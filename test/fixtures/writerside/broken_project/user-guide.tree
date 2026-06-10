@@ -1,0 +1,5 @@
+<instance-profile id="user-guide" name="User Guide" start-page="missing.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="intro.md"/>
+  <toc-element topic="missing-topic.md"/>
+</instance-profile>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=BusyMark
+Comment=Markdown and Writerside-compatible documentation editor
+Exec=busymark
+Icon=io.busystack.busymark
+Terminal=false
+Categories=Office;Development;TextEditor;Utility;
+StartupNotify=true
+StartupWMClass=io.busystack.busymark
