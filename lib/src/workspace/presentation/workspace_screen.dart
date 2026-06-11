@@ -24,6 +24,9 @@ import 'welcome_screen.dart';
 
 final _outlineNavigationTargetProvider =
     StateProvider<_OutlineNavigationTarget?>((ref) => null);
+final _sourceNavigationTargetProvider = StateProvider<_SourceNavigationTarget?>(
+  (ref) => null,
+);
 
 class _OutlineNavigationTarget {
   const _OutlineNavigationTarget({
@@ -34,6 +37,13 @@ class _OutlineNavigationTarget {
 
   final String filePath;
   final String headingId;
+  final int line;
+}
+
+class _SourceNavigationTarget {
+  const _SourceNavigationTarget({required this.filePath, required this.line});
+
+  final String filePath;
   final int line;
 }
 
@@ -256,6 +266,7 @@ class WorkspaceScreen extends ConsumerWidget {
           ),
         );
       case HeaderBarAction.search:
+        _showSearchDialog(context, ref);
       case HeaderBarAction.menu:
         break;
     }
@@ -332,6 +343,63 @@ class WorkspaceScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _showSearchDialog(BuildContext context, WidgetRef ref) {
+    final state = ref.read(workspaceControllerProvider);
+    if (state.workspace == null) {
+      return;
+    }
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    unawaited(() async {
+      if (headerBar.isAvailable) {
+        await headerBar.setSearchActive(true);
+      }
+      if (!context.mounted) {
+        return;
+      }
+      try {
+        await showBusyMarkModalDialog<void>(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          builder: (dialogContext) => _WorkspaceSearchDialog(
+            state: state,
+            onOpenResult: (result) async {
+              Navigator.pop(dialogContext);
+              await _openSearchResult(context, ref, result);
+            },
+          ),
+        );
+      } finally {
+        if (headerBar.isAvailable) {
+          await headerBar.setSearchActive(false);
+        }
+      }
+    }());
+  }
+
+  Future<void> _openSearchResult(
+    BuildContext context,
+    WidgetRef ref,
+    _WorkspaceSearchResult result,
+  ) async {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null) {
+      return;
+    }
+    if (workspace.activeFilePath != result.filePath) {
+      if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+        return;
+      }
+      await ref
+          .read(workspaceControllerProvider.notifier)
+          .openActiveFile(result.filePath);
+    }
+    if (!context.mounted) {
+      return;
+    }
+    ref.read(_sourceNavigationTargetProvider.notifier).state =
+        _SourceNavigationTarget(filePath: result.filePath, line: result.line);
   }
 
   void _showProblemsDialog(BuildContext context, WidgetRef ref) {
@@ -531,18 +599,31 @@ class _SidebarState extends State<_Sidebar> {
           if (tabs.length > 1)
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-              child: SegmentedButton<int>(
-                showSelectedIcon: false,
-                segments: [
-                  for (var index = 0; index < tabs.length; index++)
-                    ButtonSegment(
-                      value: index,
-                      label: Text(_sidebarTabLabel(tabs[index])),
-                    ),
-                ],
-                selected: {selectedIndex},
-                onSelectionChanged: (value) =>
-                    setState(() => _tab = value.first),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    BusyMarkRadius.headerButton,
+                  ),
+                  boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(
+                    BusyMarkRadius.headerButton,
+                  ),
+                  child: SegmentedButton<int>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (var index = 0; index < tabs.length; index++)
+                        ButtonSegment(
+                          value: index,
+                          label: Text(_sidebarTabLabel(tabs[index])),
+                        ),
+                    ],
+                    selected: {selectedIndex},
+                    onSelectionChanged: (value) =>
+                        setState(() => _tab = value.first),
+                  ),
+                ),
               ),
             ),
           Expanded(
@@ -1522,11 +1603,25 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToOutlineTarget(next);
     });
+    ref.listen(_sourceNavigationTargetProvider, (previous, next) {
+      if (next == null) {
+        return;
+      }
+      if (next.filePath != widget.state.workspace?.activeFilePath) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _scrollSourceToLine(next.line);
+        }
+      });
+    });
     final colors = BusyMarkSurfaceColors.of(context);
     final sourceVisible = widget.viewMode != DocumentViewModePreference.preview;
     final previewVisible = widget.viewMode != DocumentViewModePreference.source;
     final foldRegions = _syncSourceFoldRegions();
     final sourceLineHeight = _sourceLineHeight(context);
+    final sourceStrutStyle = _sourceStrutStyle;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
@@ -1552,6 +1647,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                         scrollController: _sourceScrollController,
                         lineHeight: sourceLineHeight,
                         textStyle: _sourceTextStyle,
+                        strutStyle: sourceStrutStyle,
                         collapsedRegionKeys: _foldedRegionKeys,
                         foldRegions: foldRegions,
                         onToggleFold: _toggleSourceFold,
@@ -1568,6 +1664,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                             expands: true,
                             textAlignVertical: TextAlignVertical.top,
                             style: _sourceTextStyle,
+                            strutStyle: sourceStrutStyle,
+                            cursorColor: colors.foreground,
+                            cursorHeight: sourceLineHeight,
+                            cursorWidth: 1.4,
                             decoration: InputDecoration(
                               isCollapsed: true,
                               filled: false,
@@ -1735,9 +1835,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     height: 1.45,
   );
 
+  StrutStyle get _sourceStrutStyle =>
+      StrutStyle.fromTextStyle(_sourceTextStyle, forceStrutHeight: true);
+
   double _sourceLineHeight(BuildContext context) {
     final painter = TextPainter(
       text: TextSpan(text: ' ', style: _sourceTextStyle),
+      strutStyle: _sourceStrutStyle,
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
@@ -1775,6 +1879,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       foldRegions: sourceFoldRegions(_controller.text, _controller.language),
       collapsedRegionKeys: _foldedRegionKeys,
       textStyle: _sourceTextStyle,
+      strutStyle: _sourceStrutStyle,
       lineHeight: lineHeight,
       textWidth: textWidth,
     );
@@ -1839,6 +1944,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.scrollController,
     required this.lineHeight,
     required this.textStyle,
+    required this.strutStyle,
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.onToggleFold,
@@ -1855,6 +1961,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final ScrollController scrollController;
   final double lineHeight;
   final TextStyle textStyle;
+  final StrutStyle strutStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final ValueChanged<SourceFoldRegion> onToggleFold;
@@ -1883,6 +1990,7 @@ class _SourceEditorFrame extends StatelessWidget {
                   scrollController: scrollController,
                   lineHeight: lineHeight,
                   textStyle: textStyle,
+                  strutStyle: strutStyle,
                   textWidth: textWidth,
                   foldRegions: foldRegions,
                   collapsedRegionKeys: collapsedRegionKeys,
@@ -1898,6 +2006,7 @@ class _SourceEditorFrame extends StatelessWidget {
                         controller: controller,
                         scrollController: scrollController,
                         textStyle: textStyle,
+                        strutStyle: strutStyle,
                         textWidth: textWidth,
                       ),
                     ),
@@ -1908,6 +2017,7 @@ class _SourceEditorFrame extends StatelessWidget {
                         lineHeight: lineHeight,
                         textWidth: textWidth,
                         textStyle: textStyle,
+                        strutStyle: strutStyle,
                         foldRegions: foldRegions,
                         collapsedRegionKeys: collapsedRegionKeys,
                       ),
@@ -1929,12 +2039,14 @@ class _SourceRenderedTextLayer extends StatelessWidget {
     required this.controller,
     required this.scrollController,
     required this.textStyle,
+    required this.strutStyle,
     required this.textWidth,
   });
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
   final TextStyle textStyle;
+  final StrutStyle strutStyle;
   final double textWidth;
 
   @override
@@ -1959,6 +2071,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                       context: context,
                       style: textStyle,
                     ),
+                    strutStyle: strutStyle,
                     textScaler: MediaQuery.textScalerOf(context),
                     textWidthBasis: TextWidthBasis.parent,
                   ),
@@ -1978,6 +2091,7 @@ class _SourceLineNumberGutter extends StatelessWidget {
     required this.scrollController,
     required this.lineHeight,
     required this.textStyle,
+    required this.strutStyle,
     required this.textWidth,
     required this.foldRegions,
     required this.collapsedRegionKeys,
@@ -1988,6 +2102,7 @@ class _SourceLineNumberGutter extends StatelessWidget {
   final ScrollController scrollController;
   final double lineHeight;
   final TextStyle textStyle;
+  final StrutStyle strutStyle;
   final double textWidth;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
@@ -2010,6 +2125,7 @@ class _SourceLineNumberGutter extends StatelessWidget {
                   foldRegions: foldRegions,
                   collapsedRegionKeys: collapsedRegionKeys,
                   textStyle: textStyle,
+                  strutStyle: strutStyle,
                   lineHeight: lineHeight,
                   textWidth: textWidth,
                 );
@@ -2060,6 +2176,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
     required this.lineHeight,
     required this.textWidth,
     required this.textStyle,
+    required this.strutStyle,
     required this.foldRegions,
     required this.collapsedRegionKeys,
   });
@@ -2069,6 +2186,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   final double lineHeight;
   final double textWidth;
   final TextStyle textStyle;
+  final StrutStyle strutStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
 
@@ -2087,6 +2205,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                   foldRegions: foldRegions,
                   collapsedRegionKeys: collapsedRegionKeys,
                   textStyle: textStyle,
+                  strutStyle: strutStyle,
                   lineHeight: lineHeight,
                   textWidth: textWidth,
                 );
@@ -2343,6 +2462,7 @@ List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
   required List<SourceFoldRegion> foldRegions,
   required Set<String> collapsedRegionKeys,
   required TextStyle textStyle,
+  required StrutStyle strutStyle,
   required double lineHeight,
   required double textWidth,
 }) {
@@ -2360,6 +2480,7 @@ List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
     context,
     controller: controller,
     textStyle: textStyle,
+    strutStyle: strutStyle,
     textWidth: textWidth,
   );
   for (final entry in entries) {
@@ -2387,10 +2508,12 @@ TextPainter _sourceTextPainter(
   BuildContext context, {
   required BusyMarkSourceEditingController controller,
   required TextStyle textStyle,
+  required StrutStyle strutStyle,
   required double textWidth,
 }) {
   final painter = TextPainter(
     text: controller.buildSourceTextSpan(context: context, style: textStyle),
+    strutStyle: strutStyle,
     textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),
   )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));
@@ -2809,6 +2932,320 @@ class _ProblemsList extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WorkspaceSearchDialog extends StatefulWidget {
+  const _WorkspaceSearchDialog({
+    required this.state,
+    required this.onOpenResult,
+  });
+
+  final WorkspaceState state;
+  final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
+
+  @override
+  State<_WorkspaceSearchDialog> createState() => _WorkspaceSearchDialogState();
+}
+
+class _WorkspaceSearchDialogState extends State<_WorkspaceSearchDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController()..addListener(_handleQueryChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleQueryChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleQueryChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _controller.text;
+    final results = _workspaceSearchResults(widget.state, query);
+    return BusyMarkDialogShell(
+      title: 'Search',
+      maxWidth: 700,
+      children: [
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Search',
+          ),
+          onSubmitted: (_) {
+            if (results.isNotEmpty) {
+              unawaited(widget.onOpenResult(results.first));
+            }
+          },
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        _SearchResultsList(
+          query: query,
+          results: results,
+          onOpenResult: widget.onOpenResult,
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchResultsList extends StatelessWidget {
+  const _SearchResultsList({
+    required this.query,
+    required this.results,
+    required this.onOpenResult,
+  });
+
+  final String query;
+  final List<_WorkspaceSearchResult> results;
+  final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      return const SizedBox(width: 640, height: 280);
+    }
+    final colors = BusyMarkSurfaceColors.of(context);
+    return SizedBox(
+      width: 640,
+      height: 360,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.control,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          child: results.isEmpty
+              ? const _EmptyPane(icon: Icons.search_off, title: 'No results')
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  itemCount: results.length,
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: colors.subtleBorder),
+                  itemBuilder: (context, index) {
+                    return _SearchResultRow(
+                      result: results[index],
+                      onOpen: () => onOpenResult(results[index]),
+                    );
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchResultRow extends StatelessWidget {
+  const _SearchResultRow({required this.result, required this.onOpen});
+
+  final _WorkspaceSearchResult result;
+  final Future<void> Function() onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        hoverColor: busyMarkRowHoverColor(context),
+        onTap: () => unawaited(onOpen()),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.lg,
+            vertical: BusyMarkSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                result.icon,
+                size: BusyMarkSizes.iconMd,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: BusyMarkSpacing.md),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      result.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: BusyMarkSpacing.xxs),
+                    Text(
+                      result.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: BusyMarkSpacing.md),
+              Icon(
+                Icons.chevron_right,
+                size: BusyMarkSizes.iconSm,
+                color: colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkspaceSearchResult {
+  const _WorkspaceSearchResult({
+    required this.filePath,
+    required this.line,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final String filePath;
+  final int line;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+}
+
+List<_WorkspaceSearchResult> _workspaceSearchResults(
+  WorkspaceState state,
+  String query,
+) {
+  final workspace = state.workspace;
+  final normalizedQuery = query.trim().toLowerCase();
+  if (workspace == null || normalizedQuery.isEmpty) {
+    return const [];
+  }
+  final results = <_WorkspaceSearchResult>[];
+  final activePath = workspace.activeFilePath;
+  if (activePath != null) {
+    final relativePath = _relativeDocumentPath(workspace, activePath);
+    final lines = state.activeText.split('\n');
+    for (var index = 0; index < lines.length; index++) {
+      final line = lines[index];
+      if (!line.toLowerCase().contains(normalizedQuery)) {
+        continue;
+      }
+      final lineNumber = index + 1;
+      results.add(
+        _WorkspaceSearchResult(
+          filePath: activePath,
+          line: lineNumber,
+          title: _searchExcerpt(line),
+          subtitle: '$relativePath - Line $lineNumber',
+          icon: Icons.subject,
+        ),
+      );
+      if (results.length >= _maxWorkspaceSearchResults) {
+        return results;
+      }
+    }
+  }
+
+  final sortedFiles = [...workspace.files]
+    ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  for (final file in sortedFiles) {
+    if (!_isOpenableTextDocument(file)) {
+      continue;
+    }
+    if (!file.relativePath.toLowerCase().contains(normalizedQuery)) {
+      continue;
+    }
+    final displayPath = file.relativePath;
+    final kindLabel = _documentKindLabel(file.kind);
+    results.add(
+      _WorkspaceSearchResult(
+        filePath: file.absolutePath,
+        line: 1,
+        title: displayPath,
+        subtitle: kindLabel,
+        icon: _documentKindIcon(file.kind),
+      ),
+    );
+    if (results.length >= _maxWorkspaceSearchResults) {
+      return results;
+    }
+  }
+  return results;
+}
+
+const int _maxWorkspaceSearchResults = 80;
+
+String _searchExcerpt(String line) {
+  final trimmed = line.trim();
+  if (trimmed.length <= 120) {
+    return trimmed;
+  }
+  return '${trimmed.substring(0, 117)}...';
+}
+
+String _relativeDocumentPath(Workspace workspace, String path) {
+  for (final file in workspace.files) {
+    if (file.absolutePath == path) {
+      return file.relativePath;
+    }
+  }
+  return _fileNameFromPath(path);
+}
+
+String _fileNameFromPath(String path) {
+  final normalized = path.replaceAll('\\', '/');
+  final separator = normalized.lastIndexOf('/');
+  if (separator == -1) {
+    return normalized;
+  }
+  return normalized.substring(separator + 1);
+}
+
+IconData _documentKindIcon(DocumentKind kind) {
+  return switch (kind) {
+    DocumentKind.markdown ||
+    DocumentKind.writersideMarkdownTopic => YaruIcons.text_editor,
+    DocumentKind.writersideXmlTopic => YaruIcons.document,
+    DocumentKind.tree => Icons.account_tree_outlined,
+    DocumentKind.config => YaruIcons.gear,
+    DocumentKind.variables => Icons.percent_outlined,
+    DocumentKind.categories => Icons.category_outlined,
+    DocumentKind.image => Icons.image_outlined,
+    DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
+  };
+}
+
+String _documentKindLabel(DocumentKind kind) {
+  return switch (kind) {
+    DocumentKind.markdown => 'Markdown file',
+    DocumentKind.writersideMarkdownTopic => 'Writerside Markdown topic',
+    DocumentKind.writersideXmlTopic => 'Writerside XML topic',
+    DocumentKind.tree => 'Writerside tree',
+    DocumentKind.config => 'Configuration file',
+    DocumentKind.variables => 'Variables file',
+    DocumentKind.categories => 'Categories file',
+    DocumentKind.image => 'Image',
+    DocumentKind.resource => 'Resource file',
+    DocumentKind.unknown => 'File',
+  };
 }
 
 class _DiagnosticRow extends ConsumerWidget {

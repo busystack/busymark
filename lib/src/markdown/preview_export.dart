@@ -83,11 +83,33 @@ class MarkdownPreviewBuilder {
     var inCode = false;
     String? codeLanguage;
     final codeBuffer = StringBuffer();
+    final paragraphLines = <String>[];
     var headingIndex = 0;
     final lines = document.source.split('\n');
+
+    void flushParagraph() {
+      if (paragraphLines.isEmpty) {
+        return;
+      }
+      final paragraph = _softJoinParagraphLines(paragraphLines);
+      paragraphLines.clear();
+      if (paragraph.isEmpty) {
+        return;
+      }
+      final stripped = _stripTags(paragraph);
+      blocks.add(
+        PreviewBlock(
+          kind: PreviewBlockKind.paragraph,
+          text: parseInlineMarkdownPlainText(stripped),
+          inlines: parseInlineMarkdown(stripped),
+        ),
+      );
+    }
+
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
       if (i == 0 && line.trim() == '---') {
+        flushParagraph();
         while (i + 1 < lines.length) {
           i++;
           if (lines[i].trim() == '---') {
@@ -100,6 +122,7 @@ class MarkdownPreviewBuilder {
         r'^\s*(```|~~~)\s*([A-Za-z0-9_+\-#.]*)',
       ).firstMatch(line);
       if (fence != null) {
+        flushParagraph();
         if (inCode) {
           blocks.add(
             PreviewBlock(
@@ -127,6 +150,7 @@ class MarkdownPreviewBuilder {
       if (i + 1 < lines.length) {
         final setext = RegExp(r'^\s*(=+)\s*$').firstMatch(lines[i + 1]);
         if (line.trim().isNotEmpty && setext != null) {
+          flushParagraph();
           blocks.add(
             PreviewBlock(
               kind: PreviewBlockKind.heading,
@@ -144,6 +168,7 @@ class MarkdownPreviewBuilder {
         r'^(#{1,6})\s+(.+?)\s*(\{[^}]+\})?\s*$',
       ).firstMatch(line);
       if (heading != null) {
+        flushParagraph();
         final parsedHeading = headingIndex < document.headings.length
             ? document.headings[headingIndex]
             : null;
@@ -161,9 +186,11 @@ class MarkdownPreviewBuilder {
         continue;
       }
       if (line.trim().isEmpty) {
+        flushParagraph();
         continue;
       }
       if (_isThematicBreak(line)) {
+        flushParagraph();
         blocks.add(
           PreviewBlock(kind: PreviewBlockKind.thematicBreak, text: line.trim()),
         );
@@ -171,6 +198,7 @@ class MarkdownPreviewBuilder {
       }
       final image = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)').firstMatch(line);
       if (image != null && image.group(0) == line.trim()) {
+        flushParagraph();
         final alt = image.group(1) ?? '';
         final destination = image.group(2) ?? '';
         blocks.add(
@@ -190,6 +218,7 @@ class MarkdownPreviewBuilder {
         continue;
       }
       if (line.trimLeft().startsWith('>')) {
+        flushParagraph();
         final quoteLines = <String>[];
         var style = 'quote';
         for (; i < lines.length; i++) {
@@ -225,6 +254,7 @@ class MarkdownPreviewBuilder {
       }
       final list = _listItem(line);
       if (list != null) {
+        flushParagraph();
         blocks.add(
           PreviewBlock(
             kind: PreviewBlockKind.list,
@@ -240,12 +270,14 @@ class MarkdownPreviewBuilder {
         continue;
       }
       if (line.contains('<tabs')) {
+        flushParagraph();
         blocks.add(
           const PreviewBlock(kind: PreviewBlockKind.tabs, text: 'Tabs'),
         );
         continue;
       }
       if (line.contains('<procedure')) {
+        flushParagraph();
         blocks.add(
           PreviewBlock(
             kind: PreviewBlockKind.procedure,
@@ -257,6 +289,7 @@ class MarkdownPreviewBuilder {
       if (line.contains('<note') ||
           line.contains('<tip') ||
           line.contains('<warning')) {
+        flushParagraph();
         blocks.add(
           PreviewBlock(
             kind: PreviewBlockKind.admonition,
@@ -273,14 +306,9 @@ class MarkdownPreviewBuilder {
         );
         continue;
       }
-      blocks.add(
-        PreviewBlock(
-          kind: PreviewBlockKind.paragraph,
-          text: parseInlineMarkdownPlainText(_stripTags(line.trim())),
-          inlines: parseInlineMarkdown(_stripTags(line.trim())),
-        ),
-      );
+      paragraphLines.add(line.trim());
     }
+    flushParagraph();
     if (inCode && codeBuffer.isNotEmpty) {
       blocks.add(
         PreviewBlock(
@@ -464,6 +492,21 @@ List<PreviewInline> parseInlineMarkdown(String source) {
 
 String parseInlineMarkdownPlainText(String source) {
   return parseInlineMarkdown(source).map(_inlinePlainText).join().trim();
+}
+
+String _softJoinParagraphLines(List<String> lines) {
+  final buffer = StringBuffer();
+  for (final rawLine in lines) {
+    final line = rawLine.trim();
+    if (line.isEmpty) {
+      continue;
+    }
+    if (buffer.isNotEmpty) {
+      buffer.write(' ');
+    }
+    buffer.write(line);
+  }
+  return buffer.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
 String _inlinePlainText(PreviewInline inline) {

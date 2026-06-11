@@ -120,6 +120,8 @@ void main() {
     expect(design, contains('floatingShadowsFor'));
     expect(design, contains('windowShadowsFor'));
     expect(design, contains('edgeShadowsFor'));
+    expect(design, contains('_scaleAlpha(color, 0.34)'));
+    expect(design, contains('blurRadius: 5'));
     expect(
       design,
       contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
@@ -158,6 +160,18 @@ void main() {
       expect(settingsScreen, isNot(contains('Show problems panel')));
     },
   );
+
+  test('native search action opens workspace search UI', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('case HeaderBarAction.search:'));
+    expect(workspace, contains('_showSearchDialog(context, ref)'));
+    expect(workspace, contains('class _WorkspaceSearchDialog'));
+    expect(workspace, contains('_workspaceSearchResults'));
+    expect(workspace, contains('_sourceNavigationTargetProvider'));
+  });
 
   test('workspace sidebar tabs match the opened workspace kind', () {
     final workspace = File(
@@ -210,6 +224,22 @@ void main() {
     );
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
+    expect(workspace, contains('cursorColor: colors.foreground'));
+    expect(workspace, contains('cursorHeight: sourceLineHeight'));
+    expect(workspace, contains('cursorWidth: 1.4'));
+  });
+
+  test('sidebar selector uses shared semantic shadow', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('SegmentedButton<int>'));
+    expect(
+      workspace,
+      contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
+    );
+    expect(workspace, contains('BusyMarkRadius.headerButton'));
   });
 
   test('sidebar trees share the expandable Yaru-style row', () {
@@ -280,7 +310,9 @@ void main() {
     expect(workspace, contains('getOffsetForCaret'));
     expect(workspace, contains('_sourceTextHeightForLine'));
     expect(workspace, contains('_CollapsedSourceLineOverlay'));
-    expect(workspace, isNot(contains('forceStrutHeight: true')));
+    expect(workspace, contains('_sourceStrutStyle'));
+    expect(workspace, contains('forceStrutHeight: true'));
+    expect(workspace, contains('strutStyle: sourceStrutStyle'));
     expect(workspace, contains('TextOverflow.ellipsis'));
     expect(workspace, contains('Color.alphaBlend'));
     expect(workspace, contains("'\$trimmed ...'"));

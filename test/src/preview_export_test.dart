@@ -93,6 +93,27 @@ void main() {
     expect(html, contains('<img src="logo.png" alt="Logo">'));
   });
 
+  test('preview treats single newlines inside paragraphs as soft breaks', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+The system follows a modular structure, where each module has its own subnetwork of accessory devices, such as sensors and
+actuators, that autonomously monitor and control environmental conditions without relying on a central hub.
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks, hasLength(1));
+    expect(preview.blocks.single.kind, PreviewBlockKind.paragraph);
+    expect(
+      preview.blocks.single.text,
+      'The system follows a modular structure, where each module has its own '
+      'subnetwork of accessory devices, such as sensors and actuators, that '
+      'autonomously monitor and control environmental conditions without '
+      'relying on a central hub.',
+    );
+  });
+
   test('preview supports common Markdown block variants', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
