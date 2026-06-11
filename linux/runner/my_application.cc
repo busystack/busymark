@@ -55,7 +55,6 @@ struct _MyApplication {
   GtkWidget* view_mode_split_item;
   GtkWidget* save_button;
   GtkWidget* refresh_button;
-  GtkWidget* problems_button;
   gchar* view_mode;
   gchar* background_color;
   gchar* sidebar_background_color;
@@ -796,7 +795,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* view_mode = fl_lookup_string_arg(args, "viewMode");
   const gchar* search = fl_lookup_string_arg(args, "search");
   const gchar* refresh = fl_lookup_string_arg(args, "refresh");
-  const gchar* problems = fl_lookup_string_arg(args, "problems");
   const gchar* menu = fl_lookup_string_arg(args, "menu");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
@@ -810,7 +808,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->sidebar_search_button, search);
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
-  set_widget_tooltip(self->problems_button, problems);
   set_widget_tooltip(self->save_button, save);
   set_widget_tooltip(self->view_mode_button, view_mode);
   set_menu_item_label(self->view_mode_source_item, source);
@@ -863,7 +860,6 @@ static void set_document_controls_visible(MyApplication* self,
                                           gboolean visible) {
   set_widget_visible(self->save_button, visible);
   set_widget_visible(self->refresh_button, visible);
-  set_widget_visible(self->problems_button, visible);
   set_widget_visible(self->view_mode_box, visible);
 }
 
@@ -995,13 +991,10 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_style_context_add_class(gtk_widget_get_style_context(self->save_button),
                               "busymark-save-button");
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
-  self->problems_button = create_header_icon_button("dialog-warning-symbolic");
   connect_header_action(self, self->save_button, "save");
   connect_header_action(self, self->refresh_button, "refresh");
-  connect_header_action(self, self->problems_button, "problems");
   gtk_box_pack_start(GTK_BOX(end_box), self->save_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->refresh_button, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(end_box), self->problems_button, FALSE, FALSE, 0);
   gtk_header_bar_pack_end(self->header_bar, end_box);
 
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
@@ -1335,7 +1328,6 @@ static void my_application_init(MyApplication* self) {
   self->view_mode_split_item = nullptr;
   self->save_button = nullptr;
   self->refresh_button = nullptr;
-  self->problems_button = nullptr;
   self->view_mode = nullptr;
   self->background_color = g_strdup(kDefaultHeaderbarBackground);
   self->sidebar_background_color = g_strdup(kDefaultSidebarBackground);

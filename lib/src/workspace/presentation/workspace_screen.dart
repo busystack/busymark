@@ -128,11 +128,6 @@ class WorkspaceScreen extends ConsumerWidget {
                         DocumentViewModePreference.source,
                   ),
                 ),
-                BusyMarkHeaderIconButton(
-                  tooltip: 'Problems',
-                  icon: Icons.report_problem_outlined,
-                  onPressed: () => _showProblemsDialog(context, ref),
-                ),
                 const _HeaderSeparator(),
                 BusyMarkHeaderIconButton(
                   tooltip: 'Export',
@@ -242,8 +237,6 @@ class WorkspaceScreen extends ConsumerWidget {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.exportPreview:
         _showExportDialog(context, ref);
-      case HeaderBarAction.problems:
-        _showProblemsDialog(context, ref);
       case HeaderBarAction.viewModeSource:
         unawaited(
           settingsController.setDocumentViewMode(
@@ -355,12 +348,6 @@ class WorkspaceScreen extends ConsumerWidget {
         builder: (context) => BusyMarkDialogShell(
           title: 'Problems',
           maxWidth: 760,
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
           children: [
             Text(
               count == 1 ? '1 diagnostic' : '$count diagnostics',

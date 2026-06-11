@@ -150,6 +150,7 @@ void main() {
       expect(workspace, contains('_validateActiveAndShowProblems'));
       expect(workspace, contains(').validateActive()'));
       expect(workspace, contains('class _ProblemsList'));
+      expect(workspace, isNot(contains("tooltip: 'Problems'")));
       expect(workspace, isNot(contains('_ProblemsPanel')));
       expect(workspace, isNot(contains('problemsVisible')));
       expect(settings, isNot(contains('problemsVisible')));

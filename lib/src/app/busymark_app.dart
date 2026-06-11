@@ -74,7 +74,6 @@ class BusyMarkApp extends ConsumerWidget {
       viewMode: 'View mode',
       search: material.searchFieldLabel,
       refresh: 'Validate',
-      problems: 'Problems',
       menu: 'Main menu',
       sidebar: 'Toggle sidebar',
       back: material.backButtonTooltip,

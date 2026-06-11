@@ -13,7 +13,6 @@ enum HeaderBarAction {
   search,
   refresh,
   save,
-  problems,
   menu,
   settings,
   aboutBusyMark,
@@ -33,7 +32,6 @@ class HeaderBarLabels {
     required this.viewMode,
     required this.search,
     required this.refresh,
-    required this.problems,
     required this.menu,
     required this.sidebar,
     required this.back,
@@ -49,7 +47,6 @@ class HeaderBarLabels {
   final String viewMode;
   final String search;
   final String refresh;
-  final String problems;
   final String menu;
   final String sidebar;
   final String back;
@@ -65,7 +62,6 @@ class HeaderBarLabels {
     'viewMode': viewMode,
     'search': search,
     'refresh': refresh,
-    'problems': problems,
     'menu': menu,
     'sidebar': sidebar,
     'back': back,
@@ -267,7 +263,6 @@ class LinuxHeaderBarService {
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
-      'problems' => HeaderBarAction.problems,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,

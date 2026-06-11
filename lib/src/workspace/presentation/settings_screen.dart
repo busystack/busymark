@@ -146,7 +146,6 @@ class SettingsScreen extends ConsumerWidget {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
-      case HeaderBarAction.problems:
       case HeaderBarAction.menu:
       case HeaderBarAction.exportPreview:
       case HeaderBarAction.viewModeSource:

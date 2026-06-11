@@ -168,14 +168,15 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('save,'));
-    expect(service, contains('problems,'));
     expect(service, contains("'save' => HeaderBarAction.save"));
-    expect(service, contains("'problems' => HeaderBarAction.problems"));
+    expect(service, isNot(contains('problems,')));
+    expect(service, isNot(contains("'problems' => HeaderBarAction.problems")));
     expect(service, contains('setCanSave'));
     expect(workspace, contains('case HeaderBarAction.save:'));
-    expect(workspace, contains('case HeaderBarAction.problems:'));
+    expect(workspace, isNot(contains('case HeaderBarAction.problems:')));
     expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));
+    expect(workspace, contains('_validateActiveAndShowProblems'));
     expect(workspace, contains('setCanSave(state.isDirty)'));
     expect(workspace, contains('accented: state.isDirty'));
     expect(
@@ -193,7 +194,7 @@ void main() {
     );
     expect(
       native,
-      contains('create_header_icon_button("dialog-warning-symbolic")'),
+      isNot(contains('create_header_icon_button("dialog-warning-symbolic")')),
     );
     expect(
       native,
@@ -201,11 +202,13 @@ void main() {
     );
     expect(
       native,
-      contains(
-        'connect_header_action(self, self->problems_button, "problems")',
+      isNot(
+        contains(
+          'connect_header_action(self, self->problems_button, "problems")',
+        ),
       ),
     );
-    expect(native, contains('fl_lookup_string_arg(args, "problems")'));
+    expect(native, isNot(contains('fl_lookup_string_arg(args, "problems")')));
   });
 
   test('native headerbar starts with sidebar toggle before back', () {
@@ -317,7 +320,7 @@ void main() {
     );
     expect(
       native,
-      contains('set_widget_visible(self->problems_button, visible)'),
+      isNot(contains('set_widget_visible(self->problems_button, visible)')),
     );
   });
 
