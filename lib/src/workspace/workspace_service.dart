@@ -24,6 +24,21 @@ class WorkspaceService {
   final WritersideModuleService writersideService;
   final WorkspaceScanOptions scanOptions;
 
+  Workspace createUntitledMarkdown({String source = ''}) {
+    const fileName = 'Untitled.md';
+    final now = DateTime.now();
+    final markdown = markdownParser.parse(filePath: fileName, source: source);
+    return Workspace(
+      id: 'untitled:${now.microsecondsSinceEpoch}',
+      rootPath: '',
+      kind: WorkspaceKind.untitledMarkdown,
+      openedAt: now,
+      files: const [],
+      diagnostics: markdown.diagnostics,
+      markdown: markdown,
+    );
+  }
+
   Future<Workspace> openPath(String inputPath) async {
     final path = normalizePath(inputPath);
     final fileType = FileSystemEntity.typeSync(path);
@@ -65,7 +80,7 @@ class WorkspaceService {
   }
 
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    final active = workspace.activeFilePath;
+    final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (active == null) {
       return workspace;
     }
@@ -116,7 +131,7 @@ class WorkspaceService {
   }
 
   PreviewDocument? buildPreview(Workspace workspace, String source) {
-    final active = workspace.activeFilePath;
+    final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (active == null) {
       return null;
     }

@@ -95,6 +95,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               filled: true,
               children: [
                 BusyMarkActionRow(
+                  title: 'Create Markdown File',
+                  subtitle: 'Start an unsaved local Markdown document',
+                  leading: const Icon(Icons.note_add_outlined),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _createMarkdownFile,
+                ),
+                BusyMarkActionRow(
                   title: 'Open Markdown File',
                   subtitle: '.md or .markdown',
                   leading: const Icon(Icons.description_outlined),
@@ -205,6 +212,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       return;
     }
     await _openPath(path);
+  }
+
+  Future<void> _createMarkdownFile() async {
+    final safe = await confirmSafeToContinue(context, ref);
+    if (!safe) {
+      return;
+    }
+    await ref.read(workspaceControllerProvider.notifier).createMarkdownFile();
+    if (mounted) {
+      context.go('/workspace');
+    }
   }
 
   String? _initialDirectory() {

@@ -292,11 +292,16 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   String _activeFileName(Workspace workspace) {
-    return workspace.activeFilePath?.split('/').last ?? 'Workspace';
+    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (path == null || path.isEmpty) {
+      return 'Untitled.md';
+    }
+    return p.basename(path);
   }
 
   String _workspaceKindLabel(WorkspaceKind kind) {
     return switch (kind) {
+      WorkspaceKind.untitledMarkdown => 'Unsaved Markdown file',
       WorkspaceKind.singleMarkdown => 'Single Markdown file',
       WorkspaceKind.markdownFolder => 'Markdown folder',
       WorkspaceKind.writersideModule => 'Writerside module',
@@ -683,6 +688,7 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
+    WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
     WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
@@ -718,7 +724,7 @@ class _SidebarHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _workspaceName(workspace.rootPath),
+            _workspaceName(workspace),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -728,7 +734,7 @@ class _SidebarHeader extends StatelessWidget {
           ),
           const SizedBox(height: BusyMarkSpacing.xs),
           Text(
-            '${_workspaceKindLabel(workspace.kind)} - ${workspace.files.length} files',
+            _workspaceDetail(workspace),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall,
@@ -738,13 +744,25 @@ class _SidebarHeader extends StatelessWidget {
     );
   }
 
-  String _workspaceName(String path) {
+  String _workspaceName(Workspace workspace) {
+    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
+      return workspace.markdown?.filePath ?? 'Untitled.md';
+    }
+    final path = workspace.rootPath;
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
     return segments.isEmpty ? path : segments.last;
   }
 
+  String _workspaceDetail(Workspace workspace) {
+    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
+      return 'Markdown - unsaved';
+    }
+    return '${_workspaceKindLabel(workspace.kind)} - ${workspace.files.length} files';
+  }
+
   String _workspaceKindLabel(WorkspaceKind kind) {
     return switch (kind) {
+      WorkspaceKind.untitledMarkdown => 'Markdown',
       WorkspaceKind.singleMarkdown => 'Markdown',
       WorkspaceKind.markdownFolder => 'Folder',
       WorkspaceKind.writersideModule => 'Writerside',
@@ -1830,7 +1848,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         return file.kind;
       }
     }
-    return workspace.kind == WorkspaceKind.singleMarkdown
+    return workspace.kind == WorkspaceKind.untitledMarkdown ||
+            workspace.kind == WorkspaceKind.singleMarkdown
         ? DocumentKind.markdown
         : null;
   }

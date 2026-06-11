@@ -60,6 +60,58 @@ void main() {
     settingsController.dispose();
   });
 
+  test(
+    'creates an unsaved Markdown file without adding it to recent',
+    () async {
+      final settingsStore = _MemorySettingsStore();
+      final settingsController = AppSettingsController(settingsStore);
+      await Future<void>.delayed(Duration.zero);
+      final controller = WorkspaceController(
+        service: const WorkspaceService(),
+        settingsController: settingsController,
+      );
+
+      await controller.createMarkdownFile();
+
+      expect(controller.state.workspace?.kind, WorkspaceKind.untitledMarkdown);
+      expect(controller.state.workspace?.activeFilePath, isNull);
+      expect(controller.state.workspace?.markdown?.filePath, 'Untitled.md');
+      expect(controller.state.isDirty, isTrue);
+      expect(settingsController.state.recentWorkspaces, isEmpty);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test('save as writes a new Markdown file and records it as recent', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-as-',
+    );
+    final file = File('${directory.path}/created.md');
+    final settingsStore = _MemorySettingsStore();
+    final settingsController = AppSettingsController(settingsStore);
+    await Future<void>.delayed(Duration.zero);
+    final controller = WorkspaceController(
+      service: const WorkspaceService(),
+      settingsController: settingsController,
+    );
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText('# Created\n\nDraft text.');
+
+    expect(await controller.saveActiveAs(file.path), isTrue);
+    expect(await file.readAsString(), '# Created\n\nDraft text.');
+    expect(controller.state.workspace?.kind, WorkspaceKind.singleMarkdown);
+    expect(controller.state.workspace?.activeFilePath, file.path);
+    expect(controller.state.isDirty, isFalse);
+    expect(settingsController.state.recentWorkspaces.first.path, file.path);
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
+
   test('switching active files reparses outline for the new file', () async {
     final settingsStore = _MemorySettingsStore();
     final settingsController = AppSettingsController(settingsStore);

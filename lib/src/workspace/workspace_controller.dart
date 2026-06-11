@@ -33,6 +33,24 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
   final AppSettingsController _settingsController;
   Timer? _parseDebounce;
 
+  bool get activeDocumentNeedsSaveLocation {
+    final workspace = state.workspace;
+    return workspace != null &&
+        (workspace.kind == WorkspaceKind.untitledMarkdown ||
+            workspace.activeFilePath == null);
+  }
+
+  Future<void> createMarkdownFile() async {
+    _parseDebounce?.cancel();
+    final workspace = _service.createUntitledMarkdown();
+    state = WorkspaceState(
+      workspace: workspace,
+      preview: _safePreview(workspace, ''),
+      isDirty: true,
+      isLoading: false,
+    );
+  }
+
   Future<void> openPath(String path) async {
     _parseDebounce?.cancel();
     state = const WorkspaceState(isLoading: true);
@@ -112,7 +130,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     final workspace = state.workspace;
     final active = workspace?.activeFilePath;
     if (active == null) {
-      return true;
+      state = state.copyWith(
+        errorMessage: 'Choose where to save this Markdown file.',
+      );
+      return false;
     }
     if (!overwriteExternalChanges &&
         await _service.fileChangedSince(
@@ -135,6 +156,31 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         preview: _safePreview(reparsed, state.activeText),
         isDirty: false,
         clearError: true,
+      );
+      return true;
+    } on Object catch (error) {
+      state = state.copyWith(errorMessage: 'Save failed: $error');
+      return false;
+    }
+  }
+
+  Future<bool> saveActiveAs(String path) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    final text = state.activeText;
+    try {
+      await _service.saveText(path, text);
+      final savedWorkspace = await _service.openPath(path);
+      state = WorkspaceState(
+        workspace: savedWorkspace,
+        activeText: text,
+        preview: _safePreview(savedWorkspace, text),
+      );
+      await _settingsController.recordOpenedWorkspace(
+        path: path,
+        kind: savedWorkspace.kind.name,
       );
       return true;
     } on Object catch (error) {
@@ -174,7 +220,7 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
 
   String exportActiveHtml() {
     final workspace = state.workspace;
-    final active = workspace?.activeFilePath;
+    final active = workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     if (workspace == null || active == null) {
       return '';
     }

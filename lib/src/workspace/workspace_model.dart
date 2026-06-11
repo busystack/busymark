@@ -3,7 +3,12 @@ import '../markdown/markdown_model.dart';
 import '../markdown/preview_export.dart';
 import '../writerside/writerside_model.dart';
 
-enum WorkspaceKind { singleMarkdown, markdownFolder, writersideModule }
+enum WorkspaceKind {
+  untitledMarkdown,
+  singleMarkdown,
+  markdownFolder,
+  writersideModule,
+}
 
 enum DocumentKind {
   markdown,
