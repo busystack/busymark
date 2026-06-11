@@ -10,6 +10,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../core/diagnostic.dart';
+import '../../editor/source_highlighter.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/preview_export.dart';
 import '../../platform/linux_header_bar_service.dart';
@@ -1465,7 +1466,7 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
-  late final TextEditingController _controller;
+  late final BusyMarkSourceEditingController _controller;
   late final FocusNode _sourceFocusNode;
   late final ScrollController _sourceScrollController;
   late final ScrollController _previewScrollController;
@@ -1476,7 +1477,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.state.activeText);
+    _controller = BusyMarkSourceEditingController(
+      text: widget.state.activeText,
+      language: _sourceSyntaxLanguage(widget.state.workspace),
+    );
     _sourceFocusNode = FocusNode();
     _sourceScrollController = ScrollController();
     _previewScrollController = ScrollController();
@@ -1487,6 +1491,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
     final path = widget.state.workspace?.activeFilePath ?? '';
+    _controller.language = _sourceSyntaxLanguage(widget.state.workspace);
     if (path != _lastPath) {
       _lastPath = path;
       _previewHeadingKeys.clear();
@@ -1583,6 +1588,41 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         ],
       ),
     );
+  }
+
+  SourceSyntaxLanguage _sourceSyntaxLanguage(Workspace? workspace) {
+    final kind = _activeDocumentKind(workspace);
+    return switch (kind) {
+      DocumentKind.markdown ||
+      DocumentKind.writersideMarkdownTopic => SourceSyntaxLanguage.markdown,
+      DocumentKind.writersideXmlTopic ||
+      DocumentKind.tree ||
+      DocumentKind.config ||
+      DocumentKind.variables ||
+      DocumentKind.categories => SourceSyntaxLanguage.xml,
+      DocumentKind.image ||
+      DocumentKind.resource ||
+      DocumentKind.unknown ||
+      null => SourceSyntaxLanguage.plain,
+    };
+  }
+
+  DocumentKind? _activeDocumentKind(Workspace? workspace) {
+    if (workspace == null) {
+      return null;
+    }
+    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (activePath == null) {
+      return null;
+    }
+    for (final file in workspace.files) {
+      if (file.absolutePath == activePath) {
+        return file.kind;
+      }
+    }
+    return workspace.kind == WorkspaceKind.singleMarkdown
+        ? DocumentKind.markdown
+        : null;
   }
 
   void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
