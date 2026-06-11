@@ -21,6 +21,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onChanged,
     required this.onFocused,
     this.selected = false,
+    this.selectionRange,
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
@@ -36,6 +37,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback onFocused;
   final bool selected;
+  final BusyMarkWysiwygSelectionRange? selectionRange;
   final ValueChanged<PointerDownEvent>? onPointerDown;
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
@@ -95,23 +97,45 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                 fontFamily: 'Ubuntu Mono',
                               ),
                             )
-                          : TextField(
-                              controller: controller,
-                              focusNode: focusNode,
-                              maxLines: null,
-                              minLines: 1,
-                              style: style,
-                              decoration: const InputDecoration(
-                                isCollapsed: true,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                filled: false,
-                                hoverColor: Colors.transparent,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              onTap: onFocused,
-                              onChanged: onChanged,
+                          : Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: CustomPaint(
+                                      painter: _WysiwygSelectionPainter(
+                                        text: controller.text,
+                                        style: style,
+                                        selectionRange: selectionRange,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.24),
+                                        textDirection: Directionality.of(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                TextField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  maxLines: null,
+                                  minLines: 1,
+                                  style: style,
+                                  decoration: const InputDecoration(
+                                    isCollapsed: true,
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    filled: false,
+                                    hoverColor: Colors.transparent,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  onTap: onFocused,
+                                  onChanged: onChanged,
+                                ),
+                              ],
                             ),
                     ),
                   ],
@@ -300,6 +324,72 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.unknown => Border.all(color: colors.subtleBorder),
       _ => null,
     };
+  }
+}
+
+class BusyMarkWysiwygSelectionRange {
+  const BusyMarkWysiwygSelectionRange({required this.start, required this.end});
+
+  final int start;
+  final int end;
+}
+
+class _WysiwygSelectionPainter extends CustomPainter {
+  const _WysiwygSelectionPainter({
+    required this.text,
+    required this.style,
+    required this.selectionRange,
+    required this.color,
+    required this.textDirection,
+  });
+
+  final String text;
+  final TextStyle style;
+  final BusyMarkWysiwygSelectionRange? selectionRange;
+  final Color color;
+  final TextDirection textDirection;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final range = selectionRange;
+    if (range == null || text.isEmpty || size.width <= 0) {
+      return;
+    }
+    final start = range.start.clamp(0, text.length).toInt();
+    final end = range.end.clamp(0, text.length).toInt();
+    if (end <= start) {
+      return;
+    }
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: textDirection,
+    )..layout(maxWidth: size.width);
+    final boxes = textPainter.getBoxesForSelection(
+      TextSelection(baseOffset: start, extentOffset: end),
+    );
+    final paint = Paint()..color = color;
+    for (final box in boxes) {
+      final rect = Rect.fromLTRB(
+        box.left,
+        box.top,
+        box.right,
+        box.bottom,
+      ).inflate(1.5);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WysiwygSelectionPainter oldDelegate) {
+    return oldDelegate.text != text ||
+        oldDelegate.style != style ||
+        oldDelegate.selectionRange?.start != selectionRange?.start ||
+        oldDelegate.selectionRange?.end != selectionRange?.end ||
+        oldDelegate.color != color ||
+        oldDelegate.textDirection != textDirection;
   }
 }
 

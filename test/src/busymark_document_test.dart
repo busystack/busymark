@@ -312,10 +312,12 @@ void main() {}
     );
     await tester.pump();
 
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(TextField).at(0)),
+      firstFieldRect.centerLeft + const Offset(1, 0),
     );
-    await gesture.moveTo(tester.getCenter(find.byType(TextField).at(1)));
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
     await gesture.up();
     await tester.pump();
 
@@ -326,6 +328,67 @@ void main() {}
     await tester.pump();
 
     expect(copiedText, 'First\n\nSecond');
+  });
+
+  testWidgets('WYSIWYG drag selection preserves partial paragraph boundaries', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Alpha first paragraph\n\nBeta second paragraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+    final gesture = await tester.startGesture(
+      firstFieldRect.centerLeft + const Offset(46, 0),
+    );
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(42, 0));
+    await gesture.up();
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, isNotNull);
+    expect(copiedText, isNot('Alpha first paragraph\n\nBeta second paragraph'));
+    expect(copiedText, contains('\n\n'));
   });
 
   testWidgets('WYSIWYG toolbar bold applies to selected paragraphs', (
@@ -353,10 +416,12 @@ void main() {}
     );
     await tester.pump();
 
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(TextField).at(0)),
+      firstFieldRect.centerLeft + const Offset(1, 0),
     );
-    await gesture.moveTo(tester.getCenter(find.byType(TextField).at(1)));
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
     await gesture.up();
     await tester.pump();
 
@@ -391,10 +456,12 @@ void main() {}
     );
     await tester.pump();
 
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
     final gesture = await tester.startGesture(
-      tester.getCenter(find.byType(TextField).at(0)),
+      firstFieldRect.centerLeft + const Offset(1, 0),
     );
-    await gesture.moveTo(tester.getCenter(find.byType(TextField).at(1)));
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
     await gesture.up();
     await tester.pump();
 
