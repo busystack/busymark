@@ -116,12 +116,13 @@ void main() {
     final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
 
     expect(design, contains('return BusyMarkSurfaceColors.of(context).shade'));
+    expect(design, contains('surfaceShadowsFor'));
     expect(design, contains('floatingShadowsFor'));
     expect(design, contains('windowShadowsFor'));
     expect(design, contains('edgeShadowsFor'));
     expect(
       design,
-      contains('shadowColor: BusyMarkShadow.floatingColor(context)'),
+      contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
     );
     expect(dialogs, contains('elevation: BusyMarkElevation.popover'));
     expect(

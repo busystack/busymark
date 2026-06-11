@@ -42,8 +42,33 @@ abstract final class BusyMarkShadow {
   static const Offset floatingOffset = Offset(0, 8);
   static const double windowMargin = 32;
 
+  static Color _scaleAlpha(Color color, double scale) {
+    return color.withValues(
+      alpha: (color.a * scale).clamp(0.0, 1.0).toDouble(),
+    );
+  }
+
   static Color floatingColor(BuildContext context) {
     return BusyMarkSurfaceColors.of(context).shade;
+  }
+
+  static List<BoxShadow> surfaceShadows(Color color) {
+    return [
+      BoxShadow(
+        color: _scaleAlpha(color, 0.72),
+        blurRadius: 10,
+        offset: const Offset(0, 2),
+      ),
+      BoxShadow(
+        color: _scaleAlpha(color, 0.38),
+        blurRadius: 2,
+        offset: const Offset(0, 1),
+      ),
+    ];
+  }
+
+  static List<BoxShadow> surfaceShadowsFor(BuildContext context) {
+    return surfaceShadows(floatingColor(context));
   }
 
   static List<BoxShadow> floatingShadows(Color color) {
@@ -506,14 +531,23 @@ class BusyMarkSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
     final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
+    final surface = Material(
       color: filled ? colors.card : Colors.transparent,
-      elevation: filled ? BusyMarkElevation.surface : 0,
-      shadowColor: BusyMarkShadow.floatingColor(context),
+      elevation: 0,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: borderRadius),
       clipBehavior: clipBehavior,
       child: child,
+    );
+    if (!filled) {
+      return surface;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      ),
+      child: surface,
     );
   }
 }
@@ -600,14 +634,19 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
     }
 
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
-    return Material(
-      color: colors.control,
-      elevation: BusyMarkElevation.surface,
-      shadowColor: BusyMarkShadow.floatingColor(context),
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: borderRadius),
-      clipBehavior: Clip.antiAlias,
-      child: list,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      ),
+      child: Material(
+        color: colors.control,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
+        clipBehavior: Clip.antiAlias,
+        child: list,
+      ),
     );
   }
 }
