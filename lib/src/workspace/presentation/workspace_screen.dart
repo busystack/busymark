@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yaru/yaru.dart';
 
@@ -15,6 +16,7 @@ import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
 import '../workspace_controller.dart';
 import '../workspace_model.dart';
+import '../workspace_safety.dart';
 import 'welcome_screen.dart';
 
 final _outlineNavigationTargetProvider =
@@ -69,7 +71,12 @@ class WorkspaceScreen extends ConsumerWidget {
                 child: BusyMarkHeaderIconButton(
                   tooltip: 'Welcome',
                   icon: Icons.home_outlined,
-                  onPressed: () => context.go('/'),
+                  onPressed: () async {
+                    if (await confirmSafeToContinue(context, ref) &&
+                        context.mounted) {
+                      context.go('/');
+                    }
+                  },
                 ),
               ),
               title: _HeaderTitle(
@@ -82,7 +89,9 @@ class WorkspaceScreen extends ConsumerWidget {
                 BusyMarkHeaderIconButton(
                   tooltip: 'Save',
                   icon: Icons.check,
-                  onPressed: workspaceController.saveActive,
+                  onPressed: () => unawaited(
+                    saveActiveWithOverwriteConfirmation(context, ref),
+                  ),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'Validate',
@@ -190,7 +199,6 @@ class WorkspaceScreen extends ConsumerWidget {
         );
         await headerBar.setSidebarToggleVisible(hasSidebar);
         await headerBar.setBackVisible(true);
-        await headerBar.setScheduleControlsVisible(false);
         await headerBar.setDocumentControlsVisible(true);
         await headerBar.setViewMode(
           _headerBarViewMode(settings.documentViewMode),
@@ -212,7 +220,11 @@ class WorkspaceScreen extends ConsumerWidget {
     final workspaceController = ref.read(workspaceControllerProvider.notifier);
     switch (action) {
       case HeaderBarAction.back:
-        context.go('/');
+        unawaited(() async {
+          if (await confirmSafeToContinue(context, ref) && context.mounted) {
+            context.go('/');
+          }
+        }());
       case HeaderBarAction.sidebarToggle:
         unawaited(
           settingsController.setSidebarVisible(!settings.sidebarVisible),
@@ -220,8 +232,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.refresh:
         unawaited(workspaceController.validateActive());
       case HeaderBarAction.save:
-      case HeaderBarAction.newItem:
-        unawaited(workspaceController.saveActive());
+        unawaited(saveActiveWithOverwriteConfirmation(context, ref));
       case HeaderBarAction.settings:
         context.go('/settings');
       case HeaderBarAction.aboutBusyMark:
@@ -249,9 +260,6 @@ class WorkspaceScreen extends ConsumerWidget {
           ),
         );
       case HeaderBarAction.search:
-      case HeaderBarAction.today:
-      case HeaderBarAction.previous:
-      case HeaderBarAction.next:
       case HeaderBarAction.menu:
         break;
     }
@@ -693,7 +701,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final node = entry.node;
         final file = node.file;
         final expanded = _expandedPaths.contains(node.relativePath);
-        final openable = file != null && _isOpenableMarkdownFile(file);
+        final openable = file != null && _isOpenableTextDocument(file);
         return _SidebarTreeRow(
           title: node.name,
           depth: entry.depth,
@@ -715,9 +723,13 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                   });
                 }
               : openable
-              ? () => ref
-                    .read(workspaceControllerProvider.notifier)
-                    .openActiveFile(file.absolutePath)
+              ? () async {
+                  if (await confirmSafeToContinue(context, ref)) {
+                    await ref
+                        .read(workspaceControllerProvider.notifier)
+                        .openActiveFile(file.absolutePath);
+                  }
+                }
               : null,
         );
       },
@@ -852,9 +864,18 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
   };
 }
 
-bool _isOpenableMarkdownFile(DocumentFile file) {
-  return file.kind == DocumentKind.markdown ||
-      file.kind == DocumentKind.writersideMarkdownTopic;
+bool _isOpenableTextDocument(DocumentFile file) {
+  return switch (file.kind) {
+    DocumentKind.markdown ||
+    DocumentKind.writersideMarkdownTopic ||
+    DocumentKind.writersideXmlTopic ||
+    DocumentKind.tree ||
+    DocumentKind.config ||
+    DocumentKind.variables ||
+    DocumentKind.categories ||
+    DocumentKind.resource => true,
+    DocumentKind.image || DocumentKind.unknown => false,
+  };
 }
 
 class _FileTreeNode {
@@ -1090,9 +1111,13 @@ class _TocTabState extends ConsumerState<_TocTab> {
           muted: node.hidden,
           onToggle: hasChildren ? toggle : null,
           onTap: topic != null
-              ? () => ref
-                    .read(workspaceControllerProvider.notifier)
-                    .openActiveFile(topic)
+              ? () async {
+                  if (await confirmSafeToContinue(context, ref)) {
+                    await ref
+                        .read(workspaceControllerProvider.notifier)
+                        .openActiveFile(topic);
+                  }
+                }
               : hasChildren
               ? toggle
               : null,
@@ -1898,19 +1923,25 @@ class _ProblemsList extends StatelessWidget {
   }
 }
 
-class _DiagnosticRow extends StatelessWidget {
+class _DiagnosticRow extends ConsumerWidget {
   const _DiagnosticRow({required this.diagnostic});
 
   final Diagnostic diagnostic;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
-        onTap: () {},
+        onTap: () async {
+          if (await confirmSafeToContinue(context, ref)) {
+            await ref
+                .read(workspaceControllerProvider.notifier)
+                .openActiveFile(diagnostic.filePath);
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: BusyMarkSpacing.lg,
@@ -2080,21 +2111,32 @@ class _ReadonlyExportText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return TextField(
-      controller: TextEditingController(text: value),
-      readOnly: true,
-      maxLines: null,
-      expands: true,
-      style: const TextStyle(fontFamily: 'Ubuntu Mono', fontSize: 12),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: colors.view,
-        hoverColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        contentPadding: const EdgeInsets.all(BusyMarkSpacing.md),
+    return DecoratedBox(
+      decoration: BoxDecoration(color: colors.view),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: TextButton.icon(
+                onPressed: () => Clipboard.setData(ClipboardData(text: value)),
+                icon: const Icon(Icons.copy, size: BusyMarkSizes.iconSm),
+                label: const Text('Copy'),
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(BusyMarkSpacing.md),
+              child: SelectableText(
+                value,
+                style: const TextStyle(fontFamily: 'Ubuntu Mono', fontSize: 12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

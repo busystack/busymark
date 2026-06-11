@@ -16,11 +16,13 @@ class WorkspaceService {
     this.markdownParser = const MarkdownParser(),
     this.previewBuilder = const MarkdownPreviewBuilder(),
     this.writersideService = const WritersideModuleService(),
+    this.scanOptions = const WorkspaceScanOptions(),
   });
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
   final WritersideModuleService writersideService;
+  final WorkspaceScanOptions scanOptions;
 
   Future<Workspace> openPath(String inputPath) async {
     final path = normalizePath(inputPath);
@@ -40,8 +42,27 @@ class WorkspaceService {
 
   Future<String> loadText(String path) => File(path).readAsString();
 
-  Future<void> saveText(String path, String text) =>
-      File(path).writeAsString(text);
+  Future<DateTime> fileModifiedAt(String path) async {
+    return (await File(path).stat()).modified;
+  }
+
+  Future<bool> fileChangedSince(String path, DateTime? knownModifiedAt) async {
+    if (knownModifiedAt == null) {
+      return false;
+    }
+    try {
+      final current = await fileModifiedAt(path);
+      return current.isAfter(knownModifiedAt);
+    } on Object {
+      return false;
+    }
+  }
+
+  Future<DateTime> saveText(String path, String text) async {
+    final file = File(path);
+    await file.writeAsString(text);
+    return (await file.stat()).modified;
+  }
 
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
     final active = workspace.activeFilePath;
@@ -49,7 +70,38 @@ class WorkspaceService {
       return workspace;
     }
     if (workspace.kind == WorkspaceKind.writersideModule) {
-      return _openWriterside(workspace.rootPath, activeFilePath: active);
+      final module = workspace.writersideModule;
+      final topic = module?.topics
+          .where((item) => item.filePath == active)
+          .firstOrNull;
+      if (topic?.format == WritersideTopicFormat.markdown) {
+        final markdown = markdownParser.parse(
+          filePath: active,
+          source: source,
+          mode: MarkdownMode.writersideMarkdown,
+          workspaceRoot: p.join(module!.rootPath, module.config.topicsDir),
+        );
+        return workspace.copyWith(
+          markdown: markdown,
+          diagnostics: sortDiagnostics([
+            ...module.diagnostics,
+            ...markdown.diagnostics,
+          ]),
+        );
+      }
+      if (topic?.format == WritersideTopicFormat.xml) {
+        final parsed = writersideService.topicParser.parseXml(
+          filePath: active,
+          source: source,
+        );
+        return workspace.copyWith(
+          diagnostics: sortDiagnostics([
+            ...module!.diagnostics,
+            ...parsed.diagnostics,
+          ]),
+        );
+      }
+      return workspace.copyWith(diagnostics: module?.diagnostics);
     }
     final markdown = markdownParser.parse(
       filePath: active,
@@ -73,12 +125,17 @@ class WorkspaceService {
       if (module == null) {
         return null;
       }
-      final topic = module.topics.firstWhere(
-        (item) => item.filePath == active,
-        orElse: () => module.topics.isEmpty
-            ? throw StateError('No topics')
-            : module.topics.first,
-      );
+      final topic = module.topics
+          .where((item) => item.filePath == active)
+          .firstOrNull;
+      if (topic == null) {
+        return PreviewDocument(
+          title: p.basename(active),
+          modeLabel: 'Preview',
+          compatibility: '',
+          blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
+        );
+      }
       if (topic.format == WritersideTopicFormat.markdown) {
         final parsed = markdownParser.parse(
           filePath: active,
@@ -92,15 +149,7 @@ class WorkspaceService {
         title: topic.title ?? topic.fileName,
         modeLabel: 'Preview',
         compatibility: '',
-        blocks: [
-          for (final name in topic.semanticElementNames)
-            if (_visibleSemanticElement(name))
-              PreviewBlock(
-                kind: _semanticKind(name),
-                text: _semanticText(name, topic.title),
-                attributes: {'element': name},
-              ),
-        ],
+        blocks: _xmlPreviewBlocks(source, topic.title),
       );
     }
     final parsed = markdownParser.parse(
@@ -121,6 +170,7 @@ class WorkspaceService {
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime.now(),
       activeFilePath: filePath,
+      activeFileModifiedAt: await fileModifiedAt(filePath),
       files: [await _documentFile(filePath, p.dirname(filePath))],
       diagnostics: markdown.diagnostics,
       markdown: markdown,
@@ -128,19 +178,33 @@ class WorkspaceService {
   }
 
   Future<Workspace> _openMarkdownFolder(String rootPath) async {
-    final entities = await listWorkspaceEntities(rootPath);
+    final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
+    final entities = scan.entities;
     final files = <DocumentFile>[];
-    final diagnostics = <Diagnostic>[];
+    final diagnostics = <Diagnostic>[...scan.diagnostics];
     ParsedMarkdownDocument? firstMarkdown;
+    var parsedDocuments = 0;
     for (final entity in entities.whereType<File>()) {
-      final document = await _documentFile(entity.path, rootPath);
+      final document = await _safeDocumentFile(
+        entity.path,
+        rootPath,
+        diagnostics,
+      );
+      if (document == null) {
+        continue;
+      }
       files.add(document);
       if (isMarkdownPath(entity.path)) {
-        final parsed = markdownParser.parse(
-          filePath: entity.path,
-          source: await entity.readAsString(),
-          workspaceRoot: rootPath,
+        final parsed = await _parseMarkdownFileIfSafe(
+          entity,
+          rootPath,
+          diagnostics,
+          parsedDocuments,
         );
+        if (parsed == null) {
+          continue;
+        }
+        parsedDocuments++;
         diagnostics.addAll(parsed.diagnostics);
         firstMarkdown ??= parsed;
       }
@@ -151,6 +215,9 @@ class WorkspaceService {
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime.now(),
       activeFilePath: firstMarkdown?.filePath,
+      activeFileModifiedAt: firstMarkdown == null
+          ? null
+          : await fileModifiedAt(firstMarkdown.filePath),
       files: files,
       diagnostics: sortDiagnostics(diagnostics),
       markdown: firstMarkdown,
@@ -162,10 +229,18 @@ class WorkspaceService {
     String? activeFilePath,
   }) async {
     final module = await writersideService.load(rootPath);
-    final entities = await listWorkspaceEntities(rootPath);
+    final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
+    final entities = scan.entities;
     final files = <DocumentFile>[];
+    final diagnostics = <Diagnostic>[
+      ...module.diagnostics,
+      ...scan.diagnostics,
+    ];
     for (final entity in entities.whereType<File>()) {
-      files.add(await _documentFile(entity.path, rootPath));
+      final file = await _safeDocumentFile(entity.path, rootPath, diagnostics);
+      if (file != null) {
+        files.add(file);
+      }
     }
     final firstTopic =
         activeFilePath ??
@@ -177,8 +252,11 @@ class WorkspaceService {
       kind: WorkspaceKind.writersideModule,
       openedAt: DateTime.now(),
       activeFilePath: firstTopic,
+      activeFileModifiedAt: firstTopic == null
+          ? null
+          : await fileModifiedAt(firstTopic),
       files: files,
-      diagnostics: module.diagnostics,
+      diagnostics: sortDiagnostics(diagnostics),
       writersideModule: module,
       markdown: module.topics
           .where((topic) => topic.filePath == firstTopic)
@@ -208,6 +286,75 @@ class WorkspaceService {
       size: stat.size,
       lastModified: stat.modified,
     );
+  }
+
+  Future<DocumentFile?> _safeDocumentFile(
+    String path,
+    String rootPath,
+    List<Diagnostic> diagnostics,
+  ) async {
+    try {
+      return _documentFile(path, rootPath);
+    } on Object catch (error) {
+      diagnostics.add(
+        Diagnostic(
+          code: 'workspace.file.stat-failed',
+          severity: DiagnosticSeverity.warning,
+          message: 'Could not read file metadata: $error',
+          filePath: path,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<ParsedMarkdownDocument?> _parseMarkdownFileIfSafe(
+    File file,
+    String workspaceRoot,
+    List<Diagnostic> diagnostics,
+    int parsedDocuments,
+  ) async {
+    if (parsedDocuments >= scanOptions.maxParsedDocuments) {
+      diagnostics.add(
+        Diagnostic(
+          code: 'workspace.scan.document-limit',
+          severity: DiagnosticSeverity.warning,
+          message:
+              'Large workspace detected. Some files were skipped to keep the app responsive.',
+          filePath: file.path,
+        ),
+      );
+      return null;
+    }
+    final stat = await file.stat();
+    if (stat.size > scanOptions.maxParsedFileBytes) {
+      diagnostics.add(
+        Diagnostic(
+          code: 'workspace.file.too-large',
+          severity: DiagnosticSeverity.warning,
+          message: 'File is larger than the beta auto-parse limit.',
+          filePath: file.path,
+        ),
+      );
+      return null;
+    }
+    try {
+      return markdownParser.parse(
+        filePath: file.path,
+        source: await file.readAsString(),
+        workspaceRoot: workspaceRoot,
+      );
+    } on Object catch (error) {
+      diagnostics.add(
+        Diagnostic(
+          code: 'workspace.file.read-failed',
+          severity: DiagnosticSeverity.warning,
+          message: 'Could not read Markdown file: $error',
+          filePath: file.path,
+        ),
+      );
+      return null;
+    }
   }
 
   DocumentKind _documentKind(String path) {
@@ -291,6 +438,24 @@ class WorkspaceService {
       'a' => 'Link',
       _ => name,
     };
+  }
+
+  List<PreviewBlock> _xmlPreviewBlocks(String source, String? title) {
+    final names = RegExp(
+      r'<\s*([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).allMatches(source).map((match) => match.group(1)!).toList();
+    if (names.isEmpty) {
+      return [PreviewBlock(kind: PreviewBlockKind.code, text: source)];
+    }
+    return [
+      for (final name in names)
+        if (_visibleSemanticElement(name))
+          PreviewBlock(
+            kind: _semanticKind(name),
+            text: _semanticText(name, title),
+            attributes: {'element': name},
+          ),
+    ];
   }
 }
 

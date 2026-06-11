@@ -44,9 +44,6 @@ struct _MyApplication {
   GtkWidget* header_start_box;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
-  GtkWidget* today_button;
-  GtkWidget* previous_button;
-  GtkWidget* next_button;
   GtkWidget* title_label;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
@@ -55,7 +52,7 @@ struct _MyApplication {
   GtkWidget* view_mode_source_item;
   GtkWidget* view_mode_preview_item;
   GtkWidget* view_mode_split_item;
-  GtkWidget* new_button;
+  GtkWidget* save_button;
   GtkWidget* refresh_button;
   GtkWidget* problems_button;
   gchar* view_mode;
@@ -74,7 +71,6 @@ struct _MyApplication {
   gchar* modal_barrier_color;
   gint sidebar_width;
   gboolean sidebar_visible;
-  gboolean schedule_controls_visible;
   gboolean back_visible;
   gboolean modal_barrier_visible;
   gboolean suppress_header_actions;
@@ -521,17 +517,6 @@ static GtkWidget* create_header_toggle_button(const gchar* icon_name) {
   return button;
 }
 
-static GtkWidget* create_header_text_button() {
-  GtkWidget* button = gtk_button_new_with_label("");
-  gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-  gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              "busymark-header-button");
-  return button;
-}
-
 static GtkWidget* create_header_popover() {
   GtkWidget* popover = gtk_popover_menu_new();
   gtk_popover_set_position(GTK_POPOVER(popover), GTK_POS_BOTTOM);
@@ -740,19 +725,6 @@ static GtkWidget* create_menu_button(GtkWidget* popover,
   return button;
 }
 
-static void set_button_label_and_tooltip(GtkWidget* button,
-                                         const gchar* label,
-                                         const gchar* tooltip) {
-  if (button != nullptr && GTK_IS_BUTTON(button)) {
-    if (label != nullptr) {
-      gtk_button_set_label(GTK_BUTTON(button), label);
-    }
-    if (tooltip != nullptr) {
-      gtk_widget_set_tooltip_text(button, tooltip);
-    }
-  }
-}
-
 static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
   if (widget != nullptr && GTK_IS_WIDGET(widget) && tooltip != nullptr) {
     gtk_widget_set_tooltip_text(widget, tooltip);
@@ -760,7 +732,6 @@ static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
 }
 
 static void set_localized_labels(MyApplication* self, FlValue* args) {
-  const gchar* today = fl_lookup_string_arg(args, "today");
   const gchar* source = fl_lookup_string_arg(args, "source");
   const gchar* preview = fl_lookup_string_arg(args, "preview");
   const gchar* split = fl_lookup_string_arg(args, "split");
@@ -769,25 +740,20 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* refresh = fl_lookup_string_arg(args, "refresh");
   const gchar* problems = fl_lookup_string_arg(args, "problems");
   const gchar* menu = fl_lookup_string_arg(args, "menu");
-  const gchar* previous = fl_lookup_string_arg(args, "previous");
-  const gchar* next = fl_lookup_string_arg(args, "next");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
-  const gchar* new_item = fl_lookup_string_arg(args, "newItem");
+  const gchar* save = fl_lookup_string_arg(args, "save");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
   const gchar* export_preview = fl_lookup_string_arg(args, "exportPreview");
 
-  set_button_label_and_tooltip(self->today_button, today, today);
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip(self->sidebar_toggle_button, sidebar);
   set_widget_tooltip(self->sidebar_search_button, search);
-  set_widget_tooltip(self->previous_button, previous);
-  set_widget_tooltip(self->next_button, next);
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
   set_widget_tooltip(self->problems_button, problems);
-  set_widget_tooltip(self->new_button, new_item);
+  set_widget_tooltip(self->save_button, save);
   set_widget_tooltip(self->view_mode_button, view_mode);
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
@@ -830,14 +796,6 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
   update_sidebar_header_geometry(self);
 }
 
-static void set_schedule_controls_visible(MyApplication* self,
-                                          gboolean visible) {
-  self->schedule_controls_visible = visible;
-  set_widget_visible(self->today_button, visible);
-  set_widget_visible(self->previous_button, visible);
-  set_widget_visible(self->next_button, visible);
-}
-
 static void set_back_visible(MyApplication* self, gboolean visible) {
   self->back_visible = visible;
   set_widget_visible(self->back_button, visible);
@@ -845,7 +803,7 @@ static void set_back_visible(MyApplication* self, gboolean visible) {
 
 static void set_document_controls_visible(MyApplication* self,
                                           gboolean visible) {
-  set_widget_visible(self->new_button, visible);
+  set_widget_visible(self->save_button, visible);
   set_widget_visible(self->refresh_button, visible);
   set_widget_visible(self->problems_button, visible);
   set_widget_visible(self->view_mode_box, visible);
@@ -917,23 +875,11 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->back_button = create_header_icon_button("go-previous-symbolic");
   self->sidebar_toggle_button =
       create_header_toggle_button("sidebar-show-symbolic");
-  self->today_button = create_header_text_button();
-  self->previous_button = create_header_icon_button("go-previous-symbolic");
-  self->next_button = create_header_icon_button("go-next-symbolic");
   connect_header_action(self, self->back_button, "back");
   connect_header_action(self, self->sidebar_toggle_button, "sidebarToggle");
-  connect_header_action(self, self->today_button, "today");
-  connect_header_action(self, self->previous_button, "previous");
-  connect_header_action(self, self->next_button, "next");
   gtk_box_pack_start(GTK_BOX(self->header_start_box), self->back_button,
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->header_start_box), self->sidebar_toggle_button,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->today_button,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->previous_button,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->next_button,
                      FALSE, FALSE, 0);
   gtk_header_bar_pack_start(self->header_bar, self->header_start_box);
 
@@ -979,13 +925,13 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->view_mode_box, FALSE, FALSE, 0);
 
-  self->new_button = create_header_icon_button("object-select-symbolic");
+  self->save_button = create_header_icon_button("emblem-ok-symbolic");
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
   self->problems_button = create_header_icon_button("dialog-warning-symbolic");
-  connect_header_action(self, self->new_button, "save");
+  connect_header_action(self, self->save_button, "save");
   connect_header_action(self, self->refresh_button, "refresh");
   connect_header_action(self, self->problems_button, "problems");
-  gtk_box_pack_start(GTK_BOX(end_box), self->new_button, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(end_box), self->save_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->refresh_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->problems_button, FALSE, FALSE, 0);
   gtk_header_bar_pack_end(self->header_bar, end_box);
@@ -995,7 +941,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   set_view_mode(self, "split");
   set_sidebar_visible(self, TRUE);
   set_back_visible(self, FALSE);
-  set_schedule_controls_visible(self, FALSE);
   refresh_header_bar_css(self);
   return self->titlebar_box;
 }
@@ -1021,9 +966,8 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setCanRefresh") == 0) {
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
     respond_success(method_call);
-  } else if (strcmp(method, "setCanCreate") == 0 ||
-             strcmp(method, "setCanSave") == 0) {
-    set_widget_sensitive(self->new_button, fl_method_bool_arg(args));
+  } else if (strcmp(method, "setCanSave") == 0) {
+    set_widget_sensitive(self->save_button, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));
@@ -1040,9 +984,6 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     respond_success(method_call);
   } else if (strcmp(method, "setSidebarWidth") == 0) {
     set_sidebar_width(self, fl_method_double_arg(args, 300));
-    respond_success(method_call);
-  } else if (strcmp(method, "setScheduleControlsVisible") == 0) {
-    set_schedule_controls_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setBackVisible") == 0) {
     set_back_visible(self, fl_method_bool_arg(args));
@@ -1232,9 +1173,6 @@ static void my_application_init(MyApplication* self) {
   self->header_start_box = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
-  self->today_button = nullptr;
-  self->previous_button = nullptr;
-  self->next_button = nullptr;
   self->title_label = nullptr;
   self->view_mode_box = nullptr;
   self->view_mode_button = nullptr;
@@ -1243,7 +1181,7 @@ static void my_application_init(MyApplication* self) {
   self->view_mode_source_item = nullptr;
   self->view_mode_preview_item = nullptr;
   self->view_mode_split_item = nullptr;
-  self->new_button = nullptr;
+  self->save_button = nullptr;
   self->refresh_button = nullptr;
   self->problems_button = nullptr;
   self->view_mode = nullptr;
@@ -1262,7 +1200,6 @@ static void my_application_init(MyApplication* self) {
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
-  self->schedule_controls_visible = FALSE;
   self->back_visible = FALSE;
   self->modal_barrier_visible = FALSE;
   self->suppress_header_actions = FALSE;

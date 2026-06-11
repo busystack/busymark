@@ -10,14 +10,10 @@ import '../app/busymark_design.dart';
 enum HeaderBarAction {
   back,
   sidebarToggle,
-  today,
-  previous,
-  next,
   search,
   refresh,
   save,
   problems,
-  newItem,
   menu,
   settings,
   aboutBusyMark,
@@ -31,7 +27,6 @@ enum AppViewMode { source, preview, split }
 
 class HeaderBarLabels {
   const HeaderBarLabels({
-    required this.today,
     required this.source,
     required this.preview,
     required this.split,
@@ -40,17 +35,14 @@ class HeaderBarLabels {
     required this.refresh,
     required this.problems,
     required this.menu,
-    required this.previous,
-    required this.next,
     required this.sidebar,
     required this.back,
-    required this.newItem,
+    required this.save,
     required this.settings,
     required this.aboutBusyMark,
     required this.exportPreview,
   });
 
-  final String today;
   final String source;
   final String preview;
   final String split;
@@ -59,17 +51,14 @@ class HeaderBarLabels {
   final String refresh;
   final String problems;
   final String menu;
-  final String previous;
-  final String next;
   final String sidebar;
   final String back;
-  final String newItem;
+  final String save;
   final String settings;
   final String aboutBusyMark;
   final String exportPreview;
 
   Map<String, String> toMap() => {
-    'today': today,
     'source': source,
     'preview': preview,
     'split': split,
@@ -78,11 +67,9 @@ class HeaderBarLabels {
     'refresh': refresh,
     'problems': problems,
     'menu': menu,
-    'previous': previous,
-    'next': next,
     'sidebar': sidebar,
     'back': back,
-    'newItem': newItem,
+    'save': save,
     'settings': settings,
     'aboutBusyMark': aboutBusyMark,
     'exportPreview': exportPreview,
@@ -171,7 +158,7 @@ class LinuxHeaderBarService {
   var _available = false;
 
   bool get isAvailable => _available;
-  bool get usesNativeHeaderBar => Platform.isLinux || _available;
+  bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
 
@@ -204,10 +191,6 @@ class LinuxHeaderBarService {
     return _invoke('setCanRefresh', value);
   }
 
-  Future<void> setCanCreate(bool value) {
-    return _invoke('setCanCreate', value);
-  }
-
   Future<void> setCanSave(bool value) {
     return _invoke('setCanSave', value);
   }
@@ -230,10 +213,6 @@ class LinuxHeaderBarService {
 
   Future<void> setSidebarWidth(double value) {
     return _invoke('setSidebarWidth', value);
-  }
-
-  Future<void> setScheduleControlsVisible(bool value) {
-    return _invoke('setScheduleControlsVisible', value);
   }
 
   Future<void> setBackVisible(bool value) {
@@ -277,14 +256,10 @@ class LinuxHeaderBarService {
     return switch (method) {
       'back' => HeaderBarAction.back,
       'sidebarToggle' => HeaderBarAction.sidebarToggle,
-      'today' => HeaderBarAction.today,
-      'previous' => HeaderBarAction.previous,
-      'next' => HeaderBarAction.next,
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
       'problems' => HeaderBarAction.problems,
-      'newItem' => HeaderBarAction.newItem,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,

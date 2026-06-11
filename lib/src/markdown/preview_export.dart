@@ -54,16 +54,44 @@ class MarkdownPreviewBuilder {
   PreviewDocument build(ParsedMarkdownDocument document) {
     final blocks = <PreviewBlock>[];
     var inCode = false;
+    String? codeLanguage;
+    final codeBuffer = StringBuffer();
     var headingIndex = 0;
     final lines = document.source.split('\n');
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
-      final fence = RegExp(r'^\s*```').hasMatch(line);
-      if (fence) {
+      if (i == 0 && line.trim() == '---') {
+        while (i + 1 < lines.length) {
+          i++;
+          if (lines[i].trim() == '---') {
+            break;
+          }
+        }
+        continue;
+      }
+      final fence = RegExp(r'^\s*```\s*([A-Za-z0-9_+\-#.]*)').firstMatch(line);
+      if (fence != null) {
+        if (inCode) {
+          blocks.add(
+            PreviewBlock(
+              kind: PreviewBlockKind.code,
+              text: codeBuffer.toString().trimRight(),
+              language: codeLanguage,
+            ),
+          );
+          codeBuffer.clear();
+          codeLanguage = null;
+        } else {
+          codeLanguage = fence.group(1)?.trim();
+          if (codeLanguage != null && codeLanguage.isEmpty) {
+            codeLanguage = null;
+          }
+        }
         inCode = !inCode;
         continue;
       }
       if (inCode) {
+        codeBuffer.writeln(line);
         continue;
       }
       final heading = RegExp(
@@ -84,9 +112,29 @@ class MarkdownPreviewBuilder {
         );
         continue;
       }
-      if (line.trim().isEmpty ||
-          line.trim() == '---' ||
-          RegExp(r'^\s*[A-Za-z_-]+:').hasMatch(line)) {
+      if (line.trim().isEmpty) {
+        continue;
+      }
+      final image = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)').firstMatch(line);
+      if (image != null) {
+        final alt = image.group(1) ?? '';
+        final destination = image.group(2) ?? '';
+        blocks.add(
+          PreviewBlock(
+            kind: PreviewBlockKind.image,
+            text: alt.isEmpty ? destination : alt,
+            attributes: {'src': destination},
+          ),
+        );
+        final remaining = line.replaceFirst(image.group(0)!, '').trim();
+        if (remaining.isNotEmpty) {
+          blocks.add(
+            PreviewBlock(
+              kind: PreviewBlockKind.paragraph,
+              text: _stripInlineMarkup(_stripTags(remaining)),
+            ),
+          );
+        }
         continue;
       }
       if (line.trimLeft().startsWith('>')) {
@@ -153,21 +201,12 @@ class MarkdownPreviewBuilder {
         ),
       );
     }
-    for (final code in document.codeBlocks) {
+    if (inCode && codeBuffer.isNotEmpty) {
       blocks.add(
         PreviewBlock(
           kind: PreviewBlockKind.code,
-          text: code.content.trimRight(),
-          language: code.language,
-        ),
-      );
-    }
-    for (final image in document.images) {
-      blocks.add(
-        PreviewBlock(
-          kind: PreviewBlockKind.image,
-          text: image.alt.isEmpty ? image.destination : image.alt,
-          attributes: {'src': image.destination},
+          text: codeBuffer.toString().trimRight(),
+          language: codeLanguage,
         ),
       );
     }

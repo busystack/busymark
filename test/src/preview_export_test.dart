@@ -49,4 +49,56 @@ void main() {
     expect(html, contains('<ul><li>Bullet</li></ul>'));
     expect(html, isNot(contains('Compatibility level:')));
   });
+
+  test('preview preserves source order for code and images', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+# Title
+
+Intro text.
+
+```dart
+void main() {}
+```
+
+![Logo](images/logo.png)
+
+Conclusion.
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.map((block) => block.kind), [
+      PreviewBlockKind.heading,
+      PreviewBlockKind.paragraph,
+      PreviewBlockKind.code,
+      PreviewBlockKind.image,
+      PreviewBlockKind.paragraph,
+    ]);
+    expect(preview.blocks.last.text, 'Conclusion.');
+  });
+
+  test('front matter is skipped only at the top of the document', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+# Notes
+
+Note: this line must remain visible.
+---
+Also visible.
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(
+      preview.blocks.map((block) => block.text),
+      containsAll([
+        'Note: this line must remain visible.',
+        '---',
+        'Also visible.',
+      ]),
+    );
+  });
 }

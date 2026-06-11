@@ -194,7 +194,7 @@ void main() {
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
-    expect(workspace, contains('_isOpenableMarkdownFile(file)'));
+    expect(workspace, contains('_isOpenableTextDocument(file)'));
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, isNot(contains('class _FileTreeRow')));

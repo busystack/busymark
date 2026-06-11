@@ -3,11 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:system_theme/system_theme.dart';
 
 import 'src/app/busymark_app.dart';
+import 'package:busymark/src/app/startup_path.dart';
 import 'src/platform/linux_header_bar_service.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await LinuxHeaderBarService.instance.initialize();
   await SystemTheme.accentColor.load();
-  runApp(const ProviderScope(child: BusyMarkApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        startupPathProvider.overrideWithValue(args.isEmpty ? null : args.first),
+      ],
+      child: const BusyMarkApp(),
+    ),
+  );
 }

@@ -27,7 +27,7 @@ void main() {
     expect(source, contains('self->sidebar_width'));
     expect(
       source,
-      contains('connect_header_action(self, self->new_button, "save")'),
+      contains('connect_header_action(self, self->save_button, "save")'),
     );
     expect(source, isNot(contains('window-close-symbolic')));
     expect(source, isNot(contains('window-minimize-symbolic')));
@@ -148,12 +148,9 @@ void main() {
     expect(service, contains('setCanSave'));
     expect(workspace, contains('case HeaderBarAction.save:'));
     expect(workspace, contains('case HeaderBarAction.problems:'));
-    expect(workspace, contains('workspaceController.saveActive()'));
+    expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));
-    expect(
-      native,
-      contains('create_header_icon_button("object-select-symbolic")'),
-    );
+    expect(native, contains('create_header_icon_button("emblem-ok-symbolic")'));
     expect(
       native,
       contains('create_header_icon_button("tools-check-spelling-symbolic")'),
@@ -247,7 +244,7 @@ void main() {
       native,
       contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
     );
-    expect(native, contains('set_widget_visible(self->new_button, visible)'));
+    expect(native, contains('set_widget_visible(self->save_button, visible)'));
     expect(
       native,
       contains('set_widget_visible(self->refresh_button, visible)'),

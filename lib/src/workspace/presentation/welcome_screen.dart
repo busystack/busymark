@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:busymark/src/app/startup_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
+import '../workspace_safety.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -23,8 +25,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   static const _markdownTypes = XTypeGroup(
     label: 'Markdown',
     extensions: <String>['md', 'markdown'],
-    mimeTypes: <String>['text/markdown', 'text/plain'],
+    mimeTypes: <String>['text/markdown', 'text/x-markdown'],
   );
+  var _startupPathConsumed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +43,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     });
     if (headerBar.isAvailable) {
       _configureHeaderBar(headerBar);
+    }
+    final startupPath = ref.watch(startupPathProvider);
+    if (!_startupPathConsumed &&
+        startupPath != null &&
+        startupPath.isNotEmpty) {
+      _startupPathConsumed = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_openPath(startupPath));
+        }
+      });
     }
 
     return Scaffold(
@@ -88,18 +102,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   onTap: _chooseMarkdownFile,
                 ),
                 BusyMarkActionRow(
-                  title: 'Open Folder',
-                  subtitle: 'Markdown workspace',
+                  title: 'Open Folder or Writerside Project',
+                  subtitle: 'Markdown folder or Writerside-compatible project',
                   leading: const Icon(Icons.folder_outlined),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _chooseDirectory('Open Folder'),
-                ),
-                BusyMarkActionRow(
-                  title: 'Open Writerside Project',
-                  subtitle: 'writerside.cfg workspace',
-                  leading: const Icon(Icons.account_tree_outlined),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _chooseDirectory('Open Writerside Project'),
+                  onTap: () => _chooseDirectory('Open'),
                 ),
               ],
             ),
@@ -141,7 +148,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         await headerBar.setSidebarVisible(false);
         await headerBar.setSidebarToggleVisible(false);
         await headerBar.setBackVisible(false);
-        await headerBar.setScheduleControlsVisible(false);
         await headerBar.setDocumentControlsVisible(false);
         await headerBar.setCanRefresh(false);
         await headerBar.setCanSave(false);
@@ -158,14 +164,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.back:
       case HeaderBarAction.sidebarToggle:
-      case HeaderBarAction.today:
-      case HeaderBarAction.previous:
-      case HeaderBarAction.next:
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
       case HeaderBarAction.problems:
-      case HeaderBarAction.newItem:
       case HeaderBarAction.menu:
       case HeaderBarAction.exportPreview:
       case HeaderBarAction.viewModeSource:
@@ -217,6 +219,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   Future<void> _openPath(String path) async {
     if (path.isEmpty) {
+      return;
+    }
+    final safe = await confirmSafeToContinue(context, ref);
+    if (!safe) {
       return;
     }
     await ref.read(workspaceControllerProvider.notifier).openPath(path);
@@ -306,7 +312,7 @@ class _BusyMarkAboutDialog extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
             child: Text(
-              'BusyMark is an open-source application for reading, editing, and export of Markdown files and Writeside projects.',
+              'BusyMark is an open-source application for reading, editing, and exporting Markdown files and Writerside-compatible projects.',
             ),
           ),
           Padding(

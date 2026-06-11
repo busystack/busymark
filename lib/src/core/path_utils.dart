@@ -2,14 +2,75 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'diagnostic.dart';
+
 const ignoredDirectoryNames = {
   '.git',
+  '.hg',
+  '.svn',
   '.dart_tool',
   '.idea',
+  '.cache',
+  '.gradle',
+  '.pub',
+  '.venv',
+  '.next',
+  'coverage',
   'build',
-  'node_modules',
+  'dist',
   'out',
+  'node_modules',
+  'target',
+  'venv',
 };
+
+const documentationFileExtensions = {
+  '.md',
+  '.markdown',
+  '.mdown',
+  '.mkd',
+  '.topic',
+  '.tree',
+  '.cfg',
+  '.list',
+  '.xml',
+};
+
+const resourceFileExtensions = {
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.svg',
+  '.webp',
+  '.pdf',
+  '.css',
+  '.js',
+};
+
+class WorkspaceScanOptions {
+  const WorkspaceScanOptions({
+    this.maxParsedFileBytes = 2 * 1024 * 1024,
+    this.maxParsedDocuments = 5000,
+    this.maxTreeEntries = 10000,
+    this.followLinks = false,
+  });
+
+  final int maxParsedFileBytes;
+  final int maxParsedDocuments;
+  final int maxTreeEntries;
+  final bool followLinks;
+}
+
+class WorkspaceScanResult {
+  const WorkspaceScanResult({
+    required this.entities,
+    required this.diagnostics,
+  });
+
+  final List<FileSystemEntity> entities;
+  final List<Diagnostic> diagnostics;
+}
 
 String normalizePath(String path) => p.normalize(p.absolute(path));
 
@@ -24,30 +85,96 @@ bool isMarkdownPath(String path) {
 
 bool isTextDocumentationPath(String path) {
   final extension = p.extension(path).toLowerCase();
-  return isMarkdownPath(path) ||
-      extension == '.topic' ||
-      extension == '.tree' ||
-      extension == '.cfg' ||
-      extension == '.xml' ||
-      extension == '.list';
+  return documentationFileExtensions.contains(extension);
+}
+
+bool isWorkspaceResourcePath(String path) {
+  return resourceFileExtensions.contains(p.extension(path).toLowerCase());
+}
+
+bool isWorkspaceTreePath(String path) {
+  return isTextDocumentationPath(path) || isWorkspaceResourcePath(path);
 }
 
 Future<List<FileSystemEntity>> listWorkspaceEntities(String rootPath) async {
+  return (await scanWorkspaceEntities(rootPath)).entities;
+}
+
+Future<WorkspaceScanResult> scanWorkspaceEntities(
+  String rootPath, {
+  WorkspaceScanOptions options = const WorkspaceScanOptions(),
+}) async {
   final directory = Directory(rootPath);
   if (!await directory.exists()) {
-    return const [];
+    return const WorkspaceScanResult(entities: [], diagnostics: []);
   }
-  final result = <FileSystemEntity>[];
-  await for (final entity in directory.list(recursive: true)) {
-    final relative = normalizedRelative(rootPath, entity.path);
-    final parts = p.split(relative);
-    if (parts.any(ignoredDirectoryNames.contains)) {
+  final entities = <FileSystemEntity>[];
+  final diagnostics = <Diagnostic>[];
+  final pending = <Directory>[directory];
+
+  while (pending.isNotEmpty && entities.length < options.maxTreeEntries) {
+    final current = pending.removeLast();
+    Stream<FileSystemEntity> listing;
+    try {
+      listing = current.list(followLinks: options.followLinks);
+    } on Object catch (error) {
+      diagnostics.add(
+        _scanWarning(current.path, 'Could not list folder: $error'),
+      );
       continue;
     }
-    result.add(entity);
+
+    try {
+      await for (final entity in listing) {
+        final type = await FileSystemEntity.type(
+          entity.path,
+          followLinks: options.followLinks,
+        );
+        if (type == FileSystemEntityType.directory) {
+          final name = p.basename(entity.path);
+          if (!ignoredDirectoryNames.contains(name) && !name.startsWith('.')) {
+            pending.add(Directory(entity.path));
+          }
+          continue;
+        }
+        if (type == FileSystemEntityType.link && !options.followLinks) {
+          continue;
+        }
+        if (type != FileSystemEntityType.file ||
+            !isWorkspaceTreePath(entity.path)) {
+          continue;
+        }
+        entities.add(entity);
+        if (entities.length >= options.maxTreeEntries) {
+          diagnostics.add(
+            _scanWarning(
+              rootPath,
+              'Large workspace detected. Some files were skipped to keep the app responsive.',
+            ),
+          );
+          break;
+        }
+      }
+    } on Object catch (error) {
+      diagnostics.add(
+        _scanWarning(current.path, 'Could not scan folder: $error'),
+      );
+    }
   }
-  result.sort((a, b) => a.path.compareTo(b.path));
-  return result;
+  entities.sort((a, b) => a.path.compareTo(b.path));
+  return WorkspaceScanResult(
+    entities: entities,
+    diagnostics: sortDiagnostics(diagnostics),
+  );
+}
+
+Diagnostic _scanWarning(String path, String message) {
+  return Diagnostic(
+    code: 'workspace.scan.skipped',
+    severity: DiagnosticSeverity.warning,
+    message: message,
+    filePath: path,
+  );
 }
 
 String slugForHeading(String text) {

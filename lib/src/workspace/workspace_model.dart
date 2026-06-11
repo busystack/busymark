@@ -43,6 +43,7 @@ class Workspace {
     required this.files,
     required this.diagnostics,
     this.activeFilePath,
+    this.activeFileModifiedAt,
     this.markdown,
     this.writersideModule,
   });
@@ -52,6 +53,7 @@ class Workspace {
   final WorkspaceKind kind;
   final DateTime openedAt;
   final String? activeFilePath;
+  final DateTime? activeFileModifiedAt;
   final List<DocumentFile> files;
   final List<Diagnostic> diagnostics;
   final ParsedMarkdownDocument? markdown;
@@ -59,6 +61,7 @@ class Workspace {
 
   Workspace copyWith({
     String? activeFilePath,
+    DateTime? activeFileModifiedAt,
     List<DocumentFile>? files,
     List<Diagnostic>? diagnostics,
     ParsedMarkdownDocument? markdown,
@@ -70,6 +73,7 @@ class Workspace {
       kind: kind,
       openedAt: openedAt,
       activeFilePath: activeFilePath ?? this.activeFilePath,
+      activeFileModifiedAt: activeFileModifiedAt ?? this.activeFileModifiedAt,
       files: files ?? this.files,
       diagnostics: diagnostics ?? this.diagnostics,
       markdown: markdown ?? this.markdown,
@@ -94,6 +98,8 @@ class WorkspaceState {
   final bool isDirty;
   final bool isLoading;
   final String? errorMessage;
+
+  bool get hasUnsavedChanges => isDirty;
 
   WorkspaceState copyWith({
     Workspace? workspace,
