@@ -321,7 +321,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "border-width: 0;"
       "border-color: transparent;"
-      "box-shadow: none;"
+      "box-shadow: 0 1px 1px %s;"
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
       "outline-style: none;"
@@ -361,6 +361,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar button.busymark-view-mode-button:disabled {"
       "color: %s;"
       "background-color: transparent;"
+      "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier label,"
       ".busymark-titlebar.busymark-modal-barrier button,"
@@ -438,7 +439,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
       kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
       sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
-      foreground, control, kHeaderButtonHeight, kHeaderButtonHeight,
+      foreground, control, shade, kHeaderButtonHeight, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
       control_hover, control_active, accent_foreground, accent,
       accent_foreground, disabled, disabled, popover, foreground,

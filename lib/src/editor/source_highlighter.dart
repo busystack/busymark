@@ -14,6 +14,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
 
   SourceSyntaxLanguage _language;
   List<SourceFoldRegion> _foldedRegions = const [];
+  bool renderText = true;
 
   SourceSyntaxLanguage get language => _language;
 
@@ -41,20 +42,40 @@ class BusyMarkSourceEditingController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
+    return buildSourceTextSpan(
+      context: context,
+      style: style,
+      visible: renderText,
+    );
+  }
+
+  TextSpan buildSourceTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    bool visible = true,
+  }) {
+    final colors = BusyMarkSurfaceColors.of(context);
     final baseStyle = (style ?? DefaultTextStyle.of(context).style).copyWith(
-      color: BusyMarkSurfaceColors.of(context).foreground,
+      color: visible ? colors.foreground : Colors.transparent,
+      backgroundColor: Colors.transparent,
     );
     final source = text;
     if (source.isEmpty || source.length > 300000) {
       return TextSpan(text: source, style: baseStyle);
     }
-    final palette = _SourceSyntaxPalette.fromContext(context);
     final hiddenRanges = _foldedRegions
         .map(
           (region) =>
               _HiddenRange(region.hiddenStartOffset, region.hiddenEndOffset),
         )
         .toList();
+    if (!visible) {
+      return TextSpan(
+        style: baseStyle,
+        children: _spansFromRanges(source, const [], hiddenRanges, baseStyle),
+      );
+    }
+    final palette = _SourceSyntaxPalette.fromContext(context);
     return TextSpan(
       style: baseStyle,
       children: switch (_language) {

@@ -1484,7 +1484,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _controller = BusyMarkSourceEditingController(
       text: widget.state.activeText,
       language: _sourceSyntaxLanguage(widget.state.workspace),
-    );
+    )..renderText = false;
     _sourceFocusNode = FocusNode();
     _sourceScrollController = ScrollController();
     _previewScrollController = ScrollController();
@@ -1573,8 +1573,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                             style: _sourceTextStyle,
                             decoration: InputDecoration(
                               isCollapsed: true,
-                              filled: true,
-                              fillColor: colors.view,
+                              filled: false,
+                              fillColor: Colors.transparent,
                               hoverColor: Colors.transparent,
                               focusColor: Colors.transparent,
                               border: InputBorder.none,
@@ -1774,7 +1774,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final lineHeight = _sourceLineHeight(context);
     final layouts = _sourceLineLayoutEntries(
       context,
-      source: _controller.text,
+      controller: _controller,
       foldRegions: sourceFoldRegions(_controller.text, _controller.language),
       collapsedRegionKeys: _foldedRegionKeys,
       textStyle: _sourceTextStyle,
@@ -1896,7 +1896,14 @@ class _SourceEditorFrame extends StatelessWidget {
               Expanded(
                 child: Stack(
                   children: [
-                    Positioned.fill(child: child),
+                    Positioned.fill(
+                      child: _SourceRenderedTextLayer(
+                        controller: controller,
+                        scrollController: scrollController,
+                        textStyle: textStyle,
+                        textWidth: textWidth,
+                      ),
+                    ),
                     Positioned.fill(
                       child: _CollapsedSourceLineOverlay(
                         controller: controller,
@@ -1908,6 +1915,7 @@ class _SourceEditorFrame extends StatelessWidget {
                         collapsedRegionKeys: collapsedRegionKeys,
                       ),
                     ),
+                    Positioned.fill(child: child),
                   ],
                 ),
               ),
@@ -1915,6 +1923,54 @@ class _SourceEditorFrame extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SourceRenderedTextLayer extends StatelessWidget {
+  const _SourceRenderedTextLayer({
+    required this.controller,
+    required this.scrollController,
+    required this.textStyle,
+    required this.textWidth,
+  });
+
+  final BusyMarkSourceEditingController controller;
+  final ScrollController scrollController;
+  final TextStyle textStyle;
+  final double textWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ClipRect(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([controller, scrollController]),
+          builder: (context, _) {
+            final scrollOffset = scrollController.hasClients
+                ? scrollController.offset
+                : 0.0;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
+                  left: _SourceEditorFrame.editorPaddingLeft,
+                  width: textWidth,
+                  child: RichText(
+                    text: controller.buildSourceTextSpan(
+                      context: context,
+                      style: textStyle,
+                    ),
+                    textScaler: MediaQuery.textScalerOf(context),
+                    textWidthBasis: TextWidthBasis.parent,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -1953,7 +2009,7 @@ class _SourceLineNumberGutter extends StatelessWidget {
               builder: (context, _) {
                 final layouts = _sourceLineLayoutEntries(
                   context,
-                  source: controller.text,
+                  controller: controller,
                   foldRegions: foldRegions,
                   collapsedRegionKeys: collapsedRegionKeys,
                   textStyle: textStyle,
@@ -2030,7 +2086,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
               builder: (context, _) {
                 final layouts = _sourceLineLayoutEntries(
                   context,
-                  source: controller.text,
+                  controller: controller,
                   foldRegions: foldRegions,
                   collapsedRegionKeys: collapsedRegionKeys,
                   textStyle: textStyle,
@@ -2286,13 +2342,14 @@ class _SourceLineLayoutEntry {
 
 List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
   BuildContext context, {
-  required String source,
+  required BusyMarkSourceEditingController controller,
   required List<SourceFoldRegion> foldRegions,
   required Set<String> collapsedRegionKeys,
   required TextStyle textStyle,
   required double lineHeight,
   required double textWidth,
 }) {
+  final source = controller.text;
   final linesByNumber = {
     for (final line in sourceLineInfos(source)) line.number: line,
   };
@@ -2302,42 +2359,77 @@ List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
     collapsedRegionKeys,
   );
   final layouts = <_SourceLineLayoutEntry>[];
-  var top = _SourceEditorFrame.editorPaddingTop;
+  final painter = _sourceTextPainter(
+    context,
+    controller: controller,
+    textStyle: textStyle,
+    textWidth: textWidth,
+  );
   for (final entry in entries) {
     final line = linesByNumber[entry.lineNumber];
+    final top =
+        _SourceEditorFrame.editorPaddingTop +
+        (line == null ? 0 : _sourceTextTopForOffset(painter, line.startOffset));
     final height = line == null
         ? lineHeight
-        : _sourceVisualLineHeight(
-            context,
-            line: line,
-            textStyle: textStyle,
-            lineHeight: lineHeight,
-            textWidth: textWidth,
+        : _sourceTextHeightForLine(
+            painter,
+            linesByNumber,
+            entry.lineNumber,
+            lineHeight,
           );
     layouts.add(
       _SourceLineLayoutEntry(gutterEntry: entry, top: top, height: height),
     );
-    top += height;
   }
+  painter.dispose();
   return layouts;
 }
 
-double _sourceVisualLineHeight(
+TextPainter _sourceTextPainter(
   BuildContext context, {
-  required SourceLineInfo line,
+  required BusyMarkSourceEditingController controller,
   required TextStyle textStyle,
-  required double lineHeight,
   required double textWidth,
 }) {
   final painter = TextPainter(
-    text: TextSpan(text: line.text.isEmpty ? ' ' : line.text, style: textStyle),
+    text: controller.buildSourceTextSpan(context: context, style: textStyle),
     textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),
-  )..layout(maxWidth: math.max(1, textWidth));
+  )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));
+  return painter;
+}
+
+double _sourceTextTopForOffset(TextPainter painter, int offset) {
+  return painter.getOffsetForCaret(TextPosition(offset: offset), Rect.zero).dy;
+}
+
+double _sourceTextHeightForLine(
+  TextPainter painter,
+  Map<int, SourceLineInfo> linesByNumber,
+  int lineNumber,
+  double fallback,
+) {
+  final line = linesByNumber[lineNumber];
+  if (line == null) {
+    return fallback;
+  }
+  final top = _sourceTextTopForOffset(painter, line.startOffset);
+  final nextLine = linesByNumber[lineNumber + 1];
+  if (nextLine != null) {
+    final nextTop = _sourceTextTopForOffset(painter, nextLine.startOffset);
+    if (nextTop > top) {
+      return math.max(fallback, nextTop - top);
+    }
+  }
   final metrics = painter.computeLineMetrics();
-  final height = metrics.fold<double>(0, (sum, metric) => sum + metric.height);
-  painter.dispose();
-  return math.max(lineHeight, height);
+  for (final metric in metrics) {
+    final metricTop = metric.baseline - metric.ascent;
+    if (top >= metricTop - 0.5 && top < metricTop + metric.height + 0.5) {
+      return math.max(fallback, metric.height);
+    }
+  }
+  return fallback;
 }
 
 String _collapsedLineText(String text) {

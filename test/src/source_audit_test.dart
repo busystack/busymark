@@ -269,9 +269,13 @@ void main() {
 
     expect(workspace, contains('isCollapsed: true'));
     expect(workspace, contains('_sourceLineHeight(context)'));
+    expect(workspace, contains('_SourceRenderedTextLayer'));
+    expect(workspace, contains('renderText = false'));
+    expect(workspace, contains('controller.buildSourceTextSpan'));
     expect(workspace, contains('TextPainter('));
     expect(workspace, contains('computeLineMetrics()'));
-    expect(workspace, contains('_sourceVisualLineHeight'));
+    expect(workspace, contains('getOffsetForCaret'));
+    expect(workspace, contains('_sourceTextHeightForLine'));
     expect(workspace, contains('_CollapsedSourceLineOverlay'));
     expect(workspace, isNot(contains('forceStrutHeight: true')));
     expect(workspace, contains('TextOverflow.ellipsis'));

@@ -55,12 +55,12 @@ abstract final class BusyMarkShadow {
   static List<BoxShadow> surfaceShadows(Color color) {
     return [
       BoxShadow(
-        color: _scaleAlpha(color, 0.72),
-        blurRadius: 10,
+        color: _scaleAlpha(color, 0.58),
+        blurRadius: 8,
         offset: const Offset(0, 2),
       ),
       BoxShadow(
-        color: _scaleAlpha(color, 0.38),
+        color: _scaleAlpha(color, 0.28),
         blurRadius: 2,
         offset: const Offset(0, 1),
       ),

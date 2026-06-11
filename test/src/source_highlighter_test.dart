@@ -121,6 +121,41 @@ void main() {
     expect((span.children!.single as TextSpan).text, 'plain text');
   });
 
+  testWidgets(
+    'controller can keep editable text transparent for custom render',
+    (tester) async {
+      late TextSpan root;
+      late List<TextSpan> spans;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.dark,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Builder(
+            builder: (context) {
+              final controller = BusyMarkSourceEditingController(
+                text: '# Title\nText\n',
+                language: SourceSyntaxLanguage.markdown,
+              )..renderText = false;
+              root = controller.buildTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                withComposing: false,
+              );
+              spans = _flattenTextSpans(root);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(root.style?.color, Colors.transparent);
+      expect(spans.map((span) => span.text).join(), '# Title\nText\n');
+    },
+  );
+
   testWidgets('folded regions hide body lines without changing source text', (
     tester,
   ) async {
