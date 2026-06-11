@@ -1206,6 +1206,7 @@ static void my_application_activate(GApplication* application) {
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
   self->main_window = window;
+  gtk_window_set_title(window, kApplicationDisplayName);
   gtk_widget_set_name(GTK_WIDGET(window), "busymark-window");
   configure_transparent_window_backing(window);
 
@@ -1223,8 +1224,6 @@ static void my_application_activate(GApplication* application) {
     GtkWidget* titlebar = create_busymark_titlebar(self);
     gtk_widget_show_all(titlebar);
     gtk_window_set_titlebar(window, titlebar);
-  } else {
-    gtk_window_set_title(window, kApplicationDisplayName);
   }
 
   gtk_window_set_default_size(window, 1280, 720);
@@ -1373,7 +1372,8 @@ static void my_application_init(MyApplication* self) {
 }
 
 MyApplication* my_application_new() {
-  g_set_prgname(APPLICATION_ID);
+  g_set_prgname(kApplicationDisplayName);
+  g_set_application_name(kApplicationDisplayName);
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID, "flags",

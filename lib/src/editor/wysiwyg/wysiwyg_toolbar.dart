@@ -34,15 +34,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         child: Row(
           spacing: BusyMarkSpacing.xs,
           children: _groups([
-            [
-              _button(
-                tooltip: 'Paragraph',
-                icon: Icons.subject,
-                onPressed: () =>
-                    onBlockCommand(BusyWysiwygBlockCommand.paragraph),
-              ),
-              _headingMenu(context),
-            ],
+            [_blockStyleMenu()],
             [
               _button(
                 tooltip: 'Unordered list',
@@ -132,38 +124,33 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     return widgets;
   }
 
-  Widget _headingMenu(BuildContext context) {
-    return MenuAnchor(
-      menuChildren: [
-        MenuItemButton(
-          leadingIcon: const Text('H1'),
-          onPressed: () => onBlockCommand(BusyWysiwygBlockCommand.heading1),
-          child: const Text('Heading 1'),
+  Widget _blockStyleMenu() {
+    return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
+      tooltip: 'Text style',
+      icon: Icons.text_fields,
+      itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: BusyWysiwygBlockCommand.paragraph,
+          label: 'Paragraph',
+          icon: Icons.subject,
         ),
-        MenuItemButton(
-          leadingIcon: const Text('H2'),
-          onPressed: () => onBlockCommand(BusyWysiwygBlockCommand.heading2),
-          child: const Text('Heading 2'),
+        BusyMarkPopupMenuItem(
+          value: BusyWysiwygBlockCommand.heading1,
+          label: 'Heading 1',
+          icon: Icons.title,
         ),
-        MenuItemButton(
-          leadingIcon: const Text('H3'),
-          onPressed: () => onBlockCommand(BusyWysiwygBlockCommand.heading3),
-          child: const Text('Heading 3'),
+        BusyMarkPopupMenuItem(
+          value: BusyWysiwygBlockCommand.heading2,
+          label: 'Heading 2',
+          icon: Icons.title,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyWysiwygBlockCommand.heading3,
+          label: 'Heading 3',
+          icon: Icons.title,
         ),
       ],
-      builder: (context, controller, child) {
-        return BusyMarkHeaderIconButton(
-          tooltip: 'Heading',
-          icon: Icons.title,
-          onPressed: () {
-            if (controller.isOpen) {
-              controller.close();
-            } else {
-              controller.open();
-            }
-          },
-        );
-      },
+      onSelected: onBlockCommand,
     );
   }
 

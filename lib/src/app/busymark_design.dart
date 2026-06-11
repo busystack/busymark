@@ -476,6 +476,98 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   }
 }
 
+class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
+  const BusyMarkHeaderPopupMenuButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.itemBuilder,
+    required this.onSelected,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final PopupMenuItemBuilder<T> itemBuilder;
+  final ValueChanged<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    return Theme(
+      data: theme.copyWith(
+        iconButtonTheme: IconButtonThemeData(
+          style: busyMarkHeaderIconButtonStyle(
+            foregroundColor: colors.mutedForeground,
+            backgroundColor: busyMarkHeaderButtonBackground(context),
+          ),
+        ),
+      ),
+      child: PopupMenuButton<T>(
+        tooltip: tooltip,
+        icon: Icon(icon, size: BusyMarkSizes.iconSm),
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        color: popupTheme.color ?? colors.popover,
+        surfaceTintColor: Colors.transparent,
+        elevation: BusyMarkElevation.popover,
+        shadowColor: colors.shade,
+        shape:
+            popupTheme.shape ??
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+        constraints: const BoxConstraints(minWidth: 180),
+        itemBuilder: itemBuilder,
+        onSelected: onSelected,
+      ),
+    );
+  }
+}
+
+class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
+  BusyMarkPopupMenuItem({
+    super.key,
+    required T value,
+    required String label,
+    IconData? icon,
+  }) : super(
+         value: value,
+         height: 36,
+         padding: EdgeInsets.zero,
+         child: Builder(
+           builder: (context) {
+             final colors = BusyMarkSurfaceColors.of(context);
+             return Padding(
+               padding: const EdgeInsets.symmetric(
+                 horizontal: BusyMarkSpacing.md,
+               ),
+               child: Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   SizedBox(
+                     width: 24,
+                     child: icon == null
+                         ? const SizedBox.shrink()
+                         : Icon(
+                             icon,
+                             size: BusyMarkSizes.iconSm,
+                             color: colors.mutedForeground,
+                           ),
+                   ),
+                   const SizedBox(width: BusyMarkSpacing.sm),
+                   Flexible(
+                     child: Text(label, overflow: TextOverflow.ellipsis),
+                   ),
+                 ],
+               ),
+             );
+           },
+         ),
+       );
+}
+
 class BusyMarkClamp extends StatelessWidget {
   const BusyMarkClamp({
     super.key,

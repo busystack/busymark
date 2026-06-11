@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
 
 class BusyInlineStyleRange {
@@ -27,8 +28,10 @@ class BusyMarkWysiwygTextController extends TextEditingController {
 
   void updateFromBlock(BusyBlock block) {
     final nextText = block.plainText;
-    _ranges = busyInlineStyleRanges(block.inlines);
+    final nextRanges = busyInlineStyleRanges(block.inlines);
+    final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
     if (text != nextText) {
+      _ranges = nextRanges;
       value = value.copyWith(
         text: nextText,
         selection: TextSelection.collapsed(
@@ -36,7 +39,8 @@ class BusyMarkWysiwygTextController extends TextEditingController {
         ),
         composing: TextRange.empty,
       );
-    } else {
+    } else if (rangesChanged) {
+      _ranges = nextRanges;
       notifyListeners();
     }
   }
@@ -98,6 +102,7 @@ class BusyMarkWysiwygTextController extends TextEditingController {
     TextStyle baseStyle,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
+    final colors = BusyMarkSurfaceColors.of(context);
     return switch (range.kind) {
       BusyInlineKind.strong => baseStyle.copyWith(fontWeight: FontWeight.w700),
       BusyInlineKind.emphasis => baseStyle.copyWith(
@@ -106,7 +111,10 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       BusyInlineKind.strikethrough => baseStyle.copyWith(
         decoration: TextDecoration.lineThrough,
       ),
-      BusyInlineKind.code => baseStyle.copyWith(fontFamily: 'Ubuntu Mono'),
+      BusyInlineKind.code => baseStyle.copyWith(
+        fontFamily: 'Ubuntu Mono',
+        backgroundColor: colors.control,
+      ),
       BusyInlineKind.link => baseStyle.copyWith(
         color: colorScheme.primary,
         decoration: TextDecoration.underline,
@@ -233,4 +241,27 @@ bool _styledKind(BusyInlineKind kind) {
     BusyInlineKind.link,
     BusyInlineKind.image,
   }.contains(kind);
+}
+
+bool _inlineStyleRangesEqual(
+  List<BusyInlineStyleRange> a,
+  List<BusyInlineStyleRange> b,
+) {
+  if (identical(a, b)) {
+    return true;
+  }
+  if (a.length != b.length) {
+    return false;
+  }
+  for (var index = 0; index < a.length; index++) {
+    final left = a[index];
+    final right = b[index];
+    if (left.start != right.start ||
+        left.end != right.end ||
+        left.kind != right.kind ||
+        left.destination != right.destination) {
+      return false;
+    }
+  }
+  return true;
 }

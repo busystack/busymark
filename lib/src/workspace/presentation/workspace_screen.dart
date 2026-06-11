@@ -1608,6 +1608,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewHeadingKeys = <String, GlobalKey>{};
   final _foldedRegionKeys = <String>{};
   String _lastPath = '';
+  BusyDocument? _cachedWysiwygDocument;
+  String? _cachedWysiwygPath;
+  String? _cachedWysiwygSource;
 
   @override
   void initState() {
@@ -1629,6 +1632,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _controller.language = _sourceSyntaxLanguage(widget.state.workspace);
     if (path != _lastPath) {
       _lastPath = path;
+      _clearWysiwygCache();
       _foldedRegionKeys.clear();
       _controller.clearFoldedRegions();
       _previewHeadingKeys.clear();
@@ -1636,6 +1640,20 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     } else if (widget.state.activeText != oldWidget.state.activeText &&
         !_sourceFocusNode.hasFocus) {
       _controller.text = widget.state.activeText;
+    }
+    if (oldWidget.viewMode == DocumentViewModePreference.editor &&
+        widget.viewMode != DocumentViewModePreference.editor &&
+        widget.viewMode != DocumentViewModePreference.source &&
+        widget.state.workspace != null &&
+        widget.state.isDirty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref
+            .read(workspaceControllerProvider.notifier)
+            .updateActiveText(widget.state.activeText);
+      });
     }
   }
 
@@ -1674,10 +1692,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     });
     final colors = BusyMarkSurfaceColors.of(context);
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
+    final wysiwygDocument =
+        editorVisible && _canUseWysiwyg(widget.state.workspace)
+        ? _wysiwygDocument()
+        : null;
     final wysiwygVisible =
         editorVisible &&
         _canUseWysiwyg(widget.state.workspace) &&
-        _wysiwygDocument() != null;
+        wysiwygDocument != null;
     final sourceVisible =
         widget.viewMode != DocumentViewModePreference.preview &&
         !wysiwygVisible;
@@ -1710,8 +1732,20 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   ),
                   Expanded(
                     child: BusyMarkWysiwygEditor(
-                      document: _wysiwygDocument()!,
-                      onSourceChanged: _handleSourceChanged,
+                      document: wysiwygDocument,
+                      workspaceRoot: widget.state.workspace?.rootPath,
+                      writersideRoot:
+                          widget.state.workspace?.writersideModule?.rootPath,
+                      imagesDir:
+                          widget
+                              .state
+                              .workspace
+                              ?.writersideModule
+                              ?.config
+                              .imagesDir ??
+                          'images',
+                      onDocumentChanged: _cacheWysiwygDocument,
+                      onSourceChanged: _handleWysiwygSourceChanged,
                     ),
                   ),
                 ],
@@ -1836,14 +1870,35 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     });
   }
 
-  void _handleSourceChanged(String value) {
+  void _handleSourceChanged(String value, {bool updatePreview = true}) {
     if (_foldedRegionKeys.isNotEmpty) {
       setState(() {
         _foldedRegionKeys.clear();
         _controller.clearFoldedRegions();
       });
     }
-    ref.read(workspaceControllerProvider.notifier).updateActiveText(value);
+    if (updatePreview) {
+      _clearWysiwygCache();
+    }
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText(value, updatePreview: updatePreview);
+  }
+
+  void _handleWysiwygSourceChanged(String value) {
+    _handleSourceChanged(value, updatePreview: false);
+  }
+
+  void _cacheWysiwygDocument(BusyDocument document) {
+    _cachedWysiwygDocument = document;
+    _cachedWysiwygPath = document.filePath;
+    _cachedWysiwygSource = document.source;
+  }
+
+  void _clearWysiwygCache() {
+    _cachedWysiwygDocument = null;
+    _cachedWysiwygPath = null;
+    _cachedWysiwygSource = null;
   }
 
   SourceSyntaxLanguage _sourceSyntaxLanguage(Workspace? workspace) {
@@ -2054,11 +2109,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (workspace == null || activePath == null) {
       return null;
     }
+    if (_cachedWysiwygPath == activePath &&
+        _cachedWysiwygSource == widget.state.activeText) {
+      return _cachedWysiwygDocument;
+    }
     final mode = workspace.kind == WorkspaceKind.writersideModule
         ? MarkdownMode.writersideMarkdown
         : MarkdownMode.commonMark;
     try {
-      return const MarkdownParser()
+      final document = const MarkdownParser()
           .parse(
             filePath: activePath,
             source: widget.state.activeText,
@@ -2067,6 +2126,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             validateLocalReferences: false,
           )
           .busyDocument;
+      _cachedWysiwygDocument = document;
+      _cachedWysiwygPath = activePath;
+      _cachedWysiwygSource = widget.state.activeText;
+      return document;
     } on Object {
       return workspace.markdown?.busyDocument;
     }

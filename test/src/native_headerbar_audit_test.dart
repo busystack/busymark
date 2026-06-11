@@ -34,6 +34,28 @@ void main() {
     expect(source, isNot(contains('window-maximize-symbolic')));
   });
 
+  test('Linux desktop identity resolves to BusyMark display name', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final cmake = File('linux/CMakeLists.txt').readAsStringSync();
+    final desktop = File(
+      'linux/io.busystack.busymark.desktop',
+    ).readAsStringSync();
+
+    expect(native, contains('g_set_prgname(kApplicationDisplayName)'));
+    expect(native, contains('g_set_application_name(kApplicationDisplayName)'));
+    expect(
+      native,
+      contains('gtk_window_set_title(window, kApplicationDisplayName)'),
+    );
+    expect(
+      cmake,
+      contains(r'"${CMAKE_CURRENT_SOURCE_DIR}/${APPLICATION_ID}.desktop"'),
+    );
+    expect(desktop, contains('Name=BusyMark'));
+    expect(desktop, contains('StartupWMClass=io.busystack.busymark'));
+    expect(File('linux/busymark.desktop').existsSync(), isFalse);
+  });
+
   test('native labels are supplied by Dart rather than hardcoded in C++', () {
     final source = File('linux/runner/my_application.cc').readAsStringSync();
 

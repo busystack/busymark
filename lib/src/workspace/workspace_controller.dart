@@ -108,11 +108,11 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     }
   }
 
-  void updateActiveText(String text) {
+  void updateActiveText(String text, {bool updatePreview = true}) {
     final workspace = state.workspace;
     state = state.copyWith(
       activeText: text,
-      preview: workspace == null
+      preview: workspace == null || !updatePreview
           ? state.preview
           : _safePreview(workspace, text),
       isDirty: true,
