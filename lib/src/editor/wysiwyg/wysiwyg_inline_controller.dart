@@ -52,28 +52,44 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       return TextSpan(text: text, style: baseStyle);
     }
     final spans = <TextSpan>[];
-    var offset = 0;
-    final ranges = [..._ranges]..sort((a, b) => a.start.compareTo(b.start));
+    final ranges = _normalizedRanges(_ranges, text.length);
+    final boundaries = <int>{0, text.length};
     for (final range in ranges) {
-      final start = range.start.clamp(0, text.length).toInt();
-      final end = range.end.clamp(start, text.length).toInt();
-      if (start > offset) {
-        spans.add(TextSpan(text: text.substring(offset, start)));
-      }
-      if (end > start) {
-        spans.add(
-          TextSpan(
-            text: text.substring(start, end),
-            style: _styleForRange(context, range, baseStyle),
-          ),
-        );
-      }
-      offset = end;
+      boundaries
+        ..add(range.start)
+        ..add(range.end);
     }
-    if (offset < text.length) {
-      spans.add(TextSpan(text: text.substring(offset)));
+    final sortedBoundaries = boundaries.toList()..sort();
+    for (var index = 0; index < sortedBoundaries.length - 1; index++) {
+      final start = sortedBoundaries[index];
+      final end = sortedBoundaries[index + 1];
+      if (end <= start) {
+        continue;
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(start, end),
+          style: _styleForRanges(
+            context,
+            _activeRangesForSegment(ranges, start, end),
+            baseStyle,
+          ),
+        ),
+      );
     }
     return TextSpan(style: baseStyle, children: spans);
+  }
+
+  TextStyle _styleForRanges(
+    BuildContext context,
+    List<BusyInlineStyleRange> ranges,
+    TextStyle baseStyle,
+  ) {
+    var style = baseStyle;
+    for (final range in ranges..sort(_compareRangesByStylePriority)) {
+      style = _styleForRange(context, range, style);
+    }
+    return style;
   }
 
   TextStyle _styleForRange(
@@ -108,39 +124,97 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
   final ranges = <BusyInlineStyleRange>[];
   var offset = 0;
 
-  void visit(BusyInline inline, _InheritedInlineStyle? inheritedStyle) {
+  void visit(BusyInline inline, List<_InheritedInlineStyle> inheritedStyles) {
     final start = offset;
     final children = inline.children;
     final ownStyle = _styledKind(inline.kind)
         ? _InheritedInlineStyle(inline.kind, inline.destination)
         : null;
-    final effectiveStyle = ownStyle ?? inheritedStyle;
+    final effectiveStyles = ownStyle == null
+        ? inheritedStyles
+        : [...inheritedStyles, ownStyle];
     if (children.isEmpty) {
       offset += inline.plainText.length;
     } else {
       for (final child in children) {
-        visit(child, effectiveStyle);
+        visit(child, effectiveStyles);
       }
       return;
     }
     final end = offset;
-    final kind = effectiveStyle?.kind;
-    if (kind != null && end > start && _styledKind(kind)) {
-      ranges.add(
-        BusyInlineStyleRange(
-          start: start,
-          end: end,
-          kind: kind,
-          destination: effectiveStyle?.destination,
-        ),
-      );
+    if (end > start) {
+      for (final style in effectiveStyles) {
+        if (!_styledKind(style.kind)) {
+          continue;
+        }
+        ranges.add(
+          BusyInlineStyleRange(
+            start: start,
+            end: end,
+            kind: style.kind,
+            destination: style.destination,
+          ),
+        );
+      }
     }
   }
 
   for (final inline in inlines) {
-    visit(inline, null);
+    visit(inline, const []);
   }
   return ranges;
+}
+
+List<BusyInlineStyleRange> _normalizedRanges(
+  List<BusyInlineStyleRange> ranges,
+  int textLength,
+) {
+  return [
+    for (final range in ranges)
+      if (range.end > range.start)
+        BusyInlineStyleRange(
+          start: range.start.clamp(0, textLength).toInt(),
+          end: range.end.clamp(0, textLength).toInt(),
+          kind: range.kind,
+          destination: range.destination,
+        ),
+  ].where((range) => range.end > range.start).toList()..sort((a, b) {
+    final byStart = a.start.compareTo(b.start);
+    return byStart == 0 ? a.end.compareTo(b.end) : byStart;
+  });
+}
+
+List<BusyInlineStyleRange> _activeRangesForSegment(
+  List<BusyInlineStyleRange> ranges,
+  int start,
+  int end,
+) {
+  final byKind = <BusyInlineKind, BusyInlineStyleRange>{};
+  for (final range in ranges) {
+    if (range.start <= start && range.end >= end) {
+      byKind[range.kind] = range;
+    }
+  }
+  return byKind.values.toList()..sort(_compareRangesByStylePriority);
+}
+
+int _compareRangesByStylePriority(
+  BusyInlineStyleRange a,
+  BusyInlineStyleRange b,
+) {
+  return _stylePriority(a.kind).compareTo(_stylePriority(b.kind));
+}
+
+int _stylePriority(BusyInlineKind kind) {
+  return switch (kind) {
+    BusyInlineKind.link => 0,
+    BusyInlineKind.strong => 1,
+    BusyInlineKind.emphasis => 2,
+    BusyInlineKind.strikethrough => 3,
+    BusyInlineKind.code => 4,
+    BusyInlineKind.image => 5,
+    _ => 6,
+  };
 }
 
 class _InheritedInlineStyle {

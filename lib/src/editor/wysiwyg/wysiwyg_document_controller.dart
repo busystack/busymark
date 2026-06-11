@@ -4,6 +4,7 @@ import '../../core/path_utils.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import 'wysiwyg_commands.dart';
+import 'wysiwyg_inline_controller.dart';
 
 class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
@@ -90,31 +91,39 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       final text = block.plainText;
       final safeStart = start.clamp(0, text.length);
       final safeEnd = end.clamp(safeStart, text.length);
-      final selected = text.substring(safeStart, safeEnd);
       final inlineKind = inlineKindForCommand(command);
-      return block.copyWith(
-        inlines: [
-          if (safeStart > 0)
-            BusyInline(
-              kind: BusyInlineKind.text,
-              text: text.substring(0, safeStart),
-            ),
-          BusyInline(
+      final existingRanges = busyInlineStyleRanges(block.inlines);
+      final removeExistingStyle =
+          command != BusyWysiwygInlineCommand.link &&
+          _selectionCoveredByKind(
+            existingRanges,
+            inlineKind,
+            safeStart,
+            safeEnd,
+          );
+      final ranges = [
+        for (final range in existingRanges)
+          ..._preservedRangeParts(
+            range,
+            removeKind:
+                removeExistingStyle || command == BusyWysiwygInlineCommand.link
+                ? inlineKind
+                : null,
+            selectionStart: safeStart,
+            selectionEnd: safeEnd,
+          ),
+        if (!removeExistingStyle)
+          BusyInlineStyleRange(
+            start: safeStart,
+            end: safeEnd,
             kind: inlineKind,
-            text: selected,
             destination: command == BusyWysiwygInlineCommand.link
                 ? destination
                 : null,
-            children: inlineKind == BusyInlineKind.code
-                ? const []
-                : [BusyInline(kind: BusyInlineKind.text, text: selected)],
           ),
-          if (safeEnd < text.length)
-            BusyInline(
-              kind: BusyInlineKind.text,
-              text: text.substring(safeEnd),
-            ),
-        ],
+      ];
+      return block.copyWith(
+        inlines: _inlinesFromStyleRanges(text, ranges),
         dirty: true,
       );
     });
@@ -177,4 +186,158 @@ BusyDocument _ensureEditableDocument(BusyDocument document) {
       ),
     ],
   );
+}
+
+bool _selectionCoveredByKind(
+  List<BusyInlineStyleRange> ranges,
+  BusyInlineKind kind,
+  int start,
+  int end,
+) {
+  if (end <= start) {
+    return false;
+  }
+  var offset = start;
+  final matching =
+      ranges
+          .where(
+            (range) =>
+                range.kind == kind && range.end > start && range.start < end,
+          )
+          .toList()
+        ..sort((a, b) => a.start.compareTo(b.start));
+  for (final range in matching) {
+    if (range.start > offset) {
+      return false;
+    }
+    if (range.end > offset) {
+      offset = range.end;
+    }
+    if (offset >= end) {
+      return true;
+    }
+  }
+  return false;
+}
+
+List<BusyInlineStyleRange> _preservedRangeParts(
+  BusyInlineStyleRange range, {
+  required BusyInlineKind? removeKind,
+  required int selectionStart,
+  required int selectionEnd,
+}) {
+  if (removeKind == null ||
+      range.kind != removeKind ||
+      range.end <= selectionStart ||
+      range.start >= selectionEnd) {
+    return [range];
+  }
+  return [
+    if (range.start < selectionStart)
+      BusyInlineStyleRange(
+        start: range.start,
+        end: selectionStart,
+        kind: range.kind,
+        destination: range.destination,
+      ),
+    if (range.end > selectionEnd)
+      BusyInlineStyleRange(
+        start: selectionEnd,
+        end: range.end,
+        kind: range.kind,
+        destination: range.destination,
+      ),
+  ];
+}
+
+List<BusyInline> _inlinesFromStyleRanges(
+  String text,
+  List<BusyInlineStyleRange> ranges,
+) {
+  if (text.isEmpty) {
+    return const [BusyInline(kind: BusyInlineKind.text, text: '')];
+  }
+  final normalized = _normalizedStyleRanges(ranges, text.length);
+  final boundaries = <int>{0, text.length};
+  for (final range in normalized) {
+    boundaries
+      ..add(range.start)
+      ..add(range.end);
+  }
+  final sortedBoundaries = boundaries.toList()..sort();
+  return [
+    for (var index = 0; index < sortedBoundaries.length - 1; index++)
+      if (sortedBoundaries[index + 1] > sortedBoundaries[index])
+        _inlineForSegment(
+          text.substring(sortedBoundaries[index], sortedBoundaries[index + 1]),
+          _activeStyleRangesForSegment(
+            normalized,
+            sortedBoundaries[index],
+            sortedBoundaries[index + 1],
+          ),
+        ),
+  ];
+}
+
+List<BusyInlineStyleRange> _normalizedStyleRanges(
+  List<BusyInlineStyleRange> ranges,
+  int textLength,
+) {
+  return [
+    for (final range in ranges)
+      if (range.end > range.start)
+        BusyInlineStyleRange(
+          start: range.start.clamp(0, textLength).toInt(),
+          end: range.end.clamp(0, textLength).toInt(),
+          kind: range.kind,
+          destination: range.destination,
+        ),
+  ].where((range) => range.end > range.start).toList();
+}
+
+List<BusyInlineStyleRange> _activeStyleRangesForSegment(
+  List<BusyInlineStyleRange> ranges,
+  int start,
+  int end,
+) {
+  final byKind = <BusyInlineKind, BusyInlineStyleRange>{};
+  for (final range in ranges) {
+    if (range.start <= start && range.end >= end) {
+      byKind[range.kind] = range;
+    }
+  }
+  return byKind.values.toList()..sort(_compareStyleRanges);
+}
+
+BusyInline _inlineForSegment(String text, List<BusyInlineStyleRange> styles) {
+  var inline = BusyInline(kind: BusyInlineKind.text, text: text);
+  for (final style in styles.reversed) {
+    inline = BusyInline(
+      kind: style.kind,
+      text: inline.plainText,
+      destination: style.destination,
+      children:
+          style.kind == BusyInlineKind.code ||
+              style.kind == BusyInlineKind.image
+          ? const []
+          : [inline],
+    );
+  }
+  return inline;
+}
+
+int _compareStyleRanges(BusyInlineStyleRange a, BusyInlineStyleRange b) {
+  return _stylePriority(a.kind).compareTo(_stylePriority(b.kind));
+}
+
+int _stylePriority(BusyInlineKind kind) {
+  return switch (kind) {
+    BusyInlineKind.link => 0,
+    BusyInlineKind.strong => 1,
+    BusyInlineKind.emphasis => 2,
+    BusyInlineKind.strikethrough => 3,
+    BusyInlineKind.code => 4,
+    BusyInlineKind.image => 5,
+    _ => 6,
+  };
 }

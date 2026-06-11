@@ -219,6 +219,32 @@ void main() {}
     expect(linkController.markdown, 'Alpha [Beta](target.md)\n');
   });
 
+  test('WYSIWYG inline commands preserve existing sibling formatting', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Attached source archive\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = parsed.busyDocument.blocks.first.id;
+
+    controller.applyInlineCommand(
+      blockId,
+      BusyWysiwygInlineCommand.bold,
+      'Attached source '.length,
+      'Attached source archive'.length,
+    );
+    controller.applyInlineCommand(
+      blockId,
+      BusyWysiwygInlineCommand.italic,
+      'Attached '.length,
+      'Attached source'.length,
+    );
+
+    expect(controller.markdown, 'Attached *source* **archive**\n');
+  });
+
   test('WYSIWYG block commands serialize headings and lists', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Title\n');
     final controller = BusyMarkWysiwygDocumentController(
