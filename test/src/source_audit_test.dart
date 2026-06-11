@@ -173,6 +173,21 @@ void main() {
     expect(workspace, contains('_sourceNavigationTargetProvider'));
   });
 
+  test('preview links are actionable instead of styled-only text', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+
+    expect(pubspec, contains('url_launcher:'));
+    expect(workspace, contains('TapGestureRecognizer'));
+    expect(workspace, contains('LaunchMode.externalApplication'));
+    expect(workspace, contains('_openPreviewLink(context, ref, destination)'));
+    expect(workspace, contains('openActiveFile(file.absolutePath)'));
+    expect(workspace, contains('_navigatePreviewAnchor'));
+    expect(workspace, contains('SystemMouseCursors.click'));
+  });
+
   test('workspace sidebar tabs match the opened workspace kind', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',

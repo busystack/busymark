@@ -1,16 +1,20 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../core/diagnostic.dart';
+import '../../core/path_utils.dart' show slugForHeading;
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
 import '../../markdown/markdown_model.dart';
@@ -2755,14 +2759,14 @@ class _PreviewBlockView extends StatelessWidget {
   }
 }
 
-class _PreviewInlineText extends StatelessWidget {
+class _PreviewInlineText extends ConsumerWidget {
   const _PreviewInlineText({required this.block, this.style});
 
   final PreviewBlock block;
   final TextStyle? style;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final baseStyle = style ?? Theme.of(context).textTheme.bodyMedium;
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
@@ -2771,7 +2775,13 @@ class _PreviewInlineText extends StatelessWidget {
       TextSpan(
         style: baseStyle,
         children: [
-          for (final inline in inlines) _previewInlineSpan(context, inline),
+          for (final inline in inlines)
+            _previewInlineSpan(
+              context,
+              inline,
+              onLinkTap: (destination) =>
+                  _openPreviewLink(context, ref, destination),
+            ),
         ],
       ),
     );
@@ -2812,14 +2822,18 @@ class _ListMarker extends StatelessWidget {
   }
 }
 
-InlineSpan _previewInlineSpan(BuildContext context, PreviewInline inline) {
+InlineSpan _previewInlineSpan(
+  BuildContext context,
+  PreviewInline inline, {
+  required Future<void> Function(String destination) onLinkTap,
+}) {
   final colors = BusyMarkSurfaceColors.of(context);
   final theme = Theme.of(context);
   final children = inline.children.isEmpty
       ? null
       : [
           for (final child in inline.children)
-            _previewInlineSpan(context, child),
+            _previewInlineSpan(context, child, onLinkTap: onLinkTap),
         ];
   final text = inline.children.isEmpty ? inline.text : null;
   return switch (inline.kind) {
@@ -2854,6 +2868,14 @@ InlineSpan _previewInlineSpan(BuildContext context, PreviewInline inline) {
         color: theme.colorScheme.primary,
         decoration: TextDecoration.underline,
       ),
+      mouseCursor: SystemMouseCursors.click,
+      recognizer: TapGestureRecognizer()
+        ..onTap = () {
+          final destination = inline.destination ?? inline.text;
+          if (destination.trim().isNotEmpty) {
+            unawaited(onLinkTap(destination));
+          }
+        },
     ),
     PreviewInlineKind.image => TextSpan(
       text: inline.text,
@@ -2863,6 +2885,135 @@ InlineSpan _previewInlineSpan(BuildContext context, PreviewInline inline) {
       ),
     ),
   };
+}
+
+Future<void> _openPreviewLink(
+  BuildContext context,
+  WidgetRef ref,
+  String destination,
+) async {
+  final target = destination.trim();
+  if (target.isEmpty) {
+    return;
+  }
+  final uri = Uri.tryParse(target);
+  if (_isExternalPreviewUri(uri)) {
+    final launched = await launchUrl(
+      uri!,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && context.mounted) {
+      _showPreviewLinkMessage(context, 'Could not open $target');
+    }
+    return;
+  }
+
+  final state = ref.read(workspaceControllerProvider);
+  final workspace = state.workspace;
+  final activeFilePath = workspace?.activeFilePath;
+  if (workspace == null || activeFilePath == null) {
+    return;
+  }
+
+  final parts = target.split('#');
+  final targetPath = _decodePreviewLinkPart(parts.first);
+  final anchor = parts.length > 1
+      ? _decodePreviewLinkPart(parts.sublist(1).join('#'))
+      : null;
+  if (targetPath.isEmpty) {
+    _navigatePreviewAnchor(context, ref, activeFilePath, anchor);
+    return;
+  }
+
+  final resolvedPath = p.normalize(
+    p.join(p.dirname(activeFilePath), targetPath),
+  );
+  final file = workspace.files
+      .where((file) => p.normalize(file.absolutePath) == resolvedPath)
+      .firstOrNull;
+  if (file == null) {
+    if (context.mounted) {
+      _showPreviewLinkMessage(context, 'Link target not found: $targetPath');
+    }
+    return;
+  }
+  if (!_isOpenableTextDocument(file)) {
+    if (context.mounted) {
+      _showPreviewLinkMessage(context, 'Cannot open this file type in editor');
+    }
+    return;
+  }
+  if (workspace.activeFilePath != file.absolutePath) {
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      return;
+    }
+    await ref
+        .read(workspaceControllerProvider.notifier)
+        .openActiveFile(file.absolutePath);
+  }
+  if (!context.mounted) {
+    return;
+  }
+  _navigatePreviewAnchor(context, ref, file.absolutePath, anchor);
+}
+
+bool _isExternalPreviewUri(Uri? uri) {
+  if (uri == null) {
+    return false;
+  }
+  return uri.scheme == 'http' ||
+      uri.scheme == 'https' ||
+      uri.scheme == 'mailto';
+}
+
+String _decodePreviewLinkPart(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
+}
+
+void _navigatePreviewAnchor(
+  BuildContext context,
+  WidgetRef ref,
+  String filePath,
+  String? anchor,
+) {
+  if (anchor == null || anchor.isEmpty) {
+    return;
+  }
+  final markdown = ref.read(workspaceControllerProvider).workspace?.markdown;
+  if (markdown == null || markdown.filePath != filePath) {
+    return;
+  }
+  final normalizedAnchor = anchor.startsWith('#')
+      ? anchor.substring(1)
+      : anchor;
+  final slug = slugForHeading(normalizedAnchor);
+  final heading = markdown.headings
+      .where(
+        (heading) =>
+            heading.id == normalizedAnchor ||
+            heading.id == slug ||
+            slugForHeading(heading.text) == slug,
+      )
+      .firstOrNull;
+  if (heading == null) {
+    _showPreviewLinkMessage(context, 'Anchor not found: $anchor');
+    return;
+  }
+  ref
+      .read(_outlineNavigationTargetProvider.notifier)
+      .state = _OutlineNavigationTarget(
+    filePath: filePath,
+    headingId: heading.id,
+    line: heading.span.startLine,
+  );
+}
+
+void _showPreviewLinkMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _PreviewCallout extends StatelessWidget {
