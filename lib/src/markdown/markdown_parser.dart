@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
+import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import 'markdown_model.dart';
@@ -462,7 +463,11 @@ class MarkdownParser {
       if (_isExternal(destination)) {
         continue;
       }
-      if (!_localImageExists(filePath, destination, workspaceRoot)) {
+      if (!localImageExists(
+        activeFilePath: filePath,
+        destination: destination,
+        workspaceRoot: workspaceRoot,
+      )) {
         diagnostics.add(
           Diagnostic(
             code: 'markdown.image.missing-file',
@@ -475,43 +480,6 @@ class MarkdownParser {
       }
     }
     return diagnostics;
-  }
-
-  bool _localImageExists(
-    String filePath,
-    String destination,
-    String? workspaceRoot,
-  ) {
-    final candidates = <String>[
-      p.normalize(p.join(p.dirname(filePath), destination)),
-    ];
-    if (workspaceRoot != null) {
-      candidates
-        ..add(p.normalize(p.join(workspaceRoot, destination)))
-        ..add(p.normalize(p.join(workspaceRoot, 'images', destination)));
-      final projectRoot = p.dirname(workspaceRoot);
-      final activeStem = p.basenameWithoutExtension(filePath);
-      final sluggedStem = slugForHeading(activeStem);
-      candidates
-        ..add(p.normalize(p.join(projectRoot, 'images', destination)))
-        ..add(
-          p.normalize(p.join(projectRoot, 'images', activeStem, destination)),
-        )
-        ..add(
-          p.normalize(
-            p.join(
-              projectRoot,
-              'images',
-              activeStem.toLowerCase(),
-              destination,
-            ),
-          ),
-        )
-        ..add(
-          p.normalize(p.join(projectRoot, 'images', sluggedStem, destination)),
-        );
-    }
-    return candidates.any((candidate) => File(candidate).existsSync());
   }
 
   bool _isExternal(String destination) {

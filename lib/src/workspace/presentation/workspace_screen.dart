@@ -16,6 +16,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../core/diagnostic.dart';
+import '../../core/local_image_resolver.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
@@ -259,6 +260,12 @@ class WorkspaceScreen extends ConsumerWidget {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.exportPreview:
         _showExportDialog(context, ref);
+      case HeaderBarAction.viewModeEditor:
+        unawaited(
+          settingsController.setDocumentViewMode(
+            DocumentViewModePreference.editor,
+          ),
+        );
       case HeaderBarAction.viewModeSource:
         unawaited(
           settingsController.setDocumentViewMode(
@@ -298,6 +305,7 @@ class WorkspaceScreen extends ConsumerWidget {
 
   AppViewMode _headerBarViewMode(DocumentViewModePreference mode) {
     return switch (mode) {
+      DocumentViewModePreference.editor => AppViewMode.editor,
       DocumentViewModePreference.source => AppViewMode.source,
       DocumentViewModePreference.preview => AppViewMode.preview,
       DocumentViewModePreference.split => AppViewMode.split,
@@ -1629,17 +1637,40 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       });
     });
     final colors = BusyMarkSurfaceColors.of(context);
-    final sourceVisible = widget.viewMode != DocumentViewModePreference.preview;
-    final previewVisible = widget.viewMode != DocumentViewModePreference.source;
+    final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
+    final sourceVisible =
+        widget.viewMode != DocumentViewModePreference.preview && !editorVisible;
+    final previewVisible =
+        widget.viewMode != DocumentViewModePreference.source && !editorVisible;
     final foldRegions = _syncSourceFoldRegions();
     final sourceStrutStyle = _sourceStrutStyle(
       folded: _foldedRegionKeys.isNotEmpty,
     );
+    final visualEditorStrutStyle = StrutStyle.fromTextStyle(
+      _visualEditorTextStyle,
+      forceStrutHeight: true,
+    );
     final sourceLineHeight = _sourceLineHeight(context, sourceStrutStyle);
+    _controller
+      ..renderText = editorVisible
+      ..visualMarkdown = editorVisible;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
         children: [
+          if (editorVisible)
+            Expanded(
+              child: _VisualMarkdownEditorPane(
+                controller: _controller,
+                focusNode: _sourceFocusNode,
+                scrollController: _sourceScrollController,
+                textStyle: _visualEditorTextStyle,
+                strutStyle: visualEditorStrutStyle,
+                wordWrap: widget.wordWrap,
+                dirty: widget.state.isDirty,
+                onChanged: _handleSourceChanged,
+              ),
+            ),
           if (sourceVisible)
             Expanded(
               child: DecoratedBox(
@@ -1855,6 +1886,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     leadingDistribution: TextLeadingDistribution.even,
   );
 
+  TextStyle get _visualEditorTextStyle => TextStyle(
+    fontFamily: 'Ubuntu',
+    fontSize: widget.editorFontSize + 1,
+    height: 1.55,
+    leadingDistribution: TextLeadingDistribution.even,
+  );
+
   StrutStyle? _sourceStrutStyle({required bool folded}) {
     if (folded) {
       return null;
@@ -1961,6 +1999,81 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
     }
     return text.length;
+  }
+}
+
+class _VisualMarkdownEditorPane extends StatelessWidget {
+  const _VisualMarkdownEditorPane({
+    required this.controller,
+    required this.focusNode,
+    required this.scrollController,
+    required this.textStyle,
+    required this.strutStyle,
+    required this.wordWrap,
+    required this.dirty,
+    required this.onChanged,
+  });
+
+  final BusyMarkSourceEditingController controller;
+  final FocusNode focusNode;
+  final ScrollController scrollController;
+  final TextStyle textStyle;
+  final StrutStyle? strutStyle;
+  final bool wordWrap;
+  final bool dirty;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(color: colors.view),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _PaneHeader(
+            icon: Icons.edit_document,
+            title: 'Editor',
+            trailing: _StatusPill(
+              label: dirty ? 'Unsaved' : 'Saved',
+              active: dirty,
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              scrollController: scrollController,
+              keyboardType: wordWrap
+                  ? TextInputType.multiline
+                  : TextInputType.text,
+              maxLines: null,
+              expands: true,
+              textAlignVertical: TextAlignVertical.top,
+              style: textStyle,
+              strutStyle: strutStyle,
+              selectionHeightStyle: BoxHeightStyle.max,
+              selectionWidthStyle: BoxWidthStyle.tight,
+              cursorColor: colors.foreground.withValues(alpha: 0.82),
+              cursorHeight: (textStyle.fontSize ?? 15) * 1.22,
+              cursorWidth: 1.4,
+              decoration: const InputDecoration(
+                isCollapsed: true,
+                filled: false,
+                fillColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                focusColor: Colors.transparent,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.fromLTRB(28, 24, 28, 36),
+              ),
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2913,32 +3026,14 @@ String? _resolvePreviewImagePath(Workspace? workspace, PreviewBlock block) {
   if (_isExternalPreviewUri(uri)) {
     return null;
   }
-  final decoded = _decodePreviewLinkPart(source);
-  final candidates = <String>[];
-  if (p.isAbsolute(decoded)) {
-    candidates.add(decoded);
-  }
-  candidates.add(p.normalize(p.join(p.dirname(activeFilePath), decoded)));
-  candidates.add(p.normalize(p.join(workspace.rootPath, decoded)));
   final module = workspace.writersideModule;
-  if (module != null) {
-    final imagesRoot = p.normalize(
-      p.join(module.rootPath, module.config.imagesDir),
-    );
-    candidates.add(p.normalize(p.join(imagesRoot, decoded)));
-    final activeStem = p.basenameWithoutExtension(activeFilePath);
-    final normalizedStem = activeStem.toLowerCase();
-    final sluggedStem = slugForHeading(activeStem);
-    candidates.add(p.normalize(p.join(imagesRoot, activeStem, decoded)));
-    candidates.add(p.normalize(p.join(imagesRoot, normalizedStem, decoded)));
-    candidates.add(p.normalize(p.join(imagesRoot, sluggedStem, decoded)));
-  }
-  for (final candidate in candidates) {
-    if (File(candidate).existsSync()) {
-      return candidate;
-    }
-  }
-  return null;
+  return resolveLocalImagePath(
+    activeFilePath: activeFilePath,
+    destination: source,
+    workspaceRoot: workspace.rootPath,
+    writersideRoot: module?.rootPath,
+    imagesDir: module?.config.imagesDir ?? 'images',
+  );
 }
 
 double? _previewImageWidth(PreviewBlock block) {

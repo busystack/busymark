@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
+import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import 'writerside_model.dart';
@@ -369,7 +370,12 @@ class WritersideModuleService {
         if (_isExternal(image.destination)) {
           continue;
         }
-        if (!_writersideImageExists(module, topic, image.destination)) {
+        if (!localImageExists(
+          activeFilePath: topic.filePath,
+          destination: image.destination,
+          writersideRoot: module.rootPath,
+          imagesDir: module.config.imagesDir,
+        )) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.image.missing-file',
@@ -458,24 +464,6 @@ class WritersideModuleService {
     return destination.startsWith('http://') ||
         destination.startsWith('https://') ||
         destination.startsWith('mailto:');
-  }
-
-  bool _writersideImageExists(
-    WritersideModule module,
-    WritersideTopic topic,
-    String destination,
-  ) {
-    final imagesRoot = p.join(module.rootPath, module.config.imagesDir);
-    final activeStem = p.basenameWithoutExtension(topic.fileName);
-    final sluggedStem = slugForHeading(activeStem);
-    final candidates = [
-      p.join(imagesRoot, destination),
-      p.join(imagesRoot, activeStem, destination),
-      p.join(imagesRoot, activeStem.toLowerCase(), destination),
-      p.join(imagesRoot, sluggedStem, destination),
-      p.join(p.dirname(topic.filePath), destination),
-    ];
-    return candidates.any((candidate) => File(candidate).existsSync());
   }
 
   SourceSpan _stringSpan(String filePath, String source, String value) {

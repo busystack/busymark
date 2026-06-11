@@ -17,15 +17,17 @@ enum HeaderBarAction {
   settings,
   aboutBusyMark,
   exportPreview,
+  viewModeEditor,
   viewModeSource,
   viewModePreview,
   viewModeSplit,
 }
 
-enum AppViewMode { source, preview, split }
+enum AppViewMode { editor, source, preview, split }
 
 class HeaderBarLabels {
   const HeaderBarLabels({
+    required this.editor,
     required this.source,
     required this.preview,
     required this.split,
@@ -41,6 +43,7 @@ class HeaderBarLabels {
     required this.exportPreview,
   });
 
+  final String editor;
   final String source;
   final String preview;
   final String split;
@@ -56,6 +59,7 @@ class HeaderBarLabels {
   final String exportPreview;
 
   Map<String, String> toMap() => {
+    'editor': editor,
     'source': source,
     'preview': preview,
     'split': split,
@@ -267,6 +271,7 @@ class LinuxHeaderBarService {
       'settings' => HeaderBarAction.settings,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
       'exportPreview' => HeaderBarAction.exportPreview,
+      'viewModeEditor' => HeaderBarAction.viewModeEditor,
       'viewModeSource' => HeaderBarAction.viewModeSource,
       'viewModePreview' => HeaderBarAction.viewModePreview,
       'viewModeSplit' => HeaderBarAction.viewModeSplit,

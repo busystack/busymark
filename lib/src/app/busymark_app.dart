@@ -68,6 +68,7 @@ class BusyMarkApp extends ConsumerWidget {
     final material = MaterialLocalizations.of(context);
     final theme = HeaderBarTheme.fromContext(context);
     final labels = HeaderBarLabels(
+      editor: 'Editor',
       source: 'Source',
       preview: 'Preview',
       split: 'Split',

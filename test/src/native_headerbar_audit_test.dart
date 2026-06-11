@@ -235,13 +235,19 @@ void main() {
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(service, contains('enum AppViewMode { source, preview, split }'));
+    expect(
+      service,
+      contains('enum AppViewMode { editor, source, preview, split }'),
+    );
+    expect(service, contains('viewModeEditor'));
     expect(service, contains('viewModeSource'));
     expect(service, contains('viewModePreview'));
     expect(service, contains('viewModeSplit'));
+    expect(app, contains("editor: 'Editor'"));
     expect(app, contains("source: 'Source'"));
     expect(app, contains("preview: 'Preview'"));
     expect(app, contains("split: 'Split'"));
+    expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSplit:'));
@@ -251,6 +257,7 @@ void main() {
       workspace,
       contains('_headerBarViewMode(settings.documentViewMode)'),
     );
+    expect(native, contains('create_view_mode_item(self, "editor")'));
     expect(native, contains('create_view_mode_item(self, "source")'));
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));

@@ -50,6 +50,7 @@ struct _MyApplication {
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_label;
   GtkWidget* view_mode_menu;
+  GtkWidget* view_mode_editor_item;
   GtkWidget* view_mode_source_item;
   GtkWidget* view_mode_preview_item;
   GtkWidget* view_mode_split_item;
@@ -639,6 +640,9 @@ static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
 }
 
 static const gchar* view_mode_action(const gchar* mode) {
+  if (g_strcmp0(mode, "editor") == 0) {
+    return "viewModeEditor";
+  }
   if (g_strcmp0(mode, "source") == 0) {
     return "viewModeSource";
   }
@@ -652,6 +656,9 @@ static const gchar* view_mode_action(const gchar* mode) {
 }
 
 static GtkWidget* view_mode_item(MyApplication* self, const gchar* mode) {
+  if (g_strcmp0(mode, "editor") == 0) {
+    return self->view_mode_editor_item;
+  }
   if (g_strcmp0(mode, "source") == 0) {
     return self->view_mode_source_item;
   }
@@ -714,6 +721,8 @@ static void set_view_mode(MyApplication* self, const gchar* mode) {
   }
   g_free(self->view_mode);
   self->view_mode = g_strdup(mode);
+  set_menu_item_checked(self->view_mode_editor_item,
+                        g_strcmp0(mode, "editor") == 0);
   set_menu_item_checked(self->view_mode_source_item,
                         g_strcmp0(mode, "source") == 0);
   set_menu_item_checked(self->view_mode_preview_item,
@@ -789,6 +798,7 @@ static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
 }
 
 static void set_localized_labels(MyApplication* self, FlValue* args) {
+  const gchar* editor = fl_lookup_string_arg(args, "editor");
   const gchar* source = fl_lookup_string_arg(args, "source");
   const gchar* preview = fl_lookup_string_arg(args, "preview");
   const gchar* split = fl_lookup_string_arg(args, "split");
@@ -810,6 +820,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->refresh_button, refresh);
   set_widget_tooltip(self->save_button, save);
   set_widget_tooltip(self->view_mode_button, view_mode);
+  set_menu_item_label(self->view_mode_editor_item, editor);
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
   set_menu_item_label(self->view_mode_split_item, split);
@@ -949,9 +960,12 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->view_mode_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   self->view_mode_menu = create_header_popover();
   GtkWidget* view_menu_box = create_popover_box(self->view_mode_menu);
+  self->view_mode_editor_item = create_view_mode_item(self, "editor");
   self->view_mode_source_item = create_view_mode_item(self, "source");
   self->view_mode_preview_item = create_view_mode_item(self, "preview");
   self->view_mode_split_item = create_view_mode_item(self, "split");
+  gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_editor_item, FALSE,
+                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_source_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_preview_item, FALSE,
@@ -1323,6 +1337,7 @@ static void my_application_init(MyApplication* self) {
   self->view_mode_button = nullptr;
   self->view_mode_label = nullptr;
   self->view_mode_menu = nullptr;
+  self->view_mode_editor_item = nullptr;
   self->view_mode_source_item = nullptr;
   self->view_mode_preview_item = nullptr;
   self->view_mode_split_item = nullptr;

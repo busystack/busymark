@@ -169,6 +169,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.save:
       case HeaderBarAction.menu:
       case HeaderBarAction.exportPreview:
+      case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:

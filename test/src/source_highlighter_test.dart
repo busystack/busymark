@@ -258,10 +258,57 @@ void main() {
 
     expect(foldedHeight, lessThan(unfoldedHeight - 20));
   });
+
+  testWidgets(
+    'visual markdown editor hides syntax markers but preserves source',
+    (tester) async {
+      const source =
+          '# **Title**\n'
+          'Paragraph with [link](target.md) and `code`.\n';
+      late TextSpan root;
+      late List<TextSpan> spans;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.dark,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Builder(
+            builder: (context) {
+              final controller = BusyMarkSourceEditingController(
+                text: source,
+                language: SourceSyntaxLanguage.markdown,
+              )..visualMarkdown = true;
+              root = controller.buildTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                withComposing: false,
+              );
+              spans = _flattenTextSpans(root);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(root.toPlainText(), source);
+      expect(_spanStyle(spans, '# ')?.color, Colors.transparent);
+      expect(_spanStyle(spans, '**')?.color, Colors.transparent);
+      expect(_spanStyle(spans, 'Title')?.fontWeight, FontWeight.w700);
+      expect(_spanStyle(spans, '[')?.color, Colors.transparent);
+      expect(_spanStyle(spans, '](target.md)')?.color, Colors.transparent);
+      expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
+    },
+  );
 }
 
 Color? _spanColor(List<TextSpan> spans, String text) {
   return spans.firstWhere((span) => span.text == text).style?.color;
+}
+
+TextStyle? _spanStyle(List<TextSpan> spans, String text) {
+  return spans.firstWhere((span) => span.text == text).style;
 }
 
 List<TextSpan> _flattenTextSpans(InlineSpan span) {

@@ -349,25 +349,27 @@ void main() {
 
     expect(
       settings,
-      contains('enum DocumentViewModePreference { source, preview, split }'),
+      contains(
+        'enum DocumentViewModePreference { editor, source, preview, split }',
+      ),
     );
     expect(
       settings,
       contains('documentViewMode: DocumentViewModePreference.split'),
     );
     expect(settings, contains('Future<void> setDocumentViewMode'));
+    expect(workspace, contains('final editorVisible = widget.viewMode =='));
+    expect(workspace, contains('DocumentViewModePreference.editor'));
     expect(
       workspace,
-      contains(
-        'final sourceVisible = widget.viewMode != DocumentViewModePreference.preview',
-      ),
+      contains('widget.viewMode != DocumentViewModePreference.preview'),
     );
     expect(
       workspace,
-      contains(
-        'final previewVisible = widget.viewMode != DocumentViewModePreference.source',
-      ),
+      contains('widget.viewMode != DocumentViewModePreference.source'),
     );
+    expect(workspace, contains('class _VisualMarkdownEditorPane'));
+    expect(workspace, contains('visualMarkdown = editorVisible'));
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
     expect(settingsScreen, isNot(contains('Show preview pane')));

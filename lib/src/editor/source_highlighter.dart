@@ -15,6 +15,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
   SourceSyntaxLanguage _language;
   List<SourceFoldRegion> _foldedRegions = const [];
   bool renderText = true;
+  bool visualMarkdown = false;
 
   SourceSyntaxLanguage get language => _language;
 
@@ -76,6 +77,9 @@ class BusyMarkSourceEditingController extends TextEditingController {
       );
     }
     final palette = _SourceSyntaxPalette.fromContext(context);
+    if (visualMarkdown && _language == SourceSyntaxLanguage.markdown) {
+      return _visualMarkdownTextSpan(source, baseStyle, palette);
+    }
     return TextSpan(
       style: baseStyle,
       children: switch (_language) {
@@ -430,6 +434,346 @@ List<TextSpan> _spansFromRanges(
     );
   }
   return spans;
+}
+
+TextSpan _visualMarkdownTextSpan(
+  String source,
+  TextStyle baseStyle,
+  _SourceSyntaxPalette palette,
+) {
+  final spans = <TextSpan>[];
+  final lines = source.split('\n');
+  var inFence = false;
+
+  for (var index = 0; index < lines.length; index++) {
+    final line = lines[index];
+    final fence = RegExp(r'^\s*(```|~~~)').firstMatch(line);
+    if (fence != null) {
+      inFence = !inFence;
+      spans.add(
+        TextSpan(
+          text: line,
+          style: baseStyle.copyWith(
+            color: palette.keyword,
+            fontFamily: 'Ubuntu Mono',
+          ),
+        ),
+      );
+    } else if (inFence) {
+      spans.add(
+        TextSpan(
+          text: line,
+          style: baseStyle.copyWith(
+            color: palette.literal,
+            fontFamily: 'Ubuntu Mono',
+            backgroundColor: palette.punctuation.withValues(alpha: 0.10),
+          ),
+        ),
+      );
+    } else {
+      spans.addAll(_visualMarkdownLineSpans(line, baseStyle, palette));
+    }
+    if (index < lines.length - 1) {
+      spans.add(TextSpan(text: '\n', style: baseStyle));
+    }
+  }
+
+  return TextSpan(style: baseStyle, children: spans);
+}
+
+List<TextSpan> _visualMarkdownLineSpans(
+  String line,
+  TextStyle baseStyle,
+  _SourceSyntaxPalette palette,
+) {
+  final heading = RegExp(r'^(\s{0,3}#{1,6}\s+)(.*)$').firstMatch(line);
+  if (heading != null) {
+    final marker = heading.group(1)!;
+    final content = heading.group(2)!;
+    final level = marker.trim().length;
+    return [
+      TextSpan(text: marker, style: _hiddenMarkdownStyle(baseStyle)),
+      ..._visualInlineSpans(
+        content,
+        _visualHeadingStyle(baseStyle, level, palette),
+        palette,
+      ),
+    ];
+  }
+
+  final list = RegExp(
+    r'^(\s{0,8}(?:[-*+]|\d+[.)])\s+)(\[[ xX]\]\s+)?(.*)$',
+  ).firstMatch(line);
+  if (list != null) {
+    final marker = list.group(1)!;
+    final task = list.group(2);
+    final text = list.group(3)!;
+    return [
+      TextSpan(
+        text: marker,
+        style: baseStyle.copyWith(color: palette.punctuation),
+      ),
+      if (task != null)
+        TextSpan(
+          text: task,
+          style: baseStyle.copyWith(color: palette.keyword),
+        ),
+      ..._visualInlineSpans(text, baseStyle, palette),
+    ];
+  }
+
+  final quote = RegExp(r'^(\s{0,3}>\s?)(.*)$').firstMatch(line);
+  if (quote != null) {
+    return [
+      TextSpan(
+        text: quote.group(1)!,
+        style: baseStyle.copyWith(color: palette.punctuation),
+      ),
+      ..._visualInlineSpans(
+        quote.group(2)!,
+        baseStyle.copyWith(color: palette.comment),
+        palette,
+      ),
+    ];
+  }
+
+  return _visualInlineSpans(line, baseStyle, palette);
+}
+
+List<TextSpan> _visualInlineSpans(
+  String source,
+  TextStyle baseStyle,
+  _SourceSyntaxPalette palette,
+) {
+  final spans = <TextSpan>[];
+  var index = 0;
+
+  void addText(String text, [TextStyle? style]) {
+    if (text.isEmpty) {
+      return;
+    }
+    spans.add(TextSpan(text: text, style: style ?? baseStyle));
+  }
+
+  while (index < source.length) {
+    if (source.startsWith('\\', index) && index + 1 < source.length) {
+      addText(source[index], _hiddenMarkdownStyle(baseStyle));
+      addText(source[index + 1]);
+      index += 2;
+      continue;
+    }
+
+    final code = _delimitedInline(source, index, '`');
+    if (code != null) {
+      addText(code.opening, _hiddenMarkdownStyle(baseStyle));
+      addText(
+        code.inner,
+        baseStyle.copyWith(
+          fontFamily: 'Ubuntu Mono',
+          color: palette.literal,
+          backgroundColor: palette.punctuation.withValues(alpha: 0.10),
+        ),
+      );
+      addText(code.closing, _hiddenMarkdownStyle(baseStyle));
+      index = code.end;
+      continue;
+    }
+
+    final link = _visualLinkAt(source, index);
+    if (link != null) {
+      addText(link.opening, _hiddenMarkdownStyle(baseStyle));
+      addText(
+        link.label,
+        baseStyle.copyWith(
+          color: link.image ? palette.comment : palette.link,
+          decoration: link.image ? null : TextDecoration.underline,
+        ),
+      );
+      addText(link.closing, _hiddenMarkdownStyle(baseStyle));
+      index = link.end;
+      continue;
+    }
+
+    final strong =
+        _delimitedInline(source, index, '**') ??
+        _delimitedInline(source, index, '__');
+    if (strong != null) {
+      addText(strong.opening, _hiddenMarkdownStyle(baseStyle));
+      spans.addAll(
+        _visualInlineSpans(
+          strong.inner,
+          baseStyle.copyWith(fontWeight: FontWeight.w700),
+          palette,
+        ),
+      );
+      addText(strong.closing, _hiddenMarkdownStyle(baseStyle));
+      index = strong.end;
+      continue;
+    }
+
+    final strike = _delimitedInline(source, index, '~~');
+    if (strike != null) {
+      addText(strike.opening, _hiddenMarkdownStyle(baseStyle));
+      spans.addAll(
+        _visualInlineSpans(
+          strike.inner,
+          baseStyle.copyWith(decoration: TextDecoration.lineThrough),
+          palette,
+        ),
+      );
+      addText(strike.closing, _hiddenMarkdownStyle(baseStyle));
+      index = strike.end;
+      continue;
+    }
+
+    final emphasis =
+        _delimitedInline(source, index, '*') ??
+        _delimitedInline(source, index, '_');
+    if (emphasis != null) {
+      addText(emphasis.opening, _hiddenMarkdownStyle(baseStyle));
+      spans.addAll(
+        _visualInlineSpans(
+          emphasis.inner,
+          baseStyle.copyWith(fontStyle: FontStyle.italic),
+          palette,
+        ),
+      );
+      addText(emphasis.closing, _hiddenMarkdownStyle(baseStyle));
+      index = emphasis.end;
+      continue;
+    }
+
+    final next = _nextVisualMarkerIndex(source, index + 1);
+    addText(source.substring(index, next));
+    index = next;
+  }
+
+  return spans;
+}
+
+int _nextVisualMarkerIndex(String source, int start) {
+  var next = source.length;
+  for (final marker in const [
+    '\\',
+    '`',
+    '![',
+    '[',
+    '**',
+    '__',
+    '~~',
+    '*',
+    '_',
+  ]) {
+    final found = source.indexOf(marker, start);
+    if (found >= 0 && found < next) {
+      next = found;
+    }
+  }
+  return next;
+}
+
+TextStyle _visualHeadingStyle(
+  TextStyle baseStyle,
+  int level,
+  _SourceSyntaxPalette palette,
+) {
+  final scale = switch (level) {
+    1 => 1.55,
+    2 => 1.36,
+    3 => 1.18,
+    _ => 1.05,
+  };
+  return baseStyle.copyWith(
+    color: palette.heading,
+    fontSize: (baseStyle.fontSize ?? 14) * scale,
+    fontWeight: FontWeight.w700,
+  );
+}
+
+TextStyle _hiddenMarkdownStyle(TextStyle baseStyle) {
+  return baseStyle.copyWith(
+    color: Colors.transparent,
+    fontSize: 0.01,
+    height: 0.01,
+    letterSpacing: 0,
+    wordSpacing: 0,
+  );
+}
+
+_VisualDelimitedInline? _delimitedInline(
+  String source,
+  int start,
+  String marker,
+) {
+  if (!source.startsWith(marker, start)) {
+    return null;
+  }
+  final contentStart = start + marker.length;
+  final end = source.indexOf(marker, contentStart);
+  if (end <= contentStart) {
+    return null;
+  }
+  return _VisualDelimitedInline(
+    opening: marker,
+    inner: source.substring(contentStart, end),
+    closing: marker,
+    end: end + marker.length,
+  );
+}
+
+_VisualLink? _visualLinkAt(String source, int start) {
+  final image = source.startsWith('![', start);
+  if (!image && !source.startsWith('[', start)) {
+    return null;
+  }
+  final labelStart = start + (image ? 2 : 1);
+  final labelEnd = source.indexOf(']', labelStart);
+  if (labelEnd < 0 ||
+      labelEnd + 1 >= source.length ||
+      source[labelEnd + 1] != '(') {
+    return null;
+  }
+  final destinationEnd = source.indexOf(')', labelEnd + 2);
+  if (destinationEnd < 0) {
+    return null;
+  }
+  return _VisualLink(
+    image: image,
+    opening: source.substring(start, labelStart),
+    label: source.substring(labelStart, labelEnd),
+    closing: source.substring(labelEnd, destinationEnd + 1),
+    end: destinationEnd + 1,
+  );
+}
+
+class _VisualDelimitedInline {
+  const _VisualDelimitedInline({
+    required this.opening,
+    required this.inner,
+    required this.closing,
+    required this.end,
+  });
+
+  final String opening;
+  final String inner;
+  final String closing;
+  final int end;
+}
+
+class _VisualLink {
+  const _VisualLink({
+    required this.image,
+    required this.opening,
+    required this.label,
+    required this.closing,
+    required this.end,
+  });
+
+  final bool image;
+  final String opening;
+  final String label;
+  final String closing;
+  final int end;
 }
 
 List<SourceFoldRegion> _normalizedFoldRegions(
