@@ -3,6 +3,7 @@
 #include <cairo.h>
 #include <flutter_linux/flutter_linux.h>
 #include <pango/pango.h>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #ifdef GDK_WINDOWING_X11
@@ -274,7 +275,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: transparent;"
       "background-image: none;"
       "border: none;"
-      "box-shadow: none;"
+      "outline: none;"
+      "border-radius: %dpx;"
+      "box-shadow: 0 3px 18px 2px %s;"
       "}"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop,"
@@ -432,8 +435,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "min-height: 0;"
       "border-radius: %dpx;"
       "}",
-      background, kHeaderWindowRadius, kHeaderWindowRadius,
-      headerbar_left_radius, sidebar_background, sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
+      kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
+      kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
+      sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
       foreground, control, kHeaderButtonHeight, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
       control_hover, control_active, accent_foreground, accent,
@@ -1084,6 +1088,84 @@ static gboolean clear_transparent_window_cb(GtkWidget* widget,
   return FALSE;
 }
 
+static cairo_region_t* create_rounded_window_region(gint width,
+                                                    gint height,
+                                                    gint radius) {
+  cairo_region_t* region = cairo_region_create();
+  if (width <= 0 || height <= 0) {
+    return region;
+  }
+
+  if (radius <= 0 || width < radius * 2 || height < radius * 2) {
+    const cairo_rectangle_int_t rect = {0, 0, width, height};
+    cairo_region_union_rectangle(region, &rect);
+    return region;
+  }
+
+  const gdouble radius_squared = radius * radius;
+  for (gint y = 0; y < height; y++) {
+    gint inset = 0;
+    if (y < radius) {
+      const gdouble dy = radius - y - 1;
+      inset = radius - static_cast<gint>(std::sqrt(radius_squared - dy * dy));
+    } else if (y >= height - radius) {
+      const gdouble dy = y - (height - radius);
+      inset = radius - static_cast<gint>(std::sqrt(radius_squared - dy * dy));
+    }
+
+    const gint row_width = width - inset * 2;
+    if (row_width <= 0) {
+      continue;
+    }
+
+    const cairo_rectangle_int_t row = {inset, y, row_width, 1};
+    cairo_region_union_rectangle(region, &row);
+  }
+
+  return region;
+}
+
+static void configure_rounded_window_shape(GtkWidget* widget) {
+  if (widget == nullptr || !GTK_IS_WIDGET(widget) ||
+      !gtk_widget_get_realized(widget)) {
+    return;
+  }
+
+  GdkWindow* window = gtk_widget_get_window(widget);
+  if (window == nullptr || !GDK_IS_WINDOW(window)) {
+    return;
+  }
+
+  const GdkWindowState state = gdk_window_get_state(window);
+  if ((state & GDK_WINDOW_STATE_MAXIMIZED) != 0 ||
+      (state & GDK_WINDOW_STATE_FULLSCREEN) != 0) {
+    gdk_window_shape_combine_region(window, nullptr, 0, 0);
+    return;
+  }
+
+  const gint width = gtk_widget_get_allocated_width(widget);
+  const gint height = gtk_widget_get_allocated_height(widget);
+  if (width <= 0 || height <= 0) {
+    return;
+  }
+
+  cairo_region_t* region =
+      create_rounded_window_region(width, height, kHeaderWindowRadius);
+  gdk_window_shape_combine_region(window, region, 0, 0);
+  cairo_region_destroy(region);
+}
+
+static void rounded_window_realize_cb(GtkWidget* widget, gpointer user_data) {
+  configure_rounded_window_shape(widget);
+}
+
+static gboolean rounded_window_configure_event_cb(GtkWidget* widget,
+                                                  GdkEventConfigure* event,
+                                                  gpointer user_data) {
+  configure_rounded_window_shape(widget);
+  return FALSE;
+}
+
 static void configure_transparent_window_backing(GtkWindow* window) {
   GdkScreen* screen = gtk_window_get_screen(window);
   GdkVisual* visual = gdk_screen_get_rgba_visual(screen);
@@ -1093,6 +1175,10 @@ static void configure_transparent_window_backing(GtkWindow* window) {
   gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
   g_signal_connect(window, "draw", G_CALLBACK(clear_transparent_window_cb),
                    nullptr);
+  g_signal_connect_after(window, "realize",
+                         G_CALLBACK(rounded_window_realize_cb), nullptr);
+  g_signal_connect(window, "configure-event",
+                   G_CALLBACK(rounded_window_configure_event_cb), nullptr);
 }
 
 // Called when first Flutter frame received.

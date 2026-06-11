@@ -112,6 +112,23 @@ void main() {
     expect(native, isNot(contains('"border-top-left-radius: 0;"')));
   });
 
+  test('native GTK decoration owns window shadow and rounded shape', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(native, contains('window#busymark-window decoration,'));
+    expect(native, contains('window#busymark-window decoration:backdrop {'));
+    expect(native, contains('"background-color: transparent;"'));
+    expect(native, contains('"border: none;"'));
+    expect(native, contains('"outline: none;"'));
+    expect(native, contains('"box-shadow: 0 3px 18px 2px %s;"'));
+    expect(native, contains('const gchar* shade = css_color_or'));
+    expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
+    expect(native, contains('create_rounded_window_region'));
+    expect(native, contains('gdk_window_shape_combine_region'));
+    expect(native, contains('rounded_window_configure_event_cb'));
+    expect(native, contains('configure_transparent_window_backing(window);'));
+  });
+
   test(
     'surface palette uses neutral grays instead of blue-tinted surfaces',
     () {
