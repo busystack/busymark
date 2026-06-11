@@ -147,6 +147,8 @@ void main() {
       ).readAsStringSync();
 
       expect(workspace, contains('_showProblemsDialog'));
+      expect(workspace, contains('_validateActiveAndShowProblems'));
+      expect(workspace, contains(').validateActive()'));
       expect(workspace, contains('class _ProblemsList'));
       expect(workspace, isNot(contains('_ProblemsPanel')));
       expect(workspace, isNot(contains('problemsVisible')));

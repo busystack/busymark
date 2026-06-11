@@ -319,7 +319,7 @@ class _BusyMarkAboutDialog extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
+              child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Close'),
               ),

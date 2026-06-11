@@ -53,7 +53,6 @@ class WorkspaceScreen extends ConsumerWidget {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
-    final workspaceController = ref.read(workspaceControllerProvider.notifier);
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((action) {
         _handleHeaderBarAction(context, ref, action);
@@ -100,7 +99,8 @@ class WorkspaceScreen extends ConsumerWidget {
                 BusyMarkHeaderIconButton(
                   tooltip: 'Validate',
                   icon: Icons.fact_check_outlined,
-                  onPressed: workspaceController.validateActive,
+                  onPressed: () =>
+                      unawaited(_validateActiveAndShowProblems(context, ref)),
                 ),
                 const _HeaderSeparator(),
                 BusyMarkHeaderIconButton(
@@ -221,7 +221,6 @@ class WorkspaceScreen extends ConsumerWidget {
   ) {
     final settings = ref.read(appSettingsControllerProvider);
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
-    final workspaceController = ref.read(workspaceControllerProvider.notifier);
     switch (action) {
       case HeaderBarAction.back:
         unawaited(() async {
@@ -234,7 +233,7 @@ class WorkspaceScreen extends ConsumerWidget {
           settingsController.setSidebarVisible(!settings.sidebarVisible),
         );
       case HeaderBarAction.refresh:
-        unawaited(workspaceController.validateActive());
+        unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         unawaited(saveActiveWithOverwriteConfirmation(context, ref));
       case HeaderBarAction.settings:
@@ -303,7 +302,7 @@ class WorkspaceScreen extends ConsumerWidget {
           title: 'Export Preview',
           maxWidth: 860,
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Close'),
             ),
@@ -357,7 +356,7 @@ class WorkspaceScreen extends ConsumerWidget {
           title: 'Problems',
           maxWidth: 760,
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Close'),
             ),
@@ -379,6 +378,17 @@ class WorkspaceScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _validateActiveAndShowProblems(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    await ref.read(workspaceControllerProvider.notifier).validateActive();
+    if (!context.mounted) {
+      return;
+    }
+    _showProblemsDialog(context, ref);
   }
 }
 
