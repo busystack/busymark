@@ -369,8 +369,10 @@ List<TextSpan> _spansFromRanges(
     ..sort((a, b) => a.start.compareTo(b.start));
   final hiddenStyle = baseStyle.copyWith(
     color: Colors.transparent,
-    fontSize: 0.1,
+    fontSize: 0.01,
     height: 0.01,
+    letterSpacing: 0,
+    wordSpacing: 0,
   );
   final boundaries = <int>{0, source.length};
   for (final range in sortedRanges) {

@@ -1529,6 +1529,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final sourceVisible = widget.viewMode != DocumentViewModePreference.preview;
     final previewVisible = widget.viewMode != DocumentViewModePreference.source;
     final foldRegions = _syncSourceFoldRegions();
+    final sourceLineHeight = _sourceLineHeight(context);
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
@@ -1552,7 +1553,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       child: _SourceEditorFrame(
                         controller: _controller,
                         scrollController: _sourceScrollController,
-                        lineHeight: _sourceLineHeight,
+                        lineHeight: sourceLineHeight,
+                        textStyle: _sourceTextStyle,
                         collapsedRegionKeys: _foldedRegionKeys,
                         foldRegions: foldRegions,
                         onToggleFold: _toggleSourceFold,
@@ -1569,7 +1571,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                             expands: true,
                             textAlignVertical: TextAlignVertical.top,
                             style: _sourceTextStyle,
-                            strutStyle: _sourceStrutStyle,
                             decoration: InputDecoration(
                               isCollapsed: true,
                               filled: true,
@@ -1737,14 +1738,18 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     height: 1.45,
   );
 
-  double get _sourceLineHeight => widget.editorFontSize * 1.45;
-
-  StrutStyle get _sourceStrutStyle => StrutStyle(
-    fontFamily: 'Ubuntu Mono',
-    fontSize: widget.editorFontSize,
-    height: 1.45,
-    forceStrutHeight: true,
-  );
+  double _sourceLineHeight(BuildContext context) {
+    final painter = TextPainter(
+      text: TextSpan(text: ' ', style: _sourceTextStyle),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final metrics = painter.computeLineMetrics();
+    painter.dispose();
+    return metrics.isEmpty
+        ? widget.editorFontSize * 1.45
+        : metrics.first.height;
+  }
 
   void _animateSourceScrollToLine(int line) {
     if (!mounted || !_sourceScrollController.hasClients) {
@@ -1766,20 +1771,21 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   double _sourceScrollOffsetForLine(int line) {
     final textWidth = _sourceTextLayoutWidth();
-    final layouts = sourceLineLayoutEntries(
+    final lineHeight = _sourceLineHeight(context);
+    final layouts = _sourceLineLayoutEntries(
       context,
       source: _controller.text,
       foldRegions: sourceFoldRegions(_controller.text, _controller.language),
       collapsedRegionKeys: _foldedRegionKeys,
       textStyle: _sourceTextStyle,
-      lineHeight: _sourceLineHeight,
+      lineHeight: lineHeight,
       textWidth: textWidth,
     );
     final targetOffset = layouts
         .firstWhere(
           (entry) => entry.gutterEntry.lineNumber >= line,
           orElse: () => layouts.isEmpty
-              ? const SourceLineLayoutEntry.empty()
+              ? const _SourceLineLayoutEntry.empty()
               : layouts.last,
         )
         .top;
@@ -1835,6 +1841,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.controller,
     required this.scrollController,
     required this.lineHeight,
+    required this.textStyle,
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.onToggleFold,
@@ -1843,11 +1850,14 @@ class _SourceEditorFrame extends StatelessWidget {
 
   static const double editorPaddingTop = 16;
   static const double editorPaddingBottom = 16;
+  static const double editorPaddingLeft = 12;
+  static const double editorPaddingRight = 16;
   static const double _gutterWidth = 72;
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
   final double lineHeight;
+  final TextStyle textStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final ValueChanged<SourceFoldRegion> onToggleFold;
@@ -1856,26 +1866,55 @@ class _SourceEditorFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: _gutterWidth,
-            child: _SourceLineNumberGutter(
-              controller: controller,
-              scrollController: scrollController,
-              lineHeight: lineHeight,
-              foldRegions: foldRegions,
-              collapsedRegionKeys: collapsedRegionKeys,
-              onToggleFold: onToggleFold,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final editorWidth = math
+            .max(1, constraints.maxWidth - _gutterWidth - 1)
+            .toDouble();
+        final textWidth = math
+            .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
+            .toDouble();
+        return DecoratedBox(
+          decoration: BoxDecoration(color: colors.view),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: _gutterWidth,
+                child: _SourceLineNumberGutter(
+                  controller: controller,
+                  scrollController: scrollController,
+                  lineHeight: lineHeight,
+                  textStyle: textStyle,
+                  textWidth: textWidth,
+                  foldRegions: foldRegions,
+                  collapsedRegionKeys: collapsedRegionKeys,
+                  onToggleFold: onToggleFold,
+                ),
+              ),
+              VerticalDivider(width: 1, color: colors.subtleBorder),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: child),
+                    Positioned.fill(
+                      child: _CollapsedSourceLineOverlay(
+                        controller: controller,
+                        scrollController: scrollController,
+                        lineHeight: lineHeight,
+                        textWidth: textWidth,
+                        textStyle: textStyle,
+                        foldRegions: foldRegions,
+                        collapsedRegionKeys: collapsedRegionKeys,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          VerticalDivider(width: 1, color: colors.subtleBorder),
-          Expanded(child: child),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1885,6 +1924,8 @@ class _SourceLineNumberGutter extends StatelessWidget {
     required this.controller,
     required this.scrollController,
     required this.lineHeight,
+    required this.textStyle,
+    required this.textWidth,
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.onToggleFold,
@@ -1893,6 +1934,8 @@ class _SourceLineNumberGutter extends StatelessWidget {
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
   final double lineHeight;
+  final TextStyle textStyle;
+  final double textWidth;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final ValueChanged<SourceFoldRegion> onToggleFold;
@@ -1908,10 +1951,14 @@ class _SourceLineNumberGutter extends StatelessWidget {
             return AnimatedBuilder(
               animation: Listenable.merge([controller, scrollController]),
               builder: (context, _) {
-                final entries = _sourceGutterEntriesFromRegions(
-                  controller.text,
-                  foldRegions,
-                  collapsedRegionKeys,
+                final layouts = _sourceLineLayoutEntries(
+                  context,
+                  source: controller.text,
+                  foldRegions: foldRegions,
+                  collapsedRegionKeys: collapsedRegionKeys,
+                  textStyle: textStyle,
+                  lineHeight: lineHeight,
+                  textWidth: textWidth,
                 );
                 final activeLine = sourceLineNumberForOffset(
                   controller.text,
@@ -1921,15 +1968,12 @@ class _SourceLineNumberGutter extends StatelessWidget {
                     ? scrollController.offset
                     : 0.0;
                 final children = <Widget>[];
-                for (var index = 0; index < entries.length; index++) {
-                  final top =
-                      _SourceEditorFrame.editorPaddingTop +
-                      index * lineHeight -
-                      scrollOffset;
+                for (final layout in layouts) {
+                  final top = layout.top - scrollOffset;
                   if (top < -lineHeight || top > constraints.maxHeight) {
                     continue;
                   }
-                  final entry = entries[index];
+                  final entry = layout.gutterEntry;
                   children.add(
                     Positioned(
                       top: top,
@@ -1939,6 +1983,8 @@ class _SourceLineNumberGutter extends StatelessWidget {
                       child: _SourceGutterRow(
                         entry: entry,
                         active: entry.lineNumber == activeLine,
+                        lineHeight: lineHeight,
+                        textStyle: textStyle,
                         onToggleFold: onToggleFold,
                       ),
                     ),
@@ -1954,15 +2000,146 @@ class _SourceLineNumberGutter extends StatelessWidget {
   }
 }
 
+class _CollapsedSourceLineOverlay extends StatelessWidget {
+  const _CollapsedSourceLineOverlay({
+    required this.controller,
+    required this.scrollController,
+    required this.lineHeight,
+    required this.textWidth,
+    required this.textStyle,
+    required this.foldRegions,
+    required this.collapsedRegionKeys,
+  });
+
+  final BusyMarkSourceEditingController controller;
+  final ScrollController scrollController;
+  final double lineHeight;
+  final double textWidth;
+  final TextStyle textStyle;
+  final List<SourceFoldRegion> foldRegions;
+  final Set<String> collapsedRegionKeys;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ClipRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return AnimatedBuilder(
+              animation: Listenable.merge([controller, scrollController]),
+              builder: (context, _) {
+                final layouts = _sourceLineLayoutEntries(
+                  context,
+                  source: controller.text,
+                  foldRegions: foldRegions,
+                  collapsedRegionKeys: collapsedRegionKeys,
+                  textStyle: textStyle,
+                  lineHeight: lineHeight,
+                  textWidth: textWidth,
+                );
+                final linesByNumber = {
+                  for (final line in sourceLineInfos(controller.text))
+                    line.number: line,
+                };
+                final scrollOffset = scrollController.hasClients
+                    ? scrollController.offset
+                    : 0.0;
+                final children = <Widget>[];
+                for (final layout in layouts) {
+                  final entry = layout.gutterEntry;
+                  if (!entry.collapsed) {
+                    continue;
+                  }
+                  final top = layout.top - scrollOffset;
+                  if (top < -layout.height || top > constraints.maxHeight) {
+                    continue;
+                  }
+                  final line = linesByNumber[entry.lineNumber];
+                  if (line == null) {
+                    continue;
+                  }
+                  children.add(
+                    Positioned(
+                      top: top,
+                      left: 0,
+                      right: 0,
+                      height: layout.height,
+                      child: _CollapsedSourceLine(
+                        text: _collapsedLineText(line.text),
+                        height: lineHeight,
+                        textStyle: textStyle,
+                      ),
+                    ),
+                  );
+                }
+                return Stack(children: children);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsedSourceLine extends StatelessWidget {
+  const _CollapsedSourceLine({
+    required this.text,
+    required this.height,
+    required this.textStyle,
+  });
+
+  final String text;
+  final double height;
+  final TextStyle textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final background = Color.alphaBlend(
+      colors.foreground.withValues(alpha: 0.045),
+      colors.view,
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(color: background),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          height: height,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: _SourceEditorFrame.editorPaddingLeft,
+              right: _SourceEditorFrame.editorPaddingRight,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textStyle.copyWith(color: colors.mutedForeground),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SourceGutterRow extends StatelessWidget {
   const _SourceGutterRow({
     required this.entry,
     required this.active,
+    required this.lineHeight,
+    required this.textStyle,
     required this.onToggleFold,
   });
 
   final SourceGutterEntry entry;
   final bool active;
+  final double lineHeight;
+  final TextStyle textStyle;
   final ValueChanged<SourceFoldRegion> onToggleFold;
 
   @override
@@ -1970,29 +2147,32 @@ class _SourceGutterRow extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     final region = entry.region;
     final activeColor = colors.foreground.withValues(alpha: 0.045);
-    final numberStyle = TextStyle(
+    final numberStyle = textStyle.copyWith(
       color: active ? colors.foreground : colors.mutedForeground,
-      fontFamily: 'Ubuntu Mono',
-      fontSize: 12,
       fontFeatures: const [FontFeature.tabularFigures()],
-      height: 1,
     );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: active ? activeColor : Colors.transparent,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text('${entry.lineNumber}', style: numberStyle),
+            child: SizedBox(
+              height: lineHeight,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Text('${entry.lineNumber}', style: numberStyle),
+              ),
             ),
           ),
           const SizedBox(width: 5),
           SizedBox(
             width: 22,
-            child: Center(
+            height: lineHeight,
+            child: Align(
+              alignment: Alignment.topCenter,
               child: region == null
                   ? const SizedBox.shrink()
                   : _SourceFoldButton(
@@ -2060,7 +2240,7 @@ List<SourceGutterEntry> _sourceGutterEntriesFromRegions(
   final lines = sourceLineInfos(source);
   final regionByStartLine = <int, SourceFoldRegion>{};
   for (final region in foldRegions.reversed) {
-    regionByStartLine[region.startLine] = region;
+    regionByStartLine.putIfAbsent(region.startLine, () => region);
   }
 
   final entries = <SourceGutterEntry>[];
@@ -2081,6 +2261,91 @@ List<SourceGutterEntry> _sourceGutterEntriesFromRegions(
     }
   }
   return entries;
+}
+
+class _SourceLineLayoutEntry {
+  const _SourceLineLayoutEntry({
+    required this.gutterEntry,
+    required this.top,
+    required this.height,
+  });
+
+  const _SourceLineLayoutEntry.empty()
+    : gutterEntry = const SourceGutterEntry(
+        lineNumber: 1,
+        region: null,
+        collapsed: false,
+      ),
+      top = 0,
+      height = 0;
+
+  final SourceGutterEntry gutterEntry;
+  final double top;
+  final double height;
+}
+
+List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
+  BuildContext context, {
+  required String source,
+  required List<SourceFoldRegion> foldRegions,
+  required Set<String> collapsedRegionKeys,
+  required TextStyle textStyle,
+  required double lineHeight,
+  required double textWidth,
+}) {
+  final linesByNumber = {
+    for (final line in sourceLineInfos(source)) line.number: line,
+  };
+  final entries = _sourceGutterEntriesFromRegions(
+    source,
+    foldRegions,
+    collapsedRegionKeys,
+  );
+  final layouts = <_SourceLineLayoutEntry>[];
+  var top = _SourceEditorFrame.editorPaddingTop;
+  for (final entry in entries) {
+    final line = linesByNumber[entry.lineNumber];
+    final height = line == null
+        ? lineHeight
+        : _sourceVisualLineHeight(
+            context,
+            line: line,
+            textStyle: textStyle,
+            lineHeight: lineHeight,
+            textWidth: textWidth,
+          );
+    layouts.add(
+      _SourceLineLayoutEntry(gutterEntry: entry, top: top, height: height),
+    );
+    top += height;
+  }
+  return layouts;
+}
+
+double _sourceVisualLineHeight(
+  BuildContext context, {
+  required SourceLineInfo line,
+  required TextStyle textStyle,
+  required double lineHeight,
+  required double textWidth,
+}) {
+  final painter = TextPainter(
+    text: TextSpan(text: line.text.isEmpty ? ' ' : line.text, style: textStyle),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout(maxWidth: math.max(1, textWidth));
+  final metrics = painter.computeLineMetrics();
+  final height = metrics.fold<double>(0, (sum, metric) => sum + metric.height);
+  painter.dispose();
+  return math.max(lineHeight, height);
+}
+
+String _collapsedLineText(String text) {
+  final trimmed = text.trimRight();
+  if (trimmed.isEmpty) {
+    return '...';
+  }
+  return '$trimmed ...';
 }
 
 String _foldKindLabel(SourceFoldKind kind) {
@@ -2175,7 +2440,10 @@ class _PreviewBlockView extends StatelessWidget {
     return switch (block.kind) {
       PreviewBlockKind.heading => Padding(
         padding: const EdgeInsets.only(top: 18, bottom: 6),
-        child: Text(block.text, style: _headingStyle(context, block.level)),
+        child: _PreviewInlineText(
+          block: block,
+          style: _headingStyle(context, block.level),
+        ),
       ),
       PreviewBlockKind.code => Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -2205,8 +2473,13 @@ class _PreviewBlockView extends StatelessWidget {
           'tip' => colors.admonitionTip,
           _ => colors.admonitionNote,
         },
-        child: Text(
-          block.text.isEmpty ? block.attributes['style'] ?? 'Note' : block.text,
+        child: _PreviewInlineText(
+          block: block.text.isEmpty
+              ? PreviewBlock(
+                  kind: block.kind,
+                  text: block.attributes['style'] ?? 'Note',
+                )
+              : block,
         ),
       ),
       PreviewBlockKind.tabs => _PreviewCallout(
@@ -2224,18 +2497,30 @@ class _PreviewBlockView extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 9),
-              child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+            SizedBox(
+              width: 18,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _ListMarker(block: block),
+              ),
             ),
             const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(child: Text(block.text)),
+            Expanded(child: _PreviewInlineText(block: block)),
           ],
         ),
       ),
+      PreviewBlockKind.quote => _PreviewCallout(
+        icon: Icons.format_quote_outlined,
+        color: colors.panel,
+        child: _PreviewInlineText(block: block),
+      ),
+      PreviewBlockKind.thematicBreak => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Divider(height: 1, color: colors.subtleBorder),
+      ),
       _ => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Text(block.text),
+        child: _PreviewInlineText(block: block),
       ),
     };
   }
@@ -2256,6 +2541,116 @@ class _PreviewBlockView extends StatelessWidget {
       _ => Icons.info_outline,
     };
   }
+}
+
+class _PreviewInlineText extends StatelessWidget {
+  const _PreviewInlineText({required this.block, this.style});
+
+  final PreviewBlock block;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = style ?? Theme.of(context).textTheme.bodyMedium;
+    final inlines = block.inlines.isEmpty
+        ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
+        : block.inlines;
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: [
+          for (final inline in inlines) _previewInlineSpan(context, inline),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListMarker extends StatelessWidget {
+  const _ListMarker({required this.block});
+
+  final PreviewBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final task = block.attributes['task'];
+    if (task != null) {
+      return Icon(
+        task == 'true'
+            ? Icons.check_box_outlined
+            : Icons.check_box_outline_blank,
+        size: BusyMarkSizes.iconSm,
+        color: colors.mutedForeground,
+      );
+    }
+    if (block.attributes['ordered'] == 'true') {
+      return Text(
+        block.attributes['marker'] ?? '1.',
+        textAlign: TextAlign.right,
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 7),
+      child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+    );
+  }
+}
+
+InlineSpan _previewInlineSpan(BuildContext context, PreviewInline inline) {
+  final colors = BusyMarkSurfaceColors.of(context);
+  final theme = Theme.of(context);
+  final children = inline.children.isEmpty
+      ? null
+      : [
+          for (final child in inline.children)
+            _previewInlineSpan(context, child),
+        ];
+  final text = inline.children.isEmpty ? inline.text : null;
+  return switch (inline.kind) {
+    PreviewInlineKind.text => TextSpan(text: inline.text),
+    PreviewInlineKind.strong => TextSpan(
+      text: text,
+      children: children,
+      style: const TextStyle(fontWeight: FontWeight.w700),
+    ),
+    PreviewInlineKind.emphasis => TextSpan(
+      text: text,
+      children: children,
+      style: const TextStyle(fontStyle: FontStyle.italic),
+    ),
+    PreviewInlineKind.strikethrough => TextSpan(
+      text: text,
+      children: children,
+      style: const TextStyle(decoration: TextDecoration.lineThrough),
+    ),
+    PreviewInlineKind.code => TextSpan(
+      text: inline.text,
+      style: TextStyle(
+        fontFamily: 'Ubuntu Mono',
+        backgroundColor: colors.control,
+        color: colors.foreground,
+      ),
+    ),
+    PreviewInlineKind.link => TextSpan(
+      text: text,
+      children: children,
+      style: TextStyle(
+        color: theme.colorScheme.primary,
+        decoration: TextDecoration.underline,
+      ),
+    ),
+    PreviewInlineKind.image => TextSpan(
+      text: inline.text,
+      style: TextStyle(
+        color: colors.mutedForeground,
+        fontStyle: FontStyle.italic,
+      ),
+    ),
+  };
 }
 
 class _PreviewCallout extends StatelessWidget {

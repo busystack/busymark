@@ -252,13 +252,30 @@ void main() {
     expect(workspace, contains('line: heading.span.startLine'));
     expect(workspace, contains('_sourceFocusNode.requestFocus()'));
     expect(workspace, contains('_unfoldSourceLine(line)'));
-    expect(workspace, contains('visibleSourceLineIndex'));
+    expect(workspace, contains('_sourceLineLayoutEntries'));
     expect(workspace, contains('_sourceScrollOffsetForLine'));
     expect(workspace, contains('_jumpSourceScrollToLine'));
     expect(workspace, contains('scrollController: _sourceScrollController'));
     expect(workspace, contains('Scrollable.ensureVisible'));
     expect(workspace, contains('headingKeys: _previewHeadingKeys'));
     expect(workspace, contains("block.attributes['id']"));
+  });
+
+  test('source editor line numbers use measured editor layout', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('isCollapsed: true'));
+    expect(workspace, contains('_sourceLineHeight(context)'));
+    expect(workspace, contains('TextPainter('));
+    expect(workspace, contains('computeLineMetrics()'));
+    expect(workspace, contains('_sourceVisualLineHeight'));
+    expect(workspace, contains('_CollapsedSourceLineOverlay'));
+    expect(workspace, isNot(contains('forceStrutHeight: true')));
+    expect(workspace, contains('TextOverflow.ellipsis'));
+    expect(workspace, contains('Color.alphaBlend'));
+    expect(workspace, contains("'\$trimmed ...'"));
   });
 
   test('document view modes drive source preview and split layouts', () {

@@ -162,7 +162,7 @@ void main() {
         (span) =>
             span.text == 'Intro.\nMore.\n' &&
             span.style?.color == Colors.transparent &&
-            span.style?.fontSize == 0.1,
+            span.style?.fontSize == 0.01,
       ),
       isTrue,
     );

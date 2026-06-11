@@ -78,6 +78,59 @@ Done.
     expect(entries.first.region?.key, section.key);
   });
 
+  test(
+    'collapsing one repeated markdown subsection keeps peer sections visible',
+    () {
+      const source =
+          '# Title\n'
+          '\n'
+          '## First\n'
+          'First body.\n'
+          '\n'
+          '## Second\n'
+          'Second body.\n'
+          '\n'
+          '## Third\n'
+          'Third body.\n';
+
+      final regions = sourceFoldRegions(source, SourceSyntaxLanguage.markdown);
+      final second = regions.firstWhere(
+        (region) =>
+            region.kind == SourceFoldKind.section && region.startLine == 6,
+      );
+
+      final entries = sourceGutterEntries(
+        source,
+        SourceSyntaxLanguage.markdown,
+        {second.key},
+      );
+
+      expect(entries.map((entry) => entry.lineNumber), [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        9,
+        10,
+        11,
+      ]);
+      expect(
+        entries.firstWhere((entry) => entry.lineNumber == 6).collapsed,
+        isTrue,
+      );
+      expect(
+        entries.firstWhere((entry) => entry.lineNumber == 3).collapsed,
+        isFalse,
+      );
+      expect(
+        entries.firstWhere((entry) => entry.lineNumber == 9).collapsed,
+        isFalse,
+      );
+    },
+  );
+
   test('xml folding detects simple multiline tag blocks', () {
     const source = '''
 <topic title="Install">

@@ -134,7 +134,7 @@ List<SourceGutterEntry> sourceGutterEntries(
   final regions = sourceFoldRegions(source, language);
   final regionByStartLine = <int, SourceFoldRegion>{};
   for (final region in regions.reversed) {
-    regionByStartLine[region.startLine] = region;
+    regionByStartLine.putIfAbsent(region.startLine, () => region);
   }
 
   final entries = <SourceGutterEntry>[];
