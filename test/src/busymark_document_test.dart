@@ -8,6 +8,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_export.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -173,12 +174,63 @@ void main() {}
         ),
       ),
     );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
 
     await tester.enterText(find.byType(TextField).first, 'Editable text');
     await tester.pump();
 
     expect(markdown, 'Editable text\n');
     expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG arrow keys move focus between paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) {
+      return tester.widget<TextField>(find.byType(TextField).at(index));
+    }
+
+    expect(fieldAt(0).focusNode?.hasFocus, isTrue);
+    expect(fieldAt(0).controller?.selection.extentOffset, 0);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+
+    expect(fieldAt(1).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+
+    expect(fieldAt(0).focusNode?.hasFocus, isTrue);
   });
 
   test('WYSIWYG inline ranges do not duplicate formatted text', () {
@@ -243,6 +295,22 @@ void main() {}
     );
 
     expect(controller.markdown, 'Attached *source* **archive**\n');
+  });
+
+  test('WYSIWYG image command serializes a real image block', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Image here\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = parsed.busyDocument.blocks.first.id;
+
+    controller.applyImageBlock(
+      blockId,
+      source: 'images/example.png',
+      alt: 'Example image',
+    );
+
+    expect(controller.markdown, '![Example image](images/example.png)\n');
   });
 
   test('WYSIWYG block commands serialize headings and lists', () {

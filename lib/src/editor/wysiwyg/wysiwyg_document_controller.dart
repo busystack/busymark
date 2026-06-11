@@ -75,6 +75,34 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     });
   }
 
+  void applyImageBlock(
+    String blockId, {
+    required String source,
+    required String alt,
+  }) {
+    final trimmedSource = source.trim();
+    final trimmedAlt = alt.trim();
+    if (trimmedSource.isEmpty) {
+      return;
+    }
+    _replaceBlock(
+      blockId,
+      (block) => block.copyWith(
+        kind: BusyBlockKind.image,
+        inlines: [
+          BusyInline(
+            kind: BusyInlineKind.image,
+            text: trimmedAlt,
+            destination: trimmedSource,
+            attributes: {'src': trimmedSource, 'alt': trimmedAlt},
+          ),
+        ],
+        attributes: {...block.attributes, 'src': trimmedSource},
+        dirty: true,
+      ),
+    );
+  }
+
   void applyInlineCommand(
     String blockId,
     BusyWysiwygInlineCommand command,

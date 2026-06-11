@@ -28,54 +28,94 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final readOnly = _readOnly;
     return Padding(
       padding: _padding,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: _background(context),
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          border: _border(context),
-        ),
-        child: Padding(
-          padding: _contentPadding,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (prefix != null) ...[
-                SizedBox(width: 30, child: prefix),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ],
-              Expanded(
-                child: readOnly
-                    ? SelectableText(
-                        block.rawSource ?? block.plainText,
-                        style: style.copyWith(
-                          color: colors.mutedForeground,
-                          fontFamily: 'Ubuntu Mono',
-                        ),
-                      )
-                    : TextField(
-                        controller: controller,
-                        focusNode: focusNode,
-                        maxLines: null,
-                        minLines: 1,
-                        style: style,
-                        decoration: const InputDecoration(
-                          isCollapsed: true,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: false,
-                          hoverColor: Colors.transparent,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onTap: onFocused,
-                        onChanged: onChanged,
-                      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: readOnly ? null : _focusBlock,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: _background(context),
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            border: _border(context),
+          ),
+          child: Padding(
+            padding: _contentPadding,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: _minimumHeight(context)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (prefix != null) ...[
+                    SizedBox(width: 30, child: prefix),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                  ],
+                  Expanded(
+                    child: readOnly
+                        ? SelectableText(
+                            block.rawSource ?? block.plainText,
+                            style: style.copyWith(
+                              color: colors.mutedForeground,
+                              fontFamily: 'Ubuntu Mono',
+                            ),
+                          )
+                        : TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            maxLines: null,
+                            minLines: 1,
+                            style: style,
+                            decoration: const InputDecoration(
+                              isCollapsed: true,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              filled: false,
+                              hoverColor: Colors.transparent,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onTap: onFocused,
+                            onChanged: onChanged,
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  void _focusBlock() {
+    onFocused();
+    if (!focusNode.hasFocus) {
+      focusNode.requestFocus();
+    }
+    if (!controller.selection.isValid || controller.selection.baseOffset < 0) {
+      controller.selection = TextSelection.collapsed(
+        offset: controller.text.length,
+      );
+    }
+  }
+
+  double _minimumHeight(BuildContext context) {
+    final style = _textStyle(context);
+    final fontSize =
+        style.fontSize ??
+        Theme.of(context).textTheme.bodyMedium?.fontSize ??
+        14;
+    return switch (block.kind) {
+      BusyBlockKind.heading => fontSize * 1.8,
+      BusyBlockKind.codeBlock ||
+      BusyBlockKind.blockquote ||
+      BusyBlockKind.writersideAdmonition ||
+      BusyBlockKind.writersideTabs ||
+      BusyBlockKind.writersideProcedure ||
+      BusyBlockKind.writersideRawXml ||
+      BusyBlockKind.table ||
+      BusyBlockKind.htmlBlock ||
+      BusyBlockKind.unknown => fontSize * 2.4,
+      _ => fontSize * 1.7,
+    };
   }
 
   bool get _readOnly {
