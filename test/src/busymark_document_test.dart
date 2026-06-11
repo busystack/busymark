@@ -106,6 +106,41 @@ void main() {}
     expect(const BusyMarkMarkdownSerializer().serialize(document), '$raw\n');
   });
 
+  test(
+    'serializer patches dirty blocks without canonicalizing unchanged source',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '# Title\n\nParagraph with   spacing\n\nSecond\n',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final secondBlockId = controller.document.blocks.last.id;
+
+      controller.updateBlockText(secondBlockId, 'Changed');
+
+      expect(
+        controller.markdown,
+        '# Title\n\nParagraph with   spacing\n\nChanged\n',
+      );
+    },
+  );
+
+  test('parser includes setext headings in heading metadata', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Title\n=====\n\nSection\n-------\n',
+    );
+
+    expect(parsed.headings.map((heading) => (heading.level, heading.text)), [
+      (1, 'Title'),
+      (2, 'Section'),
+    ]);
+    expect(parsed.title, 'Title');
+    expect(parsed.anchors, containsAll(['title', 'section']));
+  });
+
   test('HTML export blocks unsafe links and image URLs', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -369,6 +404,76 @@ void main() {}
     expect(markdown, '- First\n\n- Second\n\nThird\n');
   });
 
+  testWidgets('WYSIWYG typing preserves existing inline formatting', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Hello **bold** world\n',
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Hello bold! world');
+    await tester.pump();
+
+    expect(markdown, 'Hello **bold!** world\n');
+  });
+
+  testWidgets('WYSIWYG Backspace at block start merges with previous block', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n',
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final secondField = tester.widget<TextField>(find.byType(TextField).at(1));
+    secondField.focusNode!.requestFocus();
+    secondField.controller!.selection = const TextSelection.collapsed(
+      offset: 0,
+    );
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pump();
+
+    expect(markdown, 'FirstSecond\n');
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
   test('WYSIWYG inline ranges do not duplicate formatted text', () {
     final parsed = parser.parse(filePath: 'topic.md', source: '**source**\n');
     final block = parsed.busyDocument.blocks.single;
@@ -406,6 +511,50 @@ void main() {}
 
     expect(linkController.markdown, 'Alpha [Beta](target.md)\n');
   });
+
+  test('WYSIWYG text edits preserve inline ranges where possible', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Hello **bold** world\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = controller.document.blocks.first.id;
+
+    controller.updateBlockText(blockId, 'Hello bold! world');
+
+    expect(controller.markdown, 'Hello **bold!** world\n');
+  });
+
+  test(
+    'WYSIWYG inline command toggles selected mark without dropping links',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '**Alpha** [Beta](target.md)\n',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final blockId = controller.document.blocks.first.id;
+
+      controller.applyInlineCommand(
+        blockId,
+        BusyWysiwygInlineCommand.italic,
+        6,
+        10,
+      );
+      controller.applyInlineCommand(
+        blockId,
+        BusyWysiwygInlineCommand.bold,
+        0,
+        5,
+      );
+
+      expect(controller.markdown, 'Alpha [*Beta*](target.md)\n');
+    },
+  );
 
   test('WYSIWYG inline code command serializes selected text', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');

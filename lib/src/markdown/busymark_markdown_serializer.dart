@@ -1,9 +1,14 @@
+import '../core/source_span.dart';
 import 'busymark_document.dart';
 
 class BusyMarkMarkdownSerializer {
   const BusyMarkMarkdownSerializer();
 
   String serialize(BusyDocument document) {
+    final patched = _serializeByPatchingSource(document);
+    if (patched != null) {
+      return patched;
+    }
     final chunks = <String>[];
     if (document.rawFrontMatter != null &&
         document.rawFrontMatter!.trim().isNotEmpty) {
@@ -25,7 +30,7 @@ class BusyMarkMarkdownSerializer {
   }
 
   String serializeBlock(BusyBlock block) {
-    if (!block.dirty && block.preserveRaw && block.rawSource != null) {
+    if (!block.dirty && block.rawSource != null) {
       return block.rawSource!;
     }
     return switch (block.kind) {
@@ -50,6 +55,84 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.frontMatter =>
         block.rawSource ?? _inlineMarkdown(block.inlines),
     };
+  }
+
+  String? _serializeByPatchingSource(BusyDocument document) {
+    final source = document.source;
+    if (source == null) {
+      return null;
+    }
+    final dirtyBlocks = [
+      for (final block in document.blocks)
+        if (block.kind != BusyBlockKind.frontMatter && block.dirty) block,
+    ];
+    if (dirtyBlocks.isEmpty) {
+      return source;
+    }
+    if (dirtyBlocks.any((block) => block.sourceSpan == null)) {
+      return null;
+    }
+    final spannedBlocks = [
+      for (final block in document.blocks)
+        if (block.kind != BusyBlockKind.frontMatter && block.sourceSpan != null)
+          block,
+    ];
+    if (spannedBlocks.length !=
+        document.blocks
+            .where((block) => block.kind != BusyBlockKind.frontMatter)
+            .length) {
+      return null;
+    }
+    if (_sourceOutsideSpansHasContent(
+      source,
+      spannedBlocks.map((block) => block.sourceSpan!).toList(),
+    )) {
+      return null;
+    }
+    final sorted = [...dirtyBlocks]
+      ..sort(
+        (left, right) => left.sourceSpan!.startOffset.compareTo(
+          right.sourceSpan!.startOffset,
+        ),
+      );
+    for (var index = 1; index < sorted.length; index++) {
+      if (sorted[index].sourceSpan!.startOffset <
+          sorted[index - 1].sourceSpan!.endOffset) {
+        return null;
+      }
+    }
+    final buffer = StringBuffer();
+    var offset = 0;
+    for (final block in sorted) {
+      final span = block.sourceSpan!;
+      if (span.startOffset < offset ||
+          span.endOffset > source.length ||
+          span.startOffset > source.length) {
+        return null;
+      }
+      buffer
+        ..write(source.substring(offset, span.startOffset))
+        ..write(serializeBlock(block).trimRight());
+      offset = span.endOffset;
+    }
+    buffer.write(source.substring(offset));
+    return buffer.toString();
+  }
+
+  bool _sourceOutsideSpansHasContent(String source, List<SourceSpan> spans) {
+    final sorted = [...spans]
+      ..sort((left, right) => left.startOffset.compareTo(right.startOffset));
+    var offset = 0;
+    for (final span in sorted) {
+      if (span.startOffset < offset || span.endOffset > source.length) {
+        return true;
+      }
+      if (source.substring(offset, span.startOffset).trim().isNotEmpty) {
+        return true;
+      }
+      offset = span.endOffset;
+    }
+    return source.substring(offset).trim().isNotEmpty;
   }
 
   String _heading(BusyBlock block) {

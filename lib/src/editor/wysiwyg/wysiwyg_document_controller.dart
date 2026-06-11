@@ -41,13 +41,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void updateBlockText(String blockId, String text) {
-    _replaceBlock(
-      blockId,
-      (block) => block.copyWith(
-        inlines: [BusyInline(kind: BusyInlineKind.text, text: text)],
-        dirty: true,
-      ),
-    );
+    _replaceBlock(blockId, (block) => _blockWithEditedText(block, text));
   }
 
   BusyWysiwygTextSplitResult? replaceBlockTextWithParagraphs(
@@ -178,17 +172,27 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final safeOffset = offset.clamp(0, text.length).toInt();
     final leftText = text.substring(0, safeOffset);
     final rightText = text.substring(safeOffset);
+    final ranges = busyInlineStyleRanges(block.inlines);
     final nextBlockId = _nextGeneratedBlockId(_newBlockPrefixFor(block.kind));
     final nextKind = _splitKindFor(block.kind);
-    final currentBlock = block.copyWith(
-      inlines: _textInlines(leftText),
-      preserveRaw: false,
+    final currentBlock = BusyBlock(
+      id: block.id,
+      kind: block.kind,
+      inlines: _inlinesFromStyleRanges(
+        leftText,
+        _styleRangesForSlice(ranges, 0, safeOffset),
+      ),
+      children: block.children,
+      attributes: block.attributes,
       dirty: true,
     );
     final nextBlock = BusyBlock(
       id: nextBlockId,
       kind: nextKind,
-      inlines: _textInlines(rightText),
+      inlines: _inlinesFromStyleRanges(
+        rightText,
+        _styleRangesForSlice(ranges, safeOffset, text.length),
+      ),
       attributes: _splitAttributesFor(block, nextKind, orderedOffset: 1),
       dirty: true,
     );
@@ -216,6 +220,61 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return null;
     }
     return BusyWysiwygTextSplitResult(blockId: nextBlockId, offset: 0);
+  }
+
+  BusyWysiwygTextSplitResult? applyBackspaceAtStart(String blockId) {
+    final blocks = _document.blocks;
+    final index = blocks.indexWhere((block) => block.id == blockId);
+    if (index <= 0) {
+      return null;
+    }
+    final previous = blocks[index - 1];
+    final current = blocks[index];
+    if (!_isMergeableTextBlock(previous) || !_isMergeableTextBlock(current)) {
+      return null;
+    }
+    final previousText = previous.plainText;
+    final currentText = current.plainText;
+    if (currentText.isEmpty) {
+      _document = _document.copyWith(
+        blocks: [...blocks.take(index), ...blocks.skip(index + 1)],
+      );
+      notifyListeners();
+      return BusyWysiwygTextSplitResult(
+        blockId: previous.id,
+        offset: previousText.length,
+      );
+    }
+    final mergedText = '$previousText$currentText';
+    final previousRanges = busyInlineStyleRanges(previous.inlines);
+    final currentRanges = [
+      for (final range in busyInlineStyleRanges(current.inlines))
+        BusyInlineStyleRange(
+          start: range.start + previousText.length,
+          end: range.end + previousText.length,
+          kind: range.kind,
+          destination: range.destination,
+        ),
+    ];
+    final merged = BusyBlock(
+      id: previous.id,
+      kind: previous.kind,
+      inlines: _inlinesFromStyleRanges(mergedText, [
+        ...previousRanges,
+        ...currentRanges,
+      ]),
+      children: previous.children,
+      attributes: previous.attributes,
+      dirty: true,
+    );
+    _document = _document.copyWith(
+      blocks: [...blocks.take(index - 1), merged, ...blocks.skip(index + 1)],
+    );
+    notifyListeners();
+    return BusyWysiwygTextSplitResult(
+      blockId: merged.id,
+      offset: previousText.length,
+    );
   }
 
   String? insertThematicBreakAfter(String blockId) {
@@ -472,6 +531,36 @@ bool _isListItemKind(BusyBlockKind kind) {
   };
 }
 
+bool _isMergeableTextBlock(BusyBlock block) {
+  if (block.preserveRaw) {
+    return false;
+  }
+  return switch (block.kind) {
+    BusyBlockKind.paragraph ||
+    BusyBlockKind.heading ||
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem ||
+    BusyBlockKind.blockquote => true,
+    _ => false,
+  };
+}
+
+BusyBlock _blockWithEditedText(BusyBlock block, String nextText) {
+  final oldText = block.plainText;
+  final oldRanges = busyInlineStyleRanges(block.inlines);
+  final nextRanges = _remapRangesForTextEdit(
+    oldText: oldText,
+    newText: nextText,
+    ranges: oldRanges,
+  );
+  return block.copyWith(
+    inlines: _inlinesFromStyleRanges(nextText, nextRanges),
+    preserveRaw: false,
+    dirty: true,
+  );
+}
+
 BusyBlock _blockWithCommand(
   BusyBlock block,
   BusyWysiwygBlockCommand command, {
@@ -557,6 +646,101 @@ BusyBlock _blockWithInlineCommand(
     inlines: _inlinesFromStyleRanges(text, ranges),
     dirty: true,
   );
+}
+
+List<BusyInlineStyleRange> _remapRangesForTextEdit({
+  required String oldText,
+  required String newText,
+  required List<BusyInlineStyleRange> ranges,
+}) {
+  if (oldText == newText) {
+    return ranges;
+  }
+  final prefix = _commonPrefixLength(oldText, newText);
+  final suffix = _commonSuffixLength(oldText, newText, prefix);
+  final oldEditStart = prefix;
+  final oldEditEnd = oldText.length - suffix;
+  final newEditEnd = newText.length - suffix;
+  final delta = newText.length - oldText.length;
+  final mapped = <BusyInlineStyleRange>[];
+
+  for (final range in ranges) {
+    if (range.end < oldEditStart) {
+      mapped.add(range);
+      continue;
+    }
+    if (range.start > oldEditEnd) {
+      mapped.add(
+        BusyInlineStyleRange(
+          start: range.start + delta,
+          end: range.end + delta,
+          kind: range.kind,
+          destination: range.destination,
+        ),
+      );
+      continue;
+    }
+
+    final insertionTouchesRange =
+        oldEditStart == oldEditEnd &&
+        range.start <= oldEditStart &&
+        range.end >= oldEditStart;
+    final overlapsReplacedText =
+        oldEditStart < oldEditEnd &&
+        range.start < oldEditEnd &&
+        range.end > oldEditStart;
+    if (!insertionTouchesRange && !overlapsReplacedText) {
+      if (range.end <= oldEditStart) {
+        mapped.add(range);
+      } else {
+        mapped.add(
+          BusyInlineStyleRange(
+            start: range.start + delta,
+            end: range.end + delta,
+            kind: range.kind,
+            destination: range.destination,
+          ),
+        );
+      }
+      continue;
+    }
+
+    final start = range.start < oldEditStart ? range.start : oldEditStart;
+    final end = range.end > oldEditEnd ? range.end + delta : newEditEnd;
+    if (end > start) {
+      mapped.add(
+        BusyInlineStyleRange(
+          start: start,
+          end: end,
+          kind: range.kind,
+          destination: range.destination,
+        ),
+      );
+    }
+  }
+  return mapped;
+}
+
+int _commonPrefixLength(String left, String right) {
+  final limit = left.length < right.length ? left.length : right.length;
+  var index = 0;
+  while (index < limit && left.codeUnitAt(index) == right.codeUnitAt(index)) {
+    index++;
+  }
+  return index;
+}
+
+int _commonSuffixLength(String left, String right, int prefixLength) {
+  final leftRemaining = left.length - prefixLength;
+  final rightRemaining = right.length - prefixLength;
+  final limit = leftRemaining < rightRemaining ? leftRemaining : rightRemaining;
+  var count = 0;
+  while (count < limit &&
+      left.codeUnitAt(left.length - count - 1) ==
+          right.codeUnitAt(right.length - count - 1)) {
+    count++;
+  }
+  return count;
 }
 
 String _incrementOrderedMarker(String? marker, int offset) {
@@ -675,6 +859,26 @@ List<BusyInline> _inlinesFromStyleRanges(
             sortedBoundaries[index],
             sortedBoundaries[index + 1],
           ),
+        ),
+  ];
+}
+
+List<BusyInlineStyleRange> _styleRangesForSlice(
+  List<BusyInlineStyleRange> ranges,
+  int start,
+  int end,
+) {
+  if (end <= start) {
+    return const [];
+  }
+  return [
+    for (final range in ranges)
+      if (range.end > start && range.start < end)
+        BusyInlineStyleRange(
+          start: (range.start < start ? start : range.start) - start,
+          end: (range.end > end ? end : range.end) - start,
+          kind: range.kind,
+          destination: range.destination,
         ),
   ];
 }

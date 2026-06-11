@@ -1,16 +1,7 @@
 # BusyMark
 
-BusyMark is a local-first Markdown editor for Linux with basic support for
-Writerside-compatible documentation projects.
-
-## Status
-
-BusyMark is beta software. It is intended for editing local Markdown files,
-documentation folders, and small Writerside-compatible projects. Writerside
-support is currently focused on project navigation, preview, and basic
-validation workflows.
-
-Screenshots will be added before a listed beta release.
+BusyMark is a Markdown editor for Linux with support for Writerside-compatible documentation 
+projects.
 
 ## Features
 
@@ -23,15 +14,6 @@ Screenshots will be added before a listed beta release.
 - Run basic diagnostics.
 - Reopen recent workspaces.
 - Use native Linux desktop chrome with a GTK headerbar.
-
-## Non-goals for the current beta
-
-- Full JetBrains Writerside replacement.
-- Cloud sync or collaborative editing.
-- Full CommonMark compliance.
-- Full external link crawler.
-- Official Writerside builder integration.
-- Plugin or multi-window architecture.
 
 ## Supported platforms
 
@@ -71,7 +53,7 @@ flutter run -d linux -- /path/to/docs
 
 ## Test
 
-```bash
+```bashbasicbasic
 flutter analyze
 flutter test
 ```
@@ -84,16 +66,6 @@ flutter build linux
 
 The Linux desktop file uses the application id `io.busystack.busymark` and
 installs the app icon from `assets/branding/io.busystack.busymark.png`.
-
-## Known Limitations
-
-- Markdown rendering is intentionally lightweight and not a full CommonMark
-  implementation.
-- Writerside compatibility is partial and focused on local navigation and
-  validation.
-- External web link and image crawling are not part of the current beta.
-- There is no merge tool for files changed externally; BusyMark warns before
-  overwriting them.
 
 ## Contributing
 

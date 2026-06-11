@@ -362,6 +362,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _focusBlockAfterFrame(result.blockId, offset: result.offset);
       return KeyEventResult.handled;
     }
+    if (key == LogicalKeyboardKey.backspace && offset == 0) {
+      final result = _documentController.applyBackspaceAtStart(blockId);
+      if (result == null) {
+        return KeyEventResult.ignored;
+      }
+      _emitMarkdown();
+      _focusBlockAfterFrame(result.blockId, offset: result.offset);
+      return KeyEventResult.handled;
+    }
     if (key == LogicalKeyboardKey.arrowUp &&
         _isOffsetOnFirstTextLine(controller.text, offset)) {
       return _focusRelativeBlock(blockId, -1, desiredOffset: offset);
