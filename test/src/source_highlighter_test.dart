@@ -1,5 +1,6 @@
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_highlighter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -118,6 +119,53 @@ void main() {
     expect(span.style?.color, foreground);
     expect(span.children, hasLength(1));
     expect((span.children!.single as TextSpan).text, 'plain text');
+  });
+
+  testWidgets('folded regions hide body lines without changing source text', (
+    tester,
+  ) async {
+    const source = '# Title\nIntro.\nMore.\n';
+    late List<TextSpan> spans;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            final region = sourceFoldRegions(
+              source,
+              SourceSyntaxLanguage.markdown,
+            ).first;
+            final controller = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            )..setFoldedRegions([region]);
+            spans = _flattenTextSpans(
+              controller.buildTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                withComposing: false,
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(spans.map((span) => span.text).join(), source);
+    expect(
+      spans.any(
+        (span) =>
+            span.text == 'Intro.\nMore.\n' &&
+            span.style?.color == Colors.transparent &&
+            span.style?.fontSize == 0.1,
+      ),
+      isTrue,
+    );
   });
 }
 

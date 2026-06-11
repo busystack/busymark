@@ -150,7 +150,17 @@ void main() {
     expect(workspace, contains('case HeaderBarAction.problems:'));
     expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));
+    expect(workspace, contains('setCanSave(state.isDirty)'));
+    expect(workspace, contains('accented: state.isDirty'));
+    expect(
+      service,
+      contains('accentColor: Theme.of(context).colorScheme.primary'),
+    );
+    expect(service, contains('accentForegroundColor'));
     expect(native, contains('create_header_icon_button("emblem-ok-symbolic")'));
+    expect(native, contains('busymark-save-button'));
+    expect(native, contains('busymark-save-dirty'));
+    expect(native, contains('set_save_dirty(self, fl_method_bool_arg(args))'));
     expect(
       native,
       contains('create_header_icon_button("tools-check-spelling-symbolic")'),
@@ -170,6 +180,20 @@ void main() {
       ),
     );
     expect(native, contains('fl_lookup_string_arg(args, "problems")'));
+  });
+
+  test('native headerbar starts with sidebar toggle before back', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(
+      native,
+      matches(
+        RegExp(
+          r'gtk_box_pack_start\(GTK_BOX\(self->header_start_box\), self->sidebar_toggle_button[\s\S]*'
+          r'gtk_box_pack_start\(GTK_BOX\(self->header_start_box\), self->back_button',
+        ),
+      ),
+    );
   });
 
   test('native document view mode dropdown uses checked rows', () {

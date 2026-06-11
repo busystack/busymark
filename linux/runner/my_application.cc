@@ -64,6 +64,8 @@ struct _MyApplication {
   gchar* control_color;
   gchar* control_hover_color;
   gchar* control_active_color;
+  gchar* accent_color;
+  gchar* accent_foreground_color;
   gchar* popover_background_color;
   gchar* border_color;
   gchar* sidebar_border_color;
@@ -186,6 +188,19 @@ static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   }
 }
 
+static void set_save_dirty(MyApplication* self, gboolean dirty) {
+  if (self->save_button == nullptr || !GTK_IS_WIDGET(self->save_button)) {
+    return;
+  }
+  GtkStyleContext* context = gtk_widget_get_style_context(self->save_button);
+  if (dirty) {
+    gtk_style_context_add_class(context, "busymark-save-dirty");
+  } else {
+    gtk_style_context_remove_class(context, "busymark-save-dirty");
+  }
+  gtk_widget_set_sensitive(self->save_button, TRUE);
+}
+
 static void set_toggle_button_active(MyApplication* self,
                                      GtkWidget* widget,
                                      gboolean active) {
@@ -228,6 +243,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
   const gchar* control_active =
       css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
+  const gchar* accent = css_color_or(self->accent_color, "#3584e4");
+  const gchar* accent_foreground =
+      css_color_or(self->accent_foreground_color, "#ffffff");
   const gchar* popover =
       css_color_or(self->popover_background_color, background);
   const gchar* border =
@@ -325,6 +343,17 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar button.busymark-view-mode-button:checked {"
       "background-color: %s;"
       "}"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:hover,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:active,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:checked {"
+      "color: %s;"
+      "background-color: %s;"
+      "}"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty image {"
+      "color: %s;"
+      "-gtk-icon-shadow: none;"
+      "}"
       ".busymark-titlebar button.busymark-header-button:disabled,"
       ".busymark-titlebar button.busymark-view-mode-button:disabled {"
       "color: %s;"
@@ -407,7 +436,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       headerbar_left_radius, sidebar_background, sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
       foreground, control, kHeaderButtonHeight, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
-      control_hover, control_active, disabled, disabled, popover, foreground,
+      control_hover, control_active, accent_foreground, accent,
+      accent_foreground, disabled, disabled, popover, foreground,
       border, shade, foreground, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, control_hover,
       foreground, muted, kHeaderButtonRadius, kHeaderTooltipVerticalPadding,
@@ -454,6 +484,10 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "controlHoverColor"));
   set_css_color_field(&self->control_active_color,
                       fl_lookup_string_arg(args, "controlActiveColor"));
+  set_css_color_field(&self->accent_color,
+                      fl_lookup_string_arg(args, "accentColor"));
+  set_css_color_field(&self->accent_foreground_color,
+                      fl_lookup_string_arg(args, "accentForegroundColor"));
   set_css_color_field(&self->popover_background_color,
                       fl_lookup_string_arg(args, "popoverBackgroundColor"));
   set_css_color_field(&self->border_color,
@@ -896,9 +930,9 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
       create_header_toggle_button("sidebar-show-symbolic");
   connect_header_action(self, self->back_button, "back");
   connect_header_action(self, self->sidebar_toggle_button, "sidebarToggle");
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->back_button,
-                     FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->header_start_box), self->sidebar_toggle_button,
+                     FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->back_button,
                      FALSE, FALSE, 0);
   gtk_header_bar_pack_start(self->header_bar, self->header_start_box);
 
@@ -953,6 +987,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_box_pack_start(GTK_BOX(end_box), self->view_mode_box, FALSE, FALSE, 0);
 
   self->save_button = create_header_icon_button("emblem-ok-symbolic");
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->save_button),
+                              "busymark-save-button");
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
   self->problems_button = create_header_icon_button("dialog-warning-symbolic");
   connect_header_action(self, self->save_button, "save");
@@ -994,7 +1030,7 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setCanSave") == 0) {
-    set_widget_sensitive(self->save_button, fl_method_bool_arg(args));
+    set_save_dirty(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));
@@ -1162,6 +1198,8 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->control_color, g_free);
   g_clear_pointer(&self->control_hover_color, g_free);
   g_clear_pointer(&self->control_active_color, g_free);
+  g_clear_pointer(&self->accent_color, g_free);
+  g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
   g_clear_pointer(&self->border_color, g_free);
   g_clear_pointer(&self->sidebar_border_color, g_free);
@@ -1220,6 +1258,8 @@ static void my_application_init(MyApplication* self) {
   self->control_color = nullptr;
   self->control_hover_color = nullptr;
   self->control_active_color = nullptr;
+  self->accent_color = nullptr;
+  self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;
   self->border_color = nullptr;
   self->sidebar_border_color = nullptr;

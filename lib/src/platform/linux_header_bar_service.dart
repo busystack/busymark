@@ -86,6 +86,8 @@ class HeaderBarTheme {
     required this.controlColor,
     required this.controlHoverColor,
     required this.controlActiveColor,
+    required this.accentColor,
+    required this.accentForegroundColor,
     required this.popoverBackgroundColor,
     required this.borderColor,
     required this.sidebarBorderColor,
@@ -105,6 +107,8 @@ class HeaderBarTheme {
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
       controlActiveColor: colors.controlActive,
+      accentColor: Theme.of(context).colorScheme.primary,
+      accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
       borderColor: colors.subtleBorder,
       sidebarBorderColor: colors.sidebarBorder,
@@ -121,6 +125,8 @@ class HeaderBarTheme {
   final Color controlColor;
   final Color controlHoverColor;
   final Color controlActiveColor;
+  final Color accentColor;
+  final Color accentForegroundColor;
   final Color popoverBackgroundColor;
   final Color borderColor;
   final Color sidebarBorderColor;
@@ -136,6 +142,8 @@ class HeaderBarTheme {
     'controlColor': _cssColor(controlColor),
     'controlHoverColor': _cssColor(controlHoverColor),
     'controlActiveColor': _cssColor(controlActiveColor),
+    'accentColor': _cssColor(accentColor),
+    'accentForegroundColor': _cssColor(accentForegroundColor),
     'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
     'borderColor': _cssColor(borderColor),
     'sidebarBorderColor': _cssColor(sidebarBorderColor),

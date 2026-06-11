@@ -251,10 +251,10 @@ void main() {
     expect(workspace, contains('headingId: heading.id'));
     expect(workspace, contains('line: heading.span.startLine'));
     expect(workspace, contains('_sourceFocusNode.requestFocus()'));
-    expect(workspace, contains('TextPainter'));
-    expect(workspace, contains('getOffsetForCaret'));
-    expect(workspace, contains('_sourceScrollOffsetForTextOffset'));
-    expect(workspace, contains('_jumpSourceScrollToTextOffset'));
+    expect(workspace, contains('_unfoldSourceLine(line)'));
+    expect(workspace, contains('visibleSourceLineIndex'));
+    expect(workspace, contains('_sourceScrollOffsetForLine'));
+    expect(workspace, contains('_jumpSourceScrollToLine'));
     expect(workspace, contains('scrollController: _sourceScrollController'));
     expect(workspace, contains('Scrollable.ensureVisible'));
     expect(workspace, contains('headingKeys: _previewHeadingKeys'));
@@ -265,6 +265,9 @@ void main() {
     final settings = File('lib/src/app/app_settings.dart').readAsStringSync();
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final settingsScreen = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
     expect(
@@ -290,6 +293,8 @@ void main() {
     );
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
+    expect(settingsScreen, isNot(contains('Show preview pane')));
+    expect(settingsScreen, isNot(contains('setPreviewVisible')));
   });
 }
 

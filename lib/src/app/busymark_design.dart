@@ -418,22 +418,29 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.selected = false,
+    this.accented = false,
   });
 
   final String tooltip;
   final IconData icon;
   final VoidCallback? onPressed;
   final bool selected;
+  final bool accented;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     return IconButton(
       style: busyMarkHeaderIconButtonStyle(
-        foregroundColor: selected
-            ? Theme.of(context).colorScheme.primary
+        foregroundColor: accented
+            ? colorScheme.onPrimary
+            : selected
+            ? colorScheme.primary
             : colors.mutedForeground,
-        backgroundColor: selected
+        backgroundColor: accented
+            ? WidgetStatePropertyAll(colorScheme.primary)
+            : selected
             ? WidgetStatePropertyAll(colors.controlActive)
             : busyMarkHeaderButtonBackground(context),
       ),

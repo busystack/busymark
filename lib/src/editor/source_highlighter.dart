@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
+import 'source_folding.dart';
+import 'source_language.dart';
 
-enum SourceSyntaxLanguage { markdown, xml, plain }
+export 'source_language.dart';
 
 class BusyMarkSourceEditingController extends TextEditingController {
   BusyMarkSourceEditingController({
@@ -11,6 +13,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
   }) : _language = language;
 
   SourceSyntaxLanguage _language;
+  List<SourceFoldRegion> _foldedRegions = const [];
 
   SourceSyntaxLanguage get language => _language;
 
@@ -20,6 +23,16 @@ class BusyMarkSourceEditingController extends TextEditingController {
     }
     _language = value;
     notifyListeners();
+  }
+
+  List<SourceFoldRegion> get foldedRegions => _foldedRegions;
+
+  void setFoldedRegions(Iterable<SourceFoldRegion> regions) {
+    _foldedRegions = _normalizedFoldRegions(regions);
+  }
+
+  void clearFoldedRegions() {
+    _foldedRegions = const [];
   }
 
   @override
@@ -36,6 +49,12 @@ class BusyMarkSourceEditingController extends TextEditingController {
       return TextSpan(text: source, style: baseStyle);
     }
     final palette = _SourceSyntaxPalette.fromContext(context);
+    final hiddenRanges = _foldedRegions
+        .map(
+          (region) =>
+              _HiddenRange(region.hiddenStartOffset, region.hiddenEndOffset),
+        )
+        .toList();
     return TextSpan(
       style: baseStyle,
       children: switch (_language) {
@@ -43,10 +62,16 @@ class BusyMarkSourceEditingController extends TextEditingController {
           source,
           baseStyle,
           palette,
+          hiddenRanges,
         ),
-        SourceSyntaxLanguage.xml => _highlightXml(source, baseStyle, palette),
+        SourceSyntaxLanguage.xml => _highlightXml(
+          source,
+          baseStyle,
+          palette,
+          hiddenRanges,
+        ),
         SourceSyntaxLanguage.plain => [
-          TextSpan(text: source, style: baseStyle),
+          ..._spansFromRanges(source, const [], hiddenRanges, baseStyle),
         ],
       },
     );
@@ -105,10 +130,22 @@ class _HighlightRange {
   }
 }
 
+class _HiddenRange {
+  const _HiddenRange(this.start, this.end);
+
+  final int start;
+  final int end;
+
+  bool contains(int otherStart, int otherEnd) {
+    return start <= otherStart && otherEnd <= end;
+  }
+}
+
 List<TextSpan> _highlightMarkdown(
   String source,
   TextStyle baseStyle,
   _SourceSyntaxPalette palette,
+  List<_HiddenRange> hiddenRanges,
 ) {
   final ranges = <_HighlightRange>[];
   var offset = 0;
@@ -221,13 +258,14 @@ List<TextSpan> _highlightMarkdown(
     offset = lineEnd + 1;
   }
 
-  return _spansFromRanges(source, ranges);
+  return _spansFromRanges(source, ranges, hiddenRanges, baseStyle);
 }
 
 List<TextSpan> _highlightXml(
   String source,
   TextStyle baseStyle,
   _SourceSyntaxPalette palette,
+  List<_HiddenRange> hiddenRanges,
 ) {
   final ranges = <_HighlightRange>[];
   final commentStyle = baseStyle.copyWith(color: palette.comment);
@@ -288,7 +326,7 @@ List<TextSpan> _highlightXml(
     }
   }
 
-  return _spansFromRanges(source, ranges);
+  return _spansFromRanges(source, ranges, hiddenRanges, baseStyle);
 }
 
 void _addInlineMatches(
@@ -320,24 +358,70 @@ void _addRange(
   ranges.add(_HighlightRange(start, end, style));
 }
 
-List<TextSpan> _spansFromRanges(String source, List<_HighlightRange> ranges) {
-  ranges.sort((a, b) => a.start.compareTo(b.start));
+List<TextSpan> _spansFromRanges(
+  String source,
+  List<_HighlightRange> ranges,
+  List<_HiddenRange> hiddenRanges,
+  TextStyle baseStyle,
+) {
+  final sortedRanges = [...ranges]..sort((a, b) => a.start.compareTo(b.start));
+  final sortedHiddenRanges = [...hiddenRanges]
+    ..sort((a, b) => a.start.compareTo(b.start));
+  final hiddenStyle = baseStyle.copyWith(
+    color: Colors.transparent,
+    fontSize: 0.1,
+    height: 0.01,
+  );
+  final boundaries = <int>{0, source.length};
+  for (final range in sortedRanges) {
+    boundaries.add(range.start.clamp(0, source.length).toInt());
+    boundaries.add(range.end.clamp(0, source.length).toInt());
+  }
+  for (final range in sortedHiddenRanges) {
+    boundaries.add(range.start.clamp(0, source.length).toInt());
+    boundaries.add(range.end.clamp(0, source.length).toInt());
+  }
+  final sortedBoundaries = boundaries.toList()..sort();
   final spans = <TextSpan>[];
-  var cursor = 0;
-  for (final range in ranges) {
-    if (range.start > cursor) {
-      spans.add(TextSpan(text: source.substring(cursor, range.start)));
+  for (var index = 0; index < sortedBoundaries.length - 1; index++) {
+    final start = sortedBoundaries[index];
+    final end = sortedBoundaries[index + 1];
+    if (end <= start) {
+      continue;
+    }
+    final hidden = sortedHiddenRanges.any(
+      (range) => range.contains(start, end),
+    );
+    _HighlightRange? highlight;
+    for (final range in sortedRanges) {
+      if (range.start <= start && end <= range.end) {
+        highlight = range;
+        break;
+      }
     }
     spans.add(
       TextSpan(
-        text: source.substring(range.start, range.end),
-        style: range.style,
+        text: source.substring(start, end),
+        style: hidden ? hiddenStyle : highlight?.style,
       ),
     );
-    cursor = range.end;
-  }
-  if (cursor < source.length) {
-    spans.add(TextSpan(text: source.substring(cursor)));
   }
   return spans;
+}
+
+List<SourceFoldRegion> _normalizedFoldRegions(
+  Iterable<SourceFoldRegion> regions,
+) {
+  final sorted = [...regions]
+    ..sort((a, b) => a.hiddenStartOffset.compareTo(b.hiddenStartOffset));
+  final normalized = <SourceFoldRegion>[];
+  var hiddenUntil = -1;
+  for (final region in sorted) {
+    if (region.hiddenStartOffset < hiddenUntil) {
+      continue;
+    }
+    normalized.add(region);
+    hiddenUntil = region.hiddenEndOffset;
+  }
+  return normalized;
 }

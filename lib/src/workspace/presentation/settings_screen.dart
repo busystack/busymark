@@ -87,20 +87,6 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             BusyMarkGroupedList(
-              title: 'Preview',
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: 'Show preview pane',
-                  value:
-                      settings.documentViewMode !=
-                      DocumentViewModePreference.source,
-                  onChanged: controller.setPreviewVisible,
-                  leading: const Icon(Icons.preview_outlined),
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
               title: 'Validation',
               filled: true,
               children: [
