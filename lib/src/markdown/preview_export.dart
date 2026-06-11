@@ -196,11 +196,14 @@ class MarkdownPreviewBuilder {
         );
         continue;
       }
-      final image = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)').firstMatch(line);
-      if (image != null && image.group(0) == line.trim()) {
+      final image = RegExp(
+        r'^\s*!\[([^\]]*)\]\(([^)]+)\)\s*(\{[^}]*\})?\s*$',
+      ).firstMatch(line);
+      if (image != null) {
         flushParagraph();
         final alt = image.group(1) ?? '';
         final destination = image.group(2) ?? '';
+        final attributes = _parseAttributeBlock(image.group(3));
         blocks.add(
           PreviewBlock(
             kind: PreviewBlockKind.image,
@@ -212,7 +215,7 @@ class MarkdownPreviewBuilder {
                 destination: destination,
               ),
             ],
-            attributes: {'src': destination},
+            attributes: {'src': destination, ...attributes},
           ),
         );
         continue;
@@ -641,4 +644,18 @@ String _inlineNodeHtml(PreviewInline inline) {
 
 String? _attributeValue(String raw, String key) {
   return RegExp('$key\\s*=\\s*"([^"]+)"').firstMatch(raw)?.group(1);
+}
+
+Map<String, String> _parseAttributeBlock(String? raw) {
+  if (raw == null || raw.length < 2) {
+    return const {};
+  }
+  final attributes = <String, String>{};
+  final body = raw.substring(1, raw.length - 1);
+  for (final match in RegExp(
+    r'([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*"([^"]*)"',
+  ).allMatches(body)) {
+    attributes[match.group(1)!] = match.group(2)!;
+  }
+  return attributes;
 }

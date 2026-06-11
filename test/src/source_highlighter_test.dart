@@ -202,6 +202,62 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('folded regions collapse measured editor height', (tester) async {
+    const source = '# Title\nIntro.\nMore.\n# Next\nDone.\n';
+    const style = TextStyle(
+      fontFamily: 'Ubuntu Mono',
+      fontSize: 14,
+      height: 1.45,
+    );
+    late double unfoldedHeight;
+    late double foldedHeight;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            final region = sourceFoldRegions(
+              source,
+              SourceSyntaxLanguage.markdown,
+            ).firstWhere((region) => region.startLine == 1);
+            final unfolded = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            );
+            final folded = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            )..setFoldedRegions([region]);
+
+            unfoldedHeight = _layoutHeight(
+              context,
+              unfolded.buildTextSpan(
+                context: context,
+                style: style,
+                withComposing: false,
+              ),
+            );
+            foldedHeight = _layoutHeight(
+              context,
+              folded.buildTextSpan(
+                context: context,
+                style: style,
+                withComposing: false,
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(foldedHeight, lessThan(unfoldedHeight - 20));
+  });
 }
 
 Color? _spanColor(List<TextSpan> spans, String text) {
@@ -223,4 +279,15 @@ List<TextSpan> _flattenTextSpans(InlineSpan span) {
 
   visit(span);
   return result;
+}
+
+double _layoutHeight(BuildContext context, InlineSpan span) {
+  final painter = TextPainter(
+    text: span,
+    textDirection: TextDirection.ltr,
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout(maxWidth: 800);
+  final height = painter.size.height;
+  painter.dispose();
+  return height;
 }

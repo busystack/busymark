@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +32,12 @@ final _outlineNavigationTargetProvider =
     StateProvider<_OutlineNavigationTarget?>((ref) => null);
 final _sourceNavigationTargetProvider = StateProvider<_SourceNavigationTarget?>(
   (ref) => null,
+);
+
+const _sourceTextHeightBehavior = TextHeightBehavior(
+  applyHeightToFirstAscent: true,
+  applyHeightToLastDescent: true,
+  leadingDistribution: TextLeadingDistribution.even,
 );
 
 class _OutlineNavigationTarget {
@@ -1624,8 +1632,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final sourceVisible = widget.viewMode != DocumentViewModePreference.preview;
     final previewVisible = widget.viewMode != DocumentViewModePreference.source;
     final foldRegions = _syncSourceFoldRegions();
-    final sourceLineHeight = _sourceLineHeight(context);
-    final sourceStrutStyle = _sourceStrutStyle;
+    final sourceStrutStyle = _sourceStrutStyle(
+      folded: _foldedRegionKeys.isNotEmpty,
+    );
+    final sourceLineHeight = _sourceLineHeight(context, sourceStrutStyle);
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
@@ -1669,8 +1679,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                             textAlignVertical: TextAlignVertical.top,
                             style: _sourceTextStyle,
                             strutStyle: sourceStrutStyle,
-                            cursorColor: colors.foreground,
-                            cursorHeight: sourceLineHeight,
+                            selectionHeightStyle: BoxHeightStyle.max,
+                            selectionWidthStyle: BoxWidthStyle.tight,
+                            cursorColor: colors.foreground.withValues(
+                              alpha: 0.82,
+                            ),
+                            cursorHeight: widget.editorFontSize * 1.22,
                             cursorWidth: 1.4,
                             decoration: InputDecoration(
                               isCollapsed: true,
@@ -1703,6 +1717,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             Expanded(
               child: _PreviewPane(
                 preview: widget.state.preview,
+                workspace: widget.state.workspace,
                 controller: _previewScrollController,
                 headingKeys: _previewHeadingKeys,
               ),
@@ -1837,16 +1852,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     fontFamily: 'Ubuntu Mono',
     fontSize: widget.editorFontSize,
     height: 1.45,
+    leadingDistribution: TextLeadingDistribution.even,
   );
 
-  StrutStyle get _sourceStrutStyle =>
-      StrutStyle.fromTextStyle(_sourceTextStyle, forceStrutHeight: true);
+  StrutStyle? _sourceStrutStyle({required bool folded}) {
+    if (folded) {
+      return null;
+    }
+    return StrutStyle.fromTextStyle(_sourceTextStyle, forceStrutHeight: true);
+  }
 
-  double _sourceLineHeight(BuildContext context) {
+  double _sourceLineHeight(BuildContext context, StrutStyle? strutStyle) {
     final painter = TextPainter(
       text: TextSpan(text: ' ', style: _sourceTextStyle),
-      strutStyle: _sourceStrutStyle,
+      strutStyle: strutStyle,
       textDirection: Directionality.of(context),
+      textHeightBehavior: _sourceTextHeightBehavior,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
     final metrics = painter.computeLineMetrics();
@@ -1876,14 +1897,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   double _sourceScrollOffsetForLine(int line) {
     final textWidth = _sourceTextLayoutWidth();
-    final lineHeight = _sourceLineHeight(context);
+    final strutStyle = _sourceStrutStyle(folded: _foldedRegionKeys.isNotEmpty);
+    final lineHeight = _sourceLineHeight(context, strutStyle);
     final layouts = _sourceLineLayoutEntries(
       context,
       controller: _controller,
       foldRegions: sourceFoldRegions(_controller.text, _controller.language),
       collapsedRegionKeys: _foldedRegionKeys,
       textStyle: _sourceTextStyle,
-      strutStyle: _sourceStrutStyle,
+      strutStyle: strutStyle,
       lineHeight: lineHeight,
       textWidth: textWidth,
     );
@@ -1965,7 +1987,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final ScrollController scrollController;
   final double lineHeight;
   final TextStyle textStyle;
-  final StrutStyle strutStyle;
+  final StrutStyle? strutStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final ValueChanged<SourceFoldRegion> onToggleFold;
@@ -2050,7 +2072,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
   final TextStyle textStyle;
-  final StrutStyle strutStyle;
+  final StrutStyle? strutStyle;
   final double textWidth;
 
   @override
@@ -2076,6 +2098,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                       style: textStyle,
                     ),
                     strutStyle: strutStyle,
+                    textHeightBehavior: _sourceTextHeightBehavior,
                     textScaler: MediaQuery.textScalerOf(context),
                     textWidthBasis: TextWidthBasis.parent,
                   ),
@@ -2106,7 +2129,7 @@ class _SourceLineNumberGutter extends StatelessWidget {
   final ScrollController scrollController;
   final double lineHeight;
   final TextStyle textStyle;
-  final StrutStyle strutStyle;
+  final StrutStyle? strutStyle;
   final double textWidth;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
@@ -2190,7 +2213,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   final double lineHeight;
   final double textWidth;
   final TextStyle textStyle;
-  final StrutStyle strutStyle;
+  final StrutStyle? strutStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
 
@@ -2466,7 +2489,7 @@ List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
   required List<SourceFoldRegion> foldRegions,
   required Set<String> collapsedRegionKeys,
   required TextStyle textStyle,
-  required StrutStyle strutStyle,
+  required StrutStyle? strutStyle,
   required double lineHeight,
   required double textWidth,
 }) {
@@ -2512,13 +2535,14 @@ TextPainter _sourceTextPainter(
   BuildContext context, {
   required BusyMarkSourceEditingController controller,
   required TextStyle textStyle,
-  required StrutStyle strutStyle,
+  required StrutStyle? strutStyle,
   required double textWidth,
 }) {
   final painter = TextPainter(
     text: controller.buildSourceTextSpan(context: context, style: textStyle),
     strutStyle: strutStyle,
     textDirection: Directionality.of(context),
+    textHeightBehavior: _sourceTextHeightBehavior,
     textScaler: MediaQuery.textScalerOf(context),
   )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));
   return painter;
@@ -2577,11 +2601,13 @@ String _foldKindLabel(SourceFoldKind kind) {
 class _PreviewPane extends StatelessWidget {
   const _PreviewPane({
     required this.preview,
+    required this.workspace,
     required this.controller,
     required this.headingKeys,
   });
 
   final PreviewDocument? preview;
+  final Workspace? workspace;
   final ScrollController controller;
   final Map<String, GlobalKey> headingKeys;
 
@@ -2608,24 +2634,30 @@ class _PreviewPane extends StatelessWidget {
                 : Text(document.compatibility),
           ),
           Expanded(
-            child: ListView(
-              controller: controller,
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 34),
-              children: [
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final block in document.blocks)
-                          _PreviewBlockView(block, key: _keyForBlock(block)),
-                      ],
+            child: SelectionArea(
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 34),
+                children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final block in document.blocks)
+                            _PreviewBlockView(
+                              block,
+                              workspace: workspace,
+                              key: _keyForBlock(block),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -2646,9 +2678,10 @@ class _PreviewPane extends StatelessWidget {
 }
 
 class _PreviewBlockView extends StatelessWidget {
-  const _PreviewBlockView(this.block, {super.key});
+  const _PreviewBlockView(this.block, {required this.workspace, super.key});
 
   final PreviewBlock block;
+  final Workspace? workspace;
 
   @override
   Widget build(BuildContext context) {
@@ -2677,10 +2710,9 @@ class _PreviewBlockView extends StatelessWidget {
           ),
         ),
       ),
-      PreviewBlockKind.image => _PreviewCallout(
-        icon: Icons.image_not_supported_outlined,
-        color: colors.panel,
-        child: Text(block.text),
+      PreviewBlockKind.image => _PreviewImageBlock(
+        block: block,
+        workspace: workspace,
       ),
       PreviewBlockKind.admonition => _PreviewCallout(
         icon: _admonitionIcon(block.attributes['style']),
@@ -2822,66 +2854,239 @@ class _ListMarker extends StatelessWidget {
   }
 }
 
+class _PreviewImageBlock extends StatelessWidget {
+  const _PreviewImageBlock({required this.block, required this.workspace});
+
+  final PreviewBlock block;
+  final Workspace? workspace;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final imagePath = _resolvePreviewImagePath(workspace, block);
+    if (imagePath == null) {
+      return _PreviewCallout(
+        icon: Icons.image_not_supported_outlined,
+        color: colors.panel,
+        child: Text(block.text),
+      );
+    }
+    final width = _previewImageWidth(block);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: width ?? 760),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.panel,
+                border: Border.all(color: colors.subtleBorder),
+                borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+              ),
+              child: Image.file(
+                File(imagePath),
+                width: width,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.md),
+                  child: Text(block.text),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String? _resolvePreviewImagePath(Workspace? workspace, PreviewBlock block) {
+  final source = block.attributes['src'];
+  final activeFilePath = workspace?.activeFilePath;
+  if (workspace == null || activeFilePath == null || source == null) {
+    return null;
+  }
+  final uri = Uri.tryParse(source);
+  if (_isExternalPreviewUri(uri)) {
+    return null;
+  }
+  final decoded = _decodePreviewLinkPart(source);
+  final candidates = <String>[];
+  if (p.isAbsolute(decoded)) {
+    candidates.add(decoded);
+  }
+  candidates.add(p.normalize(p.join(p.dirname(activeFilePath), decoded)));
+  candidates.add(p.normalize(p.join(workspace.rootPath, decoded)));
+  final module = workspace.writersideModule;
+  if (module != null) {
+    final imagesRoot = p.normalize(
+      p.join(module.rootPath, module.config.imagesDir),
+    );
+    candidates.add(p.normalize(p.join(imagesRoot, decoded)));
+    final activeStem = p.basenameWithoutExtension(activeFilePath);
+    final normalizedStem = activeStem.toLowerCase();
+    final sluggedStem = slugForHeading(activeStem);
+    candidates.add(p.normalize(p.join(imagesRoot, activeStem, decoded)));
+    candidates.add(p.normalize(p.join(imagesRoot, normalizedStem, decoded)));
+    candidates.add(p.normalize(p.join(imagesRoot, sluggedStem, decoded)));
+  }
+  for (final candidate in candidates) {
+    if (File(candidate).existsSync()) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+double? _previewImageWidth(PreviewBlock block) {
+  final value = block.attributes['width'];
+  if (value == null) {
+    return null;
+  }
+  final parsed = double.tryParse(value.replaceAll(RegExp('[^0-9.]'), ''));
+  if (parsed == null || parsed <= 0) {
+    return null;
+  }
+  return parsed.clamp(80, 760).toDouble();
+}
+
 InlineSpan _previewInlineSpan(
   BuildContext context,
   PreviewInline inline, {
   required Future<void> Function(String destination) onLinkTap,
+  String? inheritedLinkDestination,
+  TextStyle? inheritedStyle,
 }) {
   final colors = BusyMarkSurfaceColors.of(context);
   final theme = Theme.of(context);
-  final children = inline.children.isEmpty
+  final linkDestination = inline.kind == PreviewInlineKind.link
+      ? inline.destination ?? inline.text
+      : inheritedLinkDestination;
+  final linkStyle = linkDestination == null
       ? null
-      : [
-          for (final child in inline.children)
-            _previewInlineSpan(context, child, onLinkTap: onLinkTap),
-        ];
-  final text = inline.children.isEmpty ? inline.text : null;
+      : TextStyle(
+          color: theme.colorScheme.primary,
+          decoration: TextDecoration.underline,
+        );
+  TextStyle? mergeStyle(TextStyle? style) {
+    final merged = inheritedStyle?.merge(style) ?? style ?? inheritedStyle;
+    return merged?.merge(linkStyle) ?? linkStyle;
+  }
+
+  TapGestureRecognizer? linkRecognizer() {
+    final destination = linkDestination;
+    if (destination == null || destination.trim().isEmpty) {
+      return null;
+    }
+    return TapGestureRecognizer()
+      ..onTap = () {
+        unawaited(onLinkTap(destination));
+      };
+  }
+
+  InlineSpan childSpan(PreviewInline child, TextStyle? style) {
+    return _previewInlineSpan(
+      context,
+      child,
+      onLinkTap: onLinkTap,
+      inheritedLinkDestination: linkDestination,
+      inheritedStyle: style,
+    );
+  }
+
+  TextSpan span({
+    required String? text,
+    required List<InlineSpan>? children,
+    TextStyle? style,
+  }) {
+    final clickable = linkDestination != null && text != null;
+    return TextSpan(
+      text: text,
+      children: children,
+      style: style,
+      mouseCursor: clickable ? SystemMouseCursors.click : null,
+      recognizer: clickable ? linkRecognizer() : null,
+    );
+  }
+
   return switch (inline.kind) {
-    PreviewInlineKind.text => TextSpan(text: inline.text),
-    PreviewInlineKind.strong => TextSpan(
-      text: text,
-      children: children,
-      style: const TextStyle(fontWeight: FontWeight.w700),
-    ),
-    PreviewInlineKind.emphasis => TextSpan(
-      text: text,
-      children: children,
-      style: const TextStyle(fontStyle: FontStyle.italic),
-    ),
-    PreviewInlineKind.strikethrough => TextSpan(
-      text: text,
-      children: children,
-      style: const TextStyle(decoration: TextDecoration.lineThrough),
-    ),
-    PreviewInlineKind.code => TextSpan(
+    PreviewInlineKind.text => span(
       text: inline.text,
-      style: TextStyle(
-        fontFamily: 'Ubuntu Mono',
-        backgroundColor: colors.control,
-        color: colors.foreground,
+      children: null,
+      style: mergeStyle(null),
+    ),
+    PreviewInlineKind.strong => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(
+                  child,
+                  mergeStyle(const TextStyle(fontWeight: FontWeight.w700)),
+                ),
+            ],
+      style: mergeStyle(const TextStyle(fontWeight: FontWeight.w700)),
+    ),
+    PreviewInlineKind.emphasis => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(
+                  child,
+                  mergeStyle(const TextStyle(fontStyle: FontStyle.italic)),
+                ),
+            ],
+      style: mergeStyle(const TextStyle(fontStyle: FontStyle.italic)),
+    ),
+    PreviewInlineKind.strikethrough => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(
+                  child,
+                  mergeStyle(
+                    const TextStyle(decoration: TextDecoration.lineThrough),
+                  ),
+                ),
+            ],
+      style: mergeStyle(
+        const TextStyle(decoration: TextDecoration.lineThrough),
       ),
     ),
-    PreviewInlineKind.link => TextSpan(
-      text: text,
-      children: children,
-      style: TextStyle(
-        color: theme.colorScheme.primary,
-        decoration: TextDecoration.underline,
-      ),
-      mouseCursor: SystemMouseCursors.click,
-      recognizer: TapGestureRecognizer()
-        ..onTap = () {
-          final destination = inline.destination ?? inline.text;
-          if (destination.trim().isNotEmpty) {
-            unawaited(onLinkTap(destination));
-          }
-        },
-    ),
-    PreviewInlineKind.image => TextSpan(
+    PreviewInlineKind.code => span(
       text: inline.text,
-      style: TextStyle(
-        color: colors.mutedForeground,
-        fontStyle: FontStyle.italic,
+      children: null,
+      style: mergeStyle(
+        TextStyle(
+          fontFamily: 'Ubuntu Mono',
+          backgroundColor: colors.control,
+          color: colors.foreground,
+        ),
+      ),
+    ),
+    PreviewInlineKind.link => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(child, mergeStyle(null)),
+            ],
+      style: mergeStyle(null),
+    ),
+    PreviewInlineKind.image => span(
+      text: inline.text,
+      children: null,
+      style: mergeStyle(
+        TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
       ),
     ),
   };

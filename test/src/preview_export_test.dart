@@ -57,6 +57,26 @@ void main() {
     expect(html, isNot(contains('Compatibility level:')));
   });
 
+  test('preview preserves links inside list items', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '- [How to Install Matter on RPi](https://mattercoder.com/'
+          'codelabs/how-to-install-matter-on-rpi/)\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final list = preview.blocks.singleWhere(
+      (block) => block.kind == PreviewBlockKind.list,
+    );
+
+    expect(list.text, 'How to Install Matter on RPi');
+    expect(list.inlines.single.kind, PreviewInlineKind.link);
+    expect(
+      list.inlines.single.destination,
+      'https://mattercoder.com/codelabs/how-to-install-matter-on-rpi/',
+    );
+  });
+
   test('preview preserves inline Markdown semantics', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -173,6 +193,26 @@ Conclusion.
       PreviewBlockKind.paragraph,
     ]);
     expect(preview.blocks.last.text, 'Conclusion.');
+  });
+
+  test('preview parses Writerside image attributes', () {
+    final parsed = parser.parse(
+      filePath: 'System-Design.md',
+      source: '''
+# System Design
+
+![Architecture Diagram](architecture.png){ thumbnail="true" width="500" }
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final image = preview.blocks.singleWhere(
+      (block) => block.kind == PreviewBlockKind.image,
+    );
+
+    expect(image.text, 'Architecture Diagram');
+    expect(image.attributes['src'], 'architecture.png');
+    expect(image.attributes['thumbnail'], 'true');
+    expect(image.attributes['width'], '500');
   });
 
   test('front matter is skipped only at the top of the document', () {

@@ -239,8 +239,10 @@ void main() {
     );
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
-    expect(workspace, contains('cursorColor: colors.foreground'));
-    expect(workspace, contains('cursorHeight: sourceLineHeight'));
+    expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
+    expect(workspace, contains('selectionWidthStyle: BoxWidthStyle.tight'));
+    expect(workspace, contains('cursorColor: colors.foreground.withValues'));
+    expect(workspace, contains('cursorHeight: widget.editorFontSize * 1.22'));
     expect(workspace, contains('cursorWidth: 1.4'));
   });
 
@@ -316,7 +318,7 @@ void main() {
     ).readAsStringSync();
 
     expect(workspace, contains('isCollapsed: true'));
-    expect(workspace, contains('_sourceLineHeight(context)'));
+    expect(workspace, contains('_sourceLineHeight(context, sourceStrutStyle)'));
     expect(workspace, contains('_SourceRenderedTextLayer'));
     expect(workspace, contains('renderText = false'));
     expect(workspace, contains('controller.buildSourceTextSpan'));
@@ -325,7 +327,10 @@ void main() {
     expect(workspace, contains('getOffsetForCaret'));
     expect(workspace, contains('_sourceTextHeightForLine'));
     expect(workspace, contains('_CollapsedSourceLineOverlay'));
-    expect(workspace, contains('_sourceStrutStyle'));
+    expect(workspace, contains('_sourceStrutStyle('));
+    expect(workspace, contains('folded: _foldedRegionKeys.isNotEmpty'));
+    expect(workspace, contains('if (folded)'));
+    expect(workspace, contains('return null'));
     expect(workspace, contains('forceStrutHeight: true'));
     expect(workspace, contains('strutStyle: sourceStrutStyle'));
     expect(workspace, contains('TextOverflow.ellipsis'));

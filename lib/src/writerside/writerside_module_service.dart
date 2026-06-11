@@ -369,16 +369,7 @@ class WritersideModuleService {
         if (_isExternal(image.destination)) {
           continue;
         }
-        final imagePath = p.join(
-          module.rootPath,
-          module.config.imagesDir,
-          image.destination,
-        );
-        final relativePath = p.join(
-          p.dirname(topic.filePath),
-          image.destination,
-        );
-        if (!File(imagePath).existsSync() && !File(relativePath).existsSync()) {
+        if (!_writersideImageExists(module, topic, image.destination)) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.image.missing-file',
@@ -467,6 +458,24 @@ class WritersideModuleService {
     return destination.startsWith('http://') ||
         destination.startsWith('https://') ||
         destination.startsWith('mailto:');
+  }
+
+  bool _writersideImageExists(
+    WritersideModule module,
+    WritersideTopic topic,
+    String destination,
+  ) {
+    final imagesRoot = p.join(module.rootPath, module.config.imagesDir);
+    final activeStem = p.basenameWithoutExtension(topic.fileName);
+    final sluggedStem = slugForHeading(activeStem);
+    final candidates = [
+      p.join(imagesRoot, destination),
+      p.join(imagesRoot, activeStem, destination),
+      p.join(imagesRoot, activeStem.toLowerCase(), destination),
+      p.join(imagesRoot, sluggedStem, destination),
+      p.join(p.dirname(topic.filePath), destination),
+    ];
+    return candidates.any((candidate) => File(candidate).existsSync());
   }
 
   SourceSpan _stringSpan(String filePath, String source, String value) {
