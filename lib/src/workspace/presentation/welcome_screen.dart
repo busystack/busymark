@@ -91,7 +91,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             BusyMarkGroupedList(
-              title: 'Open',
+              title: 'Create',
               filled: true,
               children: [
                 BusyMarkActionRow(
@@ -101,6 +101,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _createMarkdownFile,
                 ),
+              ],
+            ),
+            BusyMarkGroupedList(
+              title: 'Open',
+              filled: true,
+              children: [
                 BusyMarkActionRow(
                   title: 'Open Markdown File',
                   subtitle: '.md or .markdown',

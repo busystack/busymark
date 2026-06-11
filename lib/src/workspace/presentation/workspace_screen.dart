@@ -44,6 +44,20 @@ const _sourceTextHeightBehavior = TextHeightBehavior(
   leadingDistribution: TextLeadingDistribution.even,
 );
 
+bool _hasSingleScrollClient(ScrollController controller) {
+  return controller.positions.length == 1;
+}
+
+double _safeScrollOffset(ScrollController controller) {
+  return _hasSingleScrollClient(controller) ? controller.offset : 0.0;
+}
+
+double _safeMaxScrollExtent(ScrollController controller) {
+  return _hasSingleScrollClient(controller)
+      ? controller.position.maxScrollExtent
+      : 0.0;
+}
+
 class _OutlineNavigationTarget {
   const _OutlineNavigationTarget({
     required this.filePath,
@@ -1944,7 +1958,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _animateSourceScrollToLine(int line) {
-    if (!mounted || !_sourceScrollController.hasClients) {
+    if (!mounted || !_hasSingleScrollClient(_sourceScrollController)) {
       return;
     }
     _sourceScrollController.animateTo(
@@ -1955,7 +1969,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _jumpSourceScrollToLine(int line) {
-    if (!mounted || !_sourceScrollController.hasClients) {
+    if (!mounted || !_hasSingleScrollClient(_sourceScrollController)) {
       return;
     }
     _sourceScrollController.jumpTo(_sourceScrollOffsetForLine(line));
@@ -1984,7 +1998,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         )
         .top;
     return targetOffset
-        .clamp(0.0, _sourceScrollController.position.maxScrollExtent)
+        .clamp(0.0, _safeMaxScrollExtent(_sourceScrollController))
         .toDouble();
   }
 
@@ -2179,9 +2193,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
         child: AnimatedBuilder(
           animation: Listenable.merge([controller, scrollController]),
           builder: (context, _) {
-            final scrollOffset = scrollController.hasClients
-                ? scrollController.offset
-                : 0.0;
+            final scrollOffset = _safeScrollOffset(scrollController);
             return Stack(
               clipBehavior: Clip.none,
               children: [
@@ -2257,9 +2269,7 @@ class _SourceLineNumberGutter extends StatelessWidget {
                   controller.text,
                   controller.selection.extentOffset,
                 );
-                final scrollOffset = scrollController.hasClients
-                    ? scrollController.offset
-                    : 0.0;
+                final scrollOffset = _safeScrollOffset(scrollController);
                 final children = <Widget>[];
                 for (final layout in layouts) {
                   final top = layout.top - scrollOffset;
@@ -2337,9 +2347,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                   for (final line in sourceLineInfos(controller.text))
                     line.number: line,
                 };
-                final scrollOffset = scrollController.hasClients
-                    ? scrollController.offset
-                    : 0.0;
+                final scrollOffset = _safeScrollOffset(scrollController);
                 final children = <Widget>[];
                 for (final layout in layouts) {
                   final entry = layout.gutterEntry;
