@@ -368,8 +368,9 @@ void main() {
       workspace,
       contains('widget.viewMode != DocumentViewModePreference.source'),
     );
-    expect(workspace, contains('class _VisualMarkdownEditorPane'));
-    expect(workspace, contains('visualMarkdown = editorVisible'));
+    expect(workspace, contains('BusyMarkWysiwygEditor'));
+    expect(workspace, contains('visualMarkdown = false'));
+    expect(workspace, isNot(contains('class _VisualMarkdownEditorPane')));
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
     expect(settingsScreen, isNot(contains('Show preview pane')));

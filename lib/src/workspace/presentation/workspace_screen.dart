@@ -20,7 +20,10 @@ import '../../core/local_image_resolver.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
+import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_parser.dart';
 import '../../markdown/preview_export.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
@@ -1618,6 +1621,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _controller.clearFoldedRegions();
       _previewHeadingKeys.clear();
       _controller.text = widget.state.activeText;
+    } else if (widget.state.activeText != oldWidget.state.activeText &&
+        !_sourceFocusNode.hasFocus) {
+      _controller.text = widget.state.activeText;
     }
   }
 
@@ -1656,37 +1662,47 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     });
     final colors = BusyMarkSurfaceColors.of(context);
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
+    final wysiwygVisible =
+        editorVisible &&
+        _canUseWysiwyg(widget.state.workspace) &&
+        _wysiwygDocument() != null;
     final sourceVisible =
-        widget.viewMode != DocumentViewModePreference.preview && !editorVisible;
+        widget.viewMode != DocumentViewModePreference.preview &&
+        !wysiwygVisible;
     final previewVisible =
         widget.viewMode != DocumentViewModePreference.source && !editorVisible;
     final foldRegions = _syncSourceFoldRegions();
     final sourceStrutStyle = _sourceStrutStyle(
       folded: _foldedRegionKeys.isNotEmpty,
     );
-    final visualEditorStrutStyle = StrutStyle.fromTextStyle(
-      _visualEditorTextStyle,
-      forceStrutHeight: true,
-    );
     final sourceLineHeight = _sourceLineHeight(context, sourceStrutStyle);
     _controller
-      ..renderText = editorVisible
-      ..visualMarkdown = editorVisible;
+      ..renderText = false
+      ..visualMarkdown = false;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
         children: [
-          if (editorVisible)
+          if (wysiwygVisible)
             Expanded(
-              child: _VisualMarkdownEditorPane(
-                controller: _controller,
-                focusNode: _sourceFocusNode,
-                scrollController: _sourceScrollController,
-                textStyle: _visualEditorTextStyle,
-                strutStyle: visualEditorStrutStyle,
-                wordWrap: widget.wordWrap,
-                dirty: widget.state.isDirty,
-                onChanged: _handleSourceChanged,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _PaneHeader(
+                    icon: Icons.edit_document,
+                    title: 'Editor',
+                    trailing: _StatusPill(
+                      label: widget.state.isDirty ? 'Unsaved' : 'Saved',
+                      active: widget.state.isDirty,
+                    ),
+                  ),
+                  Expanded(
+                    child: BusyMarkWysiwygEditor(
+                      document: _wysiwygDocument()!,
+                      onSourceChanged: _handleSourceChanged,
+                    ),
+                  ),
+                ],
               ),
             ),
           if (sourceVisible)
@@ -1905,13 +1921,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     leadingDistribution: TextLeadingDistribution.even,
   );
 
-  TextStyle get _visualEditorTextStyle => TextStyle(
-    fontFamily: 'Ubuntu',
-    fontSize: widget.editorFontSize + 1,
-    height: 1.55,
-    leadingDistribution: TextLeadingDistribution.even,
-  );
-
   StrutStyle? _sourceStrutStyle({required bool folded}) {
     if (folded) {
       return null;
@@ -2019,80 +2028,36 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     return text.length;
   }
-}
 
-class _VisualMarkdownEditorPane extends StatelessWidget {
-  const _VisualMarkdownEditorPane({
-    required this.controller,
-    required this.focusNode,
-    required this.scrollController,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.wordWrap,
-    required this.dirty,
-    required this.onChanged,
-  });
+  bool _canUseWysiwyg(Workspace? workspace) {
+    final kind = _activeDocumentKind(workspace);
+    return kind == DocumentKind.markdown ||
+        kind == DocumentKind.writersideMarkdownTopic;
+  }
 
-  final BusyMarkSourceEditingController controller;
-  final FocusNode focusNode;
-  final ScrollController scrollController;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final bool wordWrap;
-  final bool dirty;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _PaneHeader(
-            icon: Icons.edit_document,
-            title: 'Editor',
-            trailing: _StatusPill(
-              label: dirty ? 'Unsaved' : 'Saved',
-              active: dirty,
-            ),
-          ),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              scrollController: scrollController,
-              keyboardType: wordWrap
-                  ? TextInputType.multiline
-                  : TextInputType.text,
-              maxLines: null,
-              expands: true,
-              textAlignVertical: TextAlignVertical.top,
-              style: textStyle,
-              strutStyle: strutStyle,
-              selectionHeightStyle: BoxHeightStyle.max,
-              selectionWidthStyle: BoxWidthStyle.tight,
-              cursorColor: colors.foreground.withValues(alpha: 0.82),
-              cursorHeight: (textStyle.fontSize ?? 15) * 1.22,
-              cursorWidth: 1.4,
-              decoration: const InputDecoration(
-                isCollapsed: true,
-                filled: false,
-                fillColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                focusColor: Colors.transparent,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.fromLTRB(28, 24, 28, 36),
-              ),
-              onChanged: onChanged,
-            ),
-          ),
-        ],
-      ),
-    );
+  BusyDocument? _wysiwygDocument() {
+    final workspace = widget.state.workspace;
+    final activePath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    if (workspace == null || activePath == null) {
+      return null;
+    }
+    final mode = workspace.kind == WorkspaceKind.writersideModule
+        ? MarkdownMode.writersideMarkdown
+        : MarkdownMode.commonMark;
+    try {
+      return const MarkdownParser()
+          .parse(
+            filePath: activePath,
+            source: widget.state.activeText,
+            mode: mode,
+            workspaceRoot: workspace.rootPath,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+    } on Object {
+      return workspace.markdown?.busyDocument;
+    }
   }
 }
 
@@ -2898,6 +2863,24 @@ class _PreviewBlockView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Divider(height: 1, color: colors.subtleBorder),
       ),
+      PreviewBlockKind.table => _PreviewTable(block: block),
+      PreviewBlockKind.raw => Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: colors.panel,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Text(
+          block.text,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontFamily: 'Ubuntu Mono',
+            color: colors.mutedForeground,
+            height: 1.45,
+          ),
+        ),
+      ),
       _ => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: _PreviewInlineText(block: block),
@@ -2920,6 +2903,61 @@ class _PreviewBlockView extends StatelessWidget {
       'tip' => Icons.lightbulb_outline,
       _ => Icons.info_outline,
     };
+  }
+}
+
+class _PreviewTable extends StatelessWidget {
+  const _PreviewTable({required this.block});
+
+  final PreviewBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.panel,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        child: Table(
+          border: TableBorder.symmetric(
+            inside: BorderSide(color: colors.subtleBorder),
+          ),
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            for (final row in block.children)
+              TableRow(
+                decoration: BoxDecoration(
+                  color: row.attributes['header'] == 'true'
+                      ? colors.control
+                      : Colors.transparent,
+                ),
+                children: [
+                  for (final cell in row.children)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: BusyMarkSpacing.sm,
+                        vertical: BusyMarkSpacing.xs,
+                      ),
+                      child: _PreviewInlineText(
+                        block: cell,
+                        style: row.attributes['header'] == 'true'
+                            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              )
+                            : null,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -6,6 +6,8 @@ import '../core/diagnostic.dart';
 import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import 'busymark_document.dart';
+import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
 
 class MarkdownParser {
@@ -41,12 +43,14 @@ class MarkdownParser {
           ? rawLine.substring(0, rawLine.length - 1)
           : rawLine;
       final trimmed = line.trimRight();
-      final fence = RegExp(r'^\s*```\s*([A-Za-z0-9_+\-#.]*)').firstMatch(line);
+      final fence = RegExp(
+        r'^\s*(```|~~~)\s*([A-Za-z0-9_+\-#.]*)',
+      ).firstMatch(line);
       if (fence != null) {
         if (!inFence) {
           inFence = true;
           fenceStart = offset;
-          fenceLanguage = fence.group(1)?.trim();
+          fenceLanguage = fence.group(2)?.trim();
           if (fenceLanguage != null && fenceLanguage.isEmpty) {
             fenceLanguage = null;
           }
@@ -211,6 +215,17 @@ class MarkdownParser {
       );
     }
 
+    final busyDocument = _withScannedMetadata(
+      const MarkdownAstAdapter().parse(
+        filePath: filePath,
+        source: source,
+        mode: mode,
+        title: title,
+      ),
+      headings,
+      sortDiagnostics(diagnostics),
+    );
+
     return ParsedMarkdownDocument(
       filePath: filePath,
       source: source,
@@ -223,6 +238,42 @@ class MarkdownParser {
       xmlBlocks: xmlBlocks,
       variables: variables,
       diagnostics: sortDiagnostics(diagnostics),
+      busyDocument: busyDocument,
+    );
+  }
+
+  BusyDocument _withScannedMetadata(
+    BusyDocument document,
+    List<MarkdownHeading> headings,
+    List<Diagnostic> diagnostics,
+  ) {
+    var headingIndex = 0;
+    return document.copyWith(
+      diagnostics: diagnostics,
+      blocks: [
+        for (final block in document.blocks)
+          if (block.kind == BusyBlockKind.heading &&
+              headingIndex < headings.length)
+            _headingWithScannedMetadata(block, headings[headingIndex++])
+          else
+            block,
+      ],
+    );
+  }
+
+  BusyBlock _headingWithScannedMetadata(
+    BusyBlock block,
+    MarkdownHeading heading,
+  ) {
+    return block.copyWith(
+      id: heading.id,
+      attributes: {
+        ...block.attributes,
+        'id': heading.id,
+        'level': '${heading.level}',
+        'generatedId': '${heading.generatedId}',
+      },
+      sourceSpan: heading.span,
     );
   }
 
