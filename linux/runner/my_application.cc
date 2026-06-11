@@ -619,6 +619,9 @@ static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
       gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
   gtk_widget_set_opacity(check, 0.0);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
   gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
@@ -754,6 +757,9 @@ static GtkWidget* create_view_mode_item(MyApplication* self,
       gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
   gtk_widget_set_opacity(check, 0.0);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
   gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);

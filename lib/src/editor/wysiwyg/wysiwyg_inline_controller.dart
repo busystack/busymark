@@ -108,25 +108,30 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
   final ranges = <BusyInlineStyleRange>[];
   var offset = 0;
 
-  void visit(BusyInline inline, BusyInlineKind? inheritedKind) {
+  void visit(BusyInline inline, _InheritedInlineStyle? inheritedStyle) {
     final start = offset;
     final children = inline.children;
+    final ownStyle = _styledKind(inline.kind)
+        ? _InheritedInlineStyle(inline.kind, inline.destination)
+        : null;
+    final effectiveStyle = ownStyle ?? inheritedStyle;
     if (children.isEmpty) {
       offset += inline.plainText.length;
     } else {
       for (final child in children) {
-        visit(child, inline.kind);
+        visit(child, effectiveStyle);
       }
+      return;
     }
     final end = offset;
-    final kind = _styledKind(inline.kind) ? inline.kind : inheritedKind;
+    final kind = effectiveStyle?.kind;
     if (kind != null && end > start && _styledKind(kind)) {
       ranges.add(
         BusyInlineStyleRange(
           start: start,
           end: end,
           kind: kind,
-          destination: inline.destination,
+          destination: effectiveStyle?.destination,
         ),
       );
     }
@@ -136,6 +141,13 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
     visit(inline, null);
   }
   return ranges;
+}
+
+class _InheritedInlineStyle {
+  const _InheritedInlineStyle(this.kind, this.destination);
+
+  final BusyInlineKind kind;
+  final String? destination;
 }
 
 bool _styledKind(BusyInlineKind kind) {

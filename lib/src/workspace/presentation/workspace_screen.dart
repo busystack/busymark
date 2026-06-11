@@ -44,18 +44,16 @@ const _sourceTextHeightBehavior = TextHeightBehavior(
   leadingDistribution: TextLeadingDistribution.even,
 );
 
-bool _hasSingleScrollClient(ScrollController controller) {
-  return controller.positions.length == 1;
+ScrollPosition? _safeScrollPosition(ScrollController controller) {
+  return controller.positions.isEmpty ? null : controller.positions.last;
 }
 
 double _safeScrollOffset(ScrollController controller) {
-  return _hasSingleScrollClient(controller) ? controller.offset : 0.0;
+  return _safeScrollPosition(controller)?.pixels ?? 0.0;
 }
 
 double _safeMaxScrollExtent(ScrollController controller) {
-  return _hasSingleScrollClient(controller)
-      ? controller.position.maxScrollExtent
-      : 0.0;
+  return _safeScrollPosition(controller)?.maxScrollExtent ?? 0.0;
 }
 
 class _OutlineNavigationTarget {
@@ -1958,7 +1956,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _animateSourceScrollToLine(int line) {
-    if (!mounted || !_hasSingleScrollClient(_sourceScrollController)) {
+    if (!mounted || !_sourceScrollController.hasClients) {
       return;
     }
     _sourceScrollController.animateTo(
@@ -1969,7 +1967,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _jumpSourceScrollToLine(int line) {
-    if (!mounted || !_hasSingleScrollClient(_sourceScrollController)) {
+    if (!mounted || !_sourceScrollController.hasClients) {
       return;
     }
     _sourceScrollController.jumpTo(_sourceScrollOffsetForLine(line));

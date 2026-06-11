@@ -9,7 +9,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
     required BusyDocument document,
     BusyMarkMarkdownSerializer serializer = const BusyMarkMarkdownSerializer(),
-  }) : _document = document,
+  }) : _document = _ensureEditableDocument(document),
        _serializer = serializer;
 
   BusyDocument _document;
@@ -20,7 +20,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   String get markdown => _serializer.serialize(_document);
 
   void replaceDocument(BusyDocument document) {
-    _document = document;
+    _document = _ensureEditableDocument(document);
     notifyListeners();
   }
 
@@ -158,4 +158,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       yield* _flatten(block.children);
     }
   }
+}
+
+BusyDocument _ensureEditableDocument(BusyDocument document) {
+  final hasEditableBlock = document.blocks.any(
+    (block) => block.kind != BusyBlockKind.frontMatter,
+  );
+  if (hasEditableBlock) {
+    return document;
+  }
+  return document.copyWith(
+    blocks: [
+      ...document.blocks,
+      const BusyBlock(
+        id: 'empty-paragraph',
+        kind: BusyBlockKind.paragraph,
+        inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
+      ),
+    ],
+  );
 }

@@ -1,10 +1,13 @@
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_export.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -134,6 +137,60 @@ void main() {}
     controller.updateBlockText(blockId, 'Changed');
 
     expect(controller.markdown, 'Changed\n');
+  });
+
+  test('WYSIWYG empty documents have one editable paragraph', () {
+    final parsed = parser.parse(filePath: 'Untitled.md', source: '');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final block = controller.document.blocks.single;
+
+    expect(block.kind, BusyBlockKind.paragraph);
+
+    controller.updateBlockText(block.id, 'First line');
+
+    expect(controller.markdown, 'First line\n');
+  });
+
+  testWidgets('WYSIWYG editor accepts typing in an empty document', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'Untitled.md', source: '');
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField).first, 'Editable text');
+    await tester.pump();
+
+    expect(markdown, 'Editable text\n');
+    expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  test('WYSIWYG inline ranges do not duplicate formatted text', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: '**source**\n');
+    final block = parsed.busyDocument.blocks.single;
+    final ranges = busyInlineStyleRanges(block.inlines);
+
+    expect(block.plainText, 'source');
+    expect(ranges, hasLength(1));
+    expect(ranges.single.start, 0);
+    expect(ranges.single.end, 'source'.length);
+    expect(ranges.single.kind, BusyInlineKind.strong);
   });
 
   test('WYSIWYG inline commands serialize bold italic and links', () {
