@@ -91,7 +91,7 @@ void main() {
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(service, contains('backgroundColor: colors.headerbarFlat'));
+    expect(service, contains('backgroundColor: colors.view'));
     expect(service, contains('sidebarBackgroundColor: colors.sidebar'));
     expect(service, contains('sidebarBorderColor: colors.sidebarBorder'));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#242424"'));
@@ -230,6 +230,7 @@ void main() {
 
     expect(welcome, isNot(contains('_WelcomeRail')));
     expect(welcome, contains('setSidebarVisible(false)'));
+    expect(welcome, contains('backgroundColor: colors.view'));
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
@@ -253,6 +254,20 @@ void main() {
       native,
       contains('set_widget_visible(self->problems_button, visible)'),
     );
+  });
+
+  test('no-sidebar pages use the main view surface under the headerbar', () {
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+
+    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(settings, contains('backgroundColor: colors.view'));
+    expect(welcome, isNot(contains('backgroundColor: colors.window')));
+    expect(settings, isNot(contains('backgroundColor: colors.window')));
   });
 
   test(

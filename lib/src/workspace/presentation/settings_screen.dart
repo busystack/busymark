@@ -32,7 +32,7 @@ class SettingsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: colors.window,
+      backgroundColor: colors.view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(

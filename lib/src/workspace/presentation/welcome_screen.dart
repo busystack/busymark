@@ -57,7 +57,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: colors.window,
+      backgroundColor: colors.view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(

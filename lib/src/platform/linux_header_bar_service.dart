@@ -97,7 +97,7 @@ class HeaderBarTheme {
     final colors = BusyMarkSurfaceColors.of(context);
     final barrier = Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
     return HeaderBarTheme(
-      backgroundColor: colors.headerbarFlat,
+      backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       mutedForegroundColor: colors.mutedForeground,
