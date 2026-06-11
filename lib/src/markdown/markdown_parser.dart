@@ -178,9 +178,9 @@ class MarkdownParser {
               previousSetextCandidateOffset != null) {
         addScannedHeading(
           level: level,
-          rawText: previousSetextCandidateLine!.trim(),
+          rawText: previousSetextCandidateLine.trim(),
           attrText: null,
-          startOffset: previousSetextCandidateOffset!,
+          startOffset: previousSetextCandidateOffset,
           endOffset: offset + line.length,
         );
         previousSetextCandidateLine = null;
