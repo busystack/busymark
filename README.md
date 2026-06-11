@@ -65,7 +65,7 @@ flutter build linux
 ```
 
 The Linux desktop file uses the application id `io.busystack.busymark` and
-installs the app icon from `assets/branding/io.busystack.busymark.png`.
+installs the app icon from `assets/branding/busymark_logo.svg`.
 
 ## Contributing
 

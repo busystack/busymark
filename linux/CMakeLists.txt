@@ -98,7 +98,7 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${APPLICATION_ID}.desktop"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
   COMPONENT Runtime)
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/branding/io.busystack.busymark.png"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/branding/busymark_logo.svg"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps"
   COMPONENT Runtime)
 
