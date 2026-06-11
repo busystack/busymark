@@ -96,6 +96,44 @@ void main() {
     expect(design, isNot(contains('YaruBorderContainer')));
   });
 
+  test('shared row hover uses subtle foreground overlay', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+
+    final helper = RegExp(
+      r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
+      dotAll: true,
+    ).firstMatch(design)!.group(1)!;
+    expect(helper, contains('colors.foreground.withValues'));
+    expect(helper, contains('Brightness.dark ? 0.045 : 0.055'));
+    expect(helper, isNot(contains('controlHover')));
+  });
+
+  test('shared surfaces use semantic BusyMark shadows', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final dialogs = File(
+      'lib/src/app/busymark_dialogs.dart',
+    ).readAsStringSync();
+    final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
+
+    expect(design, contains('return BusyMarkSurfaceColors.of(context).shade'));
+    expect(design, contains('floatingShadowsFor'));
+    expect(design, contains('windowShadowsFor'));
+    expect(design, contains('edgeShadowsFor'));
+    expect(
+      design,
+      contains('shadowColor: BusyMarkShadow.floatingColor(context)'),
+    );
+    expect(dialogs, contains('elevation: BusyMarkElevation.popover'));
+    expect(
+      dialogs,
+      contains('shadowColor: BusyMarkShadow.floatingColor(context)'),
+    );
+    expect(
+      theme,
+      contains('boxShadow: BusyMarkShadow.floatingShadows(colors.shade)'),
+    );
+  });
+
   test(
     'problems are opened from a popup instead of a bottom panel setting',
     () {

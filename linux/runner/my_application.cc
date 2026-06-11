@@ -353,10 +353,29 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: transparent;"
       "background-image: none;"
       "border: none;"
+      "border-width: 0;"
+      "border-color: transparent;"
       "box-shadow: none;"
+      "text-shadow: none;"
+      "outline-style: none;"
+      "outline-width: 0;"
+      "outline-offset: 0;"
+      "transition: none;"
       "min-height: %dpx;"
       "padding: 0 %dpx;"
       "border-radius: %dpx;"
+      "}"
+      "popover.busymark-header-popover button.busymark-menu-row:focus,"
+      "popover.busymark-header-popover button.busymark-menu-row:active,"
+      "popover.busymark-header-popover button.busymark-menu-row:checked {"
+      "border: none;"
+      "border-width: 0;"
+      "border-color: transparent;"
+      "box-shadow: none;"
+      "outline-style: none;"
+      "outline-width: 0;"
+      "outline-offset: 0;"
+      "text-shadow: none;"
       "}"
       "popover.busymark-header-popover button.busymark-menu-row:hover {"
       "background-color: %s;"
@@ -906,10 +925,18 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      FALSE, 0);
   gtk_widget_show_all(view_menu_box);
 
-  self->view_mode_button =
-      create_menu_button(self->view_mode_menu, "pan-down-symbolic");
+  self->view_mode_button = gtk_menu_button_new();
+  gtk_button_set_relief(GTK_BUTTON(self->view_mode_button), GTK_RELIEF_NONE);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
+                              GTK_STYLE_CLASS_FLAT);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
+                              "busymark-header-button");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
                               "busymark-view-mode-button");
+  gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(self->view_mode_button),
+                                  TRUE);
+  gtk_menu_button_set_popover(GTK_MENU_BUTTON(self->view_mode_button),
+                              self->view_mode_menu);
   GtkWidget* view_button_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   self->view_mode_label = gtk_label_new("");

@@ -202,6 +202,21 @@ void main() {
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));
     expect(native, contains('object-select-symbolic'));
+    expect(native, contains('button.busymark-menu-row:focus'));
+    expect(native, contains('button.busymark-menu-row:active'));
+    expect(native, contains('outline-width: 0;'));
+    expect(native, contains('self->view_mode_button = gtk_menu_button_new()'));
+    expect(
+      native,
+      contains('gtk_label_set_text(GTK_LABEL(self->view_mode_label)'),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(view_button_box), self->view_mode_label',
+      ),
+    );
+    expect(native, isNot(contains('create_menu_button(self->view_mode_menu')));
     expect(
       native,
       contains('set_widget_tooltip(self->view_mode_button, view_mode)'),

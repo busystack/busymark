@@ -49,14 +49,21 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: maxWidth,
-          maxHeight: maxHeight ?? MediaQuery.sizeOf(context).height * 0.86,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: maxWidth,
+        maxHeight: maxHeight ?? MediaQuery.sizeOf(context).height * 0.86,
+      ),
+      child: Material(
+        color: colors.dialog,
+        elevation: BusyMarkElevation.popover,
+        shadowColor: BusyMarkShadow.floatingColor(context),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
         ),
-        child: ColoredBox(color: colors.dialog, child: child),
+        clipBehavior: Clip.antiAlias,
+        child: child,
       ),
     );
   }
