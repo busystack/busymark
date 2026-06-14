@@ -1,0 +1,56 @@
+name: busymark
+title: BusyMark
+version: "0.1.0+1"
+summary: Markdown and Writerside documentation editor
+description: |
+  BusyMark is a Linux desktop editor for Markdown files and Writerside-compatible documentation projects.
+
+  Open individual Markdown files, documentation folders, and Writerside-style project structures. Edit local files, preview Markdown, navigate project files, inspect document outlines, and save changes in a native-feeling Linux desktop workspace.
+
+license: Apache-2.0
+base: core24
+grade: devel
+confinement: strict
+icon: assets/branding/busymark_logo.svg
+website: https://github.com/busystack/busymark
+issues: https://github.com/busystack/busymark/issues
+source-code: https://github.com/busystack/busymark
+
+platforms:
+  amd64:
+    build-on: [amd64]
+    build-for: [amd64]
+
+apps:
+  busymark:
+    command: busymark
+    desktop: share/applications/io.busystack.busymark.desktop
+    common-id: io.busystack.busymark
+    extensions: [gnome]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - gsettings
+      - opengl
+      - wayland
+      - x11
+      - home
+      - removable-media
+    environment:
+      GDK_BACKEND: wayland,x11
+      XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
+      XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
+      XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
+
+parts:
+  busymark:
+    plugin: dump
+    source: build/linux/x64/release/bundle
+    override-prime: |
+      craftctl default
+      install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
+        "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
+      install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.metainfo.xml" \
+        "$CRAFT_PRIME/share/metainfo/io.busystack.busymark.metainfo.xml"
+      install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
+        "$CRAFT_PRIME/share/icons/hicolor/scalable/apps/io.busystack.busymark.svg"

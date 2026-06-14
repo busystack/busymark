@@ -53,7 +53,7 @@ flutter run -d linux -- /path/to/docs
 
 ## Test
 
-```bashbasicbasic
+```bash
 flutter analyze
 flutter test
 ```

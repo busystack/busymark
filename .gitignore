@@ -35,6 +35,10 @@ migrate_working_dir/
 /build/
 /coverage/
 linux/flutter/ephemeral/
+*.snap
+*.assert
+snapcraft-pack.log
+.snap-build-*
 
 # Symbolication related
 app.*.symbols

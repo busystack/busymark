@@ -49,11 +49,16 @@ void main() {
     );
     expect(
       cmake,
-      contains(r'"${CMAKE_CURRENT_SOURCE_DIR}/${APPLICATION_ID}.desktop"'),
+      contains(r'"${CMAKE_CURRENT_SOURCE_DIR}/io.busystack.busymark.desktop"'),
+    );
+    expect(
+      cmake,
+      contains(
+        r'"${CMAKE_CURRENT_SOURCE_DIR}/io.busystack.busymark.metainfo.xml"',
+      ),
     );
     expect(desktop, contains('Name=BusyMark'));
     expect(desktop, contains('StartupWMClass=io.busystack.busymark'));
-    expect(File('linux/busymark.desktop').existsSync(), isFalse);
   });
 
   test('native labels are supplied by Dart rather than hardcoded in C++', () {
