@@ -159,6 +159,7 @@ void main() {
 
     expect(controller.state.workspace, isNull);
     expect(controller.state.errorMessage, contains('Open failed'));
+    expect(controller.state.errorMessage, contains('Path does not exist'));
 
     controller.dispose();
     settingsController.dispose();

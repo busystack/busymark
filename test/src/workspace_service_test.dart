@@ -1,8 +1,9 @@
+import 'dart:io';
+
+import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
-import 'package:busymark/src/core/path_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'dart:io';
 
 void main() {
   const service = WorkspaceService();
@@ -13,6 +14,15 @@ void main() {
     expect(workspace.kind, WorkspaceKind.singleMarkdown);
     expect(workspace.markdown?.title, 'Basic Markdown');
     expect(workspace.activeFilePath, isNotNull);
+  });
+
+  test('opens a Markdown file from a file URI path', () async {
+    final file = File('test/fixtures/markdown/basic.md');
+    final workspace = await service.openPath(file.absolute.uri.toString());
+
+    expect(workspace.kind, WorkspaceKind.singleMarkdown);
+    expect(workspace.activeFilePath, file.absolute.path);
+    expect(workspace.markdown?.title, 'Basic Markdown');
   });
 
   test('opens a generic Markdown folder workspace', () async {
@@ -33,6 +43,13 @@ void main() {
     expect(workspace.kind, WorkspaceKind.writersideModule);
     expect(workspace.writersideModule?.instances.single.name, 'User Guide');
     expect(workspace.activeFilePath, endsWith('intro.md'));
+  });
+
+  test('normalizes portal-style document paths as filesystem paths', () {
+    const path = '/run/user/1000/doc/abcdef/smoke.md';
+
+    expect(normalizePath(path), path);
+    expect(isPortalDocumentPath(path), isTrue);
   });
 
   test(
