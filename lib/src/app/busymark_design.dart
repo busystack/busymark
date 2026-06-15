@@ -34,20 +34,95 @@ abstract final class BusyMarkSizes {
 abstract final class BusyMarkElevation {
   static const double surface = 1;
   static const double popover = 6;
+  static const double window = 12;
 }
 
 abstract final class BusyMarkShadow {
-  static const double floatingBlur = 18;
-  static const Offset floatingOffset = Offset(0, 6);
+  static const double floatingBlur = 24;
+  static const Offset floatingOffset = Offset(0, 8);
+  static const double windowMargin = 32;
+
+  static Color _scaleAlpha(Color color, double scale) {
+    return color.withValues(
+      alpha: (color.a * scale).clamp(0.0, 1.0).toDouble(),
+    );
+  }
 
   static Color floatingColor(BuildContext context) {
-    return Theme.of(context).shadowColor.withValues(alpha: 0.28);
+    return BusyMarkSurfaceColors.of(context).shade;
+  }
+
+  static List<BoxShadow> surfaceShadows(Color color) {
+    return [
+      BoxShadow(
+        color: _scaleAlpha(color, 0.34),
+        blurRadius: 5,
+        offset: const Offset(0, 1),
+      ),
+      BoxShadow(
+        color: _scaleAlpha(color, 0.16),
+        blurRadius: 1,
+        offset: const Offset(0, 1),
+      ),
+    ];
+  }
+
+  static List<BoxShadow> surfaceShadowsFor(BuildContext context) {
+    return surfaceShadows(floatingColor(context));
   }
 
   static List<BoxShadow> floatingShadows(Color color) {
     return [
       BoxShadow(color: color, blurRadius: floatingBlur, offset: floatingOffset),
     ];
+  }
+
+  static List<BoxShadow> floatingShadowsFor(BuildContext context) {
+    return floatingShadows(floatingColor(context));
+  }
+
+  static List<BoxShadow> windowShadows(Color color) {
+    return [
+      BoxShadow(
+        color: color.withValues(alpha: color.a * 0.75),
+        blurRadius: 22,
+        offset: const Offset(0, 10),
+      ),
+      BoxShadow(
+        color: color.withValues(alpha: color.a * 0.45),
+        blurRadius: 10,
+        offset: const Offset(0, 3),
+      ),
+      BoxShadow(
+        color: color.withValues(alpha: color.a * 0.25),
+        blurRadius: 3,
+        offset: const Offset(0, 1),
+      ),
+    ];
+  }
+
+  static List<BoxShadow> windowShadowsFor(BuildContext context) {
+    return windowShadows(floatingColor(context));
+  }
+
+  static List<BoxShadow> edgeShadows(Color color, {required bool below}) {
+    return [
+      BoxShadow(
+        color: color,
+        blurRadius: floatingBlur / 2,
+        offset: Offset(
+          0,
+          below ? floatingOffset.dy / 2 : -floatingOffset.dy / 2,
+        ),
+      ),
+    ];
+  }
+
+  static List<BoxShadow> edgeShadowsFor(
+    BuildContext context, {
+    required bool below,
+  }) {
+    return edgeShadows(floatingColor(context), below: below);
   }
 }
 
@@ -348,7 +423,10 @@ Color busyMarkSelectedBackground(BuildContext context) {
 }
 
 Color busyMarkRowHoverColor(BuildContext context) {
-  return BusyMarkSurfaceColors.of(context).controlHover;
+  final colors = BusyMarkSurfaceColors.of(context);
+  return colors.foreground.withValues(
+    alpha: Theme.of(context).brightness == Brightness.dark ? 0.045 : 0.055,
+  );
 }
 
 TextStyle? busyMarkSectionHeaderStyle(BuildContext context) {
@@ -365,22 +443,29 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.selected = false,
+    this.accented = false,
   });
 
   final String tooltip;
   final IconData icon;
   final VoidCallback? onPressed;
   final bool selected;
+  final bool accented;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     return IconButton(
       style: busyMarkHeaderIconButtonStyle(
-        foregroundColor: selected
-            ? Theme.of(context).colorScheme.primary
+        foregroundColor: accented
+            ? colorScheme.onPrimary
+            : selected
+            ? colorScheme.primary
             : colors.mutedForeground,
-        backgroundColor: selected
+        backgroundColor: accented
+            ? WidgetStatePropertyAll(colorScheme.primary)
+            : selected
             ? WidgetStatePropertyAll(colors.controlActive)
             : busyMarkHeaderButtonBackground(context),
       ),
@@ -389,6 +474,98 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
       onPressed: onPressed,
     );
   }
+}
+
+class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
+  const BusyMarkHeaderPopupMenuButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.itemBuilder,
+    required this.onSelected,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final PopupMenuItemBuilder<T> itemBuilder;
+  final ValueChanged<T> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    return Theme(
+      data: theme.copyWith(
+        iconButtonTheme: IconButtonThemeData(
+          style: busyMarkHeaderIconButtonStyle(
+            foregroundColor: colors.mutedForeground,
+            backgroundColor: busyMarkHeaderButtonBackground(context),
+          ),
+        ),
+      ),
+      child: PopupMenuButton<T>(
+        tooltip: tooltip,
+        icon: Icon(icon, size: BusyMarkSizes.iconSm),
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        color: popupTheme.color ?? colors.popover,
+        surfaceTintColor: Colors.transparent,
+        elevation: BusyMarkElevation.popover,
+        shadowColor: colors.shade,
+        shape:
+            popupTheme.shape ??
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+        constraints: const BoxConstraints(minWidth: 180),
+        itemBuilder: itemBuilder,
+        onSelected: onSelected,
+      ),
+    );
+  }
+}
+
+class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
+  BusyMarkPopupMenuItem({
+    super.key,
+    required T value,
+    required String label,
+    IconData? icon,
+  }) : super(
+         value: value,
+         height: 36,
+         padding: EdgeInsets.zero,
+         child: Builder(
+           builder: (context) {
+             final colors = BusyMarkSurfaceColors.of(context);
+             return Padding(
+               padding: const EdgeInsets.symmetric(
+                 horizontal: BusyMarkSpacing.md,
+               ),
+               child: Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   SizedBox(
+                     width: 24,
+                     child: icon == null
+                         ? const SizedBox.shrink()
+                         : Icon(
+                             icon,
+                             size: BusyMarkSizes.iconSm,
+                             color: colors.mutedForeground,
+                           ),
+                   ),
+                   const SizedBox(width: BusyMarkSpacing.sm),
+                   Flexible(
+                     child: Text(label, overflow: TextOverflow.ellipsis),
+                   ),
+                 ],
+               ),
+             );
+           },
+         ),
+       );
 }
 
 class BusyMarkClamp extends StatelessWidget {
@@ -446,14 +623,23 @@ class BusyMarkSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
     final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
+    final surface = Material(
       color: filled ? colors.card : Colors.transparent,
-      elevation: filled ? BusyMarkElevation.surface : 0,
-      shadowColor: BusyMarkShadow.floatingColor(context),
+      elevation: 0,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: borderRadius),
       clipBehavior: clipBehavior,
       child: child,
+    );
+    if (!filled) {
+      return surface;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      ),
+      child: surface,
     );
   }
 }
@@ -540,14 +726,19 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
     }
 
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
-    return Material(
-      color: colors.control,
-      elevation: BusyMarkElevation.surface,
-      shadowColor: BusyMarkShadow.floatingColor(context),
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: borderRadius),
-      clipBehavior: Clip.antiAlias,
-      child: list,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      ),
+      child: Material(
+        color: colors.control,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: borderRadius),
+        clipBehavior: Clip.antiAlias,
+        child: list,
+      ),
     );
   }
 }

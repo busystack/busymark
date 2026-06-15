@@ -10,79 +10,66 @@ import '../app/busymark_design.dart';
 enum HeaderBarAction {
   back,
   sidebarToggle,
-  today,
-  previous,
-  next,
   search,
   refresh,
   save,
-  problems,
-  newItem,
   menu,
   settings,
   aboutBusyMark,
   exportPreview,
+  viewModeEditor,
   viewModeSource,
   viewModePreview,
   viewModeSplit,
 }
 
-enum AppViewMode { source, preview, split }
+enum AppViewMode { editor, source, preview, split }
 
 class HeaderBarLabels {
   const HeaderBarLabels({
-    required this.today,
+    required this.editor,
     required this.source,
     required this.preview,
     required this.split,
     required this.viewMode,
     required this.search,
     required this.refresh,
-    required this.problems,
     required this.menu,
-    required this.previous,
-    required this.next,
     required this.sidebar,
     required this.back,
-    required this.newItem,
+    required this.save,
     required this.settings,
     required this.aboutBusyMark,
     required this.exportPreview,
   });
 
-  final String today;
+  final String editor;
   final String source;
   final String preview;
   final String split;
   final String viewMode;
   final String search;
   final String refresh;
-  final String problems;
   final String menu;
-  final String previous;
-  final String next;
   final String sidebar;
   final String back;
-  final String newItem;
+  final String save;
   final String settings;
   final String aboutBusyMark;
   final String exportPreview;
 
   Map<String, String> toMap() => {
-    'today': today,
+    'editor': editor,
     'source': source,
     'preview': preview,
     'split': split,
     'viewMode': viewMode,
     'search': search,
     'refresh': refresh,
-    'problems': problems,
     'menu': menu,
-    'previous': previous,
-    'next': next,
     'sidebar': sidebar,
     'back': back,
-    'newItem': newItem,
+    'save': save,
     'settings': settings,
     'aboutBusyMark': aboutBusyMark,
     'exportPreview': exportPreview,
@@ -99,6 +86,8 @@ class HeaderBarTheme {
     required this.controlColor,
     required this.controlHoverColor,
     required this.controlActiveColor,
+    required this.accentColor,
+    required this.accentForegroundColor,
     required this.popoverBackgroundColor,
     required this.borderColor,
     required this.sidebarBorderColor,
@@ -110,7 +99,7 @@ class HeaderBarTheme {
     final colors = BusyMarkSurfaceColors.of(context);
     final barrier = Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
     return HeaderBarTheme(
-      backgroundColor: colors.headerbarFlat,
+      backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       mutedForegroundColor: colors.mutedForeground,
@@ -118,6 +107,8 @@ class HeaderBarTheme {
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
       controlActiveColor: colors.controlActive,
+      accentColor: Theme.of(context).colorScheme.primary,
+      accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
       borderColor: colors.subtleBorder,
       sidebarBorderColor: colors.sidebarBorder,
@@ -134,6 +125,8 @@ class HeaderBarTheme {
   final Color controlColor;
   final Color controlHoverColor;
   final Color controlActiveColor;
+  final Color accentColor;
+  final Color accentForegroundColor;
   final Color popoverBackgroundColor;
   final Color borderColor;
   final Color sidebarBorderColor;
@@ -149,6 +142,8 @@ class HeaderBarTheme {
     'controlColor': _cssColor(controlColor),
     'controlHoverColor': _cssColor(controlHoverColor),
     'controlActiveColor': _cssColor(controlActiveColor),
+    'accentColor': _cssColor(accentColor),
+    'accentForegroundColor': _cssColor(accentForegroundColor),
     'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
     'borderColor': _cssColor(borderColor),
     'sidebarBorderColor': _cssColor(sidebarBorderColor),
@@ -171,7 +166,7 @@ class LinuxHeaderBarService {
   var _available = false;
 
   bool get isAvailable => _available;
-  bool get usesNativeHeaderBar => Platform.isLinux || _available;
+  bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
 
@@ -204,10 +199,6 @@ class LinuxHeaderBarService {
     return _invoke('setCanRefresh', value);
   }
 
-  Future<void> setCanCreate(bool value) {
-    return _invoke('setCanCreate', value);
-  }
-
   Future<void> setCanSave(bool value) {
     return _invoke('setCanSave', value);
   }
@@ -230,10 +221,6 @@ class LinuxHeaderBarService {
 
   Future<void> setSidebarWidth(double value) {
     return _invoke('setSidebarWidth', value);
-  }
-
-  Future<void> setScheduleControlsVisible(bool value) {
-    return _invoke('setScheduleControlsVisible', value);
   }
 
   Future<void> setBackVisible(bool value) {
@@ -277,18 +264,14 @@ class LinuxHeaderBarService {
     return switch (method) {
       'back' => HeaderBarAction.back,
       'sidebarToggle' => HeaderBarAction.sidebarToggle,
-      'today' => HeaderBarAction.today,
-      'previous' => HeaderBarAction.previous,
-      'next' => HeaderBarAction.next,
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
-      'problems' => HeaderBarAction.problems,
-      'newItem' => HeaderBarAction.newItem,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
       'exportPreview' => HeaderBarAction.exportPreview,
+      'viewModeEditor' => HeaderBarAction.viewModeEditor,
       'viewModeSource' => HeaderBarAction.viewModeSource,
       'viewModePreview' => HeaderBarAction.viewModePreview,
       'viewModeSplit' => HeaderBarAction.viewModeSplit,

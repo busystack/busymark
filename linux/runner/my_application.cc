@@ -3,6 +3,7 @@
 #include <cairo.h>
 #include <flutter_linux/flutter_linux.h>
 #include <pango/pango.h>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #ifdef GDK_WINDOWING_X11
@@ -44,20 +45,17 @@ struct _MyApplication {
   GtkWidget* header_start_box;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
-  GtkWidget* today_button;
-  GtkWidget* previous_button;
-  GtkWidget* next_button;
   GtkWidget* title_label;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_label;
   GtkWidget* view_mode_menu;
+  GtkWidget* view_mode_editor_item;
   GtkWidget* view_mode_source_item;
   GtkWidget* view_mode_preview_item;
   GtkWidget* view_mode_split_item;
-  GtkWidget* new_button;
+  GtkWidget* save_button;
   GtkWidget* refresh_button;
-  GtkWidget* problems_button;
   gchar* view_mode;
   gchar* background_color;
   gchar* sidebar_background_color;
@@ -67,6 +65,8 @@ struct _MyApplication {
   gchar* control_color;
   gchar* control_hover_color;
   gchar* control_active_color;
+  gchar* accent_color;
+  gchar* accent_foreground_color;
   gchar* popover_background_color;
   gchar* border_color;
   gchar* sidebar_border_color;
@@ -74,7 +74,6 @@ struct _MyApplication {
   gchar* modal_barrier_color;
   gint sidebar_width;
   gboolean sidebar_visible;
-  gboolean schedule_controls_visible;
   gboolean back_visible;
   gboolean modal_barrier_visible;
   gboolean suppress_header_actions;
@@ -190,6 +189,19 @@ static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   }
 }
 
+static void set_save_dirty(MyApplication* self, gboolean dirty) {
+  if (self->save_button == nullptr || !GTK_IS_WIDGET(self->save_button)) {
+    return;
+  }
+  GtkStyleContext* context = gtk_widget_get_style_context(self->save_button);
+  if (dirty) {
+    gtk_style_context_add_class(context, "busymark-save-dirty");
+  } else {
+    gtk_style_context_remove_class(context, "busymark-save-dirty");
+  }
+  gtk_widget_set_sensitive(self->save_button, TRUE);
+}
+
 static void set_toggle_button_active(MyApplication* self,
                                      GtkWidget* widget,
                                      gboolean active) {
@@ -232,6 +244,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
   const gchar* control_active =
       css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
+  const gchar* accent = css_color_or(self->accent_color, "#3584e4");
+  const gchar* accent_foreground =
+      css_color_or(self->accent_foreground_color, "#ffffff");
   const gchar* popover =
       css_color_or(self->popover_background_color, background);
   const gchar* border =
@@ -260,7 +275,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: transparent;"
       "background-image: none;"
       "border: none;"
-      "box-shadow: none;"
+      "outline: none;"
+      "border-radius: %dpx;"
+      "box-shadow: 0 3px 18px 2px %s;"
       "}"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop,"
@@ -304,7 +321,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "border-width: 0;"
       "border-color: transparent;"
-      "box-shadow: none;"
+      "box-shadow: 0 1px 1px %s;"
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
       "outline-style: none;"
@@ -329,10 +346,22 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar button.busymark-view-mode-button:checked {"
       "background-color: %s;"
       "}"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:hover,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:active,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:checked {"
+      "color: %s;"
+      "background-color: %s;"
+      "}"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty image {"
+      "color: %s;"
+      "-gtk-icon-shadow: none;"
+      "}"
       ".busymark-titlebar button.busymark-header-button:disabled,"
       ".busymark-titlebar button.busymark-view-mode-button:disabled {"
       "color: %s;"
       "background-color: transparent;"
+      "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier label,"
       ".busymark-titlebar.busymark-modal-barrier button,"
@@ -357,10 +386,29 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: transparent;"
       "background-image: none;"
       "border: none;"
+      "border-width: 0;"
+      "border-color: transparent;"
       "box-shadow: none;"
+      "text-shadow: none;"
+      "outline-style: none;"
+      "outline-width: 0;"
+      "outline-offset: 0;"
+      "transition: none;"
       "min-height: %dpx;"
       "padding: 0 %dpx;"
       "border-radius: %dpx;"
+      "}"
+      "popover.busymark-header-popover button.busymark-menu-row:focus,"
+      "popover.busymark-header-popover button.busymark-menu-row:active,"
+      "popover.busymark-header-popover button.busymark-menu-row:checked {"
+      "border: none;"
+      "border-width: 0;"
+      "border-color: transparent;"
+      "box-shadow: none;"
+      "outline-style: none;"
+      "outline-width: 0;"
+      "outline-offset: 0;"
+      "text-shadow: none;"
       "}"
       "popover.busymark-header-popover button.busymark-menu-row:hover {"
       "background-color: %s;"
@@ -388,11 +436,13 @@ static void refresh_header_bar_css(MyApplication* self) {
       "min-height: 0;"
       "border-radius: %dpx;"
       "}",
-      background, kHeaderWindowRadius, kHeaderWindowRadius,
-      headerbar_left_radius, sidebar_background, sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
-      foreground, control, kHeaderButtonHeight, kHeaderButtonHeight,
+      kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
+      kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
+      sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
+      foreground, control, shade, kHeaderButtonHeight, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
-      control_hover, control_active, disabled, disabled, popover, foreground,
+      control_hover, control_active, accent_foreground, accent,
+      accent_foreground, disabled, disabled, popover, foreground,
       border, shade, foreground, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, control_hover,
       foreground, muted, kHeaderButtonRadius, kHeaderTooltipVerticalPadding,
@@ -439,6 +489,10 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "controlHoverColor"));
   set_css_color_field(&self->control_active_color,
                       fl_lookup_string_arg(args, "controlActiveColor"));
+  set_css_color_field(&self->accent_color,
+                      fl_lookup_string_arg(args, "accentColor"));
+  set_css_color_field(&self->accent_foreground_color,
+                      fl_lookup_string_arg(args, "accentForegroundColor"));
   set_css_color_field(&self->popover_background_color,
                       fl_lookup_string_arg(args, "popoverBackgroundColor"));
   set_css_color_field(&self->border_color,
@@ -521,17 +575,6 @@ static GtkWidget* create_header_toggle_button(const gchar* icon_name) {
   return button;
 }
 
-static GtkWidget* create_header_text_button() {
-  GtkWidget* button = gtk_button_new_with_label("");
-  gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-  gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              "busymark-header-button");
-  return button;
-}
-
 static GtkWidget* create_header_popover() {
   GtkWidget* popover = gtk_popover_menu_new();
   gtk_popover_set_position(GTK_POPOVER(popover), GTK_POS_BOTTOM);
@@ -576,6 +619,9 @@ static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
       gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
   gtk_widget_set_opacity(check, 0.0);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
   gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
@@ -597,6 +643,9 @@ static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
 }
 
 static const gchar* view_mode_action(const gchar* mode) {
+  if (g_strcmp0(mode, "editor") == 0) {
+    return "viewModeEditor";
+  }
   if (g_strcmp0(mode, "source") == 0) {
     return "viewModeSource";
   }
@@ -610,6 +659,9 @@ static const gchar* view_mode_action(const gchar* mode) {
 }
 
 static GtkWidget* view_mode_item(MyApplication* self, const gchar* mode) {
+  if (g_strcmp0(mode, "editor") == 0) {
+    return self->view_mode_editor_item;
+  }
   if (g_strcmp0(mode, "source") == 0) {
     return self->view_mode_source_item;
   }
@@ -672,6 +724,8 @@ static void set_view_mode(MyApplication* self, const gchar* mode) {
   }
   g_free(self->view_mode);
   self->view_mode = g_strdup(mode);
+  set_menu_item_checked(self->view_mode_editor_item,
+                        g_strcmp0(mode, "editor") == 0);
   set_menu_item_checked(self->view_mode_source_item,
                         g_strcmp0(mode, "source") == 0);
   set_menu_item_checked(self->view_mode_preview_item,
@@ -703,6 +757,9 @@ static GtkWidget* create_view_mode_item(MyApplication* self,
       gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
   gtk_widget_set_opacity(check, 0.0);
+  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
   gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
@@ -740,19 +797,6 @@ static GtkWidget* create_menu_button(GtkWidget* popover,
   return button;
 }
 
-static void set_button_label_and_tooltip(GtkWidget* button,
-                                         const gchar* label,
-                                         const gchar* tooltip) {
-  if (button != nullptr && GTK_IS_BUTTON(button)) {
-    if (label != nullptr) {
-      gtk_button_set_label(GTK_BUTTON(button), label);
-    }
-    if (tooltip != nullptr) {
-      gtk_widget_set_tooltip_text(button, tooltip);
-    }
-  }
-}
-
 static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
   if (widget != nullptr && GTK_IS_WIDGET(widget) && tooltip != nullptr) {
     gtk_widget_set_tooltip_text(widget, tooltip);
@@ -760,35 +804,29 @@ static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
 }
 
 static void set_localized_labels(MyApplication* self, FlValue* args) {
-  const gchar* today = fl_lookup_string_arg(args, "today");
+  const gchar* editor = fl_lookup_string_arg(args, "editor");
   const gchar* source = fl_lookup_string_arg(args, "source");
   const gchar* preview = fl_lookup_string_arg(args, "preview");
   const gchar* split = fl_lookup_string_arg(args, "split");
   const gchar* view_mode = fl_lookup_string_arg(args, "viewMode");
   const gchar* search = fl_lookup_string_arg(args, "search");
   const gchar* refresh = fl_lookup_string_arg(args, "refresh");
-  const gchar* problems = fl_lookup_string_arg(args, "problems");
   const gchar* menu = fl_lookup_string_arg(args, "menu");
-  const gchar* previous = fl_lookup_string_arg(args, "previous");
-  const gchar* next = fl_lookup_string_arg(args, "next");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
-  const gchar* new_item = fl_lookup_string_arg(args, "newItem");
+  const gchar* save = fl_lookup_string_arg(args, "save");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
   const gchar* export_preview = fl_lookup_string_arg(args, "exportPreview");
 
-  set_button_label_and_tooltip(self->today_button, today, today);
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip(self->sidebar_toggle_button, sidebar);
   set_widget_tooltip(self->sidebar_search_button, search);
-  set_widget_tooltip(self->previous_button, previous);
-  set_widget_tooltip(self->next_button, next);
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
-  set_widget_tooltip(self->problems_button, problems);
-  set_widget_tooltip(self->new_button, new_item);
+  set_widget_tooltip(self->save_button, save);
   set_widget_tooltip(self->view_mode_button, view_mode);
+  set_menu_item_label(self->view_mode_editor_item, editor);
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
   set_menu_item_label(self->view_mode_split_item, split);
@@ -830,14 +868,6 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
   update_sidebar_header_geometry(self);
 }
 
-static void set_schedule_controls_visible(MyApplication* self,
-                                          gboolean visible) {
-  self->schedule_controls_visible = visible;
-  set_widget_visible(self->today_button, visible);
-  set_widget_visible(self->previous_button, visible);
-  set_widget_visible(self->next_button, visible);
-}
-
 static void set_back_visible(MyApplication* self, gboolean visible) {
   self->back_visible = visible;
   set_widget_visible(self->back_button, visible);
@@ -845,9 +875,8 @@ static void set_back_visible(MyApplication* self, gboolean visible) {
 
 static void set_document_controls_visible(MyApplication* self,
                                           gboolean visible) {
-  set_widget_visible(self->new_button, visible);
+  set_widget_visible(self->save_button, visible);
   set_widget_visible(self->refresh_button, visible);
-  set_widget_visible(self->problems_button, visible);
   set_widget_visible(self->view_mode_box, visible);
 }
 
@@ -917,23 +946,11 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->back_button = create_header_icon_button("go-previous-symbolic");
   self->sidebar_toggle_button =
       create_header_toggle_button("sidebar-show-symbolic");
-  self->today_button = create_header_text_button();
-  self->previous_button = create_header_icon_button("go-previous-symbolic");
-  self->next_button = create_header_icon_button("go-next-symbolic");
   connect_header_action(self, self->back_button, "back");
   connect_header_action(self, self->sidebar_toggle_button, "sidebarToggle");
-  connect_header_action(self, self->today_button, "today");
-  connect_header_action(self, self->previous_button, "previous");
-  connect_header_action(self, self->next_button, "next");
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->back_button,
-                     FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->header_start_box), self->sidebar_toggle_button,
                      FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->today_button,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->previous_button,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->next_button,
+  gtk_box_pack_start(GTK_BOX(self->header_start_box), self->back_button,
                      FALSE, FALSE, 0);
   gtk_header_bar_pack_start(self->header_bar, self->header_start_box);
 
@@ -949,9 +966,12 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->view_mode_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   self->view_mode_menu = create_header_popover();
   GtkWidget* view_menu_box = create_popover_box(self->view_mode_menu);
+  self->view_mode_editor_item = create_view_mode_item(self, "editor");
   self->view_mode_source_item = create_view_mode_item(self, "source");
   self->view_mode_preview_item = create_view_mode_item(self, "preview");
   self->view_mode_split_item = create_view_mode_item(self, "split");
+  gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_editor_item, FALSE,
+                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_source_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_preview_item, FALSE,
@@ -960,10 +980,18 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      FALSE, 0);
   gtk_widget_show_all(view_menu_box);
 
-  self->view_mode_button =
-      create_menu_button(self->view_mode_menu, "pan-down-symbolic");
+  self->view_mode_button = gtk_menu_button_new();
+  gtk_button_set_relief(GTK_BUTTON(self->view_mode_button), GTK_RELIEF_NONE);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
+                              GTK_STYLE_CLASS_FLAT);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
+                              "busymark-header-button");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
                               "busymark-view-mode-button");
+  gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(self->view_mode_button),
+                                  TRUE);
+  gtk_menu_button_set_popover(GTK_MENU_BUTTON(self->view_mode_button),
+                              self->view_mode_menu);
   GtkWidget* view_button_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   self->view_mode_label = gtk_label_new("");
@@ -979,15 +1007,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->view_mode_box, FALSE, FALSE, 0);
 
-  self->new_button = create_header_icon_button("object-select-symbolic");
+  self->save_button = create_header_icon_button("emblem-ok-symbolic");
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->save_button),
+                              "busymark-save-button");
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
-  self->problems_button = create_header_icon_button("dialog-warning-symbolic");
-  connect_header_action(self, self->new_button, "save");
+  connect_header_action(self, self->save_button, "save");
   connect_header_action(self, self->refresh_button, "refresh");
-  connect_header_action(self, self->problems_button, "problems");
-  gtk_box_pack_start(GTK_BOX(end_box), self->new_button, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(end_box), self->save_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->refresh_button, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(end_box), self->problems_button, FALSE, FALSE, 0);
   gtk_header_bar_pack_end(self->header_bar, end_box);
 
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
@@ -995,7 +1022,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   set_view_mode(self, "split");
   set_sidebar_visible(self, TRUE);
   set_back_visible(self, FALSE);
-  set_schedule_controls_visible(self, FALSE);
   refresh_header_bar_css(self);
   return self->titlebar_box;
 }
@@ -1021,9 +1047,8 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setCanRefresh") == 0) {
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
     respond_success(method_call);
-  } else if (strcmp(method, "setCanCreate") == 0 ||
-             strcmp(method, "setCanSave") == 0) {
-    set_widget_sensitive(self->new_button, fl_method_bool_arg(args));
+  } else if (strcmp(method, "setCanSave") == 0) {
+    set_save_dirty(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));
@@ -1040,9 +1065,6 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     respond_success(method_call);
   } else if (strcmp(method, "setSidebarWidth") == 0) {
     set_sidebar_width(self, fl_method_double_arg(args, 300));
-    respond_success(method_call);
-  } else if (strcmp(method, "setScheduleControlsVisible") == 0) {
-    set_schedule_controls_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setBackVisible") == 0) {
     set_back_visible(self, fl_method_bool_arg(args));
@@ -1080,6 +1102,84 @@ static gboolean clear_transparent_window_cb(GtkWidget* widget,
   return FALSE;
 }
 
+static cairo_region_t* create_rounded_window_region(gint width,
+                                                    gint height,
+                                                    gint radius) {
+  cairo_region_t* region = cairo_region_create();
+  if (width <= 0 || height <= 0) {
+    return region;
+  }
+
+  if (radius <= 0 || width < radius * 2 || height < radius * 2) {
+    const cairo_rectangle_int_t rect = {0, 0, width, height};
+    cairo_region_union_rectangle(region, &rect);
+    return region;
+  }
+
+  const gdouble radius_squared = radius * radius;
+  for (gint y = 0; y < height; y++) {
+    gint inset = 0;
+    if (y < radius) {
+      const gdouble dy = radius - y - 1;
+      inset = radius - static_cast<gint>(std::sqrt(radius_squared - dy * dy));
+    } else if (y >= height - radius) {
+      const gdouble dy = y - (height - radius);
+      inset = radius - static_cast<gint>(std::sqrt(radius_squared - dy * dy));
+    }
+
+    const gint row_width = width - inset * 2;
+    if (row_width <= 0) {
+      continue;
+    }
+
+    const cairo_rectangle_int_t row = {inset, y, row_width, 1};
+    cairo_region_union_rectangle(region, &row);
+  }
+
+  return region;
+}
+
+static void configure_rounded_window_shape(GtkWidget* widget) {
+  if (widget == nullptr || !GTK_IS_WIDGET(widget) ||
+      !gtk_widget_get_realized(widget)) {
+    return;
+  }
+
+  GdkWindow* window = gtk_widget_get_window(widget);
+  if (window == nullptr || !GDK_IS_WINDOW(window)) {
+    return;
+  }
+
+  const GdkWindowState state = gdk_window_get_state(window);
+  if ((state & GDK_WINDOW_STATE_MAXIMIZED) != 0 ||
+      (state & GDK_WINDOW_STATE_FULLSCREEN) != 0) {
+    gdk_window_shape_combine_region(window, nullptr, 0, 0);
+    return;
+  }
+
+  const gint width = gtk_widget_get_allocated_width(widget);
+  const gint height = gtk_widget_get_allocated_height(widget);
+  if (width <= 0 || height <= 0) {
+    return;
+  }
+
+  cairo_region_t* region =
+      create_rounded_window_region(width, height, kHeaderWindowRadius);
+  gdk_window_shape_combine_region(window, region, 0, 0);
+  cairo_region_destroy(region);
+}
+
+static void rounded_window_realize_cb(GtkWidget* widget, gpointer user_data) {
+  configure_rounded_window_shape(widget);
+}
+
+static gboolean rounded_window_configure_event_cb(GtkWidget* widget,
+                                                  GdkEventConfigure* event,
+                                                  gpointer user_data) {
+  configure_rounded_window_shape(widget);
+  return FALSE;
+}
+
 static void configure_transparent_window_backing(GtkWindow* window) {
   GdkScreen* screen = gtk_window_get_screen(window);
   GdkVisual* visual = gdk_screen_get_rgba_visual(screen);
@@ -1089,6 +1189,10 @@ static void configure_transparent_window_backing(GtkWindow* window) {
   gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
   g_signal_connect(window, "draw", G_CALLBACK(clear_transparent_window_cb),
                    nullptr);
+  g_signal_connect_after(window, "realize",
+                         G_CALLBACK(rounded_window_realize_cb), nullptr);
+  g_signal_connect(window, "configure-event",
+                   G_CALLBACK(rounded_window_configure_event_cb), nullptr);
 }
 
 // Called when first Flutter frame received.
@@ -1102,6 +1206,7 @@ static void my_application_activate(GApplication* application) {
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
   self->main_window = window;
+  gtk_window_set_title(window, kApplicationDisplayName);
   gtk_widget_set_name(GTK_WIDGET(window), "busymark-window");
   configure_transparent_window_backing(window);
 
@@ -1119,8 +1224,6 @@ static void my_application_activate(GApplication* application) {
     GtkWidget* titlebar = create_busymark_titlebar(self);
     gtk_widget_show_all(titlebar);
     gtk_window_set_titlebar(window, titlebar);
-  } else {
-    gtk_window_set_title(window, kApplicationDisplayName);
   }
 
   gtk_window_set_default_size(window, 1280, 720);
@@ -1194,6 +1297,8 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->control_color, g_free);
   g_clear_pointer(&self->control_hover_color, g_free);
   g_clear_pointer(&self->control_active_color, g_free);
+  g_clear_pointer(&self->accent_color, g_free);
+  g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
   g_clear_pointer(&self->border_color, g_free);
   g_clear_pointer(&self->sidebar_border_color, g_free);
@@ -1232,20 +1337,17 @@ static void my_application_init(MyApplication* self) {
   self->header_start_box = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
-  self->today_button = nullptr;
-  self->previous_button = nullptr;
-  self->next_button = nullptr;
   self->title_label = nullptr;
   self->view_mode_box = nullptr;
   self->view_mode_button = nullptr;
   self->view_mode_label = nullptr;
   self->view_mode_menu = nullptr;
+  self->view_mode_editor_item = nullptr;
   self->view_mode_source_item = nullptr;
   self->view_mode_preview_item = nullptr;
   self->view_mode_split_item = nullptr;
-  self->new_button = nullptr;
+  self->save_button = nullptr;
   self->refresh_button = nullptr;
-  self->problems_button = nullptr;
   self->view_mode = nullptr;
   self->background_color = g_strdup(kDefaultHeaderbarBackground);
   self->sidebar_background_color = g_strdup(kDefaultSidebarBackground);
@@ -1255,6 +1357,8 @@ static void my_application_init(MyApplication* self) {
   self->control_color = nullptr;
   self->control_hover_color = nullptr;
   self->control_active_color = nullptr;
+  self->accent_color = nullptr;
+  self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;
   self->border_color = nullptr;
   self->sidebar_border_color = nullptr;
@@ -1262,14 +1366,14 @@ static void my_application_init(MyApplication* self) {
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
-  self->schedule_controls_visible = FALSE;
   self->back_visible = FALSE;
   self->modal_barrier_visible = FALSE;
   self->suppress_header_actions = FALSE;
 }
 
 MyApplication* my_application_new() {
-  g_set_prgname(APPLICATION_ID);
+  g_set_prgname(kApplicationDisplayName);
+  g_set_application_name(kApplicationDisplayName);
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),
                                      "application-id", APPLICATION_ID, "flags",

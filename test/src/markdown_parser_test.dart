@@ -4,6 +4,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_export.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   const parser = MarkdownParser();
@@ -54,6 +55,33 @@ void main() {
         'markdown.image.missing-file',
         'markdown.image.missing-alt',
       ]),
+    );
+  });
+
+  test('resolves Writerside topic-specific image directories', () async {
+    final root = await Directory.systemTemp.createTemp('busymark_writerside_');
+    addTearDown(() => root.deleteSync(recursive: true));
+    final topics = Directory(p.join(root.path, 'topics'))..createSync();
+    final images = Directory(p.join(root.path, 'images', 'system-design'))
+      ..createSync(recursive: true);
+    final nestedImages = Directory(
+      p.join(root.path, 'images', 'methodology', 'orchestrator-devices'),
+    )..createSync(recursive: true);
+    File(p.join(images.path, 'architecture.png')).writeAsBytesSync([0]);
+    File(p.join(nestedImages.path, 'rpi_1.jpg')).writeAsBytesSync([0]);
+    final topicPath = p.join(topics.path, 'System-Design.md');
+    final parsed = parser.parse(
+      filePath: topicPath,
+      workspaceRoot: topics.path,
+      source:
+          '# System Design\n\n'
+          '![Architecture Diagram](architecture.png){ width="500" }\n'
+          '![Raspberry Pi Imager](rpi_1.jpg){ width="500" }\n',
+    );
+
+    expect(
+      parsed.diagnostics.map((item) => item.code),
+      isNot(contains('markdown.image.missing-file')),
     );
   });
 

@@ -2,9 +2,10 @@
 Type=Application
 Name=BusyMark
 Comment=Markdown and Writerside-compatible documentation editor
-Exec=busymark
+Exec=busymark %F
 Icon=io.busystack.busymark
 Terminal=false
 Categories=Office;Development;TextEditor;Utility;
+MimeType=text/markdown;text/x-markdown;
 StartupNotify=true
 StartupWMClass=io.busystack.busymark

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.busystack.busymark</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <developer id="io.busystack">
+    <name>BusyStack</name>
+  </developer>
+  <name>BusyMark</name>
+  <summary>Markdown and Writerside documentation editor</summary>
+  <description>
+    <p>BusyMark is a Linux desktop editor for Markdown files and Writerside-compatible documentation projects.</p>
+  </description>
+  <launchable type="desktop-id">io.busystack.busymark.desktop</launchable>
+  <icon type="stock">io.busystack.busymark</icon>
+  <categories>
+    <category>Office</category>
+    <category>Development</category>
+    <category>TextEditor</category>
+    <category>Utility</category>
+  </categories>
+  <url type="vcs-browser">https://github.com/busystack/busymark</url>
+  <url type="homepage">https://github.com/busystack/busymark</url>
+  <url type="bugtracker">https://github.com/busystack/busymark/issues</url>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.1.0+1" date="2026-06-11" />
+  </releases>
+</component>

@@ -32,7 +32,7 @@ class SettingsScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: colors.window,
+      backgroundColor: colors.view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
@@ -87,26 +87,6 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             BusyMarkGroupedList(
-              title: 'Preview',
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: 'Show preview pane',
-                  value:
-                      settings.documentViewMode !=
-                      DocumentViewModePreference.source,
-                  onChanged: controller.setPreviewVisible,
-                  leading: const Icon(Icons.preview_outlined),
-                ),
-                BusyMarkActionRow(
-                  title: 'Writerside approximation warnings',
-                  subtitle: 'Always shown for approximate preview output',
-                  leading: const Icon(Icons.info_outline),
-                  trailing: const Icon(Icons.check),
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
               title: 'Validation',
               filled: true,
               children: [
@@ -116,33 +96,12 @@ class SettingsScreen extends ConsumerWidget {
                   onChanged: controller.setValidateOnEdit,
                   leading: const Icon(Icons.fact_check_outlined),
                 ),
-                BusyMarkSwitchRow(
-                  title: 'External links check',
-                  subtitle: 'Disabled by default',
-                  value: settings.checkExternalLinks,
-                  onChanged: controller.setExternalLinkChecking,
-                  leading: const Icon(Icons.insert_link),
-                ),
-                BusyMarkSwitchRow(
-                  title: 'External images check',
-                  subtitle: 'Disabled by default',
-                  value: settings.checkExternalImages,
-                  onChanged: controller.setExternalImageChecking,
-                  leading: const Icon(Icons.image_search_outlined),
-                ),
               ],
             ),
             BusyMarkGroupedList(
               title: 'Advanced',
               filled: true,
               children: [
-                BusyMarkSwitchRow(
-                  title: 'Official builder integration',
-                  subtitle: 'Disabled by default',
-                  value: settings.officialBuilderIntegrationEnabled,
-                  onChanged: controller.setOfficialBuilderIntegration,
-                  leading: const Icon(Icons.build_outlined),
-                ),
                 BusyMarkActionRow(
                   title: 'Clear recent workspaces',
                   leading: const Icon(Icons.clear_all),
@@ -164,7 +123,6 @@ class SettingsScreen extends ConsumerWidget {
         await headerBar.setSidebarVisible(false);
         await headerBar.setSidebarToggleVisible(false);
         await headerBar.setBackVisible(true);
-        await headerBar.setScheduleControlsVisible(false);
         await headerBar.setDocumentControlsVisible(false);
         await headerBar.setCanRefresh(false);
         await headerBar.setCanSave(false);
@@ -185,16 +143,12 @@ class SettingsScreen extends ConsumerWidget {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
-      case HeaderBarAction.today:
-      case HeaderBarAction.previous:
-      case HeaderBarAction.next:
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
-      case HeaderBarAction.problems:
-      case HeaderBarAction.newItem:
       case HeaderBarAction.menu:
       case HeaderBarAction.exportPreview:
+      case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:

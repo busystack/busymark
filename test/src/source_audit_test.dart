@@ -96,6 +96,47 @@ void main() {
     expect(design, isNot(contains('YaruBorderContainer')));
   });
 
+  test('shared row hover uses subtle foreground overlay', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+
+    final helper = RegExp(
+      r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
+      dotAll: true,
+    ).firstMatch(design)!.group(1)!;
+    expect(helper, contains('colors.foreground.withValues'));
+    expect(helper, contains('Brightness.dark ? 0.045 : 0.055'));
+    expect(helper, isNot(contains('controlHover')));
+  });
+
+  test('shared surfaces use semantic BusyMark shadows', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final dialogs = File(
+      'lib/src/app/busymark_dialogs.dart',
+    ).readAsStringSync();
+    final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
+
+    expect(design, contains('return BusyMarkSurfaceColors.of(context).shade'));
+    expect(design, contains('surfaceShadowsFor'));
+    expect(design, contains('floatingShadowsFor'));
+    expect(design, contains('windowShadowsFor'));
+    expect(design, contains('edgeShadowsFor'));
+    expect(design, contains('_scaleAlpha(color, 0.34)'));
+    expect(design, contains('blurRadius: 5'));
+    expect(
+      design,
+      contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
+    );
+    expect(dialogs, contains('elevation: BusyMarkElevation.popover'));
+    expect(
+      dialogs,
+      contains('shadowColor: BusyMarkShadow.floatingColor(context)'),
+    );
+    expect(
+      theme,
+      contains('boxShadow: BusyMarkShadow.floatingShadows(colors.shade)'),
+    );
+  });
+
   test(
     'problems are opened from a popup instead of a bottom panel setting',
     () {
@@ -108,7 +149,10 @@ void main() {
       ).readAsStringSync();
 
       expect(workspace, contains('_showProblemsDialog'));
+      expect(workspace, contains('_validateActiveAndShowProblems'));
+      expect(workspace, contains(').validateActive()'));
       expect(workspace, contains('class _ProblemsList'));
+      expect(workspace, isNot(contains("tooltip: 'Problems'")));
       expect(workspace, isNot(contains('_ProblemsPanel')));
       expect(workspace, isNot(contains('problemsVisible')));
       expect(settings, isNot(contains('problemsVisible')));
@@ -116,6 +160,33 @@ void main() {
       expect(settingsScreen, isNot(contains('Show problems panel')));
     },
   );
+
+  test('native search action opens workspace search UI', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('case HeaderBarAction.search:'));
+    expect(workspace, contains('_showSearchDialog(context, ref)'));
+    expect(workspace, contains('class _WorkspaceSearchDialog'));
+    expect(workspace, contains('_workspaceSearchResults'));
+    expect(workspace, contains('_sourceNavigationTargetProvider'));
+  });
+
+  test('preview links are actionable instead of styled-only text', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+
+    expect(pubspec, contains('url_launcher:'));
+    expect(workspace, contains('TapGestureRecognizer'));
+    expect(workspace, contains('LaunchMode.externalApplication'));
+    expect(workspace, contains('_openPreviewLink(context, ref, destination)'));
+    expect(workspace, contains('openActiveFile(file.absolutePath)'));
+    expect(workspace, contains('_navigatePreviewAnchor'));
+    expect(workspace, contains('SystemMouseCursors.click'));
+  });
 
   test('workspace sidebar tabs match the opened workspace kind', () {
     final workspace = File(
@@ -168,6 +239,24 @@ void main() {
     );
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
+    expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
+    expect(workspace, contains('selectionWidthStyle: BoxWidthStyle.tight'));
+    expect(workspace, contains('cursorColor: colors.foreground.withValues'));
+    expect(workspace, contains('cursorHeight: widget.editorFontSize * 1.22'));
+    expect(workspace, contains('cursorWidth: 1.4'));
+  });
+
+  test('sidebar selector uses shared semantic shadow', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('SegmentedButton<int>'));
+    expect(
+      workspace,
+      contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
+    );
+    expect(workspace, contains('BusyMarkRadius.headerButton'));
   });
 
   test('sidebar trees share the expandable Yaru-style row', () {
@@ -194,7 +283,7 @@ void main() {
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
-    expect(workspace, contains('_isOpenableMarkdownFile(file)'));
+    expect(workspace, contains('_isOpenableTextDocument(file)'));
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
@@ -213,14 +302,40 @@ void main() {
     expect(workspace, contains('headingId: heading.id'));
     expect(workspace, contains('line: heading.span.startLine'));
     expect(workspace, contains('_sourceFocusNode.requestFocus()'));
-    expect(workspace, contains('TextPainter'));
-    expect(workspace, contains('getOffsetForCaret'));
-    expect(workspace, contains('_sourceScrollOffsetForTextOffset'));
-    expect(workspace, contains('_jumpSourceScrollToTextOffset'));
+    expect(workspace, contains('_unfoldSourceLine(line)'));
+    expect(workspace, contains('_sourceLineLayoutEntries'));
+    expect(workspace, contains('_sourceScrollOffsetForLine'));
+    expect(workspace, contains('_jumpSourceScrollToLine'));
     expect(workspace, contains('scrollController: _sourceScrollController'));
     expect(workspace, contains('Scrollable.ensureVisible'));
     expect(workspace, contains('headingKeys: _previewHeadingKeys'));
     expect(workspace, contains("block.attributes['id']"));
+  });
+
+  test('source editor line numbers use measured editor layout', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('isCollapsed: true'));
+    expect(workspace, contains('_sourceLineHeight(context, sourceStrutStyle)'));
+    expect(workspace, contains('_SourceRenderedTextLayer'));
+    expect(workspace, contains('renderText = false'));
+    expect(workspace, contains('controller.buildSourceTextSpan'));
+    expect(workspace, contains('TextPainter('));
+    expect(workspace, contains('computeLineMetrics()'));
+    expect(workspace, contains('getOffsetForCaret'));
+    expect(workspace, contains('_sourceTextHeightForLine'));
+    expect(workspace, contains('_CollapsedSourceLineOverlay'));
+    expect(workspace, contains('_sourceStrutStyle('));
+    expect(workspace, contains('folded: _foldedRegionKeys.isNotEmpty'));
+    expect(workspace, contains('if (folded)'));
+    expect(workspace, contains('return null'));
+    expect(workspace, contains('forceStrutHeight: true'));
+    expect(workspace, contains('strutStyle: sourceStrutStyle'));
+    expect(workspace, contains('TextOverflow.ellipsis'));
+    expect(workspace, contains('Color.alphaBlend'));
+    expect(workspace, contains("'\$trimmed ...'"));
   });
 
   test('document view modes drive source preview and split layouts', () {
@@ -228,30 +343,38 @@ void main() {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final settingsScreen = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
 
     expect(
       settings,
-      contains('enum DocumentViewModePreference { source, preview, split }'),
+      contains(
+        'enum DocumentViewModePreference { editor, source, preview, split }',
+      ),
     );
     expect(
       settings,
       contains('documentViewMode: DocumentViewModePreference.split'),
     );
     expect(settings, contains('Future<void> setDocumentViewMode'));
+    expect(workspace, contains('final editorVisible = widget.viewMode =='));
+    expect(workspace, contains('DocumentViewModePreference.editor'));
     expect(
       workspace,
-      contains(
-        'final sourceVisible = widget.viewMode != DocumentViewModePreference.preview',
-      ),
+      contains('widget.viewMode != DocumentViewModePreference.preview'),
     );
     expect(
       workspace,
-      contains(
-        'final previewVisible = widget.viewMode != DocumentViewModePreference.source',
-      ),
+      contains('widget.viewMode != DocumentViewModePreference.source'),
     );
+    expect(workspace, contains('BusyMarkWysiwygEditor'));
+    expect(workspace, contains('visualMarkdown = false'));
+    expect(workspace, isNot(contains('class _VisualMarkdownEditorPane')));
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
+    expect(settingsScreen, isNot(contains('Show preview pane')));
+    expect(settingsScreen, isNot(contains('setPreviewVisible')));
   });
 }
 

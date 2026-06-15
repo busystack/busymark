@@ -33,8 +33,27 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
   final AppSettingsController _settingsController;
   Timer? _parseDebounce;
 
+  bool get activeDocumentNeedsSaveLocation {
+    final workspace = state.workspace;
+    return workspace != null &&
+        (workspace.kind == WorkspaceKind.untitledMarkdown ||
+            workspace.activeFilePath == null);
+  }
+
+  Future<void> createMarkdownFile() async {
+    _parseDebounce?.cancel();
+    final workspace = _service.createUntitledMarkdown();
+    state = WorkspaceState(
+      workspace: workspace,
+      preview: _safePreview(workspace, ''),
+      isDirty: true,
+      isLoading: false,
+    );
+  }
+
   Future<void> openPath(String path) async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    _parseDebounce?.cancel();
+    state = const WorkspaceState(isLoading: true);
     try {
       final workspace = await _service.openPath(path);
       final active = workspace.activeFilePath;
@@ -52,7 +71,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         path: recentPath,
         kind: workspace.kind.name,
       );
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Open failed for path: $path');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Open failed: $error',
@@ -72,7 +94,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     _parseDebounce?.cancel();
     try {
       final text = await File(path).readAsString();
-      final nextWorkspace = workspace.copyWith(activeFilePath: path);
+      final nextWorkspace = workspace.copyWith(
+        activeFilePath: path,
+        activeFileModifiedAt: await _service.fileModifiedAt(path),
+      );
       final reparsed = await _service.reparseActive(nextWorkspace, text);
       state = state.copyWith(
         workspace: reparsed,
@@ -81,40 +106,102 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         isDirty: false,
         clearError: true,
       );
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Could not open file: $path');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(errorMessage: 'Could not open file: $error');
     }
   }
 
-  void updateActiveText(String text) {
-    state = state.copyWith(activeText: text, isDirty: true);
+  void updateActiveText(String text, {bool updatePreview = true}) {
+    final workspace = state.workspace;
+    state = state.copyWith(
+      activeText: text,
+      preview: workspace == null || !updatePreview
+          ? state.preview
+          : _safePreview(workspace, text),
+      isDirty: true,
+    );
     _parseDebounce?.cancel();
+    if (!_settingsController.state.validateOnEdit) {
+      return;
+    }
     _parseDebounce = Timer(const Duration(milliseconds: 350), () {
       unawaited(validateActive());
     });
   }
 
-  Future<void> saveActive() async {
+  Future<bool> saveActive({bool overwriteExternalChanges = false}) async {
     final workspace = state.workspace;
     final active = workspace?.activeFilePath;
     if (active == null) {
-      return;
+      state = state.copyWith(
+        errorMessage: 'Choose where to save this Markdown file.',
+      );
+      return false;
+    }
+    if (!overwriteExternalChanges &&
+        await _service.fileChangedSince(
+          active,
+          workspace?.activeFileModifiedAt,
+        )) {
+      state = state.copyWith(
+        errorMessage: 'Save blocked: file changed on disk.',
+      );
+      return false;
     }
     try {
-      await _service.saveText(active, state.activeText);
+      final modifiedAt = await _service.saveText(active, state.activeText);
       final reparsed = await _service.reparseActive(
-        workspace!,
+        workspace!.copyWith(activeFileModifiedAt: modifiedAt),
         state.activeText,
       );
       state = state.copyWith(
-        workspace: reparsed,
+        workspace: reparsed.copyWith(activeFileModifiedAt: modifiedAt),
         preview: _safePreview(reparsed, state.activeText),
         isDirty: false,
         clearError: true,
       );
+      return true;
     } on Object catch (error) {
       state = state.copyWith(errorMessage: 'Save failed: $error');
+      return false;
     }
+  }
+
+  Future<bool> saveActiveAs(String path) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    final text = state.activeText;
+    try {
+      await _service.saveText(path, text);
+      final savedWorkspace = await _service.openPath(path);
+      state = WorkspaceState(
+        workspace: savedWorkspace,
+        activeText: text,
+        preview: _safePreview(savedWorkspace, text),
+      );
+      await _settingsController.recordOpenedWorkspace(
+        path: path,
+        kind: savedWorkspace.kind.name,
+      );
+      return true;
+    } on Object catch (error) {
+      state = state.copyWith(errorMessage: 'Save failed: $error');
+      return false;
+    }
+  }
+
+  Future<bool> activeFileChangedOnDisk() async {
+    final workspace = state.workspace;
+    final active = workspace?.activeFilePath;
+    if (active == null) {
+      return false;
+    }
+    return _service.fileChangedSince(active, workspace?.activeFileModifiedAt);
   }
 
   Future<void> validateActive() async {
@@ -139,7 +226,7 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
 
   String exportActiveHtml() {
     final workspace = state.workspace;
-    final active = workspace?.activeFilePath;
+    final active = workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     if (workspace == null || active == null) {
       return '';
     }

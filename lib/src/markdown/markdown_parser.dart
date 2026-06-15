@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
+import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import 'busymark_document.dart';
+import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
 
 class MarkdownParser {
@@ -28,11 +31,91 @@ class MarkdownParser {
     final generatedIds = <String, int>{};
     final mapper = SourceLocationMapper(source);
     var title = _frontMatterTitle(filePath, source, diagnostics);
+    void addScannedHeading({
+      required int level,
+      required String rawText,
+      required String? attrText,
+      required int startOffset,
+      required int endOffset,
+    }) {
+      final explicitId = attrText == null
+          ? null
+          : _attributeValue(attrText, 'id');
+      if (attrText != null &&
+          explicitId == null &&
+          mode == MarkdownMode.writersideMarkdown) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.attribute.malformed',
+            severity: DiagnosticSeverity.warning,
+            message: 'Malformed Writerside heading attribute block.',
+            filePath: filePath,
+            sourceSpan: SourceSpan.fromOffsets(
+              filePath: filePath,
+              source: source,
+              startOffset: startOffset + rawText.length,
+              endOffset: endOffset,
+            ),
+          ),
+        );
+      }
+      final text = _stripTrailingAttributeBlock(rawText).trim();
+      final baseId = explicitId ?? slugForHeading(text);
+      final generated = explicitId == null;
+      final id = generated ? _deduplicatedId(baseId, generatedIds) : baseId;
+      final span = SourceSpan.fromOffsets(
+        filePath: filePath,
+        source: source,
+        startOffset: startOffset,
+        endOffset: endOffset,
+      );
+      headings.add(
+        MarkdownHeading(
+          level: level,
+          text: text,
+          id: id,
+          generatedId: generated,
+          span: span,
+        ),
+      );
+      title ??= level == 1 ? text : null;
+      if (ids.containsKey(id)) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.heading.duplicate-id',
+            severity: DiagnosticSeverity.warning,
+            message: 'Duplicate heading ID "$id".',
+            filePath: filePath,
+            sourceSpan: span,
+            relatedSpans: [ids[id]!],
+          ),
+        );
+      } else {
+        ids[id] = span;
+      }
+      if (mode == MarkdownMode.writersideMarkdown &&
+          level == 1 &&
+          headings.where((item) => item.level == 1).length > 1) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.topic.h1-converted-to-chapter',
+            severity: DiagnosticSeverity.warning,
+            message:
+                'Additional top-level H1 headings are treated as chapters.',
+            filePath: filePath,
+            sourceSpan: span,
+          ),
+        );
+      }
+    }
+
     var inFence = false;
     var fenceStart = 0;
     String? fenceLanguage;
     final fenceContent = StringBuffer();
     var offset = 0;
+    String? previousSetextCandidateLine;
+    int? previousSetextCandidateOffset;
     final lines = source.split(RegExp('(?<=\n)'));
 
     for (final rawLine in lines) {
@@ -40,12 +123,14 @@ class MarkdownParser {
           ? rawLine.substring(0, rawLine.length - 1)
           : rawLine;
       final trimmed = line.trimRight();
-      final fence = RegExp(r'^\s*```\s*([A-Za-z0-9_+\-#.]*)').firstMatch(line);
+      final fence = RegExp(
+        r'^\s*(```|~~~)\s*([A-Za-z0-9_+\-#.]*)',
+      ).firstMatch(line);
       if (fence != null) {
         if (!inFence) {
           inFence = true;
           fenceStart = offset;
-          fenceLanguage = fence.group(1)?.trim();
+          fenceLanguage = fence.group(2)?.trim();
           if (fenceLanguage != null && fenceLanguage.isEmpty) {
             fenceLanguage = null;
           }
@@ -79,77 +164,27 @@ class MarkdownParser {
         r'^(#{1,6})\s+(.+?)\s*(\{[^}]+\})?\s*$',
       ).firstMatch(trimmed);
       if (heading != null) {
-        final level = heading.group(1)!.length;
-        final rawText = heading.group(2)!.trim();
-        final attrText = heading.group(3);
-        final explicitId = attrText == null
-            ? null
-            : _attributeValue(attrText, 'id');
-        if (attrText != null &&
-            explicitId == null &&
-            mode == MarkdownMode.writersideMarkdown) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'markdown.attribute.malformed',
-              severity: DiagnosticSeverity.warning,
-              message: 'Malformed Writerside heading attribute block.',
-              filePath: filePath,
-              sourceSpan: SourceSpan.fromOffsets(
-                filePath: filePath,
-                source: source,
-                startOffset: offset + line.indexOf(attrText),
-                endOffset: offset + line.indexOf(attrText) + attrText.length,
-              ),
-            ),
-          );
-        }
-        final baseId = explicitId ?? slugForHeading(rawText);
-        final generated = explicitId == null;
-        final id = generated ? _deduplicatedId(baseId, generatedIds) : baseId;
-        final span = SourceSpan.fromOffsets(
-          filePath: filePath,
-          source: source,
+        addScannedHeading(
+          level: heading.group(1)!.length,
+          rawText: heading.group(2)!.trim(),
+          attrText: heading.group(3),
           startOffset: offset,
           endOffset: offset + line.length,
         );
-        headings.add(
-          MarkdownHeading(
-            level: level,
-            text: rawText,
-            id: id,
-            generatedId: generated,
-            span: span,
-          ),
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
+      } else if (_setextUnderlineLevel(trimmed) case final level?
+          when previousSetextCandidateLine != null &&
+              previousSetextCandidateOffset != null) {
+        addScannedHeading(
+          level: level,
+          rawText: previousSetextCandidateLine.trim(),
+          attrText: null,
+          startOffset: previousSetextCandidateOffset,
+          endOffset: offset + line.length,
         );
-        title ??= level == 1 ? rawText : null;
-        if (ids.containsKey(id)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'markdown.heading.duplicate-id',
-              severity: DiagnosticSeverity.warning,
-              message: 'Duplicate heading ID "$id".',
-              filePath: filePath,
-              sourceSpan: span,
-              relatedSpans: [ids[id]!],
-            ),
-          );
-        } else {
-          ids[id] = span;
-        }
-        if (mode == MarkdownMode.writersideMarkdown &&
-            level == 1 &&
-            headings.where((item) => item.level == 1).length > 1) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.topic.h1-converted-to-chapter',
-              severity: DiagnosticSeverity.warning,
-              message:
-                  'Additional top-level H1 headings are treated as chapters.',
-              filePath: filePath,
-              sourceSpan: span,
-            ),
-          );
-        }
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
       }
 
       _extractInlineItems(
@@ -175,6 +210,14 @@ class MarkdownParser {
         lineOffset: offset,
         diagnostics: diagnostics,
       );
+
+      if (_isSetextHeadingCandidate(trimmed)) {
+        previousSetextCandidateLine = line;
+        previousSetextCandidateOffset = offset;
+      } else if (trimmed.isNotEmpty) {
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
+      }
 
       offset += rawLine.length;
     }
@@ -210,6 +253,17 @@ class MarkdownParser {
       );
     }
 
+    final busyDocument = _withScannedMetadata(
+      const MarkdownAstAdapter().parse(
+        filePath: filePath,
+        source: source,
+        mode: mode,
+        title: title,
+      ),
+      headings,
+      sortDiagnostics(diagnostics),
+    );
+
     return ParsedMarkdownDocument(
       filePath: filePath,
       source: source,
@@ -222,7 +276,134 @@ class MarkdownParser {
       xmlBlocks: xmlBlocks,
       variables: variables,
       diagnostics: sortDiagnostics(diagnostics),
+      busyDocument: busyDocument,
     );
+  }
+
+  BusyDocument _withScannedMetadata(
+    BusyDocument document,
+    List<MarkdownHeading> headings,
+    List<Diagnostic> diagnostics,
+  ) {
+    var headingIndex = 0;
+    final sourceChunks = document.source == null
+        ? const <_ScannedBlockSource>[]
+        : _scannedBlockSources(document.filePath, document.source!);
+    final nonFrontMatterBlockCount = document.blocks
+        .where((block) => block.kind != BusyBlockKind.frontMatter)
+        .length;
+    final canAssignSource = sourceChunks.length == nonFrontMatterBlockCount;
+    var sourceIndex = 0;
+    return document.copyWith(
+      diagnostics: diagnostics,
+      blocks: [
+        for (final block in document.blocks)
+          _blockWithScannedMetadata(
+            block,
+            headings,
+            canAssignSource ? sourceChunks : const <_ScannedBlockSource>[],
+            headingIndexRef: () => headingIndex++,
+            sourceIndexRef: () => sourceIndex++,
+          ),
+      ],
+    );
+  }
+
+  BusyBlock _blockWithScannedMetadata(
+    BusyBlock block,
+    List<MarkdownHeading> headings,
+    List<_ScannedBlockSource> sourceChunks, {
+    required int Function() headingIndexRef,
+    required int Function() sourceIndexRef,
+  }) {
+    var updated = block;
+    if (updated.kind == BusyBlockKind.heading) {
+      final headingIndex = headingIndexRef();
+      if (headingIndex < headings.length) {
+        updated = _headingWithScannedMetadata(updated, headings[headingIndex]);
+      }
+    }
+    if (updated.kind != BusyBlockKind.frontMatter && sourceChunks.isNotEmpty) {
+      final sourceIndex = sourceIndexRef();
+      if (sourceIndex < sourceChunks.length) {
+        final chunk = sourceChunks[sourceIndex];
+        updated = updated.copyWith(
+          rawSource: chunk.rawSource,
+          sourceSpan: chunk.span,
+        );
+      }
+    }
+    return updated;
+  }
+
+  BusyBlock _headingWithScannedMetadata(
+    BusyBlock block,
+    MarkdownHeading heading,
+  ) {
+    return block.copyWith(
+      id: heading.id,
+      attributes: {
+        ...block.attributes,
+        'id': heading.id,
+        'level': '${heading.level}',
+        'generatedId': '${heading.generatedId}',
+      },
+      sourceSpan: heading.span,
+    );
+  }
+
+  List<_ScannedBlockSource> _scannedBlockSources(
+    String filePath,
+    String source,
+  ) {
+    var scanOffset = _frontMatterEndOffset(source);
+    final chunks = <_ScannedBlockSource>[];
+    int? chunkStart;
+    final lines = source.substring(scanOffset).split(RegExp('(?<=\n)'));
+    for (final rawLine in lines) {
+      final line = rawLine.endsWith('\n')
+          ? rawLine.substring(0, rawLine.length - 1)
+          : rawLine;
+      if (line.trim().isEmpty) {
+        if (chunkStart != null) {
+          chunks.add(
+            _ScannedBlockSource.fromOffsets(
+              filePath: filePath,
+              source: source,
+              startOffset: chunkStart,
+              endOffset: scanOffset,
+            ),
+          );
+          chunkStart = null;
+        }
+      } else {
+        chunkStart ??= scanOffset;
+      }
+      scanOffset += rawLine.length;
+    }
+    if (chunkStart != null) {
+      chunks.add(
+        _ScannedBlockSource.fromOffsets(
+          filePath: filePath,
+          source: source,
+          startOffset: chunkStart,
+          endOffset: source.length,
+        ),
+      );
+    }
+    return chunks;
+  }
+
+  int _frontMatterEndOffset(String source) {
+    if (!source.startsWith('---')) {
+      return 0;
+    }
+    final end = source.indexOf('\n---', 3);
+    if (end == -1) {
+      return 0;
+    }
+    final nextLine = source.indexOf('\n', end + 4);
+    return nextLine == -1 ? source.length : nextLine + 1;
   }
 
   String? _frontMatterTitle(
@@ -264,6 +445,36 @@ class MarkdownParser {
   String? _attributeValue(String raw, String key) {
     final match = RegExp('$key\\s*=\\s*"([^"]+)"').firstMatch(raw);
     return match?.group(1);
+  }
+
+  String _stripTrailingAttributeBlock(String value) {
+    return value.replaceFirst(RegExp(r'\s*\{[^}]+\}\s*$'), '').trimRight();
+  }
+
+  int? _setextUnderlineLevel(String trimmedLine) {
+    if (RegExp(r'^=+\s*$').hasMatch(trimmedLine)) {
+      return 1;
+    }
+    if (RegExp(r'^-+\s*$').hasMatch(trimmedLine)) {
+      return 2;
+    }
+    return null;
+  }
+
+  bool _isSetextHeadingCandidate(String trimmedLine) {
+    if (trimmedLine.isEmpty) {
+      return false;
+    }
+    if (RegExp(r'^(#{1,6})\s+').hasMatch(trimmedLine)) {
+      return false;
+    }
+    if (RegExp(r'^([-+*]|\d+[.)])\s+').hasMatch(trimmedLine)) {
+      return false;
+    }
+    if (trimmedLine.startsWith('>') || trimmedLine.startsWith('|')) {
+      return false;
+    }
+    return _setextUnderlineLevel(trimmedLine) == null;
   }
 
   String _deduplicatedId(String baseId, Map<String, int> counts) {
@@ -462,8 +673,11 @@ class MarkdownParser {
       if (_isExternal(destination)) {
         continue;
       }
-      final resolved = p.normalize(p.join(p.dirname(filePath), destination));
-      if (!File(resolved).existsSync()) {
+      if (!localImageExists(
+        activeFilePath: filePath,
+        destination: destination,
+        workspaceRoot: workspaceRoot,
+      )) {
         diagnostics.add(
           Diagnostic(
             code: 'markdown.image.missing-file',
@@ -483,6 +697,31 @@ class MarkdownParser {
         destination.startsWith('https://') ||
         destination.startsWith('mailto:');
   }
+}
+
+class _ScannedBlockSource {
+  const _ScannedBlockSource({required this.rawSource, required this.span});
+
+  factory _ScannedBlockSource.fromOffsets({
+    required String filePath,
+    required String source,
+    required int startOffset,
+    required int endOffset,
+  }) {
+    final rawSource = source.substring(startOffset, endOffset).trimRight();
+    return _ScannedBlockSource(
+      rawSource: rawSource,
+      span: SourceSpan.fromOffsets(
+        filePath: filePath,
+        source: source,
+        startOffset: startOffset,
+        endOffset: startOffset + rawSource.length,
+      ),
+    );
+  }
+
+  final String rawSource;
+  final SourceSpan span;
 }
 
 const _inlineHtmlNames = {

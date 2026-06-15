@@ -68,20 +68,17 @@ class BusyMarkApp extends ConsumerWidget {
     final material = MaterialLocalizations.of(context);
     final theme = HeaderBarTheme.fromContext(context);
     final labels = HeaderBarLabels(
-      today: 'Today',
+      editor: 'Editor',
       source: 'Source',
       preview: 'Preview',
       split: 'Split',
       viewMode: 'View mode',
       search: material.searchFieldLabel,
       refresh: 'Validate',
-      problems: 'Problems',
       menu: 'Main menu',
-      previous: material.previousPageTooltip,
-      next: material.nextPageTooltip,
       sidebar: 'Toggle sidebar',
       back: material.backButtonTooltip,
-      newItem: 'Save',
+      save: 'Save',
       settings: 'Settings',
       aboutBusyMark: 'About BusyMark',
       exportPreview: 'Export Preview',

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
+import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import 'writerside_model.dart';
@@ -16,6 +17,7 @@ class WritersideModuleService {
     this.topicParser = const WritersideTopicParser(),
     this.variablesParser = const WritersideVariablesParser(),
     this.categoriesParser = const WritersideCategoriesParser(),
+    this.scanOptions = const WorkspaceScanOptions(),
   });
 
   final WritersideConfigParser configParser;
@@ -23,6 +25,7 @@ class WritersideModuleService {
   final WritersideTopicParser topicParser;
   final WritersideVariablesParser variablesParser;
   final WritersideCategoriesParser categoriesParser;
+  final WorkspaceScanOptions scanOptions;
 
   Future<WritersideModule> load(String rootPath) async {
     final root = normalizePath(rootPath);
@@ -126,28 +129,41 @@ class WritersideModuleService {
     final topics = <WritersideTopic>[];
     final topicsRoot = p.join(root, config.topicsDir);
     if (await Directory(topicsRoot).exists()) {
-      await for (final entity in Directory(topicsRoot).list(recursive: true)) {
-        if (entity is! File) {
-          continue;
-        }
+      final scan = await scanWorkspaceEntities(
+        topicsRoot,
+        options: scanOptions,
+      );
+      diagnostics.addAll(scan.diagnostics);
+      for (final entity in scan.entities.whereType<File>()) {
         final extension = p.extension(entity.path).toLowerCase();
-        if (extension == '.md' || extension == '.markdown') {
-          final source = await entity.readAsString();
-          final topic = topicParser.parseMarkdown(
-            filePath: entity.path,
-            source: source,
-            topicsRoot: topicsRoot,
+        try {
+          if (extension == '.md' || extension == '.markdown') {
+            final source = await entity.readAsString();
+            final topic = topicParser.parseMarkdown(
+              filePath: entity.path,
+              source: source,
+              topicsRoot: topicsRoot,
+            );
+            diagnostics.addAll(topic.diagnostics);
+            topics.add(topic);
+          } else if (extension == '.topic') {
+            final source = await entity.readAsString();
+            final topic = topicParser.parseXml(
+              filePath: entity.path,
+              source: source,
+            );
+            diagnostics.addAll(topic.diagnostics);
+            topics.add(topic);
+          }
+        } on Object catch (error) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.topic.read-failed',
+              severity: DiagnosticSeverity.warning,
+              message: 'Could not read topic file: $error',
+              filePath: entity.path,
+            ),
           );
-          diagnostics.addAll(topic.diagnostics);
-          topics.add(topic);
-        } else if (extension == '.topic') {
-          final source = await entity.readAsString();
-          final topic = topicParser.parseXml(
-            filePath: entity.path,
-            source: source,
-          );
-          diagnostics.addAll(topic.diagnostics);
-          topics.add(topic);
         }
       }
     }
@@ -354,16 +370,12 @@ class WritersideModuleService {
         if (_isExternal(image.destination)) {
           continue;
         }
-        final imagePath = p.join(
-          module.rootPath,
-          module.config.imagesDir,
-          image.destination,
-        );
-        final relativePath = p.join(
-          p.dirname(topic.filePath),
-          image.destination,
-        );
-        if (!File(imagePath).existsSync() && !File(relativePath).existsSync()) {
+        if (!localImageExists(
+          activeFilePath: topic.filePath,
+          destination: image.destination,
+          writersideRoot: module.rootPath,
+          imagesDir: module.config.imagesDir,
+        )) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.image.missing-file',

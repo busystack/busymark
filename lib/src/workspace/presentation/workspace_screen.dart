@@ -1,24 +1,60 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:math' as math;
+import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../core/diagnostic.dart';
+import '../../core/local_image_resolver.dart';
+import '../../core/path_utils.dart' show slugForHeading;
+import '../../editor/source_folding.dart';
+import '../../editor/source_highlighter.dart';
+import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_parser.dart';
 import '../../markdown/preview_export.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
 import '../workspace_controller.dart';
 import '../workspace_model.dart';
+import '../workspace_safety.dart';
 import 'welcome_screen.dart';
 
 final _outlineNavigationTargetProvider =
     StateProvider<_OutlineNavigationTarget?>((ref) => null);
+final _sourceNavigationTargetProvider = StateProvider<_SourceNavigationTarget?>(
+  (ref) => null,
+);
+
+const _sourceTextHeightBehavior = TextHeightBehavior(
+  applyHeightToFirstAscent: true,
+  applyHeightToLastDescent: true,
+  leadingDistribution: TextLeadingDistribution.even,
+);
+
+ScrollPosition? _safeScrollPosition(ScrollController controller) {
+  return controller.positions.isEmpty ? null : controller.positions.last;
+}
+
+double _safeScrollOffset(ScrollController controller) {
+  return _safeScrollPosition(controller)?.pixels ?? 0.0;
+}
+
+double _safeMaxScrollExtent(ScrollController controller) {
+  return _safeScrollPosition(controller)?.maxScrollExtent ?? 0.0;
+}
 
 class _OutlineNavigationTarget {
   const _OutlineNavigationTarget({
@@ -29,6 +65,13 @@ class _OutlineNavigationTarget {
 
   final String filePath;
   final String headingId;
+  final int line;
+}
+
+class _SourceNavigationTarget {
+  const _SourceNavigationTarget({required this.filePath, required this.line});
+
+  final String filePath;
   final int line;
 }
 
@@ -48,7 +91,6 @@ class WorkspaceScreen extends ConsumerWidget {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
-    final workspaceController = ref.read(workspaceControllerProvider.notifier);
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((action) {
         _handleHeaderBarAction(context, ref, action);
@@ -69,7 +111,12 @@ class WorkspaceScreen extends ConsumerWidget {
                 child: BusyMarkHeaderIconButton(
                   tooltip: 'Welcome',
                   icon: Icons.home_outlined,
-                  onPressed: () => context.go('/'),
+                  onPressed: () async {
+                    if (await confirmSafeToContinue(context, ref) &&
+                        context.mounted) {
+                      context.go('/');
+                    }
+                  },
                 ),
               ),
               title: _HeaderTitle(
@@ -82,12 +129,16 @@ class WorkspaceScreen extends ConsumerWidget {
                 BusyMarkHeaderIconButton(
                   tooltip: 'Save',
                   icon: Icons.check,
-                  onPressed: workspaceController.saveActive,
+                  accented: state.isDirty,
+                  onPressed: () => unawaited(
+                    saveActiveWithOverwriteConfirmation(context, ref),
+                  ),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'Validate',
                   icon: Icons.fact_check_outlined,
-                  onPressed: workspaceController.validateActive,
+                  onPressed: () =>
+                      unawaited(_validateActiveAndShowProblems(context, ref)),
                 ),
                 const _HeaderSeparator(),
                 BusyMarkHeaderIconButton(
@@ -114,11 +165,6 @@ class WorkspaceScreen extends ConsumerWidget {
                     settings.documentViewMode ==
                         DocumentViewModePreference.source,
                   ),
-                ),
-                BusyMarkHeaderIconButton(
-                  tooltip: 'Problems',
-                  icon: Icons.report_problem_outlined,
-                  onPressed: () => _showProblemsDialog(context, ref),
                 ),
                 const _HeaderSeparator(),
                 BusyMarkHeaderIconButton(
@@ -190,13 +236,12 @@ class WorkspaceScreen extends ConsumerWidget {
         );
         await headerBar.setSidebarToggleVisible(hasSidebar);
         await headerBar.setBackVisible(true);
-        await headerBar.setScheduleControlsVisible(false);
         await headerBar.setDocumentControlsVisible(true);
         await headerBar.setViewMode(
           _headerBarViewMode(settings.documentViewMode),
         );
         await headerBar.setCanRefresh(true);
-        await headerBar.setCanSave(true);
+        await headerBar.setCanSave(state.isDirty);
         await headerBar.setSearchActive(false);
       }());
     });
@@ -209,27 +254,33 @@ class WorkspaceScreen extends ConsumerWidget {
   ) {
     final settings = ref.read(appSettingsControllerProvider);
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
-    final workspaceController = ref.read(workspaceControllerProvider.notifier);
     switch (action) {
       case HeaderBarAction.back:
-        context.go('/');
+        unawaited(() async {
+          if (await confirmSafeToContinue(context, ref) && context.mounted) {
+            context.go('/');
+          }
+        }());
       case HeaderBarAction.sidebarToggle:
         unawaited(
           settingsController.setSidebarVisible(!settings.sidebarVisible),
         );
       case HeaderBarAction.refresh:
-        unawaited(workspaceController.validateActive());
+        unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
-      case HeaderBarAction.newItem:
-        unawaited(workspaceController.saveActive());
+        unawaited(saveActiveWithOverwriteConfirmation(context, ref));
       case HeaderBarAction.settings:
         context.go('/settings');
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.exportPreview:
         _showExportDialog(context, ref);
-      case HeaderBarAction.problems:
-        _showProblemsDialog(context, ref);
+      case HeaderBarAction.viewModeEditor:
+        unawaited(
+          settingsController.setDocumentViewMode(
+            DocumentViewModePreference.editor,
+          ),
+        );
       case HeaderBarAction.viewModeSource:
         unawaited(
           settingsController.setDocumentViewMode(
@@ -249,20 +300,23 @@ class WorkspaceScreen extends ConsumerWidget {
           ),
         );
       case HeaderBarAction.search:
-      case HeaderBarAction.today:
-      case HeaderBarAction.previous:
-      case HeaderBarAction.next:
+        _showSearchDialog(context, ref);
       case HeaderBarAction.menu:
         break;
     }
   }
 
   String _activeFileName(Workspace workspace) {
-    return workspace.activeFilePath?.split('/').last ?? 'Workspace';
+    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (path == null || path.isEmpty) {
+      return 'Untitled.md';
+    }
+    return p.basename(path);
   }
 
   String _workspaceKindLabel(WorkspaceKind kind) {
     return switch (kind) {
+      WorkspaceKind.untitledMarkdown => 'Unsaved Markdown file',
       WorkspaceKind.singleMarkdown => 'Single Markdown file',
       WorkspaceKind.markdownFolder => 'Markdown folder',
       WorkspaceKind.writersideModule => 'Writerside module',
@@ -271,6 +325,7 @@ class WorkspaceScreen extends ConsumerWidget {
 
   AppViewMode _headerBarViewMode(DocumentViewModePreference mode) {
     return switch (mode) {
+      DocumentViewModePreference.editor => AppViewMode.editor,
       DocumentViewModePreference.source => AppViewMode.source,
       DocumentViewModePreference.preview => AppViewMode.preview,
       DocumentViewModePreference.split => AppViewMode.split,
@@ -291,7 +346,7 @@ class WorkspaceScreen extends ConsumerWidget {
           title: 'Export Preview',
           maxWidth: 860,
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Close'),
             ),
@@ -330,6 +385,63 @@ class WorkspaceScreen extends ConsumerWidget {
     );
   }
 
+  void _showSearchDialog(BuildContext context, WidgetRef ref) {
+    final state = ref.read(workspaceControllerProvider);
+    if (state.workspace == null) {
+      return;
+    }
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    unawaited(() async {
+      if (headerBar.isAvailable) {
+        await headerBar.setSearchActive(true);
+      }
+      if (!context.mounted) {
+        return;
+      }
+      try {
+        await showBusyMarkModalDialog<void>(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          builder: (dialogContext) => _WorkspaceSearchDialog(
+            state: state,
+            onOpenResult: (result) async {
+              Navigator.pop(dialogContext);
+              await _openSearchResult(context, ref, result);
+            },
+          ),
+        );
+      } finally {
+        if (headerBar.isAvailable) {
+          await headerBar.setSearchActive(false);
+        }
+      }
+    }());
+  }
+
+  Future<void> _openSearchResult(
+    BuildContext context,
+    WidgetRef ref,
+    _WorkspaceSearchResult result,
+  ) async {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null) {
+      return;
+    }
+    if (workspace.activeFilePath != result.filePath) {
+      if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+        return;
+      }
+      await ref
+          .read(workspaceControllerProvider.notifier)
+          .openActiveFile(result.filePath);
+    }
+    if (!context.mounted) {
+      return;
+    }
+    ref.read(_sourceNavigationTargetProvider.notifier).state =
+        _SourceNavigationTarget(filePath: result.filePath, line: result.line);
+  }
+
   void _showProblemsDialog(BuildContext context, WidgetRef ref) {
     final workspace = ref.read(workspaceControllerProvider).workspace;
     if (workspace == null) {
@@ -344,12 +456,6 @@ class WorkspaceScreen extends ConsumerWidget {
         builder: (context) => BusyMarkDialogShell(
           title: 'Problems',
           maxWidth: 760,
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
           children: [
             Text(
               count == 1 ? '1 diagnostic' : '$count diagnostics',
@@ -367,6 +473,17 @@ class WorkspaceScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _validateActiveAndShowProblems(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    await ref.read(workspaceControllerProvider.notifier).validateActive();
+    if (!context.mounted) {
+      return;
+    }
+    _showProblemsDialog(context, ref);
   }
 }
 
@@ -522,18 +639,31 @@ class _SidebarState extends State<_Sidebar> {
           if (tabs.length > 1)
             Padding(
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-              child: SegmentedButton<int>(
-                showSelectedIcon: false,
-                segments: [
-                  for (var index = 0; index < tabs.length; index++)
-                    ButtonSegment(
-                      value: index,
-                      label: Text(_sidebarTabLabel(tabs[index])),
-                    ),
-                ],
-                selected: {selectedIndex},
-                onSelectionChanged: (value) =>
-                    setState(() => _tab = value.first),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    BusyMarkRadius.headerButton,
+                  ),
+                  boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(
+                    BusyMarkRadius.headerButton,
+                  ),
+                  child: SegmentedButton<int>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (var index = 0; index < tabs.length; index++)
+                        ButtonSegment(
+                          value: index,
+                          label: Text(_sidebarTabLabel(tabs[index])),
+                        ),
+                    ],
+                    selected: {selectedIndex},
+                    onSelectionChanged: (value) =>
+                        setState(() => _tab = value.first),
+                  ),
+                ),
               ),
             ),
           Expanded(
@@ -573,6 +703,7 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
+    WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
     WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
@@ -608,7 +739,7 @@ class _SidebarHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _workspaceName(workspace.rootPath),
+            _workspaceName(workspace),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -618,7 +749,7 @@ class _SidebarHeader extends StatelessWidget {
           ),
           const SizedBox(height: BusyMarkSpacing.xs),
           Text(
-            '${_workspaceKindLabel(workspace.kind)} - ${workspace.files.length} files',
+            _workspaceDetail(workspace),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall,
@@ -628,13 +759,25 @@ class _SidebarHeader extends StatelessWidget {
     );
   }
 
-  String _workspaceName(String path) {
+  String _workspaceName(Workspace workspace) {
+    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
+      return workspace.markdown?.filePath ?? 'Untitled.md';
+    }
+    final path = workspace.rootPath;
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
     return segments.isEmpty ? path : segments.last;
   }
 
+  String _workspaceDetail(Workspace workspace) {
+    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
+      return 'Markdown - unsaved';
+    }
+    return '${_workspaceKindLabel(workspace.kind)} - ${workspace.files.length} files';
+  }
+
   String _workspaceKindLabel(WorkspaceKind kind) {
     return switch (kind) {
+      WorkspaceKind.untitledMarkdown => 'Markdown',
       WorkspaceKind.singleMarkdown => 'Markdown',
       WorkspaceKind.markdownFolder => 'Folder',
       WorkspaceKind.writersideModule => 'Writerside',
@@ -693,7 +836,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final node = entry.node;
         final file = node.file;
         final expanded = _expandedPaths.contains(node.relativePath);
-        final openable = file != null && _isOpenableMarkdownFile(file);
+        final openable = file != null && _isOpenableTextDocument(file);
         return _SidebarTreeRow(
           title: node.name,
           depth: entry.depth,
@@ -715,9 +858,13 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                   });
                 }
               : openable
-              ? () => ref
-                    .read(workspaceControllerProvider.notifier)
-                    .openActiveFile(file.absolutePath)
+              ? () async {
+                  if (await confirmSafeToContinue(context, ref)) {
+                    await ref
+                        .read(workspaceControllerProvider.notifier)
+                        .openActiveFile(file.absolutePath);
+                  }
+                }
               : null,
         );
       },
@@ -852,9 +999,18 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
   };
 }
 
-bool _isOpenableMarkdownFile(DocumentFile file) {
-  return file.kind == DocumentKind.markdown ||
-      file.kind == DocumentKind.writersideMarkdownTopic;
+bool _isOpenableTextDocument(DocumentFile file) {
+  return switch (file.kind) {
+    DocumentKind.markdown ||
+    DocumentKind.writersideMarkdownTopic ||
+    DocumentKind.writersideXmlTopic ||
+    DocumentKind.tree ||
+    DocumentKind.config ||
+    DocumentKind.variables ||
+    DocumentKind.categories ||
+    DocumentKind.resource => true,
+    DocumentKind.image || DocumentKind.unknown => false,
+  };
 }
 
 class _FileTreeNode {
@@ -1090,9 +1246,13 @@ class _TocTabState extends ConsumerState<_TocTab> {
           muted: node.hidden,
           onToggle: hasChildren ? toggle : null,
           onTap: topic != null
-              ? () => ref
-                    .read(workspaceControllerProvider.notifier)
-                    .openActiveFile(topic)
+              ? () async {
+                  if (await confirmSafeToContinue(context, ref)) {
+                    await ref
+                        .read(workspaceControllerProvider.notifier)
+                        .openActiveFile(topic);
+                  }
+                }
               : hasChildren
               ? toggle
               : null,
@@ -1440,18 +1600,25 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
-  late final TextEditingController _controller;
+  late final BusyMarkSourceEditingController _controller;
   late final FocusNode _sourceFocusNode;
   late final ScrollController _sourceScrollController;
   late final ScrollController _previewScrollController;
   final _sourceEditorKey = GlobalKey();
   final _previewHeadingKeys = <String, GlobalKey>{};
+  final _foldedRegionKeys = <String>{};
   String _lastPath = '';
+  BusyDocument? _cachedWysiwygDocument;
+  String? _cachedWysiwygPath;
+  String? _cachedWysiwygSource;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.state.activeText);
+    _controller = BusyMarkSourceEditingController(
+      text: widget.state.activeText,
+      language: _sourceSyntaxLanguage(widget.state.workspace),
+    )..renderText = false;
     _sourceFocusNode = FocusNode();
     _sourceScrollController = ScrollController();
     _previewScrollController = ScrollController();
@@ -1462,10 +1629,31 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
     final path = widget.state.workspace?.activeFilePath ?? '';
+    _controller.language = _sourceSyntaxLanguage(widget.state.workspace);
     if (path != _lastPath) {
       _lastPath = path;
+      _clearWysiwygCache();
+      _foldedRegionKeys.clear();
+      _controller.clearFoldedRegions();
       _previewHeadingKeys.clear();
       _controller.text = widget.state.activeText;
+    } else if (widget.state.activeText != oldWidget.state.activeText &&
+        !_sourceFocusNode.hasFocus) {
+      _controller.text = widget.state.activeText;
+    }
+    if (oldWidget.viewMode == DocumentViewModePreference.editor &&
+        widget.viewMode != DocumentViewModePreference.editor &&
+        widget.viewMode != DocumentViewModePreference.source &&
+        widget.state.workspace != null &&
+        widget.state.isDirty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref
+            .read(workspaceControllerProvider.notifier)
+            .updateActiveText(widget.state.activeText);
+      });
     }
   }
 
@@ -1489,13 +1677,80 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToOutlineTarget(next);
     });
+    ref.listen(_sourceNavigationTargetProvider, (previous, next) {
+      if (next == null) {
+        return;
+      }
+      if (next.filePath != widget.state.workspace?.activeFilePath) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _scrollSourceToLine(next.line);
+        }
+      });
+    });
     final colors = BusyMarkSurfaceColors.of(context);
-    final sourceVisible = widget.viewMode != DocumentViewModePreference.preview;
-    final previewVisible = widget.viewMode != DocumentViewModePreference.source;
+    final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
+    final wysiwygDocument =
+        editorVisible && _canUseWysiwyg(widget.state.workspace)
+        ? _wysiwygDocument()
+        : null;
+    final wysiwygVisible =
+        editorVisible &&
+        _canUseWysiwyg(widget.state.workspace) &&
+        wysiwygDocument != null;
+    final sourceVisible =
+        widget.viewMode != DocumentViewModePreference.preview &&
+        !wysiwygVisible;
+    final previewVisible =
+        widget.viewMode != DocumentViewModePreference.source && !editorVisible;
+    final foldRegions = _syncSourceFoldRegions();
+    final sourceStrutStyle = _sourceStrutStyle(
+      folded: _foldedRegionKeys.isNotEmpty,
+    );
+    final sourceLineHeight = _sourceLineHeight(context, sourceStrutStyle);
+    _controller
+      ..renderText = false
+      ..visualMarkdown = false;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
         children: [
+          if (wysiwygVisible)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _PaneHeader(
+                    icon: Icons.edit_document,
+                    title: 'Editor',
+                    trailing: _StatusPill(
+                      label: widget.state.isDirty ? 'Unsaved' : 'Saved',
+                      active: widget.state.isDirty,
+                    ),
+                  ),
+                  Expanded(
+                    child: BusyMarkWysiwygEditor(
+                      document: wysiwygDocument,
+                      workspaceRoot: widget.state.workspace?.rootPath,
+                      writersideRoot:
+                          widget.state.workspace?.writersideModule?.rootPath,
+                      imagesDir:
+                          widget
+                              .state
+                              .workspace
+                              ?.writersideModule
+                              ?.config
+                              .imagesDir ??
+                          'images',
+                      onDocumentChanged: _cacheWysiwygDocument,
+                      onSourceChanged: _handleWysiwygSourceChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (sourceVisible)
             Expanded(
               child: DecoratedBox(
@@ -1512,32 +1767,54 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       ),
                     ),
                     Expanded(
-                      child: SizedBox(
-                        key: _sourceEditorKey,
-                        child: TextField(
-                          controller: _controller,
-                          focusNode: _sourceFocusNode,
-                          scrollController: _sourceScrollController,
-                          keyboardType: widget.wordWrap
-                              ? TextInputType.multiline
-                              : TextInputType.text,
-                          maxLines: null,
-                          expands: true,
-                          textAlignVertical: TextAlignVertical.top,
-                          style: _sourceTextStyle,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: colors.view,
-                            hoverColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(16),
+                      child: _SourceEditorFrame(
+                        controller: _controller,
+                        scrollController: _sourceScrollController,
+                        lineHeight: sourceLineHeight,
+                        textStyle: _sourceTextStyle,
+                        strutStyle: sourceStrutStyle,
+                        collapsedRegionKeys: _foldedRegionKeys,
+                        foldRegions: foldRegions,
+                        onToggleFold: _toggleSourceFold,
+                        child: SizedBox(
+                          key: _sourceEditorKey,
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _sourceFocusNode,
+                            scrollController: _sourceScrollController,
+                            keyboardType: widget.wordWrap
+                                ? TextInputType.multiline
+                                : TextInputType.text,
+                            maxLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            style: _sourceTextStyle,
+                            strutStyle: sourceStrutStyle,
+                            selectionHeightStyle: BoxHeightStyle.max,
+                            selectionWidthStyle: BoxWidthStyle.tight,
+                            cursorColor: colors.foreground.withValues(
+                              alpha: 0.82,
+                            ),
+                            cursorHeight: widget.editorFontSize * 1.22,
+                            cursorWidth: 1.4,
+                            decoration: InputDecoration(
+                              isCollapsed: true,
+                              filled: false,
+                              fillColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                _SourceEditorFrame.editorPaddingLeft,
+                                _SourceEditorFrame.editorPaddingTop,
+                                _SourceEditorFrame.editorPaddingRight,
+                                _SourceEditorFrame.editorPaddingBottom,
+                              ),
+                            ),
+                            onChanged: _handleSourceChanged,
                           ),
-                          onChanged: (value) => ref
-                              .read(workspaceControllerProvider.notifier)
-                              .updateActiveText(value),
                         ),
                       ),
                     ),
@@ -1551,6 +1828,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             Expanded(
               child: _PreviewPane(
                 preview: widget.state.preview,
+                workspace: widget.state.workspace,
                 controller: _previewScrollController,
                 headingKeys: _previewHeadingKeys,
               ),
@@ -1558,6 +1836,105 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         ],
       ),
     );
+  }
+
+  List<SourceFoldRegion> _syncSourceFoldRegions() {
+    final foldRegions = sourceFoldRegions(
+      _controller.text,
+      _controller.language,
+    );
+    final validKeys = {for (final region in foldRegions) region.key};
+    _foldedRegionKeys.removeWhere((key) => !validKeys.contains(key));
+    _applyFoldedRegions();
+    return foldRegions;
+  }
+
+  void _applyFoldedRegions() {
+    _controller.setFoldedRegions(
+      collapsedSourceFoldRegions(
+        _controller.text,
+        _controller.language,
+        _foldedRegionKeys,
+      ),
+    );
+  }
+
+  void _toggleSourceFold(SourceFoldRegion region) {
+    setState(() {
+      if (_foldedRegionKeys.contains(region.key)) {
+        _foldedRegionKeys.remove(region.key);
+      } else {
+        _foldedRegionKeys.add(region.key);
+      }
+      _applyFoldedRegions();
+    });
+  }
+
+  void _handleSourceChanged(String value, {bool updatePreview = true}) {
+    if (_foldedRegionKeys.isNotEmpty) {
+      setState(() {
+        _foldedRegionKeys.clear();
+        _controller.clearFoldedRegions();
+      });
+    }
+    if (updatePreview) {
+      _clearWysiwygCache();
+    }
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText(value, updatePreview: updatePreview);
+  }
+
+  void _handleWysiwygSourceChanged(String value) {
+    _handleSourceChanged(value, updatePreview: false);
+  }
+
+  void _cacheWysiwygDocument(BusyDocument document) {
+    _cachedWysiwygDocument = document;
+    _cachedWysiwygPath = document.filePath;
+    _cachedWysiwygSource = document.source;
+  }
+
+  void _clearWysiwygCache() {
+    _cachedWysiwygDocument = null;
+    _cachedWysiwygPath = null;
+    _cachedWysiwygSource = null;
+  }
+
+  SourceSyntaxLanguage _sourceSyntaxLanguage(Workspace? workspace) {
+    final kind = _activeDocumentKind(workspace);
+    return switch (kind) {
+      DocumentKind.markdown ||
+      DocumentKind.writersideMarkdownTopic => SourceSyntaxLanguage.markdown,
+      DocumentKind.writersideXmlTopic ||
+      DocumentKind.tree ||
+      DocumentKind.config ||
+      DocumentKind.variables ||
+      DocumentKind.categories => SourceSyntaxLanguage.xml,
+      DocumentKind.image ||
+      DocumentKind.resource ||
+      DocumentKind.unknown ||
+      null => SourceSyntaxLanguage.plain,
+    };
+  }
+
+  DocumentKind? _activeDocumentKind(Workspace? workspace) {
+    if (workspace == null) {
+      return null;
+    }
+    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (activePath == null) {
+      return null;
+    }
+    for (final file in workspace.files) {
+      if (file.absolutePath == activePath) {
+        return file.kind;
+      }
+    }
+    return workspace.kind == WorkspaceKind.untitledMarkdown ||
+            workspace.kind == WorkspaceKind.singleMarkdown
+        ? DocumentKind.markdown
+        : null;
   }
 
   void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
@@ -1571,19 +1948,36 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _scrollSourceToLine(int line) {
+    _unfoldSourceLine(line);
     final textOffset = _textOffsetForLine(_controller.text, line);
     _sourceFocusNode.requestFocus();
     _controller.selection = TextSelection.collapsed(offset: textOffset);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateSourceScrollToTextOffset(textOffset);
+      _animateSourceScrollToLine(line);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _jumpSourceScrollToTextOffset(textOffset);
+        _jumpSourceScrollToLine(line);
       });
       unawaited(
         Future<void>.delayed(const Duration(milliseconds: 80), () {
-          _jumpSourceScrollToTextOffset(textOffset);
+          _jumpSourceScrollToLine(line);
         }),
       );
+    });
+  }
+
+  void _unfoldSourceLine(int line) {
+    final region = collapsedRegionContainingLine(
+      _controller.text,
+      _controller.language,
+      _foldedRegionKeys,
+      line,
+    );
+    if (region == null) {
+      return;
+    }
+    setState(() {
+      _foldedRegionKeys.remove(region.key);
+      _applyFoldedRegions();
     });
   }
 
@@ -1591,47 +1985,86 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     fontFamily: 'Ubuntu Mono',
     fontSize: widget.editorFontSize,
     height: 1.45,
+    leadingDistribution: TextLeadingDistribution.even,
   );
 
-  void _animateSourceScrollToTextOffset(int textOffset) {
+  StrutStyle? _sourceStrutStyle({required bool folded}) {
+    if (folded) {
+      return null;
+    }
+    return StrutStyle.fromTextStyle(_sourceTextStyle, forceStrutHeight: true);
+  }
+
+  double _sourceLineHeight(BuildContext context, StrutStyle? strutStyle) {
+    final painter = TextPainter(
+      text: TextSpan(text: ' ', style: _sourceTextStyle),
+      strutStyle: strutStyle,
+      textDirection: Directionality.of(context),
+      textHeightBehavior: _sourceTextHeightBehavior,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final metrics = painter.computeLineMetrics();
+    painter.dispose();
+    return metrics.isEmpty
+        ? widget.editorFontSize * 1.45
+        : metrics.first.height;
+  }
+
+  void _animateSourceScrollToLine(int line) {
     if (!mounted || !_sourceScrollController.hasClients) {
       return;
     }
     _sourceScrollController.animateTo(
-      _sourceScrollOffsetForTextOffset(textOffset),
+      _sourceScrollOffsetForLine(line),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
     );
   }
 
-  void _jumpSourceScrollToTextOffset(int textOffset) {
+  void _jumpSourceScrollToLine(int line) {
     if (!mounted || !_sourceScrollController.hasClients) {
       return;
     }
-    _sourceScrollController.jumpTo(
-      _sourceScrollOffsetForTextOffset(textOffset),
-    );
+    _sourceScrollController.jumpTo(_sourceScrollOffsetForLine(line));
   }
 
-  double _sourceScrollOffsetForTextOffset(int textOffset) {
+  double _sourceScrollOffsetForLine(int line) {
+    final textWidth = _sourceTextLayoutWidth();
+    final strutStyle = _sourceStrutStyle(folded: _foldedRegionKeys.isNotEmpty);
+    final lineHeight = _sourceLineHeight(context, strutStyle);
+    final layouts = _sourceLineLayoutEntries(
+      context,
+      controller: _controller,
+      foldRegions: sourceFoldRegions(_controller.text, _controller.language),
+      collapsedRegionKeys: _foldedRegionKeys,
+      textStyle: _sourceTextStyle,
+      strutStyle: strutStyle,
+      lineHeight: lineHeight,
+      textWidth: textWidth,
+    );
+    final targetOffset = layouts
+        .firstWhere(
+          (entry) => entry.gutterEntry.lineNumber >= line,
+          orElse: () => layouts.isEmpty
+              ? const _SourceLineLayoutEntry.empty()
+              : layouts.last,
+        )
+        .top;
+    return targetOffset
+        .clamp(0.0, _safeMaxScrollExtent(_sourceScrollController))
+        .toDouble();
+  }
+
+  double _sourceTextLayoutWidth() {
     final renderBox =
         _sourceEditorKey.currentContext?.findRenderObject() as RenderBox?;
-    final availableWidth = (renderBox?.size.width ?? 800) - 32;
-    final maxWidth = availableWidth < 1 ? 1.0 : availableWidth;
-    final painter = TextPainter(
-      text: TextSpan(
-        text: _controller.text.isEmpty ? ' ' : _controller.text,
-        style: _sourceTextStyle,
-      ),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout(maxWidth: maxWidth);
-    final targetOffset = painter
-        .getOffsetForCaret(TextPosition(offset: textOffset), Rect.zero)
-        .dy;
-    return targetOffset
-        .clamp(0.0, _sourceScrollController.position.maxScrollExtent)
-        .toDouble();
+    final editorWidth = renderBox?.size.width ?? 800;
+    return math.max(
+      1,
+      editorWidth -
+          _SourceEditorFrame.editorPaddingLeft -
+          _SourceEditorFrame.editorPaddingRight,
+    );
   }
 
   void _scrollPreviewToHeading(String headingId) {
@@ -1662,16 +2095,685 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     return text.length;
   }
+
+  bool _canUseWysiwyg(Workspace? workspace) {
+    final kind = _activeDocumentKind(workspace);
+    return kind == DocumentKind.markdown ||
+        kind == DocumentKind.writersideMarkdownTopic;
+  }
+
+  BusyDocument? _wysiwygDocument() {
+    final workspace = widget.state.workspace;
+    final activePath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    if (workspace == null || activePath == null) {
+      return null;
+    }
+    if (_cachedWysiwygPath == activePath &&
+        _cachedWysiwygSource == widget.state.activeText) {
+      return _cachedWysiwygDocument;
+    }
+    final mode = workspace.kind == WorkspaceKind.writersideModule
+        ? MarkdownMode.writersideMarkdown
+        : MarkdownMode.commonMark;
+    try {
+      final document = const MarkdownParser()
+          .parse(
+            filePath: activePath,
+            source: widget.state.activeText,
+            mode: mode,
+            workspaceRoot: workspace.rootPath,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      _cachedWysiwygDocument = document;
+      _cachedWysiwygPath = activePath;
+      _cachedWysiwygSource = widget.state.activeText;
+      return document;
+    } on Object {
+      return workspace.markdown?.busyDocument;
+    }
+  }
+}
+
+class _SourceEditorFrame extends StatelessWidget {
+  const _SourceEditorFrame({
+    required this.controller,
+    required this.scrollController,
+    required this.lineHeight,
+    required this.textStyle,
+    required this.strutStyle,
+    required this.foldRegions,
+    required this.collapsedRegionKeys,
+    required this.onToggleFold,
+    required this.child,
+  });
+
+  static const double editorPaddingTop = 16;
+  static const double editorPaddingBottom = 16;
+  static const double editorPaddingLeft = 12;
+  static const double editorPaddingRight = 16;
+  static const double _gutterWidth = 72;
+
+  final BusyMarkSourceEditingController controller;
+  final ScrollController scrollController;
+  final double lineHeight;
+  final TextStyle textStyle;
+  final StrutStyle? strutStyle;
+  final List<SourceFoldRegion> foldRegions;
+  final Set<String> collapsedRegionKeys;
+  final ValueChanged<SourceFoldRegion> onToggleFold;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final editorWidth = math
+            .max(1, constraints.maxWidth - _gutterWidth - 1)
+            .toDouble();
+        final textWidth = math
+            .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
+            .toDouble();
+        return DecoratedBox(
+          decoration: BoxDecoration(color: colors.view),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: _gutterWidth,
+                child: _SourceLineNumberGutter(
+                  controller: controller,
+                  scrollController: scrollController,
+                  lineHeight: lineHeight,
+                  textStyle: textStyle,
+                  strutStyle: strutStyle,
+                  textWidth: textWidth,
+                  foldRegions: foldRegions,
+                  collapsedRegionKeys: collapsedRegionKeys,
+                  onToggleFold: onToggleFold,
+                ),
+              ),
+              VerticalDivider(width: 1, color: colors.subtleBorder),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: _SourceRenderedTextLayer(
+                        controller: controller,
+                        scrollController: scrollController,
+                        textStyle: textStyle,
+                        strutStyle: strutStyle,
+                        textWidth: textWidth,
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: _CollapsedSourceLineOverlay(
+                        controller: controller,
+                        scrollController: scrollController,
+                        lineHeight: lineHeight,
+                        textWidth: textWidth,
+                        textStyle: textStyle,
+                        strutStyle: strutStyle,
+                        foldRegions: foldRegions,
+                        collapsedRegionKeys: collapsedRegionKeys,
+                      ),
+                    ),
+                    Positioned.fill(child: child),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SourceRenderedTextLayer extends StatelessWidget {
+  const _SourceRenderedTextLayer({
+    required this.controller,
+    required this.scrollController,
+    required this.textStyle,
+    required this.strutStyle,
+    required this.textWidth,
+  });
+
+  final BusyMarkSourceEditingController controller;
+  final ScrollController scrollController;
+  final TextStyle textStyle;
+  final StrutStyle? strutStyle;
+  final double textWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ClipRect(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([controller, scrollController]),
+          builder: (context, _) {
+            final scrollOffset = _safeScrollOffset(scrollController);
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
+                  left: _SourceEditorFrame.editorPaddingLeft,
+                  width: textWidth,
+                  child: RichText(
+                    text: controller.buildSourceTextSpan(
+                      context: context,
+                      style: textStyle,
+                    ),
+                    strutStyle: strutStyle,
+                    textHeightBehavior: _sourceTextHeightBehavior,
+                    textScaler: MediaQuery.textScalerOf(context),
+                    textWidthBasis: TextWidthBasis.parent,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceLineNumberGutter extends StatelessWidget {
+  const _SourceLineNumberGutter({
+    required this.controller,
+    required this.scrollController,
+    required this.lineHeight,
+    required this.textStyle,
+    required this.strutStyle,
+    required this.textWidth,
+    required this.foldRegions,
+    required this.collapsedRegionKeys,
+    required this.onToggleFold,
+  });
+
+  final BusyMarkSourceEditingController controller;
+  final ScrollController scrollController;
+  final double lineHeight;
+  final TextStyle textStyle;
+  final StrutStyle? strutStyle;
+  final double textWidth;
+  final List<SourceFoldRegion> foldRegions;
+  final Set<String> collapsedRegionKeys;
+  final ValueChanged<SourceFoldRegion> onToggleFold;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(color: colors.view),
+      child: ClipRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return AnimatedBuilder(
+              animation: Listenable.merge([controller, scrollController]),
+              builder: (context, _) {
+                final layouts = _sourceLineLayoutEntries(
+                  context,
+                  controller: controller,
+                  foldRegions: foldRegions,
+                  collapsedRegionKeys: collapsedRegionKeys,
+                  textStyle: textStyle,
+                  strutStyle: strutStyle,
+                  lineHeight: lineHeight,
+                  textWidth: textWidth,
+                );
+                final activeLine = sourceLineNumberForOffset(
+                  controller.text,
+                  controller.selection.extentOffset,
+                );
+                final scrollOffset = _safeScrollOffset(scrollController);
+                final children = <Widget>[];
+                for (final layout in layouts) {
+                  final top = layout.top - scrollOffset;
+                  if (top < -lineHeight || top > constraints.maxHeight) {
+                    continue;
+                  }
+                  final entry = layout.gutterEntry;
+                  children.add(
+                    Positioned(
+                      top: top,
+                      left: 0,
+                      right: 0,
+                      height: lineHeight,
+                      child: _SourceGutterRow(
+                        entry: entry,
+                        active: entry.lineNumber == activeLine,
+                        lineHeight: lineHeight,
+                        textStyle: textStyle,
+                        onToggleFold: onToggleFold,
+                      ),
+                    ),
+                  );
+                }
+                return Stack(children: children);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsedSourceLineOverlay extends StatelessWidget {
+  const _CollapsedSourceLineOverlay({
+    required this.controller,
+    required this.scrollController,
+    required this.lineHeight,
+    required this.textWidth,
+    required this.textStyle,
+    required this.strutStyle,
+    required this.foldRegions,
+    required this.collapsedRegionKeys,
+  });
+
+  final BusyMarkSourceEditingController controller;
+  final ScrollController scrollController;
+  final double lineHeight;
+  final double textWidth;
+  final TextStyle textStyle;
+  final StrutStyle? strutStyle;
+  final List<SourceFoldRegion> foldRegions;
+  final Set<String> collapsedRegionKeys;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ClipRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return AnimatedBuilder(
+              animation: Listenable.merge([controller, scrollController]),
+              builder: (context, _) {
+                final layouts = _sourceLineLayoutEntries(
+                  context,
+                  controller: controller,
+                  foldRegions: foldRegions,
+                  collapsedRegionKeys: collapsedRegionKeys,
+                  textStyle: textStyle,
+                  strutStyle: strutStyle,
+                  lineHeight: lineHeight,
+                  textWidth: textWidth,
+                );
+                final linesByNumber = {
+                  for (final line in sourceLineInfos(controller.text))
+                    line.number: line,
+                };
+                final scrollOffset = _safeScrollOffset(scrollController);
+                final children = <Widget>[];
+                for (final layout in layouts) {
+                  final entry = layout.gutterEntry;
+                  if (!entry.collapsed) {
+                    continue;
+                  }
+                  final top = layout.top - scrollOffset;
+                  if (top < -layout.height || top > constraints.maxHeight) {
+                    continue;
+                  }
+                  final line = linesByNumber[entry.lineNumber];
+                  if (line == null) {
+                    continue;
+                  }
+                  children.add(
+                    Positioned(
+                      top: top,
+                      left: 0,
+                      right: 0,
+                      height: layout.height,
+                      child: _CollapsedSourceLine(
+                        text: _collapsedLineText(line.text),
+                        height: lineHeight,
+                        textStyle: textStyle,
+                      ),
+                    ),
+                  );
+                }
+                return Stack(children: children);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsedSourceLine extends StatelessWidget {
+  const _CollapsedSourceLine({
+    required this.text,
+    required this.height,
+    required this.textStyle,
+  });
+
+  final String text;
+  final double height;
+  final TextStyle textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final background = Color.alphaBlend(
+      colors.foreground.withValues(alpha: 0.045),
+      colors.view,
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(color: background),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          height: height,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: _SourceEditorFrame.editorPaddingLeft,
+              right: _SourceEditorFrame.editorPaddingRight,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textStyle.copyWith(color: colors.mutedForeground),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceGutterRow extends StatelessWidget {
+  const _SourceGutterRow({
+    required this.entry,
+    required this.active,
+    required this.lineHeight,
+    required this.textStyle,
+    required this.onToggleFold,
+  });
+
+  final SourceGutterEntry entry;
+  final bool active;
+  final double lineHeight;
+  final TextStyle textStyle;
+  final ValueChanged<SourceFoldRegion> onToggleFold;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final region = entry.region;
+    final activeColor = colors.foreground.withValues(alpha: 0.045);
+    final numberStyle = textStyle.copyWith(
+      color: active ? colors.foreground : colors.mutedForeground,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: active ? activeColor : Colors.transparent,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: lineHeight,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Text('${entry.lineNumber}', style: numberStyle),
+              ),
+            ),
+          ),
+          const SizedBox(width: 5),
+          SizedBox(
+            width: 22,
+            height: lineHeight,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: region == null
+                  ? const SizedBox.shrink()
+                  : _SourceFoldButton(
+                      region: region,
+                      collapsed: entry.collapsed,
+                      onToggleFold: onToggleFold,
+                    ),
+            ),
+          ),
+          const SizedBox(width: 7),
+        ],
+      ),
+    );
+  }
+}
+
+class _SourceFoldButton extends StatelessWidget {
+  const _SourceFoldButton({
+    required this.region,
+    required this.collapsed,
+    required this.onToggleFold,
+  });
+
+  final SourceFoldRegion region;
+  final bool collapsed;
+  final ValueChanged<SourceFoldRegion> onToggleFold;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Tooltip(
+      message: collapsed
+          ? 'Expand ${_foldKindLabel(region.kind)}'
+          : 'Collapse ${_foldKindLabel(region.kind)}',
+      waitDuration: const Duration(milliseconds: 450),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onToggleFold(region),
+          child: SizedBox.square(
+            dimension: 18,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+              ),
+              child: Icon(
+                collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
+                size: 13,
+                color: colors.mutedForeground,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+List<SourceGutterEntry> _sourceGutterEntriesFromRegions(
+  String source,
+  List<SourceFoldRegion> foldRegions,
+  Set<String> collapsedRegionKeys,
+) {
+  final lines = sourceLineInfos(source);
+  final regionByStartLine = <int, SourceFoldRegion>{};
+  for (final region in foldRegions.reversed) {
+    regionByStartLine.putIfAbsent(region.startLine, () => region);
+  }
+
+  final entries = <SourceGutterEntry>[];
+  for (var index = 0; index < lines.length; index++) {
+    final lineNumber = lines[index].number;
+    final region = regionByStartLine[lineNumber];
+    final collapsed =
+        region != null && collapsedRegionKeys.contains(region.key);
+    entries.add(
+      SourceGutterEntry(
+        lineNumber: lineNumber,
+        region: region,
+        collapsed: collapsed,
+      ),
+    );
+    if (collapsed) {
+      index += region.foldedLineCount;
+    }
+  }
+  return entries;
+}
+
+class _SourceLineLayoutEntry {
+  const _SourceLineLayoutEntry({
+    required this.gutterEntry,
+    required this.top,
+    required this.height,
+  });
+
+  const _SourceLineLayoutEntry.empty()
+    : gutterEntry = const SourceGutterEntry(
+        lineNumber: 1,
+        region: null,
+        collapsed: false,
+      ),
+      top = 0,
+      height = 0;
+
+  final SourceGutterEntry gutterEntry;
+  final double top;
+  final double height;
+}
+
+List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
+  BuildContext context, {
+  required BusyMarkSourceEditingController controller,
+  required List<SourceFoldRegion> foldRegions,
+  required Set<String> collapsedRegionKeys,
+  required TextStyle textStyle,
+  required StrutStyle? strutStyle,
+  required double lineHeight,
+  required double textWidth,
+}) {
+  final source = controller.text;
+  final linesByNumber = {
+    for (final line in sourceLineInfos(source)) line.number: line,
+  };
+  final entries = _sourceGutterEntriesFromRegions(
+    source,
+    foldRegions,
+    collapsedRegionKeys,
+  );
+  final layouts = <_SourceLineLayoutEntry>[];
+  final painter = _sourceTextPainter(
+    context,
+    controller: controller,
+    textStyle: textStyle,
+    strutStyle: strutStyle,
+    textWidth: textWidth,
+  );
+  for (final entry in entries) {
+    final line = linesByNumber[entry.lineNumber];
+    final top =
+        _SourceEditorFrame.editorPaddingTop +
+        (line == null ? 0 : _sourceTextTopForOffset(painter, line.startOffset));
+    final height = line == null
+        ? lineHeight
+        : _sourceTextHeightForLine(
+            painter,
+            linesByNumber,
+            entry.lineNumber,
+            lineHeight,
+          );
+    layouts.add(
+      _SourceLineLayoutEntry(gutterEntry: entry, top: top, height: height),
+    );
+  }
+  painter.dispose();
+  return layouts;
+}
+
+TextPainter _sourceTextPainter(
+  BuildContext context, {
+  required BusyMarkSourceEditingController controller,
+  required TextStyle textStyle,
+  required StrutStyle? strutStyle,
+  required double textWidth,
+}) {
+  final painter = TextPainter(
+    text: controller.buildSourceTextSpan(context: context, style: textStyle),
+    strutStyle: strutStyle,
+    textDirection: Directionality.of(context),
+    textHeightBehavior: _sourceTextHeightBehavior,
+    textScaler: MediaQuery.textScalerOf(context),
+  )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));
+  return painter;
+}
+
+double _sourceTextTopForOffset(TextPainter painter, int offset) {
+  return painter.getOffsetForCaret(TextPosition(offset: offset), Rect.zero).dy;
+}
+
+double _sourceTextHeightForLine(
+  TextPainter painter,
+  Map<int, SourceLineInfo> linesByNumber,
+  int lineNumber,
+  double fallback,
+) {
+  final line = linesByNumber[lineNumber];
+  if (line == null) {
+    return fallback;
+  }
+  final top = _sourceTextTopForOffset(painter, line.startOffset);
+  final nextLine = linesByNumber[lineNumber + 1];
+  if (nextLine != null) {
+    final nextTop = _sourceTextTopForOffset(painter, nextLine.startOffset);
+    if (nextTop > top) {
+      return math.max(fallback, nextTop - top);
+    }
+  }
+  final metrics = painter.computeLineMetrics();
+  for (final metric in metrics) {
+    final metricTop = metric.baseline - metric.ascent;
+    if (top >= metricTop - 0.5 && top < metricTop + metric.height + 0.5) {
+      return math.max(fallback, metric.height);
+    }
+  }
+  return fallback;
+}
+
+String _collapsedLineText(String text) {
+  final trimmed = text.trimRight();
+  if (trimmed.isEmpty) {
+    return '...';
+  }
+  return '$trimmed ...';
+}
+
+String _foldKindLabel(SourceFoldKind kind) {
+  return switch (kind) {
+    SourceFoldKind.section => 'section',
+    SourceFoldKind.list => 'list',
+    SourceFoldKind.blockquote => 'quote',
+    SourceFoldKind.code => 'code block',
+    SourceFoldKind.xml => 'tag',
+  };
 }
 
 class _PreviewPane extends StatelessWidget {
   const _PreviewPane({
     required this.preview,
+    required this.workspace,
     required this.controller,
     required this.headingKeys,
   });
 
   final PreviewDocument? preview;
+  final Workspace? workspace;
   final ScrollController controller;
   final Map<String, GlobalKey> headingKeys;
 
@@ -1698,24 +2800,30 @@ class _PreviewPane extends StatelessWidget {
                 : Text(document.compatibility),
           ),
           Expanded(
-            child: ListView(
-              controller: controller,
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 34),
-              children: [
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final block in document.blocks)
-                          _PreviewBlockView(block, key: _keyForBlock(block)),
-                      ],
+            child: SelectionArea(
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 34),
+                children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final block in document.blocks)
+                            _PreviewBlockView(
+                              block,
+                              workspace: workspace,
+                              key: _keyForBlock(block),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -1736,9 +2844,10 @@ class _PreviewPane extends StatelessWidget {
 }
 
 class _PreviewBlockView extends StatelessWidget {
-  const _PreviewBlockView(this.block, {super.key});
+  const _PreviewBlockView(this.block, {required this.workspace, super.key});
 
   final PreviewBlock block;
+  final Workspace? workspace;
 
   @override
   Widget build(BuildContext context) {
@@ -1746,7 +2855,10 @@ class _PreviewBlockView extends StatelessWidget {
     return switch (block.kind) {
       PreviewBlockKind.heading => Padding(
         padding: const EdgeInsets.only(top: 18, bottom: 6),
-        child: Text(block.text, style: _headingStyle(context, block.level)),
+        child: _PreviewInlineText(
+          block: block,
+          style: _headingStyle(context, block.level),
+        ),
       ),
       PreviewBlockKind.code => Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -1764,10 +2876,9 @@ class _PreviewBlockView extends StatelessWidget {
           ),
         ),
       ),
-      PreviewBlockKind.image => _PreviewCallout(
-        icon: Icons.image_not_supported_outlined,
-        color: colors.panel,
-        child: Text(block.text),
+      PreviewBlockKind.image => _PreviewImageBlock(
+        block: block,
+        workspace: workspace,
       ),
       PreviewBlockKind.admonition => _PreviewCallout(
         icon: _admonitionIcon(block.attributes['style']),
@@ -1776,8 +2887,13 @@ class _PreviewBlockView extends StatelessWidget {
           'tip' => colors.admonitionTip,
           _ => colors.admonitionNote,
         },
-        child: Text(
-          block.text.isEmpty ? block.attributes['style'] ?? 'Note' : block.text,
+        child: _PreviewInlineText(
+          block: block.text.isEmpty
+              ? PreviewBlock(
+                  kind: block.kind,
+                  text: block.attributes['style'] ?? 'Note',
+                )
+              : block,
         ),
       ),
       PreviewBlockKind.tabs => _PreviewCallout(
@@ -1795,18 +2911,48 @@ class _PreviewBlockView extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 9),
-              child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+            SizedBox(
+              width: 18,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _ListMarker(block: block),
+              ),
             ),
             const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(child: Text(block.text)),
+            Expanded(child: _PreviewInlineText(block: block)),
           ],
+        ),
+      ),
+      PreviewBlockKind.quote => _PreviewCallout(
+        icon: Icons.format_quote_outlined,
+        color: colors.panel,
+        child: _PreviewInlineText(block: block),
+      ),
+      PreviewBlockKind.thematicBreak => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Divider(height: 1, color: colors.subtleBorder),
+      ),
+      PreviewBlockKind.table => _PreviewTable(block: block),
+      PreviewBlockKind.raw => Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: colors.panel,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Text(
+          block.text,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontFamily: 'Ubuntu Mono',
+            color: colors.mutedForeground,
+            height: 1.45,
+          ),
         ),
       ),
       _ => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Text(block.text),
+        child: _PreviewInlineText(block: block),
       ),
     };
   }
@@ -1827,6 +2973,473 @@ class _PreviewBlockView extends StatelessWidget {
       _ => Icons.info_outline,
     };
   }
+}
+
+class _PreviewTable extends StatelessWidget {
+  const _PreviewTable({required this.block});
+
+  final PreviewBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.panel,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        child: Table(
+          border: TableBorder.symmetric(
+            inside: BorderSide(color: colors.subtleBorder),
+          ),
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            for (final row in block.children)
+              TableRow(
+                decoration: BoxDecoration(
+                  color: row.attributes['header'] == 'true'
+                      ? colors.control
+                      : Colors.transparent,
+                ),
+                children: [
+                  for (final cell in row.children)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: BusyMarkSpacing.sm,
+                        vertical: BusyMarkSpacing.xs,
+                      ),
+                      child: _PreviewInlineText(
+                        block: cell,
+                        style: row.attributes['header'] == 'true'
+                            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              )
+                            : null,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewInlineText extends ConsumerWidget {
+  const _PreviewInlineText({required this.block, this.style});
+
+  final PreviewBlock block;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final baseStyle = style ?? Theme.of(context).textTheme.bodyMedium;
+    final inlines = block.inlines.isEmpty
+        ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
+        : block.inlines;
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: [
+          for (final inline in inlines)
+            _previewInlineSpan(
+              context,
+              inline,
+              onLinkTap: (destination) =>
+                  _openPreviewLink(context, ref, destination),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListMarker extends StatelessWidget {
+  const _ListMarker({required this.block});
+
+  final PreviewBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final task = block.attributes['task'];
+    if (task != null) {
+      return Icon(
+        task == 'true'
+            ? Icons.check_box_outlined
+            : Icons.check_box_outline_blank,
+        size: BusyMarkSizes.iconSm,
+        color: colors.mutedForeground,
+      );
+    }
+    if (block.attributes['ordered'] == 'true') {
+      return Text(
+        block.attributes['marker'] ?? '1.',
+        textAlign: TextAlign.right,
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 7),
+      child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+    );
+  }
+}
+
+class _PreviewImageBlock extends StatelessWidget {
+  const _PreviewImageBlock({required this.block, required this.workspace});
+
+  final PreviewBlock block;
+  final Workspace? workspace;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final imagePath = _resolvePreviewImagePath(workspace, block);
+    if (imagePath == null) {
+      return _PreviewCallout(
+        icon: Icons.image_not_supported_outlined,
+        color: colors.panel,
+        child: Text(block.text),
+      );
+    }
+    final width = _previewImageWidth(block);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: width ?? 760),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.panel,
+                border: Border.all(color: colors.subtleBorder),
+                borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+              ),
+              child: Image.file(
+                File(imagePath),
+                width: width,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.md),
+                  child: Text(block.text),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String? _resolvePreviewImagePath(Workspace? workspace, PreviewBlock block) {
+  final source = block.attributes['src'];
+  final activeFilePath = workspace?.activeFilePath;
+  if (workspace == null || activeFilePath == null || source == null) {
+    return null;
+  }
+  final uri = Uri.tryParse(source);
+  if (_isExternalPreviewUri(uri)) {
+    return null;
+  }
+  final module = workspace.writersideModule;
+  return resolveLocalImagePath(
+    activeFilePath: activeFilePath,
+    destination: source,
+    workspaceRoot: workspace.rootPath,
+    writersideRoot: module?.rootPath,
+    imagesDir: module?.config.imagesDir ?? 'images',
+  );
+}
+
+double? _previewImageWidth(PreviewBlock block) {
+  final value = block.attributes['width'];
+  if (value == null) {
+    return null;
+  }
+  final parsed = double.tryParse(value.replaceAll(RegExp('[^0-9.]'), ''));
+  if (parsed == null || parsed <= 0) {
+    return null;
+  }
+  return parsed.clamp(80, 760).toDouble();
+}
+
+InlineSpan _previewInlineSpan(
+  BuildContext context,
+  PreviewInline inline, {
+  required Future<void> Function(String destination) onLinkTap,
+  String? inheritedLinkDestination,
+  TextStyle? inheritedStyle,
+}) {
+  final colors = BusyMarkSurfaceColors.of(context);
+  final theme = Theme.of(context);
+  final linkDestination = inline.kind == PreviewInlineKind.link
+      ? inline.destination ?? inline.text
+      : inheritedLinkDestination;
+  final linkStyle = linkDestination == null
+      ? null
+      : TextStyle(
+          color: theme.colorScheme.primary,
+          decoration: TextDecoration.underline,
+        );
+  TextStyle? mergeStyle(TextStyle? style) {
+    final merged = inheritedStyle?.merge(style) ?? style ?? inheritedStyle;
+    return merged?.merge(linkStyle) ?? linkStyle;
+  }
+
+  TapGestureRecognizer? linkRecognizer() {
+    final destination = linkDestination;
+    if (destination == null || destination.trim().isEmpty) {
+      return null;
+    }
+    return TapGestureRecognizer()
+      ..onTap = () {
+        unawaited(onLinkTap(destination));
+      };
+  }
+
+  InlineSpan childSpan(PreviewInline child, TextStyle? style) {
+    return _previewInlineSpan(
+      context,
+      child,
+      onLinkTap: onLinkTap,
+      inheritedLinkDestination: linkDestination,
+      inheritedStyle: style,
+    );
+  }
+
+  TextSpan span({
+    required String? text,
+    required List<InlineSpan>? children,
+    TextStyle? style,
+  }) {
+    final clickable = linkDestination != null && text != null;
+    return TextSpan(
+      text: text,
+      children: children,
+      style: style,
+      mouseCursor: clickable ? SystemMouseCursors.click : null,
+      recognizer: clickable ? linkRecognizer() : null,
+    );
+  }
+
+  return switch (inline.kind) {
+    PreviewInlineKind.text => span(
+      text: inline.text,
+      children: null,
+      style: mergeStyle(null),
+    ),
+    PreviewInlineKind.strong => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(
+                  child,
+                  mergeStyle(const TextStyle(fontWeight: FontWeight.w700)),
+                ),
+            ],
+      style: mergeStyle(const TextStyle(fontWeight: FontWeight.w700)),
+    ),
+    PreviewInlineKind.emphasis => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(
+                  child,
+                  mergeStyle(const TextStyle(fontStyle: FontStyle.italic)),
+                ),
+            ],
+      style: mergeStyle(const TextStyle(fontStyle: FontStyle.italic)),
+    ),
+    PreviewInlineKind.strikethrough => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(
+                  child,
+                  mergeStyle(
+                    const TextStyle(decoration: TextDecoration.lineThrough),
+                  ),
+                ),
+            ],
+      style: mergeStyle(
+        const TextStyle(decoration: TextDecoration.lineThrough),
+      ),
+    ),
+    PreviewInlineKind.code => span(
+      text: inline.text,
+      children: null,
+      style: mergeStyle(
+        TextStyle(
+          fontFamily: 'Ubuntu Mono',
+          backgroundColor: colors.control,
+          color: colors.foreground,
+        ),
+      ),
+    ),
+    PreviewInlineKind.link => span(
+      text: inline.children.isEmpty ? inline.text : null,
+      children: inline.children.isEmpty
+          ? null
+          : [
+              for (final child in inline.children)
+                childSpan(child, mergeStyle(null)),
+            ],
+      style: mergeStyle(null),
+    ),
+    PreviewInlineKind.image => span(
+      text: inline.text,
+      children: null,
+      style: mergeStyle(
+        TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
+      ),
+    ),
+  };
+}
+
+Future<void> _openPreviewLink(
+  BuildContext context,
+  WidgetRef ref,
+  String destination,
+) async {
+  final target = destination.trim();
+  if (target.isEmpty) {
+    return;
+  }
+  final uri = Uri.tryParse(target);
+  if (_isExternalPreviewUri(uri)) {
+    final launched = await launchUrl(
+      uri!,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && context.mounted) {
+      _showPreviewLinkMessage(context, 'Could not open $target');
+    }
+    return;
+  }
+
+  final state = ref.read(workspaceControllerProvider);
+  final workspace = state.workspace;
+  final activeFilePath = workspace?.activeFilePath;
+  if (workspace == null || activeFilePath == null) {
+    return;
+  }
+
+  final parts = target.split('#');
+  final targetPath = _decodePreviewLinkPart(parts.first);
+  final anchor = parts.length > 1
+      ? _decodePreviewLinkPart(parts.sublist(1).join('#'))
+      : null;
+  if (targetPath.isEmpty) {
+    _navigatePreviewAnchor(context, ref, activeFilePath, anchor);
+    return;
+  }
+
+  final resolvedPath = p.normalize(
+    p.join(p.dirname(activeFilePath), targetPath),
+  );
+  final file = workspace.files
+      .where((file) => p.normalize(file.absolutePath) == resolvedPath)
+      .firstOrNull;
+  if (file == null) {
+    if (context.mounted) {
+      _showPreviewLinkMessage(context, 'Link target not found: $targetPath');
+    }
+    return;
+  }
+  if (!_isOpenableTextDocument(file)) {
+    if (context.mounted) {
+      _showPreviewLinkMessage(context, 'Cannot open this file type in editor');
+    }
+    return;
+  }
+  if (workspace.activeFilePath != file.absolutePath) {
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      return;
+    }
+    await ref
+        .read(workspaceControllerProvider.notifier)
+        .openActiveFile(file.absolutePath);
+  }
+  if (!context.mounted) {
+    return;
+  }
+  _navigatePreviewAnchor(context, ref, file.absolutePath, anchor);
+}
+
+bool _isExternalPreviewUri(Uri? uri) {
+  if (uri == null) {
+    return false;
+  }
+  return uri.scheme == 'http' ||
+      uri.scheme == 'https' ||
+      uri.scheme == 'mailto';
+}
+
+String _decodePreviewLinkPart(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
+}
+
+void _navigatePreviewAnchor(
+  BuildContext context,
+  WidgetRef ref,
+  String filePath,
+  String? anchor,
+) {
+  if (anchor == null || anchor.isEmpty) {
+    return;
+  }
+  final markdown = ref.read(workspaceControllerProvider).workspace?.markdown;
+  if (markdown == null || markdown.filePath != filePath) {
+    return;
+  }
+  final normalizedAnchor = anchor.startsWith('#')
+      ? anchor.substring(1)
+      : anchor;
+  final slug = slugForHeading(normalizedAnchor);
+  final heading = markdown.headings
+      .where(
+        (heading) =>
+            heading.id == normalizedAnchor ||
+            heading.id == slug ||
+            slugForHeading(heading.text) == slug,
+      )
+      .firstOrNull;
+  if (heading == null) {
+    _showPreviewLinkMessage(context, 'Anchor not found: $anchor');
+    return;
+  }
+  ref
+      .read(_outlineNavigationTargetProvider.notifier)
+      .state = _OutlineNavigationTarget(
+    filePath: filePath,
+    headingId: heading.id,
+    line: heading.span.startLine,
+  );
+}
+
+void _showPreviewLinkMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _PreviewCallout extends StatelessWidget {
@@ -1898,10 +3511,127 @@ class _ProblemsList extends StatelessWidget {
   }
 }
 
-class _DiagnosticRow extends StatelessWidget {
-  const _DiagnosticRow({required this.diagnostic});
+class _WorkspaceSearchDialog extends StatefulWidget {
+  const _WorkspaceSearchDialog({
+    required this.state,
+    required this.onOpenResult,
+  });
 
-  final Diagnostic diagnostic;
+  final WorkspaceState state;
+  final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
+
+  @override
+  State<_WorkspaceSearchDialog> createState() => _WorkspaceSearchDialogState();
+}
+
+class _WorkspaceSearchDialogState extends State<_WorkspaceSearchDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController()..addListener(_handleQueryChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleQueryChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleQueryChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _controller.text;
+    final results = _workspaceSearchResults(widget.state, query);
+    return BusyMarkDialogShell(
+      title: 'Search',
+      maxWidth: 700,
+      children: [
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            hintText: 'Search',
+          ),
+          onSubmitted: (_) {
+            if (results.isNotEmpty) {
+              unawaited(widget.onOpenResult(results.first));
+            }
+          },
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        _SearchResultsList(
+          query: query,
+          results: results,
+          onOpenResult: widget.onOpenResult,
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchResultsList extends StatelessWidget {
+  const _SearchResultsList({
+    required this.query,
+    required this.results,
+    required this.onOpenResult,
+  });
+
+  final String query;
+  final List<_WorkspaceSearchResult> results;
+  final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      return const SizedBox(width: 640, height: 280);
+    }
+    final colors = BusyMarkSurfaceColors.of(context);
+    return SizedBox(
+      width: 640,
+      height: 360,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.control,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+          child: results.isEmpty
+              ? const _EmptyPane(icon: Icons.search_off, title: 'No results')
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  itemCount: results.length,
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: colors.subtleBorder),
+                  itemBuilder: (context, index) {
+                    return _SearchResultRow(
+                      result: results[index],
+                      onOpen: () => onOpenResult(results[index]),
+                    );
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchResultRow extends StatelessWidget {
+  const _SearchResultRow({required this.result, required this.onOpen});
+
+  final _WorkspaceSearchResult result;
+  final Future<void> Function() onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -1910,7 +3640,210 @@ class _DiagnosticRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
-        onTap: () {},
+        onTap: () => unawaited(onOpen()),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.lg,
+            vertical: BusyMarkSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                result.icon,
+                size: BusyMarkSizes.iconMd,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: BusyMarkSpacing.md),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      result.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: BusyMarkSpacing.xxs),
+                    Text(
+                      result.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: BusyMarkSpacing.md),
+              Icon(
+                Icons.chevron_right,
+                size: BusyMarkSizes.iconSm,
+                color: colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkspaceSearchResult {
+  const _WorkspaceSearchResult({
+    required this.filePath,
+    required this.line,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final String filePath;
+  final int line;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+}
+
+List<_WorkspaceSearchResult> _workspaceSearchResults(
+  WorkspaceState state,
+  String query,
+) {
+  final workspace = state.workspace;
+  final normalizedQuery = query.trim().toLowerCase();
+  if (workspace == null || normalizedQuery.isEmpty) {
+    return const [];
+  }
+  final results = <_WorkspaceSearchResult>[];
+  final activePath = workspace.activeFilePath;
+  if (activePath != null) {
+    final relativePath = _relativeDocumentPath(workspace, activePath);
+    final lines = state.activeText.split('\n');
+    for (var index = 0; index < lines.length; index++) {
+      final line = lines[index];
+      if (!line.toLowerCase().contains(normalizedQuery)) {
+        continue;
+      }
+      final lineNumber = index + 1;
+      results.add(
+        _WorkspaceSearchResult(
+          filePath: activePath,
+          line: lineNumber,
+          title: _searchExcerpt(line),
+          subtitle: '$relativePath - Line $lineNumber',
+          icon: Icons.subject,
+        ),
+      );
+      if (results.length >= _maxWorkspaceSearchResults) {
+        return results;
+      }
+    }
+  }
+
+  final sortedFiles = [...workspace.files]
+    ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  for (final file in sortedFiles) {
+    if (!_isOpenableTextDocument(file)) {
+      continue;
+    }
+    if (!file.relativePath.toLowerCase().contains(normalizedQuery)) {
+      continue;
+    }
+    final displayPath = file.relativePath;
+    final kindLabel = _documentKindLabel(file.kind);
+    results.add(
+      _WorkspaceSearchResult(
+        filePath: file.absolutePath,
+        line: 1,
+        title: displayPath,
+        subtitle: kindLabel,
+        icon: _documentKindIcon(file.kind),
+      ),
+    );
+    if (results.length >= _maxWorkspaceSearchResults) {
+      return results;
+    }
+  }
+  return results;
+}
+
+const int _maxWorkspaceSearchResults = 80;
+
+String _searchExcerpt(String line) {
+  final trimmed = line.trim();
+  if (trimmed.length <= 120) {
+    return trimmed;
+  }
+  return '${trimmed.substring(0, 117)}...';
+}
+
+String _relativeDocumentPath(Workspace workspace, String path) {
+  for (final file in workspace.files) {
+    if (file.absolutePath == path) {
+      return file.relativePath;
+    }
+  }
+  return _fileNameFromPath(path);
+}
+
+String _fileNameFromPath(String path) {
+  final normalized = path.replaceAll('\\', '/');
+  final separator = normalized.lastIndexOf('/');
+  if (separator == -1) {
+    return normalized;
+  }
+  return normalized.substring(separator + 1);
+}
+
+IconData _documentKindIcon(DocumentKind kind) {
+  return switch (kind) {
+    DocumentKind.markdown ||
+    DocumentKind.writersideMarkdownTopic => YaruIcons.text_editor,
+    DocumentKind.writersideXmlTopic => YaruIcons.document,
+    DocumentKind.tree => Icons.account_tree_outlined,
+    DocumentKind.config => YaruIcons.gear,
+    DocumentKind.variables => Icons.percent_outlined,
+    DocumentKind.categories => Icons.category_outlined,
+    DocumentKind.image => Icons.image_outlined,
+    DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
+  };
+}
+
+String _documentKindLabel(DocumentKind kind) {
+  return switch (kind) {
+    DocumentKind.markdown => 'Markdown file',
+    DocumentKind.writersideMarkdownTopic => 'Writerside Markdown topic',
+    DocumentKind.writersideXmlTopic => 'Writerside XML topic',
+    DocumentKind.tree => 'Writerside tree',
+    DocumentKind.config => 'Configuration file',
+    DocumentKind.variables => 'Variables file',
+    DocumentKind.categories => 'Categories file',
+    DocumentKind.image => 'Image',
+    DocumentKind.resource => 'Resource file',
+    DocumentKind.unknown => 'File',
+  };
+}
+
+class _DiagnosticRow extends ConsumerWidget {
+  const _DiagnosticRow({required this.diagnostic});
+
+  final Diagnostic diagnostic;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        hoverColor: busyMarkRowHoverColor(context),
+        onTap: () async {
+          if (await confirmSafeToContinue(context, ref)) {
+            await ref
+                .read(workspaceControllerProvider.notifier)
+                .openActiveFile(diagnostic.filePath);
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: BusyMarkSpacing.lg,
@@ -2080,21 +4013,32 @@ class _ReadonlyExportText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return TextField(
-      controller: TextEditingController(text: value),
-      readOnly: true,
-      maxLines: null,
-      expands: true,
-      style: const TextStyle(fontFamily: 'Ubuntu Mono', fontSize: 12),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: colors.view,
-        hoverColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        contentPadding: const EdgeInsets.all(BusyMarkSpacing.md),
+    return DecoratedBox(
+      decoration: BoxDecoration(color: colors.view),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: TextButton.icon(
+                onPressed: () => Clipboard.setData(ClipboardData(text: value)),
+                icon: const Icon(Icons.copy, size: BusyMarkSizes.iconSm),
+                label: const Text('Copy'),
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(BusyMarkSpacing.md),
+              child: SelectableText(
+                value,
+                style: const TextStyle(fontFamily: 'Ubuntu Mono', fontSize: 12),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

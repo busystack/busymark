@@ -27,11 +27,38 @@ void main() {
     expect(source, contains('self->sidebar_width'));
     expect(
       source,
-      contains('connect_header_action(self, self->new_button, "save")'),
+      contains('connect_header_action(self, self->save_button, "save")'),
     );
     expect(source, isNot(contains('window-close-symbolic')));
     expect(source, isNot(contains('window-minimize-symbolic')));
     expect(source, isNot(contains('window-maximize-symbolic')));
+  });
+
+  test('Linux desktop identity resolves to BusyMark display name', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final cmake = File('linux/CMakeLists.txt').readAsStringSync();
+    final desktop = File(
+      'linux/io.busystack.busymark.desktop',
+    ).readAsStringSync();
+
+    expect(native, contains('g_set_prgname(kApplicationDisplayName)'));
+    expect(native, contains('g_set_application_name(kApplicationDisplayName)'));
+    expect(
+      native,
+      contains('gtk_window_set_title(window, kApplicationDisplayName)'),
+    );
+    expect(
+      cmake,
+      contains(r'"${CMAKE_CURRENT_SOURCE_DIR}/io.busystack.busymark.desktop"'),
+    );
+    expect(
+      cmake,
+      contains(
+        r'"${CMAKE_CURRENT_SOURCE_DIR}/io.busystack.busymark.metainfo.xml"',
+      ),
+    );
+    expect(desktop, contains('Name=BusyMark'));
+    expect(desktop, contains('StartupWMClass=io.busystack.busymark'));
   });
 
   test('native labels are supplied by Dart rather than hardcoded in C++', () {
@@ -91,7 +118,7 @@ void main() {
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(service, contains('backgroundColor: colors.headerbarFlat'));
+    expect(service, contains('backgroundColor: colors.view'));
     expect(service, contains('sidebarBackgroundColor: colors.sidebar'));
     expect(service, contains('sidebarBorderColor: colors.sidebarBorder'));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#242424"'));
@@ -110,6 +137,32 @@ void main() {
     expect(native, contains('update_sidebar_header_geometry(self);'));
     expect(native, contains('refresh_header_bar_css(self);'));
     expect(native, isNot(contains('"border-top-left-radius: 0;"')));
+  });
+
+  test('native GTK decoration owns window shadow and rounded shape', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(native, contains('window#busymark-window decoration,'));
+    expect(native, contains('window#busymark-window decoration:backdrop {'));
+    expect(native, contains('"background-color: transparent;"'));
+    expect(native, contains('"border: none;"'));
+    expect(native, contains('"outline: none;"'));
+    expect(native, contains('"box-shadow: 0 3px 18px 2px %s;"'));
+    expect(native, contains('const gchar* shade = css_color_or'));
+    expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
+    expect(native, contains('create_rounded_window_region'));
+    expect(native, contains('gdk_window_shape_combine_region'));
+    expect(native, contains('rounded_window_configure_event_cb'));
+    expect(native, contains('configure_transparent_window_backing(window);'));
+  });
+
+  test('native headerbar buttons use themed shadows', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(native, contains('"box-shadow: 0 1px 1px %s;"'));
+    expect(native, contains('foreground, control, shade'));
+    expect(native, contains('"box-shadow: none;"'));
+    expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
   });
 
   test(
@@ -142,25 +195,33 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('save,'));
-    expect(service, contains('problems,'));
     expect(service, contains("'save' => HeaderBarAction.save"));
-    expect(service, contains("'problems' => HeaderBarAction.problems"));
+    expect(service, isNot(contains('problems,')));
+    expect(service, isNot(contains("'problems' => HeaderBarAction.problems")));
     expect(service, contains('setCanSave'));
     expect(workspace, contains('case HeaderBarAction.save:'));
-    expect(workspace, contains('case HeaderBarAction.problems:'));
-    expect(workspace, contains('workspaceController.saveActive()'));
+    expect(workspace, isNot(contains('case HeaderBarAction.problems:')));
+    expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));
+    expect(workspace, contains('_validateActiveAndShowProblems'));
+    expect(workspace, contains('setCanSave(state.isDirty)'));
+    expect(workspace, contains('accented: state.isDirty'));
     expect(
-      native,
-      contains('create_header_icon_button("object-select-symbolic")'),
+      service,
+      contains('accentColor: Theme.of(context).colorScheme.primary'),
     );
+    expect(service, contains('accentForegroundColor'));
+    expect(native, contains('create_header_icon_button("emblem-ok-symbolic")'));
+    expect(native, contains('busymark-save-button'));
+    expect(native, contains('busymark-save-dirty'));
+    expect(native, contains('set_save_dirty(self, fl_method_bool_arg(args))'));
     expect(
       native,
       contains('create_header_icon_button("tools-check-spelling-symbolic")'),
     );
     expect(
       native,
-      contains('create_header_icon_button("dialog-warning-symbolic")'),
+      isNot(contains('create_header_icon_button("dialog-warning-symbolic")')),
     );
     expect(
       native,
@@ -168,11 +229,27 @@ void main() {
     );
     expect(
       native,
-      contains(
-        'connect_header_action(self, self->problems_button, "problems")',
+      isNot(
+        contains(
+          'connect_header_action(self, self->problems_button, "problems")',
+        ),
       ),
     );
-    expect(native, contains('fl_lookup_string_arg(args, "problems")'));
+    expect(native, isNot(contains('fl_lookup_string_arg(args, "problems")')));
+  });
+
+  test('native headerbar starts with sidebar toggle before back', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(
+      native,
+      matches(
+        RegExp(
+          r'gtk_box_pack_start\(GTK_BOX\(self->header_start_box\), self->sidebar_toggle_button[\s\S]*'
+          r'gtk_box_pack_start\(GTK_BOX\(self->header_start_box\), self->back_button',
+        ),
+      ),
+    );
   });
 
   test('native document view mode dropdown uses checked rows', () {
@@ -185,13 +262,19 @@ void main() {
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(service, contains('enum AppViewMode { source, preview, split }'));
+    expect(
+      service,
+      contains('enum AppViewMode { editor, source, preview, split }'),
+    );
+    expect(service, contains('viewModeEditor'));
     expect(service, contains('viewModeSource'));
     expect(service, contains('viewModePreview'));
     expect(service, contains('viewModeSplit'));
+    expect(app, contains("editor: 'Editor'"));
     expect(app, contains("source: 'Source'"));
     expect(app, contains("preview: 'Preview'"));
     expect(app, contains("split: 'Split'"));
+    expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSplit:'));
@@ -201,10 +284,26 @@ void main() {
       workspace,
       contains('_headerBarViewMode(settings.documentViewMode)'),
     );
+    expect(native, contains('create_view_mode_item(self, "editor")'));
     expect(native, contains('create_view_mode_item(self, "source")'));
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));
     expect(native, contains('object-select-symbolic'));
+    expect(native, contains('button.busymark-menu-row:focus'));
+    expect(native, contains('button.busymark-menu-row:active'));
+    expect(native, contains('outline-width: 0;'));
+    expect(native, contains('self->view_mode_button = gtk_menu_button_new()'));
+    expect(
+      native,
+      contains('gtk_label_set_text(GTK_LABEL(self->view_mode_label)'),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(view_button_box), self->view_mode_label',
+      ),
+    );
+    expect(native, isNot(contains('create_menu_button(self->view_mode_menu')));
     expect(
       native,
       contains('set_widget_tooltip(self->view_mode_button, view_mode)'),
@@ -233,6 +332,7 @@ void main() {
 
     expect(welcome, isNot(contains('_WelcomeRail')));
     expect(welcome, contains('setSidebarVisible(false)'));
+    expect(welcome, contains('backgroundColor: colors.view'));
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
@@ -247,15 +347,29 @@ void main() {
       native,
       contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
     );
-    expect(native, contains('set_widget_visible(self->new_button, visible)'));
+    expect(native, contains('set_widget_visible(self->save_button, visible)'));
     expect(
       native,
       contains('set_widget_visible(self->refresh_button, visible)'),
     );
     expect(
       native,
-      contains('set_widget_visible(self->problems_button, visible)'),
+      isNot(contains('set_widget_visible(self->problems_button, visible)')),
     );
+  });
+
+  test('no-sidebar pages use the main view surface under the headerbar', () {
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+
+    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(settings, contains('backgroundColor: colors.view'));
+    expect(welcome, isNot(contains('backgroundColor: colors.window')));
+    expect(settings, isNot(contains('backgroundColor: colors.window')));
   });
 
   test(

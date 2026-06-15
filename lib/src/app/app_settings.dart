@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 enum BusyMarkThemeModePreference { system, light, dark }
 
-enum DocumentViewModePreference { source, preview, split }
+enum DocumentViewModePreference { editor, source, preview, split }
 
 enum PreviewModePreference { markdown, writersideApproximate, sourceFallback }
 

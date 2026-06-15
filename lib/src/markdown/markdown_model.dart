@@ -1,5 +1,6 @@
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
+import 'busymark_document.dart';
 
 enum MarkdownMode { commonMark, writersideMarkdown, gfm }
 
@@ -92,6 +93,7 @@ class ParsedMarkdownDocument {
     required this.xmlBlocks,
     required this.variables,
     required this.diagnostics,
+    required this.busyDocument,
   });
 
   final String filePath;
@@ -105,6 +107,7 @@ class ParsedMarkdownDocument {
   final List<MarkdownXmlBlock> xmlBlocks;
   final List<MarkdownVariableToken> variables;
   final List<Diagnostic> diagnostics;
+  final BusyDocument busyDocument;
 
   Set<String> get anchors => headings.map((heading) => heading.id).toSet();
 }

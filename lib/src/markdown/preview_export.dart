@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'busymark_document.dart';
 import 'markdown_model.dart';
 
 enum PreviewBlockKind {
@@ -8,7 +9,10 @@ enum PreviewBlockKind {
   code,
   list,
   quote,
+  thematicBreak,
   image,
+  table,
+  raw,
   link,
   admonition,
   tabs,
@@ -22,6 +26,7 @@ class PreviewBlock {
     required this.text,
     this.level,
     this.language,
+    this.inlines = const [],
     this.children = const [],
     this.attributes = const {},
   });
@@ -30,8 +35,33 @@ class PreviewBlock {
   final String text;
   final int? level;
   final String? language;
+  final List<PreviewInline> inlines;
   final List<PreviewBlock> children;
   final Map<String, String> attributes;
+}
+
+enum PreviewInlineKind {
+  text,
+  strong,
+  emphasis,
+  strikethrough,
+  code,
+  link,
+  image,
+}
+
+class PreviewInline {
+  const PreviewInline({
+    required this.kind,
+    required this.text,
+    this.destination,
+    this.children = const [],
+  });
+
+  final PreviewInlineKind kind;
+  final String text;
+  final String? destination;
+  final List<PreviewInline> children;
 }
 
 class PreviewDocument {
@@ -52,131 +82,171 @@ class MarkdownPreviewBuilder {
   const MarkdownPreviewBuilder();
 
   PreviewDocument build(ParsedMarkdownDocument document) {
-    final blocks = <PreviewBlock>[];
-    var inCode = false;
-    var headingIndex = 0;
-    final lines = document.source.split('\n');
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      final fence = RegExp(r'^\s*```').hasMatch(line);
-      if (fence) {
-        inCode = !inCode;
-        continue;
-      }
-      if (inCode) {
-        continue;
-      }
-      final heading = RegExp(
-        r'^(#{1,6})\s+(.+?)\s*(\{[^}]+\})?\s*$',
-      ).firstMatch(line);
-      if (heading != null) {
-        final parsedHeading = headingIndex < document.headings.length
-            ? document.headings[headingIndex]
-            : null;
-        headingIndex++;
-        blocks.add(
-          PreviewBlock(
-            kind: PreviewBlockKind.heading,
-            text: heading.group(2)!.trim(),
-            level: heading.group(1)!.length,
-            attributes: {if (parsedHeading != null) 'id': parsedHeading.id},
-          ),
-        );
-        continue;
-      }
-      if (line.trim().isEmpty ||
-          line.trim() == '---' ||
-          RegExp(r'^\s*[A-Za-z_-]+:').hasMatch(line)) {
-        continue;
-      }
-      if (line.trimLeft().startsWith('>')) {
-        blocks.add(
-          PreviewBlock(
-            kind: PreviewBlockKind.admonition,
-            text: _stripInlineMarkup(
-              line.replaceFirst(RegExp(r'^\s*>\s?'), ''),
-            ),
-            attributes: {
-              'style': line.contains('warning') ? 'warning' : 'note',
-            },
-          ),
-        );
-        continue;
-      }
-      if (line.trimLeft().startsWith('- ') ||
-          RegExp(r'^\s*\d+\.\s+').hasMatch(line)) {
-        blocks.add(
-          PreviewBlock(
-            kind: PreviewBlockKind.list,
-            text: _stripInlineMarkup(_stripListMarker(line)),
-          ),
-        );
-        continue;
-      }
-      if (line.contains('<tabs')) {
-        blocks.add(
-          const PreviewBlock(kind: PreviewBlockKind.tabs, text: 'Tabs'),
-        );
-        continue;
-      }
-      if (line.contains('<procedure')) {
-        blocks.add(
-          PreviewBlock(
-            kind: PreviewBlockKind.procedure,
-            text: _attributeValue(line, 'title') ?? 'Procedure',
-          ),
-        );
-        continue;
-      }
-      if (line.contains('<note') ||
-          line.contains('<tip') ||
-          line.contains('<warning')) {
-        blocks.add(
-          PreviewBlock(
-            kind: PreviewBlockKind.admonition,
-            text: _stripTags(line),
-            attributes: {
-              'style': line.contains('<warning')
-                  ? 'warning'
-                  : line.contains('<tip')
-                  ? 'tip'
-                  : 'note',
-            },
-          ),
-        );
-        continue;
-      }
-      blocks.add(
-        PreviewBlock(
-          kind: PreviewBlockKind.paragraph,
-          text: _stripInlineMarkup(_stripTags(line.trim())),
-        ),
-      );
-    }
-    for (final code in document.codeBlocks) {
-      blocks.add(
-        PreviewBlock(
-          kind: PreviewBlockKind.code,
-          text: code.content.trimRight(),
-          language: code.language,
-        ),
-      );
-    }
-    for (final image in document.images) {
-      blocks.add(
-        PreviewBlock(
-          kind: PreviewBlockKind.image,
-          text: image.alt.isEmpty ? image.destination : image.alt,
-          attributes: {'src': image.destination},
-        ),
-      );
-    }
     return PreviewDocument(
       title: document.title ?? 'Untitled',
       modeLabel: 'Preview',
       compatibility: '',
-      blocks: blocks,
+      blocks: const BusyMarkPreviewBuilder().buildBlocks(document.busyDocument),
     );
+  }
+}
+
+class BusyMarkPreviewBuilder {
+  const BusyMarkPreviewBuilder();
+
+  PreviewDocument build(BusyDocument document) {
+    return PreviewDocument(
+      title: document.title ?? 'Untitled',
+      modeLabel: 'Preview',
+      compatibility: '',
+      blocks: buildBlocks(document),
+    );
+  }
+
+  List<PreviewBlock> buildBlocks(BusyDocument document) {
+    return [
+      for (final block in document.blocks)
+        if (block.kind != BusyBlockKind.frontMatter) _block(block),
+    ];
+  }
+
+  PreviewBlock _block(BusyBlock block) {
+    return switch (block.kind) {
+      BusyBlockKind.heading => PreviewBlock(
+        kind: PreviewBlockKind.heading,
+        text: _plainText(block.inlines),
+        level: int.tryParse(block.attributes['level'] ?? ''),
+        inlines: _inlines(block.inlines),
+        attributes: {
+          ...block.attributes,
+          if (block.attributes['id'] case final id?) 'id': id,
+        },
+      ),
+      BusyBlockKind.paragraph => PreviewBlock(
+        kind: PreviewBlockKind.paragraph,
+        text: _plainText(block.inlines),
+        inlines: _inlines(block.inlines),
+      ),
+      BusyBlockKind.codeBlock => PreviewBlock(
+        kind: PreviewBlockKind.code,
+        text: block.plainText,
+        language: block.attributes['language'],
+      ),
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem => PreviewBlock(
+        kind: PreviewBlockKind.list,
+        text: _plainText(block.inlines),
+        inlines: _inlines(block.inlines),
+        children: block.children.map(_block).toList(),
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.blockquote => PreviewBlock(
+        kind: PreviewBlockKind.quote,
+        text: block.children.isEmpty
+            ? _plainText(block.inlines)
+            : block.children.map((child) => child.plainText).join('\n'),
+        inlines:
+            block.children.length == 1 &&
+                block.children.single.kind == BusyBlockKind.paragraph
+            ? _inlines(block.children.single.inlines)
+            : block.children.isEmpty
+            ? _inlines(block.inlines)
+            : const [],
+        children: block.children.map(_block).toList(),
+      ),
+      BusyBlockKind.thematicBreak => const PreviewBlock(
+        kind: PreviewBlockKind.thematicBreak,
+        text: '---',
+      ),
+      BusyBlockKind.image => PreviewBlock(
+        kind: PreviewBlockKind.image,
+        text: block.inlines.isEmpty
+            ? block.plainText
+            : block.inlines.first.text,
+        inlines: _inlines(block.inlines),
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.table => PreviewBlock(
+        kind: PreviewBlockKind.table,
+        text: '',
+        children: block.children.map(_block).toList(),
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.writersideAdmonition => PreviewBlock(
+        kind: PreviewBlockKind.admonition,
+        text: _plainText(block.inlines),
+        inlines: _inlines(block.inlines),
+        attributes: {
+          ...block.attributes,
+          'style': block.attributes['element'] ?? 'note',
+        },
+      ),
+      BusyBlockKind.writersideTabs => PreviewBlock(
+        kind: PreviewBlockKind.tabs,
+        text: _plainText(block.inlines).isEmpty
+            ? 'Tabs'
+            : _plainText(block.inlines),
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.writersideProcedure => PreviewBlock(
+        kind: PreviewBlockKind.procedure,
+        text: _plainText(block.inlines).isEmpty
+            ? block.attributes['title'] ?? 'Procedure'
+            : _plainText(block.inlines),
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.htmlBlock ||
+      BusyBlockKind.writersideRawXml ||
+      BusyBlockKind.unknown => PreviewBlock(
+        kind: PreviewBlockKind.raw,
+        text: block.rawSource ?? block.plainText,
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.frontMatter => const PreviewBlock(
+        kind: PreviewBlockKind.raw,
+        text: '',
+      ),
+    };
+  }
+
+  List<PreviewInline> _inlines(List<BusyInline> inlines) {
+    return [for (final inline in inlines) _inline(inline)];
+  }
+
+  PreviewInline _inline(BusyInline inline) {
+    return PreviewInline(
+      kind: switch (inline.kind) {
+        BusyInlineKind.text ||
+        BusyInlineKind.softBreak ||
+        BusyInlineKind.hardBreak ||
+        BusyInlineKind.writersideVariable ||
+        BusyInlineKind.html ||
+        BusyInlineKind.unknown => PreviewInlineKind.text,
+        BusyInlineKind.strong => PreviewInlineKind.strong,
+        BusyInlineKind.emphasis => PreviewInlineKind.emphasis,
+        BusyInlineKind.strikethrough => PreviewInlineKind.strikethrough,
+        BusyInlineKind.code => PreviewInlineKind.code,
+        BusyInlineKind.link => PreviewInlineKind.link,
+        BusyInlineKind.image => PreviewInlineKind.image,
+      },
+      text: inline.kind == BusyInlineKind.softBreak ? ' ' : inline.text,
+      destination: inline.destination,
+      children: _inlines(inline.children),
+    );
+  }
+
+  String _plainText(List<BusyInline> inlines) {
+    return inlines
+        .map((inline) {
+          if (inline.kind == BusyInlineKind.softBreak) {
+            return ' ';
+          }
+          return inline.plainText;
+        })
+        .join()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }
 
@@ -206,26 +276,47 @@ class MarkdownHtmlExporter {
   }
 
   void _writeBlock(StringBuffer buffer, PreviewBlock block) {
-    final text = htmlEscape.convert(block.text);
+    final text = _inlineHtml(block);
     switch (block.kind) {
       case PreviewBlockKind.heading:
         final level = block.level?.clamp(1, 6) ?? 2;
-        buffer.writeln('<h$level>$text</h$level>');
-      case PreviewBlockKind.code:
-        buffer.writeln('<pre><code>$text</code></pre>');
-      case PreviewBlockKind.image:
-        final src = htmlEscape.convert(block.attributes['src'] ?? '');
+        final id = _safeHtmlAttribute(block.attributes['id']);
         buffer.writeln(
-          '<figure><img src="$src" alt="$text"><figcaption>$text</figcaption></figure>',
+          '<h$level${id == null ? '' : ' id="$id"'}>$text</h$level>',
         );
+      case PreviewBlockKind.code:
+        final language = _safeHtmlAttribute(block.language);
+        buffer.writeln(
+          '<pre><code${language == null ? '' : ' class="language-$language"'}>${htmlEscape.convert(block.text)}</code></pre>',
+        );
+      case PreviewBlockKind.thematicBreak:
+        buffer.writeln('<hr>');
+      case PreviewBlockKind.image:
+        final src = _safeUrl(block.attributes['src'] ?? '');
+        if (src != null) {
+          buffer.writeln(
+            '<figure><img src="${htmlEscape.convert(src)}" alt="${htmlEscape.convert(block.text)}"><figcaption>${htmlEscape.convert(block.text)}</figcaption></figure>',
+          );
+        }
       case PreviewBlockKind.admonition:
         buffer.writeln('<aside class="admonition">$text</aside>');
       case PreviewBlockKind.list:
-        buffer.writeln('<ul><li>$text</li></ul>');
+        final tag = block.attributes['ordered'] == 'true' ? 'ol' : 'ul';
+        final task = block.attributes['task'];
+        final checkbox = task == null
+            ? ''
+            : '<input type="checkbox" disabled${task == 'true' ? ' checked' : ''}> ';
+        buffer.writeln('<$tag><li>$checkbox$text</li></$tag>');
       case PreviewBlockKind.tabs:
         buffer.writeln('<section><strong>Tabs</strong><p>$text</p></section>');
       case PreviewBlockKind.procedure:
         buffer.writeln('<section><h2>$text</h2></section>');
+      case PreviewBlockKind.table:
+        _writeTable(buffer, block);
+      case PreviewBlockKind.raw:
+        buffer.writeln(
+          '<pre><code>${htmlEscape.convert(block.text)}</code></pre>',
+        );
       case PreviewBlockKind.unknown:
         buffer.writeln('<p><em>$text</em></p>');
       case PreviewBlockKind.paragraph:
@@ -234,34 +325,241 @@ class MarkdownHtmlExporter {
         buffer.writeln('<p>$text</p>');
     }
   }
+
+  void _writeTable(StringBuffer buffer, PreviewBlock block) {
+    buffer.writeln('<table>');
+    for (final row in block.children) {
+      final header = row.attributes['header'] == 'true';
+      buffer.writeln('<tr>');
+      for (final cell in row.children) {
+        final tag = header ? 'th' : 'td';
+        buffer.writeln('<$tag>${_inlineHtml(cell)}</$tag>');
+      }
+      buffer.writeln('</tr>');
+    }
+    buffer.writeln('</table>');
+  }
 }
 
-String _stripInlineMarkup(String value) {
-  return value
-      .replaceAll(RegExp(r'[*_`]+'), '')
-      .replaceAllMapped(
-        RegExp(r'!\[([^\]]*)\]\(([^)]+)\)'),
-        (match) => match.group(1)!.isEmpty ? match.group(2)! : match.group(1)!,
-      )
-      .replaceAllMapped(
-        RegExp(r'\[([^\]]+)\]\(([^)]+)\)'),
-        (match) => match.group(1)!,
-      )
-      .trim();
+List<PreviewInline> parseInlineMarkdown(String source) {
+  final result = <PreviewInline>[];
+  final buffer = StringBuffer();
+  var index = 0;
+
+  void flushText() {
+    if (buffer.isEmpty) {
+      return;
+    }
+    result.add(
+      PreviewInline(kind: PreviewInlineKind.text, text: buffer.toString()),
+    );
+    buffer.clear();
+  }
+
+  while (index < source.length) {
+    if (source.startsWith('\\', index) && index + 1 < source.length) {
+      buffer.write(source[index + 1]);
+      index += 2;
+      continue;
+    }
+    if (source.startsWith('`', index)) {
+      final end = source.indexOf('`', index + 1);
+      if (end > index + 1) {
+        flushText();
+        result.add(
+          PreviewInline(
+            kind: PreviewInlineKind.code,
+            text: source.substring(index + 1, end),
+          ),
+        );
+        index = end + 1;
+        continue;
+      }
+    }
+    if (source.startsWith('![', index)) {
+      final parsed = _parseInlineLink(source, index, image: true);
+      if (parsed != null) {
+        flushText();
+        result.add(parsed.inline);
+        index = parsed.end;
+        continue;
+      }
+    }
+    if (source.startsWith('[', index)) {
+      final parsed = _parseInlineLink(source, index, image: false);
+      if (parsed != null) {
+        flushText();
+        result.add(parsed.inline);
+        index = parsed.end;
+        continue;
+      }
+    }
+    if (source.startsWith('<http://', index) ||
+        source.startsWith('<https://', index) ||
+        source.startsWith('<mailto:', index)) {
+      final end = source.indexOf('>', index + 1);
+      if (end > index + 1) {
+        final destination = source.substring(index + 1, end);
+        flushText();
+        result.add(
+          PreviewInline(
+            kind: PreviewInlineKind.link,
+            text: destination,
+            destination: destination,
+            children: [
+              PreviewInline(kind: PreviewInlineKind.text, text: destination),
+            ],
+          ),
+        );
+        index = end + 1;
+        continue;
+      }
+    }
+    final marker = _inlineMarkerAt(source, index);
+    if (marker != null) {
+      final end = source.indexOf(marker.marker, index + marker.marker.length);
+      if (end > index + marker.marker.length) {
+        final inner = source.substring(index + marker.marker.length, end);
+        flushText();
+        result.add(
+          PreviewInline(
+            kind: marker.kind,
+            text: parseInlineMarkdownPlainText(inner),
+            children: parseInlineMarkdown(inner),
+          ),
+        );
+        index = end + marker.marker.length;
+        continue;
+      }
+    }
+    buffer.write(source[index]);
+    index++;
+  }
+  flushText();
+  return result;
 }
 
-String _stripListMarker(String value) {
-  return value
-      .trimLeft()
-      .replaceFirst(RegExp(r'^-\s+'), '')
-      .replaceFirst(RegExp(r'^\d+\.\s+'), '')
-      .trim();
+String parseInlineMarkdownPlainText(String source) {
+  return parseInlineMarkdown(source).map(_inlinePlainText).join().trim();
 }
 
-String _stripTags(String value) {
-  return value.replaceAll(RegExp('<[^>]+>'), '').trim();
+String _inlinePlainText(PreviewInline inline) {
+  if (inline.children.isNotEmpty) {
+    return inline.children.map(_inlinePlainText).join();
+  }
+  return inline.text;
 }
 
-String? _attributeValue(String raw, String key) {
-  return RegExp('$key\\s*=\\s*"([^"]+)"').firstMatch(raw)?.group(1);
+_InlineMarker? _inlineMarkerAt(String source, int index) {
+  for (final marker in const [
+    _InlineMarker('**', PreviewInlineKind.strong),
+    _InlineMarker('__', PreviewInlineKind.strong),
+    _InlineMarker('~~', PreviewInlineKind.strikethrough),
+    _InlineMarker('*', PreviewInlineKind.emphasis),
+    _InlineMarker('_', PreviewInlineKind.emphasis),
+  ]) {
+    if (source.startsWith(marker.marker, index)) {
+      return marker;
+    }
+  }
+  return null;
+}
+
+class _InlineMarker {
+  const _InlineMarker(this.marker, this.kind);
+
+  final String marker;
+  final PreviewInlineKind kind;
+}
+
+_ParsedInline? _parseInlineLink(
+  String source,
+  int start, {
+  required bool image,
+}) {
+  final labelStart = start + (image ? 2 : 1);
+  final labelEnd = source.indexOf(']', labelStart);
+  if (labelEnd < 0 ||
+      labelEnd + 1 >= source.length ||
+      source[labelEnd + 1] != '(') {
+    return null;
+  }
+  final destinationEnd = source.indexOf(')', labelEnd + 2);
+  if (destinationEnd < 0) {
+    return null;
+  }
+  final label = source.substring(labelStart, labelEnd);
+  final destination = source.substring(labelEnd + 2, destinationEnd);
+  return _ParsedInline(
+    end: destinationEnd + 1,
+    inline: PreviewInline(
+      kind: image ? PreviewInlineKind.image : PreviewInlineKind.link,
+      text: label.isEmpty ? destination : parseInlineMarkdownPlainText(label),
+      destination: destination,
+      children: image ? const [] : parseInlineMarkdown(label),
+    ),
+  );
+}
+
+class _ParsedInline {
+  const _ParsedInline({required this.inline, required this.end});
+
+  final PreviewInline inline;
+  final int end;
+}
+
+String _inlineHtml(PreviewBlock block) {
+  final inlines = block.inlines.isEmpty
+      ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
+      : block.inlines;
+  return inlines.map(_inlineNodeHtml).join();
+}
+
+String _inlineNodeHtml(PreviewInline inline) {
+  final childHtml = inline.children.isEmpty
+      ? htmlEscape.convert(inline.text)
+      : inline.children.map(_inlineNodeHtml).join();
+  return switch (inline.kind) {
+    PreviewInlineKind.text => htmlEscape.convert(inline.text),
+    PreviewInlineKind.strong => '<strong>$childHtml</strong>',
+    PreviewInlineKind.emphasis => '<em>$childHtml</em>',
+    PreviewInlineKind.strikethrough => '<del>$childHtml</del>',
+    PreviewInlineKind.code => '<code>${htmlEscape.convert(inline.text)}</code>',
+    PreviewInlineKind.link =>
+      _safeUrl(inline.destination ?? '') == null
+          ? childHtml
+          : '<a href="${htmlEscape.convert(_safeUrl(inline.destination ?? '')!)}">$childHtml</a>',
+    PreviewInlineKind.image =>
+      _safeUrl(inline.destination ?? '') == null
+          ? htmlEscape.convert(inline.text)
+          : '<img src="${htmlEscape.convert(_safeUrl(inline.destination ?? '')!)}" alt="${htmlEscape.convert(inline.text)}">',
+  };
+}
+
+String? _safeHtmlAttribute(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return null;
+  }
+  return htmlEscape.convert(value.trim());
+}
+
+String? _safeUrl(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+  if (trimmed.startsWith('#')) {
+    return trimmed;
+  }
+  final uri = Uri.tryParse(trimmed);
+  if (uri == null) {
+    return null;
+  }
+  if (!uri.hasScheme) {
+    return trimmed;
+  }
+  return switch (uri.scheme.toLowerCase()) {
+    'http' || 'https' || 'mailto' => trimmed,
+    _ => null,
+  };
 }
