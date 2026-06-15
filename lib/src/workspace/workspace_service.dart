@@ -42,6 +42,7 @@ class WorkspaceService {
   Future<Workspace> openPath(String inputPath) async {
     final path = normalizePath(inputPath);
     final fileType = FileSystemEntity.typeSync(path);
+    _logOpenPathDiagnostics(inputPath, path, fileType);
     if (fileType == FileSystemEntityType.file) {
       return _openSingleMarkdown(path);
     }
@@ -53,6 +54,42 @@ class WorkspaceService {
       return _openWriterside(path);
     }
     return _openMarkdownFolder(path);
+  }
+
+  void _logOpenPathDiagnostics(
+    String rawPath,
+    String normalizedPath,
+    FileSystemEntityType fileType,
+  ) {
+    stderr.writeln('[BusyMark] Open path requested');
+    stderr.writeln('[BusyMark]   raw: $rawPath');
+    stderr.writeln('[BusyMark]   normalized: $normalizedPath');
+    stderr.writeln(
+      '[BusyMark]   raw startsWith file://: ${isFileUriPath(rawPath)}',
+    );
+    stderr.writeln(
+      '[BusyMark]   raw startsWith /run/user/: ${rawPath.startsWith('/run/user/')}',
+    );
+    stderr.writeln(
+      '[BusyMark]   normalized startsWith /run/user/: ${normalizedPath.startsWith('/run/user/')}',
+    );
+    stderr.writeln('[BusyMark]   entity type: ${_fileTypeLabel(fileType)}');
+  }
+
+  String _fileTypeLabel(FileSystemEntityType type) {
+    if (type == FileSystemEntityType.file) {
+      return 'file';
+    }
+    if (type == FileSystemEntityType.directory) {
+      return 'directory';
+    }
+    if (type == FileSystemEntityType.link) {
+      return 'link';
+    }
+    if (type == FileSystemEntityType.notFound) {
+      return 'notFound';
+    }
+    return type.toString();
   }
 
   Future<String> loadText(String path) => File(path).readAsString();

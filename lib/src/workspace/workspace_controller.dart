@@ -71,7 +71,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         path: recentPath,
         kind: workspace.kind.name,
       );
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Open failed for path: $path');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Open failed: $error',
@@ -103,7 +106,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         isDirty: false,
         clearError: true,
       );
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Could not open file: $path');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(errorMessage: 'Could not open file: $error');
     }
   }

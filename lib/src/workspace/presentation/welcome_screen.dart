@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -10,6 +11,7 @@ import 'package:path/path.dart' as p;
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
 import '../workspace_safety.dart';
@@ -205,6 +207,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (path == null) {
       return;
     }
+    _logSelectedPickerPath(path);
     await _openPath(path);
   }
 
@@ -217,7 +220,49 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (path == null) {
       return;
     }
+    _logSelectedPickerPath(path);
     await _openPath(path);
+  }
+
+  void _logSelectedPickerPath(String rawPath) {
+    try {
+      final normalizedPath = normalizePath(rawPath);
+      final fileType = FileSystemEntity.typeSync(normalizedPath);
+      stderr.writeln('[BusyMark] Picker selected path');
+      stderr.writeln('[BusyMark]   raw: $rawPath');
+      stderr.writeln('[BusyMark]   normalized: $normalizedPath');
+      stderr.writeln(
+        '[BusyMark]   raw startsWith file://: ${isFileUriPath(rawPath)}',
+      );
+      stderr.writeln(
+        '[BusyMark]   raw startsWith /run/user/: ${rawPath.startsWith('/run/user/')}',
+      );
+      stderr.writeln(
+        '[BusyMark]   normalized startsWith /run/user/: ${normalizedPath.startsWith('/run/user/')}',
+      );
+      stderr.writeln('[BusyMark]   entity type: ${_fileTypeLabel(fileType)}');
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Picker path logging failed');
+      stderr.writeln('[BusyMark]   raw: $rawPath');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+    }
+  }
+
+  String _fileTypeLabel(FileSystemEntityType type) {
+    if (type == FileSystemEntityType.file) {
+      return 'file';
+    }
+    if (type == FileSystemEntityType.directory) {
+      return 'directory';
+    }
+    if (type == FileSystemEntityType.link) {
+      return 'link';
+    }
+    if (type == FileSystemEntityType.notFound) {
+      return 'notFound';
+    }
+    return type.toString();
   }
 
   Future<void> _createMarkdownFile() async {
