@@ -44,8 +44,10 @@ apps:
 
 parts:
   busymark:
-    plugin: dump
-    source: build/linux/x64/release/bundle
+    plugin: flutter
+    source: .
+    flutter-target: lib/main.dart
+    flutter-channel: stable
     override-prime: |
       craftctl default
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
