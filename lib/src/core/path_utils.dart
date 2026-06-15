@@ -72,7 +72,28 @@ class WorkspaceScanResult {
   final List<Diagnostic> diagnostics;
 }
 
-String normalizePath(String path) => p.normalize(p.absolute(path));
+String normalizePath(String path) {
+  final value = path.trim();
+  if (_isFileUri(value)) {
+    return p.normalize(Uri.parse(value).toFilePath());
+  }
+  if (p.isAbsolute(value)) {
+    return p.normalize(value);
+  }
+  return p.normalize(p.absolute(value));
+}
+
+bool isFileUriPath(String path) => _isFileUri(path.trim());
+
+bool isPortalDocumentPath(String path) {
+  final value = path.trim();
+  return value.startsWith('/run/user/') && value.contains('/doc/');
+}
+
+bool _isFileUri(String value) {
+  final uri = Uri.tryParse(value);
+  return uri != null && uri.scheme == 'file';
+}
 
 String normalizedRelative(String root, String path) {
   return p.normalize(p.relative(path, from: root)).replaceAll(r'\', '/');
