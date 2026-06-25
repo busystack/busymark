@@ -254,10 +254,11 @@ class _LanguageControl extends StatelessWidget {
         tooltip: context.l10n.appLanguage,
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
+        offset: const Offset(0, 6),
         color: popupTheme.color ?? colors.popover,
         surfaceTintColor: Colors.transparent,
-        elevation: BusyMarkElevation.popover,
-        shadowColor: colors.shade,
+        elevation: BusyMarkElevation.window,
+        shadowColor: colors.shade.withValues(alpha: 0.42),
         shape:
             popupTheme.shape ??
             RoundedRectangleBorder(
@@ -281,32 +282,7 @@ class _LanguageControl extends StatelessWidget {
               selected: selectedValue == option.localeTag,
             ),
         ],
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 256),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  selectedLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(width: BusyMarkSpacing.sm),
-              Icon(
-                BusyMarkGlyphs.downArrow,
-                size: BusyMarkSizes.iconSm,
-                color: colors.mutedForeground,
-              ),
-            ],
-          ),
-        ),
+        child: _LanguageSelectorButton(label: selectedLabel),
       ),
     );
   }
@@ -374,6 +350,77 @@ class _LanguageControl extends StatelessWidget {
       _LanguageOption('fa', 'فارسی'),
       _LanguageOption('hi', 'हिन्दी'),
     ];
+  }
+}
+
+class _LanguageSelectorButton extends StatefulWidget {
+  const _LanguageSelectorButton({required this.label});
+
+  final String label;
+
+  @override
+  State<_LanguageSelectorButton> createState() =>
+      _LanguageSelectorButtonState();
+}
+
+class _LanguageSelectorButtonState extends State<_LanguageSelectorButton> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        if (!_hovered) {
+          setState(() => _hovered = true);
+        }
+      },
+      onExit: (_) {
+        if (_hovered) {
+          setState(() => _hovered = false);
+        }
+      },
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 34, maxWidth: 256),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BusyMarkSpacing.sm,
+          vertical: BusyMarkSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: _hovered ? colors.controlHover : Colors.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+          border: Border.all(
+            color: _hovered ? colors.subtleBorder : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Icon(
+              BusyMarkGlyphs.downArrow,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

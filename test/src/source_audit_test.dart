@@ -376,6 +376,9 @@ void main() {
       settings,
       contains('label: _SegmentLabel(context.l10n.bottomRight)'),
     );
+    expect(workspace, contains('class _SidebarSegmentLabel'));
+    expect(workspace, contains('label: _SidebarSegmentLabel('));
+    expect(workspace, contains('softWrap: false'));
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
     expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
@@ -396,6 +399,20 @@ void main() {
       contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
     );
     expect(workspace, contains('BusyMarkRadius.headerButton'));
+  });
+
+  test('settings language selector uses native hover and popover styling', () {
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+
+    expect(settings, isNot(contains('DropdownButton<String>')));
+    expect(settings, contains('class _LanguageSelectorButton'));
+    expect(settings, contains('MouseRegion('));
+    expect(settings, contains('colors.controlHover'));
+    expect(settings, contains('elevation: BusyMarkElevation.window'));
+    expect(settings, contains('shadowColor: colors.shade.withValues'));
+    expect(settings, contains('softWrap: false'));
   });
 
   test('sidebar trees share the expandable Yaru-style row', () {
