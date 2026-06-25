@@ -397,9 +397,19 @@ void main() {
 
     expect(workspace, contains('_previewSearchBlockIndex'));
     expect(workspace, contains('_previewBlockContainsSearchTarget'));
+    expect(workspace, contains('_previewBlockTargetFraction'));
+    expect(workspace, contains('_schedulePreviewSearchScroll'));
+    expect(workspace, contains('localToGlobal'));
+    expect(workspace, contains('position.pixels + targetY - viewportTop'));
     expect(workspace, contains('target.startOffset >= startOffset'));
     expect(workspace, contains('target.line >= startLine'));
-    expect(workspace, contains('return fallbackIndex'));
+    expect(workspace, contains('_scrollPreviewToApproximateLine'));
+    expect(workspace, contains('nearestBeforeIndex'));
+    expect(workspace, isNot(contains('return fallbackIndex')));
+    expect(
+      workspace,
+      contains('Future<void>.delayed(const Duration(milliseconds: 80)'),
+    );
     expect(preview, contains('sourceStartLine'));
     expect(preview, contains('sourceStartOffset'));
     expect(preview, contains('span.startLine'));

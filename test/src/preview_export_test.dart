@@ -50,6 +50,80 @@ void main() {
     );
   });
 
+  test('preview source locations survive adjacent list items and code fences', () {
+    final parsed = parser.parse(
+      filePath: 'README.md',
+      source: [
+        '# FSRS Service',
+        '',
+        'Stateless FastAPI microservice exposing the **py-fsrs (FSRS 6.x)** scheduling algorithm via a strict OpenAPI contract.',
+        '',
+        'This service performs **pure computation only**.',
+        'Persistence, authentication, authorization, and rate-limiting are expected to be handled by an upstream service (e.g.',
+        'Spring Boot).',
+        '',
+        'This service is designed to be deployed:',
+        '',
+        '* Behind an API gateway or Spring Boot service',
+        '* Without direct public exposure',
+        '* Without authentication logic',
+        '',
+        '---',
+        '',
+        '## Conda Environment Setup',
+        '',
+        '```bash',
+        'conda create -n fsrs-service python=3.11',
+        'conda activate fsrs-service',
+        'python -m pip install -e .',
+        '```',
+        '',
+        'Install test dependencies:',
+        '',
+        '```bash',
+        'conda install -n fsrs-service pytest',
+        '```',
+        '',
+        '---',
+        '',
+        '## Run the Service',
+        '',
+        '```bash',
+        'uvicorn fsrs_service.main:app --host 127.0.0.1 --port 8000',
+        '```',
+        '',
+        'An application factory is also available:',
+        '',
+        '```python',
+        'from fsrs_service.main import create_app',
+        '',
+        'app = create_app()',
+        '```',
+        '',
+        for (var index = 0; index < 50; index += 1) ...[
+          'Trailing content $index keeps the preview scrollable.',
+          '',
+        ],
+      ].join('\n'),
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.singleWhere(
+      (block) => block.text == 'An application factory is also available:',
+    );
+    final listBlocks = preview.blocks.where(
+      (block) => block.kind == PreviewBlockKind.list,
+    );
+
+    expect(listBlocks.map((block) => block.sourceStartLine), [11, 12, 13]);
+    expect(paragraph.sourceStartLine, 39);
+    expect(paragraph.sourceEndLine, 39);
+    expect(paragraph.sourceStartOffset, isNotNull);
+    expect(
+      preview.blocks.every((block) => block.sourceStartLine != null),
+      true,
+    );
+  });
+
   test('preview list text removes Markdown markers', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

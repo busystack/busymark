@@ -132,12 +132,15 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
   final entities = <FileSystemEntity>[];
   final diagnostics = <Diagnostic>[];
   final pending = <Directory>[directory];
+  var pendingIndex = 0;
 
-  while (pending.isNotEmpty && entities.length < options.maxTreeEntries) {
-    final current = pending.removeLast();
-    Stream<FileSystemEntity> listing;
+  while (pendingIndex < pending.length &&
+      entities.length < options.maxTreeEntries) {
+    final current = pending[pendingIndex++];
+    List<FileSystemEntity> listing;
     try {
-      listing = current.list(followLinks: options.followLinks);
+      listing = await current.list(followLinks: options.followLinks).toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
     } on Object catch (error) {
       diagnostics.add(
         _scanWarning(current.path, 'Could not list folder: $error'),
@@ -145,41 +148,43 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       continue;
     }
 
-    try {
-      await for (final entity in listing) {
-        final type = await FileSystemEntity.type(
+    for (final entity in listing) {
+      FileSystemEntityType type;
+      try {
+        type = await FileSystemEntity.type(
           entity.path,
           followLinks: options.followLinks,
         );
-        if (type == FileSystemEntityType.directory) {
-          final name = p.basename(entity.path);
-          if (!ignoredDirectoryNames.contains(name) && !name.startsWith('.')) {
-            pending.add(Directory(entity.path));
-          }
-          continue;
-        }
-        if (type == FileSystemEntityType.link && !options.followLinks) {
-          continue;
-        }
-        if (type != FileSystemEntityType.file ||
-            !isWorkspaceTreePath(entity.path)) {
-          continue;
-        }
-        entities.add(entity);
-        if (entities.length >= options.maxTreeEntries) {
-          diagnostics.add(
-            _scanWarning(
-              rootPath,
-              'Large workspace detected. Some files were skipped to keep the app responsive.',
-            ),
-          );
-          break;
-        }
+      } on Object catch (error) {
+        diagnostics.add(
+          _scanWarning(entity.path, 'Could not inspect path: $error'),
+        );
+        continue;
       }
-    } on Object catch (error) {
-      diagnostics.add(
-        _scanWarning(current.path, 'Could not scan folder: $error'),
-      );
+      if (type == FileSystemEntityType.directory) {
+        final name = p.basename(entity.path);
+        if (!ignoredDirectoryNames.contains(name) && !name.startsWith('.')) {
+          pending.add(Directory(entity.path));
+        }
+        continue;
+      }
+      if (type == FileSystemEntityType.link && !options.followLinks) {
+        continue;
+      }
+      if (type != FileSystemEntityType.file ||
+          !isWorkspaceTreePath(entity.path)) {
+        continue;
+      }
+      entities.add(entity);
+      if (entities.length >= options.maxTreeEntries) {
+        diagnostics.add(
+          _scanWarning(
+            rootPath,
+            'Large workspace detected. Some files were skipped to keep the app responsive.',
+          ),
+        );
+        break;
+      }
     }
   }
   entities.sort((a, b) => a.path.compareTo(b.path));

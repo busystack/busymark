@@ -1957,6 +1957,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewSearchKeys = <int, GlobalKey>{};
   final _foldedRegionKeys = <String>{};
   String _lastPath = '';
+  var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
@@ -2134,7 +2135,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToSearchTarget(next);
     });
-    final searchState = ref.watch(_workspaceSearchProvider);
     final colors = BusyMarkSurfaceColors.of(context);
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
     final wysiwygDocument =
@@ -2402,7 +2402,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 controller: _previewScrollController,
                 headingKeys: _previewHeadingKeys,
                 searchKeys: _previewSearchKeys,
-                searchQuery: searchState.active ? searchState.query : '',
               ),
             ),
         ],
@@ -2675,13 +2674,32 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _wysiwygScrollHeadingId = null;
-        _wysiwygSearchQuery = target.query;
-        _wysiwygScrollRequest += 1;
-      });
-      _scrollSourceToSearchRange(target);
-      _scrollPreviewToSearchTarget(target);
+      final editorVisible =
+          widget.viewMode == DocumentViewModePreference.editor;
+      final wysiwygVisible =
+          editorVisible &&
+          _canUseWysiwyg(widget.state.workspace) &&
+          _wysiwygDocument() != null;
+      final sourceVisible =
+          widget.viewMode != DocumentViewModePreference.preview &&
+          !wysiwygVisible;
+      final previewVisible =
+          widget.viewMode != DocumentViewModePreference.source &&
+          !editorVisible;
+
+      if (wysiwygVisible) {
+        setState(() {
+          _wysiwygScrollHeadingId = null;
+          _wysiwygSearchQuery = target.query;
+          _wysiwygScrollRequest += 1;
+        });
+      }
+      if (sourceVisible) {
+        _scrollSourceToSearchRange(target);
+      }
+      if (previewVisible) {
+        _schedulePreviewSearchScroll(target);
+      }
     });
   }
 
@@ -2837,27 +2855,139 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
-  void _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
+  void _schedulePreviewSearchScroll(_SearchNavigationTarget target) {
+    _previewSearchScrollRequest = target.request;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isCurrentPreviewSearchScroll(target) ||
+          _scrollPreviewToSearchTarget(target)) {
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_isCurrentPreviewSearchScroll(target)) {
+          _scrollPreviewToSearchTarget(target);
+        }
+      });
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 80), () {
+          if (_isCurrentPreviewSearchScroll(target)) {
+            _scrollPreviewToSearchTarget(target);
+          }
+        }),
+      );
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 180), () {
+          if (_isCurrentPreviewSearchScroll(target)) {
+            _scrollPreviewToSearchTarget(target);
+          }
+        }),
+      );
+    });
+  }
+
+  bool _isCurrentPreviewSearchScroll(_SearchNavigationTarget target) {
+    return mounted && target.request == _previewSearchScrollRequest;
+  }
+
+  bool _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
     final query = target.query.trim();
     if (query.isEmpty) {
-      return;
+      return false;
     }
     final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
-    final normalizedQuery = query.toLowerCase();
-    final index = _previewSearchBlockIndex(blocks, target, normalizedQuery);
+    final index = _previewSearchBlockIndex(
+      blocks,
+      target,
+      widget.state.activeText,
+    );
     if (index == null) {
-      return;
+      return _scrollPreviewToApproximateLine(target);
     }
     final context = _previewSearchKeys[index]?.currentContext;
     if (context == null) {
+      _scrollPreviewToApproximateLine(target);
+      return false;
+    }
+    _scrollPreviewToBlockOffset(context, blocks[index], target);
+    return true;
+  }
+
+  void _scrollPreviewToBlockOffset(
+    BuildContext blockContext,
+    PreviewBlock block,
+    _SearchNavigationTarget target,
+  ) {
+    if (!_previewScrollController.hasClients) {
+      Scrollable.ensureVisible(
+        blockContext,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
       return;
     }
-    Scrollable.ensureVisible(
-      context,
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
-      alignment: 0.0,
+    final renderObject = blockContext.findRenderObject();
+    if (renderObject is! RenderBox) {
+      Scrollable.ensureVisible(
+        blockContext,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+      return;
+    }
+
+    final position = _safeScrollPosition(_previewScrollController);
+    if (position == null) {
+      return;
+    }
+    final viewportBox =
+        position.context.notificationContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null) {
+      Scrollable.ensureVisible(
+        blockContext,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+      return;
+    }
+    final blockHeight = renderObject.size.height;
+    final targetY = renderObject
+        .localToGlobal(
+          Offset(
+            0,
+            blockHeight *
+                _previewBlockTargetFraction(
+                  block,
+                  target,
+                  widget.state.activeText,
+                ),
+          ),
+        )
+        .dy;
+    final viewportTop = viewportBox.localToGlobal(Offset.zero).dy;
+    final targetOffset =
+        position.pixels + targetY - viewportTop - BusyMarkSpacing.lg;
+    _previewScrollController.jumpTo(
+      targetOffset.clamp(0.0, position.maxScrollExtent).toDouble(),
     );
+  }
+
+  bool _scrollPreviewToApproximateLine(_SearchNavigationTarget target) {
+    final position = _safeScrollPosition(_previewScrollController);
+    if (position == null) {
+      return false;
+    }
+    final sourceLineCount = widget.state.activeText.split('\n').length;
+    final denominator = math.max(1, sourceLineCount - 1);
+    final fraction = ((target.line - 1) / denominator).clamp(0.0, 1.0);
+    _previewScrollController.jumpTo(
+      (position.maxScrollExtent * fraction).clamp(
+        0.0,
+        position.maxScrollExtent,
+      ),
+    );
+    return true;
   }
 
   int _textOffsetForLine(String text, int line) {
@@ -3561,7 +3691,6 @@ class _PreviewPane extends StatelessWidget {
     required this.controller,
     required this.headingKeys,
     required this.searchKeys,
-    required this.searchQuery,
   });
 
   final PreviewDocument? preview;
@@ -3569,7 +3698,6 @@ class _PreviewPane extends StatelessWidget {
   final ScrollController controller;
   final Map<String, GlobalKey> headingKeys;
   final Map<int, GlobalKey> searchKeys;
-  final String searchQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -3623,13 +3751,6 @@ class _PreviewPane extends StatelessWidget {
       workspace: workspace,
       headingKey: _keyForBlock(block),
     );
-    final query = searchQuery.trim();
-    if (query.isEmpty ||
-        !_previewBlockSearchText(
-          block,
-        ).toLowerCase().contains(query.toLowerCase())) {
-      return child;
-    }
     return KeyedSubtree(
       key: searchKeys.putIfAbsent(index, () => GlobalKey()),
       child: child,
@@ -3906,21 +4027,126 @@ String _previewBlockSearchText(PreviewBlock block) {
 int? _previewSearchBlockIndex(
   List<PreviewBlock> blocks,
   _SearchNavigationTarget target,
-  String normalizedQuery,
+  String source,
 ) {
-  int? fallbackIndex;
+  int? nearestBeforeIndex;
+  int? nearestAfterIndex;
+  for (final (index, block) in blocks.indexed) {
+    if (_previewBlockContainsSearchTarget(block, target)) {
+      return index;
+    }
+    final startLine = block.sourceStartLine;
+    if (startLine == null) {
+      continue;
+    }
+    if (startLine <= target.line) {
+      nearestBeforeIndex = index;
+    } else {
+      nearestAfterIndex ??= index;
+    }
+  }
+  return _previewSearchBlockIndexForSourceLine(blocks, source, target) ??
+      _previewSearchBlockIndexForOrdinal(
+        blocks,
+        target.query,
+        _searchResultOrdinalInSource(source, target),
+      ) ??
+      nearestBeforeIndex ??
+      nearestAfterIndex;
+}
+
+int? _previewSearchBlockIndexForSourceLine(
+  List<PreviewBlock> blocks,
+  String source,
+  _SearchNavigationTarget target,
+) {
+  final rawLine = _sourceLineText(source, target.line).trim();
+  if (rawLine.isEmpty) {
+    return null;
+  }
+  final strippedLine = _stripMarkdownForSearchResult(rawLine).toLowerCase();
+  final rawNeedle = rawLine.toLowerCase();
+  if (strippedLine.isEmpty && rawNeedle.isEmpty) {
+    return null;
+  }
+  for (final (index, block) in blocks.indexed) {
+    final searchText = _previewBlockSearchText(block).toLowerCase();
+    if ((strippedLine.isNotEmpty && searchText.contains(strippedLine)) ||
+        (rawNeedle.isNotEmpty && searchText.contains(rawNeedle))) {
+      return index;
+    }
+  }
+  return null;
+}
+
+String _sourceLineText(String source, int lineNumber) {
+  if (lineNumber <= 0) {
+    return '';
+  }
+  final lines = source.split('\n');
+  if (lineNumber > lines.length) {
+    return '';
+  }
+  return lines[lineNumber - 1];
+}
+
+int _searchResultOrdinalInSource(
+  String source,
+  _SearchNavigationTarget target,
+) {
+  final normalizedQuery = target.query.trim().toLowerCase();
+  if (normalizedQuery.isEmpty) {
+    return 0;
+  }
+  final lines = source.split('\n');
+  var ordinal = 0;
+  var lineStartOffset = 0;
+  for (final line in lines) {
+    final matchColumn = line.toLowerCase().indexOf(normalizedQuery);
+    if (matchColumn >= 0) {
+      final startOffset = lineStartOffset + matchColumn;
+      if (startOffset == target.startOffset) {
+        return ordinal;
+      }
+      if (startOffset > target.startOffset) {
+        return ordinal;
+      }
+      ordinal += 1;
+    }
+    lineStartOffset += line.length + 1;
+  }
+  return ordinal;
+}
+
+int? _previewSearchBlockIndexForOrdinal(
+  List<PreviewBlock> blocks,
+  String query,
+  int ordinal,
+) {
+  final normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery.isEmpty) {
+    return null;
+  }
+  var matchIndex = 0;
   for (final (index, block) in blocks.indexed) {
     if (!_previewBlockSearchText(
       block,
     ).toLowerCase().contains(normalizedQuery)) {
       continue;
     }
-    fallbackIndex ??= index;
-    if (_previewBlockContainsSearchTarget(block, target)) {
+    if (matchIndex == ordinal) {
       return index;
     }
+    matchIndex += 1;
   }
-  return fallbackIndex;
+  return null;
+}
+
+String _previewInlineSearchText(PreviewInline inline) {
+  return [
+    inline.text,
+    for (final child in inline.children) _previewInlineSearchText(child),
+  ].where((value) => value.isNotEmpty).join(' ');
 }
 
 bool _previewBlockContainsSearchTarget(
@@ -3950,11 +4176,44 @@ bool _previewBlockContainsSearchTarget(
   );
 }
 
-String _previewInlineSearchText(PreviewInline inline) {
-  return [
-    inline.text,
-    for (final child in inline.children) _previewInlineSearchText(child),
-  ].where((value) => value.isNotEmpty).join(' ');
+double _previewBlockTargetFraction(
+  PreviewBlock block,
+  _SearchNavigationTarget target,
+  String source,
+) {
+  final startOffset = block.sourceStartOffset;
+  final endOffset = block.sourceEndOffset;
+  if (startOffset != null && endOffset != null && endOffset > startOffset) {
+    return ((target.startOffset - startOffset) / (endOffset - startOffset))
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (startLine != null && endLine != null && endLine > startLine) {
+    return ((target.line - startLine) / (endLine - startLine))
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+
+  final sourceLine = _sourceLineText(source, target.line).trim();
+  if (sourceLine.isNotEmpty && block.text.contains('\n')) {
+    final sourceNeedles = {
+      sourceLine,
+      _stripMarkdownForSearchResult(sourceLine),
+    }.where((value) => value.isNotEmpty).map((value) => value.toLowerCase());
+    final blockLines = block.text.split('\n');
+    for (final (index, blockLine) in blockLines.indexed) {
+      final normalizedBlockLine = blockLine.trim().toLowerCase();
+      if (sourceNeedles.any(normalizedBlockLine.contains)) {
+        final denominator = math.max(1, blockLines.length - 1);
+        return (index / denominator).clamp(0.0, 1.0).toDouble();
+      }
+    }
+  }
+
+  return 0.0;
 }
 
 class _ListMarker extends StatelessWidget {
@@ -4683,7 +4942,7 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
           startOffset: startOffset,
           endOffset: startOffset + trimmedQuery.length,
           query: trimmedQuery,
-          title: _searchExcerpt(line),
+          title: _searchResultTitle(line),
           subtitle: '$relativePath - Line $lineNumber',
           icon: BusyMarkGlyphs.paragraph,
         ),
@@ -4727,12 +4986,48 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 
 const int _maxWorkspaceSearchResults = 80;
 
-String _searchExcerpt(String line) {
-  final trimmed = line.trim();
+String _searchResultTitle(String line) {
+  final trimmed = _stripMarkdownForSearchResult(line);
   if (trimmed.length <= 120) {
     return trimmed;
   }
   return '${trimmed.substring(0, 117)}...';
+}
+
+String _stripMarkdownForSearchResult(String line) {
+  var value = line.trim();
+  final fence = RegExp(
+    r'^(```+|~~~+)\s*([A-Za-z0-9_+\-#.]*)',
+  ).firstMatch(value);
+  if (fence != null) {
+    final language = fence.group(2)?.trim() ?? '';
+    return language.isEmpty ? 'Code block' : language;
+  }
+
+  value = value
+      .replaceFirst(RegExp(r'^\s{0,3}#{1,6}\s+'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}>\s?'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}[-+*]\s+\[[ xX]\]\s+'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}[-+*]\s+'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}\d+[.)]\s+'), '')
+      .trim();
+  final replacements = <RegExp, String Function(Match)>{
+    RegExp(r'!\[([^\]]*)\]\([^)]+\)'): (match) => match.group(1) ?? '',
+    RegExp(r'\[([^\]]+)\]\([^)]+\)'): (match) => match.group(1) ?? '',
+    RegExp(r'\[([^\]]+)\]\[[^\]]*\]'): (match) => match.group(1) ?? '',
+    RegExp(r'`([^`]*)`'): (match) => match.group(1) ?? '',
+    RegExp(r'\*\*([^*]+)\*\*'): (match) => match.group(1) ?? '',
+    RegExp(r'__([^_]+)__'): (match) => match.group(1) ?? '',
+    RegExp(r'\*([^*]+)\*'): (match) => match.group(1) ?? '',
+    RegExp(r'_([^_]+)_'): (match) => match.group(1) ?? '',
+    RegExp(r'~~([^~]+)~~'): (match) => match.group(1) ?? '',
+    RegExp(r'<[^>]+>'): (_) => '',
+  };
+  for (final entry in replacements.entries) {
+    value = value.replaceAllMapped(entry.key, entry.value);
+  }
+  value = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return value.isEmpty ? 'Untitled result' : value;
 }
 
 String _relativeDocumentPath(Workspace workspace, String path) {

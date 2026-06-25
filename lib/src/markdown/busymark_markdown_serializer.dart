@@ -73,6 +73,9 @@ class BusyMarkMarkdownSerializer {
     if (dirtyBlocks.isEmpty) {
       return source;
     }
+    if (dirtyBlocks.any((block) => _isListKind(block.kind))) {
+      return null;
+    }
     if (dirtyBlocks.any((block) => block.sourceSpan == null)) {
       return null;
     }
@@ -174,6 +177,12 @@ class BusyMarkMarkdownSerializer {
         .split('\n')
         .map((line) => line.isEmpty ? line : '  $line')
         .join('\n');
+  }
+
+  bool _isListKind(BusyBlockKind kind) {
+    return kind == BusyBlockKind.unorderedListItem ||
+        kind == BusyBlockKind.orderedListItem ||
+        kind == BusyBlockKind.taskListItem;
   }
 
   String _blockquote(BusyBlock block) {

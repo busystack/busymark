@@ -110,6 +110,48 @@ void main() {
     },
   );
 
+  test(
+    'limited folder scan prefers shallow siblings before deep subtree',
+    () async {
+      final directory = await Directory.systemTemp.createTemp('busymark-wide-');
+      try {
+        await Directory(p.join(directory.path, 'a')).create();
+        await File(
+          p.join(directory.path, 'a', 'guide.md'),
+        ).writeAsString('# A\n');
+        await Directory(p.join(directory.path, 'b')).create();
+        await File(
+          p.join(directory.path, 'b', 'guide.md'),
+        ).writeAsString('# B\n');
+        await Directory(
+          p.join(directory.path, 'z', 'deep'),
+        ).create(recursive: true);
+        for (var index = 0; index < 8; index += 1) {
+          await File(
+            p.join(directory.path, 'z', 'deep', '$index.md'),
+          ).writeAsString('# Deep $index\n');
+        }
+
+        final limitedService = WorkspaceService(
+          scanOptions: const WorkspaceScanOptions(maxTreeEntries: 2),
+        );
+        final workspace = await limitedService.openPath(directory.path);
+        final relativePaths = workspace.files.map((file) => file.relativePath);
+
+        expect(relativePaths, containsAll(['a/guide.md', 'b/guide.md']));
+        expect(relativePaths, isNot(contains('z/deep/0.md')));
+        expect(workspace.rootPath, directory.path);
+        expect(workspace.kind, WorkspaceKind.markdownFolder);
+        expect(
+          workspace.diagnostics.map((diagnostic) => diagnostic.code),
+          contains('workspace.scan.skipped'),
+        );
+      } finally {
+        await directory.delete(recursive: true);
+      }
+    },
+  );
+
   test('invalid UTF-8 Markdown does not fail the whole workspace', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-invalid-',
