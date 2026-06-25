@@ -119,8 +119,9 @@ void main() {
     expect(design, contains('floatingShadowsFor'));
     expect(design, contains('windowShadowsFor'));
     expect(design, contains('edgeShadowsFor'));
-    expect(design, contains('_scaleAlpha(color, 0.34)'));
-    expect(design, contains('blurRadius: 5'));
+    expect(design, contains('_scaleAlpha(color, 0.28)'));
+    expect(design, contains('blurRadius: 8'));
+    expect(design, contains('offset: const Offset(0, -1)'));
     expect(design, contains('BoxDecoration busyMarkSurfaceDecoration'));
     expect(
       design,
@@ -477,6 +478,59 @@ void main() {
     expect(blockWidgets, contains('Insert row above'));
     expect(blockWidgets, contains('Insert row below'));
     expect(blockWidgets, contains('Delete table'));
+  });
+
+  test('WYSIWYG text selection does not paint full text block backgrounds', () {
+    final blockWidgets = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final background = RegExp(
+      r'Color _background\(BuildContext context\).*?BoxBorder\?',
+      dotAll: true,
+    ).firstMatch(blockWidgets)!.group(0)!;
+
+    expect(background, isNot(contains('if (selected)')));
+    expect(background, isNot(contains('colorScheme.primary.withValues')));
+    expect(blockWidgets, contains('_WysiwygSelectionPainter'));
+    expect(blockWidgets, contains('getBoxesForSelection'));
+  });
+
+  test('Markdown image blocks render frameless and edit through dialog', () {
+    final imageView = File(
+      'lib/src/editor/markdown_image_view.dart',
+    ).readAsStringSync();
+    final blockWidgets = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    final prefix = RegExp(
+      r'Widget\? _prefix\(BuildContext context\).*?Color _background',
+      dotAll: true,
+    ).firstMatch(blockWidgets)!.group(0)!;
+    final imageBlockEditor = RegExp(
+      r'class _ImageBlockEditor.*?String _imageSource',
+      dotAll: true,
+    ).firstMatch(blockWidgets)!.group(0)!;
+
+    expect(imageView, isNot(contains('color: colors.panel')));
+    expect(
+      imageView,
+      isNot(contains('Border.all(color: colors.subtleBorder)')),
+    );
+    expect(prefix, isNot(contains('BusyBlockKind.image => Icon')));
+    expect(imageBlockEditor, isNot(contains('height: 240')));
+    expect(imageBlockEditor, isNot(contains('hintText: \'Alt text\'')));
+    expect(
+      blockWidgets,
+      contains("ValueKey('wysiwyg-image-block-\${block.id}')"),
+    );
+    expect(blockWidgets, contains('block.kind == BusyBlockKind.image'));
+    expect(blockWidgets, contains('_editImageBlock'));
+    expect(editor, contains('_handleImageBlockEditRequested'));
+    expect(editor, contains('initialSource: _imageSourceForBlock(block)'));
+    expect(editor, contains("submitLabel: 'Apply'"));
   });
 
   test('source view has compact gutter without pane status chrome', () {

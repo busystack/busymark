@@ -201,7 +201,7 @@ void main() {
   test('native headerbar buttons use themed shadows', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(native, contains('"box-shadow: 0 1px 1px %s;"'));
+    expect(native, contains('"box-shadow: 0 -1px 1px %s, 0 1px 1px %s;"'));
     expect(native, contains('foreground, control, shade'));
     expect(native, contains('"box-shadow: none;"'));
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
