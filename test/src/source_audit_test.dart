@@ -89,7 +89,7 @@ void main() {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
     expect(design, contains('class _BusyMarkGroupedListSurface'));
-    expect(design, contains('shape: RoundedRectangleBorder'));
+    expect(design, contains('cardTheme.shape ?? RoundedRectangleBorder'));
     expect(design, contains('clipBehavior: Clip.antiAlias'));
     expect(design, contains('Divider(height: 1'));
     expect(design, isNot(contains('YaruTileList')));
@@ -122,10 +122,11 @@ void main() {
     expect(design, contains('edgeShadowsFor'));
     expect(design, contains('_scaleAlpha(color, 0.34)'));
     expect(design, contains('blurRadius: 5'));
-    expect(
-      design,
-      contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
-    );
+    expect(design, contains('final cardTheme = Theme.of(context).cardTheme'));
+    expect(design, contains('shadowColor: cardTheme.shadowColor'));
+    expect(design, contains('color: cardTheme.color ?? colors.card'));
+    expect(theme, contains('shadowColor: colors.shade'));
+    expect(theme, contains('cardTheme: CardThemeData'));
     expect(dialogs, contains('elevation: BusyMarkElevation.popover'));
     expect(
       dialogs,
@@ -135,6 +136,19 @@ void main() {
       theme,
       contains('boxShadow: BusyMarkShadow.floatingShadows(colors.shade)'),
     );
+  });
+
+  test('filled grouped action surfaces use card theme surfaces', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+
+    final groupedSurface = RegExp(
+      r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
+      dotAll: true,
+    ).firstMatch(design)!.group(0)!;
+    expect(groupedSurface, contains('cardTheme.color ?? colors.card'));
+    expect(groupedSurface, contains('cardTheme.elevation'));
+    expect(groupedSurface, isNot(contains('color: colors.control')));
+    expect(groupedSurface, isNot(contains('boxShadow:')));
   });
 
   test(
@@ -309,6 +323,13 @@ void main() {
     expect(workspace, contains('scrollController: _sourceScrollController'));
     expect(workspace, contains('Scrollable.ensureVisible'));
     expect(workspace, contains('headingKeys: _previewHeadingKeys'));
+    expect(workspace, contains('scrollToHeadingId: _wysiwygScrollHeadingId'));
+    expect(workspace, contains('scrollRequest: _wysiwygScrollRequest'));
+    final wysiwyg = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    expect(wysiwyg, contains('void _scheduleHeadingScroll()'));
+    expect(wysiwyg, contains('Scrollable.ensureVisible'));
     expect(workspace, contains("block.attributes['id']"));
   });
 
@@ -331,7 +352,7 @@ void main() {
     expect(workspace, contains('folded: _foldedRegionKeys.isNotEmpty'));
     expect(workspace, contains('if (folded)'));
     expect(workspace, contains('return null'));
-    expect(workspace, contains('forceStrutHeight: true'));
+    expect(workspace, contains('StrutStyle.fromTextStyle(_sourceTextStyle)'));
     expect(workspace, contains('strutStyle: sourceStrutStyle'));
     expect(workspace, contains('TextOverflow.ellipsis'));
     expect(workspace, contains('Color.alphaBlend'));
@@ -375,6 +396,82 @@ void main() {
     expect(workspace, contains('if (previewVisible)'));
     expect(settingsScreen, isNot(contains('Show preview pane')));
     expect(settingsScreen, isNot(contains('setPreviewVisible')));
+  });
+
+  test('WYSIWYG toolbar exposes fuller Markdown controls', () {
+    final toolbar = File(
+      'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
+    ).readAsStringSync();
+    final commands = File(
+      'lib/src/editor/wysiwyg/wysiwyg_commands.dart',
+    ).readAsStringSync();
+    final controller = File(
+      'lib/src/editor/wysiwyg/wysiwyg_document_controller.dart',
+    ).readAsStringSync();
+    final serializer = File(
+      'lib/src/markdown/busymark_markdown_serializer.dart',
+    ).readAsStringSync();
+
+    for (final label in [
+      'Heading 4',
+      'Heading 5',
+      'Heading 6',
+      'Toggle task checked',
+      'Indent list item',
+      'Outdent list item',
+      'Code block language',
+      'Inline image',
+      'Table',
+      'Hard line break',
+    ]) {
+      expect(toolbar, contains(label));
+    }
+    expect(commands, contains('heading4'));
+    expect(commands, contains('heading5'));
+    expect(commands, contains('heading6'));
+    expect(controller, contains('insertTableAfter'));
+    expect(controller, contains('replaceTable'));
+    expect(controller, contains('insertTableRow'));
+    expect(controller, contains('deleteTableRow'));
+    expect(controller, contains('insertTableColumn'));
+    expect(controller, contains('deleteTableColumn'));
+    expect(controller, contains('deleteTable'));
+    expect(controller, contains('insertInlineImage'));
+    expect(controller, contains('insertHardBreak'));
+    expect(controller, contains('applyCodeBlockLanguage'));
+    expect(controller, contains('toggleTaskChecked'));
+    expect(controller, contains('indentListItems'));
+    expect(controller, contains('outdentListItems'));
+    expect(serializer, contains('String _listItem('));
+    expect(serializer, contains('String _indentBlock('));
+    expect(toolbar, contains('transparent: true'));
+    final blockWidgets = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    expect(blockWidgets, contains('Insert column left'));
+    expect(blockWidgets, contains('Insert column right'));
+    expect(blockWidgets, contains('Insert row above'));
+    expect(blockWidgets, contains('Insert row below'));
+    expect(blockWidgets, contains('Delete table'));
+  });
+
+  test('source view has compact gutter without pane status chrome', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('static const double _gutterWidth = 58;'));
+    expect(
+      workspace,
+      contains(
+        '_SourceEditorFrame.editorPaddingTop,\n            24,\n            34',
+      ),
+    );
+    expect(workspace, contains('first: index == 0'));
+    expect(workspace, contains('top: first ? 0 : 18'));
+    expect(workspace, isNot(contains('class _PaneHeader')));
+    expect(workspace, isNot(contains('class _StatusPill')));
+    expect(workspace, isNot(contains("'Not saved' : 'Saved'")));
   });
 }
 

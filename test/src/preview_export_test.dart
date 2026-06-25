@@ -113,6 +113,21 @@ void main() {
     expect(html, contains('<img src="logo.png" alt="Logo">'));
   });
 
+  test('preview renders quote characters as text instead of HTML entities', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Use "group" here.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single;
+    final html = const MarkdownHtmlExporter().export(parsed);
+
+    expect(paragraph.text, 'Use "group" here.');
+    expect(paragraph.inlines.single.text, 'Use "group" here.');
+    expect(html, contains('<p>Use &quot;group&quot; here.</p>'));
+    expect(html, isNot(contains('&amp;quot;')));
+  });
+
   test('preview treats single newlines inside paragraphs as soft breaks', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

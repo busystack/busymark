@@ -330,6 +330,129 @@ void main() {}
     expect(copiedText, 'First\n\nSecond');
   });
 
+  testWidgets('WYSIWYG click elsewhere clears previous block selection', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+    final thirdFieldRect = tester.getRect(find.byType(TextField).at(2));
+    final gesture = await tester.startGesture(
+      firstFieldRect.centerLeft + const Offset(1, 0),
+    );
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
+    await gesture.up();
+    await tester.pump();
+
+    await tester.tapAt(thirdFieldRect.centerLeft + const Offset(8, 0));
+    await tester.pump();
+
+    copiedText = null;
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, isNull);
+  });
+
+  testWidgets('WYSIWYG Shift click selects text across paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstField = tester.widget<TextField>(find.byType(TextField).first);
+    firstField.controller!.selection = const TextSelection.collapsed(offset: 0);
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tapAt(secondFieldRect.centerLeft + const Offset(80, 0));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, 'First\n\nSecond');
+  });
+
   testWidgets('WYSIWYG drag selection preserves partial paragraph boundaries', (
     tester,
   ) async {
@@ -941,7 +1064,278 @@ void main() {}
     controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.heading2);
     expect(controller.markdown, '## Title\n');
 
+    controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.heading6);
+    expect(controller.markdown, '###### Title\n');
+
     controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.taskList);
     expect(controller.markdown, '- [ ] Title\n');
+  });
+
+  test('WYSIWYG extended toolbar commands serialize Markdown', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = parsed.busyDocument.blocks.first.id;
+
+    controller.insertInlineImage(
+      blockId,
+      selectionStart: 6,
+      selectionEnd: 10,
+      source: 'images/logo.png',
+      alt: 'Logo',
+    );
+    expect(controller.markdown, 'Alpha ![Logo](images/logo.png)\n');
+
+    final hardBreakParsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Alpha Beta\n',
+    );
+    final hardBreakController = BusyMarkWysiwygDocumentController(
+      document: hardBreakParsed.busyDocument,
+    );
+    final hardBreakBlockId = hardBreakParsed.busyDocument.blocks.first.id;
+
+    hardBreakController.insertHardBreak(hardBreakBlockId, 5);
+    expect(hardBreakController.markdown, 'Alpha  \n Beta\n');
+  });
+
+  test('WYSIWYG table and code language commands serialize Markdown', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = parsed.busyDocument.blocks.first.id;
+
+    controller.insertTableAfter(blockId, columns: 2, rows: 1);
+
+    expect(
+      controller.markdown,
+      'Intro\n\n'
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+
+    final tableId = controller.document.blocks
+        .singleWhere((block) => block.kind == BusyBlockKind.table)
+        .id;
+    final table = controller.document.blocks.singleWhere(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    controller.updateTableCellText(
+      table.id,
+      table.children.first.children.first.id,
+      'Name',
+    );
+    expect(
+      controller.markdown,
+      'Intro\n\n'
+      '| Name | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+    controller.replaceTable(tableId, columns: 3, rows: 1);
+    expect(
+      controller.markdown,
+      'Intro\n\n'
+      '| Name | Header 2 | Header 3 |\n'
+      '| --- | --- | --- |\n'
+      '| Cell | Cell | Cell |\n',
+    );
+
+    final parsedTable = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| Header 1 | Header 2 |\n'
+          '| --- | --- |\n'
+          '| Cell | Cell |\n',
+    );
+    final parsedTableController = BusyMarkWysiwygDocumentController(
+      document: parsedTable.busyDocument,
+    );
+    final parsedTableBlock = parsedTableController.document.blocks.singleWhere(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    final parsedHeaderCellId =
+        parsedTableBlock.children.first.children.first.id;
+    parsedTableController.updateTableCellText(
+      parsedTableBlock.id,
+      parsedHeaderCellId,
+      'Name',
+    );
+    expect(parsedTableController.blockText(parsedHeaderCellId), 'Name');
+    expect(
+      parsedTableController.markdown,
+      '| Name | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+
+    final codeParsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'print(1);\n',
+    );
+    final codeController = BusyMarkWysiwygDocumentController(
+      document: codeParsed.busyDocument,
+    );
+    final codeBlockId = codeParsed.busyDocument.blocks.first.id;
+
+    codeController.applyCodeBlockLanguage(codeBlockId, 'dart');
+    expect(codeController.markdown, '```dart\nprint(1);\n```\n');
+  });
+
+  test('WYSIWYG table row and column commands serialize Markdown', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| Header 1 | Header 2 |\n'
+          '| --- | --- |\n'
+          '| Cell | Cell |\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    String tableId() => controller.document.blocks
+        .singleWhere((block) => block.kind == BusyBlockKind.table)
+        .id;
+
+    controller.insertTableRow(tableId(), 1, after: false);
+    expect(
+      controller.markdown,
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '|  |  |\n'
+      '| Cell | Cell |\n',
+    );
+
+    controller.insertTableColumn(tableId(), 0, after: true);
+    expect(
+      controller.markdown,
+      '| Header 1 |  | Header 2 |\n'
+      '| --- | --- | --- |\n'
+      '|  |  |  |\n'
+      '| Cell |  | Cell |\n',
+    );
+
+    controller.deleteTableColumn(tableId(), 1);
+    expect(
+      controller.markdown,
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '|  |  |\n'
+      '| Cell | Cell |\n',
+    );
+
+    controller.deleteTableRow(tableId(), 1);
+    expect(
+      controller.markdown,
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+
+    controller.deleteTableRow(tableId(), 0);
+    expect(
+      controller.markdown,
+      '| Cell | Cell |\n'
+      '| --- | --- |\n',
+    );
+
+    controller.deleteTable(tableId());
+    expect(controller.markdown, '');
+  });
+
+  testWidgets('WYSIWYG table cells are formatted and editable', (tester) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          'Intro\n\n'
+          '| Header 1 | Header 2 |\n'
+          '| --- | --- |\n'
+          '| Cell | Cell |\n',
+    );
+    var markdown = '';
+    final widgetTable = parsed.busyDocument.blocks.singleWhere(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    final headerCellId = widgetTable.children.first.children.first.id;
+    final bodyCellId = widgetTable.children[1].children.first.id;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(Table), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(5));
+    expect(find.text('| Header 1 | Header 2 |'), findsNothing);
+    expect(find.byTooltip('Delete table'), findsOneWidget);
+    expect(find.byTooltip('Column 1'), findsOneWidget);
+    expect(find.byTooltip('Column 2'), findsOneWidget);
+    expect(find.byTooltip('Row 1'), findsOneWidget);
+    expect(find.byTooltip('Row 2'), findsOneWidget);
+
+    final headerField = tester.widget<TextField>(
+      find.byKey(ValueKey(headerCellId)),
+    );
+    final bodyField = tester.widget<TextField>(
+      find.byKey(ValueKey(bodyCellId)),
+    );
+    expect(headerField.onChanged, isNotNull);
+    expect(bodyField.onChanged, isNotNull);
+
+    headerField.onChanged!('Name');
+    await tester.pump();
+    bodyField.onChanged!('Alice');
+    await tester.pump();
+
+    expect(
+      markdown,
+      'Intro\n\n'
+      '| Name | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Alice | Cell |\n',
+    );
+  });
+
+  test('WYSIWYG list indent outdent and task toggle commands serialize', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n- Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = parsed.busyDocument.blocks[1].id;
+
+    controller.indentListItems([childId]);
+    expect(controller.markdown, '- Parent\n  - Child\n');
+
+    controller.outdentListItems([childId]);
+    expect(controller.markdown, '- Parent\n\n- Child\n');
+
+    final taskParsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- [ ] Todo\n',
+    );
+    final taskController = BusyMarkWysiwygDocumentController(
+      document: taskParsed.busyDocument,
+    );
+    final taskId = taskParsed.busyDocument.blocks.first.id;
+
+    taskController.toggleTaskChecked([taskId]);
+    expect(taskController.markdown, '- [x] Todo\n');
   });
 }

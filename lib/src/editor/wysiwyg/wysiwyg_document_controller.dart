@@ -44,6 +44,41 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     _replaceBlock(blockId, (block) => _blockWithEditedText(block, text));
   }
 
+  void updateTableCellText(String tableBlockId, String cellId, String text) {
+    var changed = false;
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(_document.blocks, tableBlockId, (block) {
+        if (block.kind != BusyBlockKind.table) {
+          return block;
+        }
+        final rows = <BusyBlock>[];
+        for (final row in block.children) {
+          var rowChanged = false;
+          final cells = <BusyBlock>[];
+          for (final cell in row.children) {
+            if (cell.id == cellId) {
+              cells.add(_blockWithEditedText(cell, text));
+              rowChanged = true;
+              changed = true;
+            } else {
+              cells.add(cell);
+            }
+          }
+          rows.add(
+            rowChanged ? row.copyWith(children: cells, dirty: true) : row,
+          );
+        }
+        if (!changed) {
+          return block;
+        }
+        return block.copyWith(children: rows, preserveRaw: false, dirty: true);
+      }),
+    );
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
   BusyWysiwygTextSplitResult? replaceBlockTextWithParagraphs(
     String blockId,
     String text,
@@ -161,6 +196,480 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         dirty: true,
       ),
     );
+  }
+
+  void insertInlineImage(
+    String blockId, {
+    required int selectionStart,
+    required int selectionEnd,
+    required String source,
+    required String alt,
+  }) {
+    final trimmedSource = source.trim();
+    if (trimmedSource.isEmpty) {
+      return;
+    }
+    _replaceBlock(blockId, (block) {
+      final text = block.plainText;
+      final start = selectionStart
+          .clamp(0, text.length)
+          .toInt()
+          .clamp(0, text.length);
+      final end = selectionEnd
+          .clamp(start, text.length)
+          .toInt()
+          .clamp(start, text.length);
+      final selectedText = text.substring(start, end).trim();
+      final altText = alt.trim().isNotEmpty
+          ? alt.trim()
+          : selectedText.isNotEmpty
+          ? selectedText
+          : 'Image';
+      final nextText = text.replaceRange(start, end, altText);
+      final ranges =
+          _styleRangesForReplacement(
+            ranges: busyInlineStyleRanges(block.inlines),
+            selectionStart: start,
+            selectionEnd: end,
+            replacementLength: altText.length,
+          )..add(
+            BusyInlineStyleRange(
+              start: start,
+              end: start + altText.length,
+              kind: BusyInlineKind.image,
+              destination: trimmedSource,
+            ),
+          );
+      return block.copyWith(
+        inlines: _inlinesFromStyleRangesWithHardBreaks(nextText, ranges),
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  void insertHardBreak(String blockId, int offset) {
+    _replaceBlock(blockId, (block) {
+      final text = block.plainText;
+      final safeOffset = offset.clamp(0, text.length).toInt();
+      final nextText = text.replaceRange(safeOffset, safeOffset, '\n');
+      final ranges = _styleRangesForReplacement(
+        ranges: busyInlineStyleRanges(block.inlines),
+        selectionStart: safeOffset,
+        selectionEnd: safeOffset,
+        replacementLength: 1,
+      );
+      return block.copyWith(
+        inlines: _inlinesFromStyleRangesWithHardBreaks(nextText, ranges),
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  String? insertTableAfter(
+    String blockId, {
+    required int columns,
+    required int rows,
+  }) {
+    if (blockById(blockId) == null) {
+      return null;
+    }
+    final paragraphId = _nextGeneratedBlockId('paragraph');
+    final tableBlock = _generatedTableBlock(
+      id: _nextGeneratedBlockId('table'),
+      columns: columns,
+      rows: rows,
+    );
+    _document = _document.copyWith(
+      blocks: _insertBlocksAfter(_document.blocks, blockId, [
+        tableBlock,
+        BusyBlock(
+          id: paragraphId,
+          kind: BusyBlockKind.paragraph,
+          inlines: _textInlines(''),
+          dirty: true,
+        ),
+      ]),
+    );
+    notifyListeners();
+    return paragraphId;
+  }
+
+  void replaceTable(String blockId, {required int columns, required int rows}) {
+    _replaceBlock(blockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      return _generatedTableBlock(
+        id: block.id,
+        columns: columns,
+        rows: rows,
+        template: block,
+      );
+    });
+  }
+
+  void insertTableRow(
+    String tableBlockId,
+    int rowIndex, {
+    required bool after,
+  }) {
+    _replaceBlock(tableBlockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      final rows = block.children;
+      final columnCount = _tableColumnCount(block);
+      final safeRow = rows.isEmpty
+          ? 0
+          : rowIndex.clamp(0, rows.length - 1).toInt();
+      final insertIndex = rows.isEmpty ? 0 : safeRow + (after ? 1 : 0);
+      final nextRows = [...rows]
+        ..insert(
+          insertIndex.clamp(0, rows.length).toInt(),
+          _newTableRow(columnCount),
+        );
+      return block.copyWith(
+        children: _normalizedTableRows(nextRows),
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  void deleteTableRow(String tableBlockId, int rowIndex) {
+    final table = blockById(tableBlockId);
+    if (table == null || table.kind != BusyBlockKind.table) {
+      return;
+    }
+    final rows = table.children;
+    if (rows.length <= 1) {
+      deleteTable(tableBlockId);
+      return;
+    }
+    _replaceBlock(tableBlockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      final safeRow = rowIndex.clamp(0, block.children.length - 1).toInt();
+      final nextRows = [
+        for (final (index, row) in block.children.indexed)
+          if (index != safeRow) row,
+      ];
+      return block.copyWith(
+        children: _normalizedTableRows(nextRows),
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  void insertTableColumn(
+    String tableBlockId,
+    int columnIndex, {
+    required bool after,
+  }) {
+    _replaceBlock(tableBlockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      final columnCount = _tableColumnCount(block);
+      final safeColumn = columnIndex.clamp(0, columnCount - 1).toInt();
+      final insertIndex = safeColumn + (after ? 1 : 0);
+      final rows = [
+        for (final row in block.children)
+          row.copyWith(
+            children: _cellsPaddedTo(row, columnCount)
+              ..insert(
+                insertIndex.clamp(0, columnCount).toInt(),
+                _newTableCell(),
+              ),
+            dirty: true,
+          ),
+      ];
+      return block.copyWith(
+        children: _normalizedTableRows(rows),
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  void deleteTableColumn(String tableBlockId, int columnIndex) {
+    final table = blockById(tableBlockId);
+    if (table == null || table.kind != BusyBlockKind.table) {
+      return;
+    }
+    final columnCount = _tableColumnCount(table);
+    if (columnCount <= 1) {
+      deleteTable(tableBlockId);
+      return;
+    }
+    _replaceBlock(tableBlockId, (block) {
+      if (block.kind != BusyBlockKind.table) {
+        return block;
+      }
+      final safeColumn = columnIndex.clamp(0, columnCount - 1).toInt();
+      final rows = [
+        for (final row in block.children)
+          row.copyWith(
+            children: [
+              for (final (index, cell) in _cellsPaddedTo(
+                row,
+                columnCount,
+              ).indexed)
+                if (index != safeColumn) cell,
+            ],
+            dirty: true,
+          ),
+      ];
+      return block.copyWith(
+        children: _normalizedTableRows(rows),
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  void deleteTable(String tableBlockId) {
+    final nextDocument = BusyDocument(
+      filePath: _document.filePath,
+      mode: _document.mode,
+      title: _document.title,
+      blocks: _removeBlockById(_document.blocks, tableBlockId),
+      diagnostics: _document.diagnostics,
+      frontMatter: _document.frontMatter,
+      rawFrontMatter: _document.rawFrontMatter,
+    );
+    _document = nextDocument.copyWith(
+      source: _serializer.serialize(nextDocument),
+    );
+    notifyListeners();
+  }
+
+  BusyBlock _generatedTableBlock({
+    required String id,
+    required int columns,
+    required int rows,
+    BusyBlock? template,
+  }) {
+    final safeColumns = columns.clamp(1, 12).toInt();
+    final safeRows = rows.clamp(1, 50).toInt();
+    BusyBlock tableRow(int rowIndex) {
+      final header = rowIndex == 0;
+      return BusyBlock(
+        id: _nextGeneratedBlockId('table-row'),
+        kind: BusyBlockKind.table,
+        attributes: {'header': '$header'},
+        children: [
+          for (var column = 0; column < safeColumns; column++)
+            BusyBlock(
+              id: _nextGeneratedBlockId('table-cell'),
+              kind: BusyBlockKind.paragraph,
+              inlines: _textInlines(
+                _tableCellText(template, rowIndex, column) ??
+                    (header ? 'Header ${column + 1}' : 'Cell'),
+              ),
+              attributes: {'cell': header ? 'th' : 'td'},
+              dirty: true,
+            ),
+        ],
+        dirty: true,
+      );
+    }
+
+    final tableBlock = BusyBlock(
+      id: id,
+      kind: BusyBlockKind.table,
+      children: [
+        tableRow(0),
+        for (var row = 0; row < safeRows; row++) tableRow(row + 1),
+      ],
+      dirty: true,
+    );
+    return tableBlock.copyWith(
+      rawSource: _serializer.serializeBlock(tableBlock),
+    );
+  }
+
+  BusyBlock _newTableRow(int columns) {
+    return BusyBlock(
+      id: _nextGeneratedBlockId('table-row'),
+      kind: BusyBlockKind.table,
+      children: [
+        for (var column = 0; column < columns; column++) _newTableCell(),
+      ],
+      dirty: true,
+    );
+  }
+
+  BusyBlock _newTableCell() {
+    return BusyBlock(
+      id: _nextGeneratedBlockId('table-cell'),
+      kind: BusyBlockKind.paragraph,
+      inlines: _textInlines(''),
+      dirty: true,
+    );
+  }
+
+  int _tableColumnCount(BusyBlock table) {
+    var count = 1;
+    for (final row in table.children) {
+      if (row.children.length > count) {
+        count = row.children.length;
+      }
+    }
+    return count;
+  }
+
+  List<BusyBlock> _cellsPaddedTo(BusyBlock row, int columnCount) {
+    return [
+      ...row.children,
+      for (var index = row.children.length; index < columnCount; index++)
+        _newTableCell(),
+    ];
+  }
+
+  List<BusyBlock> _normalizedTableRows(List<BusyBlock> rows) {
+    return [
+      for (final (rowIndex, row) in rows.indexed)
+        row.copyWith(
+          attributes: {...row.attributes, 'header': '${rowIndex == 0}'},
+          children: [
+            for (final cell in row.children)
+              cell.copyWith(
+                attributes: {
+                  ...cell.attributes,
+                  'cell': rowIndex == 0 ? 'th' : 'td',
+                },
+                dirty: true,
+              ),
+          ],
+          dirty: true,
+        ),
+    ];
+  }
+
+  void applyCodeBlockLanguage(String blockId, String language) {
+    final trimmedLanguage = language.trim();
+    _replaceBlock(blockId, (block) {
+      final attributes = {...block.attributes}
+        ..remove('level')
+        ..remove('id')
+        ..remove('generatedId');
+      if (trimmedLanguage.isEmpty) {
+        attributes.remove('language');
+      } else {
+        attributes['language'] = trimmedLanguage;
+      }
+      return block.copyWith(
+        kind: BusyBlockKind.codeBlock,
+        attributes: attributes,
+        preserveRaw: false,
+        dirty: true,
+      );
+    });
+  }
+
+  void toggleTaskChecked(Iterable<String> blockIds) {
+    final ids = blockIds.toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+    _document = _document.copyWith(
+      blocks: _replaceBlocksByIds(_document.blocks, ids, (block) {
+        if (block.kind != BusyBlockKind.taskListItem) {
+          return block;
+        }
+        final checked = block.attributes['task'] == 'true';
+        return block.copyWith(
+          attributes: {...block.attributes, 'task': '${!checked}'},
+          dirty: true,
+        );
+      }),
+    );
+    notifyListeners();
+  }
+
+  void indentListItems(Iterable<String> blockIds) {
+    final ids = blockIds.toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+    var changed = false;
+    List<BusyBlock> visit(List<BusyBlock> blocks) {
+      final result = <BusyBlock>[];
+      for (final block in blocks) {
+        final updated = block.copyWith(children: visit(block.children));
+        if (ids.contains(updated.id) &&
+            _isListItemKind(updated.kind) &&
+            result.isNotEmpty &&
+            _isListItemKind(result.last.kind)) {
+          final parent = result.removeLast();
+          result.add(
+            parent.copyWith(
+              children: [...parent.children, updated.copyWith(dirty: true)],
+              dirty: true,
+            ),
+          );
+          changed = true;
+        } else {
+          result.add(updated);
+        }
+      }
+      return result;
+    }
+
+    final blocks = visit(_document.blocks);
+    if (!changed) {
+      return;
+    }
+    _document = _document.copyWith(blocks: blocks);
+    notifyListeners();
+  }
+
+  void outdentListItems(Iterable<String> blockIds) {
+    final ids = blockIds.toSet();
+    if (ids.isEmpty) {
+      return;
+    }
+    var changed = false;
+
+    _OutdentResult visitChildren(List<BusyBlock> blocks) {
+      final kept = <BusyBlock>[];
+      final outdented = <BusyBlock>[];
+      for (final block in blocks) {
+        final childResult = visitChildren(block.children);
+        final updated = block.copyWith(children: childResult.kept);
+        if (ids.contains(updated.id) && _isListItemKind(updated.kind)) {
+          outdented.add(updated.copyWith(dirty: true));
+          outdented.addAll(childResult.outdented);
+          changed = true;
+        } else {
+          kept.add(updated);
+          kept.addAll(childResult.outdented);
+        }
+      }
+      return _OutdentResult(kept: kept, outdented: outdented);
+    }
+
+    final result = <BusyBlock>[];
+    for (final block in _document.blocks) {
+      final childResult = visitChildren(block.children);
+      result.add(
+        block.copyWith(
+          children: childResult.kept,
+          dirty: childResult.outdented.isEmpty ? block.dirty : true,
+        ),
+      );
+      result.addAll(childResult.outdented);
+    }
+    if (!changed) {
+      return;
+    }
+    _document = _document.copyWith(blocks: result);
+    notifyListeners();
   }
 
   String? splitBlockAt(String blockId, int offset) {
@@ -409,6 +918,14 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     ];
   }
 
+  List<BusyBlock> _removeBlockById(List<BusyBlock> blocks, String blockId) {
+    return [
+      for (final block in blocks)
+        if (block.id != blockId)
+          block.copyWith(children: _removeBlockById(block.children, blockId)),
+    ];
+  }
+
   List<BusyBlock> _insertBlocksAfter(
     List<BusyBlock> blocks,
     String blockId,
@@ -470,8 +987,110 @@ class BusyWysiwygTextSplitResult {
   final int offset;
 }
 
+class _OutdentResult {
+  const _OutdentResult({required this.kept, required this.outdented});
+
+  final List<BusyBlock> kept;
+  final List<BusyBlock> outdented;
+}
+
 List<BusyInline> _textInlines(String text) {
   return [BusyInline(kind: BusyInlineKind.text, text: text)];
+}
+
+String? _tableCellText(BusyBlock? table, int row, int column) {
+  if (table == null || row < 0 || column < 0 || row >= table.children.length) {
+    return null;
+  }
+  final rowBlock = table.children[row];
+  if (column >= rowBlock.children.length) {
+    return null;
+  }
+  final text = rowBlock.children[column].plainText;
+  return text.isEmpty ? null : text;
+}
+
+List<BusyInline> _nonEmptyInlines(List<BusyInline> inlines) {
+  return [
+    for (final inline in inlines)
+      if (inline.kind != BusyInlineKind.text || inline.text.isNotEmpty) inline,
+  ];
+}
+
+List<BusyInline> _inlinesFromStyleRangesWithHardBreaks(
+  String text,
+  List<BusyInlineStyleRange> ranges,
+) {
+  if (!text.contains('\n')) {
+    return _inlinesFromStyleRanges(text, ranges);
+  }
+  final inlines = <BusyInline>[];
+  var offset = 0;
+  for (final match in RegExp(r'\n').allMatches(text)) {
+    if (match.start > offset) {
+      inlines.addAll(
+        _nonEmptyInlines(
+          _inlinesFromStyleRanges(
+            text.substring(offset, match.start),
+            _styleRangesForSlice(ranges, offset, match.start),
+          ),
+        ),
+      );
+    }
+    inlines.add(const BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'));
+    offset = match.end;
+  }
+  if (offset < text.length) {
+    inlines.addAll(
+      _nonEmptyInlines(
+        _inlinesFromStyleRanges(
+          text.substring(offset),
+          _styleRangesForSlice(ranges, offset, text.length),
+        ),
+      ),
+    );
+  }
+  return inlines.isEmpty ? _textInlines('') : inlines;
+}
+
+List<BusyInlineStyleRange> _styleRangesForReplacement({
+  required List<BusyInlineStyleRange> ranges,
+  required int selectionStart,
+  required int selectionEnd,
+  required int replacementLength,
+}) {
+  final selectedLength = selectionEnd - selectionStart;
+  final delta = replacementLength - selectedLength;
+  final replacementEnd = selectionStart + replacementLength;
+  return [
+    for (final range in ranges) ...[
+      if (range.end <= selectionStart)
+        range
+      else if (range.start >= selectionEnd)
+        BusyInlineStyleRange(
+          start: range.start + delta,
+          end: range.end + delta,
+          kind: range.kind,
+          destination: range.destination,
+        )
+      else ...[
+        if (range.start < selectionStart)
+          BusyInlineStyleRange(
+            start: range.start,
+            end: selectionStart,
+            kind: range.kind,
+            destination: range.destination,
+          ),
+        if (range.end > selectionEnd)
+          BusyInlineStyleRange(
+            start: replacementEnd,
+            end: range.end + delta,
+            kind: range.kind,
+            destination: range.destination,
+          ),
+      ],
+    ],
+  ];
 }
 
 Map<String, String> _splitAttributesFor(
@@ -577,6 +1196,12 @@ BusyBlock _blockWithCommand(
     attributes['level'] = '2';
   } else if (command == BusyWysiwygBlockCommand.heading3) {
     attributes['level'] = '3';
+  } else if (command == BusyWysiwygBlockCommand.heading4) {
+    attributes['level'] = '4';
+  } else if (command == BusyWysiwygBlockCommand.heading5) {
+    attributes['level'] = '5';
+  } else if (command == BusyWysiwygBlockCommand.heading6) {
+    attributes['level'] = '6';
   } else {
     attributes
       ..remove('level')

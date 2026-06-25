@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/app_settings.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
-import 'welcome_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -52,6 +52,19 @@ class SettingsScreen extends ConsumerWidget {
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
+              actions: [
+                BusyMarkHeaderIconButton(
+                  tooltip: 'Keyboard Shortcuts',
+                  icon: Icons.keyboard_outlined,
+                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
+                ),
+                BusyMarkHeaderIconButton(
+                  tooltip: 'About BusyMark',
+                  icon: Icons.info_outline,
+                  onPressed: () => showBusyMarkAboutDialog(context),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
             ),
       body: BusyMarkClamp(
         maxWidth: BusyMarkSizes.settingsWidth,
@@ -141,6 +154,8 @@ class SettingsScreen extends ConsumerWidget {
         context.go(workspaceOpen ? '/workspace' : '/');
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
+      case HeaderBarAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:

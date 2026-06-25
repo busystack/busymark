@@ -19,7 +19,10 @@ class MarkdownAstAdapter {
         ? source
         : source.substring(frontMatter.endOffset).trimLeft();
     final packageSource = _protectProseHyphenLines(markdownSource);
-    final document = md.Document(extensionSet: md.ExtensionSet.gitHubWeb);
+    final document = md.Document(
+      extensionSet: md.ExtensionSet.gitHubWeb,
+      encodeHtml: false,
+    );
     final nodes = document.parse(packageSource);
     var blockIndex = 0;
     final blocks = <BusyBlock>[

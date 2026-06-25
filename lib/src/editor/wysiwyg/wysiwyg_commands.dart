@@ -5,6 +5,9 @@ enum BusyWysiwygBlockCommand {
   heading1,
   heading2,
   heading3,
+  heading4,
+  heading5,
+  heading6,
   unorderedList,
   orderedList,
   taskList,
@@ -21,7 +24,10 @@ BusyBlockKind blockKindForCommand(BusyWysiwygBlockCommand command) {
     BusyWysiwygBlockCommand.paragraph => BusyBlockKind.paragraph,
     BusyWysiwygBlockCommand.heading1 ||
     BusyWysiwygBlockCommand.heading2 ||
-    BusyWysiwygBlockCommand.heading3 => BusyBlockKind.heading,
+    BusyWysiwygBlockCommand.heading3 ||
+    BusyWysiwygBlockCommand.heading4 ||
+    BusyWysiwygBlockCommand.heading5 ||
+    BusyWysiwygBlockCommand.heading6 => BusyBlockKind.heading,
     BusyWysiwygBlockCommand.unorderedList => BusyBlockKind.unorderedListItem,
     BusyWysiwygBlockCommand.orderedList => BusyBlockKind.orderedListItem,
     BusyWysiwygBlockCommand.taskList => BusyBlockKind.taskListItem,

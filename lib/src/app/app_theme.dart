@@ -68,6 +68,7 @@ ThemeData buildBusyMarkTheme({
     brightness: brightness,
     colorScheme: colorScheme,
     primaryColor: accentColor,
+    shadowColor: colors.shade,
     scaffoldBackgroundColor: colors.window,
     canvasColor: colors.window,
     cardColor: colors.card,

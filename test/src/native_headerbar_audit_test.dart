@@ -73,7 +73,49 @@ void main() {
     expect(source, isNot(contains('"Preview"')));
     expect(source, isNot(contains('"Split"')));
     expect(source, isNot(contains('"Settings"')));
+    expect(source, isNot(contains('"Keyboard Shortcuts"')));
     expect(source, isNot(contains('"About BusyMark"')));
+  });
+
+  test('native main menu exposes keyboard shortcuts action', () {
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
+    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
+    final dialogs = File(
+      'lib/src/app/busymark_dialogs.dart',
+    ).readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(service, contains('keyboardShortcuts'));
+    expect(app, contains("keyboardShortcuts: 'Keyboard Shortcuts'"));
+    expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
+    expect(dialogs, contains('Ctrl+N'));
+    expect(dialogs, contains('Ctrl+S'));
+    expect(dialogs, contains('Ctrl+Z'));
+    expect(dialogs, contains('Ctrl+Shift+Z'));
+    expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
+    expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
+    expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box),\n'
+        '                     self->keyboard_shortcuts_item',
+      ),
+    );
   });
 
   test(

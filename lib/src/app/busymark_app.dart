@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
+import '../workspace/workspace_controller.dart';
+import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
 import 'app_settings.dart';
 import 'app_theme.dart';
@@ -43,14 +46,66 @@ class BusyMarkApp extends ConsumerWidget {
           supportedLocales: const [Locale('en')],
           builder: (context, child) {
             _configureNativeHeaderBar(context, ref);
-            return ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(BusyMarkRadius.window),
-              ),
-              clipBehavior: Clip.antiAliasWithSaveLayer,
-              child: ColoredBox(
-                color: BusyMarkSurfaceColors.of(context).window,
-                child: child ?? const SizedBox.shrink(),
+            return Shortcuts(
+              shortcuts: const {
+                SingleActivator(LogicalKeyboardKey.keyN, control: true):
+                    _NewMarkdownIntent(),
+                SingleActivator(LogicalKeyboardKey.keyS, control: true):
+                    _SaveActiveIntent(),
+              },
+              child: Actions(
+                actions: {
+                  _NewMarkdownIntent: CallbackAction<_NewMarkdownIntent>(
+                    onInvoke: (intent) {
+                      unawaited(() async {
+                        final navigatorContext =
+                            rootNavigatorKey.currentContext;
+                        if (navigatorContext == null) {
+                          return;
+                        }
+                        final safe = await confirmSafeToContinue(
+                          navigatorContext,
+                          ref,
+                        );
+                        if (!safe || !navigatorContext.mounted) {
+                          return;
+                        }
+                        await ref
+                            .read(workspaceControllerProvider.notifier)
+                            .createMarkdownFile();
+                        if (navigatorContext.mounted) {
+                          router.go('/workspace');
+                        }
+                      }());
+                      return null;
+                    },
+                  ),
+                  _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
+                    onInvoke: (intent) {
+                      final state = ref.read(workspaceControllerProvider);
+                      final navigatorContext = rootNavigatorKey.currentContext;
+                      if (state.workspace != null && navigatorContext != null) {
+                        unawaited(
+                          saveActiveWithOverwriteConfirmation(
+                            navigatorContext,
+                            ref,
+                          ),
+                        );
+                      }
+                      return null;
+                    },
+                  ),
+                },
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(BusyMarkRadius.window),
+                  ),
+                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                  child: ColoredBox(
+                    color: BusyMarkSurfaceColors.of(context).window,
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               ),
             );
           },
@@ -80,6 +135,7 @@ class BusyMarkApp extends ConsumerWidget {
       back: material.backButtonTooltip,
       save: 'Save',
       settings: 'Settings',
+      keyboardShortcuts: 'Keyboard Shortcuts',
       aboutBusyMark: 'About BusyMark',
       exportPreview: 'Export Preview',
     );
@@ -91,4 +147,12 @@ class BusyMarkApp extends ConsumerWidget {
       }());
     });
   }
+}
+
+class _NewMarkdownIntent extends Intent {
+  const _NewMarkdownIntent();
+}
+
+class _SaveActiveIntent extends Intent {
+  const _SaveActiveIntent();
 }

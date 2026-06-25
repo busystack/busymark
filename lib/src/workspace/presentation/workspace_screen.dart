@@ -178,6 +178,11 @@ class WorkspaceScreen extends ConsumerWidget {
                   onPressed: () => context.go('/settings'),
                 ),
                 BusyMarkHeaderIconButton(
+                  tooltip: 'Keyboard Shortcuts',
+                  icon: Icons.keyboard_outlined,
+                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
+                ),
+                BusyMarkHeaderIconButton(
                   tooltip: 'About BusyMark',
                   icon: Icons.info_outline,
                   onPressed: () => showBusyMarkAboutDialog(context),
@@ -271,6 +276,8 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(saveActiveWithOverwriteConfirmation(context, ref));
       case HeaderBarAction.settings:
         context.go('/settings');
+      case HeaderBarAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.exportPreview:
@@ -1611,6 +1618,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   BusyDocument? _cachedWysiwygDocument;
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
+  String? _wysiwygScrollHeadingId;
+  var _wysiwygScrollRequest = 0;
 
   @override
   void initState() {
@@ -1636,6 +1645,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _foldedRegionKeys.clear();
       _controller.clearFoldedRegions();
       _previewHeadingKeys.clear();
+      _wysiwygScrollHeadingId = null;
+      _wysiwygScrollRequest = 0;
       _controller.text = widget.state.activeText;
     } else if (widget.state.activeText != oldWidget.state.activeText &&
         !_sourceFocusNode.hasFocus) {
@@ -1719,106 +1730,76 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         children: [
           if (wysiwygVisible)
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _PaneHeader(
-                    icon: Icons.edit_document,
-                    title: 'Editor',
-                    trailing: _StatusPill(
-                      label: widget.state.isDirty ? 'Unsaved' : 'Saved',
-                      active: widget.state.isDirty,
-                    ),
-                  ),
-                  Expanded(
-                    child: BusyMarkWysiwygEditor(
-                      document: wysiwygDocument,
-                      workspaceRoot: widget.state.workspace?.rootPath,
-                      writersideRoot:
-                          widget.state.workspace?.writersideModule?.rootPath,
-                      imagesDir:
-                          widget
-                              .state
-                              .workspace
-                              ?.writersideModule
-                              ?.config
-                              .imagesDir ??
-                          'images',
-                      onDocumentChanged: _cacheWysiwygDocument,
-                      onSourceChanged: _handleWysiwygSourceChanged,
-                    ),
-                  ),
-                ],
+              child: BusyMarkWysiwygEditor(
+                document: wysiwygDocument,
+                workspaceRoot: widget.state.workspace?.rootPath,
+                writersideRoot:
+                    widget.state.workspace?.writersideModule?.rootPath,
+                imagesDir:
+                    widget
+                        .state
+                        .workspace
+                        ?.writersideModule
+                        ?.config
+                        .imagesDir ??
+                    'images',
+                onDocumentChanged: _cacheWysiwygDocument,
+                onSourceChanged: _handleWysiwygSourceChanged,
+                scrollToHeadingId: _wysiwygScrollHeadingId,
+                scrollRequest: _wysiwygScrollRequest,
               ),
             ),
           if (sourceVisible)
             Expanded(
               child: DecoratedBox(
                 decoration: BoxDecoration(color: colors.view),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PaneHeader(
-                      icon: Icons.edit_note_outlined,
-                      title: 'Source',
-                      trailing: _StatusPill(
-                        label: widget.state.isDirty ? 'Unsaved' : 'Saved',
-                        active: widget.state.isDirty,
-                      ),
-                    ),
-                    Expanded(
-                      child: _SourceEditorFrame(
-                        controller: _controller,
-                        scrollController: _sourceScrollController,
-                        lineHeight: sourceLineHeight,
-                        textStyle: _sourceTextStyle,
-                        strutStyle: sourceStrutStyle,
-                        collapsedRegionKeys: _foldedRegionKeys,
-                        foldRegions: foldRegions,
-                        onToggleFold: _toggleSourceFold,
-                        child: SizedBox(
-                          key: _sourceEditorKey,
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _sourceFocusNode,
-                            scrollController: _sourceScrollController,
-                            keyboardType: widget.wordWrap
-                                ? TextInputType.multiline
-                                : TextInputType.text,
-                            maxLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
-                            style: _sourceTextStyle,
-                            strutStyle: sourceStrutStyle,
-                            selectionHeightStyle: BoxHeightStyle.max,
-                            selectionWidthStyle: BoxWidthStyle.tight,
-                            cursorColor: colors.foreground.withValues(
-                              alpha: 0.82,
-                            ),
-                            cursorHeight: widget.editorFontSize * 1.22,
-                            cursorWidth: 1.4,
-                            decoration: InputDecoration(
-                              isCollapsed: true,
-                              filled: false,
-                              fillColor: Colors.transparent,
-                              hoverColor: Colors.transparent,
-                              focusColor: Colors.transparent,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: const EdgeInsets.fromLTRB(
-                                _SourceEditorFrame.editorPaddingLeft,
-                                _SourceEditorFrame.editorPaddingTop,
-                                _SourceEditorFrame.editorPaddingRight,
-                                _SourceEditorFrame.editorPaddingBottom,
-                              ),
-                            ),
-                            onChanged: _handleSourceChanged,
-                          ),
+                child: _SourceEditorFrame(
+                  controller: _controller,
+                  scrollController: _sourceScrollController,
+                  lineHeight: sourceLineHeight,
+                  textStyle: _sourceTextStyle,
+                  strutStyle: sourceStrutStyle,
+                  collapsedRegionKeys: _foldedRegionKeys,
+                  foldRegions: foldRegions,
+                  onToggleFold: _toggleSourceFold,
+                  child: SizedBox(
+                    key: _sourceEditorKey,
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _sourceFocusNode,
+                      scrollController: _sourceScrollController,
+                      keyboardType: widget.wordWrap
+                          ? TextInputType.multiline
+                          : TextInputType.text,
+                      maxLines: null,
+                      expands: true,
+                      textAlignVertical: TextAlignVertical.top,
+                      style: _sourceTextStyle,
+                      strutStyle: sourceStrutStyle,
+                      selectionHeightStyle: BoxHeightStyle.max,
+                      selectionWidthStyle: BoxWidthStyle.tight,
+                      cursorColor: colors.foreground.withValues(alpha: 0.82),
+                      cursorHeight: widget.editorFontSize * 1.22,
+                      cursorWidth: 1.4,
+                      decoration: InputDecoration(
+                        isCollapsed: true,
+                        filled: false,
+                        fillColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.fromLTRB(
+                          _SourceEditorFrame.editorPaddingLeft,
+                          _SourceEditorFrame.editorPaddingTop,
+                          _SourceEditorFrame.editorPaddingRight,
+                          _SourceEditorFrame.editorPaddingBottom,
                         ),
                       ),
+                      onChanged: _handleSourceChanged,
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1942,6 +1923,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       if (!mounted) {
         return;
       }
+      setState(() {
+        _wysiwygScrollHeadingId = target.headingId;
+        _wysiwygScrollRequest += 1;
+      });
       _scrollSourceToLine(target.line);
       _scrollPreviewToHeading(target.headingId);
     });
@@ -1992,7 +1977,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (folded) {
       return null;
     }
-    return StrutStyle.fromTextStyle(_sourceTextStyle, forceStrutHeight: true);
+    return StrutStyle.fromTextStyle(_sourceTextStyle);
   }
 
   double _sourceLineHeight(BuildContext context, StrutStyle? strutStyle) {
@@ -2153,7 +2138,7 @@ class _SourceEditorFrame extends StatelessWidget {
   static const double editorPaddingBottom = 16;
   static const double editorPaddingLeft = 12;
   static const double editorPaddingRight = 16;
-  static const double _gutterWidth = 72;
+  static const double _gutterWidth = 58;
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
@@ -2514,6 +2499,7 @@ class _SourceGutterRow extends StatelessWidget {
     final activeColor = colors.foreground.withValues(alpha: 0.045);
     final numberStyle = textStyle.copyWith(
       color: active ? colors.foreground : colors.mutedForeground,
+      fontSize: (textStyle.fontSize ?? 14) * 0.92,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
     return DecoratedBox(
@@ -2532,9 +2518,9 @@ class _SourceGutterRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 3),
           SizedBox(
-            width: 22,
+            width: 18,
             height: lineHeight,
             child: Align(
               alignment: Alignment.topCenter,
@@ -2547,7 +2533,7 @@ class _SourceGutterRow extends StatelessWidget {
                     ),
             ),
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 5),
         ],
       ),
     );
@@ -2789,44 +2775,36 @@ class _PreviewPane extends StatelessWidget {
     }
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _PaneHeader(
-            icon: Icons.preview_outlined,
-            title: document.modeLabel,
-            trailing: document.compatibility.isEmpty
-                ? const SizedBox.shrink()
-                : Text(document.compatibility),
+      child: SelectionArea(
+        child: ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(
+            24,
+            _SourceEditorFrame.editorPaddingTop,
+            24,
+            34,
           ),
-          Expanded(
-            child: SelectionArea(
-              child: ListView(
-                controller: controller,
-                padding: const EdgeInsets.fromLTRB(24, 22, 24, 34),
-                children: [
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final block in document.blocks)
-                            _PreviewBlockView(
-                              block,
-                              workspace: workspace,
-                              key: _keyForBlock(block),
-                            ),
-                        ],
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (index, block) in document.blocks.indexed)
+                      _PreviewBlockView(
+                        block,
+                        first: index == 0,
+                        workspace: workspace,
+                        key: _keyForBlock(block),
                       ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2844,17 +2822,23 @@ class _PreviewPane extends StatelessWidget {
 }
 
 class _PreviewBlockView extends StatelessWidget {
-  const _PreviewBlockView(this.block, {required this.workspace, super.key});
+  const _PreviewBlockView(
+    this.block, {
+    required this.workspace,
+    required this.first,
+    super.key,
+  });
 
   final PreviewBlock block;
   final Workspace? workspace;
+  final bool first;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return switch (block.kind) {
       PreviewBlockKind.heading => Padding(
-        padding: const EdgeInsets.only(top: 18, bottom: 6),
+        padding: EdgeInsets.only(top: first ? 0 : 18, bottom: 6),
         child: _PreviewInlineText(
           block: block,
           style: _headingStyle(context, block.level),
@@ -2930,7 +2914,7 @@ class _PreviewBlockView extends StatelessWidget {
       ),
       PreviewBlockKind.thematicBreak => Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Divider(height: 1, color: colors.subtleBorder),
+        child: const _PreviewThematicBreak(),
       ),
       PreviewBlockKind.table => _PreviewTable(block: block),
       PreviewBlockKind.raw => Container(
@@ -3024,6 +3008,24 @@ class _PreviewTable extends StatelessWidget {
                 ],
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewThematicBreak extends StatelessWidget {
+  const _PreviewThematicBreak();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Center(
+      child: Container(
+        height: 1.6,
+        decoration: BoxDecoration(
+          color: colors.mutedForeground.withValues(alpha: 0.34),
+          borderRadius: BorderRadius.circular(999),
         ),
       ),
     );
@@ -3903,83 +3905,6 @@ class _DiagnosticRow extends ConsumerWidget {
       DiagnosticSeverity.info => Theme.of(context).colorScheme.primary,
       DiagnosticSeverity.hint => BusyMarkSurfaceColors.of(context).muted,
     };
-  }
-}
-
-class _PaneHeader extends StatelessWidget {
-  const _PaneHeader({
-    required this.icon,
-    required this.title,
-    required this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final Widget trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Container(
-      height: BusyMarkSizes.paneHeaderHeight,
-      padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.headerbarFlat,
-        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: BusyMarkSizes.iconSm, color: colors.mutedForeground),
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Flexible(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: DefaultTextStyle(
-                style: Theme.of(
-                  context,
-                ).textTheme.labelSmall!.copyWith(color: colors.mutedForeground),
-                child: trailing,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.active});
-
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: active
-            ? Theme.of(context).colorScheme.primaryContainer
-            : colors.control,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      ),
-    );
   }
 }
 

@@ -19,6 +19,12 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.onChanged,
+    required this.onTableCellChanged,
+    required this.onTableRowInserted,
+    required this.onTableRowDeleted,
+    required this.onTableColumnInserted,
+    required this.onTableColumnDeleted,
+    required this.onTableDeleted,
     required this.onFocused,
     this.selected = false,
     this.selectionRange,
@@ -35,6 +41,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final BusyMarkWysiwygTextController controller;
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
+  final void Function(String cellId, String text) onTableCellChanged;
+  final void Function(int rowIndex, {required bool after}) onTableRowInserted;
+  final ValueChanged<int> onTableRowDeleted;
+  final void Function(int columnIndex, {required bool after})
+  onTableColumnInserted;
+  final ValueChanged<int> onTableColumnDeleted;
+  final VoidCallback onTableDeleted;
   final VoidCallback onFocused;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
@@ -44,7 +57,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final style = _textStyle(context);
     final prefix = _prefix(context);
     final readOnly = _readOnly;
@@ -57,7 +69,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         padding: _padding,
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
-          onTap: readOnly ? null : _focusBlock,
+          onTap: block.kind == BusyBlockKind.table
+              ? onFocused
+              : readOnly
+              ? onFocused
+              : _focusBlock,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: _background(context),
@@ -68,83 +84,105 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
               padding: _contentPadding,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: _minimumHeight(context)),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (prefix != null) ...[
-                      SizedBox(width: 30, child: prefix),
-                      const SizedBox(width: BusyMarkSpacing.sm),
-                    ],
-                    Expanded(
-                      child: block.kind == BusyBlockKind.image
-                          ? _ImageBlockEditor(
-                              block: block,
-                              documentFilePath: documentFilePath,
-                              workspaceRoot: workspaceRoot,
-                              writersideRoot: writersideRoot,
-                              imagesDir: imagesDir,
-                              controller: controller,
-                              focusNode: focusNode,
-                              style: style,
-                              onFocused: onFocused,
-                              onChanged: onChanged,
-                            )
-                          : readOnly
-                          ? SelectableText(
-                              block.rawSource ?? block.plainText,
-                              style: style.copyWith(
-                                color: colors.mutedForeground,
-                                fontFamily: 'Ubuntu Mono',
-                              ),
-                            )
-                          : Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: IgnorePointer(
-                                    child: CustomPaint(
-                                      painter: _WysiwygSelectionPainter(
-                                        text: controller.text,
-                                        style: style,
-                                        selectionRange: selectionRange,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withValues(alpha: 0.24),
-                                        textDirection: Directionality.of(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                TextField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  maxLines: null,
-                                  minLines: 1,
-                                  style: style,
-                                  decoration: const InputDecoration(
-                                    isCollapsed: true,
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    filled: false,
-                                    hoverColor: Colors.transparent,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                  onTap: onFocused,
-                                  onChanged: onChanged,
-                                ),
-                              ],
-                            ),
-                    ),
-                  ],
-                ),
+                child: _blockContent(context, style, prefix, readOnly),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _blockContent(
+    BuildContext context,
+    TextStyle style,
+    Widget? prefix,
+    bool readOnly,
+  ) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    if (block.kind == BusyBlockKind.thematicBreak) {
+      return _ThematicBreakBlockView(selected: selected);
+    }
+    if (block.kind == BusyBlockKind.table) {
+      return _TableBlockEditor(
+        block: block,
+        onFocused: onFocused,
+        onCellChanged: onTableCellChanged,
+        onRowInserted: onTableRowInserted,
+        onRowDeleted: onTableRowDeleted,
+        onColumnInserted: onTableColumnInserted,
+        onColumnDeleted: onTableColumnDeleted,
+        onTableDeleted: onTableDeleted,
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (prefix != null) ...[
+          SizedBox(width: 30, child: prefix),
+          const SizedBox(width: BusyMarkSpacing.sm),
+        ],
+        Expanded(
+          child: block.kind == BusyBlockKind.image
+              ? _ImageBlockEditor(
+                  block: block,
+                  documentFilePath: documentFilePath,
+                  workspaceRoot: workspaceRoot,
+                  writersideRoot: writersideRoot,
+                  imagesDir: imagesDir,
+                  controller: controller,
+                  focusNode: focusNode,
+                  style: style,
+                  onFocused: onFocused,
+                  onChanged: onChanged,
+                )
+              : readOnly
+              ? SelectableText(
+                  _readOnlyText,
+                  style: style.copyWith(
+                    color: colors.mutedForeground,
+                    fontFamily: 'Ubuntu Mono',
+                  ),
+                )
+              : Stack(
+                  children: [
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _WysiwygSelectionPainter(
+                            text: controller.text,
+                            style: style,
+                            selectionRange: selectionRange,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.24),
+                            textDirection: Directionality.of(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                    TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      maxLines: null,
+                      minLines: 1,
+                      style: style,
+                      decoration: const InputDecoration(
+                        isCollapsed: true,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        hoverColor: Colors.transparent,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onTap: onFocused,
+                      onChanged: onChanged,
+                    ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 
@@ -174,17 +212,20 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => fontSize * 2.4,
+      BusyBlockKind.table => fontSize * 5.8,
+      BusyBlockKind.thematicBreak => fontSize * 2.2,
       _ => fontSize * 1.7,
     };
   }
 
   bool get _readOnly {
-    return block.preserveRaw ||
-        block.kind == BusyBlockKind.thematicBreak ||
-        block.kind == BusyBlockKind.table;
+    return block.preserveRaw || block.kind == BusyBlockKind.thematicBreak;
+  }
+
+  String get _readOnlyText {
+    return block.rawSource ?? block.plainText;
   }
 
   EdgeInsets get _padding {
@@ -196,9 +237,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => const EdgeInsets.symmetric(vertical: 8),
+      BusyBlockKind.table => const EdgeInsets.symmetric(vertical: 10),
+      BusyBlockKind.thematicBreak => const EdgeInsets.symmetric(vertical: 12),
       _ => const EdgeInsets.symmetric(vertical: 4),
     };
   }
@@ -211,9 +253,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => const EdgeInsets.all(12),
+      BusyBlockKind.table => const EdgeInsets.all(10),
+      BusyBlockKind.thematicBreak => const EdgeInsets.symmetric(vertical: 12),
       _ => EdgeInsets.zero,
     };
   }
@@ -228,7 +271,16 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.heading when level == 2 => theme.titleLarge!.copyWith(
         fontWeight: FontWeight.w700,
       ),
-      BusyBlockKind.heading => theme.titleMedium!.copyWith(
+      BusyBlockKind.heading when level == 3 => theme.titleMedium!.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      BusyBlockKind.heading when level == 4 => theme.titleSmall!.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      BusyBlockKind.heading when level == 5 => theme.bodyLarge!.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      BusyBlockKind.heading => theme.bodyMedium!.copyWith(
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
@@ -283,10 +335,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
-      BusyBlockKind.thematicBreak => Divider(
-        height: 20,
-        color: colors.subtleBorder,
-      ),
       _ => null,
     };
   }
@@ -332,6 +380,398 @@ class BusyMarkWysiwygSelectionRange {
 
   final int start;
   final int end;
+}
+
+class _ThematicBreakBlockView extends StatelessWidget {
+  const _ThematicBreakBlockView({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final lineColor = selected
+        ? scheme.primary.withValues(alpha: 0.72)
+        : colors.mutedForeground.withValues(alpha: 0.34);
+    final accentColor = selected
+        ? scheme.primary
+        : colors.mutedForeground.withValues(alpha: 0.24);
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 1.6,
+            decoration: BoxDecoration(
+              color: lineColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          Container(
+            width: 44,
+            height: 6,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TableBlockEditor extends StatelessWidget {
+  const _TableBlockEditor({
+    required this.block,
+    required this.onFocused,
+    required this.onCellChanged,
+    required this.onRowInserted,
+    required this.onRowDeleted,
+    required this.onColumnInserted,
+    required this.onColumnDeleted,
+    required this.onTableDeleted,
+  });
+
+  static const double _controlSize = 34;
+
+  final BusyBlock block;
+  final VoidCallback onFocused;
+  final void Function(String cellId, String text) onCellChanged;
+  final void Function(int rowIndex, {required bool after}) onRowInserted;
+  final ValueChanged<int> onRowDeleted;
+  final void Function(int columnIndex, {required bool after}) onColumnInserted;
+  final ValueChanged<int> onColumnDeleted;
+  final VoidCallback onTableDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context).textTheme;
+    final rows = block.children;
+    final columnCount = _columnCount(rows);
+    final dataWidth = (columnCount * 164).clamp(360, 980).toDouble();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            tooltip: 'Delete table',
+            style: busyMarkHeaderIconButtonStyle(
+              foregroundColor: colors.mutedForeground,
+              backgroundColor: busyMarkTransparentHeaderButtonBackground(
+                context,
+              ),
+            ),
+            icon: const Icon(Icons.delete_outline, size: BusyMarkSizes.iconSm),
+            onPressed: onTableDeleted,
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: dataWidth + _controlSize),
+            child: Table(
+              border: TableBorder(
+                horizontalInside: BorderSide(color: colors.subtleBorder),
+                verticalInside: BorderSide(color: colors.subtleBorder),
+                top: BorderSide(color: colors.subtleBorder),
+                right: BorderSide(color: colors.subtleBorder),
+                bottom: BorderSide(color: colors.subtleBorder),
+                left: BorderSide(color: colors.subtleBorder),
+                borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+              ),
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              columnWidths: {
+                0: const FixedColumnWidth(_controlSize),
+                for (var index = 0; index < columnCount; index++)
+                  index + 1: const FlexColumnWidth(),
+              },
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(color: colors.controlHover),
+                  children: [
+                    const _TableCornerCell(),
+                    for (var column = 0; column < columnCount; column++)
+                      _TableColumnControlCell(
+                        columnIndex: column,
+                        onInserted: onColumnInserted,
+                        onDeleted: onColumnDeleted,
+                      ),
+                  ],
+                ),
+                for (final (rowIndex, row) in rows.indexed)
+                  TableRow(
+                    decoration: BoxDecoration(
+                      color: _isHeaderRow(row, rowIndex)
+                          ? colors.controlHover
+                          : Colors.transparent,
+                    ),
+                    children: [
+                      _TableRowControlCell(
+                        rowIndex: rowIndex,
+                        onInserted: onRowInserted,
+                        onDeleted: onRowDeleted,
+                      ),
+                      for (var column = 0; column < columnCount; column++)
+                        _TableCellEditor(
+                          cell: column < row.children.length
+                              ? row.children[column]
+                              : null,
+                          header: _isHeaderRow(row, rowIndex),
+                          style: theme.bodyMedium!.copyWith(height: 1.45),
+                          onFocused: onFocused,
+                          onChanged: onCellChanged,
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  int _columnCount(List<BusyBlock> rows) {
+    var count = 1;
+    for (final row in rows) {
+      if (row.children.length > count) {
+        count = row.children.length;
+      }
+    }
+    return count;
+  }
+
+  bool _isHeaderRow(BusyBlock row, int index) {
+    return index == 0 || row.attributes['header'] == 'true';
+  }
+}
+
+enum _TableControlAction { insertBefore, insertAfter, delete }
+
+class _TableCornerCell extends StatelessWidget {
+  const _TableCornerCell();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.square(dimension: _TableBlockEditor._controlSize);
+  }
+}
+
+class _TableColumnControlCell extends StatelessWidget {
+  const _TableColumnControlCell({
+    required this.columnIndex,
+    required this.onInserted,
+    required this.onDeleted,
+  });
+
+  final int columnIndex;
+  final void Function(int columnIndex, {required bool after}) onInserted;
+  final ValueChanged<int> onDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return _TableControlMenuButton(
+      tooltip: 'Column ${columnIndex + 1}',
+      icon: Icons.more_horiz,
+      beforeLabel: 'Insert column left',
+      afterLabel: 'Insert column right',
+      deleteLabel: 'Delete column',
+      onSelected: (action) {
+        switch (action) {
+          case _TableControlAction.insertBefore:
+            onInserted(columnIndex, after: false);
+          case _TableControlAction.insertAfter:
+            onInserted(columnIndex, after: true);
+          case _TableControlAction.delete:
+            onDeleted(columnIndex);
+        }
+      },
+    );
+  }
+}
+
+class _TableRowControlCell extends StatelessWidget {
+  const _TableRowControlCell({
+    required this.rowIndex,
+    required this.onInserted,
+    required this.onDeleted,
+  });
+
+  final int rowIndex;
+  final void Function(int rowIndex, {required bool after}) onInserted;
+  final ValueChanged<int> onDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return _TableControlMenuButton(
+      tooltip: 'Row ${rowIndex + 1}',
+      icon: Icons.more_vert,
+      beforeLabel: 'Insert row above',
+      afterLabel: 'Insert row below',
+      deleteLabel: 'Delete row',
+      onSelected: (action) {
+        switch (action) {
+          case _TableControlAction.insertBefore:
+            onInserted(rowIndex, after: false);
+          case _TableControlAction.insertAfter:
+            onInserted(rowIndex, after: true);
+          case _TableControlAction.delete:
+            onDeleted(rowIndex);
+        }
+      },
+    );
+  }
+}
+
+class _TableControlMenuButton extends StatelessWidget {
+  const _TableControlMenuButton({
+    required this.tooltip,
+    required this.icon,
+    required this.beforeLabel,
+    required this.afterLabel,
+    required this.deleteLabel,
+    required this.onSelected,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final String beforeLabel;
+  final String afterLabel;
+  final String deleteLabel;
+  final ValueChanged<_TableControlAction> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return SizedBox.square(
+      dimension: _TableBlockEditor._controlSize,
+      child: PopupMenuButton<_TableControlAction>(
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        icon: Icon(icon, size: BusyMarkSizes.iconSm),
+        iconColor: colors.mutedForeground,
+        color: colors.popover,
+        surfaceTintColor: Colors.transparent,
+        elevation: BusyMarkElevation.popover,
+        shadowColor: colors.shade,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        ),
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            value: _TableControlAction.insertBefore,
+            child: Text(beforeLabel),
+          ),
+          PopupMenuItem(
+            value: _TableControlAction.insertAfter,
+            child: Text(afterLabel),
+          ),
+          PopupMenuItem(
+            value: _TableControlAction.delete,
+            child: Text(deleteLabel),
+          ),
+        ],
+        onSelected: onSelected,
+      ),
+    );
+  }
+}
+
+class _TableCellEditor extends StatefulWidget {
+  const _TableCellEditor({
+    required this.cell,
+    required this.header,
+    required this.style,
+    required this.onFocused,
+    required this.onChanged,
+  });
+
+  final BusyBlock? cell;
+  final bool header;
+  final TextStyle style;
+  final VoidCallback onFocused;
+  final void Function(String cellId, String text) onChanged;
+
+  @override
+  State<_TableCellEditor> createState() => _TableCellEditorState();
+}
+
+class _TableCellEditorState extends State<_TableCellEditor> {
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+  String? _cellId;
+
+  @override
+  void initState() {
+    super.initState();
+    _cellId = widget.cell?.id;
+    _controller = TextEditingController(text: widget.cell?.plainText ?? '');
+    _focusNode = FocusNode(debugLabel: 'BusyMark table cell $_cellId');
+  }
+
+  @override
+  void didUpdateWidget(covariant _TableCellEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final cell = widget.cell;
+    if (cell?.id != _cellId) {
+      _cellId = cell?.id;
+      _controller.text = cell?.plainText ?? '';
+      return;
+    }
+    if (!_focusNode.hasFocus &&
+        cell != null &&
+        cell.plainText != _controller.text) {
+      _controller.text = cell.plainText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final cell = widget.cell;
+    final textStyle = widget.style.copyWith(
+      fontWeight: widget.header ? FontWeight.w700 : FontWeight.w400,
+    );
+    if (cell == null) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: TextField(
+        key: ValueKey(cell.id),
+        controller: _controller,
+        focusNode: _focusNode,
+        minLines: 1,
+        maxLines: null,
+        style: textStyle,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          filled: false,
+          hoverColor: Colors.transparent,
+          hintText: widget.header ? 'Header' : 'Cell',
+          hintStyle: textStyle.copyWith(color: colors.mutedForeground),
+          contentPadding: EdgeInsets.zero,
+        ),
+        onTap: widget.onFocused,
+        onChanged: (value) => widget.onChanged(cell.id, value),
+      ),
+    );
+  }
 }
 
 class _WysiwygSelectionPainter extends CustomPainter {

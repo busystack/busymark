@@ -41,6 +41,7 @@ struct _MyApplication {
   GtkWidget* sidebar_menu;
   GtkWidget* export_item;
   GtkWidget* settings_item;
+  GtkWidget* keyboard_shortcuts_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
   GtkWidget* back_button;
@@ -816,6 +817,8 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* back = fl_lookup_string_arg(args, "back");
   const gchar* save = fl_lookup_string_arg(args, "save");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
+  const gchar* keyboard_shortcuts =
+      fl_lookup_string_arg(args, "keyboardShortcuts");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
   const gchar* export_preview = fl_lookup_string_arg(args, "exportPreview");
 
@@ -832,6 +835,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_split_item, split);
   set_menu_item_label(self->export_item, export_preview);
   set_menu_item_label(self->settings_item, settings);
+  set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
   set_menu_item_label(self->about_item, about);
   update_view_mode_label(self);
 }
@@ -918,11 +922,15 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   GtkWidget* sidebar_menu_box = create_popover_box(self->sidebar_menu);
   self->export_item = create_menu_item(self, "exportPreview");
   self->settings_item = create_menu_item(self, "settings");
+  self->keyboard_shortcuts_item =
+      create_menu_item(self, "keyboardShortcuts");
   self->about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->export_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
+                     self->keyboard_shortcuts_item, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(sidebar_menu_box);
@@ -1333,6 +1341,7 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_menu = nullptr;
   self->export_item = nullptr;
   self->settings_item = nullptr;
+  self->keyboard_shortcuts_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
   self->back_button = nullptr;
