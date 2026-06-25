@@ -1,10 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../platform/linux_header_bar_service.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
+
+const _busyMarkRepositoryUrl = 'https://github.com/busystack/busymark';
+final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
 
 Color busyMarkModalBarrierColor(BuildContext context) {
   return Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
@@ -78,17 +82,30 @@ void showBusyMarkAboutDialog(BuildContext context) {
     showBusyMarkModalDialog<void>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => const _BusyMarkInfoDialog(
+      builder: (context) => _BusyMarkInfoDialog(
         title: 'BusyMark',
-        subtitle: 'Version 0.1.0',
+        subtitle: 'Version 0.1.1',
         children: [
-          Text(
+          const Text(
             'BusyMark is an open-source application for reading and editing Markdown files and Writerside-compatible projects.',
+          ),
+          const SizedBox(height: BusyMarkSpacing.md),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => unawaited(_openBusyMarkRepository()),
+              icon: const Icon(BusyMarkGlyphs.externalLink),
+              label: const Text(_busyMarkRepositoryUrl),
+            ),
           ),
         ],
       ),
     ),
   );
+}
+
+Future<void> _openBusyMarkRepository() async {
+  await launchUrl(_busyMarkRepositoryUri, mode: LaunchMode.externalApplication);
 }
 
 void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
