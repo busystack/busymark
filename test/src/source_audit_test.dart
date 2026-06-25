@@ -119,6 +119,18 @@ void main() {
     expect(design, isNot(contains('YaruBorderContainer')));
   });
 
+  test('BusyMark dialog title bars use the same surface as dialog body', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final dialogShell = RegExp(
+      r'class BusyMarkDialogShell[\s\S]*?class SectionLabel',
+    ).firstMatch(design)!.group(0)!;
+
+    expect(dialogShell, contains('final colors = BusyMarkSurfaceColors.of'));
+    expect(dialogShell, contains('YaruDialogTitleBar('));
+    expect(dialogShell, contains('backgroundColor: colors.dialog'));
+    expect(dialogShell, contains('border: BorderSide.none'));
+  });
+
   test('shared row hover uses the themed control hover color', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 

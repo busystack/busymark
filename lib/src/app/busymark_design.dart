@@ -933,13 +933,19 @@ class BusyMarkDialogShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          YaruDialogTitleBar(title: Text(title), centerTitle: true),
+          YaruDialogTitleBar(
+            title: Text(title),
+            centerTitle: true,
+            backgroundColor: colors.dialog,
+            border: BorderSide.none,
+          ),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(BusyMarkSpacing.lg),
