@@ -455,36 +455,44 @@ class _CreateWritersideProjectDialogState
         ),
       ],
       children: [
-        BusyMarkDialogTextEntry(
-          label: context.l10n.projectName,
-          controller: _projectNameController,
-          autofocus: true,
-          textInputAction: TextInputAction.next,
-          hintText: context.l10n.defaultProjectName,
-          errorText: projectError,
+        BusyMarkFloatingTextEntryGroup(
+          children: [
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.projectName,
+              controller: _projectNameController,
+              textInputAction: TextInputAction.next,
+              errorText: projectError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.first,
+            ),
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.directoryName,
+              controller: _directoryNameController,
+              textInputAction: TextInputAction.next,
+              errorText: directoryError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.last,
+            ),
+          ],
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkDialogTextEntry(
-          label: context.l10n.directoryName,
-          controller: _directoryNameController,
-          textInputAction: TextInputAction.next,
-          errorText: directoryError,
+        BusyMarkFloatingTextEntryGroup(
+          children: [
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.instanceName,
+              controller: _instanceNameController,
+              textInputAction: TextInputAction.next,
+              groupPosition: BusyMarkFloatingTextEntryPosition.first,
+            ),
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.instanceId,
+              controller: _instanceIdController,
+              textInputAction: TextInputAction.next,
+              errorText: instanceIdError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.last,
+            ),
+          ],
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkDialogTextEntry(
-          label: context.l10n.instanceName,
-          controller: _instanceNameController,
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkDialogTextEntry(
-          label: context.l10n.instanceId,
-          controller: _instanceIdController,
-          textInputAction: TextInputAction.next,
-          errorText: instanceIdError,
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkDialogTextEntry(
+        BusyMarkFloatingTextEntry(
           label: context.l10n.startTopicTitle,
           controller: _topicTitleController,
           textInputAction: TextInputAction.done,

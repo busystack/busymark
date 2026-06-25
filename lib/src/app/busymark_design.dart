@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
+import 'busymark_glyphs.dart';
+
 abstract final class BusyMarkSpacing {
   static const double xxs = 2;
   static const double xs = 4;
@@ -1056,11 +1058,6 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
         : widget.suggested
         ? colorScheme.onPrimary
         : colors.foreground;
-    final borderColor = _focused
-        ? colorScheme.primary
-        : widget.suggested
-        ? colorScheme.primary
-        : colors.border;
     final button = Semantics(
       button: true,
       enabled: _enabled,
@@ -1105,10 +1102,11 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
               maxWidth: 220,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
+            decoration: busyMarkSurfaceDecoration(
+              context,
               color: background,
               borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-              border: Border.all(color: borderColor, width: _focused ? 2 : 1),
+              elevated: _enabled,
             ),
             child: Center(
               widthFactor: 1,
@@ -1160,34 +1158,73 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
   }
 }
 
-class BusyMarkDialogTextEntry extends StatefulWidget {
-  const BusyMarkDialogTextEntry({
+enum BusyMarkFloatingTextEntryPosition { single, first, middle, last }
+
+class BusyMarkFloatingTextEntryGroup extends StatelessWidget {
+  const BusyMarkFloatingTextEntryGroup({super.key, required this.children})
+    : assert(children.length > 1);
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final borderRadius = BorderRadius.circular(BusyMarkRadius.headerButton);
+    return DecoratedBox(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: colors.control,
+        borderRadius: borderRadius,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final child in children) ...[
+              child,
+              if (child != children.last)
+                Divider(height: 1, thickness: 1, color: colors.view),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BusyMarkFloatingTextEntry extends StatefulWidget {
+  const BusyMarkFloatingTextEntry({
     super.key,
     required this.label,
     required this.controller,
-    this.hintText,
     this.errorText,
     this.autofocus = false,
     this.textInputAction,
     this.onSubmitted,
+    this.groupPosition = BusyMarkFloatingTextEntryPosition.single,
   });
 
   final String label;
   final TextEditingController controller;
-  final String? hintText;
   final String? errorText;
   final bool autofocus;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final BusyMarkFloatingTextEntryPosition groupPosition;
 
   @override
-  State<BusyMarkDialogTextEntry> createState() =>
-      _BusyMarkDialogTextEntryState();
+  State<BusyMarkFloatingTextEntry> createState() =>
+      _BusyMarkFloatingTextEntryState();
 }
 
-class _BusyMarkDialogTextEntryState extends State<BusyMarkDialogTextEntry> {
+class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
+  static const _motionDuration = Duration(milliseconds: 140);
+  static const _motionCurve = Curves.easeOutCubic;
+
   late final FocusNode _focusNode;
   late final ScrollController _scrollController;
+  var _hovered = false;
 
   @override
   void initState() {
@@ -1199,7 +1236,7 @@ class _BusyMarkDialogTextEntryState extends State<BusyMarkDialogTextEntry> {
   }
 
   @override
-  void didUpdateWidget(covariant BusyMarkDialogTextEntry oldWidget) {
+  void didUpdateWidget(covariant BusyMarkFloatingTextEntry oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_handleTextChanged);
@@ -1223,82 +1260,134 @@ class _BusyMarkDialogTextEntryState extends State<BusyMarkDialogTextEntry> {
     final colorScheme = theme.colorScheme;
     final hasError = widget.errorText != null;
     final focused = _focusNode.hasFocus;
-    final borderColor = hasError
-        ? colorScheme.error
-        : focused
+    final floating = focused || widget.controller.text.isNotEmpty;
+    final grouped =
+        widget.groupPosition != BusyMarkFloatingTextEntryPosition.single;
+    final activeBorder = focused || hasError;
+    final radius = _borderRadius();
+    final borderColor = focused
         ? colorScheme.primary
+        : hasError
+        ? colorScheme.error
         : colors.border;
-    final hintText = widget.hintText;
+    final labelColor = focused
+        ? colorScheme.primary
+        : hasError
+        ? colorScheme.error
+        : colors.mutedForeground;
     return Semantics(
       textField: true,
       label: widget.label,
+      hint: widget.errorText,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            widget.label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: BusyMarkSpacing.xs),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _focusNode.requestFocus,
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: colors.control,
-                borderRadius: BorderRadius.circular(BusyMarkRadius.sm + 2),
-                border: Border.all(color: borderColor, width: focused ? 2 : 1),
-              ),
-              alignment: Alignment.center,
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  if (hintText != null && widget.controller.text.isEmpty)
-                    IgnorePointer(
-                      child: Text(
-                        hintText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colors.mutedForeground,
+          MouseRegion(
+            cursor: SystemMouseCursors.text,
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _focusNode.requestFocus,
+              child: Container(
+                height: 58,
+                decoration: busyMarkSurfaceDecoration(
+                  context,
+                  color: _hovered || focused
+                      ? colors.controlHover
+                      : colors.control,
+                  borderRadius: radius,
+                  border: activeBorder
+                      ? _border(color: borderColor, width: focused ? 2 : 1)
+                      : null,
+                  elevated: !grouped,
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedPositionedDirectional(
+                      duration: _motionDuration,
+                      curve: _motionCurve,
+                      start: 12,
+                      end: BusyMarkSizes.iconButton,
+                      top: floating ? 7 : 16,
+                      height: floating ? 18 : 24,
+                      child: IgnorePointer(
+                        child: AnimatedDefaultTextStyle(
+                          duration: _motionDuration,
+                          curve: _motionCurve,
+                          style:
+                              (floating
+                                      ? theme.textTheme.labelSmall
+                                      : theme.textTheme.bodyMedium)
+                                  ?.copyWith(color: labelColor) ??
+                              TextStyle(color: labelColor),
+                          child: Text(
+                            widget.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                          ),
                         ),
                       ),
                     ),
-                  EditableText(
-                    controller: widget.controller,
-                    focusNode: _focusNode,
-                    scrollController: _scrollController,
-                    autofocus: widget.autofocus,
-                    textInputAction: widget.textInputAction,
-                    onSubmitted: widget.onSubmitted,
-                    maxLines: 1,
-                    forceLine: true,
-                    style:
-                        theme.textTheme.bodyMedium?.copyWith(
-                          color: colors.foreground,
-                        ) ??
-                        TextStyle(color: colors.foreground),
-                    cursorColor: colorScheme.primary,
-                    backgroundCursorColor: colors.controlActive,
-                    selectionColor: colorScheme.primary.withValues(alpha: 0.28),
-                  ),
-                ],
+                    PositionedDirectional(
+                      start: 12,
+                      end: BusyMarkSizes.iconButton,
+                      top: 25,
+                      bottom: 6,
+                      child: AnimatedOpacity(
+                        duration: _motionDuration,
+                        curve: _motionCurve,
+                        opacity: floating ? 1 : 0,
+                        child: EditableText(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          scrollController: _scrollController,
+                          autofocus: widget.autofocus,
+                          textInputAction: widget.textInputAction,
+                          onSubmitted: widget.onSubmitted,
+                          maxLines: 1,
+                          forceLine: true,
+                          style:
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: colors.foreground,
+                              ) ??
+                              TextStyle(color: colors.foreground),
+                          cursorColor: colorScheme.primary,
+                          backgroundCursorColor: colors.controlActive,
+                          selectionColor: colorScheme.primary.withValues(
+                            alpha: 0.28,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PositionedDirectional(
+                      end: BusyMarkSpacing.md,
+                      top: 0,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          duration: _motionDuration,
+                          curve: _motionCurve,
+                          opacity: focused ? 0 : 1,
+                          child: Center(
+                            child: Icon(
+                              BusyMarkGlyphs.edit,
+                              size: BusyMarkSizes.iconSm,
+                              color: colors.mutedForeground.withValues(
+                                alpha: 0.72,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          if (hasError) ...[
-            const SizedBox(height: BusyMarkSpacing.xs),
-            Text(
-              widget.errorText!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.error,
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1314,6 +1403,50 @@ class _BusyMarkDialogTextEntryState extends State<BusyMarkDialogTextEntry> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  BorderRadius _borderRadius() {
+    const radius = Radius.circular(BusyMarkRadius.headerButton);
+    return switch (widget.groupPosition) {
+      BusyMarkFloatingTextEntryPosition.single => const BorderRadius.all(
+        radius,
+      ),
+      BusyMarkFloatingTextEntryPosition.first => const BorderRadius.vertical(
+        top: radius,
+      ),
+      BusyMarkFloatingTextEntryPosition.middle => BorderRadius.zero,
+      BusyMarkFloatingTextEntryPosition.last => const BorderRadius.vertical(
+        bottom: radius,
+      ),
+    };
+  }
+
+  Border _border({required Color color, required double width}) {
+    final side = BorderSide(color: color, width: width);
+    return switch (widget.groupPosition) {
+      BusyMarkFloatingTextEntryPosition.single => Border.all(
+        color: color,
+        width: width,
+      ),
+      BusyMarkFloatingTextEntryPosition.first => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+      BusyMarkFloatingTextEntryPosition.middle => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+      BusyMarkFloatingTextEntryPosition.last => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+    };
   }
 }
 
