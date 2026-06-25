@@ -240,6 +240,7 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.text => _escapeInlineText(inline.text),
       BusyInlineKind.strong => '**$children**',
       BusyInlineKind.emphasis => '*$children*',
+      BusyInlineKind.underline => '<u>$children</u>',
       BusyInlineKind.strikethrough => '~~$children~~',
       BusyInlineKind.code => '`${inline.text.replaceAll('`', r'\`')}`',
       BusyInlineKind.link =>

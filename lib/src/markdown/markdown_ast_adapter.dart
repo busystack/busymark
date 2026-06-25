@@ -18,7 +18,9 @@ class MarkdownAstAdapter {
     final markdownSource = frontMatter == null
         ? source
         : source.substring(frontMatter.endOffset).trimLeft();
-    final packageSource = _protectProseHyphenLines(markdownSource);
+    final packageSource = _protectProseHyphenLines(
+      _protectImageDestinationsWithSpaces(markdownSource),
+    );
     final document = md.Document(
       extensionSet: md.ExtensionSet.gitHubWeb,
       encodeHtml: false,
@@ -321,6 +323,13 @@ class MarkdownAstAdapter {
           children: children,
         ),
       ],
+      'u' => [
+        BusyInline(
+          kind: BusyInlineKind.underline,
+          text: text,
+          children: children,
+        ),
+      ],
       'del' || 's' => [
         BusyInline(
           kind: BusyInlineKind.strikethrough,
@@ -551,6 +560,129 @@ class MarkdownAstAdapter {
       attributes[match.group(1)!] = match.group(2)!;
     }
     return attributes;
+  }
+
+  String _protectImageDestinationsWithSpaces(String source) {
+    final buffer = StringBuffer();
+    var index = 0;
+    while (index < source.length) {
+      final imageStart = source.indexOf('![', index);
+      if (imageStart == -1) {
+        buffer.write(source.substring(index));
+        break;
+      }
+      buffer.write(source.substring(index, imageStart));
+      final labelEnd = _findClosingDelimiter(
+        source,
+        imageStart + 2,
+        open: '[',
+        close: ']',
+      );
+      if (labelEnd == -1 ||
+          labelEnd + 1 >= source.length ||
+          source.codeUnitAt(labelEnd + 1) != 0x28) {
+        buffer.write(source.substring(imageStart, imageStart + 2));
+        index = imageStart + 2;
+        continue;
+      }
+      final destinationStart = labelEnd + 2;
+      final destinationEnd = _findClosingDelimiter(
+        source,
+        destinationStart,
+        open: '(',
+        close: ')',
+      );
+      if (destinationEnd == -1) {
+        buffer.write(source.substring(imageStart));
+        break;
+      }
+      final rawDestination = source.substring(destinationStart, destinationEnd);
+      buffer
+        ..write(source.substring(imageStart, destinationStart))
+        ..write(_protectImageDestination(rawDestination))
+        ..write(')');
+      index = destinationEnd + 1;
+    }
+    return buffer.toString();
+  }
+
+  int _findClosingDelimiter(
+    String source,
+    int start, {
+    required String open,
+    required String close,
+  }) {
+    var depth = 0;
+    var escaped = false;
+    for (var index = start; index < source.length; index += 1) {
+      final char = source[index];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char == '\\') {
+        escaped = true;
+        continue;
+      }
+      if (char == open) {
+        depth += 1;
+        continue;
+      }
+      if (char != close) {
+        continue;
+      }
+      if (depth == 0) {
+        return index;
+      }
+      depth -= 1;
+    }
+    return -1;
+  }
+
+  String _protectImageDestination(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty || !RegExp(r'\s').hasMatch(trimmed)) {
+      return raw;
+    }
+    if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
+      return raw;
+    }
+    final leading = raw.substring(0, raw.indexOf(trimmed));
+    final trailing = raw.substring(leading.length + trimmed.length);
+    final titled = RegExp(
+      r'''^(.+?)(\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))$''',
+    ).firstMatch(trimmed);
+    if (titled != null && _looksLikeImageDestination(titled.group(1)!)) {
+      return '$leading${_encodeImageDestinationWhitespace(titled.group(1)!)}'
+          '${titled.group(2)!}$trailing';
+    }
+    if (!_looksLikeImageDestination(trimmed)) {
+      return raw;
+    }
+    return '$leading${_encodeImageDestinationWhitespace(trimmed)}$trailing';
+  }
+
+  bool _looksLikeImageDestination(String value) {
+    var path = value.trim();
+    if (path.startsWith('<') && path.endsWith('>')) {
+      path = path.substring(1, path.length - 1);
+    }
+    path = path.split('#').first.split('?').first;
+    try {
+      path = Uri.decodeComponent(path);
+    } on FormatException {
+      // Keep the original path for the extension check.
+    }
+    return RegExp(
+      r'\.(?:avif|bmp|gif|ico|jpe?g|png|svg|tiff?|webp)$',
+      caseSensitive: false,
+    ).hasMatch(path);
+  }
+
+  String _encodeImageDestinationWhitespace(String value) {
+    return value.replaceAllMapped(RegExp(r'[ \t]'), (match) {
+      return match.group(0) == '\t' ? '%09' : '%20';
+    });
   }
 
   List<Map<String, String>> _imageAttributeBlocks(String source) {
