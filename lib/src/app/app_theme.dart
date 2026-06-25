@@ -32,7 +32,7 @@ ThemeData buildBusyMarkTheme({
     onSurfaceVariant: colors.mutedForeground,
     surfaceContainerLowest: colors.window,
     surfaceContainerLow: colors.view,
-    surfaceContainer: colors.card,
+    surfaceContainer: colors.panel,
     surfaceContainerHigh: colors.control,
     surfaceContainerHighest: colors.controlHover,
     outline: colors.border,

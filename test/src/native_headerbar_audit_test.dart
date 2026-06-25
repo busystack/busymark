@@ -374,7 +374,10 @@ void main() {
 
     expect(welcome, isNot(contains('_WelcomeRail')));
     expect(welcome, contains('setSidebarVisible(false)'));
-    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(
+      welcome,
+      contains('backgroundColor: Theme.of(context).scaffoldBackgroundColor'),
+    );
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
@@ -400,7 +403,7 @@ void main() {
     );
   });
 
-  test('no-sidebar pages use the main view surface under the headerbar', () {
+  test('no-sidebar pages use themed page surfaces under the headerbar', () {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
@@ -408,9 +411,11 @@ void main() {
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
-    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(
+      welcome,
+      contains('backgroundColor: Theme.of(context).scaffoldBackgroundColor'),
+    );
     expect(settings, contains('backgroundColor: colors.view'));
-    expect(welcome, isNot(contains('backgroundColor: colors.window')));
     expect(settings, isNot(contains('backgroundColor: colors.window')));
   });
 

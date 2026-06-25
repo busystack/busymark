@@ -122,9 +122,20 @@ void main() {
     expect(design, contains('edgeShadowsFor'));
     expect(design, contains('_scaleAlpha(color, 0.34)'));
     expect(design, contains('blurRadius: 5'));
+    expect(design, contains('BoxDecoration busyMarkSurfaceDecoration'));
+    expect(
+      design,
+      contains(
+        'boxShadow: elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null',
+      ),
+    );
     expect(design, contains('final cardTheme = Theme.of(context).cardTheme'));
-    expect(design, contains('shadowColor: cardTheme.shadowColor'));
-    expect(design, contains('color: cardTheme.color ?? colors.card'));
+    final surface = RegExp(
+      r'class BusyMarkSurface.*?class BusyMarkGroupedList',
+      dotAll: true,
+    ).firstMatch(design)!.group(0)!;
+    expect(surface, contains('cardTheme.color ?? colors.card'));
+    expect(surface, contains('decoration: busyMarkSurfaceDecoration'));
     expect(theme, contains('shadowColor: colors.shade'));
     expect(theme, contains('cardTheme: CardThemeData'));
     expect(dialogs, contains('elevation: BusyMarkElevation.popover'));
@@ -138,17 +149,28 @@ void main() {
     );
   });
 
-  test('filled grouped action surfaces use card theme surfaces', () {
+  test('filled grouped action surfaces use themed container surfaces', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
 
     final groupedSurface = RegExp(
       r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
-    expect(groupedSurface, contains('cardTheme.color ?? colors.card'));
-    expect(groupedSurface, contains('cardTheme.elevation'));
+    expect(
+      groupedSurface,
+      contains('final colorScheme = Theme.of(context).colorScheme'),
+    );
+    expect(
+      groupedSurface,
+      contains('final color = colorScheme.surfaceContainer'),
+    );
+    expect(groupedSurface, contains('decoration: busyMarkSurfaceDecoration'));
+    expect(theme, contains('surfaceContainer: colors.panel'));
     expect(groupedSurface, isNot(contains('color: colors.control')));
-    expect(groupedSurface, isNot(contains('boxShadow:')));
+    expect(groupedSurface, isNot(contains('cardTheme.color ?? colors.card')));
+    expect(groupedSurface, isNot(contains('BusyMarkShadow.surfaceShadows')));
+    expect(groupedSurface, isNot(contains('elevation: cardTheme.elevation')));
   });
 
   test(
@@ -322,7 +344,11 @@ void main() {
     expect(workspace, contains('_jumpSourceScrollToLine'));
     expect(workspace, contains('scrollController: _sourceScrollController'));
     expect(workspace, contains('Scrollable.ensureVisible'));
+    expect(workspace, contains('alignment: 0.0'));
+    expect(workspace, isNot(contains('alignment: 0.04')));
     expect(workspace, contains('headingKeys: _previewHeadingKeys'));
+    expect(workspace, contains('headingKey: _keyForBlock(block)'));
+    expect(workspace, contains('key: headingKey'));
     expect(workspace, contains('scrollToHeadingId: _wysiwygScrollHeadingId'));
     expect(workspace, contains('scrollRequest: _wysiwygScrollRequest'));
     final wysiwyg = File(
@@ -444,7 +470,8 @@ void main() {
     expect(controller, contains('outdentListItems'));
     expect(serializer, contains('String _listItem('));
     expect(serializer, contains('String _indentBlock('));
-    expect(toolbar, contains('transparent: true'));
+    expect(toolbar, isNot(contains('transparent: true')));
+    expect(toolbar, contains('BusyMarkHeaderIconButton('));
     final blockWidgets = File(
       'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
     ).readAsStringSync();

@@ -2061,7 +2061,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       context,
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
-      alignment: 0.04,
+      alignment: 0.0,
     );
   }
 
@@ -2797,7 +2797,7 @@ class _PreviewPane extends StatelessWidget {
                         block,
                         first: index == 0,
                         workspace: workspace,
-                        key: _keyForBlock(block),
+                        headingKey: _keyForBlock(block),
                       ),
                   ],
                 ),
@@ -2826,12 +2826,13 @@ class _PreviewBlockView extends StatelessWidget {
     this.block, {
     required this.workspace,
     required this.first,
-    super.key,
+    required this.headingKey,
   });
 
   final PreviewBlock block;
   final Workspace? workspace;
   final bool first;
+  final Key? headingKey;
 
   @override
   Widget build(BuildContext context) {
@@ -2840,6 +2841,7 @@ class _PreviewBlockView extends StatelessWidget {
       PreviewBlockKind.heading => Padding(
         padding: EdgeInsets.only(top: first ? 0 : 18, bottom: 6),
         child: _PreviewInlineText(
+          key: headingKey,
           block: block,
           style: _headingStyle(context, block.level),
         ),
@@ -3033,7 +3035,7 @@ class _PreviewThematicBreak extends StatelessWidget {
 }
 
 class _PreviewInlineText extends ConsumerWidget {
-  const _PreviewInlineText({required this.block, this.style});
+  const _PreviewInlineText({super.key, required this.block, this.style});
 
   final PreviewBlock block;
   final TextStyle? style;

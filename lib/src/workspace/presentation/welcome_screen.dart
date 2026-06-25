@@ -35,7 +35,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
     final settings = ref.watch(appSettingsControllerProvider);
-    final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
@@ -59,7 +58,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: colors.view,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(

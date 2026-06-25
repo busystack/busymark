@@ -32,7 +32,7 @@ abstract final class BusyMarkSizes {
 }
 
 abstract final class BusyMarkElevation {
-  static const double surface = 1;
+  static const double surface = 2;
   static const double popover = 6;
   static const double window = 12;
 }
@@ -124,6 +124,21 @@ abstract final class BusyMarkShadow {
   }) {
     return edgeShadows(floatingColor(context), below: below);
   }
+}
+
+BoxDecoration busyMarkSurfaceDecoration(
+  BuildContext context, {
+  required Color color,
+  required BorderRadius borderRadius,
+  Border? border,
+  bool elevated = true,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: borderRadius,
+    border: border,
+    boxShadow: elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null,
+  );
 }
 
 abstract final class BusyMarkLinuxPalette {
@@ -648,15 +663,27 @@ class BusyMarkSurface extends StatelessWidget {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
     final cardTheme = Theme.of(context).cardTheme;
     final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
-      color: filled ? cardTheme.color ?? colors.card : Colors.transparent,
-      elevation: filled ? cardTheme.elevation ?? 0 : 0,
-      shadowColor: cardTheme.shadowColor ?? Theme.of(context).shadowColor,
+    final color = filled ? cardTheme.color ?? colors.card : Colors.transparent;
+    final shape =
+        cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
+    final material = Material(
+      color: color,
+      elevation: 0,
       surfaceTintColor: Colors.transparent,
-      shape:
-          cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius),
+      shape: shape,
       clipBehavior: clipBehavior,
       child: child,
+    );
+    if (!filled) {
+      return material;
+    }
+    return DecoratedBox(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: color,
+        borderRadius: borderRadius,
+      ),
+      child: material,
     );
   }
 }
@@ -744,15 +771,24 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
 
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
     final cardTheme = Theme.of(context).cardTheme;
-    return Material(
-      color: cardTheme.color ?? colors.card,
-      elevation: cardTheme.elevation ?? 0,
-      shadowColor: cardTheme.shadowColor ?? Theme.of(context).shadowColor,
-      surfaceTintColor: Colors.transparent,
-      shape:
-          cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius),
-      clipBehavior: Clip.antiAlias,
-      child: list,
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = colorScheme.surfaceContainer;
+    final shape =
+        cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
+    return DecoratedBox(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: color,
+        borderRadius: borderRadius,
+      ),
+      child: Material(
+        color: color,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shape: shape,
+        clipBehavior: Clip.antiAlias,
+        child: list,
+      ),
     );
   }
 }
