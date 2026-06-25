@@ -55,14 +55,19 @@ abstract final class BusyMarkShadow {
   static List<BoxShadow> surfaceShadows(Color color) {
     return [
       BoxShadow(
-        color: _scaleAlpha(color, 0.34),
-        blurRadius: 5,
-        offset: const Offset(0, 1),
+        color: _scaleAlpha(color, 0.28),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+      BoxShadow(
+        color: _scaleAlpha(color, 0.18),
+        blurRadius: 3,
+        offset: const Offset(0, -1),
       ),
       BoxShadow(
         color: _scaleAlpha(color, 0.16),
         blurRadius: 1,
-        offset: const Offset(0, 1),
+        offset: Offset.zero,
       ),
     ];
   }
@@ -474,6 +479,9 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.accented = false,
     this.transparent = false,
     this.shortcut,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.boxShadow,
   });
 
   final String tooltip;
@@ -483,37 +491,47 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final bool accented;
   final bool transparent;
   final String? shortcut;
+  final Color? foregroundColor;
+  final WidgetStateProperty<Color?>? backgroundColor;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
+    final button = IconButton(
+      style: busyMarkHeaderIconButtonStyle(
+        foregroundColor:
+            foregroundColor ??
+            (accented
+                ? colorScheme.onPrimary
+                : selected
+                ? colorScheme.primary
+                : colors.mutedForeground),
+        backgroundColor:
+            backgroundColor ??
+            (accented
+                ? WidgetStatePropertyAll(colorScheme.primary)
+                : selected
+                ? WidgetStatePropertyAll(colors.controlActive)
+                : transparent
+                ? busyMarkTransparentHeaderButtonBackground(context)
+                : busyMarkHeaderButtonBackground(context)),
+      ),
+      tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
+      icon: Icon(icon, size: BusyMarkSizes.iconSm),
+      onPressed: onPressed,
+    );
+    final shadows = boxShadow;
+    if (shadows == null || shadows.isEmpty) {
+      return button;
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-        boxShadow: transparent || onPressed == null
-            ? null
-            : BusyMarkShadow.surfaceShadows(colors.shade),
+        boxShadow: shadows,
       ),
-      child: IconButton(
-        style: busyMarkHeaderIconButtonStyle(
-          foregroundColor: accented
-              ? colorScheme.onPrimary
-              : selected
-              ? colorScheme.primary
-              : colors.mutedForeground,
-          backgroundColor: accented
-              ? WidgetStatePropertyAll(colorScheme.primary)
-              : selected
-              ? WidgetStatePropertyAll(colors.controlActive)
-              : transparent
-              ? busyMarkTransparentHeaderButtonBackground(context)
-              : busyMarkHeaderButtonBackground(context),
-        ),
-        tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-        icon: Icon(icon, size: BusyMarkSizes.iconSm),
-        onPressed: onPressed,
-      ),
+      child: button,
     );
   }
 }
@@ -526,6 +544,9 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     required this.itemBuilder,
     required this.onSelected,
     this.transparent = false,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.boxShadow,
   });
 
   final String tooltip;
@@ -533,26 +554,36 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
   final PopupMenuItemBuilder<T> itemBuilder;
   final ValueChanged<T> onSelected;
   final bool transparent;
+  final Color? foregroundColor;
+  final WidgetStateProperty<Color?>? backgroundColor;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
     final popupTheme = theme.popupMenuTheme;
-    return Theme(
+    final effectiveForeground = foregroundColor ?? colors.mutedForeground;
+    final button = Theme(
       data: theme.copyWith(
         iconButtonTheme: IconButtonThemeData(
           style: busyMarkHeaderIconButtonStyle(
-            foregroundColor: colors.mutedForeground,
-            backgroundColor: transparent
-                ? busyMarkTransparentHeaderButtonBackground(context)
-                : busyMarkHeaderButtonBackground(context),
+            foregroundColor: effectiveForeground,
+            backgroundColor:
+                backgroundColor ??
+                (transparent
+                    ? busyMarkTransparentHeaderButtonBackground(context)
+                    : busyMarkHeaderButtonBackground(context)),
           ),
         ),
       ),
       child: PopupMenuButton<T>(
         tooltip: tooltip,
-        icon: Icon(icon, size: BusyMarkSizes.iconSm),
+        icon: Icon(
+          icon,
+          size: BusyMarkSizes.iconSm,
+          color: effectiveForeground,
+        ),
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
         color: popupTheme.color ?? colors.popover,
@@ -568,6 +599,17 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
         itemBuilder: itemBuilder,
         onSelected: onSelected,
       ),
+    );
+    final shadows = boxShadow;
+    if (shadows == null || shadows.isEmpty) {
+      return button;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        boxShadow: shadows,
+      ),
+      child: button,
     );
   }
 }

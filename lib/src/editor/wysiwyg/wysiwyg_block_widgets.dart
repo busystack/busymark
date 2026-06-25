@@ -22,6 +22,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onTableColumnInserted,
     required this.onTableColumnDeleted,
     required this.onTableDeleted,
+    required this.onImageEditRequested,
     required this.onFocused,
     this.selected = false,
     this.selectionRange,
@@ -45,6 +46,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   onTableColumnInserted;
   final ValueChanged<int> onTableColumnDeleted;
   final VoidCallback onTableDeleted;
+  final VoidCallback onImageEditRequested;
   final VoidCallback onFocused;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
@@ -65,9 +67,14 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       child: Padding(
         padding: _padding,
         child: GestureDetector(
+          key: block.kind == BusyBlockKind.image
+              ? ValueKey('wysiwyg-image-block-${block.id}')
+              : null,
           behavior: HitTestBehavior.translucent,
           onTap: block.kind == BusyBlockKind.table
               ? onFocused
+              : block.kind == BusyBlockKind.image
+              ? _editImageBlock
               : readOnly
               ? onFocused
               : _focusBlock,
@@ -127,11 +134,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                   workspaceRoot: workspaceRoot,
                   writersideRoot: writersideRoot,
                   imagesDir: imagesDir,
-                  controller: controller,
-                  focusNode: focusNode,
-                  style: style,
-                  onFocused: onFocused,
-                  onChanged: onChanged,
                 )
               : readOnly
               ? SelectableText(
@@ -200,6 +202,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         offset: controller.text.length,
       );
     }
+  }
+
+  void _editImageBlock() {
+    onFocused();
+    onImageEditRequested();
   }
 
   double _minimumHeight(BuildContext context) {
@@ -319,11 +326,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
-      BusyBlockKind.image => Icon(
-        Icons.image_outlined,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
-      ),
       BusyBlockKind.blockquote => Icon(
         Icons.format_quote_outlined,
         size: BusyMarkSizes.iconSm,
@@ -345,9 +347,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   Color _background(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    if (selected) {
-      return Theme.of(context).colorScheme.primary.withValues(alpha: 0.20);
-    }
     return switch (block.kind) {
       BusyBlockKind.codeBlock ||
       BusyBlockKind.blockquote ||
@@ -853,11 +852,6 @@ class _ImageBlockEditor extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
-    required this.controller,
-    required this.focusNode,
-    required this.style,
-    required this.onFocused,
-    required this.onChanged,
   });
 
   final BusyBlock block;
@@ -865,50 +859,20 @@ class _ImageBlockEditor extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
-  final BusyMarkWysiwygTextController controller;
-  final FocusNode focusNode;
-  final TextStyle style;
-  final VoidCallback onFocused;
-  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final source = _imageSource(block);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        MarkdownImageView(
-          source: source,
-          alt: controller.text,
-          activeFilePath: documentFilePath,
-          workspaceRoot: workspaceRoot,
-          writersideRoot: writersideRoot,
-          imagesDir: imagesDir,
-          height: 240,
-        ),
-        const SizedBox(height: BusyMarkSpacing.sm),
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          maxLines: null,
-          minLines: 1,
-          style: style,
-          decoration: InputDecoration(
-            isCollapsed: true,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            filled: false,
-            hoverColor: Colors.transparent,
-            contentPadding: EdgeInsets.zero,
-            hintText: 'Alt text',
-            hintStyle: style.copyWith(color: colors.mutedForeground),
-          ),
-          onTap: onFocused,
-          onChanged: onChanged,
-        ),
-      ],
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: MarkdownImageView(
+        source: source,
+        alt: block.plainText,
+        activeFilePath: documentFilePath,
+        workspaceRoot: workspaceRoot,
+        writersideRoot: writersideRoot,
+        imagesDir: imagesDir,
+      ),
     );
   }
 }

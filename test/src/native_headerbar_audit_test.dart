@@ -198,14 +198,30 @@ void main() {
     expect(native, contains('configure_transparent_window_backing(window);'));
   });
 
-  test('native headerbar buttons use themed shadows', () {
+  test('native headerbar buttons use GTK-style themed controls', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(native, contains('"box-shadow: 0 -1px 1px %s, 0 1px 1px %s;"'));
-    expect(native, contains('foreground, control, shade'));
+    expect(native, contains('"border: 1px solid %s;"'));
     expect(native, contains('"box-shadow: none;"'));
+    expect(native, contains('foreground, control, border'));
+    expect(
+      native,
+      isNot(contains('"box-shadow: 0 -1px 1px %s, 0 1px 1px %s;"')),
+    );
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
   });
+
+  test(
+    'native document controls stay hidden on welcome and settings screens',
+    () {
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+      expect(native, contains('self->document_controls_visible = visible'));
+      expect(native, contains('visible && !self->search_active'));
+      expect(native, contains('self->document_controls_visible && !active'));
+      expect(native, contains('set_document_controls_visible(self, FALSE)'));
+    },
+  );
 
   test(
     'surface palette uses neutral grays instead of blue-tinted surfaces',
@@ -352,7 +368,7 @@ void main() {
     );
     expect(
       native,
-      contains('set_widget_visible(self->view_mode_box, visible)'),
+      contains('set_widget_visible(self->view_mode_box, effective_visible)'),
     );
     expect(native, isNot(contains('viewModeDay')));
     expect(native, isNot(contains('viewModeWeek')));
@@ -392,10 +408,13 @@ void main() {
       native,
       contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
     );
-    expect(native, contains('set_widget_visible(self->save_button, visible)'));
     expect(
       native,
-      contains('set_widget_visible(self->refresh_button, visible)'),
+      contains('set_widget_visible(self->save_button, effective_visible)'),
+    );
+    expect(
+      native,
+      contains('set_widget_visible(self->refresh_button, effective_visible)'),
     );
     expect(
       native,

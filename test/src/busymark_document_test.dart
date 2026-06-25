@@ -229,6 +229,60 @@ void main() {}
     expect(find.text('Editable text'), findsOneWidget);
   });
 
+  testWidgets('WYSIWYG editor undo and redo restore document edits', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Original\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Changed');
+    await tester.pump();
+
+    expect(markdown, 'Changed\n');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Original\n');
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Original',
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Changed\n');
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Changed',
+    );
+  });
+
   testWidgets('WYSIWYG editor applies heading keyboard shortcuts', (
     tester,
   ) async {
@@ -952,6 +1006,7 @@ void main() {}
     tester,
   ) async {
     final temp = Directory.systemTemp.createTempSync('busymark_wysiwyg_image_');
+    var markdown = '';
     try {
       final topicsDir = Directory('${temp.path}/topics')..createSync();
       final imagesDir = Directory('${temp.path}/images')..createSync();
@@ -990,7 +1045,7 @@ void main() {}
                 workspaceRoot: topicsDir.path,
                 writersideRoot: temp.path,
                 imagesDir: 'images',
-                onSourceChanged: (_) {},
+                onSourceChanged: (value) => markdown = value,
               ),
             ),
           ),
@@ -1000,6 +1055,31 @@ void main() {}
 
       expect(find.byType(Image), findsOneWidget);
       expect(find.text('rpi_1.jpg'), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('wysiwyg-image-block-image')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Image'), findsOneWidget);
+      expect(find.text('Apply'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField).at(0)).controller?.text,
+        'rpi_1.jpg',
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField).at(1)).controller?.text,
+        'Raspberry Pi',
+      );
+
+      await tester.enterText(
+        find.byType(TextField).at(0),
+        'images/updated.png',
+      );
+      await tester.enterText(find.byType(TextField).at(1), 'Updated alt');
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+
+      expect(markdown, '![Updated alt](images/updated.png)\n');
     } finally {
       temp.deleteSync(recursive: true);
     }
@@ -1108,6 +1188,148 @@ void main() {}
           ?.hasFocus,
       isTrue,
     );
+  });
+
+  testWidgets('WYSIWYG Enter carries active inline style to next paragraph', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: '**Bold**\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstField = tester.widget<TextField>(find.byType(TextField).first);
+    firstField.focusNode!.requestFocus();
+    firstField.controller!.selection = const TextSelection.collapsed(offset: 4);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).at(1), 'Next');
+    await tester.pump();
+
+    expect(markdown, '**Bold**\n\n**Next**\n');
+  });
+
+  testWidgets('WYSIWYG Enter at paragraph end preserves inner bold span', (
+    tester,
+  ) async {
+    const sentence =
+        'Users can do the following activities: input - reading, listening; '
+        'output - writing, speaking, choosing (e.g. correct word for empty '
+        'spot in a sentence). these activities should absolutely be mixed '
+        '(interleaved), rather than strictly grouped (blocked).';
+    final parsed = parser.parse(filePath: 'topic.md', source: '$sentence\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final groupedStart = sentence.indexOf('grouped');
+    final groupedEnd = groupedStart + 'grouped'.length;
+    field.focusNode!.requestFocus();
+    field.controller!.selection = TextSelection(
+      baseOffset: groupedStart,
+      extentOffset: groupedEnd,
+    );
+
+    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.pump();
+
+    field.controller!.selection = TextSelection.collapsed(
+      offset: sentence.length,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+
+    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n');
+    final context = tester.element(find.byType(TextField).first);
+    final span = field.controller!.buildTextSpan(
+      context: context,
+      style: DefaultTextStyle.of(context).style,
+      withComposing: false,
+    );
+    expect(_spanStyleForText(span, 'grouped')?.fontWeight, FontWeight.w700);
+  });
+
+  testWidgets('WYSIWYG newline text edit preserves inner bold span', (
+    tester,
+  ) async {
+    const sentence =
+        'Users can do the following activities: input - reading, listening; '
+        'output - writing, speaking, choosing (e.g. correct word for empty '
+        'spot in a sentence). these activities should absolutely be mixed '
+        '(interleaved), rather than strictly grouped (blocked).';
+    final parsed = parser.parse(filePath: 'topic.md', source: '$sentence\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final groupedStart = sentence.indexOf('grouped');
+    field.focusNode!.requestFocus();
+    field.controller!.selection = TextSelection(
+      baseOffset: groupedStart,
+      extentOffset: groupedStart + 'grouped'.length,
+    );
+
+    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, '$sentence\n');
+    await tester.pump();
+
+    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n');
+    final updatedField = tester.widget<TextField>(find.byType(TextField).first);
+    final context = tester.element(find.byType(TextField).first);
+    final span = updatedField.controller!.buildTextSpan(
+      context: context,
+      style: DefaultTextStyle.of(context).style,
+      withComposing: false,
+    );
+    expect(_spanStyleForText(span, 'grouped')?.fontWeight, FontWeight.w700);
   });
 
   testWidgets('WYSIWYG text input newlines become Markdown paragraphs', (
@@ -1449,4 +1671,22 @@ void main() {}
     taskController.toggleTaskChecked([taskId]);
     expect(taskController.markdown, '- [x] Todo\n');
   });
+}
+
+TextStyle? _spanStyleForText(InlineSpan span, String text) {
+  if (span is TextSpan) {
+    if ((span.text ?? '').contains(text)) {
+      return span.style;
+    }
+    final children = span.children;
+    if (children != null) {
+      for (final child in children) {
+        final style = _spanStyleForText(child, text);
+        if (style != null) {
+          return style;
+        }
+      }
+    }
+  }
+  return null;
 }

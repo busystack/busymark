@@ -35,31 +35,20 @@ class MarkdownImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final trimmedSource = source.trim();
     final image = _imageForSource(context, trimmedSource);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.panel,
-        border: Border.all(color: colors.subtleBorder),
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: maxWidth,
+        maxHeight: maxHeight ?? double.infinity,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: maxWidth,
-            maxHeight: maxHeight ?? double.infinity,
+      child:
+          image ??
+          _MarkdownImagePlaceholder(
+            source: trimmedSource,
+            alt: alt,
+            height: height ?? 120,
           ),
-          child:
-              image ??
-              _MarkdownImagePlaceholder(
-                source: trimmedSource,
-                alt: alt,
-                height: height ?? 120,
-              ),
-        ),
-      ),
     );
   }
 

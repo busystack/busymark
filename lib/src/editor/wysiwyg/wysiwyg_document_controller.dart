@@ -40,8 +40,19 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return null;
   }
 
-  void updateBlockText(String blockId, String text) {
-    _replaceBlock(blockId, (block) => _blockWithEditedText(block, text));
+  void updateBlockText(
+    String blockId,
+    String text, {
+    Iterable<BusyInlineKind> activeInlineKinds = const [],
+  }) {
+    _replaceBlock(
+      blockId,
+      (block) => _blockWithEditedText(
+        block,
+        text,
+        activeInlineKinds: activeInlineKinds,
+      ),
+    );
   }
 
   void updateTableCellText(String tableBlockId, String cellId, String text) {
@@ -106,25 +117,40 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         .toInt();
     final lastLineStart = textBeforeCursor.lastIndexOf('\n') + 1;
     final focusOffset = safeOffset - lastLineStart;
-    final replacements = <BusyBlock>[
-      block.copyWith(
-        inlines: _textInlines(parts.first),
-        preserveRaw: false,
-        dirty: true,
-      ),
-      for (final (index, part) in parts.skip(1).indexed)
-        BusyBlock(
-          id: _nextGeneratedBlockId(_newBlockPrefixFor(block.kind)),
-          kind: _splitKindFor(block.kind),
-          inlines: _textInlines(part),
-          attributes: _splitAttributesFor(
-            block,
-            _splitKindFor(block.kind),
-            orderedOffset: index + 1,
+    final ranges = _remapRangesForTextEdit(
+      oldText: block.plainText,
+      newText: normalizedText,
+      ranges: busyInlineStyleRanges(block.inlines),
+    );
+    final replacements = <BusyBlock>[];
+    var lineStart = 0;
+    for (final (index, part) in parts.indexed) {
+      final lineEnd = lineStart + part.length;
+      final inlines = _inlinesFromStyleRanges(
+        part,
+        _styleRangesForSlice(ranges, lineStart, lineEnd),
+      );
+      if (index == 0) {
+        replacements.add(
+          block.copyWith(inlines: inlines, preserveRaw: false, dirty: true),
+        );
+      } else {
+        replacements.add(
+          BusyBlock(
+            id: _nextGeneratedBlockId(_newBlockPrefixFor(block.kind)),
+            kind: _splitKindFor(block.kind),
+            inlines: inlines,
+            attributes: _splitAttributesFor(
+              block,
+              _splitKindFor(block.kind),
+              orderedOffset: index,
+            ),
+            dirty: true,
           ),
-          dirty: true,
-        ),
-    ];
+        );
+      }
+      lineStart = lineEnd + 1;
+    }
     _document = _document.copyWith(
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
     );
@@ -1232,7 +1258,11 @@ bool _isMergeableTextBlock(BusyBlock block) {
   };
 }
 
-BusyBlock _blockWithEditedText(BusyBlock block, String nextText) {
+BusyBlock _blockWithEditedText(
+  BusyBlock block,
+  String nextText, {
+  Iterable<BusyInlineKind> activeInlineKinds = const [],
+}) {
   final oldText = block.plainText;
   final oldRanges = busyInlineStyleRanges(block.inlines);
   final nextRanges = _remapRangesForTextEdit(
@@ -1240,6 +1270,13 @@ BusyBlock _blockWithEditedText(BusyBlock block, String nextText) {
     newText: nextText,
     ranges: oldRanges,
   );
+  if (oldText.isEmpty && nextText.isNotEmpty) {
+    for (final kind in _typingInlineKinds(activeInlineKinds)) {
+      nextRanges.add(
+        BusyInlineStyleRange(start: 0, end: nextText.length, kind: kind),
+      );
+    }
+  }
   return block.copyWith(
     inlines: _inlinesFromStyleRanges(nextText, nextRanges),
     preserveRaw: false,
@@ -1411,6 +1448,24 @@ List<BusyInlineStyleRange> _remapRangesForTextEdit({
     }
   }
   return mapped;
+}
+
+Set<BusyInlineKind> _typingInlineKinds(Iterable<BusyInlineKind> kinds) {
+  return {
+    for (final kind in kinds)
+      if (_isTypingInlineKind(kind)) kind,
+  };
+}
+
+bool _isTypingInlineKind(BusyInlineKind kind) {
+  return switch (kind) {
+    BusyInlineKind.strong ||
+    BusyInlineKind.emphasis ||
+    BusyInlineKind.underline ||
+    BusyInlineKind.strikethrough ||
+    BusyInlineKind.code => true,
+    _ => false,
+  };
 }
 
 int _commonPrefixLength(String left, String right) {

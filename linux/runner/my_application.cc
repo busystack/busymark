@@ -49,6 +49,7 @@ struct _MyApplication {
   GtkWidget* title_stack;
   GtkWidget* title_label;
   GtkWidget* search_entry;
+  gboolean document_controls_visible;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_label;
@@ -338,10 +339,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       "color: %s;"
       "background-color: %s;"
       "background-image: none;"
-      "border: none;"
-      "border-width: 0;"
-      "border-color: transparent;"
-      "box-shadow: 0 1px 1px %s;"
+      "border: 1px solid %s;"
+      "box-shadow: none;"
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
       "outline-style: none;"
@@ -461,8 +460,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       sidebar_border, kHeaderWindowRadius, foreground, foreground, control,
       border, shade, kHeaderButtonHeight,
       kHeaderButtonRadius, kHeaderButtonHorizontalPadding, accent, accent,
-      modal, modal, foreground, control, shade, kHeaderButtonHeight, kHeaderButtonHeight,
-      kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
+      modal, modal, foreground, control, border, kHeaderButtonHeight,
+      kHeaderButtonHeight, kHeaderButtonHorizontalPadding,
+      kHeaderButtonRadius, kHeaderButtonHeight,
       control_hover, control_active, accent_foreground, accent,
       accent_foreground, disabled, disabled, popover, foreground,
       border, shade, foreground, kHeaderButtonHeight,
@@ -933,9 +933,11 @@ static void set_back_visible(MyApplication* self, gboolean visible) {
 
 static void set_document_controls_visible(MyApplication* self,
                                           gboolean visible) {
-  set_widget_visible(self->save_button, visible);
-  set_widget_visible(self->refresh_button, visible);
-  set_widget_visible(self->view_mode_box, visible);
+  self->document_controls_visible = visible;
+  const gboolean effective_visible = visible && !self->search_active;
+  set_widget_visible(self->save_button, effective_visible);
+  set_widget_visible(self->refresh_button, effective_visible);
+  set_widget_visible(self->view_mode_box, effective_visible);
 }
 
 static void set_search_active(MyApplication* self, gboolean active) {
@@ -948,7 +950,11 @@ static void set_search_active(MyApplication* self, gboolean active) {
       gtk_stack_set_visible_child(GTK_STACK(self->title_stack), visible_child);
     }
   }
-  set_document_controls_visible(self, !active);
+  const gboolean document_controls_visible =
+      self->document_controls_visible && !active;
+  set_widget_visible(self->save_button, document_controls_visible);
+  set_widget_visible(self->refresh_button, document_controls_visible);
+  set_widget_visible(self->view_mode_box, document_controls_visible);
   if (changed && active && self->search_entry != nullptr &&
       GTK_IS_ENTRY(self->search_entry)) {
     gtk_widget_grab_focus(self->search_entry);
@@ -1122,6 +1128,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
                      TRUE, TRUE, 0);
   set_view_mode(self, "split");
+  set_document_controls_visible(self, FALSE);
   set_sidebar_visible(self, TRUE);
   set_back_visible(self, FALSE);
   refresh_header_bar_css(self);
@@ -1452,6 +1459,7 @@ static void my_application_init(MyApplication* self) {
   self->title_stack = nullptr;
   self->title_label = nullptr;
   self->search_entry = nullptr;
+  self->document_controls_visible = FALSE;
   self->view_mode_box = nullptr;
   self->view_mode_button = nullptr;
   self->view_mode_label = nullptr;
