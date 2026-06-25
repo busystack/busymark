@@ -22,8 +22,12 @@ constexpr gint kHeaderControlHorizontalPadding = 8;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderButtonContentSpacing = 4;
 constexpr gint kHeaderSidebarInset = 8;
-constexpr gint kHeaderWindowRadius = 8;
+constexpr gint kHeaderWindowRadius = 14;
 constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
+constexpr gint kYaruTitleButtonMinSize = 20;
+constexpr gint kYaruTitleButtonPadding = 4;
+constexpr gint kYaruTitleButtonHorizontalMargin = 1;
+constexpr gint kYaruTitleButtonRadius = 9999;
 constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
@@ -73,6 +77,9 @@ struct _MyApplication {
   gchar* control_color;
   gchar* control_hover_color;
   gchar* control_active_color;
+  gchar* title_button_color;
+  gchar* title_button_hover_color;
+  gchar* title_button_active_color;
   gchar* accent_color;
   gchar* accent_foreground_color;
   gchar* popover_background_color;
@@ -262,6 +269,12 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
   const gchar* control_active =
       css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
+  const gchar* title_button =
+      css_color_or(self->title_button_color, "rgba(255,255,255,0.10)");
+  const gchar* title_button_hover =
+      css_color_or(self->title_button_hover_color, "rgba(255,255,255,0.15)");
+  const gchar* title_button_active =
+      css_color_or(self->title_button_active_color, "rgba(255,255,255,0.25)");
   const gchar* accent = css_color_or(self->accent_color, "#3584e4");
   const gchar* accent_foreground =
       css_color_or(self->accent_foreground_color, "#ffffff");
@@ -295,7 +308,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "outline: none;"
       "border-radius: %dpx;"
-      "box-shadow: 0 3px 18px 2px %s;"
+      "box-shadow: 0 2px 10px 0 %s;"
       "}"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop,"
@@ -312,6 +325,40 @@ static void refresh_header_bar_css(MyApplication* self) {
       "headerbar.busymark-headerbar:backdrop {"
       "border-top-left-radius: %dpx;"
       "padding-left: 0;"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) {"
+      "border-radius: %dpx;"
+      "margin: 0 %dpx;"
+      "min-height: %dpx;"
+      "min-width: %dpx;"
+      "padding: %dpx;"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop {"
+      "background-color: transparent;"
+      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop:hover {"
+      "background-color: transparent;"
+      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop:active {"
+      "background-color: transparent;"
+      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
       "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
@@ -484,7 +531,10 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-radius: %dpx;"
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
-      kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
+      kHeaderWindowRadius, headerbar_left_radius, kYaruTitleButtonRadius,
+      kYaruTitleButtonHorizontalMargin, kYaruTitleButtonMinSize,
+      kYaruTitleButtonMinSize, kYaruTitleButtonPadding, title_button,
+      title_button_hover, title_button_active, sidebar_background,
       sidebar_border, kHeaderWindowRadius, foreground,
       foreground, control, border, shade, kHeaderControlHeight,
       kHeaderButtonRadius, kHeaderControlHorizontalPadding, accent, accent,
@@ -541,6 +591,12 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "controlHoverColor"));
   set_css_color_field(&self->control_active_color,
                       fl_lookup_string_arg(args, "controlActiveColor"));
+  set_css_color_field(&self->title_button_color,
+                      fl_lookup_string_arg(args, "titleButtonColor"));
+  set_css_color_field(&self->title_button_hover_color,
+                      fl_lookup_string_arg(args, "titleButtonHoverColor"));
+  set_css_color_field(&self->title_button_active_color,
+                      fl_lookup_string_arg(args, "titleButtonActiveColor"));
   set_css_color_field(&self->accent_color,
                       fl_lookup_string_arg(args, "accentColor"));
   set_css_color_field(&self->accent_foreground_color,
@@ -1454,6 +1510,9 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->control_color, g_free);
   g_clear_pointer(&self->control_hover_color, g_free);
   g_clear_pointer(&self->control_active_color, g_free);
+  g_clear_pointer(&self->title_button_color, g_free);
+  g_clear_pointer(&self->title_button_hover_color, g_free);
+  g_clear_pointer(&self->title_button_active_color, g_free);
   g_clear_pointer(&self->accent_color, g_free);
   g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
@@ -1518,6 +1577,9 @@ static void my_application_init(MyApplication* self) {
   self->control_color = nullptr;
   self->control_hover_color = nullptr;
   self->control_active_color = nullptr;
+  self->title_button_color = nullptr;
+  self->title_button_hover_color = nullptr;
+  self->title_button_active_color = nullptr;
   self->accent_color = nullptr;
   self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;

@@ -208,10 +208,11 @@ void main() {
 
     expect(native, contains('window#busymark-window decoration,'));
     expect(native, contains('window#busymark-window decoration:backdrop {'));
+    expect(native, contains('kHeaderWindowRadius = 14'));
     expect(native, contains('"background-color: transparent;"'));
     expect(native, contains('"border: none;"'));
     expect(native, contains('"outline: none;"'));
-    expect(native, contains('"box-shadow: 0 3px 18px 2px %s;"'));
+    expect(native, contains('"box-shadow: 0 2px 10px 0 %s;"'));
     expect(native, contains('const gchar* shade = css_color_or'));
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
     expect(native, contains('create_rounded_window_region'));
@@ -245,40 +246,48 @@ void main() {
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
   });
 
-  test('native window controls are left to GTK and Yaru', () {
+  test('native window controls use Yaru geometry with backdrop background', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
+    final titleButtonBlock = RegExp(
+      r'"headerbar\.busymark-headerbar button\.titlebutton:not\(\.appmenu\) \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
 
+    expect(native, contains('kYaruTitleButtonMinSize = 20'));
+    expect(native, contains('kYaruTitleButtonPadding = 4'));
+    expect(native, contains('kYaruTitleButtonHorizontalMargin = 1'));
+    expect(native, contains('kYaruTitleButtonRadius = 9999'));
+    expect(titleButtonBlock, contains('"border-radius: %dpx;"'));
+    expect(titleButtonBlock, contains('"margin: 0 %dpx;"'));
+    expect(titleButtonBlock, contains('"min-height: %dpx;"'));
+    expect(titleButtonBlock, contains('"min-width: %dpx;"'));
+    expect(titleButtonBlock, contains('"padding: %dpx;"'));
     expect(
       native,
-      isNot(
-        contains('"headerbar.busymark-headerbar button.titlebutton:backdrop'),
-      ),
+      contains('button.titlebutton:not(.appmenu).maximize:backdrop,'),
     );
     expect(
       native,
-      isNot(
-        contains(
-          '"headerbar.busymark-headerbar button.titlebutton.close:backdrop',
-        ),
-      ),
+      contains('button.titlebutton:not(.appmenu).minimize:backdrop,'),
     );
     expect(
       native,
-      isNot(
-        contains(
-          '"headerbar.busymark-headerbar button.titlebutton.maximize:backdrop',
-        ),
-      ),
+      contains('button.titlebutton:not(.appmenu).close:backdrop {'),
     );
     expect(
       native,
-      isNot(
-        contains(
-          '"headerbar.busymark-headerbar button.titlebutton.minimize:backdrop',
-        ),
+      contains(
+        '"background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"',
       ),
     );
-    expect(native, isNot(contains('kHeaderTitleButtonRadius')));
+    expect(native, isNot(contains('"background: none;"')));
+    expect(service, contains('titleButtonColor'));
+    expect(service, contains('withValues(alpha: 0.10)'));
+    expect(service, contains('withValues(alpha: 0.15)'));
+    expect(service, contains('withValues(alpha: 0.25)'));
   });
 
   test('native sidebar header buttons are decorated only on hover', () {

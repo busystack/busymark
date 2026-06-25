@@ -90,6 +90,9 @@ class HeaderBarTheme {
     required this.controlColor,
     required this.controlHoverColor,
     required this.controlActiveColor,
+    required this.titleButtonColor,
+    required this.titleButtonHoverColor,
+    required this.titleButtonActiveColor,
     required this.accentColor,
     required this.accentForegroundColor,
     required this.popoverBackgroundColor,
@@ -111,6 +114,9 @@ class HeaderBarTheme {
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
       controlActiveColor: colors.controlActive,
+      titleButtonColor: colors.foreground.withValues(alpha: 0.10),
+      titleButtonHoverColor: colors.foreground.withValues(alpha: 0.15),
+      titleButtonActiveColor: colors.foreground.withValues(alpha: 0.25),
       accentColor: Theme.of(context).colorScheme.primary,
       accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
@@ -129,6 +135,9 @@ class HeaderBarTheme {
   final Color controlColor;
   final Color controlHoverColor;
   final Color controlActiveColor;
+  final Color titleButtonColor;
+  final Color titleButtonHoverColor;
+  final Color titleButtonActiveColor;
   final Color accentColor;
   final Color accentForegroundColor;
   final Color popoverBackgroundColor;
@@ -146,6 +155,9 @@ class HeaderBarTheme {
     'controlColor': _cssColor(controlColor),
     'controlHoverColor': _cssColor(controlHoverColor),
     'controlActiveColor': _cssColor(controlActiveColor),
+    'titleButtonColor': _cssColor(titleButtonColor),
+    'titleButtonHoverColor': _cssColor(titleButtonHoverColor),
+    'titleButtonActiveColor': _cssColor(titleButtonActiveColor),
     'accentColor': _cssColor(accentColor),
     'accentForegroundColor': _cssColor(accentForegroundColor),
     'popoverBackgroundColor': _cssColor(popoverBackgroundColor),

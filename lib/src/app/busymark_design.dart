@@ -17,7 +17,7 @@ abstract final class BusyMarkRadius {
   static const double md = 8;
   static const double lg = 12;
   static const double headerButton = 8;
-  static const double window = 8;
+  static const double window = 14;
 }
 
 abstract final class BusyMarkSizes {
