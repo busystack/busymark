@@ -4,8 +4,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/app_settings.dart';
-import '../markdown/preview_export.dart';
-import '../writerside/writerside_module_service.dart';
+import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
 import 'workspace_model.dart';
 import 'workspace_service.dart';
@@ -261,34 +260,6 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     } on Object catch (error) {
       state = state.copyWith(errorMessage: 'Validation failed: $error');
     }
-  }
-
-  String exportActiveHtml() {
-    final workspace = state.workspace;
-    final active = workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    if (workspace == null || active == null) {
-      return '';
-    }
-    final markdown = _service.markdownParser.parse(
-      filePath: active,
-      source: state.activeText,
-      workspaceRoot: workspace.rootPath,
-    );
-    return const MarkdownHtmlExporter().export(markdown);
-  }
-
-  String exportProjectSummaryJson() {
-    final module = state.workspace?.writersideModule;
-    if (module == null) {
-      return '{}';
-    }
-    return const WritersideSummaryExporter().export(module);
-  }
-
-  String exportDiagnosticsJson() {
-    return const DiagnosticReportExporter().exportJson(
-      state.workspace?.diagnostics ?? const [],
-    );
   }
 
   PreviewDocument? _safePreview(Workspace workspace, String text) {

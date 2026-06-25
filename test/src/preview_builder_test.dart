@@ -1,5 +1,5 @@
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:busymark/src/markdown/preview_export.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -137,15 +137,10 @@ void main() {
     final listBlocks = preview.blocks
         .where((block) => block.kind == PreviewBlockKind.list)
         .toList();
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(lists, ['Bullet', 'Ordered', 'Star', 'Plus', 'Done']);
     expect(listBlocks[1].attributes['ordered'], 'true');
     expect(listBlocks[4].attributes['task'], 'true');
-    expect(html, contains('<ul><li>Bullet</li></ul>'));
-    expect(html, contains('<ol><li>Ordered</li></ol>'));
-    expect(html, contains('<input type="checkbox" disabled checked> Done'));
-    expect(html, isNot(contains('Compatibility level:')));
   });
 
   test('preview preserves links inside list items', () {
@@ -180,7 +175,6 @@ void main() {
     final paragraph = preview.blocks.singleWhere(
       (block) => block.kind == PreviewBlockKind.paragraph,
     );
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(preview.blocks.first.text, 'Title');
     expect(
@@ -196,12 +190,6 @@ void main() {
     );
     expect(paragraph.text, contains('bold'));
     expect(paragraph.text, contains('*escaped* text'));
-    expect(html, contains('<strong>bold</strong>'));
-    expect(html, contains('<em>italic</em>'));
-    expect(html, contains('<del>strike</del>'));
-    expect(html, contains('<code>code</code>'));
-    expect(html, contains('<a href="other.md">link</a>'));
-    expect(html, contains('<img src="logo.png" alt="Logo">'));
   });
 
   test('preview renders quote characters as text instead of HTML entities', () {
@@ -211,12 +199,9 @@ void main() {
     );
     final preview = previewBuilder.build(parsed);
     final paragraph = preview.blocks.single;
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(paragraph.text, 'Use "group" here.');
     expect(paragraph.inlines.single.text, 'Use "group" here.');
-    expect(html, contains('<p>Use &quot;group&quot; here.</p>'));
-    expect(html, isNot(contains('&amp;quot;')));
   });
 
   test('preview preserves pasted local image destinations with spaces', () {

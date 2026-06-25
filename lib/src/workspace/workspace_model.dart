@@ -1,6 +1,6 @@
 import '../core/diagnostic.dart';
 import '../markdown/markdown_model.dart';
-import '../markdown/preview_export.dart';
+import '../markdown/preview_model.dart';
 import '../writerside/writerside_model.dart';
 
 enum WorkspaceKind {

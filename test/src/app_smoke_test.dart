@@ -87,10 +87,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Save the current Markdown file'), findsOneWidget);
-    expect(
-      find.text('Open the active preview in the system print flow'),
-      findsOneWidget,
-    );
     expect(find.text('Open workspace search'), findsOneWidget);
     expect(find.text('Show this popup'), findsOneWidget);
     expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
@@ -108,7 +104,6 @@ void main() {
     expect(find.text('Ctrl+N'), findsOneWidget);
     expect(find.text('Ctrl+O'), findsOneWidget);
     expect(find.text('Ctrl+S'), findsOneWidget);
-    expect(find.text('Ctrl+P'), findsOneWidget);
     expect(find.text('Ctrl+F'), findsOneWidget);
     expect(find.text('Ctrl+/'), findsOneWidget);
     expect(find.text('Ctrl+A'), findsOneWidget);

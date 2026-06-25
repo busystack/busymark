@@ -51,7 +51,6 @@ abstract final class BusyMarkGlyphs {
   static const IconData paragraph = YaruIcons.insert_text;
   static const IconData paste = YaruIcons.paste;
   static const IconData preview = YaruIcons.eye;
-  static const IconData print = YaruIcons.printer;
   static const IconData redo = YaruIcons.redo;
   static const IconData rightArrow = YaruIcons.go_next;
   static const IconData save = YaruIcons.save;
@@ -59,7 +58,6 @@ abstract final class BusyMarkGlyphs {
   static const IconData searchUnavailable = YaruIcons.find_replace;
   static const IconData selectAll = YaruIcons.selection;
   static const IconData settings = YaruIcons.settings;
-  static const IconData share = YaruIcons.share;
   static const IconData sidebar = YaruIcons.sidebar;
   static const IconData startTopic = YaruIcons.document;
   static const IconData strikethrough = YaruIcons.strikethrough;

@@ -108,6 +108,35 @@ void main() {
     expect(glyphs, contains('YaruIcons.'));
   });
 
+  test('preview output actions are not present', () {
+    final files = <File>[
+      for (final path in ['lib', 'linux'])
+        ...Directory(path)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => _isText(file.path)),
+    ];
+    final combined = files.map((file) => file.readAsStringSync()).join('\n');
+
+    for (final removed in [
+      'export'
+          'Preview',
+      '_Print'
+          'Active'
+          'Intent',
+      '_print'
+          'Active'
+          'Preview',
+      'busy'
+          'mark-print',
+      'xdg'
+          '-open',
+    ]) {
+      expect(combined, isNot(contains(removed)));
+    }
+    expect(combined, isNot(contains('${'Ctrl'}+${'P'}')));
+  });
+
   test('grouped action rows use one BusyMark-owned rounded surface', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
@@ -435,7 +464,7 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
     final preview = File(
-      'lib/src/markdown/preview_export.dart',
+      'lib/src/markdown/preview_model.dart',
     ).readAsStringSync();
 
     expect(workspace, contains('_previewSearchBlockIndex'));

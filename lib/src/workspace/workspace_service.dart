@@ -6,7 +6,7 @@ import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
-import '../markdown/preview_export.dart';
+import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';

@@ -13,11 +13,11 @@ enum HeaderBarAction {
   search,
   refresh,
   save,
+  printDocument,
   menu,
   settings,
   keyboardShortcuts,
   aboutBusyMark,
-  exportPreview,
   viewModeEditor,
   viewModeSource,
   viewModePreview,
@@ -39,10 +39,10 @@ class HeaderBarLabels {
     required this.sidebar,
     required this.back,
     required this.save,
+    required this.printDocument,
     required this.settings,
     required this.keyboardShortcuts,
     required this.aboutBusyMark,
-    required this.exportPreview,
   });
 
   final String editor;
@@ -56,10 +56,10 @@ class HeaderBarLabels {
   final String sidebar;
   final String back;
   final String save;
+  final String printDocument;
   final String settings;
   final String keyboardShortcuts;
   final String aboutBusyMark;
-  final String exportPreview;
 
   Map<String, String> toMap() => {
     'editor': editor,
@@ -73,10 +73,10 @@ class HeaderBarLabels {
     'sidebar': sidebar,
     'back': back,
     'save': save,
+    'printDocument': printDocument,
     'settings': settings,
     'keyboardShortcuts': keyboardShortcuts,
     'aboutBusyMark': aboutBusyMark,
-    'exportPreview': exportPreview,
   };
 }
 
@@ -291,11 +291,11 @@ class LinuxHeaderBarService {
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
+      'printDocument' => HeaderBarAction.printDocument,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
-      'exportPreview' => HeaderBarAction.exportPreview,
       'viewModeEditor' => HeaderBarAction.viewModeEditor,
       'viewModeSource' => HeaderBarAction.viewModeSource,
       'viewModePreview' => HeaderBarAction.viewModePreview,

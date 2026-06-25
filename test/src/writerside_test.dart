@@ -124,15 +124,4 @@ void main() {
       );
     },
   );
-
-  test('exports project summary JSON', () async {
-    final module = await moduleService.load(
-      'test/fixtures/writerside/basic_project',
-    );
-    final json = const WritersideSummaryExporter().export(module);
-
-    expect(json, contains('"kind": "writersideModule"'));
-    expect(json, contains('"name": "User Guide"'));
-    expect(json, contains('"file": "intro.md"'));
-  });
 }

@@ -10,7 +10,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:busymark/src/markdown/preview_export.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -140,17 +140,6 @@ void main() {}
     ]);
     expect(parsed.title, 'Title');
     expect(parsed.anchors, containsAll(['title', 'section']));
-  });
-
-  test('HTML export blocks unsafe links and image URLs', () {
-    final parsed = parser.parse(
-      filePath: 'topic.md',
-      source: '[bad](javascript:alert(1))\n\n![bad](data:text/html,evil)\n',
-    );
-    final html = const MarkdownHtmlExporter().export(parsed);
-
-    expect(html, isNot(contains('javascript:')));
-    expect(html, isNot(contains('data:text')));
   });
 
   test('preview and WYSIWYG use the same semantic document', () {

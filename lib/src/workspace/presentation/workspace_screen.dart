@@ -24,7 +24,7 @@ import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
-import '../../markdown/preview_export.dart';
+import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
 import '../workspace_controller.dart';
@@ -362,12 +362,6 @@ class WorkspaceScreen extends ConsumerWidget {
                               DocumentViewModePreference.source,
                         ),
                       ),
-                      const _HeaderSeparator(),
-                      BusyMarkHeaderIconButton(
-                        tooltip: 'Export',
-                        icon: BusyMarkGlyphs.share,
-                        onPressed: () => _showExportDialog(context, ref),
-                      ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Settings',
                         icon: BusyMarkGlyphs.settings,
@@ -526,14 +520,14 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         unawaited(saveActiveWithOverwriteConfirmation(context, ref));
+      case HeaderBarAction.printDocument:
+        showBusyMarkPrintDialog(context);
       case HeaderBarAction.settings:
         context.go('/settings');
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
-      case HeaderBarAction.exportPreview:
-        _showExportDialog(context, ref);
       case HeaderBarAction.viewModeEditor:
         unawaited(
           settingsController.setDocumentViewMode(
@@ -589,59 +583,6 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.preview => AppViewMode.preview,
       DocumentViewModePreference.split => AppViewMode.split,
     };
-  }
-
-  void _showExportDialog(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(workspaceControllerProvider.notifier);
-    final html = controller.exportActiveHtml();
-    final diagnostics = controller.exportDiagnosticsJson();
-    final summary = controller.exportProjectSummaryJson();
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    unawaited(
-      showBusyMarkModalDialog<void>(
-        context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
-        builder: (context) => BusyMarkDialogShell(
-          title: 'Export Preview',
-          maxWidth: 860,
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-          children: [
-            SizedBox(
-              width: 800,
-              height: 460,
-              child: DefaultTabController(
-                length: 3,
-                child: Column(
-                  children: [
-                    const TabBar(
-                      tabs: [
-                        Tab(text: 'HTML'),
-                        Tab(text: 'Diagnostics JSON'),
-                        Tab(text: 'Project JSON'),
-                      ],
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _ReadonlyExportText(html),
-                          _ReadonlyExportText(diagnostics),
-                          _ReadonlyExportText(summary),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _openSearchResult(
@@ -5174,48 +5115,6 @@ class _EmptyPane extends StatelessWidget {
           Icon(icon, color: colors.mutedForeground),
           const SizedBox(height: BusyMarkSpacing.sm),
           Text(title, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReadonlyExportText extends StatelessWidget {
-  const _ReadonlyExportText(this.value);
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: TextButton.icon(
-                onPressed: () => Clipboard.setData(ClipboardData(text: value)),
-                icon: const Icon(
-                  BusyMarkGlyphs.copy,
-                  size: BusyMarkSizes.iconSm,
-                ),
-                label: const Text('Copy'),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(BusyMarkSpacing.md),
-              child: SelectableText(
-                value,
-                style: const TextStyle(fontFamily: 'Ubuntu Mono', fontSize: 12),
-              ),
-            ),
-          ),
         ],
       ),
     );

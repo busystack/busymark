@@ -83,7 +83,7 @@ void showBusyMarkAboutDialog(BuildContext context) {
         subtitle: 'Version 0.1.0',
         children: [
           Text(
-            'BusyMark is an open-source application for reading, editing, and exporting Markdown files and Writerside-compatible projects.',
+            'BusyMark is an open-source application for reading and editing Markdown files and Writerside-compatible projects.',
           ),
         ],
       ),
@@ -123,12 +123,6 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 subtitle: 'Save the current Markdown file',
                 leading: Icon(BusyMarkGlyphs.save),
                 trailing: _KeyboardShortcutBadge('Ctrl+S'),
-              ),
-              BusyMarkActionRow(
-                title: 'Print',
-                subtitle: 'Open the active preview in the system print flow',
-                leading: Icon(BusyMarkGlyphs.print),
-                trailing: _KeyboardShortcutBadge('Ctrl+P'),
               ),
               BusyMarkActionRow(
                 title: 'Find',
@@ -313,6 +307,20 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
             ],
           ),
         ],
+      ),
+    ),
+  );
+}
+
+void showBusyMarkPrintDialog(BuildContext context) {
+  final headerBar = LinuxHeaderBarService.instance;
+  unawaited(
+    showBusyMarkModalDialog<void>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (context) => const _BusyMarkInfoDialog(
+        title: 'Print',
+        children: [Text('Printing is not available yet.')],
       ),
     ),
   );

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -474,56 +473,5 @@ class WritersideModuleService {
       startOffset: index == -1 ? 0 : index,
       endOffset: index == -1 ? source.length : index + value.length,
     );
-  }
-}
-
-class WritersideSummaryExporter {
-  const WritersideSummaryExporter();
-
-  String export(WritersideModule module) {
-    final json = {
-      'kind': 'writersideModule',
-      'rootPath': module.rootPath,
-      'moduleName': module.config.moduleName,
-      'instances': [
-        for (final instance in module.instances)
-          {
-            'id': instance.id,
-            'name': instance.name,
-            'startPage': instance.startPage,
-            'topicCount': instance.topicFileSet.length,
-          },
-      ],
-      'topics': [
-        for (final topic in module.topics)
-          {
-            'id': topic.id,
-            'file': topic.fileName,
-            'title': topic.title,
-            'format': topic.format.name,
-          },
-      ],
-      'variables': [
-        for (final variable in module.variables)
-          {'name': variable.name, 'value': variable.value},
-      ],
-      'categories': [
-        for (final category in module.categories)
-          {'id': category.id, 'name': category.name, 'order': category.order},
-      ],
-      'diagnostics': module.diagnostics.map((item) => item.toJson()).toList(),
-    };
-    return const JsonEncoder.withIndent('  ').convert(json);
-  }
-}
-
-class DiagnosticReportExporter {
-  const DiagnosticReportExporter();
-
-  String exportJson(Iterable<Diagnostic> diagnostics) {
-    return const JsonEncoder.withIndent('  ').convert([
-      for (final diagnostic in sortDiagnostics(diagnostics))
-        diagnostic.toJson(),
-    ]);
   }
 }
