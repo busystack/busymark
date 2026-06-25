@@ -826,24 +826,36 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return TextField(
-      controller: _controller,
-      focusNode: _focusNode,
-      textInputAction: TextInputAction.search,
-      onSubmitted: (_) => widget.onSubmitted(),
-      decoration: InputDecoration(
-        isDense: true,
-        prefixIcon: Icon(BusyMarkGlyphs.search, color: colors.mutedForeground),
-        hintText: 'Search',
-        filled: true,
-        fillColor: colors.control,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: BusyMarkSpacing.md,
-          vertical: BusyMarkSpacing.sm,
+    return SizedBox(
+      height: BusyMarkSizes.iconButton,
+      child: TextField(
+        controller: _controller,
+        focusNode: _focusNode,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => widget.onSubmitted(),
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isDense: true,
+          prefixIcon: Icon(
+            BusyMarkGlyphs.search,
+            color: colors.mutedForeground,
+            size: BusyMarkSizes.iconSm,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: BusyMarkSizes.iconButton,
+            minHeight: BusyMarkSizes.iconButton,
+          ),
+          hintText: 'Search',
+          filled: true,
+          fillColor: colors.control,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.md,
+            vertical: 0,
+          ),
         ),
       ),
     );
@@ -955,10 +967,7 @@ class _SidebarState extends State<_Sidebar> {
         : _tab.clamp(0, tabs.length - 1).toInt();
     final selectedTab = tabs.isEmpty ? null : tabs[selectedIndex];
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.sidebar,
-        border: Border(right: BorderSide(color: colors.sidebarBorder)),
-      ),
+      decoration: BoxDecoration(color: colors.sidebar),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2928,7 +2937,7 @@ class _SourceEditorFrame extends StatelessWidget {
   static const double editorPaddingBottom = 16;
   static const double editorPaddingLeft = 12;
   static const double editorPaddingRight = 16;
-  static const double _gutterWidth = 58;
+  static const double _gutterWidth = 50;
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
@@ -3041,6 +3050,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                     text: controller.buildSourceTextSpan(
                       context: context,
                       style: textStyle,
+                      hideCollapsedStartLines: true,
                     ),
                     strutStyle: strutStyle,
                     textHeightBehavior: _sourceTextHeightBehavior,
@@ -3276,6 +3286,9 @@ class _SourceGutterRow extends StatelessWidget {
     required this.onToggleFold,
   });
 
+  static const double _foldButtonSize = 16;
+  static const double _foldButtonRightInset = 1;
+
   final SourceGutterEntry entry;
   final bool active;
   final double lineHeight;
@@ -3296,35 +3309,34 @@ class _SourceGutterRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: active ? activeColor : Colors.transparent,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: lineHeight,
+      child: SizedBox(
+        height: lineHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
               child: Align(
-                alignment: Alignment.topRight,
+                alignment: Alignment.center,
                 child: Text('${entry.lineNumber}', style: numberStyle),
               ),
             ),
-          ),
-          const SizedBox(width: 3),
-          SizedBox(
-            width: 18,
-            height: lineHeight,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: region == null
-                  ? const SizedBox.shrink()
-                  : _SourceFoldButton(
-                      region: region,
-                      collapsed: entry.collapsed,
-                      onToggleFold: onToggleFold,
-                    ),
+            Positioned(
+              top: 0,
+              right: _foldButtonRightInset,
+              width: _foldButtonSize,
+              height: lineHeight,
+              child: Align(
+                alignment: Alignment.center,
+                child: region == null
+                    ? const SizedBox.shrink()
+                    : _SourceFoldButton(
+                        region: region,
+                        collapsed: entry.collapsed,
+                        onToggleFold: onToggleFold,
+                      ),
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -3355,14 +3367,14 @@ class _SourceFoldButton extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: () => onToggleFold(region),
           child: SizedBox.square(
-            dimension: 18,
+            dimension: _SourceGutterRow._foldButtonSize,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
               ),
               child: Icon(
                 collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
-                size: 13,
+                size: 12,
                 color: colors.mutedForeground,
               ),
             ),
@@ -3451,6 +3463,7 @@ List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
     textStyle: textStyle,
     strutStyle: strutStyle,
     textWidth: textWidth,
+    hideCollapsedStartLines: true,
   );
   for (final entry in entries) {
     final line = linesByNumber[entry.lineNumber];
@@ -3479,9 +3492,14 @@ TextPainter _sourceTextPainter(
   required TextStyle textStyle,
   required StrutStyle? strutStyle,
   required double textWidth,
+  bool hideCollapsedStartLines = false,
 }) {
   final painter = TextPainter(
-    text: controller.buildSourceTextSpan(context: context, style: textStyle),
+    text: controller.buildSourceTextSpan(
+      context: context,
+      style: textStyle,
+      hideCollapsedStartLines: hideCollapsedStartLines,
+    ),
     strutStyle: strutStyle,
     textDirection: Directionality.of(context),
     textHeightBehavior: _sourceTextHeightBehavior,

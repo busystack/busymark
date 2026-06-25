@@ -97,7 +97,6 @@ class HeaderBarTheme {
     required this.accentForegroundColor,
     required this.popoverBackgroundColor,
     required this.borderColor,
-    required this.sidebarBorderColor,
     required this.shadeColor,
     required this.modalBarrierColor,
   });
@@ -121,7 +120,6 @@ class HeaderBarTheme {
       accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
       borderColor: colors.subtleBorder,
-      sidebarBorderColor: colors.sidebarBorder,
       shadeColor: colors.shade,
       modalBarrierColor: barrier,
     );
@@ -142,7 +140,6 @@ class HeaderBarTheme {
   final Color accentForegroundColor;
   final Color popoverBackgroundColor;
   final Color borderColor;
-  final Color sidebarBorderColor;
   final Color shadeColor;
   final Color modalBarrierColor;
 
@@ -162,7 +159,6 @@ class HeaderBarTheme {
     'accentForegroundColor': _cssColor(accentForegroundColor),
     'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
     'borderColor': _cssColor(borderColor),
-    'sidebarBorderColor': _cssColor(sidebarBorderColor),
     'shadeColor': _cssColor(shadeColor),
     'modalBarrierColor': _cssColor(modalBarrierColor),
   };

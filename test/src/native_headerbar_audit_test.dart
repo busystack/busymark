@@ -180,15 +180,19 @@ void main() {
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
 
     expect(service, contains('backgroundColor: colors.view'));
     expect(service, contains('sidebarBackgroundColor: colors.sidebar'));
-    expect(service, contains('sidebarBorderColor: colors.sidebarBorder'));
+    expect(service, isNot(contains('sidebarBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#242424"'));
     expect(native, contains('kDefaultSidebarBackground[] = "#303030"'));
     expect(native, contains('.busymark-sidebar-header {'));
     expect(native, contains('background-color: %s;'));
-    expect(native, contains('border-right: 1px solid %s;'));
+    expect(native, isNot(contains('border-right: 1px solid')));
+    expect(workspace, isNot(contains('Border(right:')));
   });
 
   test('native headerbar restores the top-left corner without sidebar', () {
@@ -230,6 +234,13 @@ void main() {
 
     expect(native, contains('kHeaderButtonHeight = 32'));
     expect(native, contains('kHeaderControlHeight = 34'));
+    expect(native, contains('kHeaderSearchEntryBorderWidth = 1'));
+    expect(
+      native,
+      contains(
+        'kHeaderSearchEntryContentHeight =\n    kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2',
+      ),
+    );
     expect(native, contains('kHeaderButtonHorizontalPadding = 8'));
     expect(native, contains('kHeaderControlHorizontalPadding = 8'));
     expect(native, contains('kHeaderButtonSpacing = 8'));
@@ -239,6 +250,14 @@ void main() {
     expect(headerButtonBlock, contains('"padding: 0 %dpx;"'));
     expect(headerButtonBlock, isNot(contains('"border: 1px solid %s;"')));
     expect(headerButtonBlock, contains('"box-shadow: none;"'));
+    expect(
+      native,
+      contains(
+        'gtk_widget_set_size_request(self->search_entry, 360, kHeaderButtonHeight)',
+      ),
+    );
+    expect(native, contains('border, kHeaderSearchEntryContentHeight'));
+    expect(native, isNot(contains('"box-shadow: 0 0 0 1px %s;"')));
     expect(
       native,
       isNot(contains('"box-shadow: 0 -1px 1px %s, 0 1px 1px %s;"')),
@@ -448,6 +467,15 @@ void main() {
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));
     expect(native, contains('object-select-symbolic'));
+    final viewModeLabelPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0)',
+    );
+    final viewModeCheckPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0)',
+    );
+    expect(viewModeLabelPack, isNonNegative);
+    expect(viewModeCheckPack, isNonNegative);
+    expect(viewModeLabelPack, lessThan(viewModeCheckPack));
     expect(native, contains('button.busymark-menu-row:focus'));
     expect(native, contains('button.busymark-menu-row:active'));
     expect(native, contains('outline-width: 0;'));

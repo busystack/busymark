@@ -568,7 +568,14 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
 
-    expect(workspace, contains('static const double _gutterWidth = 58;'));
+    expect(workspace, contains('static const double _gutterWidth = 50;'));
+    expect(workspace, contains('static const double _foldButtonSize = 16;'));
+    expect(
+      workspace,
+      contains('static const double _foldButtonRightInset = 1;'),
+    );
+    expect(workspace, contains('Positioned.fill('));
+    expect(workspace, contains('alignment: Alignment.center'));
     expect(
       workspace,
       contains(

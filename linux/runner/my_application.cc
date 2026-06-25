@@ -16,6 +16,9 @@ constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
 constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderControlHeight = 34;
+constexpr gint kHeaderSearchEntryBorderWidth = 1;
+constexpr gint kHeaderSearchEntryContentHeight =
+    kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2;
 constexpr gint kHeaderButtonRadius = 8;
 constexpr gint kHeaderButtonHorizontalPadding = 8;
 constexpr gint kHeaderControlHorizontalPadding = 8;
@@ -84,7 +87,6 @@ struct _MyApplication {
   gchar* accent_foreground_color;
   gchar* popover_background_color;
   gchar* border_color;
-  gchar* sidebar_border_color;
   gchar* shade_color;
   gchar* modal_barrier_color;
   gint sidebar_width;
@@ -282,8 +284,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->popover_background_color, background);
   const gchar* border =
       css_color_or(self->border_color, "rgba(255,255,255,0.10)");
-  const gchar* sidebar_border =
-      css_color_or(self->sidebar_border_color, border);
   const gchar* shade = css_color_or(self->shade_color, "rgba(0,0,0,0.28)");
   const gchar* modal =
       css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
@@ -364,7 +364,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "border: none;"
-      "border-right: 1px solid %s;"
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
       "border-top-right-radius: 0;"
@@ -379,7 +378,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "border: 1px solid %s;"
-      "box-shadow: 0 1px 1px %s;"
+      "box-shadow: none;"
       "text-shadow: none;"
       "min-height: %dpx;"
       "border-radius: %dpx;"
@@ -387,7 +386,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}"
       ".busymark-titlebar entry.busymark-search-entry:focus {"
       "border-color: %s;"
-      "box-shadow: 0 0 0 1px %s;"
+      "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier,"
       ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header,"
@@ -535,9 +534,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       kYaruTitleButtonHorizontalMargin, kYaruTitleButtonMinSize,
       kYaruTitleButtonMinSize, kYaruTitleButtonPadding, title_button,
       title_button_hover, title_button_active, sidebar_background,
-      sidebar_border, kHeaderWindowRadius, foreground,
-      foreground, control, border, shade, kHeaderControlHeight,
-      kHeaderButtonRadius, kHeaderControlHorizontalPadding, accent, accent,
+      kHeaderWindowRadius, foreground,
+      foreground, control, border, kHeaderSearchEntryContentHeight,
+      kHeaderButtonRadius, kHeaderControlHorizontalPadding, accent,
       modal, modal, foreground, control, kHeaderButtonHeight,
       kHeaderButtonHeight, kHeaderButtonHorizontalPadding,
       kHeaderButtonRadius, kHeaderButtonHeight,
@@ -605,8 +604,6 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "popoverBackgroundColor"));
   set_css_color_field(&self->border_color,
                       fl_lookup_string_arg(args, "borderColor"));
-  set_css_color_field(&self->sidebar_border_color,
-                      fl_lookup_string_arg(args, "sidebarBorderColor"));
   set_css_color_field(&self->shade_color,
                       fl_lookup_string_arg(args, "shadeColor"));
   set_css_color_field(&self->modal_barrier_color,
@@ -899,8 +896,8 @@ static GtkWidget* create_view_mode_item(MyApplication* self,
   gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
-  gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(item), box);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
   gtk_widget_set_halign(item, GTK_ALIGN_FILL);
@@ -1146,7 +1143,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->search_entry = gtk_search_entry_new();
   gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), "Search");
   gtk_widget_set_hexpand(self->search_entry, TRUE);
-  gtk_widget_set_size_request(self->search_entry, 360, -1);
+  gtk_widget_set_size_request(self->search_entry, 360, kHeaderButtonHeight);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->search_entry),
                               "busymark-search-entry");
   g_signal_connect(self->search_entry, "search-changed",
@@ -1517,7 +1514,6 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
   g_clear_pointer(&self->border_color, g_free);
-  g_clear_pointer(&self->sidebar_border_color, g_free);
   g_clear_pointer(&self->shade_color, g_free);
   g_clear_pointer(&self->modal_barrier_color, g_free);
   g_clear_pointer(&self->view_mode, g_free);
@@ -1584,7 +1580,6 @@ static void my_application_init(MyApplication* self) {
   self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;
   self->border_color = nullptr;
-  self->sidebar_border_color = nullptr;
   self->shade_color = nullptr;
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
