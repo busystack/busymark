@@ -57,11 +57,11 @@
   "@choose": {
     "description": "Button label for choosing a file or path."
   },
-  "chooseLocation": "Escolha o local",
+  "chooseLocation": "Escolher local",
   "@chooseLocation": {
     "description": "File picker confirmation label for choosing a directory."
   },
-  "copy": "Cópia",
+  "copy": "Copiar",
   "@copy": {
     "description": "Copy command label."
   },
@@ -73,7 +73,7 @@
   "@creating": {
     "description": "Progress label while a project or topic is being created."
   },
-  "cut": "Corte",
+  "cut": "Recortar",
   "@cut": {
     "description": "Cut command label."
   },
@@ -93,7 +93,7 @@
   "@file": {
     "description": "Generic file kind label."
   },
-  "find": "Encontrar",
+  "find": "Localizar",
   "@find": {
     "description": "Find command label."
   },
@@ -109,7 +109,7 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "lightTheme": "Luz",
+  "lightTheme": "Claro",
   "@lightTheme": {
     "description": "Light theme option."
   },
@@ -125,11 +125,11 @@
   "@open": {
     "description": "Open action label."
   },
-  "outline": "Contorno",
+  "outline": "Estrutura",
   "@outline": {
     "description": "Outline sidebar tab label."
   },
-  "overwrite": "Substituir",
+  "overwrite": "Sobrescrever",
   "@overwrite": {
     "description": "Button label for overwriting a changed file."
   },
@@ -145,7 +145,7 @@
   "@preview": {
     "description": "Preview view label."
   },
-  "recent": "Recente",
+  "recent": "Recentes",
   "@recent": {
     "description": "Recent workspaces section title."
   },
@@ -157,7 +157,7 @@
   "@save": {
     "description": "Save action label."
   },
-  "search": "Procurar",
+  "search": "Pesquisar",
   "@search": {
     "description": "Search action label and field hint."
   },
@@ -169,11 +169,11 @@
   "@settings": {
     "description": "Settings action label."
   },
-  "source": "Fonte",
+  "source": "Código-fonte",
   "@source": {
     "description": "Source view label."
   },
-  "split": "Dividir",
+  "split": "Dividido",
   "@split": {
     "description": "Split view label."
   },
@@ -245,7 +245,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Alternar barra lateral",
+  "toggleSidebar": "Mostrar/ocultar barra lateral",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -269,7 +269,7 @@
   "@validation": {
     "description": "Settings section title for validation options."
   },
-  "viewMode": "Modo de visualização",
+  "viewMode": "Modo de exibição",
   "@viewMode": {
     "description": "Native header bar view mode control label."
   },
@@ -297,7 +297,7 @@
   "@openMarkdownFile": {
     "description": "Action label for opening a Markdown file."
   },
-  "markdownFileExtensions": ".md or .markdown",
+  "markdownFileExtensions": ".md ou .markdown",
   "@markdownFileExtensions": {
     "description": "Subtitle describing supported Markdown file extensions."
   },
@@ -317,23 +317,23 @@
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Crie um novo documento Markdown não salvo",
+  "shortcutNewDocumentDescription": "Criar um novo documento Markdown não salvo",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Abra um arquivo, pasta ou projeto Markdown do Writerside",
+  "shortcutOpenDescription": "Abrir um arquivo Markdown, uma pasta ou um projeto Writerside",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "Salve o arquivo Markdown atual",
+  "shortcutSaveDescription": "Salvar o arquivo Markdown atual",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "Pesquisar o espaço de trabalho atual",
+  "shortcutFindDescription": "Pesquisar no espaço de trabalho atual",
   "@shortcutFindDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "Mostrar esta referência de atalho de teclado",
+  "shortcutKeyboardShortcutsDescription": "Mostrar esta referência de atalhos de teclado",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -341,7 +341,7 @@
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Selecione todo o texto do editor",
+  "shortcutSelectAllDescription": "Selecionar todo o texto do editor",
   "@shortcutSelectAllDescription": {
     "description": "Keyboard shortcut description for selecting all text."
   },
@@ -349,7 +349,7 @@
   "@shortcutCutDescription": {
     "description": "Keyboard shortcut description for cut."
   },
-  "shortcutCopyDescription": "Copie o texto selecionado",
+  "shortcutCopyDescription": "Copiar o texto selecionado",
   "@shortcutCopyDescription": {
     "description": "Keyboard shortcut description for copy."
   },
@@ -357,7 +357,7 @@
   "@shortcutPasteDescription": {
     "description": "Keyboard shortcut description for paste."
   },
-  "shortcutPastePlainTextDescription": "Cole o texto da área de transferência sem formatação",
+  "shortcutPastePlainTextDescription": "Colar o texto da área de transferência sem formatação",
   "@shortcutPastePlainTextDescription": {
     "description": "Keyboard shortcut description for plain text paste."
   },
@@ -365,7 +365,7 @@
   "@shortcutUndoDescription": {
     "description": "Keyboard shortcut description for undo."
   },
-  "shortcutRedoDescription": "Refaça a última edição desfeita",
+  "shortcutRedoDescription": "Refazer a última edição desfeita",
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
@@ -393,7 +393,7 @@
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
-  "shortcutLinkDescription": "Insira ou edite um link",
+  "shortcutLinkDescription": "Inserir ou editar um link",
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
@@ -409,31 +409,31 @@
   "@shortcutGroupBlocks": {
     "description": "Keyboard shortcut group for block styles."
   },
-  "shortcutParagraphDescription": "Defina o bloco atual como parágrafo",
+  "shortcutParagraphDescription": "Definir o bloco atual como parágrafo",
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "Defina o bloco atual para Título 1",
+  "shortcutHeading1Description": "Definir o bloco atual como Título 1",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "Defina o bloco atual para Título 2",
+  "shortcutHeading2Description": "Definir o bloco atual como Título 2",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "Defina o bloco atual para Título 3",
+  "shortcutHeading3Description": "Definir o bloco atual como Título 3",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "Defina o bloco atual para o Título 4",
+  "shortcutHeading4Description": "Definir o bloco atual como Título 4",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "Defina o bloco atual para o Título 5",
+  "shortcutHeading5Description": "Definir o bloco atual como Título 5",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "Defina o bloco atual para o Título 6",
+  "shortcutHeading6Description": "Definir o bloco atual como Título 6",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
@@ -461,7 +461,7 @@
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "Alternar formatação da lista de verificação",
+  "shortcutChecklistDescription": "Alternar formatação de lista de verificação",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
@@ -477,7 +477,7 @@
   "@createWritersideProject": {
     "description": "Welcome screen action for creating a Writerside project."
   },
-  "createWritersideProjectDescription": "Inicie um projeto local compatível com Writerside",
+  "createWritersideProjectDescription": "Iniciar um projeto local compatível com Writerside",
   "@createWritersideProjectDescription": {
     "description": "Welcome screen subtitle for creating a Writerside project."
   },
@@ -489,7 +489,7 @@
   "@defaultInstanceName": {
     "description": "Default Writerside instance name shown in the create project dialog."
   },
-  "defaultStartTopicTitle": "Começando",
+  "defaultStartTopicTitle": "Primeiros passos",
   "@defaultStartTopicTitle": {
     "description": "Default start topic title shown in the create project dialog."
   },
@@ -553,7 +553,7 @@
   "@editorFontSize": {
     "description": "Editor font size setting label."
   },
-  "validateOnEdit": "Validar na edição",
+  "validateOnEdit": "Validar ao editar",
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
@@ -577,7 +577,7 @@
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "Você tem alterações não salvas em {fileName}. Salvá-los antes de continuar?",
+  "unsavedChangesMessage": "Você tem alterações não salvas em {fileName}. Salvá-las antes de continuar?",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -590,7 +590,7 @@
   "@fileChangedOnDisk": {
     "description": "File changed confirmation dialog title."
   },
-  "fileChangedOnDiskMessage": "Este arquivo foi alterado no disco desde que você o abriu. Substituir?",
+  "fileChangedOnDiskMessage": "Este arquivo foi alterado no disco desde que foi aberto. Sobrescrever?",
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
@@ -610,15 +610,15 @@
   "@taskList": {
     "description": "WYSIWYG toolbar tooltip for task list."
   },
-  "toggleTaskChecked": "Alternar tarefa marcada",
+  "toggleTaskChecked": "Marcar/desmarcar tarefa",
   "@toggleTaskChecked": {
     "description": "WYSIWYG toolbar tooltip for toggling task state."
   },
-  "indentListItem": "Item da lista de recuo",
+  "indentListItem": "Recuar item da lista",
   "@indentListItem": {
     "description": "WYSIWYG toolbar tooltip for indenting a list item."
   },
-  "outdentListItem": "Item da lista ultrapassado",
+  "outdentListItem": "Remover recuo do item da lista",
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
@@ -630,7 +630,7 @@
   "@codeBlock": {
     "description": "Code block command or preview label."
   },
-  "codeBlockLanguage": "Linguagem de bloco de código",
+  "codeBlockLanguage": "Linguagem do bloco de código",
   "@codeBlockLanguage": {
     "description": "Dialog title and toolbar tooltip for code block language."
   },
@@ -642,19 +642,19 @@
   "@inlineImage": {
     "description": "Inline image command label."
   },
-  "table": "Mesa",
+  "table": "Tabela",
   "@table": {
     "description": "Table command label."
   },
-  "thematicBreak": "Pausa temática",
+  "thematicBreak": "Separador temático",
   "@thematicBreak": {
     "description": "Thematic break command label."
   },
-  "bold": "Audacioso",
+  "bold": "Negrito",
   "@bold": {
     "description": "Bold command label."
   },
-  "italic": "itálico",
+  "italic": "Itálico",
   "@italic": {
     "description": "Italic command label."
   },
@@ -674,7 +674,7 @@
   "@link": {
     "description": "Link command and preview label."
   },
-  "hardLineBreak": "Quebra de linha dura",
+  "hardLineBreak": "Quebra de linha forçada",
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
@@ -814,7 +814,7 @@
   "@tableCellDefault": {
     "description": "Default cell text for newly inserted table cells."
   },
-  "noImageSource": "Nenhuma fonte de imagem",
+  "noImageSource": "Nenhuma origem de imagem",
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
@@ -891,11 +891,11 @@
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "Não Writerside TOC",
+  "noWritersideToc": "Nenhum TOC do Writerside",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
-  "tocSection": "Seção TOC",
+  "tocSection": "Seção do TOC",
   "@tocSection": {
     "description": "Fallback label for a Writerside TOC section."
   },
@@ -903,7 +903,7 @@
   "@newTopic": {
     "description": "Create new Writerside topic action label."
   },
-  "newChildTopic": "Novo tópico filho",
+  "newChildTopic": "Novo subtópico",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
@@ -952,7 +952,7 @@
   "@createWritersideTopicFailed": {
     "description": "Fallback error shown when topic creation fails."
   },
-  "noOutline": "Sem esboço",
+  "noOutline": "Sem estrutura",
   "@noOutline": {
     "description": "Empty state shown when a document has no outline."
   },
@@ -982,11 +982,11 @@
   "@foldKindList": {
     "description": "Fold kind label for a list."
   },
-  "foldKindQuote": "citar",
+  "foldKindQuote": "citação",
   "@foldKindQuote": {
     "description": "Fold kind label for a blockquote."
   },
-  "foldKindTag": "marcação",
+  "foldKindTag": "tag",
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
@@ -1069,7 +1069,7 @@
   "@noResults": {
     "description": "Search empty state."
   },
-  "searchResultLine": "{relativePath} - Linha {lineNumber}",
+  "searchResultLine": "{relativePath} - linha {lineNumber}",
   "@searchResultLine": {
     "description": "Search result subtitle with file path and line number.",
     "placeholders": {
@@ -1093,7 +1093,7 @@
   "@documentKindWritersideMarkdownTopic": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideXmlTopic": "Writerside XML tópico",
+  "documentKindWritersideXmlTopic": "Tópico XML do Writerside",
   "@documentKindWritersideXmlTopic": {
     "description": "Search result document kind label."
   },
@@ -1157,7 +1157,7 @@
   "@workspaceErrorChooseWhereToSaveMarkdown": {
     "description": "Workspace error message shown when an untitled file needs a save location."
   },
-  "workspaceErrorSaveBlockedFileChangedOnDisk": "Salvar bloqueado: arquivo alterado no disco.",
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Salvamento bloqueado: o arquivo foi alterado no disco.",
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
@@ -1404,7 +1404,7 @@
       }
     }
   },
-  "diagnosticMarkdownFrontMatterMalformed": "O assunto principal não está encerrado.",
+  "diagnosticMarkdownFrontMatterMalformed": "O front matter não foi fechado.",
   "@diagnosticMarkdownFrontMatterMalformed": {
     "description": "Markdown parser diagnostic for unclosed front matter."
   },
@@ -1457,19 +1457,19 @@
       }
     }
   },
-  "diagnosticWritersideConfigInvalidRoot": "A raiz dowriterside.cfg deve ser <ihp>.",
+  "diagnosticWritersideConfigInvalidRoot": "A raiz de writerside.cfg deve ser <ihp>.",
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "a declaração de snippets está faltando src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "A declaração de snippets está sem src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "A declaração de grupos de instâncias está faltando src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "A declaração de grupos de instâncias está sem src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
-  "diagnosticWritersideConfigInvalidKeymapsMode": "Modo de mapas de teclado não suportado: {mode}",
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Modo de mapas de teclado não compatível: {mode}",
   "@diagnosticWritersideConfigInvalidKeymapsMode": {
     "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
     "placeholders": {
@@ -1478,11 +1478,11 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "A declaração da instância está faltando src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "A declaração de instância está sem src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "Writerside.cfg não registra uma instância.",
+  "diagnosticWritersideConfigMissingInstance": "O arquivo writerside.cfg não registra uma instância.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
@@ -1494,7 +1494,7 @@
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "A haste do arquivo de árvore não corresponde ao ID da instância \"{id}\".",
+  "diagnosticWritersideTreeIdMismatch": "O nome-base do arquivo de árvore não corresponde ao ID da instância \"{id}\".",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1503,7 +1503,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "A instância que não é da biblioteca não tem página inicial.",
+  "diagnosticWritersideTreeMissingStartPage": "A instância que não é de biblioteca não tem página inicial.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -1516,7 +1516,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "O tópico \"{topic}\" aparece mais de uma vez nesta instância TOC.",
+  "diagnosticWritersideTreeDuplicateTopic": "O tópico \"{topic}\" aparece mais de uma vez no TOC desta instância.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1525,7 +1525,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableMalformedDeclaration": "A declaração da variável deve ter nome e valor.",
+  "diagnosticWritersideVariableMalformedDeclaration": "A declaração de variável deve ter nome e valor.",
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
@@ -1560,7 +1560,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicInvalidRoot": "A raiz .topic deve ser <tópico>.",
+  "diagnosticWritersideTopicInvalidRoot": "A raiz .topic deve ser <topic>.",
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
@@ -1589,15 +1589,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "<a> está faltando href.",
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> está sem href.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
-  "diagnosticWritersideConfigMissing": "O modo Writerside requerwriterside.cfg.",
+  "diagnosticWritersideConfigMissing": "O modo Writerside requer writerside.cfg.",
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "O diretório de configuração de compilação configurado está ausente: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "O diretório de configuração de build configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1606,7 +1606,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "O diretório de especificações da API configurada está ausente: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "O diretório de especificações de API configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -1615,7 +1615,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "O diretório de snippets configurados está ausente: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "O diretório de snippets configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -1624,7 +1624,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "O arquivo de variáveis ​​configuradas está faltando: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "O arquivo de variáveis configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -1633,7 +1633,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "O arquivo de categorias configuradas está faltando: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "O arquivo de categorias configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -1642,7 +1642,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "O arquivo de grupos de instâncias configurados está ausente: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "O arquivo de grupos de instâncias configurado está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -1705,7 +1705,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "TOC faz referência ao tópico ausente \"{topic}\".",
+  "diagnosticWritersideTreeMissingTopic": "O TOC faz referência ao tópico ausente \"{topic}\".",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1732,7 +1732,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "O link do tópico \"{destination}\" não é resolvido.",
+  "diagnosticWritersideTopicLinkUnresolved": "O link de tópico \"{destination}\" não foi resolvido.",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -1753,11 +1753,11 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "<incluir> está faltando.",
+  "diagnosticWritersideIncludeMissingFrom": "<include> está sem from.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "A fonte de inclusão \"{from}\" não existe.",
+  "diagnosticWritersideIncludeSourceMissing": "A origem da inclusão \"{from}\" não existe.",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -1778,7 +1778,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "Veja também a categoria \"{ref}\" não foi declarada.",
+  "diagnosticWritersideCategoryUnresolved": "A categoria \"{ref}\" de Veja também não foi declarada.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
@@ -1787,7 +1787,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAmbiguousReference": "A referência do tópico \"{reference}\" é ambígua.",
+  "diagnosticWritersideTopicAmbiguousReference": "A referência de tópico \"{reference}\" é ambígua.",
   "@diagnosticWritersideTopicAmbiguousReference": {
     "description": "Writerside module diagnostic for an ambiguous topic reference.",
     "placeholders": {

@@ -13,7 +13,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'Markdown і Writerside-сумісний редактор документації.';
+      'Редактор документації Markdown, сумісний із Writerside.';
 
   @override
   String get aboutBusyMark => 'Про BusyMark';
@@ -25,10 +25,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get aboutDescription =>
-      'BusyMark — це орієнтований редактор документації Markdown і Writerside для локальних проектів.';
+      'BusyMark — спеціалізований редактор документації Markdown і Writerside для локальних проєктів.';
 
   @override
-  String get advanced => 'Просунутий';
+  String get advanced => 'Додатково';
 
   @override
   String get appearance => 'Зовнішній вигляд';
@@ -40,19 +40,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get back => 'Назад';
 
   @override
-  String get bottomLeft => 'Внизу зліва';
+  String get bottomLeft => 'Внизу ліворуч';
 
   @override
-  String get bottomRight => 'Праворуч внизу';
+  String get bottomRight => 'Внизу праворуч';
 
   @override
   String get cancel => 'Скасувати';
 
   @override
-  String get choose => 'Виберіть';
+  String get choose => 'Вибрати';
 
   @override
-  String get chooseLocation => 'Виберіть місце розташування';
+  String get chooseLocation => 'Вибрати розташування';
 
   @override
   String get copy => 'Копіювати';
@@ -61,37 +61,37 @@ class AppLocalizationsUk extends AppLocalizations {
   String get create => 'Створити';
 
   @override
-  String get creating => 'Створення...';
+  String get creating => 'Створення…';
 
   @override
   String get cut => 'Вирізати';
 
   @override
-  String get darkTheme => 'Темний';
+  String get darkTheme => 'Темна';
 
   @override
   String get discard => 'Відкинути';
 
   @override
-  String get editor => 'редактор';
+  String get editor => 'Редактор';
 
   @override
   String get file => 'Файл';
 
   @override
-  String get find => 'знайти';
+  String get find => 'Знайти';
 
   @override
   String get folder => 'Папка';
 
   @override
-  String get insert => 'Вставка';
+  String get insert => 'Вставити';
 
   @override
   String get keyboardShortcuts => 'Комбінації клавіш';
 
   @override
-  String get lightTheme => 'світло';
+  String get lightTheme => 'Світла';
 
   @override
   String get mainMenu => 'Головне меню';
@@ -100,7 +100,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get markdown => 'Markdown';
 
   @override
-  String get open => 'ВІДЧИНЕНО';
+  String get open => 'Відкрити';
 
   @override
   String get outline => 'Контур';
@@ -124,7 +124,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get redo => 'Повторити';
 
   @override
-  String get save => 'зберегти';
+  String get save => 'Зберегти';
 
   @override
   String get search => 'Пошук';
@@ -139,10 +139,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get source => 'Джерело';
 
   @override
-  String get split => 'Спліт';
+  String get split => 'Розділений';
 
   @override
-  String get systemTheme => 'система';
+  String get systemTheme => 'Системна';
 
   @override
   String get theme => 'Тема';
@@ -229,18 +229,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fileTypeImages => 'Зображення';
 
   @override
-  String get openMarkdownFile => 'Відкрийте файл Markdown';
+  String get openMarkdownFile => 'Відкрити файл Markdown';
 
   @override
-  String get markdownFileExtensions => '.md or .markdown';
+  String get markdownFileExtensions => '.md або .markdown';
 
   @override
   String get openFolderOrWritersideProject =>
-      'Відкрийте папку або проект Writerside';
+      'Відкрити папку або проєкт Writerside';
 
   @override
   String get markdownFolderOrWritersideProject =>
-      'Папка Markdown або проект, сумісний із Writerside';
+      'Папка Markdown або проєкт, сумісний із Writerside';
 
   @override
   String get shortcutGroupFile => 'Файл';
@@ -250,147 +250,147 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Створіть новий незбережений документ Markdown';
+      'Створити новий незбережений документ Markdown';
 
   @override
   String get shortcutOpenDescription =>
-      'Відкрийте файл Markdown, папку або проект Writerside';
+      'Відкрити файл Markdown, папку або проєкт Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Збережіть поточний файл Markdown';
+  String get shortcutSaveDescription => 'Зберегти поточний файл Markdown';
 
   @override
-  String get shortcutFindDescription => 'Пошук у поточній робочій області';
+  String get shortcutFindDescription => 'Шукати в поточній робочій області';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Показати це посилання на комбінацію клавіш';
+      'Показати довідку з комбінацій клавіш';
 
   @override
   String get shortcutGroupTextEditing => 'Редагування тексту';
 
   @override
-  String get shortcutSelectAllDescription => 'Виділіть увесь текст редактора';
+  String get shortcutSelectAllDescription => 'Виділити весь текст редактора';
 
   @override
   String get shortcutCutDescription => 'Вирізати виділений текст';
 
   @override
-  String get shortcutCopyDescription => 'Скопіюйте виділений текст';
+  String get shortcutCopyDescription => 'Копіювати виділений текст';
 
   @override
   String get shortcutPasteDescription => 'Вставити з буфера обміну';
 
   @override
   String get shortcutPastePlainTextDescription =>
-      'Вставити текст буфера обміну без форматування';
+      'Вставити текст із буфера обміну без форматування';
 
   @override
   String get shortcutUndoDescription => 'Скасувати останнє редагування';
 
   @override
-  String get shortcutRedoDescription => 'Повторити останню скасовану правку';
+  String get shortcutRedoDescription => 'Повторити останню скасовану зміну';
 
   @override
-  String get clearEditorSelection => 'Очистити вибір редактора';
+  String get clearEditorSelection => 'Очистити виділення в редакторі';
 
   @override
   String get shortcutClearEditorSelectionDescription =>
-      'Залишити поточний вибір редактора або фокус пошуку';
+      'Очистити поточне виділення в редакторі або фокус пошуку';
 
   @override
   String get shortcutGroupFormatting => 'Форматування';
 
   @override
   String get shortcutBoldDescription =>
-      'Виділити виділений текст жирним шрифтом';
+      'Застосувати жирний шрифт до виділеного тексту';
 
   @override
-  String get shortcutItalicDescription => 'Увімкнути виділений текст курсивом';
+  String get shortcutItalicDescription =>
+      'Застосувати курсив до виділеного тексту';
 
   @override
   String get shortcutUnderlineDescription =>
-      'Увімкнути підкреслення виділеного тексту';
+      'Застосувати підкреслення до виділеного тексту';
 
   @override
-  String get shortcutLinkDescription => 'Вставте або відредагуйте посилання';
+  String get shortcutLinkDescription => 'Вставити або відредагувати посилання';
 
   @override
   String get shortcutInlineCodeDescription =>
-      'Перемкнути вбудований код у виділеному тексті';
+      'Застосувати форматування вбудованого коду до виділеного тексту';
 
   @override
   String get shortcutStrikethroughDescription =>
-      'Увімкнути закреслення виділеного тексту';
+      'Застосувати закреслення до виділеного тексту';
 
   @override
   String get shortcutGroupBlocks => 'Блоки';
 
   @override
-  String get shortcutParagraphDescription =>
-      'Установити для поточного блоку абзац';
+  String get shortcutParagraphDescription => 'Зробити поточний блок абзацом';
 
   @override
   String get shortcutHeading1Description =>
-      'Установіть для поточного блоку Заголовок 1';
+      'Зробити поточний блок заголовком 1';
 
   @override
   String get shortcutHeading2Description =>
-      'Установіть для поточного блоку Заголовок 2';
+      'Зробити поточний блок заголовком 2';
 
   @override
   String get shortcutHeading3Description =>
-      'Установіть для поточного блоку Заголовок 3';
+      'Зробити поточний блок заголовком 3';
 
   @override
   String get shortcutHeading4Description =>
-      'Установіть для поточного блоку Заголовок 4';
+      'Зробити поточний блок заголовком 4';
 
   @override
   String get shortcutHeading5Description =>
-      'Установіть для поточного блоку Заголовок 5';
+      'Зробити поточний блок заголовком 5';
 
   @override
   String get shortcutHeading6Description =>
-      'Установіть для поточного блоку Заголовок 6';
+      'Зробити поточний блок заголовком 6';
 
   @override
-  String get shortcutGroupLists => 'списки';
+  String get shortcutGroupLists => 'Списки';
 
   @override
   String get numberedList => 'Нумерований список';
 
   @override
   String get shortcutNumberedListDescription =>
-      'Перемкнути форматування нумерованого списку';
+      'Увімкнути або вимкнути форматування нумерованого списку';
 
   @override
   String get bulletedList => 'Маркірований список';
 
   @override
   String get shortcutBulletedListDescription =>
-      'Перемкнути форматування маркованого списку';
+      'Увімкнути або вимкнути форматування маркованого списку';
 
   @override
   String get checklist => 'Контрольний список';
 
   @override
   String get shortcutChecklistDescription =>
-      'Перемкнути форматування контрольного списку';
+      'Увімкнути або вимкнути форматування контрольного списку';
 
   @override
   String get createMarkdownFile => 'Створити файл Markdown';
 
   @override
   String get createMarkdownFileDescription =>
-      'Запустіть незбережений локальний документ Markdown';
+      'Створити незбережений локальний документ Markdown';
 
   @override
-  String get createWritersideProject => 'Створіть проект Writerside';
+  String get createWritersideProject => 'Створити проєкт Writerside';
 
   @override
   String get createWritersideProjectDescription =>
-      'Розпочніть локальний проект, сумісний із Writerside';
+      'Створити локальний проєкт, сумісний із Writerside';
 
   @override
   String get defaultProjectName => 'Документація';
@@ -402,43 +402,44 @@ class AppLocalizationsUk extends AppLocalizations {
   String get defaultStartTopicTitle => 'Початок роботи';
 
   @override
-  String get projectName => 'Назва проекту';
+  String get projectName => 'Назва проєкту';
 
   @override
   String get directoryName => 'Назва каталогу';
 
   @override
-  String get instanceName => 'Ім\'я екземпляра';
+  String get instanceName => 'Назва екземпляра';
 
   @override
-  String get instanceId => 'ID екземпляра';
+  String get instanceId => 'Ідентифікатор екземпляра';
 
   @override
-  String get startTopicTitle => 'Почати назву теми';
+  String get startTopicTitle => 'Назва початкової теми';
 
   @override
   String get location => 'Розташування';
 
   @override
-  String get projectNameRequired => 'Потрібно вказати назву проекту.';
+  String get projectNameRequired => 'Потрібно вказати назву проєкту.';
 
   @override
   String get directoryNameRequired => 'Потрібно вказати назву каталогу.';
 
   @override
   String get useSingleSafeDirectoryName =>
-      'Використовуйте єдину назву безпечного каталогу.';
+      'Використовуйте одну безпечну назву каталогу.';
 
   @override
   String get useLowercaseIdentifier =>
       'Використовуйте ідентифікатор у нижньому регістрі з літерами, цифрами, підкресленням або дефісом.';
 
   @override
-  String get startTopicTitleRequired => 'Потрібна назва початкової теми.';
+  String get startTopicTitleRequired =>
+      'Потрібно вказати назву початкової теми.';
 
   @override
   String get createWritersideProjectFailed =>
-      'Не вдалося створити проект Writerside.';
+      'Не вдалося створити проєкт Writerside.';
 
   @override
   String get settingsTitle => 'Налаштування BusyMark';
@@ -450,7 +451,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get editorFontSize => 'Розмір шрифту редактора';
 
   @override
-  String get validateOnEdit => 'Підтвердити під час редагування';
+  String get validateOnEdit => 'Перевіряти під час редагування';
 
   @override
   String get clearRecentWorkspaces => 'Очистити останні робочі області';
@@ -470,7 +471,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'У вас є незбережені зміни в $fileName. Зберегти їх, перш ніж продовжити?';
+    return 'У $fileName є незбережені зміни. Зберегти їх перед продовженням?';
   }
 
   @override
@@ -484,7 +485,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get untitledMarkdownFileName => 'Untitled.md';
 
   @override
-  String get unorderedList => 'Невпорядкований список';
+  String get unorderedList => 'Маркований список';
 
   @override
   String get orderedList => 'Упорядкований список';
@@ -493,19 +494,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get taskList => 'Список завдань';
 
   @override
-  String get toggleTaskChecked => 'Переключити завдання';
+  String get toggleTaskChecked => 'Позначити або зняти позначку із завдання';
 
   @override
-  String get indentListItem => 'Відступ для елемента списку';
+  String get indentListItem => 'Збільшити відступ елемента списку';
 
   @override
-  String get outdentListItem => 'Відступити елемент списку';
+  String get outdentListItem => 'Зменшити відступ елемента списку';
 
   @override
-  String get blockquote => 'Блок цитати';
+  String get blockquote => 'Цитата';
 
   @override
-  String get codeBlock => 'Кодовий блок';
+  String get codeBlock => 'Блок коду';
 
   @override
   String get codeBlockLanguage => 'Мова блоку коду';
@@ -520,16 +521,16 @@ class AppLocalizationsUk extends AppLocalizations {
   String get table => 'Таблиця';
 
   @override
-  String get thematicBreak => 'Тематична перерва';
+  String get thematicBreak => 'Горизонтальна лінія';
 
   @override
-  String get bold => 'жирний';
+  String get bold => 'Жирний';
 
   @override
   String get italic => 'Курсив';
 
   @override
-  String get underline => 'Підкреслити';
+  String get underline => 'Підкреслений';
 
   @override
   String get strikethrough => 'Закреслення';
@@ -541,7 +542,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get link => 'Посилання';
 
   @override
-  String get hardLineBreak => 'Жорсткий розрив рядка';
+  String get hardLineBreak => 'Примусовий розрив рядка';
 
   @override
   String get textStyle => 'Стиль тексту';
@@ -595,10 +596,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get insertRowAbove => 'Вставте рядок вище';
+  String get insertRowAbove => 'Вставити рядок вище';
 
   @override
-  String get insertRowBelow => 'Вставте рядок нижче';
+  String get insertRowBelow => 'Вставити рядок нижче';
 
   @override
   String get deleteRow => 'Видалити рядок';
@@ -607,7 +608,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tableHeaderHint => 'Заголовок';
 
   @override
-  String get tableCellHint => 'Стільниковий';
+  String get tableCellHint => 'Клітинка';
 
   @override
   String get language => 'Мова';
@@ -628,7 +629,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get columns => 'Стовпці';
 
   @override
-  String get rows => 'рядки';
+  String get rows => 'Рядки';
 
   @override
   String tableHeaderNumber(int columnNumber) {
@@ -636,7 +637,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get tableCellDefault => 'Стільниковий';
+  String get tableCellDefault => 'Клітинка';
 
   @override
   String get noImageSource => 'Немає джерела зображення';
@@ -689,7 +690,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get toc => 'TOC';
 
   @override
-  String get markdownUnsaved => 'Markdown - незбережено';
+  String get markdownUnsaved => 'Markdown — незбережено';
 
   @override
   String workspaceDetail(String kind, int count) {
@@ -701,14 +702,14 @@ class AppLocalizationsUk extends AppLocalizations {
       few: '$count файли',
       one: '$count файл',
     );
-    return '$kind - $_temp0';
+    return '$kind — $_temp0';
   }
 
   @override
   String get noFiles => 'Немає файлів';
 
   @override
-  String get noWritersideToc => 'Немає Writerside TOC';
+  String get noWritersideToc => 'Немає TOC Writerside';
 
   @override
   String get tocSection => 'розділ TOC';
@@ -736,7 +737,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get useSingleSafeFileName =>
-      'Використовуйте єдине безпечне ім\'я файлу.';
+      'Використовуйте одну безпечну назву файлу.';
 
   @override
   String useExpectedExtension(String extension) {
@@ -755,7 +756,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Не вдалося створити тему Writerside.';
 
   @override
-  String get noOutline => 'Без контуру';
+  String get noOutline => 'Немає структури';
 
   @override
   String expandKind(String kind) {
@@ -780,7 +781,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get foldKindTag => 'тег';
 
   @override
-  String get noPreview => 'Без попереднього перегляду';
+  String get noPreview => 'Немає попереднього перегляду';
 
   @override
   String get note => 'Примітка';
@@ -789,7 +790,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tip => 'Підказка';
 
   @override
-  String get warning => 'УВАГА';
+  String get warning => 'Попередження';
 
   @override
   String get tabs => 'Вкладки';
@@ -807,7 +808,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get topic => 'Тема';
 
   @override
-  String get chapter => 'Розділ';
+  String get chapter => 'Глава';
 
   @override
   String couldNotOpenTarget(String target) {
@@ -816,12 +817,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'Цільове посилання не знайдено: $targetPath';
+    return 'Ціль посилання не знайдено: $targetPath';
   }
 
   @override
   String get cannotOpenFileTypeInEditor =>
-      'Неможливо відкрити цей тип файлу в редакторі';
+      'Цей тип файлу неможливо відкрити в редакторі';
 
   @override
   String anchorNotFound(String anchor) {
@@ -836,7 +837,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath - лінія $lineNumber';
+    return '$relativePath — рядок $lineNumber';
   }
 
   @override
@@ -846,10 +847,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get documentKindMarkdownFile => 'Файл Markdown';
 
   @override
-  String get documentKindWritersideMarkdownTopic => 'Тема Writerside Markdown';
+  String get documentKindWritersideMarkdownTopic => 'Markdown-тема Writerside';
 
   @override
-  String get documentKindWritersideXmlTopic => 'Тема Writerside XML';
+  String get documentKindWritersideXmlTopic => 'XML-тема Writerside';
 
   @override
   String get documentKindWritersideTree => 'Дерево Writerside';
@@ -873,7 +874,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String workspaceErrorCreateWritersideProjectFailed(String error) {
-    return 'Не вдалося створити проект Writerside: $error';
+    return 'Не вдалося створити проєкт Writerside: $error';
   }
 
   @override
@@ -911,12 +912,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'Цільовий каталог уже існує і не є порожнім: $path';
+    return 'Цільовий каталог уже існує та не є порожнім: $path';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'Цільовий шлях уже існує і не є каталогом: $path';
+    return 'Цільовий шлях уже існує та не є каталогом: $path';
   }
 
   @override
@@ -933,22 +934,22 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get errorProjectNameRequired => 'Потрібно вказати назву проекту.';
+  String get errorProjectNameRequired => 'Потрібно вказати назву проєкту.';
 
   @override
   String get errorDirectoryNameRequired => 'Потрібно вказати назву каталогу.';
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'Ім’я каталогу має бути одним сегментом безпечного шляху.';
+      'Назва каталогу має бути одним безпечним сегментом шляху.';
 
   @override
   String get errorInstanceIdInvalid =>
-      'ID екземпляра має починатися з малої літери та містити лише малі літери, цифри, символи підкреслення та дефіси.';
+      'Ідентифікатор екземпляра має починатися з малої літери та містити лише малі літери, цифри, підкреслення та дефіси.';
 
   @override
   String get errorTopicFileInvalid =>
-      'Назва файлу теми має бути назвою файлу Markdown без роздільників шляху.';
+      'Назва файлу теми має бути назвою Markdown-файлу без роздільників шляху.';
 
   @override
   String get errorTopicTitleRequired => 'Необхідно вказати назву теми.';
@@ -964,7 +965,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Модуль Writerside не має дерева примірників довідки.';
+      'У модулі Writerside немає дерева екземпляра довідки.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -973,7 +974,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'ID теми \"$topicId\" уже існує в цьому модулі довідки.';
+    return 'Ідентифікатор теми «$topicId» уже існує в цьому модулі довідки.';
   }
 
   @override
@@ -983,16 +984,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorReferenceTopicMissing(String topic) {
-    return 'Довідкова тема відсутня у вибраному дереві: $topic';
+    return 'Еталонна тема відсутня у вибраному дереві: $topic';
   }
 
   @override
   String get errorTopicsRootUnsafe =>
-      'Корінь теми має бути безпечним відносним каталогом.';
+      'Корінь тем має бути безпечним відносним каталогом.';
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'Назва файлу теми має складатися з одного сегмента безпечного шляху.';
+      'Назва файлу теми має бути одним безпечним сегментом шляху.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -1015,16 +1016,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceScanSkipped =>
-      'Виявлено великий робочий простір. Деякі файли було пропущено, щоб програма не реагувала.';
+      'Виявлено великий робочий простір. Деякі файли пропущено, щоб програма не перестала відповідати.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
-    return 'Не вдалося перевірити запис робочої області: $error';
+    return 'Не вдалося перевірити елемент робочої області: $error';
   }
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'Файл перевищує обмеження бета-версії автоматичного аналізу.';
+      'Файл перевищує бета-обмеження для автоматичного аналізу.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1037,20 +1038,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'Дубльований ID заголовка \"$id\".';
+    return 'Дубльований ідентифікатор заголовка «$id».';
   }
 
   @override
   String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'Додаткові заголовки H1 верхнього рівня розглядаються як розділи.';
+      'Додаткові заголовки H1 верхнього рівня розглядаються як глави.';
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Тема Writerside Markdown не має назви H1 або передньої частини.';
+      'Markdown-тема Writerside не має заголовка H1 або метаданих front matter.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
-      'У теми XML відсутній заголовок.';
+      'XML-тема не має заголовка.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -1059,10 +1060,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'Передня матерія не закрита.';
+      'Блок front matter не закрито.';
 
   @override
-  String get diagnosticMarkdownRawHtmlUnsafe => 'Небезпечний елемент HTML.';
+  String get diagnosticMarkdownRawHtmlUnsafe => 'Небезпечний HTML-елемент.';
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
@@ -1086,7 +1087,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'Недійсний XML: $message';
+    return 'Некоректний XML: $message';
   }
 
   @override
@@ -1095,20 +1096,20 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'в декларації фрагментів відсутній src.';
+      'У декларації snippets відсутній src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'в декларації instance-groups відсутній src.';
+      'У декларації instance-groups відсутній src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'Непідтримуваний режим розкладок клавіш: $mode';
+    return 'Непідтримуваний режим keymaps: $mode';
   }
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'В декларації екземпляра відсутній src.';
+      'У декларації instance відсутній src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
@@ -1116,7 +1117,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      'Корінь .tree має бути <профіль-примірника>.';
+      'Корінь .tree має бути <instance-profile>.';
 
   @override
   String get diagnosticWritersideTreeMissingId =>
@@ -1124,12 +1125,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'Стовбур файлу дерева не відповідає ідентифікатору екземпляра \"$id\".';
+    return 'Ім’я файлу дерева не відповідає ідентифікатору екземпляра «$id».';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Примірник, який не є бібліотекою, не містить початкової сторінки.';
+      'Екземпляр, який не є бібліотекою, не має початкової сторінки.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -1138,7 +1139,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'Тема \"$topic\" з\'являється більше одного разу в цьому екземплярі TOC.';
+    return 'Тема «$topic» з’являється більше одного разу в цьому TOC екземпляра.';
   }
 
   @override
@@ -1147,7 +1148,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'Змінна \"$name\" оголошується більше одного разу.';
+    return 'Змінна «$name» оголошена більше одного разу.';
   }
 
   @override
@@ -1156,12 +1157,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'Категорія \"$id\" оголошується більше одного разу.';
+    return 'Категорія «$id» оголошена більше одного разу.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'Порядок категорій \"$order\" оголошується кілька разів.';
+    return 'Порядок категорії «$order» оголошено кілька разів.';
   }
 
   @override
@@ -1170,16 +1171,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
-      'У теми XML відсутній кореневий ідентифікатор.';
+      'У XML-теми відсутній кореневий ідентифікатор.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'Кореневий ідентифікатор теми XML \"$id\" має відповідати назві файлу \"$expectedId\".';
+    return 'Кореневий ідентифікатор XML-теми «$id» має відповідати назві файлу «$expectedId».';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'Ідентифікатор елемента \"$elementId\" з\'являється більше одного разу.';
+    return 'Ідентифікатор елемента «$elementId» з’являється більше одного разу.';
   }
 
   @override
@@ -1208,29 +1209,29 @@ class AppLocalizationsUk extends AppLocalizations {
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'Відсутній каталог налаштованих фрагментів: $relativePath';
+    return 'Налаштований каталог snippets відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'Відсутній файл налаштованих змінних: $relativePath';
+    return 'Налаштований файл змінних відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'Відсутній файл налаштованих категорій: $relativePath';
+    return 'Налаштований файл категорій відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'Відсутній файл налаштованих груп екземплярів: $relativePath';
+    return 'Налаштований файл груп екземплярів відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'Зареєстроване дерево екземплярів \"$source\" не існує.';
+    return 'Зареєстроване дерево екземпляра «$source» не існує.';
   }
 
   @override
@@ -1242,42 +1243,42 @@ class AppLocalizationsUk extends AppLocalizations {
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'Відсутній каталог тем за замовчуванням: $relativePath';
+    return 'Каталог тем за замовчуванням відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'Відсутній каталог налаштованих тем: $relativePath';
+    return 'Налаштований каталог тем відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'Відсутній налаштований каталог зображень: $relativePath';
+    return 'Налаштований каталог зображень відсутній: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'Ідентифікатор елемента \"$id\" з\'являється більше одного разу.';
+    return 'Ідентифікатор елемента «$id» з’являється більше одного разу.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'TOC посилається на відсутню тему \"$topic\".';
+    return 'TOC посилається на відсутню тему «$topic».';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'Зовнішній href \"$href\" недійсний.';
+    return 'Зовнішній href «$href» недійсний.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'Змінна \"%$name%\" не оголошена.';
+    return 'Змінна «%$name%» не оголошена.';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'Посилання на тему \"$destination\" не вирішує.';
+    return 'Посилання на тему «$destination» не вдається розв’язати.';
   }
 
   @override
@@ -1285,15 +1286,16 @@ class AppLocalizationsUk extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'Якір \"$anchor\" не існує в \"$targetName\".';
+    return 'Якір «$anchor» не існує в «$targetName».';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> відсутній у.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      'У <include> відсутній атрибут from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'Включити джерело \"$from\" не існує.';
+    return 'Джерело include «$from» не існує.';
   }
 
   @override
@@ -1301,17 +1303,17 @@ class AppLocalizationsUk extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'Включити елемент \"$elementId\" не існує в \"$from\".';
+    return 'Елемент include «$elementId» не існує в «$from».';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'Див. також категорію \"$ref\" не оголошено.';
+    return 'Категорія «Див. також» «$ref» не оголошена.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'Посилання на тему \"$reference\" неоднозначне.';
+    return 'Посилання на тему «$reference» неоднозначне.';
   }
 
   @override

@@ -13,7 +13,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'Markdown og Writerside-kompatibel dokumentasjonsredigerer.';
+      'Markdown- og Writerside-kompatibel dokumentasjonsredigerer.';
 
   @override
   String get aboutBusyMark => 'Om BusyMark';
@@ -25,7 +25,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get aboutDescription =>
-      'BusyMark er en fokusert Markdown og Writerside-kompatibel dokumentasjonsredigerer for lokale prosjekter.';
+      'BusyMark er en fokusert Markdown- og Writerside-kompatibel dokumentasjonsredigerer for lokale prosjekter.';
 
   @override
   String get advanced => 'Avansert';
@@ -34,7 +34,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get appearance => 'Utseende';
 
   @override
-  String get apply => 'Søke';
+  String get apply => 'Bruk';
 
   @override
   String get back => 'Tilbake';
@@ -46,25 +46,25 @@ class AppLocalizationsNo extends AppLocalizations {
   String get bottomRight => 'Nederst til høyre';
 
   @override
-  String get cancel => 'Kansellere';
+  String get cancel => 'Avbryt';
 
   @override
-  String get choose => 'Velge';
+  String get choose => 'Velg';
 
   @override
   String get chooseLocation => 'Velg plassering';
 
   @override
-  String get copy => 'Kopiere';
+  String get copy => 'Kopier';
 
   @override
-  String get create => 'Skape';
+  String get create => 'Opprett';
 
   @override
   String get creating => 'Oppretter...';
 
   @override
-  String get cut => 'Kutt';
+  String get cut => 'Klipp ut';
 
   @override
   String get darkTheme => 'Mørk';
@@ -73,13 +73,13 @@ class AppLocalizationsNo extends AppLocalizations {
   String get discard => 'Kast';
 
   @override
-  String get editor => 'Redaktør';
+  String get editor => 'Redigerer';
 
   @override
   String get file => 'Fil';
 
   @override
-  String get find => 'Finne';
+  String get find => 'Finn';
 
   @override
   String get folder => 'Mappe';
@@ -118,13 +118,13 @@ class AppLocalizationsNo extends AppLocalizations {
   String get preview => 'Forhåndsvisning';
 
   @override
-  String get recent => 'Nylig';
+  String get recent => 'Nylige';
 
   @override
-  String get redo => 'Gjenta';
+  String get redo => 'Gjør om';
 
   @override
-  String get save => 'Spare';
+  String get save => 'Lagre';
 
   @override
   String get search => 'Søk';
@@ -139,7 +139,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get source => 'Kilde';
 
   @override
-  String get split => 'Dele';
+  String get split => 'Delt';
 
   @override
   String get systemTheme => 'System';
@@ -193,7 +193,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Bytt sidefelt';
+  String get toggleSidebar => 'Vis/skjul sidefelt';
 
   @override
   String get topLeft => 'Øverst til venstre';
@@ -205,7 +205,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get undo => 'Angre';
 
   @override
-  String get validate => 'Bekreft';
+  String get validate => 'Valider';
 
   @override
   String get validation => 'Validering';
@@ -214,7 +214,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get viewMode => 'Visningsmodus';
 
   @override
-  String get welcome => 'Velkomst';
+  String get welcome => 'Velkommen';
 
   @override
   String get writerside => 'Writerside';
@@ -232,11 +232,11 @@ class AppLocalizationsNo extends AppLocalizations {
   String get openMarkdownFile => 'Åpne Markdown-fil';
 
   @override
-  String get markdownFileExtensions => '.md or .markdown';
+  String get markdownFileExtensions => '.md eller .markdown';
 
   @override
   String get openFolderOrWritersideProject =>
-      'Åpne mappe eller Writerside Project';
+      'Åpne mappe eller Writerside-prosjekt';
 
   @override
   String get markdownFolderOrWritersideProject =>
@@ -254,7 +254,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get shortcutOpenDescription =>
-      'Åpne en Markdown-fil, -mappe eller Writerside-prosjekt';
+      'Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt';
 
   @override
   String get shortcutSaveDescription => 'Lagre gjeldende Markdown-fil';
@@ -270,7 +270,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get shortcutGroupTextEditing => 'Tekstredigering';
 
   @override
-  String get shortcutSelectAllDescription => 'Velg all redigeringstekst';
+  String get shortcutSelectAllDescription => 'Velg all tekst i redigereren';
 
   @override
   String get shortcutCutDescription => 'Klipp ut den valgte teksten';
@@ -289,39 +289,41 @@ class AppLocalizationsNo extends AppLocalizations {
   String get shortcutUndoDescription => 'Angre siste redigering';
 
   @override
-  String get shortcutRedoDescription => 'Gjenta den siste angrete redigeringen';
+  String get shortcutRedoDescription =>
+      'Gjør om den siste angrede redigeringen';
 
   @override
   String get clearEditorSelection => 'Fjern redigeringsvalg';
 
   @override
   String get shortcutClearEditorSelectionDescription =>
-      'Forlat gjeldende redigeringsvalg eller søkefokus';
+      'Gå ut av gjeldende redigeringsvalg eller søkefokus';
 
   @override
   String get shortcutGroupFormatting => 'Formatering';
 
   @override
   String get shortcutBoldDescription =>
-      'Veksle fet skrift på den valgte teksten';
+      'Slå fet skrift av/på for den valgte teksten';
 
   @override
-  String get shortcutItalicDescription => 'Veksle kursiv på den valgte teksten';
+  String get shortcutItalicDescription =>
+      'Slå kursiv av/på for den valgte teksten';
 
   @override
   String get shortcutUnderlineDescription =>
-      'Slå på understreking på den valgte teksten';
+      'Slå understreking av/på for den valgte teksten';
 
   @override
   String get shortcutLinkDescription => 'Sett inn eller rediger en lenke';
 
   @override
   String get shortcutInlineCodeDescription =>
-      'Veksle innebygd kode på den valgte teksten';
+      'Slå innebygd kode av/på for den valgte teksten';
 
   @override
   String get shortcutStrikethroughDescription =>
-      'Veksle gjennomstreking på den valgte teksten';
+      'Slå gjennomstreking av/på for den valgte teksten';
 
   @override
   String get shortcutGroupBlocks => 'Blokker';
@@ -331,27 +333,27 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get shortcutHeading1Description =>
-      'Sett gjeldende blokk til Overskrift 1';
+      'Sett gjeldende blokk til overskrift 1';
 
   @override
   String get shortcutHeading2Description =>
-      'Sett gjeldende blokk til Overskrift 2';
+      'Sett gjeldende blokk til overskrift 2';
 
   @override
   String get shortcutHeading3Description =>
-      'Sett gjeldende blokk til Overskrift 3';
+      'Sett gjeldende blokk til overskrift 3';
 
   @override
   String get shortcutHeading4Description =>
-      'Sett gjeldende blokk til Overskrift 4';
+      'Sett gjeldende blokk til overskrift 4';
 
   @override
   String get shortcutHeading5Description =>
-      'Sett gjeldende blokk til Overskrift 5';
+      'Sett gjeldende blokk til overskrift 5';
 
   @override
   String get shortcutHeading6Description =>
-      'Sett gjeldende blokk til Overskrift 6';
+      'Sett gjeldende blokk til overskrift 6';
 
   @override
   String get shortcutGroupLists => 'Lister';
@@ -360,31 +362,29 @@ class AppLocalizationsNo extends AppLocalizations {
   String get numberedList => 'Nummerert liste';
 
   @override
-  String get shortcutNumberedListDescription =>
-      'Veksle nummerert listeformatering';
+  String get shortcutNumberedListDescription => 'Slå nummerert liste av/på';
 
   @override
   String get bulletedList => 'Punktliste';
 
   @override
-  String get shortcutBulletedListDescription =>
-      'Slå av/på formatering av punktliste';
+  String get shortcutBulletedListDescription => 'Slå punktliste av/på';
 
   @override
   String get checklist => 'Sjekkliste';
 
   @override
-  String get shortcutChecklistDescription => 'Bytt sjekklisteformatering';
+  String get shortcutChecklistDescription => 'Slå sjekkliste av/på';
 
   @override
-  String get createMarkdownFile => 'Lag Markdown-fil';
+  String get createMarkdownFile => 'Opprett Markdown-fil';
 
   @override
   String get createMarkdownFileDescription =>
       'Start et ulagret lokalt Markdown-dokument';
 
   @override
-  String get createWritersideProject => 'Opprett Writerside Project';
+  String get createWritersideProject => 'Opprett Writerside-prosjekt';
 
   @override
   String get createWritersideProjectDescription =>
@@ -403,54 +403,54 @@ class AppLocalizationsNo extends AppLocalizations {
   String get projectName => 'Prosjektnavn';
 
   @override
-  String get directoryName => 'Katalognavn';
+  String get directoryName => 'Mappenavn';
 
   @override
-  String get instanceName => 'Forekomstnavn';
+  String get instanceName => 'Instansnavn';
 
   @override
-  String get instanceId => 'Forekomst-ID';
+  String get instanceId => 'Instans-ID';
 
   @override
-  String get startTopicTitle => 'Start emnetittel';
+  String get startTopicTitle => 'Tittel på startemne';
 
   @override
-  String get location => 'Sted';
+  String get location => 'Plassering';
 
   @override
   String get projectNameRequired => 'Prosjektnavn er påkrevd.';
 
   @override
-  String get directoryNameRequired => 'Katalognavn er påkrevd.';
+  String get directoryNameRequired => 'Mappenavn er påkrevd.';
 
   @override
-  String get useSingleSafeDirectoryName => 'Bruk ett enkelt trygt katalognavn.';
+  String get useSingleSafeDirectoryName => 'Bruk ett enkelt, trygt mappenavn.';
 
   @override
   String get useLowercaseIdentifier =>
-      'Bruk en liten identifikator med bokstaver, tall, understreker eller bindestreker.';
+      'Bruk en identifikator med små bokstaver, tall, understrek eller bindestrek.';
 
   @override
-  String get startTopicTitleRequired => 'Startemnetittel er påkrevd.';
+  String get startTopicTitleRequired => 'Tittel på startemne er påkrevd.';
 
   @override
   String get createWritersideProjectFailed =>
       'Kunne ikke opprette Writerside-prosjektet.';
 
   @override
-  String get settingsTitle => 'BusyMark-innstillinger';
+  String get settingsTitle => 'Innstillinger for BusyMark';
 
   @override
-  String get wordWrap => 'Ordbryting';
+  String get wordWrap => 'Tekstbryting';
 
   @override
-  String get editorFontSize => 'Editor skriftstørrelse';
+  String get editorFontSize => 'Skriftstørrelse i redigerer';
 
   @override
-  String get validateOnEdit => 'Bekreft ved redigering';
+  String get validateOnEdit => 'Valider under redigering';
 
   @override
-  String get clearRecentWorkspaces => 'Fjern nylige arbeidsområder';
+  String get clearRecentWorkspaces => 'Tøm nylige arbeidsområder';
 
   @override
   String get editingButtons => 'Redigeringsknapper';
@@ -467,7 +467,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'Du har ulagrede endringer i $fileName. Lagre dem før du fortsetter?';
+    return 'Du har ulagrede endringer i $fileName. Vil du lagre dem før du fortsetter?';
   }
 
   @override
@@ -475,7 +475,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get fileChangedOnDiskMessage =>
-      'Denne filen er endret på disken siden du åpnet den. Vil du overskrive det?';
+      'Denne filen er endret på disken siden du åpnet den. Vil du overskrive den?';
 
   @override
   String get untitledMarkdownFileName => 'Uten tittel.md';
@@ -484,22 +484,22 @@ class AppLocalizationsNo extends AppLocalizations {
   String get unorderedList => 'Uordnet liste';
 
   @override
-  String get orderedList => 'Bestilt liste';
+  String get orderedList => 'Nummerert liste';
 
   @override
   String get taskList => 'Oppgaveliste';
 
   @override
-  String get toggleTaskChecked => 'Slå av oppgaven sjekket';
+  String get toggleTaskChecked => 'Merk/fjern merking av oppgave';
 
   @override
-  String get indentListItem => 'Innrykk listeelement';
+  String get indentListItem => 'Øk innrykk for listeelement';
 
   @override
-  String get outdentListItem => 'Utestående listeelement';
+  String get outdentListItem => 'Reduser innrykk for listeelement';
 
   @override
-  String get blockquote => 'Blockquote';
+  String get blockquote => 'Sitatblokk';
 
   @override
   String get codeBlock => 'Kodeblokk';
@@ -514,10 +514,10 @@ class AppLocalizationsNo extends AppLocalizations {
   String get inlineImage => 'Innebygd bilde';
 
   @override
-  String get table => 'Bord';
+  String get table => 'Tabell';
 
   @override
-  String get thematicBreak => 'Tematisk pause';
+  String get thematicBreak => 'Tematisk skille';
 
   @override
   String get bold => 'Fet';
@@ -535,10 +535,10 @@ class AppLocalizationsNo extends AppLocalizations {
   String get inlineCode => 'Innebygd kode';
 
   @override
-  String get link => 'Link';
+  String get link => 'Lenke';
 
   @override
-  String get hardLineBreak => 'Hardt linjebrudd';
+  String get hardLineBreak => 'Hardt linjeskift';
 
   @override
   String get textStyle => 'Tekststil';
@@ -616,7 +616,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get showEditingButtons => 'Vis redigeringsknapper';
 
   @override
-  String get altText => 'Alt tekst';
+  String get altText => 'Alternativ tekst';
 
   @override
   String get describeTheImage => 'Beskriv bildet';
@@ -639,7 +639,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get noImageSource => 'Ingen bildekilde';
 
   @override
-  String get hideSidebar => 'Skjul sidefeltet';
+  String get hideSidebar => 'Skjul sidefelt';
 
   @override
   String get showSidebar => 'Vis sidefelt';
@@ -654,7 +654,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get workspaceKindUnsavedMarkdown => 'Ulagret Markdown-fil';
 
   @override
-  String get workspaceKindSingleMarkdown => 'Enkel Markdown-fil';
+  String get workspaceKindSingleMarkdown => 'Én Markdown-fil';
 
   @override
   String get workspaceKindMarkdownFolder => 'Markdown-mappe';
@@ -681,10 +681,10 @@ class AppLocalizationsNo extends AppLocalizations {
   String get files => 'Filer';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Innholdsfortegnelse';
 
   @override
-  String get markdownUnsaved => 'Markdown - ikke lagret';
+  String get markdownUnsaved => 'Markdown – ikke lagret';
 
   @override
   String workspaceDetail(String kind, int count) {
@@ -694,23 +694,23 @@ class AppLocalizationsNo extends AppLocalizations {
       other: '$count filer',
       one: '1 fil',
     );
-    return '$kind - $_temp0';
+    return '$kind – $_temp0';
   }
 
   @override
   String get noFiles => 'Ingen filer';
 
   @override
-  String get noWritersideToc => 'Ingen Writerside TOC';
+  String get noWritersideToc => 'Ingen Writerside-innholdsfortegnelse';
 
   @override
-  String get tocSection => 'TOC-delen';
+  String get tocSection => 'Innholdsfortegnelsesdelen';
 
   @override
   String get newTopic => 'Nytt emne';
 
   @override
-  String get newChildTopic => 'Nytt tema for barn';
+  String get newChildTopic => 'Nytt underemne';
 
   @override
   String get defaultNewTopicTitle => 'Nytt emne';
@@ -728,16 +728,16 @@ class AppLocalizationsNo extends AppLocalizations {
   String get fileNameRequired => 'Filnavn er påkrevd.';
 
   @override
-  String get useSingleSafeFileName => 'Bruk ett enkelt trygt filnavn.';
+  String get useSingleSafeFileName => 'Bruk ett enkelt, trygt filnavn.';
 
   @override
   String useExpectedExtension(String extension) {
-    return 'Bruk utvidelsen $extension for det valgte formatet.';
+    return 'Bruk filtypen $extension for det valgte formatet.';
   }
 
   @override
   String get useIdentifierCharacters =>
-      'Bruk bokstaver, tall, understreker eller bindestreker før utvidelsen.';
+      'Bruk bokstaver, tall, understrek eller bindestrek før filtypen.';
 
   @override
   String get topicIdAlreadyExists => 'Emne-ID finnes allerede.';
@@ -760,25 +760,25 @@ class AppLocalizationsNo extends AppLocalizations {
   }
 
   @override
-  String get foldKindSection => 'del';
+  String get foldKindSection => 'seksjon';
 
   @override
   String get foldKindList => 'liste';
 
   @override
-  String get foldKindQuote => 'sitere';
+  String get foldKindQuote => 'sitat';
 
   @override
-  String get foldKindTag => 'tag';
+  String get foldKindTag => 'tagg';
 
   @override
   String get noPreview => 'Ingen forhåndsvisning';
 
   @override
-  String get note => 'Note';
+  String get note => 'Merknad';
 
   @override
-  String get tip => 'Tupp';
+  String get tip => 'Tips';
 
   @override
   String get warning => 'Advarsel';
@@ -787,13 +787,13 @@ class AppLocalizationsNo extends AppLocalizations {
   String get tabs => 'Faner';
 
   @override
-  String get tab => 'Tab';
+  String get tab => 'Fane';
 
   @override
   String get procedure => 'Prosedyre';
 
   @override
-  String get step => 'Skritt';
+  String get step => 'Trinn';
 
   @override
   String get topic => 'Emne';
@@ -808,12 +808,12 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'Linkmål ikke funnet: $targetPath';
+    return 'Lenkemål ikke funnet: $targetPath';
   }
 
   @override
   String get cannotOpenFileTypeInEditor =>
-      'Kan ikke åpne denne filtypen i redigeringsprogrammet';
+      'Kan ikke åpne denne filtypen i redigereren';
 
   @override
   String anchorNotFound(String anchor) {
@@ -828,11 +828,11 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath - Linje $lineNumber';
+    return '$relativePath – linje $lineNumber';
   }
 
   @override
-  String get untitledResult => 'Uten tittel resultat';
+  String get untitledResult => 'Resultat uten tittel';
 
   @override
   String get documentKindMarkdownFile => 'Markdown-fil';
@@ -844,16 +844,16 @@ class AppLocalizationsNo extends AppLocalizations {
   String get documentKindWritersideXmlTopic => 'Writerside XML-emne';
 
   @override
-  String get documentKindWritersideTree => 'Writerside tre';
+  String get documentKindWritersideTree => 'Writerside-tre';
 
   @override
   String get documentKindConfigurationFile => 'Konfigurasjonsfil';
 
   @override
-  String get documentKindVariablesFile => 'Variable fil';
+  String get documentKindVariablesFile => 'Variabelfil';
 
   @override
-  String get documentKindCategoriesFile => 'Kategorier-fil';
+  String get documentKindCategoriesFile => 'Kategorifil';
 
   @override
   String get documentKindResourceFile => 'Ressursfil';
@@ -865,7 +865,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String workspaceErrorCreateWritersideProjectFailed(String error) {
-    return 'Kunne ikke opprette Writerside-prosjektet: $error';
+    return 'Kunne ikke opprette Writerside-prosjekt: $error';
   }
 
   @override
@@ -884,7 +884,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'Lagre blokkert: fil endret på disk.';
+      'Lagring blokkert: filen er endret på disk.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -903,40 +903,40 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'Målkatalogen eksisterer allerede og er ikke tom: $path';
+    return 'Målmappen finnes allerede og er ikke tom: $path';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'Målbane eksisterer allerede og er ikke en katalog: $path';
+    return 'Målbanen finnes allerede og er ikke en mappe: $path';
   }
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'Generert fil eksisterer allerede: $path';
+    return 'Den genererte filen finnes allerede: $path';
   }
 
   @override
-  String get errorParentDirectoryRequired => 'Overordnet katalog er nødvendig.';
+  String get errorParentDirectoryRequired => 'Overordnet mappe er påkrevd.';
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'Overordnet katalog finnes ikke: $path';
+    return 'Overordnet mappe finnes ikke: $path';
   }
 
   @override
   String get errorProjectNameRequired => 'Prosjektnavn er påkrevd.';
 
   @override
-  String get errorDirectoryNameRequired => 'Katalognavn er påkrevd.';
+  String get errorDirectoryNameRequired => 'Mappenavn er påkrevd.';
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'Katalognavnet må være et enkelt sikker banesegment.';
+      'Mappenavnet må være ett enkelt, trygt banesegment.';
 
   @override
   String get errorInstanceIdInvalid =>
-      'Forekomst-ID må starte med en liten bokstav og kun inneholde små bokstaver, tall, understreker og bindestreker.';
+      'Instans-ID-en må starte med en liten bokstav og bare inneholde små bokstaver, tall, understrek og bindestrek.';
 
   @override
   String get errorTopicFileInvalid =>
@@ -947,30 +947,30 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String errorWritersideModuleRootMissing(String path) {
-    return 'Writerside-modulroten eksisterer ikke: $path';
+    return 'Writerside-modulroten finnes ikke: $path';
   }
 
   @override
   String get errorWritersideModuleNotOpen =>
-      'En Writerside-modul må være åpen for å lage et emne.';
+      'En Writerside-modul må være åpen for å opprette et emne.';
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Writerside-modulen har ikke noe hjelpeinstanstre.';
+      'Writerside-modulen har ikke noe hjelpeinstans-tre.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'Writerside trefil eksisterer ikke: $path';
+    return 'Writerside-trefilen finnes ikke: $path';
   }
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'Emne-ID \"$topicId\" finnes allerede i denne hjelpemodulen.';
+    return 'Emne-ID-en «$topicId» finnes allerede i denne hjelpemodulen.';
   }
 
   @override
   String errorTopicFileAlreadyExists(String path) {
-    return 'Emnefil eksisterer allerede: $path';
+    return 'Emnefilen finnes allerede: $path';
   }
 
   @override
@@ -980,11 +980,11 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get errorTopicsRootUnsafe =>
-      'Topics root må være en sikker relativ katalog.';
+      'Emneroten må være en sikker relativ mappe.';
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'Emnefilnavnet må være et enkelt sikker banesegment.';
+      'Emnefilnavnet må være ett enkelt, trygt banesegment.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -993,7 +993,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get errorTopicFileNameInvalid =>
-      'Emnefilnavn må bare inneholde bokstaver, tall, understrek og bindestreker.';
+      'Emnefilnavnet kan bare inneholde bokstaver, tall, understrek og bindestrek.';
 
   @override
   String errorUnknown(String code) {
@@ -1016,7 +1016,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'Filen er større enn betagrensen for autoparse.';
+      'Filen er større enn betagrensen for automatisk parsing.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1025,11 +1025,11 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'Misformet Writerside-overskriftsattributtblokk.';
+      'Feil format på Writerside-attributtblokken i overskriften.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'Duplikat overskrifts-ID \"$id\".';
+    return 'Duplisert overskrifts-ID «$id».';
   }
 
   @override
@@ -1038,7 +1038,7 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown-emne har ingen H1- eller frontsaktittel.';
+      'Writerside Markdown-emnet har ingen H1-overskrift eller front matter-tittel.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -1046,29 +1046,29 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'Emnet \"$fileName\" mangler en tittel.';
+    return 'Emnet «$fileName» mangler tittel.';
   }
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'Frontsak er ikke lukket.';
+      'Front matter er ikke lukket.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Usikkert HTML-element.';
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
-    return 'Linkmål eksisterer ikke: $targetPath';
+    return 'Lenkemålet finnes ikke: $targetPath';
   }
 
   @override
   String diagnosticMarkdownLinkUnresolvedAnchor(String anchor) {
-    return 'Ankeret \"$anchor\" eksisterer ikke.';
+    return 'Ankeret «$anchor» finnes ikke.';
   }
 
   @override
   String diagnosticMarkdownImageMissingAlt(String destination) {
-    return 'Bildet \"$destination\" mangler alt-tekst.';
+    return 'Bildet «$destination» mangler alternativ tekst.';
   }
 
   @override
@@ -1087,58 +1087,58 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'utdragserklæring mangler src.';
+      'snippets-deklarasjon mangler src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'instance-groups-erklæring mangler src.';
+      'instance-groups-deklarasjon mangler src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'Ustøttet tastaturtilordning: $mode';
+    return 'Ustøttet keymaps-modus: $mode';
   }
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'Forekomsterklæring mangler src.';
+      'instance-deklarasjon mangler src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg registrerer ikke en forekomst.';
+      'writerside.cfg registrerer ingen instans.';
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      '.tree-roten må være <forekomstprofil>.';
+      '.tree-roten må være <instance-profile>.';
 
   @override
-  String get diagnosticWritersideTreeMissingId => 'Forekomstprofil mangler ID.';
+  String get diagnosticWritersideTreeMissingId => 'Instansprofilen mangler ID.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'Trefilstammen samsvarer ikke med forekomst-ID \"$id\".';
+    return 'Trefilnavnet samsvarer ikke med instans-ID-en «$id».';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Forekomst som ikke er bibliotek mangler startside.';
+      'Instans som ikke er bibliotek, mangler startside.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'Startsiden \"$startPage\" eksisterer ikke.';
+    return 'Startsiden «$startPage» finnes ikke.';
   }
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'Emnet \"$topic\" vises mer enn én gang i denne forekomsten TOC.';
+    return 'Emnet «$topic» vises mer enn én gang i denne instansens innholdsfortegnelse.';
   }
 
   @override
   String get diagnosticWritersideVariableMalformedDeclaration =>
-      'Variabelerklæring skal ha navn og verdi.';
+      'Variabeldeklarasjonen skal ha navn og verdi.';
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'Variabelen \"$name\" er deklarert mer enn én gang.';
+    return 'Variabelen «$name» er deklarert mer enn én gang.';
   }
 
   @override
@@ -1146,12 +1146,12 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'Kategori \"$id\" er deklarert mer enn én gang.';
+    return 'Kategorien «$id» er deklarert mer enn én gang.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'Kategoribestilling \"$order\" er deklarert mer enn én gang.';
+    return 'Kategorirekkefølgen «$order» er deklarert mer enn én gang.';
   }
 
   @override
@@ -1164,12 +1164,12 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'XML-emnerot-ID \"$id\" må samsvare med filnavnet \"$expectedId\".';
+    return 'Rot-ID-en «$id» i XML-emnet må samsvare med filnavnet «$expectedId».';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'Element-ID \"$elementId\" vises mer enn én gang.';
+    return 'Element-ID-en «$elementId» vises mer enn én gang.';
   }
 
   @override
@@ -1183,43 +1183,43 @@ class AppLocalizationsNo extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'Konfigurert byggekonfigurasjonskatalog mangler: $relativePath';
+    return 'Den konfigurerte byggekonfigurasjonsmappen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'Den konfigurerte API-spesifikasjonskatalogen mangler: $relativePath';
+    return 'Den konfigurerte API-spesifikasjonsmappen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'Den konfigurerte tekstutdragkatalogen mangler: $relativePath';
+    return 'Den konfigurerte snippets-mappen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'Konfigurert variabelfil mangler: $relativePath';
+    return 'Den konfigurerte variabelfilen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'Filen for konfigurerte kategorier mangler: $relativePath';
+    return 'Den konfigurerte kategorifilen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'Konfigurert forekomstgruppefil mangler: $relativePath';
+    return 'Den konfigurerte instance-groups-filen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'Det registrerte forekomsttreet \"$source\" eksisterer ikke.';
+    return 'Det registrerte instanstreet «$source» finnes ikke.';
   }
 
   @override
@@ -1231,42 +1231,42 @@ class AppLocalizationsNo extends AppLocalizations {
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'Standard emnekatalog mangler: $relativePath';
+    return 'Standardmappen for emner mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'Katalog for konfigurerte emner mangler: $relativePath';
+    return 'Den konfigurerte emnemappen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'Konfigurert bildekatalog mangler: $relativePath';
+    return 'Den konfigurerte bildemappen mangler: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'Element-ID \"$id\" vises mer enn én gang.';
+    return 'Element-ID-en «$id» vises mer enn én gang.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'TOC refererer til manglende emne \"$topic\".';
+    return 'Innholdsfortegnelsen refererer til et manglende emne: «$topic».';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'Ekstern href \"$href\" er ugyldig.';
+    return 'Ekstern href «$href» er ugyldig.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'Variabelen \"%$name%\" er ikke deklarert.';
+    return 'Variabelen «%$name%» er ikke deklarert.';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'Emnelink \"$destination\" løser seg ikke.';
+    return 'Emnelenken «$destination» kan ikke løses.';
   }
 
   @override
@@ -1274,15 +1274,16 @@ class AppLocalizationsNo extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'Ankeret \"$anchor\" finnes ikke i \"$targetName\".';
+    return 'Ankeret «$anchor» finnes ikke i «$targetName».';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> mangler fra.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      '<include> mangler from-attributt.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'Inkluder kilden \"$from\" eksisterer ikke.';
+    return 'include-kilden «$from» finnes ikke.';
   }
 
   @override
@@ -1290,17 +1291,17 @@ class AppLocalizationsNo extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'Inkluder elementet \"$elementId\" eksisterer ikke i \"$from\".';
+    return 'include-elementet «$elementId» finnes ikke i «$from».';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'Se også kategorien \"$ref\" er ikke deklarert.';
+    return 'Se også-kategorien «$ref» er ikke deklarert.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'Emnereferanse \"$reference\" er tvetydig.';
+    return 'Emnereferansen «$reference» er tvetydig.';
   }
 
   @override

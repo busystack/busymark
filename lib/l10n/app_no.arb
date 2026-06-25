@@ -4,7 +4,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "Markdown og Writerside-kompatibel dokumentasjonsredigerer.",
+  "appSubtitle": "Markdown- og Writerside-kompatibel dokumentasjonsredigerer.",
   "@appSubtitle": {
     "description": "Short application description."
   },
@@ -21,7 +21,7 @@
       }
     }
   },
-  "aboutDescription": "BusyMark er en fokusert Markdown og Writerside-kompatibel dokumentasjonsredigerer for lokale prosjekter.",
+  "aboutDescription": "BusyMark er en fokusert Markdown- og Writerside-kompatibel dokumentasjonsredigerer for lokale prosjekter.",
   "@aboutDescription": {
     "description": "Application description shown in the About dialog."
   },
@@ -33,7 +33,7 @@
   "@appearance": {
     "description": "Settings section title for appearance options."
   },
-  "apply": "Søke",
+  "apply": "Bruk",
   "@apply": {
     "description": "Button label that applies a dialog change."
   },
@@ -49,11 +49,11 @@
   "@bottomRight": {
     "description": "Editing button position option."
   },
-  "cancel": "Kansellere",
+  "cancel": "Avbryt",
   "@cancel": {
     "description": "Cancel button label."
   },
-  "choose": "Velge",
+  "choose": "Velg",
   "@choose": {
     "description": "Button label for choosing a file or path."
   },
@@ -61,11 +61,11 @@
   "@chooseLocation": {
     "description": "File picker confirmation label for choosing a directory."
   },
-  "copy": "Kopiere",
+  "copy": "Kopier",
   "@copy": {
     "description": "Copy command label."
   },
-  "create": "Skape",
+  "create": "Opprett",
   "@create": {
     "description": "Create action label."
   },
@@ -73,7 +73,7 @@
   "@creating": {
     "description": "Progress label while a project or topic is being created."
   },
-  "cut": "Kutt",
+  "cut": "Klipp ut",
   "@cut": {
     "description": "Cut command label."
   },
@@ -85,7 +85,7 @@
   "@discard": {
     "description": "Discard unsaved changes button label."
   },
-  "editor": "Redaktør",
+  "editor": "Redigerer",
   "@editor": {
     "description": "Editor view label."
   },
@@ -93,7 +93,7 @@
   "@file": {
     "description": "Generic file kind label."
   },
-  "find": "Finne",
+  "find": "Finn",
   "@find": {
     "description": "Find command label."
   },
@@ -145,15 +145,15 @@
   "@preview": {
     "description": "Preview view label."
   },
-  "recent": "Nylig",
+  "recent": "Nylige",
   "@recent": {
     "description": "Recent workspaces section title."
   },
-  "redo": "Gjenta",
+  "redo": "Gjør om",
   "@redo": {
     "description": "Redo command label."
   },
-  "save": "Spare",
+  "save": "Lagre",
   "@save": {
     "description": "Save action label."
   },
@@ -173,7 +173,7 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "Dele",
+  "split": "Delt",
   "@split": {
     "description": "Split view label."
   },
@@ -245,7 +245,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Bytt sidefelt",
+  "toggleSidebar": "Vis/skjul sidefelt",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -261,7 +261,7 @@
   "@undo": {
     "description": "Undo command label."
   },
-  "validate": "Bekreft",
+  "validate": "Valider",
   "@validate": {
     "description": "Validate action label."
   },
@@ -273,7 +273,7 @@
   "@viewMode": {
     "description": "Native header bar view mode control label."
   },
-  "welcome": "Velkomst",
+  "welcome": "Velkommen",
   "@welcome": {
     "description": "Welcome screen label and tooltip."
   },
@@ -297,11 +297,11 @@
   "@openMarkdownFile": {
     "description": "Action label for opening a Markdown file."
   },
-  "markdownFileExtensions": ".md or .markdown",
+  "markdownFileExtensions": ".md eller .markdown",
   "@markdownFileExtensions": {
     "description": "Subtitle describing supported Markdown file extensions."
   },
-  "openFolderOrWritersideProject": "Åpne mappe eller Writerside Project",
+  "openFolderOrWritersideProject": "Åpne mappe eller Writerside-prosjekt",
   "@openFolderOrWritersideProject": {
     "description": "Action label for opening a folder or Writerside project."
   },
@@ -321,7 +321,7 @@
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Åpne en Markdown-fil, -mappe eller Writerside-prosjekt",
+  "shortcutOpenDescription": "Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -341,7 +341,7 @@
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Velg all redigeringstekst",
+  "shortcutSelectAllDescription": "Velg all tekst i redigereren",
   "@shortcutSelectAllDescription": {
     "description": "Keyboard shortcut description for selecting all text."
   },
@@ -365,7 +365,7 @@
   "@shortcutUndoDescription": {
     "description": "Keyboard shortcut description for undo."
   },
-  "shortcutRedoDescription": "Gjenta den siste angrete redigeringen",
+  "shortcutRedoDescription": "Gjør om den siste angrede redigeringen",
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
@@ -373,7 +373,7 @@
   "@clearEditorSelection": {
     "description": "Keyboard shortcut label for clearing selection."
   },
-  "shortcutClearEditorSelectionDescription": "Forlat gjeldende redigeringsvalg eller søkefokus",
+  "shortcutClearEditorSelectionDescription": "Gå ut av gjeldende redigeringsvalg eller søkefokus",
   "@shortcutClearEditorSelectionDescription": {
     "description": "Keyboard shortcut description for clearing selection."
   },
@@ -381,15 +381,15 @@
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "Veksle fet skrift på den valgte teksten",
+  "shortcutBoldDescription": "Slå fet skrift av/på for den valgte teksten",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "Veksle kursiv på den valgte teksten",
+  "shortcutItalicDescription": "Slå kursiv av/på for den valgte teksten",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "Slå på understreking på den valgte teksten",
+  "shortcutUnderlineDescription": "Slå understreking av/på for den valgte teksten",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
@@ -397,11 +397,11 @@
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "Veksle innebygd kode på den valgte teksten",
+  "shortcutInlineCodeDescription": "Slå innebygd kode av/på for den valgte teksten",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "Veksle gjennomstreking på den valgte teksten",
+  "shortcutStrikethroughDescription": "Slå gjennomstreking av/på for den valgte teksten",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
@@ -413,27 +413,27 @@
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "Sett gjeldende blokk til Overskrift 1",
+  "shortcutHeading1Description": "Sett gjeldende blokk til overskrift 1",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "Sett gjeldende blokk til Overskrift 2",
+  "shortcutHeading2Description": "Sett gjeldende blokk til overskrift 2",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "Sett gjeldende blokk til Overskrift 3",
+  "shortcutHeading3Description": "Sett gjeldende blokk til overskrift 3",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "Sett gjeldende blokk til Overskrift 4",
+  "shortcutHeading4Description": "Sett gjeldende blokk til overskrift 4",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "Sett gjeldende blokk til Overskrift 5",
+  "shortcutHeading5Description": "Sett gjeldende blokk til overskrift 5",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "Sett gjeldende blokk til Overskrift 6",
+  "shortcutHeading6Description": "Sett gjeldende blokk til overskrift 6",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
@@ -445,7 +445,7 @@
   "@numberedList": {
     "description": "Keyboard shortcut label for numbered list formatting."
   },
-  "shortcutNumberedListDescription": "Veksle nummerert listeformatering",
+  "shortcutNumberedListDescription": "Slå nummerert liste av/på",
   "@shortcutNumberedListDescription": {
     "description": "Keyboard shortcut description for numbered list."
   },
@@ -453,7 +453,7 @@
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
-  "shortcutBulletedListDescription": "Slå av/på formatering av punktliste",
+  "shortcutBulletedListDescription": "Slå punktliste av/på",
   "@shortcutBulletedListDescription": {
     "description": "Keyboard shortcut description for bulleted list."
   },
@@ -461,11 +461,11 @@
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "Bytt sjekklisteformatering",
+  "shortcutChecklistDescription": "Slå sjekkliste av/på",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
-  "createMarkdownFile": "Lag Markdown-fil",
+  "createMarkdownFile": "Opprett Markdown-fil",
   "@createMarkdownFile": {
     "description": "Welcome screen action for creating a Markdown file."
   },
@@ -473,7 +473,7 @@
   "@createMarkdownFileDescription": {
     "description": "Welcome screen subtitle for creating a Markdown file."
   },
-  "createWritersideProject": "Opprett Writerside Project",
+  "createWritersideProject": "Opprett Writerside-prosjekt",
   "@createWritersideProject": {
     "description": "Welcome screen action for creating a Writerside project."
   },
@@ -497,23 +497,23 @@
   "@projectName": {
     "description": "Create project dialog field label."
   },
-  "directoryName": "Katalognavn",
+  "directoryName": "Mappenavn",
   "@directoryName": {
     "description": "Create project dialog field label."
   },
-  "instanceName": "Forekomstnavn",
+  "instanceName": "Instansnavn",
   "@instanceName": {
     "description": "Create project dialog field label."
   },
-  "instanceId": "Forekomst-ID",
+  "instanceId": "Instans-ID",
   "@instanceId": {
     "description": "Create project dialog field label."
   },
-  "startTopicTitle": "Start emnetittel",
+  "startTopicTitle": "Tittel på startemne",
   "@startTopicTitle": {
     "description": "Create project dialog field label."
   },
-  "location": "Sted",
+  "location": "Plassering",
   "@location": {
     "description": "Create dialog location section label."
   },
@@ -521,19 +521,19 @@
   "@projectNameRequired": {
     "description": "Validation message for missing project name."
   },
-  "directoryNameRequired": "Katalognavn er påkrevd.",
+  "directoryNameRequired": "Mappenavn er påkrevd.",
   "@directoryNameRequired": {
     "description": "Validation message for missing directory name."
   },
-  "useSingleSafeDirectoryName": "Bruk ett enkelt trygt katalognavn.",
+  "useSingleSafeDirectoryName": "Bruk ett enkelt, trygt mappenavn.",
   "@useSingleSafeDirectoryName": {
     "description": "Validation message for unsafe directory names."
   },
-  "useLowercaseIdentifier": "Bruk en liten identifikator med bokstaver, tall, understreker eller bindestreker.",
+  "useLowercaseIdentifier": "Bruk en identifikator med små bokstaver, tall, understrek eller bindestrek.",
   "@useLowercaseIdentifier": {
     "description": "Validation message for invalid Writerside instance IDs."
   },
-  "startTopicTitleRequired": "Startemnetittel er påkrevd.",
+  "startTopicTitleRequired": "Tittel på startemne er påkrevd.",
   "@startTopicTitleRequired": {
     "description": "Validation message for missing start topic title."
   },
@@ -541,23 +541,23 @@
   "@createWritersideProjectFailed": {
     "description": "Fallback error shown when Writerside project creation fails."
   },
-  "settingsTitle": "BusyMark-innstillinger",
+  "settingsTitle": "Innstillinger for BusyMark",
   "@settingsTitle": {
     "description": "Settings screen title."
   },
-  "wordWrap": "Ordbryting",
+  "wordWrap": "Tekstbryting",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
-  "editorFontSize": "Editor skriftstørrelse",
+  "editorFontSize": "Skriftstørrelse i redigerer",
   "@editorFontSize": {
     "description": "Editor font size setting label."
   },
-  "validateOnEdit": "Bekreft ved redigering",
+  "validateOnEdit": "Valider under redigering",
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Fjern nylige arbeidsområder",
+  "clearRecentWorkspaces": "Tøm nylige arbeidsområder",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -577,7 +577,7 @@
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "Du har ulagrede endringer i {fileName}. Lagre dem før du fortsetter?",
+  "unsavedChangesMessage": "Du har ulagrede endringer i {fileName}. Vil du lagre dem før du fortsetter?",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -590,7 +590,7 @@
   "@fileChangedOnDisk": {
     "description": "File changed confirmation dialog title."
   },
-  "fileChangedOnDiskMessage": "Denne filen er endret på disken siden du åpnet den. Vil du overskrive det?",
+  "fileChangedOnDiskMessage": "Denne filen er endret på disken siden du åpnet den. Vil du overskrive den?",
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
@@ -602,7 +602,7 @@
   "@unorderedList": {
     "description": "WYSIWYG toolbar tooltip for unordered list."
   },
-  "orderedList": "Bestilt liste",
+  "orderedList": "Nummerert liste",
   "@orderedList": {
     "description": "WYSIWYG toolbar tooltip for ordered list."
   },
@@ -610,19 +610,19 @@
   "@taskList": {
     "description": "WYSIWYG toolbar tooltip for task list."
   },
-  "toggleTaskChecked": "Slå av oppgaven sjekket",
+  "toggleTaskChecked": "Merk/fjern merking av oppgave",
   "@toggleTaskChecked": {
     "description": "WYSIWYG toolbar tooltip for toggling task state."
   },
-  "indentListItem": "Innrykk listeelement",
+  "indentListItem": "Øk innrykk for listeelement",
   "@indentListItem": {
     "description": "WYSIWYG toolbar tooltip for indenting a list item."
   },
-  "outdentListItem": "Utestående listeelement",
+  "outdentListItem": "Reduser innrykk for listeelement",
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
-  "blockquote": "Blockquote",
+  "blockquote": "Sitatblokk",
   "@blockquote": {
     "description": "Blockquote command label."
   },
@@ -642,11 +642,11 @@
   "@inlineImage": {
     "description": "Inline image command label."
   },
-  "table": "Bord",
+  "table": "Tabell",
   "@table": {
     "description": "Table command label."
   },
-  "thematicBreak": "Tematisk pause",
+  "thematicBreak": "Tematisk skille",
   "@thematicBreak": {
     "description": "Thematic break command label."
   },
@@ -670,11 +670,11 @@
   "@inlineCode": {
     "description": "Inline code command label."
   },
-  "link": "Link",
+  "link": "Lenke",
   "@link": {
     "description": "Link command and preview label."
   },
-  "hardLineBreak": "Hardt linjebrudd",
+  "hardLineBreak": "Hardt linjeskift",
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
@@ -785,7 +785,7 @@
   "@showEditingButtons": {
     "description": "Tooltip for showing floating editing buttons."
   },
-  "altText": "Alt tekst",
+  "altText": "Alternativ tekst",
   "@altText": {
     "description": "Image alt text field label."
   },
@@ -818,7 +818,7 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "Skjul sidefeltet",
+  "hideSidebar": "Skjul sidefelt",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
@@ -838,7 +838,7 @@
   "@workspaceKindUnsavedMarkdown": {
     "description": "Workspace kind label for an unsaved Markdown file."
   },
-  "workspaceKindSingleMarkdown": "Enkel Markdown-fil",
+  "workspaceKindSingleMarkdown": "Én Markdown-fil",
   "@workspaceKindSingleMarkdown": {
     "description": "Workspace kind label for a single Markdown file."
   },
@@ -867,15 +867,15 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "TOC",
+  "toc": "Innholdsfortegnelse",
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
-  "markdownUnsaved": "Markdown - ikke lagret",
+  "markdownUnsaved": "Markdown – ikke lagret",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
   },
-  "workspaceDetail": "{kind} - {count, plural, =1{1 fil} other{{count} filer}}",
+  "workspaceDetail": "{kind} – {count, plural, =1{1 fil} other{{count} filer}}",
   "@workspaceDetail": {
     "description": "Workspace detail with kind and file count.",
     "placeholders": {
@@ -891,11 +891,11 @@
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "Ingen Writerside TOC",
+  "noWritersideToc": "Ingen Writerside-innholdsfortegnelse",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
-  "tocSection": "TOC-delen",
+  "tocSection": "Innholdsfortegnelsesdelen",
   "@tocSection": {
     "description": "Fallback label for a Writerside TOC section."
   },
@@ -903,7 +903,7 @@
   "@newTopic": {
     "description": "Create new Writerside topic action label."
   },
-  "newChildTopic": "Nytt tema for barn",
+  "newChildTopic": "Nytt underemne",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
@@ -927,11 +927,11 @@
   "@fileNameRequired": {
     "description": "Validation message for missing file name."
   },
-  "useSingleSafeFileName": "Bruk ett enkelt trygt filnavn.",
+  "useSingleSafeFileName": "Bruk ett enkelt, trygt filnavn.",
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
-  "useExpectedExtension": "Bruk utvidelsen {extension} for det valgte formatet.",
+  "useExpectedExtension": "Bruk filtypen {extension} for det valgte formatet.",
   "@useExpectedExtension": {
     "description": "Validation message for an unexpected file extension.",
     "placeholders": {
@@ -940,7 +940,7 @@
       }
     }
   },
-  "useIdentifierCharacters": "Bruk bokstaver, tall, understreker eller bindestreker før utvidelsen.",
+  "useIdentifierCharacters": "Bruk bokstaver, tall, understrek eller bindestrek før filtypen.",
   "@useIdentifierCharacters": {
     "description": "Validation message for invalid topic IDs."
   },
@@ -974,7 +974,7 @@
       }
     }
   },
-  "foldKindSection": "del",
+  "foldKindSection": "seksjon",
   "@foldKindSection": {
     "description": "Fold kind label for a section."
   },
@@ -982,11 +982,11 @@
   "@foldKindList": {
     "description": "Fold kind label for a list."
   },
-  "foldKindQuote": "sitere",
+  "foldKindQuote": "sitat",
   "@foldKindQuote": {
     "description": "Fold kind label for a blockquote."
   },
-  "foldKindTag": "tag",
+  "foldKindTag": "tagg",
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
@@ -994,11 +994,11 @@
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
   },
-  "note": "Note",
+  "note": "Merknad",
   "@note": {
     "description": "Preview label for a note admonition."
   },
-  "tip": "Tupp",
+  "tip": "Tips",
   "@tip": {
     "description": "Preview label for a tip admonition."
   },
@@ -1010,7 +1010,7 @@
   "@tabs": {
     "description": "Preview label for a tabs block."
   },
-  "tab": "Tab",
+  "tab": "Fane",
   "@tab": {
     "description": "Preview label for a tab block."
   },
@@ -1018,7 +1018,7 @@
   "@procedure": {
     "description": "Preview label for a procedure block."
   },
-  "step": "Skritt",
+  "step": "Trinn",
   "@step": {
     "description": "Preview label for a procedure step."
   },
@@ -1039,7 +1039,7 @@
       }
     }
   },
-  "linkTargetNotFound": "Linkmål ikke funnet: {targetPath}",
+  "linkTargetNotFound": "Lenkemål ikke funnet: {targetPath}",
   "@linkTargetNotFound": {
     "description": "Snackbar shown when a link target path is missing.",
     "placeholders": {
@@ -1048,7 +1048,7 @@
       }
     }
   },
-  "cannotOpenFileTypeInEditor": "Kan ikke åpne denne filtypen i redigeringsprogrammet",
+  "cannotOpenFileTypeInEditor": "Kan ikke åpne denne filtypen i redigereren",
   "@cannotOpenFileTypeInEditor": {
     "description": "Snackbar shown when a file type cannot be opened in the editor."
   },
@@ -1069,7 +1069,7 @@
   "@noResults": {
     "description": "Search empty state."
   },
-  "searchResultLine": "{relativePath} - Linje {lineNumber}",
+  "searchResultLine": "{relativePath} – linje {lineNumber}",
   "@searchResultLine": {
     "description": "Search result subtitle with file path and line number.",
     "placeholders": {
@@ -1081,7 +1081,7 @@
       }
     }
   },
-  "untitledResult": "Uten tittel resultat",
+  "untitledResult": "Resultat uten tittel",
   "@untitledResult": {
     "description": "Fallback search result title."
   },
@@ -1097,7 +1097,7 @@
   "@documentKindWritersideXmlTopic": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideTree": "Writerside tre",
+  "documentKindWritersideTree": "Writerside-tre",
   "@documentKindWritersideTree": {
     "description": "Search result document kind label."
   },
@@ -1105,11 +1105,11 @@
   "@documentKindConfigurationFile": {
     "description": "Search result document kind label."
   },
-  "documentKindVariablesFile": "Variable fil",
+  "documentKindVariablesFile": "Variabelfil",
   "@documentKindVariablesFile": {
     "description": "Search result document kind label."
   },
-  "documentKindCategoriesFile": "Kategorier-fil",
+  "documentKindCategoriesFile": "Kategorifil",
   "@documentKindCategoriesFile": {
     "description": "Search result document kind label."
   },
@@ -1126,7 +1126,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideProjectFailed": "Kunne ikke opprette Writerside-prosjektet: {error}",
+  "workspaceErrorCreateWritersideProjectFailed": "Kunne ikke opprette Writerside-prosjekt: {error}",
   "@workspaceErrorCreateWritersideProjectFailed": {
     "description": "Workspace error message shown when Writerside project creation fails.",
     "placeholders": {
@@ -1157,7 +1157,7 @@
   "@workspaceErrorChooseWhereToSaveMarkdown": {
     "description": "Workspace error message shown when an untitled file needs a save location."
   },
-  "workspaceErrorSaveBlockedFileChangedOnDisk": "Lagre blokkert: fil endret på disk.",
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Lagring blokkert: filen er endret på disk.",
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
@@ -1188,7 +1188,7 @@
       }
     }
   },
-  "errorTargetDirectoryNotEmpty": "Målkatalogen eksisterer allerede og er ikke tom: {path}",
+  "errorTargetDirectoryNotEmpty": "Målmappen finnes allerede og er ikke tom: {path}",
   "@errorTargetDirectoryNotEmpty": {
     "description": "Detail for a non-empty target directory error.",
     "placeholders": {
@@ -1197,7 +1197,7 @@
       }
     }
   },
-  "errorTargetPathNotDirectory": "Målbane eksisterer allerede og er ikke en katalog: {path}",
+  "errorTargetPathNotDirectory": "Målbanen finnes allerede og er ikke en mappe: {path}",
   "@errorTargetPathNotDirectory": {
     "description": "Detail for a target path that is not a directory.",
     "placeholders": {
@@ -1206,7 +1206,7 @@
       }
     }
   },
-  "errorGeneratedFileAlreadyExists": "Generert fil eksisterer allerede: {path}",
+  "errorGeneratedFileAlreadyExists": "Den genererte filen finnes allerede: {path}",
   "@errorGeneratedFileAlreadyExists": {
     "description": "Detail for a generated file conflict.",
     "placeholders": {
@@ -1215,11 +1215,11 @@
       }
     }
   },
-  "errorParentDirectoryRequired": "Overordnet katalog er nødvendig.",
+  "errorParentDirectoryRequired": "Overordnet mappe er påkrevd.",
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
-  "errorParentDirectoryMissing": "Overordnet katalog finnes ikke: {path}",
+  "errorParentDirectoryMissing": "Overordnet mappe finnes ikke: {path}",
   "@errorParentDirectoryMissing": {
     "description": "Detail for a missing parent directory.",
     "placeholders": {
@@ -1232,15 +1232,15 @@
   "@errorProjectNameRequired": {
     "description": "Detail for a missing project name."
   },
-  "errorDirectoryNameRequired": "Katalognavn er påkrevd.",
+  "errorDirectoryNameRequired": "Mappenavn er påkrevd.",
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "Katalognavnet må være et enkelt sikker banesegment.",
+  "errorDirectoryNameUnsafe": "Mappenavnet må være ett enkelt, trygt banesegment.",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "Forekomst-ID må starte med en liten bokstav og kun inneholde små bokstaver, tall, understreker og bindestreker.",
+  "errorInstanceIdInvalid": "Instans-ID-en må starte med en liten bokstav og bare inneholde små bokstaver, tall, understrek og bindestrek.",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
@@ -1252,7 +1252,7 @@
   "@errorTopicTitleRequired": {
     "description": "Detail for a missing topic title."
   },
-  "errorWritersideModuleRootMissing": "Writerside-modulroten eksisterer ikke: {path}",
+  "errorWritersideModuleRootMissing": "Writerside-modulroten finnes ikke: {path}",
   "@errorWritersideModuleRootMissing": {
     "description": "Detail for a missing Writerside module root.",
     "placeholders": {
@@ -1261,15 +1261,15 @@
       }
     }
   },
-  "errorWritersideModuleNotOpen": "En Writerside-modul må være åpen for å lage et emne.",
+  "errorWritersideModuleNotOpen": "En Writerside-modul må være åpen for å opprette et emne.",
   "@errorWritersideModuleNotOpen": {
     "description": "Detail shown when creating a topic without an open Writerside module."
   },
-  "errorWritersideInstanceTreeMissing": "Writerside-modulen har ikke noe hjelpeinstanstre.",
+  "errorWritersideInstanceTreeMissing": "Writerside-modulen har ikke noe hjelpeinstans-tre.",
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
-  "errorWritersideTreeFileMissing": "Writerside trefil eksisterer ikke: {path}",
+  "errorWritersideTreeFileMissing": "Writerside-trefilen finnes ikke: {path}",
   "@errorWritersideTreeFileMissing": {
     "description": "Detail for a missing Writerside tree file.",
     "placeholders": {
@@ -1278,7 +1278,7 @@
       }
     }
   },
-  "errorTopicIdAlreadyExists": "Emne-ID \"{topicId}\" finnes allerede i denne hjelpemodulen.",
+  "errorTopicIdAlreadyExists": "Emne-ID-en «{topicId}» finnes allerede i denne hjelpemodulen.",
   "@errorTopicIdAlreadyExists": {
     "description": "Detail for a duplicate topic ID.",
     "placeholders": {
@@ -1287,7 +1287,7 @@
       }
     }
   },
-  "errorTopicFileAlreadyExists": "Emnefil eksisterer allerede: {path}",
+  "errorTopicFileAlreadyExists": "Emnefilen finnes allerede: {path}",
   "@errorTopicFileAlreadyExists": {
     "description": "Detail for an existing topic file.",
     "placeholders": {
@@ -1305,11 +1305,11 @@
       }
     }
   },
-  "errorTopicsRootUnsafe": "Topics root må være en sikker relativ katalog.",
+  "errorTopicsRootUnsafe": "Emneroten må være en sikker relativ mappe.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "Emnefilnavnet må være et enkelt sikker banesegment.",
+  "errorTopicFileNameUnsafe": "Emnefilnavnet må være ett enkelt, trygt banesegment.",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
@@ -1322,7 +1322,7 @@
       }
     }
   },
-  "errorTopicFileNameInvalid": "Emnefilnavn må bare inneholde bokstaver, tall, understrek og bindestreker.",
+  "errorTopicFileNameInvalid": "Emnefilnavnet kan bare inneholde bokstaver, tall, understrek og bindestrek.",
   "@errorTopicFileNameInvalid": {
     "description": "Detail for a topic file name with invalid characters."
   },
@@ -1357,7 +1357,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for autoparse.",
+  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for automatisk parsing.",
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
@@ -1370,11 +1370,11 @@
       }
     }
   },
-  "diagnosticMarkdownAttributeMalformed": "Misformet Writerside-overskriftsattributtblokk.",
+  "diagnosticMarkdownAttributeMalformed": "Feil format på Writerside-attributtblokken i overskriften.",
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "Duplikat overskrifts-ID \"{id}\".",
+  "diagnosticMarkdownHeadingDuplicateId": "Duplisert overskrifts-ID «{id}».",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1387,7 +1387,7 @@
   "@diagnosticWritersideTopicH1ConvertedToChapter": {
     "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
   },
-  "diagnosticWritersideMarkdownTopicMissingTitle": "Writerside Markdown-emne har ingen H1- eller frontsaktittel.",
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Writerside Markdown-emnet har ingen H1-overskrift eller front matter-tittel.",
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
@@ -1395,7 +1395,7 @@
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
-  "diagnosticWritersideTopicFileMissingTitle": "Emnet \"{fileName}\" mangler en tittel.",
+  "diagnosticWritersideTopicFileMissingTitle": "Emnet «{fileName}» mangler tittel.",
   "@diagnosticWritersideTopicFileMissingTitle": {
     "description": "Diagnostic for a Writerside topic file without a title.",
     "placeholders": {
@@ -1404,7 +1404,7 @@
       }
     }
   },
-  "diagnosticMarkdownFrontMatterMalformed": "Frontsak er ikke lukket.",
+  "diagnosticMarkdownFrontMatterMalformed": "Front matter er ikke lukket.",
   "@diagnosticMarkdownFrontMatterMalformed": {
     "description": "Markdown parser diagnostic for unclosed front matter."
   },
@@ -1412,7 +1412,7 @@
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
-  "diagnosticMarkdownLinkUnresolvedTarget": "Linkmål eksisterer ikke: {targetPath}",
+  "diagnosticMarkdownLinkUnresolvedTarget": "Lenkemålet finnes ikke: {targetPath}",
   "@diagnosticMarkdownLinkUnresolvedTarget": {
     "description": "Markdown parser diagnostic for a missing link target.",
     "placeholders": {
@@ -1421,7 +1421,7 @@
       }
     }
   },
-  "diagnosticMarkdownLinkUnresolvedAnchor": "Ankeret \"{anchor}\" eksisterer ikke.",
+  "diagnosticMarkdownLinkUnresolvedAnchor": "Ankeret «{anchor}» finnes ikke.",
   "@diagnosticMarkdownLinkUnresolvedAnchor": {
     "description": "Markdown parser diagnostic for a missing local anchor.",
     "placeholders": {
@@ -1430,7 +1430,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingAlt": "Bildet \"{destination}\" mangler alt-tekst.",
+  "diagnosticMarkdownImageMissingAlt": "Bildet «{destination}» mangler alternativ tekst.",
   "@diagnosticMarkdownImageMissingAlt": {
     "description": "Markdown parser diagnostic for a missing image alt text.",
     "placeholders": {
@@ -1461,15 +1461,15 @@
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "utdragserklæring mangler src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "snippets-deklarasjon mangler src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups-erklæring mangler src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups-deklarasjon mangler src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
-  "diagnosticWritersideConfigInvalidKeymapsMode": "Ustøttet tastaturtilordning: {mode}",
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Ustøttet keymaps-modus: {mode}",
   "@diagnosticWritersideConfigInvalidKeymapsMode": {
     "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
     "placeholders": {
@@ -1478,23 +1478,23 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "Forekomsterklæring mangler src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "instance-deklarasjon mangler src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "writerside.cfg registrerer ikke en forekomst.",
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg registrerer ingen instans.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": ".tree-roten må være <forekomstprofil>.",
+  "diagnosticWritersideTreeInvalidRoot": ".tree-roten må være <instance-profile>.",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "Forekomstprofil mangler ID.",
+  "diagnosticWritersideTreeMissingId": "Instansprofilen mangler ID.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "Trefilstammen samsvarer ikke med forekomst-ID \"{id}\".",
+  "diagnosticWritersideTreeIdMismatch": "Trefilnavnet samsvarer ikke med instans-ID-en «{id}».",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1503,11 +1503,11 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "Forekomst som ikke er bibliotek mangler startside.",
+  "diagnosticWritersideTreeMissingStartPage": "Instans som ikke er bibliotek, mangler startside.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
-  "diagnosticWritersideStartPageMissing": "Startsiden \"{startPage}\" eksisterer ikke.",
+  "diagnosticWritersideStartPageMissing": "Startsiden «{startPage}» finnes ikke.",
   "@diagnosticWritersideStartPageMissing": {
     "description": "Writerside diagnostic for a missing start page.",
     "placeholders": {
@@ -1516,7 +1516,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "Emnet \"{topic}\" vises mer enn én gang i denne forekomsten TOC.",
+  "diagnosticWritersideTreeDuplicateTopic": "Emnet «{topic}» vises mer enn én gang i denne instansens innholdsfortegnelse.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1525,11 +1525,11 @@
       }
     }
   },
-  "diagnosticWritersideVariableMalformedDeclaration": "Variabelerklæring skal ha navn og verdi.",
+  "diagnosticWritersideVariableMalformedDeclaration": "Variabeldeklarasjonen skal ha navn og verdi.",
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
-  "diagnosticWritersideVariableDuplicateName": "Variabelen \"{name}\" er deklarert mer enn én gang.",
+  "diagnosticWritersideVariableDuplicateName": "Variabelen «{name}» er deklarert mer enn én gang.",
   "@diagnosticWritersideVariableDuplicateName": {
     "description": "Writerside parser diagnostic for a duplicate variable name.",
     "placeholders": {
@@ -1542,7 +1542,7 @@
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
-  "diagnosticWritersideCategoryDuplicateId": "Kategori \"{id}\" er deklarert mer enn én gang.",
+  "diagnosticWritersideCategoryDuplicateId": "Kategorien «{id}» er deklarert mer enn én gang.",
   "@diagnosticWritersideCategoryDuplicateId": {
     "description": "Writerside parser diagnostic for a duplicate category ID.",
     "placeholders": {
@@ -1551,7 +1551,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "Kategoribestilling \"{order}\" er deklarert mer enn én gang.",
+  "diagnosticWritersideCategoryDuplicateOrder": "Kategorirekkefølgen «{order}» er deklarert mer enn én gang.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -1568,7 +1568,7 @@
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "XML-emnerot-ID \"{id}\" må samsvare med filnavnet \"{expectedId}\".",
+  "diagnosticWritersideTopicRootIdMismatch": "Rot-ID-en «{id}» i XML-emnet må samsvare med filnavnet «{expectedId}».",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1580,7 +1580,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "Element-ID \"{elementId}\" vises mer enn én gang.",
+  "diagnosticWritersideTopicDuplicateElementId": "Element-ID-en «{elementId}» vises mer enn én gang.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -1597,7 +1597,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Konfigurert byggekonfigurasjonskatalog mangler: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Den konfigurerte byggekonfigurasjonsmappen mangler: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1606,7 +1606,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Den konfigurerte API-spesifikasjonskatalogen mangler: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Den konfigurerte API-spesifikasjonsmappen mangler: {relativePath}",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -1615,7 +1615,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "Den konfigurerte tekstutdragkatalogen mangler: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "Den konfigurerte snippets-mappen mangler: {relativePath}",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -1624,7 +1624,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "Konfigurert variabelfil mangler: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "Den konfigurerte variabelfilen mangler: {relativePath}",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -1633,7 +1633,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "Filen for konfigurerte kategorier mangler: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "Den konfigurerte kategorifilen mangler: {relativePath}",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -1642,7 +1642,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Konfigurert forekomstgruppefil mangler: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Den konfigurerte instance-groups-filen mangler: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -1651,7 +1651,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceTree": "Det registrerte forekomsttreet \"{source}\" eksisterer ikke.",
+  "diagnosticWritersideConfigMissingInstanceTree": "Det registrerte instanstreet «{source}» finnes ikke.",
   "@diagnosticWritersideConfigMissingInstanceTree": {
     "description": "Writerside module diagnostic for a missing registered instance tree.",
     "placeholders": {
@@ -1669,7 +1669,7 @@
       }
     }
   },
-  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Standard emnekatalog mangler: {relativePath}",
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Standardmappen for emner mangler: {relativePath}",
   "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing default topics directory.",
     "placeholders": {
@@ -1678,7 +1678,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicsDirectoryMissing": "Katalog for konfigurerte emner mangler: {relativePath}",
+  "diagnosticWritersideTopicsDirectoryMissing": "Den konfigurerte emnemappen mangler: {relativePath}",
   "@diagnosticWritersideTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing topics directory.",
     "placeholders": {
@@ -1687,7 +1687,7 @@
       }
     }
   },
-  "diagnosticWritersideImagesDirectoryMissing": "Konfigurert bildekatalog mangler: {relativePath}",
+  "diagnosticWritersideImagesDirectoryMissing": "Den konfigurerte bildemappen mangler: {relativePath}",
   "@diagnosticWritersideImagesDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing images directory.",
     "placeholders": {
@@ -1696,7 +1696,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateId": "Element-ID \"{id}\" vises mer enn én gang.",
+  "diagnosticWritersideTopicDuplicateId": "Element-ID-en «{id}» vises mer enn én gang.",
   "@diagnosticWritersideTopicDuplicateId": {
     "description": "Writerside module diagnostic for a duplicate topic element ID.",
     "placeholders": {
@@ -1705,7 +1705,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "TOC refererer til manglende emne \"{topic}\".",
+  "diagnosticWritersideTreeMissingTopic": "Innholdsfortegnelsen refererer til et manglende emne: «{topic}».",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1714,7 +1714,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeInvalidHref": "Ekstern href \"{href}\" er ugyldig.",
+  "diagnosticWritersideTreeInvalidHref": "Ekstern href «{href}» er ugyldig.",
   "@diagnosticWritersideTreeInvalidHref": {
     "description": "Writerside module diagnostic for an invalid external href.",
     "placeholders": {
@@ -1723,7 +1723,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableUnresolved": "Variabelen \"%{name}%\" er ikke deklarert.",
+  "diagnosticWritersideVariableUnresolved": "Variabelen «%{name}%» er ikke deklarert.",
   "@diagnosticWritersideVariableUnresolved": {
     "description": "Writerside module diagnostic for an undeclared variable.",
     "placeholders": {
@@ -1732,7 +1732,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "Emnelink \"{destination}\" løser seg ikke.",
+  "diagnosticWritersideTopicLinkUnresolved": "Emnelenken «{destination}» kan ikke løses.",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -1741,7 +1741,7 @@
       }
     }
   },
-  "diagnosticWritersideAnchorUnresolved": "Ankeret \"{anchor}\" finnes ikke i \"{targetName}\".",
+  "diagnosticWritersideAnchorUnresolved": "Ankeret «{anchor}» finnes ikke i «{targetName}».",
   "@diagnosticWritersideAnchorUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic anchor.",
     "placeholders": {
@@ -1753,11 +1753,11 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "<include> mangler fra.",
+  "diagnosticWritersideIncludeMissingFrom": "<include> mangler from-attributt.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "Inkluder kilden \"{from}\" eksisterer ikke.",
+  "diagnosticWritersideIncludeSourceMissing": "include-kilden «{from}» finnes ikke.",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -1766,7 +1766,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeElementMissing": "Inkluder elementet \"{elementId}\" eksisterer ikke i \"{from}\".",
+  "diagnosticWritersideIncludeElementMissing": "include-elementet «{elementId}» finnes ikke i «{from}».",
   "@diagnosticWritersideIncludeElementMissing": {
     "description": "Writerside module diagnostic for a missing include element.",
     "placeholders": {
@@ -1778,7 +1778,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "Se også kategorien \"{ref}\" er ikke deklarert.",
+  "diagnosticWritersideCategoryUnresolved": "Se også-kategorien «{ref}» er ikke deklarert.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
@@ -1787,7 +1787,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAmbiguousReference": "Emnereferanse \"{reference}\" er tvetydig.",
+  "diagnosticWritersideTopicAmbiguousReference": "Emnereferansen «{reference}» er tvetydig.",
   "@diagnosticWritersideTopicAmbiguousReference": {
     "description": "Writerside module diagnostic for an ambiguous topic reference.",
     "placeholders": {
