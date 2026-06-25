@@ -97,6 +97,10 @@ class SettingsScreen extends ConsumerWidget {
                   value: settings.editorFontSize,
                   onChanged: controller.setEditorFontSize,
                 ),
+                _EditorToolbarPlacementRow(
+                  selected: settings.editorToolbarPlacement,
+                  onChanged: controller.setEditorToolbarPlacement,
+                ),
               ],
             ),
             BusyMarkGroupedList(
@@ -294,6 +298,90 @@ class _EditorFontSizeRow extends StatelessWidget {
           trailing: SizedBox(width: 260, child: slider),
         );
       },
+    );
+  }
+}
+
+class _EditorToolbarPlacementRow extends StatelessWidget {
+  const _EditorToolbarPlacementRow({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarPlacement selected;
+  final ValueChanged<EditorToolbarPlacement> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final control = _EditorToolbarPlacementControl(
+      selected: selected,
+      onChanged: onChanged,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 620) {
+          return Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.vertical_align_top),
+                    SizedBox(width: BusyMarkSpacing.md),
+                    Text('Editing buttons'),
+                  ],
+                ),
+                const SizedBox(height: BusyMarkSpacing.sm),
+                control,
+              ],
+            ),
+          );
+        }
+        return BusyMarkActionRow(
+          title: 'Editing buttons',
+          subtitle: 'Choose where the floating editor controls appear',
+          leading: const Icon(Icons.vertical_align_top),
+          trailing: SizedBox(width: 430, child: control),
+        );
+      },
+    );
+  }
+}
+
+class _EditorToolbarPlacementControl extends StatelessWidget {
+  const _EditorToolbarPlacementControl({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarPlacement selected;
+  final ValueChanged<EditorToolbarPlacement> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<EditorToolbarPlacement>(
+      showSelectedIcon: false,
+      segments: const [
+        ButtonSegment(
+          value: EditorToolbarPlacement.topLeft,
+          label: Text('Top left'),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.topRight,
+          label: Text('Top right'),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.bottomLeft,
+          label: Text('Bottom left'),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.bottomRight,
+          label: Text('Bottom right'),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (value) => onChanged(value.first),
     );
   }
 }

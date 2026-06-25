@@ -58,7 +58,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: BusyMarkSurfaceColors.of(context).view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
