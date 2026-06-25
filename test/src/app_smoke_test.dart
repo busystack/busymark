@@ -40,6 +40,7 @@ void main() {
 
     expect(find.text('BusyMark'), findsWidgets);
     expect(find.text('Create Markdown File'), findsOneWidget);
+    expect(find.text('Create Writerside Project'), findsOneWidget);
     expect(find.text('Open Markdown File'), findsOneWidget);
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);

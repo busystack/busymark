@@ -13,6 +13,7 @@ import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_safety.dart';
 
@@ -106,6 +107,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   leading: const Icon(Icons.note_add_outlined),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _createMarkdownFile,
+                ),
+                BusyMarkActionRow(
+                  title: 'Create Writerside Project',
+                  subtitle: 'Starter project with one Writerside help instance',
+                  leading: const Icon(Icons.library_books_outlined),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _createWritersideProject,
                 ),
               ],
             ),
@@ -282,6 +290,43 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
   }
 
+  Future<void> _createWritersideProject() async {
+    final safe = await confirmSafeToContinue(context, ref);
+    if (!safe || !mounted) {
+      return;
+    }
+    final parentPath = await getDirectoryPath(
+      initialDirectory: _initialDirectory(),
+      confirmButtonText: 'Choose',
+      canCreateDirectories: true,
+    );
+    if (parentPath == null || !mounted) {
+      return;
+    }
+    _logSelectedPickerPath(parentPath);
+
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    final request =
+        await showBusyMarkModalDialog<WritersideProjectCreateRequest>(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          builder: (context) =>
+              _CreateWritersideProjectDialog(parentDirectoryPath: parentPath),
+        );
+    if (request == null || !mounted) {
+      return;
+    }
+    final created = await ref
+        .read(workspaceControllerProvider.notifier)
+        .createWritersideProject(request);
+    if (!mounted) {
+      return;
+    }
+    if (created) {
+      context.go('/workspace');
+    }
+  }
+
   String? _initialDirectory() {
     final settings = ref.read(appSettingsControllerProvider);
     final lastPath = settings.lastOpenedPath;
@@ -308,6 +353,178 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (workspace != null) {
       context.go('/workspace');
     }
+  }
+}
+
+class _CreateWritersideProjectDialog extends StatefulWidget {
+  const _CreateWritersideProjectDialog({required this.parentDirectoryPath});
+
+  final String parentDirectoryPath;
+
+  @override
+  State<_CreateWritersideProjectDialog> createState() =>
+      _CreateWritersideProjectDialogState();
+}
+
+class _CreateWritersideProjectDialogState
+    extends State<_CreateWritersideProjectDialog> {
+  late final TextEditingController _projectNameController;
+  late final TextEditingController _directoryNameController;
+  var _directoryEdited = false;
+  var _syncingDirectory = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _projectNameController = TextEditingController()
+      ..addListener(_handleProjectNameChanged);
+    _directoryNameController = TextEditingController(
+      text: _slugDirectoryName(''),
+    )..addListener(_handleDirectoryNameChanged);
+  }
+
+  @override
+  void dispose() {
+    _projectNameController.dispose();
+    _directoryNameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final projectError = _projectNameError;
+    final directoryError = _directoryNameError;
+    final canCreate = projectError == null && directoryError == null;
+    return BusyMarkDialogShell(
+      title: 'Create Writerside Project',
+      maxWidth: 560,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: canCreate ? _submit : null,
+          child: const Text('Create'),
+        ),
+      ],
+      children: [
+        TextField(
+          controller: _projectNameController,
+          autofocus: true,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Project name',
+            errorText: projectError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _directoryNameController,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (canCreate) {
+              _submit();
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'Directory name',
+            errorText: directoryError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
+        Text(
+          'Location',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(color: colors.mutedForeground),
+        ),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.control,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            border: Border.all(color: colors.subtleBorder),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: SelectableText(
+              _targetPath,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String? get _projectNameError {
+    if (_projectNameController.text.trim().isEmpty) {
+      return 'Project name is required.';
+    }
+    return null;
+  }
+
+  String? get _directoryNameError {
+    final value = _directoryNameController.text.trim();
+    if (value.isEmpty) {
+      return 'Directory name is required.';
+    }
+    if (value == '.' ||
+        value == '..' ||
+        value.contains('..') ||
+        value.contains('/') ||
+        value.contains(r'\')) {
+      return 'Use a single safe directory name.';
+    }
+    return null;
+  }
+
+  String get _targetPath {
+    final directoryName = _directoryNameController.text.trim();
+    final safeDirectoryName = directoryName.isEmpty
+        ? _slugDirectoryName(_projectNameController.text)
+        : directoryName;
+    return p.join(normalizePath(widget.parentDirectoryPath), safeDirectoryName);
+  }
+
+  void _handleProjectNameChanged() {
+    if (!_directoryEdited) {
+      _syncingDirectory = true;
+      _directoryNameController.text = _slugDirectoryName(
+        _projectNameController.text,
+      );
+      _syncingDirectory = false;
+    }
+    setState(() {});
+  }
+
+  void _handleDirectoryNameChanged() {
+    if (!_syncingDirectory) {
+      _directoryEdited = true;
+    }
+    setState(() {});
+  }
+
+  void _submit() {
+    Navigator.pop(
+      context,
+      WritersideProjectCreateRequest(
+        parentDirectoryPath: normalizePath(widget.parentDirectoryPath),
+        projectName: _projectNameController.text.trim(),
+        directoryName: _directoryNameController.text.trim(),
+      ),
+    );
+  }
+
+  String _slugDirectoryName(String value) {
+    final slug = value
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    return slug.isEmpty ? 'writerside-project' : slug;
   }
 }
 

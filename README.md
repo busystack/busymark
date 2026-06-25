@@ -12,6 +12,7 @@ projects.
 - Open individual Markdown files.
 - Open Markdown documentation folders.
 - Open Writerside-compatible project folders.
+- Create Writerside-compatible starter projects.
 - Edit and save local files.
 - Preview Markdown content.
 - Navigate project files, table of contents, and document outline.

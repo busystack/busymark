@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   const service = WorkspaceService();
@@ -43,6 +45,32 @@ void main() {
     expect(workspace.kind, WorkspaceKind.writersideModule);
     expect(workspace.writersideModule?.instances.single.name, 'User Guide');
     expect(workspace.activeFilePath, endsWith('intro.md'));
+  });
+
+  test('creates and opens a Writerside starter project', () async {
+    final parent = await Directory.systemTemp.createTemp(
+      'busymark-workspace-create-',
+    );
+    addTearDown(() async {
+      if (await parent.exists()) {
+        await parent.delete(recursive: true);
+      }
+    });
+
+    final workspace = await service.createWritersideProject(
+      WritersideProjectCreateRequest(
+        parentDirectoryPath: parent.path,
+        projectName: 'Docs',
+        directoryName: 'docs',
+      ),
+    );
+
+    expect(workspace.kind, WorkspaceKind.writersideModule);
+    expect(
+      workspace.activeFilePath,
+      endsWith(p.join('topics', 'getting-started.md')),
+    );
+    expect(File(workspace.activeFilePath!).existsSync(), isTrue);
   });
 
   test('normalizes portal-style document paths as filesystem paths', () {

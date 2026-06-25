@@ -9,6 +9,7 @@ import '../markdown/markdown_parser.dart';
 import '../markdown/preview_export.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_model.dart';
+import '../writerside/writerside_project_creator.dart';
 import 'workspace_model.dart';
 
 class WorkspaceService {
@@ -16,12 +17,14 @@ class WorkspaceService {
     this.markdownParser = const MarkdownParser(),
     this.previewBuilder = const MarkdownPreviewBuilder(),
     this.writersideService = const WritersideModuleService(),
+    this.writersideProjectCreator = const WritersideProjectCreator(),
     this.scanOptions = const WorkspaceScanOptions(),
   });
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
   final WritersideModuleService writersideService;
+  final WritersideProjectCreator writersideProjectCreator;
   final WorkspaceScanOptions scanOptions;
 
   Workspace createUntitledMarkdown({String source = ''}) {
@@ -54,6 +57,16 @@ class WorkspaceService {
       return _openWriterside(path);
     }
     return _openMarkdownFolder(path);
+  }
+
+  Future<Workspace> createWritersideProject(
+    WritersideProjectCreateRequest request,
+  ) async {
+    final result = await writersideProjectCreator.create(request);
+    return _openWriterside(
+      result.rootPath,
+      activeFilePath: result.startTopicPath,
+    );
   }
 
   void _logOpenPathDiagnostics(
