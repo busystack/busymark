@@ -15,6 +15,8 @@ enum PreviewModePreference { markdown, writersideApproximate, sourceFallback }
 
 enum ValidationLevel { activeFile, wholeProject }
 
+enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
+
 extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
   ThemeMode get themeMode {
     return switch (this) {
@@ -63,6 +65,7 @@ class AppSettings {
     required this.wordWrap,
     required this.previewMode,
     required this.validationLevel,
+    required this.editorToolbarPlacement,
     required this.validateOnEdit,
     required this.checkExternalLinks,
     required this.checkExternalImages,
@@ -81,6 +84,7 @@ class AppSettings {
       wordWrap: true,
       previewMode: PreviewModePreference.markdown,
       validationLevel: ValidationLevel.wholeProject,
+      editorToolbarPlacement: EditorToolbarPlacement.topLeft,
       validateOnEdit: true,
       checkExternalLinks: false,
       checkExternalImages: false,
@@ -124,6 +128,11 @@ class AppSettings {
         json['validationLevel'],
         defaults.validationLevel,
       ),
+      editorToolbarPlacement: _enumFromName(
+        EditorToolbarPlacement.values,
+        json['editorToolbarPlacement'],
+        defaults.editorToolbarPlacement,
+      ),
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
       checkExternalLinks:
@@ -153,6 +162,7 @@ class AppSettings {
   final bool wordWrap;
   final PreviewModePreference previewMode;
   final ValidationLevel validationLevel;
+  final EditorToolbarPlacement editorToolbarPlacement;
   final bool validateOnEdit;
   final bool checkExternalLinks;
   final bool checkExternalImages;
@@ -171,6 +181,7 @@ class AppSettings {
     'wordWrap': wordWrap,
     'previewMode': previewMode.name,
     'validationLevel': validationLevel.name,
+    'editorToolbarPlacement': editorToolbarPlacement.name,
     'validateOnEdit': validateOnEdit,
     'checkExternalLinks': checkExternalLinks,
     'checkExternalImages': checkExternalImages,
@@ -188,6 +199,7 @@ class AppSettings {
     bool? wordWrap,
     PreviewModePreference? previewMode,
     ValidationLevel? validationLevel,
+    EditorToolbarPlacement? editorToolbarPlacement,
     bool? validateOnEdit,
     bool? checkExternalLinks,
     bool? checkExternalImages,
@@ -204,6 +216,8 @@ class AppSettings {
       wordWrap: wordWrap ?? this.wordWrap,
       previewMode: previewMode ?? this.previewMode,
       validationLevel: validationLevel ?? this.validationLevel,
+      editorToolbarPlacement:
+          editorToolbarPlacement ?? this.editorToolbarPlacement,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
       checkExternalLinks: checkExternalLinks ?? this.checkExternalLinks,
       checkExternalImages: checkExternalImages ?? this.checkExternalImages,
@@ -267,6 +281,10 @@ class AppSettingsController extends StateNotifier<AppSettings> {
 
   Future<void> setWordWrap(bool enabled) {
     return _save(state.copyWith(wordWrap: enabled));
+  }
+
+  Future<void> setEditorToolbarPlacement(EditorToolbarPlacement placement) {
+    return _save(state.copyWith(editorToolbarPlacement: placement));
   }
 
   Future<void> setPreviewVisible(bool enabled) {

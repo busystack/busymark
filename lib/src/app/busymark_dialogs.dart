@@ -111,17 +111,72 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 trailing: _KeyboardShortcutBadge('Ctrl+N'),
               ),
               BusyMarkActionRow(
+                title: 'Open',
+                subtitle:
+                    'Choose a Markdown file, folder, or Writerside project',
+                leading: Icon(Icons.folder_open_outlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+O'),
+              ),
+              BusyMarkActionRow(
                 title: 'Save',
                 subtitle: 'Save the current Markdown file',
                 leading: Icon(Icons.save_outlined),
                 trailing: _KeyboardShortcutBadge('Ctrl+S'),
               ),
+              BusyMarkActionRow(
+                title: 'Print',
+                subtitle: 'Open the active preview in the system print flow',
+                leading: Icon(Icons.print_outlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+P'),
+              ),
+              BusyMarkActionRow(
+                title: 'Find',
+                subtitle: 'Open workspace search',
+                leading: Icon(Icons.search),
+                trailing: _KeyboardShortcutBadge('Ctrl+F'),
+              ),
+              BusyMarkActionRow(
+                title: 'Keyboard shortcuts',
+                subtitle: 'Show this popup',
+                leading: Icon(Icons.keyboard_outlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+/'),
+              ),
             ],
           ),
           BusyMarkGroupedList(
-            title: 'Edit',
+            title: 'Text editing',
             filled: true,
             children: [
+              BusyMarkActionRow(
+                title: 'Select all',
+                subtitle: 'Select all text in the active field',
+                leading: Icon(Icons.select_all),
+                trailing: _KeyboardShortcutBadge('Ctrl+A'),
+              ),
+              BusyMarkActionRow(
+                title: 'Cut',
+                subtitle: 'Cut selected text',
+                leading: Icon(Icons.content_cut),
+                trailing: _KeyboardShortcutBadge('Ctrl+X'),
+              ),
+              BusyMarkActionRow(
+                title: 'Copy',
+                subtitle: 'Copy selected text or selected editor blocks',
+                leading: Icon(Icons.content_copy),
+                trailing: _KeyboardShortcutBadge('Ctrl+C'),
+              ),
+              BusyMarkActionRow(
+                title: 'Paste',
+                subtitle: 'Paste from clipboard',
+                leading: Icon(Icons.content_paste),
+                trailing: _KeyboardShortcutBadge('Ctrl+V'),
+              ),
+              BusyMarkActionRow(
+                title: 'Paste without formatting',
+                subtitle: 'Paste clipboard text as plain text',
+                leading: Icon(Icons.content_paste_go_outlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+V'),
+              ),
               BusyMarkActionRow(
                 title: 'Undo',
                 subtitle: 'Undo the last edit',
@@ -133,6 +188,126 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 subtitle: 'Redo the last undone edit',
                 leading: Icon(Icons.redo),
                 trailing: _KeyboardShortcutBadge('Ctrl+Shift+Z'),
+              ),
+              BusyMarkActionRow(
+                title: 'Clear editor selection',
+                subtitle: 'Clear multi-block selection in Editor view',
+                leading: Icon(Icons.clear),
+                trailing: _KeyboardShortcutBadge('Esc'),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: 'Formatting',
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: 'Bold',
+                subtitle: 'Apply bold formatting',
+                leading: Icon(Icons.format_bold),
+                trailing: _KeyboardShortcutBadge('Ctrl+B'),
+              ),
+              BusyMarkActionRow(
+                title: 'Italic',
+                subtitle: 'Apply italic formatting',
+                leading: Icon(Icons.format_italic),
+                trailing: _KeyboardShortcutBadge('Ctrl+I'),
+              ),
+              BusyMarkActionRow(
+                title: 'Underline',
+                subtitle: 'Apply underline formatting',
+                leading: Icon(Icons.format_underlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+U'),
+              ),
+              BusyMarkActionRow(
+                title: 'Link',
+                subtitle: 'Create or edit a link',
+                leading: Icon(Icons.link),
+                trailing: _KeyboardShortcutBadge('Ctrl+K'),
+              ),
+              BusyMarkActionRow(
+                title: 'Inline code',
+                subtitle: 'Apply inline code formatting',
+                leading: Icon(Icons.code_outlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+E'),
+              ),
+              BusyMarkActionRow(
+                title: 'Strikethrough',
+                subtitle: 'Apply strikethrough formatting',
+                leading: Icon(Icons.format_strikethrough),
+                trailing: _KeyboardShortcutBadge('Alt+Shift+5'),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: 'Blocks',
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: 'Paragraph',
+                subtitle: 'Apply paragraph style',
+                leading: Icon(Icons.notes_outlined),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+0'),
+              ),
+              BusyMarkActionRow(
+                title: 'Heading 1',
+                subtitle: 'Apply level 1 heading style',
+                leading: Icon(Icons.title),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+1'),
+              ),
+              BusyMarkActionRow(
+                title: 'Heading 2',
+                subtitle: 'Apply level 2 heading style',
+                leading: Icon(Icons.title),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+2'),
+              ),
+              BusyMarkActionRow(
+                title: 'Heading 3',
+                subtitle: 'Apply level 3 heading style',
+                leading: Icon(Icons.title),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+3'),
+              ),
+              BusyMarkActionRow(
+                title: 'Heading 4',
+                subtitle: 'Apply level 4 heading style',
+                leading: Icon(Icons.title),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+4'),
+              ),
+              BusyMarkActionRow(
+                title: 'Heading 5',
+                subtitle: 'Apply level 5 heading style',
+                leading: Icon(Icons.title),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+5'),
+              ),
+              BusyMarkActionRow(
+                title: 'Heading 6',
+                subtitle: 'Apply level 6 heading style',
+                leading: Icon(Icons.title),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+6'),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: 'Lists',
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: 'Numbered list',
+                subtitle: 'Apply ordered list formatting',
+                leading: Icon(Icons.format_list_numbered),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+7'),
+              ),
+              BusyMarkActionRow(
+                title: 'Bulleted list',
+                subtitle: 'Apply bulleted list formatting',
+                leading: Icon(Icons.format_list_bulleted),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+8'),
+              ),
+              BusyMarkActionRow(
+                title: 'Checklist',
+                subtitle: 'Apply task list formatting',
+                leading: Icon(Icons.checklist),
+                trailing: _KeyboardShortcutBadge('Ctrl+Shift+9'),
               ),
             ],
           ),
@@ -158,55 +333,21 @@ class _BusyMarkInfoDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                if (subtitle != null && subtitle!.isNotEmpty) ...[
-                  const SizedBox(height: BusyMarkSpacing.xs),
-                  Text(
-                    subtitle!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+    return BusyMarkDialogShell(
+      title: title,
+      maxWidth: maxWidth,
+      children: [
+        if (subtitle != null && subtitle!.isNotEmpty) ...[
+          Text(
+            subtitle!,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ),
-          ),
+          const SizedBox(height: BusyMarkSpacing.md),
         ],
-      ),
+        ...children,
+      ],
     );
   }
 }
