@@ -100,6 +100,14 @@ void main() {
     expect(find.text(l10n.appLanguage), findsOneWidget);
     expect(find.text(l10n.systemLanguage), findsWidgets);
     expect(find.text(l10n.validateOnEdit), findsOneWidget);
+    expect(find.byType(DropdownButton<String>), findsNothing);
+
+    await tester.tap(find.byTooltip(l10n.appLanguage));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deutsch'), findsOneWidget);
+    expect(find.text('العربية'), findsOneWidget);
+    expect(find.text('हिन्दी'), findsOneWidget);
   });
 
   testWidgets('stored language override localizes app text', (tester) async {

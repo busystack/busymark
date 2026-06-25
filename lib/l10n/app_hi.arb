@@ -21,11 +21,11 @@
       }
     }
   },
-  "aboutDescription": "BusyMark स्थानीय परियोजनाओं के लिए एक केंद्रित Markdown और Writerside-संगत दस्तावेज़ संपादक है।",
+  "aboutDescription": "BusyMark स्थानीय प्रोजेक्ट्स के लिए एक केंद्रित Markdown और Writerside-संगत दस्तावेज़ संपादक है।",
   "@aboutDescription": {
     "description": "Application description shown in the About dialog."
   },
-  "advanced": "विकसित",
+  "advanced": "उन्नत",
   "@advanced": {
     "description": "Settings section title for advanced actions."
   },
@@ -33,7 +33,7 @@
   "@appearance": {
     "description": "Settings section title for appearance options."
   },
-  "apply": "आवेदन करना",
+  "apply": "लागू करें",
   "@apply": {
     "description": "Button label that applies a dialog change."
   },
@@ -41,31 +41,31 @@
   "@back": {
     "description": "Tooltip for navigating back."
   },
-  "bottomLeft": "तली छोड़ें",
+  "bottomLeft": "नीचे बाएँ",
   "@bottomLeft": {
     "description": "Editing button position option."
   },
-  "bottomRight": "नीचे दाएं",
+  "bottomRight": "नीचे दाएँ",
   "@bottomRight": {
     "description": "Editing button position option."
   },
-  "cancel": "रद्द करना",
+  "cancel": "रद्द करें",
   "@cancel": {
     "description": "Cancel button label."
   },
-  "choose": "चुनना",
+  "choose": "चुनें",
   "@choose": {
     "description": "Button label for choosing a file or path."
   },
-  "chooseLocation": "स्थान का चयन",
+  "chooseLocation": "स्थान चुनें",
   "@chooseLocation": {
     "description": "File picker confirmation label for choosing a directory."
   },
-  "copy": "प्रतिलिपि",
+  "copy": "कॉपी करें",
   "@copy": {
     "description": "Copy command label."
   },
-  "create": "बनाएं",
+  "create": "बनाएँ",
   "@create": {
     "description": "Create action label."
   },
@@ -73,15 +73,15 @@
   "@creating": {
     "description": "Progress label while a project or topic is being created."
   },
-  "cut": "काटना",
+  "cut": "काटें",
   "@cut": {
     "description": "Cut command label."
   },
-  "darkTheme": "अँधेरा",
+  "darkTheme": "डार्क",
   "@darkTheme": {
     "description": "Dark theme option."
   },
-  "discard": "खारिज करना",
+  "discard": "खारिज करें",
   "@discard": {
     "description": "Discard unsaved changes button label."
   },
@@ -93,7 +93,7 @@
   "@file": {
     "description": "Generic file kind label."
   },
-  "find": "खोजो",
+  "find": "ढूँढें",
   "@find": {
     "description": "Find command label."
   },
@@ -105,11 +105,11 @@
   "@insert": {
     "description": "Insert button label."
   },
-  "keyboardShortcuts": "कुंजीपटल अल्प मार्ग",
+  "keyboardShortcuts": "कीबोर्ड शॉर्टकट",
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "lightTheme": "रोशनी",
+  "lightTheme": "लाइट",
   "@lightTheme": {
     "description": "Light theme option."
   },
@@ -121,7 +121,7 @@
   "@markdown": {
     "description": "Markdown format label."
   },
-  "open": "खुला",
+  "open": "खोलें",
   "@open": {
     "description": "Open action label."
   },
@@ -129,7 +129,7 @@
   "@outline": {
     "description": "Outline sidebar tab label."
   },
-  "overwrite": "ओवरराइट",
+  "overwrite": "ओवरराइट करें",
   "@overwrite": {
     "description": "Button label for overwriting a changed file."
   },
@@ -141,19 +141,19 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "पूर्व दर्शन",
+  "preview": "पूर्वावलोकन",
   "@preview": {
     "description": "Preview view label."
   },
-  "recent": "हाल ही का",
+  "recent": "हाल के",
   "@recent": {
     "description": "Recent workspaces section title."
   },
-  "redo": "फिर से करना",
+  "redo": "फिर से करें",
   "@redo": {
     "description": "Redo command label."
   },
-  "save": "बचाना",
+  "save": "सहेजें",
   "@save": {
     "description": "Save action label."
   },
@@ -173,15 +173,15 @@
   "@source": {
     "description": "Source view label."
   },
-  "split": "विभाजित करना",
+  "split": "स्प्लिट",
   "@split": {
     "description": "Split view label."
   },
-  "systemTheme": "प्रणाली",
+  "systemTheme": "सिस्टम",
   "@systemTheme": {
     "description": "System theme option."
   },
-  "theme": "विषय",
+  "theme": "थीम",
   "@theme": {
     "description": "Theme setting label."
   },
@@ -189,7 +189,7 @@
   "@appLanguage": {
     "description": "Application language setting label."
   },
-  "systemLanguage": "सिस्टम",
+  "systemLanguage": "सिस्टम डिफ़ॉल्ट",
   "@systemLanguage": {
     "description": "Language selector option that follows the operating system locale."
   },
@@ -249,11 +249,11 @@
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
-  "topLeft": "बाएं से बाएं",
+  "topLeft": "ऊपर बाएँ",
   "@topLeft": {
     "description": "Editing button position option."
   },
-  "topRight": "ठीक तरह से ऊपर",
+  "topRight": "ऊपर दाएँ",
   "@topRight": {
     "description": "Editing button position option."
   },
@@ -261,11 +261,11 @@
   "@undo": {
     "description": "Undo command label."
   },
-  "validate": "मान्य",
+  "validate": "सत्यापित करें",
   "@validate": {
     "description": "Validate action label."
   },
-  "validation": "मान्यकरण",
+  "validation": "सत्यापन",
   "@validation": {
     "description": "Settings section title for validation options."
   },
@@ -289,7 +289,7 @@
   "@fileTypeMarkdown": {
     "description": "Native file picker type label for Markdown files."
   },
-  "fileTypeImages": "इमेजिस",
+  "fileTypeImages": "छवियाँ",
   "@fileTypeImages": {
     "description": "Native file picker type label for images."
   },
@@ -297,7 +297,7 @@
   "@openMarkdownFile": {
     "description": "Action label for opening a Markdown file."
   },
-  "markdownFileExtensions": ".md or .markdown",
+  "markdownFileExtensions": ".md या .markdown",
   "@markdownFileExtensions": {
     "description": "Subtitle describing supported Markdown file extensions."
   },
@@ -341,7 +341,7 @@
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "सभी संपादक पाठ का चयन करें",
+  "shortcutSelectAllDescription": "संपादक का पूरा टेक्स्ट चुनें",
   "@shortcutSelectAllDescription": {
     "description": "Keyboard shortcut description for selecting all text."
   },
@@ -357,7 +357,7 @@
   "@shortcutPasteDescription": {
     "description": "Keyboard shortcut description for paste."
   },
-  "shortcutPastePlainTextDescription": "बिना फ़ॉर्मेटिंग के क्लिपबोर्ड टेक्स्ट चिपकाएँ",
+  "shortcutPastePlainTextDescription": "क्लिपबोर्ड टेक्स्ट को बिना फ़ॉर्मेटिंग के चिपकाएँ",
   "@shortcutPastePlainTextDescription": {
     "description": "Keyboard shortcut description for plain text paste."
   },
@@ -373,23 +373,23 @@
   "@clearEditorSelection": {
     "description": "Keyboard shortcut label for clearing selection."
   },
-  "shortcutClearEditorSelectionDescription": "वर्तमान संपादक चयन या खोज फ़ोकस को छोड़ दें",
+  "shortcutClearEditorSelectionDescription": "मौजूदा संपादक चयन या खोज फ़ोकस हटाएँ",
   "@shortcutClearEditorSelectionDescription": {
     "description": "Keyboard shortcut description for clearing selection."
   },
-  "shortcutGroupFormatting": "का प्रारूपण",
+  "shortcutGroupFormatting": "फ़ॉर्मेटिंग",
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "चयनित टेक्स्ट पर बोल्ड टॉगल करें",
+  "shortcutBoldDescription": "चयनित टेक्स्ट पर बोल्ड चालू/बंद करें",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "चयनित टेक्स्ट पर इटैलिक टॉगल करें",
+  "shortcutItalicDescription": "चयनित टेक्स्ट पर इटैलिक चालू/बंद करें",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "चयनित टेक्स्ट पर अंडरलाइन टॉगल करें",
+  "shortcutUnderlineDescription": "चयनित टेक्स्ट पर अंडरलाइन चालू/बंद करें",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
@@ -397,47 +397,47 @@
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "चयनित टेक्स्ट पर इनलाइन कोड टॉगल करें",
+  "shortcutInlineCodeDescription": "चयनित टेक्स्ट पर इनलाइन कोड चालू/बंद करें",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "चयनित टेक्स्ट पर स्ट्राइकथ्रू टॉगल करें",
+  "shortcutStrikethroughDescription": "चयनित टेक्स्ट पर स्ट्राइकथ्रू चालू/बंद करें",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
-  "shortcutGroupBlocks": "ब्लाकों",
+  "shortcutGroupBlocks": "ब्लॉक",
   "@shortcutGroupBlocks": {
     "description": "Keyboard shortcut group for block styles."
   },
-  "shortcutParagraphDescription": "वर्तमान ब्लॉक को पैराग्राफ़ पर सेट करें",
+  "shortcutParagraphDescription": "मौजूदा ब्लॉक को पैराग्राफ़ पर सेट करें",
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "वर्तमान ब्लॉक को शीर्षक 1 पर सेट करें",
+  "shortcutHeading1Description": "मौजूदा ब्लॉक को शीर्षक 1 पर सेट करें",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "वर्तमान ब्लॉक को शीर्षक 2 पर सेट करें",
+  "shortcutHeading2Description": "मौजूदा ब्लॉक को शीर्षक 2 पर सेट करें",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "वर्तमान ब्लॉक को शीर्षक 3 पर सेट करें",
+  "shortcutHeading3Description": "मौजूदा ब्लॉक को शीर्षक 3 पर सेट करें",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "वर्तमान ब्लॉक को शीर्षक 4 पर सेट करें",
+  "shortcutHeading4Description": "मौजूदा ब्लॉक को शीर्षक 4 पर सेट करें",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "वर्तमान ब्लॉक को शीर्षक 5 पर सेट करें",
+  "shortcutHeading5Description": "मौजूदा ब्लॉक को शीर्षक 5 पर सेट करें",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "वर्तमान ब्लॉक को शीर्षक 6 पर सेट करें",
+  "shortcutHeading6Description": "मौजूदा ब्लॉक को शीर्षक 6 पर सेट करें",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
-  "shortcutGroupLists": "सूचियों",
+  "shortcutGroupLists": "सूचियाँ",
   "@shortcutGroupLists": {
     "description": "Keyboard shortcut group for list commands."
   },
@@ -445,7 +445,7 @@
   "@numberedList": {
     "description": "Keyboard shortcut label for numbered list formatting."
   },
-  "shortcutNumberedListDescription": "क्रमांकित सूची स्वरूपण टॉगल करें",
+  "shortcutNumberedListDescription": "क्रमांकित सूची फ़ॉर्मेटिंग चालू/बंद करें",
   "@shortcutNumberedListDescription": {
     "description": "Keyboard shortcut description for numbered list."
   },
@@ -453,15 +453,15 @@
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
-  "shortcutBulletedListDescription": "बुलेटेड सूची फ़ॉर्मेटिंग टॉगल करें",
+  "shortcutBulletedListDescription": "बुलेट सूची फ़ॉर्मेटिंग चालू/बंद करें",
   "@shortcutBulletedListDescription": {
     "description": "Keyboard shortcut description for bulleted list."
   },
-  "checklist": "जांच सूची",
+  "checklist": "चेकलिस्ट",
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "चेकलिस्ट फ़ॉर्मेटिंग टॉगल करें",
+  "shortcutChecklistDescription": "चेकलिस्ट फ़ॉर्मेटिंग चालू/बंद करें",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
@@ -469,19 +469,19 @@
   "@createMarkdownFile": {
     "description": "Welcome screen action for creating a Markdown file."
   },
-  "createMarkdownFileDescription": "एक बिना सहेजा गया स्थानीय Markdown दस्तावेज़ प्रारंभ करें",
+  "createMarkdownFileDescription": "एक नया, सहेजा न गया स्थानीय Markdown दस्तावेज़ शुरू करें",
   "@createMarkdownFileDescription": {
     "description": "Welcome screen subtitle for creating a Markdown file."
   },
-  "createWritersideProject": "Writerside प्रोजेक्ट बनाएं",
+  "createWritersideProject": "Writerside प्रोजेक्ट बनाएँ",
   "@createWritersideProject": {
     "description": "Welcome screen action for creating a Writerside project."
   },
-  "createWritersideProjectDescription": "एक स्थानीय Writerside-संगत प्रोजेक्ट प्रारंभ करें",
+  "createWritersideProjectDescription": "एक स्थानीय Writerside-संगत प्रोजेक्ट शुरू करें",
   "@createWritersideProjectDescription": {
     "description": "Welcome screen subtitle for creating a Writerside project."
   },
-  "defaultProjectName": "प्रलेखन",
+  "defaultProjectName": "दस्तावेज़ीकरण",
   "@defaultProjectName": {
     "description": "Default project name shown in the create project dialog."
   },
@@ -489,7 +489,7 @@
   "@defaultInstanceName": {
     "description": "Default Writerside instance name shown in the create project dialog."
   },
-  "defaultStartTopicTitle": "शुरू करना",
+  "defaultStartTopicTitle": "शुरू करें",
   "@defaultStartTopicTitle": {
     "description": "Default start topic title shown in the create project dialog."
   },
@@ -497,47 +497,47 @@
   "@projectName": {
     "description": "Create project dialog field label."
   },
-  "directoryName": "निर्देशिका का नाम",
+  "directoryName": "डायरेक्टरी नाम",
   "@directoryName": {
     "description": "Create project dialog field label."
   },
-  "instanceName": "उदाहरण का नाम",
+  "instanceName": "इंस्टेंस नाम",
   "@instanceName": {
     "description": "Create project dialog field label."
   },
-  "instanceId": "उदाहरण ID",
+  "instanceId": "इंस्टेंस ID",
   "@instanceId": {
     "description": "Create project dialog field label."
   },
-  "startTopicTitle": "विषय शीर्षक प्रारंभ करें",
+  "startTopicTitle": "प्रारंभिक विषय शीर्षक",
   "@startTopicTitle": {
     "description": "Create project dialog field label."
   },
-  "location": "जगह",
+  "location": "स्थान",
   "@location": {
     "description": "Create dialog location section label."
   },
-  "projectNameRequired": "प्रोजेक्ट का नाम आवश्यक है.",
+  "projectNameRequired": "प्रोजेक्ट का नाम आवश्यक है।",
   "@projectNameRequired": {
     "description": "Validation message for missing project name."
   },
-  "directoryNameRequired": "निर्देशिका का नाम आवश्यक है.",
+  "directoryNameRequired": "डायरेक्टरी नाम आवश्यक है।",
   "@directoryNameRequired": {
     "description": "Validation message for missing directory name."
   },
-  "useSingleSafeDirectoryName": "एकल सुरक्षित निर्देशिका नाम का उपयोग करें.",
+  "useSingleSafeDirectoryName": "एक ही सुरक्षित डायरेक्टरी नाम इस्तेमाल करें।",
   "@useSingleSafeDirectoryName": {
     "description": "Validation message for unsafe directory names."
   },
-  "useLowercaseIdentifier": "अक्षरों, संख्याओं, अंडरस्कोर या हाइफ़न के साथ लोअरकेस पहचानकर्ता का उपयोग करें।",
+  "useLowercaseIdentifier": "लोअरकेस पहचानकर्ता इस्तेमाल करें; उसमें केवल अक्षर, अंक, अंडरस्कोर या हाइफ़न हो सकते हैं।",
   "@useLowercaseIdentifier": {
     "description": "Validation message for invalid Writerside instance IDs."
   },
-  "startTopicTitleRequired": "प्रारंभ विषय शीर्षक आवश्यक है.",
+  "startTopicTitleRequired": "प्रारंभिक विषय शीर्षक आवश्यक है।",
   "@startTopicTitleRequired": {
     "description": "Validation message for missing start topic title."
   },
-  "createWritersideProjectFailed": "Writerside प्रोजेक्ट नहीं बनाया जा सका.",
+  "createWritersideProjectFailed": "Writerside प्रोजेक्ट नहीं बनाया जा सका।",
   "@createWritersideProjectFailed": {
     "description": "Fallback error shown when Writerside project creation fails."
   },
@@ -553,7 +553,7 @@
   "@editorFontSize": {
     "description": "Editor font size setting label."
   },
-  "validateOnEdit": "संपादन पर मान्य करें",
+  "validateOnEdit": "संपादन के समय सत्यापित करें",
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
@@ -565,7 +565,7 @@
   "@editingButtons": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखाई देते हैं।",
+  "editingButtonsDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।",
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
@@ -586,11 +586,11 @@
       }
     }
   },
-  "fileChangedOnDisk": "डिस्क पर फ़ाइल बदली गई",
+  "fileChangedOnDisk": "डिस्क पर फ़ाइल बदल गई है",
   "@fileChangedOnDisk": {
     "description": "File changed confirmation dialog title."
   },
-  "fileChangedOnDiskMessage": "जब से आपने इसे खोला है तब से यह फ़ाइल डिस्क पर बदल गई है। इसे अधिलेखित करें?",
+  "fileChangedOnDiskMessage": "आपके खोलने के बाद यह फ़ाइल डिस्क पर बदल गई है। क्या इसे ओवरराइट करना है?",
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
@@ -598,11 +598,11 @@
   "@untitledMarkdownFileName": {
     "description": "Display name for a new unsaved Markdown document."
   },
-  "unorderedList": "अव्यवस्थित सूची",
+  "unorderedList": "बुलेट सूची",
   "@unorderedList": {
     "description": "WYSIWYG toolbar tooltip for unordered list."
   },
-  "orderedList": "आदेशित सूची",
+  "orderedList": "क्रमांकित सूची",
   "@orderedList": {
     "description": "WYSIWYG toolbar tooltip for ordered list."
   },
@@ -610,19 +610,19 @@
   "@taskList": {
     "description": "WYSIWYG toolbar tooltip for task list."
   },
-  "toggleTaskChecked": "टॉगल कार्य की जाँच की गई",
+  "toggleTaskChecked": "कार्य की चेक स्थिति बदलें",
   "@toggleTaskChecked": {
     "description": "WYSIWYG toolbar tooltip for toggling task state."
   },
-  "indentListItem": "इंडेंट सूची आइटम",
+  "indentListItem": "सूची आइटम का इंडेंट बढ़ाएँ",
   "@indentListItem": {
     "description": "WYSIWYG toolbar tooltip for indenting a list item."
   },
-  "outdentListItem": "आउटडेंट सूची आइटम",
+  "outdentListItem": "सूची आइटम का इंडेंट घटाएँ",
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
-  "blockquote": "ब्लॉककोट",
+  "blockquote": "ब्लॉक उद्धरण",
   "@blockquote": {
     "description": "Blockquote command label."
   },
@@ -642,11 +642,11 @@
   "@inlineImage": {
     "description": "Inline image command label."
   },
-  "table": "मेज़",
+  "table": "तालिका",
   "@table": {
     "description": "Table command label."
   },
-  "thematicBreak": "विषयगत विराम",
+  "thematicBreak": "थीमैटिक ब्रेक",
   "@thematicBreak": {
     "description": "Thematic break command label."
   },
@@ -658,7 +658,7 @@
   "@italic": {
     "description": "Italic command label."
   },
-  "underline": "रेखांकन",
+  "underline": "अंडरलाइन",
   "@underline": {
     "description": "Underline command label."
   },
@@ -670,7 +670,7 @@
   "@inlineCode": {
     "description": "Inline code command label."
   },
-  "link": "जोड़ना",
+  "link": "लिंक",
   "@link": {
     "description": "Link command and preview label."
   },
@@ -736,7 +736,7 @@
   "@insertColumnLeft": {
     "description": "Menu item for inserting a table column to the left."
   },
-  "insertColumnRight": "कॉलम दाईं ओर डालें",
+  "insertColumnRight": "दाईं ओर कॉलम डालें",
   "@insertColumnRight": {
     "description": "Menu item for inserting a table column to the right."
   },
@@ -753,23 +753,23 @@
       }
     }
   },
-  "insertRowAbove": "ऊपर पंक्ति सम्मिलित करें",
+  "insertRowAbove": "ऊपर पंक्ति डालें",
   "@insertRowAbove": {
     "description": "Menu item for inserting a table row above."
   },
-  "insertRowBelow": "नीचे पंक्ति सम्मिलित करें",
+  "insertRowBelow": "नीचे पंक्ति डालें",
   "@insertRowBelow": {
     "description": "Menu item for inserting a table row below."
   },
-  "deleteRow": "पंक्ति को हटाएं",
+  "deleteRow": "पंक्ति हटाएँ",
   "@deleteRow": {
     "description": "Menu item for deleting a table row."
   },
-  "tableHeaderHint": "हैडर",
+  "tableHeaderHint": "हेडर",
   "@tableHeaderHint": {
     "description": "Hint for an empty table header cell."
   },
-  "tableCellHint": "कक्ष",
+  "tableCellHint": "सेल",
   "@tableCellHint": {
     "description": "Hint for an empty table body cell."
   },
@@ -785,7 +785,7 @@
   "@showEditingButtons": {
     "description": "Tooltip for showing floating editing buttons."
   },
-  "altText": "वैकल्पिक पाठ",
+  "altText": "वैकल्पिक टेक्स्ट",
   "@altText": {
     "description": "Image alt text field label."
   },
@@ -797,7 +797,7 @@
   "@columns": {
     "description": "Table dialog columns field label."
   },
-  "rows": "पंक्तियों",
+  "rows": "पंक्तियाँ",
   "@rows": {
     "description": "Table dialog rows field label."
   },
@@ -810,15 +810,15 @@
       }
     }
   },
-  "tableCellDefault": "कक्ष",
+  "tableCellDefault": "सेल",
   "@tableCellDefault": {
     "description": "Default cell text for newly inserted table cells."
   },
-  "noImageSource": "कोई छवि स्रोत नहीं",
+  "noImageSource": "कोई छवि स्रोत नहीं है",
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "किनारे की बाधा को हटाएं",
+  "hideSidebar": "साइडबार छिपाएँ",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
@@ -826,7 +826,7 @@
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
-  "showPreview": "पूर्वावलोकन दिखाएं",
+  "showPreview": "पूर्वावलोकन दिखाएँ",
   "@showPreview": {
     "description": "Tooltip for showing the preview pane."
   },
@@ -891,7 +891,7 @@
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "नहीं Writerside TOC",
+  "noWritersideToc": "कोई Writerside TOC नहीं",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
@@ -903,7 +903,7 @@
   "@newTopic": {
     "description": "Create new Writerside topic action label."
   },
-  "newChildTopic": "नया बच्चा विषय",
+  "newChildTopic": "नया उप-विषय",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
@@ -919,15 +919,15 @@
   "@fileName": {
     "description": "Create topic dialog field label."
   },
-  "topicTitleRequired": "विषय शीर्षक आवश्यक है.",
+  "topicTitleRequired": "विषय शीर्षक आवश्यक है।",
   "@topicTitleRequired": {
     "description": "Validation message for missing topic title."
   },
-  "fileNameRequired": "फ़ाइल नाम आवश्यक है.",
+  "fileNameRequired": "फ़ाइल नाम आवश्यक है।",
   "@fileNameRequired": {
     "description": "Validation message for missing file name."
   },
-  "useSingleSafeFileName": "एकल सुरक्षित फ़ाइल नाम का उपयोग करें.",
+  "useSingleSafeFileName": "एक ही सुरक्षित फ़ाइल नाम इस्तेमाल करें।",
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
@@ -948,7 +948,7 @@
   "@topicIdAlreadyExists": {
     "description": "Validation message for duplicate topic IDs."
   },
-  "createWritersideTopicFailed": "Writerside विषय नहीं बनाया जा सका.",
+  "createWritersideTopicFailed": "Writerside विषय नहीं बनाया जा सका।",
   "@createWritersideTopicFailed": {
     "description": "Fallback error shown when topic creation fails."
   },
@@ -965,7 +965,7 @@
       }
     }
   },
-  "collapseKind": "संक्षिप्त करें {kind}",
+  "collapseKind": "{kind} संक्षिप्त करें",
   "@collapseKind": {
     "description": "Tooltip for collapsing a foldable source section.",
     "placeholders": {
@@ -998,7 +998,7 @@
   "@note": {
     "description": "Preview label for a note admonition."
   },
-  "tip": "बख्शीश",
+  "tip": "सुझाव",
   "@tip": {
     "description": "Preview label for a tip admonition."
   },
@@ -1030,7 +1030,7 @@
   "@chapter": {
     "description": "Preview label for a chapter element."
   },
-  "couldNotOpenTarget": "{target} नहीं खुल सका",
+  "couldNotOpenTarget": "{target} नहीं खोला जा सका",
   "@couldNotOpenTarget": {
     "description": "Snackbar shown when a link target cannot be opened.",
     "placeholders": {
@@ -1081,7 +1081,7 @@
       }
     }
   },
-  "untitledResult": "शीर्षक रहित परिणाम",
+  "untitledResult": "शीर्षकरहित परिणाम",
   "@untitledResult": {
     "description": "Fallback search result title."
   },
@@ -1097,7 +1097,7 @@
   "@documentKindWritersideXmlTopic": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideTree": "Writerside पेड़",
+  "documentKindWritersideTree": "Writerside ट्री",
   "@documentKindWritersideTree": {
     "description": "Search result document kind label."
   },
@@ -1109,7 +1109,7 @@
   "@documentKindVariablesFile": {
     "description": "Search result document kind label."
   },
-  "documentKindCategoriesFile": "श्रेणियाँ फ़ाइल",
+  "documentKindCategoriesFile": "श्रेणी फ़ाइल",
   "@documentKindCategoriesFile": {
     "description": "Search result document kind label."
   },
@@ -1117,7 +1117,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorOpenFailed": "खुला विफल: {error}",
+  "workspaceErrorOpenFailed": "खोलना विफल: {error}",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",
     "placeholders": {
@@ -1144,7 +1144,7 @@
       }
     }
   },
-  "workspaceErrorCouldNotOpenFile": "फ़ाइल नहीं खुल सकी: {error}",
+  "workspaceErrorCouldNotOpenFile": "फ़ाइल नहीं खोली जा सकी: {error}",
   "@workspaceErrorCouldNotOpenFile": {
     "description": "Workspace error message shown when opening a file fails.",
     "placeholders": {
@@ -1157,7 +1157,7 @@
   "@workspaceErrorChooseWhereToSaveMarkdown": {
     "description": "Workspace error message shown when an untitled file needs a save location."
   },
-  "workspaceErrorSaveBlockedFileChangedOnDisk": "अवरोधित सहेजें: डिस्क पर फ़ाइल बदली गई।",
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "सहेजना रोका गया: डिस्क पर फ़ाइल बदल गई है।",
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
@@ -1215,7 +1215,7 @@
       }
     }
   },
-  "errorParentDirectoryRequired": "मूल निर्देशिका आवश्यक है.",
+  "errorParentDirectoryRequired": "मूल डायरेक्टरी आवश्यक है।",
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
@@ -1228,19 +1228,19 @@
       }
     }
   },
-  "errorProjectNameRequired": "प्रोजेक्ट का नाम आवश्यक है.",
+  "errorProjectNameRequired": "प्रोजेक्ट का नाम आवश्यक है।",
   "@errorProjectNameRequired": {
     "description": "Detail for a missing project name."
   },
-  "errorDirectoryNameRequired": "निर्देशिका का नाम आवश्यक है.",
+  "errorDirectoryNameRequired": "डायरेक्टरी नाम आवश्यक है।",
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "निर्देशिका नाम एक एकल सुरक्षित पथ खंड होना चाहिए।",
+  "errorDirectoryNameUnsafe": "डायरेक्टरी नाम एक ही सुरक्षित पथ खंड होना चाहिए।",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "उदाहरण ID को लोअरकेस अक्षर से शुरू करना चाहिए और इसमें केवल लोअरकेस अक्षर, संख्याएं, अंडरस्कोर और हाइफ़न शामिल होने चाहिए।",
+  "errorInstanceIdInvalid": "इंस्टेंस ID लोअरकेस अक्षर से शुरू होना चाहिए और उसमें केवल लोअरकेस अक्षर, अंक, अंडरस्कोर और हाइफ़न होने चाहिए।",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
@@ -1248,7 +1248,7 @@
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
-  "errorTopicTitleRequired": "विषय शीर्षक आवश्यक है.",
+  "errorTopicTitleRequired": "विषय शीर्षक आवश्यक है।",
   "@errorTopicTitleRequired": {
     "description": "Detail for a missing topic title."
   },
@@ -1261,7 +1261,7 @@
       }
     }
   },
-  "errorWritersideModuleNotOpen": "विषय बनाने के लिए एक Writerside मॉड्यूल खुला होना चाहिए।",
+  "errorWritersideModuleNotOpen": "विषय बनाने के लिए Writerside मॉड्यूल खुला होना चाहिए।",
   "@errorWritersideModuleNotOpen": {
     "description": "Detail shown when creating a topic without an open Writerside module."
   },
@@ -1309,7 +1309,7 @@
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "विषय फ़ाइल नाम एक एकल सुरक्षित पथ खंड होना चाहिए.",
+  "errorTopicFileNameUnsafe": "विषय फ़ाइल नाम एक ही सुरक्षित पथ खंड होना चाहिए।",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
@@ -1322,7 +1322,7 @@
       }
     }
   },
-  "errorTopicFileNameInvalid": "विषय फ़ाइल नाम में केवल अक्षर, संख्याएँ, अंडरस्कोर और हाइफ़न होने चाहिए।",
+  "errorTopicFileNameInvalid": "विषय फ़ाइल नाम में केवल अक्षर, अंक, अंडरस्कोर और हाइफ़न होने चाहिए।",
   "@errorTopicFileNameInvalid": {
     "description": "Detail for a topic file name with invalid characters."
   },
@@ -1335,7 +1335,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileStatFailed": "फ़ाइल मेटाडेटा नहीं पढ़ सका: {error}",
+  "diagnosticWorkspaceFileStatFailed": "फ़ाइल मेटाडेटा नहीं पढ़ा जा सका: {error}",
   "@diagnosticWorkspaceFileStatFailed": {
     "description": "Diagnostic shown when file metadata cannot be read.",
     "placeholders": {
@@ -1344,7 +1344,7 @@
       }
     }
   },
-  "diagnosticWorkspaceScanSkipped": "बड़े कार्यक्षेत्र का पता चला. ऐप को प्रतिक्रियाशील बनाए रखने के लिए कुछ फ़ाइलें छोड़ दी गईं।",
+  "diagnosticWorkspaceScanSkipped": "बड़ा कार्यस्थान मिला। ऐप को प्रतिक्रियाशील रखने के लिए कुछ फ़ाइलें छोड़ दी गईं।",
   "@diagnosticWorkspaceScanSkipped": {
     "description": "Diagnostic shown when workspace scanning skips files."
   },
@@ -1361,7 +1361,7 @@
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
-  "diagnosticWorkspaceFileReadFailed": "Markdown फ़ाइल नहीं पढ़ सका: {error}",
+  "diagnosticWorkspaceFileReadFailed": "Markdown फ़ाइल नहीं पढ़ी जा सकी: {error}",
   "@diagnosticWorkspaceFileReadFailed": {
     "description": "Diagnostic shown when a Markdown file cannot be read.",
     "placeholders": {
@@ -1391,7 +1391,7 @@
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
-  "diagnosticWritersideXmlTopicMissingTitle": "XML विषय का शीर्षक गुम है.",
+  "diagnosticWritersideXmlTopicMissingTitle": "XML विषय का शीर्षक गुम है।",
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
@@ -1404,11 +1404,11 @@
       }
     }
   },
-  "diagnosticMarkdownFrontMatterMalformed": "सामने मामला बंद नहीं हुआ है.",
+  "diagnosticMarkdownFrontMatterMalformed": "फ्रंट मैटर बंद नहीं किया गया है।",
   "@diagnosticMarkdownFrontMatterMalformed": {
     "description": "Markdown parser diagnostic for unclosed front matter."
   },
-  "diagnosticMarkdownRawHtmlUnsafe": "असुरक्षित HTML तत्व.",
+  "diagnosticMarkdownRawHtmlUnsafe": "असुरक्षित HTML तत्व।",
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
@@ -1461,11 +1461,11 @@
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "स्निपेट घोषणा में स्रोत अनुपलब्ध है।",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "snippets घोषणा में src नहीं है।",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "उदाहरण-समूह घोषणा में स्रोत अनुपलब्ध है।",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups घोषणा में src नहीं है।",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
@@ -1478,23 +1478,23 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "इंस्टेंस घोषणा में स्रोत गायब है।",
+  "diagnosticWritersideConfigMissingInstanceSrc": "इंस्टेंस घोषणा में src नहीं है।",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "Writerside.cfg किसी उदाहरण को पंजीकृत नहीं करता है।",
+  "diagnosticWritersideConfigMissingInstance": "Writerside.cfg कोई इंस्टेंस पंजीकृत नहीं करता।",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": ".ट्री रूट <instance-profile> होना चाहिए।",
+  "diagnosticWritersideTreeInvalidRoot": ".tree का रूट <instance-profile> होना चाहिए।",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "इंस्टेंस प्रोफ़ाइल में आईडी मौजूद नहीं है.",
+  "diagnosticWritersideTreeMissingId": "इंस्टेंस प्रोफ़ाइल में ID नहीं है।",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "ट्री फ़ाइल स्टेम इंस्टेंस आईडी \"{id}\" से मेल नहीं खाता है।",
+  "diagnosticWritersideTreeIdMismatch": "ट्री फ़ाइल का स्टेम इंस्टेंस ID \"{id}\" से मेल नहीं खाता।",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1503,7 +1503,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "गैर-लाइब्रेरी उदाहरण में प्रारंभ पृष्ठ अनुपलब्ध है।",
+  "diagnosticWritersideTreeMissingStartPage": "गैर-लाइब्रेरी इंस्टेंस में start-page नहीं है।",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -1516,7 +1516,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "विषय \"{topic}\" इस उदाहरण TOC में एक से अधिक बार प्रकट होता है।",
+  "diagnosticWritersideTreeDuplicateTopic": "विषय \"{topic}\" इस इंस्टेंस TOC में एक से अधिक बार आता है।",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1525,7 +1525,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableMalformedDeclaration": "परिवर्तनीय घोषणा में नाम और मूल्य होना चाहिए।",
+  "diagnosticWritersideVariableMalformedDeclaration": "वेरिएबल घोषणा में नाम और मान होना चाहिए।",
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
@@ -1538,7 +1538,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "श्रेणी में आईडी मौजूद नहीं है.",
+  "diagnosticWritersideCategoryMissingId": "श्रेणी में ID नहीं है।",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
@@ -1560,15 +1560,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicInvalidRoot": ".विषय का मूल <विषय> होना चाहिए।",
+  "diagnosticWritersideTopicInvalidRoot": ".topic का रूट <topic> होना चाहिए।",
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "XML विषय में रूट आईडी गुम है.",
+  "diagnosticWritersideTopicMissingRootId": "XML विषय में रूट ID नहीं है।",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "XML विषय रूट आईडी \"{id}\" फ़ाइल नाम \"{expectedId}\" से मेल खाना चाहिए।",
+  "diagnosticWritersideTopicRootIdMismatch": "XML विषय रूट ID \"{id}\" फ़ाइल नाम \"{expectedId}\" से मेल खाना चाहिए।",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1589,7 +1589,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "<a> में href गायब है।",
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> में href नहीं है।",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
@@ -1597,7 +1597,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "कॉन्फ़िगर की गई बिल्ड कॉन्फ़िगरेशन निर्देशिका अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "कॉन्फ़िगर की गई बिल्ड कॉन्फ़िगरेशन डायरेक्टरी अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1606,7 +1606,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "कॉन्फ़िगर की गई API विनिर्देश निर्देशिका अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "कॉन्फ़िगर की गई API विनिर्देश डायरेक्टरी अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -1615,7 +1615,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "कॉन्फ़िगर की गई स्निपेट निर्देशिका अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "कॉन्फ़िगर की गई snippets डायरेक्टरी अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -1624,7 +1624,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "कॉन्फ़िगर की गई वैरिएबल फ़ाइल अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "कॉन्फ़िगर की गई variables फ़ाइल अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -1633,7 +1633,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "कॉन्फ़िगर की गई श्रेणियां फ़ाइल अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "कॉन्फ़िगर की गई categories फ़ाइल अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -1642,7 +1642,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "कॉन्फ़िगर की गई इंस्टेंस समूह फ़ाइल अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "कॉन्फ़िगर की गई instance groups फ़ाइल अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -1660,7 +1660,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicReadFailed": "विषय फ़ाइल नहीं पढ़ सका: {error}",
+  "diagnosticWritersideTopicReadFailed": "विषय फ़ाइल नहीं पढ़ी जा सकी: {error}",
   "@diagnosticWritersideTopicReadFailed": {
     "description": "Writerside module diagnostic for a topic file read failure.",
     "placeholders": {
@@ -1669,7 +1669,7 @@
       }
     }
   },
-  "diagnosticWritersideDefaultTopicsDirectoryMissing": "डिफ़ॉल्ट विषय निर्देशिका अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "डिफ़ॉल्ट topics डायरेक्टरी अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing default topics directory.",
     "placeholders": {
@@ -1678,7 +1678,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicsDirectoryMissing": "कॉन्फ़िगर की गई विषय निर्देशिका अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideTopicsDirectoryMissing": "कॉन्फ़िगर की गई topics डायरेक्टरी अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing topics directory.",
     "placeholders": {
@@ -1687,7 +1687,7 @@
       }
     }
   },
-  "diagnosticWritersideImagesDirectoryMissing": "कॉन्फ़िगर की गई छवि निर्देशिका अनुपलब्ध है: {relativePath}",
+  "diagnosticWritersideImagesDirectoryMissing": "कॉन्फ़िगर की गई images डायरेक्टरी अनुपलब्ध है: {relativePath}",
   "@diagnosticWritersideImagesDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing images directory.",
     "placeholders": {
@@ -1705,7 +1705,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "TOC गायब विषय \"{topic}\" का संदर्भ देता है।",
+  "diagnosticWritersideTreeMissingTopic": "TOC ऐसे विषय \"{topic}\" का संदर्भ देता है जो मौजूद नहीं है।",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1732,7 +1732,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "विषय लिंक \"{destination}\" हल नहीं होता।",
+  "diagnosticWritersideTopicLinkUnresolved": "विषय लिंक \"{destination}\" का लक्ष्य नहीं मिला।",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -1753,11 +1753,11 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "<include> गायब है।",
+  "diagnosticWritersideIncludeMissingFrom": "<include> में from नहीं है।",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "स्रोत शामिल करें \"{from}\" मौजूद नहीं है।",
+  "diagnosticWritersideIncludeSourceMissing": "include स्रोत \"{from}\" मौजूद नहीं है।",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -1766,7 +1766,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeElementMissing": "तत्व शामिल करें \"{elementId}\" \"{from}\" में मौजूद नहीं है।",
+  "diagnosticWritersideIncludeElementMissing": "include तत्व \"{elementId}\" \"{from}\" में मौजूद नहीं है।",
   "@diagnosticWritersideIncludeElementMissing": {
     "description": "Writerside module diagnostic for a missing include element.",
     "placeholders": {
@@ -1778,7 +1778,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "यह भी श्रेणी \"{ref}\" घोषित नहीं की गई है।",
+  "diagnosticWritersideCategoryUnresolved": "seealso श्रेणी \"{ref}\" घोषित नहीं है।",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {

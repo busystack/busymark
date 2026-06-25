@@ -1009,7 +1009,7 @@ class BusyMarkDialogShell extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   for (final action in actions) ...[
-                    action,
+                    Flexible(child: action),
                     if (action != actions.last)
                       const SizedBox(width: BusyMarkSpacing.sm),
                   ],
@@ -1099,7 +1099,11 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
           onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
           onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
           child: Container(
-            constraints: const BoxConstraints(minHeight: 34, minWidth: 72),
+            constraints: const BoxConstraints(
+              minHeight: 34,
+              minWidth: 72,
+              maxWidth: 220,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
             decoration: BoxDecoration(
               color: background,

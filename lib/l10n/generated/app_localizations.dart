@@ -411,73 +411,73 @@ abstract class AppLocalizations {
   /// Language selector option for German.
   ///
   /// In en, this message translates to:
-  /// **'German'**
+  /// **'Deutsch'**
   String get languageGerman;
 
   /// Language selector option for Italian.
   ///
   /// In en, this message translates to:
-  /// **'Italian'**
+  /// **'Italiano'**
   String get languageItalian;
 
   /// Language selector option for Norwegian.
   ///
   /// In en, this message translates to:
-  /// **'Norwegian'**
+  /// **'Norsk'**
   String get languageNorwegian;
 
   /// Language selector option for French.
   ///
   /// In en, this message translates to:
-  /// **'French'**
+  /// **'Français'**
   String get languageFrench;
 
   /// Language selector option for Russian.
   ///
   /// In en, this message translates to:
-  /// **'Russian'**
+  /// **'Русский'**
   String get languageRussian;
 
   /// Language selector option for Ukrainian.
   ///
   /// In en, this message translates to:
-  /// **'Ukrainian'**
+  /// **'Українська'**
   String get languageUkrainian;
 
   /// Language selector option for Polish.
   ///
   /// In en, this message translates to:
-  /// **'Polish'**
+  /// **'Polski'**
   String get languagePolish;
 
   /// Language selector option for Spanish.
   ///
   /// In en, this message translates to:
-  /// **'Spanish'**
+  /// **'Español'**
   String get languageSpanish;
 
   /// Language selector option for Portuguese.
   ///
   /// In en, this message translates to:
-  /// **'Portuguese'**
+  /// **'Português'**
   String get languagePortuguese;
 
   /// Language selector option for Arabic.
   ///
   /// In en, this message translates to:
-  /// **'Arabic'**
+  /// **'العربية'**
   String get languageArabic;
 
   /// Language selector option for Persian.
   ///
   /// In en, this message translates to:
-  /// **'Persian'**
+  /// **'فارسی'**
   String get languagePersian;
 
   /// Language selector option for Hindi.
   ///
   /// In en, this message translates to:
-  /// **'Hindi'**
+  /// **'हिन्दी'**
   String get languageHindi;
 
   /// Native header bar sidebar toggle tooltip.
