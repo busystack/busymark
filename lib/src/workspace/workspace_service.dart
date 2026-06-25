@@ -145,6 +145,7 @@ class WorkspaceService {
           source: source,
           mode: MarkdownMode.writersideMarkdown,
           workspaceRoot: topic!.topicRoot,
+          validateLocalReferences: false,
         );
         return workspace.copyWith(
           markdown: markdown,
@@ -208,6 +209,7 @@ class WorkspaceService {
           source: source,
           mode: MarkdownMode.writersideMarkdown,
           workspaceRoot: topic.topicRoot,
+          validateLocalReferences: false,
         );
         return previewBuilder.build(parsed);
       }

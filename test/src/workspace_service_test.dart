@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
@@ -77,6 +79,61 @@ void main() {
       isEmpty,
     );
   });
+
+  test(
+    'reparses and previews Writerside Markdown without generic link validation',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-workspace-writerside-links-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      Directory(p.join(root.path, 'topics')).createSync();
+      Directory(p.join(root.path, 'reference')).createSync();
+      Directory(p.join(root.path, 'images')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <topics dir="reference"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="api.md"/>
+</instance-profile>
+''');
+      final activeFile = File(p.join(root.path, 'topics', 'intro.md'))
+        ..writeAsStringSync('''
+# Intro
+
+[API](api.md)
+''');
+      File(p.join(root.path, 'reference', 'api.md')).writeAsStringSync('''
+# API
+''');
+      final parser = _RecordingMarkdownParser();
+      final parserService = WorkspaceService(markdownParser: parser);
+      final workspace = await parserService.openPath(root.path);
+
+      final reparsed = await parserService.reparseActive(
+        workspace,
+        activeFile.readAsStringSync(),
+      );
+      parserService.buildPreview(workspace, activeFile.readAsStringSync());
+
+      expect(parser.validationFlags, [false, false]);
+      expect(
+        reparsed.diagnostics.map((diagnostic) => diagnostic.code),
+        isNot(contains('markdown.link.unresolved-target')),
+      );
+    },
+  );
 
   test('normalizes portal-style document paths as filesystem paths', () {
     const path = '/run/user/1000/doc/abcdef/smoke.md';
@@ -206,4 +263,28 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+}
+
+class _RecordingMarkdownParser extends MarkdownParser {
+  _RecordingMarkdownParser();
+
+  final List<bool> validationFlags = [];
+
+  @override
+  ParsedMarkdownDocument parse({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+    String? workspaceRoot,
+    bool validateLocalReferences = true,
+  }) {
+    validationFlags.add(validateLocalReferences);
+    return super.parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      workspaceRoot: workspaceRoot,
+      validateLocalReferences: validateLocalReferences,
+    );
+  }
 }
