@@ -22,7 +22,9 @@ void main() {
           builder: (context) {
             foreground = BusyMarkSurfaceColors.of(context).foreground;
             final controller = BusyMarkSourceEditingController(
-              text: '# Title\nText `code` [link](target.md)\n',
+              text:
+                  '# Title\n'
+                  'Text `code` [link](target.md) **bold** *italic* ~~done~~\n',
               language: SourceSyntaxLanguage.markdown,
             );
             spans = _flattenTextSpans(
@@ -38,15 +40,19 @@ void main() {
       ),
     );
 
-    expect(
-      spans.any(
-        (span) =>
-            span.text == '# Title' && span.style?.fontWeight == FontWeight.w700,
-      ),
-      isTrue,
-    );
-    expect(_spanColor(spans, '`code`'), isNot(foreground));
-    expect(_spanColor(spans, '[link](target.md)'), isNot(foreground));
+    expect(_spanStyle(spans, 'Title')?.fontSize, 14 * 1.55);
+    expect(_spanStyle(spans, 'Title')?.fontWeight, FontWeight.w700);
+    expect(_spanStyle(spans, 'Title')?.color, foreground);
+    expect(_spanStyle(spans, 'code')?.fontFamily, 'Ubuntu Mono');
+    expect(_spanStyle(spans, 'code')?.color, foreground);
+    expect(_spanColor(spans, 'link'), isNot(foreground));
+    expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
+    expect(_spanStyle(spans, 'bold')?.fontWeight, FontWeight.w700);
+    expect(_spanStyle(spans, 'bold')?.color, foreground);
+    expect(_spanStyle(spans, 'italic')?.fontStyle, FontStyle.italic);
+    expect(_spanStyle(spans, 'italic')?.color, foreground);
+    expect(_spanStyle(spans, 'done')?.decoration, TextDecoration.lineThrough);
+    expect(_spanStyle(spans, 'done')?.color, foreground);
   });
 
   testWidgets('xml source highlighter colors tags attributes and strings', (
@@ -260,7 +266,7 @@ void main() {
   });
 
   testWidgets(
-    'visual markdown editor hides syntax markers but preserves source',
+    'visual markdown editor keeps syntax markers visible while styling content',
     (tester) async {
       const source =
           '# **Title**\n'
@@ -293,11 +299,14 @@ void main() {
       );
 
       expect(root.toPlainText(), source);
-      expect(_spanStyle(spans, '# ')?.color, Colors.transparent);
-      expect(_spanStyle(spans, '**')?.color, Colors.transparent);
+      expect(_spanStyle(spans, '# ')?.color, isNot(Colors.transparent));
+      expect(_spanStyle(spans, '**')?.color, isNot(Colors.transparent));
       expect(_spanStyle(spans, 'Title')?.fontWeight, FontWeight.w700);
-      expect(_spanStyle(spans, '[')?.color, Colors.transparent);
-      expect(_spanStyle(spans, '](target.md)')?.color, Colors.transparent);
+      expect(_spanStyle(spans, '[')?.color, isNot(Colors.transparent));
+      expect(
+        _spanStyle(spans, '](target.md)')?.color,
+        isNot(Colors.transparent),
+      );
       expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
     },
   );

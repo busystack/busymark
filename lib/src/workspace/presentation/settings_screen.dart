@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/app_settings.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
-import 'welcome_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -52,6 +52,19 @@ class SettingsScreen extends ConsumerWidget {
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
+              actions: [
+                BusyMarkHeaderIconButton(
+                  tooltip: 'Keyboard Shortcuts',
+                  icon: Icons.keyboard_outlined,
+                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
+                ),
+                BusyMarkHeaderIconButton(
+                  tooltip: 'About BusyMark',
+                  icon: Icons.info_outline,
+                  onPressed: () => showBusyMarkAboutDialog(context),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
             ),
       body: BusyMarkClamp(
         maxWidth: BusyMarkSizes.settingsWidth,
@@ -83,6 +96,10 @@ class SettingsScreen extends ConsumerWidget {
                 _EditorFontSizeRow(
                   value: settings.editorFontSize,
                   onChanged: controller.setEditorFontSize,
+                ),
+                _EditorToolbarPlacementRow(
+                  selected: settings.editorToolbarPlacement,
+                  onChanged: controller.setEditorToolbarPlacement,
                 ),
               ],
             ),
@@ -141,6 +158,8 @@ class SettingsScreen extends ConsumerWidget {
         context.go(workspaceOpen ? '/workspace' : '/');
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
+      case HeaderBarAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
@@ -279,6 +298,90 @@ class _EditorFontSizeRow extends StatelessWidget {
           trailing: SizedBox(width: 260, child: slider),
         );
       },
+    );
+  }
+}
+
+class _EditorToolbarPlacementRow extends StatelessWidget {
+  const _EditorToolbarPlacementRow({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarPlacement selected;
+  final ValueChanged<EditorToolbarPlacement> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final control = _EditorToolbarPlacementControl(
+      selected: selected,
+      onChanged: onChanged,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 620) {
+          return Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.vertical_align_top),
+                    SizedBox(width: BusyMarkSpacing.md),
+                    Text('Editing buttons'),
+                  ],
+                ),
+                const SizedBox(height: BusyMarkSpacing.sm),
+                control,
+              ],
+            ),
+          );
+        }
+        return BusyMarkActionRow(
+          title: 'Editing buttons',
+          subtitle: 'Choose where the floating editor controls appear',
+          leading: const Icon(Icons.vertical_align_top),
+          trailing: SizedBox(width: 430, child: control),
+        );
+      },
+    );
+  }
+}
+
+class _EditorToolbarPlacementControl extends StatelessWidget {
+  const _EditorToolbarPlacementControl({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarPlacement selected;
+  final ValueChanged<EditorToolbarPlacement> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<EditorToolbarPlacement>(
+      showSelectedIcon: false,
+      segments: const [
+        ButtonSegment(
+          value: EditorToolbarPlacement.topLeft,
+          label: Text('Top left'),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.topRight,
+          label: Text('Top right'),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.bottomLeft,
+          label: Text('Bottom left'),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.bottomRight,
+          label: Text('Bottom right'),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (value) => onChanged(value.first),
     );
   }
 }

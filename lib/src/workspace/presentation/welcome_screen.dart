@@ -35,7 +35,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
     final settings = ref.watch(appSettingsControllerProvider);
-    final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
@@ -59,7 +58,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: colors.view,
+      backgroundColor: BusyMarkSurfaceColors.of(context).view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
@@ -76,6 +75,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   tooltip: 'Settings',
                   icon: Icons.settings_outlined,
                   onPressed: () => context.go('/settings'),
+                ),
+                BusyMarkHeaderIconButton(
+                  tooltip: 'Keyboard Shortcuts',
+                  icon: Icons.keyboard_outlined,
+                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'About BusyMark',
@@ -177,6 +181,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go('/settings');
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
+      case HeaderBarAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.back:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
@@ -329,72 +335,6 @@ class _WelcomeMessage extends StatelessWidget {
             Expanded(child: Text(message)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-void showBusyMarkAboutDialog(BuildContext context) {
-  final headerBar = LinuxHeaderBarService.instance;
-  unawaited(
-    showBusyMarkModalDialog<void>(
-      context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => const _BusyMarkAboutDialog(),
-    ),
-  );
-}
-
-class _BusyMarkAboutDialog extends StatelessWidget {
-  const _BusyMarkAboutDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 420),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'BusyMark',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: BusyMarkSpacing.xs),
-                Text(
-                  'Version 0.1.0',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 8, 20, 20),
-            child: Text(
-              'BusyMark is an open-source application for reading, editing, and exporting Markdown files and Writerside-compatible projects.',
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

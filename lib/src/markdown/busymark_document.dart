@@ -118,6 +118,7 @@ enum BusyInlineKind {
   text,
   strong,
   emphasis,
+  underline,
   strikethrough,
   code,
   link,

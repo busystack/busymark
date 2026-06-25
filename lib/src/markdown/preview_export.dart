@@ -44,6 +44,7 @@ enum PreviewInlineKind {
   text,
   strong,
   emphasis,
+  underline,
   strikethrough,
   code,
   link,
@@ -225,6 +226,7 @@ class BusyMarkPreviewBuilder {
         BusyInlineKind.unknown => PreviewInlineKind.text,
         BusyInlineKind.strong => PreviewInlineKind.strong,
         BusyInlineKind.emphasis => PreviewInlineKind.emphasis,
+        BusyInlineKind.underline => PreviewInlineKind.underline,
         BusyInlineKind.strikethrough => PreviewInlineKind.strikethrough,
         BusyInlineKind.code => PreviewInlineKind.code,
         BusyInlineKind.link => PreviewInlineKind.link,
@@ -523,6 +525,7 @@ String _inlineNodeHtml(PreviewInline inline) {
     PreviewInlineKind.text => htmlEscape.convert(inline.text),
     PreviewInlineKind.strong => '<strong>$childHtml</strong>',
     PreviewInlineKind.emphasis => '<em>$childHtml</em>',
+    PreviewInlineKind.underline => '<u>$childHtml</u>',
     PreviewInlineKind.strikethrough => '<del>$childHtml</del>',
     PreviewInlineKind.code => '<code>${htmlEscape.convert(inline.text)}</code>',
     PreviewInlineKind.link =>

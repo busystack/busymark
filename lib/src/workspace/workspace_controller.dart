@@ -21,6 +21,10 @@ final workspaceControllerProvider =
       );
     });
 
+final workspaceSearchOpenRequestProvider = StateProvider<int>((ref) => 0);
+
+final workspaceSearchCloseRequestProvider = StateProvider<int>((ref) => 0);
+
 class WorkspaceController extends StateNotifier<WorkspaceState> {
   WorkspaceController({
     required WorkspaceService service,

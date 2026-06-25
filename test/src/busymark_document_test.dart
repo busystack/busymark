@@ -229,6 +229,103 @@ void main() {}
     expect(find.text('Editable text'), findsOneWidget);
   });
 
+  testWidgets('WYSIWYG editor undo and redo restore document edits', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Original\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Changed');
+    await tester.pump();
+
+    expect(markdown, 'Changed\n');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Original\n');
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Original',
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Changed\n');
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Changed',
+    );
+  });
+
+  testWidgets('WYSIWYG editor applies heading keyboard shortcuts', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Title\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.digit2);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.digit2);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, '## Title\n');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.digit0);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.digit0);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Title\n');
+  });
+
   testWidgets('WYSIWYG arrow keys move focus between paragraphs', (
     tester,
   ) async {
@@ -319,6 +416,138 @@ void main() {}
     );
     await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
     await gesture.up();
+    await tester.pump();
+
+    Color? nativeSelectionColorAt(int index) {
+      return TextSelectionTheme.of(
+        tester.element(find.byType(TextField).at(index)),
+      ).selectionColor;
+    }
+
+    expect(nativeSelectionColorAt(0), Colors.transparent);
+    expect(nativeSelectionColorAt(1), Colors.transparent);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, 'First\n\nSecond');
+  });
+
+  testWidgets('WYSIWYG click elsewhere clears previous block selection', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+    final thirdFieldRect = tester.getRect(find.byType(TextField).at(2));
+    final gesture = await tester.startGesture(
+      firstFieldRect.centerLeft + const Offset(1, 0),
+    );
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
+    await gesture.up();
+    await tester.pump();
+
+    await tester.tapAt(thirdFieldRect.centerLeft + const Offset(8, 0));
+    await tester.pump();
+
+    copiedText = null;
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, isNull);
+  });
+
+  testWidgets('WYSIWYG Shift click selects text across paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstField = tester.widget<TextField>(find.byType(TextField).first);
+    firstField.controller!.selection = const TextSelection.collapsed(offset: 0);
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.tapAt(secondFieldRect.centerLeft + const Offset(80, 0));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
     await tester.pump();
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -541,6 +770,65 @@ void main() {}
     expect(find.byType(TextField), findsOneWidget);
   });
 
+  testWidgets('WYSIWYG Ctrl+A twice selects all text for deletion', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) {
+      return tester.widget<TextField>(find.byType(TextField).at(index));
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(fieldAt(0).controller!.selection.start, 0);
+    expect(fieldAt(0).controller!.selection.end, 'First'.length);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(
+      TextSelectionTheme.of(
+        tester.element(find.byType(TextField).at(0)),
+      ).selectionColor,
+      Colors.transparent,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pump();
+
+    expect(markdown, isEmpty);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(fieldAt(0).controller!.text, isEmpty);
+  });
+
   test('WYSIWYG inline ranges do not duplicate formatted text', () {
     final parsed = parser.parse(filePath: 'topic.md', source: '**source**\n');
     final block = parsed.busyDocument.blocks.single;
@@ -718,6 +1006,7 @@ void main() {}
     tester,
   ) async {
     final temp = Directory.systemTemp.createTempSync('busymark_wysiwyg_image_');
+    var markdown = '';
     try {
       final topicsDir = Directory('${temp.path}/topics')..createSync();
       final imagesDir = Directory('${temp.path}/images')..createSync();
@@ -756,7 +1045,7 @@ void main() {}
                 workspaceRoot: topicsDir.path,
                 writersideRoot: temp.path,
                 imagesDir: 'images',
-                onSourceChanged: (_) {},
+                onSourceChanged: (value) => markdown = value,
               ),
             ),
           ),
@@ -766,6 +1055,31 @@ void main() {}
 
       expect(find.byType(Image), findsOneWidget);
       expect(find.text('rpi_1.jpg'), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('wysiwyg-image-block-image')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Image'), findsOneWidget);
+      expect(find.text('Apply'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField).at(0)).controller?.text,
+        'rpi_1.jpg',
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField).at(1)).controller?.text,
+        'Raspberry Pi',
+      );
+
+      await tester.enterText(
+        find.byType(TextField).at(0),
+        'images/updated.png',
+      );
+      await tester.enterText(find.byType(TextField).at(1), 'Updated alt');
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+
+      expect(markdown, '![Updated alt](images/updated.png)\n');
     } finally {
       temp.deleteSync(recursive: true);
     }
@@ -876,6 +1190,148 @@ void main() {}
     );
   });
 
+  testWidgets('WYSIWYG Enter carries active inline style to next paragraph', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: '**Bold**\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstField = tester.widget<TextField>(find.byType(TextField).first);
+    firstField.focusNode!.requestFocus();
+    firstField.controller!.selection = const TextSelection.collapsed(offset: 4);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).at(1), 'Next');
+    await tester.pump();
+
+    expect(markdown, '**Bold**\n\n**Next**\n');
+  });
+
+  testWidgets('WYSIWYG Enter at paragraph end preserves inner bold span', (
+    tester,
+  ) async {
+    const sentence =
+        'Users can do the following activities: input - reading, listening; '
+        'output - writing, speaking, choosing (e.g. correct word for empty '
+        'spot in a sentence). these activities should absolutely be mixed '
+        '(interleaved), rather than strictly grouped (blocked).';
+    final parsed = parser.parse(filePath: 'topic.md', source: '$sentence\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final groupedStart = sentence.indexOf('grouped');
+    final groupedEnd = groupedStart + 'grouped'.length;
+    field.focusNode!.requestFocus();
+    field.controller!.selection = TextSelection(
+      baseOffset: groupedStart,
+      extentOffset: groupedEnd,
+    );
+
+    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.pump();
+
+    field.controller!.selection = TextSelection.collapsed(
+      offset: sentence.length,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+
+    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n');
+    final context = tester.element(find.byType(TextField).first);
+    final span = field.controller!.buildTextSpan(
+      context: context,
+      style: DefaultTextStyle.of(context).style,
+      withComposing: false,
+    );
+    expect(_spanStyleForText(span, 'grouped')?.fontWeight, FontWeight.w700);
+  });
+
+  testWidgets('WYSIWYG newline text edit preserves inner bold span', (
+    tester,
+  ) async {
+    const sentence =
+        'Users can do the following activities: input - reading, listening; '
+        'output - writing, speaking, choosing (e.g. correct word for empty '
+        'spot in a sentence). these activities should absolutely be mixed '
+        '(interleaved), rather than strictly grouped (blocked).';
+    final parsed = parser.parse(filePath: 'topic.md', source: '$sentence\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final groupedStart = sentence.indexOf('grouped');
+    field.focusNode!.requestFocus();
+    field.controller!.selection = TextSelection(
+      baseOffset: groupedStart,
+      extentOffset: groupedStart + 'grouped'.length,
+    );
+
+    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, '$sentence\n');
+    await tester.pump();
+
+    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n');
+    final updatedField = tester.widget<TextField>(find.byType(TextField).first);
+    final context = tester.element(find.byType(TextField).first);
+    final span = updatedField.controller!.buildTextSpan(
+      context: context,
+      style: DefaultTextStyle.of(context).style,
+      withComposing: false,
+    );
+    expect(_spanStyleForText(span, 'grouped')?.fontWeight, FontWeight.w700);
+  });
+
   testWidgets('WYSIWYG text input newlines become Markdown paragraphs', (
     tester,
   ) async {
@@ -941,7 +1397,296 @@ void main() {}
     controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.heading2);
     expect(controller.markdown, '## Title\n');
 
+    controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.heading6);
+    expect(controller.markdown, '###### Title\n');
+
     controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.taskList);
     expect(controller.markdown, '- [ ] Title\n');
   });
+
+  test('WYSIWYG extended toolbar commands serialize Markdown', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Alpha Beta\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = parsed.busyDocument.blocks.first.id;
+
+    controller.insertInlineImage(
+      blockId,
+      selectionStart: 6,
+      selectionEnd: 10,
+      source: 'images/logo.png',
+      alt: 'Logo',
+    );
+    expect(controller.markdown, 'Alpha ![Logo](images/logo.png)\n');
+
+    final hardBreakParsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Alpha Beta\n',
+    );
+    final hardBreakController = BusyMarkWysiwygDocumentController(
+      document: hardBreakParsed.busyDocument,
+    );
+    final hardBreakBlockId = hardBreakParsed.busyDocument.blocks.first.id;
+
+    hardBreakController.insertHardBreak(hardBreakBlockId, 5);
+    expect(hardBreakController.markdown, 'Alpha  \n Beta\n');
+  });
+
+  test('WYSIWYG table and code language commands serialize Markdown', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Intro\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = parsed.busyDocument.blocks.first.id;
+
+    controller.insertTableAfter(blockId, columns: 2, rows: 1);
+
+    expect(
+      controller.markdown,
+      'Intro\n\n'
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+
+    final tableId = controller.document.blocks
+        .singleWhere((block) => block.kind == BusyBlockKind.table)
+        .id;
+    final table = controller.document.blocks.singleWhere(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    controller.updateTableCellText(
+      table.id,
+      table.children.first.children.first.id,
+      'Name',
+    );
+    expect(
+      controller.markdown,
+      'Intro\n\n'
+      '| Name | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+    controller.replaceTable(tableId, columns: 3, rows: 1);
+    expect(
+      controller.markdown,
+      'Intro\n\n'
+      '| Name | Header 2 | Header 3 |\n'
+      '| --- | --- | --- |\n'
+      '| Cell | Cell | Cell |\n',
+    );
+
+    final parsedTable = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| Header 1 | Header 2 |\n'
+          '| --- | --- |\n'
+          '| Cell | Cell |\n',
+    );
+    final parsedTableController = BusyMarkWysiwygDocumentController(
+      document: parsedTable.busyDocument,
+    );
+    final parsedTableBlock = parsedTableController.document.blocks.singleWhere(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    final parsedHeaderCellId =
+        parsedTableBlock.children.first.children.first.id;
+    parsedTableController.updateTableCellText(
+      parsedTableBlock.id,
+      parsedHeaderCellId,
+      'Name',
+    );
+    expect(parsedTableController.blockText(parsedHeaderCellId), 'Name');
+    expect(
+      parsedTableController.markdown,
+      '| Name | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+
+    final codeParsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'print(1);\n',
+    );
+    final codeController = BusyMarkWysiwygDocumentController(
+      document: codeParsed.busyDocument,
+    );
+    final codeBlockId = codeParsed.busyDocument.blocks.first.id;
+
+    codeController.applyCodeBlockLanguage(codeBlockId, 'dart');
+    expect(codeController.markdown, '```dart\nprint(1);\n```\n');
+  });
+
+  test('WYSIWYG table row and column commands serialize Markdown', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| Header 1 | Header 2 |\n'
+          '| --- | --- |\n'
+          '| Cell | Cell |\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    String tableId() => controller.document.blocks
+        .singleWhere((block) => block.kind == BusyBlockKind.table)
+        .id;
+
+    controller.insertTableRow(tableId(), 1, after: false);
+    expect(
+      controller.markdown,
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '|  |  |\n'
+      '| Cell | Cell |\n',
+    );
+
+    controller.insertTableColumn(tableId(), 0, after: true);
+    expect(
+      controller.markdown,
+      '| Header 1 |  | Header 2 |\n'
+      '| --- | --- | --- |\n'
+      '|  |  |  |\n'
+      '| Cell |  | Cell |\n',
+    );
+
+    controller.deleteTableColumn(tableId(), 1);
+    expect(
+      controller.markdown,
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '|  |  |\n'
+      '| Cell | Cell |\n',
+    );
+
+    controller.deleteTableRow(tableId(), 1);
+    expect(
+      controller.markdown,
+      '| Header 1 | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Cell | Cell |\n',
+    );
+
+    controller.deleteTableRow(tableId(), 0);
+    expect(
+      controller.markdown,
+      '| Cell | Cell |\n'
+      '| --- | --- |\n',
+    );
+
+    controller.deleteTable(tableId());
+    expect(controller.markdown, '');
+  });
+
+  testWidgets('WYSIWYG table cells are formatted and editable', (tester) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          'Intro\n\n'
+          '| Header 1 | Header 2 |\n'
+          '| --- | --- |\n'
+          '| Cell | Cell |\n',
+    );
+    var markdown = '';
+    final widgetTable = parsed.busyDocument.blocks.singleWhere(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    final headerCellId = widgetTable.children.first.children.first.id;
+    final bodyCellId = widgetTable.children[1].children.first.id;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(Table), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(5));
+    expect(find.text('| Header 1 | Header 2 |'), findsNothing);
+    expect(find.byTooltip('Delete table'), findsOneWidget);
+    expect(find.byTooltip('Column 1'), findsOneWidget);
+    expect(find.byTooltip('Column 2'), findsOneWidget);
+    expect(find.byTooltip('Row 1'), findsOneWidget);
+    expect(find.byTooltip('Row 2'), findsOneWidget);
+
+    final headerField = tester.widget<TextField>(
+      find.byKey(ValueKey(headerCellId)),
+    );
+    final bodyField = tester.widget<TextField>(
+      find.byKey(ValueKey(bodyCellId)),
+    );
+    expect(headerField.onChanged, isNotNull);
+    expect(bodyField.onChanged, isNotNull);
+
+    headerField.onChanged!('Name');
+    await tester.pump();
+    bodyField.onChanged!('Alice');
+    await tester.pump();
+
+    expect(
+      markdown,
+      'Intro\n\n'
+      '| Name | Header 2 |\n'
+      '| --- | --- |\n'
+      '| Alice | Cell |\n',
+    );
+  });
+
+  test('WYSIWYG list indent outdent and task toggle commands serialize', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n- Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = parsed.busyDocument.blocks[1].id;
+
+    controller.indentListItems([childId]);
+    expect(controller.markdown, '- Parent\n  - Child\n');
+
+    controller.outdentListItems([childId]);
+    expect(controller.markdown, '- Parent\n\n- Child\n');
+
+    final taskParsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- [ ] Todo\n',
+    );
+    final taskController = BusyMarkWysiwygDocumentController(
+      document: taskParsed.busyDocument,
+    );
+    final taskId = taskParsed.busyDocument.blocks.first.id;
+
+    taskController.toggleTaskChecked([taskId]);
+    expect(taskController.markdown, '- [x] Todo\n');
+  });
+}
+
+TextStyle? _spanStyleForText(InlineSpan span, String text) {
+  if (span is TextSpan) {
+    if ((span.text ?? '').contains(text)) {
+      return span.style;
+    }
+    final children = span.children;
+    if (children != null) {
+      for (final child in children) {
+        final style = _spanStyleForText(child, text);
+        if (style != null) {
+          return style;
+        }
+      }
+    }
+  }
+  return null;
 }

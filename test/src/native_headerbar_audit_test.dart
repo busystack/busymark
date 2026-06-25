@@ -73,7 +73,49 @@ void main() {
     expect(source, isNot(contains('"Preview"')));
     expect(source, isNot(contains('"Split"')));
     expect(source, isNot(contains('"Settings"')));
+    expect(source, isNot(contains('"Keyboard Shortcuts"')));
     expect(source, isNot(contains('"About BusyMark"')));
+  });
+
+  test('native main menu exposes keyboard shortcuts action', () {
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
+    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
+    final dialogs = File(
+      'lib/src/app/busymark_dialogs.dart',
+    ).readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(service, contains('keyboardShortcuts'));
+    expect(app, contains("keyboardShortcuts: 'Keyboard Shortcuts'"));
+    expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
+    expect(dialogs, contains('Ctrl+N'));
+    expect(dialogs, contains('Ctrl+S'));
+    expect(dialogs, contains('Ctrl+Z'));
+    expect(dialogs, contains('Ctrl+Shift+Z'));
+    expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
+    expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
+    expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box),\n'
+        '                     self->keyboard_shortcuts_item',
+      ),
+    );
   });
 
   test(
@@ -156,14 +198,30 @@ void main() {
     expect(native, contains('configure_transparent_window_backing(window);'));
   });
 
-  test('native headerbar buttons use themed shadows', () {
+  test('native headerbar buttons use GTK-style themed controls', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(native, contains('"box-shadow: 0 1px 1px %s;"'));
-    expect(native, contains('foreground, control, shade'));
+    expect(native, contains('"border: 1px solid %s;"'));
     expect(native, contains('"box-shadow: none;"'));
+    expect(native, contains('foreground, control, border'));
+    expect(
+      native,
+      isNot(contains('"box-shadow: 0 -1px 1px %s, 0 1px 1px %s;"')),
+    );
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
   });
+
+  test(
+    'native document controls stay hidden on welcome and settings screens',
+    () {
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+      expect(native, contains('self->document_controls_visible = visible'));
+      expect(native, contains('visible && !self->search_active'));
+      expect(native, contains('self->document_controls_visible && !active'));
+      expect(native, contains('set_document_controls_visible(self, FALSE)'));
+    },
+  );
 
   test(
     'surface palette uses neutral grays instead of blue-tinted surfaces',
@@ -310,7 +368,7 @@ void main() {
     );
     expect(
       native,
-      contains('set_widget_visible(self->view_mode_box, visible)'),
+      contains('set_widget_visible(self->view_mode_box, effective_visible)'),
     );
     expect(native, isNot(contains('viewModeDay')));
     expect(native, isNot(contains('viewModeWeek')));
@@ -332,7 +390,10 @@ void main() {
 
     expect(welcome, isNot(contains('_WelcomeRail')));
     expect(welcome, contains('setSidebarVisible(false)'));
-    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(
+      welcome,
+      contains('backgroundColor: BusyMarkSurfaceColors.of(context).view'),
+    );
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
@@ -347,10 +408,13 @@ void main() {
       native,
       contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
     );
-    expect(native, contains('set_widget_visible(self->save_button, visible)'));
     expect(
       native,
-      contains('set_widget_visible(self->refresh_button, visible)'),
+      contains('set_widget_visible(self->save_button, effective_visible)'),
+    );
+    expect(
+      native,
+      contains('set_widget_visible(self->refresh_button, effective_visible)'),
     );
     expect(
       native,
@@ -358,7 +422,7 @@ void main() {
     );
   });
 
-  test('no-sidebar pages use the main view surface under the headerbar', () {
+  test('no-sidebar pages use themed page surfaces under the headerbar', () {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
@@ -366,9 +430,11 @@ void main() {
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
-    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(
+      welcome,
+      contains('backgroundColor: BusyMarkSurfaceColors.of(context).view'),
+    );
     expect(settings, contains('backgroundColor: colors.view'));
-    expect(welcome, isNot(contains('backgroundColor: colors.window')));
     expect(settings, isNot(contains('backgroundColor: colors.window')));
   });
 

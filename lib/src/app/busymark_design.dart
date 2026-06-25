@@ -32,7 +32,7 @@ abstract final class BusyMarkSizes {
 }
 
 abstract final class BusyMarkElevation {
-  static const double surface = 1;
+  static const double surface = 2;
   static const double popover = 6;
   static const double window = 12;
 }
@@ -55,14 +55,19 @@ abstract final class BusyMarkShadow {
   static List<BoxShadow> surfaceShadows(Color color) {
     return [
       BoxShadow(
-        color: _scaleAlpha(color, 0.34),
-        blurRadius: 5,
-        offset: const Offset(0, 1),
+        color: _scaleAlpha(color, 0.28),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+      BoxShadow(
+        color: _scaleAlpha(color, 0.18),
+        blurRadius: 3,
+        offset: const Offset(0, -1),
       ),
       BoxShadow(
         color: _scaleAlpha(color, 0.16),
         blurRadius: 1,
-        offset: const Offset(0, 1),
+        offset: Offset.zero,
       ),
     ];
   }
@@ -126,6 +131,21 @@ abstract final class BusyMarkShadow {
   }
 }
 
+BoxDecoration busyMarkSurfaceDecoration(
+  BuildContext context, {
+  required Color color,
+  required BorderRadius borderRadius,
+  Border? border,
+  bool elevated = true,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: borderRadius,
+    border: border,
+    boxShadow: elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null,
+  );
+}
+
 abstract final class BusyMarkLinuxPalette {
   static const blueAccent = Color(0xFF3584E4);
   static const red = Color(0xFFC01C28);
@@ -181,18 +201,18 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
         card: Color(0xFFFFFFFF),
         dialog: Color(0xFFFAFAFA),
         popover: Color(0xFFFFFFFF),
-        control: Color.fromRGBO(0, 0, 0, 0.06),
-        controlHover: Color.fromRGBO(0, 0, 0, 0.10),
-        controlActive: Color.fromRGBO(0, 0, 0, 0.16),
+        control: Color(0xFFFFFFFF),
+        controlHover: Color(0xFFF6F6F6),
+        controlActive: Color(0xFFEDEDED),
         activeToggle: Color(0xFFFFFFFF),
         foreground: Color.fromRGBO(0, 0, 0, 0.82),
         mutedForeground: Color.fromRGBO(0, 0, 0, 0.58),
         disabledForeground: Color.fromRGBO(0, 0, 0, 0.38),
-        disabledControl: Color.fromRGBO(0, 0, 0, 0.04),
+        disabledControl: Color(0xFFF3F3F3),
         border: Color.fromRGBO(0, 0, 0, 0.18),
         subtleBorder: Color.fromRGBO(0, 0, 0, 0.10),
         sidebarBorder: Color.fromRGBO(0, 0, 0, 0.08),
-        shade: Color.fromRGBO(0, 0, 0, 0.08),
+        shade: Color.fromRGBO(0, 0, 0, 0.22),
         muted: Color.fromRGBO(0, 0, 0, 0.58),
         admonitionNote: Color(0xFFF0F4F8),
         admonitionTip: Color(0xFFEAF8EF),
@@ -209,14 +229,14 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
         card: Color(0xFF2A2A2A),
         dialog: Color(0xFF2A2A2A),
         popover: Color(0xFF383838),
-        control: Color.fromRGBO(255, 255, 255, 0.10),
-        controlHover: Color.fromRGBO(255, 255, 255, 0.14),
-        controlActive: Color.fromRGBO(255, 255, 255, 0.18),
-        activeToggle: Color.fromRGBO(255, 255, 255, 0.20),
+        control: Color(0xFF383838),
+        controlHover: Color(0xFF424242),
+        controlActive: Color(0xFF4A4A4A),
+        activeToggle: Color(0xFF4A4A4A),
         foreground: Color(0xFFFFFFFF),
         mutedForeground: Color.fromRGBO(255, 255, 255, 0.70),
         disabledForeground: Color.fromRGBO(255, 255, 255, 0.38),
-        disabledControl: Color.fromRGBO(255, 255, 255, 0.06),
+        disabledControl: Color(0xFF303030),
         border: Color.fromRGBO(0, 0, 0, 0.70),
         subtleBorder: Color.fromRGBO(255, 255, 255, 0.10),
         sidebarBorder: Color.fromRGBO(0, 0, 0, 0.36),
@@ -418,15 +438,28 @@ WidgetStateProperty<Color?> busyMarkHeaderButtonBackground(
   });
 }
 
+WidgetStateProperty<Color?> busyMarkTransparentHeaderButtonBackground(
+  BuildContext context,
+) {
+  final colors = BusyMarkSurfaceColors.of(context);
+  return WidgetStateProperty.resolveWith((states) {
+    if (states.contains(WidgetState.pressed)) {
+      return colors.controlActive;
+    }
+    if (states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.focused)) {
+      return colors.controlHover;
+    }
+    return Colors.transparent;
+  });
+}
+
 Color busyMarkSelectedBackground(BuildContext context) {
   return BusyMarkSurfaceColors.of(context).controlActive;
 }
 
 Color busyMarkRowHoverColor(BuildContext context) {
-  final colors = BusyMarkSurfaceColors.of(context);
-  return colors.foreground.withValues(
-    alpha: Theme.of(context).brightness == Brightness.dark ? 0.045 : 0.055,
-  );
+  return BusyMarkSurfaceColors.of(context).controlHover;
 }
 
 TextStyle? busyMarkSectionHeaderStyle(BuildContext context) {
@@ -444,6 +477,11 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     required this.onPressed,
     this.selected = false,
     this.accented = false,
+    this.transparent = false,
+    this.shortcut,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.boxShadow,
   });
 
   final String tooltip;
@@ -451,27 +489,49 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool selected;
   final bool accented;
+  final bool transparent;
+  final String? shortcut;
+  final Color? foregroundColor;
+  final WidgetStateProperty<Color?>? backgroundColor;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    return IconButton(
+    final button = IconButton(
       style: busyMarkHeaderIconButtonStyle(
-        foregroundColor: accented
-            ? colorScheme.onPrimary
-            : selected
-            ? colorScheme.primary
-            : colors.mutedForeground,
-        backgroundColor: accented
-            ? WidgetStatePropertyAll(colorScheme.primary)
-            : selected
-            ? WidgetStatePropertyAll(colors.controlActive)
-            : busyMarkHeaderButtonBackground(context),
+        foregroundColor:
+            foregroundColor ??
+            (accented
+                ? colorScheme.onPrimary
+                : selected
+                ? colorScheme.primary
+                : colors.mutedForeground),
+        backgroundColor:
+            backgroundColor ??
+            (accented
+                ? WidgetStatePropertyAll(colorScheme.primary)
+                : selected
+                ? WidgetStatePropertyAll(colors.controlActive)
+                : transparent
+                ? busyMarkTransparentHeaderButtonBackground(context)
+                : busyMarkHeaderButtonBackground(context)),
       ),
-      tooltip: tooltip,
+      tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
       icon: Icon(icon, size: BusyMarkSizes.iconSm),
       onPressed: onPressed,
+    );
+    final shadows = boxShadow;
+    if (shadows == null || shadows.isEmpty) {
+      return button;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        boxShadow: shadows,
+      ),
+      child: button,
     );
   }
 }
@@ -483,30 +543,47 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     required this.icon,
     required this.itemBuilder,
     required this.onSelected,
+    this.transparent = false,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.boxShadow,
   });
 
   final String tooltip;
   final IconData icon;
   final PopupMenuItemBuilder<T> itemBuilder;
   final ValueChanged<T> onSelected;
+  final bool transparent;
+  final Color? foregroundColor;
+  final WidgetStateProperty<Color?>? backgroundColor;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
     final popupTheme = theme.popupMenuTheme;
-    return Theme(
+    final effectiveForeground = foregroundColor ?? colors.mutedForeground;
+    final button = Theme(
       data: theme.copyWith(
         iconButtonTheme: IconButtonThemeData(
           style: busyMarkHeaderIconButtonStyle(
-            foregroundColor: colors.mutedForeground,
-            backgroundColor: busyMarkHeaderButtonBackground(context),
+            foregroundColor: effectiveForeground,
+            backgroundColor:
+                backgroundColor ??
+                (transparent
+                    ? busyMarkTransparentHeaderButtonBackground(context)
+                    : busyMarkHeaderButtonBackground(context)),
           ),
         ),
       ),
       child: PopupMenuButton<T>(
         tooltip: tooltip,
-        icon: Icon(icon, size: BusyMarkSizes.iconSm),
+        icon: Icon(
+          icon,
+          size: BusyMarkSizes.iconSm,
+          color: effectiveForeground,
+        ),
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
         color: popupTheme.color ?? colors.popover,
@@ -522,6 +599,17 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
         itemBuilder: itemBuilder,
         onSelected: onSelected,
       ),
+    );
+    final shadows = boxShadow;
+    if (shadows == null || shadows.isEmpty) {
+      return button;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        boxShadow: shadows,
+      ),
+      child: button,
     );
   }
 }
@@ -541,22 +629,19 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
              final colors = BusyMarkSurfaceColors.of(context);
              return Padding(
                padding: const EdgeInsets.symmetric(
-                 horizontal: BusyMarkSpacing.md,
+                 horizontal: BusyMarkSpacing.sm,
                ),
                child: Row(
                  mainAxisSize: MainAxisSize.min,
                  children: [
-                   SizedBox(
-                     width: 24,
-                     child: icon == null
-                         ? const SizedBox.shrink()
-                         : Icon(
-                             icon,
-                             size: BusyMarkSizes.iconSm,
-                             color: colors.mutedForeground,
-                           ),
-                   ),
-                   const SizedBox(width: BusyMarkSpacing.sm),
+                   if (icon != null) ...[
+                     Icon(
+                       icon,
+                       size: BusyMarkSizes.iconSm,
+                       color: colors.mutedForeground,
+                     ),
+                     const SizedBox(width: BusyMarkSpacing.sm),
+                   ],
                    Flexible(
                      child: Text(label, overflow: TextOverflow.ellipsis),
                    ),
@@ -622,24 +707,30 @@ class BusyMarkSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
+    final cardTheme = Theme.of(context).cardTheme;
     final colors = BusyMarkSurfaceColors.of(context);
-    final surface = Material(
-      color: filled ? colors.card : Colors.transparent,
+    final color = filled ? cardTheme.color ?? colors.card : Colors.transparent;
+    final shape =
+        cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
+    final material = Material(
+      color: color,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: borderRadius),
+      shape: shape,
       clipBehavior: clipBehavior,
       child: child,
     );
     if (!filled) {
-      return surface;
+      return material;
     }
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: color,
         borderRadius: borderRadius,
-        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+        border: Border.all(color: colors.subtleBorder),
       ),
-      child: surface,
+      child: material,
     );
   }
 }
@@ -726,16 +817,22 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
     }
 
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
+    final cardTheme = Theme.of(context).cardTheme;
+    final color = cardTheme.color ?? colors.card;
+    final shape =
+        cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: color,
         borderRadius: borderRadius,
-        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+        border: Border.all(color: colors.subtleBorder),
       ),
       child: Material(
-        color: colors.control,
+        color: color,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: borderRadius),
+        shape: shape,
         clipBehavior: Clip.antiAlias,
         child: list,
       ),

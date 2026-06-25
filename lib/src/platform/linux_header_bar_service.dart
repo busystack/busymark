@@ -15,6 +15,7 @@ enum HeaderBarAction {
   save,
   menu,
   settings,
+  keyboardShortcuts,
   aboutBusyMark,
   exportPreview,
   viewModeEditor,
@@ -39,6 +40,7 @@ class HeaderBarLabels {
     required this.back,
     required this.save,
     required this.settings,
+    required this.keyboardShortcuts,
     required this.aboutBusyMark,
     required this.exportPreview,
   });
@@ -55,6 +57,7 @@ class HeaderBarLabels {
   final String back;
   final String save;
   final String settings;
+  final String keyboardShortcuts;
   final String aboutBusyMark;
   final String exportPreview;
 
@@ -71,6 +74,7 @@ class HeaderBarLabels {
     'back': back,
     'save': save,
     'settings': settings,
+    'keyboardShortcuts': keyboardShortcuts,
     'aboutBusyMark': aboutBusyMark,
     'exportPreview': exportPreview,
   };
@@ -162,6 +166,7 @@ class LinuxHeaderBarService {
 
   final MethodChannel _channel;
   final _actions = StreamController<HeaderBarAction>.broadcast();
+  final _searchQueries = StreamController<String>.broadcast();
   var _initialized = false;
   var _available = false;
 
@@ -169,6 +174,7 @@ class LinuxHeaderBarService {
   bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
+  Stream<String> get searchQueries => _searchQueries.stream;
 
   Future<void> initialize() async {
     if (_initialized) {
@@ -209,6 +215,10 @@ class LinuxHeaderBarService {
 
   Future<void> setSearchActive(bool value) {
     return _invoke('setSearchActive', value);
+  }
+
+  Future<void> setSearchQuery(String value) {
+    return _invoke('setSearchQuery', value);
   }
 
   Future<void> setSidebarVisible(bool value) {
@@ -254,6 +264,12 @@ class LinuxHeaderBarService {
   }
 
   Future<void> _handleNativeAction(MethodCall call) async {
+    if (call.method == 'searchQueryChanged') {
+      if (!_searchQueries.isClosed) {
+        _searchQueries.add((call.arguments as String?) ?? '');
+      }
+      return;
+    }
     final action = _actionFromMethod(call.method);
     if (action != null && !_actions.isClosed) {
       _actions.add(action);
@@ -269,6 +285,7 @@ class LinuxHeaderBarService {
       'save' => HeaderBarAction.save,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
+      'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
       'exportPreview' => HeaderBarAction.exportPreview,
       'viewModeEditor' => HeaderBarAction.viewModeEditor,
@@ -286,6 +303,10 @@ final linuxHeaderBarServiceProvider = Provider<LinuxHeaderBarService>(
 
 final headerBarActionsProvider = StreamProvider<HeaderBarAction>((ref) {
   return ref.watch(linuxHeaderBarServiceProvider).actions;
+});
+
+final headerBarSearchQueriesProvider = StreamProvider<String>((ref) {
+  return ref.watch(linuxHeaderBarServiceProvider).searchQueries;
 });
 
 String _cssColor(Color color) {

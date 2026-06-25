@@ -41,11 +41,15 @@ struct _MyApplication {
   GtkWidget* sidebar_menu;
   GtkWidget* export_item;
   GtkWidget* settings_item;
+  GtkWidget* keyboard_shortcuts_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
+  GtkWidget* title_stack;
   GtkWidget* title_label;
+  GtkWidget* search_entry;
+  gboolean document_controls_visible;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_label;
@@ -75,6 +79,7 @@ struct _MyApplication {
   gint sidebar_width;
   gboolean sidebar_visible;
   gboolean back_visible;
+  gboolean search_active;
   gboolean modal_barrier_visible;
   gboolean suppress_header_actions;
 };
@@ -308,6 +313,22 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-header-title {"
       "color: %s;"
       "}"
+      ".busymark-titlebar entry.busymark-search-entry,"
+      ".busymark-titlebar entry.busymark-search-entry:backdrop {"
+      "color: %s;"
+      "background-color: %s;"
+      "background-image: none;"
+      "border: 1px solid %s;"
+      "box-shadow: 0 1px 1px %s;"
+      "text-shadow: none;"
+      "min-height: %dpx;"
+      "border-radius: %dpx;"
+      "padding: 0 %dpx;"
+      "}"
+      ".busymark-titlebar entry.busymark-search-entry:focus {"
+      "border-color: %s;"
+      "box-shadow: 0 0 0 1px %s;"
+      "}"
       ".busymark-titlebar.busymark-modal-barrier,"
       ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header,"
       ".busymark-titlebar.busymark-modal-barrier headerbar.busymark-headerbar {"
@@ -318,10 +339,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       "color: %s;"
       "background-color: %s;"
       "background-image: none;"
-      "border: none;"
-      "border-width: 0;"
-      "border-color: transparent;"
-      "box-shadow: 0 1px 1px %s;"
+      "border: 1px solid %s;"
+      "box-shadow: none;"
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
       "outline-style: none;"
@@ -438,9 +457,12 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
       kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
-      sidebar_border, kHeaderWindowRadius, foreground, modal, modal,
-      foreground, control, shade, kHeaderButtonHeight, kHeaderButtonHeight,
-      kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
+      sidebar_border, kHeaderWindowRadius, foreground, foreground, control,
+      border, shade, kHeaderButtonHeight,
+      kHeaderButtonRadius, kHeaderButtonHorizontalPadding, accent, accent,
+      modal, modal, foreground, control, border, kHeaderButtonHeight,
+      kHeaderButtonHeight, kHeaderButtonHorizontalPadding,
+      kHeaderButtonRadius, kHeaderButtonHeight,
       control_hover, control_active, accent_foreground, accent,
       accent_foreground, disabled, disabled, popover, foreground,
       border, shade, foreground, kHeaderButtonHeight,
@@ -521,6 +543,17 @@ static void invoke_header_bar_action(MyApplication* self,
                                   nullptr, nullptr, nullptr);
 }
 
+static void invoke_header_bar_string_action(MyApplication* self,
+                                            const gchar* action,
+                                            const gchar* value) {
+  if (self->header_bar_channel == nullptr || action == nullptr) {
+    return;
+  }
+  g_autoptr(FlValue) args = fl_value_new_string(value == nullptr ? "" : value);
+  fl_method_channel_invoke_method(self->header_bar_channel, action, args,
+                                  nullptr, nullptr, nullptr);
+}
+
 static void header_button_clicked_cb(GtkWidget* widget, gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
   if (self->suppress_header_actions) {
@@ -539,6 +572,30 @@ static void connect_header_action(MyApplication* self,
                     const_cast<gchar*>(action));
   g_signal_connect(widget, "clicked", G_CALLBACK(header_button_clicked_cb),
                    self);
+}
+
+static void search_entry_changed_cb(GtkEditable* editable, gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions) {
+    return;
+  }
+  const gchar* text = gtk_entry_get_text(GTK_ENTRY(editable));
+  invoke_header_bar_string_action(self, "searchQueryChanged", text);
+}
+
+static void search_entry_activate_cb(GtkEntry* entry, gpointer user_data) {
+  focus_flutter_view(MY_APPLICATION(user_data));
+}
+
+static gboolean search_entry_key_press_cb(GtkWidget* widget,
+                                          GdkEventKey* event,
+                                          gpointer user_data) {
+  if (event != nullptr && event->keyval == GDK_KEY_Escape) {
+    MyApplication* self = MY_APPLICATION(user_data);
+    invoke_header_bar_action(self, "search");
+    return TRUE;
+  }
+  return FALSE;
 }
 
 static void make_icon_button_square(GtkWidget* button) {
@@ -615,16 +672,11 @@ static void menu_item_clicked_cb(GtkWidget* widget, gpointer user_data) {
 static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
   GtkWidget* item = gtk_button_new();
   GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  GtkWidget* check =
-      gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
-  gtk_widget_set_opacity(check, 0.0);
   gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
-  gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
   gtk_container_add(GTK_CONTAINER(item), box);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
@@ -635,7 +687,6 @@ static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
   gtk_style_context_add_class(gtk_widget_get_style_context(item),
                               "busymark-menu-row");
   g_object_set_data(G_OBJECT(item), "busymark-label-widget", label);
-  g_object_set_data(G_OBJECT(item), "busymark-check-widget", check);
   g_object_set_data_full(G_OBJECT(item), "busymark-action",
                          g_strdup(action), g_free);
   g_signal_connect(item, "clicked", G_CALLBACK(menu_item_clicked_cb), self);
@@ -816,12 +867,18 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* back = fl_lookup_string_arg(args, "back");
   const gchar* save = fl_lookup_string_arg(args, "save");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
+  const gchar* keyboard_shortcuts =
+      fl_lookup_string_arg(args, "keyboardShortcuts");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
   const gchar* export_preview = fl_lookup_string_arg(args, "exportPreview");
 
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip(self->sidebar_toggle_button, sidebar);
   set_widget_tooltip(self->sidebar_search_button, search);
+  if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
+      search != nullptr) {
+    gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), search);
+  }
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
   set_widget_tooltip(self->save_button, save);
@@ -832,6 +889,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_split_item, split);
   set_menu_item_label(self->export_item, export_preview);
   set_menu_item_label(self->settings_item, settings);
+  set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
   set_menu_item_label(self->about_item, about);
   update_view_mode_label(self);
 }
@@ -875,9 +933,35 @@ static void set_back_visible(MyApplication* self, gboolean visible) {
 
 static void set_document_controls_visible(MyApplication* self,
                                           gboolean visible) {
-  set_widget_visible(self->save_button, visible);
-  set_widget_visible(self->refresh_button, visible);
-  set_widget_visible(self->view_mode_box, visible);
+  self->document_controls_visible = visible;
+  const gboolean effective_visible = visible && !self->search_active;
+  set_widget_visible(self->save_button, effective_visible);
+  set_widget_visible(self->refresh_button, effective_visible);
+  set_widget_visible(self->view_mode_box, effective_visible);
+}
+
+static void set_search_active(MyApplication* self, gboolean active) {
+  const gboolean changed = self->search_active != active;
+  self->search_active = active;
+  set_toggle_button_active(self, self->sidebar_search_button, active);
+  if (self->title_stack != nullptr && GTK_IS_STACK(self->title_stack)) {
+    GtkWidget* visible_child = active ? self->search_entry : self->title_label;
+    if (visible_child != nullptr && GTK_IS_WIDGET(visible_child)) {
+      gtk_stack_set_visible_child(GTK_STACK(self->title_stack), visible_child);
+    }
+  }
+  const gboolean document_controls_visible =
+      self->document_controls_visible && !active;
+  set_widget_visible(self->save_button, document_controls_visible);
+  set_widget_visible(self->refresh_button, document_controls_visible);
+  set_widget_visible(self->view_mode_box, document_controls_visible);
+  if (changed && active && self->search_entry != nullptr &&
+      GTK_IS_ENTRY(self->search_entry)) {
+    gtk_widget_grab_focus(self->search_entry);
+    gtk_editable_select_region(GTK_EDITABLE(self->search_entry), 0, -1);
+  } else if (changed && !active) {
+    focus_flutter_view(self);
+  }
 }
 
 static GtkWidget* create_busymark_titlebar(MyApplication* self) {
@@ -918,11 +1002,15 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   GtkWidget* sidebar_menu_box = create_popover_box(self->sidebar_menu);
   self->export_item = create_menu_item(self, "exportPreview");
   self->settings_item = create_menu_item(self, "settings");
+  self->keyboard_shortcuts_item =
+      create_menu_item(self, "keyboardShortcuts");
   self->about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->export_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
+                     self->keyboard_shortcuts_item, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(sidebar_menu_box);
@@ -954,12 +1042,32 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      FALSE, FALSE, 0);
   gtk_header_bar_pack_start(self->header_bar, self->header_start_box);
 
+  self->title_stack = gtk_stack_new();
+  gtk_widget_set_hexpand(self->title_stack, TRUE);
+  gtk_stack_set_transition_type(GTK_STACK(self->title_stack),
+                                GTK_STACK_TRANSITION_TYPE_NONE);
   self->title_label = gtk_label_new("");
   gtk_label_set_ellipsize(GTK_LABEL(self->title_label), PANGO_ELLIPSIZE_END);
   gtk_label_set_max_width_chars(GTK_LABEL(self->title_label), 48);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->title_label),
                               "busymark-header-title");
-  gtk_header_bar_set_custom_title(self->header_bar, self->title_label);
+  self->search_entry = gtk_search_entry_new();
+  gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), "Search");
+  gtk_widget_set_hexpand(self->search_entry, TRUE);
+  gtk_widget_set_size_request(self->search_entry, 360, -1);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->search_entry),
+                              "busymark-search-entry");
+  g_signal_connect(self->search_entry, "search-changed",
+                   G_CALLBACK(search_entry_changed_cb), self);
+  g_signal_connect(self->search_entry, "activate",
+                   G_CALLBACK(search_entry_activate_cb), self);
+  g_signal_connect(self->search_entry, "key-press-event",
+                   G_CALLBACK(search_entry_key_press_cb), self);
+  gtk_stack_add_named(GTK_STACK(self->title_stack), self->title_label, "title");
+  gtk_stack_add_named(GTK_STACK(self->title_stack), self->search_entry,
+                      "search");
+  gtk_stack_set_visible_child(GTK_STACK(self->title_stack), self->title_label);
+  gtk_header_bar_set_custom_title(self->header_bar, self->title_stack);
 
   GtkWidget* end_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
@@ -1020,6 +1128,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
                      TRUE, TRUE, 0);
   set_view_mode(self, "split");
+  set_document_controls_visible(self, FALSE);
   set_sidebar_visible(self, TRUE);
   set_back_visible(self, FALSE);
   refresh_header_bar_css(self);
@@ -1054,8 +1163,17 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     set_document_controls_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setSearchActive") == 0) {
-    set_toggle_button_active(self, self->sidebar_search_button,
-                             fl_method_bool_arg(args));
+    set_search_active(self, fl_method_bool_arg(args));
+    respond_success(method_call);
+  } else if (strcmp(method, "setSearchQuery") == 0) {
+    const gchar* value = fl_method_string_arg(args);
+    if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
+        value != nullptr) {
+      const gboolean previous = self->suppress_header_actions;
+      self->suppress_header_actions = TRUE;
+      gtk_entry_set_text(GTK_ENTRY(self->search_entry), value);
+      self->suppress_header_actions = previous;
+    }
     respond_success(method_call);
   } else if (strcmp(method, "setSidebarVisible") == 0) {
     set_sidebar_visible(self, fl_method_bool_arg(args));
@@ -1333,11 +1451,15 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_menu = nullptr;
   self->export_item = nullptr;
   self->settings_item = nullptr;
+  self->keyboard_shortcuts_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
+  self->title_stack = nullptr;
   self->title_label = nullptr;
+  self->search_entry = nullptr;
+  self->document_controls_visible = FALSE;
   self->view_mode_box = nullptr;
   self->view_mode_button = nullptr;
   self->view_mode_label = nullptr;
@@ -1367,6 +1489,7 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
   self->back_visible = FALSE;
+  self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
   self->suppress_header_actions = FALSE;
 }
