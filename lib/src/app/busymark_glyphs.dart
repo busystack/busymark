@@ -16,6 +16,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData clear = YaruIcons.edit_clear;
   static const IconData clearAll = YaruIcons.edit_clear_all;
   static const IconData code = YaruIcons.code;
+  static const IconData downArrow = YaruIcons.pan_down;
   static const IconData copy = YaruIcons.copy;
   static const IconData cut = YaruIcons.cut;
   static const IconData delete = YaruIcons.trash;
