@@ -48,6 +48,16 @@ parts:
     source: .
     flutter-target: lib/main.dart
     flutter-channel: stable
+    stage-packages:
+      - libx11-6
+      - libxdamage1
+      - libxext6
+      - libxfixes3
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libxcb-shm0
+      - libxcb1
     override-prime: |
       craftctl default
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
