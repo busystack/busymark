@@ -33,6 +33,23 @@ void main() {
     ]);
   });
 
+  test('preview blocks carry source locations for search navigation', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '# Title\n\nIntro text.\n\nSecond paragraph.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.map((block) => block.sourceStartLine), [1, 3, 5]);
+    expect(preview.blocks.map((block) => block.sourceEndLine), [1, 3, 5]);
+    expect(preview.blocks.first.sourceStartOffset, 0);
+    expect(preview.blocks[1].sourceStartOffset, greaterThan(0));
+    expect(
+      preview.blocks[1].sourceEndOffset,
+      greaterThan(preview.blocks[1].sourceStartOffset ?? 0),
+    );
+  });
+
   test('preview list text removes Markdown markers', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

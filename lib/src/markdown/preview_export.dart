@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../core/source_span.dart';
 import 'busymark_document.dart';
 import 'markdown_model.dart';
 
@@ -29,6 +30,10 @@ class PreviewBlock {
     this.inlines = const [],
     this.children = const [],
     this.attributes = const {},
+    this.sourceStartLine,
+    this.sourceEndLine,
+    this.sourceStartOffset,
+    this.sourceEndOffset,
   });
 
   final PreviewBlockKind kind;
@@ -38,6 +43,10 @@ class PreviewBlock {
   final List<PreviewInline> inlines;
   final List<PreviewBlock> children;
   final Map<String, String> attributes;
+  final int? sourceStartLine;
+  final int? sourceEndLine;
+  final int? sourceStartOffset;
+  final int? sourceEndOffset;
 }
 
 enum PreviewInlineKind {
@@ -112,7 +121,7 @@ class BusyMarkPreviewBuilder {
   }
 
   PreviewBlock _block(BusyBlock block) {
-    return switch (block.kind) {
+    final preview = switch (block.kind) {
       BusyBlockKind.heading => PreviewBlock(
         kind: PreviewBlockKind.heading,
         text: _plainText(block.inlines),
@@ -209,6 +218,26 @@ class BusyMarkPreviewBuilder {
         text: '',
       ),
     };
+    return _withSourceSpan(preview, block.sourceSpan);
+  }
+
+  PreviewBlock _withSourceSpan(PreviewBlock block, SourceSpan? span) {
+    if (span == null) {
+      return block;
+    }
+    return PreviewBlock(
+      kind: block.kind,
+      text: block.text,
+      level: block.level,
+      language: block.language,
+      inlines: block.inlines,
+      children: block.children,
+      attributes: block.attributes,
+      sourceStartLine: span.startLine,
+      sourceEndLine: span.endLine,
+      sourceStartOffset: span.startOffset,
+      sourceEndOffset: span.endOffset,
+    );
   }
 
   List<PreviewInline> _inlines(List<BusyInline> inlines) {

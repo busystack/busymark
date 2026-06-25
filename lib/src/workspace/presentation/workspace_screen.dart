@@ -2844,24 +2844,20 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
     final normalizedQuery = query.toLowerCase();
-    for (final (index, block) in blocks.indexed) {
-      if (!_previewBlockSearchText(
-        block,
-      ).toLowerCase().contains(normalizedQuery)) {
-        continue;
-      }
-      final context = _previewSearchKeys[index]?.currentContext;
-      if (context == null) {
-        return;
-      }
-      Scrollable.ensureVisible(
-        context,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        alignment: 0.0,
-      );
+    final index = _previewSearchBlockIndex(blocks, target, normalizedQuery);
+    if (index == null) {
       return;
     }
+    final context = _previewSearchKeys[index]?.currentContext;
+    if (context == null) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      alignment: 0.0,
+    );
   }
 
   int _textOffsetForLine(String text, int line) {
@@ -3905,6 +3901,53 @@ String _previewBlockSearchText(PreviewBlock block) {
     for (final inline in block.inlines) _previewInlineSearchText(inline),
     for (final child in block.children) _previewBlockSearchText(child),
   ].where((value) => value.isNotEmpty).join(' ');
+}
+
+int? _previewSearchBlockIndex(
+  List<PreviewBlock> blocks,
+  _SearchNavigationTarget target,
+  String normalizedQuery,
+) {
+  int? fallbackIndex;
+  for (final (index, block) in blocks.indexed) {
+    if (!_previewBlockSearchText(
+      block,
+    ).toLowerCase().contains(normalizedQuery)) {
+      continue;
+    }
+    fallbackIndex ??= index;
+    if (_previewBlockContainsSearchTarget(block, target)) {
+      return index;
+    }
+  }
+  return fallbackIndex;
+}
+
+bool _previewBlockContainsSearchTarget(
+  PreviewBlock block,
+  _SearchNavigationTarget target,
+) {
+  final startOffset = block.sourceStartOffset;
+  final endOffset = block.sourceEndOffset;
+  if (startOffset != null &&
+      endOffset != null &&
+      target.startOffset >= startOffset &&
+      target.startOffset < endOffset) {
+    return true;
+  }
+
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (startLine != null &&
+      endLine != null &&
+      target.line >= startLine &&
+      target.line <= endLine) {
+    return true;
+  }
+
+  return block.children.any(
+    (child) => _previewBlockContainsSearchTarget(child, target),
+  );
 }
 
 String _previewInlineSearchText(PreviewInline inline) {

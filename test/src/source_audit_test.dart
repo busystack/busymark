@@ -387,6 +387,25 @@ void main() {
     expect(workspace, contains("block.attributes['id']"));
   });
 
+  test('preview search navigation targets clicked result source span', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final preview = File(
+      'lib/src/markdown/preview_export.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('_previewSearchBlockIndex'));
+    expect(workspace, contains('_previewBlockContainsSearchTarget'));
+    expect(workspace, contains('target.startOffset >= startOffset'));
+    expect(workspace, contains('target.line >= startLine'));
+    expect(workspace, contains('return fallbackIndex'));
+    expect(preview, contains('sourceStartLine'));
+    expect(preview, contains('sourceStartOffset'));
+    expect(preview, contains('span.startLine'));
+    expect(preview, contains('span.startOffset'));
+  });
+
   test('source editor line numbers use measured editor layout', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
