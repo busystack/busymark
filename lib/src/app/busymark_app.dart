@@ -18,6 +18,7 @@ import 'app_settings.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
+import 'busymark_glyphs.dart';
 import '../platform/linux_header_bar_service.dart';
 
 class BusyMarkApp extends ConsumerWidget {
@@ -211,15 +212,15 @@ class BusyMarkApp extends ConsumerWidget {
               BusyMarkActionRow(
                 title: 'Open Markdown File',
                 subtitle: '.md or .markdown',
-                leading: const Icon(Icons.description_outlined),
-                trailing: const Icon(Icons.chevron_right),
+                leading: const Icon(BusyMarkGlyphs.markdownFile),
+                trailing: const Icon(BusyMarkGlyphs.rightArrow),
                 onTap: () => Navigator.pop(dialogContext, 'file'),
               ),
               BusyMarkActionRow(
                 title: 'Open Folder or Writerside Project',
                 subtitle: 'Markdown folder or Writerside-compatible project',
-                leading: const Icon(Icons.folder_outlined),
-                trailing: const Icon(Icons.chevron_right),
+                leading: const Icon(BusyMarkGlyphs.folder),
+                trailing: const Icon(BusyMarkGlyphs.rightArrow),
                 onTap: () => Navigator.pop(dialogContext, 'folder'),
               ),
             ],

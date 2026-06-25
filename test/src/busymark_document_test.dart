@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -654,7 +655,7 @@ void main() {}
     await gesture.up();
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
     await tester.pump();
 
     expect(markdown, '**First**\n\n**Second**\n\nThird\n');
@@ -726,7 +727,7 @@ void main() {}
     await gesture.up();
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.format_list_bulleted));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.unorderedList));
     await tester.pump();
 
     expect(markdown, '- First\n\n- Second\n\nThird\n');
@@ -1293,7 +1294,7 @@ void main() {}
       extentOffset: groupedEnd,
     );
 
-    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
     await tester.pump();
 
     field.controller!.selection = TextSelection.collapsed(
@@ -1347,7 +1348,7 @@ void main() {}
       extentOffset: groupedStart + 'grouped'.length,
     );
 
-    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
     await tester.pump();
 
     await tester.enterText(find.byType(TextField).first, '$sentence\n');

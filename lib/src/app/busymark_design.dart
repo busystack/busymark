@@ -709,6 +709,7 @@ class BusyMarkSurface extends StatelessWidget {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
     final cardTheme = Theme.of(context).cardTheme;
     final colors = BusyMarkSurfaceColors.of(context);
+    final borderColor = colors.subtleBorder;
     final color = filled ? cardTheme.color ?? colors.card : Colors.transparent;
     final shape =
         cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
@@ -728,7 +729,7 @@ class BusyMarkSurface extends StatelessWidget {
         context,
         color: color,
         borderRadius: borderRadius,
-        border: Border.all(color: colors.subtleBorder),
+        border: Border.all(color: borderColor),
       ),
       child: material,
     );
@@ -801,13 +802,15 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final borderColor = colors.subtleBorder;
+    final dividerColor = colors.view;
     final list = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var index = 0; index < children.length; index++) ...[
           children[index],
           if (index < children.length - 1)
-            Divider(height: 1, thickness: 1, color: colors.subtleBorder),
+            Divider(height: 1, thickness: 1, color: dividerColor),
         ],
       ],
     );
@@ -826,7 +829,7 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
         context,
         color: color,
         borderRadius: borderRadius,
-        border: Border.all(color: colors.subtleBorder),
+        border: Border.all(color: borderColor),
       ),
       child: Material(
         color: color,

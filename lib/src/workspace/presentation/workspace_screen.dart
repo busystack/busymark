@@ -14,6 +14,7 @@ import 'package:yaru/yaru.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../core/diagnostic.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../editor/markdown_image_view.dart';
@@ -280,7 +281,7 @@ class WorkspaceScreen extends ConsumerWidget {
                     leading: Center(
                       child: BusyMarkHeaderIconButton(
                         tooltip: 'Welcome',
-                        icon: Icons.home_outlined,
+                        icon: BusyMarkGlyphs.home,
                         onPressed: () async {
                           if (await confirmSafeToContinue(context, ref) &&
                               context.mounted) {
@@ -314,7 +315,7 @@ class WorkspaceScreen extends ConsumerWidget {
                       const SizedBox(width: BusyMarkSpacing.sm),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Save',
-                        icon: Icons.check,
+                        icon: BusyMarkGlyphs.check,
                         accented: state.isDirty,
                         shortcut: 'Ctrl+S',
                         onPressed: () => unawaited(
@@ -323,7 +324,7 @@ class WorkspaceScreen extends ConsumerWidget {
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Validate',
-                        icon: Icons.fact_check_outlined,
+                        icon: BusyMarkGlyphs.diagnostics,
                         onPressed: () => unawaited(
                           _validateActiveAndShowProblems(context, ref),
                         ),
@@ -333,7 +334,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip: settings.sidebarVisible
                             ? 'Hide sidebar'
                             : 'Show sidebar',
-                        icon: Icons.view_sidebar_outlined,
+                        icon: BusyMarkGlyphs.sidebar,
                         selected: settings.sidebarVisible,
                         onPressed: () => settingsController.setSidebarVisible(
                           !settings.sidebarVisible,
@@ -341,7 +342,7 @@ class WorkspaceScreen extends ConsumerWidget {
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Search',
-                        icon: Icons.search,
+                        icon: BusyMarkGlyphs.search,
                         selected: searchState.active,
                         shortcut: 'Ctrl+F',
                         onPressed: () => _toggleSearch(ref),
@@ -352,7 +353,7 @@ class WorkspaceScreen extends ConsumerWidget {
                                 DocumentViewModePreference.source
                             ? 'Show preview'
                             : 'Hide preview',
-                        icon: Icons.preview_outlined,
+                        icon: BusyMarkGlyphs.preview,
                         selected:
                             settings.documentViewMode !=
                             DocumentViewModePreference.source,
@@ -364,23 +365,23 @@ class WorkspaceScreen extends ConsumerWidget {
                       const _HeaderSeparator(),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Export',
-                        icon: Icons.ios_share_outlined,
+                        icon: BusyMarkGlyphs.share,
                         onPressed: () => _showExportDialog(context, ref),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Settings',
-                        icon: Icons.settings_outlined,
+                        icon: BusyMarkGlyphs.settings,
                         onPressed: () => context.go('/settings'),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Keyboard Shortcuts',
-                        icon: Icons.keyboard_outlined,
+                        icon: BusyMarkGlyphs.keyboard,
                         onPressed: () =>
                             showBusyMarkKeyboardShortcutsDialog(context),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'About BusyMark',
-                        icon: Icons.info_outline,
+                        icon: BusyMarkGlyphs.info,
                         onPressed: () => showBusyMarkAboutDialog(context),
                       ),
                       const SizedBox(width: BusyMarkSpacing.sm),
@@ -390,7 +391,7 @@ class WorkspaceScreen extends ConsumerWidget {
               children: [
                 if (state.errorMessage != null)
                   _InlineMessage(
-                    icon: Icons.warning_amber_outlined,
+                    icon: BusyMarkGlyphs.warning,
                     message: state.errorMessage!,
                   ),
                 Expanded(
@@ -832,7 +833,7 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
       onSubmitted: (_) => widget.onSubmitted(),
       decoration: InputDecoration(
         isDense: true,
-        prefixIcon: Icon(Icons.search, color: colors.mutedForeground),
+        prefixIcon: Icon(BusyMarkGlyphs.search, color: colors.mutedForeground),
         hintText: 'Search',
         filled: true,
         fillColor: colors.control,
@@ -1158,7 +1159,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
     if (widget.workspace.files.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.folder_off_outlined,
+        icon: BusyMarkGlyphs.folder,
         title: 'No files',
       );
     }
@@ -1324,11 +1325,11 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
     DocumentKind.markdown ||
     DocumentKind.writersideMarkdownTopic => YaruIcons.text_editor,
     DocumentKind.writersideXmlTopic => YaruIcons.document,
-    DocumentKind.tree => Icons.account_tree_outlined,
+    DocumentKind.tree => BusyMarkGlyphs.tree,
     DocumentKind.config => YaruIcons.gear,
-    DocumentKind.variables => Icons.percent_outlined,
-    DocumentKind.categories => Icons.category_outlined,
-    DocumentKind.image => Icons.image_outlined,
+    DocumentKind.variables => BusyMarkGlyphs.symbols,
+    DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.image => BusyMarkGlyphs.image,
     _ => YaruIcons.document,
   };
 }
@@ -1525,7 +1526,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final module = widget.workspace.writersideModule;
     if (module == null || module.instances.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.account_tree_outlined,
+        icon: BusyMarkGlyphs.tree,
         title: 'No Writerside TOC',
       );
     }
@@ -1574,7 +1575,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           enabled: topic != null || hasChildren,
           selected: topic == widget.workspace.activeFilePath,
           depth: entry.depth,
-          icon: node.href != null ? Icons.open_in_new : Icons.article_outlined,
+          icon: node.href != null
+              ? BusyMarkGlyphs.externalLink
+              : BusyMarkGlyphs.document,
           hasChildren: hasChildren,
           expanded: expanded,
           muted: node.hidden,
@@ -1708,7 +1711,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     final headings = widget.workspace.markdown?.headings ?? const [];
     if (headings.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.format_size_outlined,
+        icon: BusyMarkGlyphs.font,
         title: 'No outline',
       );
     }
@@ -1739,7 +1742,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         return _SidebarTreeRow(
           title: heading.text,
           depth: entry.depth,
-          icon: Icons.tag_outlined,
+          icon: BusyMarkGlyphs.tag,
           leading: _HeadingBadge(level: heading.level),
           hasChildren: hasChildren,
           expanded: expanded,
@@ -3560,7 +3563,7 @@ class _PreviewPane extends StatelessWidget {
     final document = preview;
     if (document == null) {
       return const _EmptyPane(
-        icon: Icons.preview_outlined,
+        icon: BusyMarkGlyphs.preview,
         title: 'No preview',
       );
     }
@@ -3693,12 +3696,12 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       PreviewBlockKind.tabs => _PreviewCallout(
-        icon: Icons.tab_outlined,
+        icon: BusyMarkGlyphs.tab,
         color: colors.panel,
         child: Text(block.text),
       ),
       PreviewBlockKind.procedure => _PreviewCallout(
-        icon: Icons.format_list_numbered,
+        icon: BusyMarkGlyphs.orderedList,
         color: colors.panel,
         child: Text(block.text),
       ),
@@ -3720,7 +3723,7 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       PreviewBlockKind.quote => _PreviewCallout(
-        icon: Icons.format_quote_outlined,
+        icon: BusyMarkGlyphs.blockquote,
         color: colors.panel,
         child: _PreviewInlineText(block: block),
       ),
@@ -3764,9 +3767,9 @@ class _PreviewBlockView extends StatelessWidget {
 
   IconData _admonitionIcon(String? style) {
     return switch (style) {
-      'warning' => Icons.warning_amber_outlined,
-      'tip' => Icons.lightbulb_outline,
-      _ => Icons.info_outline,
+      'warning' => BusyMarkGlyphs.warning,
+      'tip' => BusyMarkGlyphs.tip,
+      _ => BusyMarkGlyphs.info,
     };
   }
 }
@@ -3904,9 +3907,7 @@ class _ListMarker extends StatelessWidget {
     final task = block.attributes['task'];
     if (task != null) {
       return Icon(
-        task == 'true'
-            ? Icons.check_box_outlined
-            : Icons.check_box_outline_blank,
+        task == 'true' ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       );
@@ -3922,7 +3923,15 @@ class _ListMarker extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.only(top: 7),
-      child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+      child: SizedBox.square(
+        dimension: 6,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.mutedForeground,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -4439,7 +4448,7 @@ class _ProblemsList extends StatelessWidget {
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
         child: diagnostics.isEmpty
             ? const _EmptyPane(
-                icon: Icons.check_circle_outline,
+                icon: BusyMarkGlyphs.check,
                 title: 'No problems found',
               )
             : ListView.builder(
@@ -4469,12 +4478,15 @@ class _SearchSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) {
-      return const _SidebarEmptyState(icon: Icons.search, title: 'Search');
+      return const _SidebarEmptyState(
+        icon: BusyMarkGlyphs.search,
+        title: 'Search',
+      );
     }
     final colors = BusyMarkSurfaceColors.of(context);
     if (results.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.search_off,
+        icon: BusyMarkGlyphs.searchUnavailable,
         title: 'No results',
       );
     }
@@ -4544,7 +4556,7 @@ class _SearchResultRow extends StatelessWidget {
               ),
               const SizedBox(width: BusyMarkSpacing.md),
               Icon(
-                Icons.chevron_right,
+                BusyMarkGlyphs.rightArrow,
                 size: BusyMarkSizes.iconSm,
                 color: colors.mutedForeground,
               ),
@@ -4612,7 +4624,7 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
           query: trimmedQuery,
           title: _searchExcerpt(line),
           subtitle: '$relativePath - Line $lineNumber',
-          icon: Icons.subject,
+          icon: BusyMarkGlyphs.paragraph,
         ),
       );
       if (results.length >= _maxWorkspaceSearchResults) {
@@ -4685,11 +4697,11 @@ IconData _documentKindIcon(DocumentKind kind) {
     DocumentKind.markdown ||
     DocumentKind.writersideMarkdownTopic => YaruIcons.text_editor,
     DocumentKind.writersideXmlTopic => YaruIcons.document,
-    DocumentKind.tree => Icons.account_tree_outlined,
+    DocumentKind.tree => BusyMarkGlyphs.tree,
     DocumentKind.config => YaruIcons.gear,
-    DocumentKind.variables => Icons.percent_outlined,
-    DocumentKind.categories => Icons.category_outlined,
-    DocumentKind.image => Icons.image_outlined,
+    DocumentKind.variables => BusyMarkGlyphs.symbols,
+    DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.image => BusyMarkGlyphs.image,
     DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
   };
 }
@@ -4773,10 +4785,10 @@ class _DiagnosticRow extends ConsumerWidget {
 
   IconData _diagnosticIcon(DiagnosticSeverity severity) {
     return switch (severity) {
-      DiagnosticSeverity.error => Icons.error_outline,
-      DiagnosticSeverity.warning => Icons.warning_amber_outlined,
-      DiagnosticSeverity.info => Icons.info_outline,
-      DiagnosticSeverity.hint => Icons.tips_and_updates_outlined,
+      DiagnosticSeverity.error => BusyMarkGlyphs.error,
+      DiagnosticSeverity.warning => BusyMarkGlyphs.warning,
+      DiagnosticSeverity.info => BusyMarkGlyphs.info,
+      DiagnosticSeverity.hint => BusyMarkGlyphs.tip,
     };
   }
 
@@ -4831,7 +4843,10 @@ class _ReadonlyExportText extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: TextButton.icon(
                 onPressed: () => Clipboard.setData(ClipboardData(text: value)),
-                icon: const Icon(Icons.copy, size: BusyMarkSizes.iconSm),
+                icon: const Icon(
+                  BusyMarkGlyphs.copy,
+                  size: BusyMarkSizes.iconSm,
+                ),
                 label: const Text('Copy'),
               ),
             ),

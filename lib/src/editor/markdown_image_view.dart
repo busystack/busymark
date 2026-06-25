@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
+import '../app/busymark_glyphs.dart';
 import '../core/local_image_resolver.dart';
 
 class MarkdownImageView extends StatelessWidget {
@@ -179,7 +180,7 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.image_not_supported_outlined,
+                BusyMarkGlyphs.imageMissing,
                 size: BusyMarkSizes.iconMd,
                 color: colors.mutedForeground,
               ),

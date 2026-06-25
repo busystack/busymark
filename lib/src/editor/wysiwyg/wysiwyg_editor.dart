@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
@@ -2359,7 +2360,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         : const SizedBox.shrink();
     final toggle = BusyMarkHeaderIconButton(
       tooltip: visible ? 'Hide editing buttons' : 'Show editing buttons',
-      icon: visible ? Icons.visibility_off_outlined : Icons.edit_outlined,
+      icon: visible ? BusyMarkGlyphs.hide : BusyMarkGlyphs.edit,
       onPressed: onToggle,
       foregroundColor: colors.mutedForeground,
       backgroundColor: _editorToolbarButtonBackground(context),

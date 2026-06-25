@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
 
@@ -41,7 +42,7 @@ class SettingsScreen extends ConsumerWidget {
               leading: Center(
                 child: BusyMarkHeaderIconButton(
                   tooltip: 'Back',
-                  icon: Icons.arrow_back,
+                  icon: BusyMarkGlyphs.back,
                   onPressed: () =>
                       context.go(workspaceOpen ? '/workspace' : '/'),
                 ),
@@ -55,12 +56,12 @@ class SettingsScreen extends ConsumerWidget {
               actions: [
                 BusyMarkHeaderIconButton(
                   tooltip: 'Keyboard Shortcuts',
-                  icon: Icons.keyboard_outlined,
+                  icon: BusyMarkGlyphs.keyboard,
                   onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'About BusyMark',
-                  icon: Icons.info_outline,
+                  icon: BusyMarkGlyphs.info,
                   onPressed: () => showBusyMarkAboutDialog(context),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
@@ -91,7 +92,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Word wrap',
                   value: settings.wordWrap,
                   onChanged: controller.setWordWrap,
-                  leading: const Icon(Icons.wrap_text),
+                  leading: const Icon(BusyMarkGlyphs.wordWrap),
                 ),
                 _EditorFontSizeRow(
                   value: settings.editorFontSize,
@@ -111,7 +112,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Validate on edit',
                   value: settings.validateOnEdit,
                   onChanged: controller.setValidateOnEdit,
-                  leading: const Icon(Icons.fact_check_outlined),
+                  leading: const Icon(BusyMarkGlyphs.diagnostics),
                 ),
               ],
             ),
@@ -121,7 +122,7 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 BusyMarkActionRow(
                   title: 'Clear recent workspaces',
-                  leading: const Icon(Icons.clear_all),
+                  leading: const Icon(BusyMarkGlyphs.clearAll),
                   destructive: true,
                   onTap: controller.clearRecentWorkspaces,
                 ),
@@ -198,7 +199,7 @@ class _ThemeModeRow extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.contrast_outlined),
+                    Icon(BusyMarkGlyphs.appearance),
                     SizedBox(width: BusyMarkSpacing.md),
                     Text('Theme'),
                   ],
@@ -211,7 +212,7 @@ class _ThemeModeRow extends StatelessWidget {
         }
         return BusyMarkActionRow(
           title: 'Theme',
-          leading: const Icon(Icons.contrast_outlined),
+          leading: const Icon(BusyMarkGlyphs.appearance),
           trailing: SizedBox(width: 256, child: control),
         );
       },
@@ -275,7 +276,7 @@ class _EditorFontSizeRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.format_size),
+                    const Icon(BusyMarkGlyphs.font),
                     const SizedBox(width: BusyMarkSpacing.md),
                     Expanded(
                       child: Text(
@@ -294,7 +295,7 @@ class _EditorFontSizeRow extends StatelessWidget {
         return BusyMarkActionRow(
           title: 'Editor font size',
           subtitle: value.toStringAsFixed(0),
-          leading: const Icon(Icons.format_size),
+          leading: const Icon(BusyMarkGlyphs.font),
           trailing: SizedBox(width: 260, child: slider),
         );
       },
@@ -327,7 +328,7 @@ class _EditorToolbarPlacementRow extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.vertical_align_top),
+                    Icon(BusyMarkGlyphs.toolbarPlacement),
                     SizedBox(width: BusyMarkSpacing.md),
                     Text('Editing buttons'),
                   ],
@@ -341,7 +342,7 @@ class _EditorToolbarPlacementRow extends StatelessWidget {
         return BusyMarkActionRow(
           title: 'Editing buttons',
           subtitle: 'Choose where the floating editor controls appear',
-          leading: const Icon(Icons.vertical_align_top),
+          leading: const Icon(BusyMarkGlyphs.toolbarPlacement),
           trailing: SizedBox(width: 430, child: control),
         );
       },

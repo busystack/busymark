@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
@@ -37,6 +38,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final state = ref.watch(workspaceControllerProvider);
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((action) {
@@ -59,7 +62,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: BusyMarkSurfaceColors.of(context).view,
+      backgroundColor: colors.view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
@@ -74,95 +77,104 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               actions: [
                 BusyMarkHeaderIconButton(
                   tooltip: 'Settings',
-                  icon: Icons.settings_outlined,
+                  icon: BusyMarkGlyphs.settings,
                   onPressed: () => context.go('/settings'),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'Keyboard Shortcuts',
-                  icon: Icons.keyboard_outlined,
+                  icon: BusyMarkGlyphs.keyboard,
                   onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'About BusyMark',
-                  icon: Icons.info_outline,
+                  icon: BusyMarkGlyphs.info,
                   onPressed: () => showBusyMarkAboutDialog(context),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
             ),
-      body: BusyMarkClamp(
-        maxWidth: 760,
-        margin: EdgeInsets.zero,
-        padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            BusyMarkGroupedList(
-              title: 'Create',
-              filled: true,
-              children: [
-                BusyMarkActionRow(
-                  title: 'Create Markdown File',
-                  subtitle: 'Start an unsaved local Markdown document',
-                  leading: const Icon(Icons.note_add_outlined),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _createMarkdownFile,
-                ),
-                BusyMarkActionRow(
-                  title: 'Create Writerside Project',
-                  subtitle: 'Starter project with one Writerside help instance',
-                  leading: const Icon(Icons.library_books_outlined),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _createWritersideProject,
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: 'Open',
-              filled: true,
-              children: [
-                BusyMarkActionRow(
-                  title: 'Open Markdown File',
-                  subtitle: '.md or .markdown',
-                  leading: const Icon(Icons.description_outlined),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _chooseMarkdownFile,
-                ),
-                BusyMarkActionRow(
-                  title: 'Open Folder or Writerside Project',
-                  subtitle: 'Markdown folder or Writerside-compatible project',
-                  leading: const Icon(Icons.folder_outlined),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _chooseDirectory('Open'),
-                ),
-              ],
-            ),
-            if (state.isLoading) ...[
-              const SizedBox(height: BusyMarkSpacing.lg),
-              const LinearProgressIndicator(),
-            ],
-            if (state.errorMessage != null) ...[
-              const SizedBox(height: BusyMarkSpacing.lg),
-              _WelcomeMessage(message: state.errorMessage!),
-            ],
-            if (settings.recentWorkspaces.isNotEmpty)
+      body: Theme(
+        data: theme.copyWith(
+          cardTheme: theme.cardTheme.copyWith(
+            color: _welcomeGroupedCardColor(colors, theme.brightness),
+          ),
+        ),
+        child: BusyMarkClamp(
+          maxWidth: 760,
+          margin: EdgeInsets.zero,
+          padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               BusyMarkGroupedList(
-                title: 'Recent',
+                title: 'Create',
                 filled: true,
                 children: [
-                  for (final recent in settings.recentWorkspaces)
-                    BusyMarkActionRow(
-                      title: _displayPath(recent.path),
-                      subtitle: recent.path,
-                      leading: const Icon(Icons.history),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () async {
-                        await _openPath(recent.path);
-                      },
-                    ),
+                  BusyMarkActionRow(
+                    title: 'Create Markdown File',
+                    subtitle: 'Start an unsaved local Markdown document',
+                    leading: const Icon(BusyMarkGlyphs.newDocument),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: _createMarkdownFile,
+                  ),
+                  BusyMarkActionRow(
+                    title: 'Create Writerside Project',
+                    subtitle:
+                        'Starter project with one Writerside help instance',
+                    leading: const Icon(BusyMarkGlyphs.writersideProject),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: _createWritersideProject,
+                  ),
                 ],
               ),
-          ],
+              BusyMarkGroupedList(
+                title: 'Open',
+                filled: true,
+                children: [
+                  BusyMarkActionRow(
+                    title: 'Open Markdown File',
+                    subtitle: '.md or .markdown',
+                    leading: const Icon(BusyMarkGlyphs.markdownFile),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: _chooseMarkdownFile,
+                  ),
+                  BusyMarkActionRow(
+                    title: 'Open Folder or Writerside Project',
+                    subtitle:
+                        'Markdown folder or Writerside-compatible project',
+                    leading: const Icon(BusyMarkGlyphs.folder),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: () => _chooseDirectory('Open'),
+                  ),
+                ],
+              ),
+              if (state.isLoading) ...[
+                const SizedBox(height: BusyMarkSpacing.lg),
+                const LinearProgressIndicator(),
+              ],
+              if (state.errorMessage != null) ...[
+                const SizedBox(height: BusyMarkSpacing.lg),
+                _WelcomeMessage(message: state.errorMessage!),
+              ],
+              if (settings.recentWorkspaces.isNotEmpty)
+                BusyMarkGroupedList(
+                  title: 'Recent',
+                  filled: true,
+                  children: [
+                    for (final recent in settings.recentWorkspaces)
+                      BusyMarkActionRow(
+                        title: _displayPath(recent.path),
+                        subtitle: recent.path,
+                        leading: const Icon(BusyMarkGlyphs.history),
+                        trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                        onTap: () async {
+                          await _openPath(recent.path);
+                        },
+                      ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -356,6 +368,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 }
 
+Color _welcomeGroupedCardColor(
+  BusyMarkSurfaceColors colors,
+  Brightness brightness,
+) {
+  return switch (brightness) {
+    Brightness.light => colors.popover,
+    Brightness.dark => colors.popover,
+  };
+}
+
 class _CreateWritersideProjectDialog extends StatefulWidget {
   const _CreateWritersideProjectDialog({required this.parentDirectoryPath});
 
@@ -547,7 +569,7 @@ class _WelcomeMessage extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.warning_amber_outlined),
+            const Icon(BusyMarkGlyphs.warning),
             const SizedBox(width: BusyMarkSpacing.sm),
             Expanded(child: Text(message)),
           ],

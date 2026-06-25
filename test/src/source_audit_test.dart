@@ -85,6 +85,29 @@ void main() {
     expect(File('pubspec.yaml').readAsStringSync(), contains('name: busymark'));
   });
 
+  test('Flutter UI uses Yaru glyphs instead of Material icon constants', () {
+    final materialIconUse = RegExp(r'(^|[^A-Za-z])Icons\.', multiLine: true);
+    final files = <File>[
+      for (final path in ['lib', 'test'])
+        ...Directory(path)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => _isText(file.path)),
+    ];
+
+    for (final file in files) {
+      expect(
+        materialIconUse.hasMatch(file.readAsStringSync()),
+        isFalse,
+        reason: file.path,
+      );
+    }
+
+    final glyphs = File('lib/src/app/busymark_glyphs.dart').readAsStringSync();
+    expect(glyphs, contains("import 'package:yaru/yaru.dart';"));
+    expect(glyphs, contains('YaruIcons.'));
+  });
+
   test('grouped action rows use one BusyMark-owned rounded surface', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
@@ -156,6 +179,13 @@ void main() {
       r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
+    expect(groupedSurface, contains('final borderColor = colors.subtleBorder'));
+    expect(groupedSurface, contains('final dividerColor = colors.view'));
+    expect(
+      groupedSurface,
+      contains('Divider(height: 1, thickness: 1, color: dividerColor)'),
+    );
+    expect(groupedSurface, contains('border: Border.all(color: borderColor)'));
     expect(
       groupedSurface,
       contains('final color = cardTheme.color ?? colors.card'),
