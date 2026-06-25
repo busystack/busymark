@@ -520,8 +520,6 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         unawaited(saveActiveWithOverwriteConfirmation(context, ref));
-      case HeaderBarAction.printDocument:
-        showBusyMarkPrintDialog(context);
       case HeaderBarAction.settings:
         context.go('/settings');
       case HeaderBarAction.keyboardShortcuts:
@@ -1507,7 +1505,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         final hasChildren = node.children.isNotEmpty;
         final topic = node.topicFileName == null
             ? null
-            : module.topicsByFileName[node.topicFileName]?.filePath;
+            : module.topicByReference(node.topicFileName!)?.filePath;
         final label =
             node.tocTitle ?? node.topicFileName ?? node.href ?? 'TOC section';
         void toggle() {
@@ -1600,7 +1598,7 @@ Set<String> _activeTocAncestorKeys(Workspace workspace) {
   bool visit(TocNode node) {
     final topic = node.topicFileName == null
         ? null
-        : module.topicsByFileName[node.topicFileName]?.filePath;
+        : module.topicByReference(node.topicFileName!)?.filePath;
     if (topic == activeFilePath) {
       return true;
     }

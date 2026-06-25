@@ -30,6 +30,12 @@ and Ubuntu-style GTK environments.
 BusyMark can open Markdown files such as `.md`, `.markdown`, `.mdown`, and
 `.mkd`.
 
+BusyMark opens Writerside help modules whose root contains `writerside.cfg` or
+the equivalent older `project.ihp` file. Writerside support includes documented
+configuration locations for topics, images, variables, categories, instances,
+snippets, build configuration, API specifications, instance groups, and selected
+settings metadata.
+
 Folder workspaces include documentation-like files such as Markdown, Writerside
 topic files, `.tree`, `.cfg`, `.list`, and `.xml` files. Common resource files
 such as images, PDFs, CSS, and JavaScript can appear in the project tree, but

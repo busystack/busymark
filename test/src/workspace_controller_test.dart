@@ -110,6 +110,7 @@ void main() {
     expect(created, isTrue);
     expect(controller.state.workspace?.kind, WorkspaceKind.writersideModule);
     expect(controller.state.activeText, contains('# Getting started'));
+    expect(controller.state.preview, isNotNull);
     expect(settingsController.state.recentWorkspaces.first.path, rootPath);
     expect(
       settingsController.state.recentWorkspaces.first.kind,

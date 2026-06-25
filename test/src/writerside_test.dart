@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:busymark/src/core/diagnostic.dart';
+import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +12,10 @@ void main() {
   const configParser = WritersideConfigParser();
   const treeParser = WritersideTreeParser();
   const moduleService = WritersideModuleService();
+  const workspaceService = WorkspaceService();
+
+  bool isError(Diagnostic diagnostic) =>
+      diagnostic.severity == DiagnosticSeverity.error;
 
   test('parses writerside.cfg directories and registered instances', () {
     final path = 'test/fixtures/writerside/basic_project/writerside.cfg';
@@ -19,6 +26,103 @@ void main() {
     expect(config.varsFile, 'v.list');
     expect(config.categoriesFile, 'c.list');
     expect(config.instanceSources, contains('user-guide.tree'));
+  });
+
+  test('parses documented full writerside.cfg metadata', () {
+    final config = configParser.parse('writerside.cfg', '''
+<ihp version="2.0">
+  <settings>
+    <caps style="title" for="toc-element"/>
+    <default-property element-name="img" property-name="border-effect" value="line"/>
+    <disable-web-name-preprocessing>true</disable-web-name-preprocessing>
+    <smart-ignore-vars>true</smart-ignore-vars>
+    <wrs-supernova use-version="2.1.1477-p3867"/>
+  </settings>
+  <module name="Docs"/>
+  <topics dir="topics"/>
+  <topics dir="reference"/>
+  <images dir="assets" version="main" web-path="/img/"/>
+  <api-specifications dir="openapi"/>
+  <build-config dir="build-cfg"/>
+  <snippets src="code-snippets"/>
+  <vars src="v.list"/>
+  <categories src="c.list"/>
+  <instance-groups src="instance-groups.xml"/>
+  <instance src="ug.tree" web-path="/user/" version="main" keymaps-mode="none"/>
+</ihp>
+''');
+
+    expect(config.version, '2.0');
+    expect(config.moduleName, 'Docs');
+    expect(config.topicsDirs, ['topics', 'reference']);
+    expect(config.imageRoots.single.dir, 'assets');
+    expect(config.imageRoots.single.version, 'main');
+    expect(config.imageRoots.single.webPath, '/img/');
+    expect(config.apiSpecificationsDir, 'openapi');
+    expect(config.apiSpecificationsExplicit, isTrue);
+    expect(config.buildConfigDir, 'build-cfg');
+    expect(config.buildConfigExplicit, isTrue);
+    expect(config.snippetsDir, 'code-snippets');
+    expect(config.varsFile, 'v.list');
+    expect(config.categoriesFile, 'c.list');
+    expect(config.instanceGroupsFile, 'instance-groups.xml');
+    expect(config.instances.single.src, 'ug.tree');
+    expect(config.instances.single.webPath, '/user/');
+    expect(config.instances.single.version, 'main');
+    expect(config.instances.single.keymapsMode, 'none');
+    expect(config.settings.capsRules.single.style, 'title');
+    expect(config.settings.capsRules.single.target, 'toc-element');
+    expect(config.settings.defaultProperties.single.elementName, 'img');
+    expect(
+      config.settings.defaultProperties.single.propertyName,
+      'border-effect',
+    );
+    expect(config.settings.defaultProperties.single.value, 'line');
+    expect(config.settings.disableWebNamePreprocessing, isTrue);
+    expect(config.settings.smartIgnoreVars, isTrue);
+    expect(config.settings.wrsSupernovaUseVersion, '2.1.1477-p3867');
+    expect(config.diagnostics.where(isError), isEmpty);
+  });
+
+  test('parses documented config defaults', () {
+    final config = configParser.parse('writerside.cfg', '''
+<ihp><instance src="ug.tree"/></ihp>
+''');
+
+    expect(config.topicsDir, 'topics');
+    expect(config.topicsDirs, ['topics']);
+    expect(config.imagesDir, 'images');
+    expect(config.imagesDirs, ['images']);
+    expect(config.buildConfigDir, 'cfg');
+    expect(config.buildConfigExplicit, isFalse);
+    expect(config.apiSpecificationsDir, 'specifications');
+    expect(config.apiSpecificationsExplicit, isFalse);
+    expect(config.varsFile, isNull);
+    expect(config.categoriesFile, isNull);
+    expect(config.instanceSources, ['ug.tree']);
+  });
+
+  test('parses attribute defaults for present config elements', () {
+    final config = configParser.parse('writerside.cfg', '''
+<ihp>
+  <topics/>
+  <images/>
+  <build-config/>
+  <api-specifications/>
+  <vars/>
+  <categories/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+
+    expect(config.topicsDir, 'topics');
+    expect(config.imagesDir, 'images');
+    expect(config.buildConfigDir, 'cfg');
+    expect(config.buildConfigExplicit, isTrue);
+    expect(config.apiSpecificationsDir, 'specifications');
+    expect(config.apiSpecificationsExplicit, isTrue);
+    expect(config.varsFile, 'v.list');
+    expect(config.categoriesFile, 'c.list');
   });
 
   test('parses .tree metadata and TOC hierarchy', () {
@@ -49,6 +153,250 @@ void main() {
         module.diagnostics.map((item) => item.code),
         isNot(contains('writerside.tree.missing-topic')),
       );
+    },
+  );
+
+  test('loads project.ihp as an equivalent Writerside config file', () async {
+    final root = await Directory.systemTemp.createTemp('busymark-project-ihp-');
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(p.join(root.path, 'topics')).createSync();
+    Directory(p.join(root.path, 'images')).createSync();
+    File(p.join(root.path, 'project.ihp')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'topics', 'intro.md')).writeAsStringSync('''
+# Intro
+''');
+
+    final module = await moduleService.load(root.path);
+    final workspace = await workspaceService.openPath(root.path);
+
+    expect(module.config.configFileName, 'project.ihp');
+    expect(module.instances.single.name, 'User Guide');
+    expect(workspace.kind, WorkspaceKind.writersideModule);
+    expect(
+      module.diagnostics.map((item) => item.code),
+      isNot(
+        contains(
+          'writerside.config.'
+          'legacy-project-'
+          'ihp-unsupported',
+        ),
+      ),
+    );
+  });
+
+  test('loads topics from multiple configured topic roots', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-multi-topics-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(p.join(root.path, 'topics')).createSync();
+    Directory(p.join(root.path, 'reference')).createSync();
+    Directory(p.join(root.path, 'images')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <topics dir="reference"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="api.md"/>
+</instance-profile>
+''');
+    File(
+      p.join(root.path, 'topics', 'intro.md'),
+    ).writeAsStringSync('# Intro\n');
+    File(p.join(root.path, 'reference', 'api.md')).writeAsStringSync('# API\n');
+
+    final module = await moduleService.load(root.path);
+
+    expect(module.topicsByFileName.keys, containsAll(['intro.md', 'api.md']));
+    expect(module.topicByReference('api.md')?.title, 'API');
+    expect(
+      module.diagnostics.map((item) => item.code),
+      isNot(contains('writerside.tree.missing-topic')),
+    );
+    expect(
+      module.diagnostics.map((item) => item.code),
+      isNot(contains('writerside.tree.missing-start-page')),
+    );
+  });
+
+  test('resolves exact topic reference before basename fallback', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-exact-topic-reference-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(
+      p.join(root.path, 'topics', 'section'),
+    ).createSync(recursive: true);
+    Directory(p.join(root.path, 'images')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="section/intro.md"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'topics', 'intro.md')).writeAsStringSync('''
+# Intro
+''');
+    File(p.join(root.path, 'topics', 'section', 'intro.md')).writeAsStringSync(
+      '''
+# Section Intro
+''',
+    );
+
+    final module = await moduleService.load(root.path);
+
+    expect(module.topicByReference('intro.md')?.title, 'Intro');
+    expect(module.topicByReference('section/intro.md')?.title, 'Section Intro');
+    expect(
+      module.diagnostics.map((item) => item.code),
+      isNot(contains('writerside.topic.ambiguous-reference')),
+    );
+  });
+
+  test(
+    'reports ambiguous basename fallback after exact matching misses',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-basename-topic-ambiguity-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(
+        p.join(root.path, 'topics', 'guide'),
+      ).createSync(recursive: true);
+      Directory(p.join(root.path, 'topics', 'api')).createSync(recursive: true);
+      Directory(p.join(root.path, 'images')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="guide/intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+      File(p.join(root.path, 'topics', 'guide', 'intro.md')).writeAsStringSync(
+        '''
+# Guide Intro
+''',
+      );
+      File(p.join(root.path, 'topics', 'api', 'intro.md')).writeAsStringSync('''
+# API Intro
+''');
+
+      final module = await moduleService.load(root.path);
+
+      expect(
+        module.diagnostics.map((item) => item.code),
+        contains('writerside.topic.ambiguous-reference'),
+      );
+      expect(module.topicByReference('intro.md'), isNull);
+    },
+  );
+
+  test('resolves Markdown links across configured topic roots', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-cross-root-link-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(p.join(root.path, 'topics')).createSync();
+    Directory(p.join(root.path, 'reference')).createSync();
+    Directory(p.join(root.path, 'images')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <topics dir="reference"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="api.md"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'topics', 'intro.md')).writeAsStringSync('''
+# Intro
+
+[API](api.md)
+''');
+    File(p.join(root.path, 'reference', 'api.md')).writeAsStringSync('''
+# API
+''');
+
+    final module = await moduleService.load(root.path);
+
+    expect(module.topicByReference('api.md')?.title, 'API');
+    expect(
+      module.diagnostics.map((item) => item.code),
+      isNot(contains('markdown.link.unresolved-target')),
+    );
+  });
+
+  test(
+    'reports ambiguous basename topic references deterministically',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-ambiguous-topic-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      Directory(p.join(root.path, 'reference')).createSync();
+      Directory(p.join(root.path, 'images')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <topics dir="reference"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+      File(
+        p.join(root.path, 'topics', 'intro.md'),
+      ).writeAsStringSync('# Intro\n');
+      File(
+        p.join(root.path, 'reference', 'intro.md'),
+      ).writeAsStringSync('# Other Intro\n');
+
+      final module = await moduleService.load(root.path);
+
+      expect(
+        module.diagnostics.map((item) => item.code),
+        contains('writerside.topic.ambiguous-reference'),
+      );
+      expect(module.topicByReference('intro.md'), isNull);
     },
   );
 
@@ -124,4 +472,43 @@ void main() {
       );
     },
   );
+
+  test('resolves local images from secondary configured image roots', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-writerside-images-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(p.join(root.path, 'topics')).createSync();
+    Directory(p.join(root.path, 'images')).createSync();
+    Directory(p.join(root.path, 'assets')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <images dir="assets" web-path="/img/" version="main"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'topics', 'intro.md')).writeAsStringSync('''
+# Intro
+
+![Alt](logo.png)
+''');
+    File(p.join(root.path, 'assets', 'logo.png')).writeAsBytesSync([0]);
+
+    final module = await moduleService.load(root.path);
+
+    expect(module.config.imagesDirs, ['images', 'assets']);
+    expect(module.config.imageRoots.last.webPath, '/img/');
+    expect(module.config.imageRoots.last.version, 'main');
+    expect(
+      module.diagnostics.map((item) => item.code),
+      isNot(contains('markdown.image.missing-file')),
+    );
+  });
 }

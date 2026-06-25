@@ -98,8 +98,6 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
-    expect(service, contains('printDocument'));
-    expect(app, contains("printDocument: 'Print'"));
     expect(app, contains("keyboardShortcuts: 'Keyboard Shortcuts'"));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('Ctrl+N'));
@@ -107,24 +105,11 @@ void main() {
     expect(dialogs, contains('Ctrl+Z'));
     expect(dialogs, contains('Ctrl+Shift+Z'));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(workspace, contains('case HeaderBarAction.printDocument:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(settings, contains('case HeaderBarAction.printDocument:'));
     expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(welcome, contains('case HeaderBarAction.printDocument:'));
-    expect(native, contains('GtkWidget* print_item;'));
-    expect(native, contains('fl_lookup_string_arg(args, "printDocument")'));
-    expect(native, contains('create_menu_item(self, "printDocument")'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
-    expect(native, contains('set_widget_sensitive(self->print_item, visible)'));
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->print_item',
-      ),
-    );
     expect(
       native,
       contains(
@@ -390,16 +375,10 @@ void main() {
 
     expect(service, contains('save,'));
     expect(service, contains("'save' => HeaderBarAction.save"));
-    expect(service, contains('printDocument,'));
-    expect(
-      service,
-      contains("'printDocument' => HeaderBarAction.printDocument"),
-    );
     expect(service, isNot(contains('problems,')));
     expect(service, isNot(contains("'problems' => HeaderBarAction.problems")));
     expect(service, contains('setCanSave'));
     expect(workspace, contains('case HeaderBarAction.save:'));
-    expect(workspace, contains('case HeaderBarAction.printDocument:'));
     expect(workspace, isNot(contains('case HeaderBarAction.problems:')));
     expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));

@@ -144,12 +144,12 @@ class WorkspaceService {
           filePath: active,
           source: source,
           mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: p.join(module!.rootPath, module.config.topicsDir),
+          workspaceRoot: topic!.topicRoot,
         );
         return workspace.copyWith(
           markdown: markdown,
           diagnostics: sortDiagnostics([
-            ...module.diagnostics,
+            ...module!.diagnostics,
             ...markdown.diagnostics,
           ]),
         );
@@ -158,6 +158,7 @@ class WorkspaceService {
         final parsed = writersideService.topicParser.parseXml(
           filePath: active,
           source: source,
+          topicsRoot: topic!.topicRoot,
         );
         return workspace.copyWith(
           diagnostics: sortDiagnostics([
@@ -206,7 +207,7 @@ class WorkspaceService {
           filePath: active,
           source: source,
           mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: p.join(module.rootPath, module.config.topicsDir),
+          workspaceRoot: topic.topicRoot,
         );
         return previewBuilder.build(parsed);
       }
@@ -339,7 +340,7 @@ class WorkspaceService {
     if (startPage == null) {
       return null;
     }
-    return module.topicsByFileName[startPage]?.filePath;
+    return module.topicByReference(startPage)?.filePath;
   }
 
   Future<DocumentFile> _documentFile(String path, String rootPath) async {
@@ -433,7 +434,9 @@ class WorkspaceService {
     if (extension == '.tree') {
       return DocumentKind.tree;
     }
-    if (extension == '.cfg' || p.basename(path) == 'writerside.cfg') {
+    if (extension == '.cfg' ||
+        p.basename(path) == 'writerside.cfg' ||
+        p.basename(path) == 'project.ihp') {
       return DocumentKind.config;
     }
     if (p.basename(path) == 'v.list') {

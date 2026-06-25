@@ -312,20 +312,6 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
   );
 }
 
-void showBusyMarkPrintDialog(BuildContext context) {
-  final headerBar = LinuxHeaderBarService.instance;
-  unawaited(
-    showBusyMarkModalDialog<void>(
-      context,
-      headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => const _BusyMarkInfoDialog(
-        title: 'Print',
-        children: [Text('Printing is not available yet.')],
-      ),
-    ),
-  );
-}
-
 class _BusyMarkInfoDialog extends StatelessWidget {
   const _BusyMarkInfoDialog({
     required this.title,

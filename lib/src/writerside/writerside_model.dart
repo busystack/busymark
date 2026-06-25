@@ -1,35 +1,128 @@
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../markdown/markdown_model.dart';
+import 'package:path/path.dart' as p;
+
+class WritersideTopicRoot {
+  const WritersideTopicRoot({required this.dir, required this.explicit});
+
+  final String dir;
+  final bool explicit;
+}
+
+class WritersideImageRoot {
+  const WritersideImageRoot({
+    required this.dir,
+    required this.explicit,
+    this.version,
+    this.webPath,
+  });
+
+  final String dir;
+  final bool explicit;
+  final String? version;
+  final String? webPath;
+}
+
+class WritersideConfiguredInstance {
+  const WritersideConfiguredInstance({
+    required this.src,
+    this.version,
+    this.webPath,
+    this.keymapsMode,
+  });
+
+  final String src;
+  final String? version;
+  final String? webPath;
+  final String? keymapsMode;
+}
+
+class WritersideSettingsConfig {
+  const WritersideSettingsConfig({
+    this.capsRules = const [],
+    this.defaultProperties = const [],
+    this.disableWebNamePreprocessing,
+    this.smartIgnoreVars,
+    this.wrsSupernovaUseVersion,
+  });
+
+  final List<WritersideCapsRule> capsRules;
+  final List<WritersideDefaultProperty> defaultProperties;
+  final bool? disableWebNamePreprocessing;
+  final bool? smartIgnoreVars;
+  final String? wrsSupernovaUseVersion;
+}
+
+class WritersideCapsRule {
+  const WritersideCapsRule({required this.style, required this.target});
+
+  final String? style;
+  final String? target;
+}
+
+class WritersideDefaultProperty {
+  const WritersideDefaultProperty({
+    required this.elementName,
+    required this.propertyName,
+    required this.value,
+  });
+
+  final String? elementName;
+  final String? propertyName;
+  final String? value;
+}
 
 class WritersideConfig {
   const WritersideConfig({
     required this.filePath,
+    required this.version,
     required this.moduleName,
-    required this.topicsDir,
-    required this.imagesDir,
-    required this.snippetsDir,
-    required this.resourcesDir,
+    required this.topicRoots,
+    required this.imageRoots,
     required this.apiSpecificationsDir,
+    required this.apiSpecificationsExplicit,
     required this.buildConfigDir,
+    required this.buildConfigExplicit,
+    required this.snippetsDir,
+    required this.resourcesFile,
+    required this.resourcesDir,
     required this.varsFile,
     required this.categoriesFile,
-    required this.instanceSources,
+    required this.instanceGroupsFile,
+    required this.instances,
+    required this.settings,
     required this.diagnostics,
   });
 
   final String filePath;
+  final String? version;
   final String? moduleName;
-  final String topicsDir;
-  final String imagesDir;
-  final String? snippetsDir;
-  final String? resourcesDir;
+  final List<WritersideTopicRoot> topicRoots;
+  final List<WritersideImageRoot> imageRoots;
   final String apiSpecificationsDir;
+  final bool apiSpecificationsExplicit;
   final String buildConfigDir;
+  final bool buildConfigExplicit;
+  final String? snippetsDir;
+  final String? resourcesFile;
+  final String? resourcesDir;
   final String? varsFile;
   final String? categoriesFile;
-  final List<String> instanceSources;
+  final String? instanceGroupsFile;
+  final List<WritersideConfiguredInstance> instances;
+  final WritersideSettingsConfig settings;
   final List<Diagnostic> diagnostics;
+
+  String get configFileName => p.basename(filePath);
+  String get fileName => configFileName;
+  String get topicsDir => topicRoots.firstOrNull?.dir ?? 'topics';
+  List<String> get topicsDirs => [for (final root in topicRoots) root.dir];
+  String get imagesDir => imageRoots.firstOrNull?.dir ?? 'images';
+  List<String> get imagesDirs => [for (final root in imageRoots) root.dir];
+  List<String> get instanceSources => [
+    for (final instance in instances) instance.src,
+  ];
 }
 
 class TocNode {
@@ -117,6 +210,7 @@ class WritersideTopic {
     required this.id,
     required this.filePath,
     required this.fileName,
+    required this.topicRoot,
     required this.format,
     required this.title,
     required this.elementIds,
@@ -132,6 +226,7 @@ class WritersideTopic {
   final String id;
   final String filePath;
   final String fileName;
+  final String topicRoot;
   final WritersideTopicFormat format;
   final String? title;
   final List<WritersideElementId> elementIds;
@@ -142,6 +237,8 @@ class WritersideTopic {
   final List<Diagnostic> diagnostics;
   final ParsedMarkdownDocument? markdown;
   final List<String> semanticElementNames;
+
+  String get baseName => p.basename(fileName);
 }
 
 class WritersideVariable {
@@ -189,13 +286,57 @@ class WritersideModule {
   final List<WritersideCategory> categories;
   final List<Diagnostic> diagnostics;
 
-  Map<String, WritersideTopic> get topicsByFileName => {
-    for (final topic in topics) topic.fileName: topic,
-  };
+  Map<String, WritersideTopic> get topicsByFileName {
+    final grouped = <String, List<WritersideTopic>>{};
+    for (final topic in topics) {
+      grouped.putIfAbsent(topic.fileName, () => []).add(topic);
+    }
+    return {
+      for (final entry in grouped.entries)
+        if (entry.value.length == 1) entry.key: entry.value.single,
+    };
+  }
 
   Map<String, WritersideTopic> get topicsById => {
     for (final topic in topics) topic.id: topic,
   };
+
+  WritersideTopic? topicByReference(
+    String reference, {
+    WritersideTopic? fromTopic,
+  }) {
+    return topicsMatchingReference(
+      reference,
+      fromTopic: fromTopic,
+    ).singleOrNull;
+  }
+
+  List<WritersideTopic> topicsMatchingReference(
+    String reference, {
+    WritersideTopic? fromTopic,
+  }) {
+    final normalized = _normalizedTopicReference(reference);
+    if (normalized.isEmpty) {
+      return fromTopic == null ? const [] : [fromTopic];
+    }
+    final candidates = <String>[
+      if (fromTopic != null && !p.isAbsolute(normalized))
+        _normalizedTopicReference(
+          p.join(p.dirname(fromTopic.fileName), normalized),
+        ),
+      normalized,
+    ];
+    for (final candidate in candidates.toSet()) {
+      final exact = topics
+          .where((topic) => topic.fileName == candidate)
+          .toList();
+      if (exact.isNotEmpty) {
+        return exact;
+      }
+    }
+    final basename = p.basename(normalized);
+    return topics.where((topic) => topic.baseName == basename).toList();
+  }
 
   Set<String> get variableNames => {
     for (final variable in variables) variable.name,
@@ -204,4 +345,13 @@ class WritersideModule {
     'currentId',
     'thisTopic',
   };
+}
+
+String _normalizedTopicReference(String value) {
+  return p.normalize(value.trim()).replaceAll(r'\', '/');
+}
+
+extension _FirstOrNull<T> on List<T> {
+  T? get firstOrNull => isEmpty ? null : first;
+  T? get singleOrNull => length == 1 ? single : null;
 }

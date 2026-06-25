@@ -71,6 +71,11 @@ void main() {
       endsWith(p.join('topics', 'getting-started.md')),
     );
     expect(File(workspace.activeFilePath!).existsSync(), isTrue);
+    expect(workspace.markdown?.title, 'Getting started');
+    expect(
+      workspace.diagnostics.where((item) => item.severity.name == 'error'),
+      isEmpty,
+    );
   });
 
   test('normalizes portal-style document paths as filesystem paths', () {

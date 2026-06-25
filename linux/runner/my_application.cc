@@ -50,7 +50,6 @@ struct _MyApplication {
   GtkWidget* sidebar_title_label;
   GtkWidget* sidebar_menu_button;
   GtkWidget* sidebar_menu;
-  GtkWidget* print_item;
   GtkWidget* settings_item;
   GtkWidget* keyboard_shortcuts_item;
   GtkWidget* about_item;
@@ -949,7 +948,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
   const gchar* save = fl_lookup_string_arg(args, "save");
-  const gchar* print_document = fl_lookup_string_arg(args, "printDocument");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
   const gchar* keyboard_shortcuts =
       fl_lookup_string_arg(args, "keyboardShortcuts");
@@ -970,7 +968,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
   set_menu_item_label(self->view_mode_split_item, split);
-  set_menu_item_label(self->print_item, print_document);
   set_menu_item_label(self->settings_item, settings);
   set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
   set_menu_item_label(self->about_item, about);
@@ -1021,7 +1018,6 @@ static void set_document_controls_visible(MyApplication* self,
   set_widget_visible(self->save_button, effective_visible);
   set_widget_visible(self->refresh_button, effective_visible);
   set_widget_visible(self->view_mode_box, effective_visible);
-  set_widget_sensitive(self->print_item, visible);
 }
 
 static void set_search_active(MyApplication* self, gboolean active) {
@@ -1087,14 +1083,10 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->sidebar_menu = create_header_popover();
   GtkWidget* sidebar_menu_box = create_popover_box(self->sidebar_menu);
-  self->print_item = create_menu_item(self, "printDocument");
   self->settings_item = create_menu_item(self, "settings");
   self->keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
   self->about_item = create_menu_item(self, "aboutBusyMark");
-  set_widget_sensitive(self->print_item, FALSE);
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->print_item, FALSE,
-                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
@@ -1545,7 +1537,6 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_title_label = nullptr;
   self->sidebar_menu_button = nullptr;
   self->sidebar_menu = nullptr;
-  self->print_item = nullptr;
   self->settings_item = nullptr;
   self->keyboard_shortcuts_item = nullptr;
   self->about_item = nullptr;

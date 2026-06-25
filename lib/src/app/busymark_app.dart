@@ -284,7 +284,6 @@ class BusyMarkApp extends ConsumerWidget {
       sidebar: 'Toggle sidebar',
       back: material.backButtonTooltip,
       save: 'Save',
-      printDocument: 'Print',
       settings: 'Settings',
       keyboardShortcuts: 'Keyboard Shortcuts',
       aboutBusyMark: 'About BusyMark',

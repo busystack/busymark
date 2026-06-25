@@ -29,10 +29,14 @@ class WritersideProjectCreateRequest {
 class WritersideProjectCreateResult {
   const WritersideProjectCreateResult({
     required this.rootPath,
+    required this.configPath,
+    required this.treePath,
     required this.startTopicPath,
   });
 
   final String rootPath;
+  final String configPath;
+  final String treePath;
   final String startTopicPath;
 }
 
@@ -99,6 +103,8 @@ class WritersideProjectCreator {
 
     return WritersideProjectCreateResult(
       rootPath: rootPath,
+      configPath: configFile.path,
+      treePath: treeFile.path,
       startTopicPath: topicFile.path,
     );
   }
@@ -140,6 +146,7 @@ class WritersideProjectCreator {
     }
     if (directoryName == '.' ||
         directoryName == '..' ||
+        p.isAbsolute(directoryName) ||
         directoryName.contains('..') ||
         directoryName.contains('/') ||
         directoryName.contains(r'\')) {
@@ -161,6 +168,10 @@ class WritersideProjectCreator {
 
     final topicFileName = request.topicFileName.trim();
     if (topicFileName.isEmpty ||
+        topicFileName == '.' ||
+        topicFileName == '..' ||
+        p.isAbsolute(topicFileName) ||
+        topicFileName.contains('..') ||
         topicFileName.contains('/') ||
         topicFileName.contains(r'\') ||
         !topicFileName.endsWith('.md')) {
@@ -244,9 +255,41 @@ class WritersideProjectCreator {
   }
 
   String _startTopic({required String title}) {
-    return '# $title\n\n'
+    return '# ${_markdownHeadingText(title)}\n\n'
         'Start writing your documentation here.\n\n'
         'This Writerside-compatible starter project was created by BusyMark.\n';
+  }
+
+  String _markdownHeadingText(String value) {
+    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.isEmpty) {
+      return 'Getting started';
+    }
+    return normalized.replaceAllMapped(RegExp(r'[&<>%\[\]()!`*_{}#\\=:]'), (
+      match,
+    ) {
+      return switch (match.group(0)!) {
+        '&' => '&amp;',
+        '<' => '&lt;',
+        '>' => '&gt;',
+        '%' => '&#37;',
+        '[' => '&#91;',
+        ']' => '&#93;',
+        '(' => '&#40;',
+        ')' => '&#41;',
+        '!' => '&#33;',
+        '`' => '&#96;',
+        '*' => '&#42;',
+        '_' => '&#95;',
+        '{' => '&#123;',
+        '}' => '&#125;',
+        '#' => '&#35;',
+        '\\' => '&#92;',
+        '=' => '&#61;',
+        ':' => '&#58;',
+        _ => match.group(0)!,
+      };
+    });
   }
 
   String _xmlAttribute(String value) {

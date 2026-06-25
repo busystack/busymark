@@ -13,7 +13,6 @@ enum HeaderBarAction {
   search,
   refresh,
   save,
-  printDocument,
   menu,
   settings,
   keyboardShortcuts,
@@ -39,7 +38,6 @@ class HeaderBarLabels {
     required this.sidebar,
     required this.back,
     required this.save,
-    required this.printDocument,
     required this.settings,
     required this.keyboardShortcuts,
     required this.aboutBusyMark,
@@ -56,7 +54,6 @@ class HeaderBarLabels {
   final String sidebar;
   final String back;
   final String save;
-  final String printDocument;
   final String settings;
   final String keyboardShortcuts;
   final String aboutBusyMark;
@@ -73,7 +70,6 @@ class HeaderBarLabels {
     'sidebar': sidebar,
     'back': back,
     'save': save,
-    'printDocument': printDocument,
     'settings': settings,
     'keyboardShortcuts': keyboardShortcuts,
     'aboutBusyMark': aboutBusyMark,
@@ -291,7 +287,6 @@ class LinuxHeaderBarService {
       'search' => HeaderBarAction.search,
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
-      'printDocument' => HeaderBarAction.printDocument,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
