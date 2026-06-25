@@ -229,6 +229,49 @@ void main() {}
     expect(find.text('Editable text'), findsOneWidget);
   });
 
+  testWidgets('WYSIWYG editor applies heading keyboard shortcuts', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Title\n');
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.digit2);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.digit2);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, '## Title\n');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.digit0);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.digit0);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Title\n');
+  });
+
   testWidgets('WYSIWYG arrow keys move focus between paragraphs', (
     tester,
   ) async {
@@ -320,6 +363,15 @@ void main() {}
     await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
     await gesture.up();
     await tester.pump();
+
+    Color? nativeSelectionColorAt(int index) {
+      return TextSelectionTheme.of(
+        tester.element(find.byType(TextField).at(index)),
+      ).selectionColor;
+    }
+
+    expect(nativeSelectionColorAt(0), Colors.transparent);
+    expect(nativeSelectionColorAt(1), Colors.transparent);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
@@ -662,6 +714,65 @@ void main() {}
 
     expect(markdown, 'FirstSecond\n');
     expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG Ctrl+A twice selects all text for deletion', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) {
+      return tester.widget<TextField>(find.byType(TextField).at(index));
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(fieldAt(0).controller!.selection.start, 0);
+    expect(fieldAt(0).controller!.selection.end, 'First'.length);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(
+      TextSelectionTheme.of(
+        tester.element(find.byType(TextField).at(0)),
+      ).selectionColor,
+      Colors.transparent,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pump();
+
+    expect(markdown, isEmpty);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(fieldAt(0).controller!.text, isEmpty);
   });
 
   test('WYSIWYG inline ranges do not duplicate formatted text', () {

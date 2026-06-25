@@ -96,16 +96,15 @@ void main() {
     expect(design, isNot(contains('YaruBorderContainer')));
   });
 
-  test('shared row hover uses subtle foreground overlay', () {
+  test('shared row hover uses the themed control hover color', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
     final helper = RegExp(
       r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
       dotAll: true,
     ).firstMatch(design)!.group(1)!;
-    expect(helper, contains('colors.foreground.withValues'));
-    expect(helper, contains('Brightness.dark ? 0.045 : 0.055'));
-    expect(helper, isNot(contains('controlHover')));
+    expect(helper, contains('BusyMarkSurfaceColors.of(context).controlHover'));
+    expect(helper, isNot(contains('colors.foreground.withValues')));
   });
 
   test('shared surfaces use semantic BusyMark shadows', () {
@@ -149,9 +148,8 @@ void main() {
     );
   });
 
-  test('filled grouped action surfaces use themed container surfaces', () {
+  test('filled grouped action surfaces use themed card surfaces', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-    final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
 
     final groupedSurface = RegExp(
       r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
@@ -159,16 +157,10 @@ void main() {
     ).firstMatch(design)!.group(0)!;
     expect(
       groupedSurface,
-      contains('final colorScheme = Theme.of(context).colorScheme'),
-    );
-    expect(
-      groupedSurface,
-      contains('final color = colorScheme.surfaceContainer'),
+      contains('final color = cardTheme.color ?? colors.card'),
     );
     expect(groupedSurface, contains('decoration: busyMarkSurfaceDecoration'));
-    expect(theme, contains('surfaceContainer: colors.panel'));
     expect(groupedSurface, isNot(contains('color: colors.control')));
-    expect(groupedSurface, isNot(contains('cardTheme.color ?? colors.card')));
     expect(groupedSurface, isNot(contains('BusyMarkShadow.surfaceShadows')));
     expect(groupedSurface, isNot(contains('elevation: cardTheme.elevation')));
   });
@@ -203,10 +195,12 @@ void main() {
     ).readAsStringSync();
 
     expect(workspace, contains('case HeaderBarAction.search:'));
-    expect(workspace, contains('_showSearchDialog(context, ref)'));
-    expect(workspace, contains('class _WorkspaceSearchDialog'));
+    expect(workspace, contains('_toggleSearch(ref)'));
+    expect(workspace, contains('_workspaceSearchProvider'));
+    expect(workspace, contains('class _HeaderSearchField'));
+    expect(workspace, contains('class _SearchSidebar'));
     expect(workspace, contains('_workspaceSearchResults'));
-    expect(workspace, contains('_sourceNavigationTargetProvider'));
+    expect(workspace, contains('_searchNavigationTargetProvider'));
   });
 
   test('preview links are actionable instead of styled-only text', () {
@@ -246,7 +240,10 @@ void main() {
     expect(singleMarkdownClause, contains('_SidebarTab.outline'));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.files')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.toc')));
-    expect(workspace, contains('if (tabs.length > 1)'));
+    expect(
+      workspace,
+      contains('if (!widget.searchState.active && tabs.length > 1)'),
+    );
     expect(workspace, contains('_preferredSidebarTabIndex'));
     expect(workspace, contains('_shouldShowOutlineForOpenFile'));
     expect(workspace, contains('tabs.indexOf(_SidebarTab.outline)'));

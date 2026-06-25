@@ -128,6 +128,24 @@ void main() {
     expect(html, isNot(contains('&amp;quot;')));
   });
 
+  test('preview preserves pasted local image destinations with spaces', () {
+    const destination =
+        '/home/albert/Pictures/Screenshots/'
+        'Screenshot From 2026-06-15 03-27-53.png';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '![Screenshot From 2026-06-15 03-27-53.png]($destination)\n',
+      validateLocalReferences: false,
+    );
+    final preview = previewBuilder.build(parsed);
+    final image = preview.blocks.singleWhere(
+      (block) => block.kind == PreviewBlockKind.image,
+    );
+
+    expect(image.text, 'Screenshot From 2026-06-15 03-27-53.png');
+    expect(Uri.decodeComponent(image.attributes['src']!), destination);
+  });
+
   test('preview treats single newlines inside paragraphs as soft breaks', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

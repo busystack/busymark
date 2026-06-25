@@ -376,7 +376,7 @@ void main() {
     expect(welcome, contains('setSidebarVisible(false)'));
     expect(
       welcome,
-      contains('backgroundColor: Theme.of(context).scaffoldBackgroundColor'),
+      contains('backgroundColor: BusyMarkSurfaceColors.of(context).view'),
     );
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
@@ -413,7 +413,7 @@ void main() {
 
     expect(
       welcome,
-      contains('backgroundColor: Theme.of(context).scaffoldBackgroundColor'),
+      contains('backgroundColor: BusyMarkSurfaceColors.of(context).view'),
     );
     expect(settings, contains('backgroundColor: colors.view'));
     expect(settings, isNot(contains('backgroundColor: colors.window')));
