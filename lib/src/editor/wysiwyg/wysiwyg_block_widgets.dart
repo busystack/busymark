@@ -656,49 +656,24 @@ class _TableControlMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final theme = Theme.of(context);
-    return Theme(
-      data: theme.copyWith(
-        iconButtonTheme: IconButtonThemeData(
-          style: busyMarkHeaderIconButtonStyle(
-            foregroundColor: colors.mutedForeground,
-            backgroundColor: busyMarkHeaderButtonBackground(context),
-          ),
+    return BusyMarkHeaderPopupMenuButton<_TableControlAction>(
+      tooltip: tooltip,
+      icon: icon,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _TableControlAction.insertBefore,
+          child: Text(beforeLabel),
         ),
-      ),
-      child: SizedBox.square(
-        dimension: _TableBlockEditor._controlSize,
-        child: PopupMenuButton<_TableControlAction>(
-          tooltip: tooltip,
-          padding: EdgeInsets.zero,
-          position: PopupMenuPosition.under,
-          icon: Icon(icon, size: BusyMarkSizes.iconSm),
-          iconColor: colors.mutedForeground,
-          color: colors.popover,
-          surfaceTintColor: Colors.transparent,
-          elevation: BusyMarkElevation.popover,
-          shadowColor: colors.shade,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          ),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: _TableControlAction.insertBefore,
-              child: Text(beforeLabel),
-            ),
-            PopupMenuItem(
-              value: _TableControlAction.insertAfter,
-              child: Text(afterLabel),
-            ),
-            PopupMenuItem(
-              value: _TableControlAction.delete,
-              child: Text(deleteLabel),
-            ),
-          ],
-          onSelected: onSelected,
+        PopupMenuItem(
+          value: _TableControlAction.insertAfter,
+          child: Text(afterLabel),
         ),
-      ),
+        PopupMenuItem(
+          value: _TableControlAction.delete,
+          child: Text(deleteLabel),
+        ),
+      ],
+      onSelected: onSelected,
     );
   }
 }

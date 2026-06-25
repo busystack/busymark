@@ -39,7 +39,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
-    final theme = Theme.of(context);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((action) {
@@ -93,88 +92,79 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
             ),
-      body: Theme(
-        data: theme.copyWith(
-          cardTheme: theme.cardTheme.copyWith(
-            color: _welcomeGroupedCardColor(colors, theme.brightness),
-          ),
-        ),
-        child: BusyMarkClamp(
-          maxWidth: 760,
-          margin: EdgeInsets.zero,
-          padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BusyMarkGroupedList(
-                title: 'Create',
-                filled: true,
-                children: [
-                  BusyMarkActionRow(
-                    title: 'Create Markdown File',
-                    subtitle: 'Start an unsaved local Markdown document',
-                    leading: const Icon(BusyMarkGlyphs.newDocument),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                    onTap: _createMarkdownFile,
-                  ),
-                  BusyMarkActionRow(
-                    title: 'Create Writerside Project',
-                    subtitle:
-                        'Starter project with one Writerside help instance',
-                    leading: const Icon(BusyMarkGlyphs.writersideProject),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                    onTap: _createWritersideProject,
-                  ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: 'Open',
-                filled: true,
-                children: [
-                  BusyMarkActionRow(
-                    title: 'Open Markdown File',
-                    subtitle: '.md or .markdown',
-                    leading: const Icon(BusyMarkGlyphs.markdownFile),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                    onTap: _chooseMarkdownFile,
-                  ),
-                  BusyMarkActionRow(
-                    title: 'Open Folder or Writerside Project',
-                    subtitle:
-                        'Markdown folder or Writerside-compatible project',
-                    leading: const Icon(BusyMarkGlyphs.folder),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                    onTap: () => _chooseDirectory('Open'),
-                  ),
-                ],
-              ),
-              if (state.isLoading) ...[
-                const SizedBox(height: BusyMarkSpacing.lg),
-                const LinearProgressIndicator(),
-              ],
-              if (state.errorMessage != null) ...[
-                const SizedBox(height: BusyMarkSpacing.lg),
-                _WelcomeMessage(message: state.errorMessage!),
-              ],
-              if (settings.recentWorkspaces.isNotEmpty)
-                BusyMarkGroupedList(
-                  title: 'Recent',
-                  filled: true,
-                  children: [
-                    for (final recent in settings.recentWorkspaces)
-                      BusyMarkActionRow(
-                        title: _displayPath(recent.path),
-                        subtitle: recent.path,
-                        leading: const Icon(BusyMarkGlyphs.history),
-                        trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                        onTap: () async {
-                          await _openPath(recent.path);
-                        },
-                      ),
-                  ],
+      body: BusyMarkClamp(
+        maxWidth: 760,
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BusyMarkGroupedList(
+              title: 'Create',
+              filled: true,
+              children: [
+                BusyMarkActionRow(
+                  title: 'Create Markdown File',
+                  subtitle: 'Start an unsaved local Markdown document',
+                  leading: const Icon(BusyMarkGlyphs.newDocument),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  onTap: _createMarkdownFile,
                 ),
+                BusyMarkActionRow(
+                  title: 'Create Writerside Project',
+                  subtitle: 'Starter project with one Writerside help instance',
+                  leading: const Icon(BusyMarkGlyphs.writersideProject),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  onTap: _createWritersideProject,
+                ),
+              ],
+            ),
+            BusyMarkGroupedList(
+              title: 'Open',
+              filled: true,
+              children: [
+                BusyMarkActionRow(
+                  title: 'Open Markdown File',
+                  subtitle: '.md or .markdown',
+                  leading: const Icon(BusyMarkGlyphs.markdownFile),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  onTap: _chooseMarkdownFile,
+                ),
+                BusyMarkActionRow(
+                  title: 'Open Folder or Writerside Project',
+                  subtitle: 'Markdown folder or Writerside-compatible project',
+                  leading: const Icon(BusyMarkGlyphs.folder),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  onTap: () => _chooseDirectory('Open'),
+                ),
+              ],
+            ),
+            if (state.isLoading) ...[
+              const SizedBox(height: BusyMarkSpacing.lg),
+              const LinearProgressIndicator(),
             ],
-          ),
+            if (state.errorMessage != null) ...[
+              const SizedBox(height: BusyMarkSpacing.lg),
+              _WelcomeMessage(message: state.errorMessage!),
+            ],
+            if (settings.recentWorkspaces.isNotEmpty)
+              BusyMarkGroupedList(
+                title: 'Recent',
+                filled: true,
+                children: [
+                  for (final recent in settings.recentWorkspaces)
+                    BusyMarkActionRow(
+                      title: _displayPath(recent.path),
+                      subtitle: recent.path,
+                      leading: const Icon(BusyMarkGlyphs.history),
+                      trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                      onTap: () async {
+                        await _openPath(recent.path);
+                      },
+                    ),
+                ],
+              ),
+          ],
         ),
       ),
     );
@@ -366,16 +356,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       context.go('/workspace');
     }
   }
-}
-
-Color _welcomeGroupedCardColor(
-  BusyMarkSurfaceColors colors,
-  Brightness brightness,
-) {
-  return switch (brightness) {
-    Brightness.light => colors.popover,
-    Brightness.dark => colors.popover,
-  };
 }
 
 class _CreateWritersideProjectDialog extends StatefulWidget {

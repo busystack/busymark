@@ -233,15 +233,15 @@ class _ThemeModeControl extends StatelessWidget {
       segments: const [
         ButtonSegment(
           value: BusyMarkThemeModePreference.system,
-          label: Text('System'),
+          label: _SegmentLabel('System'),
         ),
         ButtonSegment(
           value: BusyMarkThemeModePreference.light,
-          label: Text('Light'),
+          label: _SegmentLabel('Light'),
         ),
         ButtonSegment(
           value: BusyMarkThemeModePreference.dark,
-          label: Text('Dark'),
+          label: _SegmentLabel('Dark'),
         ),
       ],
       selected: {selected},
@@ -366,23 +366,34 @@ class _EditorToolbarPlacementControl extends StatelessWidget {
       segments: const [
         ButtonSegment(
           value: EditorToolbarPlacement.topLeft,
-          label: Text('Top left'),
+          label: _SegmentLabel('Top left'),
         ),
         ButtonSegment(
           value: EditorToolbarPlacement.topRight,
-          label: Text('Top right'),
+          label: _SegmentLabel('Top right'),
         ),
         ButtonSegment(
           value: EditorToolbarPlacement.bottomLeft,
-          label: Text('Bottom left'),
+          label: _SegmentLabel('Bottom left'),
         ),
         ButtonSegment(
           value: EditorToolbarPlacement.bottomRight,
-          label: Text('Bottom right'),
+          label: _SegmentLabel('Bottom right'),
         ),
       ],
       selected: {selected},
       onSelectionChanged: (value) => onChanged(value.first),
     );
+  }
+}
+
+class _SegmentLabel extends StatelessWidget {
+  const _SegmentLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, maxLines: 1, overflow: TextOverflow.ellipsis);
   }
 }

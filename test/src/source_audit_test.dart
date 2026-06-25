@@ -140,6 +140,20 @@ void main() {
     ).firstMatch(design)!.group(1)!;
     expect(helper, contains('BusyMarkSurfaceColors.of(context).controlHover'));
     expect(helper, isNot(contains('colors.foreground.withValues')));
+    expect(design, contains('class _BusyMarkHoverBackground'));
+    expect(design, contains('return MouseRegion('));
+    expect(design, contains('ColoredBox('));
+    expect(design, isNot(contains('AnimatedContainer(')));
+    final actionRow = RegExp(
+      r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitchRow',
+    ).firstMatch(design)!.group(0)!;
+    expect(actionRow, contains('_BusyMarkHoverBackground('));
+    expect(actionRow, contains('hoverColor: Colors.transparent'));
+    final switchRow = RegExp(
+      r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkDialogShell',
+    ).firstMatch(design)!.group(0)!;
+    expect(switchRow, contains('_BusyMarkHoverBackground('));
+    expect(switchRow, contains('hoverColor: Colors.transparent'));
   });
 
   test('shared surfaces use semantic BusyMark shadows', () {
@@ -184,28 +198,35 @@ void main() {
     );
   });
 
-  test('filled grouped action surfaces use themed card surfaces', () {
+  test('filled grouped action surfaces use the shared grouped surface', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
 
     final groupedSurface = RegExp(
       r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
-    expect(groupedSurface, contains('final borderColor = colors.subtleBorder'));
     expect(groupedSurface, contains('final dividerColor = colors.view'));
     expect(
       groupedSurface,
       contains('Divider(height: 1, thickness: 1, color: dividerColor)'),
     );
-    expect(groupedSurface, contains('border: Border.all(color: borderColor)'));
-    expect(
-      groupedSurface,
-      contains('final color = cardTheme.color ?? colors.card'),
-    );
+    expect(design, contains('required this.groupedList'));
+    expect(design, contains('groupedList: Color(0xFFFFFFFF)'));
+    expect(design, contains('groupedList: Color(0xFF383838)'));
+    expect(groupedSurface, contains('final color = colors.groupedList'));
     expect(groupedSurface, contains('decoration: busyMarkSurfaceDecoration'));
+    expect(groupedSurface, contains('ClipRRect('));
+    expect(groupedSurface, contains('color: Colors.transparent'));
+    expect(groupedSurface, isNot(contains('borderColor')));
+    expect(groupedSurface, isNot(contains('Border.all')));
     expect(groupedSurface, isNot(contains('color: colors.control')));
     expect(groupedSurface, isNot(contains('BusyMarkShadow.surfaceShadows')));
     expect(groupedSurface, isNot(contains('elevation: cardTheme.elevation')));
+    expect(welcome, isNot(contains('_welcomeGroupedCardColor')));
+    expect(welcome, isNot(contains('cardTheme: theme.cardTheme.copyWith')));
   });
 
   test(
@@ -307,12 +328,22 @@ void main() {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
 
     expect(theme, contains('segmentedButtonTheme: SegmentedButtonThemeData'));
     expect(
       theme,
       contains('side: const WidgetStatePropertyAll(BorderSide.none)'),
     );
+    expect(theme, contains('return accentColor;'));
+    expect(theme, contains('return onAccent;'));
+    expect(theme, contains('return selectedContainer;'));
+    expect(settings, contains('class _SegmentLabel'));
+    expect(settings, contains('maxLines: 1'));
+    expect(settings, contains('overflow: TextOverflow.ellipsis'));
+    expect(settings, contains("label: _SegmentLabel('Bottom right')"));
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
     expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
@@ -549,6 +580,13 @@ void main() {
     expect(blockWidgets, contains('Insert row above'));
     expect(blockWidgets, contains('Insert row below'));
     expect(blockWidgets, contains('Delete table'));
+    final tableControlMenu = RegExp(
+      r'class _TableControlMenuButton[\s\S]*?class _TableCellEditor',
+    ).firstMatch(blockWidgets)!.group(0)!;
+    expect(tableControlMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(tableControlMenu, isNot(contains('theme.copyWith')));
+    expect(tableControlMenu, isNot(contains('color: colors.popover')));
+    expect(tableControlMenu, isNot(contains('elevation: BusyMarkElevation')));
   });
 
   test('WYSIWYG text selection does not paint full text block backgrounds', () {

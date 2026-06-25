@@ -221,7 +221,7 @@ void main() {
 
   test('preview preserves pasted local image destinations with spaces', () {
     const destination =
-        '/home/albert/Pictures/Screenshots/'
+        '/tmp/busymark-fixtures/Screenshots/'
         'Screenshot From 2026-06-15 03-27-53.png';
     final parsed = parser.parse(
       filePath: 'topic.md',
