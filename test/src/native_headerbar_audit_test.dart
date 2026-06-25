@@ -154,6 +154,30 @@ void main() {
     expect(dialogs, contains('BusyMarkModalEditorSurface'));
   });
 
+  test('native headerbar tooltips use opaque BusyMark popover surface', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final tooltipBlock = RegExp(
+      r'"tooltip, tooltip\.background \{"(.*?)"tooltip > box',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
+    final tooltipLabelBlock = RegExp(
+      r'"tooltip label \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
+
+    expect(tooltipBlock, contains('"background-color: %s;"'));
+    expect(tooltipBlock, contains('"background-image: none;"'));
+    expect(tooltipBlock, contains('"border: none;"'));
+    expect(tooltipBlock, contains('"box-shadow: none;"'));
+    expect(tooltipBlock, contains('"transition: none;"'));
+    expect(tooltipBlock, contains('"opacity: 1;"'));
+    expect(tooltipBlock, isNot(contains('"border: 1px solid %s;"')));
+    expect(tooltipBlock, isNot(contains('"box-shadow: 0 6px 18px %s;"')));
+    expect(tooltipLabelBlock, contains('"color: %s;"'));
+    expect(tooltipLabelBlock, contains('"text-shadow: none;"'));
+    expect(tooltipLabelBlock, contains('"opacity: 1;"'));
+  });
+
   test('native headerbar uses split sidebar and main content surfaces', () {
     final service = File(
       'lib/src/platform/linux_header_bar_service.dart',

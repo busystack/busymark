@@ -660,6 +660,38 @@ void main() {}
     expect(markdown, '**First**\n\n**Second**\n\nThird\n');
   });
 
+  testWidgets(
+    'WYSIWYG toolbar toggle stays vertically aligned when collapsed',
+    (tester) async {
+      final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
+
+      await tester.tap(find.byTooltip('Hide editing buttons'));
+      await tester.pump();
+
+      final showRect = tester.getRect(find.byTooltip('Show editing buttons'));
+
+      expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
+    },
+  );
+
   testWidgets('WYSIWYG toolbar list applies to selected paragraphs', (
     tester,
   ) async {

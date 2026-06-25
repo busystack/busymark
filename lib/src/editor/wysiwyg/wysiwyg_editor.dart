@@ -2375,11 +2375,17 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
       right: alignedEnd ? BusyMarkSpacing.sm : null,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: Row(mainAxisSize: MainAxisSize.min, children: rowChildren),
+        child: SizedBox(
+          height: _floatingWysiwygToolbarHeight,
+          child: Row(mainAxisSize: MainAxisSize.min, children: rowChildren),
+        ),
       ),
     );
   }
 }
+
+const double _floatingWysiwygToolbarHeight =
+    BusyMarkSizes.iconButton + BusyMarkSpacing.xs * 2;
 
 WidgetStateProperty<Color?> _editorToolbarButtonBackground(
   BuildContext context,

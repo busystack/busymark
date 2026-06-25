@@ -443,17 +443,33 @@ static void refresh_header_bar_css(MyApplication* self) {
       "padding: 0;"
       "min-height: 0;"
       "border-radius: %dpx;"
+      "background-color: %s;"
+      "background-image: none;"
+      "color: %s;"
+      "border: none;"
+      "box-shadow: none;"
+      "text-shadow: none;"
+      "transition: none;"
+      "opacity: 1;"
       "}"
       "tooltip > box, tooltip.background > box {"
       "margin: 0;"
       "padding: 0;"
       "min-height: 0;"
+      "background-color: transparent;"
+      "background-image: none;"
+      "border: none;"
+      "box-shadow: none;"
       "}"
       "tooltip label {"
       "margin: 0;"
       "padding: %dpx %dpx;"
       "min-height: 0;"
       "border-radius: %dpx;"
+      "background-color: transparent;"
+      "color: %s;"
+      "text-shadow: none;"
+      "opacity: 1;"
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
       kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
@@ -467,8 +483,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       accent_foreground, disabled, disabled, popover, foreground,
       border, shade, foreground, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, control_hover,
-      foreground, muted, kHeaderButtonRadius, kHeaderTooltipVerticalPadding,
-      kHeaderTooltipHorizontalPadding, kHeaderButtonRadius);
+      foreground, muted, kHeaderButtonRadius, popover, foreground,
+      kHeaderTooltipVerticalPadding, kHeaderTooltipHorizontalPadding,
+      kHeaderButtonRadius, foreground);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
