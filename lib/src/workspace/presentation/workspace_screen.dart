@@ -27,6 +27,7 @@ import '../../markdown/markdown_parser.dart';
 import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_topic_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_model.dart';
 import '../workspace_safety.dart';
@@ -1483,19 +1484,29 @@ class _TocTabState extends ConsumerState<_TocTab> {
       instance.tocRoots,
       _expandedNodeKeys,
     );
+    final activeTopicReference = _activeTocTopicReference(widget.workspace);
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
       itemCount: entries.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-            child: Text(
-              instance.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: busyMarkSectionHeaderStyle(context),
+          return _TocHeader(
+            instanceName: instance.name,
+            canCreateChild: activeTopicReference != null,
+            onCreateTopic: () => _showCreateTopicDialog(
+              context,
+              placement: activeTopicReference == null
+                  ? WritersideTopicCreatePlacement.root
+                  : WritersideTopicCreatePlacement.sibling,
+              referenceTopic: activeTopicReference,
             ),
+            onCreateChildTopic: activeTopicReference == null
+                ? null
+                : () => _showCreateTopicDialog(
+                    context,
+                    placement: WritersideTopicCreatePlacement.child,
+                    referenceTopic: activeTopicReference,
+                  ),
           );
         }
         final entry = entries[index - 1];
@@ -1543,6 +1554,377 @@ class _TocTabState extends ConsumerState<_TocTab> {
               : null,
         );
       },
+    );
+  }
+
+  Future<void> _showCreateTopicDialog(
+    BuildContext context, {
+    required WritersideTopicCreatePlacement placement,
+    required String? referenceTopic,
+  }) async {
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      return;
+    }
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    await showBusyMarkModalDialog<void>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (dialogContext) => _CreateWritersideTopicDialog(
+        workspace: widget.workspace,
+        placement: placement,
+        referenceTopic: referenceTopic,
+      ),
+    );
+  }
+}
+
+class _TocHeader extends StatelessWidget {
+  const _TocHeader({
+    required this.instanceName,
+    required this.canCreateChild,
+    required this.onCreateTopic,
+    required this.onCreateChildTopic,
+  });
+
+  final String instanceName;
+  final bool canCreateChild;
+  final VoidCallback onCreateTopic;
+  final VoidCallback? onCreateChildTopic;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              instanceName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: busyMarkSectionHeaderStyle(context),
+            ),
+          ),
+          BusyMarkHeaderIconButton(
+            tooltip: 'New Topic',
+            icon: BusyMarkGlyphs.newDocument,
+            transparent: true,
+            onPressed: onCreateTopic,
+          ),
+          const SizedBox(width: BusyMarkSpacing.xs),
+          BusyMarkHeaderIconButton(
+            tooltip: 'New Child Topic',
+            icon: BusyMarkGlyphs.tree,
+            transparent: true,
+            onPressed: canCreateChild ? onCreateChildTopic : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreateWritersideTopicDialog extends ConsumerStatefulWidget {
+  const _CreateWritersideTopicDialog({
+    required this.workspace,
+    required this.placement,
+    required this.referenceTopic,
+  });
+
+  final Workspace workspace;
+  final WritersideTopicCreatePlacement placement;
+  final String? referenceTopic;
+
+  @override
+  ConsumerState<_CreateWritersideTopicDialog> createState() =>
+      _CreateWritersideTopicDialogState();
+}
+
+class _CreateWritersideTopicDialogState
+    extends ConsumerState<_CreateWritersideTopicDialog> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _fileNameController;
+  var _format = WritersideTopicFormat.markdown;
+  var _fileNameEdited = false;
+  var _syncingFileName = false;
+  var _creating = false;
+  String? _creationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: 'New topic')
+      ..addListener(_handleTitleChanged);
+    _fileNameController = TextEditingController(text: 'new-topic.md')
+      ..addListener(_handleFileNameChanged);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _fileNameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final titleError = _titleError;
+    final fileNameError = _fileNameError;
+    final canCreate = !_creating && titleError == null && fileNameError == null;
+    return BusyMarkDialogShell(
+      title: _dialogTitle,
+      maxWidth: 560,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: canCreate ? _submit : null,
+          child: Text(_creating ? 'Creating...' : 'Create'),
+        ),
+      ],
+      children: [
+        TextField(
+          controller: _titleController,
+          autofocus: true,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Topic title',
+            errorText: titleError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _fileNameController,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (canCreate) {
+              _submit();
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'File name',
+            errorText: fileNameError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        SegmentedButton<WritersideTopicFormat>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(
+              value: WritersideTopicFormat.markdown,
+              label: Text('Markdown'),
+            ),
+            ButtonSegment(value: WritersideTopicFormat.xml, label: Text('XML')),
+          ],
+          selected: {_format},
+          onSelectionChanged: (value) => _setFormat(value.first),
+        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
+        if (_creationError != null) ...[
+          _DialogMessage(message: _creationError!),
+          const SizedBox(height: BusyMarkSpacing.lg),
+        ],
+        Text(
+          'Location',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: BusyMarkSurfaceColors.of(context).mutedForeground,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: BusyMarkSurfaceColors.of(context).control,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            border: Border.all(
+              color: BusyMarkSurfaceColors.of(context).subtleBorder,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: SelectableText(
+              _targetPath,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String get _dialogTitle {
+    return widget.placement == WritersideTopicCreatePlacement.child
+        ? 'New Child Topic'
+        : 'New Topic';
+  }
+
+  String? get _titleError {
+    if (_titleController.text.trim().isEmpty) {
+      return 'Topic title is required.';
+    }
+    return null;
+  }
+
+  String? get _fileNameError {
+    final value = _fileNameController.text.trim();
+    if (value.isEmpty) {
+      return 'File name is required.';
+    }
+    if (value == '.' ||
+        value == '..' ||
+        p.isAbsolute(value) ||
+        value.contains('/') ||
+        value.contains(r'\') ||
+        value.contains('..')) {
+      return 'Use a single safe file name.';
+    }
+    final expectedExtension = _extensionFor(_format);
+    final extension = p.extension(value).toLowerCase();
+    if (extension.isNotEmpty && extension != expectedExtension) {
+      return 'Use the $expectedExtension extension for this format.';
+    }
+    final id = p.basenameWithoutExtension(value);
+    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
+      return 'Use letters, numbers, underscores, or hyphens.';
+    }
+    final existingIds = widget.workspace.writersideModule?.topics
+        .map((topic) => topic.id)
+        .toSet();
+    if (existingIds?.contains(id) ?? false) {
+      return 'A topic with this ID already exists.';
+    }
+    return null;
+  }
+
+  String get _targetPath {
+    final module = widget.workspace.writersideModule;
+    final topicsDir = module?.config.topicsDir ?? 'topics';
+    return p.join(topicsDir, _effectiveFileName);
+  }
+
+  String get _effectiveFileName {
+    final value = _fileNameController.text.trim();
+    if (p.extension(value).isEmpty) {
+      return '$value${_extensionFor(_format)}';
+    }
+    return value;
+  }
+
+  void _handleTitleChanged() {
+    _creationError = null;
+    if (!_fileNameEdited) {
+      _syncingFileName = true;
+      _fileNameController.text =
+          '${_slugTopicName(_titleController.text)}${_extensionFor(_format)}';
+      _syncingFileName = false;
+    }
+    setState(() {});
+  }
+
+  void _handleFileNameChanged() {
+    _creationError = null;
+    if (!_syncingFileName) {
+      _fileNameEdited = true;
+    }
+    setState(() {});
+  }
+
+  void _setFormat(WritersideTopicFormat value) {
+    final previousExtension = _extensionFor(_format);
+    _format = value;
+    final nextExtension = _extensionFor(value);
+    if (!_fileNameEdited) {
+      _syncingFileName = true;
+      _fileNameController.text =
+          '${_slugTopicName(_titleController.text)}$nextExtension';
+      _syncingFileName = false;
+    } else {
+      final text = _fileNameController.text.trim();
+      if (p.extension(text).toLowerCase() == previousExtension) {
+        _syncingFileName = true;
+        _fileNameController.text =
+            '${p.basenameWithoutExtension(text)}'
+            '$nextExtension';
+        _syncingFileName = false;
+      }
+    }
+    _creationError = null;
+    setState(() {});
+  }
+
+  Future<void> _submit() async {
+    if (_creating || _titleError != null || _fileNameError != null) {
+      return;
+    }
+    setState(() {
+      _creating = true;
+      _creationError = null;
+    });
+    final created = await ref
+        .read(workspaceControllerProvider.notifier)
+        .createWritersideTopic(
+          WritersideTopicCreateRequest(
+            title: _titleController.text.trim(),
+            fileName: _effectiveFileName,
+            format: _format,
+            placement: widget.placement,
+            referenceTopic: widget.referenceTopic,
+          ),
+        );
+    if (!mounted) {
+      return;
+    }
+    if (created) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() {
+      _creating = false;
+      _creationError =
+          ref.read(workspaceControllerProvider).errorMessage ??
+          'Create Writerside topic failed.';
+    });
+  }
+
+  String _slugTopicName(String value) {
+    final slug = slugForHeading(value);
+    return slug.isEmpty ? 'new-topic' : slug;
+  }
+
+  String _extensionFor(WritersideTopicFormat format) {
+    return switch (format) {
+      WritersideTopicFormat.markdown => '.md',
+      WritersideTopicFormat.xml => '.topic',
+    };
+  }
+}
+
+class _DialogMessage extends StatelessWidget {
+  const _DialogMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.admonitionWarning,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(BusyMarkSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(BusyMarkGlyphs.warning),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(child: Text(message)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1615,6 +1997,24 @@ Set<String> _activeTocAncestorKeys(Workspace workspace) {
     visit(node);
   }
   return ancestors;
+}
+
+String? _activeTocTopicReference(Workspace workspace) {
+  final module = workspace.writersideModule;
+  final activeFilePath = workspace.activeFilePath;
+  if (module == null || module.instances.isEmpty || activeFilePath == null) {
+    return null;
+  }
+  for (final node in module.instances.first.tocRoots.expand(
+    (node) => node.flatten(),
+  )) {
+    final topicReference = node.topicFileName;
+    if (topicReference != null &&
+        module.topicByReference(topicReference)?.filePath == activeFilePath) {
+      return topicReference;
+    }
+  }
+  return null;
 }
 
 String _tocNodeKey(TocNode node) {

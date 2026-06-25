@@ -13,6 +13,7 @@ projects.
 - Open Markdown documentation folders.
 - Open Writerside-compatible project folders.
 - Create Writerside-compatible starter projects.
+- Create Writerside Markdown and XML topics from the TOC.
 - Edit and save local files.
 - Preview Markdown content.
 - Navigate project files, table of contents, and document outline.
@@ -34,7 +35,8 @@ BusyMark opens Writerside help modules whose root contains `writerside.cfg` or
 the equivalent older `project.ihp` file. Writerside support includes documented
 configuration locations for topics, images, variables, categories, instances,
 snippets, build configuration, API specifications, instance groups, and selected
-settings metadata.
+settings metadata. Topic support includes Markdown topics, XML `.topic` files,
+TOC registration, instance-specific topic titles, and custom web file names.
 
 Folder workspaces include documentation-like files such as Markdown, Writerside
 topic files, `.tree`, `.cfg`, `.list`, and `.xml` files. Common resource files

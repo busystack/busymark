@@ -91,6 +91,11 @@ class WritersideSummaryExporter {
             'topicRoot': topic.topicRoot,
             'format': topic.format.name,
             'title': topic.title,
+            'webFileName': topic.webFileName,
+            'titleOverrides': [
+              for (final override in topic.titleOverrides)
+                {'instance': override.instance, 'title': override.title},
+            ],
           },
       ],
       'diagnostics': [

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/app_settings.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
 import 'workspace_service.dart';
 
@@ -115,6 +116,42 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Create Writerside project failed: $error',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> createWritersideTopic(
+    WritersideTopicCreateRequest request,
+  ) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    _parseDebounce?.cancel();
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final nextWorkspace = await _service.createWritersideTopic(
+        workspace,
+        request,
+      );
+      final active = nextWorkspace.activeFilePath;
+      final text = active == null ? '' : await _service.loadText(active);
+      state = WorkspaceState(
+        workspace: nextWorkspace,
+        activeText: text,
+        preview: _safePreview(nextWorkspace, text),
+      );
+      return true;
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Create Writerside topic failed');
+      stderr.writeln('[BusyMark]   title: ${request.title}');
+      stderr.writeln('[BusyMark]   file name: ${request.fileName}');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Create Writerside topic failed: $error',
       );
       return false;
     }

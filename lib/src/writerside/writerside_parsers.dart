@@ -571,6 +571,7 @@ class WritersideTopicParser {
           ),
         )
         .toList();
+    final titleOverrides = _topicTitleOverrides(source);
     return WritersideTopic(
       id: p.basenameWithoutExtension(filePath),
       filePath: filePath,
@@ -584,7 +585,9 @@ class WritersideTopicParser {
       variables: parsed.variables,
       includes: includes,
       diagnostics: _writersideMarkdownDiagnostics(parsed.diagnostics),
+      webFileName: _webFileName(source),
       markdown: parsed,
+      titleOverrides: titleOverrides,
       semanticElementNames: parsed.xmlBlocks
           .map((block) => block.elementName)
           .toList(),
@@ -602,7 +605,9 @@ class WritersideTopicParser {
     final images = <MarkdownImage>[];
     final variables = <MarkdownVariableToken>[];
     final includes = <WritersideInclude>[];
+    final titleOverrides = <WritersideTopicTitleOverride>[];
     final semanticNames = <String>[];
+    String? webFileName;
     XmlDocument? document;
     try {
       document = XmlDocument.parse(source);
@@ -690,6 +695,18 @@ class WritersideTopicParser {
           seenIds[elementId] = span;
         }
         switch (element.name.local) {
+          case 'title':
+            final instance = element.getAttribute('instance');
+            if (instance != null && instance.isNotEmpty) {
+              titleOverrides.add(
+                WritersideTopicTitleOverride(
+                  instance: instance,
+                  title: element.innerText.trim(),
+                ),
+              );
+            }
+          case 'web-file-name':
+            webFileName = element.innerText.trim();
           case 'a':
             final href = element.getAttribute('href');
             if (href == null) {
@@ -768,6 +785,8 @@ class WritersideTopicParser {
       variables: variables,
       includes: includes,
       diagnostics: sortDiagnostics(diagnostics),
+      webFileName: webFileName,
+      titleOverrides: titleOverrides,
       semanticElementNames: semanticNames,
     );
   }
@@ -782,6 +801,28 @@ List<Diagnostic> _writersideMarkdownDiagnostics(List<Diagnostic> diagnostics) {
     for (final diagnostic in diagnostics)
       if (diagnostic.code != 'markdown.image.missing-file') diagnostic,
   ];
+}
+
+List<WritersideTopicTitleOverride> _topicTitleOverrides(String source) {
+  return [
+    for (final match in RegExp(
+      r'<title\b(?=[^>]*\binstance="([^"]+)")[^>]*>(.*?)</title>',
+      dotAll: true,
+    ).allMatches(source))
+      WritersideTopicTitleOverride(
+        instance: match.group(1)!.trim(),
+        title: match.group(2)!.trim(),
+      ),
+  ];
+}
+
+String? _webFileName(String source) {
+  final match = RegExp(
+    r'<web-file-name>\s*(.*?)\s*</web-file-name>',
+    dotAll: true,
+  ).firstMatch(source);
+  final value = match?.group(1)?.trim();
+  return value == null || value.isEmpty ? null : value;
 }
 
 Diagnostic _xmlError(

@@ -205,6 +205,16 @@ class WritersideInclude {
   final SourceSpan span;
 }
 
+class WritersideTopicTitleOverride {
+  const WritersideTopicTitleOverride({
+    required this.instance,
+    required this.title,
+  });
+
+  final String instance;
+  final String title;
+}
+
 class WritersideTopic {
   const WritersideTopic({
     required this.id,
@@ -219,7 +229,9 @@ class WritersideTopic {
     required this.variables,
     required this.includes,
     required this.diagnostics,
+    this.webFileName,
     this.markdown,
+    this.titleOverrides = const [],
     this.semanticElementNames = const [],
   });
 
@@ -235,7 +247,9 @@ class WritersideTopic {
   final List<MarkdownVariableToken> variables;
   final List<WritersideInclude> includes;
   final List<Diagnostic> diagnostics;
+  final String? webFileName;
   final ParsedMarkdownDocument? markdown;
+  final List<WritersideTopicTitleOverride> titleOverrides;
   final List<String> semanticElementNames;
 
   String get baseName => p.basename(fileName);

@@ -10,6 +10,7 @@ import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
 
 class WorkspaceService {
@@ -18,6 +19,7 @@ class WorkspaceService {
     this.previewBuilder = const MarkdownPreviewBuilder(),
     this.writersideService = const WritersideModuleService(),
     this.writersideProjectCreator = const WritersideProjectCreator(),
+    this.writersideTopicCreator = const WritersideTopicCreator(),
     this.scanOptions = const WorkspaceScanOptions(),
   });
 
@@ -25,6 +27,7 @@ class WorkspaceService {
   final MarkdownPreviewBuilder previewBuilder;
   final WritersideModuleService writersideService;
   final WritersideProjectCreator writersideProjectCreator;
+  final WritersideTopicCreator writersideTopicCreator;
   final WorkspaceScanOptions scanOptions;
 
   Workspace createUntitledMarkdown({String source = ''}) {
@@ -67,6 +70,30 @@ class WorkspaceService {
       result.rootPath,
       activeFilePath: result.startTopicPath,
     );
+  }
+
+  Future<Workspace> createWritersideTopic(
+    Workspace workspace,
+    WritersideTopicCreateRequest request,
+  ) async {
+    if (workspace.kind != WorkspaceKind.writersideModule ||
+        workspace.writersideModule == null) {
+      throw StateError('A Writerside module must be open to create a topic.');
+    }
+    final module = workspace.writersideModule!;
+    if (module.instances.isEmpty) {
+      throw StateError('The Writerside module has no help instance tree.');
+    }
+    final result = await writersideTopicCreator.create(
+      WritersideTopicCreateTarget(
+        rootPath: module.rootPath,
+        treePath: module.instances.first.sourceTreePath,
+        topicsRootDir: module.config.topicsDir,
+        existingTopicIds: {for (final topic in module.topics) topic.id},
+      ),
+      request,
+    );
+    return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
   }
 
   void _logOpenPathDiagnostics(

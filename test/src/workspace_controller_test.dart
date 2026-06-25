@@ -5,6 +5,7 @@ import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -121,6 +122,53 @@ void main() {
     settingsController.dispose();
     await parent.delete(recursive: true);
   });
+
+  test(
+    'creates a Writerside topic and opens it without changing recents',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-controller-create-topic-',
+      );
+      final settingsStore = _MemorySettingsStore();
+      final settingsController = AppSettingsController(settingsStore);
+      await Future<void>.delayed(Duration.zero);
+      final controller = WorkspaceController(
+        service: const WorkspaceService(),
+        settingsController: settingsController,
+      );
+      await controller.createWritersideProject(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: parent.path,
+          projectName: 'Docs',
+          directoryName: 'docs',
+        ),
+      );
+      final recentCount = settingsController.state.recentWorkspaces.length;
+
+      final created = await controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'API Reference',
+          fileName: 'api-reference.md',
+        ),
+      );
+
+      final topicPath = p.join(
+        parent.path,
+        'docs',
+        'topics',
+        'api-reference.md',
+      );
+      expect(created, isTrue);
+      expect(controller.state.workspace?.activeFilePath, topicPath);
+      expect(controller.state.activeText, contains('# API Reference'));
+      expect(controller.state.preview, isNotNull);
+      expect(settingsController.state.recentWorkspaces, hasLength(recentCount));
+
+      controller.dispose();
+      settingsController.dispose();
+      await parent.delete(recursive: true);
+    },
+  );
 
   test('save as writes a new Markdown file and records it as recent', () async {
     final directory = await Directory.systemTemp.createTemp(

@@ -367,6 +367,23 @@ class WritersideModuleService {
     final diagnostics = <Diagnostic>[];
     final variableNames = module.variableNames;
     final categoryIds = module.categories.map((item) => item.id).toSet();
+    final topicIds = <String, WritersideTopic>{};
+    for (final topic in module.topics) {
+      final previous = topicIds[topic.id];
+      if (previous == null) {
+        topicIds[topic.id] = topic;
+        continue;
+      }
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.topic.duplicate-id',
+          severity: DiagnosticSeverity.error,
+          message:
+              'Topic ID "${topic.id}" is used by multiple topic files in this help module.',
+          filePath: topic.filePath,
+        ),
+      );
+    }
     for (final instance in module.instances) {
       if (instance.startPage != null) {
         final resolved = _resolveTopicReference(module, instance.startPage!);

@@ -125,6 +125,40 @@ void main() {
     expect(config.categoriesFile, 'c.list');
   });
 
+  test('parses documented topic title overrides and web file names', () {
+    const topicParser = WritersideTopicParser();
+    final markdownTopic = topicParser.parseMarkdown(
+      filePath: '/tmp/topics/intro.md',
+      topicsRoot: '/tmp/topics',
+      source: '''
+# Intro
+
+<title instance="user-guide">Guide Intro</title>
+<web-file-name>intro-page.html</web-file-name>
+''',
+    );
+    final xmlTopic = topicParser.parseXml(
+      filePath: '/tmp/topics/install.topic',
+      topicsRoot: '/tmp/topics',
+      source: '''
+<topic id="install" title="Install">
+  <title instance="admin-guide">Admin Install</title>
+  <web-file-name>install-page.html</web-file-name>
+  <p>Install the product.</p>
+</topic>
+''',
+    );
+
+    expect(markdownTopic.title, 'Intro');
+    expect(markdownTopic.titleOverrides.single.instance, 'user-guide');
+    expect(markdownTopic.titleOverrides.single.title, 'Guide Intro');
+    expect(markdownTopic.webFileName, 'intro-page.html');
+    expect(xmlTopic.title, 'Install');
+    expect(xmlTopic.titleOverrides.single.instance, 'admin-guide');
+    expect(xmlTopic.titleOverrides.single.title, 'Admin Install');
+    expect(xmlTopic.webFileName, 'install-page.html');
+  });
+
   test('parses .tree metadata and TOC hierarchy', () {
     final path = 'test/fixtures/writerside/basic_project/user-guide.tree';
     final instance = treeParser.parse(path, File(path).readAsStringSync());
@@ -274,6 +308,44 @@ void main() {
     expect(
       module.diagnostics.map((item) => item.code),
       isNot(contains('writerside.topic.ambiguous-reference')),
+    );
+  });
+
+  test('reports duplicate topic IDs in a help module', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-duplicate-topic-id-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(
+      p.join(root.path, 'topics', 'section'),
+    ).createSync(recursive: true);
+    Directory(p.join(root.path, 'images')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'topics', 'intro.md')).writeAsStringSync('''
+# Intro
+''');
+    File(p.join(root.path, 'topics', 'section', 'intro.md')).writeAsStringSync(
+      '''
+# Other Intro
+''',
+    );
+
+    final module = await moduleService.load(root.path);
+
+    expect(
+      module.diagnostics.map((item) => item.code),
+      contains('writerside.topic.duplicate-id'),
     );
   });
 

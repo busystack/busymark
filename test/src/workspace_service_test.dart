@@ -6,6 +6,7 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -131,6 +132,53 @@ void main() {
       expect(
         reparsed.diagnostics.map((diagnostic) => diagnostic.code),
         isNot(contains('markdown.link.unresolved-target')),
+      );
+    },
+  );
+
+  test(
+    'creates a Writerside Markdown topic and registers it in the TOC',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-workspace-create-topic-',
+      );
+      addTearDown(() async {
+        if (await parent.exists()) {
+          await parent.delete(recursive: true);
+        }
+      });
+      final workspace = await service.createWritersideProject(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: parent.path,
+          projectName: 'Docs',
+          directoryName: 'docs',
+        ),
+      );
+
+      final updated = await service.createWritersideTopic(
+        workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Install BusyMark',
+          fileName: 'install',
+        ),
+      );
+
+      final topicPath = p.join(updated.rootPath, 'topics', 'install.md');
+      final treeSource = File(
+        p.join(updated.rootPath, 'user-guide.tree'),
+      ).readAsStringSync();
+
+      expect(updated.activeFilePath, topicPath);
+      expect(File(topicPath).existsSync(), isTrue);
+      expect(
+        File(topicPath).readAsStringSync(),
+        startsWith('# Install BusyMark'),
+      );
+      expect(treeSource, contains('topic="install.md"'));
+      expect(updated.markdown?.title, 'Install BusyMark');
+      expect(
+        updated.diagnostics.where((item) => item.severity.name == 'error'),
+        isEmpty,
       );
     },
   );
