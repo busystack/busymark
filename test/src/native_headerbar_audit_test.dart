@@ -333,7 +333,7 @@ void main() {
       final native = File('linux/runner/my_application.cc').readAsStringSync();
 
       expect(design, contains('sidebarWidth = 300'));
-      expect(design, contains('view: Color(0xFF242424)'));
+      expect(design, contains('view: Color(0xFF2A2A2A)'));
       expect(design, contains('sidebar: Color(0xFF303030)'));
       expect(design, contains('headerbarFlat: Color(0xFF242424)'));
       expect(design, isNot(contains('Color(0xFF1D1D20)')));

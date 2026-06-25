@@ -220,7 +220,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       ),
       Brightness.dark => const BusyMarkSurfaceColors(
         window: Color(0xFF1E1E1E),
-        view: Color(0xFF242424),
+        view: Color(0xFF2A2A2A),
         sidebar: Color(0xFF303030),
         secondarySidebar: Color(0xFF2A2A2A),
         headerbar: Color(0xFF303030),
