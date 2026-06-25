@@ -5,6 +5,8 @@ projects.
 
 [![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
 
+[![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/busymark)
+
 ## Features
 
 - Open individual Markdown files.
