@@ -384,6 +384,8 @@ class _CreateWritersideProjectDialogState
   late final TextEditingController _topicTitleController;
   var _directoryEdited = false;
   var _syncingDirectory = false;
+  var _instanceIdEdited = false;
+  var _syncingInstanceId = false;
   var _creating = false;
   String? _creationError;
   var _localizedDefaultsApplied = false;
@@ -397,9 +399,9 @@ class _CreateWritersideProjectDialogState
       text: _slugDirectoryName(''),
     )..addListener(_handleDirectoryNameChanged);
     _instanceNameController = TextEditingController()
-      ..addListener(_handleFieldChanged);
+      ..addListener(_handleInstanceNameChanged);
     _instanceIdController = TextEditingController(text: 'user-guide')
-      ..addListener(_handleFieldChanged);
+      ..addListener(_handleInstanceIdChanged);
     _topicTitleController = TextEditingController()
       ..addListener(_handleFieldChanged);
   }
@@ -442,57 +444,48 @@ class _CreateWritersideProjectDialogState
       title: context.l10n.createWritersideProject,
       maxWidth: 560,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context),
-          child: Text(context.l10n.cancel),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: _creating ? context.l10n.creating : context.l10n.create,
           onPressed: canCreate ? _submit : null,
-          child: Text(_creating ? context.l10n.creating : context.l10n.create),
+          suggested: true,
         ),
       ],
       children: [
-        TextField(
+        BusyMarkDialogTextEntry(
+          label: context.l10n.projectName,
           controller: _projectNameController,
           autofocus: true,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: context.l10n.projectName,
-            hintText: context.l10n.defaultProjectName,
-            errorText: projectError,
-          ),
+          hintText: context.l10n.defaultProjectName,
+          errorText: projectError,
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
+        BusyMarkDialogTextEntry(
+          label: context.l10n.directoryName,
           controller: _directoryNameController,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (canCreate) {
-              _submit();
-            }
-          },
-          decoration: InputDecoration(
-            labelText: context.l10n.directoryName,
-            errorText: directoryError,
-          ),
+          textInputAction: TextInputAction.next,
+          errorText: directoryError,
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
+        BusyMarkDialogTextEntry(
+          label: context.l10n.instanceName,
           controller: _instanceNameController,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(labelText: context.l10n.instanceName),
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
+        BusyMarkDialogTextEntry(
+          label: context.l10n.instanceId,
           controller: _instanceIdController,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: context.l10n.instanceId,
-            errorText: instanceIdError,
-          ),
+          errorText: instanceIdError,
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
+        BusyMarkDialogTextEntry(
+          label: context.l10n.startTopicTitle,
           controller: _topicTitleController,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) {
@@ -500,10 +493,7 @@ class _CreateWritersideProjectDialogState
               _submit();
             }
           },
-          decoration: InputDecoration(
-            labelText: context.l10n.startTopicTitle,
-            errorText: topicTitleError,
-          ),
+          errorText: topicTitleError,
         ),
         const SizedBox(height: BusyMarkSpacing.lg),
         if (_creationError != null) ...[
@@ -601,6 +591,26 @@ class _CreateWritersideProjectDialogState
     setState(() {});
   }
 
+  void _handleInstanceNameChanged() {
+    _creationError = null;
+    if (!_instanceIdEdited) {
+      _syncingInstanceId = true;
+      _instanceIdController.text = _slugInstanceId(
+        _instanceNameController.text,
+      );
+      _syncingInstanceId = false;
+    }
+    setState(() {});
+  }
+
+  void _handleInstanceIdChanged() {
+    _creationError = null;
+    if (!_syncingInstanceId) {
+      _instanceIdEdited = true;
+    }
+    setState(() {});
+  }
+
   void _handleFieldChanged() {
     _creationError = null;
     setState(() {});
@@ -653,6 +663,21 @@ class _CreateWritersideProjectDialogState
         .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
     return slug.isEmpty ? 'writerside-project' : slug;
+  }
+
+  String _slugInstanceId(String value) {
+    final slug = value
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
+        .replaceAll(RegExp(r'^[-_]+|[-_]+$'), '');
+    if (slug.isEmpty) {
+      return 'user-guide';
+    }
+    if (!RegExp(r'^[a-z]').hasMatch(slug)) {
+      return 'instance-$slug';
+    }
+    return slug;
   }
 }
 

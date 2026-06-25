@@ -126,6 +126,71 @@ void main() {
     expect(find.text(de.validateOnEdit), findsOneWidget);
   });
 
+  testWidgets('Writerside project dialog syncs instance id until edited', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark-create-dialog-');
+    const fileSelectorChannel = MethodChannel(
+      'plugins.flutter.io/file_selector',
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      fileSelectorChannel,
+      (call) async {
+        expect(call.method, 'getDirectoryPath');
+        return temp.path;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        null,
+      );
+      if (temp.existsSync()) {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createWritersideProject));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.createWritersideProject), findsWidgets);
+
+    final entries = find.byWidgetPredicate(
+      (widget) => widget is EditableText && !widget.readOnly,
+    );
+    expect(entries, findsNWidgets(5));
+    final instanceNameEntry = entries.at(2);
+    final instanceIdEntry = entries.at(3);
+
+    await tester.enterText(instanceNameEntry, 'Admin Handbook');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(instanceIdEntry).controller.text,
+      'admin-handbook',
+    );
+
+    await tester.enterText(instanceIdEntry, 'custom-instance');
+    await tester.pump();
+    await tester.enterText(instanceNameEntry, 'Operator Guide');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(instanceIdEntry).controller.text,
+      'custom-instance',
+    );
+  });
+
   testWidgets('keyboard shortcuts dialog opens from the header', (
     tester,
   ) async {
