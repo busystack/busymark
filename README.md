@@ -47,7 +47,9 @@ are skipped to keep the app responsive.
 
 ## Run From Source
 
-Install Flutter for Linux desktop development first:
+1. [Install Flutter](https://docs.flutter.dev/install)
+
+2. Run the application:
 
 ```bash
 flutter doctor
