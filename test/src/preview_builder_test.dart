@@ -1,5 +1,5 @@
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:busymark/src/markdown/preview_export.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,6 +33,97 @@ void main() {
     ]);
   });
 
+  test('preview blocks carry source locations for search navigation', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '# Title\n\nIntro text.\n\nSecond paragraph.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.map((block) => block.sourceStartLine), [1, 3, 5]);
+    expect(preview.blocks.map((block) => block.sourceEndLine), [1, 3, 5]);
+    expect(preview.blocks.first.sourceStartOffset, 0);
+    expect(preview.blocks[1].sourceStartOffset, greaterThan(0));
+    expect(
+      preview.blocks[1].sourceEndOffset,
+      greaterThan(preview.blocks[1].sourceStartOffset ?? 0),
+    );
+  });
+
+  test('preview source locations survive adjacent list items and code fences', () {
+    final parsed = parser.parse(
+      filePath: 'README.md',
+      source: [
+        '# FSRS Service',
+        '',
+        'Stateless FastAPI microservice exposing the **py-fsrs (FSRS 6.x)** scheduling algorithm via a strict OpenAPI contract.',
+        '',
+        'This service performs **pure computation only**.',
+        'Persistence, authentication, authorization, and rate-limiting are expected to be handled by an upstream service (e.g.',
+        'Spring Boot).',
+        '',
+        'This service is designed to be deployed:',
+        '',
+        '* Behind an API gateway or Spring Boot service',
+        '* Without direct public exposure',
+        '* Without authentication logic',
+        '',
+        '---',
+        '',
+        '## Conda Environment Setup',
+        '',
+        '```bash',
+        'conda create -n fsrs-service python=3.11',
+        'conda activate fsrs-service',
+        'python -m pip install -e .',
+        '```',
+        '',
+        'Install test dependencies:',
+        '',
+        '```bash',
+        'conda install -n fsrs-service pytest',
+        '```',
+        '',
+        '---',
+        '',
+        '## Run the Service',
+        '',
+        '```bash',
+        'uvicorn fsrs_service.main:app --host 127.0.0.1 --port 8000',
+        '```',
+        '',
+        'An application factory is also available:',
+        '',
+        '```python',
+        'from fsrs_service.main import create_app',
+        '',
+        'app = create_app()',
+        '```',
+        '',
+        for (var index = 0; index < 50; index += 1) ...[
+          'Trailing content $index keeps the preview scrollable.',
+          '',
+        ],
+      ].join('\n'),
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.singleWhere(
+      (block) => block.text == 'An application factory is also available:',
+    );
+    final listBlocks = preview.blocks.where(
+      (block) => block.kind == PreviewBlockKind.list,
+    );
+
+    expect(listBlocks.map((block) => block.sourceStartLine), [11, 12, 13]);
+    expect(paragraph.sourceStartLine, 39);
+    expect(paragraph.sourceEndLine, 39);
+    expect(paragraph.sourceStartOffset, isNotNull);
+    expect(
+      preview.blocks.every((block) => block.sourceStartLine != null),
+      true,
+    );
+  });
+
   test('preview list text removes Markdown markers', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -46,15 +137,10 @@ void main() {
     final listBlocks = preview.blocks
         .where((block) => block.kind == PreviewBlockKind.list)
         .toList();
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(lists, ['Bullet', 'Ordered', 'Star', 'Plus', 'Done']);
     expect(listBlocks[1].attributes['ordered'], 'true');
     expect(listBlocks[4].attributes['task'], 'true');
-    expect(html, contains('<ul><li>Bullet</li></ul>'));
-    expect(html, contains('<ol><li>Ordered</li></ol>'));
-    expect(html, contains('<input type="checkbox" disabled checked> Done'));
-    expect(html, isNot(contains('Compatibility level:')));
   });
 
   test('preview preserves links inside list items', () {
@@ -89,7 +175,6 @@ void main() {
     final paragraph = preview.blocks.singleWhere(
       (block) => block.kind == PreviewBlockKind.paragraph,
     );
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(preview.blocks.first.text, 'Title');
     expect(
@@ -105,12 +190,6 @@ void main() {
     );
     expect(paragraph.text, contains('bold'));
     expect(paragraph.text, contains('*escaped* text'));
-    expect(html, contains('<strong>bold</strong>'));
-    expect(html, contains('<em>italic</em>'));
-    expect(html, contains('<del>strike</del>'));
-    expect(html, contains('<code>code</code>'));
-    expect(html, contains('<a href="other.md">link</a>'));
-    expect(html, contains('<img src="logo.png" alt="Logo">'));
   });
 
   test('preview renders quote characters as text instead of HTML entities', () {
@@ -120,17 +199,14 @@ void main() {
     );
     final preview = previewBuilder.build(parsed);
     final paragraph = preview.blocks.single;
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(paragraph.text, 'Use "group" here.');
     expect(paragraph.inlines.single.text, 'Use "group" here.');
-    expect(html, contains('<p>Use &quot;group&quot; here.</p>'));
-    expect(html, isNot(contains('&amp;quot;')));
   });
 
   test('preview preserves pasted local image destinations with spaces', () {
     const destination =
-        '/home/albert/Pictures/Screenshots/'
+        '/tmp/busymark-fixtures/Screenshots/'
         'Screenshot From 2026-06-15 03-27-53.png';
     final parsed = parser.parse(
       filePath: 'topic.md',

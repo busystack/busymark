@@ -14,12 +14,23 @@
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
-constexpr gint kHeaderButtonHeight = 34;
+constexpr gint kHeaderButtonHeight = 32;
+constexpr gint kHeaderControlHeight = 34;
+constexpr gint kHeaderSearchEntryBorderWidth = 1;
+constexpr gint kHeaderSearchEntryContentHeight =
+    kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2;
 constexpr gint kHeaderButtonRadius = 8;
 constexpr gint kHeaderButtonHorizontalPadding = 8;
-constexpr gint kHeaderButtonSpacing = 6;
-constexpr gint kHeaderSidebarInset = 6;
-constexpr gint kHeaderWindowRadius = 8;
+constexpr gint kHeaderControlHorizontalPadding = 8;
+constexpr gint kHeaderButtonSpacing = 8;
+constexpr gint kHeaderButtonContentSpacing = 4;
+constexpr gint kHeaderSidebarInset = 8;
+constexpr gint kHeaderWindowRadius = 14;
+constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
+constexpr gint kYaruTitleButtonMinSize = 20;
+constexpr gint kYaruTitleButtonPadding = 4;
+constexpr gint kYaruTitleButtonHorizontalMargin = 1;
+constexpr gint kYaruTitleButtonRadius = 9999;
 constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
@@ -39,7 +50,6 @@ struct _MyApplication {
   GtkWidget* sidebar_title_label;
   GtkWidget* sidebar_menu_button;
   GtkWidget* sidebar_menu;
-  GtkWidget* export_item;
   GtkWidget* settings_item;
   GtkWidget* keyboard_shortcuts_item;
   GtkWidget* about_item;
@@ -69,11 +79,13 @@ struct _MyApplication {
   gchar* control_color;
   gchar* control_hover_color;
   gchar* control_active_color;
+  gchar* title_button_color;
+  gchar* title_button_hover_color;
+  gchar* title_button_active_color;
   gchar* accent_color;
   gchar* accent_foreground_color;
   gchar* popover_background_color;
   gchar* border_color;
-  gchar* sidebar_border_color;
   gchar* shade_color;
   gchar* modal_barrier_color;
   gint sidebar_width;
@@ -194,6 +206,15 @@ static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   }
 }
 
+static void update_title_stack_alignment(MyApplication* self) {
+  if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
+    return;
+  }
+  gtk_widget_set_margin_start(
+      self->title_stack,
+      self->search_active ? 0 : kHeaderWindowControlsBalanceWidth);
+}
+
 static void set_save_dirty(MyApplication* self, gboolean dirty) {
   if (self->save_button == nullptr || !GTK_IS_WIDGET(self->save_button)) {
     return;
@@ -249,6 +270,12 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
   const gchar* control_active =
       css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
+  const gchar* title_button =
+      css_color_or(self->title_button_color, "rgba(255,255,255,0.10)");
+  const gchar* title_button_hover =
+      css_color_or(self->title_button_hover_color, "rgba(255,255,255,0.15)");
+  const gchar* title_button_active =
+      css_color_or(self->title_button_active_color, "rgba(255,255,255,0.25)");
   const gchar* accent = css_color_or(self->accent_color, "#3584e4");
   const gchar* accent_foreground =
       css_color_or(self->accent_foreground_color, "#ffffff");
@@ -256,8 +283,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->popover_background_color, background);
   const gchar* border =
       css_color_or(self->border_color, "rgba(255,255,255,0.10)");
-  const gchar* sidebar_border =
-      css_color_or(self->sidebar_border_color, border);
   const gchar* shade = css_color_or(self->shade_color, "rgba(0,0,0,0.28)");
   const gchar* modal =
       css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
@@ -282,7 +307,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "outline: none;"
       "border-radius: %dpx;"
-      "box-shadow: 0 3px 18px 2px %s;"
+      "box-shadow: 0 2px 10px 0 %s;"
       "}"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop,"
@@ -300,11 +325,44 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-top-left-radius: %dpx;"
       "padding-left: 0;"
       "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) {"
+      "border-radius: %dpx;"
+      "margin: 0 %dpx;"
+      "min-height: %dpx;"
+      "min-width: %dpx;"
+      "padding: %dpx;"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop {"
+      "background-color: transparent;"
+      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop:hover,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop:hover {"
+      "background-color: transparent;"
+      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop:active,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop:active {"
+      "background-color: transparent;"
+      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
+      "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
       "background-image: none;"
       "border: none;"
-      "border-right: 1px solid %s;"
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
       "border-top-right-radius: 0;"
@@ -319,7 +377,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "border: 1px solid %s;"
-      "box-shadow: 0 1px 1px %s;"
+      "box-shadow: none;"
       "text-shadow: none;"
       "min-height: %dpx;"
       "border-radius: %dpx;"
@@ -327,7 +385,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}"
       ".busymark-titlebar entry.busymark-search-entry:focus {"
       "border-color: %s;"
-      "box-shadow: 0 0 0 1px %s;"
+      "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier,"
       ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header,"
@@ -339,7 +397,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "color: %s;"
       "background-color: %s;"
       "background-image: none;"
-      "border: 1px solid %s;"
+      "border: none;"
       "box-shadow: none;"
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
@@ -363,6 +421,21 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar button.busymark-header-button:checked,"
       ".busymark-titlebar button.busymark-view-mode-button:active,"
       ".busymark-titlebar button.busymark-view-mode-button:checked {"
+      "background-color: %s;"
+      "}"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button,"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:active,"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:checked {"
+      "background-color: transparent;"
+      "border: none;"
+      "box-shadow: none;"
+      "}"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover {"
+      "background-color: %s;"
+      "box-shadow: 0 1px 1px %s;"
+      "}"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:active,"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:checked {"
       "background-color: %s;"
       "}"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
@@ -456,19 +529,24 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-radius: %dpx;"
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
-      kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
-      sidebar_border, kHeaderWindowRadius, foreground, foreground, control,
-      border, shade, kHeaderButtonHeight,
-      kHeaderButtonRadius, kHeaderButtonHorizontalPadding, accent, accent,
-      modal, modal, foreground, control, border, kHeaderButtonHeight,
+      kHeaderWindowRadius, headerbar_left_radius, kYaruTitleButtonRadius,
+      kYaruTitleButtonHorizontalMargin, kYaruTitleButtonMinSize,
+      kYaruTitleButtonMinSize, kYaruTitleButtonPadding, title_button,
+      title_button_hover, title_button_active, sidebar_background,
+      kHeaderWindowRadius, foreground,
+      foreground, control, border, kHeaderSearchEntryContentHeight,
+      kHeaderButtonRadius, kHeaderControlHorizontalPadding, accent,
+      modal, modal, foreground, control, kHeaderButtonHeight,
       kHeaderButtonHeight, kHeaderButtonHorizontalPadding,
       kHeaderButtonRadius, kHeaderButtonHeight,
-      control_hover, control_active, accent_foreground, accent,
-      accent_foreground, disabled, disabled, popover, foreground,
-      border, shade, foreground, kHeaderButtonHeight,
-      kHeaderButtonHorizontalPadding, kHeaderButtonRadius, control_hover,
-      foreground, muted, kHeaderButtonRadius, kHeaderTooltipVerticalPadding,
-      kHeaderTooltipHorizontalPadding, kHeaderButtonRadius);
+      control_hover, control_active, control_hover, shade,
+      control_active, accent_foreground, accent, accent_foreground, disabled,
+      disabled, popover, foreground, border, shade, foreground,
+      kHeaderControlHeight,
+      kHeaderControlHorizontalPadding, kHeaderButtonRadius, control_hover,
+      foreground, muted, kHeaderButtonRadius,
+      kHeaderTooltipVerticalPadding, kHeaderTooltipHorizontalPadding,
+      kHeaderButtonRadius);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
@@ -511,6 +589,12 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "controlHoverColor"));
   set_css_color_field(&self->control_active_color,
                       fl_lookup_string_arg(args, "controlActiveColor"));
+  set_css_color_field(&self->title_button_color,
+                      fl_lookup_string_arg(args, "titleButtonColor"));
+  set_css_color_field(&self->title_button_hover_color,
+                      fl_lookup_string_arg(args, "titleButtonHoverColor"));
+  set_css_color_field(&self->title_button_active_color,
+                      fl_lookup_string_arg(args, "titleButtonActiveColor"));
   set_css_color_field(&self->accent_color,
                       fl_lookup_string_arg(args, "accentColor"));
   set_css_color_field(&self->accent_foreground_color,
@@ -519,8 +603,6 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "popoverBackgroundColor"));
   set_css_color_field(&self->border_color,
                       fl_lookup_string_arg(args, "borderColor"));
-  set_css_color_field(&self->sidebar_border_color,
-                      fl_lookup_string_arg(args, "sidebarBorderColor"));
   set_css_color_field(&self->shade_color,
                       fl_lookup_string_arg(args, "shadeColor"));
   set_css_color_field(&self->modal_barrier_color,
@@ -813,8 +895,8 @@ static GtkWidget* create_view_mode_item(MyApplication* self,
   gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
   gtk_widget_set_hexpand(label, TRUE);
-  gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(item), box);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
   gtk_widget_set_halign(item, GTK_ALIGN_FILL);
@@ -870,7 +952,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* keyboard_shortcuts =
       fl_lookup_string_arg(args, "keyboardShortcuts");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
-  const gchar* export_preview = fl_lookup_string_arg(args, "exportPreview");
 
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip(self->sidebar_toggle_button, sidebar);
@@ -887,7 +968,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
   set_menu_item_label(self->view_mode_split_item, split);
-  set_menu_item_label(self->export_item, export_preview);
   set_menu_item_label(self->settings_item, settings);
   set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
   set_menu_item_label(self->about_item, about);
@@ -944,6 +1024,7 @@ static void set_search_active(MyApplication* self, gboolean active) {
   const gboolean changed = self->search_active != active;
   self->search_active = active;
   set_toggle_button_active(self, self->sidebar_search_button, active);
+  update_title_stack_alignment(self);
   if (self->title_stack != nullptr && GTK_IS_STACK(self->title_stack)) {
     GtkWidget* visible_child = active ? self->search_entry : self->title_label;
     if (visible_child != nullptr && GTK_IS_WIDGET(visible_child)) {
@@ -979,6 +1060,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                               "busymark-sidebar-header");
 
   self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
+                              "busymark-sidebar-action-button");
   gtk_widget_set_margin_start(self->sidebar_search_button, kHeaderSidebarInset);
   connect_header_action(self, self->sidebar_search_button, "search");
   gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
@@ -1000,13 +1083,10 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->sidebar_menu = create_header_popover();
   GtkWidget* sidebar_menu_box = create_popover_box(self->sidebar_menu);
-  self->export_item = create_menu_item(self, "exportPreview");
   self->settings_item = create_menu_item(self, "settings");
   self->keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
   self->about_item = create_menu_item(self, "aboutBusyMark");
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->export_item, FALSE,
-                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
@@ -1016,6 +1096,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_widget_show_all(sidebar_menu_box);
   self->sidebar_menu_button =
       create_menu_button(self->sidebar_menu, "open-menu-symbolic");
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
+                              "busymark-sidebar-action-button");
   gtk_widget_set_margin_end(self->sidebar_menu_button, kHeaderSidebarInset);
   gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
                    self->sidebar_menu_button, FALSE, FALSE, 0);
@@ -1044,6 +1126,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->title_stack = gtk_stack_new();
   gtk_widget_set_hexpand(self->title_stack, TRUE);
+  update_title_stack_alignment(self);
   gtk_stack_set_transition_type(GTK_STACK(self->title_stack),
                                 GTK_STACK_TRANSITION_TYPE_NONE);
   self->title_label = gtk_label_new("");
@@ -1054,7 +1137,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->search_entry = gtk_search_entry_new();
   gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), "Search");
   gtk_widget_set_hexpand(self->search_entry, TRUE);
-  gtk_widget_set_size_request(self->search_entry, 360, -1);
+  gtk_widget_set_size_request(self->search_entry, 360, kHeaderButtonHeight);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->search_entry),
                               "busymark-search-entry");
   g_signal_connect(self->search_entry, "search-changed",
@@ -1090,6 +1173,9 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->view_mode_button = gtk_menu_button_new();
   gtk_button_set_relief(GTK_BUTTON(self->view_mode_button), GTK_RELIEF_NONE);
+  gtk_widget_set_size_request(self->view_mode_button, -1,
+                              kHeaderButtonHeight);
+  gtk_widget_set_valign(self->view_mode_button, GTK_ALIGN_CENTER);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
                               GTK_STYLE_CLASS_FLAT);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
@@ -1101,7 +1187,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_menu_button_set_popover(GTK_MENU_BUTTON(self->view_mode_button),
                               self->view_mode_menu);
   GtkWidget* view_button_box =
-      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonContentSpacing);
   self->view_mode_label = gtk_label_new("");
   gtk_label_set_ellipsize(GTK_LABEL(self->view_mode_label),
                           PANGO_ELLIPSIZE_END);
@@ -1415,11 +1501,13 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->control_color, g_free);
   g_clear_pointer(&self->control_hover_color, g_free);
   g_clear_pointer(&self->control_active_color, g_free);
+  g_clear_pointer(&self->title_button_color, g_free);
+  g_clear_pointer(&self->title_button_hover_color, g_free);
+  g_clear_pointer(&self->title_button_active_color, g_free);
   g_clear_pointer(&self->accent_color, g_free);
   g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
   g_clear_pointer(&self->border_color, g_free);
-  g_clear_pointer(&self->sidebar_border_color, g_free);
   g_clear_pointer(&self->shade_color, g_free);
   g_clear_pointer(&self->modal_barrier_color, g_free);
   g_clear_pointer(&self->view_mode, g_free);
@@ -1449,7 +1537,6 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_title_label = nullptr;
   self->sidebar_menu_button = nullptr;
   self->sidebar_menu = nullptr;
-  self->export_item = nullptr;
   self->settings_item = nullptr;
   self->keyboard_shortcuts_item = nullptr;
   self->about_item = nullptr;
@@ -1479,11 +1566,13 @@ static void my_application_init(MyApplication* self) {
   self->control_color = nullptr;
   self->control_hover_color = nullptr;
   self->control_active_color = nullptr;
+  self->title_button_color = nullptr;
+  self->title_button_hover_color = nullptr;
+  self->title_button_active_color = nullptr;
   self->accent_color = nullptr;
   self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;
   self->border_color = nullptr;
-  self->sidebar_border_color = nullptr;
   self->shade_color = nullptr;
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;

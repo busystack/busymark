@@ -72,6 +72,7 @@ void main() {
     expect(source, isNot(contains('"Source"')));
     expect(source, isNot(contains('"Preview"')));
     expect(source, isNot(contains('"Split"')));
+    expect(source, isNot(contains('"Print"')));
     expect(source, isNot(contains('"Settings"')));
     expect(source, isNot(contains('"Keyboard Shortcuts"')));
     expect(source, isNot(contains('"About BusyMark"')));
@@ -154,20 +155,45 @@ void main() {
     expect(dialogs, contains('BusyMarkModalEditorSurface'));
   });
 
+  test('native headerbar tooltips keep GTK theme opacity', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final tooltipBlock = RegExp(
+      r'"tooltip, tooltip\.background \{"(.*?)"tooltip > box',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
+    final tooltipLabelBlock = RegExp(
+      r'"tooltip label \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
+
+    expect(tooltipBlock, contains('"border-radius: %dpx;"'));
+    expect(tooltipBlock, isNot(contains('"background-color: %s;"')));
+    expect(tooltipBlock, isNot(contains('"opacity: 1;"')));
+    expect(tooltipBlock, isNot(contains('"transition: none;"')));
+    expect(tooltipBlock, isNot(contains('"box-shadow: none;"')));
+    expect(tooltipLabelBlock, contains('"padding: %dpx %dpx;"'));
+    expect(tooltipLabelBlock, isNot(contains('"color: %s;"')));
+    expect(tooltipLabelBlock, isNot(contains('"opacity: 1;"')));
+  });
+
   test('native headerbar uses split sidebar and main content surfaces', () {
     final service = File(
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
 
     expect(service, contains('backgroundColor: colors.view'));
     expect(service, contains('sidebarBackgroundColor: colors.sidebar'));
-    expect(service, contains('sidebarBorderColor: colors.sidebarBorder'));
+    expect(service, isNot(contains('sidebarBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#242424"'));
     expect(native, contains('kDefaultSidebarBackground[] = "#303030"'));
     expect(native, contains('.busymark-sidebar-header {'));
     expect(native, contains('background-color: %s;'));
-    expect(native, contains('border-right: 1px solid %s;'));
+    expect(native, isNot(contains('border-right: 1px solid')));
+    expect(workspace, isNot(contains('Border(right:')));
   });
 
   test('native headerbar restores the top-left corner without sidebar', () {
@@ -175,7 +201,8 @@ void main() {
 
     expect(native, contains('const gint headerbar_left_radius'));
     expect(native, contains('self->sidebar_visible ? 0 : kHeaderWindowRadius'));
-    expect(native, contains('headerbar_left_radius, sidebar_background'));
+    expect(native, contains('headerbar_left_radius'));
+    expect(native, contains('sidebar_background'));
     expect(native, contains('update_sidebar_header_geometry(self);'));
     expect(native, contains('refresh_header_bar_css(self);'));
     expect(native, isNot(contains('"border-top-left-radius: 0;"')));
@@ -186,10 +213,11 @@ void main() {
 
     expect(native, contains('window#busymark-window decoration,'));
     expect(native, contains('window#busymark-window decoration:backdrop {'));
+    expect(native, contains('kHeaderWindowRadius = 14'));
     expect(native, contains('"background-color: transparent;"'));
     expect(native, contains('"border: none;"'));
     expect(native, contains('"outline: none;"'));
-    expect(native, contains('"box-shadow: 0 3px 18px 2px %s;"'));
+    expect(native, contains('"box-shadow: 0 2px 10px 0 %s;"'));
     expect(native, contains('const gchar* shade = css_color_or'));
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
     expect(native, contains('create_rounded_window_region'));
@@ -200,15 +228,108 @@ void main() {
 
   test('native headerbar buttons use GTK-style themed controls', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final headerButtonBlock = RegExp(
+      r'"\.busymark-titlebar button\.busymark-header-button,"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
 
-    expect(native, contains('"border: 1px solid %s;"'));
-    expect(native, contains('"box-shadow: none;"'));
-    expect(native, contains('foreground, control, border'));
+    expect(native, contains('kHeaderButtonHeight = 32'));
+    expect(native, contains('kHeaderControlHeight = 34'));
+    expect(native, contains('kHeaderSearchEntryBorderWidth = 1'));
+    expect(
+      native,
+      contains(
+        'kHeaderSearchEntryContentHeight =\n    kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2',
+      ),
+    );
+    expect(native, contains('kHeaderButtonHorizontalPadding = 8'));
+    expect(native, contains('kHeaderControlHorizontalPadding = 8'));
+    expect(native, contains('kHeaderButtonSpacing = 8'));
+    expect(headerButtonBlock, contains('"border: none;"'));
+    expect(headerButtonBlock, contains('"min-height: %dpx;"'));
+    expect(headerButtonBlock, contains('"min-width: %dpx;"'));
+    expect(headerButtonBlock, contains('"padding: 0 %dpx;"'));
+    expect(headerButtonBlock, isNot(contains('"border: 1px solid %s;"')));
+    expect(headerButtonBlock, contains('"box-shadow: none;"'));
+    expect(
+      native,
+      contains(
+        'gtk_widget_set_size_request(self->search_entry, 360, kHeaderButtonHeight)',
+      ),
+    );
+    expect(native, contains('border, kHeaderSearchEntryContentHeight'));
+    expect(native, isNot(contains('"box-shadow: 0 0 0 1px %s;"')));
     expect(
       native,
       isNot(contains('"box-shadow: 0 -1px 1px %s, 0 1px 1px %s;"')),
     );
     expect(native, contains('fl_lookup_string_arg(args, "shadeColor")'));
+  });
+
+  test('native window controls use Yaru geometry with backdrop background', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
+    final titleButtonBlock = RegExp(
+      r'"headerbar\.busymark-headerbar button\.titlebutton:not\(\.appmenu\) \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
+
+    expect(native, contains('kYaruTitleButtonMinSize = 20'));
+    expect(native, contains('kYaruTitleButtonPadding = 4'));
+    expect(native, contains('kYaruTitleButtonHorizontalMargin = 1'));
+    expect(native, contains('kYaruTitleButtonRadius = 9999'));
+    expect(titleButtonBlock, contains('"border-radius: %dpx;"'));
+    expect(titleButtonBlock, contains('"margin: 0 %dpx;"'));
+    expect(titleButtonBlock, contains('"min-height: %dpx;"'));
+    expect(titleButtonBlock, contains('"min-width: %dpx;"'));
+    expect(titleButtonBlock, contains('"padding: %dpx;"'));
+    expect(
+      native,
+      contains('button.titlebutton:not(.appmenu).maximize:backdrop,'),
+    );
+    expect(
+      native,
+      contains('button.titlebutton:not(.appmenu).minimize:backdrop,'),
+    );
+    expect(
+      native,
+      contains('button.titlebutton:not(.appmenu).close:backdrop {'),
+    );
+    expect(
+      native,
+      contains(
+        '"background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"',
+      ),
+    );
+    expect(native, isNot(contains('"background: none;"')));
+    expect(service, contains('titleButtonColor'));
+    expect(service, contains('withValues(alpha: 0.10)'));
+    expect(service, contains('withValues(alpha: 0.15)'));
+    expect(service, contains('withValues(alpha: 0.25)'));
+  });
+
+  test('native sidebar header buttons are decorated only on hover', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(native, contains('"busymark-sidebar-action-button"'));
+    expect(
+      native,
+      contains(
+        '".busymark-sidebar-header button.busymark-sidebar-action-button,"',
+      ),
+    );
+    expect(native, contains('"background-color: transparent;"'));
+    expect(native, contains('"border: none;"'));
+    expect(
+      native,
+      contains(
+        '".busymark-sidebar-header button.busymark-sidebar-action-button:hover {"',
+      ),
+    );
+    expect(native, contains('"background-color: %s;"'));
+    expect(native, contains('"box-shadow: 0 1px 1px %s;"'));
   });
 
   test(
@@ -232,7 +353,7 @@ void main() {
       final native = File('linux/runner/my_application.cc').readAsStringSync();
 
       expect(design, contains('sidebarWidth = 300'));
-      expect(design, contains('view: Color(0xFF242424)'));
+      expect(design, contains('view: Color(0xFF2A2A2A)'));
       expect(design, contains('sidebar: Color(0xFF303030)'));
       expect(design, contains('headerbarFlat: Color(0xFF242424)'));
       expect(design, isNot(contains('Color(0xFF1D1D20)')));
@@ -347,10 +468,32 @@ void main() {
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));
     expect(native, contains('object-select-symbolic'));
+    final viewModeLabelPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0)',
+    );
+    final viewModeCheckPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0)',
+    );
+    expect(viewModeLabelPack, isNonNegative);
+    expect(viewModeCheckPack, isNonNegative);
+    expect(viewModeLabelPack, lessThan(viewModeCheckPack));
     expect(native, contains('button.busymark-menu-row:focus'));
     expect(native, contains('button.busymark-menu-row:active'));
     expect(native, contains('outline-width: 0;'));
     expect(native, contains('self->view_mode_button = gtk_menu_button_new()'));
+    expect(
+      native,
+      contains(
+        'gtk_widget_set_size_request(self->view_mode_button, -1,\n'
+        '                              kHeaderButtonHeight)',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_widget_set_valign(self->view_mode_button, GTK_ALIGN_CENTER)',
+      ),
+    );
     expect(
       native,
       contains('gtk_label_set_text(GTK_LABEL(self->view_mode_label)'),
@@ -359,6 +502,13 @@ void main() {
       native,
       contains(
         'gtk_box_pack_start(GTK_BOX(view_button_box), self->view_mode_label',
+      ),
+    );
+    expect(native, contains('kHeaderButtonContentSpacing = 4'));
+    expect(
+      native,
+      contains(
+        'gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonContentSpacing)',
       ),
     );
     expect(native, isNot(contains('create_menu_button(self->view_mode_menu')));
@@ -390,10 +540,7 @@ void main() {
 
     expect(welcome, isNot(contains('_WelcomeRail')));
     expect(welcome, contains('setSidebarVisible(false)'));
-    expect(
-      welcome,
-      contains('backgroundColor: BusyMarkSurfaceColors.of(context).view'),
-    );
+    expect(welcome, contains('backgroundColor: colors.view'));
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
@@ -430,10 +577,7 @@ void main() {
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
-    expect(
-      welcome,
-      contains('backgroundColor: BusyMarkSurfaceColors.of(context).view'),
-    );
+    expect(welcome, contains('backgroundColor: colors.view'));
     expect(settings, contains('backgroundColor: colors.view'));
     expect(settings, isNot(contains('backgroundColor: colors.window')));
   });
@@ -450,11 +594,21 @@ void main() {
       final workspace = File(
         'lib/src/workspace/presentation/workspace_screen.dart',
       ).readAsStringSync();
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
 
       expect(welcome, contains("setTitleRange('BusyMark')"));
       expect(settings, contains("setTitleRange('Settings')"));
       expect(workspace, contains('setTitleRange(title)'));
       expect(settings, isNot(contains("setTitleRange('BusyMark Settings')")));
+      expect(
+        native,
+        contains('kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3'),
+      );
+      expect(native, contains('update_title_stack_alignment(self);'));
+      expect(
+        native,
+        contains('self->search_active ? 0 : kHeaderWindowControlsBalanceWidth'),
+      );
     },
   );
 }

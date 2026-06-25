@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -312,7 +313,15 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     return switch (block.kind) {
       BusyBlockKind.unorderedListItem => Padding(
         padding: const EdgeInsets.only(top: 8),
-        child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+        child: SizedBox.square(
+          dimension: 6,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.mutedForeground,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
       ),
       BusyBlockKind.orderedListItem => Text(
         block.attributes['marker'] ?? '1.',
@@ -321,23 +330,23 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       ),
       BusyBlockKind.taskListItem => Icon(
         block.attributes['task'] == 'true'
-            ? Icons.check_box_outlined
-            : Icons.check_box_outline_blank,
+            ? BusyMarkGlyphs.checkedBox
+            : BusyMarkGlyphs.task,
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
       BusyBlockKind.blockquote => Icon(
-        Icons.format_quote_outlined,
+        BusyMarkGlyphs.blockquote,
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
       BusyBlockKind.codeBlock => Icon(
-        Icons.code,
+        BusyMarkGlyphs.code,
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
       BusyBlockKind.writersideAdmonition => Icon(
-        Icons.info_outline,
+        BusyMarkGlyphs.info,
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
@@ -466,7 +475,7 @@ class _TableBlockEditor extends StatelessWidget {
               foregroundColor: colors.mutedForeground,
               backgroundColor: busyMarkHeaderButtonBackground(context),
             ),
-            icon: const Icon(Icons.delete_outline, size: BusyMarkSizes.iconSm),
+            icon: const Icon(BusyMarkGlyphs.delete, size: BusyMarkSizes.iconSm),
             onPressed: onTableDeleted,
           ),
         ),
@@ -577,7 +586,7 @@ class _TableColumnControlCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return _TableControlMenuButton(
       tooltip: 'Column ${columnIndex + 1}',
-      icon: Icons.more_horiz,
+      icon: BusyMarkGlyphs.menuHorizontal,
       beforeLabel: 'Insert column left',
       afterLabel: 'Insert column right',
       deleteLabel: 'Delete column',
@@ -610,7 +619,7 @@ class _TableRowControlCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return _TableControlMenuButton(
       tooltip: 'Row ${rowIndex + 1}',
-      icon: Icons.more_vert,
+      icon: BusyMarkGlyphs.menuVertical,
       beforeLabel: 'Insert row above',
       afterLabel: 'Insert row below',
       deleteLabel: 'Delete row',
@@ -647,49 +656,24 @@ class _TableControlMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final theme = Theme.of(context);
-    return Theme(
-      data: theme.copyWith(
-        iconButtonTheme: IconButtonThemeData(
-          style: busyMarkHeaderIconButtonStyle(
-            foregroundColor: colors.mutedForeground,
-            backgroundColor: busyMarkHeaderButtonBackground(context),
-          ),
+    return BusyMarkHeaderPopupMenuButton<_TableControlAction>(
+      tooltip: tooltip,
+      icon: icon,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _TableControlAction.insertBefore,
+          child: Text(beforeLabel),
         ),
-      ),
-      child: SizedBox.square(
-        dimension: _TableBlockEditor._controlSize,
-        child: PopupMenuButton<_TableControlAction>(
-          tooltip: tooltip,
-          padding: EdgeInsets.zero,
-          position: PopupMenuPosition.under,
-          icon: Icon(icon, size: BusyMarkSizes.iconSm),
-          iconColor: colors.mutedForeground,
-          color: colors.popover,
-          surfaceTintColor: Colors.transparent,
-          elevation: BusyMarkElevation.popover,
-          shadowColor: colors.shade,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          ),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: _TableControlAction.insertBefore,
-              child: Text(beforeLabel),
-            ),
-            PopupMenuItem(
-              value: _TableControlAction.insertAfter,
-              child: Text(afterLabel),
-            ),
-            PopupMenuItem(
-              value: _TableControlAction.delete,
-              child: Text(deleteLabel),
-            ),
-          ],
-          onSelected: onSelected,
+        PopupMenuItem(
+          value: _TableControlAction.insertAfter,
+          child: Text(afterLabel),
         ),
-      ),
+        PopupMenuItem(
+          value: _TableControlAction.delete,
+          child: Text(deleteLabel),
+        ),
+      ],
+      onSelected: onSelected,
     );
   }
 }

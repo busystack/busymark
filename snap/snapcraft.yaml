@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "0.1.0+1"
+version: "0.1.1+1"
 summary: Markdown and Writerside documentation editor
 description: |
   BusyMark is a Linux desktop editor for Markdown files and Writerside-compatible documentation projects.

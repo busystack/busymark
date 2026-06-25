@@ -4,8 +4,9 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/app_settings.dart';
-import '../markdown/preview_export.dart';
-import '../writerside/writerside_module_service.dart';
+import '../markdown/preview_model.dart';
+import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
 import 'workspace_service.dart';
 
@@ -83,6 +84,76 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         isLoading: false,
         errorMessage: 'Open failed: $error',
       );
+    }
+  }
+
+  Future<bool> createWritersideProject(
+    WritersideProjectCreateRequest request,
+  ) async {
+    _parseDebounce?.cancel();
+    state = const WorkspaceState(isLoading: true);
+    try {
+      final workspace = await _service.createWritersideProject(request);
+      final active = workspace.activeFilePath;
+      final text = active == null ? '' : await _service.loadText(active);
+      final preview = _safePreview(workspace, text);
+      state = WorkspaceState(
+        workspace: workspace,
+        activeText: text,
+        preview: preview,
+      );
+      await _settingsController.recordOpenedWorkspace(
+        path: workspace.rootPath,
+        kind: workspace.kind.name,
+      );
+      return true;
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Create Writerside project failed');
+      stderr.writeln('[BusyMark]   parent: ${request.parentDirectoryPath}');
+      stderr.writeln('[BusyMark]   directory: ${request.directoryName}');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Create Writerside project failed: $error',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> createWritersideTopic(
+    WritersideTopicCreateRequest request,
+  ) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    _parseDebounce?.cancel();
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final nextWorkspace = await _service.createWritersideTopic(
+        workspace,
+        request,
+      );
+      final active = nextWorkspace.activeFilePath;
+      final text = active == null ? '' : await _service.loadText(active);
+      state = WorkspaceState(
+        workspace: nextWorkspace,
+        activeText: text,
+        preview: _safePreview(nextWorkspace, text),
+      );
+      return true;
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Create Writerside topic failed');
+      stderr.writeln('[BusyMark]   title: ${request.title}');
+      stderr.writeln('[BusyMark]   file name: ${request.fileName}');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Create Writerside topic failed: $error',
+      );
+      return false;
     }
   }
 
@@ -226,34 +297,6 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     } on Object catch (error) {
       state = state.copyWith(errorMessage: 'Validation failed: $error');
     }
-  }
-
-  String exportActiveHtml() {
-    final workspace = state.workspace;
-    final active = workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    if (workspace == null || active == null) {
-      return '';
-    }
-    final markdown = _service.markdownParser.parse(
-      filePath: active,
-      source: state.activeText,
-      workspaceRoot: workspace.rootPath,
-    );
-    return const MarkdownHtmlExporter().export(markdown);
-  }
-
-  String exportProjectSummaryJson() {
-    final module = state.workspace?.writersideModule;
-    if (module == null) {
-      return '{}';
-    }
-    return const WritersideSummaryExporter().export(module);
-  }
-
-  String exportDiagnosticsJson() {
-    return const DiagnosticReportExporter().exportJson(
-      state.workspace?.diagnostics ?? const [],
-    );
   }
 
   PreviewDocument? _safePreview(Workspace workspace, String text) {

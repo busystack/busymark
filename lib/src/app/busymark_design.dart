@@ -17,7 +17,7 @@ abstract final class BusyMarkRadius {
   static const double md = 8;
   static const double lg = 12;
   static const double headerButton = 8;
-  static const double window = 8;
+  static const double window = 14;
 }
 
 abstract final class BusyMarkSizes {
@@ -168,6 +168,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
     required this.headerbarFlat,
     required this.panel,
     required this.card,
+    required this.groupedList,
     required this.dialog,
     required this.popover,
     required this.control,
@@ -199,6 +200,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
         headerbarFlat: Color(0xFFFFFFFF),
         panel: Color(0xFFF6F5F4),
         card: Color(0xFFFFFFFF),
+        groupedList: Color(0xFFFFFFFF),
         dialog: Color(0xFFFAFAFA),
         popover: Color(0xFFFFFFFF),
         control: Color(0xFFFFFFFF),
@@ -220,13 +222,14 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       ),
       Brightness.dark => const BusyMarkSurfaceColors(
         window: Color(0xFF1E1E1E),
-        view: Color(0xFF242424),
+        view: Color(0xFF2A2A2A),
         sidebar: Color(0xFF303030),
         secondarySidebar: Color(0xFF2A2A2A),
         headerbar: Color(0xFF303030),
         headerbarFlat: Color(0xFF242424),
         panel: Color(0xFF2A2A2A),
         card: Color(0xFF2A2A2A),
+        groupedList: Color(0xFF383838),
         dialog: Color(0xFF2A2A2A),
         popover: Color(0xFF383838),
         control: Color(0xFF383838),
@@ -262,6 +265,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
   final Color headerbarFlat;
   final Color panel;
   final Color card;
+  final Color groupedList;
   final Color dialog;
   final Color popover;
   final Color control;
@@ -291,6 +295,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
     Color? headerbarFlat,
     Color? panel,
     Color? card,
+    Color? groupedList,
     Color? dialog,
     Color? popover,
     Color? control,
@@ -319,6 +324,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       headerbarFlat: headerbarFlat ?? this.headerbarFlat,
       panel: panel ?? this.panel,
       card: card ?? this.card,
+      groupedList: groupedList ?? this.groupedList,
       dialog: dialog ?? this.dialog,
       popover: popover ?? this.popover,
       control: control ?? this.control,
@@ -358,6 +364,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       headerbarFlat: Color.lerp(headerbarFlat, other.headerbarFlat, t)!,
       panel: Color.lerp(panel, other.panel, t)!,
       card: Color.lerp(card, other.card, t)!,
+      groupedList: Color.lerp(groupedList, other.groupedList, t)!,
       dialog: Color.lerp(dialog, other.dialog, t)!,
       popover: Color.lerp(popover, other.popover, t)!,
       control: Color.lerp(control, other.control, t)!,
@@ -709,6 +716,7 @@ class BusyMarkSurface extends StatelessWidget {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
     final cardTheme = Theme.of(context).cardTheme;
     final colors = BusyMarkSurfaceColors.of(context);
+    final borderColor = colors.subtleBorder;
     final color = filled ? cardTheme.color ?? colors.card : Colors.transparent;
     final shape =
         cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
@@ -728,7 +736,7 @@ class BusyMarkSurface extends StatelessWidget {
         context,
         color: color,
         borderRadius: borderRadius,
-        border: Border.all(color: colors.subtleBorder),
+        border: Border.all(color: borderColor),
       ),
       child: material,
     );
@@ -801,13 +809,14 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final dividerColor = colors.view;
     final list = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var index = 0; index < children.length; index++) ...[
           children[index],
           if (index < children.length - 1)
-            Divider(height: 1, thickness: 1, color: colors.subtleBorder),
+            Divider(height: 1, thickness: 1, color: dividerColor),
         ],
       ],
     );
@@ -817,25 +826,58 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
     }
 
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
-    final cardTheme = Theme.of(context).cardTheme;
-    final color = cardTheme.color ?? colors.card;
-    final shape =
-        cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
+    final color = colors.groupedList;
     return DecoratedBox(
       decoration: busyMarkSurfaceDecoration(
         context,
         color: color,
         borderRadius: borderRadius,
-        border: Border.all(color: colors.subtleBorder),
       ),
-      child: Material(
-        color: color,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        shape: shape,
+      child: ClipRRect(
+        borderRadius: borderRadius,
         clipBehavior: Clip.antiAlias,
-        child: list,
+        child: Material(
+          color: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          child: list,
+        ),
       ),
+    );
+  }
+}
+
+class _BusyMarkHoverBackground extends StatefulWidget {
+  const _BusyMarkHoverBackground({required this.enabled, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  State<_BusyMarkHoverBackground> createState() =>
+      _BusyMarkHoverBackgroundState();
+}
+
+class _BusyMarkHoverBackgroundState extends State<_BusyMarkHoverBackground> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.enabled && _hovered
+        ? busyMarkRowHoverColor(context)
+        : Colors.transparent;
+    return MouseRegion(
+      onEnter: (_) {
+        if (!_hovered) {
+          setState(() => _hovered = true);
+        }
+      },
+      onExit: (_) {
+        if (_hovered) {
+          setState(() => _hovered = false);
+        }
+      },
+      child: ColoredBox(color: color, child: widget.child),
     );
   }
 }
@@ -864,21 +906,24 @@ class BusyMarkActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final titleStyle = destructive ? TextStyle(color: colorScheme.error) : null;
-    return YaruListTile.square(
-      leading: leading,
-      title: Text(
-        title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: titleStyle,
-      ),
-      subtitle: subtitle == null || subtitle!.isEmpty
-          ? null
-          : Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: trailing,
+    return _BusyMarkHoverBackground(
       enabled: enabled,
-      hoverColor: busyMarkRowHoverColor(context),
-      onTap: enabled ? onTap : null,
+      child: YaruListTile.square(
+        leading: leading,
+        title: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: titleStyle,
+        ),
+        subtitle: subtitle == null || subtitle!.isEmpty
+            ? null
+            : Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: trailing,
+        enabled: enabled,
+        hoverColor: Colors.transparent,
+        onTap: enabled ? onTap : null,
+      ),
     );
   }
 }
@@ -903,13 +948,16 @@ class BusyMarkSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return YaruSwitchListTile(
-      value: value,
-      onChanged: enabled ? onChanged : null,
-      secondary: leading,
-      title: Text(title),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      hoverColor: busyMarkRowHoverColor(context),
+    return _BusyMarkHoverBackground(
+      enabled: enabled,
+      child: YaruSwitchListTile(
+        value: value,
+        onChanged: enabled ? onChanged : null,
+        secondary: leading,
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        hoverColor: Colors.transparent,
+      ),
     );
   }
 }
@@ -930,13 +978,19 @@ class BusyMarkDialogShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          YaruDialogTitleBar(title: Text(title), centerTitle: true),
+          YaruDialogTitleBar(
+            title: Text(title),
+            centerTitle: true,
+            backgroundColor: colors.dialog,
+            border: BorderSide.none,
+          ),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(BusyMarkSpacing.lg),

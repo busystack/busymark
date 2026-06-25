@@ -47,6 +47,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
       context: context,
       style: style,
       visible: renderText,
+      hideCollapsedStartLines: !renderText,
     );
   }
 
@@ -54,6 +55,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
     required BuildContext context,
     TextStyle? style,
     bool visible = true,
+    bool hideCollapsedStartLines = false,
   }) {
     final colors = BusyMarkSurfaceColors.of(context);
     final baseStyle = (style ?? DefaultTextStyle.of(context).style).copyWith(
@@ -64,12 +66,11 @@ class BusyMarkSourceEditingController extends TextEditingController {
     if (source.isEmpty || source.length > 300000) {
       return TextSpan(text: source, style: baseStyle);
     }
-    final hiddenRanges = _foldedRegions
-        .map(
-          (region) =>
-              _HiddenRange(region.hiddenStartOffset, region.hiddenEndOffset),
-        )
-        .toList();
+    final hiddenRanges = _foldedHiddenRanges(
+      source,
+      _foldedRegions,
+      hideCollapsedStartLines: hideCollapsedStartLines,
+    );
     final palette = _SourceSyntaxPalette.fromContext(context);
     final styleOverride = visible ? null : _transparentLayoutStyle;
     if (visible &&
@@ -161,14 +162,39 @@ class _HighlightRange {
 }
 
 class _HiddenRange {
-  const _HiddenRange(this.start, this.end);
+  const _HiddenRange(this.start, this.end, {this.preserveLayout = false});
 
   final int start;
   final int end;
+  final bool preserveLayout;
 
   bool contains(int otherStart, int otherEnd) {
     return start <= otherStart && otherEnd <= end;
   }
+}
+
+List<_HiddenRange> _foldedHiddenRanges(
+  String source,
+  Iterable<SourceFoldRegion> regions, {
+  required bool hideCollapsedStartLines,
+}) {
+  final ranges = <_HiddenRange>[];
+  final linesByNumber = hideCollapsedStartLines
+      ? {for (final line in sourceLineInfos(source)) line.number: line}
+      : const <int, SourceLineInfo>{};
+
+  for (final region in regions) {
+    if (hideCollapsedStartLines) {
+      final line = linesByNumber[region.startLine];
+      if (line != null && line.endOffset > line.startOffset) {
+        ranges.add(
+          _HiddenRange(line.startOffset, line.endOffset, preserveLayout: true),
+        );
+      }
+    }
+    ranges.add(_HiddenRange(region.hiddenStartOffset, region.hiddenEndOffset));
+  }
+  return ranges;
 }
 
 List<TextSpan> _highlightMarkdown(
@@ -543,9 +569,13 @@ List<TextSpan> _spansFromRanges(
     if (end <= start) {
       continue;
     }
-    final hidden = sortedHiddenRanges.any(
-      (range) => range.contains(start, end),
-    );
+    _HiddenRange? hiddenRange;
+    for (final range in sortedHiddenRanges) {
+      if (range.contains(start, end)) {
+        hiddenRange = range;
+        break;
+      }
+    }
     _HighlightRange? highlight;
     for (final range in sortedRanges) {
       if (range.start <= start && end <= range.end) {
@@ -554,14 +584,19 @@ List<TextSpan> _spansFromRanges(
       }
     }
     final style = highlight?.style;
+    final visibleStyle = style == null
+        ? baseStyle
+        : styleOverride?.call(style) ?? style;
     spans.add(
       TextSpan(
         text: source.substring(start, end),
-        style: hidden
-            ? hiddenStyle
-            : style == null
-            ? null
-            : styleOverride?.call(style) ?? style,
+        style: hiddenRange == null
+            ? style == null
+                  ? null
+                  : visibleStyle
+            : hiddenRange.preserveLayout
+            ? _transparentLayoutStyle(baseStyle)
+            : hiddenStyle,
       ),
     );
   }

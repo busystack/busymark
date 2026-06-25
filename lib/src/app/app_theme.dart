@@ -189,15 +189,18 @@ ThemeData buildBusyMarkTheme({
                 return colors.disabledForeground;
               }
               if (states.contains(WidgetState.selected)) {
-                return colors.foreground;
+                return onAccent;
               }
               return colors.foreground;
             }),
             backgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return selectedContainer;
+              if (states.contains(WidgetState.disabled)) {
+                return colors.disabledControl;
               }
-              return colors.control;
+              if (states.contains(WidgetState.selected)) {
+                return accentColor;
+              }
+              return selectedContainer;
             }),
           ),
     ),

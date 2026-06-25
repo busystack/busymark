@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -9,7 +10,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:busymark/src/markdown/preview_export.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -139,17 +140,6 @@ void main() {}
     ]);
     expect(parsed.title, 'Title');
     expect(parsed.anchors, containsAll(['title', 'section']));
-  });
-
-  test('HTML export blocks unsafe links and image URLs', () {
-    final parsed = parser.parse(
-      filePath: 'topic.md',
-      source: '[bad](javascript:alert(1))\n\n![bad](data:text/html,evil)\n',
-    );
-    final html = const MarkdownHtmlExporter().export(parsed);
-
-    expect(html, isNot(contains('javascript:')));
-    expect(html, isNot(contains('data:text')));
   });
 
   test('preview and WYSIWYG use the same semantic document', () {
@@ -654,11 +644,43 @@ void main() {}
     await gesture.up();
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
     await tester.pump();
 
     expect(markdown, '**First**\n\n**Second**\n\nThird\n');
   });
+
+  testWidgets(
+    'WYSIWYG toolbar toggle stays vertically aligned when collapsed',
+    (tester) async {
+      final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
+
+      await tester.tap(find.byTooltip('Hide editing buttons'));
+      await tester.pump();
+
+      final showRect = tester.getRect(find.byTooltip('Show editing buttons'));
+
+      expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
+    },
+  );
 
   testWidgets('WYSIWYG toolbar list applies to selected paragraphs', (
     tester,
@@ -694,7 +716,7 @@ void main() {}
     await gesture.up();
     await tester.pump();
 
-    await tester.tap(find.byIcon(Icons.format_list_bulleted));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.unorderedList));
     await tester.pump();
 
     expect(markdown, '- First\n\n- Second\n\nThird\n');
@@ -1261,7 +1283,7 @@ void main() {}
       extentOffset: groupedEnd,
     );
 
-    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
     await tester.pump();
 
     field.controller!.selection = TextSelection.collapsed(
@@ -1315,7 +1337,7 @@ void main() {}
       extentOffset: groupedStart + 'grouped'.length,
     );
 
-    await tester.tap(find.byIcon(Icons.format_bold));
+    await tester.tap(find.byIcon(BusyMarkGlyphs.bold));
     await tester.pump();
 
     await tester.enterText(find.byType(TextField).first, '$sentence\n');

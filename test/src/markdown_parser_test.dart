@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
-import 'package:busymark/src/markdown/preview_export.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -125,18 +124,5 @@ void main() {
       containsAll(['var', 'tabs']),
     );
     expect(parsed.variables.map((item) => item.name), contains('product'));
-  });
-
-  test('exports deterministic sanitized HTML', () {
-    final path = fixture('unsafe_html.md');
-    final parsed = parser.parse(
-      filePath: path,
-      source: File(path).readAsStringSync(),
-    );
-    final html = const MarkdownHtmlExporter().export(parsed);
-
-    expect(html, contains('<title>Unsafe</title>'));
-    expect(html, isNot(contains('<script>')));
-    expect(html, contains('Unsafe'));
   });
 }

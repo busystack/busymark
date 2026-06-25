@@ -209,6 +209,58 @@ void main() {
     );
   });
 
+  testWidgets('rendered folded regions hide collapsed header text', (
+    tester,
+  ) async {
+    const source = '# Title\nIntro.\nMore.\n# Next\n';
+    late List<TextSpan> spans;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            final region = sourceFoldRegions(
+              source,
+              SourceSyntaxLanguage.markdown,
+            ).firstWhere((region) => region.startLine == 1);
+            final controller = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            )..setFoldedRegions([region]);
+            spans = _flattenTextSpans(
+              controller.buildSourceTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                hideCollapsedStartLines: true,
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(spans.map((span) => span.text).join(), source);
+    expect(_spanStyle(spans, '# ')?.color, Colors.transparent);
+    expect(_spanStyle(spans, 'Title')?.color, Colors.transparent);
+    expect(_spanStyle(spans, '# ')?.fontSize, 14);
+    expect(_spanStyle(spans, 'Title')?.fontSize, 14);
+    expect(
+      spans.any(
+        (span) =>
+            span.text == 'Intro.\nMore.\n' &&
+            span.style?.color == Colors.transparent &&
+            span.style?.fontSize == 0.01,
+      ),
+      isTrue,
+    );
+    expect(_spanStyle(spans, 'Next')?.color, isNot(Colors.transparent));
+  });
+
   testWidgets('folded regions collapse measured editor height', (tester) async {
     const source = '# Title\nIntro.\nMore.\n# Next\nDone.\n';
     const style = TextStyle(

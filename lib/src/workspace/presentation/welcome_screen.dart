@@ -11,8 +11,10 @@ import 'package:path/path.dart' as p;
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_safety.dart';
 
@@ -36,6 +38,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final state = ref.watch(workspaceControllerProvider);
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
+    final colors = BusyMarkSurfaceColors.of(context);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((action) {
@@ -58,7 +61,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: BusyMarkSurfaceColors.of(context).view,
+      backgroundColor: colors.view,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
@@ -73,17 +76,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               actions: [
                 BusyMarkHeaderIconButton(
                   tooltip: 'Settings',
-                  icon: Icons.settings_outlined,
+                  icon: BusyMarkGlyphs.settings,
                   onPressed: () => context.go('/settings'),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'Keyboard Shortcuts',
-                  icon: Icons.keyboard_outlined,
+                  icon: BusyMarkGlyphs.keyboard,
                   onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(
                   tooltip: 'About BusyMark',
-                  icon: Icons.info_outline,
+                  icon: BusyMarkGlyphs.info,
                   onPressed: () => showBusyMarkAboutDialog(context),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
@@ -103,9 +106,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 BusyMarkActionRow(
                   title: 'Create Markdown File',
                   subtitle: 'Start an unsaved local Markdown document',
-                  leading: const Icon(Icons.note_add_outlined),
-                  trailing: const Icon(Icons.chevron_right),
+                  leading: const Icon(BusyMarkGlyphs.newDocument),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
                   onTap: _createMarkdownFile,
+                ),
+                BusyMarkActionRow(
+                  title: 'Create Writerside Project',
+                  subtitle: 'Starter project with one Writerside help instance',
+                  leading: const Icon(BusyMarkGlyphs.writersideProject),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  onTap: _createWritersideProject,
                 ),
               ],
             ),
@@ -116,15 +126,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 BusyMarkActionRow(
                   title: 'Open Markdown File',
                   subtitle: '.md or .markdown',
-                  leading: const Icon(Icons.description_outlined),
-                  trailing: const Icon(Icons.chevron_right),
+                  leading: const Icon(BusyMarkGlyphs.markdownFile),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
                   onTap: _chooseMarkdownFile,
                 ),
                 BusyMarkActionRow(
                   title: 'Open Folder or Writerside Project',
                   subtitle: 'Markdown folder or Writerside-compatible project',
-                  leading: const Icon(Icons.folder_outlined),
-                  trailing: const Icon(Icons.chevron_right),
+                  leading: const Icon(BusyMarkGlyphs.folder),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
                   onTap: () => _chooseDirectory('Open'),
                 ),
               ],
@@ -146,8 +156,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     BusyMarkActionRow(
                       title: _displayPath(recent.path),
                       subtitle: recent.path,
-                      leading: const Icon(Icons.history),
-                      trailing: const Icon(Icons.chevron_right),
+                      leading: const Icon(BusyMarkGlyphs.history),
+                      trailing: const Icon(BusyMarkGlyphs.rightArrow),
                       onTap: () async {
                         await _openPath(recent.path);
                       },
@@ -189,7 +199,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
       case HeaderBarAction.menu:
-      case HeaderBarAction.exportPreview:
       case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
       case HeaderBarAction.viewModePreview:
@@ -282,6 +291,41 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
   }
 
+  Future<void> _createWritersideProject() async {
+    final safe = await confirmSafeToContinue(context, ref);
+    if (!safe || !mounted) {
+      return;
+    }
+    final parentPath = await getDirectoryPath(
+      initialDirectory: _initialDirectory(),
+      confirmButtonText: 'Choose Location',
+      canCreateDirectories: true,
+    );
+    if (parentPath == null || !mounted) {
+      return;
+    }
+    _logSelectedPickerPath(parentPath);
+
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    final created = await showBusyMarkModalDialog<bool>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (context) => _CreateWritersideProjectDialog(
+        parentDirectoryPath: parentPath,
+        onCreate: (request) => ref
+            .read(workspaceControllerProvider.notifier)
+            .createWritersideProject(request),
+        errorMessage: () => ref.read(workspaceControllerProvider).errorMessage,
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (created == true) {
+      context.go('/workspace');
+    }
+  }
+
   String? _initialDirectory() {
     final settings = ref.read(appSettingsControllerProvider);
     final lastPath = settings.lastOpenedPath;
@@ -311,6 +355,288 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 }
 
+class _CreateWritersideProjectDialog extends StatefulWidget {
+  const _CreateWritersideProjectDialog({
+    required this.parentDirectoryPath,
+    required this.onCreate,
+    required this.errorMessage,
+  });
+
+  final String parentDirectoryPath;
+  final Future<bool> Function(WritersideProjectCreateRequest request) onCreate;
+  final String? Function() errorMessage;
+
+  @override
+  State<_CreateWritersideProjectDialog> createState() =>
+      _CreateWritersideProjectDialogState();
+}
+
+class _CreateWritersideProjectDialogState
+    extends State<_CreateWritersideProjectDialog> {
+  late final TextEditingController _projectNameController;
+  late final TextEditingController _directoryNameController;
+  late final TextEditingController _instanceNameController;
+  late final TextEditingController _instanceIdController;
+  late final TextEditingController _topicTitleController;
+  var _directoryEdited = false;
+  var _syncingDirectory = false;
+  var _creating = false;
+  String? _creationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _projectNameController = TextEditingController()
+      ..addListener(_handleProjectNameChanged);
+    _directoryNameController = TextEditingController(
+      text: _slugDirectoryName(''),
+    )..addListener(_handleDirectoryNameChanged);
+    _instanceNameController = TextEditingController(text: 'User Guide')
+      ..addListener(_handleFieldChanged);
+    _instanceIdController = TextEditingController(text: 'user-guide')
+      ..addListener(_handleFieldChanged);
+    _topicTitleController = TextEditingController(text: 'Getting started')
+      ..addListener(_handleFieldChanged);
+  }
+
+  @override
+  void dispose() {
+    _projectNameController.dispose();
+    _directoryNameController.dispose();
+    _instanceNameController.dispose();
+    _instanceIdController.dispose();
+    _topicTitleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final projectError = _projectNameError;
+    final directoryError = _directoryNameError;
+    final instanceIdError = _instanceIdError;
+    final topicTitleError = _topicTitleError;
+    final canCreate =
+        !_creating &&
+        projectError == null &&
+        directoryError == null &&
+        instanceIdError == null &&
+        topicTitleError == null;
+    return BusyMarkDialogShell(
+      title: 'Create Writerside Project',
+      maxWidth: 560,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: canCreate ? _submit : null,
+          child: Text(_creating ? 'Creating...' : 'Create'),
+        ),
+      ],
+      children: [
+        TextField(
+          controller: _projectNameController,
+          autofocus: true,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Project name',
+            errorText: projectError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _directoryNameController,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (canCreate) {
+              _submit();
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'Directory name',
+            errorText: directoryError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _instanceNameController,
+          textInputAction: TextInputAction.next,
+          decoration: const InputDecoration(labelText: 'Instance name'),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _instanceIdController,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Instance ID',
+            errorText: instanceIdError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _topicTitleController,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (canCreate) {
+              _submit();
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'Start topic title',
+            errorText: topicTitleError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
+        if (_creationError != null) ...[
+          _WelcomeMessage(message: _creationError!),
+          const SizedBox(height: BusyMarkSpacing.lg),
+        ],
+        Text(
+          'Location',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(color: colors.mutedForeground),
+        ),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.control,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            border: Border.all(color: colors.subtleBorder),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: SelectableText(
+              _targetPath,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String? get _projectNameError {
+    if (_projectNameController.text.trim().isEmpty) {
+      return 'Project name is required.';
+    }
+    return null;
+  }
+
+  String? get _directoryNameError {
+    final value = _directoryNameController.text.trim();
+    if (value.isEmpty) {
+      return 'Directory name is required.';
+    }
+    if (value == '.' ||
+        value == '..' ||
+        p.isAbsolute(value) ||
+        value.contains('..') ||
+        value.contains('/') ||
+        value.contains(r'\')) {
+      return 'Use a single safe directory name.';
+    }
+    return null;
+  }
+
+  String? get _instanceIdError {
+    final value = _instanceIdController.text.trim();
+    if (!RegExp(r'^[a-z][a-z0-9_-]*$').hasMatch(value)) {
+      return 'Use lowercase letters, numbers, underscores, or hyphens.';
+    }
+    return null;
+  }
+
+  String? get _topicTitleError {
+    if (_topicTitleController.text.trim().isEmpty) {
+      return 'Start topic title is required.';
+    }
+    return null;
+  }
+
+  String get _targetPath {
+    final directoryName = _directoryNameController.text.trim();
+    final safeDirectoryName = directoryName.isEmpty
+        ? _slugDirectoryName(_projectNameController.text)
+        : directoryName;
+    return p.join(normalizePath(widget.parentDirectoryPath), safeDirectoryName);
+  }
+
+  void _handleProjectNameChanged() {
+    _creationError = null;
+    if (!_directoryEdited) {
+      _syncingDirectory = true;
+      _directoryNameController.text = _slugDirectoryName(
+        _projectNameController.text,
+      );
+      _syncingDirectory = false;
+    }
+    setState(() {});
+  }
+
+  void _handleDirectoryNameChanged() {
+    _creationError = null;
+    if (!_syncingDirectory) {
+      _directoryEdited = true;
+    }
+    setState(() {});
+  }
+
+  void _handleFieldChanged() {
+    _creationError = null;
+    setState(() {});
+  }
+
+  Future<void> _submit() async {
+    if (_creating ||
+        _projectNameError != null ||
+        _directoryNameError != null ||
+        _instanceIdError != null ||
+        _topicTitleError != null) {
+      return;
+    }
+    setState(() {
+      _creating = true;
+      _creationError = null;
+    });
+    final created = await widget.onCreate(
+      WritersideProjectCreateRequest(
+        parentDirectoryPath: normalizePath(widget.parentDirectoryPath),
+        projectName: _projectNameController.text.trim(),
+        directoryName: _directoryNameController.text.trim(),
+        instanceName: _instanceNameController.text.trim().isEmpty
+            ? 'User Guide'
+            : _instanceNameController.text.trim(),
+        instanceId: _instanceIdController.text.trim(),
+        topicTitle: _topicTitleController.text.trim(),
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (created) {
+      Navigator.pop(context, true);
+      return;
+    }
+    setState(() {
+      _creating = false;
+      _creationError =
+          widget.errorMessage() ?? 'Create Writerside project failed.';
+    });
+  }
+
+  String _slugDirectoryName(String value) {
+    final slug = value
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    return slug.isEmpty ? 'writerside-project' : slug;
+  }
+}
+
 class _WelcomeMessage extends StatelessWidget {
   const _WelcomeMessage({required this.message});
 
@@ -330,7 +656,7 @@ class _WelcomeMessage extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.warning_amber_outlined),
+            const Icon(BusyMarkGlyphs.warning),
             const SizedBox(width: BusyMarkSpacing.sm),
             Expanded(child: Text(message)),
           ],

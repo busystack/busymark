@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -30,41 +29,35 @@ class WritersideModuleService {
   Future<WritersideModule> load(String rootPath) async {
     final root = normalizePath(rootPath);
     final diagnostics = <Diagnostic>[];
-    final configPath = p.join(root, 'writerside.cfg');
-    final legacyPath = p.join(root, 'project.ihp');
-    if (!await File(configPath).exists()) {
-      if (await File(legacyPath).exists()) {
-        diagnostics.add(
-          Diagnostic(
-            code: 'writerside.config.legacy-project-ihp-unsupported',
-            severity: DiagnosticSeverity.error,
-            message:
-                'This looks like an older Writerside project configuration file. BusyMark currently supports writerside.cfg only.',
-            filePath: legacyPath,
-          ),
-        );
-      } else {
-        diagnostics.add(
-          Diagnostic(
-            code: 'writerside.config.missing',
-            severity: DiagnosticSeverity.error,
-            message: 'Writerside mode requires writerside.cfg.',
-            filePath: configPath,
-          ),
-        );
-      }
+    final configPath = await _resolveConfigPath(root);
+    if (configPath == null) {
+      final expectedPath = p.join(root, 'writerside.cfg');
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.config.missing',
+          severity: DiagnosticSeverity.error,
+          message: 'Writerside mode requires writerside.cfg or project.ihp.',
+          filePath: expectedPath,
+        ),
+      );
       final emptyConfig = WritersideConfig(
-        filePath: configPath,
+        filePath: expectedPath,
+        version: null,
         moduleName: null,
-        topicsDir: 'topics',
-        imagesDir: 'images',
-        snippetsDir: null,
-        resourcesDir: null,
+        topicRoots: const [WritersideTopicRoot(dir: 'topics', explicit: false)],
+        imageRoots: const [WritersideImageRoot(dir: 'images', explicit: false)],
         apiSpecificationsDir: 'specifications',
+        apiSpecificationsExplicit: false,
         buildConfigDir: 'cfg',
+        buildConfigExplicit: false,
+        snippetsDir: null,
+        resourcesFile: null,
+        resourcesDir: null,
         varsFile: null,
         categoriesFile: null,
-        instanceSources: const [],
+        instanceGroupsFile: null,
+        instances: const [],
+        settings: const WritersideSettingsConfig(),
         diagnostics: const [],
       );
       return WritersideModule(
@@ -80,29 +73,59 @@ class WritersideModuleService {
     final configSource = await File(configPath).readAsString();
     final config = configParser.parse(configPath, configSource);
     diagnostics.addAll(config.diagnostics);
-    await _validateConfiguredDirectory(
+    final usableTopicRoots = await _existingTopicRoots(
       diagnostics,
       root,
-      config.topicsDir,
-      'writerside.config.missing-directory',
-      DiagnosticSeverity.error,
-      'Configured topics directory is missing.',
+      config,
     );
-    await _validateConfiguredDirectory(
-      diagnostics,
-      root,
-      config.imagesDir,
-      'writerside.config.missing-directory',
-      DiagnosticSeverity.warning,
-      'Configured images directory is missing.',
-    );
-    await _validateConfiguredDirectory(
+    await _validateImageRoots(diagnostics, root, config);
+    await _validateOptionalConfiguredDirectory(
       diagnostics,
       root,
       config.buildConfigDir,
-      'writerside.config.missing-directory',
-      DiagnosticSeverity.info,
-      'Configured build config directory is missing.',
+      explicit: config.buildConfigExplicit,
+      code: 'writerside.config.missing-build-config-directory',
+      severity: DiagnosticSeverity.info,
+      message: 'Configured build config directory is missing.',
+    );
+    await _validateOptionalConfiguredDirectory(
+      diagnostics,
+      root,
+      config.apiSpecificationsDir,
+      explicit: config.apiSpecificationsExplicit,
+      code: 'writerside.config.missing-api-specifications-directory',
+      severity: DiagnosticSeverity.info,
+      message: 'Configured API specifications directory is missing.',
+    );
+    await _validateOptionalConfiguredDirectory(
+      diagnostics,
+      root,
+      config.snippetsDir,
+      explicit: config.snippetsDir != null,
+      code: 'writerside.config.missing-snippets-directory',
+      severity: DiagnosticSeverity.warning,
+      message: 'Configured snippets directory is missing.',
+    );
+    await _validateOptionalConfiguredFile(
+      diagnostics,
+      root,
+      config.varsFile,
+      code: 'writerside.config.missing-vars-file',
+      message: 'Configured variables file is missing.',
+    );
+    await _validateOptionalConfiguredFile(
+      diagnostics,
+      root,
+      config.categoriesFile,
+      code: 'writerside.config.missing-categories-file',
+      message: 'Configured categories file is missing.',
+    );
+    await _validateOptionalConfiguredFile(
+      diagnostics,
+      root,
+      config.instanceGroupsFile,
+      code: 'writerside.config.missing-instance-groups-file',
+      message: 'Configured instance groups file is missing.',
     );
 
     final instances = <WritersideInstance>[];
@@ -127,8 +150,7 @@ class WritersideModuleService {
     }
 
     final topics = <WritersideTopic>[];
-    final topicsRoot = p.join(root, config.topicsDir);
-    if (await Directory(topicsRoot).exists()) {
+    for (final topicsRoot in usableTopicRoots) {
       final scan = await scanWorkspaceEntities(
         topicsRoot,
         options: scanOptions,
@@ -151,6 +173,7 @@ class WritersideModuleService {
             final topic = topicParser.parseXml(
               filePath: entity.path,
               source: source,
+              topicsRoot: topicsRoot,
             );
             diagnostics.addAll(topic.diagnostics);
             topics.add(topic);
@@ -214,56 +237,197 @@ class WritersideModuleService {
     );
   }
 
-  Future<void> _validateConfiguredDirectory(
+  Future<String?> _resolveConfigPath(String root) async {
+    final configPath = p.join(root, 'writerside.cfg');
+    if (await File(configPath).exists()) {
+      return configPath;
+    }
+    final legacyPath = p.join(root, 'project.ihp');
+    if (await File(legacyPath).exists()) {
+      return legacyPath;
+    }
+    return null;
+  }
+
+  Future<List<String>> _existingTopicRoots(
     List<Diagnostic> diagnostics,
     String root,
-    String relativePath,
-    String code,
-    DiagnosticSeverity severity,
-    String message,
+    WritersideConfig config,
   ) async {
-    final path = p.join(root, relativePath);
-    if (!await Directory(path).exists()) {
+    final existing = <String>[];
+    for (final topicRoot in config.topicRoots) {
+      final path = p.join(root, topicRoot.dir);
+      if (await Directory(path).exists()) {
+        existing.add(path);
+        continue;
+      }
+      if (topicRoot.explicit) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.config.missing-directory',
+            severity: DiagnosticSeverity.error,
+            message:
+                'Configured topics directory is missing. (${topicRoot.dir})',
+            filePath: path,
+          ),
+        );
+      }
+    }
+    if (existing.isEmpty &&
+        config.topicRoots.any(
+          (root) => !root.explicit && root.dir == 'topics',
+        )) {
+      final path = p.join(root, 'topics');
       diagnostics.add(
         Diagnostic(
-          code: code,
-          severity: severity,
-          message: '$message ($relativePath)',
+          code: 'writerside.config.missing-directory',
+          severity: DiagnosticSeverity.error,
+          message: 'Default topics directory is missing. (topics)',
+          filePath: path,
+        ),
+      );
+    }
+    return existing;
+  }
+
+  Future<void> _validateImageRoots(
+    List<Diagnostic> diagnostics,
+    String root,
+    WritersideConfig config,
+  ) async {
+    for (final imageRoot in config.imageRoots) {
+      final path = p.join(root, imageRoot.dir);
+      if (await Directory(path).exists()) {
+        continue;
+      }
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.config.missing-directory',
+          severity: imageRoot.explicit
+              ? DiagnosticSeverity.warning
+              : DiagnosticSeverity.info,
+          message: 'Configured images directory is missing. (${imageRoot.dir})',
           filePath: path,
         ),
       );
     }
   }
 
+  Future<void> _validateOptionalConfiguredDirectory(
+    List<Diagnostic> diagnostics,
+    String root,
+    String? relativePath, {
+    required bool explicit,
+    required String code,
+    required DiagnosticSeverity severity,
+    required String message,
+  }) async {
+    if (!explicit || relativePath == null || relativePath.isEmpty) {
+      return;
+    }
+    final path = p.join(root, relativePath);
+    if (await Directory(path).exists()) {
+      return;
+    }
+    diagnostics.add(
+      Diagnostic(
+        code: code,
+        severity: severity,
+        message: '$message ($relativePath)',
+        filePath: path,
+      ),
+    );
+  }
+
+  Future<void> _validateOptionalConfiguredFile(
+    List<Diagnostic> diagnostics,
+    String root,
+    String? relativePath, {
+    required String code,
+    required String message,
+  }) async {
+    if (relativePath == null || relativePath.isEmpty) {
+      return;
+    }
+    final path = p.join(root, relativePath);
+    if (await File(path).exists()) {
+      return;
+    }
+    diagnostics.add(
+      Diagnostic(
+        code: code,
+        severity: DiagnosticSeverity.warning,
+        message: '$message ($relativePath)',
+        filePath: path,
+      ),
+    );
+  }
+
   List<Diagnostic> _resolve(WritersideModule module) {
     final diagnostics = <Diagnostic>[];
-    final topicsByFile = module.topicsByFileName;
     final variableNames = module.variableNames;
     final categoryIds = module.categories.map((item) => item.id).toSet();
+    final topicIds = <String, WritersideTopic>{};
+    for (final topic in module.topics) {
+      final previous = topicIds[topic.id];
+      if (previous == null) {
+        topicIds[topic.id] = topic;
+        continue;
+      }
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.topic.duplicate-id',
+          severity: DiagnosticSeverity.error,
+          message:
+              'Topic ID "${topic.id}" is used by multiple topic files in this help module.',
+          filePath: topic.filePath,
+        ),
+      );
+    }
     for (final instance in module.instances) {
-      if (instance.startPage != null &&
-          !topicsByFile.containsKey(instance.startPage)) {
-        diagnostics.add(
-          Diagnostic(
-            code: 'writerside.tree.missing-start-page',
-            severity: DiagnosticSeverity.error,
-            message: 'Start page "${instance.startPage}" does not exist.',
-            filePath: instance.sourceTreePath,
-          ),
-        );
+      if (instance.startPage != null) {
+        final resolved = _resolveTopicReference(module, instance.startPage!);
+        if (resolved.isMissing) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.tree.missing-start-page',
+              severity: DiagnosticSeverity.error,
+              message: 'Start page "${instance.startPage}" does not exist.',
+              filePath: instance.sourceTreePath,
+            ),
+          );
+        } else if (resolved.isAmbiguous) {
+          diagnostics.add(
+            _ambiguousTopicReferenceDiagnostic(
+              reference: instance.startPage!,
+              filePath: instance.sourceTreePath,
+            ),
+          );
+        }
       }
       for (final node in instance.tocRoots.expand((node) => node.flatten())) {
         final topic = node.topicFileName;
-        if (topic != null && !topicsByFile.containsKey(topic)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.tree.missing-topic',
-              severity: DiagnosticSeverity.error,
-              message: 'TOC references missing topic "$topic".',
-              filePath: instance.sourceTreePath,
-              sourceSpan: node.span,
-            ),
-          );
+        if (topic != null) {
+          final resolved = _resolveTopicReference(module, topic);
+          if (resolved.isMissing) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.tree.missing-topic',
+                severity: DiagnosticSeverity.error,
+                message: 'TOC references missing topic "$topic".',
+                filePath: instance.sourceTreePath,
+                sourceSpan: node.span,
+              ),
+            );
+          } else if (resolved.isAmbiguous) {
+            diagnostics.add(
+              _ambiguousTopicReferenceDiagnostic(
+                reference: topic,
+                filePath: instance.sourceTreePath,
+                sourceSpan: node.span,
+              ),
+            );
+          }
         }
         final href = node.href;
         if (href != null && !_validExternalHref(href)) {
@@ -325,20 +489,27 @@ class WritersideModuleService {
           continue;
         }
         final parts = destination.split('#');
-        final targetName = parts.first.isEmpty
-            ? topic.fileName
-            : p.basename(parts.first);
+        final targetReference = parts.first;
         final anchor = parts.length > 1 ? parts.sublist(1).join('#') : null;
-        final target = topicsByFile[targetName];
+        final resolved = targetReference.isEmpty
+            ? _TopicResolution([topic])
+            : _resolveTopicReference(module, targetReference, fromTopic: topic);
+        final target = resolved.topic;
         if (target == null) {
           diagnostics.add(
-            Diagnostic(
-              code: 'markdown.link.unresolved-target',
-              severity: DiagnosticSeverity.error,
-              message: 'Topic link "$destination" does not resolve.',
-              filePath: topic.filePath,
-              sourceSpan: link.span,
-            ),
+            resolved.isAmbiguous
+                ? _ambiguousTopicReferenceDiagnostic(
+                    reference: targetReference,
+                    filePath: topic.filePath,
+                    sourceSpan: link.span,
+                  )
+                : Diagnostic(
+                    code: 'markdown.link.unresolved-target',
+                    severity: DiagnosticSeverity.error,
+                    message: 'Topic link "$destination" does not resolve.',
+                    filePath: topic.filePath,
+                    sourceSpan: link.span,
+                  ),
           );
         } else if (anchor != null && anchor.isNotEmpty) {
           final anchors = target.elementIds.map((item) => item.id).toSet();
@@ -347,7 +518,8 @@ class WritersideModuleService {
               Diagnostic(
                 code: 'markdown.link.unresolved-anchor',
                 severity: DiagnosticSeverity.warning,
-                message: 'Anchor "$anchor" does not exist in "$targetName".',
+                message:
+                    'Anchor "$anchor" does not exist in "${target.fileName}".',
                 filePath: topic.filePath,
                 sourceSpan: link.span,
               ),
@@ -370,12 +542,7 @@ class WritersideModuleService {
         if (_isExternal(image.destination)) {
           continue;
         }
-        if (!localImageExists(
-          activeFilePath: topic.filePath,
-          destination: image.destination,
-          writersideRoot: module.rootPath,
-          imagesDir: module.config.imagesDir,
-        )) {
+        if (!_localImageExistsInAnyRoot(module, topic, image.destination)) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.image.missing-file',
@@ -400,17 +567,29 @@ class WritersideModuleService {
           );
           continue;
         }
-        final target = topicsByFile[p.basename(include.from!)];
+        final resolved = _resolveTopicReference(
+          module,
+          include.from!,
+          fromTopic: topic,
+        );
+        final target = resolved.topic;
         if (target == null) {
           if (!include.nullable) {
             diagnostics.add(
-              Diagnostic(
-                code: 'writerside.include.unresolved-source',
-                severity: DiagnosticSeverity.error,
-                message: 'Include source "${include.from}" does not exist.',
-                filePath: topic.filePath,
-                sourceSpan: include.span,
-              ),
+              resolved.isAmbiguous
+                  ? _ambiguousTopicReferenceDiagnostic(
+                      reference: include.from!,
+                      filePath: topic.filePath,
+                      sourceSpan: include.span,
+                    )
+                  : Diagnostic(
+                      code: 'writerside.include.unresolved-source',
+                      severity: DiagnosticSeverity.error,
+                      message:
+                          'Include source "${include.from}" does not exist.',
+                      filePath: topic.filePath,
+                      sourceSpan: include.span,
+                    ),
             );
           }
           continue;
@@ -460,6 +639,49 @@ class WritersideModuleService {
     return Uri.tryParse(href)?.hasScheme ?? false;
   }
 
+  _TopicResolution _resolveTopicReference(
+    WritersideModule module,
+    String reference, {
+    WritersideTopic? fromTopic,
+  }) {
+    return _TopicResolution(
+      module.topicsMatchingReference(reference, fromTopic: fromTopic),
+    );
+  }
+
+  Diagnostic _ambiguousTopicReferenceDiagnostic({
+    required String reference,
+    required String filePath,
+    SourceSpan? sourceSpan,
+  }) {
+    return Diagnostic(
+      code: 'writerside.topic.ambiguous-reference',
+      severity: DiagnosticSeverity.error,
+      message:
+          'Topic reference "$reference" matches multiple configured topic files.',
+      filePath: filePath,
+      sourceSpan: sourceSpan,
+    );
+  }
+
+  bool _localImageExistsInAnyRoot(
+    WritersideModule module,
+    WritersideTopic topic,
+    String destination,
+  ) {
+    for (final imagesDir in module.config.imagesDirs) {
+      if (localImageExists(
+        activeFilePath: topic.filePath,
+        destination: destination,
+        writersideRoot: module.rootPath,
+        imagesDir: imagesDir,
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool _isExternal(String destination) {
     return destination.startsWith('http://') ||
         destination.startsWith('https://') ||
@@ -477,53 +699,12 @@ class WritersideModuleService {
   }
 }
 
-class WritersideSummaryExporter {
-  const WritersideSummaryExporter();
+class _TopicResolution {
+  const _TopicResolution(this.matches);
 
-  String export(WritersideModule module) {
-    final json = {
-      'kind': 'writersideModule',
-      'rootPath': module.rootPath,
-      'moduleName': module.config.moduleName,
-      'instances': [
-        for (final instance in module.instances)
-          {
-            'id': instance.id,
-            'name': instance.name,
-            'startPage': instance.startPage,
-            'topicCount': instance.topicFileSet.length,
-          },
-      ],
-      'topics': [
-        for (final topic in module.topics)
-          {
-            'id': topic.id,
-            'file': topic.fileName,
-            'title': topic.title,
-            'format': topic.format.name,
-          },
-      ],
-      'variables': [
-        for (final variable in module.variables)
-          {'name': variable.name, 'value': variable.value},
-      ],
-      'categories': [
-        for (final category in module.categories)
-          {'id': category.id, 'name': category.name, 'order': category.order},
-      ],
-      'diagnostics': module.diagnostics.map((item) => item.toJson()).toList(),
-    };
-    return const JsonEncoder.withIndent('  ').convert(json);
-  }
-}
+  final List<WritersideTopic> matches;
 
-class DiagnosticReportExporter {
-  const DiagnosticReportExporter();
-
-  String exportJson(Iterable<Diagnostic> diagnostics) {
-    return const JsonEncoder.withIndent('  ').convert([
-      for (final diagnostic in sortDiagnostics(diagnostics))
-        diagnostic.toJson(),
-    ]);
-  }
+  bool get isMissing => matches.isEmpty;
+  bool get isAmbiguous => matches.length > 1;
+  WritersideTopic? get topic => matches.length == 1 ? matches.single : null;
 }

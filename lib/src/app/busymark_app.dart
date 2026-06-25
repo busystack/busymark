@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +17,7 @@ import 'app_settings.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
+import 'busymark_glyphs.dart';
 import '../platform/linux_header_bar_service.dart';
 
 class BusyMarkApp extends ConsumerWidget {
@@ -67,8 +67,6 @@ class BusyMarkApp extends ConsumerWidget {
                     _SaveActiveIntent(),
                 SingleActivator(LogicalKeyboardKey.slash, control: true):
                     _KeyboardShortcutsIntent(),
-                SingleActivator(LogicalKeyboardKey.keyP, control: true):
-                    _PrintActiveIntent(),
                 SingleActivator(LogicalKeyboardKey.keyF, control: true):
                     _OpenSearchIntent(),
                 SingleActivator(LogicalKeyboardKey.escape):
@@ -140,12 +138,6 @@ class BusyMarkApp extends ConsumerWidget {
                           return null;
                         },
                       ),
-                  _PrintActiveIntent: CallbackAction<_PrintActiveIntent>(
-                    onInvoke: (intent) {
-                      unawaited(_printActivePreview(ref));
-                      return null;
-                    },
-                  ),
                   _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
                     onInvoke: (intent) {
                       if (ref.read(workspaceControllerProvider).workspace !=
@@ -211,15 +203,15 @@ class BusyMarkApp extends ConsumerWidget {
               BusyMarkActionRow(
                 title: 'Open Markdown File',
                 subtitle: '.md or .markdown',
-                leading: const Icon(Icons.description_outlined),
-                trailing: const Icon(Icons.chevron_right),
+                leading: const Icon(BusyMarkGlyphs.markdownFile),
+                trailing: const Icon(BusyMarkGlyphs.rightArrow),
                 onTap: () => Navigator.pop(dialogContext, 'file'),
               ),
               BusyMarkActionRow(
                 title: 'Open Folder or Writerside Project',
                 subtitle: 'Markdown folder or Writerside-compatible project',
-                leading: const Icon(Icons.folder_outlined),
-                trailing: const Icon(Icons.chevron_right),
+                leading: const Icon(BusyMarkGlyphs.folder),
+                trailing: const Icon(BusyMarkGlyphs.rightArrow),
                 onTap: () => Navigator.pop(dialogContext, 'folder'),
               ),
             ],
@@ -273,29 +265,6 @@ class BusyMarkApp extends ConsumerWidget {
     return p.extension(lastPath).isEmpty ? lastPath : p.dirname(lastPath);
   }
 
-  Future<void> _printActivePreview(WidgetRef ref) async {
-    final controller = ref.read(workspaceControllerProvider.notifier);
-    final state = ref.read(workspaceControllerProvider);
-    if (state.workspace == null) {
-      return;
-    }
-    final html = controller.exportActiveHtml();
-    final file = File(
-      p.join(
-        Directory.systemTemp.path,
-        'busymark-print-${DateTime.now().microsecondsSinceEpoch}.html',
-      ),
-    );
-    final printableHtml = html.replaceFirst(
-      '</body>',
-      '<script>window.addEventListener("load",function(){window.print();});</script></body>',
-    );
-    await file.writeAsString(printableHtml);
-    await Process.start('xdg-open', [
-      file.path,
-    ], mode: ProcessStartMode.detached);
-  }
-
   void _configureNativeHeaderBar(BuildContext context, WidgetRef ref) {
     final service = ref.watch(linuxHeaderBarServiceProvider);
     if (!service.isAvailable) {
@@ -318,7 +287,6 @@ class BusyMarkApp extends ConsumerWidget {
       settings: 'Settings',
       keyboardShortcuts: 'Keyboard Shortcuts',
       aboutBusyMark: 'About BusyMark',
-      exportPreview: 'Export Preview',
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
@@ -394,10 +362,6 @@ class _SaveActiveIntent extends Intent {
 
 class _KeyboardShortcutsIntent extends Intent {
   const _KeyboardShortcutsIntent();
-}
-
-class _PrintActiveIntent extends Intent {
-  const _PrintActiveIntent();
 }
 
 class _OpenSearchIntent extends Intent {

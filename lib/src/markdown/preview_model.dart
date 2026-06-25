@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import '../core/source_span.dart';
 import 'busymark_document.dart';
 import 'markdown_model.dart';
 
@@ -29,6 +28,10 @@ class PreviewBlock {
     this.inlines = const [],
     this.children = const [],
     this.attributes = const {},
+    this.sourceStartLine,
+    this.sourceEndLine,
+    this.sourceStartOffset,
+    this.sourceEndOffset,
   });
 
   final PreviewBlockKind kind;
@@ -38,6 +41,10 @@ class PreviewBlock {
   final List<PreviewInline> inlines;
   final List<PreviewBlock> children;
   final Map<String, String> attributes;
+  final int? sourceStartLine;
+  final int? sourceEndLine;
+  final int? sourceStartOffset;
+  final int? sourceEndOffset;
 }
 
 enum PreviewInlineKind {
@@ -112,7 +119,7 @@ class BusyMarkPreviewBuilder {
   }
 
   PreviewBlock _block(BusyBlock block) {
-    return switch (block.kind) {
+    final preview = switch (block.kind) {
       BusyBlockKind.heading => PreviewBlock(
         kind: PreviewBlockKind.heading,
         text: _plainText(block.inlines),
@@ -209,6 +216,26 @@ class BusyMarkPreviewBuilder {
         text: '',
       ),
     };
+    return _withSourceSpan(preview, block.sourceSpan);
+  }
+
+  PreviewBlock _withSourceSpan(PreviewBlock block, SourceSpan? span) {
+    if (span == null) {
+      return block;
+    }
+    return PreviewBlock(
+      kind: block.kind,
+      text: block.text,
+      level: block.level,
+      language: block.language,
+      inlines: block.inlines,
+      children: block.children,
+      attributes: block.attributes,
+      sourceStartLine: span.startLine,
+      sourceEndLine: span.endLine,
+      sourceStartOffset: span.startOffset,
+      sourceEndOffset: span.endOffset,
+    );
   }
 
   List<PreviewInline> _inlines(List<BusyInline> inlines) {
@@ -249,97 +276,6 @@ class BusyMarkPreviewBuilder {
         .join()
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-  }
-}
-
-class MarkdownHtmlExporter {
-  const MarkdownHtmlExporter();
-
-  String export(ParsedMarkdownDocument document) {
-    final preview = const MarkdownPreviewBuilder().build(document);
-    final buffer = StringBuffer()
-      ..writeln('<!doctype html>')
-      ..writeln('<html lang="en">')
-      ..writeln('<head>')
-      ..writeln('<meta charset="utf-8">')
-      ..writeln('<title>${htmlEscape.convert(preview.title)}</title>')
-      ..writeln(
-        '<style>body{font-family:sans-serif;max-width:860px;margin:2rem auto;line-height:1.55}code,pre{font-family:monospace}.admonition{border-left:4px solid #4a86cf;padding:.5rem 1rem;background:#f4f7fb}</style>',
-      )
-      ..writeln('</head>')
-      ..writeln('<body>');
-    for (final block in preview.blocks) {
-      _writeBlock(buffer, block);
-    }
-    buffer
-      ..writeln('</body>')
-      ..writeln('</html>');
-    return buffer.toString();
-  }
-
-  void _writeBlock(StringBuffer buffer, PreviewBlock block) {
-    final text = _inlineHtml(block);
-    switch (block.kind) {
-      case PreviewBlockKind.heading:
-        final level = block.level?.clamp(1, 6) ?? 2;
-        final id = _safeHtmlAttribute(block.attributes['id']);
-        buffer.writeln(
-          '<h$level${id == null ? '' : ' id="$id"'}>$text</h$level>',
-        );
-      case PreviewBlockKind.code:
-        final language = _safeHtmlAttribute(block.language);
-        buffer.writeln(
-          '<pre><code${language == null ? '' : ' class="language-$language"'}>${htmlEscape.convert(block.text)}</code></pre>',
-        );
-      case PreviewBlockKind.thematicBreak:
-        buffer.writeln('<hr>');
-      case PreviewBlockKind.image:
-        final src = _safeUrl(block.attributes['src'] ?? '');
-        if (src != null) {
-          buffer.writeln(
-            '<figure><img src="${htmlEscape.convert(src)}" alt="${htmlEscape.convert(block.text)}"><figcaption>${htmlEscape.convert(block.text)}</figcaption></figure>',
-          );
-        }
-      case PreviewBlockKind.admonition:
-        buffer.writeln('<aside class="admonition">$text</aside>');
-      case PreviewBlockKind.list:
-        final tag = block.attributes['ordered'] == 'true' ? 'ol' : 'ul';
-        final task = block.attributes['task'];
-        final checkbox = task == null
-            ? ''
-            : '<input type="checkbox" disabled${task == 'true' ? ' checked' : ''}> ';
-        buffer.writeln('<$tag><li>$checkbox$text</li></$tag>');
-      case PreviewBlockKind.tabs:
-        buffer.writeln('<section><strong>Tabs</strong><p>$text</p></section>');
-      case PreviewBlockKind.procedure:
-        buffer.writeln('<section><h2>$text</h2></section>');
-      case PreviewBlockKind.table:
-        _writeTable(buffer, block);
-      case PreviewBlockKind.raw:
-        buffer.writeln(
-          '<pre><code>${htmlEscape.convert(block.text)}</code></pre>',
-        );
-      case PreviewBlockKind.unknown:
-        buffer.writeln('<p><em>$text</em></p>');
-      case PreviewBlockKind.paragraph:
-      case PreviewBlockKind.quote:
-      case PreviewBlockKind.link:
-        buffer.writeln('<p>$text</p>');
-    }
-  }
-
-  void _writeTable(StringBuffer buffer, PreviewBlock block) {
-    buffer.writeln('<table>');
-    for (final row in block.children) {
-      final header = row.attributes['header'] == 'true';
-      buffer.writeln('<tr>');
-      for (final cell in row.children) {
-        final tag = header ? 'th' : 'td';
-        buffer.writeln('<$tag>${_inlineHtml(cell)}</$tag>');
-      }
-      buffer.writeln('</tr>');
-    }
-    buffer.writeln('</table>');
   }
 }
 
@@ -508,61 +444,4 @@ class _ParsedInline {
 
   final PreviewInline inline;
   final int end;
-}
-
-String _inlineHtml(PreviewBlock block) {
-  final inlines = block.inlines.isEmpty
-      ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
-      : block.inlines;
-  return inlines.map(_inlineNodeHtml).join();
-}
-
-String _inlineNodeHtml(PreviewInline inline) {
-  final childHtml = inline.children.isEmpty
-      ? htmlEscape.convert(inline.text)
-      : inline.children.map(_inlineNodeHtml).join();
-  return switch (inline.kind) {
-    PreviewInlineKind.text => htmlEscape.convert(inline.text),
-    PreviewInlineKind.strong => '<strong>$childHtml</strong>',
-    PreviewInlineKind.emphasis => '<em>$childHtml</em>',
-    PreviewInlineKind.underline => '<u>$childHtml</u>',
-    PreviewInlineKind.strikethrough => '<del>$childHtml</del>',
-    PreviewInlineKind.code => '<code>${htmlEscape.convert(inline.text)}</code>',
-    PreviewInlineKind.link =>
-      _safeUrl(inline.destination ?? '') == null
-          ? childHtml
-          : '<a href="${htmlEscape.convert(_safeUrl(inline.destination ?? '')!)}">$childHtml</a>',
-    PreviewInlineKind.image =>
-      _safeUrl(inline.destination ?? '') == null
-          ? htmlEscape.convert(inline.text)
-          : '<img src="${htmlEscape.convert(_safeUrl(inline.destination ?? '')!)}" alt="${htmlEscape.convert(inline.text)}">',
-  };
-}
-
-String? _safeHtmlAttribute(String? value) {
-  if (value == null || value.trim().isEmpty) {
-    return null;
-  }
-  return htmlEscape.convert(value.trim());
-}
-
-String? _safeUrl(String value) {
-  final trimmed = value.trim();
-  if (trimmed.isEmpty) {
-    return '';
-  }
-  if (trimmed.startsWith('#')) {
-    return trimmed;
-  }
-  final uri = Uri.tryParse(trimmed);
-  if (uri == null) {
-    return null;
-  }
-  if (!uri.hasScheme) {
-    return trimmed;
-  }
-  return switch (uri.scheme.toLowerCase()) {
-    'http' || 'https' || 'mailto' => trimmed,
-    _ => null,
-  };
 }

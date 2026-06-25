@@ -14,6 +14,7 @@ import 'package:yaru/yaru.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../core/diagnostic.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../editor/markdown_image_view.dart';
@@ -23,9 +24,10 @@ import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
-import '../../markdown/preview_export.dart';
+import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_topic_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_model.dart';
 import '../workspace_safety.dart';
@@ -280,7 +282,7 @@ class WorkspaceScreen extends ConsumerWidget {
                     leading: Center(
                       child: BusyMarkHeaderIconButton(
                         tooltip: 'Welcome',
-                        icon: Icons.home_outlined,
+                        icon: BusyMarkGlyphs.home,
                         onPressed: () async {
                           if (await confirmSafeToContinue(context, ref) &&
                               context.mounted) {
@@ -314,7 +316,7 @@ class WorkspaceScreen extends ConsumerWidget {
                       const SizedBox(width: BusyMarkSpacing.sm),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Save',
-                        icon: Icons.check,
+                        icon: BusyMarkGlyphs.check,
                         accented: state.isDirty,
                         shortcut: 'Ctrl+S',
                         onPressed: () => unawaited(
@@ -323,7 +325,7 @@ class WorkspaceScreen extends ConsumerWidget {
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Validate',
-                        icon: Icons.fact_check_outlined,
+                        icon: BusyMarkGlyphs.diagnostics,
                         onPressed: () => unawaited(
                           _validateActiveAndShowProblems(context, ref),
                         ),
@@ -333,7 +335,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip: settings.sidebarVisible
                             ? 'Hide sidebar'
                             : 'Show sidebar',
-                        icon: Icons.view_sidebar_outlined,
+                        icon: BusyMarkGlyphs.sidebar,
                         selected: settings.sidebarVisible,
                         onPressed: () => settingsController.setSidebarVisible(
                           !settings.sidebarVisible,
@@ -341,7 +343,7 @@ class WorkspaceScreen extends ConsumerWidget {
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Search',
-                        icon: Icons.search,
+                        icon: BusyMarkGlyphs.search,
                         selected: searchState.active,
                         shortcut: 'Ctrl+F',
                         onPressed: () => _toggleSearch(ref),
@@ -352,7 +354,7 @@ class WorkspaceScreen extends ConsumerWidget {
                                 DocumentViewModePreference.source
                             ? 'Show preview'
                             : 'Hide preview',
-                        icon: Icons.preview_outlined,
+                        icon: BusyMarkGlyphs.preview,
                         selected:
                             settings.documentViewMode !=
                             DocumentViewModePreference.source,
@@ -361,26 +363,20 @@ class WorkspaceScreen extends ConsumerWidget {
                               DocumentViewModePreference.source,
                         ),
                       ),
-                      const _HeaderSeparator(),
-                      BusyMarkHeaderIconButton(
-                        tooltip: 'Export',
-                        icon: Icons.ios_share_outlined,
-                        onPressed: () => _showExportDialog(context, ref),
-                      ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Settings',
-                        icon: Icons.settings_outlined,
+                        icon: BusyMarkGlyphs.settings,
                         onPressed: () => context.go('/settings'),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'Keyboard Shortcuts',
-                        icon: Icons.keyboard_outlined,
+                        icon: BusyMarkGlyphs.keyboard,
                         onPressed: () =>
                             showBusyMarkKeyboardShortcutsDialog(context),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: 'About BusyMark',
-                        icon: Icons.info_outline,
+                        icon: BusyMarkGlyphs.info,
                         onPressed: () => showBusyMarkAboutDialog(context),
                       ),
                       const SizedBox(width: BusyMarkSpacing.sm),
@@ -390,7 +386,7 @@ class WorkspaceScreen extends ConsumerWidget {
               children: [
                 if (state.errorMessage != null)
                   _InlineMessage(
-                    icon: Icons.warning_amber_outlined,
+                    icon: BusyMarkGlyphs.warning,
                     message: state.errorMessage!,
                   ),
                 Expanded(
@@ -531,8 +527,6 @@ class WorkspaceScreen extends ConsumerWidget {
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
-      case HeaderBarAction.exportPreview:
-        _showExportDialog(context, ref);
       case HeaderBarAction.viewModeEditor:
         unawaited(
           settingsController.setDocumentViewMode(
@@ -588,59 +582,6 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.preview => AppViewMode.preview,
       DocumentViewModePreference.split => AppViewMode.split,
     };
-  }
-
-  void _showExportDialog(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(workspaceControllerProvider.notifier);
-    final html = controller.exportActiveHtml();
-    final diagnostics = controller.exportDiagnosticsJson();
-    final summary = controller.exportProjectSummaryJson();
-    final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    unawaited(
-      showBusyMarkModalDialog<void>(
-        context,
-        headerBarService: headerBar.isAvailable ? headerBar : null,
-        builder: (context) => BusyMarkDialogShell(
-          title: 'Export Preview',
-          maxWidth: 860,
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-          children: [
-            SizedBox(
-              width: 800,
-              height: 460,
-              child: DefaultTabController(
-                length: 3,
-                child: Column(
-                  children: [
-                    const TabBar(
-                      tabs: [
-                        Tab(text: 'HTML'),
-                        Tab(text: 'Diagnostics JSON'),
-                        Tab(text: 'Project JSON'),
-                      ],
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _ReadonlyExportText(html),
-                          _ReadonlyExportText(diagnostics),
-                          _ReadonlyExportText(summary),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _openSearchResult(
@@ -825,24 +766,36 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return TextField(
-      controller: _controller,
-      focusNode: _focusNode,
-      textInputAction: TextInputAction.search,
-      onSubmitted: (_) => widget.onSubmitted(),
-      decoration: InputDecoration(
-        isDense: true,
-        prefixIcon: Icon(Icons.search, color: colors.mutedForeground),
-        hintText: 'Search',
-        filled: true,
-        fillColor: colors.control,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: BusyMarkSpacing.md,
-          vertical: BusyMarkSpacing.sm,
+    return SizedBox(
+      height: BusyMarkSizes.iconButton,
+      child: TextField(
+        controller: _controller,
+        focusNode: _focusNode,
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => widget.onSubmitted(),
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isDense: true,
+          prefixIcon: Icon(
+            BusyMarkGlyphs.search,
+            color: colors.mutedForeground,
+            size: BusyMarkSizes.iconSm,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: BusyMarkSizes.iconButton,
+            minHeight: BusyMarkSizes.iconButton,
+          ),
+          hintText: 'Search',
+          filled: true,
+          fillColor: colors.control,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.md,
+            vertical: 0,
+          ),
         ),
       ),
     );
@@ -954,10 +907,7 @@ class _SidebarState extends State<_Sidebar> {
         : _tab.clamp(0, tabs.length - 1).toInt();
     final selectedTab = tabs.isEmpty ? null : tabs[selectedIndex];
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.sidebar,
-        border: Border(right: BorderSide(color: colors.sidebarBorder)),
-      ),
+      decoration: BoxDecoration(color: colors.sidebar),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1158,7 +1108,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
     if (widget.workspace.files.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.folder_off_outlined,
+        icon: BusyMarkGlyphs.folder,
         title: 'No files',
       );
     }
@@ -1324,11 +1274,11 @@ IconData _fileTreeIcon(_FileTreeNode node, {required bool expanded}) {
     DocumentKind.markdown ||
     DocumentKind.writersideMarkdownTopic => YaruIcons.text_editor,
     DocumentKind.writersideXmlTopic => YaruIcons.document,
-    DocumentKind.tree => Icons.account_tree_outlined,
+    DocumentKind.tree => BusyMarkGlyphs.tree,
     DocumentKind.config => YaruIcons.gear,
-    DocumentKind.variables => Icons.percent_outlined,
-    DocumentKind.categories => Icons.category_outlined,
-    DocumentKind.image => Icons.image_outlined,
+    DocumentKind.variables => BusyMarkGlyphs.symbols,
+    DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.image => BusyMarkGlyphs.image,
     _ => YaruIcons.document,
   };
 }
@@ -1525,7 +1475,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final module = widget.workspace.writersideModule;
     if (module == null || module.instances.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.account_tree_outlined,
+        icon: BusyMarkGlyphs.tree,
         title: 'No Writerside TOC',
       );
     }
@@ -1534,19 +1484,29 @@ class _TocTabState extends ConsumerState<_TocTab> {
       instance.tocRoots,
       _expandedNodeKeys,
     );
+    final activeTopicReference = _activeTocTopicReference(widget.workspace);
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
       itemCount: entries.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-            child: Text(
-              instance.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: busyMarkSectionHeaderStyle(context),
+          return _TocHeader(
+            instanceName: instance.name,
+            canCreateChild: activeTopicReference != null,
+            onCreateTopic: () => _showCreateTopicDialog(
+              context,
+              placement: activeTopicReference == null
+                  ? WritersideTopicCreatePlacement.root
+                  : WritersideTopicCreatePlacement.sibling,
+              referenceTopic: activeTopicReference,
             ),
+            onCreateChildTopic: activeTopicReference == null
+                ? null
+                : () => _showCreateTopicDialog(
+                    context,
+                    placement: WritersideTopicCreatePlacement.child,
+                    referenceTopic: activeTopicReference,
+                  ),
           );
         }
         final entry = entries[index - 1];
@@ -1556,7 +1516,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         final hasChildren = node.children.isNotEmpty;
         final topic = node.topicFileName == null
             ? null
-            : module.topicsByFileName[node.topicFileName]?.filePath;
+            : module.topicByReference(node.topicFileName!)?.filePath;
         final label =
             node.tocTitle ?? node.topicFileName ?? node.href ?? 'TOC section';
         void toggle() {
@@ -1574,7 +1534,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           enabled: topic != null || hasChildren,
           selected: topic == widget.workspace.activeFilePath,
           depth: entry.depth,
-          icon: node.href != null ? Icons.open_in_new : Icons.article_outlined,
+          icon: node.href != null
+              ? BusyMarkGlyphs.externalLink
+              : BusyMarkGlyphs.document,
           hasChildren: hasChildren,
           expanded: expanded,
           muted: node.hidden,
@@ -1592,6 +1554,377 @@ class _TocTabState extends ConsumerState<_TocTab> {
               : null,
         );
       },
+    );
+  }
+
+  Future<void> _showCreateTopicDialog(
+    BuildContext context, {
+    required WritersideTopicCreatePlacement placement,
+    required String? referenceTopic,
+  }) async {
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      return;
+    }
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    await showBusyMarkModalDialog<void>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (dialogContext) => _CreateWritersideTopicDialog(
+        workspace: widget.workspace,
+        placement: placement,
+        referenceTopic: referenceTopic,
+      ),
+    );
+  }
+}
+
+class _TocHeader extends StatelessWidget {
+  const _TocHeader({
+    required this.instanceName,
+    required this.canCreateChild,
+    required this.onCreateTopic,
+    required this.onCreateChildTopic,
+  });
+
+  final String instanceName;
+  final bool canCreateChild;
+  final VoidCallback onCreateTopic;
+  final VoidCallback? onCreateChildTopic;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              instanceName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: busyMarkSectionHeaderStyle(context),
+            ),
+          ),
+          BusyMarkHeaderIconButton(
+            tooltip: 'New Topic',
+            icon: BusyMarkGlyphs.newDocument,
+            transparent: true,
+            onPressed: onCreateTopic,
+          ),
+          const SizedBox(width: BusyMarkSpacing.xs),
+          BusyMarkHeaderIconButton(
+            tooltip: 'New Child Topic',
+            icon: BusyMarkGlyphs.tree,
+            transparent: true,
+            onPressed: canCreateChild ? onCreateChildTopic : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreateWritersideTopicDialog extends ConsumerStatefulWidget {
+  const _CreateWritersideTopicDialog({
+    required this.workspace,
+    required this.placement,
+    required this.referenceTopic,
+  });
+
+  final Workspace workspace;
+  final WritersideTopicCreatePlacement placement;
+  final String? referenceTopic;
+
+  @override
+  ConsumerState<_CreateWritersideTopicDialog> createState() =>
+      _CreateWritersideTopicDialogState();
+}
+
+class _CreateWritersideTopicDialogState
+    extends ConsumerState<_CreateWritersideTopicDialog> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _fileNameController;
+  var _format = WritersideTopicFormat.markdown;
+  var _fileNameEdited = false;
+  var _syncingFileName = false;
+  var _creating = false;
+  String? _creationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: 'New topic')
+      ..addListener(_handleTitleChanged);
+    _fileNameController = TextEditingController(text: 'new-topic.md')
+      ..addListener(_handleFileNameChanged);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _fileNameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final titleError = _titleError;
+    final fileNameError = _fileNameError;
+    final canCreate = !_creating && titleError == null && fileNameError == null;
+    return BusyMarkDialogShell(
+      title: _dialogTitle,
+      maxWidth: 560,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: canCreate ? _submit : null,
+          child: Text(_creating ? 'Creating...' : 'Create'),
+        ),
+      ],
+      children: [
+        TextField(
+          controller: _titleController,
+          autofocus: true,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: 'Topic title',
+            errorText: titleError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        TextField(
+          controller: _fileNameController,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) {
+            if (canCreate) {
+              _submit();
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'File name',
+            errorText: fileNameError,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        SegmentedButton<WritersideTopicFormat>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(
+              value: WritersideTopicFormat.markdown,
+              label: Text('Markdown'),
+            ),
+            ButtonSegment(value: WritersideTopicFormat.xml, label: Text('XML')),
+          ],
+          selected: {_format},
+          onSelectionChanged: (value) => _setFormat(value.first),
+        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
+        if (_creationError != null) ...[
+          _DialogMessage(message: _creationError!),
+          const SizedBox(height: BusyMarkSpacing.lg),
+        ],
+        Text(
+          'Location',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: BusyMarkSurfaceColors.of(context).mutedForeground,
+          ),
+        ),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: BusyMarkSurfaceColors.of(context).control,
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            border: Border.all(
+              color: BusyMarkSurfaceColors.of(context).subtleBorder,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: SelectableText(
+              _targetPath,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String get _dialogTitle {
+    return widget.placement == WritersideTopicCreatePlacement.child
+        ? 'New Child Topic'
+        : 'New Topic';
+  }
+
+  String? get _titleError {
+    if (_titleController.text.trim().isEmpty) {
+      return 'Topic title is required.';
+    }
+    return null;
+  }
+
+  String? get _fileNameError {
+    final value = _fileNameController.text.trim();
+    if (value.isEmpty) {
+      return 'File name is required.';
+    }
+    if (value == '.' ||
+        value == '..' ||
+        p.isAbsolute(value) ||
+        value.contains('/') ||
+        value.contains(r'\') ||
+        value.contains('..')) {
+      return 'Use a single safe file name.';
+    }
+    final expectedExtension = _extensionFor(_format);
+    final extension = p.extension(value).toLowerCase();
+    if (extension.isNotEmpty && extension != expectedExtension) {
+      return 'Use the $expectedExtension extension for this format.';
+    }
+    final id = p.basenameWithoutExtension(value);
+    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
+      return 'Use letters, numbers, underscores, or hyphens.';
+    }
+    final existingIds = widget.workspace.writersideModule?.topics
+        .map((topic) => topic.id)
+        .toSet();
+    if (existingIds?.contains(id) ?? false) {
+      return 'A topic with this ID already exists.';
+    }
+    return null;
+  }
+
+  String get _targetPath {
+    final module = widget.workspace.writersideModule;
+    final topicsDir = module?.config.topicsDir ?? 'topics';
+    return p.join(topicsDir, _effectiveFileName);
+  }
+
+  String get _effectiveFileName {
+    final value = _fileNameController.text.trim();
+    if (p.extension(value).isEmpty) {
+      return '$value${_extensionFor(_format)}';
+    }
+    return value;
+  }
+
+  void _handleTitleChanged() {
+    _creationError = null;
+    if (!_fileNameEdited) {
+      _syncingFileName = true;
+      _fileNameController.text =
+          '${_slugTopicName(_titleController.text)}${_extensionFor(_format)}';
+      _syncingFileName = false;
+    }
+    setState(() {});
+  }
+
+  void _handleFileNameChanged() {
+    _creationError = null;
+    if (!_syncingFileName) {
+      _fileNameEdited = true;
+    }
+    setState(() {});
+  }
+
+  void _setFormat(WritersideTopicFormat value) {
+    final previousExtension = _extensionFor(_format);
+    _format = value;
+    final nextExtension = _extensionFor(value);
+    if (!_fileNameEdited) {
+      _syncingFileName = true;
+      _fileNameController.text =
+          '${_slugTopicName(_titleController.text)}$nextExtension';
+      _syncingFileName = false;
+    } else {
+      final text = _fileNameController.text.trim();
+      if (p.extension(text).toLowerCase() == previousExtension) {
+        _syncingFileName = true;
+        _fileNameController.text =
+            '${p.basenameWithoutExtension(text)}'
+            '$nextExtension';
+        _syncingFileName = false;
+      }
+    }
+    _creationError = null;
+    setState(() {});
+  }
+
+  Future<void> _submit() async {
+    if (_creating || _titleError != null || _fileNameError != null) {
+      return;
+    }
+    setState(() {
+      _creating = true;
+      _creationError = null;
+    });
+    final created = await ref
+        .read(workspaceControllerProvider.notifier)
+        .createWritersideTopic(
+          WritersideTopicCreateRequest(
+            title: _titleController.text.trim(),
+            fileName: _effectiveFileName,
+            format: _format,
+            placement: widget.placement,
+            referenceTopic: widget.referenceTopic,
+          ),
+        );
+    if (!mounted) {
+      return;
+    }
+    if (created) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() {
+      _creating = false;
+      _creationError =
+          ref.read(workspaceControllerProvider).errorMessage ??
+          'Create Writerside topic failed.';
+    });
+  }
+
+  String _slugTopicName(String value) {
+    final slug = slugForHeading(value);
+    return slug.isEmpty ? 'new-topic' : slug;
+  }
+
+  String _extensionFor(WritersideTopicFormat format) {
+    return switch (format) {
+      WritersideTopicFormat.markdown => '.md',
+      WritersideTopicFormat.xml => '.topic',
+    };
+  }
+}
+
+class _DialogMessage extends StatelessWidget {
+  const _DialogMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.admonitionWarning,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(BusyMarkSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(BusyMarkGlyphs.warning),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(child: Text(message)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1647,7 +1980,7 @@ Set<String> _activeTocAncestorKeys(Workspace workspace) {
   bool visit(TocNode node) {
     final topic = node.topicFileName == null
         ? null
-        : module.topicsByFileName[node.topicFileName]?.filePath;
+        : module.topicByReference(node.topicFileName!)?.filePath;
     if (topic == activeFilePath) {
       return true;
     }
@@ -1664,6 +1997,24 @@ Set<String> _activeTocAncestorKeys(Workspace workspace) {
     visit(node);
   }
   return ancestors;
+}
+
+String? _activeTocTopicReference(Workspace workspace) {
+  final module = workspace.writersideModule;
+  final activeFilePath = workspace.activeFilePath;
+  if (module == null || module.instances.isEmpty || activeFilePath == null) {
+    return null;
+  }
+  for (final node in module.instances.first.tocRoots.expand(
+    (node) => node.flatten(),
+  )) {
+    final topicReference = node.topicFileName;
+    if (topicReference != null &&
+        module.topicByReference(topicReference)?.filePath == activeFilePath) {
+      return topicReference;
+    }
+  }
+  return null;
 }
 
 String _tocNodeKey(TocNode node) {
@@ -1708,7 +2059,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     final headings = widget.workspace.markdown?.headings ?? const [];
     if (headings.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.format_size_outlined,
+        icon: BusyMarkGlyphs.font,
         title: 'No outline',
       );
     }
@@ -1739,7 +2090,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         return _SidebarTreeRow(
           title: heading.text,
           depth: entry.depth,
-          icon: Icons.tag_outlined,
+          icon: BusyMarkGlyphs.tag,
           leading: _HeadingBadge(level: heading.level),
           hasChildren: hasChildren,
           expanded: expanded,
@@ -1945,6 +2296,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewSearchKeys = <int, GlobalKey>{};
   final _foldedRegionKeys = <String>{};
   String _lastPath = '';
+  var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
@@ -2122,7 +2474,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToSearchTarget(next);
     });
-    final searchState = ref.watch(_workspaceSearchProvider);
     final colors = BusyMarkSurfaceColors.of(context);
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
     final wysiwygDocument =
@@ -2390,7 +2741,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 controller: _previewScrollController,
                 headingKeys: _previewHeadingKeys,
                 searchKeys: _previewSearchKeys,
-                searchQuery: searchState.active ? searchState.query : '',
               ),
             ),
         ],
@@ -2663,13 +3013,32 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _wysiwygScrollHeadingId = null;
-        _wysiwygSearchQuery = target.query;
-        _wysiwygScrollRequest += 1;
-      });
-      _scrollSourceToSearchRange(target);
-      _scrollPreviewToSearchTarget(target);
+      final editorVisible =
+          widget.viewMode == DocumentViewModePreference.editor;
+      final wysiwygVisible =
+          editorVisible &&
+          _canUseWysiwyg(widget.state.workspace) &&
+          _wysiwygDocument() != null;
+      final sourceVisible =
+          widget.viewMode != DocumentViewModePreference.preview &&
+          !wysiwygVisible;
+      final previewVisible =
+          widget.viewMode != DocumentViewModePreference.source &&
+          !editorVisible;
+
+      if (wysiwygVisible) {
+        setState(() {
+          _wysiwygScrollHeadingId = null;
+          _wysiwygSearchQuery = target.query;
+          _wysiwygScrollRequest += 1;
+        });
+      }
+      if (sourceVisible) {
+        _scrollSourceToSearchRange(target);
+      }
+      if (previewVisible) {
+        _schedulePreviewSearchScroll(target);
+      }
     });
   }
 
@@ -2825,31 +3194,139 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
-  void _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
-    final query = target.query.trim();
-    if (query.isEmpty) {
-      return;
-    }
-    final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
-    final normalizedQuery = query.toLowerCase();
-    for (final (index, block) in blocks.indexed) {
-      if (!_previewBlockSearchText(
-        block,
-      ).toLowerCase().contains(normalizedQuery)) {
-        continue;
-      }
-      final context = _previewSearchKeys[index]?.currentContext;
-      if (context == null) {
+  void _schedulePreviewSearchScroll(_SearchNavigationTarget target) {
+    _previewSearchScrollRequest = target.request;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isCurrentPreviewSearchScroll(target) ||
+          _scrollPreviewToSearchTarget(target)) {
         return;
       }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_isCurrentPreviewSearchScroll(target)) {
+          _scrollPreviewToSearchTarget(target);
+        }
+      });
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 80), () {
+          if (_isCurrentPreviewSearchScroll(target)) {
+            _scrollPreviewToSearchTarget(target);
+          }
+        }),
+      );
+      unawaited(
+        Future<void>.delayed(const Duration(milliseconds: 180), () {
+          if (_isCurrentPreviewSearchScroll(target)) {
+            _scrollPreviewToSearchTarget(target);
+          }
+        }),
+      );
+    });
+  }
+
+  bool _isCurrentPreviewSearchScroll(_SearchNavigationTarget target) {
+    return mounted && target.request == _previewSearchScrollRequest;
+  }
+
+  bool _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
+    final query = target.query.trim();
+    if (query.isEmpty) {
+      return false;
+    }
+    final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
+    final index = _previewSearchBlockIndex(
+      blocks,
+      target,
+      widget.state.activeText,
+    );
+    if (index == null) {
+      return _scrollPreviewToApproximateLine(target);
+    }
+    final context = _previewSearchKeys[index]?.currentContext;
+    if (context == null) {
+      _scrollPreviewToApproximateLine(target);
+      return false;
+    }
+    _scrollPreviewToBlockOffset(context, blocks[index], target);
+    return true;
+  }
+
+  void _scrollPreviewToBlockOffset(
+    BuildContext blockContext,
+    PreviewBlock block,
+    _SearchNavigationTarget target,
+  ) {
+    if (!_previewScrollController.hasClients) {
       Scrollable.ensureVisible(
-        context,
+        blockContext,
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
         alignment: 0.0,
       );
       return;
     }
+    final renderObject = blockContext.findRenderObject();
+    if (renderObject is! RenderBox) {
+      Scrollable.ensureVisible(
+        blockContext,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+      return;
+    }
+
+    final position = _safeScrollPosition(_previewScrollController);
+    if (position == null) {
+      return;
+    }
+    final viewportBox =
+        position.context.notificationContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null) {
+      Scrollable.ensureVisible(
+        blockContext,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        alignment: 0.0,
+      );
+      return;
+    }
+    final blockHeight = renderObject.size.height;
+    final targetY = renderObject
+        .localToGlobal(
+          Offset(
+            0,
+            blockHeight *
+                _previewBlockTargetFraction(
+                  block,
+                  target,
+                  widget.state.activeText,
+                ),
+          ),
+        )
+        .dy;
+    final viewportTop = viewportBox.localToGlobal(Offset.zero).dy;
+    final targetOffset =
+        position.pixels + targetY - viewportTop - BusyMarkSpacing.lg;
+    _previewScrollController.jumpTo(
+      targetOffset.clamp(0.0, position.maxScrollExtent).toDouble(),
+    );
+  }
+
+  bool _scrollPreviewToApproximateLine(_SearchNavigationTarget target) {
+    final position = _safeScrollPosition(_previewScrollController);
+    if (position == null) {
+      return false;
+    }
+    final sourceLineCount = widget.state.activeText.split('\n').length;
+    final denominator = math.max(1, sourceLineCount - 1);
+    final fraction = ((target.line - 1) / denominator).clamp(0.0, 1.0);
+    _previewScrollController.jumpTo(
+      (position.maxScrollExtent * fraction).clamp(
+        0.0,
+        position.maxScrollExtent,
+      ),
+    );
+    return true;
   }
 
   int _textOffsetForLine(String text, int line) {
@@ -2925,7 +3402,7 @@ class _SourceEditorFrame extends StatelessWidget {
   static const double editorPaddingBottom = 16;
   static const double editorPaddingLeft = 12;
   static const double editorPaddingRight = 16;
-  static const double _gutterWidth = 58;
+  static const double _gutterWidth = 50;
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
@@ -3038,6 +3515,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                     text: controller.buildSourceTextSpan(
                       context: context,
                       style: textStyle,
+                      hideCollapsedStartLines: true,
                     ),
                     strutStyle: strutStyle,
                     textHeightBehavior: _sourceTextHeightBehavior,
@@ -3273,6 +3751,9 @@ class _SourceGutterRow extends StatelessWidget {
     required this.onToggleFold,
   });
 
+  static const double _foldButtonSize = 16;
+  static const double _foldButtonRightInset = 1;
+
   final SourceGutterEntry entry;
   final bool active;
   final double lineHeight;
@@ -3293,35 +3774,34 @@ class _SourceGutterRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: active ? activeColor : Colors.transparent,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: lineHeight,
+      child: SizedBox(
+        height: lineHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
               child: Align(
-                alignment: Alignment.topRight,
+                alignment: Alignment.center,
                 child: Text('${entry.lineNumber}', style: numberStyle),
               ),
             ),
-          ),
-          const SizedBox(width: 3),
-          SizedBox(
-            width: 18,
-            height: lineHeight,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: region == null
-                  ? const SizedBox.shrink()
-                  : _SourceFoldButton(
-                      region: region,
-                      collapsed: entry.collapsed,
-                      onToggleFold: onToggleFold,
-                    ),
+            Positioned(
+              top: 0,
+              right: _foldButtonRightInset,
+              width: _foldButtonSize,
+              height: lineHeight,
+              child: Align(
+                alignment: Alignment.center,
+                child: region == null
+                    ? const SizedBox.shrink()
+                    : _SourceFoldButton(
+                        region: region,
+                        collapsed: entry.collapsed,
+                        onToggleFold: onToggleFold,
+                      ),
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -3352,14 +3832,14 @@ class _SourceFoldButton extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: () => onToggleFold(region),
           child: SizedBox.square(
-            dimension: 18,
+            dimension: _SourceGutterRow._foldButtonSize,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
               ),
               child: Icon(
                 collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
-                size: 13,
+                size: 12,
                 color: colors.mutedForeground,
               ),
             ),
@@ -3448,6 +3928,7 @@ List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
     textStyle: textStyle,
     strutStyle: strutStyle,
     textWidth: textWidth,
+    hideCollapsedStartLines: true,
   );
   for (final entry in entries) {
     final line = linesByNumber[entry.lineNumber];
@@ -3476,9 +3957,14 @@ TextPainter _sourceTextPainter(
   required TextStyle textStyle,
   required StrutStyle? strutStyle,
   required double textWidth,
+  bool hideCollapsedStartLines = false,
 }) {
   final painter = TextPainter(
-    text: controller.buildSourceTextSpan(context: context, style: textStyle),
+    text: controller.buildSourceTextSpan(
+      context: context,
+      style: textStyle,
+      hideCollapsedStartLines: hideCollapsedStartLines,
+    ),
     strutStyle: strutStyle,
     textDirection: Directionality.of(context),
     textHeightBehavior: _sourceTextHeightBehavior,
@@ -3544,7 +4030,6 @@ class _PreviewPane extends StatelessWidget {
     required this.controller,
     required this.headingKeys,
     required this.searchKeys,
-    required this.searchQuery,
   });
 
   final PreviewDocument? preview;
@@ -3552,7 +4037,6 @@ class _PreviewPane extends StatelessWidget {
   final ScrollController controller;
   final Map<String, GlobalKey> headingKeys;
   final Map<int, GlobalKey> searchKeys;
-  final String searchQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -3560,7 +4044,7 @@ class _PreviewPane extends StatelessWidget {
     final document = preview;
     if (document == null) {
       return const _EmptyPane(
-        icon: Icons.preview_outlined,
+        icon: BusyMarkGlyphs.preview,
         title: 'No preview',
       );
     }
@@ -3606,13 +4090,6 @@ class _PreviewPane extends StatelessWidget {
       workspace: workspace,
       headingKey: _keyForBlock(block),
     );
-    final query = searchQuery.trim();
-    if (query.isEmpty ||
-        !_previewBlockSearchText(
-          block,
-        ).toLowerCase().contains(query.toLowerCase())) {
-      return child;
-    }
     return KeyedSubtree(
       key: searchKeys.putIfAbsent(index, () => GlobalKey()),
       child: child,
@@ -3693,12 +4170,12 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       PreviewBlockKind.tabs => _PreviewCallout(
-        icon: Icons.tab_outlined,
+        icon: BusyMarkGlyphs.tab,
         color: colors.panel,
         child: Text(block.text),
       ),
       PreviewBlockKind.procedure => _PreviewCallout(
-        icon: Icons.format_list_numbered,
+        icon: BusyMarkGlyphs.orderedList,
         color: colors.panel,
         child: Text(block.text),
       ),
@@ -3720,7 +4197,7 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       PreviewBlockKind.quote => _PreviewCallout(
-        icon: Icons.format_quote_outlined,
+        icon: BusyMarkGlyphs.blockquote,
         color: colors.panel,
         child: _PreviewInlineText(block: block),
       ),
@@ -3764,9 +4241,9 @@ class _PreviewBlockView extends StatelessWidget {
 
   IconData _admonitionIcon(String? style) {
     return switch (style) {
-      'warning' => Icons.warning_amber_outlined,
-      'tip' => Icons.lightbulb_outline,
-      _ => Icons.info_outline,
+      'warning' => BusyMarkGlyphs.warning,
+      'tip' => BusyMarkGlyphs.tip,
+      _ => BusyMarkGlyphs.info,
     };
   }
 }
@@ -3886,11 +4363,196 @@ String _previewBlockSearchText(PreviewBlock block) {
   ].where((value) => value.isNotEmpty).join(' ');
 }
 
+int? _previewSearchBlockIndex(
+  List<PreviewBlock> blocks,
+  _SearchNavigationTarget target,
+  String source,
+) {
+  int? nearestBeforeIndex;
+  int? nearestAfterIndex;
+  for (final (index, block) in blocks.indexed) {
+    if (_previewBlockContainsSearchTarget(block, target)) {
+      return index;
+    }
+    final startLine = block.sourceStartLine;
+    if (startLine == null) {
+      continue;
+    }
+    if (startLine <= target.line) {
+      nearestBeforeIndex = index;
+    } else {
+      nearestAfterIndex ??= index;
+    }
+  }
+  return _previewSearchBlockIndexForSourceLine(blocks, source, target) ??
+      _previewSearchBlockIndexForOrdinal(
+        blocks,
+        target.query,
+        _searchResultOrdinalInSource(source, target),
+      ) ??
+      nearestBeforeIndex ??
+      nearestAfterIndex;
+}
+
+int? _previewSearchBlockIndexForSourceLine(
+  List<PreviewBlock> blocks,
+  String source,
+  _SearchNavigationTarget target,
+) {
+  final rawLine = _sourceLineText(source, target.line).trim();
+  if (rawLine.isEmpty) {
+    return null;
+  }
+  final strippedLine = _stripMarkdownForSearchResult(rawLine).toLowerCase();
+  final rawNeedle = rawLine.toLowerCase();
+  if (strippedLine.isEmpty && rawNeedle.isEmpty) {
+    return null;
+  }
+  for (final (index, block) in blocks.indexed) {
+    final searchText = _previewBlockSearchText(block).toLowerCase();
+    if ((strippedLine.isNotEmpty && searchText.contains(strippedLine)) ||
+        (rawNeedle.isNotEmpty && searchText.contains(rawNeedle))) {
+      return index;
+    }
+  }
+  return null;
+}
+
+String _sourceLineText(String source, int lineNumber) {
+  if (lineNumber <= 0) {
+    return '';
+  }
+  final lines = source.split('\n');
+  if (lineNumber > lines.length) {
+    return '';
+  }
+  return lines[lineNumber - 1];
+}
+
+int _searchResultOrdinalInSource(
+  String source,
+  _SearchNavigationTarget target,
+) {
+  final normalizedQuery = target.query.trim().toLowerCase();
+  if (normalizedQuery.isEmpty) {
+    return 0;
+  }
+  final lines = source.split('\n');
+  var ordinal = 0;
+  var lineStartOffset = 0;
+  for (final line in lines) {
+    final matchColumn = line.toLowerCase().indexOf(normalizedQuery);
+    if (matchColumn >= 0) {
+      final startOffset = lineStartOffset + matchColumn;
+      if (startOffset == target.startOffset) {
+        return ordinal;
+      }
+      if (startOffset > target.startOffset) {
+        return ordinal;
+      }
+      ordinal += 1;
+    }
+    lineStartOffset += line.length + 1;
+  }
+  return ordinal;
+}
+
+int? _previewSearchBlockIndexForOrdinal(
+  List<PreviewBlock> blocks,
+  String query,
+  int ordinal,
+) {
+  final normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery.isEmpty) {
+    return null;
+  }
+  var matchIndex = 0;
+  for (final (index, block) in blocks.indexed) {
+    if (!_previewBlockSearchText(
+      block,
+    ).toLowerCase().contains(normalizedQuery)) {
+      continue;
+    }
+    if (matchIndex == ordinal) {
+      return index;
+    }
+    matchIndex += 1;
+  }
+  return null;
+}
+
 String _previewInlineSearchText(PreviewInline inline) {
   return [
     inline.text,
     for (final child in inline.children) _previewInlineSearchText(child),
   ].where((value) => value.isNotEmpty).join(' ');
+}
+
+bool _previewBlockContainsSearchTarget(
+  PreviewBlock block,
+  _SearchNavigationTarget target,
+) {
+  final startOffset = block.sourceStartOffset;
+  final endOffset = block.sourceEndOffset;
+  if (startOffset != null &&
+      endOffset != null &&
+      target.startOffset >= startOffset &&
+      target.startOffset < endOffset) {
+    return true;
+  }
+
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (startLine != null &&
+      endLine != null &&
+      target.line >= startLine &&
+      target.line <= endLine) {
+    return true;
+  }
+
+  return block.children.any(
+    (child) => _previewBlockContainsSearchTarget(child, target),
+  );
+}
+
+double _previewBlockTargetFraction(
+  PreviewBlock block,
+  _SearchNavigationTarget target,
+  String source,
+) {
+  final startOffset = block.sourceStartOffset;
+  final endOffset = block.sourceEndOffset;
+  if (startOffset != null && endOffset != null && endOffset > startOffset) {
+    return ((target.startOffset - startOffset) / (endOffset - startOffset))
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (startLine != null && endLine != null && endLine > startLine) {
+    return ((target.line - startLine) / (endLine - startLine))
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+
+  final sourceLine = _sourceLineText(source, target.line).trim();
+  if (sourceLine.isNotEmpty && block.text.contains('\n')) {
+    final sourceNeedles = {
+      sourceLine,
+      _stripMarkdownForSearchResult(sourceLine),
+    }.where((value) => value.isNotEmpty).map((value) => value.toLowerCase());
+    final blockLines = block.text.split('\n');
+    for (final (index, blockLine) in blockLines.indexed) {
+      final normalizedBlockLine = blockLine.trim().toLowerCase();
+      if (sourceNeedles.any(normalizedBlockLine.contains)) {
+        final denominator = math.max(1, blockLines.length - 1);
+        return (index / denominator).clamp(0.0, 1.0).toDouble();
+      }
+    }
+  }
+
+  return 0.0;
 }
 
 class _ListMarker extends StatelessWidget {
@@ -3904,9 +4566,7 @@ class _ListMarker extends StatelessWidget {
     final task = block.attributes['task'];
     if (task != null) {
       return Icon(
-        task == 'true'
-            ? Icons.check_box_outlined
-            : Icons.check_box_outline_blank,
+        task == 'true' ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       );
@@ -3922,7 +4582,15 @@ class _ListMarker extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.only(top: 7),
-      child: Icon(Icons.circle, size: 6, color: colors.mutedForeground),
+      child: SizedBox.square(
+        dimension: 6,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.mutedForeground,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -4439,7 +5107,7 @@ class _ProblemsList extends StatelessWidget {
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
         child: diagnostics.isEmpty
             ? const _EmptyPane(
-                icon: Icons.check_circle_outline,
+                icon: BusyMarkGlyphs.check,
                 title: 'No problems found',
               )
             : ListView.builder(
@@ -4469,12 +5137,15 @@ class _SearchSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) {
-      return const _SidebarEmptyState(icon: Icons.search, title: 'Search');
+      return const _SidebarEmptyState(
+        icon: BusyMarkGlyphs.search,
+        title: 'Search',
+      );
     }
     final colors = BusyMarkSurfaceColors.of(context);
     if (results.isEmpty) {
       return const _SidebarEmptyState(
-        icon: Icons.search_off,
+        icon: BusyMarkGlyphs.searchUnavailable,
         title: 'No results',
       );
     }
@@ -4544,7 +5215,7 @@ class _SearchResultRow extends StatelessWidget {
               ),
               const SizedBox(width: BusyMarkSpacing.md),
               Icon(
-                Icons.chevron_right,
+                BusyMarkGlyphs.rightArrow,
                 size: BusyMarkSizes.iconSm,
                 color: colors.mutedForeground,
               ),
@@ -4610,9 +5281,9 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
           startOffset: startOffset,
           endOffset: startOffset + trimmedQuery.length,
           query: trimmedQuery,
-          title: _searchExcerpt(line),
+          title: _searchResultTitle(line),
           subtitle: '$relativePath - Line $lineNumber',
-          icon: Icons.subject,
+          icon: BusyMarkGlyphs.paragraph,
         ),
       );
       if (results.length >= _maxWorkspaceSearchResults) {
@@ -4654,12 +5325,48 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 
 const int _maxWorkspaceSearchResults = 80;
 
-String _searchExcerpt(String line) {
-  final trimmed = line.trim();
+String _searchResultTitle(String line) {
+  final trimmed = _stripMarkdownForSearchResult(line);
   if (trimmed.length <= 120) {
     return trimmed;
   }
   return '${trimmed.substring(0, 117)}...';
+}
+
+String _stripMarkdownForSearchResult(String line) {
+  var value = line.trim();
+  final fence = RegExp(
+    r'^(```+|~~~+)\s*([A-Za-z0-9_+\-#.]*)',
+  ).firstMatch(value);
+  if (fence != null) {
+    final language = fence.group(2)?.trim() ?? '';
+    return language.isEmpty ? 'Code block' : language;
+  }
+
+  value = value
+      .replaceFirst(RegExp(r'^\s{0,3}#{1,6}\s+'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}>\s?'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}[-+*]\s+\[[ xX]\]\s+'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}[-+*]\s+'), '')
+      .replaceFirst(RegExp(r'^\s{0,3}\d+[.)]\s+'), '')
+      .trim();
+  final replacements = <RegExp, String Function(Match)>{
+    RegExp(r'!\[([^\]]*)\]\([^)]+\)'): (match) => match.group(1) ?? '',
+    RegExp(r'\[([^\]]+)\]\([^)]+\)'): (match) => match.group(1) ?? '',
+    RegExp(r'\[([^\]]+)\]\[[^\]]*\]'): (match) => match.group(1) ?? '',
+    RegExp(r'`([^`]*)`'): (match) => match.group(1) ?? '',
+    RegExp(r'\*\*([^*]+)\*\*'): (match) => match.group(1) ?? '',
+    RegExp(r'__([^_]+)__'): (match) => match.group(1) ?? '',
+    RegExp(r'\*([^*]+)\*'): (match) => match.group(1) ?? '',
+    RegExp(r'_([^_]+)_'): (match) => match.group(1) ?? '',
+    RegExp(r'~~([^~]+)~~'): (match) => match.group(1) ?? '',
+    RegExp(r'<[^>]+>'): (_) => '',
+  };
+  for (final entry in replacements.entries) {
+    value = value.replaceAllMapped(entry.key, entry.value);
+  }
+  value = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return value.isEmpty ? 'Untitled result' : value;
 }
 
 String _relativeDocumentPath(Workspace workspace, String path) {
@@ -4685,11 +5392,11 @@ IconData _documentKindIcon(DocumentKind kind) {
     DocumentKind.markdown ||
     DocumentKind.writersideMarkdownTopic => YaruIcons.text_editor,
     DocumentKind.writersideXmlTopic => YaruIcons.document,
-    DocumentKind.tree => Icons.account_tree_outlined,
+    DocumentKind.tree => BusyMarkGlyphs.tree,
     DocumentKind.config => YaruIcons.gear,
-    DocumentKind.variables => Icons.percent_outlined,
-    DocumentKind.categories => Icons.category_outlined,
-    DocumentKind.image => Icons.image_outlined,
+    DocumentKind.variables => BusyMarkGlyphs.symbols,
+    DocumentKind.categories => BusyMarkGlyphs.category,
+    DocumentKind.image => BusyMarkGlyphs.image,
     DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
   };
 }
@@ -4773,10 +5480,10 @@ class _DiagnosticRow extends ConsumerWidget {
 
   IconData _diagnosticIcon(DiagnosticSeverity severity) {
     return switch (severity) {
-      DiagnosticSeverity.error => Icons.error_outline,
-      DiagnosticSeverity.warning => Icons.warning_amber_outlined,
-      DiagnosticSeverity.info => Icons.info_outline,
-      DiagnosticSeverity.hint => Icons.tips_and_updates_outlined,
+      DiagnosticSeverity.error => BusyMarkGlyphs.error,
+      DiagnosticSeverity.warning => BusyMarkGlyphs.warning,
+      DiagnosticSeverity.info => BusyMarkGlyphs.info,
+      DiagnosticSeverity.hint => BusyMarkGlyphs.tip,
     };
   }
 
@@ -4806,45 +5513,6 @@ class _EmptyPane extends StatelessWidget {
           Icon(icon, color: colors.mutedForeground),
           const SizedBox(height: BusyMarkSpacing.sm),
           Text(title, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReadonlyExportText extends StatelessWidget {
-  const _ReadonlyExportText(this.value);
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: TextButton.icon(
-                onPressed: () => Clipboard.setData(ClipboardData(text: value)),
-                icon: const Icon(Icons.copy, size: BusyMarkSizes.iconSm),
-                label: const Text('Copy'),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(BusyMarkSpacing.md),
-              child: SelectableText(
-                value,
-                style: const TextStyle(fontFamily: 'Ubuntu Mono', fontSize: 12),
-              ),
-            ),
-          ),
         ],
       ),
     );

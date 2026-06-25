@@ -6,9 +6,11 @@ import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
-import '../markdown/preview_export.dart';
+import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_model.dart';
+import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
 
 class WorkspaceService {
@@ -16,12 +18,16 @@ class WorkspaceService {
     this.markdownParser = const MarkdownParser(),
     this.previewBuilder = const MarkdownPreviewBuilder(),
     this.writersideService = const WritersideModuleService(),
+    this.writersideProjectCreator = const WritersideProjectCreator(),
+    this.writersideTopicCreator = const WritersideTopicCreator(),
     this.scanOptions = const WorkspaceScanOptions(),
   });
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
   final WritersideModuleService writersideService;
+  final WritersideProjectCreator writersideProjectCreator;
+  final WritersideTopicCreator writersideTopicCreator;
   final WorkspaceScanOptions scanOptions;
 
   Workspace createUntitledMarkdown({String source = ''}) {
@@ -54,6 +60,40 @@ class WorkspaceService {
       return _openWriterside(path);
     }
     return _openMarkdownFolder(path);
+  }
+
+  Future<Workspace> createWritersideProject(
+    WritersideProjectCreateRequest request,
+  ) async {
+    final result = await writersideProjectCreator.create(request);
+    return _openWriterside(
+      result.rootPath,
+      activeFilePath: result.startTopicPath,
+    );
+  }
+
+  Future<Workspace> createWritersideTopic(
+    Workspace workspace,
+    WritersideTopicCreateRequest request,
+  ) async {
+    if (workspace.kind != WorkspaceKind.writersideModule ||
+        workspace.writersideModule == null) {
+      throw StateError('A Writerside module must be open to create a topic.');
+    }
+    final module = workspace.writersideModule!;
+    if (module.instances.isEmpty) {
+      throw StateError('The Writerside module has no help instance tree.');
+    }
+    final result = await writersideTopicCreator.create(
+      WritersideTopicCreateTarget(
+        rootPath: module.rootPath,
+        treePath: module.instances.first.sourceTreePath,
+        topicsRootDir: module.config.topicsDir,
+        existingTopicIds: {for (final topic in module.topics) topic.id},
+      ),
+      request,
+    );
+    return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
   }
 
   void _logOpenPathDiagnostics(
@@ -131,12 +171,13 @@ class WorkspaceService {
           filePath: active,
           source: source,
           mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: p.join(module!.rootPath, module.config.topicsDir),
+          workspaceRoot: topic!.topicRoot,
+          validateLocalReferences: false,
         );
         return workspace.copyWith(
           markdown: markdown,
           diagnostics: sortDiagnostics([
-            ...module.diagnostics,
+            ...module!.diagnostics,
             ...markdown.diagnostics,
           ]),
         );
@@ -145,6 +186,7 @@ class WorkspaceService {
         final parsed = writersideService.topicParser.parseXml(
           filePath: active,
           source: source,
+          topicsRoot: topic!.topicRoot,
         );
         return workspace.copyWith(
           diagnostics: sortDiagnostics([
@@ -193,7 +235,8 @@ class WorkspaceService {
           filePath: active,
           source: source,
           mode: MarkdownMode.writersideMarkdown,
-          workspaceRoot: p.join(module.rootPath, module.config.topicsDir),
+          workspaceRoot: topic.topicRoot,
+          validateLocalReferences: false,
         );
         return previewBuilder.build(parsed);
       }
@@ -326,7 +369,7 @@ class WorkspaceService {
     if (startPage == null) {
       return null;
     }
-    return module.topicsByFileName[startPage]?.filePath;
+    return module.topicByReference(startPage)?.filePath;
   }
 
   Future<DocumentFile> _documentFile(String path, String rootPath) async {
@@ -420,7 +463,9 @@ class WorkspaceService {
     if (extension == '.tree') {
       return DocumentKind.tree;
     }
-    if (extension == '.cfg' || p.basename(path) == 'writerside.cfg') {
+    if (extension == '.cfg' ||
+        p.basename(path) == 'writerside.cfg' ||
+        p.basename(path) == 'project.ihp') {
       return DocumentKind.config;
     }
     if (p.basename(path) == 'v.list') {

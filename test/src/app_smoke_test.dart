@@ -40,6 +40,7 @@ void main() {
 
     expect(find.text('BusyMark'), findsWidgets);
     expect(find.text('Create Markdown File'), findsOneWidget);
+    expect(find.text('Create Writerside Project'), findsOneWidget);
     expect(find.text('Open Markdown File'), findsOneWidget);
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
@@ -86,10 +87,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Save the current Markdown file'), findsOneWidget);
-    expect(
-      find.text('Open the active preview in the system print flow'),
-      findsOneWidget,
-    );
     expect(find.text('Open workspace search'), findsOneWidget);
     expect(find.text('Show this popup'), findsOneWidget);
     expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
@@ -107,7 +104,6 @@ void main() {
     expect(find.text('Ctrl+N'), findsOneWidget);
     expect(find.text('Ctrl+O'), findsOneWidget);
     expect(find.text('Ctrl+S'), findsOneWidget);
-    expect(find.text('Ctrl+P'), findsOneWidget);
     expect(find.text('Ctrl+F'), findsOneWidget);
     expect(find.text('Ctrl+/'), findsOneWidget);
     expect(find.text('Ctrl+A'), findsOneWidget);
@@ -401,6 +397,295 @@ void main() {
     expect(find.byType(TextField).evaluate().length, initialTextFields);
   });
 
+  testWidgets('preview search result clicks move preview scroll repeatedly', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      [
+        '# Search Scroll',
+        '',
+        '- **First [needle target](https://example.com)**',
+        '',
+        for (var index = 0; index < 60; index += 1) ...[
+          'Filler paragraph $index keeps the preview tall enough to scroll.',
+          '',
+        ],
+        '- `Second needle target`',
+        '',
+        for (var index = 0; index < 20; index += 1) ...[
+          'Trailing paragraph $index keeps the second target away from the end.',
+          '',
+        ],
+      ].join('\n'),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/search-scroll.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'needle');
+    await tester.pump();
+
+    expect(
+      find.text('- **First [needle target](https://example.com)**'),
+      findsNothing,
+    );
+    expect(find.text('- `Second needle target`'), findsNothing);
+    expect(find.text('First needle target'), findsWidgets);
+    expect(find.text('Second needle target'), findsWidgets);
+
+    await _tapLeftmostText(tester, 'Second needle target');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final secondOffset = _largestScrollableOffset(tester);
+    expect(secondOffset, greaterThan(100));
+
+    await _tapLeftmostText(tester, 'First needle target');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final firstOffset = _largestScrollableOffset(tester);
+    expect(firstOffset, lessThan(secondOffset));
+
+    await _tapLeftmostText(tester, 'Second needle target');
+    await _tapLeftmostText(tester, 'First needle target');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(_largestScrollableOffset(tester), lessThan(secondOffset));
+  });
+
+  testWidgets('preview search result clicks scroll to code block matches', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      [
+        '# Code Search',
+        '',
+        '```dart',
+        "print('first code needle target');",
+        '```',
+        '',
+        for (var index = 0; index < 60; index += 1) ...[
+          'Filler paragraph $index keeps the preview tall enough to scroll.',
+          '',
+        ],
+        '```dart',
+        "print('second code needle target');",
+        '```',
+        '',
+        for (var index = 0; index < 20; index += 1) ...[
+          'Trailing paragraph $index keeps the second target away from the end.',
+          '',
+        ],
+      ].join('\n'),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/search-code-scroll.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'code needle');
+    await tester.pump();
+
+    await _tapLeftmostText(tester, 'second code needle target');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final secondOffset = _largestScrollableOffset(tester);
+    expect(secondOffset, greaterThan(100));
+
+    await _tapLeftmostText(tester, 'first code needle target');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(_largestScrollableOffset(tester), lessThan(secondOffset));
+  });
+
+  testWidgets('preview search result click lands on paragraph after lists', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const target = 'An application factory is also available:';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(_fsrsReadmeSearchSource());
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/search-readme-scroll.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'ac');
+    await tester.pump();
+
+    await _tapLeftmostText(tester, target);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final rect = _rightmostTextRect(tester, target);
+    final offset = _largestScrollableOffset(tester);
+    expect(rect.top, greaterThan(40));
+    expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
+  });
+
+  testWidgets('preview search result click lands on code block line', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const target = 'conda activate fsrs-service';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(_fsrsReadmeSearchSource());
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/search-readme-scroll.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'ac');
+    await tester.pump();
+
+    await _tapLeftmostText(tester, target);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final rect = _rightmostTextRect(tester, target);
+    final offset = _largestScrollableOffset(tester);
+    expect(rect.top, greaterThan(0));
+    expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
+  });
+
   testWidgets('Ctrl+S runs Save for the active workspace', (tester) async {
     final service = _StartupWorkspaceService();
     await tester.pumpWidget(
@@ -431,6 +716,132 @@ void main() {
     expect(service.savedPath, 'test/fixtures/markdown/basic.md');
     expect(service.savedText, '# Basic Markdown\n');
   });
+}
+
+double _largestScrollableOffset(WidgetTester tester) {
+  var maxExtent = double.negativeInfinity;
+  var pixels = 0.0;
+  for (final state in tester.stateList<ScrollableState>(
+    find.byType(Scrollable),
+  )) {
+    final position = state.position;
+    if (position.maxScrollExtent > maxExtent) {
+      maxExtent = position.maxScrollExtent;
+      pixels = position.pixels;
+    }
+  }
+  return pixels;
+}
+
+Future<void> _tapLeftmostText(WidgetTester tester, String text) async {
+  final finder = find.textContaining(text).hitTestable();
+  expect(finder, findsAtLeastNWidgets(1));
+  Finder? leftmostFinder;
+  var leftmostX = double.infinity;
+  for (final element in finder.evaluate()) {
+    final elementFinder = find.byElementPredicate(
+      (candidate) => identical(candidate, element),
+    );
+    final center = tester.getCenter(elementFinder);
+    if (center.dx < leftmostX) {
+      leftmostX = center.dx;
+      leftmostFinder = elementFinder;
+    }
+  }
+  await tester.tap(leftmostFinder!);
+}
+
+Rect _rightmostTextRect(WidgetTester tester, String text) {
+  final finder = find.textContaining(text);
+  expect(finder, findsAtLeastNWidgets(1));
+  Finder? rightmostFinder;
+  var rightmostX = double.negativeInfinity;
+  for (final element in finder.evaluate()) {
+    final elementFinder = find.byElementPredicate(
+      (candidate) => identical(candidate, element),
+    );
+    final center = tester.getCenter(elementFinder);
+    if (center.dx > rightmostX) {
+      rightmostX = center.dx;
+      rightmostFinder = elementFinder;
+    }
+  }
+  return tester.getRect(rightmostFinder!);
+}
+
+String _fsrsReadmeSearchSource() {
+  return [
+    '# FSRS Service',
+    '',
+    'Stateless FastAPI microservice exposing the **py-fsrs (FSRS 6.x)** scheduling algorithm via a strict OpenAPI contract.',
+    '',
+    'This service performs **pure computation only**.',
+    'Persistence, authentication, authorization, and rate-limiting are expected to be handled by an upstream service (e.g.',
+    'Spring Boot).',
+    '',
+    'This service is designed to be deployed:',
+    '',
+    '* Behind an API gateway or Spring Boot service',
+    '* Without direct public exposure',
+    '* Without authentication logic',
+    '',
+    '---',
+    '',
+    '## Conda Environment Setup',
+    '',
+    '```bash',
+    'conda create -n fsrs-service python=3.11',
+    'conda activate fsrs-service',
+    'python -m pip install -e .',
+    '```',
+    '',
+    'Install test dependencies:',
+    '',
+    '```bash',
+    'conda install -n fsrs-service pytest',
+    '```',
+    '',
+    '---',
+    '',
+    '## Run the Service',
+    '',
+    '```bash',
+    'uvicorn fsrs_service.main:app --host 127.0.0.1 --port 8000',
+    '```',
+    '',
+    'An application factory is also available:',
+    '',
+    '```python',
+    'from fsrs_service.main import create_app',
+    '',
+    'app = create_app()',
+    '```',
+    '',
+    '---',
+    '',
+    '### Scheduler Operations',
+    '',
+    '* `POST /v1/schedulers/retrievability`',
+    '  Compute recall probability at a given time.',
+    '',
+    '* `POST /v1/schedulers/review`',
+    '  Apply a review rating and return:',
+    '',
+    '  ```json',
+    '  { "card": {}, "review_log": {} }',
+    '  ```',
+    '',
+    '* `POST /v1/schedulers/reschedule`',
+    '  Recompute card state **from review history**.',
+    '',
+    '  This endpoint **does not accept a target datetime**.',
+    '  It replays `review_logs` to derive the card state.',
+    '',
+    for (var index = 0; index < 50; index += 1) ...[
+      'Trailing content $index keeps the preview scrollable.',
+      '',
+    ],
+  ].join('\n');
 }
 
 class _FallbackHeaderBarService extends LinuxHeaderBarService {
@@ -500,6 +911,37 @@ class _StartupWorkspaceService extends WorkspaceService {
     savedText = text;
     return DateTime(2026, 1, 2);
   }
+}
+
+class _SearchWorkspaceService extends WorkspaceService {
+  const _SearchWorkspaceService(this.source);
+
+  final String source;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    return Workspace(
+      id: path,
+      rootPath: path,
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: path,
+      activeFileModifiedAt: DateTime(2026),
+      files: [
+        DocumentFile(
+          absolutePath: path,
+          relativePath: 'search-scroll.md',
+          kind: DocumentKind.markdown,
+          size: source.length,
+          lastModified: DateTime(2026),
+        ),
+      ],
+      diagnostics: const [],
+    );
+  }
+
+  @override
+  Future<String> loadText(String path) async => source;
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {
