@@ -17,6 +17,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onToggleTaskCommand,
     required this.onHardBreakCommand,
     required this.onCodeLanguageCommand,
+    this.alignEnd = false,
   });
 
   final ValueChanged<BusyWysiwygBlockCommand> onBlockCommand;
@@ -30,11 +31,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onToggleTaskCommand;
   final VoidCallback onHardBreakCommand;
   final VoidCallback onCodeLanguageCommand;
+  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      reverse: alignEnd,
       padding: const EdgeInsets.symmetric(
         horizontal: BusyMarkSpacing.sm,
         vertical: BusyMarkSpacing.xs,
@@ -119,27 +122,39 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             _button(
               tooltip: 'Bold',
               icon: Icons.format_bold,
+              shortcut: 'Ctrl+B',
               onPressed: () => onInlineCommand(BusyWysiwygInlineCommand.bold),
             ),
             _button(
               tooltip: 'Italic',
               icon: Icons.format_italic,
+              shortcut: 'Ctrl+I',
               onPressed: () => onInlineCommand(BusyWysiwygInlineCommand.italic),
+            ),
+            _button(
+              tooltip: 'Underline',
+              icon: Icons.format_underlined,
+              shortcut: 'Ctrl+U',
+              onPressed: () =>
+                  onInlineCommand(BusyWysiwygInlineCommand.underline),
             ),
             _button(
               tooltip: 'Strikethrough',
               icon: Icons.format_strikethrough,
+              shortcut: 'Alt+Shift+5',
               onPressed: () =>
                   onInlineCommand(BusyWysiwygInlineCommand.strikethrough),
             ),
             _button(
               tooltip: 'Inline code',
               icon: Icons.code_outlined,
+              shortcut: 'Ctrl+E',
               onPressed: () => onInlineCommand(BusyWysiwygInlineCommand.code),
             ),
             _button(
               tooltip: 'Link',
               icon: Icons.link,
+              shortcut: 'Ctrl+K',
               onPressed: onLinkCommand,
             ),
             _button(
@@ -206,7 +221,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         ),
       ],
       onSelected: onBlockCommand,
-      transparent: true,
     );
   }
 
@@ -214,12 +228,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required String tooltip,
     required IconData icon,
     required VoidCallback onPressed,
+    String? shortcut,
   }) {
     return BusyMarkHeaderIconButton(
       tooltip: tooltip,
       icon: icon,
       onPressed: onPressed,
-      transparent: true,
+      shortcut: shortcut,
     );
   }
 }

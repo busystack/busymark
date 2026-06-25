@@ -786,6 +786,62 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
   }
 
+  BusyWysiwygTextSplitResult? deleteTextSelection({
+    required String firstBlockId,
+    required int firstStartOffset,
+    required String lastBlockId,
+    required int lastEndOffset,
+    required Iterable<String> removedBlockIds,
+  }) {
+    final firstBlock = blockById(firstBlockId);
+    final lastBlock = blockById(lastBlockId);
+    if (firstBlock == null || lastBlock == null) {
+      return null;
+    }
+    final firstText = firstBlock.plainText;
+    final lastText = lastBlock.plainText;
+    final firstStart = firstStartOffset.clamp(0, firstText.length).toInt();
+    final lastEnd = lastEndOffset.clamp(0, lastText.length).toInt();
+    if (firstBlockId == lastBlockId) {
+      if (lastEnd <= firstStart) {
+        return null;
+      }
+      final nextText =
+          firstText.substring(0, firstStart) + firstText.substring(lastEnd);
+      _document = _document.copyWith(
+        blocks: _replaceInBlocks(
+          _document.blocks,
+          firstBlockId,
+          (block) => _blockWithEditedText(block, nextText),
+        ),
+      );
+      notifyListeners();
+      return BusyWysiwygTextSplitResult(
+        blockId: firstBlockId,
+        offset: firstStart,
+      );
+    }
+
+    final mergedText =
+        firstText.substring(0, firstStart) + lastText.substring(lastEnd);
+    final removeIds = removedBlockIds.where((id) => id != firstBlockId).toSet();
+    _document = _document.copyWith(
+      blocks: _removeBlocksByIds(
+        _replaceInBlocks(
+          _document.blocks,
+          firstBlockId,
+          (block) => _blockWithEditedText(block, mergedText),
+        ),
+        removeIds,
+      ),
+    );
+    notifyListeners();
+    return BusyWysiwygTextSplitResult(
+      blockId: firstBlockId,
+      offset: firstStart,
+    );
+  }
+
   String? insertThematicBreakAfter(String blockId) {
     if (blockById(blockId) == null) {
       return null;
@@ -923,6 +979,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       for (final block in blocks)
         if (block.id != blockId)
           block.copyWith(children: _removeBlockById(block.children, blockId)),
+    ];
+  }
+
+  List<BusyBlock> _removeBlocksByIds(List<BusyBlock> blocks, Set<String> ids) {
+    if (ids.isEmpty) {
+      return blocks;
+    }
+    return [
+      for (final block in blocks)
+        if (!ids.contains(block.id))
+          block.copyWith(children: _removeBlocksByIds(block.children, ids)),
     ];
   }
 
@@ -1564,9 +1631,10 @@ int _stylePriority(BusyInlineKind kind) {
     BusyInlineKind.link => 0,
     BusyInlineKind.strong => 1,
     BusyInlineKind.emphasis => 2,
-    BusyInlineKind.strikethrough => 3,
-    BusyInlineKind.code => 4,
-    BusyInlineKind.image => 5,
-    _ => 6,
+    BusyInlineKind.underline => 3,
+    BusyInlineKind.strikethrough => 4,
+    BusyInlineKind.code => 5,
+    BusyInlineKind.image => 6,
+    _ => 7,
   };
 }

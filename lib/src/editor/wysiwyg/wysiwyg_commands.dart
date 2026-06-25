@@ -17,7 +17,14 @@ enum BusyWysiwygBlockCommand {
   thematicBreak,
 }
 
-enum BusyWysiwygInlineCommand { bold, italic, strikethrough, code, link }
+enum BusyWysiwygInlineCommand {
+  bold,
+  italic,
+  underline,
+  strikethrough,
+  code,
+  link,
+}
 
 BusyBlockKind blockKindForCommand(BusyWysiwygBlockCommand command) {
   return switch (command) {
@@ -42,6 +49,7 @@ BusyInlineKind inlineKindForCommand(BusyWysiwygInlineCommand command) {
   return switch (command) {
     BusyWysiwygInlineCommand.bold => BusyInlineKind.strong,
     BusyWysiwygInlineCommand.italic => BusyInlineKind.emphasis,
+    BusyWysiwygInlineCommand.underline => BusyInlineKind.underline,
     BusyWysiwygInlineCommand.strikethrough => BusyInlineKind.strikethrough,
     BusyWysiwygInlineCommand.code => BusyInlineKind.code,
     BusyWysiwygInlineCommand.link => BusyInlineKind.link,

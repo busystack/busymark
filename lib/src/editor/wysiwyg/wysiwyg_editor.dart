@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_block_widgets.dart';
@@ -23,8 +24,12 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.toolbarPlacement = EditorToolbarPlacement.topLeft,
     this.scrollToHeadingId,
+    this.scrollToSearchQuery,
     this.scrollRequest = 0,
+    this.onOpenSearch,
+    this.onCloseSearch,
   });
 
   final BusyDocument document;
@@ -33,8 +38,12 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final EditorToolbarPlacement toolbarPlacement;
   final String? scrollToHeadingId;
+  final String? scrollToSearchQuery;
   final int scrollRequest;
+  final VoidCallback? onOpenSearch;
+  final VoidCallback? onCloseSearch;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -58,6 +67,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   int _preserveSelectionFocusCallbacks = 0;
   bool _internalChange = false;
   bool _initialFocusScheduled = false;
+  var _toolbarVisible = true;
 
   @override
   void initState() {
@@ -68,6 +78,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _syncBlockControllers();
     _scheduleInitialFocus();
     _scheduleHeadingScroll();
+    _scheduleSearchScroll();
   }
 
   @override
@@ -81,6 +92,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (oldWidget.scrollRequest != widget.scrollRequest) {
       _scheduleHeadingScroll();
+      _scheduleSearchScroll();
     }
   }
 
@@ -119,11 +131,105 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             _InlineCommandIntent(BusyWysiwygInlineCommand.bold),
         const SingleActivator(LogicalKeyboardKey.keyI, control: true):
             _InlineCommandIntent(BusyWysiwygInlineCommand.italic),
+        const SingleActivator(LogicalKeyboardKey.keyU, control: true):
+            _InlineCommandIntent(BusyWysiwygInlineCommand.underline),
         const SingleActivator(LogicalKeyboardKey.keyK, control: true):
             const _LinkCommandIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyE, control: true):
+            _InlineCommandIntent(BusyWysiwygInlineCommand.code),
+        const SingleActivator(
+          LogicalKeyboardKey.digit5,
+          alt: true,
+          shift: true,
+        ): _InlineCommandIntent(
+          BusyWysiwygInlineCommand.strikethrough,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit0,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.paragraph,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit1,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.heading1,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit2,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.heading2,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit3,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.heading3,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit4,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.heading4,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit5,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.heading5,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit6,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.heading6,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit7,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.orderedList,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit8,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.unorderedList,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.digit9,
+          control: true,
+          shift: true,
+        ): _BlockCommandIntent(
+          BusyWysiwygBlockCommand.taskList,
+        ),
+        const SingleActivator(
+          LogicalKeyboardKey.keyV,
+          control: true,
+          shift: true,
+        ): const _PastePlainTextIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyA, control: true):
+            const _SelectAllTextIntent(),
         if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.keyC, control: true):
               const _CopyBlockSelectionIntent(),
+        if (blockSelectionActive)
+          const SingleActivator(LogicalKeyboardKey.backspace):
+              const _DeleteBlockSelectionIntent(),
+        if (blockSelectionActive)
+          const SingleActivator(LogicalKeyboardKey.delete):
+              const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.escape):
               const _ClearBlockSelectionIntent(),
@@ -142,6 +248,31 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               return null;
             },
           ),
+          _BlockCommandIntent: CallbackAction<_BlockCommandIntent>(
+            onInvoke: (intent) {
+              _applyBlockCommand(intent.command);
+              return null;
+            },
+          ),
+          _PastePlainTextIntent: CallbackAction<_PastePlainTextIntent>(
+            onInvoke: (intent) {
+              unawaited(_pastePlainTextIntoActiveBlock());
+              return null;
+            },
+          ),
+          _SelectAllTextIntent: CallbackAction<_SelectAllTextIntent>(
+            onInvoke: (intent) {
+              _selectAllForActiveBlock();
+              return null;
+            },
+          ),
+          _DeleteBlockSelectionIntent:
+              CallbackAction<_DeleteBlockSelectionIntent>(
+                onInvoke: (intent) {
+                  _deleteBlockSelection();
+                  return null;
+                },
+              ),
           _CopyBlockSelectionIntent: CallbackAction<_CopyBlockSelectionIntent>(
             onInvoke: (intent) {
               _copyBlockSelection();
@@ -158,111 +289,149 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         },
         child: DecoratedBox(
           decoration: BoxDecoration(color: colors.view),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BusyMarkWysiwygToolbar(
-                onBlockCommand: _applyBlockCommand,
-                onInlineCommand: _applyInlineCommand,
-                onLinkCommand: () => unawaited(_applyLinkCommand()),
-                onImageCommand: () => unawaited(_applyImageCommand()),
-                onInlineImageCommand: () =>
-                    unawaited(_applyInlineImageCommand()),
-                onTableCommand: () => unawaited(_applyTableCommand()),
-                onIndentCommand: _applyIndentCommand,
-                onOutdentCommand: _applyOutdentCommand,
-                onToggleTaskCommand: _applyToggleTaskCommand,
-                onHardBreakCommand: _applyHardBreakCommand,
-                onCodeLanguageCommand: () =>
-                    unawaited(_applyCodeLanguageCommand()),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: () {
-                    _clearBlockSelection();
-                    _focusActiveOrFirstBlock();
-                  },
-                  child: Focus(
-                    focusNode: _selectionFocusNode,
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(28, 20, 28, 38),
-                      itemCount: entries.length,
-                      itemBuilder: (context, index) {
-                        final entry = entries[index];
-                        final block = entry.block;
-                        return Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 820),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                left: entry.depth * 28.0,
-                              ),
-                              child: BusyMarkWysiwygBlockField(
-                                key: _blockKeyFor(block.id),
-                                block: block,
-                                documentFilePath:
-                                    _documentController.document.filePath,
-                                workspaceRoot: widget.workspaceRoot,
-                                writersideRoot: widget.writersideRoot,
-                                imagesDir: widget.imagesDir,
-                                controller: _textControllerFor(block),
-                                focusNode: _focusNodeFor(block),
-                                selected: selectedBlockIds.contains(block.id),
-                                selectionRange:
-                                    selectionRangesByBlockId[block.id],
-                                onPointerDown: (event) =>
-                                    _handleBlockPointerDown(block.id, event),
-                                onPointerMove: _handleBlockPointerMove,
-                                onPointerUp: _handleBlockPointerUp,
-                                onFocused: () => _handleBlockFocused(block.id),
-                                onChanged: (value) =>
-                                    _handleBlockTextChanged(block.id, value),
-                                onTableCellChanged: (cellId, value) =>
-                                    _handleTableCellTextChanged(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () {
+                        _clearBlockSelection();
+                        _focusActiveOrFirstBlock();
+                      },
+                      child: Focus(
+                        focusNode: _selectionFocusNode,
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: _editorContentPadding(),
+                          itemCount: entries.length,
+                          itemBuilder: (context, index) {
+                            final entry = entries[index];
+                            final block = entry.block;
+                            return Align(
+                              alignment: Alignment.topCenter,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 820,
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: entry.depth * 28.0,
+                                  ),
+                                  child: BusyMarkWysiwygBlockField(
+                                    key: _blockKeyFor(block.id),
+                                    block: block,
+                                    documentFilePath:
+                                        _documentController.document.filePath,
+                                    workspaceRoot: widget.workspaceRoot,
+                                    writersideRoot: widget.writersideRoot,
+                                    imagesDir: widget.imagesDir,
+                                    controller: _textControllerFor(block),
+                                    focusNode: _focusNodeFor(block),
+                                    selected: selectedBlockIds.contains(
                                       block.id,
-                                      cellId,
-                                      value,
                                     ),
-                                onTableRowInserted:
-                                    (rowIndex, {required after}) =>
-                                        _handleTableRowInserted(
+                                    selectionRange:
+                                        selectionRangesByBlockId[block.id],
+                                    onPointerDown: (event) =>
+                                        _handleBlockPointerDown(
+                                          block.id,
+                                          event,
+                                        ),
+                                    onPointerMove: _handleBlockPointerMove,
+                                    onPointerUp: _handleBlockPointerUp,
+                                    onFocused: () =>
+                                        _handleBlockFocused(block.id),
+                                    onChanged: (value) =>
+                                        _handleBlockTextChanged(
+                                          block.id,
+                                          value,
+                                        ),
+                                    onTableCellChanged: (cellId, value) =>
+                                        _handleTableCellTextChanged(
+                                          block.id,
+                                          cellId,
+                                          value,
+                                        ),
+                                    onTableRowInserted:
+                                        (rowIndex, {required after}) =>
+                                            _handleTableRowInserted(
+                                              block.id,
+                                              rowIndex,
+                                              after: after,
+                                            ),
+                                    onTableRowDeleted: (rowIndex) =>
+                                        _handleTableRowDeleted(
                                           block.id,
                                           rowIndex,
-                                          after: after,
                                         ),
-                                onTableRowDeleted: (rowIndex) =>
-                                    _handleTableRowDeleted(block.id, rowIndex),
-                                onTableColumnInserted:
-                                    (columnIndex, {required after}) =>
-                                        _handleTableColumnInserted(
+                                    onTableColumnInserted:
+                                        (columnIndex, {required after}) =>
+                                            _handleTableColumnInserted(
+                                              block.id,
+                                              columnIndex,
+                                              after: after,
+                                            ),
+                                    onTableColumnDeleted: (columnIndex) =>
+                                        _handleTableColumnDeleted(
                                           block.id,
                                           columnIndex,
-                                          after: after,
                                         ),
-                                onTableColumnDeleted: (columnIndex) =>
-                                    _handleTableColumnDeleted(
-                                      block.id,
-                                      columnIndex,
-                                    ),
-                                onTableDeleted: () =>
-                                    _handleTableDeleted(block.id),
+                                    onTableDeleted: () =>
+                                        _handleTableDeleted(block.id),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      },
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                  _FloatingWysiwygToolbar(
+                    placement: widget.toolbarPlacement,
+                    visible: _toolbarVisible,
+                    maxWidth: math.max(0, constraints.maxWidth - 16),
+                    onToggle: () =>
+                        setState(() => _toolbarVisible = !_toolbarVisible),
+                    child: BusyMarkWysiwygToolbar(
+                      alignEnd: _toolbarAlignedEnd(widget.toolbarPlacement),
+                      onBlockCommand: _applyBlockCommand,
+                      onInlineCommand: _applyInlineCommand,
+                      onLinkCommand: () => unawaited(_applyLinkCommand()),
+                      onImageCommand: () => unawaited(_applyImageCommand()),
+                      onInlineImageCommand: () =>
+                          unawaited(_applyInlineImageCommand()),
+                      onTableCommand: () => unawaited(_applyTableCommand()),
+                      onIndentCommand: _applyIndentCommand,
+                      onOutdentCommand: _applyOutdentCommand,
+                      onToggleTaskCommand: _applyToggleTaskCommand,
+                      onHardBreakCommand: _applyHardBreakCommand,
+                      onCodeLanguageCommand: () =>
+                          unawaited(_applyCodeLanguageCommand()),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
+  }
+
+  EdgeInsets _editorContentPadding() {
+    final top = widget.toolbarPlacement._isTop && _toolbarVisible ? 66.0 : 20.0;
+    final bottom = widget.toolbarPlacement._isTop || !_toolbarVisible
+        ? 38.0
+        : 84.0;
+    return EdgeInsets.fromLTRB(28, top, 28, bottom);
+  }
+
+  bool _toolbarAlignedEnd(EditorToolbarPlacement placement) {
+    return placement == EditorToolbarPlacement.topRight ||
+        placement == EditorToolbarPlacement.bottomRight;
   }
 
   void _syncBlockControllers() {
@@ -489,6 +658,55 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     });
   }
 
+  void _scheduleSearchScroll() {
+    final query = widget.scrollToSearchQuery?.trim();
+    if (query == null || query.isEmpty || widget.scrollRequest == 0) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final target = _blockForSearchQuery(query);
+      if (target == null) {
+        return;
+      }
+      final controller = _textControllerFor(target);
+      final matchStart = controller.text.toLowerCase().indexOf(
+        query.toLowerCase(),
+      );
+      if (matchStart >= 0) {
+        _activeBlockId = target.id;
+        _focusNodeFor(target).requestFocus();
+        controller.selection = TextSelection(
+          baseOffset: matchStart,
+          extentOffset: matchStart + query.length,
+        );
+      }
+      if (_ensureBlockVisible(target.id)) {
+        return;
+      }
+      _jumpNearBlock(target.id);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _ensureBlockVisible(target.id);
+        }
+      });
+    });
+  }
+
+  BusyBlock? _blockForSearchQuery(String query) {
+    final normalizedQuery = query.toLowerCase();
+    for (final entry in _editableBlockEntries(
+      _documentController.document.blocks,
+    )) {
+      if (entry.block.plainText.toLowerCase().contains(normalizedQuery)) {
+        return entry.block;
+      }
+    }
+    return null;
+  }
+
   bool _ensureBlockVisible(String blockId) {
     final targetContext = _blockKeys[blockId]?.currentContext;
     if (targetContext == null) {
@@ -557,10 +775,89 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   KeyEventResult _handleBlockKeyEvent(String blockId, KeyEvent event) {
-    if (event is! KeyDownEvent || _hasCommandModifierPressed()) {
+    if (event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
+    final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
+    _activeBlockId = blockId;
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyA) {
+      _selectAllForBlock(blockId);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyF) {
+      widget.onOpenSearch?.call();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      widget.onCloseSearch?.call();
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyB) {
+      _applyInlineCommand(BusyWysiwygInlineCommand.bold);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyI) {
+      _applyInlineCommand(BusyWysiwygInlineCommand.italic);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyU) {
+      _applyInlineCommand(BusyWysiwygInlineCommand.underline);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyK) {
+      unawaited(_applyLinkCommand());
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyE) {
+      _applyInlineCommand(BusyWysiwygInlineCommand.code);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isAltPressed &&
+        keyboard.isShiftPressed &&
+        key == LogicalKeyboardKey.digit5) {
+      _applyInlineCommand(BusyWysiwygInlineCommand.strikethrough);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed &&
+        keyboard.isShiftPressed &&
+        key == LogicalKeyboardKey.keyV) {
+      unawaited(_pastePlainTextIntoActiveBlock());
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed && keyboard.isShiftPressed) {
+      final command = _headingShortcutBlockCommand(key);
+      if (command != null) {
+        _applyBlockCommand(command);
+        return KeyEventResult.handled;
+      }
+    }
+    if (keyboard.isControlPressed &&
+        keyboard.isShiftPressed &&
+        key == LogicalKeyboardKey.digit7) {
+      _applyBlockCommand(BusyWysiwygBlockCommand.orderedList);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed &&
+        keyboard.isShiftPressed &&
+        key == LogicalKeyboardKey.digit8) {
+      _applyBlockCommand(BusyWysiwygBlockCommand.unorderedList);
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed &&
+        keyboard.isShiftPressed &&
+        key == LogicalKeyboardKey.digit9) {
+      _applyBlockCommand(BusyWysiwygBlockCommand.taskList);
+      return KeyEventResult.handled;
+    }
+    if (_hasCommandModifierPressed()) {
+      return KeyEventResult.ignored;
+    }
+    if ((key == LogicalKeyboardKey.backspace ||
+            key == LogicalKeyboardKey.delete) &&
+        _deleteBlockSelection()) {
+      return KeyEventResult.handled;
+    }
     final controller = _textControllers[blockId];
     if (controller == null ||
         !controller.selection.isValid ||
@@ -865,6 +1162,40 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       alt: result.alt,
     );
     _emitMarkdown();
+  }
+
+  Future<void> _pastePlainTextIntoActiveBlock() async {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    final controller = _textControllers[blockId];
+    if (controller == null) {
+      return;
+    }
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text == null || text.isEmpty) {
+      return;
+    }
+    final currentText = controller.text;
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: currentText.length);
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, currentText.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(0, currentText.length)
+        .toInt();
+    final nextText = currentText.replaceRange(start, end, text);
+    controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: start + text.length),
+    );
+    _handleBlockTextChanged(blockId, nextText);
   }
 
   Future<void> _applyInlineImageCommand() async {
@@ -1436,6 +1767,93 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
+  void _selectAllForActiveBlock() {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      final blocks = _focusableBlocks();
+      if (blocks.isNotEmpty) {
+        _selectAllForBlock(blocks.first.id);
+      }
+      return;
+    }
+    _selectAllForBlock(blockId);
+  }
+
+  void _selectAllForBlock(String blockId) {
+    final controller = _textControllers[blockId];
+    final focusNode = _focusNodes[blockId];
+    if (controller == null || focusNode == null) {
+      return;
+    }
+    _activeBlockId = blockId;
+    if (_isWholeBlockSelected(blockId)) {
+      _selectWholeDocumentText();
+      return;
+    }
+    _clearBlockSelection();
+    focusNode.requestFocus();
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
+    );
+  }
+
+  bool _isWholeBlockSelected(String blockId) {
+    if (_hasBlockSelection) {
+      final ranges = _selectedTextRanges();
+      return ranges.length == 1 &&
+          ranges.single.block.id == blockId &&
+          ranges.single.coversWholeBlock;
+    }
+    final controller = _textControllers[blockId];
+    final selection = controller?.selection;
+    if (controller == null || selection == null || !selection.isValid) {
+      return false;
+    }
+    return math.min(selection.start, selection.end) == 0 &&
+        math.max(selection.start, selection.end) == controller.text.length;
+  }
+
+  void _selectWholeDocumentText() {
+    final blocks = _focusableBlocks();
+    if (blocks.isEmpty) {
+      return;
+    }
+    final first = blocks.first;
+    final last = blocks.last;
+    setState(() {
+      _selectionStartBlockId = first.id;
+      _selectionStartOffset = 0;
+      _selectionEndBlockId = last.id;
+      _selectionEndOffset = last.plainText.length;
+    });
+    _collapseFieldSelections();
+    _selectionFocusNode.requestFocus();
+  }
+
+  bool _deleteBlockSelection() {
+    final ranges = _selectedTextRanges();
+    if (ranges.isEmpty) {
+      return false;
+    }
+    final first = ranges.first;
+    final last = ranges.last;
+    final result = _documentController.deleteTextSelection(
+      firstBlockId: first.block.id,
+      firstStartOffset: first.start,
+      lastBlockId: last.block.id,
+      lastEndOffset: last.end,
+      removedBlockIds: ranges.map((range) => range.block.id),
+    );
+    if (result == null) {
+      return false;
+    }
+    _clearBlockSelection(collapseFields: false);
+    _emitMarkdown();
+    _focusBlockAfterFrame(result.blockId, offset: result.offset);
+    return true;
+  }
+
   void _copyBlockSelection() {
     final selectedText = _selectedTextRanges()
         .map(_copyTextForRange)
@@ -1629,6 +2047,60 @@ class _EditableBlockEntry {
   final int depth;
 }
 
+class _FloatingWysiwygToolbar extends StatelessWidget {
+  const _FloatingWysiwygToolbar({
+    required this.placement,
+    required this.visible,
+    required this.maxWidth,
+    required this.onToggle,
+    required this.child,
+  });
+
+  final EditorToolbarPlacement placement;
+  final bool visible;
+  final double maxWidth;
+  final VoidCallback onToggle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final alignedEnd = placement._isRight;
+    final toolbar = visible
+        ? SizedBox(width: math.max(0, maxWidth - 42), child: child)
+        : const SizedBox.shrink();
+    final toggle = BusyMarkHeaderIconButton(
+      tooltip: visible ? 'Hide editing buttons' : 'Show editing buttons',
+      icon: visible ? Icons.visibility_off_outlined : Icons.edit_outlined,
+      onPressed: onToggle,
+    );
+    final rowChildren = alignedEnd
+        ? [toolbar, const SizedBox(width: BusyMarkSpacing.xs), toggle]
+        : [toggle, const SizedBox(width: BusyMarkSpacing.xs), toolbar];
+    return Positioned(
+      top: placement._isTop ? BusyMarkSpacing.sm : null,
+      bottom: placement._isTop ? null : BusyMarkSpacing.sm,
+      left: alignedEnd ? null : BusyMarkSpacing.sm,
+      right: alignedEnd ? BusyMarkSpacing.sm : null,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Row(mainAxisSize: MainAxisSize.min, children: rowChildren),
+      ),
+    );
+  }
+}
+
+extension _EditorToolbarPlacementX on EditorToolbarPlacement {
+  bool get _isTop {
+    return this == EditorToolbarPlacement.topLeft ||
+        this == EditorToolbarPlacement.topRight;
+  }
+
+  bool get _isRight {
+    return this == EditorToolbarPlacement.topRight ||
+        this == EditorToolbarPlacement.bottomRight;
+  }
+}
+
 class _InlineCommandIntent extends Intent {
   const _InlineCommandIntent(this.command);
 
@@ -1637,6 +2109,24 @@ class _InlineCommandIntent extends Intent {
 
 class _LinkCommandIntent extends Intent {
   const _LinkCommandIntent();
+}
+
+class _BlockCommandIntent extends Intent {
+  const _BlockCommandIntent(this.command);
+
+  final BusyWysiwygBlockCommand command;
+}
+
+class _PastePlainTextIntent extends Intent {
+  const _PastePlainTextIntent();
+}
+
+class _SelectAllTextIntent extends Intent {
+  const _SelectAllTextIntent();
+}
+
+class _DeleteBlockSelectionIntent extends Intent {
+  const _DeleteBlockSelectionIntent();
 }
 
 class _CopyBlockSelectionIntent extends Intent {
@@ -1649,6 +2139,26 @@ class _ClearBlockSelectionIntent extends Intent {
 
 class _MoveToBlockEnd {
   const _MoveToBlockEnd();
+}
+
+BusyWysiwygBlockCommand? _headingShortcutBlockCommand(LogicalKeyboardKey key) {
+  return switch (key) {
+    LogicalKeyboardKey.digit0 ||
+    LogicalKeyboardKey.numpad0 => BusyWysiwygBlockCommand.paragraph,
+    LogicalKeyboardKey.digit1 ||
+    LogicalKeyboardKey.numpad1 => BusyWysiwygBlockCommand.heading1,
+    LogicalKeyboardKey.digit2 ||
+    LogicalKeyboardKey.numpad2 => BusyWysiwygBlockCommand.heading2,
+    LogicalKeyboardKey.digit3 ||
+    LogicalKeyboardKey.numpad3 => BusyWysiwygBlockCommand.heading3,
+    LogicalKeyboardKey.digit4 ||
+    LogicalKeyboardKey.numpad4 => BusyWysiwygBlockCommand.heading4,
+    LogicalKeyboardKey.digit5 ||
+    LogicalKeyboardKey.numpad5 => BusyWysiwygBlockCommand.heading5,
+    LogicalKeyboardKey.digit6 ||
+    LogicalKeyboardKey.numpad6 => BusyWysiwygBlockCommand.heading6,
+    _ => null,
+  };
 }
 
 Iterable<BusyBlock> _flattenBlocks(List<BusyBlock> blocks) sync* {

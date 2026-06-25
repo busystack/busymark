@@ -1,10 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
 
 import '../../app/busymark_design.dart';
-import '../../core/local_image_resolver.dart';
+import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
 
@@ -161,23 +158,30 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                         ),
                       ),
                     ),
-                    TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      maxLines: null,
-                      minLines: 1,
-                      style: style,
-                      decoration: const InputDecoration(
-                        isCollapsed: true,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false,
-                        hoverColor: Colors.transparent,
-                        contentPadding: EdgeInsets.zero,
+                    TextSelectionTheme(
+                      data: selectionRange == null
+                          ? Theme.of(context).textSelectionTheme
+                          : Theme.of(context).textSelectionTheme.copyWith(
+                              selectionColor: Colors.transparent,
+                            ),
+                      child: TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        maxLines: null,
+                        minLines: 1,
+                        style: style,
+                        decoration: const InputDecoration(
+                          isCollapsed: true,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: false,
+                          hoverColor: Colors.transparent,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onTap: onFocused,
+                        onChanged: onChanged,
                       ),
-                      onTap: onFocused,
-                      onChanged: onChanged,
                     ),
                   ],
                 ),
@@ -461,9 +465,7 @@ class _TableBlockEditor extends StatelessWidget {
             tooltip: 'Delete table',
             style: busyMarkHeaderIconButtonStyle(
               foregroundColor: colors.mutedForeground,
-              backgroundColor: busyMarkTransparentHeaderButtonBackground(
-                context,
-              ),
+              backgroundColor: busyMarkHeaderButtonBackground(context),
             ),
             icon: const Icon(Icons.delete_outline, size: BusyMarkSizes.iconSm),
             onPressed: onTableDeleted,
@@ -647,36 +649,47 @@ class _TableControlMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return SizedBox.square(
-      dimension: _TableBlockEditor._controlSize,
-      child: PopupMenuButton<_TableControlAction>(
-        tooltip: tooltip,
-        padding: EdgeInsets.zero,
-        position: PopupMenuPosition.under,
-        icon: Icon(icon, size: BusyMarkSizes.iconSm),
-        iconColor: colors.mutedForeground,
-        color: colors.popover,
-        surfaceTintColor: Colors.transparent,
-        elevation: BusyMarkElevation.popover,
-        shadowColor: colors.shade,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+    final theme = Theme.of(context);
+    return Theme(
+      data: theme.copyWith(
+        iconButtonTheme: IconButtonThemeData(
+          style: busyMarkHeaderIconButtonStyle(
+            foregroundColor: colors.mutedForeground,
+            backgroundColor: busyMarkHeaderButtonBackground(context),
+          ),
         ),
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: _TableControlAction.insertBefore,
-            child: Text(beforeLabel),
+      ),
+      child: SizedBox.square(
+        dimension: _TableBlockEditor._controlSize,
+        child: PopupMenuButton<_TableControlAction>(
+          tooltip: tooltip,
+          padding: EdgeInsets.zero,
+          position: PopupMenuPosition.under,
+          icon: Icon(icon, size: BusyMarkSizes.iconSm),
+          iconColor: colors.mutedForeground,
+          color: colors.popover,
+          surfaceTintColor: Colors.transparent,
+          elevation: BusyMarkElevation.popover,
+          shadowColor: colors.shade,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
           ),
-          PopupMenuItem(
-            value: _TableControlAction.insertAfter,
-            child: Text(afterLabel),
-          ),
-          PopupMenuItem(
-            value: _TableControlAction.delete,
-            child: Text(deleteLabel),
-          ),
-        ],
-        onSelected: onSelected,
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: _TableControlAction.insertBefore,
+              child: Text(beforeLabel),
+            ),
+            PopupMenuItem(
+              value: _TableControlAction.insertAfter,
+              child: Text(afterLabel),
+            ),
+            PopupMenuItem(
+              value: _TableControlAction.delete,
+              child: Text(deleteLabel),
+            ),
+          ],
+          onSelected: onSelected,
+        ),
       ),
     );
   }
@@ -862,26 +875,17 @@ class _ImageBlockEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final source = _imageSource(block);
-    final file = _resolveLocalImageFile(
-      source,
-      documentFilePath,
-      workspaceRoot: workspaceRoot,
-      writersideRoot: writersideRoot,
-      imagesDir: imagesDir,
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.panel,
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            border: Border.all(color: colors.subtleBorder),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            child: _LocalImagePreview(file: file, source: source),
-          ),
+        MarkdownImageView(
+          source: source,
+          alt: controller.text,
+          activeFilePath: documentFilePath,
+          workspaceRoot: workspaceRoot,
+          writersideRoot: writersideRoot,
+          imagesDir: imagesDir,
+          height: 240,
         ),
         const SizedBox(height: BusyMarkSpacing.sm),
         TextField(
@@ -909,62 +913,6 @@ class _ImageBlockEditor extends StatelessWidget {
   }
 }
 
-class _LocalImagePreview extends StatelessWidget {
-  const _LocalImagePreview({required this.file, required this.source});
-
-  final File? file;
-  final String source;
-
-  @override
-  Widget build(BuildContext context) {
-    if (file == null || !file!.existsSync()) {
-      return _ImagePlaceholder(source: source);
-    }
-    return Image.file(
-      file!,
-      height: 240,
-      fit: BoxFit.contain,
-      alignment: Alignment.center,
-      errorBuilder: (context, error, stackTrace) =>
-          _ImagePlaceholder(source: source),
-    );
-  }
-}
-
-class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({required this.source});
-
-  final String source;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return SizedBox(
-      height: 120,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_not_supported_outlined,
-              size: BusyMarkSizes.iconMd,
-              color: colors.mutedForeground,
-            ),
-            const SizedBox(height: BusyMarkSpacing.xs),
-            Text(
-              source.isEmpty ? 'No image source' : source,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 String _imageSource(BusyBlock block) {
   final attributeSource = block.attributes['src'];
   if (attributeSource != null && attributeSource.trim().isNotEmpty) {
@@ -978,36 +926,4 @@ String _imageSource(BusyBlock block) {
     }
   }
   return '';
-}
-
-File? _resolveLocalImageFile(
-  String source,
-  String documentFilePath, {
-  required String? workspaceRoot,
-  required String? writersideRoot,
-  required String imagesDir,
-}) {
-  if (source.isEmpty) {
-    return null;
-  }
-  final uri = Uri.tryParse(source);
-  if (uri != null && uri.hasScheme) {
-    if (uri.scheme == 'file') {
-      return File.fromUri(uri);
-    }
-    return null;
-  }
-  final pathWithoutFragment = source.split('#').first.split('?').first.trim();
-  if (pathWithoutFragment.isEmpty ||
-      p.extension(pathWithoutFragment).toLowerCase() == '.svg') {
-    return null;
-  }
-  final resolvedPath = resolveLocalImagePath(
-    activeFilePath: documentFilePath,
-    destination: source,
-    workspaceRoot: workspaceRoot,
-    writersideRoot: writersideRoot,
-    imagesDir: imagesDir,
-  );
-  return resolvedPath == null ? null : File(resolvedPath);
 }
