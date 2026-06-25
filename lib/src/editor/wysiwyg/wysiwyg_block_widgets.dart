@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/localization.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -470,7 +471,7 @@ class _TableBlockEditor extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: IconButton(
-            tooltip: 'Delete table',
+            tooltip: context.l10n.deleteTable,
             style: busyMarkHeaderIconButtonStyle(
               foregroundColor: colors.mutedForeground,
               backgroundColor: busyMarkHeaderButtonBackground(context),
@@ -585,11 +586,11 @@ class _TableColumnControlCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _TableControlMenuButton(
-      tooltip: 'Column ${columnIndex + 1}',
+      tooltip: context.l10n.tableColumnNumber(columnIndex + 1),
       icon: BusyMarkGlyphs.menuHorizontal,
-      beforeLabel: 'Insert column left',
-      afterLabel: 'Insert column right',
-      deleteLabel: 'Delete column',
+      beforeLabel: context.l10n.insertColumnLeft,
+      afterLabel: context.l10n.insertColumnRight,
+      deleteLabel: context.l10n.deleteColumn,
       onSelected: (action) {
         switch (action) {
           case _TableControlAction.insertBefore:
@@ -618,11 +619,11 @@ class _TableRowControlCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _TableControlMenuButton(
-      tooltip: 'Row ${rowIndex + 1}',
+      tooltip: context.l10n.tableRowNumber(rowIndex + 1),
       icon: BusyMarkGlyphs.menuVertical,
-      beforeLabel: 'Insert row above',
-      afterLabel: 'Insert row below',
-      deleteLabel: 'Delete row',
+      beforeLabel: context.l10n.insertRowAbove,
+      afterLabel: context.l10n.insertRowBelow,
+      deleteLabel: context.l10n.deleteRow,
       onSelected: (action) {
         switch (action) {
           case _TableControlAction.insertBefore:
@@ -759,7 +760,9 @@ class _TableCellEditorState extends State<_TableCellEditor> {
           focusedBorder: InputBorder.none,
           filled: false,
           hoverColor: Colors.transparent,
-          hintText: widget.header ? 'Header' : 'Cell',
+          hintText: widget.header
+              ? context.l10n.tableHeaderHint
+              : context.l10n.tableCellHint,
           hintStyle: textStyle.copyWith(color: colors.mutedForeground),
           contentPadding: EdgeInsets.zero,
         ),

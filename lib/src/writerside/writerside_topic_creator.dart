@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
+import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import 'writerside_model.dart';
 
@@ -59,17 +60,17 @@ class WritersideTopicCreator {
   ) async {
     final rootPath = normalizePath(target.rootPath);
     if (!Directory(rootPath).existsSync()) {
-      throw FileSystemException(
-        'Writerside module root does not exist',
-        rootPath,
+      throw BusyMarkException(
+        'writerside.topic.module-root-missing',
+        args: {'path': rootPath},
       );
     }
     final treePath = normalizePath(target.treePath);
     final treeFile = File(treePath);
     if (!treeFile.existsSync()) {
-      throw FileSystemException(
-        'Writerside tree file does not exist',
-        treePath,
+      throw BusyMarkException(
+        'writerside.topic.tree-file-missing',
+        args: {'path': treePath},
       );
     }
     final topicsRootDir = _safeRelativeDirectory(target.topicsRootDir);
@@ -77,25 +78,23 @@ class WritersideTopicCreator {
     final topicFileName = _topicFileName(request.fileName, request.format);
     final topicId = p.basenameWithoutExtension(topicFileName);
     if (target.existingTopicIds.contains(topicId)) {
-      throw ArgumentError.value(
-        request.fileName,
-        'fileName',
-        'Topic ID "$topicId" already exists in this help module.',
+      throw BusyMarkException(
+        'writerside.topic.id-exists',
+        args: {'topicId': topicId},
       );
     }
     final title = request.title.trim();
     if (title.isEmpty) {
-      throw ArgumentError.value(
-        request.title,
-        'title',
-        'Topic title is required.',
-      );
+      throw const BusyMarkException('writerside.topic.title-required');
     }
 
     final topicPath = normalizePath(p.join(topicsRootPath, topicFileName));
     final topicFile = File(topicPath);
     if (topicFile.existsSync()) {
-      throw FileSystemException('Topic file already exists', topicPath);
+      throw BusyMarkException(
+        'writerside.topic.file-exists',
+        args: {'path': topicPath},
+      );
     }
 
     final treeSource = await treeFile.readAsString();
@@ -155,10 +154,9 @@ class WritersideTopicCreator {
       WritersideTopicCreatePlacement.root => true,
     };
     if (!inserted) {
-      throw ArgumentError.value(
-        referenceTopic,
-        'referenceTopic',
-        'Reference topic is not present in the selected tree.',
+      throw BusyMarkException(
+        'writerside.topic.reference-missing',
+        args: {'topic': referenceTopic},
       );
     }
     return _treeXml(document);
@@ -219,11 +217,7 @@ class WritersideTopicCreator {
         directory == '..' ||
         p.isAbsolute(directory) ||
         directory.split(RegExp(r'[/\\]+')).contains('..')) {
-      throw ArgumentError.value(
-        value,
-        'topicsRootDir',
-        'Topics root must be a safe relative directory.',
-      );
+      throw const BusyMarkException('writerside.topic.topics-root-unsafe');
     }
     return p.normalize(directory).replaceAll(r'\', '/');
   }
@@ -237,11 +231,7 @@ class WritersideTopicCreator {
         trimmed.contains('/') ||
         trimmed.contains(r'\') ||
         trimmed.contains('..')) {
-      throw ArgumentError.value(
-        value,
-        'fileName',
-        'Topic file name must be a single safe path segment.',
-      );
+      throw const BusyMarkException('writerside.topic.file-name-unsafe');
     }
     final expectedExtension = switch (format) {
       WritersideTopicFormat.markdown => '.md',
@@ -250,19 +240,14 @@ class WritersideTopicCreator {
     final extension = p.extension(trimmed).toLowerCase();
     final fileName = extension.isEmpty ? '$trimmed$expectedExtension' : trimmed;
     if (p.extension(fileName).toLowerCase() != expectedExtension) {
-      throw ArgumentError.value(
-        value,
-        'fileName',
-        'Topic file extension must match the selected format.',
+      throw BusyMarkException(
+        'writerside.topic.file-extension-mismatch',
+        args: {'extension': expectedExtension},
       );
     }
     final id = p.basenameWithoutExtension(fileName);
     if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
-      throw ArgumentError.value(
-        value,
-        'fileName',
-        'Topic file name must contain only letters, numbers, underscores, and hyphens.',
-      );
+      throw const BusyMarkException('writerside.topic.file-name-invalid');
     }
     return fileName;
   }

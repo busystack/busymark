@@ -13,7 +13,7 @@ void main() {
     );
     final preview = previewBuilder.build(parsed);
 
-    expect(preview.modeLabel, 'Preview');
+    expect(preview.modeLabel, isEmpty);
     expect(preview.compatibility, isEmpty);
   });
 

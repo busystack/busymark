@@ -12,10 +12,12 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/localization.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
+import '../workspace_message.dart';
 import '../workspace_safety.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -26,8 +28,8 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  static const _markdownTypes = XTypeGroup(
-    label: 'Markdown',
+  XTypeGroup _markdownTypes(BuildContext context) => XTypeGroup(
+    label: context.l10n.fileTypeMarkdown,
     extensions: <String>['md', 'markdown'],
     mimeTypes: <String>['text/markdown', 'text/x-markdown'],
   );
@@ -68,24 +70,24 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               leadingWidth: 0,
               titleSpacing: BusyMarkSpacing.lg,
               title: Text(
-                'BusyMark',
+                context.l10n.appTitle,
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               actions: [
                 BusyMarkHeaderIconButton(
-                  tooltip: 'Settings',
+                  tooltip: context.l10n.settings,
                   icon: BusyMarkGlyphs.settings,
                   onPressed: () => context.go('/settings'),
                 ),
                 BusyMarkHeaderIconButton(
-                  tooltip: 'Keyboard Shortcuts',
+                  tooltip: context.l10n.keyboardShortcuts,
                   icon: BusyMarkGlyphs.keyboard,
                   onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(
-                  tooltip: 'About BusyMark',
+                  tooltip: context.l10n.aboutBusyMark,
                   icon: BusyMarkGlyphs.info,
                   onPressed: () => showBusyMarkAboutDialog(context),
                 ),
@@ -100,19 +102,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             BusyMarkGroupedList(
-              title: 'Create',
+              title: context.l10n.create,
               filled: true,
               children: [
                 BusyMarkActionRow(
-                  title: 'Create Markdown File',
-                  subtitle: 'Start an unsaved local Markdown document',
+                  title: context.l10n.createMarkdownFile,
+                  subtitle: context.l10n.createMarkdownFileDescription,
                   leading: const Icon(BusyMarkGlyphs.newDocument),
                   trailing: const Icon(BusyMarkGlyphs.rightArrow),
                   onTap: _createMarkdownFile,
                 ),
                 BusyMarkActionRow(
-                  title: 'Create Writerside Project',
-                  subtitle: 'Starter project with one Writerside help instance',
+                  title: context.l10n.createWritersideProject,
+                  subtitle: context.l10n.createWritersideProjectDescription,
                   leading: const Icon(BusyMarkGlyphs.writersideProject),
                   trailing: const Icon(BusyMarkGlyphs.rightArrow),
                   onTap: _createWritersideProject,
@@ -120,22 +122,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               ],
             ),
             BusyMarkGroupedList(
-              title: 'Open',
+              title: context.l10n.open,
               filled: true,
               children: [
                 BusyMarkActionRow(
-                  title: 'Open Markdown File',
-                  subtitle: '.md or .markdown',
+                  title: context.l10n.openMarkdownFile,
+                  subtitle: context.l10n.markdownFileExtensions,
                   leading: const Icon(BusyMarkGlyphs.markdownFile),
                   trailing: const Icon(BusyMarkGlyphs.rightArrow),
                   onTap: _chooseMarkdownFile,
                 ),
                 BusyMarkActionRow(
-                  title: 'Open Folder or Writerside Project',
-                  subtitle: 'Markdown folder or Writerside-compatible project',
+                  title: context.l10n.openFolderOrWritersideProject,
+                  subtitle: context.l10n.markdownFolderOrWritersideProject,
                   leading: const Icon(BusyMarkGlyphs.folder),
                   trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                  onTap: () => _chooseDirectory('Open'),
+                  onTap: () => _chooseDirectory(context.l10n.open),
                 ),
               ],
             ),
@@ -143,13 +145,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               const SizedBox(height: BusyMarkSpacing.lg),
               const LinearProgressIndicator(),
             ],
-            if (state.errorMessage != null) ...[
+            if (state.message != null) ...[
               const SizedBox(height: BusyMarkSpacing.lg),
-              _WelcomeMessage(message: state.errorMessage!),
+              _WelcomeMessage(
+                message: localizeWorkspaceMessage(context, state.message!),
+              ),
             ],
             if (settings.recentWorkspaces.isNotEmpty)
               BusyMarkGroupedList(
-                title: 'Recent',
+                title: context.l10n.recent,
                 filled: true,
                 children: [
                   for (final recent in settings.recentWorkspaces)
@@ -173,7 +177,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   void _configureHeaderBar(LinuxHeaderBarService headerBar) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
-        await headerBar.setTitleRange('BusyMark');
+        await headerBar.setTitleRange(context.l10n.appTitle);
         await headerBar.setSidebarVisible(false);
         await headerBar.setSidebarToggleVisible(false);
         await headerBar.setBackVisible(false);
@@ -214,9 +218,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   Future<void> _chooseMarkdownFile() async {
     final selected = await openFile(
-      acceptedTypeGroups: const [_markdownTypes],
+      acceptedTypeGroups: [_markdownTypes(context)],
       initialDirectory: _initialDirectory(),
-      confirmButtonText: 'Open',
+      confirmButtonText: context.l10n.open,
     );
     final path = selected?.path;
     if (path == null) {
@@ -298,7 +302,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     }
     final parentPath = await getDirectoryPath(
       initialDirectory: _initialDirectory(),
-      confirmButtonText: 'Choose Location',
+      confirmButtonText: context.l10n.chooseLocation,
       canCreateDirectories: true,
     );
     if (parentPath == null || !mounted) {
@@ -315,7 +319,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         onCreate: (request) => ref
             .read(workspaceControllerProvider.notifier)
             .createWritersideProject(request),
-        errorMessage: () => ref.read(workspaceControllerProvider).errorMessage,
+        message: () => ref.read(workspaceControllerProvider).message,
       ),
     );
     if (!mounted) {
@@ -359,12 +363,12 @@ class _CreateWritersideProjectDialog extends StatefulWidget {
   const _CreateWritersideProjectDialog({
     required this.parentDirectoryPath,
     required this.onCreate,
-    required this.errorMessage,
+    required this.message,
   });
 
   final String parentDirectoryPath;
   final Future<bool> Function(WritersideProjectCreateRequest request) onCreate;
-  final String? Function() errorMessage;
+  final WorkspaceMessage? Function() message;
 
   @override
   State<_CreateWritersideProjectDialog> createState() =>
@@ -382,6 +386,7 @@ class _CreateWritersideProjectDialogState
   var _syncingDirectory = false;
   var _creating = false;
   String? _creationError;
+  var _localizedDefaultsApplied = false;
 
   @override
   void initState() {
@@ -391,12 +396,23 @@ class _CreateWritersideProjectDialogState
     _directoryNameController = TextEditingController(
       text: _slugDirectoryName(''),
     )..addListener(_handleDirectoryNameChanged);
-    _instanceNameController = TextEditingController(text: 'User Guide')
+    _instanceNameController = TextEditingController()
       ..addListener(_handleFieldChanged);
     _instanceIdController = TextEditingController(text: 'user-guide')
       ..addListener(_handleFieldChanged);
-    _topicTitleController = TextEditingController(text: 'Getting started')
+    _topicTitleController = TextEditingController()
       ..addListener(_handleFieldChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_localizedDefaultsApplied) {
+      return;
+    }
+    _localizedDefaultsApplied = true;
+    _instanceNameController.text = context.l10n.defaultInstanceName;
+    _topicTitleController.text = context.l10n.defaultStartTopicTitle;
   }
 
   @override
@@ -412,10 +428,10 @@ class _CreateWritersideProjectDialogState
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final projectError = _projectNameError;
-    final directoryError = _directoryNameError;
-    final instanceIdError = _instanceIdError;
-    final topicTitleError = _topicTitleError;
+    final projectError = _projectNameError(context);
+    final directoryError = _directoryNameError(context);
+    final instanceIdError = _instanceIdError(context);
+    final topicTitleError = _topicTitleError(context);
     final canCreate =
         !_creating &&
         projectError == null &&
@@ -423,16 +439,16 @@ class _CreateWritersideProjectDialogState
         instanceIdError == null &&
         topicTitleError == null;
     return BusyMarkDialogShell(
-      title: 'Create Writerside Project',
+      title: context.l10n.createWritersideProject,
       maxWidth: 560,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           onPressed: canCreate ? _submit : null,
-          child: Text(_creating ? 'Creating...' : 'Create'),
+          child: Text(_creating ? context.l10n.creating : context.l10n.create),
         ),
       ],
       children: [
@@ -441,7 +457,8 @@ class _CreateWritersideProjectDialogState
           autofocus: true,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            labelText: 'Project name',
+            labelText: context.l10n.projectName,
+            hintText: context.l10n.defaultProjectName,
             errorText: projectError,
           ),
         ),
@@ -455,7 +472,7 @@ class _CreateWritersideProjectDialogState
             }
           },
           decoration: InputDecoration(
-            labelText: 'Directory name',
+            labelText: context.l10n.directoryName,
             errorText: directoryError,
           ),
         ),
@@ -463,14 +480,14 @@ class _CreateWritersideProjectDialogState
         TextField(
           controller: _instanceNameController,
           textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(labelText: 'Instance name'),
+          decoration: InputDecoration(labelText: context.l10n.instanceName),
         ),
         const SizedBox(height: BusyMarkSpacing.md),
         TextField(
           controller: _instanceIdController,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            labelText: 'Instance ID',
+            labelText: context.l10n.instanceId,
             errorText: instanceIdError,
           ),
         ),
@@ -484,7 +501,7 @@ class _CreateWritersideProjectDialogState
             }
           },
           decoration: InputDecoration(
-            labelText: 'Start topic title',
+            labelText: context.l10n.startTopicTitle,
             errorText: topicTitleError,
           ),
         ),
@@ -494,7 +511,7 @@ class _CreateWritersideProjectDialogState
           const SizedBox(height: BusyMarkSpacing.lg),
         ],
         Text(
-          'Location',
+          context.l10n.location,
           style: Theme.of(
             context,
           ).textTheme.labelMedium?.copyWith(color: colors.mutedForeground),
@@ -518,17 +535,17 @@ class _CreateWritersideProjectDialogState
     );
   }
 
-  String? get _projectNameError {
+  String? _projectNameError(BuildContext context) {
     if (_projectNameController.text.trim().isEmpty) {
-      return 'Project name is required.';
+      return context.l10n.projectNameRequired;
     }
     return null;
   }
 
-  String? get _directoryNameError {
+  String? _directoryNameError(BuildContext context) {
     final value = _directoryNameController.text.trim();
     if (value.isEmpty) {
-      return 'Directory name is required.';
+      return context.l10n.directoryNameRequired;
     }
     if (value == '.' ||
         value == '..' ||
@@ -536,22 +553,22 @@ class _CreateWritersideProjectDialogState
         value.contains('..') ||
         value.contains('/') ||
         value.contains(r'\')) {
-      return 'Use a single safe directory name.';
+      return context.l10n.useSingleSafeDirectoryName;
     }
     return null;
   }
 
-  String? get _instanceIdError {
+  String? _instanceIdError(BuildContext context) {
     final value = _instanceIdController.text.trim();
     if (!RegExp(r'^[a-z][a-z0-9_-]*$').hasMatch(value)) {
-      return 'Use lowercase letters, numbers, underscores, or hyphens.';
+      return context.l10n.useLowercaseIdentifier;
     }
     return null;
   }
 
-  String? get _topicTitleError {
+  String? _topicTitleError(BuildContext context) {
     if (_topicTitleController.text.trim().isEmpty) {
-      return 'Start topic title is required.';
+      return context.l10n.startTopicTitleRequired;
     }
     return null;
   }
@@ -591,10 +608,10 @@ class _CreateWritersideProjectDialogState
 
   Future<void> _submit() async {
     if (_creating ||
-        _projectNameError != null ||
-        _directoryNameError != null ||
-        _instanceIdError != null ||
-        _topicTitleError != null) {
+        _projectNameError(context) != null ||
+        _directoryNameError(context) != null ||
+        _instanceIdError(context) != null ||
+        _topicTitleError(context) != null) {
       return;
     }
     setState(() {
@@ -607,7 +624,7 @@ class _CreateWritersideProjectDialogState
         projectName: _projectNameController.text.trim(),
         directoryName: _directoryNameController.text.trim(),
         instanceName: _instanceNameController.text.trim().isEmpty
-            ? 'User Guide'
+            ? context.l10n.defaultInstanceName
             : _instanceNameController.text.trim(),
         instanceId: _instanceIdController.text.trim(),
         topicTitle: _topicTitleController.text.trim(),
@@ -622,8 +639,10 @@ class _CreateWritersideProjectDialogState
     }
     setState(() {
       _creating = false;
-      _creationError =
-          widget.errorMessage() ?? 'Create Writerside project failed.';
+      final message = widget.message();
+      _creationError = message == null
+          ? context.l10n.createWritersideProjectFailed
+          : localizeWorkspaceMessage(context, message);
     });
   }
 

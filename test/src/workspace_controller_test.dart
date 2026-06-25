@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
@@ -78,7 +79,7 @@ void main() {
 
       expect(controller.state.workspace?.kind, WorkspaceKind.untitledMarkdown);
       expect(controller.state.workspace?.activeFilePath, isNull);
-      expect(controller.state.workspace?.markdown?.filePath, 'Untitled.md');
+      expect(controller.state.workspace?.markdown?.filePath, isEmpty);
       expect(controller.state.isDirty, isTrue);
       expect(settingsController.state.recentWorkspaces, isEmpty);
 
@@ -104,6 +105,8 @@ void main() {
         parentDirectoryPath: parent.path,
         projectName: 'Docs',
         directoryName: 'docs',
+        instanceName: 'User Guide',
+        topicTitle: 'Getting started',
       ),
     );
 
@@ -141,6 +144,8 @@ void main() {
           parentDirectoryPath: parent.path,
           projectName: 'Docs',
           directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
         ),
       );
       final recentCount = settingsController.state.recentWorkspaces.length;
@@ -244,8 +249,7 @@ void main() {
     await controller.openPath('test/fixtures/markdown/does-not-exist.md');
 
     expect(controller.state.workspace, isNull);
-    expect(controller.state.errorMessage, contains('Open failed'));
-    expect(controller.state.errorMessage, contains('Path does not exist'));
+    expect(controller.state.message?.code, WorkspaceMessageCode.openFailed);
 
     controller.dispose();
     settingsController.dispose();

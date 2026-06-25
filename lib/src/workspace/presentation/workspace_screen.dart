@@ -15,7 +15,9 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
+import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source_folding.dart';
@@ -30,6 +32,7 @@ import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_model.dart';
+import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import 'welcome_screen.dart';
 
@@ -198,7 +201,11 @@ class WorkspaceScreen extends ConsumerWidget {
       return const WelcomeScreen();
     }
     final searchState = ref.watch(_workspaceSearchProvider);
-    final searchResults = _workspaceSearchResults(state, searchState.query);
+    final searchResults = _workspaceSearchResults(
+      context,
+      state,
+      searchState.query,
+    );
 
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -281,7 +288,7 @@ class WorkspaceScreen extends ConsumerWidget {
                     titleSpacing: 0,
                     leading: Center(
                       child: BusyMarkHeaderIconButton(
-                        tooltip: 'Welcome',
+                        tooltip: context.l10n.welcome,
                         icon: BusyMarkGlyphs.home,
                         onPressed: () async {
                           if (await confirmSafeToContinue(context, ref) &&
@@ -308,14 +315,17 @@ class WorkspaceScreen extends ConsumerWidget {
                             },
                           )
                         : _HeaderTitle(
-                            title: _activeFileName(workspace),
-                            subtitle: _workspaceKindLabel(workspace.kind),
+                            title: _activeFileName(context, workspace),
+                            subtitle: _workspaceKindLabel(
+                              context,
+                              workspace.kind,
+                            ),
                             dirty: state.isDirty,
                           ),
                     actions: [
                       const SizedBox(width: BusyMarkSpacing.sm),
                       BusyMarkHeaderIconButton(
-                        tooltip: 'Save',
+                        tooltip: context.l10n.save,
                         icon: BusyMarkGlyphs.check,
                         accented: state.isDirty,
                         shortcut: 'Ctrl+S',
@@ -324,7 +334,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                       ),
                       BusyMarkHeaderIconButton(
-                        tooltip: 'Validate',
+                        tooltip: context.l10n.validate,
                         icon: BusyMarkGlyphs.diagnostics,
                         onPressed: () => unawaited(
                           _validateActiveAndShowProblems(context, ref),
@@ -333,8 +343,8 @@ class WorkspaceScreen extends ConsumerWidget {
                       const _HeaderSeparator(),
                       BusyMarkHeaderIconButton(
                         tooltip: settings.sidebarVisible
-                            ? 'Hide sidebar'
-                            : 'Show sidebar',
+                            ? context.l10n.hideSidebar
+                            : context.l10n.showSidebar,
                         icon: BusyMarkGlyphs.sidebar,
                         selected: settings.sidebarVisible,
                         onPressed: () => settingsController.setSidebarVisible(
@@ -342,7 +352,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                       ),
                       BusyMarkHeaderIconButton(
-                        tooltip: 'Search',
+                        tooltip: context.l10n.search,
                         icon: BusyMarkGlyphs.search,
                         selected: searchState.active,
                         shortcut: 'Ctrl+F',
@@ -352,8 +362,8 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip:
                             settings.documentViewMode ==
                                 DocumentViewModePreference.source
-                            ? 'Show preview'
-                            : 'Hide preview',
+                            ? context.l10n.showPreview
+                            : context.l10n.hidePreview,
                         icon: BusyMarkGlyphs.preview,
                         selected:
                             settings.documentViewMode !=
@@ -364,18 +374,18 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                       ),
                       BusyMarkHeaderIconButton(
-                        tooltip: 'Settings',
+                        tooltip: context.l10n.settings,
                         icon: BusyMarkGlyphs.settings,
                         onPressed: () => context.go('/settings'),
                       ),
                       BusyMarkHeaderIconButton(
-                        tooltip: 'Keyboard Shortcuts',
+                        tooltip: context.l10n.keyboardShortcuts,
                         icon: BusyMarkGlyphs.keyboard,
                         onPressed: () =>
                             showBusyMarkKeyboardShortcutsDialog(context),
                       ),
                       BusyMarkHeaderIconButton(
-                        tooltip: 'About BusyMark',
+                        tooltip: context.l10n.aboutBusyMark,
                         icon: BusyMarkGlyphs.info,
                         onPressed: () => showBusyMarkAboutDialog(context),
                       ),
@@ -384,10 +394,10 @@ class WorkspaceScreen extends ConsumerWidget {
                   ),
             body: Column(
               children: [
-                if (state.errorMessage != null)
+                if (state.message != null)
                   _InlineMessage(
                     icon: BusyMarkGlyphs.warning,
-                    message: state.errorMessage!,
+                    message: localizeWorkspaceMessage(context, state.message!),
                   ),
                 Expanded(
                   child: Row(
@@ -476,8 +486,8 @@ class WorkspaceScreen extends ConsumerWidget {
     _WorkspaceSearchState searchState,
   ) {
     final title = state.isDirty
-        ? '*${_activeFileName(workspace)}'
-        : _activeFileName(workspace);
+        ? '*${_activeFileName(context, workspace)}'
+        : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
@@ -558,20 +568,22 @@ class WorkspaceScreen extends ConsumerWidget {
     }
   }
 
-  String _activeFileName(Workspace workspace) {
+  String _activeFileName(BuildContext context, Workspace workspace) {
     final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (path == null || path.isEmpty) {
-      return 'Untitled.md';
+      return context.l10n.untitledMarkdownFileName;
     }
     return p.basename(path);
   }
 
-  String _workspaceKindLabel(WorkspaceKind kind) {
+  String _workspaceKindLabel(BuildContext context, WorkspaceKind kind) {
     return switch (kind) {
-      WorkspaceKind.untitledMarkdown => 'Unsaved Markdown file',
-      WorkspaceKind.singleMarkdown => 'Single Markdown file',
-      WorkspaceKind.markdownFolder => 'Markdown folder',
-      WorkspaceKind.writersideModule => 'Writerside module',
+      WorkspaceKind.untitledMarkdown =>
+        context.l10n.workspaceKindUnsavedMarkdown,
+      WorkspaceKind.singleMarkdown => context.l10n.workspaceKindSingleMarkdown,
+      WorkspaceKind.markdownFolder => context.l10n.workspaceKindMarkdownFolder,
+      WorkspaceKind.writersideModule =>
+        context.l10n.workspaceKindWritersideModule,
     };
   }
 
@@ -630,11 +642,11 @@ class WorkspaceScreen extends ConsumerWidget {
         context,
         headerBarService: headerBar.isAvailable ? headerBar : null,
         builder: (context) => BusyMarkDialogShell(
-          title: 'Problems',
+          title: context.l10n.problems,
           maxWidth: 760,
           children: [
             Text(
-              count == 1 ? '1 diagnostic' : '$count diagnostics',
+              context.l10n.diagnosticCount(count),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: BusyMarkSurfaceColors.of(context).mutedForeground,
               ),
@@ -785,7 +797,7 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
             minWidth: BusyMarkSizes.iconButton,
             minHeight: BusyMarkSizes.iconButton,
           ),
-          hintText: 'Search',
+          hintText: context.l10n.search,
           filled: true,
           fillColor: colors.control,
           border: OutlineInputBorder(
@@ -932,7 +944,7 @@ class _SidebarState extends State<_Sidebar> {
                       for (var index = 0; index < tabs.length; index++)
                         ButtonSegment(
                           value: index,
-                          label: Text(_sidebarTabLabel(tabs[index])),
+                          label: Text(_sidebarTabLabel(context, tabs[index])),
                         ),
                     ],
                     selected: {selectedIndex},
@@ -1001,11 +1013,11 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   };
 }
 
-String _sidebarTabLabel(_SidebarTab tab) {
+String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
   return switch (tab) {
-    _SidebarTab.files => 'Files',
-    _SidebarTab.toc => 'TOC',
-    _SidebarTab.outline => 'Outline',
+    _SidebarTab.files => context.l10n.files,
+    _SidebarTab.toc => context.l10n.toc,
+    _SidebarTab.outline => context.l10n.outline,
   };
 }
 
@@ -1023,7 +1035,7 @@ class _SidebarHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _workspaceName(workspace),
+            _workspaceName(context, workspace),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1033,7 +1045,7 @@ class _SidebarHeader extends StatelessWidget {
           ),
           const SizedBox(height: BusyMarkSpacing.xs),
           Text(
-            _workspaceDetail(workspace),
+            _workspaceDetail(context, workspace),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall,
@@ -1043,28 +1055,34 @@ class _SidebarHeader extends StatelessWidget {
     );
   }
 
-  String _workspaceName(Workspace workspace) {
+  String _workspaceName(BuildContext context, Workspace workspace) {
     if (workspace.kind == WorkspaceKind.untitledMarkdown) {
-      return workspace.markdown?.filePath ?? 'Untitled.md';
+      final filePath = workspace.markdown?.filePath;
+      return filePath == null || filePath.isEmpty
+          ? context.l10n.untitledMarkdownFileName
+          : filePath;
     }
     final path = workspace.rootPath;
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
     return segments.isEmpty ? path : segments.last;
   }
 
-  String _workspaceDetail(Workspace workspace) {
+  String _workspaceDetail(BuildContext context, Workspace workspace) {
     if (workspace.kind == WorkspaceKind.untitledMarkdown) {
-      return 'Markdown - unsaved';
+      return context.l10n.markdownUnsaved;
     }
-    return '${_workspaceKindLabel(workspace.kind)} - ${workspace.files.length} files';
+    return context.l10n.workspaceDetail(
+      _workspaceKindLabel(context, workspace.kind),
+      workspace.files.length,
+    );
   }
 
-  String _workspaceKindLabel(WorkspaceKind kind) {
+  String _workspaceKindLabel(BuildContext context, WorkspaceKind kind) {
     return switch (kind) {
-      WorkspaceKind.untitledMarkdown => 'Markdown',
-      WorkspaceKind.singleMarkdown => 'Markdown',
-      WorkspaceKind.markdownFolder => 'Folder',
-      WorkspaceKind.writersideModule => 'Writerside',
+      WorkspaceKind.untitledMarkdown => context.l10n.markdown,
+      WorkspaceKind.singleMarkdown => context.l10n.markdown,
+      WorkspaceKind.markdownFolder => context.l10n.folder,
+      WorkspaceKind.writersideModule => context.l10n.writerside,
     };
   }
 }
@@ -1107,9 +1125,9 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
     final tree = _buildFileTree(widget.workspace.files);
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
     if (widget.workspace.files.isEmpty) {
-      return const _SidebarEmptyState(
+      return _SidebarEmptyState(
         icon: BusyMarkGlyphs.folder,
-        title: 'No files',
+        title: context.l10n.noFiles,
       );
     }
     return ListView.builder(
@@ -1474,9 +1492,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
   Widget build(BuildContext context) {
     final module = widget.workspace.writersideModule;
     if (module == null || module.instances.isEmpty) {
-      return const _SidebarEmptyState(
+      return _SidebarEmptyState(
         icon: BusyMarkGlyphs.tree,
-        title: 'No Writerside TOC',
+        title: context.l10n.noWritersideToc,
       );
     }
     final instance = module.instances.first;
@@ -1518,7 +1536,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
             ? null
             : module.topicByReference(node.topicFileName!)?.filePath;
         final label =
-            node.tocTitle ?? node.topicFileName ?? node.href ?? 'TOC section';
+            node.tocTitle ??
+            node.topicFileName ??
+            node.href ??
+            context.l10n.tocSection;
         void toggle() {
           setState(() {
             if (expanded) {
@@ -1606,14 +1627,14 @@ class _TocHeader extends StatelessWidget {
             ),
           ),
           BusyMarkHeaderIconButton(
-            tooltip: 'New Topic',
+            tooltip: context.l10n.newTopic,
             icon: BusyMarkGlyphs.newDocument,
             transparent: true,
             onPressed: onCreateTopic,
           ),
           const SizedBox(width: BusyMarkSpacing.xs),
           BusyMarkHeaderIconButton(
-            tooltip: 'New Child Topic',
+            tooltip: context.l10n.newChildTopic,
             icon: BusyMarkGlyphs.tree,
             transparent: true,
             onPressed: canCreateChild ? onCreateChildTopic : null,
@@ -1649,11 +1670,12 @@ class _CreateWritersideTopicDialogState
   var _syncingFileName = false;
   var _creating = false;
   String? _creationError;
+  var _localizedDefaultsApplied = false;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: 'New topic')
+    _titleController = TextEditingController()
       ..addListener(_handleTitleChanged);
     _fileNameController = TextEditingController(text: 'new-topic.md')
       ..addListener(_handleFileNameChanged);
@@ -1667,21 +1689,31 @@ class _CreateWritersideTopicDialogState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_localizedDefaultsApplied) {
+      return;
+    }
+    _localizedDefaultsApplied = true;
+    _titleController.text = context.l10n.defaultNewTopicTitle;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final titleError = _titleError;
-    final fileNameError = _fileNameError;
+    final titleError = _titleError(context);
+    final fileNameError = _fileNameError(context);
     final canCreate = !_creating && titleError == null && fileNameError == null;
     return BusyMarkDialogShell(
-      title: _dialogTitle,
+      title: _dialogTitle(context),
       maxWidth: 560,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           onPressed: canCreate ? _submit : null,
-          child: Text(_creating ? 'Creating...' : 'Create'),
+          child: Text(_creating ? context.l10n.creating : context.l10n.create),
         ),
       ],
       children: [
@@ -1690,7 +1722,7 @@ class _CreateWritersideTopicDialogState
           autofocus: true,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            labelText: 'Topic title',
+            labelText: context.l10n.topicTitle,
             errorText: titleError,
           ),
         ),
@@ -1704,19 +1736,22 @@ class _CreateWritersideTopicDialogState
             }
           },
           decoration: InputDecoration(
-            labelText: 'File name',
+            labelText: context.l10n.fileName,
             errorText: fileNameError,
           ),
         ),
         const SizedBox(height: BusyMarkSpacing.md),
         SegmentedButton<WritersideTopicFormat>(
           showSelectedIcon: false,
-          segments: const [
+          segments: [
             ButtonSegment(
               value: WritersideTopicFormat.markdown,
-              label: Text('Markdown'),
+              label: Text(context.l10n.markdown),
             ),
-            ButtonSegment(value: WritersideTopicFormat.xml, label: Text('XML')),
+            ButtonSegment(
+              value: WritersideTopicFormat.xml,
+              label: Text(context.l10n.xml),
+            ),
           ],
           selected: {_format},
           onSelectionChanged: (value) => _setFormat(value.first),
@@ -1727,7 +1762,7 @@ class _CreateWritersideTopicDialogState
           const SizedBox(height: BusyMarkSpacing.lg),
         ],
         Text(
-          'Location',
+          context.l10n.location,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             color: BusyMarkSurfaceColors.of(context).mutedForeground,
           ),
@@ -1753,23 +1788,23 @@ class _CreateWritersideTopicDialogState
     );
   }
 
-  String get _dialogTitle {
+  String _dialogTitle(BuildContext context) {
     return widget.placement == WritersideTopicCreatePlacement.child
-        ? 'New Child Topic'
-        : 'New Topic';
+        ? context.l10n.newChildTopic
+        : context.l10n.newTopic;
   }
 
-  String? get _titleError {
+  String? _titleError(BuildContext context) {
     if (_titleController.text.trim().isEmpty) {
-      return 'Topic title is required.';
+      return context.l10n.topicTitleRequired;
     }
     return null;
   }
 
-  String? get _fileNameError {
+  String? _fileNameError(BuildContext context) {
     final value = _fileNameController.text.trim();
     if (value.isEmpty) {
-      return 'File name is required.';
+      return context.l10n.fileNameRequired;
     }
     if (value == '.' ||
         value == '..' ||
@@ -1777,22 +1812,22 @@ class _CreateWritersideTopicDialogState
         value.contains('/') ||
         value.contains(r'\') ||
         value.contains('..')) {
-      return 'Use a single safe file name.';
+      return context.l10n.useSingleSafeFileName;
     }
     final expectedExtension = _extensionFor(_format);
     final extension = p.extension(value).toLowerCase();
     if (extension.isNotEmpty && extension != expectedExtension) {
-      return 'Use the $expectedExtension extension for this format.';
+      return context.l10n.useExpectedExtension(expectedExtension);
     }
     final id = p.basenameWithoutExtension(value);
     if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
-      return 'Use letters, numbers, underscores, or hyphens.';
+      return context.l10n.useIdentifierCharacters;
     }
     final existingIds = widget.workspace.writersideModule?.topics
         .map((topic) => topic.id)
         .toSet();
     if (existingIds?.contains(id) ?? false) {
-      return 'A topic with this ID already exists.';
+      return context.l10n.topicIdAlreadyExists;
     }
     return null;
   }
@@ -1854,7 +1889,9 @@ class _CreateWritersideTopicDialogState
   }
 
   Future<void> _submit() async {
-    if (_creating || _titleError != null || _fileNameError != null) {
+    if (_creating ||
+        _titleError(context) != null ||
+        _fileNameError(context) != null) {
       return;
     }
     setState(() {
@@ -1881,9 +1918,10 @@ class _CreateWritersideTopicDialogState
     }
     setState(() {
       _creating = false;
-      _creationError =
-          ref.read(workspaceControllerProvider).errorMessage ??
-          'Create Writerside topic failed.';
+      final message = ref.read(workspaceControllerProvider).message;
+      _creationError = message == null
+          ? context.l10n.createWritersideTopicFailed
+          : localizeWorkspaceMessage(context, message);
     });
   }
 
@@ -2058,9 +2096,9 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   Widget build(BuildContext context) {
     final headings = widget.workspace.markdown?.headings ?? const [];
     if (headings.isEmpty) {
-      return const _SidebarEmptyState(
+      return _SidebarEmptyState(
         icon: BusyMarkGlyphs.font,
-        title: 'No outline',
+        title: context.l10n.noOutline,
       );
     }
     final activeFilePath =
@@ -2231,7 +2269,7 @@ class _HeadingBadge extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          'H$level',
+          context.l10n.headingLevelAbbreviation(level),
           style: Theme.of(
             context,
           ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -3823,8 +3861,8 @@ class _SourceFoldButton extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     return Tooltip(
       message: collapsed
-          ? 'Expand ${_foldKindLabel(region.kind)}'
-          : 'Collapse ${_foldKindLabel(region.kind)}',
+          ? context.l10n.expandKind(_foldKindLabel(context, region.kind))
+          : context.l10n.collapseKind(_foldKindLabel(context, region.kind)),
       waitDuration: const Duration(milliseconds: 450),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -4013,13 +4051,13 @@ String _collapsedLineText(String text) {
   return '$trimmed ...';
 }
 
-String _foldKindLabel(SourceFoldKind kind) {
+String _foldKindLabel(BuildContext context, SourceFoldKind kind) {
   return switch (kind) {
-    SourceFoldKind.section => 'section',
-    SourceFoldKind.list => 'list',
-    SourceFoldKind.blockquote => 'quote',
-    SourceFoldKind.code => 'code block',
-    SourceFoldKind.xml => 'tag',
+    SourceFoldKind.section => context.l10n.foldKindSection,
+    SourceFoldKind.list => context.l10n.foldKindList,
+    SourceFoldKind.blockquote => context.l10n.foldKindQuote,
+    SourceFoldKind.code => context.l10n.codeBlock,
+    SourceFoldKind.xml => context.l10n.foldKindTag,
   };
 }
 
@@ -4043,9 +4081,9 @@ class _PreviewPane extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     final document = preview;
     if (document == null) {
-      return const _EmptyPane(
+      return _EmptyPane(
         icon: BusyMarkGlyphs.preview,
-        title: 'No preview',
+        title: context.l10n.noPreview,
       );
     }
     return DecoratedBox(
@@ -4124,13 +4162,14 @@ class _PreviewBlockView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return switch (block.kind) {
+    final displayBlock = _localizedPreviewBlock(context, block);
+    return switch (displayBlock.kind) {
       PreviewBlockKind.heading => Padding(
         padding: EdgeInsets.only(top: first ? 0 : 18, bottom: 6),
         child: _PreviewInlineText(
           key: headingKey,
-          block: block,
-          style: _headingStyle(context, block.level),
+          block: displayBlock,
+          style: _headingStyle(context, displayBlock.level),
         ),
       ),
       PreviewBlockKind.code => Container(
@@ -4142,7 +4181,7 @@ class _PreviewBlockView extends StatelessWidget {
           border: Border.all(color: colors.subtleBorder),
         ),
         child: Text(
-          block.text,
+          displayBlock.text,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontFamily: 'Ubuntu Mono',
             height: 1.45,
@@ -4150,34 +4189,27 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       PreviewBlockKind.image => _PreviewImageBlock(
-        block: block,
+        block: displayBlock,
         workspace: workspace,
       ),
       PreviewBlockKind.admonition => _PreviewCallout(
-        icon: _admonitionIcon(block.attributes['style']),
-        color: switch (block.attributes['style']) {
+        icon: _admonitionIcon(displayBlock.attributes['style']),
+        color: switch (displayBlock.attributes['style']) {
           'warning' => colors.admonitionWarning,
           'tip' => colors.admonitionTip,
           _ => colors.admonitionNote,
         },
-        child: _PreviewInlineText(
-          block: block.text.isEmpty
-              ? PreviewBlock(
-                  kind: block.kind,
-                  text: block.attributes['style'] ?? 'Note',
-                )
-              : block,
-        ),
+        child: _PreviewInlineText(block: displayBlock),
       ),
       PreviewBlockKind.tabs => _PreviewCallout(
         icon: BusyMarkGlyphs.tab,
         color: colors.panel,
-        child: Text(block.text),
+        child: Text(displayBlock.text),
       ),
       PreviewBlockKind.procedure => _PreviewCallout(
         icon: BusyMarkGlyphs.orderedList,
         color: colors.panel,
-        child: Text(block.text),
+        child: Text(displayBlock.text),
       ),
       PreviewBlockKind.list => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -4205,7 +4237,7 @@ class _PreviewBlockView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: const _PreviewThematicBreak(),
       ),
-      PreviewBlockKind.table => _PreviewTable(block: block),
+      PreviewBlockKind.table => _PreviewTable(block: displayBlock),
       PreviewBlockKind.raw => Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(14),
@@ -4215,7 +4247,7 @@ class _PreviewBlockView extends StatelessWidget {
           border: Border.all(color: colors.subtleBorder),
         ),
         child: Text(
-          block.text,
+          displayBlock.text,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontFamily: 'Ubuntu Mono',
             color: colors.mutedForeground,
@@ -4225,9 +4257,54 @@ class _PreviewBlockView extends StatelessWidget {
       ),
       _ => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
-        child: _PreviewInlineText(block: block),
+        child: _PreviewInlineText(block: displayBlock),
       ),
     };
+  }
+
+  PreviewBlock _localizedPreviewBlock(
+    BuildContext context,
+    PreviewBlock block,
+  ) {
+    if (block.text.trim().isNotEmpty) {
+      return block;
+    }
+    final element = block.attributes['element'];
+    final text = switch (block.kind) {
+      PreviewBlockKind.heading =>
+        element == 'chapter' ? context.l10n.chapter : context.l10n.topic,
+      PreviewBlockKind.code => context.l10n.codeBlock,
+      PreviewBlockKind.image => context.l10n.image,
+      PreviewBlockKind.admonition => switch (block.attributes['style']) {
+        'warning' => context.l10n.warning,
+        'tip' => context.l10n.tip,
+        _ => context.l10n.note,
+      },
+      PreviewBlockKind.tabs =>
+        element == 'tab' ? context.l10n.tab : context.l10n.tabs,
+      PreviewBlockKind.procedure =>
+        element == 'step' ? context.l10n.step : context.l10n.procedure,
+      PreviewBlockKind.paragraph =>
+        element == 'a'
+            ? context.l10n.link
+            : element ?? context.l10n.untitledResult,
+      _ => block.text,
+    };
+    if (text == block.text) {
+      return block;
+    }
+    return PreviewBlock(
+      kind: block.kind,
+      text: text,
+      level: block.level,
+      attributes: block.attributes,
+      inlines: block.inlines,
+      children: block.children,
+      sourceStartLine: block.sourceStartLine,
+      sourceEndLine: block.sourceEndLine,
+      sourceStartOffset: block.sourceStartOffset,
+      sourceEndOffset: block.sourceEndOffset,
+    );
   }
 
   TextStyle? _headingStyle(BuildContext context, int? level) {
@@ -4940,7 +5017,7 @@ Future<void> _openPreviewLink(
       mode: LaunchMode.externalApplication,
     );
     if (!launched && context.mounted) {
-      _showPreviewLinkMessage(context, 'Could not open $target');
+      _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
     }
     return;
   }
@@ -4970,13 +5047,16 @@ Future<void> _openPreviewLink(
       .firstOrNull;
   if (file == null) {
     if (context.mounted) {
-      _showPreviewLinkMessage(context, 'Link target not found: $targetPath');
+      _showPreviewLinkMessage(
+        context,
+        context.l10n.linkTargetNotFound(targetPath),
+      );
     }
     return;
   }
   if (!_isOpenableTextDocument(file)) {
     if (context.mounted) {
-      _showPreviewLinkMessage(context, 'Cannot open this file type in editor');
+      _showPreviewLinkMessage(context, context.l10n.cannotOpenFileTypeInEditor);
     }
     return;
   }
@@ -5037,7 +5117,7 @@ void _navigatePreviewAnchor(
       )
       .firstOrNull;
   if (heading == null) {
-    _showPreviewLinkMessage(context, 'Anchor not found: $anchor');
+    _showPreviewLinkMessage(context, context.l10n.anchorNotFound(anchor));
     return;
   }
   ref
@@ -5106,9 +5186,9 @@ class _ProblemsList extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
         child: diagnostics.isEmpty
-            ? const _EmptyPane(
+            ? _EmptyPane(
                 icon: BusyMarkGlyphs.check,
-                title: 'No problems found',
+                title: context.l10n.noProblemsFound,
               )
             : ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -5137,16 +5217,16 @@ class _SearchSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) {
-      return const _SidebarEmptyState(
+      return _SidebarEmptyState(
         icon: BusyMarkGlyphs.search,
-        title: 'Search',
+        title: context.l10n.search,
       );
     }
     final colors = BusyMarkSurfaceColors.of(context);
     if (results.isEmpty) {
-      return const _SidebarEmptyState(
+      return _SidebarEmptyState(
         icon: BusyMarkGlyphs.searchUnavailable,
-        title: 'No results',
+        title: context.l10n.noResults,
       );
     }
     return ListView.separated(
@@ -5250,6 +5330,7 @@ class _WorkspaceSearchResult {
 }
 
 List<_WorkspaceSearchResult> _workspaceSearchResults(
+  BuildContext context,
   WorkspaceState state,
   String query,
 ) {
@@ -5281,8 +5362,8 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
           startOffset: startOffset,
           endOffset: startOffset + trimmedQuery.length,
           query: trimmedQuery,
-          title: _searchResultTitle(line),
-          subtitle: '$relativePath - Line $lineNumber',
+          title: _searchResultTitle(context, line),
+          subtitle: context.l10n.searchResultLine(relativePath, lineNumber),
           icon: BusyMarkGlyphs.paragraph,
         ),
       );
@@ -5303,7 +5384,7 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
       continue;
     }
     final displayPath = file.relativePath;
-    final kindLabel = _documentKindLabel(file.kind);
+    final kindLabel = _documentKindLabel(context, file.kind);
     results.add(
       _WorkspaceSearchResult(
         filePath: file.absolutePath,
@@ -5325,22 +5406,24 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 
 const int _maxWorkspaceSearchResults = 80;
 
-String _searchResultTitle(String line) {
-  final trimmed = _stripMarkdownForSearchResult(line);
+String _searchResultTitle(BuildContext context, String line) {
+  final trimmed = _stripMarkdownForSearchResult(line, context: context);
   if (trimmed.length <= 120) {
     return trimmed;
   }
   return '${trimmed.substring(0, 117)}...';
 }
 
-String _stripMarkdownForSearchResult(String line) {
+String _stripMarkdownForSearchResult(String line, {BuildContext? context}) {
   var value = line.trim();
   final fence = RegExp(
     r'^(```+|~~~+)\s*([A-Za-z0-9_+\-#.]*)',
   ).firstMatch(value);
   if (fence != null) {
     final language = fence.group(2)?.trim() ?? '';
-    return language.isEmpty ? 'Code block' : language;
+    return language.isEmpty
+        ? context?.l10n.codeBlock ?? 'code block'
+        : language;
   }
 
   value = value
@@ -5366,7 +5449,9 @@ String _stripMarkdownForSearchResult(String line) {
     value = value.replaceAllMapped(entry.key, entry.value);
   }
   value = value.replaceAll(RegExp(r'\s+'), ' ').trim();
-  return value.isEmpty ? 'Untitled result' : value;
+  return value.isEmpty
+      ? context?.l10n.untitledResult ?? 'untitled result'
+      : value;
 }
 
 String _relativeDocumentPath(Workspace workspace, String path) {
@@ -5401,18 +5486,20 @@ IconData _documentKindIcon(DocumentKind kind) {
   };
 }
 
-String _documentKindLabel(DocumentKind kind) {
+String _documentKindLabel(BuildContext context, DocumentKind kind) {
   return switch (kind) {
-    DocumentKind.markdown => 'Markdown file',
-    DocumentKind.writersideMarkdownTopic => 'Writerside Markdown topic',
-    DocumentKind.writersideXmlTopic => 'Writerside XML topic',
-    DocumentKind.tree => 'Writerside tree',
-    DocumentKind.config => 'Configuration file',
-    DocumentKind.variables => 'Variables file',
-    DocumentKind.categories => 'Categories file',
-    DocumentKind.image => 'Image',
-    DocumentKind.resource => 'Resource file',
-    DocumentKind.unknown => 'File',
+    DocumentKind.markdown => context.l10n.documentKindMarkdownFile,
+    DocumentKind.writersideMarkdownTopic =>
+      context.l10n.documentKindWritersideMarkdownTopic,
+    DocumentKind.writersideXmlTopic =>
+      context.l10n.documentKindWritersideXmlTopic,
+    DocumentKind.tree => context.l10n.documentKindWritersideTree,
+    DocumentKind.config => context.l10n.documentKindConfigurationFile,
+    DocumentKind.variables => context.l10n.documentKindVariablesFile,
+    DocumentKind.categories => context.l10n.documentKindCategoriesFile,
+    DocumentKind.image => context.l10n.image,
+    DocumentKind.resource => context.l10n.documentKindResourceFile,
+    DocumentKind.unknown => context.l10n.file,
   };
 }
 
@@ -5454,7 +5541,7 @@ class _DiagnosticRow extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      diagnostic.message,
+                      localizeDiagnostic(context, diagnostic),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

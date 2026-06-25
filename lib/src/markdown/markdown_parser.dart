@@ -48,7 +48,6 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.attribute.malformed',
             severity: DiagnosticSeverity.warning,
-            message: 'Malformed Writerside heading attribute block.',
             filePath: filePath,
             sourceSpan: SourceSpan.fromOffsets(
               filePath: filePath,
@@ -84,8 +83,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.heading.duplicate-id',
             severity: DiagnosticSeverity.warning,
-            message: 'Duplicate heading ID "$id".',
             filePath: filePath,
+            args: {'id': id},
             sourceSpan: span,
             relatedSpans: [ids[id]!],
           ),
@@ -100,8 +99,6 @@ class MarkdownParser {
           Diagnostic(
             code: 'writerside.topic.h1-converted-to-chapter',
             severity: DiagnosticSeverity.warning,
-            message:
-                'Additional top-level H1 headings are treated as chapters.',
             filePath: filePath,
             sourceSpan: span,
           ),
@@ -232,7 +229,6 @@ class MarkdownParser {
         Diagnostic(
           code: 'writerside.topic.missing-title',
           severity: DiagnosticSeverity.warning,
-          message: 'Writerside Markdown topic has no H1 or front matter title.',
           filePath: filePath,
           sourceSpan: SourceSpan.fromOffsets(
             filePath: filePath,
@@ -509,7 +505,6 @@ class MarkdownParser {
         Diagnostic(
           code: 'markdown.front-matter.malformed',
           severity: DiagnosticSeverity.warning,
-          message: 'Front matter is not closed.',
           filePath: filePath,
           sourceSpan: SourceSpan.fromOffsets(
             filePath: filePath,
@@ -676,7 +671,6 @@ class MarkdownParser {
       Diagnostic(
         code: 'markdown.raw-html.unsafe',
         severity: DiagnosticSeverity.warning,
-        message: 'Unsafe raw HTML is blocked in preview.',
         filePath: filePath,
         sourceSpan: SourceSpan.fromOffsets(
           filePath: filePath,
@@ -715,8 +709,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.link.unresolved-target',
             severity: DiagnosticSeverity.warning,
-            message: 'Local link target "$targetPath" does not exist.',
             filePath: filePath,
+            args: {'targetPath': targetPath},
             sourceSpan: link.span,
           ),
         );
@@ -738,8 +732,8 @@ class MarkdownParser {
             Diagnostic(
               code: 'markdown.link.unresolved-anchor',
               severity: DiagnosticSeverity.warning,
-              message: 'Anchor "$anchor" was not found.',
               filePath: filePath,
+              args: {'anchor': anchor},
               sourceSpan: link.span,
             ),
           );
@@ -752,8 +746,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.image.missing-alt',
             severity: DiagnosticSeverity.warning,
-            message: 'Image "$image.destination" is missing alt text.',
             filePath: filePath,
+            args: {'destination': image.destination},
             sourceSpan: image.span,
           ),
         );
@@ -771,8 +765,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.image.missing-file',
             severity: DiagnosticSeverity.warning,
-            message: 'Local image "$destination" does not exist.',
             filePath: filePath,
+            args: {'destination': destination},
             sourceSpan: image.span,
           ),
         );

@@ -143,7 +143,11 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
         ..sort((a, b) => a.path.compareTo(b.path));
     } on Object catch (error) {
       diagnostics.add(
-        _scanWarning(current.path, 'Could not list folder: $error'),
+        _scanWarning(
+          current.path,
+          'workspace.scan.inspect-failed',
+          args: {'error': '$error'},
+        ),
       );
       continue;
     }
@@ -157,7 +161,11 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
         );
       } on Object catch (error) {
         diagnostics.add(
-          _scanWarning(entity.path, 'Could not inspect path: $error'),
+          _scanWarning(
+            entity.path,
+            'workspace.scan.inspect-failed',
+            args: {'error': '$error'},
+          ),
         );
         continue;
       }
@@ -177,12 +185,7 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       }
       entities.add(entity);
       if (entities.length >= options.maxTreeEntries) {
-        diagnostics.add(
-          _scanWarning(
-            rootPath,
-            'Large workspace detected. Some files were skipped to keep the app responsive.',
-          ),
-        );
+        diagnostics.add(_scanWarning(rootPath, 'workspace.scan.skipped'));
         break;
       }
     }
@@ -194,12 +197,16 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
   );
 }
 
-Diagnostic _scanWarning(String path, String message) {
+Diagnostic _scanWarning(
+  String path,
+  String code, {
+  Map<String, Object?> args = const {},
+}) {
   return Diagnostic(
-    code: 'workspace.scan.skipped',
+    code: code,
     severity: DiagnosticSeverity.warning,
-    message: message,
     filePath: path,
+    args: args,
   );
 }
 

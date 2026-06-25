@@ -91,8 +91,8 @@ class MarkdownPreviewBuilder {
 
   PreviewDocument build(ParsedMarkdownDocument document) {
     return PreviewDocument(
-      title: document.title ?? 'Untitled',
-      modeLabel: 'Preview',
+      title: document.title ?? '',
+      modeLabel: '',
       compatibility: '',
       blocks: const BusyMarkPreviewBuilder().buildBlocks(document.busyDocument),
     );
@@ -104,8 +104,8 @@ class BusyMarkPreviewBuilder {
 
   PreviewDocument build(BusyDocument document) {
     return PreviewDocument(
-      title: document.title ?? 'Untitled',
-      modeLabel: 'Preview',
+      title: document.title ?? '',
+      modeLabel: '',
       compatibility: '',
       blocks: buildBlocks(document),
     );
@@ -192,15 +192,13 @@ class BusyMarkPreviewBuilder {
       ),
       BusyBlockKind.writersideTabs => PreviewBlock(
         kind: PreviewBlockKind.tabs,
-        text: _plainText(block.inlines).isEmpty
-            ? 'Tabs'
-            : _plainText(block.inlines),
+        text: _plainText(block.inlines),
         attributes: block.attributes,
       ),
       BusyBlockKind.writersideProcedure => PreviewBlock(
         kind: PreviewBlockKind.procedure,
         text: _plainText(block.inlines).isEmpty
-            ? block.attributes['title'] ?? 'Procedure'
+            ? block.attributes['title'] ?? ''
             : _plainText(block.inlines),
         attributes: block.attributes,
       ),

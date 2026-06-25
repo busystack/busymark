@@ -1,3 +1,4 @@
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/source_folding.dart';
@@ -14,6 +15,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -63,6 +66,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -100,6 +105,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -135,6 +142,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.dark,
             accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -170,6 +179,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -217,6 +228,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -273,6 +286,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -328,6 +343,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.dark,
             accentColor: BusyMarkLinuxPalette.blueAccent,

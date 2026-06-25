@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -190,6 +191,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -227,6 +230,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -281,6 +286,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -326,6 +333,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -385,6 +394,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -453,6 +464,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -517,6 +530,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -576,6 +591,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -621,6 +638,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -657,6 +676,8 @@ void main() {}
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
               width: 900,
@@ -693,6 +714,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -733,6 +756,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -764,6 +789,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -803,6 +830,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1058,6 +1087,8 @@ void main() {}
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
               width: 900,
@@ -1181,6 +1212,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1220,6 +1253,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1260,6 +1295,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1315,6 +1352,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1362,6 +1401,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1392,6 +1433,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,
@@ -1439,6 +1482,7 @@ void main() {}
       selectionEnd: 10,
       source: 'images/logo.png',
       alt: 'Logo',
+      fallbackAltText: 'Image',
     );
     expect(controller.markdown, 'Alpha ![Logo](images/logo.png)\n');
 
@@ -1462,7 +1506,13 @@ void main() {}
     );
     final blockId = parsed.busyDocument.blocks.first.id;
 
-    controller.insertTableAfter(blockId, columns: 2, rows: 1);
+    controller.insertTableAfter(
+      blockId,
+      columns: 2,
+      rows: 1,
+      headerTextForColumn: (column) => 'Header $column',
+      cellText: 'Cell',
+    );
 
     expect(
       controller.markdown,
@@ -1490,7 +1540,13 @@ void main() {}
       '| --- | --- |\n'
       '| Cell | Cell |\n',
     );
-    controller.replaceTable(tableId, columns: 3, rows: 1);
+    controller.replaceTable(
+      tableId,
+      columns: 3,
+      rows: 1,
+      headerTextForColumn: (column) => 'Header $column',
+      cellText: 'Cell',
+    );
     expect(
       controller.markdown,
       'Intro\n\n'
@@ -1619,6 +1675,8 @@ void main() {}
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: SizedBox(
             width: 900,

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
@@ -31,7 +32,7 @@ class WorkspaceService {
   final WorkspaceScanOptions scanOptions;
 
   Workspace createUntitledMarkdown({String source = ''}) {
-    const fileName = 'Untitled.md';
+    const fileName = '';
     final now = DateTime.now();
     final markdown = markdownParser.parse(filePath: fileName, source: source);
     return Workspace(
@@ -53,7 +54,10 @@ class WorkspaceService {
       return _openSingleMarkdown(path);
     }
     if (fileType != FileSystemEntityType.directory) {
-      throw FileSystemException('Path does not exist', path);
+      throw BusyMarkException(
+        'workspace.path-does-not-exist',
+        args: {'path': path},
+      );
     }
     if (File(p.join(path, 'writerside.cfg')).existsSync() ||
         File(p.join(path, 'project.ihp')).existsSync()) {
@@ -78,11 +82,11 @@ class WorkspaceService {
   ) async {
     if (workspace.kind != WorkspaceKind.writersideModule ||
         workspace.writersideModule == null) {
-      throw StateError('A Writerside module must be open to create a topic.');
+      throw const BusyMarkException('writerside.topic.module-not-open');
     }
     final module = workspace.writersideModule!;
     if (module.instances.isEmpty) {
-      throw StateError('The Writerside module has no help instance tree.');
+      throw const BusyMarkException('writerside.topic.instance-tree-missing');
     }
     final result = await writersideTopicCreator.create(
       WritersideTopicCreateTarget(
@@ -225,7 +229,7 @@ class WorkspaceService {
       if (topic == null) {
         return PreviewDocument(
           title: p.basename(active),
-          modeLabel: 'Preview',
+          modeLabel: '',
           compatibility: '',
           blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
         );
@@ -242,7 +246,7 @@ class WorkspaceService {
       }
       return PreviewDocument(
         title: topic.title ?? topic.fileName,
-        modeLabel: 'Preview',
+        modeLabel: '',
         compatibility: '',
         blocks: _xmlPreviewBlocks(source, topic.title),
       );
@@ -395,8 +399,8 @@ class WorkspaceService {
         Diagnostic(
           code: 'workspace.file.stat-failed',
           severity: DiagnosticSeverity.warning,
-          message: 'Could not read file metadata: $error',
           filePath: path,
+          args: {'error': '$error'},
         ),
       );
       return null;
@@ -414,8 +418,6 @@ class WorkspaceService {
         Diagnostic(
           code: 'workspace.scan.document-limit',
           severity: DiagnosticSeverity.warning,
-          message:
-              'Large workspace detected. Some files were skipped to keep the app responsive.',
           filePath: file.path,
         ),
       );
@@ -427,7 +429,6 @@ class WorkspaceService {
         Diagnostic(
           code: 'workspace.file.too-large',
           severity: DiagnosticSeverity.warning,
-          message: 'File is larger than the beta auto-parse limit.',
           filePath: file.path,
         ),
       );
@@ -444,8 +445,8 @@ class WorkspaceService {
         Diagnostic(
           code: 'workspace.file.read-failed',
           severity: DiagnosticSeverity.warning,
-          message: 'Could not read Markdown file: $error',
           filePath: file.path,
+          args: {'error': '$error'},
         ),
       );
       return null;
@@ -521,18 +522,18 @@ class WorkspaceService {
 
   String _semanticText(String name, String? title) {
     return switch (name) {
-      'topic' => title ?? 'Topic',
-      'chapter' => 'Chapter',
-      'procedure' => 'Procedure',
-      'step' => 'Step',
-      'note' => 'Note',
-      'tip' => 'Tip',
-      'warning' => 'Warning',
-      'tabs' => 'Tabs',
-      'tab' => 'Tab',
-      'code-block' => 'Code block',
-      'img' => 'Image',
-      'a' => 'Link',
+      'topic' => title ?? '',
+      'chapter' ||
+      'procedure' ||
+      'step' ||
+      'note' ||
+      'tip' ||
+      'warning' ||
+      'tabs' ||
+      'tab' ||
+      'code-block' ||
+      'img' ||
+      'a' => '',
       _ => name,
     };
   }

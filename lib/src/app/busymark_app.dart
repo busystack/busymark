@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:system_theme/system_theme.dart';
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
@@ -18,13 +19,14 @@ import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
+import 'localization.dart';
 import '../platform/linux_header_bar_service.dart';
 
 class BusyMarkApp extends ConsumerWidget {
   const BusyMarkApp({super.key});
 
-  static const _markdownTypes = XTypeGroup(
-    label: 'Markdown',
+  XTypeGroup _markdownTypes(BuildContext context) => XTypeGroup(
+    label: context.l10n.fileTypeMarkdown,
     extensions: <String>['md', 'markdown'],
     mimeTypes: <String>['text/markdown', 'text/x-markdown'],
   );
@@ -37,7 +39,7 @@ class BusyMarkApp extends ConsumerWidget {
       builder: (context, systemColor) {
         final accent = systemColor.accent;
         return MaterialApp.router(
-          title: 'BusyMark',
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           debugShowCheckedModeBanner: false,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -48,13 +50,15 @@ class BusyMarkApp extends ConsumerWidget {
             accentColor: accent,
           ),
           themeMode: settings.themeMode,
+          locale: settings.locale,
           localizationsDelegates: const [
+            AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
             ...GlobalUbuntuLocalizations.delegates,
           ],
-          supportedLocales: const [Locale('en')],
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) {
             _configureNativeHeaderBar(context, ref);
             return Shortcuts(
@@ -194,22 +198,22 @@ class BusyMarkApp extends ConsumerWidget {
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => BusyMarkDialogShell(
-        title: 'Open',
+        title: context.l10n.open,
         maxWidth: 520,
         children: [
           BusyMarkGroupedList(
             filled: true,
             children: [
               BusyMarkActionRow(
-                title: 'Open Markdown File',
-                subtitle: '.md or .markdown',
+                title: context.l10n.openMarkdownFile,
+                subtitle: context.l10n.markdownFileExtensions,
                 leading: const Icon(BusyMarkGlyphs.markdownFile),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
                 onTap: () => Navigator.pop(dialogContext, 'file'),
               ),
               BusyMarkActionRow(
-                title: 'Open Folder or Writerside Project',
-                subtitle: 'Markdown folder or Writerside-compatible project',
+                title: context.l10n.openFolderOrWritersideProject,
+                subtitle: context.l10n.markdownFolderOrWritersideProject,
                 leading: const Icon(BusyMarkGlyphs.folder),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
                 onTap: () => Navigator.pop(dialogContext, 'folder'),
@@ -241,18 +245,26 @@ class BusyMarkApp extends ConsumerWidget {
   }
 
   Future<String?> _chooseMarkdownFile(WidgetRef ref) async {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) {
+      return null;
+    }
     final selected = await openFile(
-      acceptedTypeGroups: const [_markdownTypes],
+      acceptedTypeGroups: [_markdownTypes(context)],
       initialDirectory: _initialDirectory(ref),
-      confirmButtonText: 'Open',
+      confirmButtonText: context.l10n.open,
     );
     return selected?.path;
   }
 
-  Future<String?> _chooseWorkspaceFolder(WidgetRef ref) {
+  Future<String?> _chooseWorkspaceFolder(WidgetRef ref) async {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) {
+      return null;
+    }
     return getDirectoryPath(
       initialDirectory: _initialDirectory(ref),
-      confirmButtonText: 'Open',
+      confirmButtonText: context.l10n.open,
       canCreateDirectories: false,
     );
   }
@@ -271,22 +283,23 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     final material = MaterialLocalizations.of(context);
+    final l10n = context.l10n;
     final theme = HeaderBarTheme.fromContext(context);
     final labels = HeaderBarLabels(
-      editor: 'Editor',
-      source: 'Source',
-      preview: 'Preview',
-      split: 'Split',
-      viewMode: 'View mode',
+      editor: l10n.editor,
+      source: l10n.source,
+      preview: l10n.preview,
+      split: l10n.split,
+      viewMode: l10n.viewMode,
       search: material.searchFieldLabel,
-      refresh: 'Validate',
-      menu: 'Main menu',
-      sidebar: 'Toggle sidebar',
+      refresh: l10n.validate,
+      menu: l10n.mainMenu,
+      sidebar: l10n.toggleSidebar,
       back: material.backButtonTooltip,
-      save: 'Save',
-      settings: 'Settings',
-      keyboardShortcuts: 'Keyboard Shortcuts',
-      aboutBusyMark: 'About BusyMark',
+      save: l10n.save,
+      settings: l10n.settings,
+      keyboardShortcuts: l10n.keyboardShortcuts,
+      aboutBusyMark: l10n.aboutBusyMark,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {

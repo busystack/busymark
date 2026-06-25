@@ -230,6 +230,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required int selectionEnd,
     required String source,
     required String alt,
+    required String fallbackAltText,
   }) {
     final trimmedSource = source.trim();
     if (trimmedSource.isEmpty) {
@@ -250,7 +251,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ? alt.trim()
           : selectedText.isNotEmpty
           ? selectedText
-          : 'Image';
+          : fallbackAltText;
       final nextText = text.replaceRange(start, end, altText);
       final ranges =
           _styleRangesForReplacement(
@@ -297,6 +298,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String blockId, {
     required int columns,
     required int rows,
+    required String Function(int columnNumber) headerTextForColumn,
+    required String cellText,
   }) {
     if (blockById(blockId) == null) {
       return null;
@@ -306,6 +309,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       id: _nextGeneratedBlockId('table'),
       columns: columns,
       rows: rows,
+      headerTextForColumn: headerTextForColumn,
+      cellText: cellText,
     );
     _document = _document.copyWith(
       blocks: _insertBlocksAfter(_document.blocks, blockId, [
@@ -322,7 +327,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return paragraphId;
   }
 
-  void replaceTable(String blockId, {required int columns, required int rows}) {
+  void replaceTable(
+    String blockId, {
+    required int columns,
+    required int rows,
+    required String Function(int columnNumber) headerTextForColumn,
+    required String cellText,
+  }) {
     _replaceBlock(blockId, (block) {
       if (block.kind != BusyBlockKind.table) {
         return block;
@@ -331,6 +342,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         id: block.id,
         columns: columns,
         rows: rows,
+        headerTextForColumn: headerTextForColumn,
+        cellText: cellText,
         template: block,
       );
     });
@@ -478,6 +491,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String id,
     required int columns,
     required int rows,
+    required String Function(int columnNumber) headerTextForColumn,
+    required String cellText,
     BusyBlock? template,
   }) {
     final safeColumns = columns.clamp(1, 12).toInt();
@@ -495,7 +510,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               kind: BusyBlockKind.paragraph,
               inlines: _textInlines(
                 _tableCellText(template, rowIndex, column) ??
-                    (header ? 'Header ${column + 1}' : 'Cell'),
+                    (header ? headerTextForColumn(column + 1) : cellText),
               ),
               attributes: {'cell': header ? 'th' : 'td'},
               dirty: true,

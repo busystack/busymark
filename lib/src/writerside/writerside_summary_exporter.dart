@@ -103,7 +103,7 @@ class WritersideSummaryExporter {
           {
             'code': diagnostic.code,
             'severity': diagnostic.severity.name,
-            'message': diagnostic.message,
+            if (diagnostic.args.isNotEmpty) 'args': diagnostic.args,
             'filePath': diagnostic.filePath,
           },
       ],

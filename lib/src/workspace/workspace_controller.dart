@@ -8,6 +8,7 @@ import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
+import 'workspace_message.dart';
 import 'workspace_service.dart';
 
 final workspaceServiceProvider = Provider<WorkspaceService>(
@@ -82,7 +83,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Open failed: $error',
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.openFailed,
+          error: error,
+        ),
       );
     }
   }
@@ -115,7 +119,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Create Writerside project failed: $error',
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.createWritersideProjectFailed,
+          error: error,
+        ),
       );
       return false;
     }
@@ -129,7 +136,7 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       return false;
     }
     _parseDebounce?.cancel();
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearMessage: true);
     try {
       final nextWorkspace = await _service.createWritersideTopic(
         workspace,
@@ -151,7 +158,10 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Create Writerside topic failed: $error',
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.createWritersideTopicFailed,
+          error: error,
+        ),
       );
       return false;
     }
@@ -179,13 +189,18 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         activeText: text,
         preview: _safePreview(reparsed, text),
         isDirty: false,
-        clearError: true,
+        clearMessage: true,
       );
     } on Object catch (error, stackTrace) {
       stderr.writeln('[BusyMark] Could not open file: $path');
       stderr.writeln('[BusyMark]   error: $error');
       stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
-      state = state.copyWith(errorMessage: 'Could not open file: $error');
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.couldNotOpenFile,
+          error: error,
+        ),
+      );
     }
   }
 
@@ -212,7 +227,9 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     final active = workspace?.activeFilePath;
     if (active == null) {
       state = state.copyWith(
-        errorMessage: 'Choose where to save this Markdown file.',
+        message: const WorkspaceMessage(
+          WorkspaceMessageCode.chooseWhereToSaveMarkdown,
+        ),
       );
       return false;
     }
@@ -222,7 +239,9 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
           workspace?.activeFileModifiedAt,
         )) {
       state = state.copyWith(
-        errorMessage: 'Save blocked: file changed on disk.',
+        message: const WorkspaceMessage(
+          WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+        ),
       );
       return false;
     }
@@ -236,11 +255,16 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         workspace: reparsed.copyWith(activeFileModifiedAt: modifiedAt),
         preview: _safePreview(reparsed, state.activeText),
         isDirty: false,
-        clearError: true,
+        clearMessage: true,
       );
       return true;
     } on Object catch (error) {
-      state = state.copyWith(errorMessage: 'Save failed: $error');
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.saveFailed,
+          error: error,
+        ),
+      );
       return false;
     }
   }
@@ -265,7 +289,12 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       );
       return true;
     } on Object catch (error) {
-      state = state.copyWith(errorMessage: 'Save failed: $error');
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.saveFailed,
+          error: error,
+        ),
+      );
       return false;
     }
   }
@@ -292,10 +321,15 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       state = state.copyWith(
         workspace: reparsed,
         preview: _safePreview(reparsed, state.activeText),
-        clearError: true,
+        clearMessage: true,
       );
     } on Object catch (error) {
-      state = state.copyWith(errorMessage: 'Validation failed: $error');
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.validationFailed,
+          error: error,
+        ),
+      );
     }
   }
 
@@ -304,8 +338,8 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       return _service.buildPreview(workspace, text);
     } on Object {
       return PreviewDocument(
-        title: 'Source fallback',
-        modeLabel: 'Preview',
+        title: '',
+        modeLabel: '',
         compatibility: '',
         blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: text)],
       );

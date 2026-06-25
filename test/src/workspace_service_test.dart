@@ -65,6 +65,8 @@ void main() {
         parentDirectoryPath: parent.path,
         projectName: 'Docs',
         directoryName: 'docs',
+        instanceName: 'User Guide',
+        topicTitle: 'Getting started',
       ),
     );
 
@@ -152,6 +154,8 @@ void main() {
           parentDirectoryPath: parent.path,
           projectName: 'Docs',
           directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
         ),
       );
 

@@ -30,7 +30,6 @@ class WritersideConfigParser {
         Diagnostic(
           code: 'writerside.config.invalid-root',
           severity: DiagnosticSeverity.error,
-          message: 'writerside.cfg root must be <ihp>.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -78,7 +77,6 @@ class WritersideConfigParser {
               Diagnostic(
                 code: 'writerside.config.missing-snippets-src',
                 severity: DiagnosticSeverity.warning,
-                message: '<snippets> should define src.',
                 filePath: filePath,
                 sourceSpan: _elementSpan(filePath, source, 'snippets'),
               ),
@@ -105,7 +103,6 @@ class WritersideConfigParser {
               Diagnostic(
                 code: 'writerside.config.missing-instance-groups-src',
                 severity: DiagnosticSeverity.warning,
-                message: '<instance-groups> should define src.',
                 filePath: filePath,
                 sourceSpan: _elementSpan(filePath, source, 'instance-groups'),
               ),
@@ -122,9 +119,8 @@ class WritersideConfigParser {
                 Diagnostic(
                   code: 'writerside.config.invalid-keymaps-mode',
                   severity: DiagnosticSeverity.warning,
-                  message:
-                      'keymaps-mode "$keymapsMode" should be none, generated, or provided.',
                   filePath: filePath,
+                  args: {'mode': keymapsMode},
                   sourceSpan: _elementSpan(
                     filePath,
                     source,
@@ -147,7 +143,6 @@ class WritersideConfigParser {
               Diagnostic(
                 code: 'writerside.config.missing-instance-src',
                 severity: DiagnosticSeverity.error,
-                message: '<instance> is missing src.',
                 filePath: filePath,
                 sourceSpan: _elementSpan(filePath, source, 'instance'),
               ),
@@ -168,7 +163,6 @@ class WritersideConfigParser {
         Diagnostic(
           code: 'writerside.config.missing-instance',
           severity: DiagnosticSeverity.error,
-          message: 'writerside.cfg does not register an instance.',
           filePath: filePath,
           sourceSpan: SourceSpan.entireFile(filePath, source),
         ),
@@ -295,7 +289,6 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.invalid-root',
           severity: DiagnosticSeverity.error,
-          message: '.tree root must be <instance-profile>.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -309,7 +302,6 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.missing-id',
           severity: DiagnosticSeverity.error,
-          message: 'Instance profile is missing id.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -319,8 +311,8 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.id-mismatch',
           severity: DiagnosticSeverity.warning,
-          message: 'Tree file stem does not match instance id "$id".',
           filePath: filePath,
+          args: {'id': id},
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
       );
@@ -330,7 +322,6 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.missing-start-page',
           severity: DiagnosticSeverity.error,
-          message: 'Non-library instance is missing start-page.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -351,9 +342,8 @@ class WritersideTreeParser {
           Diagnostic(
             code: 'writerside.tree.duplicate-topic',
             severity: DiagnosticSeverity.error,
-            message:
-                'Topic "$topic" appears more than once in this instance TOC.',
             filePath: filePath,
+            args: {'topic': topic},
             sourceSpan: node.span,
             relatedSpans: [seen[topic]!],
           ),
@@ -425,7 +415,6 @@ class WritersideVariablesParser {
           Diagnostic(
             code: 'writerside.variable.malformed-declaration',
             severity: DiagnosticSeverity.warning,
-            message: 'Variable declaration must have name and value.',
             filePath: filePath,
             sourceSpan: span,
           ),
@@ -437,8 +426,8 @@ class WritersideVariablesParser {
           Diagnostic(
             code: 'writerside.variable.duplicate-name',
             severity: DiagnosticSeverity.warning,
-            message: 'Variable "$name" is declared more than once.',
             filePath: filePath,
+            args: {'name': name},
             sourceSpan: span,
             relatedSpans: [seen[name]!],
           ),
@@ -482,7 +471,6 @@ class WritersideCategoriesParser {
           Diagnostic(
             code: 'writerside.category.missing-id',
             severity: DiagnosticSeverity.error,
-            message: 'Category is missing id.',
             filePath: filePath,
             sourceSpan: span,
           ),
@@ -494,8 +482,8 @@ class WritersideCategoriesParser {
           Diagnostic(
             code: 'writerside.category.duplicate-id',
             severity: DiagnosticSeverity.error,
-            message: 'Category "$id" is declared more than once.',
             filePath: filePath,
+            args: {'id': id},
             sourceSpan: span,
             relatedSpans: [ids[id]!],
           ),
@@ -506,8 +494,8 @@ class WritersideCategoriesParser {
           Diagnostic(
             code: 'writerside.category.duplicate-order',
             severity: DiagnosticSeverity.warning,
-            message: 'Category order "$order" is declared more than once.',
             filePath: filePath,
+            args: {'order': '$order'},
             sourceSpan: span,
             relatedSpans: [orders[order]!],
           ),
@@ -626,7 +614,6 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.invalid-root',
             severity: DiagnosticSeverity.error,
-            message: '.topic root must be <topic>.',
             filePath: filePath,
             sourceSpan: _elementSpan(filePath, source, root.name.local),
           ),
@@ -639,7 +626,6 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.missing-root-id',
             severity: DiagnosticSeverity.error,
-            message: 'XML topic is missing root id.',
             filePath: filePath,
             sourceSpan: _elementSpan(filePath, source, root.name.local),
           ),
@@ -650,9 +636,8 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.root-id-mismatch',
             severity: DiagnosticSeverity.error,
-            message:
-                'XML topic root id "$id" must match filename "$expectedId".',
             filePath: filePath,
+            args: {'id': id, 'expectedId': expectedId},
             sourceSpan: _elementSpan(filePath, source, root.name.local, id),
           ),
         );
@@ -662,7 +647,6 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.missing-title',
             severity: DiagnosticSeverity.warning,
-            message: 'XML topic is missing title.',
             filePath: filePath,
             sourceSpan: _elementSpan(filePath, source, root.name.local),
           ),
@@ -685,8 +669,8 @@ class WritersideTopicParser {
               Diagnostic(
                 code: 'writerside.topic.duplicate-element-id',
                 severity: DiagnosticSeverity.error,
-                message: 'Element id "$elementId" appears more than once.',
                 filePath: filePath,
+                args: {'elementId': elementId},
                 sourceSpan: span,
                 relatedSpans: [seenIds[elementId]!],
               ),
@@ -714,7 +698,6 @@ class WritersideTopicParser {
                 Diagnostic(
                   code: 'writerside.topic.missing-required-attribute',
                   severity: DiagnosticSeverity.warning,
-                  message: '<a> is missing href.',
                   filePath: filePath,
                   sourceSpan: _elementSpan(filePath, source, 'a'),
                 ),
@@ -855,8 +838,8 @@ Diagnostic _xmlError(
   return Diagnostic(
     code: code,
     severity: DiagnosticSeverity.error,
-    message: 'Invalid XML: $message',
     filePath: filePath,
+    args: {'message': message},
     sourceSpan: span,
   );
 }

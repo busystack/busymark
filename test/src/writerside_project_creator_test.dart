@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
@@ -34,6 +35,8 @@ void main() {
           parentDirectoryPath: parent.path,
           projectName: 'Docs',
           directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
         ),
       );
 
@@ -70,6 +73,7 @@ void main() {
         projectName: 'A & B <Docs>',
         directoryName: 'xml-docs',
         instanceName: 'Guide "Main" & More',
+        topicTitle: 'Getting started',
       ),
     );
 
@@ -103,6 +107,7 @@ void main() {
           parentDirectoryPath: parent.path,
           projectName: 'Docs $index',
           directoryName: 'docs-$index',
+          instanceName: 'User Guide',
           topicTitle: title,
         ),
       );
@@ -143,9 +148,11 @@ void main() {
             parentDirectoryPath: parent.path,
             projectName: 'Docs',
             directoryName: 'docs',
+            instanceName: 'User Guide',
+            topicTitle: 'Getting started',
           ),
         ),
-        throwsA(isA<FileSystemException>()),
+        throwsA(isA<BusyMarkException>()),
       );
 
       expect(existingConfig.readAsStringSync(), 'existing config');
@@ -170,6 +177,8 @@ void main() {
             parentDirectoryPath: parent.path,
             projectName: 'Docs',
             directoryName: directoryName,
+            instanceName: 'User Guide',
+            topicTitle: 'Getting started',
           ),
         ),
         throwsA(anything),
@@ -186,6 +195,8 @@ void main() {
               RegExp(r'[^a-z0-9_-]'),
               '-',
             ),
+            instanceName: 'User Guide',
+            topicTitle: 'Getting started',
             topicFileName: topicFileName,
           ),
         ),
@@ -203,7 +214,9 @@ void main() {
               RegExp(r'[^a-z0-9_-]'),
               '-',
             ),
+            instanceName: 'User Guide',
             instanceId: instanceId,
+            topicTitle: 'Getting started',
           ),
         ),
         throwsA(anything),

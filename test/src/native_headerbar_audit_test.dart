@@ -98,7 +98,7 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
-    expect(app, contains("keyboardShortcuts: 'Keyboard Shortcuts'"));
+    expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('Ctrl+N'));
     expect(dialogs, contains('Ctrl+S'));
@@ -449,10 +449,10 @@ void main() {
     expect(service, contains('viewModeSource'));
     expect(service, contains('viewModePreview'));
     expect(service, contains('viewModeSplit'));
-    expect(app, contains("editor: 'Editor'"));
-    expect(app, contains("source: 'Source'"));
-    expect(app, contains("preview: 'Preview'"));
-    expect(app, contains("split: 'Split'"));
+    expect(app, contains('editor: l10n.editor'));
+    expect(app, contains('source: l10n.source'));
+    expect(app, contains('preview: l10n.preview'));
+    expect(app, contains('split: l10n.split'));
     expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
@@ -596,8 +596,8 @@ void main() {
       ).readAsStringSync();
       final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-      expect(welcome, contains("setTitleRange('BusyMark')"));
-      expect(settings, contains("setTitleRange('Settings')"));
+      expect(welcome, contains('setTitleRange(context.l10n.appTitle)'));
+      expect(settings, contains('setTitleRange(context.l10n.settings)'));
       expect(workspace, contains('setTitleRange(title)'));
       expect(settings, isNot(contains("setTitleRange('BusyMark Settings')")));
       expect(

@@ -2,6 +2,7 @@ import '../core/diagnostic.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_model.dart';
+import 'workspace_message.dart';
 
 enum WorkspaceKind {
   untitledMarkdown,
@@ -94,7 +95,7 @@ class WorkspaceState {
     this.preview,
     this.isDirty = false,
     this.isLoading = false,
-    this.errorMessage,
+    this.message,
   });
 
   final Workspace? workspace;
@@ -102,7 +103,7 @@ class WorkspaceState {
   final PreviewDocument? preview;
   final bool isDirty;
   final bool isLoading;
-  final String? errorMessage;
+  final WorkspaceMessage? message;
 
   bool get hasUnsavedChanges => isDirty;
 
@@ -112,8 +113,8 @@ class WorkspaceState {
     PreviewDocument? preview,
     bool? isDirty,
     bool? isLoading,
-    String? errorMessage,
-    bool clearError = false,
+    WorkspaceMessage? message,
+    bool clearMessage = false,
   }) {
     return WorkspaceState(
       workspace: workspace ?? this.workspace,
@@ -121,7 +122,7 @@ class WorkspaceState {
       preview: preview ?? this.preview,
       isDirty: isDirty ?? this.isDirty,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
+      message: clearMessage ? null : message ?? this.message,
     );
   }
 }
