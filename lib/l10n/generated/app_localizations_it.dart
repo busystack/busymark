@@ -24,8 +24,19 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get aboutDescription =>
-      'BusyMark è un editor di documentazione dedicato ai progetti locali Markdown e Writerside.';
+  String get aboutTagline => 'Editor Markdown e Writerside';
+
+  @override
+  String get aboutLicenseLabel => 'Licenza';
+
+  @override
+  String get aboutLicenseName => 'Apache License 2.0';
+
+  @override
+  String get aboutWebsite => 'Sito web';
+
+  @override
+  String get aboutReportIssue => 'Segnala un problema';
 
   @override
   String get advanced => 'Avanzato';

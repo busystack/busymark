@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -134,7 +135,7 @@ void main() {
     expect(find.text(de.validateOnEdit), findsOneWidget);
   });
 
-  testWidgets('Writerside project dialog syncs instance id until edited', (
+  testWidgets('Writerside project dialog syncs generated fields until edited', (
     tester,
   ) async {
     final temp = Directory.systemTemp.createTempSync('busymark-create-dialog-');
@@ -177,8 +178,60 @@ void main() {
       (widget) => widget is EditableText && !widget.readOnly,
     );
     expect(entries, findsNWidgets(5));
+    final projectNameEntry = entries.at(0);
+    final directoryNameEntry = entries.at(1);
     final instanceNameEntry = entries.at(2);
     final instanceIdEntry = entries.at(3);
+
+    await tester.enterText(projectNameEntry, 'API Reference');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(directoryNameEntry).controller.text,
+      'api-reference',
+    );
+
+    await tester.enterText(projectNameEntry, 'Developer Portal');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(directoryNameEntry).controller.text,
+      'developer-portal',
+    );
+
+    await tester.enterText(projectNameEntry, 'Документация API');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(directoryNameEntry).controller.text,
+      'документация-api',
+    );
+
+    await tester.enterText(projectNameEntry, 'دليل المستخدم');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(directoryNameEntry).controller.text,
+      'دليل-المستخدم',
+    );
+
+    await tester.enterText(projectNameEntry, 'Café Études');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(directoryNameEntry).controller.text,
+      'café-études',
+    );
+
+    await tester.enterText(directoryNameEntry, 'custom-directory');
+    await tester.pump();
+    await tester.enterText(projectNameEntry, 'Operator Portal');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(directoryNameEntry).controller.text,
+      'custom-directory',
+    );
 
     await tester.enterText(instanceNameEntry, 'Admin Handbook');
     await tester.pump();
@@ -186,6 +239,38 @@ void main() {
     expect(
       tester.widget<EditableText>(instanceIdEntry).controller.text,
       'admin-handbook',
+    );
+
+    await tester.enterText(instanceNameEntry, 'Reviewer Handbook');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(instanceIdEntry).controller.text,
+      'reviewer-handbook',
+    );
+
+    await tester.enterText(instanceNameEntry, 'Руководство администратора');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(instanceIdEntry).controller.text,
+      'руководство-администратора',
+    );
+
+    await tester.enterText(instanceNameEntry, 'دليل الإدارة');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(instanceIdEntry).controller.text,
+      'دليل-الإدارة',
+    );
+
+    await tester.enterText(instanceNameEntry, 'Café Études');
+    await tester.pump();
+
+    expect(
+      tester.widget<EditableText>(instanceIdEntry).controller.text,
+      'café-études',
     );
 
     await tester.enterText(instanceIdEntry, 'custom-instance');
@@ -267,6 +352,35 @@ void main() {
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);
+  });
+
+  testWidgets('about dialog shows the BusyMark logo', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.aboutBusyMark));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.appTitle), findsWidgets);
+    expect(find.text(l10n.aboutTagline), findsOneWidget);
+    expect(find.text(l10n.aboutVersion(busyMarkAppVersion)), findsOneWidget);
+    expect(find.text(l10n.aboutLicenseLabel), findsOneWidget);
+    expect(find.text(l10n.aboutLicenseName), findsOneWidget);
+    expect(find.text(l10n.aboutWebsite), findsOneWidget);
+    expect(find.text('https://github.com/busystack/busymark'), findsOneWidget);
+    expect(find.text(l10n.aboutReportIssue), findsOneWidget);
+    expect(
+      find.text('https://github.com/busystack/busymark/issues'),
+      findsOneWidget,
+    );
+    expect(find.byType(SvgPicture), findsOneWidget);
   });
 
   testWidgets('Ctrl+N creates a new Markdown document', (tester) async {

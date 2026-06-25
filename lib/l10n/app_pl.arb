@@ -21,9 +21,25 @@
       }
     }
   },
-  "aboutDescription": "BusyMark to edytor dokumentacji Markdown zgodny z Writerside dla projektów lokalnych.",
-  "@aboutDescription": {
-    "description": "Application description shown in the About dialog."
+  "aboutTagline": "Edytor Markdown i Writerside",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Licencja",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Strona internetowa",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "Zgłoś problem",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
   },
   "advanced": "Zaawansowane",
   "@advanced": {

@@ -21,9 +21,25 @@
       }
     }
   },
-  "aboutDescription": "BusyMark è un editor di documentazione dedicato ai progetti locali Markdown e Writerside.",
-  "@aboutDescription": {
-    "description": "Application description shown in the About dialog."
+  "aboutTagline": "Editor Markdown e Writerside",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Licenza",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Sito web",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "Segnala un problema",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
   },
   "advanced": "Avanzato",
   "@advanced": {

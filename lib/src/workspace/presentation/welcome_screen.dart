@@ -377,11 +377,18 @@ class _CreateWritersideProjectDialog extends StatefulWidget {
 
 class _CreateWritersideProjectDialogState
     extends State<_CreateWritersideProjectDialog> {
+  static final _directorySlugCharacterPattern = RegExp(
+    r'[\p{L}\p{M}\p{N}_-]',
+    unicode: true,
+  );
+
   late final TextEditingController _projectNameController;
   late final TextEditingController _directoryNameController;
   late final TextEditingController _instanceNameController;
   late final TextEditingController _instanceIdController;
   late final TextEditingController _topicTitleController;
+  late String _lastGeneratedDirectoryName;
+  late String _lastGeneratedInstanceId;
   var _directoryEdited = false;
   var _syncingDirectory = false;
   var _instanceIdEdited = false;
@@ -395,13 +402,16 @@ class _CreateWritersideProjectDialogState
     super.initState();
     _projectNameController = TextEditingController()
       ..addListener(_handleProjectNameChanged);
+    _lastGeneratedDirectoryName = _slugDirectoryName('');
     _directoryNameController = TextEditingController(
-      text: _slugDirectoryName(''),
+      text: _lastGeneratedDirectoryName,
     )..addListener(_handleDirectoryNameChanged);
     _instanceNameController = TextEditingController()
       ..addListener(_handleInstanceNameChanged);
-    _instanceIdController = TextEditingController(text: 'user-guide')
-      ..addListener(_handleInstanceIdChanged);
+    _lastGeneratedInstanceId = 'user-guide';
+    _instanceIdController = TextEditingController(
+      text: _lastGeneratedInstanceId,
+    )..addListener(_handleInstanceIdChanged);
     _topicTitleController = TextEditingController()
       ..addListener(_handleFieldChanged);
   }
@@ -558,7 +568,7 @@ class _CreateWritersideProjectDialogState
 
   String? _instanceIdError(BuildContext context) {
     final value = _instanceIdController.text.trim();
-    if (!RegExp(r'^[a-z][a-z0-9_-]*$').hasMatch(value)) {
+    if (!WritersideProjectCreator.isValidInstanceId(value)) {
       return context.l10n.useLowercaseIdentifier;
     }
     return null;
@@ -581,12 +591,14 @@ class _CreateWritersideProjectDialogState
 
   void _handleProjectNameChanged() {
     _creationError = null;
-    if (!_directoryEdited) {
+    final nextDirectoryName = _slugDirectoryName(_projectNameController.text);
+    if (!_directoryEdited ||
+        _directoryNameController.text == _lastGeneratedDirectoryName) {
       _syncingDirectory = true;
-      _directoryNameController.text = _slugDirectoryName(
-        _projectNameController.text,
-      );
+      _lastGeneratedDirectoryName = nextDirectoryName;
+      _directoryNameController.text = nextDirectoryName;
       _syncingDirectory = false;
+      _directoryEdited = false;
     }
     setState(() {});
   }
@@ -594,19 +606,22 @@ class _CreateWritersideProjectDialogState
   void _handleDirectoryNameChanged() {
     _creationError = null;
     if (!_syncingDirectory) {
-      _directoryEdited = true;
+      _directoryEdited =
+          _directoryNameController.text != _lastGeneratedDirectoryName;
     }
     setState(() {});
   }
 
   void _handleInstanceNameChanged() {
     _creationError = null;
-    if (!_instanceIdEdited) {
+    final nextInstanceId = _slugInstanceId(_instanceNameController.text);
+    if (!_instanceIdEdited ||
+        _instanceIdController.text == _lastGeneratedInstanceId) {
       _syncingInstanceId = true;
-      _instanceIdController.text = _slugInstanceId(
-        _instanceNameController.text,
-      );
+      _lastGeneratedInstanceId = nextInstanceId;
+      _instanceIdController.text = nextInstanceId;
       _syncingInstanceId = false;
+      _instanceIdEdited = false;
     }
     setState(() {});
   }
@@ -614,7 +629,8 @@ class _CreateWritersideProjectDialogState
   void _handleInstanceIdChanged() {
     _creationError = null;
     if (!_syncingInstanceId) {
-      _instanceIdEdited = true;
+      _instanceIdEdited =
+          _instanceIdController.text != _lastGeneratedInstanceId;
     }
     setState(() {});
   }
@@ -665,27 +681,26 @@ class _CreateWritersideProjectDialogState
   }
 
   String _slugDirectoryName(String value) {
-    final slug = value
-        .toLowerCase()
-        .trim()
-        .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
-        .replaceAll(RegExp(r'^-+|-+$'), '');
+    final buffer = StringBuffer();
+    var pendingSeparator = false;
+    for (final rune in value.toLowerCase().trim().runes) {
+      final character = String.fromCharCode(rune);
+      if (_directorySlugCharacterPattern.hasMatch(character)) {
+        if (pendingSeparator && buffer.isNotEmpty) {
+          buffer.write('-');
+        }
+        buffer.write(character);
+        pendingSeparator = false;
+      } else {
+        pendingSeparator = true;
+      }
+    }
+    final slug = buffer.toString().replaceAll(RegExp(r'^[-_]+|[-_]+$'), '');
     return slug.isEmpty ? 'writerside-project' : slug;
   }
 
   String _slugInstanceId(String value) {
-    final slug = value
-        .toLowerCase()
-        .trim()
-        .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
-        .replaceAll(RegExp(r'^[-_]+|[-_]+$'), '');
-    if (slug.isEmpty) {
-      return 'user-guide';
-    }
-    if (!RegExp(r'^[a-z]').hasMatch(slug)) {
-      return 'instance-$slug';
-    }
-    return slug;
+    return WritersideProjectCreator.slugInstanceId(value);
   }
 }
 

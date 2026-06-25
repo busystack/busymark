@@ -1270,11 +1270,7 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
         : hasError
         ? colorScheme.error
         : colors.border;
-    final labelColor = focused
-        ? colorScheme.primary
-        : hasError
-        ? colorScheme.error
-        : colors.mutedForeground;
+    final labelColor = colors.mutedForeground;
     return Semantics(
       textField: true,
       label: widget.label,

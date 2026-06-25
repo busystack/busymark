@@ -144,11 +144,35 @@ abstract class AppLocalizations {
   /// **'Version {version}'**
   String aboutVersion(String version);
 
-  /// Application description shown in the About dialog.
+  /// Short tagline shown under the app name in the About dialog.
   ///
   /// In en, this message translates to:
-  /// **'BusyMark is a focused Markdown and Writerside-compatible documentation editor for local projects.'**
-  String get aboutDescription;
+  /// **'Markdown and Writerside Editor'**
+  String get aboutTagline;
+
+  /// Label for the license row in the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'License'**
+  String get aboutLicenseLabel;
+
+  /// Formal license name shown in the About dialog. Keep the legal license name exact.
+  ///
+  /// In en, this message translates to:
+  /// **'Apache License 2.0'**
+  String get aboutLicenseName;
+
+  /// Label for the website row in the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get aboutWebsite;
+
+  /// Label for the issue tracker row in the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an Issue'**
+  String get aboutReportIssue;
 
   /// Settings section title for advanced actions.
   ///

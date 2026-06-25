@@ -21,9 +21,25 @@
       }
     }
   },
-  "aboutDescription": "BusyMark स्थानीय प्रोजेक्ट्स के लिए एक केंद्रित Markdown और Writerside-संगत दस्तावेज़ संपादक है।",
-  "@aboutDescription": {
-    "description": "Application description shown in the About dialog."
+  "aboutTagline": "Markdown और Writerside संपादक",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "लाइसेंस",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "वेबसाइट",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "समस्या की रिपोर्ट करें",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
   },
   "advanced": "उन्नत",
   "@advanced": {

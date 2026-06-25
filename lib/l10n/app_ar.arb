@@ -4,7 +4,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "محرر وثائق متوافق مع Markdown وWriterside.",
+  "appSubtitle": "محرر مستندات متوافق مع Markdown وWriterside.",
   "@appSubtitle": {
     "description": "Short application description."
   },
@@ -21,23 +21,39 @@
       }
     }
   },
-  "aboutDescription": "BusyMark هو محرر وثائق متوافق مع Markdown و Writerside للمشاريع المحلية.",
-  "@aboutDescription": {
-    "description": "Application description shown in the About dialog."
+  "aboutTagline": "محرر Markdown وWriterside",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
   },
-  "advanced": "متقدم",
+  "aboutLicenseLabel": "الترخيص",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "الموقع الإلكتروني",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "الإبلاغ عن مشكلة",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
+  },
+  "advanced": "خيارات متقدمة",
   "@advanced": {
     "description": "Settings section title for advanced actions."
   },
-  "appearance": "مظهر",
+  "appearance": "المظهر",
   "@appearance": {
     "description": "Settings section title for appearance options."
   },
-  "apply": "يتقدم",
+  "apply": "تطبيق",
   "@apply": {
     "description": "Button label that applies a dialog change."
   },
-  "back": "خلف",
+  "back": "رجوع",
   "@back": {
     "description": "Tooltip for navigating back."
   },
@@ -49,11 +65,11 @@
   "@bottomRight": {
     "description": "Editing button position option."
   },
-  "cancel": "يلغي",
+  "cancel": "إلغاء",
   "@cancel": {
     "description": "Cancel button label."
   },
-  "choose": "يختار",
+  "choose": "اختيار",
   "@choose": {
     "description": "Button label for choosing a file or path."
   },
@@ -61,11 +77,11 @@
   "@chooseLocation": {
     "description": "File picker confirmation label for choosing a directory."
   },
-  "copy": "ينسخ",
+  "copy": "نسخ",
   "@copy": {
     "description": "Copy command label."
   },
-  "create": "يخلق",
+  "create": "إنشاء",
   "@create": {
     "description": "Create action label."
   },
@@ -73,15 +89,15 @@
   "@creating": {
     "description": "Progress label while a project or topic is being created."
   },
-  "cut": "يقطع",
+  "cut": "قص",
   "@cut": {
     "description": "Cut command label."
   },
-  "darkTheme": "مظلم",
+  "darkTheme": "داكن",
   "@darkTheme": {
     "description": "Dark theme option."
   },
-  "discard": "ينبذ",
+  "discard": "تجاهل",
   "@discard": {
     "description": "Discard unsaved changes button label."
   },
@@ -93,7 +109,7 @@
   "@file": {
     "description": "Generic file kind label."
   },
-  "find": "يجد",
+  "find": "بحث",
   "@find": {
     "description": "Find command label."
   },
@@ -109,7 +125,7 @@
   "@keyboardShortcuts": {
     "description": "Keyboard shortcuts dialog title and menu item."
   },
-  "lightTheme": "ضوء",
+  "lightTheme": "فاتح",
   "@lightTheme": {
     "description": "Light theme option."
   },
@@ -121,11 +137,11 @@
   "@markdown": {
     "description": "Markdown format label."
   },
-  "open": "يفتح",
+  "open": "فتح",
   "@open": {
     "description": "Open action label."
   },
-  "outline": "الخطوط العريضة",
+  "outline": "المخطط",
   "@outline": {
     "description": "Outline sidebar tab label."
   },
@@ -145,7 +161,7 @@
   "@preview": {
     "description": "Preview view label."
   },
-  "recent": "مؤخرًا",
+  "recent": "الأخيرة",
   "@recent": {
     "description": "Recent workspaces section title."
   },
@@ -153,15 +169,15 @@
   "@redo": {
     "description": "Redo command label."
   },
-  "save": "يحفظ",
+  "save": "حفظ",
   "@save": {
     "description": "Save action label."
   },
-  "search": "يبحث",
+  "search": "بحث",
   "@search": {
     "description": "Search action label and field hint."
   },
-  "selectAll": "حدد الكل",
+  "selectAll": "تحديد الكل",
   "@selectAll": {
     "description": "Select all command label."
   },
@@ -169,19 +185,19 @@
   "@settings": {
     "description": "Settings action label."
   },
-  "source": "مصدر",
+  "source": "المصدر",
   "@source": {
     "description": "Source view label."
   },
-  "split": "ينقسم",
+  "split": "تقسيم",
   "@split": {
     "description": "Split view label."
   },
-  "systemTheme": "نظام",
+  "systemTheme": "النظام",
   "@systemTheme": {
     "description": "System theme option."
   },
-  "theme": "سمة",
+  "theme": "السمة",
   "@theme": {
     "description": "Theme setting label."
   },
@@ -261,11 +277,11 @@
   "@undo": {
     "description": "Undo command label."
   },
-  "validate": "التحقق من صحة",
+  "validate": "تحقق",
   "@validate": {
     "description": "Validate action label."
   },
-  "validation": "تصديق",
+  "validation": "التحقق",
   "@validation": {
     "description": "Settings section title for validation options."
   },
@@ -293,15 +309,15 @@
   "@fileTypeImages": {
     "description": "Native file picker type label for images."
   },
-  "openMarkdownFile": "افتح ملف Markdown.",
+  "openMarkdownFile": "فتح ملف Markdown",
   "@openMarkdownFile": {
     "description": "Action label for opening a Markdown file."
   },
-  "markdownFileExtensions": ".md or .markdown",
+  "markdownFileExtensions": ".md أو .markdown",
   "@markdownFileExtensions": {
     "description": "Subtitle describing supported Markdown file extensions."
   },
-  "openFolderOrWritersideProject": "افتح المجلد أو مشروع Writerside",
+  "openFolderOrWritersideProject": "فتح مجلد أو مشروع Writerside",
   "@openFolderOrWritersideProject": {
     "description": "Action label for opening a folder or Writerside project."
   },
@@ -313,27 +329,27 @@
   "@shortcutGroupFile": {
     "description": "Keyboard shortcut group for file commands."
   },
-  "shortcutNewDocument": "وثيقة جديدة",
+  "shortcutNewDocument": "مستند جديد",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "قم بإنشاء مستند Markdown جديد غير محفوظ",
+  "shortcutNewDocumentDescription": "إنشاء مستند Markdown جديد غير محفوظ",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "افتح ملف Markdown أو مجلد أو مشروع Writerside",
+  "shortcutOpenDescription": "فتح ملف Markdown أو مجلد أو مشروع Writerside",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "احفظ ملف Markdown الحالي",
+  "shortcutSaveDescription": "حفظ ملف Markdown الحالي",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "ابحث في مساحة العمل الحالية",
+  "shortcutFindDescription": "البحث في مساحة العمل الحالية",
   "@shortcutFindDescription": {
     "description": "Keyboard shortcut description for search."
   },
-  "shortcutKeyboardShortcutsDescription": "إظهار مرجع اختصار لوحة المفاتيح هذا",
+  "shortcutKeyboardShortcutsDescription": "إظهار مرجع اختصارات لوحة المفاتيح",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
@@ -341,7 +357,7 @@
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "حدد كل نص المحرر",
+  "shortcutSelectAllDescription": "تحديد كل نص المحرر",
   "@shortcutSelectAllDescription": {
     "description": "Keyboard shortcut description for selecting all text."
   },
@@ -349,11 +365,11 @@
   "@shortcutCutDescription": {
     "description": "Keyboard shortcut description for cut."
   },
-  "shortcutCopyDescription": "انسخ النص المحدد",
+  "shortcutCopyDescription": "نسخ النص المحدد",
   "@shortcutCopyDescription": {
     "description": "Keyboard shortcut description for copy."
   },
-  "shortcutPasteDescription": "لصق من الحافظة",
+  "shortcutPasteDescription": "لصق محتوى الحافظة",
   "@shortcutPasteDescription": {
     "description": "Keyboard shortcut description for paste."
   },
@@ -369,11 +385,11 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "مسح اختيار المحرر",
+  "clearEditorSelection": "مسح تحديد المحرر",
   "@clearEditorSelection": {
     "description": "Keyboard shortcut label for clearing selection."
   },
-  "shortcutClearEditorSelectionDescription": "اترك اختيار المحرر الحالي أو التركيز على البحث",
+  "shortcutClearEditorSelectionDescription": "إلغاء تحديد المحرر الحالي أو تركيز البحث",
   "@shortcutClearEditorSelectionDescription": {
     "description": "Keyboard shortcut description for clearing selection."
   },
@@ -381,59 +397,59 @@
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "تبديل غامق على النص المحدد",
+  "shortcutBoldDescription": "تبديل الخط العريض للنص المحدد",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "تبديل الخط المائل على النص المحدد",
+  "shortcutItalicDescription": "تبديل الخط المائل للنص المحدد",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "تبديل التسطير على النص المحدد",
+  "shortcutUnderlineDescription": "تبديل التسطير للنص المحدد",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
-  "shortcutLinkDescription": "قم بإدراج رابط أو تحريره",
+  "shortcutLinkDescription": "إدراج رابط أو تحريره",
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "تبديل التعليمات البرمجية المضمنة في النص المحدد",
+  "shortcutInlineCodeDescription": "تبديل الكود المضمن للنص المحدد",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "تبديل يتوسطه خط على النص المحدد",
+  "shortcutStrikethroughDescription": "تبديل الشطب للنص المحدد",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
-  "shortcutGroupBlocks": "كتل",
+  "shortcutGroupBlocks": "الكتل",
   "@shortcutGroupBlocks": {
     "description": "Keyboard shortcut group for block styles."
   },
-  "shortcutParagraphDescription": "اضبط الكتلة الحالية على الفقرة",
+  "shortcutParagraphDescription": "تعيين الكتلة الحالية كفقرة",
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "اضبط الكتلة الحالية على العنوان 1",
+  "shortcutHeading1Description": "تعيين الكتلة الحالية كعنوان 1",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "اضبط الكتلة الحالية على العنوان 2",
+  "shortcutHeading2Description": "تعيين الكتلة الحالية كعنوان 2",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "اضبط الكتلة الحالية على العنوان 3",
+  "shortcutHeading3Description": "تعيين الكتلة الحالية كعنوان 3",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "اضبط الكتلة الحالية على العنوان 4",
+  "shortcutHeading4Description": "تعيين الكتلة الحالية كعنوان 4",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "اضبط الكتلة الحالية على العنوان 5",
+  "shortcutHeading5Description": "تعيين الكتلة الحالية كعنوان 5",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "اضبط الكتلة الحالية على العنوان 6",
+  "shortcutHeading6Description": "تعيين الكتلة الحالية كعنوان 6",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
@@ -453,23 +469,23 @@
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
-  "shortcutBulletedListDescription": "تبديل تنسيق القائمة ذات التعداد النقطي",
+  "shortcutBulletedListDescription": "تبديل تنسيق القائمة النقطية",
   "@shortcutBulletedListDescription": {
     "description": "Keyboard shortcut description for bulleted list."
   },
-  "checklist": "قائمة التحقق",
+  "checklist": "قائمة مهام",
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "تبديل تنسيق قائمة التحقق",
+  "shortcutChecklistDescription": "تبديل تنسيق قائمة المهام",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
-  "createMarkdownFile": "قم بإنشاء ملف Markdown.",
+  "createMarkdownFile": "إنشاء ملف Markdown",
   "@createMarkdownFile": {
     "description": "Welcome screen action for creating a Markdown file."
   },
-  "createMarkdownFileDescription": "ابدأ مستند Markdown محليًا غير محفوظ",
+  "createMarkdownFileDescription": "بدء مستند Markdown محلي غير محفوظ",
   "@createMarkdownFileDescription": {
     "description": "Welcome screen subtitle for creating a Markdown file."
   },
@@ -477,7 +493,7 @@
   "@createWritersideProject": {
     "description": "Welcome screen action for creating a Writerside project."
   },
-  "createWritersideProjectDescription": "ابدأ مشروعًا محليًا متوافقًا مع Writerside",
+  "createWritersideProjectDescription": "بدء مشروع محلي متوافق مع Writerside",
   "@createWritersideProjectDescription": {
     "description": "Welcome screen subtitle for creating a Writerside project."
   },
@@ -489,7 +505,7 @@
   "@defaultInstanceName": {
     "description": "Default Writerside instance name shown in the create project dialog."
   },
-  "defaultStartTopicTitle": "ابدء",
+  "defaultStartTopicTitle": "البدء",
   "@defaultStartTopicTitle": {
     "description": "Default start topic title shown in the create project dialog."
   },
@@ -505,15 +521,15 @@
   "@instanceName": {
     "description": "Create project dialog field label."
   },
-  "instanceId": "مثيل ID",
+  "instanceId": "معرّف المثيل",
   "@instanceId": {
     "description": "Create project dialog field label."
   },
-  "startTopicTitle": "بداية عنوان الموضوع",
+  "startTopicTitle": "عنوان موضوع البداية",
   "@startTopicTitle": {
     "description": "Create project dialog field label."
   },
-  "location": "موقع",
+  "location": "الموقع",
   "@location": {
     "description": "Create dialog location section label."
   },
@@ -525,11 +541,11 @@
   "@directoryNameRequired": {
     "description": "Validation message for missing directory name."
   },
-  "useSingleSafeDirectoryName": "استخدم اسم دليل آمن واحد.",
+  "useSingleSafeDirectoryName": "استخدم اسم دليل آمنًا واحدًا.",
   "@useSingleSafeDirectoryName": {
     "description": "Validation message for unsafe directory names."
   },
-  "useLowercaseIdentifier": "استخدم معرفًا صغيرًا يحتوي على أحرف أو أرقام أو شرطات سفلية أو واصلات.",
+  "useLowercaseIdentifier": "استخدم معرّفًا بأحرف صغيرة يحتوي فقط على أحرف أو أرقام أو شرطات سفلية أو واصلات.",
   "@useLowercaseIdentifier": {
     "description": "Validation message for invalid Writerside instance IDs."
   },
@@ -541,11 +557,11 @@
   "@createWritersideProjectFailed": {
     "description": "Fallback error shown when Writerside project creation fails."
   },
-  "settingsTitle": "BusyMark الإعدادات",
+  "settingsTitle": "إعدادات BusyMark",
   "@settingsTitle": {
     "description": "Settings screen title."
   },
-  "wordWrap": "التفاف الكلمة",
+  "wordWrap": "التفاف النص",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -553,7 +569,7 @@
   "@editorFontSize": {
     "description": "Editor font size setting label."
   },
-  "validateOnEdit": "التحقق من صحة التحرير",
+  "validateOnEdit": "التحقق أثناء التحرير",
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
@@ -590,7 +606,7 @@
   "@fileChangedOnDisk": {
     "description": "File changed confirmation dialog title."
   },
-  "fileChangedOnDiskMessage": "تم تغيير هذا الملف على القرص منذ أن قمت بفتحه. الكتابة فوقه؟",
+  "fileChangedOnDiskMessage": "تم تغيير هذا الملف على القرص منذ فتحه. هل تريد الكتابة فوقه؟",
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
@@ -610,27 +626,27 @@
   "@taskList": {
     "description": "WYSIWYG toolbar tooltip for task list."
   },
-  "toggleTaskChecked": "تم تحديد مهمة التبديل",
+  "toggleTaskChecked": "تبديل حالة المهمة",
   "@toggleTaskChecked": {
     "description": "WYSIWYG toolbar tooltip for toggling task state."
   },
-  "indentListItem": "مسافة بادئة لعنصر القائمة",
+  "indentListItem": "إضافة مسافة بادئة لعنصر القائمة",
   "@indentListItem": {
     "description": "WYSIWYG toolbar tooltip for indenting a list item."
   },
-  "outdentListItem": "عنصر قائمة خارجي",
+  "outdentListItem": "إزالة المسافة البادئة لعنصر القائمة",
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
-  "blockquote": "اقتباس",
+  "blockquote": "اقتباس كتلي",
   "@blockquote": {
     "description": "Blockquote command label."
   },
-  "codeBlock": "كتلة التعليمات البرمجية",
+  "codeBlock": "كتلة كود",
   "@codeBlock": {
     "description": "Code block command or preview label."
   },
-  "codeBlockLanguage": "لغة كتلة التعليمات البرمجية",
+  "codeBlockLanguage": "لغة كتلة الكود",
   "@codeBlockLanguage": {
     "description": "Dialog title and toolbar tooltip for code block language."
   },
@@ -642,11 +658,11 @@
   "@inlineImage": {
     "description": "Inline image command label."
   },
-  "table": "طاولة",
+  "table": "جدول",
   "@table": {
     "description": "Table command label."
   },
-  "thematicBreak": "استراحة موضوعية",
+  "thematicBreak": "فاصل أفقي",
   "@thematicBreak": {
     "description": "Thematic break command label."
   },
@@ -662,19 +678,19 @@
   "@underline": {
     "description": "Underline command label."
   },
-  "strikethrough": "يتوسطه خط",
+  "strikethrough": "شطب",
   "@strikethrough": {
     "description": "Strikethrough command label."
   },
-  "inlineCode": "رمز مضمن",
+  "inlineCode": "كود مضمن",
   "@inlineCode": {
     "description": "Inline code command label."
   },
-  "link": "وصلة",
+  "link": "رابط",
   "@link": {
     "description": "Link command and preview label."
   },
-  "hardLineBreak": "كسر الخط الثابت",
+  "hardLineBreak": "فاصل سطر صريح",
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
@@ -732,11 +748,11 @@
       }
     }
   },
-  "insertColumnLeft": "أدخل العمود الأيسر",
+  "insertColumnLeft": "إدراج عمود إلى اليسار",
   "@insertColumnLeft": {
     "description": "Menu item for inserting a table column to the left."
   },
-  "insertColumnRight": "أدخل العمود الأيمن",
+  "insertColumnRight": "إدراج عمود إلى اليمين",
   "@insertColumnRight": {
     "description": "Menu item for inserting a table column to the right."
   },
@@ -753,11 +769,11 @@
       }
     }
   },
-  "insertRowAbove": "أدخل الصف أعلاه",
+  "insertRowAbove": "إدراج صف في الأعلى",
   "@insertRowAbove": {
     "description": "Menu item for inserting a table row above."
   },
-  "insertRowBelow": "أدخل الصف أدناه",
+  "insertRowBelow": "إدراج صف في الأسفل",
   "@insertRowBelow": {
     "description": "Menu item for inserting a table row below."
   },
@@ -838,15 +854,15 @@
   "@workspaceKindUnsavedMarkdown": {
     "description": "Workspace kind label for an unsaved Markdown file."
   },
-  "workspaceKindSingleMarkdown": "ملف واحد Markdown.",
+  "workspaceKindSingleMarkdown": "ملف Markdown واحد",
   "@workspaceKindSingleMarkdown": {
     "description": "Workspace kind label for a single Markdown file."
   },
-  "workspaceKindMarkdownFolder": "مجلد Markdown.",
+  "workspaceKindMarkdownFolder": "مجلد Markdown",
   "@workspaceKindMarkdownFolder": {
     "description": "Workspace kind label for a Markdown folder."
   },
-  "workspaceKindWritersideModule": "وحدة Writerside.",
+  "workspaceKindWritersideModule": "وحدة Writerside",
   "@workspaceKindWritersideModule": {
     "description": "Workspace kind label for a Writerside module."
   },
@@ -867,7 +883,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "TOC",
+  "toc": "جدول المحتويات",
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
@@ -891,11 +907,11 @@
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "لا Writerside TOC",
+  "noWritersideToc": "لا يوجد جدول محتويات Writerside",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
-  "tocSection": "قسم TOC.",
+  "tocSection": "قسم جدول المحتويات",
   "@tocSection": {
     "description": "Fallback label for a Writerside TOC section."
   },
@@ -903,7 +919,7 @@
   "@newTopic": {
     "description": "Create new Writerside topic action label."
   },
-  "newChildTopic": "موضوع الطفل الجديد",
+  "newChildTopic": "موضوع فرعي جديد",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
@@ -919,7 +935,7 @@
   "@fileName": {
     "description": "Create topic dialog field label."
   },
-  "topicTitleRequired": "عنوان الموضوع مطلوب .",
+  "topicTitleRequired": "عنوان الموضوع مطلوب.",
   "@topicTitleRequired": {
     "description": "Validation message for missing topic title."
   },
@@ -940,19 +956,19 @@
       }
     }
   },
-  "useIdentifierCharacters": "استخدم الحروف أو الأرقام أو الشرطات السفلية أو الواصلات قبل الامتداد.",
+  "useIdentifierCharacters": "استخدم أحرفًا أو أرقامًا أو شرطات سفلية أو واصلات قبل الامتداد.",
   "@useIdentifierCharacters": {
     "description": "Validation message for invalid topic IDs."
   },
-  "topicIdAlreadyExists": "الموضوع ID موجود بالفعل.",
+  "topicIdAlreadyExists": "معرّف الموضوع موجود بالفعل.",
   "@topicIdAlreadyExists": {
     "description": "Validation message for duplicate topic IDs."
   },
-  "createWritersideTopicFailed": "لا يمكن إنشاء موضوع Writerside.",
+  "createWritersideTopicFailed": "تعذر إنشاء موضوع Writerside.",
   "@createWritersideTopicFailed": {
     "description": "Fallback error shown when topic creation fails."
   },
-  "noOutline": "لا الخطوط العريضة",
+  "noOutline": "لا يوجد مخطط",
   "@noOutline": {
     "description": "Empty state shown when a document has no outline."
   },
@@ -982,15 +998,15 @@
   "@foldKindList": {
     "description": "Fold kind label for a list."
   },
-  "foldKindQuote": "يقتبس",
+  "foldKindQuote": "اقتباس",
   "@foldKindQuote": {
     "description": "Fold kind label for a blockquote."
   },
-  "foldKindTag": "علامة",
+  "foldKindTag": "وسم",
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
-  "noPreview": "لا معاينة",
+  "noPreview": "لا توجد معاينة",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
   },
@@ -1006,11 +1022,11 @@
   "@warning": {
     "description": "Preview label for a warning admonition."
   },
-  "tabs": "علامات التبويب",
+  "tabs": "علامات تبويب",
   "@tabs": {
     "description": "Preview label for a tabs block."
   },
-  "tab": "فاتورة غير مدفوعة",
+  "tab": "علامة تبويب",
   "@tab": {
     "description": "Preview label for a tab block."
   },
@@ -1022,7 +1038,7 @@
   "@step": {
     "description": "Preview label for a procedure step."
   },
-  "topic": "عنوان",
+  "topic": "موضوع",
   "@topic": {
     "description": "Preview label for a topic element."
   },
@@ -1069,7 +1085,7 @@
   "@noResults": {
     "description": "Search empty state."
   },
-  "searchResultLine": "{relativePath} - الخط {lineNumber}",
+  "searchResultLine": "{relativePath} - السطر {lineNumber}",
   "@searchResultLine": {
     "description": "Search result subtitle with file path and line number.",
     "placeholders": {
@@ -1085,7 +1101,7 @@
   "@untitledResult": {
     "description": "Fallback search result title."
   },
-  "documentKindMarkdownFile": "Markdown الملف",
+  "documentKindMarkdownFile": "ملف Markdown",
   "@documentKindMarkdownFile": {
     "description": "Search result document kind label."
   },
@@ -1097,7 +1113,7 @@
   "@documentKindWritersideXmlTopic": {
     "description": "Search result document kind label."
   },
-  "documentKindWritersideTree": "Writerside شجرة",
+  "documentKindWritersideTree": "شجرة Writerside",
   "@documentKindWritersideTree": {
     "description": "Search result document kind label."
   },
@@ -1170,7 +1186,7 @@
       }
     }
   },
-  "workspaceErrorValidationFailed": "فشل التحقق من الصحة: ​​{error}",
+  "workspaceErrorValidationFailed": "فشل التحقق: {error}",
   "@workspaceErrorValidationFailed": {
     "description": "Workspace error message shown when validation fails.",
     "placeholders": {
@@ -1240,7 +1256,7 @@
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "يجب أن يبدأ المثيل ID بحرف صغير ويحتوي فقط على أحرف صغيرة وأرقام وشرطات سفلية وواصلات.",
+  "errorInstanceIdInvalid": "يجب أن يبدأ معرّف المثيل بحرف صغير وأن يحتوي فقط على أحرف صغيرة وأرقام وشرطات سفلية وواصلات.",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
@@ -1248,7 +1264,7 @@
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
-  "errorTopicTitleRequired": "عنوان الموضوع مطلوب .",
+  "errorTopicTitleRequired": "عنوان الموضوع مطلوب.",
   "@errorTopicTitleRequired": {
     "description": "Detail for a missing topic title."
   },
@@ -1265,11 +1281,11 @@
   "@errorWritersideModuleNotOpen": {
     "description": "Detail shown when creating a topic without an open Writerside module."
   },
-  "errorWritersideInstanceTreeMissing": "لا تحتوي وحدة Writerside على شجرة مثيلات مساعدة.",
+  "errorWritersideInstanceTreeMissing": "لا تحتوي وحدة Writerside على شجرة مثيل مساعدة.",
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
-  "errorWritersideTreeFileMissing": "Writerside ملف الشجرة غير موجود: {path}",
+  "errorWritersideTreeFileMissing": "ملف شجرة Writerside غير موجود: {path}",
   "@errorWritersideTreeFileMissing": {
     "description": "Detail for a missing Writerside tree file.",
     "placeholders": {
@@ -1278,7 +1294,7 @@
       }
     }
   },
-  "errorTopicIdAlreadyExists": "الموضوع ID \"{topicId}\" موجود بالفعل في وحدة التعليمات هذه.",
+  "errorTopicIdAlreadyExists": "معرّف الموضوع \"{topicId}\" موجود بالفعل في وحدة التعليمات هذه.",
   "@errorTopicIdAlreadyExists": {
     "description": "Detail for a duplicate topic ID.",
     "placeholders": {
@@ -1370,11 +1386,11 @@
       }
     }
   },
-  "diagnosticMarkdownAttributeMalformed": "كتلة سمة عنوان Writerside مشوهة.",
+  "diagnosticMarkdownAttributeMalformed": "كتلة سمات عنوان Writerside غير صالحة.",
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "عنوان مكرر ID \"{id}\".",
+  "diagnosticMarkdownHeadingDuplicateId": "معرّف عنوان مكرر \"{id}\".",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1383,15 +1399,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicH1ConvertedToChapter": "يتم التعامل مع عناوين H1 الإضافية ذات المستوى الأعلى كفصول.",
+  "diagnosticWritersideTopicH1ConvertedToChapter": "تُعامل عناوين H1 الإضافية في المستوى الأعلى كفصول.",
   "@diagnosticWritersideTopicH1ConvertedToChapter": {
     "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
   },
-  "diagnosticWritersideMarkdownTopicMissingTitle": "موضوع Writerside Markdown ليس له عنوان H1 أو عنوان أمامي.",
+  "diagnosticWritersideMarkdownTopicMissingTitle": "موضوع Writerside Markdown لا يحتوي على عنوان H1 أو عنوان في الترويسة.",
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
-  "diagnosticWritersideXmlTopicMissingTitle": "موضوع XML يفتقد العنوان.",
+  "diagnosticWritersideXmlTopicMissingTitle": "موضوع XML لا يحتوي على عنوان.",
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
@@ -1404,7 +1420,7 @@
       }
     }
   },
-  "diagnosticMarkdownFrontMatterMalformed": "المسألة الأمامية ليست مغلقة.",
+  "diagnosticMarkdownFrontMatterMalformed": "الترويسة الأمامية غير مغلقة.",
   "@diagnosticMarkdownFrontMatterMalformed": {
     "description": "Markdown parser diagnostic for unclosed front matter."
   },
@@ -1412,7 +1428,7 @@
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
-  "diagnosticMarkdownLinkUnresolvedTarget": "هدف الارتباط غير موجود: {targetPath}",
+  "diagnosticMarkdownLinkUnresolvedTarget": "هدف الرابط غير موجود: {targetPath}",
   "@diagnosticMarkdownLinkUnresolvedTarget": {
     "description": "Markdown parser diagnostic for a missing link target.",
     "placeholders": {
@@ -1421,7 +1437,7 @@
       }
     }
   },
-  "diagnosticMarkdownLinkUnresolvedAnchor": "المرساة \"{anchor}\" غير موجودة.",
+  "diagnosticMarkdownLinkUnresolvedAnchor": "المُرسى \"{anchor}\" غير موجود.",
   "@diagnosticMarkdownLinkUnresolvedAnchor": {
     "description": "Markdown parser diagnostic for a missing local anchor.",
     "placeholders": {
@@ -1457,19 +1473,19 @@
       }
     }
   },
-  "diagnosticWritersideConfigInvalidRoot": "يجب أن يكون جذر Writerside.cfg <ihp>.",
+  "diagnosticWritersideConfigInvalidRoot": "يجب أن يكون جذر writerside.cfg هو <ihp>.",
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "إعلان المقتطفات مفقود src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "إعلان المقتطفات يفتقد src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "إعلان مجموعات المثيلات مفقود src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "إعلان مجموعات المثيلات يفتقد src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
-  "diagnosticWritersideConfigInvalidKeymapsMode": "وضع خرائط المفاتيح غير المدعومة: {mode}",
+  "diagnosticWritersideConfigInvalidKeymapsMode": "وضع خرائط مفاتيح غير مدعوم: {mode}",
   "@diagnosticWritersideConfigInvalidKeymapsMode": {
     "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
     "placeholders": {
@@ -1478,23 +1494,23 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "إعلان المثيل مفقود src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "إعلان المثيل يفتقد src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "Writerside.cfg لا يسجل مثيلًا.",
+  "diagnosticWritersideConfigMissingInstance": "لا يسجل writerside.cfg أي مثيل.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": "يجب أن يكون جذر الشجرة <instance-profile>.",
+  "diagnosticWritersideTreeInvalidRoot": "يجب أن يكون جذر الشجرة هو <instance-profile>.",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "ملف تعريف المثيل مفقود.",
+  "diagnosticWritersideTreeMissingId": "ملف تعريف المثيل يفتقد id.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "لا يتطابق جذع ملف الشجرة مع معرف المثيل \"{id}\".",
+  "diagnosticWritersideTreeIdMismatch": "لا يتطابق اسم ملف الشجرة مع معرّف المثيل \"{id}\".",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1503,7 +1519,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "المثيل غير الخاص بالمكتبة يفتقد صفحة البداية.",
+  "diagnosticWritersideTreeMissingStartPage": "المثيل غير المخصص للمكتبة يفتقد صفحة البداية.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -1516,7 +1532,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "يظهر الموضوع \"{topic}\" أكثر من مرة في هذه الحالة TOC.",
+  "diagnosticWritersideTreeDuplicateTopic": "يظهر الموضوع \"{topic}\" أكثر من مرة في جدول محتويات هذا المثيل.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1525,7 +1541,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableMalformedDeclaration": "يجب أن يكون للإعلان المتغير اسم وقيمة.",
+  "diagnosticWritersideVariableMalformedDeclaration": "يجب أن يحتوي إعلان المتغير على اسم وقيمة.",
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
@@ -1538,7 +1554,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "الفئة مفقودة معرف.",
+  "diagnosticWritersideCategoryMissingId": "الفئة تفتقد id.",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
@@ -1560,15 +1576,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicInvalidRoot": "يجب أن يكون جذر الموضوع <topic>.",
+  "diagnosticWritersideTopicInvalidRoot": "يجب أن يكون جذر الموضوع هو <topic>.",
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "يفتقد موضوع XML معرف الجذر.",
+  "diagnosticWritersideTopicMissingRootId": "موضوع XML يفتقد معرّف الجذر.",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "يجب أن يتطابق معرف جذر موضوع XML \"{id}\" مع اسم الملف \"{expectedId}\".",
+  "diagnosticWritersideTopicRootIdMismatch": "يجب أن يتطابق معرّف جذر موضوع XML \"{id}\" مع اسم الملف \"{expectedId}\".",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1580,7 +1596,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "يظهر معرف العنصر \"{elementId}\" أكثر من مرة.",
+  "diagnosticWritersideTopicDuplicateElementId": "يظهر معرّف العنصر \"{elementId}\" أكثر من مرة.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -1589,11 +1605,11 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "<a> مفقود href.",
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> يفتقد href.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
-  "diagnosticWritersideConfigMissing": "يتطلب وضع Writerside.cfg.",
+  "diagnosticWritersideConfigMissing": "يتطلب وضع Writerside ملف writerside.cfg.",
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
@@ -1624,7 +1640,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "ملف المتغيرات التي تم تكوينها مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "ملف المتغيرات المكوّن مفقود: {relativePath}",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -1633,7 +1649,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "ملف الفئات التي تم تكوينها مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "ملف الفئات المكوّن مفقود: {relativePath}",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -1642,7 +1658,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "ملف مجموعات المثيلات التي تم تكوينها مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "ملف مجموعات المثيلات المكوّن مفقود: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -1696,7 +1712,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateId": "يظهر معرف العنصر \"{id}\" أكثر من مرة.",
+  "diagnosticWritersideTopicDuplicateId": "يظهر معرّف العنصر \"{id}\" أكثر من مرة.",
   "@diagnosticWritersideTopicDuplicateId": {
     "description": "Writerside module diagnostic for a duplicate topic element ID.",
     "placeholders": {
@@ -1705,7 +1721,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "يشير TOC إلى الموضوع المفقود \"{topic}\".",
+  "diagnosticWritersideTreeMissingTopic": "يشير جدول المحتويات إلى الموضوع المفقود \"{topic}\".",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1714,7 +1730,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeInvalidHref": "href الخارجي \"{href}\" غير صالح.",
+  "diagnosticWritersideTreeInvalidHref": "قيمة href الخارجية \"{href}\" غير صالحة.",
   "@diagnosticWritersideTreeInvalidHref": {
     "description": "Writerside module diagnostic for an invalid external href.",
     "placeholders": {
@@ -1732,7 +1748,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "رابط الموضوع \"{destination}\" لا يتم حله.",
+  "diagnosticWritersideTopicLinkUnresolved": "لا يمكن حل رابط الموضوع \"{destination}\".",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -1741,7 +1757,7 @@
       }
     }
   },
-  "diagnosticWritersideAnchorUnresolved": "المرساة \"{anchor}\" غير موجودة في \"{targetName}\".",
+  "diagnosticWritersideAnchorUnresolved": "المُرسى \"{anchor}\" غير موجود في \"{targetName}\".",
   "@diagnosticWritersideAnchorUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic anchor.",
     "placeholders": {
@@ -1753,11 +1769,11 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "<include> مفقود من.",
+  "diagnosticWritersideIncludeMissingFrom": "<include> يفتقد from.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "تضمين المصدر \"{from}\" غير موجود.",
+  "diagnosticWritersideIncludeSourceMissing": "مصدر التضمين \"{from}\" غير موجود.",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -1766,7 +1782,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeElementMissing": "تضمين العنصر \"{elementId}\" غير موجود في \"{from}\".",
+  "diagnosticWritersideIncludeElementMissing": "عنصر التضمين \"{elementId}\" غير موجود في \"{from}\".",
   "@diagnosticWritersideIncludeElementMissing": {
     "description": "Writerside module diagnostic for a missing include element.",
     "placeholders": {
@@ -1778,7 +1794,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "انظر أيضًا لم يتم الإعلان عن الفئة \"{ref}\".",
+  "diagnosticWritersideCategoryUnresolved": "فئة \"انظر أيضًا\" \"{ref}\" غير معلنة.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {

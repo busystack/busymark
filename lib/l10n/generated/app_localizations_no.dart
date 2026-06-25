@@ -24,8 +24,19 @@ class AppLocalizationsNo extends AppLocalizations {
   }
 
   @override
-  String get aboutDescription =>
-      'BusyMark er en fokusert Markdown- og Writerside-kompatibel dokumentasjonsredigerer for lokale prosjekter.';
+  String get aboutTagline => 'Markdown- og Writerside-redigerer';
+
+  @override
+  String get aboutLicenseLabel => 'Lisens';
+
+  @override
+  String get aboutLicenseName => 'Apache License 2.0';
+
+  @override
+  String get aboutWebsite => 'Nettsted';
+
+  @override
+  String get aboutReportIssue => 'Rapporter et problem';
 
   @override
   String get advanced => 'Avansert';

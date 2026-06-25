@@ -449,6 +449,8 @@ void main() {
     expect(design, contains('BusyMarkGlyphs.edit'));
     expect(design, contains('end: BusyMarkSizes.iconButton'));
     expect(design, contains('opacity: focused ? 0 : 1'));
+    expect(design, contains('final labelColor = colors.mutedForeground;'));
+    expect(design, isNot(contains('final labelColor = focused')));
     expect(design, contains('hint: widget.errorText'));
     expect(design, isNot(contains('widget.errorText!')));
     expect(design, isNot(contains('if (hasError) ...[')));
