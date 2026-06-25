@@ -3,6 +3,8 @@
 BusyMark is a Markdown editor for Linux with support for Writerside-compatible documentation 
 projects.
 
+[![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
+
 ## Features
 
 - Open individual Markdown files.
