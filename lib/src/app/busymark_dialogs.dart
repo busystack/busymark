@@ -29,12 +29,23 @@ Future<T?> showBusyMarkModalDialog<T>(
     return await showDialog<T>(
       context: context,
       barrierColor: barrierColor,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
-      ),
+      builder: (dialogContext) {
+        final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
+        final padding = EdgeInsets.fromLTRB(
+          viewInsets.left + 40,
+          viewInsets.top + 24,
+          viewInsets.right + 40,
+          viewInsets.bottom + 24,
+        );
+        return AnimatedPadding(
+          padding: padding,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.decelerate,
+          child: Center(
+            child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
+          ),
+        );
+      },
     );
   } finally {
     await headerBarService?.setModalBarrierVisible(false);
@@ -68,6 +79,7 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
+          side: BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,
         child: child,

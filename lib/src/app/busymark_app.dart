@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:system_theme/system_theme.dart';
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
@@ -19,6 +20,7 @@ import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import '../platform/linux_header_bar_service.dart';
+import 'window_control_service.dart';
 
 class BusyMarkApp extends ConsumerWidget {
   const BusyMarkApp({super.key});
@@ -37,7 +39,7 @@ class BusyMarkApp extends ConsumerWidget {
       builder: (context, systemColor) {
         final accent = systemColor.accent;
         return MaterialApp.router(
-          title: 'BusyMark',
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
           debugShowCheckedModeBanner: false,
           theme: buildBusyMarkTheme(
             brightness: Brightness.light,
@@ -49,129 +51,135 @@ class BusyMarkApp extends ConsumerWidget {
           ),
           themeMode: settings.themeMode,
           localizationsDelegates: const [
+            AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
             ...GlobalUbuntuLocalizations.delegates,
           ],
-          supportedLocales: const [Locale('en')],
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) {
             _configureNativeHeaderBar(context, ref);
-            return Shortcuts(
-              shortcuts: const {
-                SingleActivator(LogicalKeyboardKey.keyN, control: true):
-                    _NewMarkdownIntent(),
-                SingleActivator(LogicalKeyboardKey.keyO, control: true):
-                    _OpenWorkspaceIntent(),
-                SingleActivator(LogicalKeyboardKey.keyS, control: true):
-                    _SaveActiveIntent(),
-                SingleActivator(LogicalKeyboardKey.slash, control: true):
-                    _KeyboardShortcutsIntent(),
-                SingleActivator(LogicalKeyboardKey.keyF, control: true):
-                    _OpenSearchIntent(),
-                SingleActivator(LogicalKeyboardKey.escape):
-                    _CloseSearchIntent(),
-              },
-              child: Actions(
-                actions: {
-                  _NewMarkdownIntent: CallbackAction<_NewMarkdownIntent>(
-                    onInvoke: (intent) {
-                      unawaited(() async {
-                        final navigatorContext =
-                            rootNavigatorKey.currentContext;
-                        if (navigatorContext == null) {
-                          return;
-                        }
-                        final safe = await confirmSafeToContinue(
-                          navigatorContext,
-                          ref,
-                        );
-                        if (!safe || !navigatorContext.mounted) {
-                          return;
-                        }
-                        await ref
-                            .read(workspaceControllerProvider.notifier)
-                            .createMarkdownFile();
-                        if (navigatorContext.mounted) {
-                          router.go('/workspace');
-                        }
-                      }());
-                      return null;
-                    },
-                  ),
-                  _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
-                    onInvoke: (intent) {
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (navigatorContext != null) {
-                        unawaited(
-                          _showOpenChooser(navigatorContext, ref, router),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
-                    onInvoke: (intent) {
-                      final state = ref.read(workspaceControllerProvider);
-                      final navigatorContext = rootNavigatorKey.currentContext;
-                      if (state.workspace != null && navigatorContext != null) {
-                        unawaited(
-                          saveActiveWithOverwriteConfirmation(
-                            navigatorContext,
-                            ref,
-                          ),
-                        );
-                      }
-                      return null;
-                    },
-                  ),
-                  _KeyboardShortcutsIntent:
-                      CallbackAction<_KeyboardShortcutsIntent>(
-                        onInvoke: (intent) {
+            return _BusyMarkWindowLifecycle(
+              child: Shortcuts(
+                shortcuts: const {
+                  SingleActivator(LogicalKeyboardKey.keyN, control: true):
+                      _NewMarkdownIntent(),
+                  SingleActivator(LogicalKeyboardKey.keyO, control: true):
+                      _OpenWorkspaceIntent(),
+                  SingleActivator(LogicalKeyboardKey.keyS, control: true):
+                      _SaveActiveIntent(),
+                  SingleActivator(LogicalKeyboardKey.slash, control: true):
+                      _KeyboardShortcutsIntent(),
+                  SingleActivator(LogicalKeyboardKey.keyF, control: true):
+                      _OpenSearchIntent(),
+                  SingleActivator(LogicalKeyboardKey.escape):
+                      _CloseSearchIntent(),
+                },
+                child: Actions(
+                  actions: {
+                    _NewMarkdownIntent: CallbackAction<_NewMarkdownIntent>(
+                      onInvoke: (intent) {
+                        unawaited(() async {
                           final navigatorContext =
                               rootNavigatorKey.currentContext;
-                          if (navigatorContext != null) {
-                            showBusyMarkKeyboardShortcutsDialog(
-                              navigatorContext,
-                            );
+                          if (navigatorContext == null) {
+                            return;
                           }
-                          return null;
-                        },
-                      ),
-                  _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
-                    onInvoke: (intent) {
-                      if (ref.read(workspaceControllerProvider).workspace !=
-                          null) {
-                        final notifier = ref.read(
-                          workspaceSearchOpenRequestProvider.notifier,
-                        );
-                        notifier.state++;
-                      }
-                      return null;
-                    },
-                  ),
-                  _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
-                    onInvoke: (intent) {
-                      if (ref.read(workspaceControllerProvider).workspace !=
-                          null) {
-                        final notifier = ref.read(
-                          workspaceSearchCloseRequestProvider.notifier,
-                        );
-                        notifier.state++;
-                      }
-                      return null;
-                    },
-                  ),
-                },
-                child: _BusyMarkSearchShortcutHandler(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(BusyMarkRadius.window),
+                          final safe = await confirmSafeToContinue(
+                            navigatorContext,
+                            ref,
+                          );
+                          if (!safe || !navigatorContext.mounted) {
+                            return;
+                          }
+                          await ref
+                              .read(workspaceControllerProvider.notifier)
+                              .createMarkdownFile();
+                          if (navigatorContext.mounted) {
+                            router.go('/workspace');
+                          }
+                        }());
+                        return null;
+                      },
                     ),
-                    clipBehavior: Clip.antiAliasWithSaveLayer,
-                    child: ColoredBox(
-                      color: BusyMarkSurfaceColors.of(context).window,
-                      child: child ?? const SizedBox.shrink(),
+                    _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
+                      onInvoke: (intent) {
+                        final navigatorContext =
+                            rootNavigatorKey.currentContext;
+                        if (navigatorContext != null) {
+                          unawaited(
+                            _showOpenChooser(navigatorContext, ref, router),
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                    _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
+                      onInvoke: (intent) {
+                        final state = ref.read(workspaceControllerProvider);
+                        final navigatorContext =
+                            rootNavigatorKey.currentContext;
+                        if (state.workspace != null &&
+                            navigatorContext != null) {
+                          unawaited(
+                            saveActiveWithOverwriteConfirmation(
+                              navigatorContext,
+                              ref,
+                            ),
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                    _KeyboardShortcutsIntent:
+                        CallbackAction<_KeyboardShortcutsIntent>(
+                          onInvoke: (intent) {
+                            final navigatorContext =
+                                rootNavigatorKey.currentContext;
+                            if (navigatorContext != null) {
+                              showBusyMarkKeyboardShortcutsDialog(
+                                navigatorContext,
+                              );
+                            }
+                            return null;
+                          },
+                        ),
+                    _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
+                      onInvoke: (intent) {
+                        if (ref.read(workspaceControllerProvider).workspace !=
+                            null) {
+                          final notifier = ref.read(
+                            workspaceSearchOpenRequestProvider.notifier,
+                          );
+                          notifier.state++;
+                        }
+                        return null;
+                      },
+                    ),
+                    _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
+                      onInvoke: (intent) {
+                        if (ref.read(workspaceControllerProvider).workspace !=
+                            null) {
+                          final notifier = ref.read(
+                            workspaceSearchCloseRequestProvider.notifier,
+                          );
+                          notifier.state++;
+                        }
+                        return null;
+                      },
+                    ),
+                  },
+                  child: _BusyMarkSearchShortcutHandler(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(BusyMarkRadius.window),
+                      ),
+                      clipBehavior: Clip.antiAliasWithSaveLayer,
+                      child: ColoredBox(
+                        color: BusyMarkSurfaceColors.of(context).window,
+                        child: child ?? const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),
@@ -270,6 +278,7 @@ class BusyMarkApp extends ConsumerWidget {
     if (!service.isAvailable) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final material = MaterialLocalizations.of(context);
     final theme = HeaderBarTheme.fromContext(context);
     final labels = HeaderBarLabels(
@@ -280,13 +289,13 @@ class BusyMarkApp extends ConsumerWidget {
       viewMode: 'View mode',
       search: material.searchFieldLabel,
       refresh: 'Validate',
-      menu: 'Main menu',
+      menu: l10n.mainMenuTooltip,
       sidebar: 'Toggle sidebar',
       back: material.backButtonTooltip,
       save: 'Save',
-      settings: 'Settings',
-      keyboardShortcuts: 'Keyboard Shortcuts',
-      aboutBusyMark: 'About BusyMark',
+      settings: l10n.settingsMenuItem,
+      keyboardShortcuts: l10n.keyboardShortcutsMenuItem,
+      aboutBusyMark: l10n.aboutBusyMarkMenuItem,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
@@ -295,6 +304,124 @@ class BusyMarkApp extends ConsumerWidget {
         await service.setLocalizedLabels(labels);
       }());
     });
+  }
+}
+
+class _BusyMarkWindowLifecycle extends ConsumerStatefulWidget {
+  const _BusyMarkWindowLifecycle({required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<_BusyMarkWindowLifecycle> createState() =>
+      _BusyMarkWindowLifecycleState();
+}
+
+class _BusyMarkWindowLifecycleState
+    extends ConsumerState<_BusyMarkWindowLifecycle> {
+  late final WindowControlService _windowControlService;
+
+  @override
+  void initState() {
+    super.initState();
+    _windowControlService = ref.read(windowControlServiceProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _windowControlService.registerCloseHandler(_handleWindowClose);
+      unawaited(
+        _windowControlService
+            .initialize(ref.read(appSettingsControllerProvider))
+            .then((applied) {
+              if (!applied &&
+                  mounted &&
+                  ref.read(appSettingsControllerProvider).alwaysOnTop) {
+                unawaited(
+                  ref
+                      .read(appSettingsControllerProvider.notifier)
+                      .setAlwaysOnTop(false),
+                );
+              }
+            }),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _windowControlService.unregisterCloseHandler();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<bool>(
+      appSettingsControllerProvider.select((settings) => settings.alwaysOnTop),
+      (previous, next) {
+        if (previous == next) {
+          return;
+        }
+        unawaited(
+          _windowControlService
+              .applyAlwaysOnTop(next)
+              .catchError((Object _) {}),
+        );
+      },
+    );
+    return widget.child;
+  }
+
+  Future<void> _handleWindowClose() async {
+    final context = rootNavigatorKey.currentContext ?? this.context;
+    if (!context.mounted) {
+      return;
+    }
+    final settings = ref.read(appSettingsControllerProvider);
+    final workspace = ref.read(workspaceControllerProvider);
+    await _windowControlService.handleCloseRequest(
+      hasUnsavedChanges: workspace.hasUnsavedChanges,
+      confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,
+      showCloseDialog: () => _showWindowCloseDialog(context),
+      saveChanges: () => saveActiveWithOverwriteConfirmation(context, ref),
+    );
+  }
+
+  Future<WindowCloseAction?> _showWindowCloseDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    return showBusyMarkModalDialog<WindowCloseAction>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (context) => BusyMarkDialogShell(
+        title: l10n.closeUnsavedChangesTitle,
+        maxWidth: 520,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, WindowCloseAction.cancel),
+            child: Text(l10n.closeUnsavedChangesCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, WindowCloseAction.discard),
+            child: Text(l10n.closeUnsavedChangesDiscard),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, WindowCloseAction.save),
+            child: Text(l10n.closeUnsavedChangesSave),
+          ),
+        ],
+        children: [Text(_closeUnsavedChangesMessage(context))],
+      ),
+    );
+  }
+
+  String _closeUnsavedChangesMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final state = ref.read(workspaceControllerProvider);
+    if (!state.hasUnsavedChanges) {
+      return l10n.closeUnsavedChangesMultipleMessage(0);
+    }
+    return l10n.closeUnsavedChangesSingleMessage;
   }
 }
 

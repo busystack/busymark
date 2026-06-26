@@ -1,5 +1,84 @@
 {
   "@@locale": "en",
   "appTitle": "BusyMark",
-  "appSubtitle": "Markdown and Writerside-compatible documentation editor."
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Markdown and Writerside-compatible documentation editor.",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "mainMenuTooltip": "Main menu",
+  "@mainMenuTooltip": {
+    "description": "Tooltip for the main application menu button."
+  },
+  "settingsMenuItem": "Settings",
+  "@settingsMenuItem": {
+    "description": "Main menu item that opens settings."
+  },
+  "keyboardShortcutsMenuItem": "Keyboard Shortcuts",
+  "@keyboardShortcutsMenuItem": {
+    "description": "Main menu item that opens the keyboard shortcuts dialog."
+  },
+  "aboutBusyMarkMenuItem": "About BusyMark",
+  "@aboutBusyMarkMenuItem": {
+    "description": "Main menu item that opens the about dialog."
+  },
+  "settingsWindowSectionTitle": "Window",
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
+  "settingsConfirmCloseWithUnsavedChangesTitle": "Confirm before closing with unsaved changes",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Ask before closing BusyMark when documents have unsaved changes.",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
+  "settingsAlwaysOnTopTitle": "Keep BusyMark on top",
+  "@settingsAlwaysOnTopTitle": {
+    "description": "Settings switch title for always-on-top window behavior."
+  },
+  "settingsAlwaysOnTopDescription": "Keep the BusyMark window above other windows when supported by the desktop environment.",
+  "@settingsAlwaysOnTopDescription": {
+    "description": "Settings switch description for always-on-top window behavior."
+  },
+  "settingsAlwaysOnTopUnsupportedDescription": "Always-on-top is not available on this desktop environment.",
+  "@settingsAlwaysOnTopUnsupportedDescription": {
+    "description": "Settings switch description shown when native always-on-top window behavior is unavailable."
+  },
+  "closeUnsavedChangesTitle": "Unsaved changes",
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
+  "closeUnsavedChangesSingleMessage": "This document has unsaved changes. Save changes before closing BusyMark?",
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Save changes before closing BusyMark?} =1{1 document has unsaved changes. Save changes before closing BusyMark?} other{{count} documents have unsaved changes. Save changes before closing BusyMark?}}",
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "closeUnsavedChangesCancel": "Cancel",
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesDiscard": "Discard",
+  "@closeUnsavedChangesDiscard": {
+    "description": "Discard button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesSave": "Save",
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
+  "windowSettingApplyFailed": "Could not apply the window setting.",
+  "@windowSettingApplyFailed": {
+    "description": "Non-blocking error shown when a native window setting cannot be applied."
+  }
 }

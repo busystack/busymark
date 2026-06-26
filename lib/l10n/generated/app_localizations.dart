@@ -94,17 +94,119 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
-  /// No description provided for @appTitle.
+  /// Application name.
   ///
   /// In en, this message translates to:
   /// **'BusyMark'**
   String get appTitle;
 
-  /// No description provided for @appSubtitle.
+  /// Short application description.
   ///
   /// In en, this message translates to:
   /// **'Markdown and Writerside-compatible documentation editor.'**
   String get appSubtitle;
+
+  /// Tooltip for the main application menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'Main menu'**
+  String get mainMenuTooltip;
+
+  /// Main menu item that opens settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsMenuItem;
+
+  /// Main menu item that opens the keyboard shortcuts dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard Shortcuts'**
+  String get keyboardShortcutsMenuItem;
+
+  /// Main menu item that opens the about dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'About BusyMark'**
+  String get aboutBusyMarkMenuItem;
+
+  /// Settings section title for native window behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get settingsWindowSectionTitle;
+
+  /// Settings switch title for close confirmation when documents have unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm before closing with unsaved changes'**
+  String get settingsConfirmCloseWithUnsavedChangesTitle;
+
+  /// Settings switch description for close confirmation when documents have unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask before closing BusyMark when documents have unsaved changes.'**
+  String get settingsConfirmCloseWithUnsavedChangesDescription;
+
+  /// Settings switch title for always-on-top window behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep BusyMark on top'**
+  String get settingsAlwaysOnTopTitle;
+
+  /// Settings switch description for always-on-top window behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the BusyMark window above other windows when supported by the desktop environment.'**
+  String get settingsAlwaysOnTopDescription;
+
+  /// Settings switch description shown when native always-on-top window behavior is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Always-on-top is not available on this desktop environment.'**
+  String get settingsAlwaysOnTopUnsupportedDescription;
+
+  /// Window close confirmation dialog title when documents have unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved changes'**
+  String get closeUnsavedChangesTitle;
+
+  /// Window close confirmation message when one document has unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'This document has unsaved changes. Save changes before closing BusyMark?'**
+  String get closeUnsavedChangesSingleMessage;
+
+  /// Window close confirmation message when multiple documents have unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Save changes before closing BusyMark?} =1{1 document has unsaved changes. Save changes before closing BusyMark?} other{{count} documents have unsaved changes. Save changes before closing BusyMark?}}'**
+  String closeUnsavedChangesMultipleMessage(int count);
+
+  /// Cancel button label in the window close unsaved-changes dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get closeUnsavedChangesCancel;
+
+  /// Discard button label in the window close unsaved-changes dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get closeUnsavedChangesDiscard;
+
+  /// Save button label in the window close unsaved-changes dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get closeUnsavedChangesSave;
+
+  /// Non-blocking error shown when a native window setting cannot be applied.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not apply the window setting.'**
+  String get windowSettingApplyFailed;
 }
 
 class _AppLocalizationsDelegate

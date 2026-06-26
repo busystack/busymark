@@ -54,6 +54,11 @@ struct _MyApplication {
   GtkWidget* keyboard_shortcuts_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
+  GtkWidget* header_menu_button;
+  GtkWidget* header_menu;
+  GtkWidget* header_settings_item;
+  GtkWidget* header_keyboard_shortcuts_item;
+  GtkWidget* header_about_item;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
   GtkWidget* title_stack;
@@ -93,6 +98,7 @@ struct _MyApplication {
   gboolean back_visible;
   gboolean search_active;
   gboolean modal_barrier_visible;
+  gboolean always_on_top;
   gboolean suppress_header_actions;
 };
 
@@ -747,6 +753,7 @@ static void menu_item_clicked_cb(GtkWidget* widget, gpointer user_data) {
   const gchar* action = static_cast<const gchar*>(
       g_object_get_data(G_OBJECT(widget), "busymark-action"));
   close_menu_button(self->sidebar_menu_button);
+  close_menu_button(self->header_menu_button);
   focus_flutter_view(self);
   invoke_header_bar_action(self, action);
 }
@@ -961,6 +968,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
     gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), search);
   }
   set_widget_tooltip(self->sidebar_menu_button, menu);
+  set_widget_tooltip(self->header_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
   set_widget_tooltip(self->save_button, save);
   set_widget_tooltip(self->view_mode_button, view_mode);
@@ -971,6 +979,10 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->settings_item, settings);
   set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
   set_menu_item_label(self->about_item, about);
+  set_menu_item_label(self->header_settings_item, settings);
+  set_menu_item_label(self->header_keyboard_shortcuts_item,
+                      keyboard_shortcuts);
+  set_menu_item_label(self->header_about_item, about);
   update_view_mode_label(self);
 }
 
@@ -990,6 +1002,7 @@ static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
 static void set_sidebar_visible(MyApplication* self, gboolean visible) {
   self->sidebar_visible = visible;
   set_toggle_button_active(self, self->sidebar_toggle_button, visible);
+  set_widget_visible(self->header_menu_button, !visible);
   update_sidebar_header_geometry(self);
   refresh_header_bar_css(self);
 }
@@ -1004,6 +1017,47 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
   }
   self->sidebar_width = static_cast<gint>(width);
   update_sidebar_header_geometry(self);
+}
+
+static gboolean can_keep_window_above(MyApplication* self, gboolean value) {
+  if (!value) {
+    return TRUE;
+  }
+#ifdef GDK_WINDOWING_X11
+  GdkDisplay* display = nullptr;
+  if (self->main_window != nullptr && GTK_IS_WINDOW(self->main_window)) {
+    GdkScreen* screen = gtk_window_get_screen(self->main_window);
+    if (screen != nullptr && GDK_IS_SCREEN(screen)) {
+      display = gdk_screen_get_display(screen);
+    }
+  }
+  if (display == nullptr) {
+    display = gdk_display_get_default();
+  }
+  return display != nullptr && GDK_IS_X11_DISPLAY(display);
+#else
+  return FALSE;
+#endif
+}
+
+static gboolean set_always_on_top(MyApplication* self, gboolean value) {
+  if (!can_keep_window_above(self, value)) {
+    self->always_on_top = FALSE;
+    return FALSE;
+  }
+  self->always_on_top = value;
+  if (self->main_window == nullptr || !GTK_IS_WINDOW(self->main_window)) {
+    return TRUE;
+  }
+  gtk_window_set_keep_above(self->main_window, value);
+  if (value) {
+    gtk_window_present(self->main_window);
+    GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(self->main_window));
+    if (window != nullptr && GDK_IS_WINDOW(window)) {
+      gdk_window_raise(window);
+    }
+  }
+  return TRUE;
 }
 
 static void set_back_visible(MyApplication* self, gboolean visible) {
@@ -1113,6 +1167,23 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->header_start_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   gtk_widget_set_margin_start(self->header_start_box, kHeaderSidebarInset);
+  self->header_menu = create_header_popover();
+  GtkWidget* header_menu_box = create_popover_box(self->header_menu);
+  self->header_settings_item = create_menu_item(self, "settings");
+  self->header_keyboard_shortcuts_item =
+      create_menu_item(self, "keyboardShortcuts");
+  self->header_about_item = create_menu_item(self, "aboutBusyMark");
+  gtk_box_pack_start(GTK_BOX(header_menu_box), self->header_settings_item,
+                     FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(header_menu_box),
+                     self->header_keyboard_shortcuts_item, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(header_menu_box), self->header_about_item, FALSE,
+                     FALSE, 0);
+  gtk_widget_show_all(header_menu_box);
+  self->header_menu_button =
+      create_menu_button(self->header_menu, "open-menu-symbolic");
+  gtk_box_pack_start(GTK_BOX(self->header_start_box),
+                     self->header_menu_button, FALSE, FALSE, 0);
   self->back_button = create_header_icon_button("go-previous-symbolic");
   self->sidebar_toggle_button =
       create_header_toggle_button("sidebar-show-symbolic");
@@ -1282,6 +1353,10 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setModalBarrierVisible") == 0) {
     set_modal_barrier_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
+  } else if (strcmp(method, "isAlwaysOnTopSupported") == 0) {
+    respond_bool(method_call, can_keep_window_above(self, TRUE));
+  } else if (strcmp(method, "setAlwaysOnTop") == 0) {
+    respond_bool(method_call, set_always_on_top(self, fl_method_bool_arg(args)));
   } else {
     fl_method_call_respond_not_implemented(method_call, nullptr);
   }
@@ -1402,6 +1477,7 @@ static void configure_transparent_window_backing(GtkWindow* window) {
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+  set_always_on_top(self, self->always_on_top);
 }
 
 // Implements GApplication::activate.
@@ -1541,6 +1617,11 @@ static void my_application_init(MyApplication* self) {
   self->keyboard_shortcuts_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
+  self->header_menu_button = nullptr;
+  self->header_menu = nullptr;
+  self->header_settings_item = nullptr;
+  self->header_keyboard_shortcuts_item = nullptr;
+  self->header_about_item = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
   self->title_stack = nullptr;
@@ -1580,6 +1661,7 @@ static void my_application_init(MyApplication* self) {
   self->back_visible = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
+  self->always_on_top = FALSE;
   self->suppress_header_actions = FALSE;
 }
 
