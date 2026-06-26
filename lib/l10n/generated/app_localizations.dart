@@ -1008,24 +1008,6 @@ abstract class AppLocalizations {
   /// **'Ask before closing BusyMark when documents have unsaved changes.'**
   String get settingsConfirmCloseWithUnsavedChangesDescription;
 
-  /// Settings switch title for always-on-top window behavior.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep BusyMark on top'**
-  String get settingsAlwaysOnTopTitle;
-
-  /// Settings switch description for always-on-top window behavior.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep the BusyMark window above other windows when supported by the desktop environment.'**
-  String get settingsAlwaysOnTopDescription;
-
-  /// Settings switch description shown when native always-on-top window behavior is unavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'Always-on-top is not available on this desktop environment.'**
-  String get settingsAlwaysOnTopUnsupportedDescription;
-
   /// Window close confirmation dialog title when documents have unsaved changes.
   ///
   /// In en, this message translates to:
@@ -1061,12 +1043,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get closeUnsavedChangesSave;
-
-  /// Non-blocking error shown when a native window setting cannot be applied.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not apply the window setting.'**
-  String get windowSettingApplyFailed;
 
   /// Fallback file name in unsaved changes dialog.
   ///

@@ -591,12 +591,6 @@
   "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
   "settingsConfirmCloseWithUnsavedChangesDescription": "وقتی سندها تغییرات ذخیره‌نشده دارند، پیش از بستن BusyMark پرسیده شود.",
   "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
-  "settingsAlwaysOnTopTitle": "نگه داشتن BusyMark در جلو",
-  "@settingsAlwaysOnTopTitle": {"description":"Settings switch title for always-on-top window behavior."},
-  "settingsAlwaysOnTopDescription": "در صورت پشتیبانی محیط دسکتاپ، پنجره BusyMark را بالای پنجره‌های دیگر نگه می‌دارد.",
-  "@settingsAlwaysOnTopDescription": {"description":"Settings switch description for always-on-top window behavior."},
-  "settingsAlwaysOnTopUnsupportedDescription": "همیشه در جلو در این محیط دسکتاپ در دسترس نیست.",
-  "@settingsAlwaysOnTopUnsupportedDescription": {"description":"Settings switch description shown when native always-on-top window behavior is unavailable."},
   "closeUnsavedChangesTitle": "تغییرات ذخیره‌نشده",
   "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
   "closeUnsavedChangesSingleMessage": "این سند تغییرات ذخیره‌نشده دارد. پیش از بستن BusyMark تغییرات ذخیره شوند؟",
@@ -609,8 +603,6 @@
   "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
   "closeUnsavedChangesSave": "ذخیره",
   "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
-  "windowSettingApplyFailed": "امکان اعمال تنظیم پنجره وجود نداشت.",
-  "@windowSettingApplyFailed": {"description":"Non-blocking error shown when a native window setting cannot be applied."},
   "currentFile": "فایل فعلی",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."

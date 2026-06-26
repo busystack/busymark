@@ -98,7 +98,6 @@ struct _MyApplication {
   gboolean back_visible;
   gboolean search_active;
   gboolean modal_barrier_visible;
-  gboolean always_on_top;
   gboolean suppress_header_actions;
 };
 
@@ -1019,47 +1018,6 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
   update_sidebar_header_geometry(self);
 }
 
-static gboolean can_keep_window_above(MyApplication* self, gboolean value) {
-  if (!value) {
-    return TRUE;
-  }
-#ifdef GDK_WINDOWING_X11
-  GdkDisplay* display = nullptr;
-  if (self->main_window != nullptr && GTK_IS_WINDOW(self->main_window)) {
-    GdkScreen* screen = gtk_window_get_screen(self->main_window);
-    if (screen != nullptr && GDK_IS_SCREEN(screen)) {
-      display = gdk_screen_get_display(screen);
-    }
-  }
-  if (display == nullptr) {
-    display = gdk_display_get_default();
-  }
-  return display != nullptr && GDK_IS_X11_DISPLAY(display);
-#else
-  return FALSE;
-#endif
-}
-
-static gboolean set_always_on_top(MyApplication* self, gboolean value) {
-  if (!can_keep_window_above(self, value)) {
-    self->always_on_top = FALSE;
-    return FALSE;
-  }
-  self->always_on_top = value;
-  if (self->main_window == nullptr || !GTK_IS_WINDOW(self->main_window)) {
-    return TRUE;
-  }
-  gtk_window_set_keep_above(self->main_window, value);
-  if (value) {
-    gtk_window_present(self->main_window);
-    GdkWindow* window = gtk_widget_get_window(GTK_WIDGET(self->main_window));
-    if (window != nullptr && GDK_IS_WINDOW(window)) {
-      gdk_window_raise(window);
-    }
-  }
-  return TRUE;
-}
-
 static void set_back_visible(MyApplication* self, gboolean visible) {
   self->back_visible = visible;
   set_widget_visible(self->back_button, visible);
@@ -1353,10 +1311,6 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setModalBarrierVisible") == 0) {
     set_modal_barrier_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
-  } else if (strcmp(method, "isAlwaysOnTopSupported") == 0) {
-    respond_bool(method_call, can_keep_window_above(self, TRUE));
-  } else if (strcmp(method, "setAlwaysOnTop") == 0) {
-    respond_bool(method_call, set_always_on_top(self, fl_method_bool_arg(args)));
   } else {
     fl_method_call_respond_not_implemented(method_call, nullptr);
   }
@@ -1477,7 +1431,6 @@ static void configure_transparent_window_backing(GtkWindow* window) {
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
-  set_always_on_top(self, self->always_on_top);
 }
 
 // Implements GApplication::activate.
@@ -1661,7 +1614,6 @@ static void my_application_init(MyApplication* self) {
   self->back_visible = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
-  self->always_on_top = FALSE;
   self->suppress_header_actions = FALSE;
 }
 

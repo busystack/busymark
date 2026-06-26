@@ -115,7 +115,7 @@ class BusyMarkWysiwygTextController extends TextEditingController {
         decoration: TextDecoration.lineThrough,
       ),
       BusyInlineKind.code => baseStyle.copyWith(
-        fontFamily: 'Ubuntu Mono',
+        fontFamily: BusyMarkTypography.monoFontFamily,
         backgroundColor: colors.control,
       ),
       BusyInlineKind.link => baseStyle.copyWith(

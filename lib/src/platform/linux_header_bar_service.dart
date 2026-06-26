@@ -99,7 +99,9 @@ class HeaderBarTheme {
 
   factory HeaderBarTheme.fromContext(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final barrier = Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
+    final barrier = Theme.of(
+      context,
+    ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
     return HeaderBarTheme(
       backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
@@ -109,9 +111,15 @@ class HeaderBarTheme {
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
       controlActiveColor: colors.controlActive,
-      titleButtonColor: colors.foreground.withValues(alpha: 0.10),
-      titleButtonHoverColor: colors.foreground.withValues(alpha: 0.15),
-      titleButtonActiveColor: colors.foreground.withValues(alpha: 0.25),
+      titleButtonColor: colors.foreground.withValues(
+        alpha: BusyMarkAlpha.titleButton,
+      ),
+      titleButtonHoverColor: colors.foreground.withValues(
+        alpha: BusyMarkAlpha.titleButtonHover,
+      ),
+      titleButtonActiveColor: colors.foreground.withValues(
+        alpha: BusyMarkAlpha.titleButtonActive,
+      ),
       accentColor: Theme.of(context).colorScheme.primary,
       accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
@@ -260,20 +268,6 @@ class LinuxHeaderBarService {
     return _invoke('setModalBarrierVisible', value);
   }
 
-  Future<bool> setAlwaysOnTop(bool value) {
-    if (!Platform.isLinux) {
-      return Future.value(true);
-    }
-    return _invokeBool('setAlwaysOnTop', value, false);
-  }
-
-  Future<bool> isAlwaysOnTopSupported() {
-    if (!Platform.isLinux) {
-      return Future.value(true);
-    }
-    return _invokeBool('isAlwaysOnTopSupported', null, false);
-  }
-
   Future<void> _invoke(
     String method, [
     Object? arguments,
@@ -293,29 +287,6 @@ class LinuxHeaderBarService {
     } on Object {
       // Native headerbar is a progressive Linux enhancement. Flutter fallback
       // remains usable if the host shell rejects an update.
-    }
-  }
-
-  Future<bool> _invokeBool(
-    String method, [
-    Object? arguments,
-    bool requireHeaderBar = true,
-  ]) async {
-    if (!_channelReady) {
-      await initialize();
-    }
-    if (!_channelReady || (requireHeaderBar && !_available)) {
-      return false;
-    }
-    try {
-      return await _channel.invokeMethod<bool>(method, arguments) ?? false;
-    } on MissingPluginException {
-      _initialized = false;
-      _channelReady = false;
-      _available = false;
-      return false;
-    } on Object {
-      return false;
     }
   }
 

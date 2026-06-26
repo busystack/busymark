@@ -591,12 +591,6 @@
   "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
   "settingsConfirmCloseWithUnsavedChangesDescription": "اسأل قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.",
   "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
-  "settingsAlwaysOnTopTitle": "إبقاء BusyMark في المقدمة",
-  "@settingsAlwaysOnTopTitle": {"description":"Settings switch title for always-on-top window behavior."},
-  "settingsAlwaysOnTopDescription": "إبقاء نافذة BusyMark فوق النوافذ الأخرى عندما تدعم بيئة سطح المكتب ذلك.",
-  "@settingsAlwaysOnTopDescription": {"description":"Settings switch description for always-on-top window behavior."},
-  "settingsAlwaysOnTopUnsupportedDescription": "ميزة البقاء في المقدمة غير متاحة في بيئة سطح المكتب هذه.",
-  "@settingsAlwaysOnTopUnsupportedDescription": {"description":"Settings switch description shown when native always-on-top window behavior is unavailable."},
   "closeUnsavedChangesTitle": "تغييرات غير محفوظة",
   "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
   "closeUnsavedChangesSingleMessage": "يحتوي هذا المستند على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟",
@@ -609,8 +603,6 @@
   "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
   "closeUnsavedChangesSave": "حفظ",
   "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
-  "windowSettingApplyFailed": "تعذر تطبيق إعداد النافذة.",
-  "@windowSettingApplyFailed": {"description":"Non-blocking error shown when a native window setting cannot be applied."},
   "currentFile": "الملف الحالي",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."

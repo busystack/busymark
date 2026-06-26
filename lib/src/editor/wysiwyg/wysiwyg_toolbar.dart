@@ -280,14 +280,14 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       }
       if (states.contains(WidgetState.pressed)) {
         return Color.alphaBlend(
-          colorScheme.onPrimary.withValues(alpha: 0.18),
+          colorScheme.onPrimary.withValues(alpha: BusyMarkAlpha.toolbarPressed),
           colorScheme.primary,
         );
       }
       if (states.contains(WidgetState.hovered) ||
           states.contains(WidgetState.focused)) {
         return Color.alphaBlend(
-          colorScheme.onPrimary.withValues(alpha: 0.10),
+          colorScheme.onPrimary.withValues(alpha: BusyMarkAlpha.toolbarHover),
           colorScheme.primary,
         );
       }

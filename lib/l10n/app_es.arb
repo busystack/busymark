@@ -591,12 +591,6 @@
   "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
   "settingsConfirmCloseWithUnsavedChangesDescription": "Preguntar antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.",
   "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
-  "settingsAlwaysOnTopTitle": "Mantener BusyMark en primer plano",
-  "@settingsAlwaysOnTopTitle": {"description":"Settings switch title for always-on-top window behavior."},
-  "settingsAlwaysOnTopDescription": "Mantener la ventana de BusyMark por encima de otras ventanas cuando el entorno de escritorio lo admita.",
-  "@settingsAlwaysOnTopDescription": {"description":"Settings switch description for always-on-top window behavior."},
-  "settingsAlwaysOnTopUnsupportedDescription": "Siempre en primer plano no está disponible en este entorno de escritorio.",
-  "@settingsAlwaysOnTopUnsupportedDescription": {"description":"Settings switch description shown when native always-on-top window behavior is unavailable."},
   "closeUnsavedChangesTitle": "Cambios sin guardar",
   "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
   "closeUnsavedChangesSingleMessage": "Este documento tiene cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?",
@@ -609,8 +603,6 @@
   "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
   "closeUnsavedChangesSave": "Guardar",
   "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
-  "windowSettingApplyFailed": "No se pudo aplicar la configuración de la ventana.",
-  "@windowSettingApplyFailed": {"description":"Non-blocking error shown when a native window setting cannot be applied."},
   "currentFile": "Archivo actual",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."

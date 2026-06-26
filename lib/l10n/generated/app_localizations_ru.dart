@@ -487,17 +487,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Спрашивать перед закрытием BusyMark, если в документах есть несохранённые изменения.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Держать BusyMark поверх других окон';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Держать окно BusyMark поверх других окон, если это поддерживается средой рабочего стола.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Режим поверх всех окон недоступен в этой среде рабочего стола.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Несохранённые изменения';
 
   @override
@@ -530,9 +519,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Сохранить';
-
-  @override
-  String get windowSettingApplyFailed => 'Не удалось применить настройку окна.';
 
   @override
   String get currentFile => 'Текущий файл';

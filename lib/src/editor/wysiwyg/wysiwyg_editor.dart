@@ -341,11 +341,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                               alignment: Alignment.topCenter,
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(
-                                  maxWidth: 820,
+                                  maxWidth: BusyMarkSizes.wysiwygContentWidth,
                                 ),
                                 child: Padding(
                                   padding: EdgeInsets.only(
-                                    left: entry.depth * 28.0,
+                                    left:
+                                        entry.depth *
+                                        BusyMarkSizes.wysiwygBlockIndent,
                                   ),
                                   child: BusyMarkWysiwygBlockField(
                                     key: _blockKeyFor(block.id),
@@ -423,7 +425,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                   _FloatingWysiwygToolbar(
                     placement: widget.toolbarPlacement,
                     visible: _toolbarVisible,
-                    maxWidth: math.max(0, constraints.maxWidth - 16),
+                    maxWidth: math.max(
+                      0,
+                      constraints.maxWidth - BusyMarkSpacing.lg,
+                    ),
                     onToggle: () =>
                         setState(() => _toolbarVisible = !_toolbarVisible),
                     child: BusyMarkWysiwygToolbar(
@@ -453,11 +458,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   EdgeInsets _editorContentPadding() {
-    final top = widget.toolbarPlacement._isTop && _toolbarVisible ? 66.0 : 20.0;
+    final top = widget.toolbarPlacement._isTop && _toolbarVisible
+        ? BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar
+        : BusyMarkSizes.wysiwygEditorTopPadding;
     final bottom = widget.toolbarPlacement._isTop || !_toolbarVisible
-        ? 38.0
-        : 84.0;
-    return EdgeInsets.fromLTRB(28, top, 28, bottom);
+        ? BusyMarkSizes.wysiwygEditorBottomPadding
+        : BusyMarkSizes.wysiwygEditorBottomPaddingWithToolbar;
+    return EdgeInsets.fromLTRB(
+      BusyMarkSizes.wysiwygEditorHorizontalPadding,
+      top,
+      BusyMarkSizes.wysiwygEditorHorizontalPadding,
+      bottom,
+    );
   }
 
   bool _toolbarAlignedEnd(EditorToolbarPlacement placement) {
@@ -871,7 +883,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     Scrollable.ensureVisible(
       targetContext,
-      duration: const Duration(milliseconds: 180),
+      duration: BusyMarkMotion.scroll,
       curve: Curves.easeOutCubic,
       alignment: 0.04,
     );
@@ -1589,14 +1601,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (block.kind != BusyBlockKind.table || block.children.isEmpty) {
       return 2;
     }
-    return block.children.first.children.length.clamp(1, 12).toInt();
+    return block.children.first.children.length
+        .clamp(BusyMarkSizes.tableMinColumns, BusyMarkSizes.tableMaxColumns)
+        .toInt();
   }
 
   int _tableBodyRowCount(BusyBlock block) {
     if (block.kind != BusyBlockKind.table) {
       return 2;
     }
-    return (block.children.length - 1).clamp(1, 50).toInt();
+    return (block.children.length - 1)
+        .clamp(BusyMarkSizes.tableMinRows, BusyMarkSizes.tableMaxRows)
+        .toInt();
   }
 
   void _applyIndentCommand() {
@@ -1753,7 +1769,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       builder: (context) => AlertDialog(
         title: Text(context.l10n.codeBlockLanguage),
         content: SizedBox(
-          width: 360,
+          width: BusyMarkSizes.tableDialogWidth,
           child: TextField(
             controller: controller,
             autofocus: true,
@@ -2272,16 +2288,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
-        fontFamily: 'Ubuntu Mono',
-        height: 1.45,
+        fontFamily: BusyMarkTypography.monoFontFamily,
+        height: BusyMarkTypography.codeLineHeight,
       ),
-      _ => theme.bodyMedium!.copyWith(height: 1.5),
+      _ => theme.bodyMedium!.copyWith(
+        height: BusyMarkTypography.bodyLineHeight,
+      ),
     };
   }
 
   EdgeInsets _outerPaddingForBlock(BusyBlock block) {
     return switch (block.kind) {
-      BusyBlockKind.heading => const EdgeInsets.only(top: 16, bottom: 6),
+      BusyBlockKind.heading => BusyMarkInsets.wysiwygHeadingBlock,
       BusyBlockKind.codeBlock ||
       BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
@@ -2290,8 +2308,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => const EdgeInsets.symmetric(vertical: 8),
-      _ => const EdgeInsets.symmetric(vertical: 4),
+      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
+      _ => BusyMarkInsets.wysiwygDefaultBlock,
     };
   }
 
@@ -2305,7 +2323,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => const EdgeInsets.all(12),
+      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
       _ => EdgeInsets.zero,
     };
   }
@@ -2377,7 +2395,10 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     final alignedEnd = placement._isRight;
     final toolbar = visible
-        ? SizedBox(width: math.max(0, maxWidth - 42), child: child)
+        ? SizedBox(
+            width: math.max(0, maxWidth - BusyMarkSizes.wysiwygToolbarReserve),
+            child: child,
+          )
         : const SizedBox.shrink();
     final toggle = BusyMarkHeaderIconButton(
       tooltip: visible
@@ -2421,14 +2442,14 @@ WidgetStateProperty<Color?> _editorToolbarButtonBackground(
     }
     if (states.contains(WidgetState.pressed)) {
       return Color.alphaBlend(
-        colors.foreground.withValues(alpha: 0.08),
+        colors.foreground.withValues(alpha: BusyMarkAlpha.editorToolbarPressed),
         colors.sidebar,
       );
     }
     if (states.contains(WidgetState.hovered) ||
         states.contains(WidgetState.focused)) {
       return Color.alphaBlend(
-        colors.foreground.withValues(alpha: 0.04),
+        colors.foreground.withValues(alpha: BusyMarkAlpha.editorToolbarHover),
         colors.sidebar,
       );
     }
@@ -2585,7 +2606,7 @@ class _ImageDialogState extends State<_ImageDialog> {
     return AlertDialog(
       title: Text(widget.title),
       content: SizedBox(
-        width: 420,
+        width: BusyMarkSizes.imageDialogWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2604,7 +2625,7 @@ class _ImageDialogState extends State<_ImageDialog> {
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: BusyMarkSpacing.sm),
                   child: OutlinedButton(
                     onPressed: _chooseImage,
                     child: Text(context.l10n.choose),
@@ -2691,10 +2712,12 @@ class _TableDialogState extends State<_TableDialog> {
   void initState() {
     super.initState();
     _columnsController = TextEditingController(
-      text: '${widget.initialColumns.clamp(1, 12)}',
+      text:
+          '${widget.initialColumns.clamp(BusyMarkSizes.tableMinColumns, BusyMarkSizes.tableMaxColumns)}',
     );
     _rowsController = TextEditingController(
-      text: '${widget.initialRows.clamp(1, 50)}',
+      text:
+          '${widget.initialRows.clamp(BusyMarkSizes.tableMinRows, BusyMarkSizes.tableMaxRows)}',
     );
   }
 
@@ -2710,7 +2733,7 @@ class _TableDialogState extends State<_TableDialog> {
     return AlertDialog(
       title: Text(context.l10n.table),
       content: SizedBox(
-        width: 360,
+        width: BusyMarkSizes.tableDialogWidth,
         child: Row(
           children: [
             Expanded(
@@ -2756,8 +2779,12 @@ class _TableDialogState extends State<_TableDialog> {
     Navigator.pop(
       context,
       _TableDialogResult(
-        columns: columns.clamp(1, 12).toInt(),
-        rows: rows.clamp(1, 50).toInt(),
+        columns: columns
+            .clamp(BusyMarkSizes.tableMinColumns, BusyMarkSizes.tableMaxColumns)
+            .toInt(),
+        rows: rows
+            .clamp(BusyMarkSizes.tableMinRows, BusyMarkSizes.tableMaxRows)
+            .toInt(),
       ),
     );
   }

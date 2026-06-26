@@ -17,6 +17,10 @@ ThemeData buildBusyMarkTheme({
     ),
   };
   final colors = BusyMarkSurfaceColors.fromBrightness(brightness);
+  final syntaxColors = BusyMarkSyntaxColors.fromSurfaceColors(
+    brightness,
+    colors,
+  );
   final onAccent = contrastColor(accentColor);
   final selectedContainer = colors.controlActive;
   final colorScheme = base.colorScheme.copyWith(
@@ -47,7 +51,7 @@ ThemeData buildBusyMarkTheme({
     borderRadius: BorderRadius.circular(BusyMarkRadius.sm + 2),
   );
   final focusedInputBorder = inputBorder.copyWith(
-    borderSide: BorderSide(color: accentColor, width: 2),
+    borderSide: BorderSide(color: accentColor, width: BusyMarkStroke.focus),
   );
   final textTheme = _busyMarkTextTheme(base.textTheme, colors);
   final buttonText = WidgetStatePropertyAll(textTheme.labelLarge);
@@ -58,9 +62,12 @@ ThemeData buildBusyMarkTheme({
     enabledBorder: inputBorder,
     focusedBorder: focusedInputBorder,
     focusedErrorBorder: inputBorder.copyWith(
-      borderSide: BorderSide(color: colorScheme.error, width: 2),
+      borderSide: BorderSide(
+        color: colorScheme.error,
+        width: BusyMarkStroke.focus,
+      ),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    contentPadding: BusyMarkInsets.input,
     hintStyle: textTheme.bodyMedium?.copyWith(color: colors.mutedForeground),
   );
 
@@ -74,18 +81,21 @@ ThemeData buildBusyMarkTheme({
     cardColor: colors.card,
     extensions: [
       for (final extension in base.extensions.values)
-        if (extension is! BusyMarkSurfaceColors) extension,
+        if (extension is! BusyMarkSurfaceColors &&
+            extension is! BusyMarkSyntaxColors)
+          extension,
       colors,
+      syntaxColors,
     ],
     dividerColor: colors.subtleBorder,
     visualDensity: VisualDensity.compact,
     splashFactory: NoSplash.splashFactory,
-    focusColor: accentColor.withValues(alpha: 0.18),
+    focusColor: accentColor.withValues(alpha: BusyMarkAlpha.focus),
     hoverColor: colors.controlHover,
-    splashColor: accentColor.withValues(alpha: 0.12),
+    splashColor: accentColor.withValues(alpha: BusyMarkAlpha.splash),
     appBarTheme: base.appBarTheme.copyWith(
-      elevation: 0,
-      scrolledUnderElevation: 0,
+      elevation: BusyMarkElevation.none,
+      scrolledUnderElevation: BusyMarkElevation.none,
       backgroundColor: colors.headerbar,
       foregroundColor: colors.foreground,
       surfaceTintColor: colors.headerbar,
@@ -112,7 +122,7 @@ ThemeData buildBusyMarkTheme({
       selectedTileColor: selectedContainer,
       iconColor: colors.mutedForeground,
       textColor: colors.foreground,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      contentPadding: BusyMarkInsets.listTile,
       titleTextStyle: textTheme.bodyMedium,
       subtitleTextStyle: textTheme.bodySmall,
       leadingAndTrailingTextStyle: textTheme.labelSmall,
@@ -152,9 +162,9 @@ ThemeData buildBusyMarkTheme({
         base.textButtonTheme.style,
         shape: buttonShape,
         foreground: accentColor,
-        background: Colors.transparent,
+        background: BusyMarkLinuxPalette.transparent,
         disabledForeground: colors.disabledForeground,
-        disabledBackground: Colors.transparent,
+        disabledBackground: BusyMarkLinuxPalette.transparent,
         overlayColor: _controlOverlay(accentColor),
         textStyle: buttonText,
       ),
@@ -164,9 +174,9 @@ ThemeData buildBusyMarkTheme({
         base.iconButtonTheme.style,
         shape: buttonShape,
         foreground: colors.mutedForeground,
-        background: Colors.transparent,
+        background: BusyMarkLinuxPalette.transparent,
         disabledForeground: colors.disabledForeground,
-        disabledBackground: Colors.transparent,
+        disabledBackground: BusyMarkLinuxPalette.transparent,
         overlayColor: _controlOverlay(accentColor),
         textStyle: buttonText,
       ),
@@ -266,13 +276,15 @@ ThemeData buildBusyMarkTheme({
     ),
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: accentColor,
-      selectionColor: accentColor.withValues(alpha: 0.32),
+      selectionColor: accentColor.withValues(
+        alpha: BusyMarkAlpha.textSelection,
+      ),
       selectionHandleColor: accentColor,
     ),
     cardTheme: CardThemeData(
       color: colors.card,
       elevation: BusyMarkElevation.surface,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: BusyMarkLinuxPalette.transparent,
       shadowColor: colors.shade,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
@@ -285,7 +297,7 @@ TextTheme _busyMarkTextTheme(TextTheme base, BusyMarkSurfaceColors colors) {
   TextStyle? apply(TextStyle? style, {Color? color}) {
     return style?.copyWith(
       color: color,
-      fontFamily: 'Ubuntu',
+      fontFamily: BusyMarkTypography.fontFamily,
       letterSpacing: 0,
     );
   }
@@ -338,20 +350,20 @@ ButtonStyle _buttonStyle(
     }),
     overlayColor: overlayColor ?? _controlOverlay(foreground),
     side: side ?? const WidgetStatePropertyAll(BorderSide.none),
-    elevation: const WidgetStatePropertyAll(0),
+    elevation: const WidgetStatePropertyAll(BusyMarkElevation.none),
   );
 }
 
 WidgetStateProperty<Color?> _controlOverlay(Color foreground) {
   return WidgetStateProperty.resolveWith((states) {
     if (states.contains(WidgetState.pressed)) {
-      return foreground.withValues(alpha: 0.14);
+      return foreground.withValues(alpha: BusyMarkAlpha.overlayPressed);
     }
     if (states.contains(WidgetState.hovered)) {
-      return foreground.withValues(alpha: 0.08);
+      return foreground.withValues(alpha: BusyMarkAlpha.overlayHover);
     }
     if (states.contains(WidgetState.focused)) {
-      return foreground.withValues(alpha: 0.10);
+      return foreground.withValues(alpha: BusyMarkAlpha.overlayFocus);
     }
     return null;
   });

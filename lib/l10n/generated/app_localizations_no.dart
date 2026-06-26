@@ -482,17 +482,6 @@ class AppLocalizationsNo extends AppLocalizations {
       'Spør før BusyMark lukkes når dokumenter har ulagrede endringer.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Hold BusyMark øverst';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Hold BusyMark-vinduet over andre vinduer når skrivebordsmiljøet støtter det.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Alltid øverst er ikke tilgjengelig i dette skrivebordsmiljøet.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Ulagrede endringer';
 
   @override
@@ -521,10 +510,6 @@ class AppLocalizationsNo extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Lagre';
-
-  @override
-  String get windowSettingApplyFailed =>
-      'Kunne ikke bruke vindusinnstillingen.';
 
   @override
   String get currentFile => 'gjeldende fil';

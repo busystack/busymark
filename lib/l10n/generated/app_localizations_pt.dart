@@ -487,17 +487,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Perguntar antes de fechar o BusyMark quando documentos tiverem alterações não salvas.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Manter o BusyMark em primeiro plano';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Manter a janela do BusyMark acima de outras janelas quando o ambiente de desktop oferecer suporte.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Sempre em primeiro plano não está disponível neste ambiente de desktop.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Alterações não salvas';
 
   @override
@@ -526,10 +515,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Salvar';
-
-  @override
-  String get windowSettingApplyFailed =>
-      'Não foi possível aplicar a configuração da janela.';
 
   @override
   String get currentFile => 'arquivo atual';

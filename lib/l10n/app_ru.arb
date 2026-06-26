@@ -591,12 +591,6 @@
   "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
   "settingsConfirmCloseWithUnsavedChangesDescription": "Спрашивать перед закрытием BusyMark, если в документах есть несохранённые изменения.",
   "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
-  "settingsAlwaysOnTopTitle": "Держать BusyMark поверх других окон",
-  "@settingsAlwaysOnTopTitle": {"description":"Settings switch title for always-on-top window behavior."},
-  "settingsAlwaysOnTopDescription": "Держать окно BusyMark поверх других окон, если это поддерживается средой рабочего стола.",
-  "@settingsAlwaysOnTopDescription": {"description":"Settings switch description for always-on-top window behavior."},
-  "settingsAlwaysOnTopUnsupportedDescription": "Режим поверх всех окон недоступен в этой среде рабочего стола.",
-  "@settingsAlwaysOnTopUnsupportedDescription": {"description":"Settings switch description shown when native always-on-top window behavior is unavailable."},
   "closeUnsavedChangesTitle": "Несохранённые изменения",
   "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
   "closeUnsavedChangesSingleMessage": "В этом документе есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?",
@@ -609,8 +603,6 @@
   "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
   "closeUnsavedChangesSave": "Сохранить",
   "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
-  "windowSettingApplyFailed": "Не удалось применить настройку окна.",
-  "@windowSettingApplyFailed": {"description":"Non-blocking error shown when a native window setting cannot be applied."},
   "currentFile": "Текущий файл",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."

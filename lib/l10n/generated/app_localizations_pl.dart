@@ -486,17 +486,6 @@ class AppLocalizationsPl extends AppLocalizations {
       'Pytaj przed zamknięciem BusyMark, gdy dokumenty mają niezapisane zmiany.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Trzymaj BusyMark na wierzchu';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Trzymaj okno BusyMark nad innymi oknami, jeśli środowisko pulpitu to obsługuje.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Tryb zawsze na wierzchu nie jest dostępny w tym środowisku pulpitu.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Niezapisane zmiany';
 
   @override
@@ -525,10 +514,6 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Zapisz';
-
-  @override
-  String get windowSettingApplyFailed =>
-      'Nie można zastosować ustawienia okna.';
 
   @override
   String get currentFile => 'Bieżący plik';

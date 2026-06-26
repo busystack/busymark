@@ -643,7 +643,7 @@ class WorkspaceScreen extends ConsumerWidget {
         headerBarService: headerBar.isAvailable ? headerBar : null,
         builder: (context) => BusyMarkDialogShell(
           title: context.l10n.problems,
-          maxWidth: 760,
+          maxWidth: BusyMarkSizes.contentWidth,
           children: [
             Text(
               context.l10n.diagnosticCount(count),
@@ -653,8 +653,8 @@ class WorkspaceScreen extends ConsumerWidget {
             ),
             const SizedBox(height: BusyMarkSpacing.md),
             SizedBox(
-              width: 700,
-              height: 420,
+              width: BusyMarkSizes.problemsListWidth,
+              height: BusyMarkSizes.problemsListHeight,
               child: _ProblemsList(workspace: workspace),
             ),
           ],
@@ -820,8 +820,8 @@ class _HeaderSeparator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 1,
-      height: 22,
+      width: BusyMarkStroke.hairline,
+      height: BusyMarkSizes.sidebarSeparatorHeight,
       margin: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       color: BusyMarkSurfaceColors.of(context).subtleBorder,
     );
@@ -926,7 +926,7 @@ class _SidebarState extends State<_Sidebar> {
           _SidebarHeader(workspace: widget.workspace),
           if (!widget.searchState.active && tabs.length > 1)
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+              padding: BusyMarkInsets.sidebarTabs,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
@@ -1049,7 +1049,7 @@ class _SidebarHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      padding: BusyMarkInsets.sidebarHeader,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1150,7 +1150,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
+      padding: BusyMarkInsets.sidebarList,
       itemCount: entries.length,
       itemBuilder: (context, index) {
         final entry = entries[index];
@@ -1236,35 +1236,39 @@ class _SidebarTreeRow extends StatelessWidget {
       context,
     ).textTheme.bodyMedium?.copyWith(color: titleColor);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
+      padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
       child: Material(
         color: selected
             ? busyMarkSelectedBackground(context)
-            : Colors.transparent,
+            : BusyMarkLinuxPalette.transparent,
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           hoverColor: clickable
               ? busyMarkRowHoverColor(context)
-              : Colors.transparent,
+              : BusyMarkLinuxPalette.transparent,
           onTap: clickable ? onTap : null,
           child: SizedBox(
-            height: 30,
+            height: BusyMarkSizes.sidebarTreeRowHeight,
             child: Row(
               children: [
-                SizedBox(width: 4 + depth * 14),
+                SizedBox(
+                  width:
+                      BusyMarkSizes.sidebarTreeDepthBase +
+                      depth * BusyMarkSizes.sidebarTreeDepthIndent,
+                ),
                 SizedBox.square(
-                  dimension: 18,
+                  dimension: BusyMarkSizes.sidebarTreeControl,
                   child: hasChildren
                       ? GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: enabled ? onToggle ?? onTap : null,
                           child: AnimatedRotation(
                             turns: expanded ? 0.25 : 0,
-                            duration: const Duration(milliseconds: 120),
+                            duration: BusyMarkMotion.sidebarExpand,
                             child: Icon(
                               YaruIcons.pan_end,
-                              size: 14,
+                              size: BusyMarkSizes.sidebarTreeArrow,
                               color: foreground,
                             ),
                           ),
@@ -1273,7 +1277,7 @@ class _SidebarTreeRow extends StatelessWidget {
                 ),
                 const SizedBox(width: BusyMarkSpacing.xs),
                 SizedBox.square(
-                  dimension: 18,
+                  dimension: BusyMarkSizes.sidebarTreeControl,
                   child: Center(
                     child:
                         leading ??
@@ -1523,7 +1527,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     );
     final activeTopicReference = _activeTocTopicReference(widget.workspace);
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
+      padding: BusyMarkInsets.sidebarList,
       itemCount: entries.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
@@ -1634,7 +1638,7 @@ class _TocHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      padding: BusyMarkInsets.tocHeader,
       child: Row(
         children: [
           Expanded(
@@ -1724,7 +1728,7 @@ class _CreateWritersideTopicDialogState
     final canCreate = !_creating && titleError == null && fileNameError == null;
     return BusyMarkDialogShell(
       title: _dialogTitle(context),
-      maxWidth: 560,
+      maxWidth: BusyMarkSizes.dialogWide,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
@@ -2125,7 +2129,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     final tree = _buildOutlineTree(headings);
     final entries = _visibleOutlineTreeEntries(tree, _expandedNodeKeys);
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
+      padding: BusyMarkInsets.sidebarList,
       itemCount: entries.length,
       itemBuilder: (context, index) {
         final entry = entries[index];
@@ -2760,25 +2764,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           selectionHeightStyle: BoxHeightStyle.max,
                           selectionWidthStyle: BoxWidthStyle.tight,
                           cursorColor: colors.foreground.withValues(
-                            alpha: 0.82,
+                            alpha: BusyMarkAlpha.sourceCursor,
                           ),
-                          cursorHeight: widget.editorFontSize * 1.22,
-                          cursorWidth: 1.4,
+                          cursorHeight:
+                              widget.editorFontSize *
+                              BusyMarkTypography.sourceCursorHeightScale,
+                          cursorWidth: BusyMarkStroke.sourceCursor,
                           decoration: InputDecoration(
                             isCollapsed: true,
                             filled: false,
-                            fillColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            focusColor: Colors.transparent,
+                            fillColor: BusyMarkLinuxPalette.transparent,
+                            hoverColor: BusyMarkLinuxPalette.transparent,
+                            focusColor: BusyMarkLinuxPalette.transparent,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.fromLTRB(
-                              _SourceEditorFrame.editorPaddingLeft,
-                              _SourceEditorFrame.editorPaddingTop,
-                              _SourceEditorFrame.editorPaddingRight,
-                              _SourceEditorFrame.editorPaddingBottom,
-                            ),
+                            contentPadding: BusyMarkInsets.sourceEditor,
                           ),
                           onChanged: _handleSourceChanged,
                         ),
@@ -2789,7 +2790,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ),
             ),
           if (sourceVisible && previewVisible)
-            VerticalDivider(width: 1, color: colors.subtleBorder),
+            VerticalDivider(
+              width: BusyMarkStroke.hairline,
+              color: colors.subtleBorder,
+            ),
           if (previewVisible)
             Expanded(
               child: _PreviewPane(
@@ -3110,7 +3114,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _jumpSourceScrollToLine(line);
       });
       unawaited(
-        Future<void>.delayed(const Duration(milliseconds: 80), () {
+        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
           _jumpSourceScrollToLine(line);
         }),
       );
@@ -3129,7 +3133,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _jumpSourceScrollToLine(target.line);
       });
       unawaited(
-        Future<void>.delayed(const Duration(milliseconds: 80), () {
+        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
           _jumpSourceScrollToLine(target.line);
         }),
       );
@@ -3153,9 +3157,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   TextStyle get _sourceTextStyle => TextStyle(
-    fontFamily: 'Ubuntu Mono',
+    fontFamily: BusyMarkTypography.monoFontFamily,
     fontSize: widget.editorFontSize,
-    height: 1.45,
+    height: BusyMarkTypography.codeLineHeight,
     leadingDistribution: TextLeadingDistribution.even,
   );
 
@@ -3187,7 +3191,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     _sourceScrollController.animateTo(
       _sourceScrollOffsetForLine(line),
-      duration: const Duration(milliseconds: 180),
+      duration: BusyMarkMotion.scroll,
       curve: Curves.easeOutCubic,
     );
   }
@@ -3245,7 +3249,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     Scrollable.ensureVisible(
       context,
-      duration: const Duration(milliseconds: 180),
+      duration: BusyMarkMotion.scroll,
       curve: Curves.easeOutCubic,
       alignment: 0.0,
     );
@@ -3264,14 +3268,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         }
       });
       unawaited(
-        Future<void>.delayed(const Duration(milliseconds: 80), () {
+        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
           if (_isCurrentPreviewSearchScroll(target)) {
             _scrollPreviewToSearchTarget(target);
           }
         }),
       );
       unawaited(
-        Future<void>.delayed(const Duration(milliseconds: 180), () {
+        Future<void>.delayed(BusyMarkMotion.scroll, () {
           if (_isCurrentPreviewSearchScroll(target)) {
             _scrollPreviewToSearchTarget(target);
           }
@@ -3315,7 +3319,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (!_previewScrollController.hasClients) {
       Scrollable.ensureVisible(
         blockContext,
-        duration: const Duration(milliseconds: 180),
+        duration: BusyMarkMotion.scroll,
         curve: Curves.easeOutCubic,
         alignment: 0.0,
       );
@@ -3325,7 +3329,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (renderObject is! RenderBox) {
       Scrollable.ensureVisible(
         blockContext,
-        duration: const Duration(milliseconds: 180),
+        duration: BusyMarkMotion.scroll,
         curve: Curves.easeOutCubic,
         alignment: 0.0,
       );
@@ -3341,7 +3345,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (viewportBox == null) {
       Scrollable.ensureVisible(
         blockContext,
-        duration: const Duration(milliseconds: 180),
+        duration: BusyMarkMotion.scroll,
         curve: Curves.easeOutCubic,
         alignment: 0.0,
       );
@@ -3455,11 +3459,12 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.child,
   });
 
-  static const double editorPaddingTop = 16;
-  static const double editorPaddingBottom = 16;
-  static const double editorPaddingLeft = 12;
-  static const double editorPaddingRight = 16;
-  static const double _gutterWidth = 50;
+  static const double editorPaddingTop = BusyMarkSourceEditorMetrics.paddingTop;
+  static const double editorPaddingLeft =
+      BusyMarkSourceEditorMetrics.paddingLeft;
+  static const double editorPaddingRight =
+      BusyMarkSourceEditorMetrics.paddingRight;
+  static const double _gutterWidth = BusyMarkSizes.sourceGutterWidth;
 
   final BusyMarkSourceEditingController controller;
   final ScrollController scrollController;
@@ -3477,7 +3482,10 @@ class _SourceEditorFrame extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final editorWidth = math
-            .max(1, constraints.maxWidth - _gutterWidth - 1)
+            .max(
+              BusyMarkStroke.hairline,
+              constraints.maxWidth - _gutterWidth - BusyMarkStroke.hairline,
+            )
             .toDouble();
         final textWidth = math
             .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
@@ -3501,7 +3509,10 @@ class _SourceEditorFrame extends StatelessWidget {
                   onToggleFold: onToggleFold,
                 ),
               ),
-              VerticalDivider(width: 1, color: colors.subtleBorder),
+              VerticalDivider(
+                width: BusyMarkStroke.hairline,
+                color: colors.subtleBorder,
+              ),
               Expanded(
                 child: Stack(
                   children: [
@@ -3769,7 +3780,7 @@ class _CollapsedSourceLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final background = Color.alphaBlend(
-      colors.foreground.withValues(alpha: 0.045),
+      colors.foreground.withValues(alpha: BusyMarkAlpha.sourceCollapsedLine),
       colors.view,
     );
     return DecoratedBox(
@@ -3808,8 +3819,9 @@ class _SourceGutterRow extends StatelessWidget {
     required this.onToggleFold,
   });
 
-  static const double _foldButtonSize = 16;
-  static const double _foldButtonRightInset = 1;
+  static const double _foldButtonSize = BusyMarkSizes.sourceFoldButton;
+  static const double _foldButtonRightInset =
+      BusyMarkSizes.sourceFoldButtonRightInset;
 
   final SourceGutterEntry entry;
   final bool active;
@@ -3821,15 +3833,19 @@ class _SourceGutterRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final region = entry.region;
-    final activeColor = colors.foreground.withValues(alpha: 0.045);
+    final activeColor = colors.foreground.withValues(
+      alpha: BusyMarkAlpha.sourceCollapsedLine,
+    );
     final numberStyle = textStyle.copyWith(
       color: active ? colors.foreground : colors.mutedForeground,
-      fontSize: (textStyle.fontSize ?? 14) * 0.92,
+      fontSize:
+          (textStyle.fontSize ?? BusyMarkTypography.defaultFontSize) *
+          BusyMarkTypography.sourceLineNumberScale,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: active ? activeColor : Colors.transparent,
+        color: active ? activeColor : BusyMarkLinuxPalette.transparent,
       ),
       child: SizedBox(
         height: lineHeight,
@@ -3882,7 +3898,7 @@ class _SourceFoldButton extends StatelessWidget {
       message: collapsed
           ? context.l10n.expandKind(_foldKindLabel(context, region.kind))
           : context.l10n.collapseKind(_foldKindLabel(context, region.kind)),
-      waitDuration: const Duration(milliseconds: 450),
+      waitDuration: BusyMarkMotion.tooltipWait,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
@@ -4110,17 +4126,14 @@ class _PreviewPane extends StatelessWidget {
       child: SelectionArea(
         child: ListView(
           controller: controller,
-          padding: const EdgeInsets.fromLTRB(
-            24,
-            _SourceEditorFrame.editorPaddingTop,
-            24,
-            34,
-          ),
+          padding: BusyMarkInsets.previewPane,
           children: [
             Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760),
+                constraints: const BoxConstraints(
+                  maxWidth: BusyMarkSizes.contentWidth,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -4184,7 +4197,10 @@ class _PreviewBlockView extends StatelessWidget {
     final displayBlock = _localizedPreviewBlock(context, block);
     return switch (displayBlock.kind) {
       PreviewBlockKind.heading => Padding(
-        padding: EdgeInsets.only(top: first ? 0 : 18, bottom: 6),
+        padding: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSizes.previewHeadingTop,
+          bottom: BusyMarkSizes.previewHeadingBottom,
+        ),
         child: _PreviewInlineText(
           key: headingKey,
           block: displayBlock,
@@ -4192,8 +4208,8 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       PreviewBlockKind.code => Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
+        padding: BusyMarkInsets.previewCodeBlock,
         decoration: BoxDecoration(
           color: colors.panel,
           borderRadius: BorderRadius.circular(BusyMarkRadius.md),
@@ -4202,8 +4218,8 @@ class _PreviewBlockView extends StatelessWidget {
         child: Text(
           displayBlock.text,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: 'Ubuntu Mono',
-            height: 1.45,
+            fontFamily: BusyMarkTypography.monoFontFamily,
+            height: BusyMarkTypography.codeLineHeight,
           ),
         ),
       ),
@@ -4231,14 +4247,16 @@ class _PreviewBlockView extends StatelessWidget {
         child: Text(displayBlock.text),
       ),
       PreviewBlockKind.list => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 18,
+              width: BusyMarkSizes.previewListMarkerWidth,
               child: Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(
+                  top: BusyMarkSizes.previewListMarkerTopInset,
+                ),
                 child: _ListMarker(block: block),
               ),
             ),
@@ -4253,13 +4271,13 @@ class _PreviewBlockView extends StatelessWidget {
         child: _PreviewInlineText(block: block),
       ),
       PreviewBlockKind.thematicBreak => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.mdPlus),
         child: const _PreviewThematicBreak(),
       ),
       PreviewBlockKind.table => _PreviewTable(block: displayBlock),
       PreviewBlockKind.raw => Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
+        padding: BusyMarkInsets.previewCodeBlock,
         decoration: BoxDecoration(
           color: colors.panel,
           borderRadius: BorderRadius.circular(BusyMarkRadius.md),
@@ -4268,14 +4286,16 @@ class _PreviewBlockView extends StatelessWidget {
         child: Text(
           displayBlock.text,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: 'Ubuntu Mono',
+            fontFamily: BusyMarkTypography.monoFontFamily,
             color: colors.mutedForeground,
-            height: 1.45,
+            height: BusyMarkTypography.codeLineHeight,
           ),
         ),
       ),
       _ => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          vertical: BusyMarkSizes.previewHeadingBottom,
+        ),
         child: _PreviewInlineText(block: displayBlock),
       ),
     };
@@ -4353,7 +4373,7 @@ class _PreviewTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
       decoration: BoxDecoration(
         color: colors.panel,
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
@@ -4372,15 +4392,12 @@ class _PreviewTable extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: row.attributes['header'] == 'true'
                       ? colors.control
-                      : Colors.transparent,
+                      : BusyMarkLinuxPalette.transparent,
                 ),
                 children: [
                   for (final cell in row.children)
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: BusyMarkSpacing.sm,
-                        vertical: BusyMarkSpacing.xs,
-                      ),
+                      padding: BusyMarkInsets.previewTableCell,
                       child: _PreviewInlineText(
                         block: cell,
                         style: row.attributes['header'] == 'true'
@@ -4407,10 +4424,12 @@ class _PreviewThematicBreak extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     return Center(
       child: Container(
-        height: 1.6,
+        height: BusyMarkTypography.previewThematicBreakHeight,
         decoration: BoxDecoration(
-          color: colors.mutedForeground.withValues(alpha: 0.34),
-          borderRadius: BorderRadius.circular(999),
+          color: colors.mutedForeground.withValues(
+            alpha: BusyMarkAlpha.thematicBreak,
+          ),
+          borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
         ),
       ),
     );
@@ -4677,9 +4696,9 @@ class _ListMarker extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.only(top: 7),
+      padding: const EdgeInsets.only(top: BusyMarkSizes.floatingEntryLabelTop),
       child: SizedBox.square(
-        dimension: 6,
+        dimension: BusyMarkSizes.markerDot,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: colors.mutedForeground,
@@ -4704,7 +4723,7 @@ class _PreviewImageBlock extends StatelessWidget {
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
       child: Align(
         alignment: Alignment.centerLeft,
         child: MarkdownImageView(
@@ -4715,7 +4734,7 @@ class _PreviewImageBlock extends StatelessWidget {
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
           width: width,
-          maxWidth: width ?? 760,
+          maxWidth: width ?? BusyMarkSizes.previewImageMaxWidth,
         ),
       ),
     );
@@ -4746,7 +4765,12 @@ double? _previewImageWidth(PreviewBlock block) {
   if (parsed == null || parsed <= 0) {
     return null;
   }
-  return parsed.clamp(80, 760).toDouble();
+  return parsed
+      .clamp(
+        BusyMarkSizes.previewImageMinWidth,
+        BusyMarkSizes.previewImageMaxWidth,
+      )
+      .toDouble();
 }
 
 InlineSpan _previewInlineSpan(
@@ -4894,7 +4918,7 @@ InlineSpan _previewInlineSpan(
       children: null,
       style: mergeStyle(
         TextStyle(
-          fontFamily: 'Ubuntu Mono',
+          fontFamily: BusyMarkTypography.monoFontFamily,
           backgroundColor: colors.control,
           color: colors.foreground,
         ),
@@ -4942,9 +4966,9 @@ InlineSpan _previewInlineImageSpan(
           workspaceRoot: workspace?.rootPath,
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
-          maxWidth: 320,
-          maxHeight: 180,
-          height: 96,
+          maxWidth: BusyMarkSizes.previewMinWidth,
+          maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
+          height: BusyMarkSizes.previewInlineImageHeight,
         ),
       ),
     ),
@@ -4971,15 +4995,15 @@ List<InlineSpan>? _highlightedPreviewTextSpans(
   final highlightStyle =
       style?.merge(
         TextStyle(
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.primary.withValues(alpha: 0.24),
+          backgroundColor: Theme.of(context).colorScheme.primary.withValues(
+            alpha: BusyMarkAlpha.previewHighlight,
+          ),
         ),
       ) ??
       TextStyle(
         backgroundColor: Theme.of(
           context,
-        ).colorScheme.primary.withValues(alpha: 0.24),
+        ).colorScheme.primary.withValues(alpha: BusyMarkAlpha.previewHighlight),
       );
   final spans = <InlineSpan>[];
   var cursor = 0;
@@ -5167,8 +5191,8 @@ class _PreviewCallout extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
+      padding: BusyMarkInsets.previewCallout,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(BusyMarkRadius.md),
@@ -5210,7 +5234,9 @@ class _ProblemsList extends StatelessWidget {
                 title: context.l10n.noProblemsFound,
               )
             : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  vertical: BusyMarkSpacing.xs,
+                ),
                 itemCount: diagnostics.length,
                 itemBuilder: (context, index) {
                   return _DiagnosticRow(diagnostic: diagnostics[index]);
@@ -5249,10 +5275,10 @@ class _SearchSidebar extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(8, 2, 8, 10),
+      padding: BusyMarkInsets.sidebarList,
       itemCount: results.length,
       separatorBuilder: (context, index) =>
-          Divider(height: 1, color: colors.subtleBorder),
+          Divider(height: BusyMarkStroke.hairline, color: colors.subtleBorder),
       itemBuilder: (context, index) {
         return _SearchResultRow(
           result: results[index],
@@ -5273,15 +5299,12 @@ class _SearchResultRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Material(
-      color: Colors.transparent,
+      color: BusyMarkLinuxPalette.transparent,
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
         onTap: () => unawaited(onOpen()),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BusyMarkSpacing.lg,
-            vertical: BusyMarkSpacing.sm,
-          ),
+          padding: BusyMarkInsets.searchResultRow,
           child: Row(
             children: [
               Icon(
@@ -5531,7 +5554,7 @@ class _DiagnosticRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Material(
-      color: Colors.transparent,
+      color: BusyMarkLinuxPalette.transparent,
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
         onTap: () async {
@@ -5542,10 +5565,7 @@ class _DiagnosticRow extends ConsumerWidget {
           }
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BusyMarkSpacing.lg,
-            vertical: BusyMarkSpacing.sm,
-          ),
+          padding: BusyMarkInsets.searchResultRow,
           child: Row(
             children: [
               Icon(

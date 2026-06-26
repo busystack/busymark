@@ -491,17 +491,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Demander confirmation avant de fermer BusyMark lorsque des documents ont des modifications non enregistrées.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Garder BusyMark au premier plan';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Garder la fenêtre BusyMark au-dessus des autres fenêtres lorsque l’environnement de bureau le permet.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Le mode toujours au premier plan n’est pas disponible dans cet environnement de bureau.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Modifications non enregistrées';
 
   @override
@@ -530,10 +519,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Enregistrer';
-
-  @override
-  String get windowSettingApplyFailed =>
-      'Impossible d’appliquer le paramètre de fenêtre.';
 
   @override
   String get currentFile => 'fichier actuel';

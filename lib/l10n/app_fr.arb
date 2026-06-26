@@ -591,12 +591,6 @@
   "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
   "settingsConfirmCloseWithUnsavedChangesDescription": "Demander confirmation avant de fermer BusyMark lorsque des documents ont des modifications non enregistrées.",
   "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
-  "settingsAlwaysOnTopTitle": "Garder BusyMark au premier plan",
-  "@settingsAlwaysOnTopTitle": {"description":"Settings switch title for always-on-top window behavior."},
-  "settingsAlwaysOnTopDescription": "Garder la fenêtre BusyMark au-dessus des autres fenêtres lorsque l’environnement de bureau le permet.",
-  "@settingsAlwaysOnTopDescription": {"description":"Settings switch description for always-on-top window behavior."},
-  "settingsAlwaysOnTopUnsupportedDescription": "Le mode toujours au premier plan n’est pas disponible dans cet environnement de bureau.",
-  "@settingsAlwaysOnTopUnsupportedDescription": {"description":"Settings switch description shown when native always-on-top window behavior is unavailable."},
   "closeUnsavedChangesTitle": "Modifications non enregistrées",
   "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
   "closeUnsavedChangesSingleMessage": "Ce document contient des modifications non enregistrées. Enregistrer les modifications avant de fermer BusyMark ?",
@@ -609,8 +603,6 @@
   "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
   "closeUnsavedChangesSave": "Enregistrer",
   "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
-  "windowSettingApplyFailed": "Impossible d’appliquer le paramètre de fenêtre.",
-  "@windowSettingApplyFailed": {"description":"Non-blocking error shown when a native window setting cannot be applied."},
   "currentFile": "fichier actuel",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."

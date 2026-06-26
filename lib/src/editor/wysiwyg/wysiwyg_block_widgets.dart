@@ -125,7 +125,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (prefix != null) ...[
-          SizedBox(width: 30, child: prefix),
+          SizedBox(width: BusyMarkSizes.wysiwygPrefixWidth, child: prefix),
           const SizedBox(width: BusyMarkSpacing.sm),
         ],
         Expanded(
@@ -142,7 +142,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                   _readOnlyText,
                   style: style.copyWith(
                     color: colors.mutedForeground,
-                    fontFamily: 'Ubuntu Mono',
+                    fontFamily: BusyMarkTypography.monoFontFamily,
                   ),
                 )
               : Stack(
@@ -154,9 +154,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                             text: controller.text,
                             style: style,
                             selectionRange: selectionRange,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.24),
+                            color: Theme.of(context).colorScheme.primary
+                                .withValues(
+                                  alpha: BusyMarkAlpha.previewHighlight,
+                                ),
                             textDirection: Directionality.of(context),
                           ),
                         ),
@@ -166,7 +167,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                       data: selectionRange == null
                           ? Theme.of(context).textSelectionTheme
                           : Theme.of(context).textSelectionTheme.copyWith(
-                              selectionColor: Colors.transparent,
+                              selectionColor: BusyMarkLinuxPalette.transparent,
                             ),
                       child: TextField(
                         controller: controller,
@@ -180,7 +181,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
                           filled: false,
-                          hoverColor: Colors.transparent,
+                          hoverColor: BusyMarkLinuxPalette.transparent,
                           contentPadding: EdgeInsets.zero,
                         ),
                         onTap: onFocused,
@@ -243,7 +244,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   EdgeInsets get _padding {
     return switch (block.kind) {
-      BusyBlockKind.heading => const EdgeInsets.only(top: 16, bottom: 6),
+      BusyBlockKind.heading => BusyMarkInsets.wysiwygHeadingBlock,
       BusyBlockKind.codeBlock ||
       BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
@@ -251,10 +252,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => const EdgeInsets.symmetric(vertical: 8),
-      BusyBlockKind.table => const EdgeInsets.symmetric(vertical: 10),
-      BusyBlockKind.thematicBreak => const EdgeInsets.symmetric(vertical: 12),
-      _ => const EdgeInsets.symmetric(vertical: 4),
+      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
+      BusyBlockKind.table => BusyMarkInsets.wysiwygTableBlock,
+      BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakBlock,
+      _ => BusyMarkInsets.wysiwygDefaultBlock,
     };
   }
 
@@ -267,9 +268,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => const EdgeInsets.all(12),
-      BusyBlockKind.table => const EdgeInsets.all(10),
-      BusyBlockKind.thematicBreak => const EdgeInsets.symmetric(vertical: 12),
+      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
+      BusyBlockKind.table => BusyMarkInsets.wysiwygTableContent,
+      BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakContent,
       _ => EdgeInsets.zero,
     };
   }
@@ -297,10 +298,12 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
-        fontFamily: 'Ubuntu Mono',
-        height: 1.45,
+        fontFamily: BusyMarkTypography.monoFontFamily,
+        height: BusyMarkTypography.codeLineHeight,
       ),
-      _ => theme.bodyMedium!.copyWith(height: 1.5),
+      _ => theme.bodyMedium!.copyWith(
+        height: BusyMarkTypography.bodyLineHeight,
+      ),
     };
   }
 
@@ -313,9 +316,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     );
     return switch (block.kind) {
       BusyBlockKind.unorderedListItem => Padding(
-        padding: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.only(top: BusyMarkSpacing.sm),
         child: SizedBox.square(
-          dimension: 6,
+          dimension: BusyMarkSizes.markerDot,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: colors.mutedForeground,
@@ -367,7 +370,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => colors.panel,
-      _ => Colors.transparent,
+      _ => BusyMarkLinuxPalette.transparent,
     };
   }
 
@@ -405,28 +408,30 @@ class _ThematicBreakBlockView extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     final scheme = Theme.of(context).colorScheme;
     final lineColor = selected
-        ? scheme.primary.withValues(alpha: 0.72)
-        : colors.mutedForeground.withValues(alpha: 0.34);
+        ? scheme.primary.withValues(alpha: BusyMarkAlpha.thematicBreakSelected)
+        : colors.mutedForeground.withValues(alpha: BusyMarkAlpha.thematicBreak);
     final accentColor = selected
         ? scheme.primary
-        : colors.mutedForeground.withValues(alpha: 0.24);
+        : colors.mutedForeground.withValues(
+            alpha: BusyMarkAlpha.thematicBreakHandle,
+          );
     return Center(
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
-            height: 1.6,
+            height: BusyMarkStroke.thematicBreak,
             decoration: BoxDecoration(
               color: lineColor,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
             ),
           ),
           Container(
-            width: 44,
-            height: 6,
+            width: BusyMarkSizes.thematicBreakHandleWidth,
+            height: BusyMarkSizes.markerDot,
             decoration: BoxDecoration(
               color: accentColor,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
             ),
           ),
         ],
@@ -447,7 +452,7 @@ class _TableBlockEditor extends StatelessWidget {
     required this.onTableDeleted,
   });
 
-  static const double _controlSize = 34;
+  static const double _controlSize = BusyMarkSizes.tableControl;
 
   final BusyBlock block;
   final VoidCallback onFocused;
@@ -464,7 +469,9 @@ class _TableBlockEditor extends StatelessWidget {
     final theme = Theme.of(context).textTheme;
     final rows = block.children;
     final columnCount = _columnCount(rows);
-    final dataWidth = (columnCount * 164).clamp(360, 980).toDouble();
+    final dataWidth = (columnCount * BusyMarkSizes.tableColumnBaseWidth)
+        .clamp(BusyMarkSizes.tableMinWidth, BusyMarkSizes.tableMaxWidth)
+        .toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -518,7 +525,7 @@ class _TableBlockEditor extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: _isHeaderRow(row, rowIndex)
                           ? colors.controlHover
-                          : Colors.transparent,
+                          : BusyMarkLinuxPalette.transparent,
                     ),
                     children: [
                       _TableRowControlCell(
@@ -532,7 +539,9 @@ class _TableBlockEditor extends StatelessWidget {
                               ? row.children[column]
                               : null,
                           header: _isHeaderRow(row, rowIndex),
-                          style: theme.bodyMedium!.copyWith(height: 1.45),
+                          style: theme.bodyMedium!.copyWith(
+                            height: BusyMarkTypography.codeLineHeight,
+                          ),
                           onFocused: onFocused,
                           onChanged: onCellChanged,
                         ),
@@ -745,7 +754,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: BusyMarkInsets.wysiwygTableCell,
       child: TextField(
         key: ValueKey(cell.id),
         controller: _controller,
@@ -759,7 +768,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           filled: false,
-          hoverColor: Colors.transparent,
+          hoverColor: BusyMarkLinuxPalette.transparent,
           hintText: widget.header
               ? context.l10n.tableHeaderHint
               : context.l10n.tableCellHint,
@@ -813,9 +822,12 @@ class _WysiwygSelectionPainter extends CustomPainter {
         box.top,
         box.right,
         box.bottom,
-      ).inflate(1.5);
+      ).inflate(BusyMarkStroke.selectionInflate);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+        RRect.fromRectAndRadius(
+          rect,
+          const Radius.circular(BusyMarkRadius.selection),
+        ),
         paint,
       );
     }

@@ -484,17 +484,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'जब दस्तावेज़ों में सहेजे बिना बदलाव हों, तो BusyMark बंद करने से पहले पूछें।';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'BusyMark को सबसे ऊपर रखें';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'जब डेस्कटॉप वातावरण समर्थित करे, BusyMark विंडो को अन्य विंडो के ऊपर रखें।';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'इस डेस्कटॉप वातावरण में हमेशा सबसे ऊपर उपलब्ध नहीं है।';
-
-  @override
   String get closeUnsavedChangesTitle => 'सहेजे बिना बदलाव';
 
   @override
@@ -523,9 +512,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'सहेजें';
-
-  @override
-  String get windowSettingApplyFailed => 'विंडो सेटिंग लागू नहीं की जा सकी।';
 
   @override
   String get currentFile => 'वर्तमान फ़ाइल';

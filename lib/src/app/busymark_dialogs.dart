@@ -19,7 +19,9 @@ final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
 
 Color busyMarkModalBarrierColor(BuildContext context) {
-  return Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
+  return Theme.of(
+    context,
+  ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
 }
 
 Future<T?> showBusyMarkModalDialog<T>(
@@ -40,15 +42,15 @@ Future<T?> showBusyMarkModalDialog<T>(
       builder: (dialogContext) {
         final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
         final padding = EdgeInsets.fromLTRB(
-          viewInsets.left + 40,
-          viewInsets.top + 24,
-          viewInsets.right + 40,
-          viewInsets.bottom + 24,
+          viewInsets.left + BusyMarkSizes.modalHorizontalInset,
+          viewInsets.top + BusyMarkSizes.modalVerticalInset,
+          viewInsets.right + BusyMarkSizes.modalHorizontalInset,
+          viewInsets.bottom + BusyMarkSizes.modalVerticalInset,
         );
         return AnimatedPadding(
           padding: padding,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.decelerate,
+          duration: BusyMarkMotion.modalPadding,
+          curve: BusyMarkMotion.modalPaddingCurve,
           child: Center(
             child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
           ),
@@ -64,7 +66,7 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
   const BusyMarkModalEditorSurface({
     super.key,
     required this.child,
-    this.maxWidth = 860,
+    this.maxWidth = BusyMarkSizes.modalMaxWidth,
     this.maxHeight,
   });
 
@@ -78,13 +80,16 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: maxWidth,
-        maxHeight: maxHeight ?? MediaQuery.sizeOf(context).height * 0.86,
+        maxHeight:
+            maxHeight ??
+            MediaQuery.sizeOf(context).height *
+                BusyMarkSizes.modalMaxHeightFraction,
       ),
       child: Material(
         color: colors.dialog,
         elevation: BusyMarkElevation.popover,
         shadowColor: BusyMarkShadow.floatingColor(context),
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: BusyMarkLinuxPalette.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
           side: BorderSide.none,
@@ -127,7 +132,7 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => _BusyMarkInfoDialog(
         title: context.l10n.keyboardShortcuts,
-        maxWidth: 480,
+        maxWidth: BusyMarkSizes.dialogNarrow,
         children: [
           BusyMarkGroupedList(
             title: context.l10n.shortcutGroupFile,
@@ -369,7 +374,7 @@ class _BusyMarkAboutDialog extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     return BusyMarkDialogShell(
       title: context.l10n.aboutBusyMark,
-      maxWidth: 460,
+      maxWidth: BusyMarkSizes.dialogCompact,
       children: [
         _BusyMarkAboutLogo(label: context.l10n.appTitle),
         const SizedBox(height: BusyMarkSpacing.xs),
@@ -437,15 +442,15 @@ class _BusyMarkAboutLogo extends StatelessWidget {
         label: label,
         child: ExcludeSemantics(
           child: SizedBox.square(
-            dimension: 136,
+            dimension: BusyMarkSizes.aboutLogoViewport,
             child: ClipRect(
               child: OverflowBox(
-                maxWidth: 216,
-                maxHeight: 216,
+                maxWidth: BusyMarkSizes.aboutLogoAsset,
+                maxHeight: BusyMarkSizes.aboutLogoAsset,
                 child: SvgPicture.asset(
                   _busyMarkLogoAsset,
-                  width: 216,
-                  height: 216,
+                  width: BusyMarkSizes.aboutLogoAsset,
+                  height: BusyMarkSizes.aboutLogoAsset,
                 ),
               ),
             ),
@@ -478,7 +483,7 @@ class _KeyboardShortcutBadge extends StatelessWidget {
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontFamily: 'Ubuntu Mono',
+            fontFamily: BusyMarkTypography.monoFontFamily,
             color: colors.foreground,
           ),
         ),

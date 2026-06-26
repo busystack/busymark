@@ -484,17 +484,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Vor dem Schließen von BusyMark nachfragen, wenn Dokumente ungespeicherte Änderungen haben.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'BusyMark im Vordergrund halten';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Das BusyMark-Fenster über anderen Fenstern halten, wenn die Desktop-Umgebung es unterstützt.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Immer im Vordergrund ist in dieser Desktop-Umgebung nicht verfügbar.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Ungespeicherte Änderungen';
 
   @override
@@ -523,10 +512,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Speichern';
-
-  @override
-  String get windowSettingApplyFailed =>
-      'Die Fenstereinstellung konnte nicht angewendet werden.';
 
   @override
   String get currentFile => 'Aktuelle Datei';

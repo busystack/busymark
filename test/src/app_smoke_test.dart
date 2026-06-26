@@ -120,8 +120,6 @@ void main() {
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
       findsOneWidget,
     );
-    expect(find.text(l10n.settingsAlwaysOnTopTitle), findsOneWidget);
-    expect(find.text(l10n.settingsAlwaysOnTopDescription), findsOneWidget);
 
     await tester.tap(find.byTooltip(l10n.appLanguage));
     await tester.pumpAndSettle();
@@ -131,14 +129,6 @@ void main() {
     expect(find.text('हिन्दी'), findsOneWidget);
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
-
-    await tester.ensureVisible(find.text(l10n.settingsAlwaysOnTopTitle));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.settingsAlwaysOnTopTitle));
-    await tester.pumpAndSettle();
-
-    expect(nativeWindow.alwaysOnTopValues, contains(true));
-    expect(settingsStore.value['alwaysOnTop'], isTrue);
 
     await tester.ensureVisible(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
@@ -326,47 +316,6 @@ void main() {
       'custom-instance',
     );
   });
-
-  testWidgets(
-    'settings disables always-on-top when the desktop cannot support it',
-    (tester) async {
-      final l10n = AppLocalizationsEn();
-      final settingsStore = _MemorySettingsStore();
-      final nativeWindow = _FakeNativeWindowController(
-        alwaysOnTopSupported: false,
-      );
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-            localSettingsStoreProvider.overrideWithValue(settingsStore),
-            nativeWindowControllerProvider.overrideWithValue(nativeWindow),
-          ],
-          child: const BusyMarkApp(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byTooltip(l10n.mainMenu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.settings));
-      await tester.pumpAndSettle();
-
-      expect(find.text(l10n.settingsAlwaysOnTopTitle), findsOneWidget);
-      expect(
-        find.text(l10n.settingsAlwaysOnTopUnsupportedDescription),
-        findsOneWidget,
-      );
-
-      await tester.ensureVisible(find.text(l10n.settingsAlwaysOnTopTitle));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.settingsAlwaysOnTopTitle));
-      await tester.pumpAndSettle();
-
-      expect(nativeWindow.alwaysOnTopValues, isNot(contains(true)));
-      expect(settingsStore.value['alwaysOnTop'], isNot(true));
-    },
-  );
 
   testWidgets('keyboard shortcuts dialog opens from the header', (
     tester,
@@ -1301,10 +1250,6 @@ class _MemorySettingsStore implements LocalSettingsStore {
 }
 
 class _FakeNativeWindowController implements NativeWindowController {
-  _FakeNativeWindowController({this.alwaysOnTopSupported = true});
-
-  final bool alwaysOnTopSupported;
-  final alwaysOnTopValues = <bool>[];
   final preventCloseValues = <bool>[];
   final listeners = <WindowListener>[];
   var closeCount = 0;
@@ -1317,17 +1262,6 @@ class _FakeNativeWindowController implements NativeWindowController {
   @override
   Future<void> close() async {
     closeCount++;
-  }
-
-  @override
-  Future<bool> isAlwaysOnTopSupported() async {
-    return alwaysOnTopSupported;
-  }
-
-  @override
-  Future<bool> setAlwaysOnTop(bool value) async {
-    alwaysOnTopValues.add(value);
-    return !value || alwaysOnTopSupported;
   }
 
   @override

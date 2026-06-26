@@ -473,17 +473,6 @@ class AppLocalizationsFa extends AppLocalizations {
       'وقتی سندها تغییرات ذخیره‌نشده دارند، پیش از بستن BusyMark پرسیده شود.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'نگه داشتن BusyMark در جلو';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'در صورت پشتیبانی محیط دسکتاپ، پنجره BusyMark را بالای پنجره‌های دیگر نگه می‌دارد.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'همیشه در جلو در این محیط دسکتاپ در دسترس نیست.';
-
-  @override
   String get closeUnsavedChangesTitle => 'تغییرات ذخیره‌نشده';
 
   @override
@@ -512,9 +501,6 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'ذخیره';
-
-  @override
-  String get windowSettingApplyFailed => 'امکان اعمال تنظیم پنجره وجود نداشت.';
 
   @override
   String get currentFile => 'فایل فعلی';

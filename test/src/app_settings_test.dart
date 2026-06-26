@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('window behavior defaults protect unsaved changes without pinning', () {
+  test('window behavior defaults protect unsaved changes', () {
     final settings = AppSettings.defaults();
 
     expect(settings.confirmCloseWithUnsavedChanges, isTrue);
-    expect(settings.alwaysOnTop, isFalse);
   });
 
   test('document view mode defaults to split', () {
@@ -49,12 +48,9 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     await controller.setConfirmCloseWithUnsavedChanges(false);
-    await controller.setAlwaysOnTop(true);
 
     expect(store.value['confirmCloseWithUnsavedChanges'], isFalse);
-    expect(store.value['alwaysOnTop'], isTrue);
     expect(controller.state.confirmCloseWithUnsavedChanges, isFalse);
-    expect(controller.state.alwaysOnTop, isTrue);
 
     controller.dispose();
   });

@@ -59,8 +59,8 @@ class BusyMarkSourceEditingController extends TextEditingController {
   }) {
     final colors = BusyMarkSurfaceColors.of(context);
     final baseStyle = (style ?? DefaultTextStyle.of(context).style).copyWith(
-      color: visible ? colors.foreground : Colors.transparent,
-      backgroundColor: Colors.transparent,
+      color: visible ? colors.foreground : BusyMarkLinuxPalette.transparent,
+      backgroundColor: BusyMarkLinuxPalette.transparent,
     );
     final source = text;
     if (source.isEmpty || source.length > 300000) {
@@ -71,7 +71,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
       _foldedRegions,
       hideCollapsedStartLines: hideCollapsedStartLines,
     );
-    final palette = _SourceSyntaxPalette.fromContext(context);
+    final palette = BusyMarkSyntaxColors.of(context);
     final styleOverride = visible ? null : _transparentLayoutStyle;
     if (visible &&
         visualMarkdown &&
@@ -107,46 +107,6 @@ class BusyMarkSourceEditingController extends TextEditingController {
       },
     );
   }
-}
-
-class _SourceSyntaxPalette {
-  const _SourceSyntaxPalette({
-    required this.heading,
-    required this.keyword,
-    required this.tag,
-    required this.attribute,
-    required this.string,
-    required this.literal,
-    required this.link,
-    required this.comment,
-    required this.punctuation,
-  });
-
-  factory _SourceSyntaxPalette.fromContext(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return _SourceSyntaxPalette(
-      heading: dark ? const Color(0xFF99C1F1) : const Color(0xFF1A5FB4),
-      keyword: dark ? const Color(0xFFFFBE6F) : const Color(0xFF9C6B00),
-      tag: dark ? const Color(0xFF8FF0A4) : const Color(0xFF2A7B43),
-      attribute: dark ? const Color(0xFFF9F06B) : const Color(0xFF865E00),
-      string: dark ? const Color(0xFFF66151) : const Color(0xFFC01C28),
-      literal: dark ? const Color(0xFFDC8ADD) : const Color(0xFF813D9C),
-      link: dark ? const Color(0xFF62A0EA) : const Color(0xFF1C71D8),
-      comment: colors.mutedForeground.withValues(alpha: dark ? 0.82 : 0.76),
-      punctuation: colors.mutedForeground,
-    );
-  }
-
-  final Color heading;
-  final Color keyword;
-  final Color tag;
-  final Color attribute;
-  final Color string;
-  final Color literal;
-  final Color link;
-  final Color comment;
-  final Color punctuation;
 }
 
 class _HighlightRange {
@@ -200,7 +160,7 @@ List<_HiddenRange> _foldedHiddenRanges(
 List<TextSpan> _highlightMarkdown(
   String source,
   TextStyle baseStyle,
-  _SourceSyntaxPalette palette,
+  BusyMarkSyntaxColors palette,
   List<_HiddenRange> hiddenRanges, {
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
@@ -286,8 +246,10 @@ List<TextSpan> _highlightMarkdown(
       line,
       RegExp(r'`[^`\n]+`'),
       baseStyle.copyWith(
-        fontFamily: 'Ubuntu Mono',
-        backgroundColor: palette.punctuation.withValues(alpha: 0.10),
+        fontFamily: BusyMarkTypography.monoFontFamily,
+        backgroundColor: palette.punctuation.withValues(
+          alpha: BusyMarkAlpha.sourceSyntaxBackground,
+        ),
       ),
       openingLength: 1,
       closingLength: 1,
@@ -365,7 +327,7 @@ List<TextSpan> _highlightMarkdown(
 List<TextSpan> _highlightXml(
   String source,
   TextStyle baseStyle,
-  _SourceSyntaxPalette palette,
+  BusyMarkSyntaxColors palette,
   List<_HiddenRange> hiddenRanges, {
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
@@ -546,9 +508,9 @@ List<TextSpan> _spansFromRanges(
   final sortedHiddenRanges = [...hiddenRanges]
     ..sort((a, b) => a.start.compareTo(b.start));
   final hiddenStyle = baseStyle.copyWith(
-    color: Colors.transparent,
-    fontSize: 0.01,
-    height: 0.01,
+    color: BusyMarkLinuxPalette.transparent,
+    fontSize: BusyMarkTypography.hiddenLayoutFontSize,
+    height: BusyMarkTypography.hiddenLayoutHeight,
     letterSpacing: 0,
     wordSpacing: 0,
   );
@@ -606,7 +568,7 @@ List<TextSpan> _spansFromRanges(
 TextSpan _visualMarkdownTextSpan(
   String source,
   TextStyle baseStyle,
-  _SourceSyntaxPalette palette,
+  BusyMarkSyntaxColors palette,
 ) {
   final spans = <TextSpan>[];
   final lines = source.split('\n');
@@ -622,7 +584,7 @@ TextSpan _visualMarkdownTextSpan(
           text: line,
           style: baseStyle.copyWith(
             color: palette.keyword,
-            fontFamily: 'Ubuntu Mono',
+            fontFamily: BusyMarkTypography.monoFontFamily,
           ),
         ),
       );
@@ -632,8 +594,10 @@ TextSpan _visualMarkdownTextSpan(
           text: line,
           style: baseStyle.copyWith(
             color: palette.literal,
-            fontFamily: 'Ubuntu Mono',
-            backgroundColor: palette.punctuation.withValues(alpha: 0.10),
+            fontFamily: BusyMarkTypography.monoFontFamily,
+            backgroundColor: palette.punctuation.withValues(
+              alpha: BusyMarkAlpha.sourceSyntaxBackground,
+            ),
           ),
         ),
       );
@@ -651,7 +615,7 @@ TextSpan _visualMarkdownTextSpan(
 List<TextSpan> _visualMarkdownLineSpans(
   String line,
   TextStyle baseStyle,
-  _SourceSyntaxPalette palette,
+  BusyMarkSyntaxColors palette,
 ) {
   final heading = RegExp(r'^(\s{0,3}#{1,6}\s+)(.*)$').firstMatch(line);
   if (heading != null) {
@@ -710,7 +674,7 @@ List<TextSpan> _visualMarkdownLineSpans(
 List<TextSpan> _visualInlineSpans(
   String source,
   TextStyle baseStyle,
-  _SourceSyntaxPalette palette,
+  BusyMarkSyntaxColors palette,
 ) {
   final spans = <TextSpan>[];
   var index = 0;
@@ -736,8 +700,10 @@ List<TextSpan> _visualInlineSpans(
       addText(
         code.inner,
         baseStyle.copyWith(
-          fontFamily: 'Ubuntu Mono',
-          backgroundColor: palette.punctuation.withValues(alpha: 0.10),
+          fontFamily: BusyMarkTypography.monoFontFamily,
+          backgroundColor: palette.punctuation.withValues(
+            alpha: BusyMarkAlpha.sourceSyntaxBackground,
+          ),
         ),
       );
       addText(code.closing);
@@ -839,25 +805,19 @@ int _nextVisualMarkerIndex(String source, int start) {
 }
 
 TextStyle _markdownHeadingStyle(TextStyle baseStyle, int level) {
-  final scale = switch (level) {
-    1 => 1.55,
-    2 => 1.36,
-    3 => 1.22,
-    4 => 1.12,
-    5 => 1.04,
-    _ => 0.98,
-  };
+  final scale = BusyMarkTypography.markdownHeadingScale(level);
   return baseStyle.copyWith(
-    fontSize: (baseStyle.fontSize ?? 14) * scale,
+    fontSize:
+        (baseStyle.fontSize ?? BusyMarkTypography.defaultFontSize) * scale,
     fontWeight: FontWeight.w700,
   );
 }
 
 TextStyle _transparentLayoutStyle(TextStyle style) {
   return style.copyWith(
-    color: Colors.transparent,
-    backgroundColor: Colors.transparent,
-    decorationColor: Colors.transparent,
+    color: BusyMarkLinuxPalette.transparent,
+    backgroundColor: BusyMarkLinuxPalette.transparent,
+    decorationColor: BusyMarkLinuxPalette.transparent,
   );
 }
 

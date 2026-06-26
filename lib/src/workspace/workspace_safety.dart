@@ -35,7 +35,7 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
     headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: context.l10n.unsavedChanges,
-      maxWidth: 520,
+      maxWidth: BusyMarkSizes.dialog,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.cancel),
@@ -87,7 +87,7 @@ Future<bool> saveActiveWithOverwriteConfirmation(
     headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
       title: context.l10n.fileChangedOnDisk,
-      maxWidth: 520,
+      maxWidth: BusyMarkSizes.dialog,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),

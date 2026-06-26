@@ -490,17 +490,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Preguntar antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Mantener BusyMark en primer plano';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Mantener la ventana de BusyMark por encima de otras ventanas cuando el entorno de escritorio lo admita.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Siempre en primer plano no está disponible en este entorno de escritorio.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Cambios sin guardar';
 
   @override
@@ -529,10 +518,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Guardar';
-
-  @override
-  String get windowSettingApplyFailed =>
-      'No se pudo aplicar la configuración de la ventana.';
 
   @override
   String get currentFile => 'Archivo actual';

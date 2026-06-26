@@ -466,17 +466,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'اسأل قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'إبقاء BusyMark في المقدمة';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'إبقاء نافذة BusyMark فوق النوافذ الأخرى عندما تدعم بيئة سطح المكتب ذلك.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'ميزة البقاء في المقدمة غير متاحة في بيئة سطح المكتب هذه.';
-
-  @override
   String get closeUnsavedChangesTitle => 'تغييرات غير محفوظة';
 
   @override
@@ -505,9 +494,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'حفظ';
-
-  @override
-  String get windowSettingApplyFailed => 'تعذر تطبيق إعداد النافذة.';
 
   @override
   String get currentFile => 'الملف الحالي';

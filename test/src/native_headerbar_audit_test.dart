@@ -134,45 +134,6 @@ void main() {
     );
   });
 
-  test('native window keep-above is wired through the GTK runner', () {
-    final service = File(
-      'lib/src/platform/linux_header_bar_service.dart',
-    ).readAsStringSync();
-    final windowService = File(
-      'lib/src/app/window_control_service.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(service, contains('setAlwaysOnTop'));
-    expect(service, contains('isAlwaysOnTopSupported'));
-    expect(service, contains("_invokeBool('setAlwaysOnTop', value, false)"));
-    expect(
-      service,
-      contains("_invokeBool('isAlwaysOnTopSupported', null, false)"),
-    );
-    expect(windowService, contains('windowManager.setAlwaysOnTop(value)'));
-    expect(
-      windowService,
-      contains('LinuxHeaderBarService.instance.setAlwaysOnTop(value)'),
-    );
-    expect(
-      windowService,
-      contains('LinuxHeaderBarService.instance.isAlwaysOnTopSupported()'),
-    );
-    expect(native, contains('set_always_on_top(MyApplication* self'));
-    expect(native, contains('can_keep_window_above(MyApplication* self'));
-    expect(native, contains('GDK_IS_X11_DISPLAY(display)'));
-    expect(native, contains('self->always_on_top = value'));
-    expect(native, contains('return FALSE'));
-    expect(native, contains('gtk_window_set_keep_above(self->main_window'));
-    expect(native, contains('gtk_window_present(self->main_window)'));
-    expect(native, contains('gdk_window_raise(window)'));
-    expect(native, contains('set_always_on_top(self, self->always_on_top)'));
-    expect(native, contains('strcmp(method, "isAlwaysOnTopSupported")'));
-    expect(native, contains('strcmp(method, "setAlwaysOnTop")'));
-    expect(native, contains('respond_bool(method_call, set_always_on_top'));
-  });
-
   test(
     'Flutter top bars are fallback-only when native headerbar is available',
     () {
@@ -359,9 +320,9 @@ void main() {
     );
     expect(native, isNot(contains('"background: none;"')));
     expect(service, contains('titleButtonColor'));
-    expect(service, contains('withValues(alpha: 0.10)'));
-    expect(service, contains('withValues(alpha: 0.15)'));
-    expect(service, contains('withValues(alpha: 0.25)'));
+    expect(service, contains('BusyMarkAlpha.titleButton'));
+    expect(service, contains('BusyMarkAlpha.titleButtonHover'));
+    expect(service, contains('BusyMarkAlpha.titleButtonActive'));
   });
 
   test('native sidebar header buttons are decorated only on hover', () {

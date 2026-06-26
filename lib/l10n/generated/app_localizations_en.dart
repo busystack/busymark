@@ -482,17 +482,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Ask before closing BusyMark when documents have unsaved changes.';
 
   @override
-  String get settingsAlwaysOnTopTitle => 'Keep BusyMark on top';
-
-  @override
-  String get settingsAlwaysOnTopDescription =>
-      'Keep the BusyMark window above other windows when supported by the desktop environment.';
-
-  @override
-  String get settingsAlwaysOnTopUnsupportedDescription =>
-      'Always-on-top is not available on this desktop environment.';
-
-  @override
   String get closeUnsavedChangesTitle => 'Unsaved changes';
 
   @override
@@ -521,9 +510,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get closeUnsavedChangesSave => 'Save';
-
-  @override
-  String get windowSettingApplyFailed => 'Could not apply the window setting.';
 
   @override
   String get currentFile => 'current file';

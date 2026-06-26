@@ -205,7 +205,7 @@ class BusyMarkApp extends ConsumerWidget {
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => BusyMarkDialogShell(
         title: context.l10n.open,
-        maxWidth: 520,
+        maxWidth: BusyMarkSizes.dialog,
         children: [
           BusyMarkGroupedList(
             filled: true,
@@ -340,21 +340,7 @@ class _BusyMarkWindowLifecycleState
         return;
       }
       _windowControlService.registerCloseHandler(_handleWindowClose);
-      unawaited(
-        _windowControlService
-            .initialize(ref.read(appSettingsControllerProvider))
-            .then((applied) {
-              if (!applied &&
-                  mounted &&
-                  ref.read(appSettingsControllerProvider).alwaysOnTop) {
-                unawaited(
-                  ref
-                      .read(appSettingsControllerProvider.notifier)
-                      .setAlwaysOnTop(false),
-                );
-              }
-            }),
-      );
+      unawaited(_windowControlService.initialize());
     });
   }
 
@@ -366,19 +352,6 @@ class _BusyMarkWindowLifecycleState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(
-      appSettingsControllerProvider.select((settings) => settings.alwaysOnTop),
-      (previous, next) {
-        if (previous == next) {
-          return;
-        }
-        unawaited(
-          _windowControlService
-              .applyAlwaysOnTop(next)
-              .catchError((Object _) {}),
-        );
-      },
-    );
     return widget.child;
   }
 
@@ -405,7 +378,7 @@ class _BusyMarkWindowLifecycleState
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => BusyMarkDialogShell(
         title: l10n.closeUnsavedChangesTitle,
-        maxWidth: 520,
+        maxWidth: BusyMarkSizes.dialog,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, WindowCloseAction.cancel),

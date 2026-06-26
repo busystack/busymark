@@ -4,9 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../platform/linux_header_bar_service.dart';
-import 'app_settings.dart';
-
 enum WindowCloseAction { cancel, discard, save }
 
 abstract interface class NativeWindowController {
@@ -14,22 +11,9 @@ abstract interface class NativeWindowController {
 
   Future<void> close();
 
-  Future<bool> isAlwaysOnTopSupported();
-
-  Future<bool> setAlwaysOnTop(bool value);
-
   void addListener(WindowListener listener);
 
   void removeListener(WindowListener listener);
-}
-
-class WindowControlException implements Exception {
-  const WindowControlException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
 }
 
 class WindowManagerNativeWindowController implements NativeWindowController {
@@ -43,17 +27,6 @@ class WindowManagerNativeWindowController implements NativeWindowController {
   @override
   Future<void> close() {
     return _ignoreMissingPlugin(windowManager.close);
-  }
-
-  @override
-  Future<bool> isAlwaysOnTopSupported() {
-    return LinuxHeaderBarService.instance.isAlwaysOnTopSupported();
-  }
-
-  @override
-  Future<bool> setAlwaysOnTop(bool value) async {
-    await _ignoreMissingPlugin(() => windowManager.setAlwaysOnTop(value));
-    return LinuxHeaderBarService.instance.setAlwaysOnTop(value);
   }
 
   @override
@@ -83,29 +56,8 @@ class WindowControlService {
   WindowListener? _listener;
   var _closeInProgress = false;
 
-  Future<bool> initialize(AppSettings settings) async {
-    try {
-      await applyAlwaysOnTop(settings.alwaysOnTop);
-    } on WindowControlException {
-      // Persisted window stacking preferences are best-effort at startup.
-      await _nativeWindow.setPreventClose(true);
-      return false;
-    }
+  Future<void> initialize() async {
     await _nativeWindow.setPreventClose(true);
-    return true;
-  }
-
-  Future<bool> isAlwaysOnTopSupported() {
-    return _nativeWindow.isAlwaysOnTopSupported();
-  }
-
-  Future<void> applyAlwaysOnTop(bool value) async {
-    final applied = await _nativeWindow.setAlwaysOnTop(value);
-    if (!applied) {
-      throw const WindowControlException(
-        'Always-on-top is not supported by this desktop environment.',
-      );
-    }
   }
 
   void registerCloseHandler(Future<void> Function() onCloseRequest) {

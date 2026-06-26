@@ -107,9 +107,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               ],
             ),
       body: BusyMarkClamp(
-        maxWidth: 760,
+        maxWidth: BusyMarkSizes.contentWidth,
         margin: EdgeInsets.zero,
-        padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
+        padding: BusyMarkInsets.welcomePage,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -478,7 +478,7 @@ class _CreateWritersideProjectDialogState
         topicTitleError == null;
     return BusyMarkDialogShell(
       title: context.l10n.createWritersideProject,
-      maxWidth: 560,
+      maxWidth: BusyMarkSizes.dialogWide,
       actions: [
         BusyMarkDialogButton(
           label: context.l10n.cancel,
