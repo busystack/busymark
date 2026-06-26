@@ -377,13 +377,22 @@ class _CreateWritersideProjectDialog extends StatefulWidget {
 
 class _CreateWritersideProjectDialogState
     extends State<_CreateWritersideProjectDialog> {
+  static final _directorySlugCharacterPattern = RegExp(
+    r'[\p{L}\p{M}\p{N}_-]',
+    unicode: true,
+  );
+
   late final TextEditingController _projectNameController;
   late final TextEditingController _directoryNameController;
   late final TextEditingController _instanceNameController;
   late final TextEditingController _instanceIdController;
   late final TextEditingController _topicTitleController;
+  late String _lastGeneratedDirectoryName;
+  late String _lastGeneratedInstanceId;
   var _directoryEdited = false;
   var _syncingDirectory = false;
+  var _instanceIdEdited = false;
+  var _syncingInstanceId = false;
   var _creating = false;
   String? _creationError;
   var _localizedDefaultsApplied = false;
@@ -393,13 +402,16 @@ class _CreateWritersideProjectDialogState
     super.initState();
     _projectNameController = TextEditingController()
       ..addListener(_handleProjectNameChanged);
+    _lastGeneratedDirectoryName = _slugDirectoryName('');
     _directoryNameController = TextEditingController(
-      text: _slugDirectoryName(''),
+      text: _lastGeneratedDirectoryName,
     )..addListener(_handleDirectoryNameChanged);
     _instanceNameController = TextEditingController()
-      ..addListener(_handleFieldChanged);
-    _instanceIdController = TextEditingController(text: 'user-guide')
-      ..addListener(_handleFieldChanged);
+      ..addListener(_handleInstanceNameChanged);
+    _lastGeneratedInstanceId = 'user-guide';
+    _instanceIdController = TextEditingController(
+      text: _lastGeneratedInstanceId,
+    )..addListener(_handleInstanceIdChanged);
     _topicTitleController = TextEditingController()
       ..addListener(_handleFieldChanged);
   }
@@ -442,57 +454,56 @@ class _CreateWritersideProjectDialogState
       title: context.l10n.createWritersideProject,
       maxWidth: 560,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context),
-          child: Text(context.l10n.cancel),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: _creating ? context.l10n.creating : context.l10n.create,
           onPressed: canCreate ? _submit : null,
-          child: Text(_creating ? context.l10n.creating : context.l10n.create),
+          suggested: true,
         ),
       ],
       children: [
-        TextField(
-          controller: _projectNameController,
-          autofocus: true,
-          textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: context.l10n.projectName,
-            hintText: context.l10n.defaultProjectName,
-            errorText: projectError,
-          ),
+        BusyMarkFloatingTextEntryGroup(
+          children: [
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.projectName,
+              controller: _projectNameController,
+              textInputAction: TextInputAction.next,
+              errorText: projectError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.first,
+            ),
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.directoryName,
+              controller: _directoryNameController,
+              textInputAction: TextInputAction.next,
+              errorText: directoryError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.last,
+            ),
+          ],
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          controller: _directoryNameController,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (canCreate) {
-              _submit();
-            }
-          },
-          decoration: InputDecoration(
-            labelText: context.l10n.directoryName,
-            errorText: directoryError,
-          ),
+        BusyMarkFloatingTextEntryGroup(
+          children: [
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.instanceName,
+              controller: _instanceNameController,
+              textInputAction: TextInputAction.next,
+              groupPosition: BusyMarkFloatingTextEntryPosition.first,
+            ),
+            BusyMarkFloatingTextEntry(
+              label: context.l10n.instanceId,
+              controller: _instanceIdController,
+              textInputAction: TextInputAction.next,
+              errorText: instanceIdError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.last,
+            ),
+          ],
         ),
         const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          controller: _instanceNameController,
-          textInputAction: TextInputAction.next,
-          decoration: InputDecoration(labelText: context.l10n.instanceName),
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          controller: _instanceIdController,
-          textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: context.l10n.instanceId,
-            errorText: instanceIdError,
-          ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
+        BusyMarkFloatingTextEntry(
+          label: context.l10n.startTopicTitle,
           controller: _topicTitleController,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) {
@@ -500,10 +511,7 @@ class _CreateWritersideProjectDialogState
               _submit();
             }
           },
-          decoration: InputDecoration(
-            labelText: context.l10n.startTopicTitle,
-            errorText: topicTitleError,
-          ),
+          errorText: topicTitleError,
         ),
         const SizedBox(height: BusyMarkSpacing.lg),
         if (_creationError != null) ...[
@@ -560,7 +568,7 @@ class _CreateWritersideProjectDialogState
 
   String? _instanceIdError(BuildContext context) {
     final value = _instanceIdController.text.trim();
-    if (!RegExp(r'^[a-z][a-z0-9_-]*$').hasMatch(value)) {
+    if (!WritersideProjectCreator.isValidInstanceId(value)) {
       return context.l10n.useLowercaseIdentifier;
     }
     return null;
@@ -583,12 +591,14 @@ class _CreateWritersideProjectDialogState
 
   void _handleProjectNameChanged() {
     _creationError = null;
-    if (!_directoryEdited) {
+    final nextDirectoryName = _slugDirectoryName(_projectNameController.text);
+    if (!_directoryEdited ||
+        _directoryNameController.text == _lastGeneratedDirectoryName) {
       _syncingDirectory = true;
-      _directoryNameController.text = _slugDirectoryName(
-        _projectNameController.text,
-      );
+      _lastGeneratedDirectoryName = nextDirectoryName;
+      _directoryNameController.text = nextDirectoryName;
       _syncingDirectory = false;
+      _directoryEdited = false;
     }
     setState(() {});
   }
@@ -596,7 +606,31 @@ class _CreateWritersideProjectDialogState
   void _handleDirectoryNameChanged() {
     _creationError = null;
     if (!_syncingDirectory) {
-      _directoryEdited = true;
+      _directoryEdited =
+          _directoryNameController.text != _lastGeneratedDirectoryName;
+    }
+    setState(() {});
+  }
+
+  void _handleInstanceNameChanged() {
+    _creationError = null;
+    final nextInstanceId = _slugInstanceId(_instanceNameController.text);
+    if (!_instanceIdEdited ||
+        _instanceIdController.text == _lastGeneratedInstanceId) {
+      _syncingInstanceId = true;
+      _lastGeneratedInstanceId = nextInstanceId;
+      _instanceIdController.text = nextInstanceId;
+      _syncingInstanceId = false;
+      _instanceIdEdited = false;
+    }
+    setState(() {});
+  }
+
+  void _handleInstanceIdChanged() {
+    _creationError = null;
+    if (!_syncingInstanceId) {
+      _instanceIdEdited =
+          _instanceIdController.text != _lastGeneratedInstanceId;
     }
     setState(() {});
   }
@@ -647,12 +681,26 @@ class _CreateWritersideProjectDialogState
   }
 
   String _slugDirectoryName(String value) {
-    final slug = value
-        .toLowerCase()
-        .trim()
-        .replaceAll(RegExp(r'[^a-z0-9_-]+'), '-')
-        .replaceAll(RegExp(r'^-+|-+$'), '');
+    final buffer = StringBuffer();
+    var pendingSeparator = false;
+    for (final rune in value.toLowerCase().trim().runes) {
+      final character = String.fromCharCode(rune);
+      if (_directorySlugCharacterPattern.hasMatch(character)) {
+        if (pendingSeparator && buffer.isNotEmpty) {
+          buffer.write('-');
+        }
+        buffer.write(character);
+        pendingSeparator = false;
+      } else {
+        pendingSeparator = true;
+      }
+    }
+    final slug = buffer.toString().replaceAll(RegExp(r'^[-_]+|[-_]+$'), '');
     return slug.isEmpty ? 'writerside-project' : slug;
+  }
+
+  String _slugInstanceId(String value) {
+    return WritersideProjectCreator.slugInstanceId(value);
   }
 }
 

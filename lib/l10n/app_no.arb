@@ -21,9 +21,25 @@
       }
     }
   },
-  "aboutDescription": "BusyMark er en fokusert Markdown- og Writerside-kompatibel dokumentasjonsredigerer for lokale prosjekter.",
-  "@aboutDescription": {
-    "description": "Application description shown in the About dialog."
+  "aboutTagline": "Markdown- og Writerside-redigerer",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Lisens",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Nettsted",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "Rapporter et problem",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
   },
   "advanced": "Avansert",
   "@advanced": {

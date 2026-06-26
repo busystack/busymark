@@ -160,6 +160,21 @@ void main() {
     expect(dialogShell, contains('border: BorderSide.none'));
   });
 
+  test('BusyMark dialog buttons use shared shadowed accent surfaces', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final dialogButton = RegExp(
+      r'class BusyMarkDialogButton[\s\S]*?enum BusyMarkFloatingTextEntryPosition',
+    ).firstMatch(design)!.group(0)!;
+
+    expect(dialogButton, contains('busyMarkSurfaceDecoration('));
+    expect(dialogButton, contains('color: background'));
+    expect(dialogButton, contains('elevated: _enabled'));
+    expect(dialogButton, contains('return colorScheme.primary;'));
+    expect(dialogButton, contains('colorScheme.onPrimary'));
+    expect(dialogButton, isNot(contains('border: Border.all')));
+    expect(dialogButton, isNot(contains('final borderColor')));
+  });
+
   test('shared row hover uses the themed control hover color', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
@@ -376,6 +391,9 @@ void main() {
       settings,
       contains('label: _SegmentLabel(context.l10n.bottomRight)'),
     );
+    expect(workspace, contains('class _SidebarSegmentLabel'));
+    expect(workspace, contains('label: _SidebarSegmentLabel('));
+    expect(workspace, contains('softWrap: false'));
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
     expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
@@ -396,6 +414,72 @@ void main() {
       contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
     );
     expect(workspace, contains('BusyMarkRadius.headerButton'));
+  });
+
+  test('settings language selector uses native hover and popover styling', () {
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+
+    expect(settings, isNot(contains('DropdownButton<String>')));
+    expect(settings, contains('class _LanguageSelectorButton'));
+    expect(settings, contains('MouseRegion('));
+    expect(settings, contains('colors.controlHover'));
+    expect(settings, contains('elevation: BusyMarkElevation.window'));
+    expect(settings, contains('shadowColor: colors.shade.withValues'));
+    expect(settings, contains('softWrap: false'));
+  });
+
+  test('Writerside project dialog uses floating Adwaita-style entries', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+
+    expect(design, contains('class BusyMarkFloatingTextEntry'));
+    expect(design, contains('class BusyMarkFloatingTextEntryGroup'));
+    expect(design, contains('busyMarkSurfaceDecoration('));
+    expect(design, contains('elevated: !grouped'));
+    expect(design, contains('AnimatedPositionedDirectional('));
+    expect(design, contains('AnimatedDefaultTextStyle('));
+    expect(design, contains('AnimatedOpacity('));
+    expect(design, contains('BusyMarkRadius.headerButton'));
+    expect(design, contains('MouseRegion('));
+    expect(design, contains('EditableText('));
+    expect(design, contains('BusyMarkGlyphs.edit'));
+    expect(design, contains('end: BusyMarkSizes.iconButton'));
+    expect(design, contains('opacity: focused ? 0 : 1'));
+    expect(design, contains('final labelColor = colors.mutedForeground;'));
+    expect(design, isNot(contains('final labelColor = focused')));
+    expect(design, contains('hint: widget.errorText'));
+    expect(design, isNot(contains('widget.errorText!')));
+    expect(design, isNot(contains('if (hasError) ...[')));
+    expect(design, isNot(contains('class BusyMarkDialogTextEntry')));
+    expect(design, isNot(contains('InputDecoration(')));
+    expect(welcome, contains('BusyMarkFloatingTextEntryGroup('));
+    expect(
+      RegExp(r'BusyMarkFloatingTextEntryGroup\(').allMatches(welcome).length,
+      2,
+    );
+    expect(
+      RegExp(
+        r'groupPosition: BusyMarkFloatingTextEntryPosition\.first',
+      ).allMatches(welcome).length,
+      2,
+    );
+    expect(
+      RegExp(
+        r'groupPosition: BusyMarkFloatingTextEntryPosition\.last',
+      ).allMatches(welcome).length,
+      2,
+    );
+    expect(welcome, contains('BusyMarkFloatingTextEntry('));
+    expect(welcome, isNot(contains('BusyMarkDialogTextEntry(')));
+    expect(welcome, isNot(contains('autofocus: true')));
+    expect(
+      welcome,
+      isNot(contains('hintText: context.l10n.defaultProjectName')),
+    );
   });
 
   test('sidebar trees share the expandable Yaru-style row', () {

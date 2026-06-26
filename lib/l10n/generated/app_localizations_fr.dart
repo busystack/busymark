@@ -20,12 +20,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String aboutVersion(String version) {
-    return 'Version$version';
+    return 'Version $version';
   }
 
   @override
-  String get aboutDescription =>
-      'BusyMark est un éditeur de documentation ciblé compatible Markdown et Writerside pour les projets locaux.';
+  String get aboutTagline => 'Éditeur Markdown et Writerside';
+
+  @override
+  String get aboutLicenseLabel => 'Licence';
+
+  @override
+  String get aboutLicenseName => 'Apache License 2.0';
+
+  @override
+  String get aboutWebsite => 'Site web';
+
+  @override
+  String get aboutReportIssue => 'Signaler un problème';
 
   @override
   String get advanced => 'Avancé';
@@ -37,7 +48,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get apply => 'Appliquer';
 
   @override
-  String get back => 'Dos';
+  String get back => 'Retour';
 
   @override
   String get bottomLeft => 'En bas à gauche';
@@ -55,7 +66,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chooseLocation => 'Choisissez un emplacement';
 
   @override
-  String get copy => 'Copie';
+  String get copy => 'Copier';
 
   @override
   String get create => 'Créer';
@@ -70,16 +81,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get darkTheme => 'Sombre';
 
   @override
-  String get discard => 'Jeter';
+  String get discard => 'Ignorer';
 
   @override
   String get editor => 'Éditeur';
 
   @override
-  String get file => 'Déposer';
+  String get file => 'Fichier';
 
   @override
-  String get find => 'Trouver';
+  String get find => 'Rechercher';
 
   @override
   String get folder => 'Dossier';
@@ -91,7 +102,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get keyboardShortcuts => 'Raccourcis clavier';
 
   @override
-  String get lightTheme => 'Lumière';
+  String get lightTheme => 'Clair';
 
   @override
   String get mainMenu => 'Menu principal';
@@ -103,7 +114,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get open => 'Ouvrir';
 
   @override
-  String get outline => 'Contour';
+  String get outline => 'Plan';
 
   @override
   String get overwrite => 'Écraser';
@@ -112,22 +123,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get paste => 'Coller';
 
   @override
-  String get pasteWithoutFormatting => 'Coller sans formater';
+  String get pasteWithoutFormatting => 'Coller sans mise en forme';
 
   @override
   String get preview => 'Aperçu';
 
   @override
-  String get recent => 'Récent';
+  String get recent => 'Récents';
 
   @override
   String get redo => 'Refaire';
 
   @override
-  String get save => 'Sauvegarder';
+  String get save => 'Enregistrer';
 
   @override
-  String get search => 'Recherche';
+  String get search => 'Rechercher';
 
   @override
   String get selectAll => 'Tout sélectionner';
@@ -139,7 +150,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get source => 'Source';
 
   @override
-  String get split => 'Diviser';
+  String get split => 'Vue fractionnée';
 
   @override
   String get systemTheme => 'Système';
@@ -202,7 +213,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get topRight => 'En haut à droite';
 
   @override
-  String get undo => 'Défaire';
+  String get undo => 'Annuler';
 
   @override
   String get validate => 'Valider';
@@ -214,7 +225,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewMode => 'Mode d\'affichage';
 
   @override
-  String get welcome => 'Accueillir';
+  String get welcome => 'Bienvenue';
 
   @override
   String get writerside => 'Writerside';
@@ -232,7 +243,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get openMarkdownFile => 'Ouvrir le fichier Markdown';
 
   @override
-  String get markdownFileExtensions => '.md or .markdown';
+  String get markdownFileExtensions => '.md ou .markdown';
 
   @override
   String get openFolderOrWritersideProject =>
@@ -243,7 +254,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Dossier Markdown ou projet compatible Writerside';
 
   @override
-  String get shortcutGroupFile => 'Déposer';
+  String get shortcutGroupFile => 'Fichier';
 
   @override
   String get shortcutNewDocument => 'Nouveau document';
@@ -258,7 +269,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutSaveDescription =>
-      'Enregistrez le fichier Markdown actuel';
+      'Enregistrer le fichier Markdown actuel';
 
   @override
   String get shortcutFindDescription =>
@@ -266,7 +277,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
-      'Afficher cette référence de raccourci clavier';
+      'Afficher cette liste de raccourcis clavier';
 
   @override
   String get shortcutGroupTextEditing => 'Édition de texte';
@@ -279,14 +290,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shortcutCutDescription => 'Couper le texte sélectionné';
 
   @override
-  String get shortcutCopyDescription => 'Copiez le texte sélectionné';
+  String get shortcutCopyDescription => 'Copier le texte sélectionné';
 
   @override
   String get shortcutPasteDescription => 'Coller depuis le presse-papier';
 
   @override
   String get shortcutPastePlainTextDescription =>
-      'Coller le texte du presse-papiers sans le formater';
+      'Coller le texte du presse-papiers sans mise en forme';
 
   @override
   String get shortcutUndoDescription => 'Annuler la dernière modification';
@@ -307,57 +318,57 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutBoldDescription =>
-      'Basculer en gras sur le texte sélectionné';
+      'Activer/désactiver le gras sur le texte sélectionné';
 
   @override
   String get shortcutItalicDescription =>
-      'Basculer en italique sur le texte sélectionné';
+      'Activer/désactiver l’italique sur le texte sélectionné';
 
   @override
   String get shortcutUnderlineDescription =>
-      'Activer le soulignement sur le texte sélectionné';
+      'Activer/désactiver le soulignement sur le texte sélectionné';
 
   @override
   String get shortcutLinkDescription => 'Insérer ou modifier un lien';
 
   @override
   String get shortcutInlineCodeDescription =>
-      'Basculer le code en ligne sur le texte sélectionné';
+      'Activer/désactiver le code en ligne sur le texte sélectionné';
 
   @override
   String get shortcutStrikethroughDescription =>
-      'Basculer le barré sur le texte sélectionné';
+      'Activer/désactiver le barré sur le texte sélectionné';
 
   @override
   String get shortcutGroupBlocks => 'Blocs';
 
   @override
   String get shortcutParagraphDescription =>
-      'Définir le bloc actuel sur paragraphe';
+      'Définir le bloc actuel comme paragraphe';
 
   @override
   String get shortcutHeading1Description =>
-      'Définir le bloc actuel sur Titre 1';
+      'Définir le bloc actuel comme titre 1';
 
   @override
   String get shortcutHeading2Description =>
-      'Définir le bloc actuel sur Titre 2';
+      'Définir le bloc actuel comme titre 2';
 
   @override
   String get shortcutHeading3Description =>
-      'Définir le bloc actuel sur le titre 3';
+      'Définir le bloc actuel comme titre 3';
 
   @override
   String get shortcutHeading4Description =>
-      'Définir le bloc actuel sur le titre 4';
+      'Définir le bloc actuel comme titre 4';
 
   @override
   String get shortcutHeading5Description =>
-      'Définir le bloc actuel sur le titre 5';
+      'Définir le bloc actuel comme titre 5';
 
   @override
   String get shortcutHeading6Description =>
-      'Définir le bloc actuel sur le titre 6';
+      'Définir le bloc actuel comme titre 6';
 
   @override
   String get shortcutGroupLists => 'Listes';
@@ -367,35 +378,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shortcutNumberedListDescription =>
-      'Basculer le formatage de la liste numérotée';
+      'Activer/désactiver la liste numérotée';
 
   @override
   String get bulletedList => 'Liste à puces';
 
   @override
   String get shortcutBulletedListDescription =>
-      'Activer/désactiver le formatage de la liste à puces';
+      'Activer/désactiver la liste à puces';
 
   @override
   String get checklist => 'Liste de contrôle';
 
   @override
   String get shortcutChecklistDescription =>
-      'Activer/Désactiver le formatage de la liste de contrôle';
+      'Activer/désactiver la liste de tâches';
 
   @override
   String get createMarkdownFile => 'Créer un fichier Markdown';
 
   @override
   String get createMarkdownFileDescription =>
-      'Démarrer un document Markdown local non enregistré';
+      'Créer un document Markdown local non enregistré';
 
   @override
   String get createWritersideProject => 'Créer un projet Writerside';
 
   @override
   String get createWritersideProjectDescription =>
-      'Démarrer un projet local compatible avec Writerside';
+      'Créer un projet local compatible avec Writerside';
 
   @override
   String get defaultProjectName => 'Documentation';
@@ -404,7 +415,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get defaultInstanceName => 'Guide de l\'utilisateur';
 
   @override
-  String get defaultStartTopicTitle => 'Commencer';
+  String get defaultStartTopicTitle => 'Premiers pas';
 
   @override
   String get projectName => 'Nom du projet';
@@ -419,7 +430,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get instanceId => 'ID d\'instance';
 
   @override
-  String get startTopicTitle => 'Titre du sujet de début';
+  String get startTopicTitle => 'Titre du sujet de départ';
 
   @override
   String get location => 'Emplacement';
@@ -432,7 +443,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get useSingleSafeDirectoryName =>
-      'Utilisez un seul nom de répertoire sécurisé.';
+      'Utilisez un seul segment sûr comme nom de répertoire.';
 
   @override
   String get useLowercaseIdentifier =>
@@ -447,7 +458,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de créer le projet Writerside.';
 
   @override
-  String get settingsTitle => 'BusyMark Paramètres';
+  String get settingsTitle => 'Paramètres de BusyMark';
 
   @override
   String get wordWrap => 'Retour à la ligne';
@@ -456,7 +467,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editorFontSize => 'Taille de la police de l\'éditeur';
 
   @override
-  String get validateOnEdit => 'Valider lors de la modification';
+  String get validateOnEdit => 'Valider pendant la modification';
 
   @override
   String get clearRecentWorkspaces => 'Effacer les espaces de travail récents';
@@ -466,7 +477,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editingButtonsDescription =>
-      'Choisissez où apparaissent les boutons d’édition WYSIWYG flottants.';
+      'Choisissez l’emplacement des boutons d’édition WYSIWYG flottants.';
 
   @override
   String get currentFile => 'fichier actuel';
@@ -499,22 +510,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get taskList => 'Liste des tâches';
 
   @override
-  String get toggleTaskChecked => 'Basculer la tâche cochée';
+  String get toggleTaskChecked => 'Cocher/décocher la tâche';
 
   @override
-  String get indentListItem => 'Élément de liste de retrait';
+  String get indentListItem => 'Augmenter le retrait de l’élément de liste';
 
   @override
-  String get outdentListItem => 'Élément de liste retiré';
+  String get outdentListItem => 'Réduire le retrait de l’élément de liste';
 
   @override
-  String get blockquote => 'Citation de bloc';
+  String get blockquote => 'Citation';
 
   @override
   String get codeBlock => 'Bloc de code';
 
   @override
-  String get codeBlockLanguage => 'Langage de bloc de code';
+  String get codeBlockLanguage => 'Langage du bloc de code';
 
   @override
   String get image => 'Image';
@@ -526,10 +537,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get table => 'Tableau';
 
   @override
-  String get thematicBreak => 'Pause thématique';
+  String get thematicBreak => 'Séparateur horizontal';
 
   @override
-  String get bold => 'Audacieux';
+  String get bold => 'Gras';
 
   @override
   String get italic => 'Italique';
@@ -547,7 +558,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get link => 'Lien';
 
   @override
-  String get hardLineBreak => 'Saut de ligne dur';
+  String get hardLineBreak => 'Saut de ligne forcé';
 
   @override
   String get textStyle => 'Style de texte';
@@ -571,7 +582,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get heading5 => 'Titre 5';
 
   @override
-  String get heading6 => 'Rubrique 6';
+  String get heading6 => 'Titre 6';
 
   @override
   String headingLevelAbbreviation(int level) {
@@ -601,10 +612,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get insertRowAbove => 'Insérer la ligne ci-dessus';
+  String get insertRowAbove => 'Insérer une ligne au-dessus';
 
   @override
-  String get insertRowBelow => 'Insérer une ligne ci-dessous';
+  String get insertRowBelow => 'Insérer une ligne en dessous';
 
   @override
   String get deleteRow => 'Supprimer la ligne';
@@ -690,7 +701,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get files => 'Fichiers';
 
   @override
-  String get toc => 'TOC';
+  String get toc => 'Table des matières';
 
   @override
   String get markdownUnsaved => 'Markdown - non enregistré';
@@ -710,10 +721,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noFiles => 'Aucun fichier';
 
   @override
-  String get noWritersideToc => 'Non Writerside TOC';
+  String get noWritersideToc => 'Aucune table des matières Writerside';
 
   @override
-  String get tocSection => 'Section TOC';
+  String get tocSection => 'Section de la table des matières';
 
   @override
   String get newTopic => 'Nouveau sujet';
@@ -738,7 +749,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get useSingleSafeFileName =>
-      'Utilisez un seul nom de fichier sécurisé.';
+      'Utilisez un seul segment sûr comme nom de fichier.';
 
   @override
   String useExpectedExtension(String extension) {
@@ -747,7 +758,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get useIdentifierCharacters =>
-      'Utilisez des lettres, des chiffres, des traits de soulignement ou des traits d\'union avant l\'extension.';
+      'Utilisez des lettres, des chiffres, des traits de soulignement ou des traits d’union avant l’extension.';
 
   @override
   String get topicIdAlreadyExists => 'L\'ID du sujet existe déjà.';
@@ -757,7 +768,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de créer le sujet Writerside.';
 
   @override
-  String get noOutline => 'Pas de contour';
+  String get noOutline => 'Aucun plan';
 
   @override
   String expandKind(String kind) {
@@ -779,7 +790,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get foldKindQuote => 'citation';
 
   @override
-  String get foldKindTag => 'étiqueter';
+  String get foldKindTag => 'balise';
 
   @override
   String get noPreview => 'Pas d\'aperçu';
@@ -797,7 +808,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tabs => 'Onglets';
 
   @override
-  String get tab => 'Languette';
+  String get tab => 'Onglet';
 
   @override
   String get procedure => 'Procédure';
@@ -838,7 +849,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath - Ligne $lineNumber';
+    return '$relativePath – ligne $lineNumber';
   }
 
   @override
@@ -854,7 +865,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get documentKindWritersideXmlTopic => 'Sujet Writerside XML';
 
   @override
-  String get documentKindWritersideTree => 'Arbre Writerside';
+  String get documentKindWritersideTree => 'Arborescence Writerside';
 
   @override
   String get documentKindConfigurationFile => 'Fichier de configuration';
@@ -894,7 +905,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'Sauvegarde bloquée : fichier modifié sur le disque.';
+      'Enregistrement bloqué : le fichier a été modifié sur le disque.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -942,7 +953,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'Le nom du répertoire doit être un segment de chemin sécurisé unique.';
+      'Le nom du répertoire doit être un seul segment de chemin sûr.';
 
   @override
   String get errorInstanceIdInvalid =>
@@ -966,7 +977,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'Le module Writerside n\'a pas d\'arborescence d\'instance d\'aide.';
+      'Le module Writerside n’a pas d’arborescence d’instance d’aide.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -994,7 +1005,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'Le nom du fichier de sujet doit être un seul segment de chemin sécurisé.';
+      'Le nom du fichier de sujet doit être un seul segment de chemin sûr.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -1026,7 +1037,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'Le fichier est plus volumineux que la limite d’analyse automatique bêta.';
+      'Le fichier dépasse la limite d’analyse automatique de la version bêta.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1035,11 +1046,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'Bloc d\'attribut d\'en-tête Writerside mal formé.';
+      'Bloc d’attributs de titre Writerside mal formé.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'ID de titre en double : \"$id\".';
+    return 'ID de titre en double : « $id ».';
   }
 
   @override
@@ -1048,7 +1059,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Le sujet Writerside Markdown n’a pas de titre H1 ou de présentation.';
+      'Le sujet Markdown Writerside n’a pas de titre H1 ni de titre de prologue.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -1056,12 +1067,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'Le sujet \"$fileName\" n\'a pas de titre.';
+    return 'Le sujet « $fileName » n’a pas de titre.';
   }
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'Le dossier n’est pas clos.';
+      'Le bloc de front matter n’est pas fermé.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'Élément HTML dangereux.';
@@ -1088,33 +1099,33 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'XML non valide : $message';
+    return 'XML non valide : $message';
   }
 
   @override
   String get diagnosticWritersideConfigInvalidRoot =>
-      'La racine dewriterside.cfg doit être <ihp>.';
+      'La racine de writerside.cfg doit être <ihp>.';
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'La déclaration des extraits de code manque src.';
+      'La déclaration des extraits de code n’a pas d’attribut src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'La déclaration des groupes d\'instances ne contient pas src.';
+      'La déclaration des groupes d’instances n’a pas d’attribut src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'Mode de mappage de touches non pris en charge : $mode';
+    return 'Mode de raccourcis clavier non pris en charge : $mode';
   }
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'Il manque src dans la déclaration d\'instance.';
+      'La déclaration d’instance n’a pas d’attribut src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
-      'writerside.cfg n’enregistre pas d’instance.';
+      'writerside.cfg ne déclare aucune instance.';
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
@@ -1122,25 +1133,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingId =>
-      'Le profil d\'instance n\'a pas d\'identifiant.';
+      'Le profil d’instance n’a pas d’ID.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'La tige du fichier d\'arborescence ne correspond pas à l\'ID d\'instance \"$id\".';
+    return 'Le nom de base du fichier d’arborescence ne correspond pas à l’ID d’instance « $id ».';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'L\'instance non-bibliothèque n\'a pas de page de démarrage.';
+      'Une instance qui n’est pas une bibliothèque n’a pas de page de démarrage.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'La page d\'accueil \"$startPage\" n\'existe pas.';
+    return 'La page de démarrage « $startPage » n’existe pas.';
   }
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'Le sujet « $topic » apparaît plusieurs fois dans cette instance TOC.';
+    return 'Le sujet « $topic » apparaît plusieurs fois dans cette table des matières d’instance.';
   }
 
   @override
@@ -1149,7 +1160,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'La variable \"$name\" est déclarée plusieurs fois.';
+    return 'La variable « $name » est déclarée plusieurs fois.';
   }
 
   @override
@@ -1163,7 +1174,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'L\'ordre des catégories \"$order\" est déclaré plusieurs fois.';
+    return 'L’ordre de catégorie « $order » est déclaré plusieurs fois.';
   }
 
   @override
@@ -1172,66 +1183,67 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
-      'Le sujet XML n\'a pas d\'identifiant racine.';
+      'Le sujet XML n’a pas d’ID racine.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'L\'ID racine du sujet XML \"$id\" doit correspondre au nom de fichier \"$expectedId\".';
+    return 'L’ID racine du sujet XML « $id » doit correspondre au nom de fichier « $expectedId ».';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'L\'ID d\'élément \"$elementId\" apparaît plusieurs fois.';
+    return 'L’ID d’élément « $elementId » apparaît plusieurs fois.';
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref => '<a> manque href.';
+  String get diagnosticWritersideTopicAnchorMissingHref =>
+      'L’élément <a> n’a pas d’attribut href.';
 
   @override
   String get diagnosticWritersideConfigMissing =>
-      'Le mode Writerside nécessitewriterside.cfg.';
+      'Le mode Writerside nécessite writerside.cfg.';
 
   @override
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'Le répertoire de configuration de build configuré est manquant : $relativePath';
+    return 'Le répertoire de configuration de build configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'Le répertoire des spécifications d\'API configurées est manquant : $relativePath';
+    return 'Le répertoire des spécifications d’API configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'Le répertoire des extraits de code configurés est manquant : $relativePath';
+    return 'Le répertoire des extraits de code configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'Le fichier de variables configurées est manquant : $relativePath';
+    return 'Le fichier de variables configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'Le fichier de catégories configurées est manquant : $relativePath';
+    return 'Le fichier de catégories configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'Le fichier des groupes d\'instances configurés est manquant : $relativePath';
+    return 'Le fichier de groupes d’instances configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'L\'arborescence des instances enregistrées \"$source\" n\'existe pas.';
+    return 'L’arborescence d’instance enregistrée « $source » n’existe pas.';
   }
 
   @override
@@ -1243,42 +1255,42 @@ class AppLocalizationsFr extends AppLocalizations {
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'Le répertoire des sujets par défaut est manquant : $relativePath';
+    return 'Le répertoire des sujets par défaut est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'Le répertoire des sujets configurés est manquant : $relativePath';
+    return 'Le répertoire des sujets configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'Le répertoire des images configurées est manquant : $relativePath';
+    return 'Le répertoire des images configuré est manquant : $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'L\'ID d\'élément \"$id\" apparaît plusieurs fois.';
+    return 'L’ID de sujet « $id » apparaît plusieurs fois.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'TOC fait référence au sujet manquant \"$topic\".';
+    return 'La table des matières fait référence au sujet manquant « $topic ».';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'Le href externe \"$href\" n\'est pas valide.';
+    return 'Le href externe « $href » n’est pas valide.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'La variable \"%$name%\" n\'est pas déclarée.';
+    return 'La variable « %$name% » n’est pas déclarée.';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'Le lien du sujet \"$destination\" n\'est pas résolu.';
+    return 'Le lien vers le sujet « $destination » n’est pas résolu.';
   }
 
   @override
@@ -1286,15 +1298,16 @@ class AppLocalizationsFr extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'L\'ancre \"$anchor\" n\'existe pas dans \"$targetName\".';
+    return 'L’ancre « $anchor » n’existe pas dans « $targetName ».';
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> est absent.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      'L’élément <include> n’a pas d’attribut from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'La source d\'inclusion \"$from\" n\'existe pas.';
+    return 'La source d’inclusion « $from » n’existe pas.';
   }
 
   @override
@@ -1302,21 +1315,21 @@ class AppLocalizationsFr extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'L\'élément d\'inclusion \"$elementId\" n\'existe pas dans \"$from\".';
+    return 'L’élément d’inclusion « $elementId » n’existe pas dans « $from ».';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'Voir aussi la catégorie \"$ref\" n\'est pas déclarée.';
+    return 'La catégorie « Voir aussi » « $ref » n’est pas déclarée.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'La référence du sujet « $reference » est ambiguë.';
+    return 'La référence de sujet « $reference » est ambiguë.';
   }
 
   @override
   String diagnosticUnknown(String code) {
-    return 'Diagnostic inconnu : $code';
+    return 'Diagnostic inconnu : $code';
   }
 }

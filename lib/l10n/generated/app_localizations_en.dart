@@ -24,8 +24,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aboutDescription =>
-      'BusyMark is a focused Markdown and Writerside-compatible documentation editor for local projects.';
+  String get aboutTagline => 'Markdown and Writerside Editor';
+
+  @override
+  String get aboutLicenseLabel => 'License';
+
+  @override
+  String get aboutLicenseName => 'Apache License 2.0';
+
+  @override
+  String get aboutWebsite => 'Website';
+
+  @override
+  String get aboutReportIssue => 'Report an Issue';
 
   @override
   String get advanced => 'Advanced';
@@ -157,40 +168,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageEnglish => 'English';
 
   @override
-  String get languageGerman => 'German';
+  String get languageGerman => 'Deutsch';
 
   @override
-  String get languageItalian => 'Italian';
+  String get languageItalian => 'Italiano';
 
   @override
-  String get languageNorwegian => 'Norwegian';
+  String get languageNorwegian => 'Norsk';
 
   @override
-  String get languageFrench => 'French';
+  String get languageFrench => 'Français';
 
   @override
-  String get languageRussian => 'Russian';
+  String get languageRussian => 'Русский';
 
   @override
-  String get languageUkrainian => 'Ukrainian';
+  String get languageUkrainian => 'Українська';
 
   @override
-  String get languagePolish => 'Polish';
+  String get languagePolish => 'Polski';
 
   @override
-  String get languageSpanish => 'Spanish';
+  String get languageSpanish => 'Español';
 
   @override
-  String get languagePortuguese => 'Portuguese';
+  String get languagePortuguese => 'Português';
 
   @override
-  String get languageArabic => 'Arabic';
+  String get languageArabic => 'العربية';
 
   @override
-  String get languagePersian => 'Persian';
+  String get languagePersian => 'فارسی';
 
   @override
-  String get languageHindi => 'Hindi';
+  String get languageHindi => 'हिन्दी';
 
   @override
   String get toggleSidebar => 'Toggle sidebar';

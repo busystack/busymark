@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../platform/linux_header_bar_service.dart';
@@ -10,7 +11,12 @@ import 'busymark_glyphs.dart';
 import 'localization.dart';
 
 const _busyMarkRepositoryUrl = 'https://github.com/busystack/busymark';
+const _busyMarkIssueUrl = 'https://github.com/busystack/busymark/issues';
+const _apacheLicenseUrl = 'https://www.apache.org/licenses/LICENSE-2.0';
+const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
 final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
+final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
+final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
 
 Color busyMarkModalBarrierColor(BuildContext context) {
   return Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
@@ -84,28 +90,21 @@ void showBusyMarkAboutDialog(BuildContext context) {
     showBusyMarkModalDialog<void>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (context) => _BusyMarkInfoDialog(
-        title: context.l10n.appTitle,
-        subtitle: context.l10n.aboutVersion(busyMarkAppVersion),
-        children: [
-          Text(context.l10n.aboutDescription),
-          const SizedBox(height: BusyMarkSpacing.md),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => unawaited(_openBusyMarkRepository()),
-              icon: const Icon(BusyMarkGlyphs.externalLink),
-              label: const Text(_busyMarkRepositoryUrl),
-            ),
-          ),
-        ],
-      ),
+      builder: (context) => const _BusyMarkAboutDialog(),
     ),
   );
 }
 
 Future<void> _openBusyMarkRepository() async {
   await launchUrl(_busyMarkRepositoryUri, mode: LaunchMode.externalApplication);
+}
+
+Future<void> _openBusyMarkIssues() async {
+  await launchUrl(_busyMarkIssueUri, mode: LaunchMode.externalApplication);
+}
+
+Future<void> _openApacheLicense() async {
+  await launchUrl(_apacheLicenseUri, mode: LaunchMode.externalApplication);
 }
 
 void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
@@ -332,33 +331,115 @@ class _BusyMarkInfoDialog extends StatelessWidget {
   const _BusyMarkInfoDialog({
     required this.title,
     required this.children,
-    this.subtitle,
     this.maxWidth = 420,
   });
 
   final String title;
-  final String? subtitle;
   final List<Widget> children;
   final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkDialogShell(
       title: title,
       maxWidth: maxWidth,
+      children: children,
+    );
+  }
+}
+
+class _BusyMarkAboutDialog extends StatelessWidget {
+  const _BusyMarkAboutDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    return BusyMarkDialogShell(
+      title: context.l10n.aboutBusyMark,
+      maxWidth: 460,
       children: [
-        if (subtitle != null && subtitle!.isNotEmpty) ...[
-          Text(
-            subtitle!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+        _BusyMarkAboutLogo(label: context.l10n.appTitle),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        Text(
+          context.l10n.appTitle,
+          textAlign: TextAlign.center,
+          style: textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: colors.foreground,
           ),
-          const SizedBox(height: BusyMarkSpacing.md),
-        ],
-        ...children,
+        ),
+        const SizedBox(height: BusyMarkSpacing.xs),
+        Text(
+          context.l10n.aboutTagline,
+          textAlign: TextAlign.center,
+          style: textTheme.bodyMedium?.copyWith(color: colors.mutedForeground),
+        ),
+        const SizedBox(height: BusyMarkSpacing.xxs),
+        Text(
+          context.l10n.aboutVersion(busyMarkAppVersion),
+          textAlign: TextAlign.center,
+          style: textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+        ),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkActionRow(
+              title: context.l10n.aboutLicenseLabel,
+              subtitle: context.l10n.aboutLicenseName,
+              leading: const Icon(BusyMarkGlyphs.info),
+              trailing: const Icon(BusyMarkGlyphs.externalLink),
+              onTap: () => unawaited(_openApacheLicense()),
+            ),
+            BusyMarkActionRow(
+              title: context.l10n.aboutWebsite,
+              subtitle: _busyMarkRepositoryUrl,
+              leading: const Icon(BusyMarkGlyphs.home),
+              trailing: const Icon(BusyMarkGlyphs.externalLink),
+              onTap: () => unawaited(_openBusyMarkRepository()),
+            ),
+            BusyMarkActionRow(
+              title: context.l10n.aboutReportIssue,
+              subtitle: _busyMarkIssueUrl,
+              leading: const Icon(BusyMarkGlyphs.warning),
+              trailing: const Icon(BusyMarkGlyphs.externalLink),
+              onTap: () => unawaited(_openBusyMarkIssues()),
+            ),
+          ],
+        ),
       ],
+    );
+  }
+}
+
+class _BusyMarkAboutLogo extends StatelessWidget {
+  const _BusyMarkAboutLogo({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Semantics(
+        image: true,
+        label: label,
+        child: ExcludeSemantics(
+          child: SizedBox.square(
+            dimension: 136,
+            child: ClipRect(
+              child: OverflowBox(
+                maxWidth: 216,
+                maxHeight: 216,
+                child: SvgPicture.asset(
+                  _busyMarkLogoAsset,
+                  width: 216,
+                  height: 216,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

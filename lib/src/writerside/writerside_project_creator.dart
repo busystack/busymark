@@ -44,7 +44,57 @@ class WritersideProjectCreateResult {
 class WritersideProjectCreator {
   const WritersideProjectCreator();
 
-  static final _instanceIdPattern = RegExp(r'^[a-z][a-z0-9_-]*$');
+  static final _instanceIdStartPattern = RegExp(r'[\p{L}]', unicode: true);
+  static final _instanceIdCharacterPattern = RegExp(
+    r'[\p{L}\p{M}\p{N}_-]',
+    unicode: true,
+  );
+
+  static bool isValidInstanceId(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return false;
+    }
+    var index = 0;
+    for (final rune in trimmed.runes) {
+      final character = String.fromCharCode(rune);
+      if (index == 0 && !_instanceIdStartPattern.hasMatch(character)) {
+        return false;
+      }
+      if (!_instanceIdCharacterPattern.hasMatch(character)) {
+        return false;
+      }
+      index += 1;
+    }
+    return true;
+  }
+
+  static String slugInstanceId(String value) {
+    final buffer = StringBuffer();
+    var pendingSeparator = false;
+    for (final rune in value.toLowerCase().trim().runes) {
+      final character = String.fromCharCode(rune);
+      if (_instanceIdCharacterPattern.hasMatch(character)) {
+        if (pendingSeparator && buffer.isNotEmpty) {
+          buffer.write('-');
+        }
+        buffer.write(character);
+        pendingSeparator = false;
+      } else {
+        pendingSeparator = true;
+      }
+    }
+    final slug = buffer.toString().replaceAll(RegExp(r'^[-_]+|[-_]+$'), '');
+    if (slug.isEmpty) {
+      return 'user-guide';
+    }
+    if (!_instanceIdStartPattern.hasMatch(
+      String.fromCharCode(slug.runes.first),
+    )) {
+      return 'instance-$slug';
+    }
+    return slug;
+  }
 
   Future<WritersideProjectCreateResult> create(
     WritersideProjectCreateRequest request,
@@ -148,7 +198,7 @@ class WritersideProjectCreator {
     }
 
     final instanceId = request.instanceId.trim();
-    if (!_instanceIdPattern.hasMatch(instanceId)) {
+    if (!isValidInstanceId(instanceId)) {
       throw const BusyMarkException('writerside.project.instance-id-invalid');
     }
 

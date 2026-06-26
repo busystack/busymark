@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
+
+import 'busymark_glyphs.dart';
 
 abstract final class BusyMarkSpacing {
   static const double xxs = 2;
@@ -1008,7 +1011,7 @@ class BusyMarkDialogShell extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   for (final action in actions) ...[
-                    action,
+                    Flexible(child: action),
                     if (action != actions.last)
                       const SizedBox(width: BusyMarkSpacing.sm),
                   ],
@@ -1018,6 +1021,428 @@ class BusyMarkDialogShell extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class BusyMarkDialogButton extends StatefulWidget {
+  const BusyMarkDialogButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.suggested = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool suggested;
+
+  @override
+  State<BusyMarkDialogButton> createState() => _BusyMarkDialogButtonState();
+}
+
+class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
+  var _hovered = false;
+  var _focused = false;
+  var _pressed = false;
+
+  bool get _enabled => widget.onPressed != null;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final colorScheme = theme.colorScheme;
+    final background = _buttonBackground(context, colors, colorScheme);
+    final foreground = !_enabled
+        ? colors.disabledForeground
+        : widget.suggested
+        ? colorScheme.onPrimary
+        : colors.foreground;
+    final button = Semantics(
+      button: true,
+      enabled: _enabled,
+      label: widget.label,
+      child: FocusableActionDetector(
+        enabled: _enabled,
+        mouseCursor: _enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        shortcuts: const <ShortcutActivator, Intent>{
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onPressed?.call();
+              return null;
+            },
+          ),
+        },
+        onShowHoverHighlight: (value) {
+          if (_hovered != value) {
+            setState(() => _hovered = value);
+          }
+        },
+        onShowFocusHighlight: (value) {
+          if (_focused != value) {
+            setState(() => _focused = value);
+          }
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onPressed,
+          onTapDown: _enabled ? (_) => setState(() => _pressed = true) : null,
+          onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
+          onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: 34,
+              minWidth: 72,
+              maxWidth: 220,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: busyMarkSurfaceDecoration(
+              context,
+              color: background,
+              borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+              elevated: _enabled,
+            ),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(color: foreground),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return button;
+  }
+
+  Color _buttonBackground(
+    BuildContext context,
+    BusyMarkSurfaceColors colors,
+    ColorScheme colorScheme,
+  ) {
+    if (!_enabled) {
+      return colors.disabledControl;
+    }
+    if (!widget.suggested) {
+      if (_pressed) {
+        return colors.controlActive;
+      }
+      if (_hovered || _focused) {
+        return colors.controlHover;
+      }
+      return colors.control;
+    }
+    if (_pressed) {
+      return _mixForState(context, colorScheme.primary, 0.14);
+    }
+    if (_hovered || _focused) {
+      return _mixForState(context, colorScheme.primary, 0.08);
+    }
+    return colorScheme.primary;
+  }
+
+  Color _mixForState(BuildContext context, Color color, double amount) {
+    final target = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    return Color.lerp(color, target, amount)!;
+  }
+}
+
+enum BusyMarkFloatingTextEntryPosition { single, first, middle, last }
+
+class BusyMarkFloatingTextEntryGroup extends StatelessWidget {
+  const BusyMarkFloatingTextEntryGroup({super.key, required this.children})
+    : assert(children.length > 1);
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final borderRadius = BorderRadius.circular(BusyMarkRadius.headerButton);
+    return DecoratedBox(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: colors.control,
+        borderRadius: borderRadius,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final child in children) ...[
+              child,
+              if (child != children.last)
+                Divider(height: 1, thickness: 1, color: colors.view),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BusyMarkFloatingTextEntry extends StatefulWidget {
+  const BusyMarkFloatingTextEntry({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.errorText,
+    this.autofocus = false,
+    this.textInputAction,
+    this.onSubmitted,
+    this.groupPosition = BusyMarkFloatingTextEntryPosition.single,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final String? errorText;
+  final bool autofocus;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final BusyMarkFloatingTextEntryPosition groupPosition;
+
+  @override
+  State<BusyMarkFloatingTextEntry> createState() =>
+      _BusyMarkFloatingTextEntryState();
+}
+
+class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
+  static const _motionDuration = Duration(milliseconds: 140);
+  static const _motionCurve = Curves.easeOutCubic;
+
+  late final FocusNode _focusNode;
+  late final ScrollController _scrollController;
+  var _hovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _scrollController = ScrollController();
+    widget.controller.addListener(_handleTextChanged);
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant BusyMarkFloatingTextEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleTextChanged);
+      widget.controller.addListener(_handleTextChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleTextChanged);
+    _focusNode.removeListener(_handleFocusChanged);
+    _focusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasError = widget.errorText != null;
+    final focused = _focusNode.hasFocus;
+    final floating = focused || widget.controller.text.isNotEmpty;
+    final grouped =
+        widget.groupPosition != BusyMarkFloatingTextEntryPosition.single;
+    final activeBorder = focused || hasError;
+    final radius = _borderRadius();
+    final borderColor = focused
+        ? colorScheme.primary
+        : hasError
+        ? colorScheme.error
+        : colors.border;
+    final labelColor = colors.mutedForeground;
+    return Semantics(
+      textField: true,
+      label: widget.label,
+      hint: widget.errorText,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MouseRegion(
+            cursor: SystemMouseCursors.text,
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _focusNode.requestFocus,
+              child: Container(
+                height: 58,
+                decoration: busyMarkSurfaceDecoration(
+                  context,
+                  color: _hovered || focused
+                      ? colors.controlHover
+                      : colors.control,
+                  borderRadius: radius,
+                  border: activeBorder
+                      ? _border(color: borderColor, width: focused ? 2 : 1)
+                      : null,
+                  elevated: !grouped,
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedPositionedDirectional(
+                      duration: _motionDuration,
+                      curve: _motionCurve,
+                      start: 12,
+                      end: BusyMarkSizes.iconButton,
+                      top: floating ? 7 : 16,
+                      height: floating ? 18 : 24,
+                      child: IgnorePointer(
+                        child: AnimatedDefaultTextStyle(
+                          duration: _motionDuration,
+                          curve: _motionCurve,
+                          style:
+                              (floating
+                                      ? theme.textTheme.labelSmall
+                                      : theme.textTheme.bodyMedium)
+                                  ?.copyWith(color: labelColor) ??
+                              TextStyle(color: labelColor),
+                          child: Text(
+                            widget.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PositionedDirectional(
+                      start: 12,
+                      end: BusyMarkSizes.iconButton,
+                      top: 25,
+                      bottom: 6,
+                      child: AnimatedOpacity(
+                        duration: _motionDuration,
+                        curve: _motionCurve,
+                        opacity: floating ? 1 : 0,
+                        child: EditableText(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          scrollController: _scrollController,
+                          autofocus: widget.autofocus,
+                          textInputAction: widget.textInputAction,
+                          onSubmitted: widget.onSubmitted,
+                          maxLines: 1,
+                          forceLine: true,
+                          style:
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: colors.foreground,
+                              ) ??
+                              TextStyle(color: colors.foreground),
+                          cursorColor: colorScheme.primary,
+                          backgroundCursorColor: colors.controlActive,
+                          selectionColor: colorScheme.primary.withValues(
+                            alpha: 0.28,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PositionedDirectional(
+                      end: BusyMarkSpacing.md,
+                      top: 0,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          duration: _motionDuration,
+                          curve: _motionCurve,
+                          opacity: focused ? 0 : 1,
+                          child: Center(
+                            child: Icon(
+                              BusyMarkGlyphs.edit,
+                              size: BusyMarkSizes.iconSm,
+                              color: colors.mutedForeground.withValues(
+                                alpha: 0.72,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleTextChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _handleFocusChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  BorderRadius _borderRadius() {
+    const radius = Radius.circular(BusyMarkRadius.headerButton);
+    return switch (widget.groupPosition) {
+      BusyMarkFloatingTextEntryPosition.single => const BorderRadius.all(
+        radius,
+      ),
+      BusyMarkFloatingTextEntryPosition.first => const BorderRadius.vertical(
+        top: radius,
+      ),
+      BusyMarkFloatingTextEntryPosition.middle => BorderRadius.zero,
+      BusyMarkFloatingTextEntryPosition.last => const BorderRadius.vertical(
+        bottom: radius,
+      ),
+    };
+  }
+
+  Border _border({required Color color, required double width}) {
+    final side = BorderSide(color: color, width: width);
+    return switch (widget.groupPosition) {
+      BusyMarkFloatingTextEntryPosition.single => Border.all(
+        color: color,
+        width: width,
+      ),
+      BusyMarkFloatingTextEntryPosition.first => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+      BusyMarkFloatingTextEntryPosition.middle => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+      BusyMarkFloatingTextEntryPosition.last => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+    };
   }
 }
 

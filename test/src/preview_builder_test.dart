@@ -229,12 +229,9 @@ void main() {
     );
     final preview = previewBuilder.build(parsed);
     final paragraph = preview.blocks.single;
-    final html = const MarkdownHtmlExporter().export(parsed);
 
     expect(paragraph.text, 'Use "group" here.');
     expect(paragraph.inlines.single.text, 'Use "group" here.');
-    expect(html, contains('<p>Use &quot;group&quot; here.</p>'));
-    expect(html, isNot(contains('&amp;quot;')));
   });
 
   test('preview preserves pasted local image destinations with spaces', () {

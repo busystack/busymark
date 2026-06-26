@@ -144,11 +144,35 @@ abstract class AppLocalizations {
   /// **'Version {version}'**
   String aboutVersion(String version);
 
-  /// Application description shown in the About dialog.
+  /// Short tagline shown under the app name in the About dialog.
   ///
   /// In en, this message translates to:
-  /// **'BusyMark is a focused Markdown and Writerside-compatible documentation editor for local projects.'**
-  String get aboutDescription;
+  /// **'Markdown and Writerside Editor'**
+  String get aboutTagline;
+
+  /// Label for the license row in the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'License'**
+  String get aboutLicenseLabel;
+
+  /// Formal license name shown in the About dialog. Keep the legal license name exact.
+  ///
+  /// In en, this message translates to:
+  /// **'Apache License 2.0'**
+  String get aboutLicenseName;
+
+  /// Label for the website row in the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get aboutWebsite;
+
+  /// Label for the issue tracker row in the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an Issue'**
+  String get aboutReportIssue;
 
   /// Settings section title for advanced actions.
   ///
@@ -411,73 +435,73 @@ abstract class AppLocalizations {
   /// Language selector option for German.
   ///
   /// In en, this message translates to:
-  /// **'German'**
+  /// **'Deutsch'**
   String get languageGerman;
 
   /// Language selector option for Italian.
   ///
   /// In en, this message translates to:
-  /// **'Italian'**
+  /// **'Italiano'**
   String get languageItalian;
 
   /// Language selector option for Norwegian.
   ///
   /// In en, this message translates to:
-  /// **'Norwegian'**
+  /// **'Norsk'**
   String get languageNorwegian;
 
   /// Language selector option for French.
   ///
   /// In en, this message translates to:
-  /// **'French'**
+  /// **'Français'**
   String get languageFrench;
 
   /// Language selector option for Russian.
   ///
   /// In en, this message translates to:
-  /// **'Russian'**
+  /// **'Русский'**
   String get languageRussian;
 
   /// Language selector option for Ukrainian.
   ///
   /// In en, this message translates to:
-  /// **'Ukrainian'**
+  /// **'Українська'**
   String get languageUkrainian;
 
   /// Language selector option for Polish.
   ///
   /// In en, this message translates to:
-  /// **'Polish'**
+  /// **'Polski'**
   String get languagePolish;
 
   /// Language selector option for Spanish.
   ///
   /// In en, this message translates to:
-  /// **'Spanish'**
+  /// **'Español'**
   String get languageSpanish;
 
   /// Language selector option for Portuguese.
   ///
   /// In en, this message translates to:
-  /// **'Portuguese'**
+  /// **'Português'**
   String get languagePortuguese;
 
   /// Language selector option for Arabic.
   ///
   /// In en, this message translates to:
-  /// **'Arabic'**
+  /// **'العربية'**
   String get languageArabic;
 
   /// Language selector option for Persian.
   ///
   /// In en, this message translates to:
-  /// **'Persian'**
+  /// **'فارسی'**
   String get languagePersian;
 
   /// Language selector option for Hindi.
   ///
   /// In en, this message translates to:
-  /// **'Hindi'**
+  /// **'हिन्दी'**
   String get languageHindi;
 
   /// Native header bar sidebar toggle tooltip.

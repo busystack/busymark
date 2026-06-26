@@ -944,7 +944,9 @@ class _SidebarState extends State<_Sidebar> {
                       for (var index = 0; index < tabs.length; index++)
                         ButtonSegment(
                           value: index,
-                          label: Text(_sidebarTabLabel(context, tabs[index])),
+                          label: _SidebarSegmentLabel(
+                            _sidebarTabLabel(context, tabs[index]),
+                          ),
                         ),
                     ],
                     selected: {selectedIndex},
@@ -1019,6 +1021,23 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
   };
+}
+
+class _SidebarSegmentLabel extends StatelessWidget {
+  const _SidebarSegmentLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
+      textAlign: TextAlign.center,
+    );
+  }
 }
 
 class _SidebarHeader extends StatelessWidget {

@@ -65,6 +65,38 @@ void main() {
     },
   );
 
+  test(
+    'creates starter project with Unicode directory and instance ID',
+    () async {
+      final parent = await tempParent();
+
+      final result = await creator.create(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: parent.path,
+          projectName: 'Документация API',
+          directoryName: 'документация-api',
+          instanceName: 'Руководство администратора',
+          instanceId: 'руководство-администратора',
+          topicTitle: 'Getting started',
+        ),
+      );
+
+      expect(result.rootPath, p.join(parent.path, 'документация-api'));
+      expect(
+        result.treePath,
+        p.join(result.rootPath, 'руководство-администратора.tree'),
+      );
+      expect(File(result.treePath).existsSync(), isTrue);
+
+      final module = await moduleService.load(result.rootPath);
+
+      expect(module.instances, hasLength(1));
+      expect(module.instances.single.id, 'руководство-администратора');
+      expect(module.instances.single.name, 'Руководство администратора');
+      expect(module.diagnostics, isEmpty);
+    },
+  );
+
   test('escapes XML-sensitive project names in writerside.cfg', () async {
     final parent = await tempParent();
     final result = await creator.create(

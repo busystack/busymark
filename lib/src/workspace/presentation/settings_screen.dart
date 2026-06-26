@@ -243,47 +243,184 @@ class _LanguageControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: selectedLocaleTag ?? _systemLocaleTag,
-        isExpanded: true,
-        onChanged: (value) {
-          if (value == null) {
-            return;
-          }
-          onChanged(value == _systemLocaleTag ? null : value);
-        },
-        items: [
-          DropdownMenuItem(
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    final selectedValue = selectedLocaleTag ?? _systemLocaleTag;
+    final selectedLabel = _selectedLabel(context, selectedValue);
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: PopupMenuButton<String>(
+        tooltip: context.l10n.appLanguage,
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        offset: const Offset(0, 6),
+        color: popupTheme.color ?? colors.popover,
+        surfaceTintColor: Colors.transparent,
+        elevation: BusyMarkElevation.window,
+        shadowColor: colors.shade.withValues(alpha: 0.42),
+        shape:
+            popupTheme.shape ??
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+        constraints: const BoxConstraints(minWidth: 220, maxWidth: 280),
+        onSelected: (value) =>
+            onChanged(value == _systemLocaleTag ? null : value),
+        itemBuilder: (context) => [
+          _languageMenuItem(
+            context,
             value: _systemLocaleTag,
-            child: Text(context.l10n.systemLanguage),
+            label: context.l10n.systemLanguage,
+            selected: selectedValue == _systemLocaleTag,
           ),
-          for (final option in _languageOptions(context))
-            DropdownMenuItem(
+          for (final option in _languageOptions())
+            _languageMenuItem(
+              context,
               value: option.localeTag,
-              child: Text(option.label),
+              label: option.label,
+              selected: selectedValue == option.localeTag,
             ),
         ],
+        child: _LanguageSelectorButton(label: selectedLabel),
       ),
     );
   }
 
-  List<_LanguageOption> _languageOptions(BuildContext context) {
-    return [
-      _LanguageOption('en', context.l10n.languageEnglish),
-      _LanguageOption('de', context.l10n.languageGerman),
-      _LanguageOption('it', context.l10n.languageItalian),
-      _LanguageOption('no', context.l10n.languageNorwegian),
-      _LanguageOption('fr', context.l10n.languageFrench),
-      _LanguageOption('ru', context.l10n.languageRussian),
-      _LanguageOption('uk', context.l10n.languageUkrainian),
-      _LanguageOption('pl', context.l10n.languagePolish),
-      _LanguageOption('es', context.l10n.languageSpanish),
-      _LanguageOption('pt', context.l10n.languagePortuguese),
-      _LanguageOption('ar', context.l10n.languageArabic),
-      _LanguageOption('fa', context.l10n.languagePersian),
-      _LanguageOption('hi', context.l10n.languageHindi),
+  PopupMenuItem<String> _languageMenuItem(
+    BuildContext context, {
+    required String value,
+    required String label,
+    required bool selected,
+  }) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return PopupMenuItem<String>(
+      value: value,
+      height: 36,
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+        child: Row(
+          children: [
+            SizedBox(
+              width: BusyMarkSizes.iconSm,
+              child: selected
+                  ? Icon(
+                      BusyMarkGlyphs.check,
+                      size: BusyMarkSizes.iconSm,
+                      color: colors.mutedForeground,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _selectedLabel(BuildContext context, String value) {
+    if (value == _systemLocaleTag) {
+      return context.l10n.systemLanguage;
+    }
+    return _languageOptions()
+        .firstWhere(
+          (option) => option.localeTag == value,
+          orElse: () => const _LanguageOption('en', 'English'),
+        )
+        .label;
+  }
+
+  List<_LanguageOption> _languageOptions() {
+    return const [
+      _LanguageOption('en', 'English'),
+      _LanguageOption('de', 'Deutsch'),
+      _LanguageOption('it', 'Italiano'),
+      _LanguageOption('no', 'Norsk'),
+      _LanguageOption('fr', 'Français'),
+      _LanguageOption('ru', 'Русский'),
+      _LanguageOption('uk', 'Українська'),
+      _LanguageOption('pl', 'Polski'),
+      _LanguageOption('es', 'Español'),
+      _LanguageOption('pt', 'Português'),
+      _LanguageOption('ar', 'العربية'),
+      _LanguageOption('fa', 'فارسی'),
+      _LanguageOption('hi', 'हिन्दी'),
     ];
+  }
+}
+
+class _LanguageSelectorButton extends StatefulWidget {
+  const _LanguageSelectorButton({required this.label});
+
+  final String label;
+
+  @override
+  State<_LanguageSelectorButton> createState() =>
+      _LanguageSelectorButtonState();
+}
+
+class _LanguageSelectorButtonState extends State<_LanguageSelectorButton> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        if (!_hovered) {
+          setState(() => _hovered = true);
+        }
+      },
+      onExit: (_) {
+        if (_hovered) {
+          setState(() => _hovered = false);
+        }
+      },
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 34, maxWidth: 256),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BusyMarkSpacing.sm,
+          vertical: BusyMarkSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: _hovered ? colors.controlHover : Colors.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+          border: Border.all(
+            color: _hovered ? colors.subtleBorder : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Icon(
+              BusyMarkGlyphs.downArrow,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

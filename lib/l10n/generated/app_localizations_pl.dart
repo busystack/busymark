@@ -23,8 +23,19 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
-  String get aboutDescription =>
-      'BusyMark to edytor dokumentacji Markdown zgodny z Writerside dla projektów lokalnych.';
+  String get aboutTagline => 'Edytor Markdown i Writerside';
+
+  @override
+  String get aboutLicenseLabel => 'Licencja';
+
+  @override
+  String get aboutLicenseName => 'Apache License 2.0';
+
+  @override
+  String get aboutWebsite => 'Strona internetowa';
+
+  @override
+  String get aboutReportIssue => 'Zgłoś problem';
 
   @override
   String get advanced => 'Zaawansowane';
