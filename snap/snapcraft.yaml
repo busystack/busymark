@@ -64,7 +64,14 @@ parts:
       craftctl default
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
+      install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
+        "$CRAFT_PRIME/meta/gui/io.busystack.busymark.svg"
+      install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
+        "$CRAFT_PRIME/meta/gui/icon.svg"
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.metainfo.xml" \
         "$CRAFT_PRIME/share/metainfo/io.busystack.busymark.metainfo.xml"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
         "$CRAFT_PRIME/share/icons/hicolor/scalable/apps/io.busystack.busymark.svg"
+      sed 's#^Icon=.*#Icon=${SNAP}/meta/gui/io.busystack.busymark.svg#' \
+        "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
+        > "$CRAFT_PRIME/meta/gui/io.busystack.busymark.desktop"
