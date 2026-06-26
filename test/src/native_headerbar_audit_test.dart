@@ -41,7 +41,7 @@ void main() {
       'linux/io.busystack.busymark.desktop',
     ).readAsStringSync();
 
-    expect(native, contains('g_set_prgname(kApplicationDisplayName)'));
+    expect(native, contains('g_set_prgname(APPLICATION_ID)'));
     expect(native, contains('g_set_application_name(kApplicationDisplayName)'));
     expect(
       native,

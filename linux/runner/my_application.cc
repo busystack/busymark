@@ -2,6 +2,7 @@
 
 #include <cairo.h>
 #include <flutter_linux/flutter_linux.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <pango/pango.h>
 #include <cmath>
 #include <cstdio>
@@ -102,6 +103,32 @@ struct _MyApplication {
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+static GdkPixbuf* load_application_icon_at_size(gint size) {
+  g_autofree gchar* executable_path =
+      g_file_read_link("/proc/self/exe", nullptr);
+  if (executable_path == nullptr) {
+    return nullptr;
+  }
+
+  g_autofree gchar* executable_dir = g_path_get_dirname(executable_path);
+  g_autofree gchar* icon_path =
+      g_build_filename(executable_dir, "data", "flutter_assets", "assets",
+                       "branding", "busymark_logo.svg", nullptr);
+
+  g_autoptr(GError) error = nullptr;
+  GdkPixbuf* icon =
+      gdk_pixbuf_new_from_file_at_size(icon_path, size, size, &error);
+  if (icon == nullptr) {
+    const gchar* message = error != nullptr ? error->message : "unknown error";
+    g_warning("Failed to load application icon: %s", message);
+  }
+  return icon;
+}
+
+static GdkPixbuf* load_application_icon() {
+  return load_application_icon_at_size(256);
+}
 
 static void respond_success(FlMethodCall* method_call) {
   g_autoptr(FlValue) result = fl_value_new_null();
@@ -1442,6 +1469,17 @@ static void my_application_activate(GApplication* application) {
   gtk_window_set_title(window, kApplicationDisplayName);
   gtk_widget_set_name(GTK_WIDGET(window), "busymark-window");
   configure_transparent_window_backing(window);
+  g_autoptr(GdkPixbuf) application_icon = load_application_icon();
+  if (application_icon != nullptr) {
+    gtk_window_set_default_icon(application_icon);
+    gtk_window_set_icon(window, application_icon);
+  }
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  gtk_window_set_wmclass(window, APPLICATION_ID, APPLICATION_ID);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+  if (application_icon == nullptr) {
+    gtk_window_set_icon_name(window, APPLICATION_ID);
+  }
 
   gboolean use_header_bar = TRUE;
 #ifdef GDK_WINDOWING_X11
@@ -1618,7 +1656,7 @@ static void my_application_init(MyApplication* self) {
 }
 
 MyApplication* my_application_new() {
-  g_set_prgname(kApplicationDisplayName);
+  g_set_prgname(APPLICATION_ID);
   g_set_application_name(kApplicationDisplayName);
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),
