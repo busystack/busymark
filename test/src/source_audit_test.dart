@@ -372,7 +372,10 @@ void main() {
     expect(settings, contains('class _SegmentLabel'));
     expect(settings, contains('maxLines: 1'));
     expect(settings, contains('overflow: TextOverflow.ellipsis'));
-    expect(settings, contains("label: _SegmentLabel('Bottom right')"));
+    expect(
+      settings,
+      contains('label: _SegmentLabel(context.l10n.bottomRight)'),
+    );
     expect(workspace, contains('hoverColor: Colors.transparent'));
     expect(workspace, contains('focusColor: Colors.transparent'));
     expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
@@ -568,16 +571,16 @@ void main() {
     ).readAsStringSync();
 
     for (final label in [
-      'Heading 4',
-      'Heading 5',
-      'Heading 6',
-      'Toggle task checked',
-      'Indent list item',
-      'Outdent list item',
-      'Code block language',
-      'Inline image',
-      'Table',
-      'Hard line break',
+      'context.l10n.heading4',
+      'context.l10n.heading5',
+      'context.l10n.heading6',
+      'context.l10n.toggleTaskChecked',
+      'context.l10n.indentListItem',
+      'context.l10n.outdentListItem',
+      'context.l10n.codeBlockLanguage',
+      'context.l10n.inlineImage',
+      'context.l10n.table',
+      'context.l10n.hardLineBreak',
     ]) {
       expect(toolbar, contains(label));
     }
@@ -604,11 +607,11 @@ void main() {
     final blockWidgets = File(
       'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
     ).readAsStringSync();
-    expect(blockWidgets, contains('Insert column left'));
-    expect(blockWidgets, contains('Insert column right'));
-    expect(blockWidgets, contains('Insert row above'));
-    expect(blockWidgets, contains('Insert row below'));
-    expect(blockWidgets, contains('Delete table'));
+    expect(blockWidgets, contains('context.l10n.insertColumnLeft'));
+    expect(blockWidgets, contains('context.l10n.insertColumnRight'));
+    expect(blockWidgets, contains('context.l10n.insertRowAbove'));
+    expect(blockWidgets, contains('context.l10n.insertRowBelow'));
+    expect(blockWidgets, contains('context.l10n.deleteTable'));
     final tableControlMenu = RegExp(
       r'class _TableControlMenuButton[\s\S]*?class _TableCellEditor',
     ).firstMatch(blockWidgets)!.group(0)!;
@@ -668,7 +671,7 @@ void main() {
     expect(blockWidgets, contains('_editImageBlock'));
     expect(editor, contains('_handleImageBlockEditRequested'));
     expect(editor, contains('initialSource: _imageSourceForBlock(block)'));
-    expect(editor, contains("submitLabel: 'Apply'"));
+    expect(editor, contains('submitLabel: context.l10n.apply'));
   });
 
   test('source view has compact gutter without pane status chrome', () {

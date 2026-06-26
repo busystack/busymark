@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 
 class WritersideProjectCreateRequest {
@@ -9,10 +10,10 @@ class WritersideProjectCreateRequest {
     required this.parentDirectoryPath,
     required this.projectName,
     required this.directoryName,
+    required this.instanceName,
+    required this.topicTitle,
     this.moduleName,
-    this.instanceName = 'User Guide',
     this.instanceId = 'user-guide',
-    this.topicTitle = 'Getting started',
     this.topicFileName = 'getting-started.md',
   });
 
@@ -56,17 +57,17 @@ class WritersideProjectCreator {
     final rootType = await FileSystemEntity.type(rootPath);
     if (rootType == FileSystemEntityType.directory) {
       if (!await _isDirectoryEmpty(rootDirectory)) {
-        throw FileSystemException(
-          'Target directory already exists and is not empty',
-          rootPath,
+        throw BusyMarkException(
+          'writerside.project.target-directory-not-empty',
+          args: {'path': rootPath},
         );
       }
     } else if (rootType == FileSystemEntityType.notFound) {
       await rootDirectory.create();
     } else {
-      throw FileSystemException(
-        'Target path already exists and is not a directory',
-        rootPath,
+      throw BusyMarkException(
+        'writerside.project.target-path-not-directory',
+        args: {'path': rootPath},
       );
     }
 
@@ -76,7 +77,10 @@ class WritersideProjectCreator {
     final topicFile = File(p.join(rootPath, 'topics', validated.topicFileName));
     for (final file in [configFile, treeFile, topicFile]) {
       if (await file.exists()) {
-        throw FileSystemException('Generated file already exists', file.path);
+        throw BusyMarkException(
+          'writerside.project.generated-file-exists',
+          args: {'path': file.path},
+        );
       }
     }
 
@@ -112,37 +116,27 @@ class WritersideProjectCreator {
   _ValidatedCreateRequest _validate(WritersideProjectCreateRequest request) {
     final parentDirectoryPath = request.parentDirectoryPath.trim();
     if (parentDirectoryPath.isEmpty) {
-      throw ArgumentError.value(
-        request.parentDirectoryPath,
-        'parentDirectoryPath',
-        'Parent directory is required.',
+      throw const BusyMarkException(
+        'writerside.project.parent-directory-required',
       );
     }
     final normalizedParentPath = normalizePath(parentDirectoryPath);
     final parentType = FileSystemEntity.typeSync(normalizedParentPath);
     if (parentType != FileSystemEntityType.directory) {
-      throw FileSystemException(
-        'Parent directory does not exist',
-        normalizedParentPath,
+      throw BusyMarkException(
+        'writerside.project.parent-directory-missing',
+        args: {'path': normalizedParentPath},
       );
     }
 
     final projectName = request.projectName.trim();
     if (projectName.isEmpty) {
-      throw ArgumentError.value(
-        request.projectName,
-        'projectName',
-        'Project name is required.',
-      );
+      throw const BusyMarkException('writerside.project.name-required');
     }
 
     final directoryName = request.directoryName.trim();
     if (directoryName.isEmpty) {
-      throw ArgumentError.value(
-        request.directoryName,
-        'directoryName',
-        'Directory name is required.',
-      );
+      throw const BusyMarkException('writerside.project.directory-required');
     }
     if (directoryName == '.' ||
         directoryName == '..' ||
@@ -150,20 +144,12 @@ class WritersideProjectCreator {
         directoryName.contains('..') ||
         directoryName.contains('/') ||
         directoryName.contains(r'\')) {
-      throw ArgumentError.value(
-        request.directoryName,
-        'directoryName',
-        'Directory name must be a single safe path segment.',
-      );
+      throw const BusyMarkException('writerside.project.directory-unsafe');
     }
 
     final instanceId = request.instanceId.trim();
     if (!_instanceIdPattern.hasMatch(instanceId)) {
-      throw ArgumentError.value(
-        request.instanceId,
-        'instanceId',
-        'Instance ID must start with a lowercase letter and contain only lowercase letters, numbers, underscores, and hyphens.',
-      );
+      throw const BusyMarkException('writerside.project.instance-id-invalid');
     }
 
     final topicFileName = request.topicFileName.trim();
@@ -175,24 +161,16 @@ class WritersideProjectCreator {
         topicFileName.contains('/') ||
         topicFileName.contains(r'\') ||
         !topicFileName.endsWith('.md')) {
-      throw ArgumentError.value(
-        request.topicFileName,
-        'topicFileName',
-        'Topic file name must be a Markdown file name without path separators.',
-      );
+      throw const BusyMarkException('writerside.project.topic-file-invalid');
     }
 
     final topicTitle = request.topicTitle.trim();
     if (topicTitle.isEmpty) {
-      throw ArgumentError.value(
-        request.topicTitle,
-        'topicTitle',
-        'Topic title is required.',
-      );
+      throw const BusyMarkException('writerside.project.topic-title-required');
     }
 
     final instanceName = request.instanceName.trim().isEmpty
-        ? 'User Guide'
+        ? projectName
         : request.instanceName.trim();
     final moduleName = request.moduleName?.trim().isNotEmpty == true
         ? request.moduleName!.trim()
@@ -263,7 +241,7 @@ class WritersideProjectCreator {
   String _markdownHeadingText(String value) {
     final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (normalized.isEmpty) {
-      return 'Getting started';
+      return '';
     }
     return normalized.replaceAllMapped(RegExp(r'[&<>%\[\]()!`*_{}#\\=:]'), (
       match,

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
@@ -760,10 +761,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final result = await _showImageDialog(
       context,
-      title: 'Image',
+      title: context.l10n.image,
       initialSource: _imageSourceForBlock(block),
       initialAlt: block.plainText,
-      submitLabel: 'Apply',
+      submitLabel: context.l10n.apply,
     );
     if (result == null || result.source.trim().isEmpty) {
       return;
@@ -1423,7 +1424,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (blockId == null) {
       return;
     }
-    final result = await _showImageDialog(context, title: 'Image');
+    final result = await _showImageDialog(
+      context,
+      title: context.l10n.image,
+      submitLabel: context.l10n.insert,
+    );
     if (result == null || result.source.trim().isEmpty) {
       return;
     }
@@ -1493,10 +1498,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         : activeController!.text
               .substring(activeSelection.start, activeSelection.end)
               .trim();
+    final dialogTitle = context.l10n.inlineImage;
+    final insertLabel = context.l10n.insert;
+    final fallbackAltText = context.l10n.image;
     final result = await _showImageDialog(
       context,
-      title: 'Inline image',
+      title: dialogTitle,
       initialAlt: initialAlt,
+      submitLabel: insertLabel,
     );
     if (result == null || result.source.trim().isEmpty) {
       return;
@@ -1510,6 +1519,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           selectionEnd: range.end,
           source: result.source,
           alt: result.alt,
+          fallbackAltText: fallbackAltText,
         );
       }
       _clearBlockSelection();
@@ -1524,6 +1534,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       selectionEnd: selection.end,
       source: result.source,
       alt: result.alt,
+      fallbackAltText: fallbackAltText,
     );
     _emitMarkdown();
   }
@@ -1534,6 +1545,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     final block = _documentController.blockById(blockId);
+    final l10n = context.l10n;
+    String headerTextForColumn(int columnNumber) {
+      return l10n.tableHeaderNumber(columnNumber);
+    }
+
+    final cellText = l10n.tableCellDefault;
     final result = await _showTableDialog(
       context,
       initialColumns: block == null ? 2 : _tableColumnCount(block),
@@ -1548,6 +1565,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         blockId,
         columns: result.columns,
         rows: result.rows,
+        headerTextForColumn: headerTextForColumn,
+        cellText: cellText,
       );
       _emitMarkdown();
       return;
@@ -1557,6 +1576,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blockId,
       columns: result.columns,
       rows: result.rows,
+      headerTextForColumn: headerTextForColumn,
+      cellText: cellText,
     );
     _emitMarkdown();
     if (paragraphId != null) {
@@ -1669,7 +1690,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Link'),
+        title: Text(context.l10n.link),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -1679,11 +1700,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Apply'),
+            child: Text(context.l10n.apply),
           ),
         ],
       ),
@@ -1695,7 +1716,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     required String title,
     String initialSource = '',
     String initialAlt = '',
-    String submitLabel = 'Insert',
+    required String submitLabel,
   }) {
     return showDialog<_ImageDialogResult>(
       context: context,
@@ -1730,14 +1751,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Code block language'),
+        title: Text(context.l10n.codeBlockLanguage),
         content: SizedBox(
           width: 360,
           child: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Language',
+            decoration: InputDecoration(
+              labelText: context.l10n.language,
               hintText: 'dart',
             ),
             onSubmitted: (value) => Navigator.pop(context, value),
@@ -1746,11 +1767,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Apply'),
+            child: Text(context.l10n.apply),
           ),
         ],
       ),
@@ -2359,7 +2380,9 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         ? SizedBox(width: math.max(0, maxWidth - 42), child: child)
         : const SizedBox.shrink();
     final toggle = BusyMarkHeaderIconButton(
-      tooltip: visible ? 'Hide editing buttons' : 'Show editing buttons',
+      tooltip: visible
+          ? context.l10n.hideEditingButtons
+          : context.l10n.showEditingButtons,
       icon: visible ? BusyMarkGlyphs.hide : BusyMarkGlyphs.edit,
       onPressed: onToggle,
       foregroundColor: colors.mutedForeground,
@@ -2527,7 +2550,7 @@ class _ImageDialog extends StatefulWidget {
     required this.title,
     this.initialSource = '',
     this.initialAlt = '',
-    this.submitLabel = 'Insert',
+    required this.submitLabel,
   });
 
   final String title;
@@ -2573,8 +2596,8 @@ class _ImageDialogState extends State<_ImageDialog> {
                   child: TextField(
                     controller: _sourceController,
                     autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Source',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.source,
                       hintText: 'images/example.png',
                     ),
                   ),
@@ -2584,7 +2607,7 @@ class _ImageDialogState extends State<_ImageDialog> {
                   padding: const EdgeInsets.only(top: 8),
                   child: OutlinedButton(
                     onPressed: _chooseImage,
-                    child: const Text('Choose'),
+                    child: Text(context.l10n.choose),
                   ),
                 ),
               ],
@@ -2592,9 +2615,9 @@ class _ImageDialogState extends State<_ImageDialog> {
             const SizedBox(height: BusyMarkSpacing.md),
             TextField(
               controller: _altController,
-              decoration: const InputDecoration(
-                labelText: 'Alt text',
-                hintText: 'Describe the image',
+              decoration: InputDecoration(
+                labelText: context.l10n.altText,
+                hintText: context.l10n.describeTheImage,
               ),
               onSubmitted: (_) => _submit(),
             ),
@@ -2604,7 +2627,7 @@ class _ImageDialogState extends State<_ImageDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(onPressed: _submit, child: Text(widget.submitLabel)),
       ],
@@ -2613,10 +2636,10 @@ class _ImageDialogState extends State<_ImageDialog> {
 
   Future<void> _chooseImage() async {
     final file = await openFile(
-      acceptedTypeGroups: const [
+      acceptedTypeGroups: [
         XTypeGroup(
-          label: 'Images',
-          extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'],
+          label: context.l10n.fileTypeImages,
+          extensions: const ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'],
         ),
       ],
     );
@@ -2685,7 +2708,7 @@ class _TableDialogState extends State<_TableDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Table'),
+      title: Text(context.l10n.table),
       content: SizedBox(
         width: 360,
         child: Row(
@@ -2695,8 +2718,8 @@ class _TableDialogState extends State<_TableDialog> {
                 controller: _columnsController,
                 autofocus: true,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Columns',
+                decoration: InputDecoration(
+                  labelText: context.l10n.columns,
                   hintText: '2',
                 ),
                 onSubmitted: (_) => _submit(),
@@ -2707,8 +2730,8 @@ class _TableDialogState extends State<_TableDialog> {
               child: TextField(
                 controller: _rowsController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Rows',
+                decoration: InputDecoration(
+                  labelText: context.l10n.rows,
                   hintText: '2',
                 ),
                 onSubmitted: (_) => _submit(),
@@ -2720,9 +2743,9 @@ class _TableDialogState extends State<_TableDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Insert')),
+        FilledButton(onPressed: _submit, child: Text(context.l10n.insert)),
       ],
     );
   }

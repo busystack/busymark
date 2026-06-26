@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/localization.dart';
 import 'wysiwyg_commands.dart';
 
 class BusyMarkWysiwygToolbar extends StatelessWidget {
@@ -50,83 +51,83 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
           [
             _button(
               context,
-              tooltip: 'Unordered list',
+              tooltip: context.l10n.unorderedList,
               icon: BusyMarkGlyphs.unorderedList,
               onPressed: () =>
                   onBlockCommand(BusyWysiwygBlockCommand.unorderedList),
             ),
             _button(
               context,
-              tooltip: 'Ordered list',
+              tooltip: context.l10n.orderedList,
               icon: BusyMarkGlyphs.orderedList,
               onPressed: () =>
                   onBlockCommand(BusyWysiwygBlockCommand.orderedList),
             ),
             _button(
               context,
-              tooltip: 'Task list',
+              tooltip: context.l10n.taskList,
               icon: BusyMarkGlyphs.checkedBox,
               onPressed: () => onBlockCommand(BusyWysiwygBlockCommand.taskList),
             ),
             _button(
               context,
-              tooltip: 'Toggle task checked',
+              tooltip: context.l10n.toggleTaskChecked,
               icon: BusyMarkGlyphs.checkedBox,
               onPressed: onToggleTaskCommand,
             ),
             _button(
               context,
-              tooltip: 'Indent list item',
+              tooltip: context.l10n.indentListItem,
               icon: BusyMarkGlyphs.indent,
               onPressed: onIndentCommand,
             ),
             _button(
               context,
-              tooltip: 'Outdent list item',
+              tooltip: context.l10n.outdentListItem,
               icon: BusyMarkGlyphs.outdent,
               onPressed: onOutdentCommand,
             ),
             _button(
               context,
-              tooltip: 'Blockquote',
+              tooltip: context.l10n.blockquote,
               icon: BusyMarkGlyphs.blockquote,
               onPressed: () =>
                   onBlockCommand(BusyWysiwygBlockCommand.blockquote),
             ),
             _button(
               context,
-              tooltip: 'Code block',
+              tooltip: context.l10n.codeBlock,
               icon: BusyMarkGlyphs.code,
               onPressed: () =>
                   onBlockCommand(BusyWysiwygBlockCommand.codeBlock),
             ),
             _button(
               context,
-              tooltip: 'Code block language',
+              tooltip: context.l10n.codeBlockLanguage,
               icon: BusyMarkGlyphs.insertObject,
               onPressed: onCodeLanguageCommand,
             ),
             _button(
               context,
-              tooltip: 'Image',
+              tooltip: context.l10n.image,
               icon: BusyMarkGlyphs.image,
               onPressed: onImageCommand,
             ),
             _button(
               context,
-              tooltip: 'Inline image',
+              tooltip: context.l10n.inlineImage,
               icon: BusyMarkGlyphs.inlineImage,
               onPressed: onInlineImageCommand,
             ),
             _button(
               context,
-              tooltip: 'Table',
+              tooltip: context.l10n.table,
               icon: BusyMarkGlyphs.table,
               onPressed: onTableCommand,
             ),
             _button(
               context,
-              tooltip: 'Thematic break',
+              tooltip: context.l10n.thematicBreak,
               icon: BusyMarkGlyphs.thematicBreak,
               onPressed: () =>
                   onBlockCommand(BusyWysiwygBlockCommand.thematicBreak),
@@ -135,21 +136,21 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
           [
             _button(
               context,
-              tooltip: 'Bold',
+              tooltip: context.l10n.bold,
               icon: BusyMarkGlyphs.bold,
               shortcut: 'Ctrl+B',
               onPressed: () => onInlineCommand(BusyWysiwygInlineCommand.bold),
             ),
             _button(
               context,
-              tooltip: 'Italic',
+              tooltip: context.l10n.italic,
               icon: BusyMarkGlyphs.italic,
               shortcut: 'Ctrl+I',
               onPressed: () => onInlineCommand(BusyWysiwygInlineCommand.italic),
             ),
             _button(
               context,
-              tooltip: 'Underline',
+              tooltip: context.l10n.underline,
               icon: BusyMarkGlyphs.underline,
               shortcut: 'Ctrl+U',
               onPressed: () =>
@@ -157,7 +158,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             ),
             _button(
               context,
-              tooltip: 'Strikethrough',
+              tooltip: context.l10n.strikethrough,
               icon: BusyMarkGlyphs.strikethrough,
               shortcut: 'Alt+Shift+5',
               onPressed: () =>
@@ -165,21 +166,21 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             ),
             _button(
               context,
-              tooltip: 'Inline code',
+              tooltip: context.l10n.inlineCode,
               icon: BusyMarkGlyphs.code,
               shortcut: 'Ctrl+E',
               onPressed: () => onInlineCommand(BusyWysiwygInlineCommand.code),
             ),
             _button(
               context,
-              tooltip: 'Link',
+              tooltip: context.l10n.link,
               icon: BusyMarkGlyphs.link,
               shortcut: 'Ctrl+K',
               onPressed: onLinkCommand,
             ),
             _button(
               context,
-              tooltip: 'Hard line break',
+              tooltip: context.l10n.hardLineBreak,
               icon: BusyMarkGlyphs.hardBreak,
               onPressed: onHardBreakCommand,
             ),
@@ -204,7 +205,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
-      tooltip: 'Text style',
+      tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       foregroundColor: colorScheme.onPrimary,
       backgroundColor: _toolbarButtonBackground(context),
@@ -212,37 +213,37 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
-          label: 'Paragraph',
+          label: context.l10n.paragraph,
           icon: BusyMarkGlyphs.paragraph,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading1,
-          label: 'Heading 1',
+          label: context.l10n.heading1,
           icon: BusyMarkGlyphs.heading,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading2,
-          label: 'Heading 2',
+          label: context.l10n.heading2,
           icon: BusyMarkGlyphs.heading,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading3,
-          label: 'Heading 3',
+          label: context.l10n.heading3,
           icon: BusyMarkGlyphs.heading,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading4,
-          label: 'Heading 4',
+          label: context.l10n.heading4,
           icon: BusyMarkGlyphs.heading,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading5,
-          label: 'Heading 5',
+          label: context.l10n.heading5,
           icon: BusyMarkGlyphs.heading,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading6,
-          label: 'Heading 6',
+          label: context.l10n.heading6,
           icon: BusyMarkGlyphs.heading,
         ),
       ],

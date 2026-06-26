@@ -36,7 +36,6 @@ class WritersideModuleService {
         Diagnostic(
           code: 'writerside.config.missing',
           severity: DiagnosticSeverity.error,
-          message: 'Writerside mode requires writerside.cfg or project.ihp.',
           filePath: expectedPath,
         ),
       );
@@ -86,7 +85,6 @@ class WritersideModuleService {
       explicit: config.buildConfigExplicit,
       code: 'writerside.config.missing-build-config-directory',
       severity: DiagnosticSeverity.info,
-      message: 'Configured build config directory is missing.',
     );
     await _validateOptionalConfiguredDirectory(
       diagnostics,
@@ -95,7 +93,6 @@ class WritersideModuleService {
       explicit: config.apiSpecificationsExplicit,
       code: 'writerside.config.missing-api-specifications-directory',
       severity: DiagnosticSeverity.info,
-      message: 'Configured API specifications directory is missing.',
     );
     await _validateOptionalConfiguredDirectory(
       diagnostics,
@@ -104,28 +101,24 @@ class WritersideModuleService {
       explicit: config.snippetsDir != null,
       code: 'writerside.config.missing-snippets-directory',
       severity: DiagnosticSeverity.warning,
-      message: 'Configured snippets directory is missing.',
     );
     await _validateOptionalConfiguredFile(
       diagnostics,
       root,
       config.varsFile,
       code: 'writerside.config.missing-vars-file',
-      message: 'Configured variables file is missing.',
     );
     await _validateOptionalConfiguredFile(
       diagnostics,
       root,
       config.categoriesFile,
       code: 'writerside.config.missing-categories-file',
-      message: 'Configured categories file is missing.',
     );
     await _validateOptionalConfiguredFile(
       diagnostics,
       root,
       config.instanceGroupsFile,
       code: 'writerside.config.missing-instance-groups-file',
-      message: 'Configured instance groups file is missing.',
     );
 
     final instances = <WritersideInstance>[];
@@ -136,8 +129,8 @@ class WritersideModuleService {
           Diagnostic(
             code: 'writerside.config.missing-instance-tree',
             severity: DiagnosticSeverity.error,
-            message: 'Registered instance tree "$source" does not exist.',
             filePath: configPath,
+            args: {'source': source},
             sourceSpan: _stringSpan(configPath, configSource, source),
           ),
         );
@@ -183,8 +176,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.topic.read-failed',
               severity: DiagnosticSeverity.warning,
-              message: 'Could not read topic file: $error',
               filePath: entity.path,
+              args: {'error': '$error'},
             ),
           );
         }
@@ -266,9 +259,8 @@ class WritersideModuleService {
           Diagnostic(
             code: 'writerside.config.missing-directory',
             severity: DiagnosticSeverity.error,
-            message:
-                'Configured topics directory is missing. (${topicRoot.dir})',
             filePath: path,
+            args: {'kind': 'topics', 'relativePath': topicRoot.dir},
           ),
         );
       }
@@ -282,8 +274,8 @@ class WritersideModuleService {
         Diagnostic(
           code: 'writerside.config.missing-directory',
           severity: DiagnosticSeverity.error,
-          message: 'Default topics directory is missing. (topics)',
           filePath: path,
+          args: {'kind': 'topicsDefault', 'relativePath': 'topics'},
         ),
       );
     }
@@ -306,8 +298,8 @@ class WritersideModuleService {
           severity: imageRoot.explicit
               ? DiagnosticSeverity.warning
               : DiagnosticSeverity.info,
-          message: 'Configured images directory is missing. (${imageRoot.dir})',
           filePath: path,
+          args: {'kind': 'images', 'relativePath': imageRoot.dir},
         ),
       );
     }
@@ -320,7 +312,6 @@ class WritersideModuleService {
     required bool explicit,
     required String code,
     required DiagnosticSeverity severity,
-    required String message,
   }) async {
     if (!explicit || relativePath == null || relativePath.isEmpty) {
       return;
@@ -333,8 +324,8 @@ class WritersideModuleService {
       Diagnostic(
         code: code,
         severity: severity,
-        message: '$message ($relativePath)',
         filePath: path,
+        args: {'relativePath': relativePath},
       ),
     );
   }
@@ -344,7 +335,6 @@ class WritersideModuleService {
     String root,
     String? relativePath, {
     required String code,
-    required String message,
   }) async {
     if (relativePath == null || relativePath.isEmpty) {
       return;
@@ -357,8 +347,8 @@ class WritersideModuleService {
       Diagnostic(
         code: code,
         severity: DiagnosticSeverity.warning,
-        message: '$message ($relativePath)',
         filePath: path,
+        args: {'relativePath': relativePath},
       ),
     );
   }
@@ -378,9 +368,8 @@ class WritersideModuleService {
         Diagnostic(
           code: 'writerside.topic.duplicate-id',
           severity: DiagnosticSeverity.error,
-          message:
-              'Topic ID "${topic.id}" is used by multiple topic files in this help module.',
           filePath: topic.filePath,
+          args: {'id': topic.id},
         ),
       );
     }
@@ -392,8 +381,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.tree.missing-start-page',
               severity: DiagnosticSeverity.error,
-              message: 'Start page "${instance.startPage}" does not exist.',
               filePath: instance.sourceTreePath,
+              args: {'startPage': instance.startPage},
             ),
           );
         } else if (resolved.isAmbiguous) {
@@ -414,8 +403,8 @@ class WritersideModuleService {
               Diagnostic(
                 code: 'writerside.tree.missing-topic',
                 severity: DiagnosticSeverity.error,
-                message: 'TOC references missing topic "$topic".',
                 filePath: instance.sourceTreePath,
+                args: {'topic': topic},
                 sourceSpan: node.span,
               ),
             );
@@ -435,8 +424,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.tree.invalid-href',
               severity: DiagnosticSeverity.warning,
-              message: 'External href "$href" is invalid.',
               filePath: instance.sourceTreePath,
+              args: {'href': href},
               sourceSpan: node.span,
             ),
           );
@@ -449,8 +438,8 @@ class WritersideModuleService {
           Diagnostic(
             code: 'writerside.topic.missing-title',
             severity: DiagnosticSeverity.warning,
-            message: 'Topic "${topic.fileName}" is missing a title.',
             filePath: topic.filePath,
+            args: {'fileName': topic.fileName},
           ),
         );
       }
@@ -461,8 +450,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.topic.duplicate-element-id',
               severity: DiagnosticSeverity.error,
-              message: 'Element id "${id.id}" appears more than once.',
               filePath: topic.filePath,
+              args: {'elementId': id.id},
               sourceSpan: id.span,
               relatedSpans: [duplicateIds[id.id]!],
             ),
@@ -476,8 +465,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.variable.unresolved',
               severity: DiagnosticSeverity.warning,
-              message: 'Variable "%${variable.name}%" is not declared.',
               filePath: topic.filePath,
+              args: {'name': variable.name},
               sourceSpan: variable.span,
             ),
           );
@@ -506,8 +495,8 @@ class WritersideModuleService {
                 : Diagnostic(
                     code: 'markdown.link.unresolved-target',
                     severity: DiagnosticSeverity.error,
-                    message: 'Topic link "$destination" does not resolve.',
                     filePath: topic.filePath,
+                    args: {'destination': destination},
                     sourceSpan: link.span,
                   ),
           );
@@ -518,9 +507,8 @@ class WritersideModuleService {
               Diagnostic(
                 code: 'markdown.link.unresolved-anchor',
                 severity: DiagnosticSeverity.warning,
-                message:
-                    'Anchor "$anchor" does not exist in "${target.fileName}".',
                 filePath: topic.filePath,
+                args: {'anchor': anchor, 'targetName': target.fileName},
                 sourceSpan: link.span,
               ),
             );
@@ -533,8 +521,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'markdown.image.missing-alt',
               severity: DiagnosticSeverity.warning,
-              message: 'Image "${image.destination}" is missing alt text.',
               filePath: topic.filePath,
+              args: {'destination': image.destination},
               sourceSpan: image.span,
             ),
           );
@@ -547,8 +535,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'markdown.image.missing-file',
               severity: DiagnosticSeverity.error,
-              message: 'Image "${image.destination}" does not exist.',
               filePath: topic.filePath,
+              args: {'destination': image.destination},
               sourceSpan: image.span,
             ),
           );
@@ -560,7 +548,6 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.include.unresolved-source',
               severity: DiagnosticSeverity.error,
-              message: '<include> is missing from.',
               filePath: topic.filePath,
               sourceSpan: include.span,
             ),
@@ -585,9 +572,8 @@ class WritersideModuleService {
                   : Diagnostic(
                       code: 'writerside.include.unresolved-source',
                       severity: DiagnosticSeverity.error,
-                      message:
-                          'Include source "${include.from}" does not exist.',
                       filePath: topic.filePath,
+                      args: {'from': include.from},
                       sourceSpan: include.span,
                     ),
             );
@@ -601,9 +587,8 @@ class WritersideModuleService {
               Diagnostic(
                 code: 'writerside.include.unresolved-element',
                 severity: DiagnosticSeverity.error,
-                message:
-                    'Include element "${include.elementId}" does not exist in "${include.from}".',
                 filePath: topic.filePath,
+                args: {'elementId': include.elementId, 'from': include.from},
                 sourceSpan: include.span,
               ),
             );
@@ -619,8 +604,8 @@ class WritersideModuleService {
             Diagnostic(
               code: 'writerside.category.unresolved',
               severity: DiagnosticSeverity.warning,
-              message: 'Seealso category "$ref" is not declared.',
               filePath: topic.filePath,
+              args: {'ref': ref},
               sourceSpan: SourceSpan.fromOffsets(
                 filePath: topic.filePath,
                 source: topic.markdown!.source,
@@ -657,9 +642,8 @@ class WritersideModuleService {
     return Diagnostic(
       code: 'writerside.topic.ambiguous-reference',
       severity: DiagnosticSeverity.error,
-      message:
-          'Topic reference "$reference" matches multiple configured topic files.',
       filePath: filePath,
+      args: {'reference': reference},
       sourceSpan: sourceSpan,
     );
   }

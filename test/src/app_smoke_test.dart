@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_de.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -18,11 +21,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
   late _FallbackHeaderBarService headerBarService;
+  final l10n = AppLocalizationsEn();
 
   setUp(() {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
     binding.platformDispatcher.defaultRouteNameTestValue = '/';
     headerBarService = _FallbackHeaderBarService();
+  });
+
+  testWidgets('app wires generated localization delegates and locales', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(app.localizationsDelegates, contains(AppLocalizations.delegate));
+    expect(app.supportedLocales, AppLocalizations.supportedLocales);
+    expect(app.supportedLocales, contains(const Locale('de')));
+    expect(app.supportedLocales, contains(const Locale('it')));
+    expect(app.supportedLocales, contains(const Locale('no')));
+    expect(app.supportedLocales, contains(const Locale('fr')));
+    expect(app.supportedLocales, contains(const Locale('ru')));
+    expect(app.supportedLocales, contains(const Locale('uk')));
+    expect(app.supportedLocales, contains(const Locale('pl')));
+    expect(app.supportedLocales, contains(const Locale('es')));
+    expect(app.supportedLocales, contains(const Locale('pt')));
+    expect(app.supportedLocales, contains(const Locale('ar')));
+    expect(app.supportedLocales, contains(const Locale('fa')));
+    expect(app.supportedLocales, contains(const Locale('hi')));
+    expect(app.onGenerateTitle, isNotNull);
+    expect(find.text(l10n.appTitle), findsWidgets);
   });
 
   testWidgets('app boots to BusyMark welcome screen without login UI', (
@@ -38,10 +74,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('BusyMark'), findsWidgets);
-    expect(find.text('Create Markdown File'), findsOneWidget);
-    expect(find.text('Create Writerside Project'), findsOneWidget);
-    expect(find.text('Open Markdown File'), findsOneWidget);
+    expect(find.text(l10n.appTitle), findsWidgets);
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+    expect(find.text(l10n.createWritersideProject), findsOneWidget);
+    expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
   });
@@ -57,11 +93,37 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Settings'));
+    await tester.tap(find.byTooltip(l10n.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text('BusyMark Settings'), findsOneWidget);
-    expect(find.text('Validate on edit'), findsOneWidget);
+    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(find.text(l10n.appLanguage), findsOneWidget);
+    expect(find.text(l10n.systemLanguage), findsWidgets);
+    expect(find.text(l10n.validateOnEdit), findsOneWidget);
+  });
+
+  testWidgets('stored language override localizes app text', (tester) async {
+    final de = AppLocalizationsDe();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults().copyWith(localeTag: 'de').toJson();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(de.settings));
+    await tester.pumpAndSettle();
+
+    expect(find.text(de.settingsTitle), findsOneWidget);
+    expect(find.text(de.appLanguage), findsOneWidget);
+    expect(find.text(de.validateOnEdit), findsOneWidget);
   });
 
   testWidgets('keyboard shortcuts dialog opens from the header', (
@@ -77,30 +139,30 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Keyboard Shortcuts'));
+    await tester.tap(find.byTooltip(l10n.keyboardShortcuts));
     await tester.pumpAndSettle();
 
-    expect(find.text('Keyboard Shortcuts'), findsOneWidget);
-    expect(find.text('Create a new unsaved Markdown document'), findsOneWidget);
+    expect(find.text(l10n.keyboardShortcuts), findsWidgets);
+    expect(find.text(l10n.shortcutNewDocumentDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutOpenDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutSaveDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutFindDescription), findsOneWidget);
     expect(
-      find.text('Choose a Markdown file, folder, or Writerside project'),
+      find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
     );
-    expect(find.text('Save the current Markdown file'), findsOneWidget);
-    expect(find.text('Open workspace search'), findsOneWidget);
-    expect(find.text('Show this popup'), findsOneWidget);
     expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
-    expect(find.text('Undo the last edit'), findsOneWidget);
-    expect(find.text('Redo the last undone edit'), findsOneWidget);
-    expect(find.text('Apply bold formatting'), findsOneWidget);
-    expect(find.text('Apply underline formatting'), findsOneWidget);
-    expect(find.text('Apply strikethrough formatting'), findsOneWidget);
-    expect(find.text('Apply paragraph style'), findsOneWidget);
-    expect(find.text('Apply level 1 heading style'), findsOneWidget);
-    expect(find.text('Apply level 6 heading style'), findsOneWidget);
-    expect(find.text('Apply ordered list formatting'), findsOneWidget);
-    expect(find.text('Apply bulleted list formatting'), findsOneWidget);
-    expect(find.text('Apply task list formatting'), findsOneWidget);
+    expect(find.text(l10n.shortcutUndoDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutRedoDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutBoldDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutUnderlineDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutStrikethroughDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutParagraphDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutHeading1Description), findsOneWidget);
+    expect(find.text(l10n.shortcutHeading6Description), findsOneWidget);
+    expect(find.text(l10n.shortcutNumberedListDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
     expect(find.text('Ctrl+N'), findsOneWidget);
     expect(find.text('Ctrl+O'), findsOneWidget);
     expect(find.text('Ctrl+S'), findsOneWidget);
@@ -154,8 +216,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.untitledCount, 1);
-    expect(find.text('Create Markdown File'), findsNothing);
-    expect(find.text('Unsaved Markdown file'), findsWidgets);
+    expect(find.text(l10n.createMarkdownFile), findsNothing);
+    expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
   });
 
   testWidgets('Ctrl+N with unsaved changes opens confirmation dialog', (
@@ -196,13 +258,13 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
-    expect(find.text('Unsaved changes'), findsOneWidget);
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
 
-    await tester.tap(find.text('Discard'));
+    await tester.tap(find.text(l10n.discard));
     await tester.pumpAndSettle();
 
     expect(service.untitledCount, 1);
-    expect(find.text('Unsaved Markdown file'), findsWidgets);
+    expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
   });
 
   testWidgets('startup path opens a Markdown file workspace', (tester) async {
@@ -231,7 +293,7 @@ void main() {
     }
 
     expect(service.openedPath, 'test/fixtures/markdown/basic.md');
-    expect(find.text('Open Markdown File'), findsNothing);
+    expect(find.text(l10n.openMarkdownFile), findsNothing);
     expect(find.textContaining('Basic Markdown'), findsWidgets);
   });
 
@@ -250,6 +312,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
               source: 'logo.png',
@@ -289,6 +353,8 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: Scaffold(
               body: MarkdownImageView(
                 source: image.path,
@@ -326,6 +392,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: MarkdownImageView(
               source: 'logo.svg',
@@ -370,11 +438,11 @@ void main() {
     await tester.pump();
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
         break;
       }
     }
-    expect(find.text('Single Markdown file'), findsWidgets);
+    expect(find.text(l10n.workspaceKindSingleMarkdown), findsWidgets);
 
     final initialTextFields = find.byType(TextField).evaluate().length;
 
@@ -447,7 +515,7 @@ void main() {
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
         break;
       }
     }
@@ -542,7 +610,7 @@ void main() {
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
         break;
       }
     }
@@ -602,7 +670,7 @@ void main() {
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
         break;
       }
     }
@@ -661,7 +729,7 @@ void main() {
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('Single Markdown file').evaluate().isNotEmpty) {
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
         break;
       }
     }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -89,7 +90,7 @@ void main() {
           format: WritersideTopicFormat.xml,
         ),
       ),
-      throwsA(isA<ArgumentError>()),
+      throwsA(isA<BusyMarkException>()),
     );
     expect(
       File(p.join(root.path, 'topics', 'intro.topic')).existsSync(),

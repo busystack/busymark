@@ -1135,7 +1135,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_style_context_add_class(gtk_widget_get_style_context(self->title_label),
                               "busymark-header-title");
   self->search_entry = gtk_search_entry_new();
-  gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), "Search");
+  gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), "");
   gtk_widget_set_hexpand(self->search_entry, TRUE);
   gtk_widget_set_size_request(self->search_entry, 360, kHeaderButtonHeight);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->search_entry),

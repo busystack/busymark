@@ -73,6 +73,40 @@ flutter analyze
 flutter test
 ```
 
+## Localization
+
+BusyMark has ARB localization files for:
+
+- Arabic (ar)
+- English (en)
+- French (fr)
+- German (de)
+- Hindi (hi)
+- Italian (it)
+- Norwegian (no)
+- Persian (fa)
+- Polish (pl)
+- Portuguese (pt)
+- Russian (ru)
+- Spanish (es)
+- Ukrainian (uk)
+
+English in `lib/l10n/app_en.arb` is the source of truth for app strings.
+
+Target ARB files were initially translated with Google Translate and audited. 
+
+When changing user-facing text, update `app_en.arb`, keep every target ARB in
+sync, then run:
+
+```bash
+flutter gen-l10n
+flutter analyze
+flutter test
+```
+
+Linux `.desktop` and AppStream metadata are localized in the repository. Snap
+Store listing translations are managed outside `snap/snapcraft.yaml`.
+
 ## Build Linux Locally
 
 ```bash

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
+import '../app/localization.dart';
 import '../core/local_image_resolver.dart';
 
 class MarkdownImageView extends StatelessWidget {
@@ -167,7 +168,7 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final label = source.isEmpty
-        ? 'No image source'
+        ? context.l10n.noImageSource
         : alt.trim().isEmpty
         ? source
         : '$alt\n$source';

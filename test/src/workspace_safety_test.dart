@@ -1,3 +1,5 @@
+import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -7,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  final l10n = AppLocalizationsEn();
+
   testWidgets(
     'unsaved changes dialog aborts destructive navigation on cancel',
     (tester) async {
@@ -20,6 +24,8 @@ void main() {
             ),
           ],
           child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             theme: buildBusyMarkTheme(
               brightness: Brightness.light,
               accentColor: Colors.green,
@@ -61,8 +67,8 @@ void main() {
       await tester.tap(find.text('Navigate'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Unsaved changes'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
+      expect(find.text(l10n.unsavedChanges), findsOneWidget);
+      await tester.tap(find.text(l10n.cancel));
       await tester.pumpAndSettle();
 
       expect(safeToContinue, isFalse);

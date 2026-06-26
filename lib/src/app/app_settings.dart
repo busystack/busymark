@@ -17,6 +17,8 @@ enum ValidationLevel { activeFile, wholeProject }
 
 enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
 
+const Object _unset = Object();
+
 extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
   ThemeMode get themeMode {
     return switch (this) {
@@ -58,6 +60,7 @@ class RecentWorkspace {
 class AppSettings {
   const AppSettings({
     required this.themeModePreference,
+    required this.localeTag,
     required this.sidebarVisible,
     required this.previewVisible,
     required this.documentViewMode,
@@ -77,6 +80,7 @@ class AppSettings {
   factory AppSettings.defaults() {
     return const AppSettings(
       themeModePreference: BusyMarkThemeModePreference.system,
+      localeTag: null,
       sidebarVisible: true,
       previewVisible: true,
       documentViewMode: DocumentViewModePreference.split,
@@ -110,6 +114,7 @@ class AppSettings {
         json['themeModePreference'],
         defaults.themeModePreference,
       ),
+      localeTag: _localeTagFromJson(json['localeTag']),
       sidebarVisible:
           json['sidebarVisible'] as bool? ?? defaults.sidebarVisible,
       previewVisible: documentViewMode != DocumentViewModePreference.source,
@@ -155,6 +160,7 @@ class AppSettings {
   }
 
   final BusyMarkThemeModePreference themeModePreference;
+  final String? localeTag;
   final bool sidebarVisible;
   final bool previewVisible;
   final DocumentViewModePreference documentViewMode;
@@ -172,8 +178,11 @@ class AppSettings {
 
   ThemeMode get themeMode => themeModePreference.themeMode;
 
+  Locale? get locale => _localeFromTag(localeTag);
+
   Map<String, Object?> toJson() => {
     'themeModePreference': themeModePreference.name,
+    'localeTag': localeTag,
     'sidebarVisible': sidebarVisible,
     'previewVisible': previewVisible,
     'documentViewMode': documentViewMode.name,
@@ -192,6 +201,7 @@ class AppSettings {
 
   AppSettings copyWith({
     BusyMarkThemeModePreference? themeModePreference,
+    Object? localeTag = _unset,
     bool? sidebarVisible,
     bool? previewVisible,
     DocumentViewModePreference? documentViewMode,
@@ -209,6 +219,9 @@ class AppSettings {
   }) {
     return AppSettings(
       themeModePreference: themeModePreference ?? this.themeModePreference,
+      localeTag: identical(localeTag, _unset)
+          ? this.localeTag
+          : localeTag as String?,
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       previewVisible: previewVisible ?? this.previewVisible,
       documentViewMode: documentViewMode ?? this.documentViewMode,
@@ -273,6 +286,10 @@ class AppSettingsController extends StateNotifier<AppSettings> {
 
   Future<void> setThemeModePreference(BusyMarkThemeModePreference preference) {
     return _save(state.copyWith(themeModePreference: preference));
+  }
+
+  Future<void> setLocaleTag(String? localeTag) {
+    return _save(state.copyWith(localeTag: localeTag));
   }
 
   Future<void> setEditorFontSize(double size) {
@@ -378,4 +395,30 @@ T _enumFromName<T extends Enum>(List<T> values, Object? name, T fallback) {
     }
   }
   return fallback;
+}
+
+String? _localeTagFromJson(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  final tag = value.toString().trim();
+  return tag.isEmpty ? null : tag;
+}
+
+Locale? _localeFromTag(String? tag) {
+  if (tag == null || tag.isEmpty) {
+    return null;
+  }
+  final parts = tag.split(RegExp('[-_]'));
+  if (parts.length == 1) {
+    return Locale(parts.first);
+  }
+  if (parts.length == 2) {
+    return Locale(parts.first, parts.last);
+  }
+  return Locale.fromSubtags(
+    languageCode: parts[0],
+    scriptCode: parts[1].isEmpty ? null : parts[1],
+    countryCode: parts[2].isEmpty ? null : parts[2],
+  );
 }
