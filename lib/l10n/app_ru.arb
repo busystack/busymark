@@ -1,0 +1,1842 @@
+{
+  "@@locale": "ru",
+  "appTitle": "BusyMark",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Редактор документации с поддержкой Markdown и Writerside.",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "aboutBusyMark": "О BusyMark",
+  "@aboutBusyMark": {
+    "description": "Menu item and tooltip for the About dialog."
+  },
+  "aboutVersion": "Версия {version}",
+  "@aboutVersion": {
+    "description": "Version label in the About dialog.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutTagline": "Редактор Markdown и Writerside",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Лицензия",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Веб-сайт",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "Сообщить о проблеме",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
+  },
+  "advanced": "Дополнительно",
+  "@advanced": {
+    "description": "Settings section title for advanced actions."
+  },
+  "appearance": "Внешний вид",
+  "@appearance": {
+    "description": "Settings section title for appearance options."
+  },
+  "apply": "Применить",
+  "@apply": {
+    "description": "Button label that applies a dialog change."
+  },
+  "back": "Назад",
+  "@back": {
+    "description": "Tooltip for navigating back."
+  },
+  "bottomLeft": "Внизу слева",
+  "@bottomLeft": {
+    "description": "Editing button position option."
+  },
+  "bottomRight": "Внизу справа",
+  "@bottomRight": {
+    "description": "Editing button position option."
+  },
+  "cancel": "Отмена",
+  "@cancel": {
+    "description": "Cancel button label."
+  },
+  "choose": "Выбрать",
+  "@choose": {
+    "description": "Button label for choosing a file or path."
+  },
+  "chooseLocation": "Выберите расположение",
+  "@chooseLocation": {
+    "description": "File picker confirmation label for choosing a directory."
+  },
+  "copy": "Копировать",
+  "@copy": {
+    "description": "Copy command label."
+  },
+  "create": "Создать",
+  "@create": {
+    "description": "Create action label."
+  },
+  "creating": "Создание…",
+  "@creating": {
+    "description": "Progress label while a project or topic is being created."
+  },
+  "cut": "Вырезать",
+  "@cut": {
+    "description": "Cut command label."
+  },
+  "darkTheme": "Темная",
+  "@darkTheme": {
+    "description": "Dark theme option."
+  },
+  "discard": "Не сохранять",
+  "@discard": {
+    "description": "Discard unsaved changes button label."
+  },
+  "editor": "Редактор",
+  "@editor": {
+    "description": "Editor view label."
+  },
+  "file": "Файл",
+  "@file": {
+    "description": "Generic file kind label."
+  },
+  "find": "Найти",
+  "@find": {
+    "description": "Find command label."
+  },
+  "folder": "Папка",
+  "@folder": {
+    "description": "Folder kind label."
+  },
+  "insert": "Вставка",
+  "@insert": {
+    "description": "Insert button label."
+  },
+  "keyboardShortcuts": "Сочетания клавиш",
+  "@keyboardShortcuts": {
+    "description": "Keyboard shortcuts dialog title and menu item."
+  },
+  "lightTheme": "Светлая",
+  "@lightTheme": {
+    "description": "Light theme option."
+  },
+  "mainMenu": "Главное меню",
+  "@mainMenu": {
+    "description": "Native header bar main menu tooltip."
+  },
+  "markdown": "Markdown",
+  "@markdown": {
+    "description": "Markdown format label."
+  },
+  "open": "Открыть",
+  "@open": {
+    "description": "Open action label."
+  },
+  "outline": "Структура",
+  "@outline": {
+    "description": "Outline sidebar tab label."
+  },
+  "overwrite": "Перезаписать",
+  "@overwrite": {
+    "description": "Button label for overwriting a changed file."
+  },
+  "paste": "Вставить",
+  "@paste": {
+    "description": "Paste command label."
+  },
+  "pasteWithoutFormatting": "Вставить без форматирования",
+  "@pasteWithoutFormatting": {
+    "description": "Plain text paste command label."
+  },
+  "preview": "Предварительный просмотр",
+  "@preview": {
+    "description": "Preview view label."
+  },
+  "recent": "Недавние",
+  "@recent": {
+    "description": "Recent workspaces section title."
+  },
+  "redo": "Повторить",
+  "@redo": {
+    "description": "Redo command label."
+  },
+  "save": "Сохранить",
+  "@save": {
+    "description": "Save action label."
+  },
+  "search": "Поиск",
+  "@search": {
+    "description": "Search action label and field hint."
+  },
+  "selectAll": "Выбрать все",
+  "@selectAll": {
+    "description": "Select all command label."
+  },
+  "settings": "Настройки",
+  "@settings": {
+    "description": "Settings action label."
+  },
+  "source": "Исходный текст",
+  "@source": {
+    "description": "Source view label."
+  },
+  "split": "Разделенный вид",
+  "@split": {
+    "description": "Split view label."
+  },
+  "systemTheme": "Как в системе",
+  "@systemTheme": {
+    "description": "System theme option."
+  },
+  "theme": "Тема оформления",
+  "@theme": {
+    "description": "Theme setting label."
+  },
+  "appLanguage": "Язык интерфейса",
+  "@appLanguage": {
+    "description": "Application language setting label."
+  },
+  "systemLanguage": "Как в системе",
+  "@systemLanguage": {
+    "description": "Language selector option that follows the operating system locale."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language selector option for English."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language selector option for German."
+  },
+  "languageItalian": "Italiano",
+  "@languageItalian": {
+    "description": "Language selector option for Italian."
+  },
+  "languageNorwegian": "Norsk",
+  "@languageNorwegian": {
+    "description": "Language selector option for Norwegian."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Language selector option for French."
+  },
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Language selector option for Russian."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language selector option for Ukrainian."
+  },
+  "languagePolish": "Polski",
+  "@languagePolish": {
+    "description": "Language selector option for Polish."
+  },
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Language selector option for Spanish."
+  },
+  "languagePortuguese": "Português",
+  "@languagePortuguese": {
+    "description": "Language selector option for Portuguese."
+  },
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Language selector option for Arabic."
+  },
+  "languagePersian": "فارسی",
+  "@languagePersian": {
+    "description": "Language selector option for Persian."
+  },
+  "languageHindi": "हिन्दी",
+  "@languageHindi": {
+    "description": "Language selector option for Hindi."
+  },
+  "toggleSidebar": "Показать или скрыть боковую панель",
+  "@toggleSidebar": {
+    "description": "Native header bar sidebar toggle tooltip."
+  },
+  "topLeft": "Вверху слева",
+  "@topLeft": {
+    "description": "Editing button position option."
+  },
+  "topRight": "Вверху справа",
+  "@topRight": {
+    "description": "Editing button position option."
+  },
+  "undo": "Отменить",
+  "@undo": {
+    "description": "Undo command label."
+  },
+  "validate": "Проверить",
+  "@validate": {
+    "description": "Validate action label."
+  },
+  "validation": "Проверка",
+  "@validation": {
+    "description": "Settings section title for validation options."
+  },
+  "viewMode": "Режим просмотра",
+  "@viewMode": {
+    "description": "Native header bar view mode control label."
+  },
+  "welcome": "Добро пожаловать",
+  "@welcome": {
+    "description": "Welcome screen label and tooltip."
+  },
+  "writerside": "Writerside",
+  "@writerside": {
+    "description": "Writerside workspace kind label."
+  },
+  "xml": "XML",
+  "@xml": {
+    "description": "XML format label."
+  },
+  "fileTypeMarkdown": "Markdown",
+  "@fileTypeMarkdown": {
+    "description": "Native file picker type label for Markdown files."
+  },
+  "fileTypeImages": "Изображения",
+  "@fileTypeImages": {
+    "description": "Native file picker type label for images."
+  },
+  "openMarkdownFile": "Открыть файл Markdown",
+  "@openMarkdownFile": {
+    "description": "Action label for opening a Markdown file."
+  },
+  "markdownFileExtensions": ".md или .markdown",
+  "@markdownFileExtensions": {
+    "description": "Subtitle describing supported Markdown file extensions."
+  },
+  "openFolderOrWritersideProject": "Открыть папку или проект Writerside",
+  "@openFolderOrWritersideProject": {
+    "description": "Action label for opening a folder or Writerside project."
+  },
+  "markdownFolderOrWritersideProject": "Папка Markdown или проект, совместимый с Writerside.",
+  "@markdownFolderOrWritersideProject": {
+    "description": "Subtitle describing supported folder workspace types."
+  },
+  "shortcutGroupFile": "Файл",
+  "@shortcutGroupFile": {
+    "description": "Keyboard shortcut group for file commands."
+  },
+  "shortcutNewDocument": "Новый документ",
+  "@shortcutNewDocument": {
+    "description": "Keyboard shortcut label for creating a document."
+  },
+  "shortcutNewDocumentDescription": "Создать новый несохраненный документ Markdown.",
+  "@shortcutNewDocumentDescription": {
+    "description": "Keyboard shortcut description for creating a document."
+  },
+  "shortcutOpenDescription": "Открыть файл Markdown, папку или проект Writerside.",
+  "@shortcutOpenDescription": {
+    "description": "Keyboard shortcut description for opening content."
+  },
+  "shortcutSaveDescription": "Сохранить текущий файл Markdown.",
+  "@shortcutSaveDescription": {
+    "description": "Keyboard shortcut description for saving content."
+  },
+  "shortcutFindDescription": "Искать в текущей рабочей области.",
+  "@shortcutFindDescription": {
+    "description": "Keyboard shortcut description for search."
+  },
+  "shortcutKeyboardShortcutsDescription": "Показать справку по сочетаниям клавиш.",
+  "@shortcutKeyboardShortcutsDescription": {
+    "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutGroupTextEditing": "Редактирование текста",
+  "@shortcutGroupTextEditing": {
+    "description": "Keyboard shortcut group for text editing commands."
+  },
+  "shortcutSelectAllDescription": "Выделить весь текст в редакторе.",
+  "@shortcutSelectAllDescription": {
+    "description": "Keyboard shortcut description for selecting all text."
+  },
+  "shortcutCutDescription": "Вырезать выделенный текст.",
+  "@shortcutCutDescription": {
+    "description": "Keyboard shortcut description for cut."
+  },
+  "shortcutCopyDescription": "Скопировать выделенный текст.",
+  "@shortcutCopyDescription": {
+    "description": "Keyboard shortcut description for copy."
+  },
+  "shortcutPasteDescription": "Вставить из буфера обмена.",
+  "@shortcutPasteDescription": {
+    "description": "Keyboard shortcut description for paste."
+  },
+  "shortcutPastePlainTextDescription": "Вставить текст из буфера обмена без форматирования.",
+  "@shortcutPastePlainTextDescription": {
+    "description": "Keyboard shortcut description for plain text paste."
+  },
+  "shortcutUndoDescription": "Отменить последнее изменение.",
+  "@shortcutUndoDescription": {
+    "description": "Keyboard shortcut description for undo."
+  },
+  "shortcutRedoDescription": "Повторить последнее отмененное изменение.",
+  "@shortcutRedoDescription": {
+    "description": "Keyboard shortcut description for redo."
+  },
+  "clearEditorSelection": "Очистить выделение в редакторе",
+  "@clearEditorSelection": {
+    "description": "Keyboard shortcut label for clearing selection."
+  },
+  "shortcutClearEditorSelectionDescription": "Снять выделение в редакторе или фокус поиска.",
+  "@shortcutClearEditorSelectionDescription": {
+    "description": "Keyboard shortcut description for clearing selection."
+  },
+  "shortcutGroupFormatting": "Форматирование",
+  "@shortcutGroupFormatting": {
+    "description": "Keyboard shortcut group for inline formatting."
+  },
+  "shortcutBoldDescription": "Включить или отключить полужирное начертание для выделенного текста.",
+  "@shortcutBoldDescription": {
+    "description": "Keyboard shortcut description for bold."
+  },
+  "shortcutItalicDescription": "Включить или отключить курсив для выделенного текста.",
+  "@shortcutItalicDescription": {
+    "description": "Keyboard shortcut description for italic."
+  },
+  "shortcutUnderlineDescription": "Включить или отключить подчеркивание для выделенного текста.",
+  "@shortcutUnderlineDescription": {
+    "description": "Keyboard shortcut description for underline."
+  },
+  "shortcutLinkDescription": "Вставить или изменить ссылку.",
+  "@shortcutLinkDescription": {
+    "description": "Keyboard shortcut description for link insertion."
+  },
+  "shortcutInlineCodeDescription": "Включить или отключить встроенный код для выделенного текста.",
+  "@shortcutInlineCodeDescription": {
+    "description": "Keyboard shortcut description for inline code."
+  },
+  "shortcutStrikethroughDescription": "Включить или отключить зачеркивание для выделенного текста.",
+  "@shortcutStrikethroughDescription": {
+    "description": "Keyboard shortcut description for strikethrough."
+  },
+  "shortcutGroupBlocks": "Блоки",
+  "@shortcutGroupBlocks": {
+    "description": "Keyboard shortcut group for block styles."
+  },
+  "shortcutParagraphDescription": "Сделать текущий блок абзацем.",
+  "@shortcutParagraphDescription": {
+    "description": "Keyboard shortcut description for paragraph style."
+  },
+  "shortcutHeading1Description": "Сделать текущий блок заголовком 1.",
+  "@shortcutHeading1Description": {
+    "description": "Keyboard shortcut description for heading 1."
+  },
+  "shortcutHeading2Description": "Сделать текущий блок заголовком 2.",
+  "@shortcutHeading2Description": {
+    "description": "Keyboard shortcut description for heading 2."
+  },
+  "shortcutHeading3Description": "Сделать текущий блок заголовком 3.",
+  "@shortcutHeading3Description": {
+    "description": "Keyboard shortcut description for heading 3."
+  },
+  "shortcutHeading4Description": "Сделать текущий блок заголовком 4.",
+  "@shortcutHeading4Description": {
+    "description": "Keyboard shortcut description for heading 4."
+  },
+  "shortcutHeading5Description": "Сделать текущий блок заголовком 5.",
+  "@shortcutHeading5Description": {
+    "description": "Keyboard shortcut description for heading 5."
+  },
+  "shortcutHeading6Description": "Сделать текущий блок заголовком 6.",
+  "@shortcutHeading6Description": {
+    "description": "Keyboard shortcut description for heading 6."
+  },
+  "shortcutGroupLists": "Списки",
+  "@shortcutGroupLists": {
+    "description": "Keyboard shortcut group for list commands."
+  },
+  "numberedList": "Нумерованный список",
+  "@numberedList": {
+    "description": "Keyboard shortcut label for numbered list formatting."
+  },
+  "shortcutNumberedListDescription": "Включить или отключить форматирование нумерованного списка.",
+  "@shortcutNumberedListDescription": {
+    "description": "Keyboard shortcut description for numbered list."
+  },
+  "bulletedList": "Маркированный список",
+  "@bulletedList": {
+    "description": "Keyboard shortcut label for bulleted list formatting."
+  },
+  "shortcutBulletedListDescription": "Включить или отключить форматирование маркированного списка.",
+  "@shortcutBulletedListDescription": {
+    "description": "Keyboard shortcut description for bulleted list."
+  },
+  "checklist": "Контрольный список",
+  "@checklist": {
+    "description": "Keyboard shortcut label for checklist formatting."
+  },
+  "shortcutChecklistDescription": "Включить или отключить форматирование списка задач.",
+  "@shortcutChecklistDescription": {
+    "description": "Keyboard shortcut description for checklist."
+  },
+  "createMarkdownFile": "Создать файл Markdown",
+  "@createMarkdownFile": {
+    "description": "Welcome screen action for creating a Markdown file."
+  },
+  "createMarkdownFileDescription": "Создать локальный несохраненный документ Markdown.",
+  "@createMarkdownFileDescription": {
+    "description": "Welcome screen subtitle for creating a Markdown file."
+  },
+  "createWritersideProject": "Создать проект Writerside",
+  "@createWritersideProject": {
+    "description": "Welcome screen action for creating a Writerside project."
+  },
+  "createWritersideProjectDescription": "Создать локальный проект, совместимый с Writerside.",
+  "@createWritersideProjectDescription": {
+    "description": "Welcome screen subtitle for creating a Writerside project."
+  },
+  "defaultProjectName": "Документация",
+  "@defaultProjectName": {
+    "description": "Default project name shown in the create project dialog."
+  },
+  "defaultInstanceName": "Руководство пользователя",
+  "@defaultInstanceName": {
+    "description": "Default Writerside instance name shown in the create project dialog."
+  },
+  "defaultStartTopicTitle": "Начало работы",
+  "@defaultStartTopicTitle": {
+    "description": "Default start topic title shown in the create project dialog."
+  },
+  "projectName": "Название проекта",
+  "@projectName": {
+    "description": "Create project dialog field label."
+  },
+  "directoryName": "Имя каталога",
+  "@directoryName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceName": "Имя экземпляра",
+  "@instanceName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceId": "ID экземпляра",
+  "@instanceId": {
+    "description": "Create project dialog field label."
+  },
+  "startTopicTitle": "Заголовок стартовой темы",
+  "@startTopicTitle": {
+    "description": "Create project dialog field label."
+  },
+  "location": "Расположение",
+  "@location": {
+    "description": "Create dialog location section label."
+  },
+  "projectNameRequired": "Укажите название проекта.",
+  "@projectNameRequired": {
+    "description": "Validation message for missing project name."
+  },
+  "directoryNameRequired": "Укажите имя каталога.",
+  "@directoryNameRequired": {
+    "description": "Validation message for missing directory name."
+  },
+  "useSingleSafeDirectoryName": "Укажите одно безопасное имя каталога.",
+  "@useSingleSafeDirectoryName": {
+    "description": "Validation message for unsafe directory names."
+  },
+  "useLowercaseIdentifier": "Используйте идентификатор в нижнем регистре: буквы, цифры, подчеркивания или дефисы.",
+  "@useLowercaseIdentifier": {
+    "description": "Validation message for invalid Writerside instance IDs."
+  },
+  "startTopicTitleRequired": "Укажите название стартовой темы.",
+  "@startTopicTitleRequired": {
+    "description": "Validation message for missing start topic title."
+  },
+  "createWritersideProjectFailed": "Не удалось создать проект Writerside.",
+  "@createWritersideProjectFailed": {
+    "description": "Fallback error shown when Writerside project creation fails."
+  },
+  "settingsTitle": "Настройки BusyMark",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "wordWrap": "Перенос строк",
+  "@wordWrap": {
+    "description": "Word wrap setting label."
+  },
+  "editorFontSize": "Размер шрифта редактора",
+  "@editorFontSize": {
+    "description": "Editor font size setting label."
+  },
+  "validateOnEdit": "Проверять при редактировании",
+  "@validateOnEdit": {
+    "description": "Validation setting label."
+  },
+  "clearRecentWorkspaces": "Очистить список недавних рабочих областей",
+  "@clearRecentWorkspaces": {
+    "description": "Settings action label for clearing recent workspaces."
+  },
+  "editingButtons": "Кнопки редактирования",
+  "@editingButtons": {
+    "description": "Settings label for WYSIWYG editing button position."
+  },
+  "editingButtonsDescription": "Выберите, где будут отображаться плавающие кнопки редактирования WYSIWYG.",
+  "@editingButtonsDescription": {
+    "description": "Description for WYSIWYG editing button position setting."
+  },
+  "settingsWindowSectionTitle": "Окно",
+  "@settingsWindowSectionTitle": {"description":"Settings section title for native window behavior."},
+  "settingsConfirmCloseWithUnsavedChangesTitle": "Подтверждать закрытие при несохранённых изменениях",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Спрашивать перед закрытием BusyMark, если в документах есть несохранённые изменения.",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
+  "closeUnsavedChangesTitle": "Несохранённые изменения",
+  "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
+  "closeUnsavedChangesSingleMessage": "В этом документе есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?",
+  "@closeUnsavedChangesSingleMessage": {"description":"Window close confirmation message when one document has unsaved changes."},
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Сохранить изменения перед закрытием BusyMark?} =1{В 1 документе есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?} few{В {count} документах есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?} many{В {count} документах есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?} other{В {count} документах есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?}}",
+  "@closeUnsavedChangesMultipleMessage": {"description":"Window close confirmation message when multiple documents have unsaved changes.","placeholders":{"count":{"type":"int"}}},
+  "closeUnsavedChangesCancel": "Отмена",
+  "@closeUnsavedChangesCancel": {"description":"Cancel button label in the window close unsaved-changes dialog."},
+  "closeUnsavedChangesDiscard": "Не сохранять",
+  "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
+  "closeUnsavedChangesSave": "Сохранить",
+  "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
+  "currentFile": "Текущий файл",
+  "@currentFile": {
+    "description": "Fallback file name in unsaved changes dialog."
+  },
+  "unsavedChanges": "Несохраненные изменения",
+  "@unsavedChanges": {
+    "description": "Unsaved changes dialog title."
+  },
+  "unsavedChangesMessage": "В файле {fileName} есть несохраненные изменения. Сохранить их перед продолжением?",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes confirmation message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "fileChangedOnDisk": "Файл изменен на диске",
+  "@fileChangedOnDisk": {
+    "description": "File changed confirmation dialog title."
+  },
+  "fileChangedOnDiskMessage": "Этот файл был изменен на диске после открытия. Перезаписать его?",
+  "@fileChangedOnDiskMessage": {
+    "description": "File changed confirmation dialog message."
+  },
+  "untitledMarkdownFileName": "Без названия.md",
+  "@untitledMarkdownFileName": {
+    "description": "Display name for a new unsaved Markdown document."
+  },
+  "unorderedList": "Маркированный список",
+  "@unorderedList": {
+    "description": "WYSIWYG toolbar tooltip for unordered list."
+  },
+  "orderedList": "Нумерованный список",
+  "@orderedList": {
+    "description": "WYSIWYG toolbar tooltip for ordered list."
+  },
+  "taskList": "Список задач",
+  "@taskList": {
+    "description": "WYSIWYG toolbar tooltip for task list."
+  },
+  "toggleTaskChecked": "Отметить задачу или снять отметку",
+  "@toggleTaskChecked": {
+    "description": "WYSIWYG toolbar tooltip for toggling task state."
+  },
+  "indentListItem": "Увеличить отступ элемента списка",
+  "@indentListItem": {
+    "description": "WYSIWYG toolbar tooltip for indenting a list item."
+  },
+  "outdentListItem": "Уменьшить отступ элемента списка",
+  "@outdentListItem": {
+    "description": "WYSIWYG toolbar tooltip for outdenting a list item."
+  },
+  "blockquote": "Цитата",
+  "@blockquote": {
+    "description": "Blockquote command label."
+  },
+  "codeBlock": "Блок кода",
+  "@codeBlock": {
+    "description": "Code block command or preview label."
+  },
+  "codeBlockLanguage": "Язык блока кода",
+  "@codeBlockLanguage": {
+    "description": "Dialog title and toolbar tooltip for code block language."
+  },
+  "image": "Изображение",
+  "@image": {
+    "description": "Image command and document kind label."
+  },
+  "inlineImage": "Встроенное изображение",
+  "@inlineImage": {
+    "description": "Inline image command label."
+  },
+  "table": "Таблица",
+  "@table": {
+    "description": "Table command label."
+  },
+  "thematicBreak": "Горизонтальная линия",
+  "@thematicBreak": {
+    "description": "Thematic break command label."
+  },
+  "bold": "Полужирный",
+  "@bold": {
+    "description": "Bold command label."
+  },
+  "italic": "Курсив",
+  "@italic": {
+    "description": "Italic command label."
+  },
+  "underline": "Подчеркивание",
+  "@underline": {
+    "description": "Underline command label."
+  },
+  "strikethrough": "Зачеркивание",
+  "@strikethrough": {
+    "description": "Strikethrough command label."
+  },
+  "inlineCode": "Встроенный код",
+  "@inlineCode": {
+    "description": "Inline code command label."
+  },
+  "link": "Ссылка",
+  "@link": {
+    "description": "Link command and preview label."
+  },
+  "hardLineBreak": "Жесткий перенос строки",
+  "@hardLineBreak": {
+    "description": "Hard line break command label."
+  },
+  "textStyle": "Стиль текста",
+  "@textStyle": {
+    "description": "Text style menu tooltip."
+  },
+  "paragraph": "Абзац",
+  "@paragraph": {
+    "description": "Paragraph style label."
+  },
+  "heading1": "Заголовок 1",
+  "@heading1": {
+    "description": "Heading 1 style label."
+  },
+  "heading2": "Заголовок 2",
+  "@heading2": {
+    "description": "Heading 2 style label."
+  },
+  "heading3": "Заголовок 3",
+  "@heading3": {
+    "description": "Heading 3 style label."
+  },
+  "heading4": "Заголовок 4",
+  "@heading4": {
+    "description": "Heading 4 style label."
+  },
+  "heading5": "Заголовок 5",
+  "@heading5": {
+    "description": "Heading 5 style label."
+  },
+  "heading6": "Заголовок 6",
+  "@heading6": {
+    "description": "Heading 6 style label."
+  },
+  "headingLevelAbbreviation": "H{level}",
+  "@headingLevelAbbreviation": {
+    "description": "Compact outline badge for a heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTable": "Удалить таблицу",
+  "@deleteTable": {
+    "description": "Tooltip for deleting a table."
+  },
+  "tableColumnNumber": "Столбец {columnNumber}",
+  "@tableColumnNumber": {
+    "description": "Tooltip for a table column control.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertColumnLeft": "Вставить столбец слева",
+  "@insertColumnLeft": {
+    "description": "Menu item for inserting a table column to the left."
+  },
+  "insertColumnRight": "Вставить столбец справа",
+  "@insertColumnRight": {
+    "description": "Menu item for inserting a table column to the right."
+  },
+  "deleteColumn": "Удалить столбец",
+  "@deleteColumn": {
+    "description": "Menu item for deleting a table column."
+  },
+  "tableRowNumber": "Строка {rowNumber}",
+  "@tableRowNumber": {
+    "description": "Tooltip for a table row control.",
+    "placeholders": {
+      "rowNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertRowAbove": "Вставить строку выше",
+  "@insertRowAbove": {
+    "description": "Menu item for inserting a table row above."
+  },
+  "insertRowBelow": "Вставить строку ниже",
+  "@insertRowBelow": {
+    "description": "Menu item for inserting a table row below."
+  },
+  "deleteRow": "Удалить строку",
+  "@deleteRow": {
+    "description": "Menu item for deleting a table row."
+  },
+  "tableHeaderHint": "Заголовок",
+  "@tableHeaderHint": {
+    "description": "Hint for an empty table header cell."
+  },
+  "tableCellHint": "Ячейка",
+  "@tableCellHint": {
+    "description": "Hint for an empty table body cell."
+  },
+  "language": "Язык",
+  "@language": {
+    "description": "Code block language field label."
+  },
+  "hideEditingButtons": "Скрыть кнопки редактирования",
+  "@hideEditingButtons": {
+    "description": "Tooltip for hiding floating editing buttons."
+  },
+  "showEditingButtons": "Показать кнопки редактирования",
+  "@showEditingButtons": {
+    "description": "Tooltip for showing floating editing buttons."
+  },
+  "altText": "Альтернативный текст",
+  "@altText": {
+    "description": "Image alt text field label."
+  },
+  "describeTheImage": "Опишите изображение",
+  "@describeTheImage": {
+    "description": "Image alt text hint."
+  },
+  "columns": "Столбцы",
+  "@columns": {
+    "description": "Table dialog columns field label."
+  },
+  "rows": "Строки",
+  "@rows": {
+    "description": "Table dialog rows field label."
+  },
+  "tableHeaderNumber": "Заголовок {columnNumber}",
+  "@tableHeaderNumber": {
+    "description": "Default header text for a newly inserted table column.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellDefault": "Ячейка",
+  "@tableCellDefault": {
+    "description": "Default cell text for newly inserted table cells."
+  },
+  "noImageSource": "Источник изображения не указан",
+  "@noImageSource": {
+    "description": "Placeholder shown when an image has no source."
+  },
+  "hideSidebar": "Скрыть боковую панель",
+  "@hideSidebar": {
+    "description": "Tooltip for hiding the workspace sidebar."
+  },
+  "showSidebar": "Показать боковую панель",
+  "@showSidebar": {
+    "description": "Tooltip for showing the workspace sidebar."
+  },
+  "showPreview": "Показать предварительный просмотр",
+  "@showPreview": {
+    "description": "Tooltip for showing the preview pane."
+  },
+  "hidePreview": "Скрыть предварительный просмотр",
+  "@hidePreview": {
+    "description": "Tooltip for hiding the preview pane."
+  },
+  "workspaceKindUnsavedMarkdown": "Несохраненный файл Markdown",
+  "@workspaceKindUnsavedMarkdown": {
+    "description": "Workspace kind label for an unsaved Markdown file."
+  },
+  "workspaceKindSingleMarkdown": "Отдельный файл Markdown",
+  "@workspaceKindSingleMarkdown": {
+    "description": "Workspace kind label for a single Markdown file."
+  },
+  "workspaceKindMarkdownFolder": "Папка с Markdown",
+  "@workspaceKindMarkdownFolder": {
+    "description": "Workspace kind label for a Markdown folder."
+  },
+  "workspaceKindWritersideModule": "Модуль Writerside",
+  "@workspaceKindWritersideModule": {
+    "description": "Workspace kind label for a Writerside module."
+  },
+  "problems": "Проблемы",
+  "@problems": {
+    "description": "Diagnostics dialog title."
+  },
+  "diagnosticCount": "{count, plural, =0{Диагностических сообщений нет} one{{count} диагностическое сообщение} few{{count} диагностических сообщения} many{{count} диагностических сообщений} other{{count} диагностического сообщения}}",
+  "@diagnosticCount": {
+    "description": "Count of diagnostics in the workspace.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "files": "Файлы",
+  "@files": {
+    "description": "Files sidebar tab label."
+  },
+  "toc": "Оглавление",
+  "@toc": {
+    "description": "Writerside table of contents sidebar tab label."
+  },
+  "markdownUnsaved": "Markdown — не сохранен",
+  "@markdownUnsaved": {
+    "description": "Workspace detail label for an unsaved Markdown file."
+  },
+  "workspaceDetail": "{kind} — {count, plural, one{{count} файл} few{{count} файла} many{{count} файлов} other{{count} файла}}",
+  "@workspaceDetail": {
+    "description": "Workspace detail with kind and file count.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFiles": "Файлов нет",
+  "@noFiles": {
+    "description": "Empty state shown when there are no files."
+  },
+  "noWritersideToc": "Оглавление Writerside отсутствует",
+  "@noWritersideToc": {
+    "description": "Empty state shown when there is no Writerside TOC."
+  },
+  "tocSection": "Раздел оглавления",
+  "@tocSection": {
+    "description": "Fallback label for a Writerside TOC section."
+  },
+  "newTopic": "Новая тема",
+  "@newTopic": {
+    "description": "Create new Writerside topic action label."
+  },
+  "newChildTopic": "Новая дочерняя тема",
+  "@newChildTopic": {
+    "description": "Create new child Writerside topic action label."
+  },
+  "defaultNewTopicTitle": "Новая тема",
+  "@defaultNewTopicTitle": {
+    "description": "Default topic title in the create topic dialog."
+  },
+  "topicTitle": "Название темы",
+  "@topicTitle": {
+    "description": "Create topic dialog field label."
+  },
+  "fileName": "Имя файла",
+  "@fileName": {
+    "description": "Create topic dialog field label."
+  },
+  "topicTitleRequired": "Укажите название темы.",
+  "@topicTitleRequired": {
+    "description": "Validation message for missing topic title."
+  },
+  "fileNameRequired": "Укажите имя файла.",
+  "@fileNameRequired": {
+    "description": "Validation message for missing file name."
+  },
+  "useSingleSafeFileName": "Укажите одно безопасное имя файла.",
+  "@useSingleSafeFileName": {
+    "description": "Validation message for unsafe file names."
+  },
+  "useExpectedExtension": "Используйте расширение {extension} для выбранного формата.",
+  "@useExpectedExtension": {
+    "description": "Validation message for an unexpected file extension.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "useIdentifierCharacters": "Перед расширением используйте буквы, цифры, подчеркивания или дефисы.",
+  "@useIdentifierCharacters": {
+    "description": "Validation message for invalid topic IDs."
+  },
+  "topicIdAlreadyExists": "ID темы уже существует.",
+  "@topicIdAlreadyExists": {
+    "description": "Validation message for duplicate topic IDs."
+  },
+  "createWritersideTopicFailed": "Не удалось создать тему Writerside.",
+  "@createWritersideTopicFailed": {
+    "description": "Fallback error shown when topic creation fails."
+  },
+  "noOutline": "Структура отсутствует",
+  "@noOutline": {
+    "description": "Empty state shown when a document has no outline."
+  },
+  "expandKind": "Развернуть {kind}",
+  "@expandKind": {
+    "description": "Tooltip for expanding a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseKind": "Свернуть {kind}",
+  "@collapseKind": {
+    "description": "Tooltip for collapsing a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "foldKindSection": "раздел",
+  "@foldKindSection": {
+    "description": "Fold kind label for a section."
+  },
+  "foldKindList": "список",
+  "@foldKindList": {
+    "description": "Fold kind label for a list."
+  },
+  "foldKindQuote": "цитата",
+  "@foldKindQuote": {
+    "description": "Fold kind label for a blockquote."
+  },
+  "foldKindTag": "тег",
+  "@foldKindTag": {
+    "description": "Fold kind label for an XML tag."
+  },
+  "noPreview": "Нет предварительного просмотра",
+  "@noPreview": {
+    "description": "Empty state shown when there is no preview."
+  },
+  "note": "Примечание",
+  "@note": {
+    "description": "Preview label for a note admonition."
+  },
+  "tip": "Совет",
+  "@tip": {
+    "description": "Preview label for a tip admonition."
+  },
+  "warning": "Предупреждение",
+  "@warning": {
+    "description": "Preview label for a warning admonition."
+  },
+  "tabs": "Вкладки",
+  "@tabs": {
+    "description": "Preview label for a tabs block."
+  },
+  "tab": "Вкладка",
+  "@tab": {
+    "description": "Preview label for a tab block."
+  },
+  "procedure": "Процедура",
+  "@procedure": {
+    "description": "Preview label for a procedure block."
+  },
+  "step": "Шаг",
+  "@step": {
+    "description": "Preview label for a procedure step."
+  },
+  "topic": "Тема",
+  "@topic": {
+    "description": "Preview label for a topic element."
+  },
+  "chapter": "Глава",
+  "@chapter": {
+    "description": "Preview label for a chapter element."
+  },
+  "couldNotOpenTarget": "Не удалось открыть {target}",
+  "@couldNotOpenTarget": {
+    "description": "Snackbar shown when a link target cannot be opened.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "linkTargetNotFound": "Цель ссылки не найдена: {targetPath}",
+  "@linkTargetNotFound": {
+    "description": "Snackbar shown when a link target path is missing.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "cannotOpenFileTypeInEditor": "Этот тип файла нельзя открыть в редакторе",
+  "@cannotOpenFileTypeInEditor": {
+    "description": "Snackbar shown when a file type cannot be opened in the editor."
+  },
+  "anchorNotFound": "Якорь не найден: {anchor}",
+  "@anchorNotFound": {
+    "description": "Snackbar shown when a link anchor is missing.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "noProblemsFound": "Проблем не найдено",
+  "@noProblemsFound": {
+    "description": "Diagnostics empty state."
+  },
+  "noResults": "Нет результатов",
+  "@noResults": {
+    "description": "Search empty state."
+  },
+  "searchResultLine": "{relativePath} — строка {lineNumber}",
+  "@searchResultLine": {
+    "description": "Search result subtitle with file path and line number.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      },
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "untitledResult": "Результат без названия",
+  "@untitledResult": {
+    "description": "Fallback search result title."
+  },
+  "documentKindMarkdownFile": "Файл Markdown",
+  "@documentKindMarkdownFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideMarkdownTopic": "Markdown-тема Writerside",
+  "@documentKindWritersideMarkdownTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideXmlTopic": "XML-тема Writerside",
+  "@documentKindWritersideXmlTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideTree": "Дерево Writerside",
+  "@documentKindWritersideTree": {
+    "description": "Search result document kind label."
+  },
+  "documentKindConfigurationFile": "Конфигурационный файл",
+  "@documentKindConfigurationFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindVariablesFile": "Файл переменных",
+  "@documentKindVariablesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindCategoriesFile": "Файл категорий",
+  "@documentKindCategoriesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindResourceFile": "Файл ресурсов",
+  "@documentKindResourceFile": {
+    "description": "Search result document kind label."
+  },
+  "workspaceErrorOpenFailed": "Не удалось открыть: {error}",
+  "@workspaceErrorOpenFailed": {
+    "description": "Workspace error message shown when opening a path fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideProjectFailed": "Не удалось создать проект Writerside: {error}",
+  "@workspaceErrorCreateWritersideProjectFailed": {
+    "description": "Workspace error message shown when Writerside project creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideTopicFailed": "Не удалось создать тему Writerside: {error}",
+  "@workspaceErrorCreateWritersideTopicFailed": {
+    "description": "Workspace error message shown when Writerside topic creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCouldNotOpenFile": "Не удалось открыть файл: {error}",
+  "@workspaceErrorCouldNotOpenFile": {
+    "description": "Workspace error message shown when opening a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorChooseWhereToSaveMarkdown": "Выберите место для сохранения этого файла Markdown.",
+  "@workspaceErrorChooseWhereToSaveMarkdown": {
+    "description": "Workspace error message shown when an untitled file needs a save location."
+  },
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Сохранение заблокировано: файл на диске изменен.",
+  "@workspaceErrorSaveBlockedFileChangedOnDisk": {
+    "description": "Workspace error message shown when a save is blocked by external changes."
+  },
+  "workspaceErrorSaveFailed": "Не удалось сохранить: {error}",
+  "@workspaceErrorSaveFailed": {
+    "description": "Workspace error message shown when saving fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorValidationFailed": "Проверка не удалась: {error}",
+  "@workspaceErrorValidationFailed": {
+    "description": "Workspace error message shown when validation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPathDoesNotExist": "Путь не существует: {path}",
+  "@errorPathDoesNotExist": {
+    "description": "Detail for a missing path error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetDirectoryNotEmpty": "Целевой каталог уже существует и не пуст: {path}",
+  "@errorTargetDirectoryNotEmpty": {
+    "description": "Detail for a non-empty target directory error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetPathNotDirectory": "Целевой путь уже существует и не является каталогом: {path}",
+  "@errorTargetPathNotDirectory": {
+    "description": "Detail for a target path that is not a directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratedFileAlreadyExists": "Сгенерированный файл уже существует: {path}",
+  "@errorGeneratedFileAlreadyExists": {
+    "description": "Detail for a generated file conflict.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorParentDirectoryRequired": "Укажите родительский каталог.",
+  "@errorParentDirectoryRequired": {
+    "description": "Detail for missing parent directory input."
+  },
+  "errorParentDirectoryMissing": "Родительский каталог не существует: {path}",
+  "@errorParentDirectoryMissing": {
+    "description": "Detail for a missing parent directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProjectNameRequired": "Укажите название проекта.",
+  "@errorProjectNameRequired": {
+    "description": "Detail for a missing project name."
+  },
+  "errorDirectoryNameRequired": "Укажите имя каталога.",
+  "@errorDirectoryNameRequired": {
+    "description": "Detail for a missing directory name."
+  },
+  "errorDirectoryNameUnsafe": "Имя каталога должно быть одним безопасным сегментом пути.",
+  "@errorDirectoryNameUnsafe": {
+    "description": "Detail for an unsafe directory name."
+  },
+  "errorInstanceIdInvalid": "ID экземпляра должен начинаться со строчной буквы и содержать только строчные буквы, цифры, подчеркивания и дефисы.",
+  "@errorInstanceIdInvalid": {
+    "description": "Detail for an invalid Writerside instance ID."
+  },
+  "errorTopicFileInvalid": "Имя файла темы должно быть именем файла Markdown без разделителей пути.",
+  "@errorTopicFileInvalid": {
+    "description": "Detail for an invalid topic file name."
+  },
+  "errorTopicTitleRequired": "Требуется название темы.",
+  "@errorTopicTitleRequired": {
+    "description": "Detail for a missing topic title."
+  },
+  "errorWritersideModuleRootMissing": "Корень модуля Writerside не существует: {path}",
+  "@errorWritersideModuleRootMissing": {
+    "description": "Detail for a missing Writerside module root.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideModuleNotOpen": "Для создания темы модуль Writerside должен быть открыт.",
+  "@errorWritersideModuleNotOpen": {
+    "description": "Detail shown when creating a topic without an open Writerside module."
+  },
+  "errorWritersideInstanceTreeMissing": "В модуле Writerside отсутствует дерево экземпляра справки.",
+  "@errorWritersideInstanceTreeMissing": {
+    "description": "Detail shown when creating a topic without a Writerside instance tree."
+  },
+  "errorWritersideTreeFileMissing": "Файл дерева Writerside не существует: {path}",
+  "@errorWritersideTreeFileMissing": {
+    "description": "Detail for a missing Writerside tree file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicIdAlreadyExists": "ID темы «{topicId}» уже существует в этом модуле справки.",
+  "@errorTopicIdAlreadyExists": {
+    "description": "Detail for a duplicate topic ID.",
+    "placeholders": {
+      "topicId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileAlreadyExists": "Файл темы уже существует: {path}",
+  "@errorTopicFileAlreadyExists": {
+    "description": "Detail for an existing topic file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReferenceTopicMissing": "Выбранная опорная тема отсутствует в дереве: {topic}",
+  "@errorReferenceTopicMissing": {
+    "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicsRootUnsafe": "Корень тем должен быть безопасным относительным каталогом.",
+  "@errorTopicsRootUnsafe": {
+    "description": "Detail for an unsafe topics root directory."
+  },
+  "errorTopicFileNameUnsafe": "Имя файла темы должно быть одним безопасным сегментом пути.",
+  "@errorTopicFileNameUnsafe": {
+    "description": "Detail for an unsafe topic file name."
+  },
+  "errorTopicFileExtensionMismatch": "Расширение файла темы должно соответствовать выбранному формату ({extension}).",
+  "@errorTopicFileExtensionMismatch": {
+    "description": "Detail for a topic file extension mismatch.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileNameInvalid": "Имя файла темы должно содержать только буквы, цифры, подчеркивания и дефисы.",
+  "@errorTopicFileNameInvalid": {
+    "description": "Detail for a topic file name with invalid characters."
+  },
+  "errorUnknown": "Неизвестная ошибка: {code}",
+  "@errorUnknown": {
+    "description": "Fallback detail for an unknown coded application error.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileStatFailed": "Не удалось прочитать метаданные файла: {error}",
+  "@diagnosticWorkspaceFileStatFailed": {
+    "description": "Diagnostic shown when file metadata cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceScanSkipped": "Обнаружена большая рабочая область. Некоторые файлы пропущены, чтобы приложение отвечало быстрее.",
+  "@diagnosticWorkspaceScanSkipped": {
+    "description": "Diagnostic shown when workspace scanning skips files."
+  },
+  "diagnosticWorkspaceScanInspectFailed": "Не удалось проверить запись рабочей области: {error}",
+  "@diagnosticWorkspaceScanInspectFailed": {
+    "description": "Diagnostic shown when a workspace entry cannot be inspected.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileTooLarge": "Размер файла превышает предел автоматического анализа в бета-версии.",
+  "@diagnosticWorkspaceFileTooLarge": {
+    "description": "Diagnostic shown when a file is too large to parse automatically."
+  },
+  "diagnosticWorkspaceFileReadFailed": "Не удалось прочитать файл Markdown: {error}",
+  "@diagnosticWorkspaceFileReadFailed": {
+    "description": "Diagnostic shown when a Markdown file cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownAttributeMalformed": "Некорректный блок атрибутов заголовка Writerside.",
+  "@diagnosticMarkdownAttributeMalformed": {
+    "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
+  },
+  "diagnosticMarkdownHeadingDuplicateId": "Дублирующийся ID заголовка «{id}».",
+  "@diagnosticMarkdownHeadingDuplicateId": {
+    "description": "Markdown parser diagnostic for duplicate heading IDs.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Дополнительные заголовки H1 верхнего уровня рассматриваются как главы.",
+  "@diagnosticWritersideTopicH1ConvertedToChapter": {
+    "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
+  },
+  "diagnosticWritersideMarkdownTopicMissingTitle": "У Markdown-темы Writerside нет заголовка H1 или title.",
+  "@diagnosticWritersideMarkdownTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside Markdown topic without a title."
+  },
+  "diagnosticWritersideXmlTopicMissingTitle": "У XML-темы отсутствует заголовок.",
+  "@diagnosticWritersideXmlTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside XML topic without a title."
+  },
+  "diagnosticWritersideTopicFileMissingTitle": "У темы «{fileName}» отсутствует заголовок.",
+  "@diagnosticWritersideTopicFileMissingTitle": {
+    "description": "Diagnostic for a Writerside topic file without a title.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownFrontMatterMalformed": "Front matter не закрыт.",
+  "@diagnosticMarkdownFrontMatterMalformed": {
+    "description": "Markdown parser diagnostic for unclosed front matter."
+  },
+  "diagnosticMarkdownRawHtmlUnsafe": "Небезопасный HTML-элемент.",
+  "@diagnosticMarkdownRawHtmlUnsafe": {
+    "description": "Markdown parser diagnostic for unsafe raw HTML."
+  },
+  "diagnosticMarkdownLinkUnresolvedTarget": "Цель ссылки не существует: {targetPath}",
+  "@diagnosticMarkdownLinkUnresolvedTarget": {
+    "description": "Markdown parser diagnostic for a missing link target.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkUnresolvedAnchor": "Якорь «{anchor}» не существует.",
+  "@diagnosticMarkdownLinkUnresolvedAnchor": {
+    "description": "Markdown parser diagnostic for a missing local anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingAlt": "У изображения «{destination}» отсутствует альтернативный текст.",
+  "@diagnosticMarkdownImageMissingAlt": {
+    "description": "Markdown parser diagnostic for a missing image alt text.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingFile": "Файл изображения не существует: {destination}",
+  "@diagnosticMarkdownImageMissingFile": {
+    "description": "Markdown parser diagnostic for a missing image file.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticInvalidXml": "Некорректный XML: {message}",
+  "@diagnosticInvalidXml": {
+    "description": "XML parser diagnostic for invalid XML.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigInvalidRoot": "Корневым элементом writerside.cfg должен быть <ihp>.",
+  "@diagnosticWritersideConfigInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
+  },
+  "diagnosticWritersideConfigMissingSnippetsSrc": "В объявлении snippets отсутствует атрибут src.",
+  "@diagnosticWritersideConfigMissingSnippetsSrc": {
+    "description": "Writerside parser diagnostic for a snippets declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "В объявлении instance-groups отсутствует атрибут src.",
+  "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
+    "description": "Writerside parser diagnostic for an instance-groups declaration without src."
+  },
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Неподдерживаемый режим keymaps: {mode}",
+  "@diagnosticWritersideConfigInvalidKeymapsMode": {
+    "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceSrc": "В объявлении instance отсутствует атрибут src.",
+  "@diagnosticWritersideConfigMissingInstanceSrc": {
+    "description": "Writerside parser diagnostic for an instance declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstance": "В writerside.cfg не зарегистрирован ни один экземпляр.",
+  "@diagnosticWritersideConfigMissingInstance": {
+    "description": "Writerside parser diagnostic for a config with no instance."
+  },
+  "diagnosticWritersideTreeInvalidRoot": "Корневым элементом .tree должен быть <instance-profile>.",
+  "@diagnosticWritersideTreeInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid tree root element."
+  },
+  "diagnosticWritersideTreeMissingId": "У профиля экземпляра отсутствует идентификатор.",
+  "@diagnosticWritersideTreeMissingId": {
+    "description": "Writerside parser diagnostic for an instance profile without id."
+  },
+  "diagnosticWritersideTreeIdMismatch": "Имя файла дерева не соответствует идентификатору экземпляра «{id}».",
+  "@diagnosticWritersideTreeIdMismatch": {
+    "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingStartPage": "В экземпляре, не являющемся библиотекой, отсутствует стартовая страница.",
+  "@diagnosticWritersideTreeMissingStartPage": {
+    "description": "Writerside parser diagnostic for a tree missing start-page."
+  },
+  "diagnosticWritersideStartPageMissing": "Стартовая страница «{startPage}» не существует.",
+  "@diagnosticWritersideStartPageMissing": {
+    "description": "Writerside diagnostic for a missing start page.",
+    "placeholders": {
+      "startPage": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeDuplicateTopic": "Тема «{topic}» встречается в этом оглавлении несколько раз.",
+  "@diagnosticWritersideTreeDuplicateTopic": {
+    "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableMalformedDeclaration": "Объявление переменной должно содержать имя и значение.",
+  "@diagnosticWritersideVariableMalformedDeclaration": {
+    "description": "Writerside parser diagnostic for a malformed variable declaration."
+  },
+  "diagnosticWritersideVariableDuplicateName": "Переменная «{name}» объявлена несколько раз.",
+  "@diagnosticWritersideVariableDuplicateName": {
+    "description": "Writerside parser diagnostic for a duplicate variable name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryMissingId": "У категории отсутствует идентификатор.",
+  "@diagnosticWritersideCategoryMissingId": {
+    "description": "Writerside parser diagnostic for a category without id."
+  },
+  "diagnosticWritersideCategoryDuplicateId": "Категория «{id}» объявлена несколько раз.",
+  "@diagnosticWritersideCategoryDuplicateId": {
+    "description": "Writerside parser diagnostic for a duplicate category ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryDuplicateOrder": "Порядок категории «{order}» объявлен несколько раз.",
+  "@diagnosticWritersideCategoryDuplicateOrder": {
+    "description": "Writerside parser diagnostic for a duplicate category order.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicInvalidRoot": "Корневым элементом .topic должен быть <topic>.",
+  "@diagnosticWritersideTopicInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid XML topic root."
+  },
+  "diagnosticWritersideTopicMissingRootId": "У XML-темы отсутствует корневой идентификатор.",
+  "@diagnosticWritersideTopicMissingRootId": {
+    "description": "Writerside parser diagnostic for an XML topic missing root id."
+  },
+  "diagnosticWritersideTopicRootIdMismatch": "Корневой идентификатор XML-темы «{id}» должен совпадать с именем файла «{expectedId}».",
+  "@diagnosticWritersideTopicRootIdMismatch": {
+    "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "expectedId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateElementId": "Идентификатор элемента «{elementId}» встречается несколько раз.",
+  "@diagnosticWritersideTopicDuplicateElementId": {
+    "description": "Writerside parser diagnostic for a duplicate XML element ID.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAnchorMissingHref": "У элемента <a> отсутствует атрибут href.",
+  "@diagnosticWritersideTopicAnchorMissingHref": {
+    "description": "Writerside parser diagnostic for an anchor without href."
+  },
+  "diagnosticWritersideConfigMissing": "Для режима Writerside требуется файл writerside.cfg.",
+  "@diagnosticWritersideConfigMissing": {
+    "description": "Writerside module diagnostic for a missing writerside.cfg."
+  },
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Отсутствует настроенный каталог конфигурации сборки: {relativePath}",
+  "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
+    "description": "Writerside module diagnostic for a missing build config directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Отсутствует настроенный каталог спецификаций API: {relativePath}",
+  "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
+    "description": "Writerside module diagnostic for a missing API specifications directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "Отсутствует настроенный каталог фрагментов: {relativePath}",
+  "@diagnosticWritersideConfigMissingSnippetsDirectory": {
+    "description": "Writerside module diagnostic for a missing snippets directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingVarsFile": "Отсутствует настроенный файл переменных: {relativePath}",
+  "@diagnosticWritersideConfigMissingVarsFile": {
+    "description": "Writerside module diagnostic for a missing variables file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingCategoriesFile": "Отсутствует настроенный файл категорий: {relativePath}",
+  "@diagnosticWritersideConfigMissingCategoriesFile": {
+    "description": "Writerside module diagnostic for a missing categories file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Отсутствует настроенный файл групп экземпляров: {relativePath}",
+  "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
+    "description": "Writerside module diagnostic for a missing instance groups file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceTree": "Зарегистрированное дерево экземпляра «{source}» не существует.",
+  "@diagnosticWritersideConfigMissingInstanceTree": {
+    "description": "Writerside module diagnostic for a missing registered instance tree.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicReadFailed": "Не удалось прочитать файл темы: {error}",
+  "@diagnosticWritersideTopicReadFailed": {
+    "description": "Writerside module diagnostic for a topic file read failure.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Отсутствует каталог тем по умолчанию: {relativePath}",
+  "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing default topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicsDirectoryMissing": "Отсутствует настроенный каталог тем: {relativePath}",
+  "@diagnosticWritersideTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideImagesDirectoryMissing": "Отсутствует настроенный каталог изображений: {relativePath}",
+  "@diagnosticWritersideImagesDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing images directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateId": "Идентификатор элемента «{id}» встречается несколько раз.",
+  "@diagnosticWritersideTopicDuplicateId": {
+    "description": "Writerside module diagnostic for a duplicate topic element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingTopic": "Оглавление ссылается на отсутствующую тему «{topic}».",
+  "@diagnosticWritersideTreeMissingTopic": {
+    "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeInvalidHref": "Внешняя ссылка «{href}» недействительна.",
+  "@diagnosticWritersideTreeInvalidHref": {
+    "description": "Writerside module diagnostic for an invalid external href.",
+    "placeholders": {
+      "href": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableUnresolved": "Переменная «%{name}%» не объявлена.",
+  "@diagnosticWritersideVariableUnresolved": {
+    "description": "Writerside module diagnostic for an undeclared variable.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicLinkUnresolved": "Не удалось разрешить ссылку на тему «{destination}».",
+  "@diagnosticWritersideTopicLinkUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic link.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideAnchorUnresolved": "Якорь «{anchor}» не существует в «{targetName}».",
+  "@diagnosticWritersideAnchorUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeMissingFrom": "У элемента <include> отсутствует атрибут from.",
+  "@diagnosticWritersideIncludeMissingFrom": {
+    "description": "Writerside module diagnostic for an include without a from attribute."
+  },
+  "diagnosticWritersideIncludeSourceMissing": "Источник <include> «{from}» не существует.",
+  "@diagnosticWritersideIncludeSourceMissing": {
+    "description": "Writerside module diagnostic for a missing include source.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeElementMissing": "Включаемый элемент «{elementId}» не существует в «{from}».",
+  "@diagnosticWritersideIncludeElementMissing": {
+    "description": "Writerside module diagnostic for a missing include element.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryUnresolved": "Категория «{ref}» из раздела «См. также» не объявлена.",
+  "@diagnosticWritersideCategoryUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved seealso category.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAmbiguousReference": "Ссылка на тему «{reference}» неоднозначна.",
+  "@diagnosticWritersideTopicAmbiguousReference": {
+    "description": "Writerside module diagnostic for an ambiguous topic reference.",
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticUnknown": "Неизвестное диагностическое сообщение: {code}",
+  "@diagnosticUnknown": {
+    "description": "Fallback text for an unknown diagnostic code.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  }
+}

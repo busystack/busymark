@@ -48,7 +48,6 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.attribute.malformed',
             severity: DiagnosticSeverity.warning,
-            message: 'Malformed Writerside heading attribute block.',
             filePath: filePath,
             sourceSpan: SourceSpan.fromOffsets(
               filePath: filePath,
@@ -84,8 +83,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.heading.duplicate-id',
             severity: DiagnosticSeverity.warning,
-            message: 'Duplicate heading ID "$id".',
             filePath: filePath,
+            args: {'id': id},
             sourceSpan: span,
             relatedSpans: [ids[id]!],
           ),
@@ -100,8 +99,6 @@ class MarkdownParser {
           Diagnostic(
             code: 'writerside.topic.h1-converted-to-chapter',
             severity: DiagnosticSeverity.warning,
-            message:
-                'Additional top-level H1 headings are treated as chapters.',
             filePath: filePath,
             sourceSpan: span,
           ),
@@ -127,6 +124,8 @@ class MarkdownParser {
         r'^\s*(```|~~~)\s*([A-Za-z0-9_+\-#.]*)',
       ).firstMatch(line);
       if (fence != null) {
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
         if (!inFence) {
           inFence = true;
           fenceStart = offset;
@@ -214,6 +213,9 @@ class MarkdownParser {
       if (_isSetextHeadingCandidate(trimmed)) {
         previousSetextCandidateLine = line;
         previousSetextCandidateOffset = offset;
+      } else if (trimmed.isEmpty) {
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
       } else if (trimmed.isNotEmpty) {
         previousSetextCandidateLine = null;
         previousSetextCandidateOffset = null;
@@ -227,7 +229,6 @@ class MarkdownParser {
         Diagnostic(
           code: 'writerside.topic.missing-title',
           severity: DiagnosticSeverity.warning,
-          message: 'Writerside Markdown topic has no H1 or front matter title.',
           filePath: filePath,
           sourceSpan: SourceSpan.fromOffsets(
             filePath: filePath,
@@ -358,40 +359,124 @@ class MarkdownParser {
   ) {
     var scanOffset = _frontMatterEndOffset(source);
     final chunks = <_ScannedBlockSource>[];
-    int? chunkStart;
     final lines = source.substring(scanOffset).split(RegExp('(?<=\n)'));
+    final indexedLines = <_ScannedSourceLine>[];
     for (final rawLine in lines) {
-      final line = rawLine.endsWith('\n')
-          ? rawLine.substring(0, rawLine.length - 1)
-          : rawLine;
-      if (line.trim().isEmpty) {
-        if (chunkStart != null) {
-          chunks.add(
-            _ScannedBlockSource.fromOffsets(
-              filePath: filePath,
-              source: source,
-              startOffset: chunkStart,
-              endOffset: scanOffset,
-            ),
-          );
-          chunkStart = null;
-        }
-      } else {
-        chunkStart ??= scanOffset;
-      }
+      indexedLines.add(
+        _ScannedSourceLine(rawLine: rawLine, offset: scanOffset),
+      );
       scanOffset += rawLine.length;
     }
-    if (chunkStart != null) {
+
+    void addChunk(int startIndex, int endIndex) {
+      if (startIndex >= indexedLines.length || endIndex <= startIndex) {
+        return;
+      }
       chunks.add(
         _ScannedBlockSource.fromOffsets(
           filePath: filePath,
           source: source,
-          startOffset: chunkStart,
-          endOffset: source.length,
+          startOffset: indexedLines[startIndex].offset,
+          endOffset: indexedLines[endIndex - 1].endOffset,
         ),
       );
     }
+
+    var index = 0;
+    while (index < indexedLines.length) {
+      if (indexedLines[index].trimmed.isEmpty) {
+        index += 1;
+        continue;
+      }
+
+      final startIndex = index;
+      final fence = _fenceMarker(indexedLines[index].line);
+      if (fence != null) {
+        index += 1;
+        while (index < indexedLines.length) {
+          if (_isClosingFence(indexedLines[index].line, fence)) {
+            index += 1;
+            break;
+          }
+          index += 1;
+        }
+        addChunk(startIndex, index);
+        continue;
+      }
+
+      if (_isAtxHeading(indexedLines[index].line) ||
+          _isThematicBreak(indexedLines[index].trimmed)) {
+        index += 1;
+        addChunk(startIndex, index);
+        continue;
+      }
+
+      final listIndent = _listItemIndent(indexedLines[index].line);
+      if (listIndent != null) {
+        index += 1;
+        while (index < indexedLines.length) {
+          final line = indexedLines[index];
+          if (line.trimmed.isEmpty) {
+            break;
+          }
+          final nextIndent = _listItemIndent(line.line);
+          if (nextIndent != null && nextIndent <= listIndent) {
+            break;
+          }
+          index += 1;
+        }
+        addChunk(startIndex, index);
+        continue;
+      }
+
+      index += 1;
+      while (index < indexedLines.length) {
+        final line = indexedLines[index];
+        if (line.trimmed.isEmpty ||
+            _fenceMarker(line.line) != null ||
+            _isAtxHeading(line.line) ||
+            _listItemIndent(line.line) != null) {
+          break;
+        }
+        if (_setextUnderlineLevel(line.trimmed) != null &&
+            index == startIndex + 1) {
+          index += 1;
+          break;
+        }
+        if (_isThematicBreak(line.trimmed)) {
+          break;
+        }
+        index += 1;
+      }
+      addChunk(startIndex, index);
+    }
     return chunks;
+  }
+
+  bool _isAtxHeading(String line) {
+    return RegExp(r'^\s{0,3}#{1,6}\s+').hasMatch(line);
+  }
+
+  bool _isThematicBreak(String trimmedLine) {
+    return RegExp(r'^([*\-_])(\s*\1){2,}\s*$').hasMatch(trimmedLine);
+  }
+
+  String? _fenceMarker(String line) {
+    final match = RegExp(r'^\s*(`{3,}|~{3,})').firstMatch(line);
+    return match?.group(1);
+  }
+
+  bool _isClosingFence(String line, String opener) {
+    final marker = _fenceMarker(line);
+    if (marker == null || marker.codeUnitAt(0) != opener.codeUnitAt(0)) {
+      return false;
+    }
+    return marker.length >= opener.length;
+  }
+
+  int? _listItemIndent(String line) {
+    final match = RegExp(r'^(\s*)([-+*]|\d+[.)])\s+').firstMatch(line);
+    return match?.group(1)!.length;
   }
 
   int _frontMatterEndOffset(String source) {
@@ -420,7 +505,6 @@ class MarkdownParser {
         Diagnostic(
           code: 'markdown.front-matter.malformed',
           severity: DiagnosticSeverity.warning,
-          message: 'Front matter is not closed.',
           filePath: filePath,
           sourceSpan: SourceSpan.fromOffsets(
             filePath: filePath,
@@ -587,7 +671,6 @@ class MarkdownParser {
       Diagnostic(
         code: 'markdown.raw-html.unsafe',
         severity: DiagnosticSeverity.warning,
-        message: 'Unsafe raw HTML is blocked in preview.',
         filePath: filePath,
         sourceSpan: SourceSpan.fromOffsets(
           filePath: filePath,
@@ -626,8 +709,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.link.unresolved-target',
             severity: DiagnosticSeverity.warning,
-            message: 'Local link target "$targetPath" does not exist.',
             filePath: filePath,
+            args: {'targetPath': targetPath},
             sourceSpan: link.span,
           ),
         );
@@ -649,8 +732,8 @@ class MarkdownParser {
             Diagnostic(
               code: 'markdown.link.unresolved-anchor',
               severity: DiagnosticSeverity.warning,
-              message: 'Anchor "$anchor" was not found.',
               filePath: filePath,
+              args: {'anchor': anchor},
               sourceSpan: link.span,
             ),
           );
@@ -663,8 +746,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.image.missing-alt',
             severity: DiagnosticSeverity.warning,
-            message: 'Image "$image.destination" is missing alt text.',
             filePath: filePath,
+            args: {'destination': image.destination},
             sourceSpan: image.span,
           ),
         );
@@ -682,8 +765,8 @@ class MarkdownParser {
           Diagnostic(
             code: 'markdown.image.missing-file',
             severity: DiagnosticSeverity.warning,
-            message: 'Local image "$destination" does not exist.',
             filePath: filePath,
+            args: {'destination': destination},
             sourceSpan: image.span,
           ),
         );
@@ -722,6 +805,21 @@ class _ScannedBlockSource {
 
   final String rawSource;
   final SourceSpan span;
+}
+
+class _ScannedSourceLine {
+  const _ScannedSourceLine({required this.rawLine, required this.offset});
+
+  final String rawLine;
+  final int offset;
+
+  String get line => rawLine.endsWith('\n')
+      ? rawLine.substring(0, rawLine.length - 1)
+      : rawLine;
+
+  String get trimmed => line.trim();
+
+  int get endOffset => offset + rawLine.length;
 }
 
 const _inlineHtmlNames = {

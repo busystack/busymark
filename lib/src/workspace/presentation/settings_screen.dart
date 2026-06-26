@@ -4,17 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
+import '../../app/localization.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
-import 'welcome_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
     final controller = ref.watch(appSettingsControllerProvider.notifier);
     final workspaceOpen =
@@ -28,7 +32,7 @@ class SettingsScreen extends ConsumerWidget {
       });
     });
     if (headerBar.isAvailable) {
-      _configureHeaderBar(headerBar);
+      _configureHeaderBar(context, headerBar);
     }
 
     return Scaffold(
@@ -40,30 +44,47 @@ class SettingsScreen extends ConsumerWidget {
               titleSpacing: 0,
               leading: Center(
                 child: BusyMarkHeaderIconButton(
-                  tooltip: 'Back',
-                  icon: Icons.arrow_back,
+                  tooltip: context.l10n.back,
+                  icon: BusyMarkGlyphs.back,
                   onPressed: () =>
                       context.go(workspaceOpen ? '/workspace' : '/'),
                 ),
               ),
               title: Text(
-                'BusyMark Settings',
+                context.l10n.settingsTitle,
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
+              actions: [
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.keyboardShortcuts,
+                  icon: BusyMarkGlyphs.keyboard,
+                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
+                ),
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.aboutBusyMark,
+                  icon: BusyMarkGlyphs.info,
+                  onPressed: () => showBusyMarkAboutDialog(context),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
             ),
       body: BusyMarkClamp(
         maxWidth: BusyMarkSizes.settingsWidth,
         margin: EdgeInsets.zero,
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 32),
+        padding: BusyMarkInsets.settingsPage,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             BusyMarkGroupedList(
-              title: 'Appearance',
+              title: context.l10n.appearance,
               filled: true,
               children: [
+                _LanguageRow(
+                  selectedLocaleTag: settings.localeTag,
+                  onChanged: controller.setLocaleTag,
+                ),
                 _ThemeModeRow(
                   selected: settings.themeModePreference,
                   onChanged: controller.setThemeModePreference,
@@ -71,40 +92,58 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             BusyMarkGroupedList(
-              title: 'Editor',
+              title: context.l10n.editor,
               filled: true,
               children: [
                 BusyMarkSwitchRow(
-                  title: 'Word wrap',
+                  title: context.l10n.wordWrap,
                   value: settings.wordWrap,
                   onChanged: controller.setWordWrap,
-                  leading: const Icon(Icons.wrap_text),
+                  leading: const Icon(BusyMarkGlyphs.wordWrap),
                 ),
                 _EditorFontSizeRow(
                   value: settings.editorFontSize,
                   onChanged: controller.setEditorFontSize,
                 ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: 'Validation',
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: 'Validate on edit',
-                  value: settings.validateOnEdit,
-                  onChanged: controller.setValidateOnEdit,
-                  leading: const Icon(Icons.fact_check_outlined),
+                _EditorToolbarPlacementRow(
+                  selected: settings.editorToolbarPlacement,
+                  onChanged: controller.setEditorToolbarPlacement,
                 ),
               ],
             ),
             BusyMarkGroupedList(
-              title: 'Advanced',
+              title: context.l10n.validation,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: context.l10n.validateOnEdit,
+                  value: settings.validateOnEdit,
+                  onChanged: controller.setValidateOnEdit,
+                  leading: const Icon(BusyMarkGlyphs.diagnostics),
+                ),
+              ],
+            ),
+            BusyMarkGroupedList(
+              title: l10n.settingsWindowSectionTitle,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
+                  subtitle:
+                      l10n.settingsConfirmCloseWithUnsavedChangesDescription,
+                  value: settings.confirmCloseWithUnsavedChanges,
+                  onChanged: controller.setConfirmCloseWithUnsavedChanges,
+                  leading: const Icon(BusyMarkGlyphs.warning),
+                ),
+              ],
+            ),
+            BusyMarkGroupedList(
+              title: context.l10n.advanced,
               filled: true,
               children: [
                 BusyMarkActionRow(
-                  title: 'Clear recent workspaces',
-                  leading: const Icon(Icons.clear_all),
+                  title: context.l10n.clearRecentWorkspaces,
+                  leading: const Icon(BusyMarkGlyphs.clearAll),
                   destructive: true,
                   onTap: controller.clearRecentWorkspaces,
                 ),
@@ -116,10 +155,13 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _configureHeaderBar(LinuxHeaderBarService headerBar) {
+  void _configureHeaderBar(
+    BuildContext context,
+    LinuxHeaderBarService headerBar,
+  ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
-        await headerBar.setTitleRange('Settings');
+        await headerBar.setTitleRange(context.l10n.settings);
         await headerBar.setSidebarVisible(false);
         await headerBar.setSidebarToggleVisible(false);
         await headerBar.setBackVisible(true);
@@ -141,13 +183,14 @@ class SettingsScreen extends ConsumerWidget {
         context.go(workspaceOpen ? '/workspace' : '/');
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
+      case HeaderBarAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
       case HeaderBarAction.menu:
-      case HeaderBarAction.exportPreview:
       case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
       case HeaderBarAction.viewModePreview:
@@ -155,6 +198,268 @@ class SettingsScreen extends ConsumerWidget {
         break;
     }
   }
+}
+
+class _LanguageRow extends StatelessWidget {
+  const _LanguageRow({
+    required this.selectedLocaleTag,
+    required this.onChanged,
+  });
+
+  final String? selectedLocaleTag;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final control = _LanguageControl(
+      selectedLocaleTag: selectedLocaleTag,
+      onChanged: onChanged,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < BusyMarkSizes.settingsControlBreakpoint) {
+          return Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(BusyMarkGlyphs.symbols),
+                    const SizedBox(width: BusyMarkSpacing.md),
+                    Expanded(child: Text(context.l10n.appLanguage)),
+                  ],
+                ),
+                const SizedBox(height: BusyMarkSpacing.sm),
+                control,
+              ],
+            ),
+          );
+        }
+        return BusyMarkActionRow(
+          title: context.l10n.appLanguage,
+          leading: const Icon(BusyMarkGlyphs.symbols),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: control,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LanguageControl extends StatelessWidget {
+  const _LanguageControl({
+    required this.selectedLocaleTag,
+    required this.onChanged,
+  });
+
+  static const _systemLocaleTag = 'system';
+
+  final String? selectedLocaleTag;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    final selectedValue = selectedLocaleTag ?? _systemLocaleTag;
+    final selectedLabel = _selectedLabel(context, selectedValue);
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: PopupMenuButton<String>(
+        tooltip: context.l10n.appLanguage,
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        offset: const Offset(0, BusyMarkSpacing.xs + BusyMarkSpacing.xxs),
+        color: popupTheme.color ?? colors.popover,
+        surfaceTintColor: BusyMarkLinuxPalette.transparent,
+        elevation: BusyMarkElevation.window,
+        shadowColor: colors.shade.withValues(
+          alpha: BusyMarkAlpha.languageMenuShadow,
+        ),
+        shape:
+            popupTheme.shape ??
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+        constraints: const BoxConstraints(
+          minWidth: BusyMarkSizes.languagePopupMinWidth,
+          maxWidth: BusyMarkSizes.languagePopupMaxWidth,
+        ),
+        onSelected: (value) =>
+            onChanged(value == _systemLocaleTag ? null : value),
+        itemBuilder: (context) => [
+          _languageMenuItem(
+            context,
+            value: _systemLocaleTag,
+            label: context.l10n.systemLanguage,
+            selected: selectedValue == _systemLocaleTag,
+          ),
+          for (final option in _languageOptions())
+            _languageMenuItem(
+              context,
+              value: option.localeTag,
+              label: option.label,
+              selected: selectedValue == option.localeTag,
+            ),
+        ],
+        child: _LanguageSelectorButton(label: selectedLabel),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _languageMenuItem(
+    BuildContext context, {
+    required String value,
+    required String label,
+    required bool selected,
+  }) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return PopupMenuItem<String>(
+      value: value,
+      height: BusyMarkSizes.popupMenuItemHeight,
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+        child: Row(
+          children: [
+            SizedBox(
+              width: BusyMarkSizes.iconSm,
+              child: selected
+                  ? Icon(
+                      BusyMarkGlyphs.check,
+                      size: BusyMarkSizes.iconSm,
+                      color: colors.mutedForeground,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _selectedLabel(BuildContext context, String value) {
+    if (value == _systemLocaleTag) {
+      return context.l10n.systemLanguage;
+    }
+    return _languageOptions()
+        .firstWhere(
+          (option) => option.localeTag == value,
+          orElse: () => const _LanguageOption('en', 'English'),
+        )
+        .label;
+  }
+
+  List<_LanguageOption> _languageOptions() {
+    return const [
+      _LanguageOption('en', 'English'),
+      _LanguageOption('de', 'Deutsch'),
+      _LanguageOption('it', 'Italiano'),
+      _LanguageOption('no', 'Norsk'),
+      _LanguageOption('fr', 'Français'),
+      _LanguageOption('ru', 'Русский'),
+      _LanguageOption('uk', 'Українська'),
+      _LanguageOption('pl', 'Polski'),
+      _LanguageOption('es', 'Español'),
+      _LanguageOption('pt', 'Português'),
+      _LanguageOption('ar', 'العربية'),
+      _LanguageOption('fa', 'فارسی'),
+      _LanguageOption('hi', 'हिन्दी'),
+    ];
+  }
+}
+
+class _LanguageSelectorButton extends StatefulWidget {
+  const _LanguageSelectorButton({required this.label});
+
+  final String label;
+
+  @override
+  State<_LanguageSelectorButton> createState() =>
+      _LanguageSelectorButtonState();
+}
+
+class _LanguageSelectorButtonState extends State<_LanguageSelectorButton> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        if (!_hovered) {
+          setState(() => _hovered = true);
+        }
+      },
+      onExit: (_) {
+        if (_hovered) {
+          setState(() => _hovered = false);
+        }
+      },
+      child: Container(
+        constraints: const BoxConstraints(
+          minHeight: BusyMarkSizes.iconButton,
+          maxWidth: BusyMarkSizes.languageButtonMaxWidth,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BusyMarkSpacing.sm,
+          vertical: BusyMarkSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: _hovered
+              ? colors.controlHover
+              : BusyMarkLinuxPalette.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+          border: Border.all(
+            color: _hovered
+                ? colors.subtleBorder
+                : BusyMarkLinuxPalette.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.foreground,
+                ),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Icon(
+              BusyMarkGlyphs.downArrow,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageOption {
+  const _LanguageOption(this.localeTag, this.label);
+
+  final String localeTag;
+  final String label;
 }
 
 class _ThemeModeRow extends StatelessWidget {
@@ -171,17 +476,17 @@ class _ThemeModeRow extends StatelessWidget {
           selected: selected,
           onChanged: onChanged,
         );
-        if (constraints.maxWidth < 560) {
+        if (constraints.maxWidth < BusyMarkSizes.settingsControlBreakpoint) {
           return Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.contrast_outlined),
-                    SizedBox(width: BusyMarkSpacing.md),
-                    Text('Theme'),
+                    const Icon(BusyMarkGlyphs.appearance),
+                    const SizedBox(width: BusyMarkSpacing.md),
+                    Text(context.l10n.theme),
                   ],
                 ),
                 const SizedBox(height: BusyMarkSpacing.sm),
@@ -191,9 +496,12 @@ class _ThemeModeRow extends StatelessWidget {
           );
         }
         return BusyMarkActionRow(
-          title: 'Theme',
-          leading: const Icon(Icons.contrast_outlined),
-          trailing: SizedBox(width: 256, child: control),
+          title: context.l10n.theme,
+          leading: const Icon(BusyMarkGlyphs.appearance),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: control,
+          ),
         );
       },
     );
@@ -210,18 +518,18 @@ class _ThemeModeControl extends StatelessWidget {
   Widget build(BuildContext context) {
     return SegmentedButton<BusyMarkThemeModePreference>(
       showSelectedIcon: false,
-      segments: const [
+      segments: [
         ButtonSegment(
           value: BusyMarkThemeModePreference.system,
-          label: Text('System'),
+          label: _SegmentLabel(context.l10n.systemTheme),
         ),
         ButtonSegment(
           value: BusyMarkThemeModePreference.light,
-          label: Text('Light'),
+          label: _SegmentLabel(context.l10n.lightTheme),
         ),
         ButtonSegment(
           value: BusyMarkThemeModePreference.dark,
-          label: Text('Dark'),
+          label: _SegmentLabel(context.l10n.darkTheme),
         ),
       ],
       selected: {selected},
@@ -248,7 +556,7 @@ class _EditorFontSizeRow extends StatelessWidget {
     );
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 560) {
+        if (constraints.maxWidth < BusyMarkSizes.settingsControlBreakpoint) {
           return Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.md),
             child: Column(
@@ -256,11 +564,11 @@ class _EditorFontSizeRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.format_size),
+                    const Icon(BusyMarkGlyphs.font),
                     const SizedBox(width: BusyMarkSpacing.md),
                     Expanded(
                       child: Text(
-                        'Editor font size',
+                        context.l10n.editorFontSize,
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                     ),
@@ -273,12 +581,113 @@ class _EditorFontSizeRow extends StatelessWidget {
           );
         }
         return BusyMarkActionRow(
-          title: 'Editor font size',
+          title: context.l10n.editorFontSize,
           subtitle: value.toStringAsFixed(0),
-          leading: const Icon(Icons.format_size),
-          trailing: SizedBox(width: 260, child: slider),
+          leading: const Icon(BusyMarkGlyphs.font),
+          trailing: SizedBox(
+            width: BusyMarkSizes.sliderRowWidth,
+            child: slider,
+          ),
         );
       },
     );
+  }
+}
+
+class _EditorToolbarPlacementRow extends StatelessWidget {
+  const _EditorToolbarPlacementRow({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarPlacement selected;
+  final ValueChanged<EditorToolbarPlacement> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final control = _EditorToolbarPlacementControl(
+      selected: selected,
+      onChanged: onChanged,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < BusyMarkSizes.toolbarPlacementBreakpoint) {
+          return Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(BusyMarkGlyphs.toolbarPlacement),
+                    const SizedBox(width: BusyMarkSpacing.md),
+                    Text(context.l10n.editingButtons),
+                  ],
+                ),
+                const SizedBox(height: BusyMarkSpacing.sm),
+                control,
+              ],
+            ),
+          );
+        }
+        return BusyMarkActionRow(
+          title: context.l10n.editingButtons,
+          subtitle: context.l10n.editingButtonsDescription,
+          leading: const Icon(BusyMarkGlyphs.toolbarPlacement),
+          trailing: SizedBox(
+            width: BusyMarkSizes.toolbarPlacementRowWidth,
+            child: control,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _EditorToolbarPlacementControl extends StatelessWidget {
+  const _EditorToolbarPlacementControl({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarPlacement selected;
+  final ValueChanged<EditorToolbarPlacement> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<EditorToolbarPlacement>(
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment(
+          value: EditorToolbarPlacement.topLeft,
+          label: _SegmentLabel(context.l10n.topLeft),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.topRight,
+          label: _SegmentLabel(context.l10n.topRight),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.bottomLeft,
+          label: _SegmentLabel(context.l10n.bottomLeft),
+        ),
+        ButtonSegment(
+          value: EditorToolbarPlacement.bottomRight,
+          label: _SegmentLabel(context.l10n.bottomRight),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (value) => onChanged(value.first),
+    );
+  }
+}
+
+class _SegmentLabel extends StatelessWidget {
+  const _SegmentLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, maxLines: 1, overflow: TextOverflow.ellipsis);
   }
 }

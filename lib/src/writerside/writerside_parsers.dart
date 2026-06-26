@@ -2,6 +2,7 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 import '../core/diagnostic.dart';
+import '../core/path_utils.dart';
 import '../core/source_span.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
@@ -21,20 +22,7 @@ class WritersideConfigParser {
       );
     }
     if (document == null) {
-      return WritersideConfig(
-        filePath: filePath,
-        moduleName: null,
-        topicsDir: 'topics',
-        imagesDir: 'images',
-        snippetsDir: null,
-        resourcesDir: null,
-        apiSpecificationsDir: 'specifications',
-        buildConfigDir: 'cfg',
-        varsFile: null,
-        categoriesFile: null,
-        instanceSources: const [],
-        diagnostics: diagnostics,
-      );
+      return _emptyConfig(filePath, diagnostics);
     }
     final root = document.rootElement;
     if (root.name.local != 'ihp') {
@@ -42,56 +30,139 @@ class WritersideConfigParser {
         Diagnostic(
           code: 'writerside.config.invalid-root',
           severity: DiagnosticSeverity.error,
-          message: 'writerside.cfg root must be <ihp>.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
       );
     }
-    final instances = <String>[];
+    final instances = <WritersideConfiguredInstance>[];
     String? moduleName;
-    var topicsDir = 'topics';
-    var imagesDir = 'images';
+    final topicRoots = <WritersideTopicRoot>[];
+    final imageRoots = <WritersideImageRoot>[];
     String? snippetsDir;
+    String? resourcesFile;
     String? resourcesDir;
     var apiSpecificationsDir = 'specifications';
+    var apiSpecificationsExplicit = false;
     var buildConfigDir = 'cfg';
+    var buildConfigExplicit = false;
     String? varsFile;
     String? categoriesFile;
+    String? instanceGroupsFile;
+    var settings = const WritersideSettingsConfig();
     for (final child in root.childElements) {
       switch (child.name.local) {
         case 'module':
           moduleName = child.getAttribute('name');
         case 'topics':
-          topicsDir = child.getAttribute('dir') ?? topicsDir;
+          topicRoots.add(
+            WritersideTopicRoot(
+              dir: child.getAttribute('dir') ?? 'topics',
+              explicit: true,
+            ),
+          );
         case 'images':
-          imagesDir = child.getAttribute('dir') ?? imagesDir;
+          imageRoots.add(
+            WritersideImageRoot(
+              dir: child.getAttribute('dir') ?? 'images',
+              version: child.getAttribute('version'),
+              webPath: child.getAttribute('web-path'),
+              explicit: true,
+            ),
+          );
         case 'snippets':
           snippetsDir = child.getAttribute('src') ?? child.getAttribute('dir');
+          if (snippetsDir == null || snippetsDir.isEmpty) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.config.missing-snippets-src',
+                severity: DiagnosticSeverity.warning,
+                filePath: filePath,
+                sourceSpan: _elementSpan(filePath, source, 'snippets'),
+              ),
+            );
+            snippetsDir = null;
+          }
         case 'resources':
+          resourcesFile = child.getAttribute('src');
           resourcesDir = child.getAttribute('dir');
         case 'api-specifications':
-          apiSpecificationsDir =
-              child.getAttribute('dir') ?? apiSpecificationsDir;
+          apiSpecificationsDir = child.getAttribute('dir') ?? 'specifications';
+          apiSpecificationsExplicit = true;
         case 'build-config':
-          buildConfigDir = child.getAttribute('dir') ?? buildConfigDir;
+          buildConfigDir = child.getAttribute('dir') ?? 'cfg';
+          buildConfigExplicit = true;
         case 'vars':
-          varsFile = child.getAttribute('src');
+          varsFile = child.getAttribute('src') ?? 'v.list';
         case 'categories':
-          categoriesFile = child.getAttribute('src');
-        case 'instance':
-          final source = child.getAttribute('src');
-          if (source != null && source.isNotEmpty) {
-            instances.add(source);
+          categoriesFile = child.getAttribute('src') ?? 'c.list';
+        case 'instance-groups':
+          instanceGroupsFile = child.getAttribute('src');
+          if (instanceGroupsFile == null || instanceGroupsFile.isEmpty) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.config.missing-instance-groups-src',
+                severity: DiagnosticSeverity.warning,
+                filePath: filePath,
+                sourceSpan: _elementSpan(filePath, source, 'instance-groups'),
+              ),
+            );
+            instanceGroupsFile = null;
           }
+        case 'instance':
+          final instanceSource = child.getAttribute('src');
+          if (instanceSource != null && instanceSource.isNotEmpty) {
+            final keymapsMode = child.getAttribute('keymaps-mode');
+            if (keymapsMode != null &&
+                !{'none', 'generated', 'provided'}.contains(keymapsMode)) {
+              diagnostics.add(
+                Diagnostic(
+                  code: 'writerside.config.invalid-keymaps-mode',
+                  severity: DiagnosticSeverity.warning,
+                  filePath: filePath,
+                  args: {'mode': keymapsMode},
+                  sourceSpan: _elementSpan(
+                    filePath,
+                    source,
+                    'instance',
+                    keymapsMode,
+                  ),
+                ),
+              );
+            }
+            instances.add(
+              WritersideConfiguredInstance(
+                src: instanceSource,
+                version: child.getAttribute('version'),
+                webPath: child.getAttribute('web-path'),
+                keymapsMode: keymapsMode,
+              ),
+            );
+          } else {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.config.missing-instance-src',
+                severity: DiagnosticSeverity.error,
+                filePath: filePath,
+                sourceSpan: _elementSpan(filePath, source, 'instance'),
+              ),
+            );
+          }
+        case 'settings':
+          settings = _settingsConfig(filePath, source, child);
       }
+    }
+    if (topicRoots.isEmpty) {
+      topicRoots.add(const WritersideTopicRoot(dir: 'topics', explicit: false));
+    }
+    if (imageRoots.isEmpty) {
+      imageRoots.add(const WritersideImageRoot(dir: 'images', explicit: false));
     }
     if (instances.isEmpty) {
       diagnostics.add(
         Diagnostic(
           code: 'writerside.config.missing-instance',
           severity: DiagnosticSeverity.error,
-          message: 'writerside.cfg does not register an instance.',
           filePath: filePath,
           sourceSpan: SourceSpan.entireFile(filePath, source),
         ),
@@ -99,17 +170,90 @@ class WritersideConfigParser {
     }
     return WritersideConfig(
       filePath: filePath,
+      version: root.getAttribute('version'),
       moduleName: moduleName,
-      topicsDir: topicsDir,
-      imagesDir: imagesDir,
-      snippetsDir: snippetsDir,
-      resourcesDir: resourcesDir,
+      topicRoots: topicRoots,
+      imageRoots: imageRoots,
       apiSpecificationsDir: apiSpecificationsDir,
+      apiSpecificationsExplicit: apiSpecificationsExplicit,
       buildConfigDir: buildConfigDir,
+      buildConfigExplicit: buildConfigExplicit,
+      snippetsDir: snippetsDir,
+      resourcesFile: resourcesFile,
+      resourcesDir: resourcesDir,
       varsFile: varsFile,
       categoriesFile: categoriesFile,
-      instanceSources: instances,
+      instanceGroupsFile: instanceGroupsFile,
+      instances: instances,
+      settings: settings,
       diagnostics: diagnostics,
+    );
+  }
+
+  WritersideConfig _emptyConfig(String filePath, List<Diagnostic> diagnostics) {
+    return WritersideConfig(
+      filePath: filePath,
+      version: null,
+      moduleName: null,
+      topicRoots: const [WritersideTopicRoot(dir: 'topics', explicit: false)],
+      imageRoots: const [WritersideImageRoot(dir: 'images', explicit: false)],
+      apiSpecificationsDir: 'specifications',
+      apiSpecificationsExplicit: false,
+      buildConfigDir: 'cfg',
+      buildConfigExplicit: false,
+      snippetsDir: null,
+      resourcesFile: null,
+      resourcesDir: null,
+      varsFile: null,
+      categoriesFile: null,
+      instanceGroupsFile: null,
+      instances: const [],
+      settings: const WritersideSettingsConfig(),
+      diagnostics: diagnostics,
+    );
+  }
+
+  WritersideSettingsConfig _settingsConfig(
+    String filePath,
+    String source,
+    XmlElement settings,
+  ) {
+    final capsRules = <WritersideCapsRule>[];
+    final defaultProperties = <WritersideDefaultProperty>[];
+    bool? disableWebNamePreprocessing;
+    bool? smartIgnoreVars;
+    String? wrsSupernovaUseVersion;
+    for (final child in settings.childElements) {
+      switch (child.name.local) {
+        case 'caps':
+          capsRules.add(
+            WritersideCapsRule(
+              style: child.getAttribute('style'),
+              target: child.getAttribute('for'),
+            ),
+          );
+        case 'default-property':
+          defaultProperties.add(
+            WritersideDefaultProperty(
+              elementName: child.getAttribute('element-name'),
+              propertyName: child.getAttribute('property-name'),
+              value: child.getAttribute('value'),
+            ),
+          );
+        case 'disable-web-name-preprocessing':
+          disableWebNamePreprocessing = child.innerText.trim() == 'true';
+        case 'smart-ignore-vars':
+          smartIgnoreVars = child.innerText.trim() == 'true';
+        case 'wrs-supernova':
+          wrsSupernovaUseVersion = child.getAttribute('use-version');
+      }
+    }
+    return WritersideSettingsConfig(
+      capsRules: capsRules,
+      defaultProperties: defaultProperties,
+      disableWebNamePreprocessing: disableWebNamePreprocessing,
+      smartIgnoreVars: smartIgnoreVars,
+      wrsSupernovaUseVersion: wrsSupernovaUseVersion,
     );
   }
 }
@@ -145,7 +289,6 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.invalid-root',
           severity: DiagnosticSeverity.error,
-          message: '.tree root must be <instance-profile>.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -159,7 +302,6 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.missing-id',
           severity: DiagnosticSeverity.error,
-          message: 'Instance profile is missing id.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -169,8 +311,8 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.id-mismatch',
           severity: DiagnosticSeverity.warning,
-          message: 'Tree file stem does not match instance id "$id".',
           filePath: filePath,
+          args: {'id': id},
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
       );
@@ -180,7 +322,6 @@ class WritersideTreeParser {
         Diagnostic(
           code: 'writerside.tree.missing-start-page',
           severity: DiagnosticSeverity.error,
-          message: 'Non-library instance is missing start-page.',
           filePath: filePath,
           sourceSpan: _elementSpan(filePath, source, root.name.local),
         ),
@@ -201,9 +342,8 @@ class WritersideTreeParser {
           Diagnostic(
             code: 'writerside.tree.duplicate-topic',
             severity: DiagnosticSeverity.error,
-            message:
-                'Topic "$topic" appears more than once in this instance TOC.',
             filePath: filePath,
+            args: {'topic': topic},
             sourceSpan: node.span,
             relatedSpans: [seen[topic]!],
           ),
@@ -275,7 +415,6 @@ class WritersideVariablesParser {
           Diagnostic(
             code: 'writerside.variable.malformed-declaration',
             severity: DiagnosticSeverity.warning,
-            message: 'Variable declaration must have name and value.',
             filePath: filePath,
             sourceSpan: span,
           ),
@@ -287,8 +426,8 @@ class WritersideVariablesParser {
           Diagnostic(
             code: 'writerside.variable.duplicate-name',
             severity: DiagnosticSeverity.warning,
-            message: 'Variable "$name" is declared more than once.',
             filePath: filePath,
+            args: {'name': name},
             sourceSpan: span,
             relatedSpans: [seen[name]!],
           ),
@@ -332,7 +471,6 @@ class WritersideCategoriesParser {
           Diagnostic(
             code: 'writerside.category.missing-id',
             severity: DiagnosticSeverity.error,
-            message: 'Category is missing id.',
             filePath: filePath,
             sourceSpan: span,
           ),
@@ -344,8 +482,8 @@ class WritersideCategoriesParser {
           Diagnostic(
             code: 'writerside.category.duplicate-id',
             severity: DiagnosticSeverity.error,
-            message: 'Category "$id" is declared more than once.',
             filePath: filePath,
+            args: {'id': id},
             sourceSpan: span,
             relatedSpans: [ids[id]!],
           ),
@@ -356,8 +494,8 @@ class WritersideCategoriesParser {
           Diagnostic(
             code: 'writerside.category.duplicate-order',
             severity: DiagnosticSeverity.warning,
-            message: 'Category order "$order" is declared more than once.',
             filePath: filePath,
+            args: {'order': '$order'},
             sourceSpan: span,
             relatedSpans: [orders[order]!],
           ),
@@ -398,6 +536,7 @@ class WritersideTopicParser {
       source: source,
       mode: MarkdownMode.writersideMarkdown,
       workspaceRoot: topicsRoot,
+      validateLocalReferences: false,
     );
     final ids = parsed.headings
         .map(
@@ -420,10 +559,12 @@ class WritersideTopicParser {
           ),
         )
         .toList();
+    final titleOverrides = _topicTitleOverrides(source);
     return WritersideTopic(
       id: p.basenameWithoutExtension(filePath),
       filePath: filePath,
-      fileName: p.basename(filePath),
+      fileName: normalizedRelative(topicsRoot, filePath),
+      topicRoot: topicsRoot,
       format: WritersideTopicFormat.markdown,
       title: parsed.title,
       elementIds: ids,
@@ -431,22 +572,30 @@ class WritersideTopicParser {
       images: parsed.images,
       variables: parsed.variables,
       includes: includes,
-      diagnostics: parsed.diagnostics,
+      diagnostics: _writersideMarkdownDiagnostics(parsed.diagnostics),
+      webFileName: _webFileName(source),
       markdown: parsed,
+      titleOverrides: titleOverrides,
       semanticElementNames: parsed.xmlBlocks
           .map((block) => block.elementName)
           .toList(),
     );
   }
 
-  WritersideTopic parseXml({required String filePath, required String source}) {
+  WritersideTopic parseXml({
+    required String filePath,
+    required String source,
+    String? topicsRoot,
+  }) {
     final diagnostics = <Diagnostic>[];
     final ids = <WritersideElementId>[];
     final links = <MarkdownLink>[];
     final images = <MarkdownImage>[];
     final variables = <MarkdownVariableToken>[];
     final includes = <WritersideInclude>[];
+    final titleOverrides = <WritersideTopicTitleOverride>[];
     final semanticNames = <String>[];
+    String? webFileName;
     XmlDocument? document;
     try {
       document = XmlDocument.parse(source);
@@ -465,7 +614,6 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.invalid-root',
             severity: DiagnosticSeverity.error,
-            message: '.topic root must be <topic>.',
             filePath: filePath,
             sourceSpan: _elementSpan(filePath, source, root.name.local),
           ),
@@ -478,7 +626,6 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.missing-root-id',
             severity: DiagnosticSeverity.error,
-            message: 'XML topic is missing root id.',
             filePath: filePath,
             sourceSpan: _elementSpan(filePath, source, root.name.local),
           ),
@@ -489,9 +636,8 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.root-id-mismatch',
             severity: DiagnosticSeverity.error,
-            message:
-                'XML topic root id "$id" must match filename "$expectedId".',
             filePath: filePath,
+            args: {'id': id, 'expectedId': expectedId},
             sourceSpan: _elementSpan(filePath, source, root.name.local, id),
           ),
         );
@@ -501,7 +647,6 @@ class WritersideTopicParser {
           Diagnostic(
             code: 'writerside.topic.missing-title',
             severity: DiagnosticSeverity.warning,
-            message: 'XML topic is missing title.',
             filePath: filePath,
             sourceSpan: _elementSpan(filePath, source, root.name.local),
           ),
@@ -524,8 +669,8 @@ class WritersideTopicParser {
               Diagnostic(
                 code: 'writerside.topic.duplicate-element-id',
                 severity: DiagnosticSeverity.error,
-                message: 'Element id "$elementId" appears more than once.',
                 filePath: filePath,
+                args: {'elementId': elementId},
                 sourceSpan: span,
                 relatedSpans: [seenIds[elementId]!],
               ),
@@ -534,6 +679,18 @@ class WritersideTopicParser {
           seenIds[elementId] = span;
         }
         switch (element.name.local) {
+          case 'title':
+            final instance = element.getAttribute('instance');
+            if (instance != null && instance.isNotEmpty) {
+              titleOverrides.add(
+                WritersideTopicTitleOverride(
+                  instance: instance,
+                  title: element.innerText.trim(),
+                ),
+              );
+            }
+          case 'web-file-name':
+            webFileName = element.innerText.trim();
           case 'a':
             final href = element.getAttribute('href');
             if (href == null) {
@@ -541,7 +698,6 @@ class WritersideTopicParser {
                 Diagnostic(
                   code: 'writerside.topic.missing-required-attribute',
                   severity: DiagnosticSeverity.warning,
-                  message: '<a> is missing href.',
                   filePath: filePath,
                   sourceSpan: _elementSpan(filePath, source, 'a'),
                 ),
@@ -600,7 +756,10 @@ class WritersideTopicParser {
     return WritersideTopic(
       id: id,
       filePath: filePath,
-      fileName: p.basename(filePath),
+      fileName: topicsRoot == null
+          ? p.basename(filePath)
+          : normalizedRelative(topicsRoot, filePath),
+      topicRoot: topicsRoot ?? p.dirname(filePath),
       format: WritersideTopicFormat.xml,
       title: title,
       elementIds: ids,
@@ -609,6 +768,8 @@ class WritersideTopicParser {
       variables: variables,
       includes: includes,
       diagnostics: sortDiagnostics(diagnostics),
+      webFileName: webFileName,
+      titleOverrides: titleOverrides,
       semanticElementNames: semanticNames,
     );
   }
@@ -617,6 +778,35 @@ class WritersideTopicParser {
 final _includeRegex = RegExp(
   r'<include\b(?=[^>]*\bfrom="(?<from>[^"]+)")(?=[^>]*\belement-id="(?<id>[^"]+)")[^>]*/?>',
 );
+
+List<Diagnostic> _writersideMarkdownDiagnostics(List<Diagnostic> diagnostics) {
+  return [
+    for (final diagnostic in diagnostics)
+      if (diagnostic.code != 'markdown.image.missing-file') diagnostic,
+  ];
+}
+
+List<WritersideTopicTitleOverride> _topicTitleOverrides(String source) {
+  return [
+    for (final match in RegExp(
+      r'<title\b(?=[^>]*\binstance="([^"]+)")[^>]*>(.*?)</title>',
+      dotAll: true,
+    ).allMatches(source))
+      WritersideTopicTitleOverride(
+        instance: match.group(1)!.trim(),
+        title: match.group(2)!.trim(),
+      ),
+  ];
+}
+
+String? _webFileName(String source) {
+  final match = RegExp(
+    r'<web-file-name>\s*(.*?)\s*</web-file-name>',
+    dotAll: true,
+  ).firstMatch(source);
+  final value = match?.group(1)?.trim();
+  return value == null || value.isEmpty ? null : value;
+}
 
 Diagnostic _xmlError(
   String code,
@@ -648,8 +838,8 @@ Diagnostic _xmlError(
   return Diagnostic(
     code: code,
     severity: DiagnosticSeverity.error,
-    message: 'Invalid XML: $message',
     filePath: filePath,
+    args: {'message': message},
     sourceSpan: span,
   );
 }

@@ -19,16 +19,16 @@ class Diagnostic {
   const Diagnostic({
     required this.code,
     required this.severity,
-    required this.message,
     required this.filePath,
+    this.args = const {},
     this.sourceSpan,
     this.relatedSpans = const [],
   });
 
   final String code;
   final DiagnosticSeverity severity;
-  final String message;
   final String filePath;
+  final Map<String, Object?> args;
   final SourceSpan? sourceSpan;
   final List<SourceSpan> relatedSpans;
 
@@ -38,8 +38,8 @@ class Diagnostic {
   Map<String, Object?> toJson() => {
     'code': code,
     'severity': severity.label,
-    'message': message,
     'file': filePath,
+    if (args.isNotEmpty) 'args': args,
     'line': line,
     'column': column,
   };

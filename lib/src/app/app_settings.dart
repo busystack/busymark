@@ -15,6 +15,10 @@ enum PreviewModePreference { markdown, writersideApproximate, sourceFallback }
 
 enum ValidationLevel { activeFile, wholeProject }
 
+enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
+
+const Object _unset = Object();
+
 extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
   ThemeMode get themeMode {
     return switch (this) {
@@ -56,6 +60,7 @@ class RecentWorkspace {
 class AppSettings {
   const AppSettings({
     required this.themeModePreference,
+    required this.localeTag,
     required this.sidebarVisible,
     required this.previewVisible,
     required this.documentViewMode,
@@ -63,10 +68,12 @@ class AppSettings {
     required this.wordWrap,
     required this.previewMode,
     required this.validationLevel,
+    required this.editorToolbarPlacement,
     required this.validateOnEdit,
     required this.checkExternalLinks,
     required this.checkExternalImages,
     required this.officialBuilderIntegrationEnabled,
+    required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
   });
@@ -74,6 +81,7 @@ class AppSettings {
   factory AppSettings.defaults() {
     return const AppSettings(
       themeModePreference: BusyMarkThemeModePreference.system,
+      localeTag: null,
       sidebarVisible: true,
       previewVisible: true,
       documentViewMode: DocumentViewModePreference.split,
@@ -81,10 +89,12 @@ class AppSettings {
       wordWrap: true,
       previewMode: PreviewModePreference.markdown,
       validationLevel: ValidationLevel.wholeProject,
+      editorToolbarPlacement: EditorToolbarPlacement.topLeft,
       validateOnEdit: true,
       checkExternalLinks: false,
       checkExternalImages: false,
       officialBuilderIntegrationEnabled: false,
+      confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
   }
@@ -106,6 +116,7 @@ class AppSettings {
         json['themeModePreference'],
         defaults.themeModePreference,
       ),
+      localeTag: _localeTagFromJson(json['localeTag']),
       sidebarVisible:
           json['sidebarVisible'] as bool? ?? defaults.sidebarVisible,
       previewVisible: documentViewMode != DocumentViewModePreference.source,
@@ -124,6 +135,11 @@ class AppSettings {
         json['validationLevel'],
         defaults.validationLevel,
       ),
+      editorToolbarPlacement: _enumFromName(
+        EditorToolbarPlacement.values,
+        json['editorToolbarPlacement'],
+        defaults.editorToolbarPlacement,
+      ),
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
       checkExternalLinks:
@@ -133,6 +149,9 @@ class AppSettings {
       officialBuilderIntegrationEnabled:
           json['officialBuilderIntegrationEnabled'] as bool? ??
           defaults.officialBuilderIntegrationEnabled,
+      confirmCloseWithUnsavedChanges:
+          json['confirmCloseWithUnsavedChanges'] as bool? ??
+          defaults.confirmCloseWithUnsavedChanges,
       lastOpenedPath: json['lastOpenedPath']?.toString(),
       recentWorkspaces: recent is List
           ? recent
@@ -146,6 +165,7 @@ class AppSettings {
   }
 
   final BusyMarkThemeModePreference themeModePreference;
+  final String? localeTag;
   final bool sidebarVisible;
   final bool previewVisible;
   final DocumentViewModePreference documentViewMode;
@@ -153,17 +173,22 @@ class AppSettings {
   final bool wordWrap;
   final PreviewModePreference previewMode;
   final ValidationLevel validationLevel;
+  final EditorToolbarPlacement editorToolbarPlacement;
   final bool validateOnEdit;
   final bool checkExternalLinks;
   final bool checkExternalImages;
   final bool officialBuilderIntegrationEnabled;
+  final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
 
   ThemeMode get themeMode => themeModePreference.themeMode;
 
+  Locale? get locale => _localeFromTag(localeTag);
+
   Map<String, Object?> toJson() => {
     'themeModePreference': themeModePreference.name,
+    'localeTag': localeTag,
     'sidebarVisible': sidebarVisible,
     'previewVisible': previewVisible,
     'documentViewMode': documentViewMode.name,
@@ -171,16 +196,19 @@ class AppSettings {
     'wordWrap': wordWrap,
     'previewMode': previewMode.name,
     'validationLevel': validationLevel.name,
+    'editorToolbarPlacement': editorToolbarPlacement.name,
     'validateOnEdit': validateOnEdit,
     'checkExternalLinks': checkExternalLinks,
     'checkExternalImages': checkExternalImages,
     'officialBuilderIntegrationEnabled': officialBuilderIntegrationEnabled,
+    'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
   };
 
   AppSettings copyWith({
     BusyMarkThemeModePreference? themeModePreference,
+    Object? localeTag = _unset,
     bool? sidebarVisible,
     bool? previewVisible,
     DocumentViewModePreference? documentViewMode,
@@ -188,15 +216,20 @@ class AppSettings {
     bool? wordWrap,
     PreviewModePreference? previewMode,
     ValidationLevel? validationLevel,
+    EditorToolbarPlacement? editorToolbarPlacement,
     bool? validateOnEdit,
     bool? checkExternalLinks,
     bool? checkExternalImages,
     bool? officialBuilderIntegrationEnabled,
+    bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
   }) {
     return AppSettings(
       themeModePreference: themeModePreference ?? this.themeModePreference,
+      localeTag: identical(localeTag, _unset)
+          ? this.localeTag
+          : localeTag as String?,
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       previewVisible: previewVisible ?? this.previewVisible,
       documentViewMode: documentViewMode ?? this.documentViewMode,
@@ -204,12 +237,16 @@ class AppSettings {
       wordWrap: wordWrap ?? this.wordWrap,
       previewMode: previewMode ?? this.previewMode,
       validationLevel: validationLevel ?? this.validationLevel,
+      editorToolbarPlacement:
+          editorToolbarPlacement ?? this.editorToolbarPlacement,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
       checkExternalLinks: checkExternalLinks ?? this.checkExternalLinks,
       checkExternalImages: checkExternalImages ?? this.checkExternalImages,
       officialBuilderIntegrationEnabled:
           officialBuilderIntegrationEnabled ??
           this.officialBuilderIntegrationEnabled,
+      confirmCloseWithUnsavedChanges:
+          confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
       recentWorkspaces: recentWorkspaces ?? this.recentWorkspaces,
     );
@@ -261,12 +298,20 @@ class AppSettingsController extends StateNotifier<AppSettings> {
     return _save(state.copyWith(themeModePreference: preference));
   }
 
+  Future<void> setLocaleTag(String? localeTag) {
+    return _save(state.copyWith(localeTag: localeTag));
+  }
+
   Future<void> setEditorFontSize(double size) {
     return _save(state.copyWith(editorFontSize: size.clamp(11, 24)));
   }
 
   Future<void> setWordWrap(bool enabled) {
     return _save(state.copyWith(wordWrap: enabled));
+  }
+
+  Future<void> setEditorToolbarPlacement(EditorToolbarPlacement placement) {
+    return _save(state.copyWith(editorToolbarPlacement: placement));
   }
 
   Future<void> setPreviewVisible(bool enabled) {
@@ -304,6 +349,10 @@ class AppSettingsController extends StateNotifier<AppSettings> {
 
   Future<void> setOfficialBuilderIntegration(bool enabled) {
     return _save(state.copyWith(officialBuilderIntegrationEnabled: enabled));
+  }
+
+  Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
+    return _save(state.copyWith(confirmCloseWithUnsavedChanges: enabled));
   }
 
   Future<void> recordOpenedWorkspace({
@@ -360,4 +409,30 @@ T _enumFromName<T extends Enum>(List<T> values, Object? name, T fallback) {
     }
   }
   return fallback;
+}
+
+String? _localeTagFromJson(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  final tag = value.toString().trim();
+  return tag.isEmpty ? null : tag;
+}
+
+Locale? _localeFromTag(String? tag) {
+  if (tag == null || tag.isEmpty) {
+    return null;
+  }
+  final parts = tag.split(RegExp('[-_]'));
+  if (parts.length == 1) {
+    return Locale(parts.first);
+  }
+  if (parts.length == 2) {
+    return Locale(parts.first, parts.last);
+  }
+  return Locale.fromSubtags(
+    languageCode: parts[0],
+    scriptCode: parts[1].isEmpty ? null : parts[1],
+    countryCode: parts[2].isEmpty ? null : parts[2],
+  );
 }

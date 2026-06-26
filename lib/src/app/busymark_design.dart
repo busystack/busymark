@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
+
+import 'busymark_glyphs.dart';
 
 abstract final class BusyMarkSpacing {
   static const double xxs = 2;
   static const double xs = 4;
   static const double sm = 8;
+  static const double smPlus = 10;
   static const double md = 12;
+  static const double mdPlus = 14;
   static const double lg = 16;
+  static const double lgPlus = 18;
   static const double xl = 24;
+  static const double xxl = 32;
   static const double tooltipHorizontal = 8;
   static const double tooltipVertical = 5;
 }
@@ -17,10 +24,13 @@ abstract final class BusyMarkRadius {
   static const double md = 8;
   static const double lg = 12;
   static const double headerButton = 8;
-  static const double window = 8;
+  static const double window = 14;
+  static const double pill = 999;
+  static const double selection = 3;
 }
 
 abstract final class BusyMarkSizes {
+  static const double contentWidth = 760;
   static const double sidebarWidth = 300;
   static const double settingsWidth = 760;
   static const double toolbarHeight = 46;
@@ -29,12 +39,266 @@ abstract final class BusyMarkSizes {
   static const double iconSm = 16;
   static const double iconMd = 20;
   static const double previewMinWidth = 320;
+  static const double modalMaxWidth = 860;
+  static const double modalHorizontalInset = 40;
+  static const double modalVerticalInset = 24;
+  static const double modalMaxHeightFraction = 0.86;
+  static const double dialog = 520;
+  static const double dialogNarrow = 480;
+  static const double dialogCompact = 460;
+  static const double dialogWide = 560;
+  static const double popupMenuMinWidth = 180;
+  static const double popupMenuItemHeight = 36;
+  static const double languagePopupMinWidth = 220;
+  static const double languagePopupMaxWidth = 280;
+  static const double languageButtonMaxWidth = 256;
+  static const double dialogButtonMinWidth = 72;
+  static const double dialogButtonMaxWidth = 220;
+  static const double floatingEntryHeight = 58;
+  static const double floatingEntryInset = 12;
+  static const double floatingEntryLabelTop = 7;
+  static const double floatingEntryLabelRestTop = 16;
+  static const double floatingEntryLabelHeight = 18;
+  static const double floatingEntryLabelRestHeight = 24;
+  static const double floatingEntryInputTop = 25;
+  static const double floatingEntryInputBottom = 6;
+  static const double aboutLogoViewport = 136;
+  static const double aboutLogoAsset = 216;
+  static const double sidebarSeparatorHeight = 22;
+  static const double sidebarTreeRowHeight = 30;
+  static const double sidebarTreeDepthBase = 4;
+  static const double sidebarTreeDepthIndent = 14;
+  static const double sidebarTreeControl = 18;
+  static const double sidebarTreeArrow = 14;
+  static const double problemsListWidth = 700;
+  static const double problemsListHeight = 420;
+  static const double sourceGutterWidth = 50;
+  static const double sourceFoldButton = 16;
+  static const double sourceFoldButtonRightInset = 1;
+  static const double previewHeadingTop = 18;
+  static const double previewHeadingBottom = 6;
+  static const double previewListMarkerWidth = 18;
+  static const double previewListMarkerTopInset = 2;
+  static const double previewImageMinWidth = 80;
+  static const double previewImageMaxWidth = contentWidth;
+  static const double previewInlineImageMaxHeight = 180;
+  static const double previewInlineImageHeight = 96;
+  static const double wysiwygContentWidth = 820;
+  static const double wysiwygBlockIndent = 28;
+  static const double wysiwygEditorHorizontalPadding = 28;
+  static const double wysiwygEditorTopPadding = 20;
+  static const double wysiwygEditorTopPaddingWithToolbar = 66;
+  static const double wysiwygEditorBottomPadding = 38;
+  static const double wysiwygEditorBottomPaddingWithToolbar = 84;
+  static const double wysiwygPrefixWidth = 30;
+  static const double wysiwygToolbarReserve = 42;
+  static const double imageDialogWidth = 420;
+  static const double tableDialogWidth = 360;
+  static const double tableColumnBaseWidth = 164;
+  static const double tableMinWidth = 360;
+  static const double tableMaxWidth = 980;
+  static const double tableControl = 34;
+  static const double markerDot = 6;
+  static const double thematicBreakHandleWidth = 44;
+  static const double controlRowWidth = 256;
+  static const double sliderRowWidth = 260;
+  static const double toolbarPlacementRowWidth = 430;
+  static const double settingsControlBreakpoint = 560;
+  static const double toolbarPlacementBreakpoint = 620;
+  static const int tableMinColumns = 1;
+  static const int tableMaxColumns = 12;
+  static const int tableMinRows = 1;
+  static const int tableMaxRows = 50;
 }
 
 abstract final class BusyMarkElevation {
-  static const double surface = 1;
+  static const double none = 0;
+  static const double surface = 2;
   static const double popover = 6;
   static const double window = 12;
+}
+
+abstract final class BusyMarkStroke {
+  static const double hairline = 1;
+  static const double focus = 2;
+  static const double sourceCursor = 1.4;
+  static const double thematicBreak = 1.6;
+  static const double selectionInflate = 1.5;
+}
+
+abstract final class BusyMarkAlpha {
+  static const double modalBarrier = 0.32;
+  static const double focus = 0.18;
+  static const double splash = 0.12;
+  static const double overlayPressed = 0.14;
+  static const double overlayHover = 0.08;
+  static const double overlayFocus = 0.10;
+  static const double textSelection = 0.32;
+  static const double floatingTextSelection = 0.28;
+  static const double titleButton = 0.10;
+  static const double titleButtonHover = 0.15;
+  static const double titleButtonActive = 0.25;
+  static const double languageMenuShadow = 0.42;
+  static const double sourceCollapsedLine = 0.045;
+  static const double sourceCursor = 0.82;
+  static const double sourceSyntaxBackground = 0.10;
+  static const double syntaxCommentDark = 0.82;
+  static const double syntaxCommentLight = 0.76;
+  static const double previewHighlight = 0.24;
+  static const double thematicBreak = 0.34;
+  static const double thematicBreakHandle = 0.24;
+  static const double thematicBreakSelected = 0.72;
+  static const double floatingEntryIcon = 0.72;
+  static const double toolbarPressed = 0.18;
+  static const double toolbarHover = 0.10;
+  static const double editorToolbarPressed = 0.08;
+  static const double editorToolbarHover = 0.04;
+  static const double windowShadowHigh = 0.75;
+  static const double windowShadowMedium = 0.45;
+  static const double windowShadowLow = 0.25;
+}
+
+abstract final class BusyMarkTypography {
+  static const String fontFamily = 'Ubuntu';
+  static const String monoFontFamily = 'Ubuntu Mono';
+  static const double codeLineHeight = 1.45;
+  static const double bodyLineHeight = 1.5;
+  static const double defaultFontSize = 14;
+  static const double previewThematicBreakHeight = BusyMarkStroke.thematicBreak;
+  static const double sourceCursorHeightScale = 1.22;
+  static const double sourceLineNumberScale = 0.92;
+  static const double hiddenLayoutFontSize = 0.01;
+  static const double hiddenLayoutHeight = 0.01;
+
+  static double markdownHeadingScale(int level) {
+    return switch (level) {
+      1 => 1.55,
+      2 => 1.36,
+      3 => 1.22,
+      4 => 1.12,
+      5 => 1.04,
+      _ => 0.98,
+    };
+  }
+}
+
+abstract final class BusyMarkMotion {
+  static const Duration modalPadding = Duration(milliseconds: 100);
+  static const Duration sidebarExpand = Duration(milliseconds: 120);
+  static const Duration floatingEntry = Duration(milliseconds: 140);
+  static const Duration scroll = Duration(milliseconds: 180);
+  static const Duration previewSearchDelay = Duration(milliseconds: 80);
+  static const Duration tooltipWait = Duration(milliseconds: 450);
+  static const Curve modalPaddingCurve = Curves.decelerate;
+  static const Curve floatingEntryCurve = Curves.easeOutCubic;
+}
+
+abstract final class BusyMarkInsets {
+  static const input = EdgeInsets.symmetric(
+    horizontal: BusyMarkSpacing.md,
+    vertical: BusyMarkSpacing.smPlus,
+  );
+  static const listTile = EdgeInsets.symmetric(horizontal: BusyMarkSpacing.md);
+  static const settingsPage = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.xl,
+    BusyMarkSpacing.mdPlus,
+    BusyMarkSpacing.xl,
+    BusyMarkSpacing.xxl,
+  );
+  static const welcomePage = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.xl,
+    BusyMarkSpacing.lgPlus,
+    BusyMarkSpacing.xl,
+    BusyMarkSpacing.xxl,
+  );
+  static const sidebarTabs = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.smPlus,
+    0,
+    BusyMarkSpacing.smPlus,
+    BusyMarkSpacing.sm,
+  );
+  static const sidebarHeader = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.mdPlus,
+    BusyMarkSpacing.mdPlus,
+    BusyMarkSpacing.mdPlus,
+    BusyMarkSpacing.md,
+  );
+  static const sidebarList = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.sm,
+    BusyMarkSpacing.xxs,
+    BusyMarkSpacing.sm,
+    BusyMarkSpacing.smPlus,
+  );
+  static const tocHeader = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.sm,
+    6,
+    BusyMarkSpacing.sm,
+    BusyMarkSpacing.sm,
+  );
+  static const previewPane = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.xl,
+    BusyMarkSourceEditorMetrics.paddingTop,
+    BusyMarkSpacing.xl,
+    BusyMarkSizes.iconButton,
+  );
+  static const previewCodeBlock = EdgeInsets.all(BusyMarkSpacing.mdPlus);
+  static const previewCallout = EdgeInsets.all(BusyMarkSpacing.md);
+  static const previewTableCell = EdgeInsets.symmetric(
+    horizontal: BusyMarkSpacing.sm,
+    vertical: BusyMarkSpacing.xs,
+  );
+  static const dialogButton = EdgeInsets.symmetric(
+    horizontal: BusyMarkSpacing.mdPlus,
+    vertical: 7,
+  );
+  static const sectionLabel = EdgeInsets.fromLTRB(
+    BusyMarkSpacing.md,
+    BusyMarkSpacing.mdPlus,
+    BusyMarkSpacing.md,
+    6,
+  );
+  static const wysiwygHeadingBlock = EdgeInsets.only(
+    top: BusyMarkSpacing.lg,
+    bottom: 6,
+  );
+  static const wysiwygContainerBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.sm,
+  );
+  static const wysiwygTableBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.smPlus,
+  );
+  static const wysiwygThematicBreakBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.md,
+  );
+  static const wysiwygDefaultBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.xs,
+  );
+  static const wysiwygContainerContent = EdgeInsets.all(BusyMarkSpacing.md);
+  static const wysiwygTableContent = EdgeInsets.all(BusyMarkSpacing.smPlus);
+  static const wysiwygThematicBreakContent = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.md,
+  );
+  static const wysiwygTableCell = EdgeInsets.symmetric(
+    horizontal: BusyMarkSpacing.smPlus,
+    vertical: BusyMarkSpacing.sm,
+  );
+  static const sourceEditor = EdgeInsets.fromLTRB(
+    BusyMarkSourceEditorMetrics.paddingLeft,
+    BusyMarkSourceEditorMetrics.paddingTop,
+    BusyMarkSourceEditorMetrics.paddingRight,
+    BusyMarkSourceEditorMetrics.paddingBottom,
+  );
+  static const searchResultRow = EdgeInsets.symmetric(
+    horizontal: BusyMarkSpacing.lg,
+    vertical: BusyMarkSpacing.sm,
+  );
+}
+
+abstract final class BusyMarkSourceEditorMetrics {
+  static const double paddingTop = BusyMarkSpacing.lg;
+  static const double paddingBottom = BusyMarkSpacing.lg;
+  static const double paddingLeft = BusyMarkSpacing.md;
+  static const double paddingRight = BusyMarkSpacing.lg;
 }
 
 abstract final class BusyMarkShadow {
@@ -55,14 +319,19 @@ abstract final class BusyMarkShadow {
   static List<BoxShadow> surfaceShadows(Color color) {
     return [
       BoxShadow(
-        color: _scaleAlpha(color, 0.34),
-        blurRadius: 5,
-        offset: const Offset(0, 1),
+        color: _scaleAlpha(color, 0.28),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+      BoxShadow(
+        color: _scaleAlpha(color, 0.18),
+        blurRadius: 3,
+        offset: const Offset(0, -1),
       ),
       BoxShadow(
         color: _scaleAlpha(color, 0.16),
         blurRadius: 1,
-        offset: const Offset(0, 1),
+        offset: Offset.zero,
       ),
     ];
   }
@@ -84,17 +353,21 @@ abstract final class BusyMarkShadow {
   static List<BoxShadow> windowShadows(Color color) {
     return [
       BoxShadow(
-        color: color.withValues(alpha: color.a * 0.75),
+        color: color.withValues(
+          alpha: color.a * BusyMarkAlpha.windowShadowHigh,
+        ),
         blurRadius: 22,
         offset: const Offset(0, 10),
       ),
       BoxShadow(
-        color: color.withValues(alpha: color.a * 0.45),
+        color: color.withValues(
+          alpha: color.a * BusyMarkAlpha.windowShadowMedium,
+        ),
         blurRadius: 10,
         offset: const Offset(0, 3),
       ),
       BoxShadow(
-        color: color.withValues(alpha: color.a * 0.25),
+        color: color.withValues(alpha: color.a * BusyMarkAlpha.windowShadowLow),
         blurRadius: 3,
         offset: const Offset(0, 1),
       ),
@@ -126,7 +399,24 @@ abstract final class BusyMarkShadow {
   }
 }
 
+BoxDecoration busyMarkSurfaceDecoration(
+  BuildContext context, {
+  required Color color,
+  required BorderRadius borderRadius,
+  Border? border,
+  bool elevated = true,
+}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: borderRadius,
+    border: border,
+    boxShadow: elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null,
+  );
+}
+
 abstract final class BusyMarkLinuxPalette {
+  static const transparent = Color(0x00000000);
+  static const white = Color(0xFFFFFFFF);
   static const blueAccent = Color(0xFF3584E4);
   static const red = Color(0xFFC01C28);
   static const yellow = Color(0xFFE5A50A);
@@ -135,6 +425,119 @@ abstract final class BusyMarkLinuxPalette {
   static const light4 = Color(0xFFC0BFBC);
   static const dark4 = Color(0xFF242424);
   static const black = Color(0xFF000000);
+}
+
+@immutable
+class BusyMarkSyntaxColors extends ThemeExtension<BusyMarkSyntaxColors> {
+  const BusyMarkSyntaxColors({
+    required this.heading,
+    required this.keyword,
+    required this.tag,
+    required this.attribute,
+    required this.string,
+    required this.literal,
+    required this.link,
+    required this.comment,
+    required this.punctuation,
+  });
+
+  factory BusyMarkSyntaxColors.fromSurfaceColors(
+    Brightness brightness,
+    BusyMarkSurfaceColors colors,
+  ) {
+    final dark = brightness == Brightness.dark;
+    return BusyMarkSyntaxColors(
+      heading: dark ? _darkHeading : _lightHeading,
+      keyword: dark ? _darkKeyword : _lightKeyword,
+      tag: dark ? _darkTag : _lightTag,
+      attribute: dark ? _darkAttribute : _lightAttribute,
+      string: dark ? _darkString : _lightString,
+      literal: dark ? _darkLiteral : _lightLiteral,
+      link: dark ? _darkLink : _lightLink,
+      comment: colors.mutedForeground.withValues(
+        alpha: dark
+            ? BusyMarkAlpha.syntaxCommentDark
+            : BusyMarkAlpha.syntaxCommentLight,
+      ),
+      punctuation: colors.mutedForeground,
+    );
+  }
+
+  static BusyMarkSyntaxColors of(BuildContext context) {
+    return Theme.of(context).extension<BusyMarkSyntaxColors>() ??
+        BusyMarkSyntaxColors.fromSurfaceColors(
+          Theme.of(context).brightness,
+          BusyMarkSurfaceColors.of(context),
+        );
+  }
+
+  static const _darkHeading = Color(0xFF99C1F1);
+  static const _lightHeading = Color(0xFF1A5FB4);
+  static const _darkKeyword = Color(0xFFFFBE6F);
+  static const _lightKeyword = Color(0xFF9C6B00);
+  static const _darkTag = Color(0xFF8FF0A4);
+  static const _lightTag = Color(0xFF2A7B43);
+  static const _darkAttribute = Color(0xFFF9F06B);
+  static const _lightAttribute = Color(0xFF865E00);
+  static const _darkString = Color(0xFFF66151);
+  static const _lightString = Color(0xFFC01C28);
+  static const _darkLiteral = Color(0xFFDC8ADD);
+  static const _lightLiteral = Color(0xFF813D9C);
+  static const _darkLink = Color(0xFF62A0EA);
+  static const _lightLink = Color(0xFF1C71D8);
+
+  final Color heading;
+  final Color keyword;
+  final Color tag;
+  final Color attribute;
+  final Color string;
+  final Color literal;
+  final Color link;
+  final Color comment;
+  final Color punctuation;
+
+  @override
+  BusyMarkSyntaxColors copyWith({
+    Color? heading,
+    Color? keyword,
+    Color? tag,
+    Color? attribute,
+    Color? string,
+    Color? literal,
+    Color? link,
+    Color? comment,
+    Color? punctuation,
+  }) {
+    return BusyMarkSyntaxColors(
+      heading: heading ?? this.heading,
+      keyword: keyword ?? this.keyword,
+      tag: tag ?? this.tag,
+      attribute: attribute ?? this.attribute,
+      string: string ?? this.string,
+      literal: literal ?? this.literal,
+      link: link ?? this.link,
+      comment: comment ?? this.comment,
+      punctuation: punctuation ?? this.punctuation,
+    );
+  }
+
+  @override
+  BusyMarkSyntaxColors lerp(covariant BusyMarkSyntaxColors? other, double t) {
+    if (other == null) {
+      return this;
+    }
+    return BusyMarkSyntaxColors(
+      heading: Color.lerp(heading, other.heading, t)!,
+      keyword: Color.lerp(keyword, other.keyword, t)!,
+      tag: Color.lerp(tag, other.tag, t)!,
+      attribute: Color.lerp(attribute, other.attribute, t)!,
+      string: Color.lerp(string, other.string, t)!,
+      literal: Color.lerp(literal, other.literal, t)!,
+      link: Color.lerp(link, other.link, t)!,
+      comment: Color.lerp(comment, other.comment, t)!,
+      punctuation: Color.lerp(punctuation, other.punctuation, t)!,
+    );
+  }
 }
 
 @immutable
@@ -148,6 +551,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
     required this.headerbarFlat,
     required this.panel,
     required this.card,
+    required this.groupedList,
     required this.dialog,
     required this.popover,
     required this.control,
@@ -179,20 +583,21 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
         headerbarFlat: Color(0xFFFFFFFF),
         panel: Color(0xFFF6F5F4),
         card: Color(0xFFFFFFFF),
+        groupedList: Color(0xFFFFFFFF),
         dialog: Color(0xFFFAFAFA),
         popover: Color(0xFFFFFFFF),
-        control: Color.fromRGBO(0, 0, 0, 0.06),
-        controlHover: Color.fromRGBO(0, 0, 0, 0.10),
-        controlActive: Color.fromRGBO(0, 0, 0, 0.16),
+        control: Color(0xFFFFFFFF),
+        controlHover: Color(0xFFF6F6F6),
+        controlActive: Color(0xFFEDEDED),
         activeToggle: Color(0xFFFFFFFF),
         foreground: Color.fromRGBO(0, 0, 0, 0.82),
         mutedForeground: Color.fromRGBO(0, 0, 0, 0.58),
         disabledForeground: Color.fromRGBO(0, 0, 0, 0.38),
-        disabledControl: Color.fromRGBO(0, 0, 0, 0.04),
+        disabledControl: Color(0xFFF3F3F3),
         border: Color.fromRGBO(0, 0, 0, 0.18),
         subtleBorder: Color.fromRGBO(0, 0, 0, 0.10),
         sidebarBorder: Color.fromRGBO(0, 0, 0, 0.08),
-        shade: Color.fromRGBO(0, 0, 0, 0.08),
+        shade: Color.fromRGBO(0, 0, 0, 0.22),
         muted: Color.fromRGBO(0, 0, 0, 0.58),
         admonitionNote: Color(0xFFF0F4F8),
         admonitionTip: Color(0xFFEAF8EF),
@@ -200,23 +605,24 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       ),
       Brightness.dark => const BusyMarkSurfaceColors(
         window: Color(0xFF1E1E1E),
-        view: Color(0xFF242424),
+        view: Color(0xFF2A2A2A),
         sidebar: Color(0xFF303030),
         secondarySidebar: Color(0xFF2A2A2A),
         headerbar: Color(0xFF303030),
         headerbarFlat: Color(0xFF242424),
         panel: Color(0xFF2A2A2A),
         card: Color(0xFF2A2A2A),
+        groupedList: Color(0xFF383838),
         dialog: Color(0xFF2A2A2A),
         popover: Color(0xFF383838),
-        control: Color.fromRGBO(255, 255, 255, 0.10),
-        controlHover: Color.fromRGBO(255, 255, 255, 0.14),
-        controlActive: Color.fromRGBO(255, 255, 255, 0.18),
-        activeToggle: Color.fromRGBO(255, 255, 255, 0.20),
+        control: Color(0xFF383838),
+        controlHover: Color(0xFF424242),
+        controlActive: Color(0xFF4A4A4A),
+        activeToggle: Color(0xFF4A4A4A),
         foreground: Color(0xFFFFFFFF),
         mutedForeground: Color.fromRGBO(255, 255, 255, 0.70),
         disabledForeground: Color.fromRGBO(255, 255, 255, 0.38),
-        disabledControl: Color.fromRGBO(255, 255, 255, 0.06),
+        disabledControl: Color(0xFF303030),
         border: Color.fromRGBO(0, 0, 0, 0.70),
         subtleBorder: Color.fromRGBO(255, 255, 255, 0.10),
         sidebarBorder: Color.fromRGBO(0, 0, 0, 0.36),
@@ -242,6 +648,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
   final Color headerbarFlat;
   final Color panel;
   final Color card;
+  final Color groupedList;
   final Color dialog;
   final Color popover;
   final Color control;
@@ -271,6 +678,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
     Color? headerbarFlat,
     Color? panel,
     Color? card,
+    Color? groupedList,
     Color? dialog,
     Color? popover,
     Color? control,
@@ -299,6 +707,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       headerbarFlat: headerbarFlat ?? this.headerbarFlat,
       panel: panel ?? this.panel,
       card: card ?? this.card,
+      groupedList: groupedList ?? this.groupedList,
       dialog: dialog ?? this.dialog,
       popover: popover ?? this.popover,
       control: control ?? this.control,
@@ -338,6 +747,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       headerbarFlat: Color.lerp(headerbarFlat, other.headerbarFlat, t)!,
       panel: Color.lerp(panel, other.panel, t)!,
       card: Color.lerp(card, other.card, t)!,
+      groupedList: Color.lerp(groupedList, other.groupedList, t)!,
       dialog: Color.lerp(dialog, other.dialog, t)!,
       popover: Color.lerp(popover, other.popover, t)!,
       control: Color.lerp(control, other.control, t)!,
@@ -418,15 +828,28 @@ WidgetStateProperty<Color?> busyMarkHeaderButtonBackground(
   });
 }
 
+WidgetStateProperty<Color?> busyMarkTransparentHeaderButtonBackground(
+  BuildContext context,
+) {
+  final colors = BusyMarkSurfaceColors.of(context);
+  return WidgetStateProperty.resolveWith((states) {
+    if (states.contains(WidgetState.pressed)) {
+      return colors.controlActive;
+    }
+    if (states.contains(WidgetState.hovered) ||
+        states.contains(WidgetState.focused)) {
+      return colors.controlHover;
+    }
+    return BusyMarkLinuxPalette.transparent;
+  });
+}
+
 Color busyMarkSelectedBackground(BuildContext context) {
   return BusyMarkSurfaceColors.of(context).controlActive;
 }
 
 Color busyMarkRowHoverColor(BuildContext context) {
-  final colors = BusyMarkSurfaceColors.of(context);
-  return colors.foreground.withValues(
-    alpha: Theme.of(context).brightness == Brightness.dark ? 0.045 : 0.055,
-  );
+  return BusyMarkSurfaceColors.of(context).controlHover;
 }
 
 TextStyle? busyMarkSectionHeaderStyle(BuildContext context) {
@@ -444,6 +867,11 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     required this.onPressed,
     this.selected = false,
     this.accented = false,
+    this.transparent = false,
+    this.shortcut,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.boxShadow,
   });
 
   final String tooltip;
@@ -451,27 +879,49 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool selected;
   final bool accented;
+  final bool transparent;
+  final String? shortcut;
+  final Color? foregroundColor;
+  final WidgetStateProperty<Color?>? backgroundColor;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    return IconButton(
+    final button = IconButton(
       style: busyMarkHeaderIconButtonStyle(
-        foregroundColor: accented
-            ? colorScheme.onPrimary
-            : selected
-            ? colorScheme.primary
-            : colors.mutedForeground,
-        backgroundColor: accented
-            ? WidgetStatePropertyAll(colorScheme.primary)
-            : selected
-            ? WidgetStatePropertyAll(colors.controlActive)
-            : busyMarkHeaderButtonBackground(context),
+        foregroundColor:
+            foregroundColor ??
+            (accented
+                ? colorScheme.onPrimary
+                : selected
+                ? colorScheme.primary
+                : colors.mutedForeground),
+        backgroundColor:
+            backgroundColor ??
+            (accented
+                ? WidgetStatePropertyAll(colorScheme.primary)
+                : selected
+                ? WidgetStatePropertyAll(colors.controlActive)
+                : transparent
+                ? busyMarkTransparentHeaderButtonBackground(context)
+                : busyMarkHeaderButtonBackground(context)),
       ),
-      tooltip: tooltip,
+      tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
       icon: Icon(icon, size: BusyMarkSizes.iconSm),
       onPressed: onPressed,
+    );
+    final shadows = boxShadow;
+    if (shadows == null || shadows.isEmpty) {
+      return button;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        boxShadow: shadows,
+      ),
+      child: button,
     );
   }
 }
@@ -483,34 +933,51 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     required this.icon,
     required this.itemBuilder,
     required this.onSelected,
+    this.transparent = false,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.boxShadow,
   });
 
   final String tooltip;
   final IconData icon;
   final PopupMenuItemBuilder<T> itemBuilder;
   final ValueChanged<T> onSelected;
+  final bool transparent;
+  final Color? foregroundColor;
+  final WidgetStateProperty<Color?>? backgroundColor;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
     final popupTheme = theme.popupMenuTheme;
-    return Theme(
+    final effectiveForeground = foregroundColor ?? colors.mutedForeground;
+    final button = Theme(
       data: theme.copyWith(
         iconButtonTheme: IconButtonThemeData(
           style: busyMarkHeaderIconButtonStyle(
-            foregroundColor: colors.mutedForeground,
-            backgroundColor: busyMarkHeaderButtonBackground(context),
+            foregroundColor: effectiveForeground,
+            backgroundColor:
+                backgroundColor ??
+                (transparent
+                    ? busyMarkTransparentHeaderButtonBackground(context)
+                    : busyMarkHeaderButtonBackground(context)),
           ),
         ),
       ),
       child: PopupMenuButton<T>(
         tooltip: tooltip,
-        icon: Icon(icon, size: BusyMarkSizes.iconSm),
+        icon: Icon(
+          icon,
+          size: BusyMarkSizes.iconSm,
+          color: effectiveForeground,
+        ),
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
         color: popupTheme.color ?? colors.popover,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: BusyMarkLinuxPalette.transparent,
         elevation: BusyMarkElevation.popover,
         shadowColor: colors.shade,
         shape:
@@ -518,10 +985,23 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(BusyMarkRadius.md),
             ),
-        constraints: const BoxConstraints(minWidth: 180),
+        constraints: const BoxConstraints(
+          minWidth: BusyMarkSizes.popupMenuMinWidth,
+        ),
         itemBuilder: itemBuilder,
         onSelected: onSelected,
       ),
+    );
+    final shadows = boxShadow;
+    if (shadows == null || shadows.isEmpty) {
+      return button;
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        boxShadow: shadows,
+      ),
+      child: button,
     );
   }
 }
@@ -534,29 +1014,26 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     IconData? icon,
   }) : super(
          value: value,
-         height: 36,
+         height: BusyMarkSizes.popupMenuItemHeight,
          padding: EdgeInsets.zero,
          child: Builder(
            builder: (context) {
              final colors = BusyMarkSurfaceColors.of(context);
              return Padding(
                padding: const EdgeInsets.symmetric(
-                 horizontal: BusyMarkSpacing.md,
+                 horizontal: BusyMarkSpacing.sm,
                ),
                child: Row(
                  mainAxisSize: MainAxisSize.min,
                  children: [
-                   SizedBox(
-                     width: 24,
-                     child: icon == null
-                         ? const SizedBox.shrink()
-                         : Icon(
-                             icon,
-                             size: BusyMarkSizes.iconSm,
-                             color: colors.mutedForeground,
-                           ),
-                   ),
-                   const SizedBox(width: BusyMarkSpacing.sm),
+                   if (icon != null) ...[
+                     Icon(
+                       icon,
+                       size: BusyMarkSizes.iconSm,
+                       color: colors.mutedForeground,
+                     ),
+                     const SizedBox(width: BusyMarkSpacing.sm),
+                   ],
                    Flexible(
                      child: Text(label, overflow: TextOverflow.ellipsis),
                    ),
@@ -622,24 +1099,33 @@ class BusyMarkSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
+    final cardTheme = Theme.of(context).cardTheme;
     final colors = BusyMarkSurfaceColors.of(context);
-    final surface = Material(
-      color: filled ? colors.card : Colors.transparent,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: borderRadius),
+    final borderColor = colors.subtleBorder;
+    final color = filled
+        ? cardTheme.color ?? colors.card
+        : BusyMarkLinuxPalette.transparent;
+    final shape =
+        cardTheme.shape ?? RoundedRectangleBorder(borderRadius: borderRadius);
+    final material = Material(
+      color: color,
+      elevation: BusyMarkElevation.none,
+      surfaceTintColor: BusyMarkLinuxPalette.transparent,
+      shape: shape,
       clipBehavior: clipBehavior,
       child: child,
     );
     if (!filled) {
-      return surface;
+      return material;
     }
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: color,
         borderRadius: borderRadius,
-        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+        border: Border.all(color: borderColor),
       ),
-      child: surface,
+      child: material,
     );
   }
 }
@@ -710,13 +1196,18 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final dividerColor = colors.view;
     final list = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var index = 0; index < children.length; index++) ...[
           children[index],
           if (index < children.length - 1)
-            Divider(height: 1, thickness: 1, color: colors.subtleBorder),
+            Divider(
+              height: BusyMarkStroke.hairline,
+              thickness: BusyMarkStroke.hairline,
+              color: dividerColor,
+            ),
         ],
       ],
     );
@@ -726,19 +1217,58 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
     }
 
     final borderRadius = BorderRadius.circular(BusyMarkRadius.md);
+    final color = colors.groupedList;
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: color,
         borderRadius: borderRadius,
-        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
       ),
-      child: Material(
-        color: colors.control,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: borderRadius),
+      child: ClipRRect(
+        borderRadius: borderRadius,
         clipBehavior: Clip.antiAlias,
-        child: list,
+        child: Material(
+          color: BusyMarkLinuxPalette.transparent,
+          elevation: BusyMarkElevation.none,
+          surfaceTintColor: BusyMarkLinuxPalette.transparent,
+          child: list,
+        ),
       ),
+    );
+  }
+}
+
+class _BusyMarkHoverBackground extends StatefulWidget {
+  const _BusyMarkHoverBackground({required this.enabled, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  State<_BusyMarkHoverBackground> createState() =>
+      _BusyMarkHoverBackgroundState();
+}
+
+class _BusyMarkHoverBackgroundState extends State<_BusyMarkHoverBackground> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.enabled && _hovered
+        ? busyMarkRowHoverColor(context)
+        : BusyMarkLinuxPalette.transparent;
+    return MouseRegion(
+      onEnter: (_) {
+        if (!_hovered) {
+          setState(() => _hovered = true);
+        }
+      },
+      onExit: (_) {
+        if (_hovered) {
+          setState(() => _hovered = false);
+        }
+      },
+      child: ColoredBox(color: color, child: widget.child),
     );
   }
 }
@@ -767,21 +1297,24 @@ class BusyMarkActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final titleStyle = destructive ? TextStyle(color: colorScheme.error) : null;
-    return YaruListTile.square(
-      leading: leading,
-      title: Text(
-        title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: titleStyle,
-      ),
-      subtitle: subtitle == null || subtitle!.isEmpty
-          ? null
-          : Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: trailing,
+    return _BusyMarkHoverBackground(
       enabled: enabled,
-      hoverColor: busyMarkRowHoverColor(context),
-      onTap: enabled ? onTap : null,
+      child: YaruListTile.square(
+        leading: leading,
+        title: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: titleStyle,
+        ),
+        subtitle: subtitle == null || subtitle!.isEmpty
+            ? null
+            : Text(subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: trailing,
+        enabled: enabled,
+        hoverColor: BusyMarkLinuxPalette.transparent,
+        onTap: enabled ? onTap : null,
+      ),
     );
   }
 }
@@ -806,13 +1339,16 @@ class BusyMarkSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return YaruSwitchListTile(
-      value: value,
-      onChanged: enabled ? onChanged : null,
-      secondary: leading,
-      title: Text(title),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      hoverColor: busyMarkRowHoverColor(context),
+    return _BusyMarkHoverBackground(
+      enabled: enabled,
+      child: YaruSwitchListTile(
+        value: value,
+        onChanged: enabled ? onChanged : null,
+        secondary: leading,
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        hoverColor: BusyMarkLinuxPalette.transparent,
+      ),
     );
   }
 }
@@ -822,7 +1358,7 @@ class BusyMarkDialogShell extends StatelessWidget {
     super.key,
     required this.title,
     required this.children,
-    this.maxWidth = 520,
+    this.maxWidth = BusyMarkSizes.dialog,
     this.actions = const [],
   });
 
@@ -833,13 +1369,19 @@ class BusyMarkDialogShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          YaruDialogTitleBar(title: Text(title), centerTitle: true),
+          YaruDialogTitleBar(
+            title: Text(title),
+            centerTitle: true,
+            backgroundColor: colors.dialog,
+            border: BorderSide.none,
+          ),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(BusyMarkSpacing.lg),
@@ -857,7 +1399,7 @@ class BusyMarkDialogShell extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   for (final action in actions) ...[
-                    action,
+                    Flexible(child: action),
                     if (action != actions.last)
                       const SizedBox(width: BusyMarkSpacing.sm),
                   ],
@@ -870,6 +1412,446 @@ class BusyMarkDialogShell extends StatelessWidget {
   }
 }
 
+class BusyMarkDialogButton extends StatefulWidget {
+  const BusyMarkDialogButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.suggested = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool suggested;
+
+  @override
+  State<BusyMarkDialogButton> createState() => _BusyMarkDialogButtonState();
+}
+
+class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
+  var _hovered = false;
+  var _focused = false;
+  var _pressed = false;
+
+  bool get _enabled => widget.onPressed != null;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final colorScheme = theme.colorScheme;
+    final background = _buttonBackground(context, colors, colorScheme);
+    final foreground = !_enabled
+        ? colors.disabledForeground
+        : widget.suggested
+        ? colorScheme.onPrimary
+        : colors.foreground;
+    final button = Semantics(
+      button: true,
+      enabled: _enabled,
+      label: widget.label,
+      child: FocusableActionDetector(
+        enabled: _enabled,
+        mouseCursor: _enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        shortcuts: const <ShortcutActivator, Intent>{
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onPressed?.call();
+              return null;
+            },
+          ),
+        },
+        onShowHoverHighlight: (value) {
+          if (_hovered != value) {
+            setState(() => _hovered = value);
+          }
+        },
+        onShowFocusHighlight: (value) {
+          if (_focused != value) {
+            setState(() => _focused = value);
+          }
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onPressed,
+          onTapDown: _enabled ? (_) => setState(() => _pressed = true) : null,
+          onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
+          onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: BusyMarkSizes.iconButton,
+              minWidth: BusyMarkSizes.dialogButtonMinWidth,
+              maxWidth: BusyMarkSizes.dialogButtonMaxWidth,
+            ),
+            padding: BusyMarkInsets.dialogButton,
+            decoration: busyMarkSurfaceDecoration(
+              context,
+              color: background,
+              borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+              elevated: _enabled,
+            ),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(color: foreground),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return button;
+  }
+
+  Color _buttonBackground(
+    BuildContext context,
+    BusyMarkSurfaceColors colors,
+    ColorScheme colorScheme,
+  ) {
+    if (!_enabled) {
+      return colors.disabledControl;
+    }
+    if (!widget.suggested) {
+      if (_pressed) {
+        return colors.controlActive;
+      }
+      if (_hovered || _focused) {
+        return colors.controlHover;
+      }
+      return colors.control;
+    }
+    if (_pressed) {
+      return _mixForState(
+        context,
+        colorScheme.primary,
+        BusyMarkAlpha.overlayPressed,
+      );
+    }
+    if (_hovered || _focused) {
+      return _mixForState(
+        context,
+        colorScheme.primary,
+        BusyMarkAlpha.overlayHover,
+      );
+    }
+    return colorScheme.primary;
+  }
+
+  Color _mixForState(BuildContext context, Color color, double amount) {
+    final target = Theme.of(context).brightness == Brightness.dark
+        ? BusyMarkLinuxPalette.white
+        : BusyMarkLinuxPalette.black;
+    return Color.lerp(color, target, amount)!;
+  }
+}
+
+enum BusyMarkFloatingTextEntryPosition { single, first, middle, last }
+
+class BusyMarkFloatingTextEntryGroup extends StatelessWidget {
+  const BusyMarkFloatingTextEntryGroup({super.key, required this.children})
+    : assert(children.length > 1);
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final borderRadius = BorderRadius.circular(BusyMarkRadius.headerButton);
+    return DecoratedBox(
+      decoration: busyMarkSurfaceDecoration(
+        context,
+        color: colors.control,
+        borderRadius: borderRadius,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final child in children) ...[
+              child,
+              if (child != children.last)
+                Divider(
+                  height: BusyMarkStroke.hairline,
+                  thickness: BusyMarkStroke.hairline,
+                  color: colors.view,
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BusyMarkFloatingTextEntry extends StatefulWidget {
+  const BusyMarkFloatingTextEntry({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.errorText,
+    this.autofocus = false,
+    this.textInputAction,
+    this.onSubmitted,
+    this.groupPosition = BusyMarkFloatingTextEntryPosition.single,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final String? errorText;
+  final bool autofocus;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final BusyMarkFloatingTextEntryPosition groupPosition;
+
+  @override
+  State<BusyMarkFloatingTextEntry> createState() =>
+      _BusyMarkFloatingTextEntryState();
+}
+
+class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
+  late final FocusNode _focusNode;
+  late final ScrollController _scrollController;
+  var _hovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _scrollController = ScrollController();
+    widget.controller.addListener(_handleTextChanged);
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant BusyMarkFloatingTextEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleTextChanged);
+      widget.controller.addListener(_handleTextChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleTextChanged);
+    _focusNode.removeListener(_handleFocusChanged);
+    _focusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasError = widget.errorText != null;
+    final focused = _focusNode.hasFocus;
+    final floating = focused || widget.controller.text.isNotEmpty;
+    final grouped =
+        widget.groupPosition != BusyMarkFloatingTextEntryPosition.single;
+    final activeBorder = focused || hasError;
+    final radius = _borderRadius();
+    final borderColor = focused
+        ? colorScheme.primary
+        : hasError
+        ? colorScheme.error
+        : colors.border;
+    final labelColor = colors.mutedForeground;
+    return Semantics(
+      textField: true,
+      label: widget.label,
+      hint: widget.errorText,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MouseRegion(
+            cursor: SystemMouseCursors.text,
+            onEnter: (_) => setState(() => _hovered = true),
+            onExit: (_) => setState(() => _hovered = false),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _focusNode.requestFocus,
+              child: Container(
+                height: BusyMarkSizes.floatingEntryHeight,
+                decoration: busyMarkSurfaceDecoration(
+                  context,
+                  color: _hovered || focused
+                      ? colors.controlHover
+                      : colors.control,
+                  borderRadius: radius,
+                  border: activeBorder
+                      ? _border(
+                          color: borderColor,
+                          width: focused
+                              ? BusyMarkStroke.focus
+                              : BusyMarkStroke.hairline,
+                        )
+                      : null,
+                  elevated: !grouped,
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedPositionedDirectional(
+                      duration: BusyMarkMotion.floatingEntry,
+                      curve: BusyMarkMotion.floatingEntryCurve,
+                      start: BusyMarkSizes.floatingEntryInset,
+                      end: BusyMarkSizes.iconButton,
+                      top: floating
+                          ? BusyMarkSizes.floatingEntryLabelTop
+                          : BusyMarkSizes.floatingEntryLabelRestTop,
+                      height: floating
+                          ? BusyMarkSizes.floatingEntryLabelHeight
+                          : BusyMarkSizes.floatingEntryLabelRestHeight,
+                      child: IgnorePointer(
+                        child: AnimatedDefaultTextStyle(
+                          duration: BusyMarkMotion.floatingEntry,
+                          curve: BusyMarkMotion.floatingEntryCurve,
+                          style:
+                              (floating
+                                      ? theme.textTheme.labelSmall
+                                      : theme.textTheme.bodyMedium)
+                                  ?.copyWith(color: labelColor) ??
+                              TextStyle(color: labelColor),
+                          child: Text(
+                            widget.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PositionedDirectional(
+                      start: BusyMarkSizes.floatingEntryInset,
+                      end: BusyMarkSizes.iconButton,
+                      top: BusyMarkSizes.floatingEntryInputTop,
+                      bottom: BusyMarkSizes.floatingEntryInputBottom,
+                      child: AnimatedOpacity(
+                        duration: BusyMarkMotion.floatingEntry,
+                        curve: BusyMarkMotion.floatingEntryCurve,
+                        opacity: floating ? 1 : 0,
+                        child: EditableText(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          scrollController: _scrollController,
+                          autofocus: widget.autofocus,
+                          textInputAction: widget.textInputAction,
+                          onSubmitted: widget.onSubmitted,
+                          maxLines: 1,
+                          forceLine: true,
+                          style:
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: colors.foreground,
+                              ) ??
+                              TextStyle(color: colors.foreground),
+                          cursorColor: colorScheme.primary,
+                          backgroundCursorColor: colors.controlActive,
+                          selectionColor: colorScheme.primary.withValues(
+                            alpha: BusyMarkAlpha.floatingTextSelection,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PositionedDirectional(
+                      end: BusyMarkSpacing.md,
+                      top: 0,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          duration: BusyMarkMotion.floatingEntry,
+                          curve: BusyMarkMotion.floatingEntryCurve,
+                          opacity: focused ? 0 : 1,
+                          child: Center(
+                            child: Icon(
+                              BusyMarkGlyphs.edit,
+                              size: BusyMarkSizes.iconSm,
+                              color: colors.mutedForeground.withValues(
+                                alpha: BusyMarkAlpha.floatingEntryIcon,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleTextChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _handleFocusChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  BorderRadius _borderRadius() {
+    const radius = Radius.circular(BusyMarkRadius.headerButton);
+    return switch (widget.groupPosition) {
+      BusyMarkFloatingTextEntryPosition.single => const BorderRadius.all(
+        radius,
+      ),
+      BusyMarkFloatingTextEntryPosition.first => const BorderRadius.vertical(
+        top: radius,
+      ),
+      BusyMarkFloatingTextEntryPosition.middle => BorderRadius.zero,
+      BusyMarkFloatingTextEntryPosition.last => const BorderRadius.vertical(
+        bottom: radius,
+      ),
+    };
+  }
+
+  Border _border({required Color color, required double width}) {
+    final side = BorderSide(color: color, width: width);
+    return switch (widget.groupPosition) {
+      BusyMarkFloatingTextEntryPosition.single => Border.all(
+        color: color,
+        width: width,
+      ),
+      BusyMarkFloatingTextEntryPosition.first => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+      BusyMarkFloatingTextEntryPosition.middle => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+      BusyMarkFloatingTextEntryPosition.last => Border(
+        top: side,
+        right: side,
+        bottom: side,
+        left: side,
+      ),
+    };
+  }
+}
+
 class SectionLabel extends StatelessWidget {
   const SectionLabel(this.text, {super.key});
 
@@ -878,7 +1860,7 @@ class SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
+      padding: BusyMarkInsets.sectionLabel,
       child: Text(text, style: busyMarkSectionHeaderStyle(context)),
     );
   }

@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
+import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'workspace_controller.dart';
 
@@ -14,8 +15,8 @@ enum _UnsavedChangesAction { cancel, discard, save }
 
 enum _OverwriteAction { cancel, overwrite }
 
-const _markdownSaveType = XTypeGroup(
-  label: 'Markdown',
+XTypeGroup _markdownSaveType(BuildContext context) => XTypeGroup(
+  label: context.l10n.fileTypeMarkdown,
   extensions: <String>['md', 'markdown'],
   mimeTypes: <String>['text/markdown', 'text/x-markdown'],
 );
@@ -26,34 +27,31 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
     return true;
   }
   final fileName =
-      state.workspace?.activeFilePath?.split('/').last ?? 'the current file';
+      state.workspace?.activeFilePath?.split('/').last ??
+      context.l10n.currentFile;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final action = await showBusyMarkModalDialog<_UnsavedChangesAction>(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
-      title: 'Unsaved changes',
-      maxWidth: 520,
+      title: context.l10n.unsavedChanges,
+      maxWidth: BusyMarkSizes.dialog,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.cancel),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         TextButton(
           onPressed: () =>
               Navigator.pop(context, _UnsavedChangesAction.discard),
-          child: const Text('Discard'),
+          child: Text(context.l10n.discard),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.save),
-          child: const Text('Save'),
+          child: Text(context.l10n.save),
         ),
       ],
-      children: [
-        Text(
-          'You have unsaved changes in $fileName. Save them before continuing?',
-        ),
-      ],
+      children: [Text(context.l10n.unsavedChangesMessage(fileName))],
     ),
   );
 
@@ -88,21 +86,19 @@ Future<bool> saveActiveWithOverwriteConfirmation(
     context,
     headerBarService: headerBar.isAvailable ? headerBar : null,
     builder: (context) => BusyMarkDialogShell(
-      title: 'File changed on disk',
-      maxWidth: 520,
+      title: context.l10n.fileChangedOnDisk,
+      maxWidth: BusyMarkSizes.dialog,
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
-          child: const Text('Overwrite'),
+          child: Text(context.l10n.overwrite),
         ),
       ],
-      children: const [
-        Text('This file changed on disk since you opened it. Overwrite it?'),
-      ],
+      children: [Text(context.l10n.fileChangedOnDiskMessage)],
     ),
   );
   if (action != _OverwriteAction.overwrite) {
@@ -115,14 +111,14 @@ Future<bool> _saveActiveAs(BuildContext context, WidgetRef ref) async {
   final state = ref.read(workspaceControllerProvider);
   final activePath = state.workspace?.activeFilePath;
   final location = await getSaveLocation(
-    acceptedTypeGroups: const [_markdownSaveType],
+    acceptedTypeGroups: [_markdownSaveType(context)],
     suggestedName: activePath == null || activePath.isEmpty
-        ? 'Untitled.md'
+        ? context.l10n.untitledMarkdownFileName
         : p.basename(activePath),
     initialDirectory: activePath == null || activePath.isEmpty
         ? null
         : p.dirname(activePath),
-    confirmButtonText: 'Save',
+    confirmButtonText: context.l10n.save,
   );
   if (location == null) {
     return false;

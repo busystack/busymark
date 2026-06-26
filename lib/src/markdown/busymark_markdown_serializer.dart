@@ -37,11 +37,15 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.heading => _heading(block),
       BusyBlockKind.paragraph => _inlineMarkdown(block.inlines),
       BusyBlockKind.codeBlock => _codeBlock(block),
-      BusyBlockKind.unorderedListItem => '- ${_inlineMarkdown(block.inlines)}',
-      BusyBlockKind.orderedListItem =>
-        '${block.attributes['marker'] ?? '1.'} ${_inlineMarkdown(block.inlines)}',
-      BusyBlockKind.taskListItem =>
-        '- [${block.attributes['task'] == 'true' ? 'x' : ' '}] ${_inlineMarkdown(block.inlines)}',
+      BusyBlockKind.unorderedListItem => _listItem(block, '-'),
+      BusyBlockKind.orderedListItem => _listItem(
+        block,
+        block.attributes['marker'] ?? '1.',
+      ),
+      BusyBlockKind.taskListItem => _listItem(
+        block,
+        '- [${block.attributes['task'] == 'true' ? 'x' : ' '}]',
+      ),
       BusyBlockKind.blockquote => _blockquote(block),
       BusyBlockKind.thematicBreak => '---',
       BusyBlockKind.image => _image(block),
@@ -68,6 +72,9 @@ class BusyMarkMarkdownSerializer {
     ];
     if (dirtyBlocks.isEmpty) {
       return source;
+    }
+    if (dirtyBlocks.any((block) => _isListKind(block.kind))) {
+      return null;
     }
     if (dirtyBlocks.any((block) => block.sourceSpan == null)) {
       return null;
@@ -151,6 +158,33 @@ class BusyMarkMarkdownSerializer {
     return '```$language\n$text\n```';
   }
 
+  String _listItem(BusyBlock block, String marker) {
+    final text = _inlineMarkdown(block.inlines);
+    final line = text.isEmpty ? marker : '$marker $text';
+    if (block.children.isEmpty) {
+      return line;
+    }
+    final nested = block.children
+        .map(serializeBlock)
+        .where((source) => source.trim().isNotEmpty)
+        .map(_indentBlock)
+        .join('\n');
+    return nested.isEmpty ? line : '$line\n$nested';
+  }
+
+  String _indentBlock(String source) {
+    return source
+        .split('\n')
+        .map((line) => line.isEmpty ? line : '  $line')
+        .join('\n');
+  }
+
+  bool _isListKind(BusyBlockKind kind) {
+    return kind == BusyBlockKind.unorderedListItem ||
+        kind == BusyBlockKind.orderedListItem ||
+        kind == BusyBlockKind.taskListItem;
+  }
+
   String _blockquote(BusyBlock block) {
     final text = block.children.isEmpty
         ? _inlineMarkdown(block.inlines)
@@ -215,6 +249,7 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.text => _escapeInlineText(inline.text),
       BusyInlineKind.strong => '**$children**',
       BusyInlineKind.emphasis => '*$children*',
+      BusyInlineKind.underline => '<u>$children</u>',
       BusyInlineKind.strikethrough => '~~$children~~',
       BusyInlineKind.code => '`${inline.text.replaceAll('`', r'\`')}`',
       BusyInlineKind.link =>

@@ -1,0 +1,1842 @@
+{
+  "@@locale": "no",
+  "appTitle": "BusyMark",
+  "@appTitle": {
+    "description": "Application name."
+  },
+  "appSubtitle": "Markdown- og Writerside-kompatibel dokumentasjonsredigerer.",
+  "@appSubtitle": {
+    "description": "Short application description."
+  },
+  "aboutBusyMark": "Om BusyMark",
+  "@aboutBusyMark": {
+    "description": "Menu item and tooltip for the About dialog."
+  },
+  "aboutVersion": "Versjon {version}",
+  "@aboutVersion": {
+    "description": "Version label in the About dialog.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutTagline": "Markdown- og Writerside-redigerer",
+  "@aboutTagline": {
+    "description": "Short tagline shown under the app name in the About dialog."
+  },
+  "aboutLicenseLabel": "Lisens",
+  "@aboutLicenseLabel": {
+    "description": "Label for the license row in the About dialog."
+  },
+  "aboutLicenseName": "Apache License 2.0",
+  "@aboutLicenseName": {
+    "description": "Formal license name shown in the About dialog. Keep the legal license name exact."
+  },
+  "aboutWebsite": "Nettsted",
+  "@aboutWebsite": {
+    "description": "Label for the website row in the About dialog."
+  },
+  "aboutReportIssue": "Rapporter et problem",
+  "@aboutReportIssue": {
+    "description": "Label for the issue tracker row in the About dialog."
+  },
+  "advanced": "Avansert",
+  "@advanced": {
+    "description": "Settings section title for advanced actions."
+  },
+  "appearance": "Utseende",
+  "@appearance": {
+    "description": "Settings section title for appearance options."
+  },
+  "apply": "Bruk",
+  "@apply": {
+    "description": "Button label that applies a dialog change."
+  },
+  "back": "Tilbake",
+  "@back": {
+    "description": "Tooltip for navigating back."
+  },
+  "bottomLeft": "Nederst til venstre",
+  "@bottomLeft": {
+    "description": "Editing button position option."
+  },
+  "bottomRight": "Nederst til høyre",
+  "@bottomRight": {
+    "description": "Editing button position option."
+  },
+  "cancel": "Avbryt",
+  "@cancel": {
+    "description": "Cancel button label."
+  },
+  "choose": "Velg",
+  "@choose": {
+    "description": "Button label for choosing a file or path."
+  },
+  "chooseLocation": "Velg plassering",
+  "@chooseLocation": {
+    "description": "File picker confirmation label for choosing a directory."
+  },
+  "copy": "Kopier",
+  "@copy": {
+    "description": "Copy command label."
+  },
+  "create": "Opprett",
+  "@create": {
+    "description": "Create action label."
+  },
+  "creating": "Oppretter...",
+  "@creating": {
+    "description": "Progress label while a project or topic is being created."
+  },
+  "cut": "Klipp ut",
+  "@cut": {
+    "description": "Cut command label."
+  },
+  "darkTheme": "Mørk",
+  "@darkTheme": {
+    "description": "Dark theme option."
+  },
+  "discard": "Kast",
+  "@discard": {
+    "description": "Discard unsaved changes button label."
+  },
+  "editor": "Redigerer",
+  "@editor": {
+    "description": "Editor view label."
+  },
+  "file": "Fil",
+  "@file": {
+    "description": "Generic file kind label."
+  },
+  "find": "Finn",
+  "@find": {
+    "description": "Find command label."
+  },
+  "folder": "Mappe",
+  "@folder": {
+    "description": "Folder kind label."
+  },
+  "insert": "Sett inn",
+  "@insert": {
+    "description": "Insert button label."
+  },
+  "keyboardShortcuts": "Tastatursnarveier",
+  "@keyboardShortcuts": {
+    "description": "Keyboard shortcuts dialog title and menu item."
+  },
+  "lightTheme": "Lys",
+  "@lightTheme": {
+    "description": "Light theme option."
+  },
+  "mainMenu": "Hovedmeny",
+  "@mainMenu": {
+    "description": "Native header bar main menu tooltip."
+  },
+  "markdown": "Markdown",
+  "@markdown": {
+    "description": "Markdown format label."
+  },
+  "open": "Åpne",
+  "@open": {
+    "description": "Open action label."
+  },
+  "outline": "Disposisjon",
+  "@outline": {
+    "description": "Outline sidebar tab label."
+  },
+  "overwrite": "Overskriv",
+  "@overwrite": {
+    "description": "Button label for overwriting a changed file."
+  },
+  "paste": "Lim inn",
+  "@paste": {
+    "description": "Paste command label."
+  },
+  "pasteWithoutFormatting": "Lim inn uten formatering",
+  "@pasteWithoutFormatting": {
+    "description": "Plain text paste command label."
+  },
+  "preview": "Forhåndsvisning",
+  "@preview": {
+    "description": "Preview view label."
+  },
+  "recent": "Nylige",
+  "@recent": {
+    "description": "Recent workspaces section title."
+  },
+  "redo": "Gjør om",
+  "@redo": {
+    "description": "Redo command label."
+  },
+  "save": "Lagre",
+  "@save": {
+    "description": "Save action label."
+  },
+  "search": "Søk",
+  "@search": {
+    "description": "Search action label and field hint."
+  },
+  "selectAll": "Velg alle",
+  "@selectAll": {
+    "description": "Select all command label."
+  },
+  "settings": "Innstillinger",
+  "@settings": {
+    "description": "Settings action label."
+  },
+  "source": "Kilde",
+  "@source": {
+    "description": "Source view label."
+  },
+  "split": "Delt",
+  "@split": {
+    "description": "Split view label."
+  },
+  "systemTheme": "System",
+  "@systemTheme": {
+    "description": "System theme option."
+  },
+  "theme": "Tema",
+  "@theme": {
+    "description": "Theme setting label."
+  },
+  "appLanguage": "Språk",
+  "@appLanguage": {
+    "description": "Application language setting label."
+  },
+  "systemLanguage": "System",
+  "@systemLanguage": {
+    "description": "Language selector option that follows the operating system locale."
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "Language selector option for English."
+  },
+  "languageGerman": "Deutsch",
+  "@languageGerman": {
+    "description": "Language selector option for German."
+  },
+  "languageItalian": "Italiano",
+  "@languageItalian": {
+    "description": "Language selector option for Italian."
+  },
+  "languageNorwegian": "Norsk",
+  "@languageNorwegian": {
+    "description": "Language selector option for Norwegian."
+  },
+  "languageFrench": "Français",
+  "@languageFrench": {
+    "description": "Language selector option for French."
+  },
+  "languageRussian": "Русский",
+  "@languageRussian": {
+    "description": "Language selector option for Russian."
+  },
+  "languageUkrainian": "Українська",
+  "@languageUkrainian": {
+    "description": "Language selector option for Ukrainian."
+  },
+  "languagePolish": "Polski",
+  "@languagePolish": {
+    "description": "Language selector option for Polish."
+  },
+  "languageSpanish": "Español",
+  "@languageSpanish": {
+    "description": "Language selector option for Spanish."
+  },
+  "languagePortuguese": "Português",
+  "@languagePortuguese": {
+    "description": "Language selector option for Portuguese."
+  },
+  "languageArabic": "العربية",
+  "@languageArabic": {
+    "description": "Language selector option for Arabic."
+  },
+  "languagePersian": "فارسی",
+  "@languagePersian": {
+    "description": "Language selector option for Persian."
+  },
+  "languageHindi": "हिन्दी",
+  "@languageHindi": {
+    "description": "Language selector option for Hindi."
+  },
+  "toggleSidebar": "Vis/skjul sidefelt",
+  "@toggleSidebar": {
+    "description": "Native header bar sidebar toggle tooltip."
+  },
+  "topLeft": "Øverst til venstre",
+  "@topLeft": {
+    "description": "Editing button position option."
+  },
+  "topRight": "Øverst til høyre",
+  "@topRight": {
+    "description": "Editing button position option."
+  },
+  "undo": "Angre",
+  "@undo": {
+    "description": "Undo command label."
+  },
+  "validate": "Valider",
+  "@validate": {
+    "description": "Validate action label."
+  },
+  "validation": "Validering",
+  "@validation": {
+    "description": "Settings section title for validation options."
+  },
+  "viewMode": "Visningsmodus",
+  "@viewMode": {
+    "description": "Native header bar view mode control label."
+  },
+  "welcome": "Velkommen",
+  "@welcome": {
+    "description": "Welcome screen label and tooltip."
+  },
+  "writerside": "Writerside",
+  "@writerside": {
+    "description": "Writerside workspace kind label."
+  },
+  "xml": "XML",
+  "@xml": {
+    "description": "XML format label."
+  },
+  "fileTypeMarkdown": "Markdown",
+  "@fileTypeMarkdown": {
+    "description": "Native file picker type label for Markdown files."
+  },
+  "fileTypeImages": "Bilder",
+  "@fileTypeImages": {
+    "description": "Native file picker type label for images."
+  },
+  "openMarkdownFile": "Åpne Markdown-fil",
+  "@openMarkdownFile": {
+    "description": "Action label for opening a Markdown file."
+  },
+  "markdownFileExtensions": ".md eller .markdown",
+  "@markdownFileExtensions": {
+    "description": "Subtitle describing supported Markdown file extensions."
+  },
+  "openFolderOrWritersideProject": "Åpne mappe eller Writerside-prosjekt",
+  "@openFolderOrWritersideProject": {
+    "description": "Action label for opening a folder or Writerside project."
+  },
+  "markdownFolderOrWritersideProject": "Markdown-mappe eller Writerside-kompatibelt prosjekt",
+  "@markdownFolderOrWritersideProject": {
+    "description": "Subtitle describing supported folder workspace types."
+  },
+  "shortcutGroupFile": "Fil",
+  "@shortcutGroupFile": {
+    "description": "Keyboard shortcut group for file commands."
+  },
+  "shortcutNewDocument": "Nytt dokument",
+  "@shortcutNewDocument": {
+    "description": "Keyboard shortcut label for creating a document."
+  },
+  "shortcutNewDocumentDescription": "Opprett et nytt ulagret Markdown-dokument",
+  "@shortcutNewDocumentDescription": {
+    "description": "Keyboard shortcut description for creating a document."
+  },
+  "shortcutOpenDescription": "Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt",
+  "@shortcutOpenDescription": {
+    "description": "Keyboard shortcut description for opening content."
+  },
+  "shortcutSaveDescription": "Lagre gjeldende Markdown-fil",
+  "@shortcutSaveDescription": {
+    "description": "Keyboard shortcut description for saving content."
+  },
+  "shortcutFindDescription": "Søk i gjeldende arbeidsområde",
+  "@shortcutFindDescription": {
+    "description": "Keyboard shortcut description for search."
+  },
+  "shortcutKeyboardShortcutsDescription": "Vis denne hurtigtastreferansen",
+  "@shortcutKeyboardShortcutsDescription": {
+    "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutGroupTextEditing": "Tekstredigering",
+  "@shortcutGroupTextEditing": {
+    "description": "Keyboard shortcut group for text editing commands."
+  },
+  "shortcutSelectAllDescription": "Velg all tekst i redigereren",
+  "@shortcutSelectAllDescription": {
+    "description": "Keyboard shortcut description for selecting all text."
+  },
+  "shortcutCutDescription": "Klipp ut den valgte teksten",
+  "@shortcutCutDescription": {
+    "description": "Keyboard shortcut description for cut."
+  },
+  "shortcutCopyDescription": "Kopier den valgte teksten",
+  "@shortcutCopyDescription": {
+    "description": "Keyboard shortcut description for copy."
+  },
+  "shortcutPasteDescription": "Lim inn fra utklippstavlen",
+  "@shortcutPasteDescription": {
+    "description": "Keyboard shortcut description for paste."
+  },
+  "shortcutPastePlainTextDescription": "Lim inn utklippstavletekst uten formatering",
+  "@shortcutPastePlainTextDescription": {
+    "description": "Keyboard shortcut description for plain text paste."
+  },
+  "shortcutUndoDescription": "Angre siste redigering",
+  "@shortcutUndoDescription": {
+    "description": "Keyboard shortcut description for undo."
+  },
+  "shortcutRedoDescription": "Gjør om den siste angrede redigeringen",
+  "@shortcutRedoDescription": {
+    "description": "Keyboard shortcut description for redo."
+  },
+  "clearEditorSelection": "Fjern redigeringsvalg",
+  "@clearEditorSelection": {
+    "description": "Keyboard shortcut label for clearing selection."
+  },
+  "shortcutClearEditorSelectionDescription": "Gå ut av gjeldende redigeringsvalg eller søkefokus",
+  "@shortcutClearEditorSelectionDescription": {
+    "description": "Keyboard shortcut description for clearing selection."
+  },
+  "shortcutGroupFormatting": "Formatering",
+  "@shortcutGroupFormatting": {
+    "description": "Keyboard shortcut group for inline formatting."
+  },
+  "shortcutBoldDescription": "Slå fet skrift av/på for den valgte teksten",
+  "@shortcutBoldDescription": {
+    "description": "Keyboard shortcut description for bold."
+  },
+  "shortcutItalicDescription": "Slå kursiv av/på for den valgte teksten",
+  "@shortcutItalicDescription": {
+    "description": "Keyboard shortcut description for italic."
+  },
+  "shortcutUnderlineDescription": "Slå understreking av/på for den valgte teksten",
+  "@shortcutUnderlineDescription": {
+    "description": "Keyboard shortcut description for underline."
+  },
+  "shortcutLinkDescription": "Sett inn eller rediger en lenke",
+  "@shortcutLinkDescription": {
+    "description": "Keyboard shortcut description for link insertion."
+  },
+  "shortcutInlineCodeDescription": "Slå innebygd kode av/på for den valgte teksten",
+  "@shortcutInlineCodeDescription": {
+    "description": "Keyboard shortcut description for inline code."
+  },
+  "shortcutStrikethroughDescription": "Slå gjennomstreking av/på for den valgte teksten",
+  "@shortcutStrikethroughDescription": {
+    "description": "Keyboard shortcut description for strikethrough."
+  },
+  "shortcutGroupBlocks": "Blokker",
+  "@shortcutGroupBlocks": {
+    "description": "Keyboard shortcut group for block styles."
+  },
+  "shortcutParagraphDescription": "Sett gjeldende blokk til avsnitt",
+  "@shortcutParagraphDescription": {
+    "description": "Keyboard shortcut description for paragraph style."
+  },
+  "shortcutHeading1Description": "Sett gjeldende blokk til overskrift 1",
+  "@shortcutHeading1Description": {
+    "description": "Keyboard shortcut description for heading 1."
+  },
+  "shortcutHeading2Description": "Sett gjeldende blokk til overskrift 2",
+  "@shortcutHeading2Description": {
+    "description": "Keyboard shortcut description for heading 2."
+  },
+  "shortcutHeading3Description": "Sett gjeldende blokk til overskrift 3",
+  "@shortcutHeading3Description": {
+    "description": "Keyboard shortcut description for heading 3."
+  },
+  "shortcutHeading4Description": "Sett gjeldende blokk til overskrift 4",
+  "@shortcutHeading4Description": {
+    "description": "Keyboard shortcut description for heading 4."
+  },
+  "shortcutHeading5Description": "Sett gjeldende blokk til overskrift 5",
+  "@shortcutHeading5Description": {
+    "description": "Keyboard shortcut description for heading 5."
+  },
+  "shortcutHeading6Description": "Sett gjeldende blokk til overskrift 6",
+  "@shortcutHeading6Description": {
+    "description": "Keyboard shortcut description for heading 6."
+  },
+  "shortcutGroupLists": "Lister",
+  "@shortcutGroupLists": {
+    "description": "Keyboard shortcut group for list commands."
+  },
+  "numberedList": "Nummerert liste",
+  "@numberedList": {
+    "description": "Keyboard shortcut label for numbered list formatting."
+  },
+  "shortcutNumberedListDescription": "Slå nummerert liste av/på",
+  "@shortcutNumberedListDescription": {
+    "description": "Keyboard shortcut description for numbered list."
+  },
+  "bulletedList": "Punktliste",
+  "@bulletedList": {
+    "description": "Keyboard shortcut label for bulleted list formatting."
+  },
+  "shortcutBulletedListDescription": "Slå punktliste av/på",
+  "@shortcutBulletedListDescription": {
+    "description": "Keyboard shortcut description for bulleted list."
+  },
+  "checklist": "Sjekkliste",
+  "@checklist": {
+    "description": "Keyboard shortcut label for checklist formatting."
+  },
+  "shortcutChecklistDescription": "Slå sjekkliste av/på",
+  "@shortcutChecklistDescription": {
+    "description": "Keyboard shortcut description for checklist."
+  },
+  "createMarkdownFile": "Opprett Markdown-fil",
+  "@createMarkdownFile": {
+    "description": "Welcome screen action for creating a Markdown file."
+  },
+  "createMarkdownFileDescription": "Start et ulagret lokalt Markdown-dokument",
+  "@createMarkdownFileDescription": {
+    "description": "Welcome screen subtitle for creating a Markdown file."
+  },
+  "createWritersideProject": "Opprett Writerside-prosjekt",
+  "@createWritersideProject": {
+    "description": "Welcome screen action for creating a Writerside project."
+  },
+  "createWritersideProjectDescription": "Start et lokalt Writerside-kompatibelt prosjekt",
+  "@createWritersideProjectDescription": {
+    "description": "Welcome screen subtitle for creating a Writerside project."
+  },
+  "defaultProjectName": "Dokumentasjon",
+  "@defaultProjectName": {
+    "description": "Default project name shown in the create project dialog."
+  },
+  "defaultInstanceName": "Brukerveiledning",
+  "@defaultInstanceName": {
+    "description": "Default Writerside instance name shown in the create project dialog."
+  },
+  "defaultStartTopicTitle": "Komme i gang",
+  "@defaultStartTopicTitle": {
+    "description": "Default start topic title shown in the create project dialog."
+  },
+  "projectName": "Prosjektnavn",
+  "@projectName": {
+    "description": "Create project dialog field label."
+  },
+  "directoryName": "Mappenavn",
+  "@directoryName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceName": "Instansnavn",
+  "@instanceName": {
+    "description": "Create project dialog field label."
+  },
+  "instanceId": "Instans-ID",
+  "@instanceId": {
+    "description": "Create project dialog field label."
+  },
+  "startTopicTitle": "Tittel på startemne",
+  "@startTopicTitle": {
+    "description": "Create project dialog field label."
+  },
+  "location": "Plassering",
+  "@location": {
+    "description": "Create dialog location section label."
+  },
+  "projectNameRequired": "Prosjektnavn er påkrevd.",
+  "@projectNameRequired": {
+    "description": "Validation message for missing project name."
+  },
+  "directoryNameRequired": "Mappenavn er påkrevd.",
+  "@directoryNameRequired": {
+    "description": "Validation message for missing directory name."
+  },
+  "useSingleSafeDirectoryName": "Bruk ett enkelt, trygt mappenavn.",
+  "@useSingleSafeDirectoryName": {
+    "description": "Validation message for unsafe directory names."
+  },
+  "useLowercaseIdentifier": "Bruk en identifikator med små bokstaver, tall, understrek eller bindestrek.",
+  "@useLowercaseIdentifier": {
+    "description": "Validation message for invalid Writerside instance IDs."
+  },
+  "startTopicTitleRequired": "Tittel på startemne er påkrevd.",
+  "@startTopicTitleRequired": {
+    "description": "Validation message for missing start topic title."
+  },
+  "createWritersideProjectFailed": "Kunne ikke opprette Writerside-prosjektet.",
+  "@createWritersideProjectFailed": {
+    "description": "Fallback error shown when Writerside project creation fails."
+  },
+  "settingsTitle": "Innstillinger for BusyMark",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "wordWrap": "Tekstbryting",
+  "@wordWrap": {
+    "description": "Word wrap setting label."
+  },
+  "editorFontSize": "Skriftstørrelse i redigerer",
+  "@editorFontSize": {
+    "description": "Editor font size setting label."
+  },
+  "validateOnEdit": "Valider under redigering",
+  "@validateOnEdit": {
+    "description": "Validation setting label."
+  },
+  "clearRecentWorkspaces": "Tøm nylige arbeidsområder",
+  "@clearRecentWorkspaces": {
+    "description": "Settings action label for clearing recent workspaces."
+  },
+  "editingButtons": "Redigeringsknapper",
+  "@editingButtons": {
+    "description": "Settings label for WYSIWYG editing button position."
+  },
+  "editingButtonsDescription": "Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.",
+  "@editingButtonsDescription": {
+    "description": "Description for WYSIWYG editing button position setting."
+  },
+  "settingsWindowSectionTitle": "Vindu",
+  "@settingsWindowSectionTitle": {"description":"Settings section title for native window behavior."},
+  "settingsConfirmCloseWithUnsavedChangesTitle": "Bekreft før lukking med ulagrede endringer",
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Spør før BusyMark lukkes når dokumenter har ulagrede endringer.",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
+  "closeUnsavedChangesTitle": "Ulagrede endringer",
+  "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
+  "closeUnsavedChangesSingleMessage": "Dette dokumentet har ulagrede endringer. Lagre endringene før BusyMark lukkes?",
+  "@closeUnsavedChangesSingleMessage": {"description":"Window close confirmation message when one document has unsaved changes."},
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Lagre endringene før BusyMark lukkes?} =1{1 dokument har ulagrede endringer. Lagre endringene før BusyMark lukkes?} other{{count} dokumenter har ulagrede endringer. Lagre endringene før BusyMark lukkes?}}",
+  "@closeUnsavedChangesMultipleMessage": {"description":"Window close confirmation message when multiple documents have unsaved changes.","placeholders":{"count":{"type":"int"}}},
+  "closeUnsavedChangesCancel": "Avbryt",
+  "@closeUnsavedChangesCancel": {"description":"Cancel button label in the window close unsaved-changes dialog."},
+  "closeUnsavedChangesDiscard": "Forkast",
+  "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
+  "closeUnsavedChangesSave": "Lagre",
+  "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
+  "currentFile": "gjeldende fil",
+  "@currentFile": {
+    "description": "Fallback file name in unsaved changes dialog."
+  },
+  "unsavedChanges": "Ulagrede endringer",
+  "@unsavedChanges": {
+    "description": "Unsaved changes dialog title."
+  },
+  "unsavedChangesMessage": "Du har ulagrede endringer i {fileName}. Vil du lagre dem før du fortsetter?",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes confirmation message.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "fileChangedOnDisk": "Fil endret på disk",
+  "@fileChangedOnDisk": {
+    "description": "File changed confirmation dialog title."
+  },
+  "fileChangedOnDiskMessage": "Denne filen er endret på disken siden du åpnet den. Vil du overskrive den?",
+  "@fileChangedOnDiskMessage": {
+    "description": "File changed confirmation dialog message."
+  },
+  "untitledMarkdownFileName": "Uten tittel.md",
+  "@untitledMarkdownFileName": {
+    "description": "Display name for a new unsaved Markdown document."
+  },
+  "unorderedList": "Uordnet liste",
+  "@unorderedList": {
+    "description": "WYSIWYG toolbar tooltip for unordered list."
+  },
+  "orderedList": "Nummerert liste",
+  "@orderedList": {
+    "description": "WYSIWYG toolbar tooltip for ordered list."
+  },
+  "taskList": "Oppgaveliste",
+  "@taskList": {
+    "description": "WYSIWYG toolbar tooltip for task list."
+  },
+  "toggleTaskChecked": "Merk/fjern merking av oppgave",
+  "@toggleTaskChecked": {
+    "description": "WYSIWYG toolbar tooltip for toggling task state."
+  },
+  "indentListItem": "Øk innrykk for listeelement",
+  "@indentListItem": {
+    "description": "WYSIWYG toolbar tooltip for indenting a list item."
+  },
+  "outdentListItem": "Reduser innrykk for listeelement",
+  "@outdentListItem": {
+    "description": "WYSIWYG toolbar tooltip for outdenting a list item."
+  },
+  "blockquote": "Sitatblokk",
+  "@blockquote": {
+    "description": "Blockquote command label."
+  },
+  "codeBlock": "Kodeblokk",
+  "@codeBlock": {
+    "description": "Code block command or preview label."
+  },
+  "codeBlockLanguage": "Kodeblokkspråk",
+  "@codeBlockLanguage": {
+    "description": "Dialog title and toolbar tooltip for code block language."
+  },
+  "image": "Bilde",
+  "@image": {
+    "description": "Image command and document kind label."
+  },
+  "inlineImage": "Innebygd bilde",
+  "@inlineImage": {
+    "description": "Inline image command label."
+  },
+  "table": "Tabell",
+  "@table": {
+    "description": "Table command label."
+  },
+  "thematicBreak": "Tematisk skille",
+  "@thematicBreak": {
+    "description": "Thematic break command label."
+  },
+  "bold": "Fet",
+  "@bold": {
+    "description": "Bold command label."
+  },
+  "italic": "Kursiv",
+  "@italic": {
+    "description": "Italic command label."
+  },
+  "underline": "Understrek",
+  "@underline": {
+    "description": "Underline command label."
+  },
+  "strikethrough": "Gjennomstreking",
+  "@strikethrough": {
+    "description": "Strikethrough command label."
+  },
+  "inlineCode": "Innebygd kode",
+  "@inlineCode": {
+    "description": "Inline code command label."
+  },
+  "link": "Lenke",
+  "@link": {
+    "description": "Link command and preview label."
+  },
+  "hardLineBreak": "Hardt linjeskift",
+  "@hardLineBreak": {
+    "description": "Hard line break command label."
+  },
+  "textStyle": "Tekststil",
+  "@textStyle": {
+    "description": "Text style menu tooltip."
+  },
+  "paragraph": "Avsnitt",
+  "@paragraph": {
+    "description": "Paragraph style label."
+  },
+  "heading1": "Overskrift 1",
+  "@heading1": {
+    "description": "Heading 1 style label."
+  },
+  "heading2": "Overskrift 2",
+  "@heading2": {
+    "description": "Heading 2 style label."
+  },
+  "heading3": "Overskrift 3",
+  "@heading3": {
+    "description": "Heading 3 style label."
+  },
+  "heading4": "Overskrift 4",
+  "@heading4": {
+    "description": "Heading 4 style label."
+  },
+  "heading5": "Overskrift 5",
+  "@heading5": {
+    "description": "Heading 5 style label."
+  },
+  "heading6": "Overskrift 6",
+  "@heading6": {
+    "description": "Heading 6 style label."
+  },
+  "headingLevelAbbreviation": "H{level}",
+  "@headingLevelAbbreviation": {
+    "description": "Compact outline badge for a heading level.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteTable": "Slett tabell",
+  "@deleteTable": {
+    "description": "Tooltip for deleting a table."
+  },
+  "tableColumnNumber": "Kolonne {columnNumber}",
+  "@tableColumnNumber": {
+    "description": "Tooltip for a table column control.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertColumnLeft": "Sett inn kolonne til venstre",
+  "@insertColumnLeft": {
+    "description": "Menu item for inserting a table column to the left."
+  },
+  "insertColumnRight": "Sett inn kolonne til høyre",
+  "@insertColumnRight": {
+    "description": "Menu item for inserting a table column to the right."
+  },
+  "deleteColumn": "Slett kolonne",
+  "@deleteColumn": {
+    "description": "Menu item for deleting a table column."
+  },
+  "tableRowNumber": "Rad {rowNumber}",
+  "@tableRowNumber": {
+    "description": "Tooltip for a table row control.",
+    "placeholders": {
+      "rowNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "insertRowAbove": "Sett inn rad over",
+  "@insertRowAbove": {
+    "description": "Menu item for inserting a table row above."
+  },
+  "insertRowBelow": "Sett inn rad under",
+  "@insertRowBelow": {
+    "description": "Menu item for inserting a table row below."
+  },
+  "deleteRow": "Slett rad",
+  "@deleteRow": {
+    "description": "Menu item for deleting a table row."
+  },
+  "tableHeaderHint": "Overskrift",
+  "@tableHeaderHint": {
+    "description": "Hint for an empty table header cell."
+  },
+  "tableCellHint": "Celle",
+  "@tableCellHint": {
+    "description": "Hint for an empty table body cell."
+  },
+  "language": "Språk",
+  "@language": {
+    "description": "Code block language field label."
+  },
+  "hideEditingButtons": "Skjul redigeringsknapper",
+  "@hideEditingButtons": {
+    "description": "Tooltip for hiding floating editing buttons."
+  },
+  "showEditingButtons": "Vis redigeringsknapper",
+  "@showEditingButtons": {
+    "description": "Tooltip for showing floating editing buttons."
+  },
+  "altText": "Alternativ tekst",
+  "@altText": {
+    "description": "Image alt text field label."
+  },
+  "describeTheImage": "Beskriv bildet",
+  "@describeTheImage": {
+    "description": "Image alt text hint."
+  },
+  "columns": "Kolonner",
+  "@columns": {
+    "description": "Table dialog columns field label."
+  },
+  "rows": "Rader",
+  "@rows": {
+    "description": "Table dialog rows field label."
+  },
+  "tableHeaderNumber": "Overskrift {columnNumber}",
+  "@tableHeaderNumber": {
+    "description": "Default header text for a newly inserted table column.",
+    "placeholders": {
+      "columnNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "tableCellDefault": "Celle",
+  "@tableCellDefault": {
+    "description": "Default cell text for newly inserted table cells."
+  },
+  "noImageSource": "Ingen bildekilde",
+  "@noImageSource": {
+    "description": "Placeholder shown when an image has no source."
+  },
+  "hideSidebar": "Skjul sidefelt",
+  "@hideSidebar": {
+    "description": "Tooltip for hiding the workspace sidebar."
+  },
+  "showSidebar": "Vis sidefelt",
+  "@showSidebar": {
+    "description": "Tooltip for showing the workspace sidebar."
+  },
+  "showPreview": "Vis forhåndsvisning",
+  "@showPreview": {
+    "description": "Tooltip for showing the preview pane."
+  },
+  "hidePreview": "Skjul forhåndsvisning",
+  "@hidePreview": {
+    "description": "Tooltip for hiding the preview pane."
+  },
+  "workspaceKindUnsavedMarkdown": "Ulagret Markdown-fil",
+  "@workspaceKindUnsavedMarkdown": {
+    "description": "Workspace kind label for an unsaved Markdown file."
+  },
+  "workspaceKindSingleMarkdown": "Én Markdown-fil",
+  "@workspaceKindSingleMarkdown": {
+    "description": "Workspace kind label for a single Markdown file."
+  },
+  "workspaceKindMarkdownFolder": "Markdown-mappe",
+  "@workspaceKindMarkdownFolder": {
+    "description": "Workspace kind label for a Markdown folder."
+  },
+  "workspaceKindWritersideModule": "Writerside-modul",
+  "@workspaceKindWritersideModule": {
+    "description": "Workspace kind label for a Writerside module."
+  },
+  "problems": "Problemer",
+  "@problems": {
+    "description": "Diagnostics dialog title."
+  },
+  "diagnosticCount": "{count, plural, =0{Ingen diagnostikkmeldinger} =1{1 diagnostikkmelding} other{{count} diagnostikkmeldinger}}",
+  "@diagnosticCount": {
+    "description": "Count of diagnostics in the workspace.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "files": "Filer",
+  "@files": {
+    "description": "Files sidebar tab label."
+  },
+  "toc": "Innholdsfortegnelse",
+  "@toc": {
+    "description": "Writerside table of contents sidebar tab label."
+  },
+  "markdownUnsaved": "Markdown – ikke lagret",
+  "@markdownUnsaved": {
+    "description": "Workspace detail label for an unsaved Markdown file."
+  },
+  "workspaceDetail": "{kind} – {count, plural, =1{1 fil} other{{count} filer}}",
+  "@workspaceDetail": {
+    "description": "Workspace detail with kind and file count.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noFiles": "Ingen filer",
+  "@noFiles": {
+    "description": "Empty state shown when there are no files."
+  },
+  "noWritersideToc": "Ingen Writerside-innholdsfortegnelse",
+  "@noWritersideToc": {
+    "description": "Empty state shown when there is no Writerside TOC."
+  },
+  "tocSection": "Innholdsfortegnelsesdelen",
+  "@tocSection": {
+    "description": "Fallback label for a Writerside TOC section."
+  },
+  "newTopic": "Nytt emne",
+  "@newTopic": {
+    "description": "Create new Writerside topic action label."
+  },
+  "newChildTopic": "Nytt underemne",
+  "@newChildTopic": {
+    "description": "Create new child Writerside topic action label."
+  },
+  "defaultNewTopicTitle": "Nytt emne",
+  "@defaultNewTopicTitle": {
+    "description": "Default topic title in the create topic dialog."
+  },
+  "topicTitle": "Emnetittel",
+  "@topicTitle": {
+    "description": "Create topic dialog field label."
+  },
+  "fileName": "Filnavn",
+  "@fileName": {
+    "description": "Create topic dialog field label."
+  },
+  "topicTitleRequired": "Emnetittel er påkrevd.",
+  "@topicTitleRequired": {
+    "description": "Validation message for missing topic title."
+  },
+  "fileNameRequired": "Filnavn er påkrevd.",
+  "@fileNameRequired": {
+    "description": "Validation message for missing file name."
+  },
+  "useSingleSafeFileName": "Bruk ett enkelt, trygt filnavn.",
+  "@useSingleSafeFileName": {
+    "description": "Validation message for unsafe file names."
+  },
+  "useExpectedExtension": "Bruk filtypen {extension} for det valgte formatet.",
+  "@useExpectedExtension": {
+    "description": "Validation message for an unexpected file extension.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "useIdentifierCharacters": "Bruk bokstaver, tall, understrek eller bindestrek før filtypen.",
+  "@useIdentifierCharacters": {
+    "description": "Validation message for invalid topic IDs."
+  },
+  "topicIdAlreadyExists": "Emne-ID finnes allerede.",
+  "@topicIdAlreadyExists": {
+    "description": "Validation message for duplicate topic IDs."
+  },
+  "createWritersideTopicFailed": "Kunne ikke opprette Writerside-emne.",
+  "@createWritersideTopicFailed": {
+    "description": "Fallback error shown when topic creation fails."
+  },
+  "noOutline": "Ingen disposisjon",
+  "@noOutline": {
+    "description": "Empty state shown when a document has no outline."
+  },
+  "expandKind": "Utvid {kind}",
+  "@expandKind": {
+    "description": "Tooltip for expanding a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "collapseKind": "Skjul {kind}",
+  "@collapseKind": {
+    "description": "Tooltip for collapsing a foldable source section.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "foldKindSection": "seksjon",
+  "@foldKindSection": {
+    "description": "Fold kind label for a section."
+  },
+  "foldKindList": "liste",
+  "@foldKindList": {
+    "description": "Fold kind label for a list."
+  },
+  "foldKindQuote": "sitat",
+  "@foldKindQuote": {
+    "description": "Fold kind label for a blockquote."
+  },
+  "foldKindTag": "tagg",
+  "@foldKindTag": {
+    "description": "Fold kind label for an XML tag."
+  },
+  "noPreview": "Ingen forhåndsvisning",
+  "@noPreview": {
+    "description": "Empty state shown when there is no preview."
+  },
+  "note": "Merknad",
+  "@note": {
+    "description": "Preview label for a note admonition."
+  },
+  "tip": "Tips",
+  "@tip": {
+    "description": "Preview label for a tip admonition."
+  },
+  "warning": "Advarsel",
+  "@warning": {
+    "description": "Preview label for a warning admonition."
+  },
+  "tabs": "Faner",
+  "@tabs": {
+    "description": "Preview label for a tabs block."
+  },
+  "tab": "Fane",
+  "@tab": {
+    "description": "Preview label for a tab block."
+  },
+  "procedure": "Prosedyre",
+  "@procedure": {
+    "description": "Preview label for a procedure block."
+  },
+  "step": "Trinn",
+  "@step": {
+    "description": "Preview label for a procedure step."
+  },
+  "topic": "Emne",
+  "@topic": {
+    "description": "Preview label for a topic element."
+  },
+  "chapter": "Kapittel",
+  "@chapter": {
+    "description": "Preview label for a chapter element."
+  },
+  "couldNotOpenTarget": "Kunne ikke åpne {target}",
+  "@couldNotOpenTarget": {
+    "description": "Snackbar shown when a link target cannot be opened.",
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "linkTargetNotFound": "Lenkemål ikke funnet: {targetPath}",
+  "@linkTargetNotFound": {
+    "description": "Snackbar shown when a link target path is missing.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "cannotOpenFileTypeInEditor": "Kan ikke åpne denne filtypen i redigereren",
+  "@cannotOpenFileTypeInEditor": {
+    "description": "Snackbar shown when a file type cannot be opened in the editor."
+  },
+  "anchorNotFound": "Anker ikke funnet: {anchor}",
+  "@anchorNotFound": {
+    "description": "Snackbar shown when a link anchor is missing.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "noProblemsFound": "Ingen problemer funnet",
+  "@noProblemsFound": {
+    "description": "Diagnostics empty state."
+  },
+  "noResults": "Ingen resultater",
+  "@noResults": {
+    "description": "Search empty state."
+  },
+  "searchResultLine": "{relativePath} – linje {lineNumber}",
+  "@searchResultLine": {
+    "description": "Search result subtitle with file path and line number.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      },
+      "lineNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "untitledResult": "Resultat uten tittel",
+  "@untitledResult": {
+    "description": "Fallback search result title."
+  },
+  "documentKindMarkdownFile": "Markdown-fil",
+  "@documentKindMarkdownFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideMarkdownTopic": "Writerside Markdown-emne",
+  "@documentKindWritersideMarkdownTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideXmlTopic": "Writerside XML-emne",
+  "@documentKindWritersideXmlTopic": {
+    "description": "Search result document kind label."
+  },
+  "documentKindWritersideTree": "Writerside-tre",
+  "@documentKindWritersideTree": {
+    "description": "Search result document kind label."
+  },
+  "documentKindConfigurationFile": "Konfigurasjonsfil",
+  "@documentKindConfigurationFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindVariablesFile": "Variabelfil",
+  "@documentKindVariablesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindCategoriesFile": "Kategorifil",
+  "@documentKindCategoriesFile": {
+    "description": "Search result document kind label."
+  },
+  "documentKindResourceFile": "Ressursfil",
+  "@documentKindResourceFile": {
+    "description": "Search result document kind label."
+  },
+  "workspaceErrorOpenFailed": "Åpning mislyktes: {error}",
+  "@workspaceErrorOpenFailed": {
+    "description": "Workspace error message shown when opening a path fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideProjectFailed": "Kunne ikke opprette Writerside-prosjekt: {error}",
+  "@workspaceErrorCreateWritersideProjectFailed": {
+    "description": "Workspace error message shown when Writerside project creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCreateWritersideTopicFailed": "Kunne ikke opprette Writerside-emne: {error}",
+  "@workspaceErrorCreateWritersideTopicFailed": {
+    "description": "Workspace error message shown when Writerside topic creation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorCouldNotOpenFile": "Kunne ikke åpne filen: {error}",
+  "@workspaceErrorCouldNotOpenFile": {
+    "description": "Workspace error message shown when opening a file fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorChooseWhereToSaveMarkdown": "Velg hvor du vil lagre denne Markdown-filen.",
+  "@workspaceErrorChooseWhereToSaveMarkdown": {
+    "description": "Workspace error message shown when an untitled file needs a save location."
+  },
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Lagring blokkert: filen er endret på disk.",
+  "@workspaceErrorSaveBlockedFileChangedOnDisk": {
+    "description": "Workspace error message shown when a save is blocked by external changes."
+  },
+  "workspaceErrorSaveFailed": "Lagring mislyktes: {error}",
+  "@workspaceErrorSaveFailed": {
+    "description": "Workspace error message shown when saving fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrorValidationFailed": "Validering mislyktes: {error}",
+  "@workspaceErrorValidationFailed": {
+    "description": "Workspace error message shown when validation fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorPathDoesNotExist": "Banen finnes ikke: {path}",
+  "@errorPathDoesNotExist": {
+    "description": "Detail for a missing path error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetDirectoryNotEmpty": "Målmappen finnes allerede og er ikke tom: {path}",
+  "@errorTargetDirectoryNotEmpty": {
+    "description": "Detail for a non-empty target directory error.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTargetPathNotDirectory": "Målbanen finnes allerede og er ikke en mappe: {path}",
+  "@errorTargetPathNotDirectory": {
+    "description": "Detail for a target path that is not a directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorGeneratedFileAlreadyExists": "Den genererte filen finnes allerede: {path}",
+  "@errorGeneratedFileAlreadyExists": {
+    "description": "Detail for a generated file conflict.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorParentDirectoryRequired": "Overordnet mappe er påkrevd.",
+  "@errorParentDirectoryRequired": {
+    "description": "Detail for missing parent directory input."
+  },
+  "errorParentDirectoryMissing": "Overordnet mappe finnes ikke: {path}",
+  "@errorParentDirectoryMissing": {
+    "description": "Detail for a missing parent directory.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorProjectNameRequired": "Prosjektnavn er påkrevd.",
+  "@errorProjectNameRequired": {
+    "description": "Detail for a missing project name."
+  },
+  "errorDirectoryNameRequired": "Mappenavn er påkrevd.",
+  "@errorDirectoryNameRequired": {
+    "description": "Detail for a missing directory name."
+  },
+  "errorDirectoryNameUnsafe": "Mappenavnet må være ett enkelt, trygt banesegment.",
+  "@errorDirectoryNameUnsafe": {
+    "description": "Detail for an unsafe directory name."
+  },
+  "errorInstanceIdInvalid": "Instans-ID-en må starte med en liten bokstav og bare inneholde små bokstaver, tall, understrek og bindestrek.",
+  "@errorInstanceIdInvalid": {
+    "description": "Detail for an invalid Writerside instance ID."
+  },
+  "errorTopicFileInvalid": "Emnefilnavn må være et Markdown-filnavn uten baneskillere.",
+  "@errorTopicFileInvalid": {
+    "description": "Detail for an invalid topic file name."
+  },
+  "errorTopicTitleRequired": "Emnetittel er påkrevd.",
+  "@errorTopicTitleRequired": {
+    "description": "Detail for a missing topic title."
+  },
+  "errorWritersideModuleRootMissing": "Writerside-modulroten finnes ikke: {path}",
+  "@errorWritersideModuleRootMissing": {
+    "description": "Detail for a missing Writerside module root.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideModuleNotOpen": "En Writerside-modul må være åpen for å opprette et emne.",
+  "@errorWritersideModuleNotOpen": {
+    "description": "Detail shown when creating a topic without an open Writerside module."
+  },
+  "errorWritersideInstanceTreeMissing": "Writerside-modulen har ikke noe hjelpeinstans-tre.",
+  "@errorWritersideInstanceTreeMissing": {
+    "description": "Detail shown when creating a topic without a Writerside instance tree."
+  },
+  "errorWritersideTreeFileMissing": "Writerside-trefilen finnes ikke: {path}",
+  "@errorWritersideTreeFileMissing": {
+    "description": "Detail for a missing Writerside tree file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicIdAlreadyExists": "Emne-ID-en «{topicId}» finnes allerede i denne hjelpemodulen.",
+  "@errorTopicIdAlreadyExists": {
+    "description": "Detail for a duplicate topic ID.",
+    "placeholders": {
+      "topicId": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileAlreadyExists": "Emnefilen finnes allerede: {path}",
+  "@errorTopicFileAlreadyExists": {
+    "description": "Detail for an existing topic file.",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "errorReferenceTopicMissing": "Referanseemnet finnes ikke i det valgte treet: {topic}",
+  "@errorReferenceTopicMissing": {
+    "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicsRootUnsafe": "Emneroten må være en sikker relativ mappe.",
+  "@errorTopicsRootUnsafe": {
+    "description": "Detail for an unsafe topics root directory."
+  },
+  "errorTopicFileNameUnsafe": "Emnefilnavnet må være ett enkelt, trygt banesegment.",
+  "@errorTopicFileNameUnsafe": {
+    "description": "Detail for an unsafe topic file name."
+  },
+  "errorTopicFileExtensionMismatch": "Emnefiltypen må samsvare med det valgte formatet ({extension}).",
+  "@errorTopicFileExtensionMismatch": {
+    "description": "Detail for a topic file extension mismatch.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTopicFileNameInvalid": "Emnefilnavnet kan bare inneholde bokstaver, tall, understrek og bindestrek.",
+  "@errorTopicFileNameInvalid": {
+    "description": "Detail for a topic file name with invalid characters."
+  },
+  "errorUnknown": "Ukjent feil: {code}",
+  "@errorUnknown": {
+    "description": "Fallback detail for an unknown coded application error.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileStatFailed": "Kunne ikke lese filmetadata: {error}",
+  "@diagnosticWorkspaceFileStatFailed": {
+    "description": "Diagnostic shown when file metadata cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceScanSkipped": "Stort arbeidsområde oppdaget. Noen filer ble hoppet over for å holde appen responsiv.",
+  "@diagnosticWorkspaceScanSkipped": {
+    "description": "Diagnostic shown when workspace scanning skips files."
+  },
+  "diagnosticWorkspaceScanInspectFailed": "Kunne ikke inspisere arbeidsområdeoppføringen: {error}",
+  "@diagnosticWorkspaceScanInspectFailed": {
+    "description": "Diagnostic shown when a workspace entry cannot be inspected.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for automatisk parsing.",
+  "@diagnosticWorkspaceFileTooLarge": {
+    "description": "Diagnostic shown when a file is too large to parse automatically."
+  },
+  "diagnosticWorkspaceFileReadFailed": "Kunne ikke lese Markdown-fil: {error}",
+  "@diagnosticWorkspaceFileReadFailed": {
+    "description": "Diagnostic shown when a Markdown file cannot be read.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownAttributeMalformed": "Feil format på Writerside-attributtblokken i overskriften.",
+  "@diagnosticMarkdownAttributeMalformed": {
+    "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
+  },
+  "diagnosticMarkdownHeadingDuplicateId": "Duplisert overskrifts-ID «{id}».",
+  "@diagnosticMarkdownHeadingDuplicateId": {
+    "description": "Markdown parser diagnostic for duplicate heading IDs.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Ytterligere toppnivå H1-overskrifter behandles som kapitler.",
+  "@diagnosticWritersideTopicH1ConvertedToChapter": {
+    "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
+  },
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Writerside Markdown-emnet har ingen H1-overskrift eller front matter-tittel.",
+  "@diagnosticWritersideMarkdownTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside Markdown topic without a title."
+  },
+  "diagnosticWritersideXmlTopicMissingTitle": "XML-emnet mangler tittel.",
+  "@diagnosticWritersideXmlTopicMissingTitle": {
+    "description": "Diagnostic for a Writerside XML topic without a title."
+  },
+  "diagnosticWritersideTopicFileMissingTitle": "Emnet «{fileName}» mangler tittel.",
+  "@diagnosticWritersideTopicFileMissingTitle": {
+    "description": "Diagnostic for a Writerside topic file without a title.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownFrontMatterMalformed": "Front matter er ikke lukket.",
+  "@diagnosticMarkdownFrontMatterMalformed": {
+    "description": "Markdown parser diagnostic for unclosed front matter."
+  },
+  "diagnosticMarkdownRawHtmlUnsafe": "Usikkert HTML-element.",
+  "@diagnosticMarkdownRawHtmlUnsafe": {
+    "description": "Markdown parser diagnostic for unsafe raw HTML."
+  },
+  "diagnosticMarkdownLinkUnresolvedTarget": "Lenkemålet finnes ikke: {targetPath}",
+  "@diagnosticMarkdownLinkUnresolvedTarget": {
+    "description": "Markdown parser diagnostic for a missing link target.",
+    "placeholders": {
+      "targetPath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownLinkUnresolvedAnchor": "Ankeret «{anchor}» finnes ikke.",
+  "@diagnosticMarkdownLinkUnresolvedAnchor": {
+    "description": "Markdown parser diagnostic for a missing local anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingAlt": "Bildet «{destination}» mangler alternativ tekst.",
+  "@diagnosticMarkdownImageMissingAlt": {
+    "description": "Markdown parser diagnostic for a missing image alt text.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMarkdownImageMissingFile": "Bildet finnes ikke: {destination}",
+  "@diagnosticMarkdownImageMissingFile": {
+    "description": "Markdown parser diagnostic for a missing image file.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticInvalidXml": "Ugyldig XML: {message}",
+  "@diagnosticInvalidXml": {
+    "description": "XML parser diagnostic for invalid XML.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigInvalidRoot": "writerside.cfg-roten må være <ihp>.",
+  "@diagnosticWritersideConfigInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
+  },
+  "diagnosticWritersideConfigMissingSnippetsSrc": "snippets-deklarasjon mangler src.",
+  "@diagnosticWritersideConfigMissingSnippetsSrc": {
+    "description": "Writerside parser diagnostic for a snippets declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "instance-groups-deklarasjon mangler src.",
+  "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
+    "description": "Writerside parser diagnostic for an instance-groups declaration without src."
+  },
+  "diagnosticWritersideConfigInvalidKeymapsMode": "Ustøttet keymaps-modus: {mode}",
+  "@diagnosticWritersideConfigInvalidKeymapsMode": {
+    "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceSrc": "instance-deklarasjon mangler src.",
+  "@diagnosticWritersideConfigMissingInstanceSrc": {
+    "description": "Writerside parser diagnostic for an instance declaration without src."
+  },
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg registrerer ingen instans.",
+  "@diagnosticWritersideConfigMissingInstance": {
+    "description": "Writerside parser diagnostic for a config with no instance."
+  },
+  "diagnosticWritersideTreeInvalidRoot": ".tree-roten må være <instance-profile>.",
+  "@diagnosticWritersideTreeInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid tree root element."
+  },
+  "diagnosticWritersideTreeMissingId": "Instansprofilen mangler ID.",
+  "@diagnosticWritersideTreeMissingId": {
+    "description": "Writerside parser diagnostic for an instance profile without id."
+  },
+  "diagnosticWritersideTreeIdMismatch": "Trefilnavnet samsvarer ikke med instans-ID-en «{id}».",
+  "@diagnosticWritersideTreeIdMismatch": {
+    "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingStartPage": "Instans som ikke er bibliotek, mangler startside.",
+  "@diagnosticWritersideTreeMissingStartPage": {
+    "description": "Writerside parser diagnostic for a tree missing start-page."
+  },
+  "diagnosticWritersideStartPageMissing": "Startsiden «{startPage}» finnes ikke.",
+  "@diagnosticWritersideStartPageMissing": {
+    "description": "Writerside diagnostic for a missing start page.",
+    "placeholders": {
+      "startPage": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeDuplicateTopic": "Emnet «{topic}» vises mer enn én gang i denne instansens innholdsfortegnelse.",
+  "@diagnosticWritersideTreeDuplicateTopic": {
+    "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableMalformedDeclaration": "Variabeldeklarasjonen skal ha navn og verdi.",
+  "@diagnosticWritersideVariableMalformedDeclaration": {
+    "description": "Writerside parser diagnostic for a malformed variable declaration."
+  },
+  "diagnosticWritersideVariableDuplicateName": "Variabelen «{name}» er deklarert mer enn én gang.",
+  "@diagnosticWritersideVariableDuplicateName": {
+    "description": "Writerside parser diagnostic for a duplicate variable name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryMissingId": "Kategori mangler id.",
+  "@diagnosticWritersideCategoryMissingId": {
+    "description": "Writerside parser diagnostic for a category without id."
+  },
+  "diagnosticWritersideCategoryDuplicateId": "Kategorien «{id}» er deklarert mer enn én gang.",
+  "@diagnosticWritersideCategoryDuplicateId": {
+    "description": "Writerside parser diagnostic for a duplicate category ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryDuplicateOrder": "Kategorirekkefølgen «{order}» er deklarert mer enn én gang.",
+  "@diagnosticWritersideCategoryDuplicateOrder": {
+    "description": "Writerside parser diagnostic for a duplicate category order.",
+    "placeholders": {
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicInvalidRoot": ".topic-roten må være <topic>.",
+  "@diagnosticWritersideTopicInvalidRoot": {
+    "description": "Writerside parser diagnostic for an invalid XML topic root."
+  },
+  "diagnosticWritersideTopicMissingRootId": "XML-emnet mangler rot-ID.",
+  "@diagnosticWritersideTopicMissingRootId": {
+    "description": "Writerside parser diagnostic for an XML topic missing root id."
+  },
+  "diagnosticWritersideTopicRootIdMismatch": "Rot-ID-en «{id}» i XML-emnet må samsvare med filnavnet «{expectedId}».",
+  "@diagnosticWritersideTopicRootIdMismatch": {
+    "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "expectedId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateElementId": "Element-ID-en «{elementId}» vises mer enn én gang.",
+  "@diagnosticWritersideTopicDuplicateElementId": {
+    "description": "Writerside parser diagnostic for a duplicate XML element ID.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> mangler href.",
+  "@diagnosticWritersideTopicAnchorMissingHref": {
+    "description": "Writerside parser diagnostic for an anchor without href."
+  },
+  "diagnosticWritersideConfigMissing": "Writerside-modus krever writerside.cfg.",
+  "@diagnosticWritersideConfigMissing": {
+    "description": "Writerside module diagnostic for a missing writerside.cfg."
+  },
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Den konfigurerte byggekonfigurasjonsmappen mangler: {relativePath}",
+  "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
+    "description": "Writerside module diagnostic for a missing build config directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Den konfigurerte API-spesifikasjonsmappen mangler: {relativePath}",
+  "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
+    "description": "Writerside module diagnostic for a missing API specifications directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "Den konfigurerte snippets-mappen mangler: {relativePath}",
+  "@diagnosticWritersideConfigMissingSnippetsDirectory": {
+    "description": "Writerside module diagnostic for a missing snippets directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingVarsFile": "Den konfigurerte variabelfilen mangler: {relativePath}",
+  "@diagnosticWritersideConfigMissingVarsFile": {
+    "description": "Writerside module diagnostic for a missing variables file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingCategoriesFile": "Den konfigurerte kategorifilen mangler: {relativePath}",
+  "@diagnosticWritersideConfigMissingCategoriesFile": {
+    "description": "Writerside module diagnostic for a missing categories file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Den konfigurerte instance-groups-filen mangler: {relativePath}",
+  "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
+    "description": "Writerside module diagnostic for a missing instance groups file.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideConfigMissingInstanceTree": "Det registrerte instanstreet «{source}» finnes ikke.",
+  "@diagnosticWritersideConfigMissingInstanceTree": {
+    "description": "Writerside module diagnostic for a missing registered instance tree.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicReadFailed": "Kunne ikke lese emnefilen: {error}",
+  "@diagnosticWritersideTopicReadFailed": {
+    "description": "Writerside module diagnostic for a topic file read failure.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "Standardmappen for emner mangler: {relativePath}",
+  "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing default topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicsDirectoryMissing": "Den konfigurerte emnemappen mangler: {relativePath}",
+  "@diagnosticWritersideTopicsDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing topics directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideImagesDirectoryMissing": "Den konfigurerte bildemappen mangler: {relativePath}",
+  "@diagnosticWritersideImagesDirectoryMissing": {
+    "description": "Writerside module diagnostic for a missing images directory.",
+    "placeholders": {
+      "relativePath": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicDuplicateId": "Element-ID-en «{id}» vises mer enn én gang.",
+  "@diagnosticWritersideTopicDuplicateId": {
+    "description": "Writerside module diagnostic for a duplicate topic element ID.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeMissingTopic": "Innholdsfortegnelsen refererer til et manglende emne: «{topic}».",
+  "@diagnosticWritersideTreeMissingTopic": {
+    "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTreeInvalidHref": "Ekstern href «{href}» er ugyldig.",
+  "@diagnosticWritersideTreeInvalidHref": {
+    "description": "Writerside module diagnostic for an invalid external href.",
+    "placeholders": {
+      "href": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideVariableUnresolved": "Variabelen «%{name}%» er ikke deklarert.",
+  "@diagnosticWritersideVariableUnresolved": {
+    "description": "Writerside module diagnostic for an undeclared variable.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicLinkUnresolved": "Emnelenken «{destination}» kan ikke løses.",
+  "@diagnosticWritersideTopicLinkUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic link.",
+    "placeholders": {
+      "destination": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideAnchorUnresolved": "Ankeret «{anchor}» finnes ikke i «{targetName}».",
+  "@diagnosticWritersideAnchorUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved topic anchor.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeMissingFrom": "<include> mangler from-attributt.",
+  "@diagnosticWritersideIncludeMissingFrom": {
+    "description": "Writerside module diagnostic for an include without a from attribute."
+  },
+  "diagnosticWritersideIncludeSourceMissing": "include-kilden «{from}» finnes ikke.",
+  "@diagnosticWritersideIncludeSourceMissing": {
+    "description": "Writerside module diagnostic for a missing include source.",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideIncludeElementMissing": "include-elementet «{elementId}» finnes ikke i «{from}».",
+  "@diagnosticWritersideIncludeElementMissing": {
+    "description": "Writerside module diagnostic for a missing include element.",
+    "placeholders": {
+      "elementId": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideCategoryUnresolved": "Se også-kategorien «{ref}» er ikke deklarert.",
+  "@diagnosticWritersideCategoryUnresolved": {
+    "description": "Writerside module diagnostic for an unresolved seealso category.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticWritersideTopicAmbiguousReference": "Emnereferansen «{reference}» er tvetydig.",
+  "@diagnosticWritersideTopicAmbiguousReference": {
+    "description": "Writerside module diagnostic for an ambiguous topic reference.",
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticUnknown": "Ukjent diagnostikk: {code}",
+  "@diagnosticUnknown": {
+    "description": "Fallback text for an unknown diagnostic code.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  }
+}

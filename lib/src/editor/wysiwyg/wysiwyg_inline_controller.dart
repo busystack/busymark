@@ -108,11 +108,14 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       BusyInlineKind.emphasis => baseStyle.copyWith(
         fontStyle: FontStyle.italic,
       ),
+      BusyInlineKind.underline => baseStyle.copyWith(
+        decoration: TextDecoration.underline,
+      ),
       BusyInlineKind.strikethrough => baseStyle.copyWith(
         decoration: TextDecoration.lineThrough,
       ),
       BusyInlineKind.code => baseStyle.copyWith(
-        fontFamily: 'Ubuntu Mono',
+        fontFamily: BusyMarkTypography.monoFontFamily,
         backgroundColor: colors.control,
       ),
       BusyInlineKind.link => baseStyle.copyWith(
@@ -218,10 +221,11 @@ int _stylePriority(BusyInlineKind kind) {
     BusyInlineKind.link => 0,
     BusyInlineKind.strong => 1,
     BusyInlineKind.emphasis => 2,
-    BusyInlineKind.strikethrough => 3,
-    BusyInlineKind.code => 4,
-    BusyInlineKind.image => 5,
-    _ => 6,
+    BusyInlineKind.underline => 3,
+    BusyInlineKind.strikethrough => 4,
+    BusyInlineKind.code => 5,
+    BusyInlineKind.image => 6,
+    _ => 7,
   };
 }
 
@@ -236,6 +240,7 @@ bool _styledKind(BusyInlineKind kind) {
   return {
     BusyInlineKind.strong,
     BusyInlineKind.emphasis,
+    BusyInlineKind.underline,
     BusyInlineKind.strikethrough,
     BusyInlineKind.code,
     BusyInlineKind.link,

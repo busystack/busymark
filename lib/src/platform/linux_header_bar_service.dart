@@ -15,8 +15,8 @@ enum HeaderBarAction {
   save,
   menu,
   settings,
+  keyboardShortcuts,
   aboutBusyMark,
-  exportPreview,
   viewModeEditor,
   viewModeSource,
   viewModePreview,
@@ -39,8 +39,8 @@ class HeaderBarLabels {
     required this.back,
     required this.save,
     required this.settings,
+    required this.keyboardShortcuts,
     required this.aboutBusyMark,
-    required this.exportPreview,
   });
 
   final String editor;
@@ -55,8 +55,8 @@ class HeaderBarLabels {
   final String back;
   final String save;
   final String settings;
+  final String keyboardShortcuts;
   final String aboutBusyMark;
-  final String exportPreview;
 
   Map<String, String> toMap() => {
     'editor': editor,
@@ -71,8 +71,8 @@ class HeaderBarLabels {
     'back': back,
     'save': save,
     'settings': settings,
+    'keyboardShortcuts': keyboardShortcuts,
     'aboutBusyMark': aboutBusyMark,
-    'exportPreview': exportPreview,
   };
 }
 
@@ -86,18 +86,22 @@ class HeaderBarTheme {
     required this.controlColor,
     required this.controlHoverColor,
     required this.controlActiveColor,
+    required this.titleButtonColor,
+    required this.titleButtonHoverColor,
+    required this.titleButtonActiveColor,
     required this.accentColor,
     required this.accentForegroundColor,
     required this.popoverBackgroundColor,
     required this.borderColor,
-    required this.sidebarBorderColor,
     required this.shadeColor,
     required this.modalBarrierColor,
   });
 
   factory HeaderBarTheme.fromContext(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final barrier = Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32);
+    final barrier = Theme.of(
+      context,
+    ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
     return HeaderBarTheme(
       backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
@@ -107,11 +111,19 @@ class HeaderBarTheme {
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
       controlActiveColor: colors.controlActive,
+      titleButtonColor: colors.foreground.withValues(
+        alpha: BusyMarkAlpha.titleButton,
+      ),
+      titleButtonHoverColor: colors.foreground.withValues(
+        alpha: BusyMarkAlpha.titleButtonHover,
+      ),
+      titleButtonActiveColor: colors.foreground.withValues(
+        alpha: BusyMarkAlpha.titleButtonActive,
+      ),
       accentColor: Theme.of(context).colorScheme.primary,
       accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
       borderColor: colors.subtleBorder,
-      sidebarBorderColor: colors.sidebarBorder,
       shadeColor: colors.shade,
       modalBarrierColor: barrier,
     );
@@ -125,11 +137,13 @@ class HeaderBarTheme {
   final Color controlColor;
   final Color controlHoverColor;
   final Color controlActiveColor;
+  final Color titleButtonColor;
+  final Color titleButtonHoverColor;
+  final Color titleButtonActiveColor;
   final Color accentColor;
   final Color accentForegroundColor;
   final Color popoverBackgroundColor;
   final Color borderColor;
-  final Color sidebarBorderColor;
   final Color shadeColor;
   final Color modalBarrierColor;
 
@@ -142,11 +156,13 @@ class HeaderBarTheme {
     'controlColor': _cssColor(controlColor),
     'controlHoverColor': _cssColor(controlHoverColor),
     'controlActiveColor': _cssColor(controlActiveColor),
+    'titleButtonColor': _cssColor(titleButtonColor),
+    'titleButtonHoverColor': _cssColor(titleButtonHoverColor),
+    'titleButtonActiveColor': _cssColor(titleButtonActiveColor),
     'accentColor': _cssColor(accentColor),
     'accentForegroundColor': _cssColor(accentForegroundColor),
     'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
     'borderColor': _cssColor(borderColor),
-    'sidebarBorderColor': _cssColor(sidebarBorderColor),
     'shadeColor': _cssColor(shadeColor),
     'modalBarrierColor': _cssColor(modalBarrierColor),
   };
@@ -162,27 +178,36 @@ class LinuxHeaderBarService {
 
   final MethodChannel _channel;
   final _actions = StreamController<HeaderBarAction>.broadcast();
+  final _searchQueries = StreamController<String>.broadcast();
   var _initialized = false;
+  var _channelReady = false;
   var _available = false;
 
   bool get isAvailable => _available;
   bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
+  Stream<String> get searchQueries => _searchQueries.stream;
 
   Future<void> initialize() async {
-    if (_initialized) {
+    if (_channelReady || (_initialized && !Platform.isLinux)) {
+      return;
+    }
+    if (!Platform.isLinux) {
+      _initialized = true;
       return;
     }
     _initialized = true;
-    if (!Platform.isLinux) {
-      return;
-    }
     try {
       _available = await _channel.invokeMethod<bool>('initialize') ?? false;
+      _channelReady = true;
     } on MissingPluginException {
+      _initialized = false;
+      _channelReady = false;
       _available = false;
     } on Object {
+      _initialized = false;
+      _channelReady = false;
       _available = false;
     }
   }
@@ -209,6 +234,10 @@ class LinuxHeaderBarService {
 
   Future<void> setSearchActive(bool value) {
     return _invoke('setSearchActive', value);
+  }
+
+  Future<void> setSearchQuery(String value) {
+    return _invoke('setSearchQuery', value);
   }
 
   Future<void> setSidebarVisible(bool value) {
@@ -239,13 +268,21 @@ class LinuxHeaderBarService {
     return _invoke('setModalBarrierVisible', value);
   }
 
-  Future<void> _invoke(String method, [Object? arguments]) async {
-    if (!_available) {
+  Future<void> _invoke(
+    String method, [
+    Object? arguments,
+    bool requireHeaderBar = true,
+  ]) async {
+    if (!_channelReady) {
+      await initialize();
+    }
+    if (!_channelReady || (requireHeaderBar && !_available)) {
       return;
     }
     try {
       await _channel.invokeMethod<void>(method, arguments);
     } on MissingPluginException {
+      _channelReady = false;
       _available = false;
     } on Object {
       // Native headerbar is a progressive Linux enhancement. Flutter fallback
@@ -254,6 +291,12 @@ class LinuxHeaderBarService {
   }
 
   Future<void> _handleNativeAction(MethodCall call) async {
+    if (call.method == 'searchQueryChanged') {
+      if (!_searchQueries.isClosed) {
+        _searchQueries.add((call.arguments as String?) ?? '');
+      }
+      return;
+    }
     final action = _actionFromMethod(call.method);
     if (action != null && !_actions.isClosed) {
       _actions.add(action);
@@ -269,8 +312,8 @@ class LinuxHeaderBarService {
       'save' => HeaderBarAction.save,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
+      'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
-      'exportPreview' => HeaderBarAction.exportPreview,
       'viewModeEditor' => HeaderBarAction.viewModeEditor,
       'viewModeSource' => HeaderBarAction.viewModeSource,
       'viewModePreview' => HeaderBarAction.viewModePreview,
@@ -286,6 +329,10 @@ final linuxHeaderBarServiceProvider = Provider<LinuxHeaderBarService>(
 
 final headerBarActionsProvider = StreamProvider<HeaderBarAction>((ref) {
   return ref.watch(linuxHeaderBarServiceProvider).actions;
+});
+
+final headerBarSearchQueriesProvider = StreamProvider<String>((ref) {
+  return ref.watch(linuxHeaderBarServiceProvider).searchQueries;
 });
 
 String _cssColor(Color color) {

@@ -1,9 +1,14 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:busymark/src/writerside/writerside_project_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   const service = WorkspaceService();
@@ -45,6 +50,143 @@ void main() {
     expect(workspace.activeFilePath, endsWith('intro.md'));
   });
 
+  test('creates and opens a Writerside starter project', () async {
+    final parent = await Directory.systemTemp.createTemp(
+      'busymark-workspace-create-',
+    );
+    addTearDown(() async {
+      if (await parent.exists()) {
+        await parent.delete(recursive: true);
+      }
+    });
+
+    final workspace = await service.createWritersideProject(
+      WritersideProjectCreateRequest(
+        parentDirectoryPath: parent.path,
+        projectName: 'Docs',
+        directoryName: 'docs',
+        instanceName: 'User Guide',
+        topicTitle: 'Getting started',
+      ),
+    );
+
+    expect(workspace.kind, WorkspaceKind.writersideModule);
+    expect(
+      workspace.activeFilePath,
+      endsWith(p.join('topics', 'getting-started.md')),
+    );
+    expect(File(workspace.activeFilePath!).existsSync(), isTrue);
+    expect(workspace.markdown?.title, 'Getting started');
+    expect(
+      workspace.diagnostics.where((item) => item.severity.name == 'error'),
+      isEmpty,
+    );
+  });
+
+  test(
+    'reparses and previews Writerside Markdown without generic link validation',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-workspace-writerside-links-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      Directory(p.join(root.path, 'topics')).createSync();
+      Directory(p.join(root.path, 'reference')).createSync();
+      Directory(p.join(root.path, 'images')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <topics dir="reference"/>
+  <images dir="images"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <toc-element topic="api.md"/>
+</instance-profile>
+''');
+      final activeFile = File(p.join(root.path, 'topics', 'intro.md'))
+        ..writeAsStringSync('''
+# Intro
+
+[API](api.md)
+''');
+      File(p.join(root.path, 'reference', 'api.md')).writeAsStringSync('''
+# API
+''');
+      final parser = _RecordingMarkdownParser();
+      final parserService = WorkspaceService(markdownParser: parser);
+      final workspace = await parserService.openPath(root.path);
+
+      final reparsed = await parserService.reparseActive(
+        workspace,
+        activeFile.readAsStringSync(),
+      );
+      parserService.buildPreview(workspace, activeFile.readAsStringSync());
+
+      expect(parser.validationFlags, [false, false]);
+      expect(
+        reparsed.diagnostics.map((diagnostic) => diagnostic.code),
+        isNot(contains('markdown.link.unresolved-target')),
+      );
+    },
+  );
+
+  test(
+    'creates a Writerside Markdown topic and registers it in the TOC',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-workspace-create-topic-',
+      );
+      addTearDown(() async {
+        if (await parent.exists()) {
+          await parent.delete(recursive: true);
+        }
+      });
+      final workspace = await service.createWritersideProject(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: parent.path,
+          projectName: 'Docs',
+          directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
+        ),
+      );
+
+      final updated = await service.createWritersideTopic(
+        workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Install BusyMark',
+          fileName: 'install',
+        ),
+      );
+
+      final topicPath = p.join(updated.rootPath, 'topics', 'install.md');
+      final treeSource = File(
+        p.join(updated.rootPath, 'user-guide.tree'),
+      ).readAsStringSync();
+
+      expect(updated.activeFilePath, topicPath);
+      expect(File(topicPath).existsSync(), isTrue);
+      expect(
+        File(topicPath).readAsStringSync(),
+        startsWith('# Install BusyMark'),
+      );
+      expect(treeSource, contains('topic="install.md"'));
+      expect(updated.markdown?.title, 'Install BusyMark');
+      expect(
+        updated.diagnostics.where((item) => item.severity.name == 'error'),
+        isEmpty,
+      );
+    },
+  );
+
   test('normalizes portal-style document paths as filesystem paths', () {
     const path = '/run/user/1000/doc/abcdef/smoke.md';
 
@@ -79,6 +221,48 @@ void main() {
       );
 
       await directory.delete(recursive: true);
+    },
+  );
+
+  test(
+    'limited folder scan prefers shallow siblings before deep subtree',
+    () async {
+      final directory = await Directory.systemTemp.createTemp('busymark-wide-');
+      try {
+        await Directory(p.join(directory.path, 'a')).create();
+        await File(
+          p.join(directory.path, 'a', 'guide.md'),
+        ).writeAsString('# A\n');
+        await Directory(p.join(directory.path, 'b')).create();
+        await File(
+          p.join(directory.path, 'b', 'guide.md'),
+        ).writeAsString('# B\n');
+        await Directory(
+          p.join(directory.path, 'z', 'deep'),
+        ).create(recursive: true);
+        for (var index = 0; index < 8; index += 1) {
+          await File(
+            p.join(directory.path, 'z', 'deep', '$index.md'),
+          ).writeAsString('# Deep $index\n');
+        }
+
+        final limitedService = WorkspaceService(
+          scanOptions: const WorkspaceScanOptions(maxTreeEntries: 2),
+        );
+        final workspace = await limitedService.openPath(directory.path);
+        final relativePaths = workspace.files.map((file) => file.relativePath);
+
+        expect(relativePaths, containsAll(['a/guide.md', 'b/guide.md']));
+        expect(relativePaths, isNot(contains('z/deep/0.md')));
+        expect(workspace.rootPath, directory.path);
+        expect(workspace.kind, WorkspaceKind.markdownFolder);
+        expect(
+          workspace.diagnostics.map((diagnostic) => diagnostic.code),
+          contains('workspace.scan.skipped'),
+        );
+      } finally {
+        await directory.delete(recursive: true);
+      }
     },
   );
 
@@ -131,4 +315,28 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+}
+
+class _RecordingMarkdownParser extends MarkdownParser {
+  _RecordingMarkdownParser();
+
+  final List<bool> validationFlags = [];
+
+  @override
+  ParsedMarkdownDocument parse({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+    String? workspaceRoot,
+    bool validateLocalReferences = true,
+  }) {
+    validationFlags.add(validateLocalReferences);
+    return super.parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      workspaceRoot: workspaceRoot,
+      validateLocalReferences: validateLocalReferences,
+    );
+  }
 }

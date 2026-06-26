@@ -1,3 +1,4 @@
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/source_folding.dart';
@@ -14,6 +15,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -22,7 +25,9 @@ void main() {
           builder: (context) {
             foreground = BusyMarkSurfaceColors.of(context).foreground;
             final controller = BusyMarkSourceEditingController(
-              text: '# Title\nText `code` [link](target.md)\n',
+              text:
+                  '# Title\n'
+                  'Text `code` [link](target.md) **bold** *italic* ~~done~~\n',
               language: SourceSyntaxLanguage.markdown,
             );
             spans = _flattenTextSpans(
@@ -38,15 +43,19 @@ void main() {
       ),
     );
 
-    expect(
-      spans.any(
-        (span) =>
-            span.text == '# Title' && span.style?.fontWeight == FontWeight.w700,
-      ),
-      isTrue,
-    );
-    expect(_spanColor(spans, '`code`'), isNot(foreground));
-    expect(_spanColor(spans, '[link](target.md)'), isNot(foreground));
+    expect(_spanStyle(spans, 'Title')?.fontSize, 14 * 1.55);
+    expect(_spanStyle(spans, 'Title')?.fontWeight, FontWeight.w700);
+    expect(_spanStyle(spans, 'Title')?.color, foreground);
+    expect(_spanStyle(spans, 'code')?.fontFamily, 'Ubuntu Mono');
+    expect(_spanStyle(spans, 'code')?.color, foreground);
+    expect(_spanColor(spans, 'link'), isNot(foreground));
+    expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
+    expect(_spanStyle(spans, 'bold')?.fontWeight, FontWeight.w700);
+    expect(_spanStyle(spans, 'bold')?.color, foreground);
+    expect(_spanStyle(spans, 'italic')?.fontStyle, FontStyle.italic);
+    expect(_spanStyle(spans, 'italic')?.color, foreground);
+    expect(_spanStyle(spans, 'done')?.decoration, TextDecoration.lineThrough);
+    expect(_spanStyle(spans, 'done')?.color, foreground);
   });
 
   testWidgets('xml source highlighter colors tags attributes and strings', (
@@ -57,6 +66,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -94,6 +105,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -129,6 +142,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.dark,
             accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -164,6 +179,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -203,6 +220,60 @@ void main() {
     );
   });
 
+  testWidgets('rendered folded regions hide collapsed header text', (
+    tester,
+  ) async {
+    const source = '# Title\nIntro.\nMore.\n# Next\n';
+    late List<TextSpan> spans;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            final region = sourceFoldRegions(
+              source,
+              SourceSyntaxLanguage.markdown,
+            ).firstWhere((region) => region.startLine == 1);
+            final controller = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            )..setFoldedRegions([region]);
+            spans = _flattenTextSpans(
+              controller.buildSourceTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                hideCollapsedStartLines: true,
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(spans.map((span) => span.text).join(), source);
+    expect(_spanStyle(spans, '# ')?.color, Colors.transparent);
+    expect(_spanStyle(spans, 'Title')?.color, Colors.transparent);
+    expect(_spanStyle(spans, '# ')?.fontSize, 14);
+    expect(_spanStyle(spans, 'Title')?.fontSize, 14);
+    expect(
+      spans.any(
+        (span) =>
+            span.text == 'Intro.\nMore.\n' &&
+            span.style?.color == Colors.transparent &&
+            span.style?.fontSize == 0.01,
+      ),
+      isTrue,
+    );
+    expect(_spanStyle(spans, 'Next')?.color, isNot(Colors.transparent));
+  });
+
   testWidgets('folded regions collapse measured editor height', (tester) async {
     const source = '# Title\nIntro.\nMore.\n# Next\nDone.\n';
     const style = TextStyle(
@@ -215,6 +286,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
           brightness: Brightness.dark,
           accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -260,7 +333,7 @@ void main() {
   });
 
   testWidgets(
-    'visual markdown editor hides syntax markers but preserves source',
+    'visual markdown editor keeps syntax markers visible while styling content',
     (tester) async {
       const source =
           '# **Title**\n'
@@ -270,6 +343,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: buildBusyMarkTheme(
             brightness: Brightness.dark,
             accentColor: BusyMarkLinuxPalette.blueAccent,
@@ -293,11 +368,14 @@ void main() {
       );
 
       expect(root.toPlainText(), source);
-      expect(_spanStyle(spans, '# ')?.color, Colors.transparent);
-      expect(_spanStyle(spans, '**')?.color, Colors.transparent);
+      expect(_spanStyle(spans, '# ')?.color, isNot(Colors.transparent));
+      expect(_spanStyle(spans, '**')?.color, isNot(Colors.transparent));
       expect(_spanStyle(spans, 'Title')?.fontWeight, FontWeight.w700);
-      expect(_spanStyle(spans, '[')?.color, Colors.transparent);
-      expect(_spanStyle(spans, '](target.md)')?.color, Colors.transparent);
+      expect(_spanStyle(spans, '[')?.color, isNot(Colors.transparent));
+      expect(
+        _spanStyle(spans, '](target.md)')?.color,
+        isNot(Colors.transparent),
+      );
       expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
     },
   );
