@@ -471,6 +471,62 @@ class AppLocalizationsNo extends AppLocalizations {
       'Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.';
 
   @override
+  String get settingsWindowSectionTitle => 'Vindu';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Bekreft før lukking med ulagrede endringer';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Spør før BusyMark lukkes når dokumenter har ulagrede endringer.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Hold BusyMark øverst';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Hold BusyMark-vinduet over andre vinduer når skrivebordsmiljøet støtter det.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Alltid øverst er ikke tilgjengelig i dette skrivebordsmiljøet.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Ulagrede endringer';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Dette dokumentet har ulagrede endringer. Lagre endringene før BusyMark lukkes?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dokumenter har ulagrede endringer. Lagre endringene før BusyMark lukkes?',
+      one:
+          '1 dokument har ulagrede endringer. Lagre endringene før BusyMark lukkes?',
+      zero: 'Lagre endringene før BusyMark lukkes?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Avbryt';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Forkast';
+
+  @override
+  String get closeUnsavedChangesSave => 'Lagre';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Kunne ikke bruke vindusinnstillingen.';
+
+  @override
   String get currentFile => 'gjeldende fil';
 
   @override

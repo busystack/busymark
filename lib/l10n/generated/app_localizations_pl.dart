@@ -475,6 +475,62 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wybierz, gdzie mają być wyświetlane pływające przyciski edycji WYSIWYG.';
 
   @override
+  String get settingsWindowSectionTitle => 'Okno';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Potwierdzaj zamknięcie przy niezapisanych zmianach';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Pytaj przed zamknięciem BusyMark, gdy dokumenty mają niezapisane zmiany.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Trzymaj BusyMark na wierzchu';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Trzymaj okno BusyMark nad innymi oknami, jeśli środowisko pulpitu to obsługuje.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Tryb zawsze na wierzchu nie jest dostępny w tym środowisku pulpitu.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Niezapisane zmiany';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Ten dokument ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count dokumentów ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?',
+      one:
+          '1 dokument ma niezapisane zmiany. Zapisać zmiany przed zamknięciem BusyMark?',
+      zero: 'Zapisać zmiany przed zamknięciem BusyMark?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Anuluj';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Odrzuć';
+
+  @override
+  String get closeUnsavedChangesSave => 'Zapisz';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Nie można zastosować ustawienia okna.';
+
+  @override
   String get currentFile => 'Bieżący plik';
 
   @override

@@ -478,6 +478,62 @@ class AppLocalizationsIt extends AppLocalizations {
       'Scegli dove mostrare i pulsanti mobili di modifica WYSIWYG.';
 
   @override
+  String get settingsWindowSectionTitle => 'Finestra';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Conferma prima di chiudere con modifiche non salvate';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Chiedi conferma prima di chiudere BusyMark quando i documenti hanno modifiche non salvate.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Mantieni BusyMark in primo piano';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Mantieni la finestra di BusyMark sopra le altre quando supportato dall’ambiente desktop.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Sempre in primo piano non è disponibile in questo ambiente desktop.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Modifiche non salvate';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Questo documento contiene modifiche non salvate. Salvare le modifiche prima di chiudere BusyMark?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documenti contengono modifiche non salvate. Salvare le modifiche prima di chiudere BusyMark?',
+      one:
+          '1 documento contiene modifiche non salvate. Salvare le modifiche prima di chiudere BusyMark?',
+      zero: 'Salvare le modifiche prima di chiudere BusyMark?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Annulla';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Scarta';
+
+  @override
+  String get closeUnsavedChangesSave => 'Salva';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Impossibile applicare l’impostazione della finestra.';
+
+  @override
   String get currentFile => 'File corrente';
 
   @override

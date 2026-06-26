@@ -479,6 +479,62 @@ class AppLocalizationsEs extends AppLocalizations {
       'Elija dónde aparecen los botones flotantes de edición WYSIWYG.';
 
   @override
+  String get settingsWindowSectionTitle => 'Ventana';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Confirmar antes de cerrar con cambios sin guardar';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Preguntar antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Mantener BusyMark en primer plano';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Mantener la ventana de BusyMark por encima de otras ventanas cuando el entorno de escritorio lo admita.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Siempre en primer plano no está disponible en este entorno de escritorio.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Cambios sin guardar';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Este documento tiene cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documentos tienen cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?',
+      one:
+          '1 documento tiene cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?',
+      zero: '¿Guardar los cambios antes de cerrar BusyMark?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Cancelar';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Descartar';
+
+  @override
+  String get closeUnsavedChangesSave => 'Guardar';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'No se pudo aplicar la configuración de la ventana.';
+
+  @override
   String get currentFile => 'Archivo actual';
 
   @override

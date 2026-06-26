@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
@@ -19,6 +20,8 @@ import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
+
+enum _WelcomeMenuAction { settings, keyboardShortcuts, aboutBusyMark }
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -37,6 +40,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(workspaceControllerProvider);
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -76,20 +80,28 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               actions: [
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.settings,
-                  icon: BusyMarkGlyphs.settings,
-                  onPressed: () => context.go('/settings'),
-                ),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.keyboardShortcuts,
-                  icon: BusyMarkGlyphs.keyboard,
-                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
-                ),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.aboutBusyMark,
-                  icon: BusyMarkGlyphs.info,
-                  onPressed: () => showBusyMarkAboutDialog(context),
+                BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>(
+                  tooltip: l10n.mainMenu,
+                  icon: BusyMarkGlyphs.menuVertical,
+                  itemBuilder: (context) => [
+                    BusyMarkPopupMenuItem(
+                      value: _WelcomeMenuAction.settings,
+                      label: l10n.settings,
+                      icon: BusyMarkGlyphs.settings,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _WelcomeMenuAction.keyboardShortcuts,
+                      label: l10n.keyboardShortcuts,
+                      icon: BusyMarkGlyphs.keyboard,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _WelcomeMenuAction.aboutBusyMark,
+                      label: l10n.aboutBusyMark,
+                      icon: BusyMarkGlyphs.info,
+                    ),
+                  ],
+                  onSelected: (action) =>
+                      _handleWelcomeMenuAction(context, action),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
@@ -208,6 +220,20 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:
         break;
+    }
+  }
+
+  void _handleWelcomeMenuAction(
+    BuildContext context,
+    _WelcomeMenuAction action,
+  ) {
+    switch (action) {
+      case _WelcomeMenuAction.settings:
+        context.go('/settings');
+      case _WelcomeMenuAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
+      case _WelcomeMenuAction.aboutBusyMark:
+        showBusyMarkAboutDialog(context);
     }
   }
 

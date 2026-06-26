@@ -29,6 +29,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData folder = YaruIcons.folder;
   static const IconData folderOpen = YaruIcons.folder_open;
   static const IconData font = YaruIcons.font;
+  static const IconData goTop = YaruIcons.go_top;
   static const IconData hardBreak = YaruIcons.go_down;
   static const IconData heading = YaruIcons.font;
   static const IconData hide = YaruIcons.hide;

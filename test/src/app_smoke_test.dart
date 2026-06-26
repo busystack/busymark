@@ -9,6 +9,7 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/startup_path.dart';
+import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -19,6 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 void main() {
   late _FallbackHeaderBarService headerBarService;
@@ -84,17 +86,24 @@ void main() {
   });
 
   testWidgets('settings screen opens', (tester) async {
+    final l10n = AppLocalizationsEn();
+    final settingsStore = _MemorySettingsStore();
+    final nativeWindow = _FakeNativeWindowController();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         ],
         child: const BusyMarkApp(),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip(l10n.settings));
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settingsTitle), findsOneWidget);
@@ -102,6 +111,17 @@ void main() {
     expect(find.text(l10n.systemLanguage), findsWidgets);
     expect(find.text(l10n.validateOnEdit), findsOneWidget);
     expect(find.byType(DropdownButton<String>), findsNothing);
+    expect(find.text(l10n.settingsWindowSectionTitle), findsOneWidget);
+    expect(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.settingsAlwaysOnTopTitle), findsOneWidget);
+    expect(find.text(l10n.settingsAlwaysOnTopDescription), findsOneWidget);
 
     await tester.tap(find.byTooltip(l10n.appLanguage));
     await tester.pumpAndSettle();
@@ -109,6 +129,27 @@ void main() {
     expect(find.text('Deutsch'), findsOneWidget);
     expect(find.text('العربية'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
+    await tester.tap(find.text(l10n.systemLanguage).last);
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text(l10n.settingsAlwaysOnTopTitle));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settingsAlwaysOnTopTitle));
+    await tester.pumpAndSettle();
+
+    expect(nativeWindow.alwaysOnTopValues, contains(true));
+    expect(settingsStore.value['alwaysOnTop'], isTrue);
+
+    await tester.ensureVisible(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
+    );
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
   });
 
   testWidgets('stored language override localizes app text', (tester) async {
@@ -127,7 +168,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip(de.settings));
+    await tester.tap(find.byTooltip(de.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(de.settings));
     await tester.pumpAndSettle();
 
     expect(find.text(de.settingsTitle), findsOneWidget);
@@ -284,9 +327,51 @@ void main() {
     );
   });
 
+  testWidgets(
+    'settings disables always-on-top when the desktop cannot support it',
+    (tester) async {
+      final l10n = AppLocalizationsEn();
+      final settingsStore = _MemorySettingsStore();
+      final nativeWindow = _FakeNativeWindowController(
+        alwaysOnTopSupported: false,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+            nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+          ],
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settings));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.settingsAlwaysOnTopTitle), findsOneWidget);
+      expect(
+        find.text(l10n.settingsAlwaysOnTopUnsupportedDescription),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text(l10n.settingsAlwaysOnTopTitle));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settingsAlwaysOnTopTitle));
+      await tester.pumpAndSettle();
+
+      expect(nativeWindow.alwaysOnTopValues, isNot(contains(true)));
+      expect(settingsStore.value['alwaysOnTop'], isNot(true));
+    },
+  );
+
   testWidgets('keyboard shortcuts dialog opens from the header', (
     tester,
   ) async {
+    final l10n = AppLocalizationsEn();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -297,7 +382,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip(l10n.keyboardShortcuts));
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.keyboardShortcuts));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.keyboardShortcuts), findsWidgets);
@@ -365,7 +452,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip(l10n.aboutBusyMark));
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.aboutBusyMark));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.appTitle), findsWidgets);
@@ -1208,5 +1297,46 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _FakeNativeWindowController implements NativeWindowController {
+  _FakeNativeWindowController({this.alwaysOnTopSupported = true});
+
+  final bool alwaysOnTopSupported;
+  final alwaysOnTopValues = <bool>[];
+  final preventCloseValues = <bool>[];
+  final listeners = <WindowListener>[];
+  var closeCount = 0;
+
+  @override
+  Future<void> setPreventClose(bool value) async {
+    preventCloseValues.add(value);
+  }
+
+  @override
+  Future<void> close() async {
+    closeCount++;
+  }
+
+  @override
+  Future<bool> isAlwaysOnTopSupported() async {
+    return alwaysOnTopSupported;
+  }
+
+  @override
+  Future<bool> setAlwaysOnTop(bool value) async {
+    alwaysOnTopValues.add(value);
+    return !value || alwaysOnTopSupported;
+  }
+
+  @override
+  void addListener(WindowListener listener) {
+    listeners.add(listener);
+  }
+
+  @override
+  void removeListener(WindowListener listener) {
+    listeners.remove(listener);
   }
 }

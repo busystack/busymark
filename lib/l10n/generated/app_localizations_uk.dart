@@ -475,6 +475,66 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.';
 
   @override
+  String get settingsWindowSectionTitle => 'Вікно';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Підтверджувати закриття за наявності незбережених змін';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Запитувати перед закриттям BusyMark, якщо документи мають незбережені зміни.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Тримати BusyMark поверх інших вікон';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Тримати вікно BusyMark над іншими вікнами, якщо це підтримує середовище робочого столу.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Режим поверх усіх вікон недоступний у цьому середовищі робочого столу.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Незбережені зміни';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Цей документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count документа мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      many:
+          '$count документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      few:
+          '$count документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      one:
+          '1 документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?',
+      zero: 'Зберегти зміни перед закриттям BusyMark?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Скасувати';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Відхилити';
+
+  @override
+  String get closeUnsavedChangesSave => 'Зберегти';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Не вдалося застосувати налаштування вікна.';
+
+  @override
   String get currentFile => 'поточний файл';
 
   @override

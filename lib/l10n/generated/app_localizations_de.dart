@@ -473,6 +473,62 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wählen Sie aus, wo die schwebenden WYSIWYG-Bearbeitungsschaltflächen angezeigt werden.';
 
   @override
+  String get settingsWindowSectionTitle => 'Fenster';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Vor dem Schließen bei ungespeicherten Änderungen bestätigen';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Vor dem Schließen von BusyMark nachfragen, wenn Dokumente ungespeicherte Änderungen haben.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'BusyMark im Vordergrund halten';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Das BusyMark-Fenster über anderen Fenstern halten, wenn die Desktop-Umgebung es unterstützt.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Immer im Vordergrund ist in dieser Desktop-Umgebung nicht verfügbar.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Ungespeicherte Änderungen';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Dieses Dokument enthält ungespeicherte Änderungen. Änderungen vor dem Schließen von BusyMark speichern?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Dokumente enthalten ungespeicherte Änderungen. Änderungen vor dem Schließen von BusyMark speichern?',
+      one:
+          '1 Dokument enthält ungespeicherte Änderungen. Änderungen vor dem Schließen von BusyMark speichern?',
+      zero: 'Änderungen vor dem Schließen von BusyMark speichern?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Abbrechen';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Verwerfen';
+
+  @override
+  String get closeUnsavedChangesSave => 'Speichern';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Die Fenstereinstellung konnte nicht angewendet werden.';
+
+  @override
   String get currentFile => 'Aktuelle Datei';
 
   @override

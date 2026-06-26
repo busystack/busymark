@@ -473,6 +473,61 @@ class AppLocalizationsHi extends AppLocalizations {
       'चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।';
 
   @override
+  String get settingsWindowSectionTitle => 'विंडो';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'सहेजे बिना बदलाव हों तो बंद करने से पहले पुष्टि करें';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'जब दस्तावेज़ों में सहेजे बिना बदलाव हों, तो BusyMark बंद करने से पहले पूछें।';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'BusyMark को सबसे ऊपर रखें';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'जब डेस्कटॉप वातावरण समर्थित करे, BusyMark विंडो को अन्य विंडो के ऊपर रखें।';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'इस डेस्कटॉप वातावरण में हमेशा सबसे ऊपर उपलब्ध नहीं है।';
+
+  @override
+  String get closeUnsavedChangesTitle => 'सहेजे बिना बदलाव';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'इस दस्तावेज़ में सहेजे बिना बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count दस्तावेज़ों में सहेजे बिना बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?',
+      one:
+          '1 दस्तावेज़ में सहेजे बिना बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?',
+      zero: 'BusyMark बंद करने से पहले बदलाव सहेजें?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'रद्द करें';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'छोड़ें';
+
+  @override
+  String get closeUnsavedChangesSave => 'सहेजें';
+
+  @override
+  String get windowSettingApplyFailed => 'विंडो सेटिंग लागू नहीं की जा सकी।';
+
+  @override
   String get currentFile => 'वर्तमान फ़ाइल';
 
   @override

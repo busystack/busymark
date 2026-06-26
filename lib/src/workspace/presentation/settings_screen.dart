@@ -4,19 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
+import '../../app/window_control_service.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
+
+final _alwaysOnTopSupportedProvider = FutureProvider.autoDispose<bool>((ref) {
+  return ref.watch(windowControlServiceProvider).isAlwaysOnTopSupported();
+});
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
     final controller = ref.watch(appSettingsControllerProvider.notifier);
     final workspaceOpen =
@@ -24,6 +31,17 @@ class SettingsScreen extends ConsumerWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
+    final alwaysOnTopSupport = ref.watch(_alwaysOnTopSupportedProvider);
+    final alwaysOnTopSupported = alwaysOnTopSupport.maybeWhen(
+      data: (supported) => supported,
+      orElse: () => false,
+    );
+    final alwaysOnTopSubtitle = alwaysOnTopSupport.maybeWhen(
+      data: (supported) => supported
+          ? l10n.settingsAlwaysOnTopDescription
+          : l10n.settingsAlwaysOnTopUnsupportedDescription,
+      orElse: () => l10n.settingsAlwaysOnTopDescription,
+    );
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((action) {
         _handleHeaderBarAction(context, workspaceOpen, action);
@@ -122,6 +140,29 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             BusyMarkGroupedList(
+              title: l10n.settingsWindowSectionTitle,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
+                  subtitle:
+                      l10n.settingsConfirmCloseWithUnsavedChangesDescription,
+                  value: settings.confirmCloseWithUnsavedChanges,
+                  onChanged: controller.setConfirmCloseWithUnsavedChanges,
+                  leading: const Icon(BusyMarkGlyphs.warning),
+                ),
+                BusyMarkSwitchRow(
+                  title: l10n.settingsAlwaysOnTopTitle,
+                  subtitle: alwaysOnTopSubtitle,
+                  value: alwaysOnTopSupported && settings.alwaysOnTop,
+                  enabled: alwaysOnTopSupported,
+                  onChanged: (value) =>
+                      unawaited(_setAlwaysOnTop(context, ref, value)),
+                  leading: const Icon(BusyMarkGlyphs.goTop),
+                ),
+              ],
+            ),
+            BusyMarkGroupedList(
               title: context.l10n.advanced,
               filled: true,
               children: [
@@ -180,6 +221,27 @@ class SettingsScreen extends ConsumerWidget {
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:
         break;
+    }
+  }
+
+  Future<void> _setAlwaysOnTop(
+    BuildContext context,
+    WidgetRef ref,
+    bool value,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref.read(windowControlServiceProvider).applyAlwaysOnTop(value);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setAlwaysOnTop(value);
+    } on Object {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.windowSettingApplyFailed)));
     }
   }
 }

@@ -476,6 +476,65 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выберите, где будут отображаться плавающие кнопки редактирования WYSIWYG.';
 
   @override
+  String get settingsWindowSectionTitle => 'Окно';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Подтверждать закрытие при несохранённых изменениях';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Спрашивать перед закрытием BusyMark, если в документах есть несохранённые изменения.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Держать BusyMark поверх других окон';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Держать окно BusyMark поверх других окон, если это поддерживается средой рабочего стола.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Режим поверх всех окон недоступен в этой среде рабочего стола.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Несохранённые изменения';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'В этом документе есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'В $count документах есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?',
+      many:
+          'В $count документах есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?',
+      few:
+          'В $count документах есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?',
+      one:
+          'В 1 документе есть несохранённые изменения. Сохранить изменения перед закрытием BusyMark?',
+      zero: 'Сохранить изменения перед закрытием BusyMark?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Отмена';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Не сохранять';
+
+  @override
+  String get closeUnsavedChangesSave => 'Сохранить';
+
+  @override
+  String get windowSettingApplyFailed => 'Не удалось применить настройку окна.';
+
+  @override
   String get currentFile => 'Текущий файл';
 
   @override

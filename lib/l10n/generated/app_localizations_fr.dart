@@ -480,6 +480,62 @@ class AppLocalizationsFr extends AppLocalizations {
       'Choisissez l’emplacement des boutons d’édition WYSIWYG flottants.';
 
   @override
+  String get settingsWindowSectionTitle => 'Fenêtre';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Confirmer avant de fermer avec des modifications non enregistrées';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Demander confirmation avant de fermer BusyMark lorsque des documents ont des modifications non enregistrées.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Garder BusyMark au premier plan';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Garder la fenêtre BusyMark au-dessus des autres fenêtres lorsque l’environnement de bureau le permet.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Le mode toujours au premier plan n’est pas disponible dans cet environnement de bureau.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Modifications non enregistrées';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Ce document contient des modifications non enregistrées. Enregistrer les modifications avant de fermer BusyMark ?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documents contiennent des modifications non enregistrées. Enregistrer les modifications avant de fermer BusyMark ?',
+      one:
+          '1 document contient des modifications non enregistrées. Enregistrer les modifications avant de fermer BusyMark ?',
+      zero: 'Enregistrer les modifications avant de fermer BusyMark ?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Annuler';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Ignorer';
+
+  @override
+  String get closeUnsavedChangesSave => 'Enregistrer';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Impossible d’appliquer le paramètre de fenêtre.';
+
+  @override
   String get currentFile => 'fichier actuel';
 
   @override

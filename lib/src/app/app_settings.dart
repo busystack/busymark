@@ -73,6 +73,8 @@ class AppSettings {
     required this.checkExternalLinks,
     required this.checkExternalImages,
     required this.officialBuilderIntegrationEnabled,
+    required this.confirmCloseWithUnsavedChanges,
+    required this.alwaysOnTop,
     required this.recentWorkspaces,
     this.lastOpenedPath,
   });
@@ -93,6 +95,8 @@ class AppSettings {
       checkExternalLinks: false,
       checkExternalImages: false,
       officialBuilderIntegrationEnabled: false,
+      confirmCloseWithUnsavedChanges: true,
+      alwaysOnTop: false,
       recentWorkspaces: [],
     );
   }
@@ -147,6 +151,10 @@ class AppSettings {
       officialBuilderIntegrationEnabled:
           json['officialBuilderIntegrationEnabled'] as bool? ??
           defaults.officialBuilderIntegrationEnabled,
+      confirmCloseWithUnsavedChanges:
+          json['confirmCloseWithUnsavedChanges'] as bool? ??
+          defaults.confirmCloseWithUnsavedChanges,
+      alwaysOnTop: json['alwaysOnTop'] as bool? ?? defaults.alwaysOnTop,
       lastOpenedPath: json['lastOpenedPath']?.toString(),
       recentWorkspaces: recent is List
           ? recent
@@ -173,6 +181,8 @@ class AppSettings {
   final bool checkExternalLinks;
   final bool checkExternalImages;
   final bool officialBuilderIntegrationEnabled;
+  final bool confirmCloseWithUnsavedChanges;
+  final bool alwaysOnTop;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
 
@@ -195,6 +205,8 @@ class AppSettings {
     'checkExternalLinks': checkExternalLinks,
     'checkExternalImages': checkExternalImages,
     'officialBuilderIntegrationEnabled': officialBuilderIntegrationEnabled,
+    'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
+    'alwaysOnTop': alwaysOnTop,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
   };
@@ -214,6 +226,8 @@ class AppSettings {
     bool? checkExternalLinks,
     bool? checkExternalImages,
     bool? officialBuilderIntegrationEnabled,
+    bool? confirmCloseWithUnsavedChanges,
+    bool? alwaysOnTop,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
   }) {
@@ -237,6 +251,9 @@ class AppSettings {
       officialBuilderIntegrationEnabled:
           officialBuilderIntegrationEnabled ??
           this.officialBuilderIntegrationEnabled,
+      confirmCloseWithUnsavedChanges:
+          confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
+      alwaysOnTop: alwaysOnTop ?? this.alwaysOnTop,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
       recentWorkspaces: recentWorkspaces ?? this.recentWorkspaces,
     );
@@ -339,6 +356,14 @@ class AppSettingsController extends StateNotifier<AppSettings> {
 
   Future<void> setOfficialBuilderIntegration(bool enabled) {
     return _save(state.copyWith(officialBuilderIntegrationEnabled: enabled));
+  }
+
+  Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
+    return _save(state.copyWith(confirmCloseWithUnsavedChanges: enabled));
+  }
+
+  Future<void> setAlwaysOnTop(bool enabled) {
+    return _save(state.copyWith(alwaysOnTop: enabled));
   }
 
   Future<void> recordOpenedWorkspace({

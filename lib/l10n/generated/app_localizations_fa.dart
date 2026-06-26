@@ -462,6 +462,61 @@ class AppLocalizationsFa extends AppLocalizations {
       'محل نمایش دکمه‌های شناور ویرایش WYSIWYG را انتخاب کنید.';
 
   @override
+  String get settingsWindowSectionTitle => 'پنجره';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'تأیید پیش از بستن با تغییرات ذخیره‌نشده';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'وقتی سندها تغییرات ذخیره‌نشده دارند، پیش از بستن BusyMark پرسیده شود.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'نگه داشتن BusyMark در جلو';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'در صورت پشتیبانی محیط دسکتاپ، پنجره BusyMark را بالای پنجره‌های دیگر نگه می‌دارد.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'همیشه در جلو در این محیط دسکتاپ در دسترس نیست.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'تغییرات ذخیره‌نشده';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'این سند تغییرات ذخیره‌نشده دارد. پیش از بستن BusyMark تغییرات ذخیره شوند؟';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count سند تغییرات ذخیره‌نشده دارند. پیش از بستن BusyMark تغییرات ذخیره شوند؟',
+      one:
+          '۱ سند تغییرات ذخیره‌نشده دارد. پیش از بستن BusyMark تغییرات ذخیره شوند؟',
+      zero: 'پیش از بستن BusyMark تغییرات ذخیره شوند؟',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'لغو';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'دور انداختن';
+
+  @override
+  String get closeUnsavedChangesSave => 'ذخیره';
+
+  @override
+  String get windowSettingApplyFailed => 'امکان اعمال تنظیم پنجره وجود نداشت.';
+
+  @override
   String get currentFile => 'فایل فعلی';
 
   @override

@@ -455,6 +455,61 @@ class AppLocalizationsAr extends AppLocalizations {
       'اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.';
 
   @override
+  String get settingsWindowSectionTitle => 'النافذة';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'التأكيد قبل الإغلاق مع تغييرات غير محفوظة';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'اسأل قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'إبقاء BusyMark في المقدمة';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'إبقاء نافذة BusyMark فوق النوافذ الأخرى عندما تدعم بيئة سطح المكتب ذلك.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'ميزة البقاء في المقدمة غير متاحة في بيئة سطح المكتب هذه.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'تغييرات غير محفوظة';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'يحتوي هذا المستند على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'تحتوي $count مستندات على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      one:
+          'يحتوي مستند واحد على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      zero: 'هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'إلغاء';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'تجاهل';
+
+  @override
+  String get closeUnsavedChangesSave => 'حفظ';
+
+  @override
+  String get windowSettingApplyFailed => 'تعذر تطبيق إعداد النافذة.';
+
+  @override
   String get currentFile => 'الملف الحالي';
 
   @override

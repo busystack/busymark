@@ -476,6 +476,62 @@ class AppLocalizationsPt extends AppLocalizations {
       'Escolha onde os botões flutuantes de edição WYSIWYG aparecerão.';
 
   @override
+  String get settingsWindowSectionTitle => 'Janela';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesTitle =>
+      'Confirmar antes de fechar com alterações não salvas';
+
+  @override
+  String get settingsConfirmCloseWithUnsavedChangesDescription =>
+      'Perguntar antes de fechar o BusyMark quando documentos tiverem alterações não salvas.';
+
+  @override
+  String get settingsAlwaysOnTopTitle => 'Manter o BusyMark em primeiro plano';
+
+  @override
+  String get settingsAlwaysOnTopDescription =>
+      'Manter a janela do BusyMark acima de outras janelas quando o ambiente de desktop oferecer suporte.';
+
+  @override
+  String get settingsAlwaysOnTopUnsupportedDescription =>
+      'Sempre em primeiro plano não está disponível neste ambiente de desktop.';
+
+  @override
+  String get closeUnsavedChangesTitle => 'Alterações não salvas';
+
+  @override
+  String get closeUnsavedChangesSingleMessage =>
+      'Este documento tem alterações não salvas. Salvar as alterações antes de fechar o BusyMark?';
+
+  @override
+  String closeUnsavedChangesMultipleMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count documentos têm alterações não salvas. Salvar as alterações antes de fechar o BusyMark?',
+      one:
+          '1 documento tem alterações não salvas. Salvar as alterações antes de fechar o BusyMark?',
+      zero: 'Salvar as alterações antes de fechar o BusyMark?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get closeUnsavedChangesCancel => 'Cancelar';
+
+  @override
+  String get closeUnsavedChangesDiscard => 'Descartar';
+
+  @override
+  String get closeUnsavedChangesSave => 'Salvar';
+
+  @override
+  String get windowSettingApplyFailed =>
+      'Não foi possível aplicar a configuração da janela.';
+
+  @override
   String get currentFile => 'arquivo atual';
 
   @override
