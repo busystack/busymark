@@ -28,10 +28,6 @@ constexpr gint kHeaderButtonContentSpacing = 4;
 constexpr gint kHeaderSidebarInset = 8;
 constexpr gint kHeaderWindowRadius = 14;
 constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
-constexpr gint kYaruTitleButtonMinSize = 20;
-constexpr gint kYaruTitleButtonPadding = 4;
-constexpr gint kYaruTitleButtonHorizontalMargin = 1;
-constexpr gint kYaruTitleButtonRadius = 9999;
 constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
@@ -84,10 +80,6 @@ struct _MyApplication {
   gchar* disabled_foreground_color;
   gchar* control_color;
   gchar* control_hover_color;
-  gchar* control_active_color;
-  gchar* title_button_color;
-  gchar* title_button_hover_color;
-  gchar* title_button_active_color;
   gchar* accent_color;
   gchar* accent_foreground_color;
   gchar* popover_background_color;
@@ -128,6 +120,13 @@ static GdkPixbuf* load_application_icon_at_size(gint size) {
 
 static GdkPixbuf* load_application_icon() {
   return load_application_icon_at_size(256);
+}
+
+static void prefer_dark_gtk_theme() {
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings != nullptr) {
+    g_object_set(settings, "gtk-application-prefer-dark-theme", TRUE, nullptr);
+  }
 }
 
 static void respond_success(FlMethodCall* method_call) {
@@ -301,13 +300,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->control_color, "rgba(255,255,255,0.10)");
   const gchar* control_hover =
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
-  const gchar* control_active =
-      css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
-  const gchar* title_button = css_color_or(self->title_button_color, control);
-  const gchar* title_button_hover =
-      css_color_or(self->title_button_hover_color, control_hover);
-  const gchar* title_button_active =
-      css_color_or(self->title_button_active_color, control_active);
   const gchar* accent = css_color_or(self->accent_color, "#3584e4");
   const gchar* accent_foreground =
       css_color_or(self->accent_foreground_color, "#ffffff");
@@ -358,39 +350,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-top-left-radius: %dpx;"
       "padding-left: 0;"
       "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu),"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu):backdrop {"
-      "color: %s;"
-      "background-color: %s;"
-      "background-image: none;"
-      "border: 1px solid %s;"
-      "box-shadow: 0 1px 1px %s;"
-      "text-shadow: none;"
-      "-gtk-icon-shadow: none;"
-      "border-radius: %dpx;"
-      "margin: 0 %dpx;"
-      "min-height: %dpx;"
-      "min-width: %dpx;"
-      "padding: %dpx;"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu):hover {"
-      "color: %s;"
-      "background-color: %s;"
-      "background-image: none;"
-      "box-shadow: 0 1px 1px %s;"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu):active {"
-      "color: %s;"
-      "background-color: %s;"
-      "background-image: none;"
-      "box-shadow: 0 1px 1px %s;"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) image,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) label {"
-      "color: %s;"
-      "text-shadow: none;"
-      "-gtk-icon-shadow: none;"
-      "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
       "background-image: none;"
@@ -427,14 +386,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar button.busymark-header-button,"
       ".busymark-titlebar button.busymark-view-mode-button {"
       "color: %s;"
-      "background-color: %s;"
-      "background-image: none;"
-      "border: 1px solid %s;"
-      "box-shadow: 0 1px 1px %s;"
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
-      "outline-style: none;"
-      "transition: none;"
       "min-height: %dpx;"
       "min-width: %dpx;"
       "padding: 0 %dpx;"
@@ -453,31 +406,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       "text-shadow: none;"
       "-gtk-icon-shadow: none;"
       "}"
-      ".busymark-titlebar button.busymark-header-button:hover,"
-      ".busymark-titlebar button.busymark-view-mode-button:hover {"
-      "background-color: %s;"
-      "}"
-      ".busymark-titlebar button.busymark-header-button:active,"
-      ".busymark-titlebar button.busymark-header-button:checked,"
-      ".busymark-titlebar button.busymark-view-mode-button:active,"
-      ".busymark-titlebar button.busymark-view-mode-button:checked {"
-      "background-color: %s;"
-      "}"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button,"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:active,"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:checked {"
-      "background-color: transparent;"
-      "border: none;"
-      "box-shadow: none;"
-      "}"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover {"
-      "background-color: %s;"
-      "box-shadow: 0 1px 1px %s;"
-      "}"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:active,"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:checked {"
-      "background-color: %s;"
-      "}"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:hover,"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:active,"
@@ -492,8 +420,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar button.busymark-header-button:disabled,"
       ".busymark-titlebar button.busymark-view-mode-button:disabled {"
       "color: %s;"
-      "background-color: transparent;"
-      "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier label,"
       ".busymark-titlebar.busymark-modal-barrier button,"
@@ -569,19 +495,13 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-radius: %dpx;"
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
-      kHeaderWindowRadius, headerbar_left_radius, foreground, title_button,
-      border, shade, kYaruTitleButtonRadius, kYaruTitleButtonHorizontalMargin,
-      kYaruTitleButtonMinSize, kYaruTitleButtonMinSize,
-      kYaruTitleButtonPadding, foreground, title_button_hover, shade, foreground,
-      title_button_active, shade, foreground,
-      sidebar_background,
-      kHeaderWindowRadius, foreground, foreground, control, border, kHeaderSearchEntryContentHeight,
-      kHeaderButtonRadius,
+      kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
+      kHeaderWindowRadius, foreground, foreground, control, border,
+      kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
       kHeaderControlHorizontalPadding, accent, modal, modal, foreground,
-      control, border, shade, kHeaderButtonHeight, kHeaderButtonHeight,
+      kHeaderButtonHeight, kHeaderButtonHeight,
       kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
-      foreground, control_hover, control_active, control_hover, shade,
-      control_active, accent_foreground, accent, accent_foreground, disabled,
+      foreground, accent_foreground, accent, accent_foreground, disabled,
       disabled, popover, foreground, border, shade, foreground,
       kHeaderControlHeight, kHeaderControlHorizontalPadding,
       kHeaderButtonRadius, control_hover, foreground, muted,
@@ -628,14 +548,6 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "controlColor"));
   set_css_color_field(&self->control_hover_color,
                       fl_lookup_string_arg(args, "controlHoverColor"));
-  set_css_color_field(&self->control_active_color,
-                      fl_lookup_string_arg(args, "controlActiveColor"));
-  set_css_color_field(&self->title_button_color,
-                      fl_lookup_string_arg(args, "titleButtonColor"));
-  set_css_color_field(&self->title_button_hover_color,
-                      fl_lookup_string_arg(args, "titleButtonHoverColor"));
-  set_css_color_field(&self->title_button_active_color,
-                      fl_lookup_string_arg(args, "titleButtonActiveColor"));
   set_css_color_field(&self->accent_color,
                       fl_lookup_string_arg(args, "accentColor"));
   set_css_color_field(&self->accent_foreground_color,
@@ -1471,6 +1383,8 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
+  prefer_dark_gtk_theme();
+
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
@@ -1553,6 +1467,7 @@ static gboolean my_application_local_command_line(GApplication* application,
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
+  prefer_dark_gtk_theme();
 }
 
 // Implements GApplication::shutdown.
@@ -1576,10 +1491,6 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->disabled_foreground_color, g_free);
   g_clear_pointer(&self->control_color, g_free);
   g_clear_pointer(&self->control_hover_color, g_free);
-  g_clear_pointer(&self->control_active_color, g_free);
-  g_clear_pointer(&self->title_button_color, g_free);
-  g_clear_pointer(&self->title_button_hover_color, g_free);
-  g_clear_pointer(&self->title_button_active_color, g_free);
   g_clear_pointer(&self->accent_color, g_free);
   g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
@@ -1646,10 +1557,6 @@ static void my_application_init(MyApplication* self) {
   self->disabled_foreground_color = nullptr;
   self->control_color = nullptr;
   self->control_hover_color = nullptr;
-  self->control_active_color = nullptr;
-  self->title_button_color = nullptr;
-  self->title_button_hover_color = nullptr;
-  self->title_button_active_color = nullptr;
   self->accent_color = nullptr;
   self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;

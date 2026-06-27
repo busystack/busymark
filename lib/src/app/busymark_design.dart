@@ -135,9 +135,6 @@ abstract final class BusyMarkAlpha {
   static const double overlayFocus = 0.10;
   static const double textSelection = 0.32;
   static const double floatingTextSelection = 0.28;
-  static const double titleButton = 0.10;
-  static const double titleButtonHover = 0.15;
-  static const double titleButtonActive = 0.25;
   static const double languageMenuShadow = 0.42;
   static const double sourceCollapsedLine = 0.045;
   static const double sourceCursor = 0.82;
