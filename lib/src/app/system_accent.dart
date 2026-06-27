@@ -4,21 +4,28 @@ import 'dart:io';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:system_theme/system_theme.dart';
 
 import 'busymark_design.dart';
 
+const busyMarkDefaultAccentColor = BusyMarkLinuxPalette.blueAccent;
+
+final initialSystemAccentColorProvider = Provider<Color>(
+  (ref) => busyMarkDefaultAccentColor,
+);
+
 final systemAccentColorProvider = StreamProvider<Color>((ref) async* {
-  final fallback = SystemTheme.accentColor.accent;
+  final fallback = ref.watch(initialSystemAccentColorProvider);
+  yield fallback;
+
   if (!Platform.isLinux) {
-    yield fallback;
-    yield* SystemTheme.onChange.map((color) => color.accent);
     return;
   }
 
   final appearance = LinuxPortalAppearance();
-  final initial = await appearance.readAccentColor() ?? fallback;
-  yield initial;
+  final initial = await appearance.readAccentColor();
+  if (initial != null && initial != fallback) {
+    yield initial;
+  }
   yield* appearance.accentColorChanges().distinct();
 });
 

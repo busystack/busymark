@@ -7,7 +7,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
-import 'package:system_theme/system_theme.dart';
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -37,9 +36,14 @@ class BusyMarkApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(appSettingsControllerProvider);
-    final accent =
-        ref.watch(systemAccentColorProvider).asData?.value ??
-        SystemTheme.fallbackColor;
+    final fallbackAccent = ref.watch(initialSystemAccentColorProvider);
+    final accent = ref
+        .watch(systemAccentColorProvider)
+        .when(
+          data: (color) => color,
+          error: (_, _) => fallbackAccent,
+          loading: () => fallbackAccent,
+        );
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,

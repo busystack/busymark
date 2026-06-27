@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/app/busymark_app.dart';
@@ -14,18 +13,17 @@ Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await LinuxHeaderBarService.instance.initialize();
-  await SystemTheme.accentColor.load();
+  var initialAccent = busyMarkDefaultAccentColor;
   if (Platform.isLinux) {
-    final accent = await const LinuxPortalAppearance().readAccentColor();
-    if (accent != null) {
-      SystemTheme.fallbackColor = accent;
-      SystemTheme.accentColor.accent = accent;
-    }
+    initialAccent =
+        await const LinuxPortalAppearance().readAccentColor() ??
+        busyMarkDefaultAccentColor;
   }
   runApp(
     ProviderScope(
       overrides: [
         startupPathProvider.overrideWithValue(args.isEmpty ? null : args.first),
+        initialSystemAccentColorProvider.overrideWithValue(initialAccent),
       ],
       child: const BusyMarkApp(),
     ),
