@@ -78,6 +78,7 @@ class HeaderBarLabels {
 
 class HeaderBarTheme {
   const HeaderBarTheme({
+    required this.preferDark,
     required this.backgroundColor,
     required this.sidebarBackgroundColor,
     required this.foregroundColor,
@@ -99,7 +100,8 @@ class HeaderBarTheme {
       context,
     ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
     return HeaderBarTheme(
-      backgroundColor: colors.headerbarFlat,
+      preferDark: Theme.of(context).brightness == Brightness.dark,
+      backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       mutedForegroundColor: colors.mutedForeground,
@@ -115,6 +117,7 @@ class HeaderBarTheme {
     );
   }
 
+  final bool preferDark;
   final Color backgroundColor;
   final Color sidebarBackgroundColor;
   final Color foregroundColor;
@@ -129,7 +132,8 @@ class HeaderBarTheme {
   final Color shadeColor;
   final Color modalBarrierColor;
 
-  Map<String, String> toMap() => {
+  Map<String, Object> toMap() => {
+    'preferDark': preferDark,
     'backgroundColor': _cssColor(backgroundColor),
     'sidebarBackgroundColor': _cssColor(sidebarBackgroundColor),
     'foregroundColor': _cssColor(foregroundColor),

@@ -184,11 +184,29 @@ void main() {
   });
 
   test('native GTK prefers dark theme for snap runtime widgets', () {
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(native, contains('static void prefer_dark_gtk_theme()'));
+    expect(service, contains('preferDark: Theme.of(context).brightness'));
+    expect(service, contains("'preferDark': preferDark"));
+    expect(native, contains('static void set_gtk_theme_preference'));
     expect(native, contains('gtk_settings_get_default()'));
-    expect(native, contains('"gtk-application-prefer-dark-theme", TRUE'));
+    expect(
+      native,
+      contains('"gtk-application-prefer-dark-theme", prefer_dark'),
+    );
+    expect(native, contains('set_gtk_theme_preference(TRUE);'));
+    expect(native, contains('"gtk-theme-name"'));
+    expect(native, contains('"gtk-icon-theme-name"'));
+    expect(native, contains('gtk_theme_exists'));
+    expect(native, contains('icon_theme_exists'));
+    expect(native, contains('gtk_theme_name_for_preference'));
+    expect(native, contains('icon_theme_name_for_preference'));
+    expect(native, contains('"Yaru-dark"'));
+    expect(native, contains('gtk_icon_theme_set_custom_theme'));
+    expect(native, contains('fl_lookup_bool_arg(args, "preferDark", TRUE)'));
     expect(
       native,
       matches(
@@ -241,13 +259,31 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
 
-    expect(service, contains('backgroundColor: colors.headerbarFlat'));
+    expect(service, contains('backgroundColor: colors.view'));
     expect(service, contains('sidebarBackgroundColor: colors.sidebar'));
     expect(service, isNot(contains('sidebarBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#242424"'));
     expect(native, contains('kDefaultSidebarBackground[] = "#303030"'));
     expect(native, contains('.busymark-sidebar-header {'));
     expect(native, contains('background-color: %s;'));
+    final headerbarBlock = RegExp(
+      r'"headerbar\.busymark-headerbar,"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)!.group(1)!;
+    expect(headerbarBlock, contains('"background-color: %s;"'));
+    expect(headerbarBlock, contains('"background-image: none;"'));
+    expect(headerbarBlock, contains('"border: none;"'));
+    expect(headerbarBlock, contains('"box-shadow: none;"'));
+    expect(headerbarBlock, contains('"border-top-left-radius: %dpx;"'));
+    expect(headerbarBlock, contains('"padding-left: 0;"'));
+    expect(
+      native,
+      isNot(
+        contains(
+          '".busymark-titlebar.busymark-modal-barrier headerbar.busymark-headerbar {"',
+        ),
+      ),
+    );
     expect(native, isNot(contains('border-right: 1px solid')));
     expect(workspace, isNot(contains('Border(right:')));
   });
@@ -381,9 +417,10 @@ void main() {
       final native = File('linux/runner/my_application.cc').readAsStringSync();
 
       expect(design, contains('sidebarWidth = 300'));
-      expect(design, contains('view: Color(0xFF2A2A2A)'));
+      expect(design, contains('view: Color(0xFF242424)'));
       expect(design, contains('sidebar: Color(0xFF303030)'));
       expect(design, contains('headerbarFlat: Color(0xFF242424)'));
+      expect(native, contains('"#242424"'));
       expect(design, isNot(contains('Color(0xFF1D1D20)')));
       expect(design, isNot(contains('Color(0xFF2E2E32)')));
       expect(design, isNot(contains('Color.fromRGBO(0, 0, 6')));
