@@ -60,8 +60,18 @@ parts:
       - libwayland-egl1
       - libxcb-shm0
       - libxcb1
+      - yaru-theme-gtk
+      - yaru-theme-icon
+    override-build: |
+      rm -rf "$CRAFT_PART_BUILD/build"
+      rm -rf "$CRAFT_PART_BUILD/.dart_tool"
+      rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
+      craftctl default
     override-prime: |
       craftctl default
+      mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
+      cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"
+      cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \

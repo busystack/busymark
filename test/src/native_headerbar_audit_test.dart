@@ -188,6 +188,7 @@ void main() {
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
     expect(service, contains('preferDark: Theme.of(context).brightness'));
     expect(service, contains("'preferDark': preferDark"));
@@ -199,14 +200,41 @@ void main() {
     );
     expect(native, contains('set_gtk_theme_preference(TRUE);'));
     expect(native, contains('"gtk-theme-name"'));
-    expect(native, contains('"gtk-icon-theme-name"'));
     expect(native, contains('gtk_theme_exists'));
-    expect(native, contains('icon_theme_exists'));
-    expect(native, contains('gtk_theme_name_for_preference'));
-    expect(native, contains('icon_theme_name_for_preference'));
+    expect(native, contains('available_gtk_theme_fallback'));
     expect(native, contains('"Yaru-dark"'));
+    expect(native, contains('"Adwaita-dark"'));
+    expect(native, contains('"gtk-icon-theme-name"'));
+    expect(native, contains('icon_theme_exists'));
+    expect(native, contains('available_icon_theme_fallback'));
     expect(native, contains('gtk_icon_theme_set_custom_theme'));
+    expect(native, contains('gtk_accent_css_provider'));
+    expect(native, contains('@define-color theme_selected_bg_color %s;'));
+    expect(native, contains('@define-color accent_bg_color %s;'));
+    expect(native, contains('treeview.view:selected'));
+    expect(native, contains('button.suggested-action'));
+    expect(native, contains('GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1'));
+    expect(native, isNot(contains('gtk_theme_name_for_preference')));
+    expect(native, isNot(contains('icon_theme_name_for_preference')));
     expect(native, contains('fl_lookup_bool_arg(args, "preferDark", TRUE)'));
+    expect(snapcraft, contains('yaru-theme-gtk'));
+    expect(snapcraft, contains('yaru-theme-icon'));
+    expect(snapcraft, contains('override-build:'));
+    expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
+    expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
+    expect(snapcraft, contains('craftctl default'));
+    expect(
+      snapcraft,
+      contains(
+        r'cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"',
+      ),
+    );
+    expect(
+      snapcraft,
+      contains(
+        r'cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"',
+      ),
+    );
     expect(
       native,
       matches(
@@ -320,10 +348,6 @@ void main() {
 
   test('native headerbar buttons use GTK-style themed controls', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final headerButtonBlock = RegExp(
-      r'"\.busymark-titlebar button\.busymark-header-button,"(.*?)"\}',
-      dotAll: true,
-    ).firstMatch(native)!.group(1)!;
 
     expect(native, contains('kHeaderButtonHeight = 32'));
     expect(native, contains('kHeaderControlHeight = 34'));
@@ -334,16 +358,24 @@ void main() {
         'kHeaderSearchEntryContentHeight =\n    kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2',
       ),
     );
-    expect(native, contains('kHeaderButtonHorizontalPadding = 8'));
     expect(native, contains('kHeaderControlHorizontalPadding = 8'));
     expect(native, contains('kHeaderButtonSpacing = 8'));
-    expect(headerButtonBlock, contains('"color: %s;"'));
-    expect(headerButtonBlock, contains('"min-height: %dpx;"'));
-    expect(headerButtonBlock, contains('"min-width: %dpx;"'));
-    expect(headerButtonBlock, contains('"padding: 0 %dpx;"'));
-    expect(headerButtonBlock, isNot(contains('"background-color: %s;"')));
-    expect(headerButtonBlock, isNot(contains('"border: 1px solid %s;"')));
-    expect(headerButtonBlock, isNot(contains('"box-shadow:')));
+    expect(
+      native,
+      isNot(contains('".busymark-titlebar button.busymark-header-button,"')),
+    );
+    expect(
+      native,
+      isNot(
+        contains('".busymark-titlebar button.busymark-view-mode-button {"'),
+      ),
+    );
+    expect(
+      native,
+      isNot(
+        contains('".busymark-titlebar button.busymark-header-button image,"'),
+      ),
+    );
     expect(
       native,
       contains(
