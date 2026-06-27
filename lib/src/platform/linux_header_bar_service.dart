@@ -25,6 +25,23 @@ enum HeaderBarAction {
 
 enum AppViewMode { editor, source, preview, split }
 
+class HeaderBarActionEvent {
+  const HeaderBarActionEvent({required this.sequence, required this.action});
+
+  final int sequence;
+  final HeaderBarAction action;
+
+  @override
+  bool operator ==(Object other) {
+    return other is HeaderBarActionEvent &&
+        other.sequence == sequence &&
+        other.action == action;
+  }
+
+  @override
+  int get hashCode => Object.hash(sequence, action);
+}
+
 class HeaderBarLabels {
   const HeaderBarLabels({
     required this.editor,
@@ -160,15 +177,18 @@ class LinuxHeaderBarService {
 
   final MethodChannel _channel;
   final _actions = StreamController<HeaderBarAction>.broadcast();
+  final _actionEvents = StreamController<HeaderBarActionEvent>.broadcast();
   final _searchQueries = StreamController<String>.broadcast();
   var _initialized = false;
   var _channelReady = false;
   var _available = false;
+  var _actionSequence = 0;
 
   bool get isAvailable => _available;
   bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
+  Stream<HeaderBarActionEvent> get actionEvents => _actionEvents.stream;
   Stream<String> get searchQueries => _searchQueries.stream;
 
   Future<void> initialize() async {
@@ -280,8 +300,16 @@ class LinuxHeaderBarService {
       return;
     }
     final action = _actionFromMethod(call.method);
-    if (action != null && !_actions.isClosed) {
-      _actions.add(action);
+    if (action != null) {
+      _actionSequence++;
+      if (!_actions.isClosed) {
+        _actions.add(action);
+      }
+      if (!_actionEvents.isClosed) {
+        _actionEvents.add(
+          HeaderBarActionEvent(sequence: _actionSequence, action: action),
+        );
+      }
     }
   }
 
@@ -309,8 +337,8 @@ final linuxHeaderBarServiceProvider = Provider<LinuxHeaderBarService>(
   (ref) => LinuxHeaderBarService.instance,
 );
 
-final headerBarActionsProvider = StreamProvider<HeaderBarAction>((ref) {
-  return ref.watch(linuxHeaderBarServiceProvider).actions;
+final headerBarActionsProvider = StreamProvider<HeaderBarActionEvent>((ref) {
+  return ref.watch(linuxHeaderBarServiceProvider).actionEvents;
 });
 
 final headerBarSearchQueriesProvider = StreamProvider<String>((ref) {

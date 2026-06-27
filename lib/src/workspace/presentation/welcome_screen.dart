@@ -47,8 +47,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final colors = BusyMarkSurfaceColors.of(context);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((action) {
-        _handleHeaderBarAction(context, action);
+      next.whenData((event) {
+        _handleHeaderBarAction(context, event.action);
       });
     });
     if (headerBar.isAvailable) {

@@ -260,8 +260,8 @@ class WorkspaceScreen extends ConsumerWidget {
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((action) {
-        _handleHeaderBarAction(context, ref, action);
+      next.whenData((event) {
+        _handleHeaderBarAction(context, ref, event.action);
       });
     });
     ref.listen(headerBarSearchQueriesProvider, (previous, next) {
