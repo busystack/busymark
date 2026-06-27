@@ -602,6 +602,52 @@ void main() {
     },
   );
 
+  testWidgets(
+    'shared Markdown image renderer rejects absolute paths outside workspace',
+    (tester) async {
+      final workspace = Directory.systemTemp.createTempSync(
+        'busymark_preview_image_workspace_',
+      );
+      final outside = Directory.systemTemp.createTempSync(
+        'busymark_preview_image_outside_',
+      );
+      try {
+        final image = File('${outside.path}/outside.png')
+          ..writeAsBytesSync(
+            base64Decode(
+              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+            ),
+          );
+        final markdown = File('${workspace.path}/image.md')
+          ..writeAsStringSync('# Image\n\n![Outside](${image.path})\n');
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: MarkdownImageView(
+                source: image.path,
+                alt: 'Outside',
+                activeFilePath: markdown.path,
+                workspaceRoot: workspace.path,
+                writersideRoot: null,
+                imagesDir: 'images',
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(Image), findsNothing);
+        expect(find.textContaining(image.path), findsOneWidget);
+      } finally {
+        workspace.deleteSync(recursive: true);
+        outside.deleteSync(recursive: true);
+      }
+    },
+  );
+
   testWidgets('shared Markdown image renderer resolves local SVG images', (
     tester,
   ) async {
@@ -1193,16 +1239,35 @@ class _StartupWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<bool> fileChangedSince(String path, DateTime? knownModifiedAt) async {
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: '# Basic Markdown\n',
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: '# Basic Markdown\n'.length,
+        contentHash: 'startup',
+      ),
+    );
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
     return false;
   }
 
   @override
-  Future<DateTime> saveText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     saveCount++;
     savedPath = path;
     savedText = text;
-    return DateTime(2026, 1, 2);
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, 2),
+      size: 0,
+      contentHash: '',
+    );
   }
 }
 
@@ -1235,6 +1300,18 @@ class _SearchWorkspaceService extends WorkspaceService {
 
   @override
   Future<String> loadText(String path) async => source;
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: source,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: source.length,
+        contentHash: 'search',
+      ),
+    );
+  }
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

@@ -42,6 +42,19 @@ void main() {
     expect(settings.copyWith(localeTag: null).locale, isNull);
   });
 
+  test('unused product settings are not persisted', () {
+    final json = AppSettings.defaults().toJson();
+
+    expect(json, isNot(containsPair('previewMode', anything)));
+    expect(json, isNot(containsPair('validationLevel', anything)));
+    expect(json, isNot(containsPair('checkExternalLinks', anything)));
+    expect(json, isNot(containsPair('checkExternalImages', anything)));
+    expect(
+      json,
+      isNot(containsPair('officialBuilderIntegrationEnabled', anything)),
+    );
+  });
+
   test('window behavior settings persist', () async {
     final store = _MemorySettingsStore();
     final controller = AppSettingsController(store);

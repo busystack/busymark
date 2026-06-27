@@ -269,7 +269,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutSaveDescription => 'حفظ ملف Markdown الحالي';
 
   @override
-  String get shortcutFindDescription => 'البحث في مساحة العمل الحالية';
+  String get shortcutFindDescription => 'البحث في المستند الحالي';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

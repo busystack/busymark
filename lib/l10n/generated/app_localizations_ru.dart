@@ -271,7 +271,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get shortcutSaveDescription => 'Сохранить текущий файл Markdown.';
 
   @override
-  String get shortcutFindDescription => 'Искать в текущей рабочей области.';
+  String get shortcutFindDescription => 'Искать в текущем документе.';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

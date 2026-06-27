@@ -24,6 +24,31 @@ enum DocumentKind {
   unknown,
 }
 
+class WorkspaceFileSnapshot {
+  const WorkspaceFileSnapshot({
+    required this.modifiedAt,
+    required this.size,
+    required this.contentHash,
+  });
+
+  final DateTime modifiedAt;
+  final int size;
+  final String contentHash;
+
+  bool differsFrom(WorkspaceFileSnapshot other) {
+    return modifiedAt != other.modifiedAt ||
+        size != other.size ||
+        contentHash != other.contentHash;
+  }
+}
+
+class WorkspaceFileLoad {
+  const WorkspaceFileLoad({required this.text, required this.snapshot});
+
+  final String text;
+  final WorkspaceFileSnapshot snapshot;
+}
+
 class DocumentFile {
   const DocumentFile({
     required this.absolutePath,
@@ -41,7 +66,7 @@ class DocumentFile {
 }
 
 class Workspace {
-  const Workspace({
+  Workspace({
     required this.id,
     required this.rootPath,
     required this.kind,
@@ -49,10 +74,12 @@ class Workspace {
     required this.files,
     required this.diagnostics,
     this.activeFilePath,
-    this.activeFileModifiedAt,
+    DateTime? activeFileModifiedAt,
+    this.activeFileSnapshot,
     this.markdown,
     this.writersideModule,
-  });
+  }) : activeFileModifiedAt =
+           activeFileModifiedAt ?? activeFileSnapshot?.modifiedAt;
 
   final String id;
   final String rootPath;
@@ -60,6 +87,7 @@ class Workspace {
   final DateTime openedAt;
   final String? activeFilePath;
   final DateTime? activeFileModifiedAt;
+  final WorkspaceFileSnapshot? activeFileSnapshot;
   final List<DocumentFile> files;
   final List<Diagnostic> diagnostics;
   final ParsedMarkdownDocument? markdown;
@@ -68,18 +96,24 @@ class Workspace {
   Workspace copyWith({
     String? activeFilePath,
     DateTime? activeFileModifiedAt,
+    WorkspaceFileSnapshot? activeFileSnapshot,
     List<DocumentFile>? files,
     List<Diagnostic>? diagnostics,
     ParsedMarkdownDocument? markdown,
     WritersideModule? writersideModule,
   }) {
+    final nextSnapshot = activeFileSnapshot ?? this.activeFileSnapshot;
     return Workspace(
       id: id,
       rootPath: rootPath,
       kind: kind,
       openedAt: openedAt,
       activeFilePath: activeFilePath ?? this.activeFilePath,
-      activeFileModifiedAt: activeFileModifiedAt ?? this.activeFileModifiedAt,
+      activeFileModifiedAt:
+          activeFileModifiedAt ??
+          nextSnapshot?.modifiedAt ??
+          this.activeFileModifiedAt,
+      activeFileSnapshot: nextSnapshot,
       files: files ?? this.files,
       diagnostics: diagnostics ?? this.diagnostics,
       markdown: markdown ?? this.markdown,

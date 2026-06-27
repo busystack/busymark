@@ -270,7 +270,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shortcutSaveDescription => 'Zapisz bieżący plik Markdown';
 
   @override
-  String get shortcutFindDescription => 'Przeszukaj bieżący obszar roboczy';
+  String get shortcutFindDescription => 'Przeszukaj bieżący dokument';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

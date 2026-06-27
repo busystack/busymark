@@ -271,7 +271,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get shortcutSaveDescription => 'Lagre gjeldende Markdown-fil';
 
   @override
-  String get shortcutFindDescription => 'Søk i gjeldende arbeidsområde';
+  String get shortcutFindDescription => 'Søk i gjeldende dokument';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

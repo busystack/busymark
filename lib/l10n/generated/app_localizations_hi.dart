@@ -270,7 +270,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutSaveDescription => 'वर्तमान Markdown फ़ाइल सहेजें';
 
   @override
-  String get shortcutFindDescription => 'वर्तमान कार्यस्थान खोजें';
+  String get shortcutFindDescription => 'वर्तमान दस्तावेज़ खोजें';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

@@ -271,7 +271,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutSaveDescription => 'Save the current Markdown file';
 
   @override
-  String get shortcutFindDescription => 'Search the current workspace';
+  String get shortcutFindDescription => 'Search the current document';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

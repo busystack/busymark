@@ -105,7 +105,7 @@ class MarkdownAstAdapter {
       final rawText = node.textContent.trim();
       final attrId = _attributeValue(rawText, 'id');
       final text = _stripTrailingAttributeBlock(rawText);
-      final id = attrId ?? node.generatedId ?? slugForHeading(text);
+      final id = attrId ?? slugForHeading(text);
       return [
         BusyBlock(
           id: id.isEmpty ? nextId() : id,
