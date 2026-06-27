@@ -27,8 +27,6 @@ const ignoredDirectoryNames = {
 const documentationFileExtensions = {
   '.md',
   '.markdown',
-  '.mdown',
-  '.mkd',
   '.topic',
   '.tree',
   '.cfg',

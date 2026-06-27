@@ -660,6 +660,7 @@ class WritersideModuleService {
       if (localImageExists(
         activeFilePath: topic.filePath,
         destination: destination,
+        workspaceRoot: topic.topicRoot,
         writersideRoot: module.rootPath,
         imagesDir: imagesDir,
       )) {

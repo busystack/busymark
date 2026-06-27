@@ -217,6 +217,40 @@ void main() {
     expect(leftovers, isEmpty);
   });
 
+  test(
+    'saveText follows file symlinks and preserves target permissions',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-symlink-save-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final target = File(p.join(directory.path, 'target.md'));
+      await target.writeAsString('# Original\n');
+      final chmod = await Process.run('chmod', ['600', target.path]);
+      expect(chmod.exitCode, 0);
+      final link = Link(p.join(directory.path, 'link.md'));
+      await link.create(target.path);
+
+      final snapshot = await service.saveText(link.path, '# Saved\n');
+
+      expect(
+        FileSystemEntity.typeSync(link.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+      expect(await target.readAsString(), '# Saved\n');
+      expect(await File(link.path).readAsString(), '# Saved\n');
+      expect((await target.stat()).mode & 0x1ff, 0x180);
+      expect(snapshot.size, '# Saved\n'.length);
+    },
+    skip: Platform.isWindows
+        ? 'POSIX symlink and permission behavior only.'
+        : false,
+  );
+
   test('fileChangedSince treats deleted files as changed', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-conflict-missing-',
@@ -286,6 +320,24 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+
+  test('folder scan excludes unsupported legacy Markdown extensions', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-legacy-markdown-',
+    );
+    await File('${directory.path}/README.md').writeAsString('# Readme\n');
+    await File('${directory.path}/legacy.mdown').writeAsString('# Legacy\n');
+    await File('${directory.path}/legacy.mkd').writeAsString('# Legacy\n');
+
+    final workspace = await service.openPath(directory.path);
+    final relativePaths = workspace.files.map((file) => file.relativePath);
+
+    expect(relativePaths, contains('README.md'));
+    expect(relativePaths, isNot(contains('legacy.mdown')));
+    expect(relativePaths, isNot(contains('legacy.mkd')));
+
+    await directory.delete(recursive: true);
+  });
 
   test(
     'limited folder scan prefers shallow siblings before deep subtree',

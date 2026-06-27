@@ -61,7 +61,17 @@ class MarkdownImageView extends StatelessWidget {
     final uri = Uri.tryParse(source);
     if (uri != null && uri.hasScheme) {
       if (uri.scheme == 'file') {
-        return _fileImage(File.fromUri(uri), source, _isSvgPath(uri.path));
+        final resolvedPath = resolveLocalImagePath(
+          activeFilePath: activeFilePath,
+          destination: File.fromUri(uri).path,
+          workspaceRoot: workspaceRoot,
+          writersideRoot: writersideRoot,
+          imagesDir: imagesDir,
+        );
+        if (resolvedPath == null) {
+          return null;
+        }
+        return _fileImage(File(resolvedPath), source, _isSvgPath(resolvedPath));
       }
       if (uri.scheme == 'http' || uri.scheme == 'https') {
         if (_isSvgPath(uri.path)) {

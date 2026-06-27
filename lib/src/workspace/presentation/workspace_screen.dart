@@ -2567,7 +2567,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             Expanded(
               child: BusyMarkWysiwygEditor(
                 document: wysiwygDocument,
-                workspaceRoot: widget.state.workspace?.rootPath,
+                workspaceRoot: _imageWorkspaceRoot(widget.state.workspace),
                 writersideRoot:
                     widget.state.workspace?.writersideModule?.rootPath,
                 imagesDir:
@@ -4731,7 +4731,7 @@ class _PreviewImageBlock extends StatelessWidget {
           source: source,
           alt: block.text,
           activeFilePath: activeFilePath ?? '',
-          workspaceRoot: workspace?.rootPath,
+          workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
           width: width,
@@ -4740,6 +4740,25 @@ class _PreviewImageBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+String? _imageWorkspaceRoot(Workspace? workspace) {
+  if (workspace == null) {
+    return null;
+  }
+  final module = workspace.writersideModule;
+  if (module == null) {
+    return workspace.rootPath;
+  }
+  final activeFilePath =
+      workspace.activeFilePath ?? workspace.markdown?.filePath;
+  if (activeFilePath == null) {
+    return null;
+  }
+  return module.topics
+      .where((topic) => topic.filePath == activeFilePath)
+      .map((topic) => topic.topicRoot)
+      .firstOrNull;
 }
 
 String _previewImageSource(PreviewBlock block) {
@@ -4964,7 +4983,7 @@ InlineSpan _previewInlineImageSpan(
           source: inline.destination ?? '',
           alt: inline.text,
           activeFilePath: activeFilePath ?? '',
-          workspaceRoot: workspace?.rootPath,
+          workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
           maxWidth: BusyMarkSizes.previewMinWidth,

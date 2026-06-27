@@ -179,13 +179,18 @@ class WorkspaceService {
   }
 
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
-    final target = File(path);
+    final savePath = await _saveTargetPath(path);
+    final target = File(savePath);
+    final existingStat = await target.stat();
     final bytes = utf8.encode(text);
-    final temp = _temporarySaveFile(path);
+    final temp = _temporarySaveFile(savePath);
     var renamed = false;
     try {
       await temp.writeAsBytes(bytes, flush: true);
-      await temp.rename(path);
+      if (existingStat.type != FileSystemEntityType.notFound) {
+        await _copyFileMode(existingStat, temp);
+      }
+      await temp.rename(savePath);
       renamed = true;
       final stat = await target.stat();
       return _snapshotFromBytes(stat, bytes);
@@ -200,6 +205,28 @@ class WorkspaceService {
         }
       }
       rethrow;
+    }
+  }
+
+  Future<String> _saveTargetPath(String path) async {
+    final type = await FileSystemEntity.type(path, followLinks: false);
+    if (type != FileSystemEntityType.link) {
+      return path;
+    }
+    return Link(path).resolveSymbolicLinks();
+  }
+
+  Future<void> _copyFileMode(FileStat sourceStat, File target) async {
+    if (Platform.isWindows) {
+      return;
+    }
+    final mode = (sourceStat.mode & 0xfff).toRadixString(8);
+    final result = await Process.run('chmod', [mode, target.path]);
+    if (result.exitCode != 0) {
+      throw FileSystemException(
+        'Failed to apply file mode $mode: ${result.stderr}',
+        target.path,
+      );
     }
   }
 

@@ -187,32 +187,99 @@ void main() {
     },
   );
 
-  test('resolves Writerside topic-specific image directories', () async {
-    final root = await Directory.systemTemp.createTemp('busymark_writerside_');
-    addTearDown(() => root.deleteSync(recursive: true));
-    final topics = Directory(p.join(root.path, 'topics'))..createSync();
-    final images = Directory(p.join(root.path, 'images', 'system-design'))
-      ..createSync(recursive: true);
-    final nestedImages = Directory(
-      p.join(root.path, 'images', 'methodology', 'orchestrator-devices'),
-    )..createSync(recursive: true);
-    File(p.join(images.path, 'architecture.png')).writeAsBytesSync([0]);
-    File(p.join(nestedImages.path, 'rpi_1.jpg')).writeAsBytesSync([0]);
-    final topicPath = p.join(topics.path, 'System-Design.md');
-    final parsed = parser.parse(
-      filePath: topicPath,
-      workspaceRoot: topics.path,
-      source:
-          '# System Design\n\n'
-          '![Architecture Diagram](architecture.png){ width="500" }\n'
-          '![Raspberry Pi Imager](rpi_1.jpg){ width="500" }\n',
-    );
+  test(
+    'normal Markdown image diagnostics stay within the workspace root',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark_writerside_',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final topics = Directory(p.join(root.path, 'topics'))..createSync();
+      final images = Directory(p.join(root.path, 'images', 'system-design'))
+        ..createSync(recursive: true);
+      final nestedImages = Directory(
+        p.join(root.path, 'images', 'methodology', 'orchestrator-devices'),
+      )..createSync(recursive: true);
+      File(p.join(images.path, 'architecture.png')).writeAsBytesSync([0]);
+      File(p.join(nestedImages.path, 'rpi_1.jpg')).writeAsBytesSync([0]);
+      final topicPath = p.join(topics.path, 'System-Design.md');
+      final parsed = parser.parse(
+        filePath: topicPath,
+        workspaceRoot: topics.path,
+        source:
+            '# System Design\n\n'
+            '![Architecture Diagram](architecture.png){ width="500" }\n'
+            '![Raspberry Pi Imager](rpi_1.jpg){ width="500" }\n',
+      );
 
-    expect(
-      parsed.diagnostics.map((item) => item.code),
-      isNot(contains('markdown.image.missing-file')),
-    );
-  });
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        contains('markdown.image.missing-file'),
+      );
+    },
+  );
+
+  test(
+    'local reference diagnostics reject parent, absolute, and symlink escapes',
+    () async {
+      final workspace = await Directory.systemTemp.createTemp(
+        'busymark-reference-root-',
+      );
+      final outside = await Directory.systemTemp.createTemp(
+        'busymark-reference-outside-',
+      );
+      addTearDown(() => workspace.deleteSync(recursive: true));
+      addTearDown(() => outside.deleteSync(recursive: true));
+      final outsideMarkdown = File(p.join(outside.path, 'outside.md'))
+        ..writeAsStringSync('# Secret\n');
+      final outsideImage = File(p.join(outside.path, 'outside.png'))
+        ..writeAsBytesSync([0]);
+      await Link(p.join(workspace.path, 'linked')).create(outside.path);
+      final active = File(p.join(workspace.path, 'index.md'));
+      final source =
+          '# Index\n\n'
+          '[Parent](../${p.basename(outside.path)}/outside.md#secret)\n'
+          '[Absolute](${outsideMarkdown.path}#secret)\n'
+          '[Symlink](linked/outside.md#secret)\n'
+          '![Parent](../${p.basename(outside.path)}/outside.png)\n'
+          '![Absolute](${outsideImage.path})\n'
+          '![Symlink](linked/outside.png)\n';
+
+      final parsed = await parser.parseAsync(
+        filePath: active.path,
+        source: source,
+        workspaceRoot: workspace.path,
+      );
+      final linkTargets = parsed.diagnostics
+          .where((item) => item.code == 'markdown.link.unresolved-target')
+          .map((item) => item.args['targetPath'])
+          .toList();
+      final missingImages = parsed.diagnostics
+          .where((item) => item.code == 'markdown.image.missing-file')
+          .map((item) => item.args['destination'])
+          .toList();
+
+      expect(
+        linkTargets,
+        containsAll([
+          '../${p.basename(outside.path)}/outside.md',
+          outsideMarkdown.path,
+          'linked/outside.md',
+        ]),
+      );
+      expect(
+        missingImages,
+        containsAll([
+          '../${p.basename(outside.path)}/outside.png',
+          outsideImage.path,
+          'linked/outside.png',
+        ]),
+      );
+    },
+    skip: Platform.isWindows
+        ? 'POSIX symlink behavior is required for this coverage.'
+        : false,
+  );
 
   test(
     'cross-linked Markdown anchor validation does not recurse forever',

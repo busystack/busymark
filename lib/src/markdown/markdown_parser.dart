@@ -11,9 +11,9 @@ import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
 
-// Cross-file diagnostics are intentionally scoped to Markdown files inside the
-// opened workspace. Targets outside that root, symlinks, unsupported file
-// types, and oversized files are not inspected.
+// Cross-file diagnostics are intentionally scoped to Markdown files that
+// resolve inside the opened workspace. Targets outside that root, unsupported
+// file types, and oversized files are not inspected.
 const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
 
 class MarkdownParser {
@@ -1012,7 +1012,7 @@ class MarkdownParser {
       return const _LocalLinkTarget.blocked();
     }
     final localTargetPath = _decodeLocalReferencePath(targetPath);
-    final root = _absoluteWorkspaceRoot(workspaceRoot);
+    final root = _canonicalWorkspaceRootSync(workspaceRoot);
     if (root == null) {
       return const _LocalLinkTarget.unvalidated();
     }
@@ -1020,32 +1020,33 @@ class MarkdownParser {
         ? p.normalize(localTargetPath)
         : p.normalize(p.join(p.dirname(filePath), localTargetPath));
     final absoluteTarget = p.normalize(p.absolute(resolved));
-    if (!_isWithinDirectory(root, absoluteTarget)) {
+    final canonicalTarget = _canonicalExistingPathSync(absoluteTarget);
+    if (canonicalTarget == null || !_isWithinDirectory(root, canonicalTarget)) {
       return const _LocalLinkTarget.blocked();
     }
     FileSystemEntityType type;
     try {
-      type = FileSystemEntity.typeSync(absoluteTarget, followLinks: false);
+      type = FileSystemEntity.typeSync(canonicalTarget, followLinks: false);
     } on Object {
       return const _LocalLinkTarget.blocked();
     }
     if (type != FileSystemEntityType.file) {
       return const _LocalLinkTarget.blocked();
     }
-    if (!isMarkdownPath(absoluteTarget)) {
+    if (!isMarkdownPath(canonicalTarget)) {
       return _LocalLinkTarget.found(
-        path: absoluteTarget,
+        path: canonicalTarget,
         canValidateAnchors: false,
       );
     }
     FileStat stat;
     try {
-      stat = File(absoluteTarget).statSync();
+      stat = File(canonicalTarget).statSync();
     } on Object {
       return const _LocalLinkTarget.blocked();
     }
     return _LocalLinkTarget.found(
-      path: absoluteTarget,
+      path: canonicalTarget,
       canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
     );
   }
@@ -1062,7 +1063,7 @@ class MarkdownParser {
       return const _LocalLinkTarget.blocked();
     }
     final localTargetPath = _decodeLocalReferencePath(targetPath);
-    final root = _absoluteWorkspaceRoot(workspaceRoot);
+    final root = await _canonicalWorkspaceRoot(workspaceRoot);
     if (root == null) {
       return const _LocalLinkTarget.unvalidated();
     }
@@ -1070,41 +1071,81 @@ class MarkdownParser {
         ? p.normalize(localTargetPath)
         : p.normalize(p.join(p.dirname(filePath), localTargetPath));
     final absoluteTarget = p.normalize(p.absolute(resolved));
-    if (!_isWithinDirectory(root, absoluteTarget)) {
+    final canonicalTarget = await _canonicalExistingPath(absoluteTarget);
+    if (canonicalTarget == null || !_isWithinDirectory(root, canonicalTarget)) {
       return const _LocalLinkTarget.blocked();
     }
     FileSystemEntityType type;
     try {
-      type = await FileSystemEntity.type(absoluteTarget, followLinks: false);
+      type = await FileSystemEntity.type(canonicalTarget, followLinks: false);
     } on Object {
       return const _LocalLinkTarget.blocked();
     }
     if (type != FileSystemEntityType.file) {
       return const _LocalLinkTarget.blocked();
     }
-    if (!isMarkdownPath(absoluteTarget)) {
+    if (!isMarkdownPath(canonicalTarget)) {
       return _LocalLinkTarget.found(
-        path: absoluteTarget,
+        path: canonicalTarget,
         canValidateAnchors: false,
       );
     }
     FileStat stat;
     try {
-      stat = await File(absoluteTarget).stat();
+      stat = await File(canonicalTarget).stat();
     } on Object {
       return const _LocalLinkTarget.blocked();
     }
     return _LocalLinkTarget.found(
-      path: absoluteTarget,
+      path: canonicalTarget,
       canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
     );
   }
 
-  String? _absoluteWorkspaceRoot(String? workspaceRoot) {
+  String? _canonicalWorkspaceRootSync(String? workspaceRoot) {
     if (workspaceRoot == null || workspaceRoot.trim().isEmpty) {
       return null;
     }
-    return p.normalize(p.absolute(workspaceRoot));
+    try {
+      final directory = Directory(p.normalize(p.absolute(workspaceRoot)));
+      if (!directory.existsSync()) {
+        return null;
+      }
+      return p.normalize(directory.resolveSymbolicLinksSync());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  Future<String?> _canonicalWorkspaceRoot(String? workspaceRoot) async {
+    if (workspaceRoot == null || workspaceRoot.trim().isEmpty) {
+      return null;
+    }
+    try {
+      final directory = Directory(p.normalize(p.absolute(workspaceRoot)));
+      if (!await directory.exists()) {
+        return null;
+      }
+      return p.normalize(await directory.resolveSymbolicLinks());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  String? _canonicalExistingPathSync(String path) {
+    try {
+      return p.normalize(File(path).resolveSymbolicLinksSync());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  Future<String?> _canonicalExistingPath(String path) async {
+    try {
+      return p.normalize(await File(path).resolveSymbolicLinks());
+    } on FileSystemException {
+      return null;
+    }
   }
 
   bool _isWithinDirectory(String root, String candidate) {
