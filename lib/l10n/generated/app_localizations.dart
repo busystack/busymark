@@ -633,7 +633,7 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for search.
   ///
   /// In en, this message translates to:
-  /// **'Search the current workspace'**
+  /// **'Search the current document'**
   String get shortcutFindDescription;
 
   /// Keyboard shortcut description for opening shortcuts.

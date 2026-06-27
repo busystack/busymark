@@ -345,7 +345,7 @@
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "جستجو در فضای کاری فعلی",
+  "shortcutFindDescription": "جستجو در سند فعلی",
   "@shortcutFindDescription": {
     "description": "Keyboard shortcut description for search."
   },

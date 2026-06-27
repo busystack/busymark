@@ -175,7 +175,7 @@
   "@shortcutOpenDescription": {"description": "Keyboard shortcut description for opening content."},
   "shortcutSaveDescription": "Save the current Markdown file",
   "@shortcutSaveDescription": {"description": "Keyboard shortcut description for saving content."},
-  "shortcutFindDescription": "Search the current workspace",
+  "shortcutFindDescription": "Search the current document",
   "@shortcutFindDescription": {"description": "Keyboard shortcut description for search."},
   "shortcutKeyboardShortcutsDescription": "Show this keyboard shortcut reference",
   "@shortcutKeyboardShortcutsDescription": {"description": "Keyboard shortcut description for opening shortcuts."},

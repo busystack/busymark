@@ -270,7 +270,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get shortcutSaveDescription => 'ذخیرهٔ فایل Markdown فعلی';
 
   @override
-  String get shortcutFindDescription => 'جستجو در فضای کاری فعلی';
+  String get shortcutFindDescription => 'جستجو در سند فعلی';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
