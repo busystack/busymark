@@ -103,7 +103,7 @@ class HeaderBarTheme {
       context,
     ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
     return HeaderBarTheme(
-      backgroundColor: colors.view,
+      backgroundColor: colors.headerbarFlat,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       mutedForegroundColor: colors.mutedForeground,
@@ -111,15 +111,9 @@ class HeaderBarTheme {
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
       controlActiveColor: colors.controlActive,
-      titleButtonColor: colors.foreground.withValues(
-        alpha: BusyMarkAlpha.titleButton,
-      ),
-      titleButtonHoverColor: colors.foreground.withValues(
-        alpha: BusyMarkAlpha.titleButtonHover,
-      ),
-      titleButtonActiveColor: colors.foreground.withValues(
-        alpha: BusyMarkAlpha.titleButtonActive,
-      ),
+      titleButtonColor: colors.control,
+      titleButtonHoverColor: colors.controlHover,
+      titleButtonActiveColor: colors.controlActive,
       accentColor: Theme.of(context).colorScheme.primary,
       accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,

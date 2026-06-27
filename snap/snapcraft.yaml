@@ -26,7 +26,6 @@ platforms:
 apps:
   busymark:
     command: busymark
-    desktop: share/applications/io.busystack.busymark.desktop
     common-id: io.busystack.busymark
     extensions: [gnome]
     plugs:

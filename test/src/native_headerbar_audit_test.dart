@@ -40,6 +40,7 @@ void main() {
     final desktop = File(
       'linux/io.busystack.busymark.desktop',
     ).readAsStringSync();
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
     expect(native, contains('g_set_prgname(APPLICATION_ID)'));
     expect(native, contains('g_set_application_name(kApplicationDisplayName)'));
@@ -59,7 +60,18 @@ void main() {
       ),
     );
     expect(desktop, contains('Name=BusyMark'));
+    expect(desktop, contains('Exec=busymark %f'));
     expect(desktop, contains('StartupWMClass=io.busystack.busymark'));
+    expect(
+      snapcraft,
+      isNot(
+        contains('desktop: share/applications/io.busystack.busymark.desktop'),
+      ),
+    );
+    expect(
+      snapcraft,
+      contains(r'> "$CRAFT_PRIME/meta/gui/io.busystack.busymark.desktop"'),
+    );
   });
 
   test('native labels are supplied by Dart rather than hardcoded in C++', () {
@@ -288,14 +300,29 @@ void main() {
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
     final titleButtonBlock = RegExp(
-      r'"headerbar\.busymark-headerbar button\.titlebutton:not\(\.appmenu\) \{"(.*?)"\}',
+      r'"headerbar\.busymark-headerbar button\.titlebutton:not\(\.appmenu\),"(.*?)"headerbar\.busymark-headerbar button\.titlebutton:not\(\.appmenu\):hover \{"',
       dotAll: true,
     ).firstMatch(native)!.group(1)!;
 
+    expect(native, contains('const gchar* title_button ='));
+    expect(native, contains('css_color_or(self->title_button_color, control)'));
+    expect(
+      native,
+      contains('css_color_or(self->title_button_hover_color, control_hover)'),
+    );
+    expect(
+      native,
+      contains('css_color_or(self->title_button_active_color, control_active)'),
+    );
     expect(native, contains('kYaruTitleButtonMinSize = 20'));
     expect(native, contains('kYaruTitleButtonPadding = 4'));
     expect(native, contains('kYaruTitleButtonHorizontalMargin = 1'));
     expect(native, contains('kYaruTitleButtonRadius = 9999'));
+    expect(titleButtonBlock, contains('"color: %s;"'));
+    expect(titleButtonBlock, contains('"background-color: %s;"'));
+    expect(titleButtonBlock, contains('"background-image: none;"'));
+    expect(titleButtonBlock, contains('"border: none;"'));
+    expect(titleButtonBlock, contains('"box-shadow: none;"'));
     expect(titleButtonBlock, contains('"border-radius: %dpx;"'));
     expect(titleButtonBlock, contains('"margin: 0 %dpx;"'));
     expect(titleButtonBlock, contains('"min-height: %dpx;"'));
@@ -307,6 +334,27 @@ void main() {
         '"headerbar.busymark-headerbar button.titlebutton:not(.appmenu):backdrop {"',
       ),
     );
+    expect(
+      native,
+      contains(
+        '"headerbar.busymark-headerbar button.titlebutton:not(.appmenu):hover {"',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        '"headerbar.busymark-headerbar button.titlebutton:not(.appmenu):active {"',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        '"headerbar.busymark-headerbar button.titlebutton:not(.appmenu) image,"',
+      ),
+    );
+    expect(native, contains('foreground, title_button,'));
+    expect(native, contains('foreground, title_button_hover, foreground'));
+    expect(native, contains('title_button_active, foreground'));
     expect(
       native,
       isNot(contains('button.titlebutton:not(.appmenu).maximize,')),

@@ -28,6 +28,10 @@ constexpr gint kHeaderButtonContentSpacing = 4;
 constexpr gint kHeaderSidebarInset = 8;
 constexpr gint kHeaderWindowRadius = 14;
 constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
+constexpr gint kYaruTitleButtonMinSize = 20;
+constexpr gint kYaruTitleButtonPadding = 4;
+constexpr gint kYaruTitleButtonHorizontalMargin = 1;
+constexpr gint kYaruTitleButtonRadius = 9999;
 constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
@@ -291,9 +295,22 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->foreground_color, "rgba(255,255,255,0.92)");
   const gchar* muted =
       css_color_or(self->muted_foreground_color, "rgba(255,255,255,0.70)");
+  const gchar* disabled =
+      css_color_or(self->disabled_foreground_color, "rgba(255,255,255,0.38)");
   const gchar* control =
       css_color_or(self->control_color, "rgba(255,255,255,0.10)");
+  const gchar* control_hover =
+      css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
+  const gchar* control_active =
+      css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
+  const gchar* title_button = css_color_or(self->title_button_color, control);
+  const gchar* title_button_hover =
+      css_color_or(self->title_button_hover_color, control_hover);
+  const gchar* title_button_active =
+      css_color_or(self->title_button_active_color, control_active);
   const gchar* accent = css_color_or(self->accent_color, "#3584e4");
+  const gchar* accent_foreground =
+      css_color_or(self->accent_foreground_color, "#ffffff");
   const gchar* popover =
       css_color_or(self->popover_background_color, background);
   const gchar* border =
@@ -341,6 +358,39 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-top-left-radius: %dpx;"
       "padding-left: 0;"
       "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu),"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu):backdrop {"
+      "color: %s;"
+      "background-color: %s;"
+      "background-image: none;"
+      "border: 1px solid %s;"
+      "box-shadow: 0 1px 1px %s;"
+      "text-shadow: none;"
+      "-gtk-icon-shadow: none;"
+      "border-radius: %dpx;"
+      "margin: 0 %dpx;"
+      "min-height: %dpx;"
+      "min-width: %dpx;"
+      "padding: %dpx;"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu):hover {"
+      "color: %s;"
+      "background-color: %s;"
+      "background-image: none;"
+      "box-shadow: 0 1px 1px %s;"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu):active {"
+      "color: %s;"
+      "background-color: %s;"
+      "background-image: none;"
+      "box-shadow: 0 1px 1px %s;"
+      "}"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) image,"
+      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) label {"
+      "color: %s;"
+      "text-shadow: none;"
+      "-gtk-icon-shadow: none;"
+      "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
       "background-image: none;"
@@ -374,6 +424,84 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar.busymark-modal-barrier headerbar.busymark-headerbar {"
       "background-image: linear-gradient(%s, %s);"
       "}"
+      ".busymark-titlebar button.busymark-header-button,"
+      ".busymark-titlebar button.busymark-view-mode-button {"
+      "color: %s;"
+      "background-color: %s;"
+      "background-image: none;"
+      "border: 1px solid %s;"
+      "box-shadow: 0 1px 1px %s;"
+      "text-shadow: none;"
+      "-gtk-icon-shadow: none;"
+      "outline-style: none;"
+      "transition: none;"
+      "min-height: %dpx;"
+      "min-width: %dpx;"
+      "padding: 0 %dpx;"
+      "border-radius: %dpx;"
+      "}"
+      ".busymark-titlebar button.busymark-header-icon-button {"
+      "min-width: %dpx;"
+      "padding-left: 0;"
+      "padding-right: 0;"
+      "}"
+      ".busymark-titlebar button.busymark-header-button image,"
+      ".busymark-titlebar button.busymark-header-button label,"
+      ".busymark-titlebar button.busymark-view-mode-button image,"
+      ".busymark-titlebar button.busymark-view-mode-button label {"
+      "color: %s;"
+      "text-shadow: none;"
+      "-gtk-icon-shadow: none;"
+      "}"
+      ".busymark-titlebar button.busymark-header-button:hover,"
+      ".busymark-titlebar button.busymark-view-mode-button:hover {"
+      "background-color: %s;"
+      "}"
+      ".busymark-titlebar button.busymark-header-button:active,"
+      ".busymark-titlebar button.busymark-header-button:checked,"
+      ".busymark-titlebar button.busymark-view-mode-button:active,"
+      ".busymark-titlebar button.busymark-view-mode-button:checked {"
+      "background-color: %s;"
+      "}"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button,"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:active,"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:checked {"
+      "background-color: transparent;"
+      "border: none;"
+      "box-shadow: none;"
+      "}"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover {"
+      "background-color: %s;"
+      "box-shadow: 0 1px 1px %s;"
+      "}"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:active,"
+      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:checked {"
+      "background-color: %s;"
+      "}"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:hover,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:active,"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:checked {"
+      "color: %s;"
+      "background-color: %s;"
+      "}"
+      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty image {"
+      "color: %s;"
+      "-gtk-icon-shadow: none;"
+      "}"
+      ".busymark-titlebar button.busymark-header-button:disabled,"
+      ".busymark-titlebar button.busymark-view-mode-button:disabled {"
+      "color: %s;"
+      "background-color: transparent;"
+      "box-shadow: none;"
+      "}"
+      ".busymark-titlebar.busymark-modal-barrier label,"
+      ".busymark-titlebar.busymark-modal-barrier button,"
+      ".busymark-titlebar.busymark-modal-barrier button image {"
+      "color: %s;"
+      "text-shadow: none;"
+      "-gtk-icon-shadow: none;"
+      "}"
       "popover.busymark-header-popover,"
       "popover.background.busymark-header-popover,"
       "popover.background.busymark-header-popover > contents,"
@@ -385,10 +513,42 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: 1px solid %s;"
       "box-shadow: 0 6px 18px %s;"
       "}"
-      "popover.busymark-header-popover label {"
+      "popover.busymark-header-popover button.busymark-menu-row {"
+      "color: %s;"
+      "background-color: transparent;"
+      "background-image: none;"
+      "border: none;"
+      "border-width: 0;"
+      "border-color: transparent;"
+      "box-shadow: none;"
+      "text-shadow: none;"
+      "outline-style: none;"
+      "outline-width: 0;"
+      "outline-offset: 0;"
+      "transition: none;"
+      "min-height: %dpx;"
+      "padding: 0 %dpx;"
+      "border-radius: %dpx;"
+      "}"
+      "popover.busymark-header-popover button.busymark-menu-row:focus,"
+      "popover.busymark-header-popover button.busymark-menu-row:active,"
+      "popover.busymark-header-popover button.busymark-menu-row:checked {"
+      "border: none;"
+      "border-width: 0;"
+      "border-color: transparent;"
+      "box-shadow: none;"
+      "outline-style: none;"
+      "outline-width: 0;"
+      "outline-offset: 0;"
+      "text-shadow: none;"
+      "}"
+      "popover.busymark-header-popover button.busymark-menu-row:hover {"
+      "background-color: %s;"
+      "}"
+      "popover.busymark-header-popover button.busymark-menu-row label {"
       "color: %s;"
       "}"
-      "popover.busymark-header-popover image {"
+      "popover.busymark-header-popover button.busymark-menu-row image {"
       "color: %s;"
       "}"
       "tooltip, tooltip.background {"
@@ -409,11 +569,23 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-radius: %dpx;"
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
-      kHeaderWindowRadius, headerbar_left_radius, sidebar_background,
-      kHeaderWindowRadius, foreground, foreground, control, border,
-      kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
-      kHeaderControlHorizontalPadding, accent, modal, modal, popover,
-      foreground, border, shade, foreground, muted, kHeaderButtonRadius,
+      kHeaderWindowRadius, headerbar_left_radius, foreground, title_button,
+      border, shade, kYaruTitleButtonRadius, kYaruTitleButtonHorizontalMargin,
+      kYaruTitleButtonMinSize, kYaruTitleButtonMinSize,
+      kYaruTitleButtonPadding, foreground, title_button_hover, shade, foreground,
+      title_button_active, shade, foreground,
+      sidebar_background,
+      kHeaderWindowRadius, foreground, foreground, control, border, kHeaderSearchEntryContentHeight,
+      kHeaderButtonRadius,
+      kHeaderControlHorizontalPadding, accent, modal, modal, foreground,
+      control, border, shade, kHeaderButtonHeight, kHeaderButtonHeight,
+      kHeaderButtonHorizontalPadding, kHeaderButtonRadius, kHeaderButtonHeight,
+      foreground, control_hover, control_active, control_hover, shade,
+      control_active, accent_foreground, accent, accent_foreground, disabled,
+      disabled, popover, foreground, border, shade, foreground,
+      kHeaderControlHeight, kHeaderControlHorizontalPadding,
+      kHeaderButtonRadius, control_hover, foreground, muted,
+      kHeaderButtonRadius,
       kHeaderTooltipVerticalPadding, kHeaderTooltipHorizontalPadding,
       kHeaderButtonRadius);
 
