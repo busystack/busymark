@@ -6,6 +6,7 @@ import '../core/diagnostic.dart';
 import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import '../core/uri_utils.dart';
 import 'writerside_model.dart';
 import 'writerside_parsers.dart';
 
@@ -474,7 +475,7 @@ class WritersideModuleService {
       }
       for (final link in topic.links) {
         final destination = link.destination;
-        if (_isExternal(destination)) {
+        if (hasUriScheme(destination)) {
           continue;
         }
         final parts = destination.split('#');
@@ -528,7 +529,7 @@ class WritersideModuleService {
             ),
           );
         }
-        if (_isExternal(image.destination)) {
+        if (hasUriScheme(image.destination)) {
           continue;
         }
         if (!_localImageExistsInAnyRoot(module, topic, image.destination)) {
@@ -622,7 +623,8 @@ class WritersideModuleService {
   }
 
   bool _validExternalHref(String href) {
-    return Uri.tryParse(href)?.hasScheme ?? false;
+    final uri = parseSchemedUri(href);
+    return uri != null && isLaunchableExternalUri(uri);
   }
 
   _TopicResolution _resolveTopicReference(
@@ -665,12 +667,6 @@ class WritersideModuleService {
       }
     }
     return false;
-  }
-
-  bool _isExternal(String destination) {
-    return destination.startsWith('http://') ||
-        destination.startsWith('https://') ||
-        destination.startsWith('mailto:');
   }
 
   String _decodeMarkdownAnchor(String value) {

@@ -115,6 +115,26 @@ void main() {
     );
   });
 
+  test('does not validate schemed URIs as local references', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '[Ftp](ftp://example.com/doc.md)\n'
+          '[Tel](tel:+15551234567)\n'
+          '[Custom](docs://topic/intro)\n'
+          '[File](file:///tmp/topic.md)\n'
+          '[Script](javascript:alert(1))\n'
+          '![Remote](ftp://example.com/logo.png)\n'
+          '![Inline](data:image/png;base64,AAAA)\n',
+      workspaceRoot: '/tmp/busymark-workspace',
+    );
+    final codes = parsed.diagnostics.map((item) => item.code);
+
+    expect(codes, isNot(contains('markdown.link.unresolved-target')));
+    expect(codes, isNot(contains('markdown.image.missing-file')));
+    expect(codes, contains('markdown.raw-html.unsafe'));
+  });
+
   test(
     'derives diagnostic links and images from Markdown AST semantics',
     () async {

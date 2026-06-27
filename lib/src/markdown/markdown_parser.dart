@@ -6,6 +6,7 @@ import '../core/diagnostic.dart';
 import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
@@ -789,7 +790,7 @@ class MarkdownParser {
     final anchors = headings.map((item) => item.id).toSet();
     for (final link in links) {
       final destination = link.destination.trim();
-      if (_isExternal(destination)) {
+      if (hasUriScheme(destination)) {
         continue;
       }
       final fragmentIndex = destination.indexOf('#');
@@ -850,7 +851,7 @@ class MarkdownParser {
         );
       }
       final destination = image.destination.trim();
-      if (_isExternal(destination)) {
+      if (hasUriScheme(destination)) {
         continue;
       }
       if (!localImageExists(
@@ -883,7 +884,7 @@ class MarkdownParser {
     final anchors = headings.map((item) => item.id).toSet();
     for (final link in links) {
       final destination = link.destination.trim();
-      if (_isExternal(destination)) {
+      if (hasUriScheme(destination)) {
         continue;
       }
       final fragmentIndex = destination.indexOf('#');
@@ -977,7 +978,7 @@ class MarkdownParser {
         );
       }
       final destination = image.destination.trim();
-      if (_isExternal(destination)) {
+      if (hasUriScheme(destination)) {
         continue;
       }
       if (!localImageExists(
@@ -1007,7 +1008,7 @@ class MarkdownParser {
     if (targetPath.isEmpty) {
       return const _LocalLinkTarget.currentDocument();
     }
-    if (_hasUriScheme(targetPath)) {
+    if (hasUriScheme(targetPath)) {
       return const _LocalLinkTarget.blocked();
     }
     final localTargetPath = _decodeLocalReferencePath(targetPath);
@@ -1057,7 +1058,7 @@ class MarkdownParser {
     if (targetPath.isEmpty) {
       return const _LocalLinkTarget.currentDocument();
     }
-    if (_hasUriScheme(targetPath)) {
+    if (hasUriScheme(targetPath)) {
       return const _LocalLinkTarget.blocked();
     }
     final localTargetPath = _decodeLocalReferencePath(targetPath);
@@ -1108,17 +1109,6 @@ class MarkdownParser {
 
   bool _isWithinDirectory(String root, String candidate) {
     return p.equals(root, candidate) || p.isWithin(root, candidate);
-  }
-
-  bool _hasUriScheme(String destination) {
-    final uri = Uri.tryParse(destination);
-    return uri != null && uri.hasScheme;
-  }
-
-  bool _isExternal(String destination) {
-    return destination.startsWith('http://') ||
-        destination.startsWith('https://') ||
-        destination.startsWith('mailto:');
   }
 }
 

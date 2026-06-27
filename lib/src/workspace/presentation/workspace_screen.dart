@@ -19,6 +19,7 @@ import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
+import '../../core/uri_utils.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
@@ -5053,12 +5054,18 @@ Future<void> _openPreviewLink(
   if (target.isEmpty) {
     return;
   }
-  final uri = Uri.tryParse(target);
-  if (_isExternalPreviewUri(uri)) {
-    final launched = await launchUrl(
-      uri!,
-      mode: LaunchMode.externalApplication,
-    );
+  final uri = parseSchemedUri(target);
+  if (uri != null) {
+    if (!isLaunchableExternalUri(uri)) {
+      if (context.mounted) {
+        _showPreviewLinkMessage(
+          context,
+          context.l10n.couldNotOpenTarget(target),
+        );
+      }
+      return;
+    }
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
     }
@@ -5115,15 +5122,6 @@ Future<void> _openPreviewLink(
     return;
   }
   _navigatePreviewAnchor(context, ref, file.absolutePath, anchor);
-}
-
-bool _isExternalPreviewUri(Uri? uri) {
-  if (uri == null) {
-    return false;
-  }
-  return uri.scheme == 'http' ||
-      uri.scheme == 'https' ||
-      uri.scheme == 'mailto';
 }
 
 String _decodePreviewLinkPart(String value) {

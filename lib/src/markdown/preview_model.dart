@@ -1,4 +1,5 @@
 import '../core/source_span.dart';
+import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_model.dart';
 
@@ -330,25 +331,26 @@ List<PreviewInline> parseInlineMarkdown(String source) {
         continue;
       }
     }
-    if (source.startsWith('<http://', index) ||
-        source.startsWith('<https://', index) ||
-        source.startsWith('<mailto:', index)) {
+    if (source.startsWith('<', index)) {
       final end = source.indexOf('>', index + 1);
       if (end > index + 1) {
         final destination = source.substring(index + 1, end);
-        flushText();
-        result.add(
-          PreviewInline(
-            kind: PreviewInlineKind.link,
-            text: destination,
-            destination: destination,
-            children: [
-              PreviewInline(kind: PreviewInlineKind.text, text: destination),
-            ],
-          ),
-        );
-        index = end + 1;
-        continue;
+        final uri = parseSchemedUri(destination);
+        if (uri != null && isLaunchableExternalUri(uri)) {
+          flushText();
+          result.add(
+            PreviewInline(
+              kind: PreviewInlineKind.link,
+              text: destination,
+              destination: destination,
+              children: [
+                PreviewInline(kind: PreviewInlineKind.text, text: destination),
+              ],
+            ),
+          );
+          index = end + 1;
+          continue;
+        }
       }
     }
     final marker = _inlineMarkerAt(source, index);

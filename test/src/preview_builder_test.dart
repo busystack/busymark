@@ -192,6 +192,33 @@ void main() {
     expect(paragraph.text, contains('*escaped* text'));
   });
 
+  test('inline autolinks support broad safe URI schemes', () {
+    final inlines = parseInlineMarkdown(
+      '<ftp://example.com/doc.md> '
+      '<tel:+15551234567> '
+      '<docs://topic/intro> '
+      '<file:///tmp/topic.md> '
+      '<javascript:alert(1)> '
+      '<data:text/plain,hello>',
+    );
+    final destinations = inlines
+        .where((inline) => inline.kind == PreviewInlineKind.link)
+        .map((inline) => inline.destination)
+        .toList();
+
+    expect(
+      destinations,
+      containsAll([
+        'ftp://example.com/doc.md',
+        'tel:+15551234567',
+        'docs://topic/intro',
+        'file:///tmp/topic.md',
+      ]),
+    );
+    expect(destinations, isNot(contains('javascript:alert(1)')));
+    expect(destinations, isNot(contains('data:text/plain,hello')));
+  });
+
   test('preview renders quote characters as text instead of HTML entities', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
