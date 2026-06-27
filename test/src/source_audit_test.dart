@@ -381,6 +381,18 @@ void main() {
       workspace,
       contains('widget.workspace.activeFilePath != _activeFilePath'),
     );
+    final activeFileUpdateClause = RegExp(
+      r'if \(widget\.workspace\.activeFilePath != _activeFilePath\) \{(.*?)\n    \}',
+      dotAll: true,
+    ).firstMatch(workspace)!.group(1)!;
+    expect(
+      activeFileUpdateClause,
+      contains('_activeFilePath = widget.workspace.activeFilePath;'),
+    );
+    expect(
+      activeFileUpdateClause,
+      isNot(contains('_tab = _preferredSidebarTabIndex')),
+    );
     expect(folderClause, contains('_SidebarTab.files'));
     expect(folderClause, contains('_SidebarTab.outline'));
     expect(folderClause, isNot(contains('_SidebarTab.toc')));

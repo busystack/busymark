@@ -907,7 +907,6 @@ class _SidebarState extends State<_Sidebar> {
     }
     if (widget.workspace.activeFilePath != _activeFilePath) {
       _activeFilePath = widget.workspace.activeFilePath;
-      _tab = _preferredSidebarTabIndex(widget.workspace);
     }
   }
 
