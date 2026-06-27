@@ -4815,13 +4815,27 @@ String _previewImageSource(PreviewBlock block) {
     return attributeSource.trim();
   }
   for (final inline in block.inlines) {
-    if (inline.kind == PreviewInlineKind.image &&
-        inline.destination != null &&
-        inline.destination!.trim().isNotEmpty) {
-      return inline.destination!.trim();
+    final source = _previewImageSourceFromInline(inline);
+    if (source != null) {
+      return source;
     }
   }
   return '';
+}
+
+String? _previewImageSourceFromInline(PreviewInline inline) {
+  if (inline.kind == PreviewInlineKind.image &&
+      inline.destination != null &&
+      inline.destination!.trim().isNotEmpty) {
+    return inline.destination!.trim();
+  }
+  for (final child in inline.children) {
+    final source = _previewImageSourceFromInline(child);
+    if (source != null) {
+      return source;
+    }
+  }
+  return null;
 }
 
 double? _previewImageWidth(PreviewBlock block) {

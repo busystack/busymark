@@ -380,11 +380,11 @@ class MarkdownAstAdapter {
     List<BusyInline> inlines,
     String Function() nextId,
   ) {
-    final image = inlines.where((item) => item.kind == BusyInlineKind.image);
-    if (image.length != 1) {
+    final images = _imageInlines(inlines).toList(growable: false);
+    if (images.length != 1) {
       return null;
     }
-    final imageInline = image.single;
+    final imageInline = images.single;
     final plain = paragraph.textContent.trim();
     final attributeText = plain.replaceFirst(imageInline.text, '').trim();
     if (inlines.length > 2 ||
@@ -394,13 +394,35 @@ class MarkdownAstAdapter {
     return BusyBlock(
       id: nextId(),
       kind: BusyBlockKind.image,
-      inlines: [imageInline],
+      inlines: [_imageBlockInline(inlines, imageInline)],
       attributes: {
         ...imageInline.attributes,
         if (imageInline.destination case final destination?) 'src': destination,
         ..._parseAttributeBlock(attributeText),
       },
     );
+  }
+
+  BusyInline _imageBlockInline(
+    List<BusyInline> inlines,
+    BusyInline imageInline,
+  ) {
+    final firstInline = inlines.firstOrNull;
+    if (firstInline != null &&
+        firstInline.kind == BusyInlineKind.link &&
+        _imageInlines([firstInline]).length == 1) {
+      return firstInline;
+    }
+    return imageInline;
+  }
+
+  Iterable<BusyInline> _imageInlines(Iterable<BusyInline> inlines) sync* {
+    for (final inline in inlines) {
+      if (inline.kind == BusyInlineKind.image) {
+        yield inline;
+      }
+      yield* _imageInlines(inline.children);
+    }
   }
 
   List<BusyBlock> _tableRows(md.Element table, String Function() nextId) {
