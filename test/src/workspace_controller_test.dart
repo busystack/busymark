@@ -311,6 +311,68 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+
+  test('save treats a deleted active file as an external conflict', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-missing-',
+    );
+    final file = File('${directory.path}/note.md');
+    await file.writeAsString('# Original\n');
+    final settingsStore = _MemorySettingsStore();
+    final settingsController = AppSettingsController(settingsStore);
+    await Future<void>.delayed(Duration.zero);
+    final controller = WorkspaceController(
+      service: const WorkspaceService(),
+      settingsController: settingsController,
+    );
+
+    await controller.openPath(file.path);
+    await file.delete();
+    controller.updateActiveText('# BusyMark\n');
+
+    expect(await controller.saveActive(), isFalse);
+    expect(
+      controller.state.message?.code,
+      WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+    );
+    expect(await file.exists(), isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
+
+  test('save detects external rewrites with unchanged modified time', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-hash-',
+    );
+    final file = File('${directory.path}/note.md');
+    await file.writeAsString('# Original\n');
+    final settingsStore = _MemorySettingsStore();
+    final settingsController = AppSettingsController(settingsStore);
+    await Future<void>.delayed(Duration.zero);
+    final controller = WorkspaceController(
+      service: const WorkspaceService(),
+      settingsController: settingsController,
+    );
+
+    await controller.openPath(file.path);
+    final loadedSnapshot = controller.state.workspace!.activeFileSnapshot!;
+    await file.writeAsString('# External rewrite\n');
+    await file.setLastModified(loadedSnapshot.modifiedAt);
+    controller.updateActiveText('# BusyMark\n');
+
+    expect(await controller.saveActive(), isFalse);
+    expect(await file.readAsString(), '# External rewrite\n');
+    expect(
+      controller.state.message?.code,
+      WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+    );
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

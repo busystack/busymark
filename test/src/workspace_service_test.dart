@@ -194,6 +194,69 @@ void main() {
     expect(isPortalDocumentPath(path), isTrue);
   });
 
+  test('saveText writes content and returns the saved file snapshot', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-atomic-save-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+
+    final snapshot = await service.saveText(file.path, '# Saved\n');
+
+    expect(await file.readAsString(), '# Saved\n');
+    expect(snapshot.size, '# Saved\n'.length);
+    expect(snapshot.contentHash, hasLength(64));
+    final leftovers = await directory
+        .list()
+        .where((entity) => p.basename(entity.path).contains('busymark-save'))
+        .toList();
+    expect(leftovers, isEmpty);
+  });
+
+  test('fileChangedSince treats deleted files as changed', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-conflict-missing-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('# Original\n');
+    final load = await service.loadTextWithSnapshot(file.path);
+
+    await file.delete();
+
+    expect(await service.fileChangedSince(file.path, load.snapshot), isTrue);
+  });
+
+  test(
+    'fileChangedSince detects content changes with unchanged modified time',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-conflict-hash-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final file = File(p.join(directory.path, 'note.md'));
+      await file.writeAsString('# Original\n');
+      final load = await service.loadTextWithSnapshot(file.path);
+
+      await file.writeAsString('# External rewrite\n');
+      await file.setLastModified(load.snapshot.modifiedAt);
+
+      expect(await service.fileChangedSince(file.path, load.snapshot), isTrue);
+    },
+  );
+
   test(
     'folder scan skips generated directories and binary resources',
     () async {

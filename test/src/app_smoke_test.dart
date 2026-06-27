@@ -1193,16 +1193,35 @@ class _StartupWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<bool> fileChangedSince(String path, DateTime? knownModifiedAt) async {
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: '# Basic Markdown\n',
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: '# Basic Markdown\n'.length,
+        contentHash: 'startup',
+      ),
+    );
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
     return false;
   }
 
   @override
-  Future<DateTime> saveText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     saveCount++;
     savedPath = path;
     savedText = text;
-    return DateTime(2026, 1, 2);
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, 2),
+      size: 0,
+      contentHash: '',
+    );
   }
 }
 
@@ -1235,6 +1254,18 @@ class _SearchWorkspaceService extends WorkspaceService {
 
   @override
   Future<String> loadText(String path) async => source;
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: source,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: source.length,
+        contentHash: 'search',
+      ),
+    );
+  }
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

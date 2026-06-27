@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
 import '../core/busymark_exception.dart';
@@ -136,28 +138,84 @@ class WorkspaceService {
     return type.toString();
   }
 
-  Future<String> loadText(String path) => File(path).readAsString();
+  Future<String> loadText(String path) async {
+    return (await loadTextWithSnapshot(path)).text;
+  }
+
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    final file = File(path);
+    final bytes = await file.readAsBytes();
+    final stat = await file.stat();
+    return WorkspaceFileLoad(
+      text: utf8.decode(bytes),
+      snapshot: _snapshotFromBytes(stat, bytes),
+    );
+  }
 
   Future<DateTime> fileModifiedAt(String path) async {
     return (await File(path).stat()).modified;
   }
 
-  Future<bool> fileChangedSince(String path, DateTime? knownModifiedAt) async {
-    if (knownModifiedAt == null) {
-      return false;
+  Future<WorkspaceFileSnapshot> fileSnapshot(String path) async {
+    final file = File(path);
+    final bytes = await file.readAsBytes();
+    final stat = await file.stat();
+    return _snapshotFromBytes(stat, bytes);
+  }
+
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    if (knownSnapshot == null) {
+      return true;
     }
     try {
-      final current = await fileModifiedAt(path);
-      return current.isAfter(knownModifiedAt);
+      final current = await fileSnapshot(path);
+      return current.differsFrom(knownSnapshot);
     } on Object {
-      return false;
+      return true;
     }
   }
 
-  Future<DateTime> saveText(String path, String text) async {
-    final file = File(path);
-    await file.writeAsString(text);
-    return (await file.stat()).modified;
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    final target = File(path);
+    final bytes = utf8.encode(text);
+    final temp = _temporarySaveFile(path);
+    var renamed = false;
+    try {
+      await temp.writeAsBytes(bytes, flush: true);
+      await temp.rename(path);
+      renamed = true;
+      final stat = await target.stat();
+      return _snapshotFromBytes(stat, bytes);
+    } on Object {
+      if (!renamed) {
+        try {
+          if (await temp.exists()) {
+            await temp.delete();
+          }
+        } on Object {
+          // Best-effort cleanup; preserve the original save error.
+        }
+      }
+      rethrow;
+    }
+  }
+
+  WorkspaceFileSnapshot _snapshotFromBytes(FileStat stat, List<int> bytes) {
+    return WorkspaceFileSnapshot(
+      modifiedAt: stat.modified,
+      size: stat.size,
+      contentHash: crypto.sha256.convert(bytes).toString(),
+    );
+  }
+
+  File _temporarySaveFile(String path) {
+    final directory = p.dirname(path);
+    final basename = p.basename(path);
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    return File(p.join(directory, '.$basename.busymark-save-$pid-$stamp.tmp'));
   }
 
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
@@ -261,15 +319,18 @@ class WorkspaceService {
   }
 
   Future<Workspace> _openSingleMarkdown(String filePath) async {
-    final source = await File(filePath).readAsString();
-    final markdown = markdownParser.parse(filePath: filePath, source: source);
+    final load = await loadTextWithSnapshot(filePath);
+    final markdown = markdownParser.parse(
+      filePath: filePath,
+      source: load.text,
+    );
     return Workspace(
       id: filePath,
       rootPath: p.dirname(filePath),
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime.now(),
       activeFilePath: filePath,
-      activeFileModifiedAt: await fileModifiedAt(filePath),
+      activeFileSnapshot: load.snapshot,
       files: [await _documentFile(filePath, p.dirname(filePath))],
       diagnostics: markdown.diagnostics,
       markdown: markdown,
@@ -314,9 +375,9 @@ class WorkspaceService {
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime.now(),
       activeFilePath: firstMarkdown?.filePath,
-      activeFileModifiedAt: firstMarkdown == null
+      activeFileSnapshot: firstMarkdown == null
           ? null
-          : await fileModifiedAt(firstMarkdown.filePath),
+          : await fileSnapshot(firstMarkdown.filePath),
       files: files,
       diagnostics: sortDiagnostics(diagnostics),
       markdown: firstMarkdown,
@@ -351,9 +412,9 @@ class WorkspaceService {
       kind: WorkspaceKind.writersideModule,
       openedAt: DateTime.now(),
       activeFilePath: firstTopic,
-      activeFileModifiedAt: firstTopic == null
+      activeFileSnapshot: firstTopic == null
           ? null
-          : await fileModifiedAt(firstTopic),
+          : await fileSnapshot(firstTopic),
       files: files,
       diagnostics: sortDiagnostics(diagnostics),
       writersideModule: module,

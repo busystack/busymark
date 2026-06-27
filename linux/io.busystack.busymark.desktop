@@ -32,4 +32,4 @@ Terminal=false
 Categories=Office;Development;TextEditor;Utility;
 MimeType=text/markdown;text/x-markdown;
 StartupNotify=true
-StartupWMClass=busymark_io.busystack.busymark
+StartupWMClass=io.busystack.busymark
