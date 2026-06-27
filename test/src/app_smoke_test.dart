@@ -602,6 +602,52 @@ void main() {
     },
   );
 
+  testWidgets(
+    'shared Markdown image renderer rejects absolute paths outside workspace',
+    (tester) async {
+      final workspace = Directory.systemTemp.createTempSync(
+        'busymark_preview_image_workspace_',
+      );
+      final outside = Directory.systemTemp.createTempSync(
+        'busymark_preview_image_outside_',
+      );
+      try {
+        final image = File('${outside.path}/outside.png')
+          ..writeAsBytesSync(
+            base64Decode(
+              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+            ),
+          );
+        final markdown = File('${workspace.path}/image.md')
+          ..writeAsStringSync('# Image\n\n![Outside](${image.path})\n');
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: MarkdownImageView(
+                source: image.path,
+                alt: 'Outside',
+                activeFilePath: markdown.path,
+                workspaceRoot: workspace.path,
+                writersideRoot: null,
+                imagesDir: 'images',
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(Image), findsNothing);
+        expect(find.textContaining(image.path), findsOneWidget);
+      } finally {
+        workspace.deleteSync(recursive: true);
+        outside.deleteSync(recursive: true);
+      }
+    },
+  );
+
   testWidgets('shared Markdown image renderer resolves local SVG images', (
     tester,
   ) async {
