@@ -5023,6 +5023,10 @@ InlineSpan _previewInlineImageSpan(
       workspace?.activeFilePath ?? workspace?.markdown?.filePath;
   return WidgetSpan(
     alignment: PlaceholderAlignment.middle,
+    style: const TextStyle(
+      decoration: TextDecoration.none,
+      fontStyle: FontStyle.normal,
+    ),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: DefaultTextStyle.merge(

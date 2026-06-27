@@ -12,15 +12,6 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutVersion": "Versão {version}",
-  "@aboutVersion": {
-    "description": "Version label in the About dialog.",
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "aboutTagline": "Editor de Markdown e Writerside",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."

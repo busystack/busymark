@@ -18,11 +18,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutBusyMark => 'دربارهٔ BusyMark';
 
   @override
-  String aboutVersion(String version) {
-    return 'نسخهٔ $version';
-  }
-
-  @override
   String get aboutTagline => 'ویرایشگر Markdown و Writerside';
 
   @override

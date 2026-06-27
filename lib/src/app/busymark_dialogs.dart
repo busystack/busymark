@@ -392,12 +392,9 @@ class _BusyMarkAboutDialog extends StatelessWidget {
           textAlign: TextAlign.center,
           style: textTheme.bodyMedium?.copyWith(color: colors.mutedForeground),
         ),
-        const SizedBox(height: BusyMarkSpacing.xxs),
-        Text(
-          context.l10n.aboutVersion(busyMarkAppVersion),
-          textAlign: TextAlign.center,
-          style: textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
-        ),
+        const SizedBox(height: BusyMarkSpacing.sm),
+        const _AboutVersionTag(version: busyMarkAppVersion),
+        const SizedBox(height: BusyMarkSpacing.md),
         BusyMarkGroupedList(
           filled: true,
           children: [
@@ -443,16 +440,40 @@ class _BusyMarkAboutLogo extends StatelessWidget {
         child: ExcludeSemantics(
           child: SizedBox.square(
             dimension: BusyMarkSizes.aboutLogoViewport,
-            child: ClipRect(
-              child: OverflowBox(
-                maxWidth: BusyMarkSizes.aboutLogoAsset,
-                maxHeight: BusyMarkSizes.aboutLogoAsset,
-                child: SvgPicture.asset(
-                  _busyMarkLogoAsset,
-                  width: BusyMarkSizes.aboutLogoAsset,
-                  height: BusyMarkSizes.aboutLogoAsset,
-                ),
-              ),
+            child: SvgPicture.asset(_busyMarkLogoAsset, fit: BoxFit.contain),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AboutVersionTag extends StatelessWidget {
+  const _AboutVersionTag({required this.version});
+
+  final String version;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Center(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.control,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.md,
+            vertical: BusyMarkSpacing.xs,
+          ),
+          child: Text(
+            version,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colors.foreground,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

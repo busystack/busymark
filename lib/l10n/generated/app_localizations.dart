@@ -138,12 +138,6 @@ abstract class AppLocalizations {
   /// **'About BusyMark'**
   String get aboutBusyMark;
 
-  /// Version label in the About dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Version {version}'**
-  String aboutVersion(String version);
-
   /// Short tagline shown under the app name in the About dialog.
   ///
   /// In en, this message translates to:

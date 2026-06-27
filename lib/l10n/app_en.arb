@@ -6,11 +6,6 @@
   "@appSubtitle": {"description": "Short application description."},
   "aboutBusyMark": "About BusyMark",
   "@aboutBusyMark": {"description": "Menu item and tooltip for the About dialog."},
-  "aboutVersion": "Version {version}",
-  "@aboutVersion": {
-    "description": "Version label in the About dialog.",
-    "placeholders": {"version": {"type": "String"}}
-  },
   "aboutTagline": "Markdown and Writerside Editor",
   "@aboutTagline": {"description": "Short tagline shown under the app name in the About dialog."},
   "aboutLicenseLabel": "License",

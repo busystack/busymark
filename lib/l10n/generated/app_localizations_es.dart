@@ -19,11 +19,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aboutBusyMark => 'Acerca de BusyMark';
 
   @override
-  String aboutVersion(String version) {
-    return 'Versión $version';
-  }
-
-  @override
   String get aboutTagline => 'Editor de Markdown y Writerside';
 
   @override

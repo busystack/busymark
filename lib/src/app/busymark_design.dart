@@ -412,6 +412,8 @@ BoxDecoration busyMarkSurfaceDecoration(
 }
 
 abstract final class BusyMarkLinuxPalette {
+  static Color fromArgb(int value) => Color(value);
+
   static const transparent = Color(0x00000000);
   static const white = Color(0xFFFFFFFF);
   static const blueAccent = Color(0xFF3584E4);
