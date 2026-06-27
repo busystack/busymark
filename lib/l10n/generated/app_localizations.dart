@@ -138,12 +138,6 @@ abstract class AppLocalizations {
   /// **'About BusyMark'**
   String get aboutBusyMark;
 
-  /// Version label in the About dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Version {version}'**
-  String aboutVersion(String version);
-
   /// Short tagline shown under the app name in the About dialog.
   ///
   /// In en, this message translates to:
@@ -633,7 +627,7 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for search.
   ///
   /// In en, this message translates to:
-  /// **'Search the current workspace'**
+  /// **'Search the current document'**
   String get shortcutFindDescription;
 
   /// Keyboard shortcut description for opening shortcuts.

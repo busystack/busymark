@@ -40,4 +40,41 @@ void main() {
       expect(calls, ['initialize', 'initialize', 'setSidebarVisible']);
     },
   );
+
+  test('headerbar action events preserve repeated identical clicks', () async {
+    if (!Platform.isLinux) {
+      return;
+    }
+    TestWidgetsFlutterBinding.ensureInitialized();
+    const channelName = 'com.busymark.test/headerbar-events';
+    const channel = MethodChannel(channelName);
+    const codec = StandardMethodCodec();
+    final service = LinuxHeaderBarService(channel: channel);
+    final events = <HeaderBarActionEvent>[];
+    final subscription = service.actionEvents.listen(events.add);
+
+    addTearDown(() async {
+      await subscription.cancel();
+      channel.setMethodCallHandler(null);
+    });
+
+    Future<void> sendNativeAction(String method) {
+      return TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            channelName,
+            codec.encodeMethodCall(MethodCall(method)),
+            (_) {},
+          );
+    }
+
+    await sendNativeAction('save');
+    await sendNativeAction('save');
+
+    expect(events.map((event) => event.action), [
+      HeaderBarAction.save,
+      HeaderBarAction.save,
+    ]);
+    expect(events.map((event) => event.sequence), [1, 2]);
+    expect(events.first, isNot(events.last));
+  });
 }

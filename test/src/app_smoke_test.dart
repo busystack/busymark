@@ -8,6 +8,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
@@ -408,7 +409,15 @@ void main() {
 
     expect(find.text(l10n.appTitle), findsWidgets);
     expect(find.text(l10n.aboutTagline), findsOneWidget);
-    expect(find.text(l10n.aboutVersion(busyMarkAppVersion)), findsOneWidget);
+    expect(find.text(busyMarkAppVersion), findsOneWidget);
+    expect(find.textContaining('Version'), findsNothing);
+    expect(
+      find.ancestor(
+        of: find.text(busyMarkAppVersion),
+        matching: find.byType(DecoratedBox),
+      ),
+      findsWidgets,
+    );
     expect(find.text(l10n.aboutLicenseLabel), findsOneWidget);
     expect(find.text(l10n.aboutLicenseName), findsOneWidget);
     expect(find.text(l10n.aboutWebsite), findsOneWidget);
@@ -418,7 +427,11 @@ void main() {
       find.text('https://github.com/busystack/busymark/issues'),
       findsOneWidget,
     );
-    expect(find.byType(SvgPicture), findsOneWidget);
+    final logo = find.byType(SvgPicture);
+    expect(logo, findsOneWidget);
+    final logoSize = tester.getSize(logo);
+    expect(logoSize.width, lessThanOrEqualTo(BusyMarkSizes.aboutLogoViewport));
+    expect(logoSize.height, lessThanOrEqualTo(BusyMarkSizes.aboutLogoViewport));
   });
 
   testWidgets('Ctrl+N creates a new Markdown document', (tester) async {
@@ -602,6 +615,52 @@ void main() {
     },
   );
 
+  testWidgets(
+    'shared Markdown image renderer rejects absolute paths outside workspace',
+    (tester) async {
+      final workspace = Directory.systemTemp.createTempSync(
+        'busymark_preview_image_workspace_',
+      );
+      final outside = Directory.systemTemp.createTempSync(
+        'busymark_preview_image_outside_',
+      );
+      try {
+        final image = File('${outside.path}/outside.png')
+          ..writeAsBytesSync(
+            base64Decode(
+              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+            ),
+          );
+        final markdown = File('${workspace.path}/image.md')
+          ..writeAsStringSync('# Image\n\n![Outside](${image.path})\n');
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: MarkdownImageView(
+                source: image.path,
+                alt: 'Outside',
+                activeFilePath: markdown.path,
+                workspaceRoot: workspace.path,
+                writersideRoot: null,
+                imagesDir: 'images',
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byType(Image), findsNothing);
+        expect(find.textContaining(image.path), findsOneWidget);
+      } finally {
+        workspace.deleteSync(recursive: true);
+        outside.deleteSync(recursive: true);
+      }
+    },
+  );
+
   testWidgets('shared Markdown image renderer resolves local SVG images', (
     tester,
   ) async {
@@ -635,6 +694,147 @@ void main() {
 
       expect(find.byType(SvgPicture), findsOneWidget);
       expect(find.text('logo.svg'), findsNothing);
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  testWidgets(
+    'shared Markdown image renderer sanitizes embedded SVG image data',
+    (tester) async {
+      final temp = Directory.systemTemp.createTempSync(
+        'busymark_preview_svg_data_',
+      );
+      try {
+        final embeddedSvg = Uri.encodeComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">'
+          '<rect width="8" height="8" fill="#ffffff"/>'
+          '</svg>',
+        );
+        File('${temp.path}/badge.svg').writeAsStringSync(
+          '<svg xmlns="http://www.w3.org/2000/svg" '
+          'xmlns:xlink="http://www.w3.org/1999/xlink" '
+          'width="20" height="20">'
+          '<rect width="20" height="20" fill="#0e8420"/>'
+          '<image x="2" y="2" width="16" height="16" '
+          'xlink:href="data:image/svg+xml,$embeddedSvg"/>'
+          '</svg>',
+        );
+        final markdown = File('${temp.path}/image.md')
+          ..writeAsStringSync('# Image\n\n![Badge](badge.svg)\n');
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: MarkdownImageView(
+                source: 'badge.svg',
+                alt: 'Badge',
+                activeFilePath: markdown.path,
+                workspaceRoot: temp.path,
+                writersideRoot: null,
+                imagesDir: 'images',
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(SvgPicture), findsOneWidget);
+        expect(find.textContaining('badge.svg'), findsNothing);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    },
+  );
+
+  testWidgets('shared Markdown image renderer renders generated SVG badges', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync(
+      'busymark_preview_svg_badge_',
+    );
+    try {
+      final embeddedIcon = Uri.encodeComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+        '<defs><style>.cls-1{fill:#fff}</style></defs>'
+        '<path class="cls-1" d="M18.03 18.03l5.95-5.95-5.95-2.65v8.6z"/>'
+        '</svg>',
+      );
+      File('${temp.path}/badge.svg').writeAsStringSync(
+        '<svg xmlns="http://www.w3.org/2000/svg" '
+        'xmlns:xlink="http://www.w3.org/1999/xlink" '
+        'width="197.9" height="20">'
+        '<clipPath id="round">'
+        '<rect width="197.9" height="20" rx="3" fill="#fff"/>'
+        '</clipPath>'
+        '<g clip-path="url(#round)">'
+        '<rect width="80.8" height="20" fill="#555"/>'
+        '<rect x="80.8" width="117.1" height="20" fill="#0e8420"/>'
+        '</g>'
+        '<g fill="#fff" text-anchor="middle" font-size="110">'
+        '<image x="5" y="3" width="14" height="14" '
+        'xlink:href="data:image/svg+xml,$embeddedIcon"/>'
+        '<text x="499" y="150" fill="#010101" fill-opacity=".3" '
+        'transform="scale(0.1)" textLength="538" lengthAdjust="spacing">'
+        'BusyMark'
+        '</text>'
+        '<text x="499" y="140" transform="scale(0.1)" '
+        'textLength="538" lengthAdjust="spacing">'
+        'BusyMark'
+        '</text>'
+        '<text x="1383.5" y="150" fill="#010101" fill-opacity=".3" '
+        'transform="scale(0.1)" textLength="1071" lengthAdjust="spacing">'
+        'latest/beta 0.1.1+1'
+        '</text>'
+        '<text x="1383.5" y="140" transform="scale(0.1)" '
+        'textLength="1071" lengthAdjust="spacing">'
+        'latest/beta 0.1.1+1'
+        '</text>'
+        '</g>'
+        '</svg>',
+      );
+      final markdown = File('${temp.path}/image.md')
+        ..writeAsStringSync('# Image\n\n![Badge](badge.svg)\n');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: DefaultTextStyle.merge(
+              style: const TextStyle(
+                decoration: TextDecoration.underline,
+                fontStyle: FontStyle.italic,
+              ),
+              child: MarkdownImageView(
+                source: 'badge.svg',
+                alt: 'Badge',
+                activeFilePath: markdown.path,
+                workspaceRoot: temp.path,
+                writersideRoot: null,
+                imagesDir: 'images',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(SvgPicture), findsOneWidget);
+      expect(find.text('BusyMark'), findsOneWidget);
+      expect(find.text('latest/beta 0.1.1+1'), findsOneWidget);
+      expect(find.textContaining('badge.svg'), findsNothing);
+      final badgeText = tester.widget<Text>(find.text('BusyMark'));
+      expect(badgeText.style?.fontStyle, FontStyle.normal);
+      expect(badgeText.style?.decoration, isNot(TextDecoration.underline));
+      final iconRight = tester.getTopRight(find.byType(SvgPicture)).dx;
+      final textLeft = tester.getTopLeft(find.text('BusyMark')).dx;
+      expect(textLeft, greaterThan(iconRight + 2));
     } finally {
       temp.deleteSync(recursive: true);
     }
@@ -1193,16 +1393,35 @@ class _StartupWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<bool> fileChangedSince(String path, DateTime? knownModifiedAt) async {
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: '# Basic Markdown\n',
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: '# Basic Markdown\n'.length,
+        contentHash: 'startup',
+      ),
+    );
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
     return false;
   }
 
   @override
-  Future<DateTime> saveText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     saveCount++;
     savedPath = path;
     savedText = text;
-    return DateTime(2026, 1, 2);
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, 2),
+      size: 0,
+      contentHash: '',
+    );
   }
 }
 
@@ -1235,6 +1454,18 @@ class _SearchWorkspaceService extends WorkspaceService {
 
   @override
   Future<String> loadText(String path) async => source;
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: source,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: source.length,
+        contentHash: 'search',
+      ),
+    );
+  }
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

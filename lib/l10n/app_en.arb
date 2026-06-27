@@ -6,11 +6,6 @@
   "@appSubtitle": {"description": "Short application description."},
   "aboutBusyMark": "About BusyMark",
   "@aboutBusyMark": {"description": "Menu item and tooltip for the About dialog."},
-  "aboutVersion": "Version {version}",
-  "@aboutVersion": {
-    "description": "Version label in the About dialog.",
-    "placeholders": {"version": {"type": "String"}}
-  },
   "aboutTagline": "Markdown and Writerside Editor",
   "@aboutTagline": {"description": "Short tagline shown under the app name in the About dialog."},
   "aboutLicenseLabel": "License",
@@ -175,7 +170,7 @@
   "@shortcutOpenDescription": {"description": "Keyboard shortcut description for opening content."},
   "shortcutSaveDescription": "Save the current Markdown file",
   "@shortcutSaveDescription": {"description": "Keyboard shortcut description for saving content."},
-  "shortcutFindDescription": "Search the current workspace",
+  "shortcutFindDescription": "Search the current document",
   "@shortcutFindDescription": {"description": "Keyboard shortcut description for search."},
   "shortcutKeyboardShortcutsDescription": "Show this keyboard shortcut reference",
   "@shortcutKeyboardShortcutsDescription": {"description": "Keyboard shortcut description for opening shortcuts."},

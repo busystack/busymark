@@ -882,11 +882,25 @@ String _imageSource(BusyBlock block) {
     return attributeSource.trim();
   }
   for (final inline in block.inlines) {
-    if (inline.kind == BusyInlineKind.image &&
-        inline.destination != null &&
-        inline.destination!.trim().isNotEmpty) {
-      return inline.destination!.trim();
+    final source = _imageSourceFromInline(inline);
+    if (source != null) {
+      return source;
     }
   }
   return '';
+}
+
+String? _imageSourceFromInline(BusyInline inline) {
+  if (inline.kind == BusyInlineKind.image &&
+      inline.destination != null &&
+      inline.destination!.trim().isNotEmpty) {
+    return inline.destination!.trim();
+  }
+  for (final child in inline.children) {
+    final source = _imageSourceFromInline(child);
+    if (source != null) {
+      return source;
+    }
+  }
+  return null;
 }

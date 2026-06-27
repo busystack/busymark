@@ -19,11 +19,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aboutBusyMark => 'Über BusyMark';
 
   @override
-  String aboutVersion(String version) {
-    return 'Version $version';
-  }
-
-  @override
   String get aboutTagline => 'Markdown- und Writerside-Editor';
 
   @override
@@ -271,7 +266,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortcutSaveDescription => 'Aktuelle Markdown-Datei speichern';
 
   @override
-  String get shortcutFindDescription => 'Aktuellen Arbeitsbereich durchsuchen';
+  String get shortcutFindDescription => 'Aktuelles Dokument durchsuchen';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

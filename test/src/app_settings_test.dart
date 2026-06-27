@@ -1,5 +1,6 @@
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -42,17 +43,37 @@ void main() {
     expect(settings.copyWith(localeTag: null).locale, isNull);
   });
 
+  test('unused product settings are not persisted', () {
+    final json = AppSettings.defaults().toJson();
+
+    expect(json, isNot(containsPair('previewMode', anything)));
+    expect(json, isNot(containsPair('validationLevel', anything)));
+    expect(json, isNot(containsPair('checkExternalLinks', anything)));
+    expect(json, isNot(containsPair('checkExternalImages', anything)));
+    expect(
+      json,
+      isNot(containsPair('officialBuilderIntegrationEnabled', anything)),
+    );
+  });
+
   test('window behavior settings persist', () async {
     final store = _MemorySettingsStore();
-    final controller = AppSettingsController(store);
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
 
     await controller.setConfirmCloseWithUnsavedChanges(false);
 
     expect(store.value['confirmCloseWithUnsavedChanges'], isFalse);
-    expect(controller.state.confirmCloseWithUnsavedChanges, isFalse);
-
-    controller.dispose();
+    expect(
+      container
+          .read(appSettingsControllerProvider)
+          .confirmCloseWithUnsavedChanges,
+      isFalse,
+    );
   });
 }
 

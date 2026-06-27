@@ -16,39 +16,43 @@ String? resolveLocalImagePath({
   if (decoded.isEmpty) {
     return null;
   }
+  final allowedRoots = _canonicalAllowedImageRoots(
+    workspaceRoot: workspaceRoot,
+    writersideRoot: writersideRoot,
+    imagesDir: imagesDir,
+  );
+  if (allowedRoots.isEmpty) {
+    return null;
+  }
   final candidates = <String>[];
   if (p.isAbsolute(decoded)) {
     candidates.add(decoded);
-  }
-  candidates.add(p.normalize(p.join(p.dirname(activeFilePath), decoded)));
-  if (workspaceRoot != null) {
-    candidates
-      ..add(p.normalize(p.join(workspaceRoot, decoded)))
-      ..add(p.normalize(p.join(workspaceRoot, imagesDir, decoded)));
-    final projectRoot = writersideRoot ?? p.dirname(workspaceRoot);
-    candidates.addAll(
-      _writersideImageCandidates(
-        rootPath: projectRoot,
-        imagesDir: imagesDir,
-        activeFilePath: activeFilePath,
-        destination: decoded,
-      ),
-    );
-  }
-  if (writersideRoot != null) {
-    candidates.addAll(
-      _writersideImageCandidates(
-        rootPath: writersideRoot,
-        imagesDir: imagesDir,
-        activeFilePath: activeFilePath,
-        destination: decoded,
-      ),
-    );
+  } else {
+    candidates.add(p.normalize(p.join(p.dirname(activeFilePath), decoded)));
+    if (workspaceRoot != null) {
+      candidates
+        ..add(p.normalize(p.join(workspaceRoot, decoded)))
+        ..add(p.normalize(p.join(workspaceRoot, imagesDir, decoded)));
+    }
+    if (writersideRoot != null) {
+      candidates.addAll(
+        _writersideImageCandidates(
+          rootPath: writersideRoot,
+          imagesDir: imagesDir,
+          activeFilePath: activeFilePath,
+          destination: decoded,
+        ),
+      );
+    }
   }
 
   for (final candidate in candidates.toSet()) {
-    if (File(candidate).existsSync()) {
-      return candidate;
+    final resolved = _canonicalExistingFileWithinAllowedRoots(
+      candidate,
+      allowedRoots,
+    );
+    if (resolved != null) {
+      return resolved;
     }
   }
 
@@ -58,6 +62,7 @@ String? resolveLocalImagePath({
   }
   return _findImageByBasename(
     imagesRoot: imagesRoot,
+    allowedRoots: allowedRoots,
     basename: decoded,
     maxEntries: maxRecursiveEntries,
   );
@@ -80,6 +85,61 @@ bool localImageExists({
       null;
 }
 
+List<String> _canonicalAllowedImageRoots({
+  required String? workspaceRoot,
+  required String? writersideRoot,
+  required String imagesDir,
+}) {
+  final roots = <String>[];
+  if (workspaceRoot != null) {
+    final canonical = _canonicalExistingDirectory(workspaceRoot);
+    if (canonical != null) {
+      roots.add(canonical);
+    }
+  }
+  if (writersideRoot != null) {
+    final canonical = _canonicalExistingDirectory(
+      p.join(writersideRoot, imagesDir),
+    );
+    if (canonical != null) {
+      roots.add(canonical);
+    }
+  }
+  return roots.toSet().toList();
+}
+
+String? _canonicalExistingDirectory(String path) {
+  try {
+    final directory = Directory(p.normalize(p.absolute(path)));
+    if (!directory.existsSync()) {
+      return null;
+    }
+    return p.normalize(directory.resolveSymbolicLinksSync());
+  } on FileSystemException {
+    return null;
+  }
+}
+
+String? _canonicalExistingFileWithinAllowedRoots(
+  String path,
+  List<String> allowedRoots,
+) {
+  try {
+    final file = File(p.normalize(p.absolute(path)));
+    if (!file.existsSync()) {
+      return null;
+    }
+    final canonical = p.normalize(file.resolveSymbolicLinksSync());
+    if (!_isWithinAnyRoot(canonical, allowedRoots)) {
+      return null;
+    }
+    final type = FileSystemEntity.typeSync(canonical, followLinks: false);
+    return type == FileSystemEntityType.file ? canonical : null;
+  } on FileSystemException {
+    return null;
+  }
+}
+
 List<String> _writersideImageCandidates({
   required String rootPath,
   required String imagesDir,
@@ -99,20 +159,21 @@ List<String> _writersideImageCandidates({
 
 String? _imagesRoot(String? workspaceRoot, String? writersideRoot, String dir) {
   if (writersideRoot != null) {
-    return p.normalize(p.join(writersideRoot, dir));
+    return _canonicalExistingDirectory(p.join(writersideRoot, dir));
   }
   if (workspaceRoot == null) {
     return null;
   }
   final workspaceImages = Directory(p.normalize(p.join(workspaceRoot, dir)));
   if (workspaceImages.existsSync()) {
-    return workspaceImages.path;
+    return _canonicalExistingDirectory(workspaceImages.path);
   }
-  return p.normalize(p.join(p.dirname(workspaceRoot), dir));
+  return null;
 }
 
 String? _findImageByBasename({
   required String imagesRoot,
+  required List<String> allowedRoots,
   required String basename,
   required int maxEntries,
 }) {
@@ -131,7 +192,13 @@ String? _findImageByBasename({
       if (entity is! File || p.basename(entity.path) != basename) {
         continue;
       }
-      matches.add(p.normalize(entity.path));
+      final resolved = _canonicalExistingFileWithinAllowedRoots(
+        entity.path,
+        allowedRoots,
+      );
+      if (resolved != null) {
+        matches.add(resolved);
+      }
     }
   } on FileSystemException {
     return null;
@@ -141,6 +208,12 @@ String? _findImageByBasename({
   }
   matches.sort();
   return matches.first;
+}
+
+bool _isWithinAnyRoot(String candidate, Iterable<String> roots) {
+  return roots.any(
+    (root) => p.equals(root, candidate) || p.isWithin(root, candidate),
+  );
 }
 
 String _decodeImageDestination(String value) {

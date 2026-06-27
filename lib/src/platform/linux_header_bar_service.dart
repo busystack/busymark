@@ -25,6 +25,23 @@ enum HeaderBarAction {
 
 enum AppViewMode { editor, source, preview, split }
 
+class HeaderBarActionEvent {
+  const HeaderBarActionEvent({required this.sequence, required this.action});
+
+  final int sequence;
+  final HeaderBarAction action;
+
+  @override
+  bool operator ==(Object other) {
+    return other is HeaderBarActionEvent &&
+        other.sequence == sequence &&
+        other.action == action;
+  }
+
+  @override
+  int get hashCode => Object.hash(sequence, action);
+}
+
 class HeaderBarLabels {
   const HeaderBarLabels({
     required this.editor,
@@ -78,6 +95,7 @@ class HeaderBarLabels {
 
 class HeaderBarTheme {
   const HeaderBarTheme({
+    required this.preferDark,
     required this.backgroundColor,
     required this.sidebarBackgroundColor,
     required this.foregroundColor,
@@ -85,10 +103,6 @@ class HeaderBarTheme {
     required this.disabledForegroundColor,
     required this.controlColor,
     required this.controlHoverColor,
-    required this.controlActiveColor,
-    required this.titleButtonColor,
-    required this.titleButtonHoverColor,
-    required this.titleButtonActiveColor,
     required this.accentColor,
     required this.accentForegroundColor,
     required this.popoverBackgroundColor,
@@ -103,6 +117,7 @@ class HeaderBarTheme {
       context,
     ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
     return HeaderBarTheme(
+      preferDark: Theme.of(context).brightness == Brightness.dark,
       backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
@@ -110,16 +125,6 @@ class HeaderBarTheme {
       disabledForegroundColor: colors.disabledForeground,
       controlColor: colors.control,
       controlHoverColor: colors.controlHover,
-      controlActiveColor: colors.controlActive,
-      titleButtonColor: colors.foreground.withValues(
-        alpha: BusyMarkAlpha.titleButton,
-      ),
-      titleButtonHoverColor: colors.foreground.withValues(
-        alpha: BusyMarkAlpha.titleButtonHover,
-      ),
-      titleButtonActiveColor: colors.foreground.withValues(
-        alpha: BusyMarkAlpha.titleButtonActive,
-      ),
       accentColor: Theme.of(context).colorScheme.primary,
       accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
       popoverBackgroundColor: colors.popover,
@@ -129,6 +134,7 @@ class HeaderBarTheme {
     );
   }
 
+  final bool preferDark;
   final Color backgroundColor;
   final Color sidebarBackgroundColor;
   final Color foregroundColor;
@@ -136,10 +142,6 @@ class HeaderBarTheme {
   final Color disabledForegroundColor;
   final Color controlColor;
   final Color controlHoverColor;
-  final Color controlActiveColor;
-  final Color titleButtonColor;
-  final Color titleButtonHoverColor;
-  final Color titleButtonActiveColor;
   final Color accentColor;
   final Color accentForegroundColor;
   final Color popoverBackgroundColor;
@@ -147,7 +149,8 @@ class HeaderBarTheme {
   final Color shadeColor;
   final Color modalBarrierColor;
 
-  Map<String, String> toMap() => {
+  Map<String, Object> toMap() => {
+    'preferDark': preferDark,
     'backgroundColor': _cssColor(backgroundColor),
     'sidebarBackgroundColor': _cssColor(sidebarBackgroundColor),
     'foregroundColor': _cssColor(foregroundColor),
@@ -155,10 +158,6 @@ class HeaderBarTheme {
     'disabledForegroundColor': _cssColor(disabledForegroundColor),
     'controlColor': _cssColor(controlColor),
     'controlHoverColor': _cssColor(controlHoverColor),
-    'controlActiveColor': _cssColor(controlActiveColor),
-    'titleButtonColor': _cssColor(titleButtonColor),
-    'titleButtonHoverColor': _cssColor(titleButtonHoverColor),
-    'titleButtonActiveColor': _cssColor(titleButtonActiveColor),
     'accentColor': _cssColor(accentColor),
     'accentForegroundColor': _cssColor(accentForegroundColor),
     'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
@@ -178,15 +177,18 @@ class LinuxHeaderBarService {
 
   final MethodChannel _channel;
   final _actions = StreamController<HeaderBarAction>.broadcast();
+  final _actionEvents = StreamController<HeaderBarActionEvent>.broadcast();
   final _searchQueries = StreamController<String>.broadcast();
   var _initialized = false;
   var _channelReady = false;
   var _available = false;
+  var _actionSequence = 0;
 
   bool get isAvailable => _available;
   bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
+  Stream<HeaderBarActionEvent> get actionEvents => _actionEvents.stream;
   Stream<String> get searchQueries => _searchQueries.stream;
 
   Future<void> initialize() async {
@@ -298,8 +300,16 @@ class LinuxHeaderBarService {
       return;
     }
     final action = _actionFromMethod(call.method);
-    if (action != null && !_actions.isClosed) {
-      _actions.add(action);
+    if (action != null) {
+      _actionSequence++;
+      if (!_actions.isClosed) {
+        _actions.add(action);
+      }
+      if (!_actionEvents.isClosed) {
+        _actionEvents.add(
+          HeaderBarActionEvent(sequence: _actionSequence, action: action),
+        );
+      }
     }
   }
 
@@ -327,8 +337,8 @@ final linuxHeaderBarServiceProvider = Provider<LinuxHeaderBarService>(
   (ref) => LinuxHeaderBarService.instance,
 );
 
-final headerBarActionsProvider = StreamProvider<HeaderBarAction>((ref) {
-  return ref.watch(linuxHeaderBarServiceProvider).actions;
+final headerBarActionsProvider = StreamProvider<HeaderBarActionEvent>((ref) {
+  return ref.watch(linuxHeaderBarServiceProvider).actionEvents;
 });
 
 final headerBarSearchQueriesProvider = StreamProvider<String>((ref) {

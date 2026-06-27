@@ -11,10 +11,6 @@ enum BusyMarkThemeModePreference { system, light, dark }
 
 enum DocumentViewModePreference { editor, source, preview, split }
 
-enum PreviewModePreference { markdown, writersideApproximate, sourceFallback }
-
-enum ValidationLevel { activeFile, wholeProject }
-
 enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
 
 const Object _unset = Object();
@@ -66,13 +62,8 @@ class AppSettings {
     required this.documentViewMode,
     required this.editorFontSize,
     required this.wordWrap,
-    required this.previewMode,
-    required this.validationLevel,
     required this.editorToolbarPlacement,
     required this.validateOnEdit,
-    required this.checkExternalLinks,
-    required this.checkExternalImages,
-    required this.officialBuilderIntegrationEnabled,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -87,13 +78,8 @@ class AppSettings {
       documentViewMode: DocumentViewModePreference.split,
       editorFontSize: 14,
       wordWrap: true,
-      previewMode: PreviewModePreference.markdown,
-      validationLevel: ValidationLevel.wholeProject,
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,
       validateOnEdit: true,
-      checkExternalLinks: false,
-      checkExternalImages: false,
-      officialBuilderIntegrationEnabled: false,
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -125,16 +111,6 @@ class AppSettings {
           (json['editorFontSize'] as num?)?.toDouble() ??
           defaults.editorFontSize,
       wordWrap: json['wordWrap'] as bool? ?? defaults.wordWrap,
-      previewMode: _enumFromName(
-        PreviewModePreference.values,
-        json['previewMode'],
-        defaults.previewMode,
-      ),
-      validationLevel: _enumFromName(
-        ValidationLevel.values,
-        json['validationLevel'],
-        defaults.validationLevel,
-      ),
       editorToolbarPlacement: _enumFromName(
         EditorToolbarPlacement.values,
         json['editorToolbarPlacement'],
@@ -142,13 +118,6 @@ class AppSettings {
       ),
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
-      checkExternalLinks:
-          json['checkExternalLinks'] as bool? ?? defaults.checkExternalLinks,
-      checkExternalImages:
-          json['checkExternalImages'] as bool? ?? defaults.checkExternalImages,
-      officialBuilderIntegrationEnabled:
-          json['officialBuilderIntegrationEnabled'] as bool? ??
-          defaults.officialBuilderIntegrationEnabled,
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
@@ -171,13 +140,8 @@ class AppSettings {
   final DocumentViewModePreference documentViewMode;
   final double editorFontSize;
   final bool wordWrap;
-  final PreviewModePreference previewMode;
-  final ValidationLevel validationLevel;
   final EditorToolbarPlacement editorToolbarPlacement;
   final bool validateOnEdit;
-  final bool checkExternalLinks;
-  final bool checkExternalImages;
-  final bool officialBuilderIntegrationEnabled;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -194,13 +158,8 @@ class AppSettings {
     'documentViewMode': documentViewMode.name,
     'editorFontSize': editorFontSize,
     'wordWrap': wordWrap,
-    'previewMode': previewMode.name,
-    'validationLevel': validationLevel.name,
     'editorToolbarPlacement': editorToolbarPlacement.name,
     'validateOnEdit': validateOnEdit,
-    'checkExternalLinks': checkExternalLinks,
-    'checkExternalImages': checkExternalImages,
-    'officialBuilderIntegrationEnabled': officialBuilderIntegrationEnabled,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
@@ -214,13 +173,8 @@ class AppSettings {
     DocumentViewModePreference? documentViewMode,
     double? editorFontSize,
     bool? wordWrap,
-    PreviewModePreference? previewMode,
-    ValidationLevel? validationLevel,
     EditorToolbarPlacement? editorToolbarPlacement,
     bool? validateOnEdit,
-    bool? checkExternalLinks,
-    bool? checkExternalImages,
-    bool? officialBuilderIntegrationEnabled,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -235,16 +189,9 @@ class AppSettings {
       documentViewMode: documentViewMode ?? this.documentViewMode,
       editorFontSize: editorFontSize ?? this.editorFontSize,
       wordWrap: wordWrap ?? this.wordWrap,
-      previewMode: previewMode ?? this.previewMode,
-      validationLevel: validationLevel ?? this.validationLevel,
       editorToolbarPlacement:
           editorToolbarPlacement ?? this.editorToolbarPlacement,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
-      checkExternalLinks: checkExternalLinks ?? this.checkExternalLinks,
-      checkExternalImages: checkExternalImages ?? this.checkExternalImages,
-      officialBuilderIntegrationEnabled:
-          officialBuilderIntegrationEnabled ??
-          this.officialBuilderIntegrationEnabled,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -287,12 +234,15 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
   }
 }
 
-class AppSettingsController extends StateNotifier<AppSettings> {
-  AppSettingsController(this._store) : super(AppSettings.defaults()) {
-    unawaited(_load());
-  }
+class AppSettingsController extends Notifier<AppSettings> {
+  late LocalSettingsStore _store;
 
-  final LocalSettingsStore _store;
+  @override
+  AppSettings build() {
+    _store = ref.read(localSettingsStoreProvider);
+    unawaited(_load());
+    return AppSettings.defaults();
+  }
 
   Future<void> setThemeModePreference(BusyMarkThemeModePreference preference) {
     return _save(state.copyWith(themeModePreference: preference));
@@ -339,18 +289,6 @@ class AppSettingsController extends StateNotifier<AppSettings> {
     return _save(state.copyWith(validateOnEdit: enabled));
   }
 
-  Future<void> setExternalLinkChecking(bool enabled) {
-    return _save(state.copyWith(checkExternalLinks: enabled));
-  }
-
-  Future<void> setExternalImageChecking(bool enabled) {
-    return _save(state.copyWith(checkExternalImages: enabled));
-  }
-
-  Future<void> setOfficialBuilderIntegration(bool enabled) {
-    return _save(state.copyWith(officialBuilderIntegrationEnabled: enabled));
-  }
-
   Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
     return _save(state.copyWith(confirmCloseWithUnsavedChanges: enabled));
   }
@@ -395,9 +333,9 @@ final localSettingsStoreProvider = Provider<LocalSettingsStore>(
 );
 
 final appSettingsControllerProvider =
-    StateNotifierProvider<AppSettingsController, AppSettings>((ref) {
-      return AppSettingsController(ref.watch(localSettingsStoreProvider));
-    });
+    NotifierProvider<AppSettingsController, AppSettings>(
+      AppSettingsController.new,
+    );
 
 T _enumFromName<T extends Enum>(List<T> values, Object? name, T fallback) {
   if (name == null) {

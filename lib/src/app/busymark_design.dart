@@ -135,9 +135,6 @@ abstract final class BusyMarkAlpha {
   static const double overlayFocus = 0.10;
   static const double textSelection = 0.32;
   static const double floatingTextSelection = 0.28;
-  static const double titleButton = 0.10;
-  static const double titleButtonHover = 0.15;
-  static const double titleButtonActive = 0.25;
   static const double languageMenuShadow = 0.42;
   static const double sourceCollapsedLine = 0.045;
   static const double sourceCursor = 0.82;
@@ -415,9 +412,26 @@ BoxDecoration busyMarkSurfaceDecoration(
 }
 
 abstract final class BusyMarkLinuxPalette {
+  static Color fromArgb(int value) => Color(value);
+
   static const transparent = Color(0x00000000);
   static const white = Color(0xFFFFFFFF);
   static const blueAccent = Color(0xFF3584E4);
+  static const ubuntuBlueAccent = Color(0xFF0073E5);
+  static const ubuntuTealAccent = Color(0xFF2190A4);
+  static const ubuntuGreenAccent = Color(0xFF3A944A);
+  static const ubuntuYellowAccent = Color(0xFFC88800);
+  static const ubuntuOrangeAccent = Color(0xFFED5B00);
+  static const ubuntuRedAccent = Color(0xFFDA3450);
+  static const ubuntuPinkAccent = Color(0xFFD56199);
+  static const ubuntuPurpleAccent = Color(0xFF7764D8);
+  static const ubuntuSlateAccent = Color(0xFF6F8396);
+  static const ubuntuBrownAccent = Color(0xFF986A44);
+  static const ubuntuMagentaAccent = Color(0xFFB34CB3);
+  static const ubuntuOliveAccent = Color(0xFF4B8501);
+  static const ubuntuPrussianGreenAccent = Color(0xFF308280);
+  static const ubuntuSageAccent = Color(0xFF657B69);
+  static const ubuntuWartyBrownAccent = Color(0xFFB39169);
   static const red = Color(0xFFC01C28);
   static const yellow = Color(0xFFE5A50A);
   static const green = Color(0xFF2EC27E);
@@ -605,7 +619,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       ),
       Brightness.dark => const BusyMarkSurfaceColors(
         window: Color(0xFF1E1E1E),
-        view: Color(0xFF2A2A2A),
+        view: Color(0xFF242424),
         sidebar: Color(0xFF303030),
         secondarySidebar: Color(0xFF2A2A2A),
         headerbar: Color(0xFF303030),

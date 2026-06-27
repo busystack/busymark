@@ -6,12 +6,48 @@ import '../core/diagnostic.dart';
 import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
 import '../core/source_span.dart';
+import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
 
+// Cross-file diagnostics are intentionally scoped to Markdown files that
+// resolve inside the opened workspace. Targets outside that root, unsupported
+// file types, and oversized files are not inspected.
+const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
+
 class MarkdownParser {
   const MarkdownParser();
+
+  Future<ParsedMarkdownDocument> parseAsync({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+    String? workspaceRoot,
+    bool validateLocalReferences = true,
+  }) async {
+    final parsed = parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      workspaceRoot: workspaceRoot,
+      validateLocalReferences: false,
+    );
+    if (!validateLocalReferences) {
+      return parsed;
+    }
+    final diagnostics = sortDiagnostics([
+      ...parsed.diagnostics,
+      ...await _validateLocalReferencesAsync(
+        filePath: filePath,
+        workspaceRoot: workspaceRoot,
+        headings: parsed.headings,
+        links: parsed.links,
+        images: parsed.images,
+      ),
+    ]);
+    return _withDiagnostics(parsed, diagnostics);
+  }
 
   ParsedMarkdownDocument parse({
     required String filePath,
@@ -29,7 +65,6 @@ class MarkdownParser {
     final variables = <MarkdownVariableToken>[];
     final ids = <String, SourceSpan>{};
     final generatedIds = <String, int>{};
-    final mapper = SourceLocationMapper(source);
     var title = _frontMatterTitle(filePath, source, diagnostics);
     void addScannedHeading({
       required int level,
@@ -186,13 +221,11 @@ class MarkdownParser {
         previousSetextCandidateOffset = null;
       }
 
-      _extractInlineItems(
+      _extractVariableTokens(
         filePath: filePath,
         source: source,
         line: line,
         lineOffset: offset,
-        links: links,
-        images: images,
         variables: variables,
       );
       _extractXmlBlocks(
@@ -240,29 +273,39 @@ class MarkdownParser {
       );
     }
 
+    final renderedDocument = const MarkdownAstAdapter().parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      title: title,
+    );
+    var busyDocument = _withScannedMetadata(
+      renderedDocument,
+      headings,
+      sortDiagnostics(diagnostics),
+    );
+    final inlineReferences = _extractAstInlineReferences(
+      filePath: filePath,
+      source: source,
+      document: busyDocument,
+    );
+    links.addAll(inlineReferences.links);
+    images.addAll(inlineReferences.images);
+
     if (validateLocalReferences) {
       diagnostics.addAll(
         _validateLocalReferences(
           filePath: filePath,
-          source: source,
           workspaceRoot: workspaceRoot,
           headings: headings,
           links: links,
           images: images,
-          mapper: mapper,
         ),
       );
     }
 
-    final busyDocument = _withScannedMetadata(
-      const MarkdownAstAdapter().parse(
-        filePath: filePath,
-        source: source,
-        mode: mode,
-        title: title,
-      ),
-      headings,
-      sortDiagnostics(diagnostics),
+    busyDocument = busyDocument.copyWith(
+      diagnostics: sortDiagnostics(diagnostics),
     );
 
     return ParsedMarkdownDocument(
@@ -308,6 +351,92 @@ class MarkdownParser {
           ),
       ],
     );
+  }
+
+  ParsedMarkdownDocument _withDiagnostics(
+    ParsedMarkdownDocument parsed,
+    List<Diagnostic> diagnostics,
+  ) {
+    return ParsedMarkdownDocument(
+      filePath: parsed.filePath,
+      source: parsed.source,
+      mode: parsed.mode,
+      title: parsed.title,
+      headings: parsed.headings,
+      links: parsed.links,
+      images: parsed.images,
+      codeBlocks: parsed.codeBlocks,
+      xmlBlocks: parsed.xmlBlocks,
+      variables: parsed.variables,
+      diagnostics: diagnostics,
+      busyDocument: parsed.busyDocument.copyWith(diagnostics: diagnostics),
+    );
+  }
+
+  _AstInlineReferences _extractAstInlineReferences({
+    required String filePath,
+    required String source,
+    required BusyDocument document,
+  }) {
+    final links = <MarkdownLink>[];
+    final images = <MarkdownImage>[];
+    final fallbackSpan = SourceSpan.entireFile(filePath, source);
+
+    void visitInline(BusyInline inline, SourceSpan span) {
+      final destination = inline.destination;
+      if (destination != null && destination.trim().isNotEmpty) {
+        switch (inline.kind) {
+          case BusyInlineKind.link:
+            links.add(
+              MarkdownLink(
+                text: inline.plainText,
+                destination: destination,
+                span: span,
+              ),
+            );
+            break;
+          case BusyInlineKind.image:
+            images.add(
+              MarkdownImage(
+                alt: inline.text,
+                destination: destination,
+                span: span,
+              ),
+            );
+            break;
+          case BusyInlineKind.text:
+          case BusyInlineKind.strong:
+          case BusyInlineKind.emphasis:
+          case BusyInlineKind.underline:
+          case BusyInlineKind.strikethrough:
+          case BusyInlineKind.code:
+          case BusyInlineKind.softBreak:
+          case BusyInlineKind.hardBreak:
+          case BusyInlineKind.html:
+          case BusyInlineKind.writersideVariable:
+          case BusyInlineKind.unknown:
+            break;
+        }
+      }
+      for (final child in inline.children) {
+        visitInline(child, span);
+      }
+    }
+
+    void visitBlock(BusyBlock block, SourceSpan inheritedSpan) {
+      final span = block.sourceSpan ?? inheritedSpan;
+      for (final inline in block.inlines) {
+        visitInline(inline, span);
+      }
+      for (final child in block.children) {
+        visitBlock(child, span);
+      }
+    }
+
+    for (final block in document.blocks) {
+      visitBlock(block, fallbackSpan);
+    }
+    return _AstInlineReferences(links: links, images: images);
   }
 
   BusyBlock _blockWithScannedMetadata(
@@ -568,45 +697,13 @@ class MarkdownParser {
     return count == 0 ? base : '$base-$count';
   }
 
-  void _extractInlineItems({
+  void _extractVariableTokens({
     required String filePath,
     required String source,
     required String line,
     required int lineOffset,
-    required List<MarkdownLink> links,
-    required List<MarkdownImage> images,
     required List<MarkdownVariableToken> variables,
   }) {
-    final imageRegex = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)');
-    for (final match in imageRegex.allMatches(line)) {
-      images.add(
-        MarkdownImage(
-          alt: match.group(1)!,
-          destination: match.group(2)!,
-          span: SourceSpan.fromOffsets(
-            filePath: filePath,
-            source: source,
-            startOffset: lineOffset + match.start,
-            endOffset: lineOffset + match.end,
-          ),
-        ),
-      );
-    }
-    final linkRegex = RegExp(r'(?<!!)\[([^\]]+)\]\(([^)]+)\)');
-    for (final match in linkRegex.allMatches(line)) {
-      links.add(
-        MarkdownLink(
-          text: match.group(1)!,
-          destination: match.group(2)!,
-          span: SourceSpan.fromOffsets(
-            filePath: filePath,
-            source: source,
-            startOffset: lineOffset + match.start,
-            endOffset: lineOffset + match.end,
-          ),
-        ),
-      );
-    }
     final variableRegex = RegExp(r'(?<!\\)%([A-Za-z_][A-Za-z0-9_.-]*)%');
     for (final match in variableRegex.allMatches(line)) {
       variables.add(
@@ -684,27 +781,34 @@ class MarkdownParser {
 
   List<Diagnostic> _validateLocalReferences({
     required String filePath,
-    required String source,
     required String? workspaceRoot,
     required List<MarkdownHeading> headings,
     required List<MarkdownLink> links,
     required List<MarkdownImage> images,
-    required SourceLocationMapper mapper,
   }) {
     final diagnostics = <Diagnostic>[];
     final anchors = headings.map((item) => item.id).toSet();
     for (final link in links) {
       final destination = link.destination.trim();
-      if (_isExternal(destination)) {
+      if (hasUriScheme(destination)) {
         continue;
       }
-      final parts = destination.split('#');
-      final targetPath = parts.first;
-      final anchor = parts.length > 1 ? parts.sublist(1).join('#') : null;
-      final resolved = targetPath.isEmpty
-          ? filePath
-          : p.normalize(p.join(p.dirname(filePath), targetPath));
-      if (targetPath.isNotEmpty && !File(resolved).existsSync()) {
+      final fragmentIndex = destination.indexOf('#');
+      final targetPath = fragmentIndex == -1
+          ? destination
+          : destination.substring(0, fragmentIndex);
+      final anchor = fragmentIndex == -1
+          ? null
+          : destination.substring(fragmentIndex + 1);
+      final decodedAnchor = anchor == null
+          ? null
+          : _decodeLocalReferenceAnchor(anchor);
+      final target = _resolveLocalLinkTarget(
+        filePath: filePath,
+        workspaceRoot: workspaceRoot,
+        targetPath: targetPath,
+      );
+      if (targetPath.isNotEmpty && target.blocksTargetValidation) {
         diagnostics.add(
           Diagnostic(
             code: 'markdown.link.unresolved-target',
@@ -716,18 +820,12 @@ class MarkdownParser {
         );
         continue;
       }
-      if (anchor != null && anchor.isNotEmpty) {
+      if (decodedAnchor != null && decodedAnchor.isNotEmpty) {
         var targetAnchors = anchors;
-        if (targetPath.isNotEmpty && File(resolved).existsSync()) {
-          final targetSource = File(resolved).readAsStringSync();
-          targetAnchors = parse(
-            filePath: resolved,
-            source: targetSource,
-            workspaceRoot: workspaceRoot,
-            validateLocalReferences: false,
-          ).anchors;
+        if (targetPath.isNotEmpty) {
+          continue;
         }
-        if (!targetAnchors.contains(anchor)) {
+        if (!targetAnchors.contains(decodedAnchor)) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.link.unresolved-anchor',
@@ -753,7 +851,7 @@ class MarkdownParser {
         );
       }
       final destination = image.destination.trim();
-      if (_isExternal(destination)) {
+      if (hasUriScheme(destination)) {
         continue;
       }
       if (!localImageExists(
@@ -775,11 +873,349 @@ class MarkdownParser {
     return diagnostics;
   }
 
-  bool _isExternal(String destination) {
-    return destination.startsWith('http://') ||
-        destination.startsWith('https://') ||
-        destination.startsWith('mailto:');
+  Future<List<Diagnostic>> _validateLocalReferencesAsync({
+    required String filePath,
+    required String? workspaceRoot,
+    required List<MarkdownHeading> headings,
+    required List<MarkdownLink> links,
+    required List<MarkdownImage> images,
+  }) async {
+    final diagnostics = <Diagnostic>[];
+    final anchors = headings.map((item) => item.id).toSet();
+    for (final link in links) {
+      final destination = link.destination.trim();
+      if (hasUriScheme(destination)) {
+        continue;
+      }
+      final fragmentIndex = destination.indexOf('#');
+      final targetPath = fragmentIndex == -1
+          ? destination
+          : destination.substring(0, fragmentIndex);
+      final anchor = fragmentIndex == -1
+          ? null
+          : destination.substring(fragmentIndex + 1);
+      final decodedAnchor = anchor == null
+          ? null
+          : _decodeLocalReferenceAnchor(anchor);
+      final target = await _resolveLocalLinkTargetAsync(
+        filePath: filePath,
+        workspaceRoot: workspaceRoot,
+        targetPath: targetPath,
+      );
+      if (targetPath.isNotEmpty && target.blocksTargetValidation) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.link.unresolved-target',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'targetPath': targetPath},
+            sourceSpan: link.span,
+          ),
+        );
+        continue;
+      }
+      if (decodedAnchor == null || decodedAnchor.isEmpty) {
+        continue;
+      }
+      if (targetPath.isEmpty) {
+        if (!anchors.contains(decodedAnchor)) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'markdown.link.unresolved-anchor',
+              severity: DiagnosticSeverity.warning,
+              filePath: filePath,
+              args: {'anchor': anchor},
+              sourceSpan: link.span,
+            ),
+          );
+        }
+        continue;
+      }
+      if (!target.canValidateAnchors || target.path == null) {
+        continue;
+      }
+      try {
+        final targetSource = await File(target.path!).readAsString();
+        final targetAnchors = parse(
+          filePath: target.path!,
+          source: targetSource,
+          workspaceRoot: workspaceRoot,
+          validateLocalReferences: false,
+        ).anchors;
+        if (!targetAnchors.contains(decodedAnchor)) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'markdown.link.unresolved-anchor',
+              severity: DiagnosticSeverity.warning,
+              filePath: filePath,
+              args: {'anchor': anchor},
+              sourceSpan: link.span,
+            ),
+          );
+        }
+      } on Object {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.link.unresolved-target',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'targetPath': targetPath},
+            sourceSpan: link.span,
+          ),
+        );
+      }
+    }
+    for (final image in images) {
+      if (image.alt.trim().isEmpty) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.image.missing-alt',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'destination': image.destination},
+            sourceSpan: image.span,
+          ),
+        );
+      }
+      final destination = image.destination.trim();
+      if (hasUriScheme(destination)) {
+        continue;
+      }
+      if (!localImageExists(
+        activeFilePath: filePath,
+        destination: destination,
+        workspaceRoot: workspaceRoot,
+      )) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.image.missing-file',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'destination': destination},
+            sourceSpan: image.span,
+          ),
+        );
+      }
+    }
+    return diagnostics;
   }
+
+  _LocalLinkTarget _resolveLocalLinkTarget({
+    required String filePath,
+    required String? workspaceRoot,
+    required String targetPath,
+  }) {
+    if (targetPath.isEmpty) {
+      return const _LocalLinkTarget.currentDocument();
+    }
+    if (hasUriScheme(targetPath)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    final localTargetPath = _decodeLocalReferencePath(targetPath);
+    final root = _canonicalWorkspaceRootSync(workspaceRoot);
+    if (root == null) {
+      return const _LocalLinkTarget.unvalidated();
+    }
+    final resolved = p.isAbsolute(localTargetPath)
+        ? p.normalize(localTargetPath)
+        : p.normalize(p.join(p.dirname(filePath), localTargetPath));
+    final absoluteTarget = p.normalize(p.absolute(resolved));
+    final canonicalTarget = _canonicalExistingPathSync(absoluteTarget);
+    if (canonicalTarget == null || !_isWithinDirectory(root, canonicalTarget)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    FileSystemEntityType type;
+    try {
+      type = FileSystemEntity.typeSync(canonicalTarget, followLinks: false);
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (type != FileSystemEntityType.file) {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (!isMarkdownPath(canonicalTarget)) {
+      return _LocalLinkTarget.found(
+        path: canonicalTarget,
+        canValidateAnchors: false,
+      );
+    }
+    FileStat stat;
+    try {
+      stat = File(canonicalTarget).statSync();
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    return _LocalLinkTarget.found(
+      path: canonicalTarget,
+      canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
+    );
+  }
+
+  Future<_LocalLinkTarget> _resolveLocalLinkTargetAsync({
+    required String filePath,
+    required String? workspaceRoot,
+    required String targetPath,
+  }) async {
+    if (targetPath.isEmpty) {
+      return const _LocalLinkTarget.currentDocument();
+    }
+    if (hasUriScheme(targetPath)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    final localTargetPath = _decodeLocalReferencePath(targetPath);
+    final root = await _canonicalWorkspaceRoot(workspaceRoot);
+    if (root == null) {
+      return const _LocalLinkTarget.unvalidated();
+    }
+    final resolved = p.isAbsolute(localTargetPath)
+        ? p.normalize(localTargetPath)
+        : p.normalize(p.join(p.dirname(filePath), localTargetPath));
+    final absoluteTarget = p.normalize(p.absolute(resolved));
+    final canonicalTarget = await _canonicalExistingPath(absoluteTarget);
+    if (canonicalTarget == null || !_isWithinDirectory(root, canonicalTarget)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    FileSystemEntityType type;
+    try {
+      type = await FileSystemEntity.type(canonicalTarget, followLinks: false);
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (type != FileSystemEntityType.file) {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (!isMarkdownPath(canonicalTarget)) {
+      return _LocalLinkTarget.found(
+        path: canonicalTarget,
+        canValidateAnchors: false,
+      );
+    }
+    FileStat stat;
+    try {
+      stat = await File(canonicalTarget).stat();
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    return _LocalLinkTarget.found(
+      path: canonicalTarget,
+      canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
+    );
+  }
+
+  String? _canonicalWorkspaceRootSync(String? workspaceRoot) {
+    if (workspaceRoot == null || workspaceRoot.trim().isEmpty) {
+      return null;
+    }
+    try {
+      final directory = Directory(p.normalize(p.absolute(workspaceRoot)));
+      if (!directory.existsSync()) {
+        return null;
+      }
+      return p.normalize(directory.resolveSymbolicLinksSync());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  Future<String?> _canonicalWorkspaceRoot(String? workspaceRoot) async {
+    if (workspaceRoot == null || workspaceRoot.trim().isEmpty) {
+      return null;
+    }
+    try {
+      final directory = Directory(p.normalize(p.absolute(workspaceRoot)));
+      if (!await directory.exists()) {
+        return null;
+      }
+      return p.normalize(await directory.resolveSymbolicLinks());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  String? _canonicalExistingPathSync(String path) {
+    try {
+      return p.normalize(File(path).resolveSymbolicLinksSync());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  Future<String?> _canonicalExistingPath(String path) async {
+    try {
+      return p.normalize(await File(path).resolveSymbolicLinks());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  bool _isWithinDirectory(String root, String candidate) {
+    return p.equals(root, candidate) || p.isWithin(root, candidate);
+  }
+}
+
+class _AstInlineReferences {
+  const _AstInlineReferences({required this.links, required this.images});
+
+  final List<MarkdownLink> links;
+  final List<MarkdownImage> images;
+}
+
+String _decodeLocalReferencePath(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
+}
+
+String _decodeLocalReferenceAnchor(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
+}
+
+class _LocalLinkTarget {
+  const _LocalLinkTarget._({
+    required this.path,
+    required this.blocksTargetValidation,
+    required this.canValidateAnchors,
+  });
+
+  const _LocalLinkTarget.currentDocument()
+    : this._(
+        path: null,
+        blocksTargetValidation: false,
+        canValidateAnchors: true,
+      );
+
+  const _LocalLinkTarget.unvalidated()
+    : this._(
+        path: null,
+        blocksTargetValidation: false,
+        canValidateAnchors: false,
+      );
+
+  const _LocalLinkTarget.blocked()
+    : this._(
+        path: null,
+        blocksTargetValidation: true,
+        canValidateAnchors: false,
+      );
+
+  const _LocalLinkTarget.found({
+    required String path,
+    required bool canValidateAnchors,
+  }) : this._(
+         path: path,
+         blocksTargetValidation: false,
+         canValidateAnchors: canValidateAnchors,
+       );
+
+  final String? path;
+  final bool blocksTargetValidation;
+  final bool canValidateAnchors;
 }
 
 class _ScannedBlockSource {

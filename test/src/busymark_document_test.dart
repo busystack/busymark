@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
+import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -67,6 +69,25 @@ void main() {}
         BusyBlockKind.table,
       ]),
     );
+  });
+
+  test('linked remote image paragraphs import as editable image blocks', () {
+    const imageUrl = 'https://snapcraft.io/busymark/badge.svg';
+    const linkUrl = 'https://snapcraft.io/busymark';
+    final parsed = parser.parse(
+      filePath: 'README.md',
+      source: '[![busymark]($imageUrl)]($linkUrl)\n',
+    );
+    final block = parsed.busyDocument.blocks.single;
+
+    expect(block.kind, BusyBlockKind.image);
+    expect(block.attributes['src'], imageUrl);
+    expect(block.plainText, 'busymark');
+    expect(block.inlines.single.kind, BusyInlineKind.link);
+    expect(block.inlines.single.destination, linkUrl);
+    expect(block.inlines.single.children.single.kind, BusyInlineKind.image);
+    expect(parsed.images.single.destination, imageUrl);
+    expect(parsed.links.single.destination, linkUrl);
   });
 
   test('serializer emits Markdown source for edited semantic blocks', () {
@@ -1138,6 +1159,49 @@ void main() {}
     }
   });
 
+  testWidgets('WYSIWYG editor renders linked remote image blocks', (
+    tester,
+  ) async {
+    const imageUrl = 'https://example.com/remote.png';
+    final previousHttpClientProvider = debugNetworkImageHttpClientProvider;
+    final parsed = parser.parse(
+      filePath: 'README.md',
+      source: '[![busymark]($imageUrl)](https://snapcraft.io/busymark)\n',
+    );
+
+    try {
+      debugNetworkImageHttpClientProvider = () => _FakeImageHttpClient();
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final imageView = tester.widget<MarkdownImageView>(
+        find.byType(MarkdownImageView),
+      );
+      expect(imageView.source, imageUrl);
+      expect(imageView.alt, 'busymark');
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.text(imageUrl), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+    } finally {
+      debugNetworkImageHttpClientProvider = previousHttpClientProvider;
+    }
+  });
+
   test('WYSIWYG Enter splits one block into separate Markdown paragraphs', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'FirstSecond\n');
     final controller = BusyMarkWysiwygDocumentController(
@@ -1769,4 +1833,66 @@ TextStyle? _spanStyleForText(InlineSpan span, String text) {
     }
   }
   return null;
+}
+
+class _FakeImageHttpClient implements HttpClient {
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) async => _FakeImageRequest();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeImageRequest implements HttpClientRequest {
+  @override
+  HttpHeaders get headers => _FakeImageHeaders();
+
+  @override
+  Future<HttpClientResponse> close() async => _FakeImageResponse();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeImageHeaders implements HttpHeaders {
+  @override
+  void add(String name, Object value, {bool preserveHeaderCase = false}) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeImageResponse extends Stream<List<int>>
+    implements HttpClientResponse {
+  static final _bytes = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+  );
+
+  @override
+  int get statusCode => HttpStatus.ok;
+
+  @override
+  int get contentLength => _bytes.length;
+
+  @override
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
+
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return Stream<List<int>>.fromIterable([_bytes]).listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

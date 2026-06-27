@@ -28,8 +28,7 @@ and Ubuntu-style GTK environments.
 
 ## Supported files and projects
 
-BusyMark can open Markdown files such as `.md`, `.markdown`, `.mdown`, and
-`.mkd`.
+BusyMark can open Markdown files such as `.md` and `.markdown`.
 
 BusyMark opens Writerside help modules whose root contains `writerside.cfg` or
 the equivalent older `project.ihp` file. Writerside support includes documented

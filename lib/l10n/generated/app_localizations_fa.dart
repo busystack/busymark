@@ -18,11 +18,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutBusyMark => 'دربارهٔ BusyMark';
 
   @override
-  String aboutVersion(String version) {
-    return 'نسخهٔ $version';
-  }
-
-  @override
   String get aboutTagline => 'ویرایشگر Markdown و Writerside';
 
   @override
@@ -270,7 +265,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get shortcutSaveDescription => 'ذخیرهٔ فایل Markdown فعلی';
 
   @override
-  String get shortcutFindDescription => 'جستجو در فضای کاری فعلی';
+  String get shortcutFindDescription => 'جستجو در سند فعلی';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

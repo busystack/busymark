@@ -2,6 +2,7 @@
 
 #include <cairo.h>
 #include <flutter_linux/flutter_linux.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <pango/pango.h>
 #include <cmath>
 #include <cstdio>
@@ -20,17 +21,12 @@ constexpr gint kHeaderSearchEntryBorderWidth = 1;
 constexpr gint kHeaderSearchEntryContentHeight =
     kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2;
 constexpr gint kHeaderButtonRadius = 8;
-constexpr gint kHeaderButtonHorizontalPadding = 8;
 constexpr gint kHeaderControlHorizontalPadding = 8;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderButtonContentSpacing = 4;
 constexpr gint kHeaderSidebarInset = 8;
 constexpr gint kHeaderWindowRadius = 14;
 constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
-constexpr gint kYaruTitleButtonMinSize = 20;
-constexpr gint kYaruTitleButtonPadding = 4;
-constexpr gint kYaruTitleButtonHorizontalMargin = 1;
-constexpr gint kYaruTitleButtonRadius = 9999;
 constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
@@ -41,6 +37,7 @@ struct _MyApplication {
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
   GtkCssProvider* header_bar_css_provider;
+  GtkCssProvider* gtk_accent_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
   GtkWidget* titlebar_box;
@@ -83,10 +80,6 @@ struct _MyApplication {
   gchar* disabled_foreground_color;
   gchar* control_color;
   gchar* control_hover_color;
-  gchar* control_active_color;
-  gchar* title_button_color;
-  gchar* title_button_hover_color;
-  gchar* title_button_active_color;
   gchar* accent_color;
   gchar* accent_foreground_color;
   gchar* popover_background_color;
@@ -102,6 +95,130 @@ struct _MyApplication {
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+static GdkPixbuf* load_application_icon_at_size(gint size) {
+  g_autofree gchar* executable_path =
+      g_file_read_link("/proc/self/exe", nullptr);
+  if (executable_path == nullptr) {
+    return nullptr;
+  }
+
+  g_autofree gchar* executable_dir = g_path_get_dirname(executable_path);
+  g_autofree gchar* icon_path =
+      g_build_filename(executable_dir, "data", "flutter_assets", "assets",
+                       "branding", "busymark_logo.svg", nullptr);
+
+  g_autoptr(GError) error = nullptr;
+  GdkPixbuf* icon =
+      gdk_pixbuf_new_from_file_at_size(icon_path, size, size, &error);
+  if (icon == nullptr) {
+    const gchar* message = error != nullptr ? error->message : "unknown error";
+    g_warning("Failed to load application icon: %s", message);
+  }
+  return icon;
+}
+
+static GdkPixbuf* load_application_icon() {
+  return load_application_icon_at_size(256);
+}
+
+static gboolean gtk_theme_exists_in_data_dir(const gchar* data_dir,
+                                             const gchar* theme_name) {
+  if (data_dir == nullptr || theme_name == nullptr || theme_name[0] == '\0') {
+    return FALSE;
+  }
+  g_autofree gchar* css_path =
+      g_build_filename(data_dir, "themes", theme_name, "gtk-3.0", "gtk.css",
+                       nullptr);
+  return g_file_test(css_path, G_FILE_TEST_IS_REGULAR);
+}
+
+static gboolean gtk_theme_exists(const gchar* theme_name) {
+  if (gtk_theme_exists_in_data_dir(g_get_user_data_dir(), theme_name)) {
+    return TRUE;
+  }
+  const gchar* const* data_dirs = g_get_system_data_dirs();
+  for (gint i = 0; data_dirs != nullptr && data_dirs[i] != nullptr; ++i) {
+    if (gtk_theme_exists_in_data_dir(data_dirs[i], theme_name)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+static gboolean icon_theme_exists_in_data_dir(const gchar* data_dir,
+                                              const gchar* theme_name) {
+  if (data_dir == nullptr || theme_name == nullptr || theme_name[0] == '\0') {
+    return FALSE;
+  }
+  g_autofree gchar* index_path =
+      g_build_filename(data_dir, "icons", theme_name, "index.theme", nullptr);
+  return g_file_test(index_path, G_FILE_TEST_IS_REGULAR);
+}
+
+static gboolean icon_theme_exists(const gchar* theme_name) {
+  if (icon_theme_exists_in_data_dir(g_get_user_data_dir(), theme_name)) {
+    return TRUE;
+  }
+  const gchar* const* data_dirs = g_get_system_data_dirs();
+  for (gint i = 0; data_dirs != nullptr && data_dirs[i] != nullptr; ++i) {
+    if (icon_theme_exists_in_data_dir(data_dirs[i], theme_name)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+static const gchar* available_gtk_theme_fallback(gboolean prefer_dark) {
+  const gchar* primary = prefer_dark ? "Yaru-dark" : "Yaru";
+  if (gtk_theme_exists(primary)) {
+    return primary;
+  }
+  const gchar* secondary = prefer_dark ? "Adwaita-dark" : "Adwaita";
+  return gtk_theme_exists(secondary) ? secondary : nullptr;
+}
+
+static const gchar* available_icon_theme_fallback(gboolean prefer_dark) {
+  const gchar* primary = prefer_dark ? "Yaru-dark" : "Yaru";
+  if (icon_theme_exists(primary)) {
+    return primary;
+  }
+  return icon_theme_exists("Adwaita") ? "Adwaita" : nullptr;
+}
+
+static void set_gtk_theme_preference(gboolean prefer_dark) {
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings != nullptr) {
+    g_object_set(settings, "gtk-application-prefer-dark-theme", prefer_dark,
+                 nullptr);
+
+    g_autofree gchar* theme_name = nullptr;
+    g_object_get(settings, "gtk-theme-name", &theme_name, nullptr);
+    if (!gtk_theme_exists(theme_name)) {
+      const gchar* fallback = available_gtk_theme_fallback(prefer_dark);
+      if (fallback != nullptr) {
+        g_object_set(settings, "gtk-theme-name", fallback, nullptr);
+      }
+    }
+
+    g_autofree gchar* icon_theme_name = nullptr;
+    g_object_get(settings, "gtk-icon-theme-name", &icon_theme_name, nullptr);
+    if (!icon_theme_exists(icon_theme_name)) {
+      const gchar* fallback = available_icon_theme_fallback(prefer_dark);
+      if (fallback != nullptr) {
+        g_object_set(settings, "gtk-icon-theme-name", fallback, nullptr);
+        GtkIconTheme* icon_theme = gtk_icon_theme_get_default();
+        if (icon_theme != nullptr) {
+          gtk_icon_theme_set_custom_theme(icon_theme, fallback);
+        }
+      }
+    }
+  }
+}
+
+static void prefer_dark_gtk_theme() {
+  set_gtk_theme_preference(TRUE);
+}
 
 static void respond_success(FlMethodCall* method_call) {
   g_autoptr(FlValue) result = fl_value_new_null();
@@ -148,6 +265,19 @@ static const gchar* fl_lookup_string_arg(FlValue* args, const gchar* key) {
     return nullptr;
   }
   return fl_value_get_string(value);
+}
+
+static gboolean fl_lookup_bool_arg(FlValue* args,
+                                   const gchar* key,
+                                   gboolean fallback) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return fallback;
+  }
+  FlValue* value = fl_value_lookup_string(args, key);
+  if (value == nullptr || fl_value_get_type(value) != FL_VALUE_TYPE_BOOL) {
+    return fallback;
+  }
+  return fl_value_get_bool(value);
 }
 
 static gboolean has_header_bar(MyApplication* self) {
@@ -259,6 +389,7 @@ static void refresh_header_bar_css(MyApplication* self) {
   if (!has_header_bar(self)) {
     return;
   }
+
   const gchar* background =
       css_color_or(self->background_color, kDefaultHeaderbarBackground);
   const gchar* sidebar_background =
@@ -267,20 +398,10 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->foreground_color, "rgba(255,255,255,0.92)");
   const gchar* muted =
       css_color_or(self->muted_foreground_color, "rgba(255,255,255,0.70)");
-  const gchar* disabled =
-      css_color_or(self->disabled_foreground_color, "rgba(255,255,255,0.38)");
   const gchar* control =
       css_color_or(self->control_color, "rgba(255,255,255,0.10)");
   const gchar* control_hover =
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
-  const gchar* control_active =
-      css_color_or(self->control_active_color, "rgba(255,255,255,0.18)");
-  const gchar* title_button =
-      css_color_or(self->title_button_color, "rgba(255,255,255,0.10)");
-  const gchar* title_button_hover =
-      css_color_or(self->title_button_hover_color, "rgba(255,255,255,0.15)");
-  const gchar* title_button_active =
-      css_color_or(self->title_button_active_color, "rgba(255,255,255,0.25)");
   const gchar* accent = css_color_or(self->accent_color, "#3584e4");
   const gchar* accent_foreground =
       css_color_or(self->accent_foreground_color, "#ffffff");
@@ -296,8 +417,9 @@ static void refresh_header_bar_css(MyApplication* self) {
 
   gtk_style_context_add_class(gtk_widget_get_style_context(self->titlebar_box),
                               "busymark-titlebar");
-  gtk_style_context_add_class(gtk_widget_get_style_context(GTK_WIDGET(self->header_bar)),
-                              "busymark-headerbar");
+  gtk_style_context_add_class(
+      gtk_widget_get_style_context(GTK_WIDGET(self->header_bar)),
+      "busymark-headerbar");
 
   g_autofree gchar* css = g_strdup_printf(
       "window#busymark-window,"
@@ -315,9 +437,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "box-shadow: 0 2px 10px 0 %s;"
       "}"
       ".busymark-titlebar,"
-      ".busymark-titlebar:backdrop,"
-      "headerbar.busymark-headerbar,"
-      "headerbar.busymark-headerbar:backdrop {"
+      ".busymark-titlebar:backdrop {"
       "background-color: %s;"
       "background-image: none;"
       "border: none;"
@@ -327,42 +447,12 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}"
       "headerbar.busymark-headerbar,"
       "headerbar.busymark-headerbar:backdrop {"
+      "background-color: %s;"
+      "background-image: none;"
+      "border: none;"
+      "box-shadow: none;"
       "border-top-left-radius: %dpx;"
       "padding-left: 0;"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu) {"
-      "border-radius: %dpx;"
-      "margin: 0 %dpx;"
-      "min-height: %dpx;"
-      "min-width: %dpx;"
-      "padding: %dpx;"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop {"
-      "background-color: transparent;"
-      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:hover,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:hover,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:hover,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop:hover,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop:hover,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop:hover {"
-      "background-color: transparent;"
-      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
-      "}"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:active,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:active,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:active,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).maximize:backdrop:active,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).minimize:backdrop:active,"
-      "headerbar.busymark-headerbar button.titlebutton:not(.appmenu).close:backdrop:active {"
-      "background-color: transparent;"
-      "background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"
       "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
@@ -393,55 +483,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier,"
-      ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header,"
-      ".busymark-titlebar.busymark-modal-barrier headerbar.busymark-headerbar {"
+      ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header {"
       "background-image: linear-gradient(%s, %s);"
-      "}"
-      ".busymark-titlebar button.busymark-header-button,"
-      ".busymark-titlebar button.busymark-view-mode-button {"
-      "color: %s;"
-      "background-color: %s;"
-      "background-image: none;"
-      "border: none;"
-      "box-shadow: none;"
-      "text-shadow: none;"
-      "-gtk-icon-shadow: none;"
-      "outline-style: none;"
-      "transition: none;"
-      "min-height: %dpx;"
-      "min-width: %dpx;"
-      "padding: 0 %dpx;"
-      "border-radius: %dpx;"
-      "}"
-      ".busymark-titlebar button.busymark-header-icon-button {"
-      "min-width: %dpx;"
-      "padding-left: 0;"
-      "padding-right: 0;"
-      "}"
-      ".busymark-titlebar button.busymark-header-button:hover,"
-      ".busymark-titlebar button.busymark-view-mode-button:hover {"
-      "background-color: %s;"
-      "}"
-      ".busymark-titlebar button.busymark-header-button:active,"
-      ".busymark-titlebar button.busymark-header-button:checked,"
-      ".busymark-titlebar button.busymark-view-mode-button:active,"
-      ".busymark-titlebar button.busymark-view-mode-button:checked {"
-      "background-color: %s;"
-      "}"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button,"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:active,"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:checked {"
-      "background-color: transparent;"
-      "border: none;"
-      "box-shadow: none;"
-      "}"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover {"
-      "background-color: %s;"
-      "box-shadow: 0 1px 1px %s;"
-      "}"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:active,"
-      ".busymark-sidebar-header button.busymark-sidebar-action-button:hover:checked {"
-      "background-color: %s;"
       "}"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:hover,"
@@ -452,19 +495,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}"
       ".busymark-titlebar button.busymark-save-button.busymark-save-dirty image {"
       "color: %s;"
-      "-gtk-icon-shadow: none;"
-      "}"
-      ".busymark-titlebar button.busymark-header-button:disabled,"
-      ".busymark-titlebar button.busymark-view-mode-button:disabled {"
-      "color: %s;"
-      "background-color: transparent;"
-      "box-shadow: none;"
-      "}"
-      ".busymark-titlebar.busymark-modal-barrier label,"
-      ".busymark-titlebar.busymark-modal-barrier button,"
-      ".busymark-titlebar.busymark-modal-barrier button image {"
-      "color: %s;"
-      "text-shadow: none;"
       "-gtk-icon-shadow: none;"
       "}"
       "popover.busymark-header-popover,"
@@ -534,22 +564,16 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-radius: %dpx;"
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
-      kHeaderWindowRadius, headerbar_left_radius, kYaruTitleButtonRadius,
-      kYaruTitleButtonHorizontalMargin, kYaruTitleButtonMinSize,
-      kYaruTitleButtonMinSize, kYaruTitleButtonPadding, title_button,
-      title_button_hover, title_button_active, sidebar_background,
-      kHeaderWindowRadius, foreground,
-      foreground, control, border, kHeaderSearchEntryContentHeight,
-      kHeaderButtonRadius, kHeaderControlHorizontalPadding, accent,
-      modal, modal, foreground, control, kHeaderButtonHeight,
-      kHeaderButtonHeight, kHeaderButtonHorizontalPadding,
-      kHeaderButtonRadius, kHeaderButtonHeight,
-      control_hover, control_active, control_hover, shade,
-      control_active, accent_foreground, accent, accent_foreground, disabled,
-      disabled, popover, foreground, border, shade, foreground,
-      kHeaderControlHeight,
-      kHeaderControlHorizontalPadding, kHeaderButtonRadius, control_hover,
-      foreground, muted, kHeaderButtonRadius,
+      kHeaderWindowRadius, background, headerbar_left_radius,
+      sidebar_background,
+      kHeaderWindowRadius, foreground, foreground, control, border,
+      kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
+      kHeaderControlHorizontalPadding, accent, modal, modal,
+      accent_foreground, accent, accent_foreground, popover, foreground, border,
+      shade, foreground,
+      kHeaderControlHeight, kHeaderControlHorizontalPadding,
+      kHeaderButtonRadius, control_hover, foreground, muted,
+      kHeaderButtonRadius,
       kHeaderTooltipVerticalPadding, kHeaderTooltipHorizontalPadding,
       kHeaderButtonRadius);
 
@@ -574,10 +598,90 @@ static void refresh_header_bar_css(MyApplication* self) {
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
+static void refresh_gtk_accent_css(MyApplication* self) {
+  const gchar* accent = css_color_or(self->accent_color, "#3584e4");
+  const gchar* accent_foreground =
+      css_color_or(self->accent_foreground_color, "#ffffff");
+
+  g_autofree gchar* css = g_strdup_printf(
+      "@define-color theme_selected_bg_color %s;"
+      "@define-color theme_selected_fg_color %s;"
+      "@define-color theme_unfocused_selected_bg_color %s;"
+      "@define-color theme_unfocused_selected_fg_color %s;"
+      "@define-color accent_bg_color %s;"
+      "@define-color accent_fg_color %s;"
+      "treeview.view:selected,"
+      "treeview.view:selected:focus,"
+      "iconview:selected,"
+      "iconview:selected:focus,"
+      "row:selected,"
+      "row:selected:focus,"
+      "rubberband,"
+      ".rubberband {"
+      "background-color: %s;"
+      "color: %s;"
+      "}"
+      "treeview.view:selected *,"
+      "iconview:selected *,"
+      "row:selected * {"
+      "color: %s;"
+      "}"
+      "button.suggested-action,"
+      "button.suggested-action:hover,"
+      "button.suggested-action:active,"
+      "button.suggested-action:checked {"
+      "background-color: %s;"
+      "background-image: none;"
+      "border-color: %s;"
+      "color: %s;"
+      "}"
+      "button.suggested-action label,"
+      "button.suggested-action image {"
+      "color: %s;"
+      "}"
+      "checkbutton check:checked,"
+      "radiobutton radio:checked,"
+      "switch:checked,"
+      "scale trough highlight,"
+      "progressbar progress {"
+      "background-color: %s;"
+      "background-image: none;"
+      "border-color: %s;"
+      "}",
+      accent, accent_foreground, accent, accent_foreground, accent,
+      accent_foreground, accent, accent_foreground, accent_foreground, accent,
+      accent, accent_foreground, accent_foreground, accent, accent);
+
+  g_autoptr(GError) error = nullptr;
+  GtkCssProvider* provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(provider, css, -1, &error);
+  if (error != nullptr) {
+    g_warning("Failed to load BusyMark GTK accent CSS: %s", error->message);
+    g_object_unref(provider);
+    return;
+  }
+
+  GdkScreen* screen = gdk_screen_get_default();
+  if (screen == nullptr) {
+    g_object_unref(provider);
+    return;
+  }
+  if (self->gtk_accent_css_provider != nullptr) {
+    gtk_style_context_remove_provider_for_screen(
+        screen, GTK_STYLE_PROVIDER(self->gtk_accent_css_provider));
+    g_clear_object(&self->gtk_accent_css_provider);
+  }
+  self->gtk_accent_css_provider = provider;
+  gtk_style_context_add_provider_for_screen(
+      screen, GTK_STYLE_PROVIDER(self->gtk_accent_css_provider),
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+}
+
 static void set_header_bar_theme(MyApplication* self, FlValue* args) {
   if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
     return;
   }
+  set_gtk_theme_preference(fl_lookup_bool_arg(args, "preferDark", TRUE));
   set_css_color_field(&self->background_color,
                       fl_lookup_string_arg(args, "backgroundColor"));
   set_css_color_field(&self->sidebar_background_color,
@@ -592,14 +696,6 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "controlColor"));
   set_css_color_field(&self->control_hover_color,
                       fl_lookup_string_arg(args, "controlHoverColor"));
-  set_css_color_field(&self->control_active_color,
-                      fl_lookup_string_arg(args, "controlActiveColor"));
-  set_css_color_field(&self->title_button_color,
-                      fl_lookup_string_arg(args, "titleButtonColor"));
-  set_css_color_field(&self->title_button_hover_color,
-                      fl_lookup_string_arg(args, "titleButtonHoverColor"));
-  set_css_color_field(&self->title_button_active_color,
-                      fl_lookup_string_arg(args, "titleButtonActiveColor"));
   set_css_color_field(&self->accent_color,
                       fl_lookup_string_arg(args, "accentColor"));
   set_css_color_field(&self->accent_foreground_color,
@@ -612,6 +708,7 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                       fl_lookup_string_arg(args, "shadeColor"));
   set_css_color_field(&self->modal_barrier_color,
                       fl_lookup_string_arg(args, "modalBarrierColor"));
+  refresh_gtk_accent_css(self);
   refresh_header_bar_css(self);
 }
 
@@ -1435,6 +1532,8 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
+  prefer_dark_gtk_theme();
+
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
@@ -1442,6 +1541,17 @@ static void my_application_activate(GApplication* application) {
   gtk_window_set_title(window, kApplicationDisplayName);
   gtk_widget_set_name(GTK_WIDGET(window), "busymark-window");
   configure_transparent_window_backing(window);
+  g_autoptr(GdkPixbuf) application_icon = load_application_icon();
+  if (application_icon != nullptr) {
+    gtk_window_set_default_icon(application_icon);
+    gtk_window_set_icon(window, application_icon);
+  }
+  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+  gtk_window_set_wmclass(window, APPLICATION_ID, APPLICATION_ID);
+  G_GNUC_END_IGNORE_DEPRECATIONS
+  if (application_icon == nullptr) {
+    gtk_window_set_icon_name(window, APPLICATION_ID);
+  }
 
   gboolean use_header_bar = TRUE;
 #ifdef GDK_WINDOWING_X11
@@ -1506,6 +1616,7 @@ static gboolean my_application_local_command_line(GApplication* application,
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
+  prefer_dark_gtk_theme();
 }
 
 // Implements GApplication::shutdown.
@@ -1516,11 +1627,19 @@ static void my_application_shutdown(GApplication* application) {
 // Implements GObject::dispose.
 static void my_application_dispose(GObject* object) {
   MyApplication* self = MY_APPLICATION(object);
-  if (self->header_bar_css_provider != nullptr) {
-    gtk_style_context_remove_provider_for_screen(
-        gdk_screen_get_default(), GTK_STYLE_PROVIDER(self->header_bar_css_provider));
-    g_clear_object(&self->header_bar_css_provider);
+  GdkScreen* screen = gdk_screen_get_default();
+  if (screen != nullptr) {
+    if (self->header_bar_css_provider != nullptr) {
+      gtk_style_context_remove_provider_for_screen(
+          screen, GTK_STYLE_PROVIDER(self->header_bar_css_provider));
+    }
+    if (self->gtk_accent_css_provider != nullptr) {
+      gtk_style_context_remove_provider_for_screen(
+          screen, GTK_STYLE_PROVIDER(self->gtk_accent_css_provider));
+    }
   }
+  g_clear_object(&self->header_bar_css_provider);
+  g_clear_object(&self->gtk_accent_css_provider);
   g_clear_object(&self->header_bar_channel);
   g_clear_pointer(&self->background_color, g_free);
   g_clear_pointer(&self->sidebar_background_color, g_free);
@@ -1529,10 +1648,6 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->disabled_foreground_color, g_free);
   g_clear_pointer(&self->control_color, g_free);
   g_clear_pointer(&self->control_hover_color, g_free);
-  g_clear_pointer(&self->control_active_color, g_free);
-  g_clear_pointer(&self->title_button_color, g_free);
-  g_clear_pointer(&self->title_button_hover_color, g_free);
-  g_clear_pointer(&self->title_button_active_color, g_free);
   g_clear_pointer(&self->accent_color, g_free);
   g_clear_pointer(&self->accent_foreground_color, g_free);
   g_clear_pointer(&self->popover_background_color, g_free);
@@ -1557,6 +1672,7 @@ static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
   self->header_bar_css_provider = nullptr;
+  self->gtk_accent_css_provider = nullptr;
   self->main_window = nullptr;
   self->flutter_view = nullptr;
   self->titlebar_box = nullptr;
@@ -1599,10 +1715,6 @@ static void my_application_init(MyApplication* self) {
   self->disabled_foreground_color = nullptr;
   self->control_color = nullptr;
   self->control_hover_color = nullptr;
-  self->control_active_color = nullptr;
-  self->title_button_color = nullptr;
-  self->title_button_hover_color = nullptr;
-  self->title_button_active_color = nullptr;
   self->accent_color = nullptr;
   self->accent_foreground_color = nullptr;
   self->popover_background_color = nullptr;
@@ -1618,7 +1730,7 @@ static void my_application_init(MyApplication* self) {
 }
 
 MyApplication* my_application_new() {
-  g_set_prgname(kApplicationDisplayName);
+  g_set_prgname(APPLICATION_ID);
   g_set_application_name(kApplicationDisplayName);
 
   return MY_APPLICATION(g_object_new(my_application_get_type(),

@@ -12,15 +12,6 @@
   "@aboutBusyMark": {
     "description": "Menu item and tooltip for the About dialog."
   },
-  "aboutVersion": "نسخهٔ {version}",
-  "@aboutVersion": {
-    "description": "Version label in the About dialog.",
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
-  },
   "aboutTagline": "ویرایشگر Markdown و Writerside",
   "@aboutTagline": {
     "description": "Short tagline shown under the app name in the About dialog."
@@ -345,7 +336,7 @@
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "جستجو در فضای کاری فعلی",
+  "shortcutFindDescription": "جستجو در سند فعلی",
   "@shortcutFindDescription": {
     "description": "Keyboard shortcut description for search."
   },

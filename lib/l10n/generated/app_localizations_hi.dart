@@ -18,11 +18,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutBusyMark => 'BusyMark के बारे में';
 
   @override
-  String aboutVersion(String version) {
-    return 'संस्करण $version';
-  }
-
-  @override
   String get aboutTagline => 'Markdown और Writerside संपादक';
 
   @override
@@ -270,7 +265,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutSaveDescription => 'वर्तमान Markdown फ़ाइल सहेजें';
 
   @override
-  String get shortcutFindDescription => 'वर्तमान कार्यस्थान खोजें';
+  String get shortcutFindDescription => 'वर्तमान दस्तावेज़ खोजें';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>

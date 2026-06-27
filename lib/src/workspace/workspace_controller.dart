@@ -16,28 +16,41 @@ final workspaceServiceProvider = Provider<WorkspaceService>(
 );
 
 final workspaceControllerProvider =
-    StateNotifierProvider<WorkspaceController, WorkspaceState>((ref) {
-      return WorkspaceController(
-        service: ref.watch(workspaceServiceProvider),
-        settingsController: ref.watch(appSettingsControllerProvider.notifier),
-      );
-    });
+    NotifierProvider<WorkspaceController, WorkspaceState>(
+      WorkspaceController.new,
+    );
 
-final workspaceSearchOpenRequestProvider = StateProvider<int>((ref) => 0);
+final workspaceSearchOpenRequestProvider =
+    NotifierProvider<WorkspaceSearchRequestController, int>(
+      WorkspaceSearchRequestController.new,
+    );
 
-final workspaceSearchCloseRequestProvider = StateProvider<int>((ref) => 0);
+final workspaceSearchCloseRequestProvider =
+    NotifierProvider<WorkspaceSearchRequestController, int>(
+      WorkspaceSearchRequestController.new,
+    );
 
-class WorkspaceController extends StateNotifier<WorkspaceState> {
-  WorkspaceController({
-    required WorkspaceService service,
-    required AppSettingsController settingsController,
-  }) : _service = service,
-       _settingsController = settingsController,
-       super(const WorkspaceState());
+class WorkspaceSearchRequestController extends Notifier<int> {
+  @override
+  int build() => 0;
 
-  final WorkspaceService _service;
-  final AppSettingsController _settingsController;
+  void request() {
+    state++;
+  }
+}
+
+class WorkspaceController extends Notifier<WorkspaceState> {
+  late WorkspaceService _service;
+  late AppSettingsController _settingsController;
   Timer? _parseDebounce;
+
+  @override
+  WorkspaceState build() {
+    _service = ref.read(workspaceServiceProvider);
+    _settingsController = ref.read(appSettingsControllerProvider.notifier);
+    ref.onDispose(() => _parseDebounce?.cancel());
+    return const WorkspaceState();
+  }
 
   bool get activeDocumentNeedsSaveLocation {
     final workspace = state.workspace;
@@ -63,10 +76,16 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     try {
       final workspace = await _service.openPath(path);
       final active = workspace.activeFilePath;
-      final text = active == null ? '' : await _service.loadText(active);
-      final preview = _safePreview(workspace, text);
+      final load = active == null
+          ? null
+          : await _service.loadTextWithSnapshot(active);
+      final text = load?.text ?? '';
+      final loadedWorkspace = load == null
+          ? workspace
+          : workspace.copyWith(activeFileSnapshot: load.snapshot);
+      final preview = _safePreview(loadedWorkspace, text);
       state = WorkspaceState(
-        workspace: workspace,
+        workspace: loadedWorkspace,
         activeText: text,
         preview: preview,
       );
@@ -99,10 +118,16 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     try {
       final workspace = await _service.createWritersideProject(request);
       final active = workspace.activeFilePath;
-      final text = active == null ? '' : await _service.loadText(active);
-      final preview = _safePreview(workspace, text);
+      final load = active == null
+          ? null
+          : await _service.loadTextWithSnapshot(active);
+      final text = load?.text ?? '';
+      final loadedWorkspace = load == null
+          ? workspace
+          : workspace.copyWith(activeFileSnapshot: load.snapshot);
+      final preview = _safePreview(loadedWorkspace, text);
       state = WorkspaceState(
-        workspace: workspace,
+        workspace: loadedWorkspace,
         activeText: text,
         preview: preview,
       );
@@ -143,11 +168,17 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         request,
       );
       final active = nextWorkspace.activeFilePath;
-      final text = active == null ? '' : await _service.loadText(active);
+      final load = active == null
+          ? null
+          : await _service.loadTextWithSnapshot(active);
+      final text = load?.text ?? '';
+      final loadedWorkspace = load == null
+          ? nextWorkspace
+          : nextWorkspace.copyWith(activeFileSnapshot: load.snapshot);
       state = WorkspaceState(
-        workspace: nextWorkspace,
+        workspace: loadedWorkspace,
         activeText: text,
-        preview: _safePreview(nextWorkspace, text),
+        preview: _safePreview(loadedWorkspace, text),
       );
       return true;
     } on Object catch (error, stackTrace) {
@@ -178,16 +209,16 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     }
     _parseDebounce?.cancel();
     try {
-      final text = await File(path).readAsString();
+      final load = await _service.loadTextWithSnapshot(path);
       final nextWorkspace = workspace.copyWith(
         activeFilePath: path,
-        activeFileModifiedAt: await _service.fileModifiedAt(path),
+        activeFileSnapshot: load.snapshot,
       );
-      final reparsed = await _service.reparseActive(nextWorkspace, text);
+      final reparsed = await _service.reparseActive(nextWorkspace, load.text);
       state = state.copyWith(
         workspace: reparsed,
-        activeText: text,
-        preview: _safePreview(reparsed, text),
+        activeText: load.text,
+        preview: _safePreview(reparsed, load.text),
         isDirty: false,
         clearMessage: true,
       );
@@ -236,7 +267,7 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     if (!overwriteExternalChanges &&
         await _service.fileChangedSince(
           active,
-          workspace?.activeFileModifiedAt,
+          workspace?.activeFileSnapshot,
         )) {
       state = state.copyWith(
         message: const WorkspaceMessage(
@@ -246,13 +277,13 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       return false;
     }
     try {
-      final modifiedAt = await _service.saveText(active, state.activeText);
+      final snapshot = await _service.saveText(active, state.activeText);
       final reparsed = await _service.reparseActive(
-        workspace!.copyWith(activeFileModifiedAt: modifiedAt),
+        workspace!.copyWith(activeFileSnapshot: snapshot),
         state.activeText,
       );
       state = state.copyWith(
-        workspace: reparsed.copyWith(activeFileModifiedAt: modifiedAt),
+        workspace: reparsed.copyWith(activeFileSnapshot: snapshot),
         preview: _safePreview(reparsed, state.activeText),
         isDirty: false,
         clearMessage: true,
@@ -305,7 +336,7 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     if (active == null) {
       return false;
     }
-    return _service.fileChangedSince(active, workspace?.activeFileModifiedAt);
+    return _service.fileChangedSince(active, workspace?.activeFileSnapshot);
   }
 
   Future<void> validateActive() async {
@@ -344,11 +375,5 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: text)],
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _parseDebounce?.cancel();
-    super.dispose();
   }
 }

@@ -19,6 +19,7 @@ import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
+import '../../core/uri_utils.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
@@ -37,16 +38,63 @@ import '../workspace_safety.dart';
 import 'welcome_screen.dart';
 
 final _outlineNavigationTargetProvider =
-    StateProvider<_OutlineNavigationTarget?>((ref) => null);
-final _sourceNavigationTargetProvider = StateProvider<_SourceNavigationTarget?>(
-  (ref) => null,
-);
-final _workspaceSearchProvider = StateProvider<_WorkspaceSearchState>(
-  (ref) => const _WorkspaceSearchState(),
-);
-final _searchNavigationTargetProvider = StateProvider<_SearchNavigationTarget?>(
-  (ref) => null,
-);
+    NotifierProvider<
+      _OutlineNavigationTargetController,
+      _OutlineNavigationTarget?
+    >(_OutlineNavigationTargetController.new);
+final _sourceNavigationTargetProvider =
+    NotifierProvider<
+      _SourceNavigationTargetController,
+      _SourceNavigationTarget?
+    >(_SourceNavigationTargetController.new);
+final _workspaceSearchProvider =
+    NotifierProvider<_WorkspaceSearchController, _WorkspaceSearchState>(
+      _WorkspaceSearchController.new,
+    );
+final _searchNavigationTargetProvider =
+    NotifierProvider<
+      _SearchNavigationTargetController,
+      _SearchNavigationTarget?
+    >(_SearchNavigationTargetController.new);
+
+class _OutlineNavigationTargetController
+    extends Notifier<_OutlineNavigationTarget?> {
+  @override
+  _OutlineNavigationTarget? build() => null;
+
+  void set(_OutlineNavigationTarget? target) {
+    state = target;
+  }
+}
+
+class _SourceNavigationTargetController
+    extends Notifier<_SourceNavigationTarget?> {
+  @override
+  _SourceNavigationTarget? build() => null;
+
+  void set(_SourceNavigationTarget? target) {
+    state = target;
+  }
+}
+
+class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
+  @override
+  _WorkspaceSearchState build() => const _WorkspaceSearchState();
+
+  void set(_WorkspaceSearchState searchState) {
+    state = searchState;
+  }
+}
+
+class _SearchNavigationTargetController
+    extends Notifier<_SearchNavigationTarget?> {
+  @override
+  _SearchNavigationTarget? build() => null;
+
+  void set(_SearchNavigationTarget? target) {
+    state = target;
+  }
+}
 
 const _sourceTextHeightBehavior = TextHeightBehavior(
   applyHeightToFirstAscent: true,
@@ -212,8 +260,8 @@ class WorkspaceScreen extends ConsumerWidget {
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((action) {
-        _handleHeaderBarAction(context, ref, action);
+      next.whenData((event) {
+        _handleHeaderBarAction(context, ref, event.action);
       });
     });
     ref.listen(headerBarSearchQueriesProvider, (previous, next) {
@@ -222,10 +270,9 @@ class WorkspaceScreen extends ConsumerWidget {
         if (current.query == query && current.active) {
           return;
         }
-        ref.read(_workspaceSearchProvider.notifier).state = current.copyWith(
-          active: true,
-          query: query,
-        );
+        ref
+            .read(_workspaceSearchProvider.notifier)
+            .set(current.copyWith(active: true, query: query));
         unawaited(settingsController.setSidebarVisible(true));
       });
     });
@@ -446,9 +493,9 @@ class WorkspaceScreen extends ConsumerWidget {
 
   void _openSearch(WidgetRef ref) {
     final search = ref.read(_workspaceSearchProvider);
-    ref.read(_workspaceSearchProvider.notifier).state = search.copyWith(
-      active: true,
-    );
+    ref
+        .read(_workspaceSearchProvider.notifier)
+        .set(search.copyWith(active: true));
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
     unawaited(headerBar.setSearchActive(true));
     unawaited(headerBar.setSearchQuery(search.query));
@@ -462,18 +509,17 @@ class WorkspaceScreen extends ConsumerWidget {
     if (!search.active) {
       return;
     }
-    ref.read(_workspaceSearchProvider.notifier).state = search.copyWith(
-      active: false,
-    );
+    ref
+        .read(_workspaceSearchProvider.notifier)
+        .set(search.copyWith(active: false));
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchActive(false));
   }
 
   void _setSearchQuery(WidgetRef ref, String query) {
     final current = ref.read(_workspaceSearchProvider);
-    ref.read(_workspaceSearchProvider.notifier).state = current.copyWith(
-      active: true,
-      query: query,
-    );
+    ref
+        .read(_workspaceSearchProvider.notifier)
+        .set(current.copyWith(active: true, query: query));
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchQuery(query));
   }
 
@@ -620,14 +666,16 @@ class WorkspaceScreen extends ConsumerWidget {
     final previous = ref.read(_searchNavigationTargetProvider);
     ref
         .read(_searchNavigationTargetProvider.notifier)
-        .state = _SearchNavigationTarget(
-      filePath: result.filePath,
-      line: result.line,
-      startOffset: result.startOffset,
-      endOffset: result.endOffset,
-      query: result.query,
-      request: (previous?.request ?? 0) + 1,
-    );
+        .set(
+          _SearchNavigationTarget(
+            filePath: result.filePath,
+            line: result.line,
+            startOffset: result.startOffset,
+            endOffset: result.endOffset,
+            query: result.query,
+            request: (previous?.request ?? 0) + 1,
+          ),
+        );
   }
 
   void _showProblemsDialog(BuildContext context, WidgetRef ref) {
@@ -906,7 +954,6 @@ class _SidebarState extends State<_Sidebar> {
     }
     if (widget.workspace.activeFilePath != _activeFilePath) {
       _activeFilePath = widget.workspace.activeFilePath;
-      _tab = _preferredSidebarTabIndex(widget.workspace);
     }
   }
 
@@ -2161,11 +2208,13 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
               : () {
                   ref
                       .read(_outlineNavigationTargetProvider.notifier)
-                      .state = _OutlineNavigationTarget(
-                    filePath: activeFilePath,
-                    headingId: heading.id,
-                    line: heading.span.startLine,
-                  );
+                      .set(
+                        _OutlineNavigationTarget(
+                          filePath: activeFilePath,
+                          headingId: heading.id,
+                          line: heading.span.startLine,
+                        ),
+                      );
                 },
         );
       },
@@ -2385,11 +2434,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyF) {
-      ref.read(workspaceSearchOpenRequestProvider.notifier).state++;
+      ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.escape) {
-      ref.read(workspaceSearchCloseRequestProvider.notifier).state++;
+      ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyB) {
@@ -2566,7 +2615,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             Expanded(
               child: BusyMarkWysiwygEditor(
                 document: wysiwygDocument,
-                workspaceRoot: widget.state.workspace?.rootPath,
+                workspaceRoot: _imageWorkspaceRoot(widget.state.workspace),
                 writersideRoot:
                     widget.state.workspace?.writersideModule?.rootPath,
                 imagesDir:
@@ -2585,10 +2634,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 scrollRequest: _wysiwygScrollRequest,
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
-                    .state++,
+                    .request(),
                 onCloseSearch: () => ref
                     .read(workspaceSearchCloseRequestProvider.notifier)
-                    .state++,
+                    .request(),
               ),
             ),
           if (sourceVisible)
@@ -4730,7 +4779,7 @@ class _PreviewImageBlock extends StatelessWidget {
           source: source,
           alt: block.text,
           activeFilePath: activeFilePath ?? '',
-          workspaceRoot: workspace?.rootPath,
+          workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
           width: width,
@@ -4741,19 +4790,52 @@ class _PreviewImageBlock extends StatelessWidget {
   }
 }
 
+String? _imageWorkspaceRoot(Workspace? workspace) {
+  if (workspace == null) {
+    return null;
+  }
+  final module = workspace.writersideModule;
+  if (module == null) {
+    return workspace.rootPath;
+  }
+  final activeFilePath =
+      workspace.activeFilePath ?? workspace.markdown?.filePath;
+  if (activeFilePath == null) {
+    return null;
+  }
+  return module.topics
+      .where((topic) => topic.filePath == activeFilePath)
+      .map((topic) => topic.topicRoot)
+      .firstOrNull;
+}
+
 String _previewImageSource(PreviewBlock block) {
   final attributeSource = block.attributes['src'];
   if (attributeSource != null && attributeSource.trim().isNotEmpty) {
     return attributeSource.trim();
   }
   for (final inline in block.inlines) {
-    if (inline.kind == PreviewInlineKind.image &&
-        inline.destination != null &&
-        inline.destination!.trim().isNotEmpty) {
-      return inline.destination!.trim();
+    final source = _previewImageSourceFromInline(inline);
+    if (source != null) {
+      return source;
     }
   }
   return '';
+}
+
+String? _previewImageSourceFromInline(PreviewInline inline) {
+  if (inline.kind == PreviewInlineKind.image &&
+      inline.destination != null &&
+      inline.destination!.trim().isNotEmpty) {
+    return inline.destination!.trim();
+  }
+  for (final child in inline.children) {
+    final source = _previewImageSourceFromInline(child);
+    if (source != null) {
+      return source;
+    }
+  }
+  return null;
 }
 
 double? _previewImageWidth(PreviewBlock block) {
@@ -4955,6 +5037,10 @@ InlineSpan _previewInlineImageSpan(
       workspace?.activeFilePath ?? workspace?.markdown?.filePath;
   return WidgetSpan(
     alignment: PlaceholderAlignment.middle,
+    style: const TextStyle(
+      decoration: TextDecoration.none,
+      fontStyle: FontStyle.normal,
+    ),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: DefaultTextStyle.merge(
@@ -4963,7 +5049,7 @@ InlineSpan _previewInlineImageSpan(
           source: inline.destination ?? '',
           alt: inline.text,
           activeFilePath: activeFilePath ?? '',
-          workspaceRoot: workspace?.rootPath,
+          workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
           maxWidth: BusyMarkSizes.previewMinWidth,
@@ -5053,12 +5139,18 @@ Future<void> _openPreviewLink(
   if (target.isEmpty) {
     return;
   }
-  final uri = Uri.tryParse(target);
-  if (_isExternalPreviewUri(uri)) {
-    final launched = await launchUrl(
-      uri!,
-      mode: LaunchMode.externalApplication,
-    );
+  final uri = parseSchemedUri(target);
+  if (uri != null) {
+    if (!isLaunchableExternalUri(uri)) {
+      if (context.mounted) {
+        _showPreviewLinkMessage(
+          context,
+          context.l10n.couldNotOpenTarget(target),
+        );
+      }
+      return;
+    }
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
     }
@@ -5117,15 +5209,6 @@ Future<void> _openPreviewLink(
   _navigatePreviewAnchor(context, ref, file.absolutePath, anchor);
 }
 
-bool _isExternalPreviewUri(Uri? uri) {
-  if (uri == null) {
-    return false;
-  }
-  return uri.scheme == 'http' ||
-      uri.scheme == 'https' ||
-      uri.scheme == 'mailto';
-}
-
 String _decodePreviewLinkPart(String value) {
   try {
     return Uri.decodeComponent(value);
@@ -5150,11 +5233,13 @@ void _navigatePreviewAnchor(
   final normalizedAnchor = anchor.startsWith('#')
       ? anchor.substring(1)
       : anchor;
-  final slug = slugForHeading(normalizedAnchor);
+  final decodedAnchor = _decodePreviewAnchor(normalizedAnchor);
+  final slug = slugForHeading(decodedAnchor);
   final heading = markdown.headings
       .where(
         (heading) =>
             heading.id == normalizedAnchor ||
+            heading.id == decodedAnchor ||
             heading.id == slug ||
             slugForHeading(heading.text) == slug,
       )
@@ -5165,15 +5250,25 @@ void _navigatePreviewAnchor(
   }
   ref
       .read(_outlineNavigationTargetProvider.notifier)
-      .state = _OutlineNavigationTarget(
-    filePath: filePath,
-    headingId: heading.id,
-    line: heading.span.startLine,
-  );
+      .set(
+        _OutlineNavigationTarget(
+          filePath: filePath,
+          headingId: heading.id,
+          line: heading.span.startLine,
+        ),
+      );
 }
 
 void _showPreviewLinkMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String _decodePreviewAnchor(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
 }
 
 class _PreviewCallout extends StatelessWidget {

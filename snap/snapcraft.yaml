@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "0.1.1+1"
+version: "0.1.2+1"
 summary: Markdown and Writerside documentation editor
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
@@ -26,7 +26,6 @@ platforms:
 apps:
   busymark:
     command: busymark
-    desktop: share/applications/io.busystack.busymark.desktop
     common-id: io.busystack.busymark
     extensions: [gnome]
     plugs:
@@ -37,6 +36,7 @@ apps:
       - wayland
       - x11
       - home
+      - network
       - removable-media
     environment:
       GDK_BACKEND: wayland,x11
@@ -60,11 +60,28 @@ parts:
       - libwayland-egl1
       - libxcb-shm0
       - libxcb1
+      - yaru-theme-gtk
+      - yaru-theme-icon
+    override-build: |
+      rm -rf "$CRAFT_PART_BUILD/build"
+      rm -rf "$CRAFT_PART_BUILD/.dart_tool"
+      rm -rf "$CRAFT_PART_BUILD/linux/flutter/ephemeral"
+      craftctl default
     override-prime: |
       craftctl default
+      mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
+      cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"
+      cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
+      install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
+        "$CRAFT_PRIME/meta/gui/io.busystack.busymark.svg"
+      install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
+        "$CRAFT_PRIME/meta/gui/icon.svg"
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.metainfo.xml" \
         "$CRAFT_PRIME/share/metainfo/io.busystack.busymark.metainfo.xml"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \
         "$CRAFT_PRIME/share/icons/hicolor/scalable/apps/io.busystack.busymark.svg"
+      sed 's#^Icon=.*#Icon=${SNAP}/meta/gui/io.busystack.busymark.svg#' \
+        "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
+        > "$CRAFT_PRIME/meta/gui/io.busystack.busymark.desktop"

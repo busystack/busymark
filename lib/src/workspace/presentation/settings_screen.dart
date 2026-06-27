@@ -27,8 +27,8 @@ class SettingsScreen extends ConsumerWidget {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
-      next.whenData((action) {
-        _handleHeaderBarAction(context, workspaceOpen, action);
+      next.whenData((event) {
+        _handleHeaderBarAction(context, workspaceOpen, event.action);
       });
     });
     if (headerBar.isAvailable) {

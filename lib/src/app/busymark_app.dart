@@ -7,7 +7,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
-import 'package:system_theme/system_theme.dart';
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -20,6 +19,7 @@ import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
+import 'system_accent.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'window_control_service.dart';
 
@@ -36,161 +36,157 @@ class BusyMarkApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(appSettingsControllerProvider);
-    return SystemThemeBuilder(
-      builder: (context, systemColor) {
-        final accent = systemColor.accent;
-        return MaterialApp.router(
-          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-          debugShowCheckedModeBanner: false,
-          theme: buildBusyMarkTheme(
-            brightness: Brightness.light,
-            accentColor: accent,
-          ),
-          darkTheme: buildBusyMarkTheme(
-            brightness: Brightness.dark,
-            accentColor: accent,
-          ),
-          themeMode: settings.themeMode,
-          locale: settings.locale,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            ...GlobalUbuntuLocalizations.delegates,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) {
-            _configureNativeHeaderBar(context, ref);
-            return _BusyMarkWindowLifecycle(
-              child: Shortcuts(
-                shortcuts: const {
-                  SingleActivator(LogicalKeyboardKey.keyN, control: true):
-                      _NewMarkdownIntent(),
-                  SingleActivator(LogicalKeyboardKey.keyO, control: true):
-                      _OpenWorkspaceIntent(),
-                  SingleActivator(LogicalKeyboardKey.keyS, control: true):
-                      _SaveActiveIntent(),
-                  SingleActivator(LogicalKeyboardKey.slash, control: true):
-                      _KeyboardShortcutsIntent(),
-                  SingleActivator(LogicalKeyboardKey.keyF, control: true):
-                      _OpenSearchIntent(),
-                  SingleActivator(LogicalKeyboardKey.escape):
-                      _CloseSearchIntent(),
-                },
-                child: Actions(
-                  actions: {
-                    _NewMarkdownIntent: CallbackAction<_NewMarkdownIntent>(
-                      onInvoke: (intent) {
-                        unawaited(() async {
-                          final navigatorContext =
-                              rootNavigatorKey.currentContext;
-                          if (navigatorContext == null) {
-                            return;
-                          }
-                          final safe = await confirmSafeToContinue(
-                            navigatorContext,
-                            ref,
-                          );
-                          if (!safe || !navigatorContext.mounted) {
-                            return;
-                          }
-                          await ref
-                              .read(workspaceControllerProvider.notifier)
-                              .createMarkdownFile();
-                          if (navigatorContext.mounted) {
-                            router.go('/workspace');
-                          }
-                        }());
-                        return null;
-                      },
-                    ),
-                    _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
+    final fallbackAccent = ref.watch(initialSystemAccentColorProvider);
+    final accent = ref
+        .watch(systemAccentColorProvider)
+        .when(
+          data: (color) => color,
+          error: (_, _) => fallbackAccent,
+          loading: () => fallbackAccent,
+        );
+    return MaterialApp.router(
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      debugShowCheckedModeBanner: false,
+      theme: buildBusyMarkTheme(
+        brightness: Brightness.light,
+        accentColor: accent,
+      ),
+      darkTheme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: accent,
+      ),
+      themeMode: settings.themeMode,
+      locale: settings.locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        ...GlobalUbuntuLocalizations.delegates,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) {
+        _configureNativeHeaderBar(context, ref);
+        return _BusyMarkWindowLifecycle(
+          child: Shortcuts(
+            shortcuts: const {
+              SingleActivator(LogicalKeyboardKey.keyN, control: true):
+                  _NewMarkdownIntent(),
+              SingleActivator(LogicalKeyboardKey.keyO, control: true):
+                  _OpenWorkspaceIntent(),
+              SingleActivator(LogicalKeyboardKey.keyS, control: true):
+                  _SaveActiveIntent(),
+              SingleActivator(LogicalKeyboardKey.slash, control: true):
+                  _KeyboardShortcutsIntent(),
+              SingleActivator(LogicalKeyboardKey.keyF, control: true):
+                  _OpenSearchIntent(),
+              SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
+            },
+            child: Actions(
+              actions: {
+                _NewMarkdownIntent: CallbackAction<_NewMarkdownIntent>(
+                  onInvoke: (intent) {
+                    unawaited(() async {
+                      final navigatorContext = rootNavigatorKey.currentContext;
+                      if (navigatorContext == null) {
+                        return;
+                      }
+                      final safe = await confirmSafeToContinue(
+                        navigatorContext,
+                        ref,
+                      );
+                      if (!safe || !navigatorContext.mounted) {
+                        return;
+                      }
+                      await ref
+                          .read(workspaceControllerProvider.notifier)
+                          .createMarkdownFile();
+                      if (navigatorContext.mounted) {
+                        router.go('/workspace');
+                      }
+                    }());
+                    return null;
+                  },
+                ),
+                _OpenWorkspaceIntent: CallbackAction<_OpenWorkspaceIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(
+                        _showOpenChooser(navigatorContext, ref, router),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
+                  onInvoke: (intent) {
+                    final state = ref.read(workspaceControllerProvider);
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (state.workspace != null && navigatorContext != null) {
+                      unawaited(
+                        saveActiveWithOverwriteConfirmation(
+                          navigatorContext,
+                          ref,
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _KeyboardShortcutsIntent:
+                    CallbackAction<_KeyboardShortcutsIntent>(
                       onInvoke: (intent) {
                         final navigatorContext =
                             rootNavigatorKey.currentContext;
                         if (navigatorContext != null) {
-                          unawaited(
-                            _showOpenChooser(navigatorContext, ref, router),
-                          );
+                          showBusyMarkKeyboardShortcutsDialog(navigatorContext);
                         }
                         return null;
                       },
                     ),
-                    _SaveActiveIntent: CallbackAction<_SaveActiveIntent>(
-                      onInvoke: (intent) {
-                        final state = ref.read(workspaceControllerProvider);
-                        final navigatorContext =
-                            rootNavigatorKey.currentContext;
-                        if (state.workspace != null &&
-                            navigatorContext != null) {
-                          unawaited(
-                            saveActiveWithOverwriteConfirmation(
-                              navigatorContext,
-                              ref,
-                            ),
-                          );
-                        }
-                        return null;
-                      },
-                    ),
-                    _KeyboardShortcutsIntent:
-                        CallbackAction<_KeyboardShortcutsIntent>(
-                          onInvoke: (intent) {
-                            final navigatorContext =
-                                rootNavigatorKey.currentContext;
-                            if (navigatorContext != null) {
-                              showBusyMarkKeyboardShortcutsDialog(
-                                navigatorContext,
-                              );
-                            }
-                            return null;
-                          },
-                        ),
-                    _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
-                      onInvoke: (intent) {
-                        if (ref.read(workspaceControllerProvider).workspace !=
-                            null) {
-                          final notifier = ref.read(
-                            workspaceSearchOpenRequestProvider.notifier,
-                          );
-                          notifier.state++;
-                        }
-                        return null;
-                      },
-                    ),
-                    _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
-                      onInvoke: (intent) {
-                        if (ref.read(workspaceControllerProvider).workspace !=
-                            null) {
-                          final notifier = ref.read(
-                            workspaceSearchCloseRequestProvider.notifier,
-                          );
-                          notifier.state++;
-                        }
-                        return null;
-                      },
-                    ),
+                _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
+                  onInvoke: (intent) {
+                    if (ref.read(workspaceControllerProvider).workspace !=
+                        null) {
+                      final notifier = ref.read(
+                        workspaceSearchOpenRequestProvider.notifier,
+                      );
+                      notifier.request();
+                    }
+                    return null;
                   },
-                  child: _BusyMarkSearchShortcutHandler(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(BusyMarkRadius.window),
-                      ),
-                      clipBehavior: Clip.antiAliasWithSaveLayer,
-                      child: ColoredBox(
-                        color: BusyMarkSurfaceColors.of(context).window,
-                        child: child ?? const SizedBox.shrink(),
-                      ),
-                    ),
+                ),
+                _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
+                  onInvoke: (intent) {
+                    if (ref.read(workspaceControllerProvider).workspace !=
+                        null) {
+                      final notifier = ref.read(
+                        workspaceSearchCloseRequestProvider.notifier,
+                      );
+                      notifier.request();
+                    }
+                    return null;
+                  },
+                ),
+              },
+              child: _BusyMarkSearchShortcutHandler(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(BusyMarkRadius.window),
+                  ),
+                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                  child: ColoredBox(
+                    color: BusyMarkSurfaceColors.of(context).window,
+                    child: child ?? const SizedBox.shrink(),
                   ),
                 ),
               ),
-            );
-          },
-          routerConfig: router,
+            ),
+          ),
         );
       },
+      routerConfig: router,
     );
   }
 
@@ -444,11 +440,11 @@ class _BusyMarkSearchShortcutHandlerState
     final keyboard = HardwareKeyboard.instance;
     if (keyboard.isControlPressed &&
         event.logicalKey == LogicalKeyboardKey.keyF) {
-      ref.read(workspaceSearchOpenRequestProvider.notifier).state++;
+      ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return true;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      ref.read(workspaceSearchCloseRequestProvider.notifier).state++;
+      ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return false;
     }
     return false;

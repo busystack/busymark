@@ -348,6 +348,25 @@ void main() {
     expect(workspace, contains('SystemMouseCursors.click'));
   });
 
+  test('inline preview images do not inherit link text decoration', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final imageSpanStart = workspace.indexOf(
+      'InlineSpan _previewInlineImageSpan(',
+    );
+    final imageSpanEnd = workspace.indexOf(
+      'List<InlineSpan>? _highlightedPreviewTextSpans(',
+      imageSpanStart,
+    );
+    final imageSpan = workspace.substring(imageSpanStart, imageSpanEnd);
+
+    expect(imageSpan, contains('WidgetSpan('));
+    expect(imageSpan, contains('style: const TextStyle('));
+    expect(imageSpan, contains('decoration: TextDecoration.none'));
+    expect(imageSpan, contains('fontStyle: FontStyle.normal'));
+  });
+
   test('workspace sidebar tabs match the opened workspace kind', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -380,6 +399,18 @@ void main() {
     expect(
       workspace,
       contains('widget.workspace.activeFilePath != _activeFilePath'),
+    );
+    final activeFileUpdateClause = RegExp(
+      r'if \(widget\.workspace\.activeFilePath != _activeFilePath\) \{(.*?)\n    \}',
+      dotAll: true,
+    ).firstMatch(workspace)!.group(1)!;
+    expect(
+      activeFileUpdateClause,
+      contains('_activeFilePath = widget.workspace.activeFilePath;'),
+    );
+    expect(
+      activeFileUpdateClause,
+      isNot(contains('_tab = _preferredSidebarTabIndex')),
     );
     expect(folderClause, contains('_SidebarTab.files'));
     expect(folderClause, contains('_SidebarTab.outline'));

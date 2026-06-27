@@ -18,11 +18,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutBusyMark => 'حول BusyMark';
 
   @override
-  String aboutVersion(String version) {
-    return 'الإصدار $version';
-  }
-
-  @override
   String get aboutTagline => 'محرر Markdown وWriterside';
 
   @override
@@ -269,7 +264,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutSaveDescription => 'حفظ ملف Markdown الحالي';
 
   @override
-  String get shortcutFindDescription => 'البحث في مساحة العمل الحالية';
+  String get shortcutFindDescription => 'البحث في المستند الحالي';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
