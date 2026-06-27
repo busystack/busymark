@@ -1,5 +1,6 @@
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -57,15 +58,22 @@ void main() {
 
   test('window behavior settings persist', () async {
     final store = _MemorySettingsStore();
-    final controller = AppSettingsController(store);
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
     await Future<void>.delayed(Duration.zero);
 
     await controller.setConfirmCloseWithUnsavedChanges(false);
 
     expect(store.value['confirmCloseWithUnsavedChanges'], isFalse);
-    expect(controller.state.confirmCloseWithUnsavedChanges, isFalse);
-
-    controller.dispose();
+    expect(
+      container
+          .read(appSettingsControllerProvider)
+          .confirmCloseWithUnsavedChanges,
+      isFalse,
+    );
   });
 }
 

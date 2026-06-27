@@ -7,6 +7,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -14,13 +15,9 @@ void main() {
   test(
     'records opened Markdown files by file path in recent workspaces',
     () async {
-      final settingsStore = _MemorySettingsStore();
-      final settingsController = AppSettingsController(settingsStore);
-      await Future<void>.delayed(Duration.zero);
-      final controller = WorkspaceController(
-        service: const WorkspaceService(),
-        settingsController: settingsController,
-      );
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
       await controller.openPath('test/fixtures/markdown/basic.md');
 
@@ -40,13 +37,9 @@ void main() {
   );
 
   test('records opened folders by folder path in recent workspaces', () async {
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     await controller.openPath('test/fixtures/markdown');
 
@@ -67,13 +60,9 @@ void main() {
   test(
     'creates an unsaved Markdown file without adding it to recent',
     () async {
-      final settingsStore = _MemorySettingsStore();
-      final settingsController = AppSettingsController(settingsStore);
-      await Future<void>.delayed(Duration.zero);
-      final controller = WorkspaceController(
-        service: const WorkspaceService(),
-        settingsController: settingsController,
-      );
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
       await controller.createMarkdownFile();
 
@@ -92,13 +81,9 @@ void main() {
     final parent = await Directory.systemTemp.createTemp(
       'busymark-controller-create-',
     );
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     final created = await controller.createWritersideProject(
       WritersideProjectCreateRequest(
@@ -132,13 +117,9 @@ void main() {
       final parent = await Directory.systemTemp.createTemp(
         'busymark-controller-create-topic-',
       );
-      final settingsStore = _MemorySettingsStore();
-      final settingsController = AppSettingsController(settingsStore);
-      await Future<void>.delayed(Duration.zero);
-      final controller = WorkspaceController(
-        service: const WorkspaceService(),
-        settingsController: settingsController,
-      );
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
       await controller.createWritersideProject(
         WritersideProjectCreateRequest(
           parentDirectoryPath: parent.path,
@@ -180,13 +161,9 @@ void main() {
       'busymark-save-as-',
     );
     final file = File('${directory.path}/created.md');
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     await controller.createMarkdownFile();
     controller.updateActiveText('# Created\n\nDraft text.');
@@ -204,13 +181,9 @@ void main() {
   });
 
   test('switching active files reparses outline for the new file', () async {
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     await controller.openPath('test/fixtures/markdown');
     final otherFile = controller.state.workspace!.files.singleWhere(
@@ -237,13 +210,9 @@ void main() {
   });
 
   test('failed open clears stale workspace state', () async {
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     await controller.openPath('test/fixtures/markdown/basic.md');
     await controller.openPath('test/fixtures/markdown/does-not-exist.md');
@@ -256,14 +225,10 @@ void main() {
   });
 
   test('validate on edit setting controls live diagnostics only', () async {
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
     await settingsController.setValidateOnEdit(false);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final controller = harness.controller;
 
     await controller.openPath('test/fixtures/markdown/other.md');
     controller.updateActiveText('# Changed\n\nVisible preview.');
@@ -285,13 +250,9 @@ void main() {
       final directory = await Directory.systemTemp.createTemp('busymark-save-');
       final file = File('${directory.path}/note.md');
       await file.writeAsString('# Original\n');
-      final settingsStore = _MemorySettingsStore();
-      final settingsController = AppSettingsController(settingsStore);
-      await Future<void>.delayed(Duration.zero);
-      final controller = WorkspaceController(
-        service: const WorkspaceService(),
-        settingsController: settingsController,
-      );
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
       await controller.openPath(file.path);
       await Future<void>.delayed(const Duration(milliseconds: 5));
@@ -318,13 +279,9 @@ void main() {
     );
     final file = File('${directory.path}/note.md');
     await file.writeAsString('# Original\n');
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     await controller.openPath(file.path);
     await file.delete();
@@ -348,13 +305,9 @@ void main() {
     );
     final file = File('${directory.path}/note.md');
     await file.writeAsString('# Original\n');
-    final settingsStore = _MemorySettingsStore();
-    final settingsController = AppSettingsController(settingsStore);
-    await Future<void>.delayed(Duration.zero);
-    final controller = WorkspaceController(
-      service: const WorkspaceService(),
-      settingsController: settingsController,
-    );
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
 
     await controller.openPath(file.path);
     final loadedSnapshot = controller.state.workspace!.activeFileSnapshot!;
@@ -373,6 +326,80 @@ void main() {
     settingsController.dispose();
     await directory.delete(recursive: true);
   });
+}
+
+Future<_WorkspaceControllerHarness> _createControllerHarness() async {
+  final container = ProviderContainer(
+    overrides: [
+      localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+      workspaceServiceProvider.overrideWithValue(const WorkspaceService()),
+    ],
+  );
+  addTearDown(container.dispose);
+  container.read(appSettingsControllerProvider.notifier);
+  container.read(workspaceControllerProvider.notifier);
+  await Future<void>.delayed(Duration.zero);
+  return _WorkspaceControllerHarness(container);
+}
+
+class _WorkspaceControllerHarness {
+  _WorkspaceControllerHarness(this._container);
+
+  final ProviderContainer _container;
+
+  late final controller = _WorkspaceControllerDriver(_container);
+  late final settingsController = _AppSettingsControllerDriver(_container);
+}
+
+class _WorkspaceControllerDriver {
+  const _WorkspaceControllerDriver(this._container);
+
+  final ProviderContainer _container;
+
+  WorkspaceController get _notifier =>
+      _container.read(workspaceControllerProvider.notifier);
+
+  WorkspaceState get state => _container.read(workspaceControllerProvider);
+
+  Future<void> openPath(String path) => _notifier.openPath(path);
+
+  Future<void> createMarkdownFile() => _notifier.createMarkdownFile();
+
+  Future<bool> createWritersideProject(
+    WritersideProjectCreateRequest request,
+  ) => _notifier.createWritersideProject(request);
+
+  Future<bool> createWritersideTopic(WritersideTopicCreateRequest request) =>
+      _notifier.createWritersideTopic(request);
+
+  Future<void> openActiveFile(String path) => _notifier.openActiveFile(path);
+
+  void updateActiveText(String text, {bool updatePreview = true}) {
+    _notifier.updateActiveText(text, updatePreview: updatePreview);
+  }
+
+  Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
+      _notifier.saveActive(overwriteExternalChanges: overwriteExternalChanges);
+
+  Future<bool> saveActiveAs(String path) => _notifier.saveActiveAs(path);
+
+  void dispose() {}
+}
+
+class _AppSettingsControllerDriver {
+  const _AppSettingsControllerDriver(this._container);
+
+  final ProviderContainer _container;
+
+  AppSettingsController get _notifier =>
+      _container.read(appSettingsControllerProvider.notifier);
+
+  AppSettings get state => _container.read(appSettingsControllerProvider);
+
+  Future<void> setValidateOnEdit(bool enabled) =>
+      _notifier.setValidateOnEdit(enabled);
+
+  void dispose() {}
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

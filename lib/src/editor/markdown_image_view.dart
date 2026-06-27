@@ -154,6 +154,11 @@ class MarkdownImageView extends StatelessWidget {
         alt: alt,
         height: height ?? 120,
       ),
+      errorBuilder: (context, error, stackTrace) => _MarkdownImagePlaceholder(
+        source: source,
+        alt: alt,
+        height: height ?? 120,
+      ),
     );
   }
 }

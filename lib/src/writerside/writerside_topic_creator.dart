@@ -130,8 +130,8 @@ class WritersideTopicCreator {
     if (root.name.local != 'instance-profile') {
       throw FormatException('.tree root must be <instance-profile>.', treePath);
     }
-    final element = XmlElement(XmlName('toc-element'), [
-      XmlAttribute(XmlName('topic'), topicFileName),
+    final element = XmlElement(XmlName.parts('toc-element'), [
+      XmlAttribute(XmlName.parts('topic'), topicFileName),
     ]);
     final referenceTopic = request.referenceTopic?.trim();
     if (request.placement == WritersideTopicCreatePlacement.root ||

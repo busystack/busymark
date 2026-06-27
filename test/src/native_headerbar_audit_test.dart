@@ -303,22 +303,24 @@ void main() {
     expect(titleButtonBlock, contains('"padding: %dpx;"'));
     expect(
       native,
-      contains('button.titlebutton:not(.appmenu).maximize:backdrop,'),
-    );
-    expect(
-      native,
-      contains('button.titlebutton:not(.appmenu).minimize:backdrop,'),
-    );
-    expect(
-      native,
-      contains('button.titlebutton:not(.appmenu).close:backdrop {'),
-    );
-    expect(
-      native,
       contains(
-        '"background-image: -gtk-gradient(radial, center center, 0, center center, 0.4166666667, to(%s), to(transparent));"',
+        '"headerbar.busymark-headerbar button.titlebutton:not(.appmenu):backdrop {"',
       ),
     );
+    expect(
+      native,
+      isNot(contains('button.titlebutton:not(.appmenu).maximize,')),
+    );
+    expect(
+      native,
+      isNot(contains('button.titlebutton:not(.appmenu).minimize,')),
+    );
+    expect(native, isNot(contains('button.titlebutton:not(.appmenu).close,')));
+    expect(
+      native,
+      isNot(contains('button.titlebutton:not(.appmenu).maximize:backdrop')),
+    );
+    expect(native, isNot(contains('-gtk-gradient')));
     expect(native, isNot(contains('"background: none;"')));
     expect(service, contains('titleButtonColor'));
     expect(service, contains('BusyMarkAlpha.titleButton'));

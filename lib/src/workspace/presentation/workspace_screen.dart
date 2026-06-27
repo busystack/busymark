@@ -38,16 +38,63 @@ import '../workspace_safety.dart';
 import 'welcome_screen.dart';
 
 final _outlineNavigationTargetProvider =
-    StateProvider<_OutlineNavigationTarget?>((ref) => null);
-final _sourceNavigationTargetProvider = StateProvider<_SourceNavigationTarget?>(
-  (ref) => null,
-);
-final _workspaceSearchProvider = StateProvider<_WorkspaceSearchState>(
-  (ref) => const _WorkspaceSearchState(),
-);
-final _searchNavigationTargetProvider = StateProvider<_SearchNavigationTarget?>(
-  (ref) => null,
-);
+    NotifierProvider<
+      _OutlineNavigationTargetController,
+      _OutlineNavigationTarget?
+    >(_OutlineNavigationTargetController.new);
+final _sourceNavigationTargetProvider =
+    NotifierProvider<
+      _SourceNavigationTargetController,
+      _SourceNavigationTarget?
+    >(_SourceNavigationTargetController.new);
+final _workspaceSearchProvider =
+    NotifierProvider<_WorkspaceSearchController, _WorkspaceSearchState>(
+      _WorkspaceSearchController.new,
+    );
+final _searchNavigationTargetProvider =
+    NotifierProvider<
+      _SearchNavigationTargetController,
+      _SearchNavigationTarget?
+    >(_SearchNavigationTargetController.new);
+
+class _OutlineNavigationTargetController
+    extends Notifier<_OutlineNavigationTarget?> {
+  @override
+  _OutlineNavigationTarget? build() => null;
+
+  void set(_OutlineNavigationTarget? target) {
+    state = target;
+  }
+}
+
+class _SourceNavigationTargetController
+    extends Notifier<_SourceNavigationTarget?> {
+  @override
+  _SourceNavigationTarget? build() => null;
+
+  void set(_SourceNavigationTarget? target) {
+    state = target;
+  }
+}
+
+class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
+  @override
+  _WorkspaceSearchState build() => const _WorkspaceSearchState();
+
+  void set(_WorkspaceSearchState searchState) {
+    state = searchState;
+  }
+}
+
+class _SearchNavigationTargetController
+    extends Notifier<_SearchNavigationTarget?> {
+  @override
+  _SearchNavigationTarget? build() => null;
+
+  void set(_SearchNavigationTarget? target) {
+    state = target;
+  }
+}
 
 const _sourceTextHeightBehavior = TextHeightBehavior(
   applyHeightToFirstAscent: true,
@@ -223,10 +270,9 @@ class WorkspaceScreen extends ConsumerWidget {
         if (current.query == query && current.active) {
           return;
         }
-        ref.read(_workspaceSearchProvider.notifier).state = current.copyWith(
-          active: true,
-          query: query,
-        );
+        ref
+            .read(_workspaceSearchProvider.notifier)
+            .set(current.copyWith(active: true, query: query));
         unawaited(settingsController.setSidebarVisible(true));
       });
     });
@@ -447,9 +493,9 @@ class WorkspaceScreen extends ConsumerWidget {
 
   void _openSearch(WidgetRef ref) {
     final search = ref.read(_workspaceSearchProvider);
-    ref.read(_workspaceSearchProvider.notifier).state = search.copyWith(
-      active: true,
-    );
+    ref
+        .read(_workspaceSearchProvider.notifier)
+        .set(search.copyWith(active: true));
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
     unawaited(headerBar.setSearchActive(true));
     unawaited(headerBar.setSearchQuery(search.query));
@@ -463,18 +509,17 @@ class WorkspaceScreen extends ConsumerWidget {
     if (!search.active) {
       return;
     }
-    ref.read(_workspaceSearchProvider.notifier).state = search.copyWith(
-      active: false,
-    );
+    ref
+        .read(_workspaceSearchProvider.notifier)
+        .set(search.copyWith(active: false));
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchActive(false));
   }
 
   void _setSearchQuery(WidgetRef ref, String query) {
     final current = ref.read(_workspaceSearchProvider);
-    ref.read(_workspaceSearchProvider.notifier).state = current.copyWith(
-      active: true,
-      query: query,
-    );
+    ref
+        .read(_workspaceSearchProvider.notifier)
+        .set(current.copyWith(active: true, query: query));
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchQuery(query));
   }
 
@@ -621,14 +666,16 @@ class WorkspaceScreen extends ConsumerWidget {
     final previous = ref.read(_searchNavigationTargetProvider);
     ref
         .read(_searchNavigationTargetProvider.notifier)
-        .state = _SearchNavigationTarget(
-      filePath: result.filePath,
-      line: result.line,
-      startOffset: result.startOffset,
-      endOffset: result.endOffset,
-      query: result.query,
-      request: (previous?.request ?? 0) + 1,
-    );
+        .set(
+          _SearchNavigationTarget(
+            filePath: result.filePath,
+            line: result.line,
+            startOffset: result.startOffset,
+            endOffset: result.endOffset,
+            query: result.query,
+            request: (previous?.request ?? 0) + 1,
+          ),
+        );
   }
 
   void _showProblemsDialog(BuildContext context, WidgetRef ref) {
@@ -2161,11 +2208,13 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
               : () {
                   ref
                       .read(_outlineNavigationTargetProvider.notifier)
-                      .state = _OutlineNavigationTarget(
-                    filePath: activeFilePath,
-                    headingId: heading.id,
-                    line: heading.span.startLine,
-                  );
+                      .set(
+                        _OutlineNavigationTarget(
+                          filePath: activeFilePath,
+                          headingId: heading.id,
+                          line: heading.span.startLine,
+                        ),
+                      );
                 },
         );
       },
@@ -2385,11 +2434,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyF) {
-      ref.read(workspaceSearchOpenRequestProvider.notifier).state++;
+      ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.escape) {
-      ref.read(workspaceSearchCloseRequestProvider.notifier).state++;
+      ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyB) {
@@ -2585,10 +2634,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 scrollRequest: _wysiwygScrollRequest,
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
-                    .state++,
+                    .request(),
                 onCloseSearch: () => ref
                     .read(workspaceSearchCloseRequestProvider.notifier)
-                    .state++,
+                    .request(),
               ),
             ),
           if (sourceVisible)
@@ -5183,11 +5232,13 @@ void _navigatePreviewAnchor(
   }
   ref
       .read(_outlineNavigationTargetProvider.notifier)
-      .state = _OutlineNavigationTarget(
-    filePath: filePath,
-    headingId: heading.id,
-    line: heading.span.startLine,
-  );
+      .set(
+        _OutlineNavigationTarget(
+          filePath: filePath,
+          headingId: heading.id,
+          line: heading.span.startLine,
+        ),
+      );
 }
 
 void _showPreviewLinkMessage(BuildContext context, String message) {

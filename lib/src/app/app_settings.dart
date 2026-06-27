@@ -234,12 +234,15 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
   }
 }
 
-class AppSettingsController extends StateNotifier<AppSettings> {
-  AppSettingsController(this._store) : super(AppSettings.defaults()) {
-    unawaited(_load());
-  }
+class AppSettingsController extends Notifier<AppSettings> {
+  late LocalSettingsStore _store;
 
-  final LocalSettingsStore _store;
+  @override
+  AppSettings build() {
+    _store = ref.read(localSettingsStoreProvider);
+    unawaited(_load());
+    return AppSettings.defaults();
+  }
 
   Future<void> setThemeModePreference(BusyMarkThemeModePreference preference) {
     return _save(state.copyWith(themeModePreference: preference));
@@ -330,9 +333,9 @@ final localSettingsStoreProvider = Provider<LocalSettingsStore>(
 );
 
 final appSettingsControllerProvider =
-    StateNotifierProvider<AppSettingsController, AppSettings>((ref) {
-      return AppSettingsController(ref.watch(localSettingsStoreProvider));
-    });
+    NotifierProvider<AppSettingsController, AppSettings>(
+      AppSettingsController.new,
+    );
 
 T _enumFromName<T extends Enum>(List<T> values, Object? name, T fallback) {
   if (name == null) {

@@ -37,6 +37,7 @@ apps:
       - wayland
       - x11
       - home
+      - network
       - removable-media
     environment:
       GDK_BACKEND: wayland,x11

@@ -154,7 +154,7 @@ class BusyMarkApp extends ConsumerWidget {
                           final notifier = ref.read(
                             workspaceSearchOpenRequestProvider.notifier,
                           );
-                          notifier.state++;
+                          notifier.request();
                         }
                         return null;
                       },
@@ -166,7 +166,7 @@ class BusyMarkApp extends ConsumerWidget {
                           final notifier = ref.read(
                             workspaceSearchCloseRequestProvider.notifier,
                           );
-                          notifier.state++;
+                          notifier.request();
                         }
                         return null;
                       },
@@ -444,11 +444,11 @@ class _BusyMarkSearchShortcutHandlerState
     final keyboard = HardwareKeyboard.instance;
     if (keyboard.isControlPressed &&
         event.logicalKey == LogicalKeyboardKey.keyF) {
-      ref.read(workspaceSearchOpenRequestProvider.notifier).state++;
+      ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return true;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      ref.read(workspaceSearchCloseRequestProvider.notifier).state++;
+      ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return false;
     }
     return false;

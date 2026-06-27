@@ -16,28 +16,41 @@ final workspaceServiceProvider = Provider<WorkspaceService>(
 );
 
 final workspaceControllerProvider =
-    StateNotifierProvider<WorkspaceController, WorkspaceState>((ref) {
-      return WorkspaceController(
-        service: ref.watch(workspaceServiceProvider),
-        settingsController: ref.watch(appSettingsControllerProvider.notifier),
-      );
-    });
+    NotifierProvider<WorkspaceController, WorkspaceState>(
+      WorkspaceController.new,
+    );
 
-final workspaceSearchOpenRequestProvider = StateProvider<int>((ref) => 0);
+final workspaceSearchOpenRequestProvider =
+    NotifierProvider<WorkspaceSearchRequestController, int>(
+      WorkspaceSearchRequestController.new,
+    );
 
-final workspaceSearchCloseRequestProvider = StateProvider<int>((ref) => 0);
+final workspaceSearchCloseRequestProvider =
+    NotifierProvider<WorkspaceSearchRequestController, int>(
+      WorkspaceSearchRequestController.new,
+    );
 
-class WorkspaceController extends StateNotifier<WorkspaceState> {
-  WorkspaceController({
-    required WorkspaceService service,
-    required AppSettingsController settingsController,
-  }) : _service = service,
-       _settingsController = settingsController,
-       super(const WorkspaceState());
+class WorkspaceSearchRequestController extends Notifier<int> {
+  @override
+  int build() => 0;
 
-  final WorkspaceService _service;
-  final AppSettingsController _settingsController;
+  void request() {
+    state++;
+  }
+}
+
+class WorkspaceController extends Notifier<WorkspaceState> {
+  late WorkspaceService _service;
+  late AppSettingsController _settingsController;
   Timer? _parseDebounce;
+
+  @override
+  WorkspaceState build() {
+    _service = ref.read(workspaceServiceProvider);
+    _settingsController = ref.read(appSettingsControllerProvider.notifier);
+    ref.onDispose(() => _parseDebounce?.cancel());
+    return const WorkspaceState();
+  }
 
   bool get activeDocumentNeedsSaveLocation {
     final workspace = state.workspace;
@@ -362,11 +375,5 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
         blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: text)],
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _parseDebounce?.cancel();
-    super.dispose();
   }
 }
