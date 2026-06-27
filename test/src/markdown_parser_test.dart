@@ -57,6 +57,58 @@ void main() {
     );
   });
 
+  test(
+    'derives diagnostic links and images from Markdown AST semantics',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark_ast_links_');
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(p.join(root.path, 'docs')).createSync();
+      File(p.join(root.path, 'target.md')).writeAsStringSync('# Target\n');
+      File(p.join(root.path, 'docs', 'a(b).md')).writeAsStringSync('# Paren\n');
+      File(
+        p.join(root.path, 'docs', 'angle target.md'),
+      ).writeAsStringSync('# Angle\n');
+      File(p.join(root.path, 'logo.png')).writeAsBytesSync([0]);
+      final path = p.join(root.path, 'topic.md');
+
+      final parsed = await parser.parseAsync(
+        filePath: path,
+        workspaceRoot: root.path,
+        source:
+            '# AST links\n\n'
+            '[Nested [label]](target.md)\n'
+            '[Titled](target.md "Existing target")\n'
+            '[Paren](docs/a(b).md)\n'
+            '[Angle](<docs/angle target.md> "Existing target")\n'
+            '![Logo][logo-ref]\n'
+            '[Missing][missing-ref]\n\n'
+            '[logo-ref]: logo.png "Logo title"\n'
+            '[missing-ref]: missing.md\n',
+      );
+
+      expect(
+        parsed.links.map((item) => item.destination),
+        containsAll([
+          'target.md',
+          'docs/a(b).md',
+          'docs/angle%20target.md',
+          'missing.md',
+        ]),
+      );
+      expect(parsed.images.single.destination, 'logo.png');
+      expect(
+        parsed.diagnostics
+            .where((item) => item.code == 'markdown.link.unresolved-target')
+            .map((item) => item.args['targetPath']),
+        ['missing.md'],
+      );
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        isNot(contains('markdown.image.missing-file')),
+      );
+    },
+  );
+
   test('resolves Writerside topic-specific image directories', () async {
     final root = await Directory.systemTemp.createTemp('busymark_writerside_');
     addTearDown(() => root.deleteSync(recursive: true));

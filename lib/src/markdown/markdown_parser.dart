@@ -64,7 +64,6 @@ class MarkdownParser {
     final variables = <MarkdownVariableToken>[];
     final ids = <String, SourceSpan>{};
     final generatedIds = <String, int>{};
-    final mapper = SourceLocationMapper(source);
     var title = _frontMatterTitle(filePath, source, diagnostics);
     void addScannedHeading({
       required int level,
@@ -221,13 +220,11 @@ class MarkdownParser {
         previousSetextCandidateOffset = null;
       }
 
-      _extractInlineItems(
+      _extractVariableTokens(
         filePath: filePath,
         source: source,
         line: line,
         lineOffset: offset,
-        links: links,
-        images: images,
         variables: variables,
       );
       _extractXmlBlocks(
@@ -275,29 +272,39 @@ class MarkdownParser {
       );
     }
 
+    final renderedDocument = const MarkdownAstAdapter().parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      title: title,
+    );
+    var busyDocument = _withScannedMetadata(
+      renderedDocument,
+      headings,
+      sortDiagnostics(diagnostics),
+    );
+    final inlineReferences = _extractAstInlineReferences(
+      filePath: filePath,
+      source: source,
+      document: busyDocument,
+    );
+    links.addAll(inlineReferences.links);
+    images.addAll(inlineReferences.images);
+
     if (validateLocalReferences) {
       diagnostics.addAll(
         _validateLocalReferences(
           filePath: filePath,
-          source: source,
           workspaceRoot: workspaceRoot,
           headings: headings,
           links: links,
           images: images,
-          mapper: mapper,
         ),
       );
     }
 
-    final busyDocument = _withScannedMetadata(
-      const MarkdownAstAdapter().parse(
-        filePath: filePath,
-        source: source,
-        mode: mode,
-        title: title,
-      ),
-      headings,
-      sortDiagnostics(diagnostics),
+    busyDocument = busyDocument.copyWith(
+      diagnostics: sortDiagnostics(diagnostics),
     );
 
     return ParsedMarkdownDocument(
@@ -363,6 +370,72 @@ class MarkdownParser {
       diagnostics: diagnostics,
       busyDocument: parsed.busyDocument.copyWith(diagnostics: diagnostics),
     );
+  }
+
+  _AstInlineReferences _extractAstInlineReferences({
+    required String filePath,
+    required String source,
+    required BusyDocument document,
+  }) {
+    final links = <MarkdownLink>[];
+    final images = <MarkdownImage>[];
+    final fallbackSpan = SourceSpan.entireFile(filePath, source);
+
+    void visitInline(BusyInline inline, SourceSpan span) {
+      final destination = inline.destination;
+      if (destination != null && destination.trim().isNotEmpty) {
+        switch (inline.kind) {
+          case BusyInlineKind.link:
+            links.add(
+              MarkdownLink(
+                text: inline.plainText,
+                destination: destination,
+                span: span,
+              ),
+            );
+            break;
+          case BusyInlineKind.image:
+            images.add(
+              MarkdownImage(
+                alt: inline.text,
+                destination: destination,
+                span: span,
+              ),
+            );
+            break;
+          case BusyInlineKind.text:
+          case BusyInlineKind.strong:
+          case BusyInlineKind.emphasis:
+          case BusyInlineKind.underline:
+          case BusyInlineKind.strikethrough:
+          case BusyInlineKind.code:
+          case BusyInlineKind.softBreak:
+          case BusyInlineKind.hardBreak:
+          case BusyInlineKind.html:
+          case BusyInlineKind.writersideVariable:
+          case BusyInlineKind.unknown:
+            break;
+        }
+      }
+      for (final child in inline.children) {
+        visitInline(child, span);
+      }
+    }
+
+    void visitBlock(BusyBlock block, SourceSpan inheritedSpan) {
+      final span = block.sourceSpan ?? inheritedSpan;
+      for (final inline in block.inlines) {
+        visitInline(inline, span);
+      }
+      for (final child in block.children) {
+        visitBlock(child, span);
+      }
+    }
+
+    for (final block in document.blocks) {
+      visitBlock(block, fallbackSpan);
+    }
+    return _AstInlineReferences(links: links, images: images);
   }
 
   BusyBlock _blockWithScannedMetadata(
@@ -623,45 +696,13 @@ class MarkdownParser {
     return count == 0 ? base : '$base-$count';
   }
 
-  void _extractInlineItems({
+  void _extractVariableTokens({
     required String filePath,
     required String source,
     required String line,
     required int lineOffset,
-    required List<MarkdownLink> links,
-    required List<MarkdownImage> images,
     required List<MarkdownVariableToken> variables,
   }) {
-    final imageRegex = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)');
-    for (final match in imageRegex.allMatches(line)) {
-      images.add(
-        MarkdownImage(
-          alt: match.group(1)!,
-          destination: match.group(2)!,
-          span: SourceSpan.fromOffsets(
-            filePath: filePath,
-            source: source,
-            startOffset: lineOffset + match.start,
-            endOffset: lineOffset + match.end,
-          ),
-        ),
-      );
-    }
-    final linkRegex = RegExp(r'(?<!!)\[([^\]]+)\]\(([^)]+)\)');
-    for (final match in linkRegex.allMatches(line)) {
-      links.add(
-        MarkdownLink(
-          text: match.group(1)!,
-          destination: match.group(2)!,
-          span: SourceSpan.fromOffsets(
-            filePath: filePath,
-            source: source,
-            startOffset: lineOffset + match.start,
-            endOffset: lineOffset + match.end,
-          ),
-        ),
-      );
-    }
     final variableRegex = RegExp(r'(?<!\\)%([A-Za-z_][A-Za-z0-9_.-]*)%');
     for (final match in variableRegex.allMatches(line)) {
       variables.add(
@@ -739,12 +780,10 @@ class MarkdownParser {
 
   List<Diagnostic> _validateLocalReferences({
     required String filePath,
-    required String source,
     required String? workspaceRoot,
     required List<MarkdownHeading> headings,
     required List<MarkdownLink> links,
     required List<MarkdownImage> images,
-    required SourceLocationMapper mapper,
   }) {
     final diagnostics = <Diagnostic>[];
     final anchors = headings.map((item) => item.id).toSet();
@@ -965,13 +1004,14 @@ class MarkdownParser {
     if (_hasUriScheme(targetPath)) {
       return const _LocalLinkTarget.blocked();
     }
+    final localTargetPath = _decodeLocalReferencePath(targetPath);
     final root = _absoluteWorkspaceRoot(workspaceRoot);
     if (root == null) {
       return const _LocalLinkTarget.unvalidated();
     }
-    final resolved = p.isAbsolute(targetPath)
-        ? p.normalize(targetPath)
-        : p.normalize(p.join(p.dirname(filePath), targetPath));
+    final resolved = p.isAbsolute(localTargetPath)
+        ? p.normalize(localTargetPath)
+        : p.normalize(p.join(p.dirname(filePath), localTargetPath));
     final absoluteTarget = p.normalize(p.absolute(resolved));
     if (!_isWithinDirectory(root, absoluteTarget)) {
       return const _LocalLinkTarget.blocked();
@@ -1014,13 +1054,14 @@ class MarkdownParser {
     if (_hasUriScheme(targetPath)) {
       return const _LocalLinkTarget.blocked();
     }
+    final localTargetPath = _decodeLocalReferencePath(targetPath);
     final root = _absoluteWorkspaceRoot(workspaceRoot);
     if (root == null) {
       return const _LocalLinkTarget.unvalidated();
     }
-    final resolved = p.isAbsolute(targetPath)
-        ? p.normalize(targetPath)
-        : p.normalize(p.join(p.dirname(filePath), targetPath));
+    final resolved = p.isAbsolute(localTargetPath)
+        ? p.normalize(localTargetPath)
+        : p.normalize(p.join(p.dirname(filePath), localTargetPath));
     final absoluteTarget = p.normalize(p.absolute(resolved));
     if (!_isWithinDirectory(root, absoluteTarget)) {
       return const _LocalLinkTarget.blocked();
@@ -1072,6 +1113,21 @@ class MarkdownParser {
     return destination.startsWith('http://') ||
         destination.startsWith('https://') ||
         destination.startsWith('mailto:');
+  }
+}
+
+class _AstInlineReferences {
+  const _AstInlineReferences({required this.links, required this.images});
+
+  final List<MarkdownLink> links;
+  final List<MarkdownImage> images;
+}
+
+String _decodeLocalReferencePath(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
   }
 }
 
