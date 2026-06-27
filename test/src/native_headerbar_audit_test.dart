@@ -47,6 +47,7 @@ void main() {
       native,
       contains('gtk_window_set_title(window, kApplicationDisplayName)'),
     );
+    expect(cmake, contains('set(APPLICATION_ID "io.busystack.busymark")'));
     expect(
       cmake,
       contains(r'"${CMAKE_CURRENT_SOURCE_DIR}/io.busystack.busymark.desktop"'),
