@@ -210,19 +210,25 @@ Diagnostic _scanWarning(
   );
 }
 
+/// BusyMark heading anchors follow `package:markdown` GFM heading IDs, extended
+/// to Unicode letters, marks, and numbers for localized documents.
+///
+/// Compatibility target:
+/// - lower-case and trim heading text
+/// - keep Unicode letters, combining marks, numbers, ASCII `_`, and ASCII `-`
+/// - remove other punctuation
+/// - convert whitespace to ASCII hyphens
 String slugForHeading(String text) {
   final buffer = StringBuffer();
-  var previousHyphen = false;
-  for (final rune in text.toLowerCase().runes) {
+  final validSlugCharacter = RegExp(r'[\p{L}\p{M}\p{N}_-]', unicode: true);
+  final whitespace = RegExp(r'\s', unicode: true);
+  for (final rune in text.toLowerCase().trim().runes) {
     final char = String.fromCharCode(rune);
-    final isAlphaNumeric = RegExp('[a-z0-9]').hasMatch(char);
-    if (isAlphaNumeric) {
+    if (validSlugCharacter.hasMatch(char)) {
       buffer.write(char);
-      previousHyphen = false;
-    } else if (!previousHyphen) {
+    } else if (whitespace.hasMatch(char)) {
       buffer.write('-');
-      previousHyphen = true;
     }
   }
-  return buffer.toString().replaceAll(RegExp('^-+|-+\$'), '');
+  return buffer.toString();
 }

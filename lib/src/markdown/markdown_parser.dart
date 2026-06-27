@@ -799,6 +799,9 @@ class MarkdownParser {
       final anchor = fragmentIndex == -1
           ? null
           : destination.substring(fragmentIndex + 1);
+      final decodedAnchor = anchor == null
+          ? null
+          : _decodeLocalReferenceAnchor(anchor);
       final target = _resolveLocalLinkTarget(
         filePath: filePath,
         workspaceRoot: workspaceRoot,
@@ -816,12 +819,12 @@ class MarkdownParser {
         );
         continue;
       }
-      if (anchor != null && anchor.isNotEmpty) {
+      if (decodedAnchor != null && decodedAnchor.isNotEmpty) {
         var targetAnchors = anchors;
         if (targetPath.isNotEmpty) {
           continue;
         }
-        if (!targetAnchors.contains(anchor)) {
+        if (!targetAnchors.contains(decodedAnchor)) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.link.unresolved-anchor',
@@ -890,6 +893,9 @@ class MarkdownParser {
       final anchor = fragmentIndex == -1
           ? null
           : destination.substring(fragmentIndex + 1);
+      final decodedAnchor = anchor == null
+          ? null
+          : _decodeLocalReferenceAnchor(anchor);
       final target = await _resolveLocalLinkTargetAsync(
         filePath: filePath,
         workspaceRoot: workspaceRoot,
@@ -907,11 +913,11 @@ class MarkdownParser {
         );
         continue;
       }
-      if (anchor == null || anchor.isEmpty) {
+      if (decodedAnchor == null || decodedAnchor.isEmpty) {
         continue;
       }
       if (targetPath.isEmpty) {
-        if (!anchors.contains(anchor)) {
+        if (!anchors.contains(decodedAnchor)) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.link.unresolved-anchor',
@@ -935,7 +941,7 @@ class MarkdownParser {
           workspaceRoot: workspaceRoot,
           validateLocalReferences: false,
         ).anchors;
-        if (!targetAnchors.contains(anchor)) {
+        if (!targetAnchors.contains(decodedAnchor)) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.link.unresolved-anchor',
@@ -1124,6 +1130,14 @@ class _AstInlineReferences {
 }
 
 String _decodeLocalReferencePath(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
+}
+
+String _decodeLocalReferenceAnchor(String value) {
   try {
     return Uri.decodeComponent(value);
   } on FormatException {

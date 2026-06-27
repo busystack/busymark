@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +40,61 @@ void main() {
     );
 
     expect(parsed.title, 'Front Matter Title');
+  });
+
+  test('generates Unicode heading anchors for supported languages', () {
+    final localizedHeadings = <String, ({String heading, String slug})>{
+      'en': (heading: 'Getting Started', slug: 'getting-started'),
+      'de': (heading: 'Überblick Änderungen', slug: 'überblick-änderungen'),
+      'it': (heading: 'Novità rapide', slug: 'novità-rapide'),
+      'no': (heading: 'Nøkkel område', slug: 'nøkkel-område'),
+      'fr': (heading: 'État de l’art', slug: 'état-de-lart'),
+      'ru': (heading: 'Быстрый старт', slug: 'быстрый-старт'),
+      'uk': (heading: 'Швидкий старт', slug: 'швидкий-старт'),
+      'pl': (heading: 'Zażółć gęślą jaźń', slug: 'zażółć-gęślą-jaźń'),
+      'es': (heading: 'Guía rápida', slug: 'guía-rápida'),
+      'pt': (heading: 'Visão geral', slug: 'visão-geral'),
+      'ar': (heading: 'دليل البدء', slug: 'دليل-البدء'),
+      'fa': (heading: 'راهنمای شروع', slug: 'راهنمای-شروع'),
+      'hi': (heading: 'हिंदी दस्तावेज़', slug: 'हिंदी-दस्तावेज़'),
+    };
+    final source = localizedHeadings.entries
+        .expand((entry) {
+          final heading = entry.value.heading;
+          final slug = entry.value.slug;
+          return [
+            '## $heading',
+            '',
+            '[${entry.key} raw](#$slug)',
+            '[${entry.key} encoded](#${Uri.encodeComponent(slug)})',
+            '',
+          ];
+        })
+        .join('\n');
+
+    final parsed = parser.parse(filePath: 'localized.md', source: source);
+    final adapted = const MarkdownAstAdapter().parse(
+      filePath: 'localized.md',
+      source: source,
+      mode: MarkdownMode.commonMark,
+    );
+
+    for (final MapEntry(key: locale, value: item)
+        in localizedHeadings.entries) {
+      expect(slugForHeading(item.heading), item.slug, reason: locale);
+      expect(parsed.anchors, contains(item.slug), reason: locale);
+      expect(
+        adapted.blocks
+            .where((block) => block.kind == BusyBlockKind.heading)
+            .map((block) => block.attributes['id']),
+        contains(item.slug),
+        reason: locale,
+      );
+    }
+    expect(
+      parsed.diagnostics.map((item) => item.code),
+      isNot(contains('markdown.link.unresolved-anchor')),
+    );
   });
 
   test('detects unresolved links, missing images, and missing alt text', () {

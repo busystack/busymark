@@ -501,8 +501,9 @@ class WritersideModuleService {
                   ),
           );
         } else if (anchor != null && anchor.isNotEmpty) {
+          final decodedAnchor = _decodeMarkdownAnchor(anchor);
           final anchors = target.elementIds.map((item) => item.id).toSet();
-          if (!anchors.contains(anchor)) {
+          if (!anchors.contains(decodedAnchor)) {
             diagnostics.add(
               Diagnostic(
                 code: 'markdown.link.unresolved-anchor',
@@ -670,6 +671,14 @@ class WritersideModuleService {
     return destination.startsWith('http://') ||
         destination.startsWith('https://') ||
         destination.startsWith('mailto:');
+  }
+
+  String _decodeMarkdownAnchor(String value) {
+    try {
+      return Uri.decodeComponent(value);
+    } on FormatException {
+      return value;
+    }
   }
 
   SourceSpan _stringSpan(String filePath, String source, String value) {

@@ -5150,11 +5150,13 @@ void _navigatePreviewAnchor(
   final normalizedAnchor = anchor.startsWith('#')
       ? anchor.substring(1)
       : anchor;
-  final slug = slugForHeading(normalizedAnchor);
+  final decodedAnchor = _decodePreviewAnchor(normalizedAnchor);
+  final slug = slugForHeading(decodedAnchor);
   final heading = markdown.headings
       .where(
         (heading) =>
             heading.id == normalizedAnchor ||
+            heading.id == decodedAnchor ||
             heading.id == slug ||
             slugForHeading(heading.text) == slug,
       )
@@ -5174,6 +5176,14 @@ void _navigatePreviewAnchor(
 
 void _showPreviewLinkMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+String _decodePreviewAnchor(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return value;
+  }
 }
 
 class _PreviewCallout extends StatelessWidget {
