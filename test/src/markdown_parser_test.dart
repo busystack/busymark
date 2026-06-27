@@ -84,19 +84,86 @@ void main() {
     );
   });
 
-  test('cross-linked Markdown anchor validation does not recurse forever', () {
-    final path = fixture('cycle_a.md');
-    final parsed = parser.parse(
+  test(
+    'cross-linked Markdown anchor validation does not recurse forever',
+    () async {
+      final path = fixture('cycle_a.md');
+      final parsed = await parser.parseAsync(
+        filePath: path,
+        source: File(path).readAsStringSync(),
+        workspaceRoot: 'test/fixtures/markdown',
+      );
+
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        isNot(contains('markdown.link.unresolved-anchor')),
+      );
+    },
+  );
+
+  test('local link validation stays inside the workspace root', () async {
+    final root = await Directory.systemTemp.createTemp('busymark-link-scope-');
+    addTearDown(() => root.deleteSync(recursive: true));
+    final workspace = Directory(p.join(root.path, 'workspace'))..createSync();
+    final secret = File(p.join(root.path, 'secret.md'))
+      ..writeAsStringSync('# Secret\n');
+    final path = p.join(workspace.path, 'topic.md');
+
+    final parsed = await parser.parseAsync(
       filePath: path,
-      source: File(path).readAsStringSync(),
-      workspaceRoot: 'test/fixtures/markdown',
+      source: '[Secret](../${p.basename(secret.path)}#secret)\n',
+      workspaceRoot: workspace.path,
     );
 
     expect(
       parsed.diagnostics.map((item) => item.code),
-      isNot(contains('markdown.link.unresolved-anchor')),
+      contains('markdown.link.unresolved-target'),
     );
   });
+
+  test(
+    'local link validation does not read unsupported anchor targets',
+    () async {
+      final root = Directory.systemTemp.createTempSync('busymark-link-binary-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final binary = File(p.join(root.path, 'binary.bin'))
+        ..writeAsBytesSync([0xff, 0xfe, 0xfd]);
+      final path = p.join(root.path, 'topic.md');
+
+      final parsed = await parser.parseAsync(
+        filePath: path,
+        source: '[Binary](${p.basename(binary.path)}#anchor)\n',
+        workspaceRoot: root.path,
+      );
+
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        isNot(contains('markdown.link.unresolved-anchor')),
+      );
+    },
+  );
+
+  test(
+    'local link validation does not read oversized Markdown targets',
+    () async {
+      final root = Directory.systemTemp.createTempSync('busymark-link-large-');
+      addTearDown(() => root.deleteSync(recursive: true));
+      final large = File(p.join(root.path, 'large.md'))
+        ..writeAsBytesSync([0xff, ...List<int>.filled(2 * 1024 * 1024, 0x61)]);
+      final path = p.join(root.path, 'topic.md');
+
+      final parsed = await parser.parseAsync(
+        filePath: path,
+        source: '[Large](${p.basename(large.path)}#anchor)\n',
+        workspaceRoot: root.path,
+      );
+
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        isNot(contains('markdown.link.unresolved-anchor')),
+      );
+    },
+  );
 
   test('detects unsafe raw HTML', () {
     final path = fixture('unsafe_html.md');

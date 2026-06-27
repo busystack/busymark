@@ -259,7 +259,7 @@ class WorkspaceService {
       }
       return workspace.copyWith(diagnostics: module?.diagnostics);
     }
-    final markdown = markdownParser.parse(
+    final markdown = await markdownParser.parseAsync(
       filePath: active,
       source: source,
       mode: MarkdownMode.commonMark,
@@ -314,24 +314,27 @@ class WorkspaceService {
       source: source,
       mode: MarkdownMode.commonMark,
       workspaceRoot: workspace.rootPath,
+      validateLocalReferences: false,
     );
     return previewBuilder.build(parsed);
   }
 
   Future<Workspace> _openSingleMarkdown(String filePath) async {
     final load = await loadTextWithSnapshot(filePath);
-    final markdown = markdownParser.parse(
+    final rootPath = p.dirname(filePath);
+    final markdown = await markdownParser.parseAsync(
       filePath: filePath,
       source: load.text,
+      workspaceRoot: rootPath,
     );
     return Workspace(
       id: filePath,
-      rootPath: p.dirname(filePath),
+      rootPath: rootPath,
       kind: WorkspaceKind.singleMarkdown,
       openedAt: DateTime.now(),
       activeFilePath: filePath,
       activeFileSnapshot: load.snapshot,
-      files: [await _documentFile(filePath, p.dirname(filePath))],
+      files: [await _documentFile(filePath, rootPath)],
       diagnostics: markdown.diagnostics,
       markdown: markdown,
     );
@@ -496,7 +499,7 @@ class WorkspaceService {
       return null;
     }
     try {
-      return markdownParser.parse(
+      return markdownParser.parseAsync(
         filePath: file.path,
         source: await file.readAsString(),
         workspaceRoot: workspaceRoot,

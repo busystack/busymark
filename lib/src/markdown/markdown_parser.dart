@@ -10,8 +10,43 @@ import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
 
+// Cross-file diagnostics are intentionally scoped to Markdown files inside the
+// opened workspace. Targets outside that root, symlinks, unsupported file
+// types, and oversized files are not inspected.
+const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
+
 class MarkdownParser {
   const MarkdownParser();
+
+  Future<ParsedMarkdownDocument> parseAsync({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+    String? workspaceRoot,
+    bool validateLocalReferences = true,
+  }) async {
+    final parsed = parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      workspaceRoot: workspaceRoot,
+      validateLocalReferences: false,
+    );
+    if (!validateLocalReferences) {
+      return parsed;
+    }
+    final diagnostics = sortDiagnostics([
+      ...parsed.diagnostics,
+      ...await _validateLocalReferencesAsync(
+        filePath: filePath,
+        workspaceRoot: workspaceRoot,
+        headings: parsed.headings,
+        links: parsed.links,
+        images: parsed.images,
+      ),
+    ]);
+    return _withDiagnostics(parsed, diagnostics);
+  }
 
   ParsedMarkdownDocument parse({
     required String filePath,
@@ -307,6 +342,26 @@ class MarkdownParser {
             sourceIndexRef: () => sourceIndex++,
           ),
       ],
+    );
+  }
+
+  ParsedMarkdownDocument _withDiagnostics(
+    ParsedMarkdownDocument parsed,
+    List<Diagnostic> diagnostics,
+  ) {
+    return ParsedMarkdownDocument(
+      filePath: parsed.filePath,
+      source: parsed.source,
+      mode: parsed.mode,
+      title: parsed.title,
+      headings: parsed.headings,
+      links: parsed.links,
+      images: parsed.images,
+      codeBlocks: parsed.codeBlocks,
+      xmlBlocks: parsed.xmlBlocks,
+      variables: parsed.variables,
+      diagnostics: diagnostics,
+      busyDocument: parsed.busyDocument.copyWith(diagnostics: diagnostics),
     );
   }
 
@@ -698,13 +753,19 @@ class MarkdownParser {
       if (_isExternal(destination)) {
         continue;
       }
-      final parts = destination.split('#');
-      final targetPath = parts.first;
-      final anchor = parts.length > 1 ? parts.sublist(1).join('#') : null;
-      final resolved = targetPath.isEmpty
-          ? filePath
-          : p.normalize(p.join(p.dirname(filePath), targetPath));
-      if (targetPath.isNotEmpty && !File(resolved).existsSync()) {
+      final fragmentIndex = destination.indexOf('#');
+      final targetPath = fragmentIndex == -1
+          ? destination
+          : destination.substring(0, fragmentIndex);
+      final anchor = fragmentIndex == -1
+          ? null
+          : destination.substring(fragmentIndex + 1);
+      final target = _resolveLocalLinkTarget(
+        filePath: filePath,
+        workspaceRoot: workspaceRoot,
+        targetPath: targetPath,
+      );
+      if (targetPath.isNotEmpty && target.blocksTargetValidation) {
         diagnostics.add(
           Diagnostic(
             code: 'markdown.link.unresolved-target',
@@ -718,14 +779,8 @@ class MarkdownParser {
       }
       if (anchor != null && anchor.isNotEmpty) {
         var targetAnchors = anchors;
-        if (targetPath.isNotEmpty && File(resolved).existsSync()) {
-          final targetSource = File(resolved).readAsStringSync();
-          targetAnchors = parse(
-            filePath: resolved,
-            source: targetSource,
-            workspaceRoot: workspaceRoot,
-            validateLocalReferences: false,
-          ).anchors;
+        if (targetPath.isNotEmpty) {
+          continue;
         }
         if (!targetAnchors.contains(anchor)) {
           diagnostics.add(
@@ -775,11 +830,291 @@ class MarkdownParser {
     return diagnostics;
   }
 
+  Future<List<Diagnostic>> _validateLocalReferencesAsync({
+    required String filePath,
+    required String? workspaceRoot,
+    required List<MarkdownHeading> headings,
+    required List<MarkdownLink> links,
+    required List<MarkdownImage> images,
+  }) async {
+    final diagnostics = <Diagnostic>[];
+    final anchors = headings.map((item) => item.id).toSet();
+    for (final link in links) {
+      final destination = link.destination.trim();
+      if (_isExternal(destination)) {
+        continue;
+      }
+      final fragmentIndex = destination.indexOf('#');
+      final targetPath = fragmentIndex == -1
+          ? destination
+          : destination.substring(0, fragmentIndex);
+      final anchor = fragmentIndex == -1
+          ? null
+          : destination.substring(fragmentIndex + 1);
+      final target = await _resolveLocalLinkTargetAsync(
+        filePath: filePath,
+        workspaceRoot: workspaceRoot,
+        targetPath: targetPath,
+      );
+      if (targetPath.isNotEmpty && target.blocksTargetValidation) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.link.unresolved-target',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'targetPath': targetPath},
+            sourceSpan: link.span,
+          ),
+        );
+        continue;
+      }
+      if (anchor == null || anchor.isEmpty) {
+        continue;
+      }
+      if (targetPath.isEmpty) {
+        if (!anchors.contains(anchor)) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'markdown.link.unresolved-anchor',
+              severity: DiagnosticSeverity.warning,
+              filePath: filePath,
+              args: {'anchor': anchor},
+              sourceSpan: link.span,
+            ),
+          );
+        }
+        continue;
+      }
+      if (!target.canValidateAnchors || target.path == null) {
+        continue;
+      }
+      try {
+        final targetSource = await File(target.path!).readAsString();
+        final targetAnchors = parse(
+          filePath: target.path!,
+          source: targetSource,
+          workspaceRoot: workspaceRoot,
+          validateLocalReferences: false,
+        ).anchors;
+        if (!targetAnchors.contains(anchor)) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'markdown.link.unresolved-anchor',
+              severity: DiagnosticSeverity.warning,
+              filePath: filePath,
+              args: {'anchor': anchor},
+              sourceSpan: link.span,
+            ),
+          );
+        }
+      } on Object {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.link.unresolved-target',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'targetPath': targetPath},
+            sourceSpan: link.span,
+          ),
+        );
+      }
+    }
+    for (final image in images) {
+      if (image.alt.trim().isEmpty) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.image.missing-alt',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'destination': image.destination},
+            sourceSpan: image.span,
+          ),
+        );
+      }
+      final destination = image.destination.trim();
+      if (_isExternal(destination)) {
+        continue;
+      }
+      if (!localImageExists(
+        activeFilePath: filePath,
+        destination: destination,
+        workspaceRoot: workspaceRoot,
+      )) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.image.missing-file',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'destination': destination},
+            sourceSpan: image.span,
+          ),
+        );
+      }
+    }
+    return diagnostics;
+  }
+
+  _LocalLinkTarget _resolveLocalLinkTarget({
+    required String filePath,
+    required String? workspaceRoot,
+    required String targetPath,
+  }) {
+    if (targetPath.isEmpty) {
+      return const _LocalLinkTarget.currentDocument();
+    }
+    if (_hasUriScheme(targetPath)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    final root = _absoluteWorkspaceRoot(workspaceRoot);
+    if (root == null) {
+      return const _LocalLinkTarget.unvalidated();
+    }
+    final resolved = p.isAbsolute(targetPath)
+        ? p.normalize(targetPath)
+        : p.normalize(p.join(p.dirname(filePath), targetPath));
+    final absoluteTarget = p.normalize(p.absolute(resolved));
+    if (!_isWithinDirectory(root, absoluteTarget)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    FileSystemEntityType type;
+    try {
+      type = FileSystemEntity.typeSync(absoluteTarget, followLinks: false);
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (type != FileSystemEntityType.file) {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (!isMarkdownPath(absoluteTarget)) {
+      return _LocalLinkTarget.found(
+        path: absoluteTarget,
+        canValidateAnchors: false,
+      );
+    }
+    FileStat stat;
+    try {
+      stat = File(absoluteTarget).statSync();
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    return _LocalLinkTarget.found(
+      path: absoluteTarget,
+      canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
+    );
+  }
+
+  Future<_LocalLinkTarget> _resolveLocalLinkTargetAsync({
+    required String filePath,
+    required String? workspaceRoot,
+    required String targetPath,
+  }) async {
+    if (targetPath.isEmpty) {
+      return const _LocalLinkTarget.currentDocument();
+    }
+    if (_hasUriScheme(targetPath)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    final root = _absoluteWorkspaceRoot(workspaceRoot);
+    if (root == null) {
+      return const _LocalLinkTarget.unvalidated();
+    }
+    final resolved = p.isAbsolute(targetPath)
+        ? p.normalize(targetPath)
+        : p.normalize(p.join(p.dirname(filePath), targetPath));
+    final absoluteTarget = p.normalize(p.absolute(resolved));
+    if (!_isWithinDirectory(root, absoluteTarget)) {
+      return const _LocalLinkTarget.blocked();
+    }
+    FileSystemEntityType type;
+    try {
+      type = await FileSystemEntity.type(absoluteTarget, followLinks: false);
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (type != FileSystemEntityType.file) {
+      return const _LocalLinkTarget.blocked();
+    }
+    if (!isMarkdownPath(absoluteTarget)) {
+      return _LocalLinkTarget.found(
+        path: absoluteTarget,
+        canValidateAnchors: false,
+      );
+    }
+    FileStat stat;
+    try {
+      stat = await File(absoluteTarget).stat();
+    } on Object {
+      return const _LocalLinkTarget.blocked();
+    }
+    return _LocalLinkTarget.found(
+      path: absoluteTarget,
+      canValidateAnchors: stat.size <= _maxLocalReferenceTargetBytes,
+    );
+  }
+
+  String? _absoluteWorkspaceRoot(String? workspaceRoot) {
+    if (workspaceRoot == null || workspaceRoot.trim().isEmpty) {
+      return null;
+    }
+    return p.normalize(p.absolute(workspaceRoot));
+  }
+
+  bool _isWithinDirectory(String root, String candidate) {
+    return p.equals(root, candidate) || p.isWithin(root, candidate);
+  }
+
+  bool _hasUriScheme(String destination) {
+    final uri = Uri.tryParse(destination);
+    return uri != null && uri.hasScheme;
+  }
+
   bool _isExternal(String destination) {
     return destination.startsWith('http://') ||
         destination.startsWith('https://') ||
         destination.startsWith('mailto:');
   }
+}
+
+class _LocalLinkTarget {
+  const _LocalLinkTarget._({
+    required this.path,
+    required this.blocksTargetValidation,
+    required this.canValidateAnchors,
+  });
+
+  const _LocalLinkTarget.currentDocument()
+    : this._(
+        path: null,
+        blocksTargetValidation: false,
+        canValidateAnchors: true,
+      );
+
+  const _LocalLinkTarget.unvalidated()
+    : this._(
+        path: null,
+        blocksTargetValidation: false,
+        canValidateAnchors: false,
+      );
+
+  const _LocalLinkTarget.blocked()
+    : this._(
+        path: null,
+        blocksTargetValidation: true,
+        canValidateAnchors: false,
+      );
+
+  const _LocalLinkTarget.found({
+    required String path,
+    required bool canValidateAnchors,
+  }) : this._(
+         path: path,
+         blocksTargetValidation: false,
+         canValidateAnchors: canValidateAnchors,
+       );
+
+  final String? path;
+  final bool blocksTargetValidation;
+  final bool canValidateAnchors;
 }
 
 class _ScannedBlockSource {
