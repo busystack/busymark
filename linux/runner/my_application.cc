@@ -194,30 +194,28 @@ static void set_gtk_theme_preference(gboolean prefer_dark) {
 
     g_autofree gchar* theme_name = nullptr;
     g_object_get(settings, "gtk-theme-name", &theme_name, nullptr);
-    if (!gtk_theme_exists(theme_name)) {
-      const gchar* fallback = available_gtk_theme_fallback(prefer_dark);
-      if (fallback != nullptr) {
+    const gchar* fallback = available_gtk_theme_fallback(prefer_dark);
+    if (fallback != nullptr) {
+      if (!gtk_theme_exists(theme_name) ||
+          g_strcmp0(theme_name, fallback) != 0) {
         g_object_set(settings, "gtk-theme-name", fallback, nullptr);
       }
     }
 
     g_autofree gchar* icon_theme_name = nullptr;
     g_object_get(settings, "gtk-icon-theme-name", &icon_theme_name, nullptr);
-    if (!icon_theme_exists(icon_theme_name)) {
-      const gchar* fallback = available_icon_theme_fallback(prefer_dark);
-      if (fallback != nullptr) {
-        g_object_set(settings, "gtk-icon-theme-name", fallback, nullptr);
+    const gchar* icon_fallback = available_icon_theme_fallback(prefer_dark);
+    if (icon_fallback != nullptr) {
+      if (!icon_theme_exists(icon_theme_name) ||
+          g_strcmp0(icon_theme_name, icon_fallback) != 0) {
+        g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);
         GtkIconTheme* icon_theme = gtk_icon_theme_get_default();
         if (icon_theme != nullptr) {
-          gtk_icon_theme_set_custom_theme(icon_theme, fallback);
+          gtk_icon_theme_set_custom_theme(icon_theme, icon_fallback);
         }
       }
     }
   }
-}
-
-static void prefer_dark_gtk_theme() {
-  set_gtk_theme_preference(TRUE);
 }
 
 static void respond_success(FlMethodCall* method_call) {
@@ -267,17 +265,18 @@ static const gchar* fl_lookup_string_arg(FlValue* args, const gchar* key) {
   return fl_value_get_string(value);
 }
 
-static gboolean fl_lookup_bool_arg(FlValue* args,
-                                   const gchar* key,
-                                   gboolean fallback) {
+static gboolean fl_lookup_optional_bool_arg(FlValue* args,
+                                            const gchar* key,
+                                            gboolean* value_out) {
   if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
-    return fallback;
+    return FALSE;
   }
   FlValue* value = fl_value_lookup_string(args, key);
   if (value == nullptr || fl_value_get_type(value) != FL_VALUE_TYPE_BOOL) {
-    return fallback;
+    return FALSE;
   }
-  return fl_value_get_bool(value);
+  *value_out = fl_value_get_bool(value);
+  return TRUE;
 }
 
 static gboolean has_header_bar(MyApplication* self) {
@@ -681,7 +680,10 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
   if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
     return;
   }
-  set_gtk_theme_preference(fl_lookup_bool_arg(args, "preferDark", TRUE));
+  gboolean prefer_dark = FALSE;
+  if (fl_lookup_optional_bool_arg(args, "preferDark", &prefer_dark)) {
+    set_gtk_theme_preference(prefer_dark);
+  }
   set_css_color_field(&self->background_color,
                       fl_lookup_string_arg(args, "backgroundColor"));
   set_css_color_field(&self->sidebar_background_color,
@@ -1532,8 +1534,6 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
-  prefer_dark_gtk_theme();
-
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
@@ -1616,7 +1616,6 @@ static gboolean my_application_local_command_line(GApplication* application,
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
-  prefer_dark_gtk_theme();
 }
 
 // Implements GApplication::shutdown.

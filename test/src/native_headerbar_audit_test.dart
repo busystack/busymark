@@ -183,7 +183,7 @@ void main() {
     expect(dialogs, contains('BusyMarkModalEditorSurface'));
   });
 
-  test('native GTK prefers dark theme for snap runtime widgets', () {
+  test('native GTK theme follows Flutter brightness for snap runtime widgets', () {
     final service = File(
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
@@ -198,15 +198,38 @@ void main() {
       native,
       contains('"gtk-application-prefer-dark-theme", prefer_dark'),
     );
-    expect(native, contains('set_gtk_theme_preference(TRUE);'));
     expect(native, contains('"gtk-theme-name"'));
     expect(native, contains('gtk_theme_exists'));
     expect(native, contains('available_gtk_theme_fallback'));
+    expect(
+      native,
+      contains(
+        'const gchar* fallback = available_gtk_theme_fallback(prefer_dark);',
+      ),
+    );
+    expect(native, contains('g_strcmp0(theme_name, fallback) != 0'));
+    expect(
+      native,
+      contains('g_object_set(settings, "gtk-theme-name", fallback, nullptr);'),
+    );
     expect(native, contains('"Yaru-dark"'));
     expect(native, contains('"Adwaita-dark"'));
     expect(native, contains('"gtk-icon-theme-name"'));
     expect(native, contains('icon_theme_exists'));
     expect(native, contains('available_icon_theme_fallback'));
+    expect(
+      native,
+      contains(
+        'const gchar* icon_fallback = available_icon_theme_fallback(prefer_dark);',
+      ),
+    );
+    expect(native, contains('g_strcmp0(icon_theme_name, icon_fallback) != 0'));
+    expect(
+      native,
+      contains(
+        'g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);',
+      ),
+    );
     expect(native, contains('gtk_icon_theme_set_custom_theme'));
     expect(native, contains('gtk_accent_css_provider'));
     expect(native, contains('@define-color theme_selected_bg_color %s;'));
@@ -216,7 +239,15 @@ void main() {
     expect(native, contains('GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1'));
     expect(native, isNot(contains('gtk_theme_name_for_preference')));
     expect(native, isNot(contains('icon_theme_name_for_preference')));
-    expect(native, contains('fl_lookup_bool_arg(args, "preferDark", TRUE)'));
+    expect(native, contains('fl_lookup_optional_bool_arg'));
+    expect(native, contains('fl_lookup_optional_bool_arg(args, "preferDark"'));
+    expect(native, contains('set_gtk_theme_preference(prefer_dark);'));
+    expect(native, isNot(contains('prefer_dark_gtk_theme')));
+    expect(native, isNot(contains('set_gtk_theme_preference(TRUE)')));
+    expect(
+      native,
+      isNot(contains('fl_lookup_bool_arg(args, "preferDark", TRUE)')),
+    );
     expect(snapcraft, contains('yaru-theme-gtk'));
     expect(snapcraft, contains('yaru-theme-icon'));
     expect(snapcraft, contains('override-build:'));
@@ -237,21 +268,25 @@ void main() {
     );
     expect(
       native,
-      matches(
-        RegExp(
-          r'static void my_application_startup[\s\S]*'
-          r'G_APPLICATION_CLASS\(my_application_parent_class\)->startup\(application\);[\s\S]*'
-          r'prefer_dark_gtk_theme\(\);',
+      isNot(
+        matches(
+          RegExp(
+            r'static void my_application_startup[\s\S]*'
+            r'G_APPLICATION_CLASS\(my_application_parent_class\)->startup\(application\);[\s\S]*'
+            r'set_gtk_theme_preference',
+          ),
         ),
       ),
     );
     expect(
       native,
-      matches(
-        RegExp(
-          r'static void my_application_activate\(GApplication\* application\) \{[\s\S]*'
-          r'prefer_dark_gtk_theme\(\);[\s\S]*'
-          r'gtk_application_window_new',
+      isNot(
+        matches(
+          RegExp(
+            r'static void my_application_activate\(GApplication\* application\) \{[\s\S]*'
+            r'set_gtk_theme_preference[\s\S]*'
+            r'gtk_application_window_new',
+          ),
         ),
       ),
     );
