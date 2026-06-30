@@ -125,6 +125,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final colors = BusyMarkSurfaceColors.of(context);
     final entries = _editableBlockEntries(_documentController.document.blocks);
     final blocks = entries.map((entry) => entry.block).toList();
+    final blockSelectionActive = _hasBlockSelection;
     final selectionRangesByBlockId = {
       for (final range in _selectedTextRanges(blocks))
         range.block.id: BusyMarkWysiwygSelectionRange(
@@ -132,8 +133,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           end: range.end,
         ),
     };
+    if (blockSelectionActive) {
+      for (final blockId in _selectedBlockIds(blocks)) {
+        selectionRangesByBlockId.putIfAbsent(
+          blockId,
+          () => const BusyMarkWysiwygSelectionRange(start: 0, end: 0),
+        );
+      }
+    }
     final selectedBlockIds = _fullySelectedBlockIds(blocks);
-    final blockSelectionActive = _hasBlockSelection;
     return Shortcuts(
       shortcuts: {
         const SingleActivator(LogicalKeyboardKey.keyB, control: true):
@@ -241,6 +249,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           const SingleActivator(LogicalKeyboardKey.keyC, control: true):
               const _CopyBlockSelectionIntent(),
         if (blockSelectionActive)
+          const SingleActivator(LogicalKeyboardKey.keyX, control: true):
+              const _CutBlockSelectionIntent(),
+        if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.backspace):
               const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
@@ -292,6 +303,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           _CopyBlockSelectionIntent: CallbackAction<_CopyBlockSelectionIntent>(
             onInvoke: (intent) {
               _copyBlockSelection();
+              return null;
+            },
+          ),
+          _CutBlockSelectionIntent: CallbackAction<_CutBlockSelectionIntent>(
+            onInvoke: (intent) {
+              _cutBlockSelection();
               return null;
             },
           ),
@@ -952,6 +969,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _activeBlockId = blockId;
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyA) {
       _selectAllForBlock(blockId);
+      return KeyEventResult.handled;
+    }
+    if (_hasBlockSelection &&
+        keyboard.isControlPressed &&
+        key == LogicalKeyboardKey.keyC) {
+      _copyBlockSelection();
+      return KeyEventResult.handled;
+    }
+    if (_hasBlockSelection &&
+        keyboard.isControlPressed &&
+        key == LogicalKeyboardKey.keyX) {
+      _cutBlockSelection();
       return KeyEventResult.handled;
     }
     if (keyboard.isControlPressed &&
@@ -1971,7 +2000,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (HardwareKeyboard.instance.isShiftPressed) {
       final anchor = _selectionAnchorForBlock(_activeBlockId ?? blockId);
       if (anchor != null) {
-        _pointerDownBlockId = null;
+        _pointerDownBlockId = anchor.blockId;
         _activeBlockId = blockId;
         setState(() {
           _selectionStartBlockId = anchor.blockId;
@@ -2181,14 +2210,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _copyBlockSelection() {
-    final selectedText = _selectedTextRanges()
-        .map(_copyTextForRange)
-        .where((text) => text.trim().isNotEmpty)
-        .join('\n\n');
+    final selectedText = _selectedTextForClipboard();
     if (selectedText.isEmpty) {
       return;
     }
     unawaited(Clipboard.setData(ClipboardData(text: selectedText)));
+  }
+
+  bool _cutBlockSelection() {
+    final selectedText = _selectedTextForClipboard();
+    if (selectedText.isNotEmpty) {
+      unawaited(Clipboard.setData(ClipboardData(text: selectedText)));
+    }
+    return _deleteBlockSelection();
+  }
+
+  String _selectedTextForClipboard() {
+    return _selectedTextRanges()
+        .map(_copyTextForRange)
+        .where((text) => text.trim().isNotEmpty)
+        .join('\n\n');
   }
 
   String _copyTextForBlock(BusyBlock block) {
@@ -2499,6 +2540,10 @@ class _DeleteBlockSelectionIntent extends Intent {
 
 class _CopyBlockSelectionIntent extends Intent {
   const _CopyBlockSelectionIntent();
+}
+
+class _CutBlockSelectionIntent extends Intent {
+  const _CutBlockSelectionIntent();
 }
 
 class _ClearBlockSelectionIntent extends Intent {

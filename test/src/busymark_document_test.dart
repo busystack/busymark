@@ -585,6 +585,225 @@ void main() {}
     expect(copiedText, 'First\n\nSecond');
   });
 
+  testWidgets('WYSIWYG Shift drag extends selection across paragraphs', (
+    tester,
+  ) async {
+    const plannerParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## Planner Service\n\n$plannerParagraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingField = tester.widget<TextField>(find.byType(TextField).at(0));
+    headingField.focusNode!.requestFocus();
+    headingField.controller!.selection = const TextSelection.collapsed(
+      offset: 0,
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final paragraphRect = tester.getRect(find.byType(TextField).at(1));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    final gesture = await tester.startGesture(
+      headingRect.centerLeft + const Offset(2, 0),
+    );
+    await gesture.moveTo(paragraphRect.bottomRight - const Offset(2, 2));
+    await gesture.up();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, isNotNull);
+    expect(copiedText, contains('Planner Service'));
+    expect(copiedText, contains('as example.'));
+  });
+
+  testWidgets('WYSIWYG Shift drag from heading end hides native selection', (
+    tester,
+  ) async {
+    const heading = 'Planner Service';
+    const plannerParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## $heading\n\n$plannerParagraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingField = tester.widget<TextField>(find.byType(TextField).at(0));
+    headingField.focusNode!.requestFocus();
+    headingField.controller!.selection = TextSelection.collapsed(
+      offset: heading.length,
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final paragraphRect = tester.getRect(find.byType(TextField).at(1));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    final gesture = await tester.startGesture(
+      headingRect.centerRight - const Offset(2, 0),
+    );
+    await gesture.moveTo(paragraphRect.bottomRight - const Offset(2, 2));
+    await gesture.up();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    Color? nativeSelectionColorAt(int index) {
+      return TextSelectionTheme.of(
+        tester.element(find.byType(TextField).at(index)),
+      ).selectionColor;
+    }
+
+    expect(nativeSelectionColorAt(0), Colors.transparent);
+    expect(nativeSelectionColorAt(1), Colors.transparent);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, plannerParagraph);
+  });
+
+  testWidgets('WYSIWYG Ctrl+X cuts block selection', (tester) async {
+    const source = 'First\n\nSecond\n\nThird\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    var markdown = source;
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+    final gesture = await tester.startGesture(
+      firstFieldRect.centerLeft + const Offset(1, 0),
+    );
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
+    await gesture.up();
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, 'First\n\nSecond');
+    expect(markdown, contains('Third'));
+    expect(markdown, isNot(contains('First')));
+    expect(markdown, isNot(contains('Second')));
+  });
+
   testWidgets('WYSIWYG drag selection preserves partial paragraph boundaries', (
     tester,
   ) async {
