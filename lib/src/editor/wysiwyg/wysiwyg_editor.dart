@@ -2089,22 +2089,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleBlockPointerMove(PointerMoveEvent event) {
+    if (_pointerDownBlockId == null || event.buttons != kPrimaryMouseButton) {
+      return;
+    }
+    _updateBlockSelectionDrag(event.position);
+  }
+
+  bool _updateBlockSelectionDrag(Offset position) {
     final startBlockId = _pointerDownBlockId;
-    if (startBlockId == null || event.buttons != kPrimaryMouseButton) {
-      return;
+    if (startBlockId == null) {
+      return false;
     }
-    final targetBlockId = _blockIdAtGlobalPosition(event.position);
+    final targetBlockId = _blockIdAtGlobalPosition(position);
     if (targetBlockId == null || targetBlockId == startBlockId) {
-      return;
+      return false;
     }
-    final endOffset = _textOffsetAtGlobalPosition(
-      targetBlockId,
-      event.position,
-    );
+    final endOffset = _textOffsetAtGlobalPosition(targetBlockId, position);
     if (_selectionStartBlockId == startBlockId &&
         _selectionEndBlockId == targetBlockId &&
         _selectionEndOffset == endOffset) {
-      return;
+      return false;
     }
     setState(() {
       _selectionStartBlockId = startBlockId;
@@ -2113,9 +2117,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     });
     _collapseFieldSelections();
     _selectionFocusNode.requestFocus();
+    return true;
   }
 
   void _handleBlockPointerUp(PointerUpEvent event) {
+    _updateBlockSelectionDrag(event.position);
     _pointerDownBlockId = null;
     if (_preserveSelectionFocusCallbacks > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

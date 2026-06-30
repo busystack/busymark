@@ -15,6 +15,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -741,6 +742,192 @@ void main() {}
     await tester.pump();
 
     expect(copiedText, plannerParagraph);
+  });
+
+  testWidgets('WYSIWYG reverse drag updates selection on pointer up', (
+    tester,
+  ) async {
+    const heading = 'Planner Service';
+    const firstParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    const secondParagraph =
+        'It also has to call learner-model get all candos and to create '
+        'schedulers for learner for each cando.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## $heading\n\n$firstParagraph\n\n$secondParagraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final firstParagraphRect = tester.getRect(find.byType(TextField).at(1));
+    final secondParagraphRect = tester.getRect(find.byType(TextField).at(2));
+    final gesture = await tester.createGesture(pointer: 42);
+    await gesture.down(secondParagraphRect.bottomRight - const Offset(2, 2));
+    await gesture.moveTo(firstParagraphRect.centerRight - const Offset(2, 0));
+    await gesture.updateWithCustomEvent(
+      PointerUpEvent(
+        pointer: 42,
+        position: headingRect.centerLeft + const Offset(2, 0),
+      ),
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, contains(heading));
+    expect(copiedText, contains('example.'));
+    expect(copiedText, contains('cando.'));
+  });
+
+  testWidgets('WYSIWYG reverse drag aligns wrapped trailing word highlight', (
+    tester,
+  ) async {
+    const heading = 'Planner Service';
+    const firstParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    const secondParagraph =
+        'It also has to call learner-model get all candos and to create '
+        'schedulers for learner for each cando.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## $heading\n\n$firstParagraph\n\n$secondParagraph\n',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          return MediaQuery(
+            data: media.copyWith(textScaler: const TextScaler.linear(1.35)),
+            child: child!,
+          );
+        },
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 420,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final firstParagraphRect = tester.getRect(find.byType(TextField).at(1));
+    final secondParagraphRect = tester.getRect(find.byType(TextField).at(2));
+    final gesture = await tester.createGesture(pointer: 43);
+    await gesture.down(secondParagraphRect.bottomRight - const Offset(2, 2));
+    await gesture.moveTo(firstParagraphRect.centerRight - const Offset(2, 0));
+    await gesture.updateWithCustomEvent(
+      PointerUpEvent(
+        pointer: 43,
+        position: headingRect.centerLeft + const Offset(2, 0),
+      ),
+    );
+    await tester.pump();
+
+    final textFieldRender = tester.renderObject<RenderObject>(
+      find.byType(TextField).at(1),
+    );
+    final renderEditable = _findRenderEditable(textFieldRender);
+    expect(renderEditable, isNotNull);
+    final exampleStart = firstParagraph.indexOf('example.');
+    final exampleBoxes = renderEditable!.getBoxesForSelection(
+      TextSelection(
+        baseOffset: exampleStart,
+        extentOffset: exampleStart + 'example.'.length,
+      ),
+    );
+    expect(exampleBoxes, isNotEmpty);
+
+    final painterFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint &&
+          widget.painter.runtimeType.toString() == '_WysiwygSelectionPainter',
+    );
+    final customPaint = tester.widget<CustomPaint>(painterFinder.at(1));
+    final painter = customPaint.painter! as dynamic;
+    expect(painter.selectionRange.start, 0);
+    expect(painter.selectionRange.end, firstParagraph.length);
+
+    final paintBox = tester.renderObject<RenderBox>(painterFinder.at(1));
+    final painterText =
+        TextPainter(
+          text: TextSpan(
+            text: firstParagraph,
+            style: painter.style as TextStyle,
+          ),
+          textDirection: painter.textDirection as TextDirection,
+          textScaler: painter.textScaler as TextScaler,
+          locale: painter.locale as Locale?,
+        )..layout(
+          maxWidth: paintBox.size.width - (painter.layoutWidthInset as double),
+        );
+    final highlightBoxes = painterText.getBoxesForSelection(
+      TextSelection(
+        baseOffset: exampleStart,
+        extentOffset: exampleStart + 'example.'.length,
+      ),
+    );
+    painterText.dispose();
+
+    expect(highlightBoxes, hasLength(exampleBoxes.length));
+    final lineTolerance =
+        (exampleBoxes.last.bottom - exampleBoxes.last.top) / 3;
+    expect(
+      (highlightBoxes.last.top - exampleBoxes.last.top).abs(),
+      lessThan(lineTolerance),
+    );
+    expect(
+      (highlightBoxes.last.bottom - exampleBoxes.last.bottom).abs(),
+      lessThan(lineTolerance),
+    );
   });
 
   testWidgets('WYSIWYG Ctrl+X cuts block selection', (tester) async {
@@ -2197,6 +2384,17 @@ TextStyle? _spanStyleForText(InlineSpan span, String text) {
     }
   }
   return null;
+}
+
+RenderEditable? _findRenderEditable(RenderObject root) {
+  if (root is RenderEditable) {
+    return root;
+  }
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findRenderEditable(child);
+  });
+  return result;
 }
 
 class _FakeImageHttpClient implements HttpClient {
