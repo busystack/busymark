@@ -883,6 +883,104 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
   }
 
+  BusyWysiwygTextSplitResult? insertStyledBlocksAtSelection({
+    required String blockId,
+    required int selectionStart,
+    required int selectionEnd,
+    required List<BusyWysiwygStyledBlock> blocks,
+  }) {
+    if (blocks.isEmpty) {
+      return null;
+    }
+    final block = blockById(blockId);
+    if (block == null || block.preserveRaw) {
+      return null;
+    }
+    final text = block.plainText;
+    final start = selectionStart.clamp(0, text.length).toInt();
+    final end = selectionEnd.clamp(start, text.length).toInt();
+    final oldRanges = busyInlineStyleRanges(block.inlines);
+    final beforeText = text.substring(0, start);
+    final afterText = text.substring(end);
+    final beforeRanges = _styleRangesForSlice(oldRanges, 0, start);
+    final afterRanges = _styleRangesForSlice(oldRanges, end, text.length);
+
+    final replacements = <BusyBlock>[];
+    if (blocks.length == 1) {
+      final inserted = blocks.single;
+      final nextText = beforeText + inserted.text + afterText;
+      final nextRanges = [
+        ...beforeRanges,
+        ..._shiftStyleRanges(inserted.ranges, beforeText.length),
+        ..._shiftStyleRanges(
+          afterRanges,
+          beforeText.length + inserted.text.length,
+        ),
+      ];
+      replacements.add(
+        block.copyWith(
+          kind: beforeText.isEmpty && afterText.isEmpty
+              ? inserted.kind
+              : block.kind,
+          attributes: beforeText.isEmpty && afterText.isEmpty
+              ? inserted.attributes
+              : block.attributes,
+          inlines: _inlinesFromStyleRanges(nextText, nextRanges),
+          preserveRaw: false,
+          dirty: true,
+        ),
+      );
+      _document = _document.copyWith(
+        blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
+      );
+      notifyListeners();
+      return BusyWysiwygTextSplitResult(
+        blockId: blockId,
+        offset: beforeText.length + inserted.text.length,
+      );
+    }
+
+    final first = blocks.first;
+    final firstText = beforeText + first.text;
+    replacements.add(
+      block.copyWith(
+        kind: beforeText.isEmpty ? first.kind : block.kind,
+        attributes: beforeText.isEmpty ? first.attributes : block.attributes,
+        inlines: _inlinesFromStyleRanges(firstText, [
+          ...beforeRanges,
+          ..._shiftStyleRanges(first.ranges, beforeText.length),
+        ]),
+        preserveRaw: false,
+        dirty: true,
+      ),
+    );
+
+    for (final inserted in blocks.skip(1).take(blocks.length - 2)) {
+      replacements.add(_styledBlockToBusyBlock(inserted));
+    }
+
+    final last = blocks.last;
+    final lastText = last.text + afterText;
+    final lastBlock = _styledBlockToBusyBlock(
+      last,
+      text: lastText,
+      ranges: [
+        ...last.ranges,
+        ..._shiftStyleRanges(afterRanges, last.text.length),
+      ],
+    );
+    replacements.add(lastBlock);
+
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
+    );
+    notifyListeners();
+    return BusyWysiwygTextSplitResult(
+      blockId: lastBlock.id,
+      offset: last.text.length,
+    );
+  }
+
   String? insertThematicBreakAfter(String blockId) {
     if (blockById(blockId) == null) {
       return null;
@@ -1083,6 +1181,25 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     } while (existingIds.contains(id));
     return id;
   }
+
+  BusyBlock _styledBlockToBusyBlock(
+    BusyWysiwygStyledBlock styled, {
+    String? text,
+    List<BusyInlineStyleRange>? ranges,
+  }) {
+    final kind = styled.kind;
+    return BusyBlock(
+      id: _nextGeneratedBlockId(_newBlockPrefixFor(kind)),
+      kind: kind,
+      inlines: _inlinesFromStyleRanges(
+        text ?? styled.text,
+        ranges ?? styled.ranges,
+      ),
+      attributes: styled.attributes,
+      preserveRaw: false,
+      dirty: true,
+    );
+  }
 }
 
 class BusyWysiwygTextSplitResult {
@@ -1093,6 +1210,20 @@ class BusyWysiwygTextSplitResult {
 
   final String blockId;
   final int offset;
+}
+
+class BusyWysiwygStyledBlock {
+  const BusyWysiwygStyledBlock({
+    required this.kind,
+    required this.text,
+    required this.ranges,
+    this.attributes = const {},
+  });
+
+  final BusyBlockKind kind;
+  final String text;
+  final List<BusyInlineStyleRange> ranges;
+  final Map<String, String> attributes;
 }
 
 class _OutdentResult {
@@ -1642,6 +1773,24 @@ List<BusyInlineStyleRange> _styleRangesForSlice(
           kind: range.kind,
           destination: range.destination,
         ),
+  ];
+}
+
+List<BusyInlineStyleRange> _shiftStyleRanges(
+  List<BusyInlineStyleRange> ranges,
+  int offset,
+) {
+  if (offset == 0) {
+    return ranges;
+  }
+  return [
+    for (final range in ranges)
+      BusyInlineStyleRange(
+        start: range.start + offset,
+        end: range.end + offset,
+        kind: range.kind,
+        destination: range.destination,
+      ),
   ];
 }
 

@@ -70,6 +70,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   int? _selectionStartOffset;
   int? _selectionEndOffset;
   String? _pointerDownBlockId;
+  _WysiwygInternalClipboard? _internalClipboard;
   final _pendingInlineKindsByBlockId = <String, Set<BusyInlineKind>>{};
   int _preserveSelectionFocusCallbacks = 0;
   bool _internalChange = false;
@@ -236,6 +237,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           control: true,
           shift: true,
         ): const _PastePlainTextIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+            const _PasteTextIntent(),
         const SingleActivator(LogicalKeyboardKey.keyA, control: true):
             const _SelectAllTextIntent(),
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
@@ -284,6 +287,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           _PastePlainTextIntent: CallbackAction<_PastePlainTextIntent>(
             onInvoke: (intent) {
               unawaited(_pastePlainTextIntoActiveBlock());
+              return null;
+            },
+          ),
+          _PasteTextIntent: CallbackAction<_PasteTextIntent>(
+            onInvoke: (intent) {
+              unawaited(_pasteIntoActiveBlock());
               return null;
             },
           ),
@@ -971,16 +980,20 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _selectAllForBlock(blockId);
       return KeyEventResult.handled;
     }
-    if (_hasBlockSelection &&
-        keyboard.isControlPressed &&
-        key == LogicalKeyboardKey.keyC) {
-      _copyBlockSelection();
+    if (keyboard.isControlPressed &&
+        key == LogicalKeyboardKey.keyC &&
+        _copyCurrentSelection()) {
       return KeyEventResult.handled;
     }
-    if (_hasBlockSelection &&
-        keyboard.isControlPressed &&
-        key == LogicalKeyboardKey.keyX) {
-      _cutBlockSelection();
+    if (keyboard.isControlPressed &&
+        key == LogicalKeyboardKey.keyX &&
+        _cutCurrentSelection()) {
+      return KeyEventResult.handled;
+    }
+    if (keyboard.isControlPressed &&
+        !keyboard.isShiftPressed &&
+        key == LogicalKeyboardKey.keyV) {
+      unawaited(_pasteIntoActiveBlock());
       return KeyEventResult.handled;
     }
     if (keyboard.isControlPressed &&
@@ -1482,7 +1495,61 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _emitMarkdown();
   }
 
-  Future<void> _pastePlainTextIntoActiveBlock() async {
+  Future<void> _pasteIntoActiveBlock() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text == null || text.isEmpty) {
+      return;
+    }
+    final internalClipboard = _internalClipboard;
+    if (internalClipboard != null &&
+        internalClipboard.text == text &&
+        _pasteInternalClipboardIntoActiveBlock(internalClipboard)) {
+      return;
+    }
+    await _pastePlainTextIntoActiveBlock(textOverride: text);
+  }
+
+  bool _pasteInternalClipboardIntoActiveBlock(
+    _WysiwygInternalClipboard clipboard,
+  ) {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return false;
+    }
+    final controller = _textControllers[blockId];
+    if (controller == null) {
+      return false;
+    }
+    final currentText = controller.text;
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: currentText.length);
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, currentText.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, currentText.length)
+        .toInt();
+    _recordUndoSnapshot();
+    final result = _documentController.insertStyledBlocksAtSelection(
+      blockId: blockId,
+      selectionStart: start,
+      selectionEnd: end,
+      blocks: clipboard.blocks,
+    );
+    if (result == null) {
+      return false;
+    }
+    _clearBlockSelection(collapseFields: false);
+    _emitMarkdown();
+    _focusBlockAfterFrame(result.blockId, offset: result.offset);
+    return true;
+  }
+
+  Future<void> _pastePlainTextIntoActiveBlock({String? textOverride}) async {
     final blockId = _activeBlockId;
     if (blockId == null) {
       return;
@@ -1491,8 +1558,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (controller == null) {
       return;
     }
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
+    final text =
+        textOverride ?? (await Clipboard.getData(Clipboard.kTextPlain))?.text;
     if (text == null || text.isEmpty) {
       return;
     }
@@ -2210,26 +2277,129 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _copyBlockSelection() {
-    final selectedText = _selectedTextForClipboard();
-    if (selectedText.isEmpty) {
-      return;
-    }
-    unawaited(Clipboard.setData(ClipboardData(text: selectedText)));
+    _copyCurrentSelection();
   }
 
   bool _cutBlockSelection() {
-    final selectedText = _selectedTextForClipboard();
-    if (selectedText.isNotEmpty) {
-      unawaited(Clipboard.setData(ClipboardData(text: selectedText)));
-    }
-    return _deleteBlockSelection();
+    return _cutCurrentSelection();
   }
 
-  String _selectedTextForClipboard() {
-    return _selectedTextRanges()
-        .map(_copyTextForRange)
-        .where((text) => text.trim().isNotEmpty)
-        .join('\n\n');
+  bool _copyCurrentSelection() {
+    final ranges = _currentSelectionRanges();
+    if (ranges.isEmpty) {
+      return false;
+    }
+    return _copyRangesToClipboard(ranges);
+  }
+
+  bool _cutCurrentSelection() {
+    final ranges = _currentSelectionRanges();
+    if (ranges.isEmpty || !_copyRangesToClipboard(ranges)) {
+      return false;
+    }
+    if (_hasBlockSelection) {
+      return _deleteBlockSelection();
+    }
+    return _deleteActiveTextSelection(ranges.single);
+  }
+
+  bool _copyRangesToClipboard(List<_SelectedTextRange> ranges) {
+    final clipboardBlocks = <BusyWysiwygStyledBlock>[];
+    final clipboardTexts = <String>[];
+    for (final range in ranges) {
+      final clipboardText = _copyTextForRange(range);
+      if (clipboardText.trim().isEmpty) {
+        continue;
+      }
+      clipboardTexts.add(clipboardText);
+      clipboardBlocks.add(_styledBlockForRange(range));
+    }
+    if (clipboardTexts.isEmpty || clipboardBlocks.isEmpty) {
+      return false;
+    }
+    final clipboardText = clipboardTexts.join('\n\n');
+    _internalClipboard = _WysiwygInternalClipboard(
+      text: clipboardText,
+      blocks: clipboardBlocks,
+    );
+    unawaited(Clipboard.setData(ClipboardData(text: clipboardText)));
+    return true;
+  }
+
+  List<_SelectedTextRange> _currentSelectionRanges() {
+    final selectedRanges = _selectedTextRanges();
+    if (selectedRanges.isNotEmpty) {
+      return selectedRanges;
+    }
+    final activeRange = _activeTextSelectionRange();
+    return activeRange == null ? const [] : [activeRange];
+  }
+
+  _SelectedTextRange? _activeTextSelectionRange() {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return null;
+    }
+    final block = _documentController.blockById(blockId);
+    final controller = _textControllers[blockId];
+    final selection = controller?.selection;
+    if (block == null ||
+        controller == null ||
+        selection == null ||
+        !selection.isValid ||
+        selection.isCollapsed) {
+      return null;
+    }
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, controller.text.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, controller.text.length)
+        .toInt();
+    if (end <= start) {
+      return null;
+    }
+    return _SelectedTextRange(block: block, start: start, end: end);
+  }
+
+  BusyWysiwygStyledBlock _styledBlockForRange(_SelectedTextRange range) {
+    final text = range.block.plainText;
+    final start = range.start.clamp(0, text.length).toInt();
+    final end = range.end.clamp(start, text.length).toInt();
+    return BusyWysiwygStyledBlock(
+      kind: range.coversWholeBlock ? range.block.kind : BusyBlockKind.paragraph,
+      text: text.substring(start, end),
+      ranges: _inlineRangesForSlice(
+        busyInlineStyleRanges(range.block.inlines),
+        start,
+        end,
+      ),
+      attributes: range.coversWholeBlock ? range.block.attributes : const {},
+    );
+  }
+
+  bool _deleteActiveTextSelection(_SelectedTextRange range) {
+    final blockId = range.block.id;
+    final controller = _textControllers[blockId];
+    if (controller == null) {
+      return false;
+    }
+    final text = controller.text;
+    final start = range.start.clamp(0, text.length).toInt();
+    final end = range.end.clamp(start, text.length).toInt();
+    if (end <= start) {
+      return false;
+    }
+    _recordUndoSnapshot();
+    _documentController.updateBlockText(
+      blockId,
+      text.replaceRange(start, end, ''),
+    );
+    _emitMarkdown();
+    _focusBlockAfterFrame(blockId, offset: start);
+    return true;
   }
 
   String _copyTextForBlock(BusyBlock block) {
@@ -2261,6 +2431,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       range.start.clamp(0, text.length).toInt(),
       range.end.clamp(0, text.length).toInt(),
     );
+  }
+
+  List<BusyInlineStyleRange> _inlineRangesForSlice(
+    List<BusyInlineStyleRange> ranges,
+    int start,
+    int end,
+  ) {
+    if (end <= start) {
+      return const [];
+    }
+    return [
+      for (final range in ranges)
+        if (range.end > start && range.start < end)
+          BusyInlineStyleRange(
+            start: (range.start < start ? start : range.start) - start,
+            end: (range.end > end ? end : range.end) - start,
+            kind: range.kind,
+            destination: range.destination,
+          ),
+    ];
   }
 
   int _textOffsetAtGlobalPosition(String blockId, Offset globalPosition) {
@@ -2409,6 +2599,13 @@ class _SelectionAnchor {
   final int offset;
 }
 
+class _WysiwygInternalClipboard {
+  const _WysiwygInternalClipboard({required this.text, required this.blocks});
+
+  final String text;
+  final List<BusyWysiwygStyledBlock> blocks;
+}
+
 class _EditableBlockEntry {
   const _EditableBlockEntry({required this.block, required this.depth});
 
@@ -2528,6 +2725,10 @@ class _BlockCommandIntent extends Intent {
 
 class _PastePlainTextIntent extends Intent {
   const _PastePlainTextIntent();
+}
+
+class _PasteTextIntent extends Intent {
+  const _PasteTextIntent();
 }
 
 class _SelectAllTextIntent extends Intent {
