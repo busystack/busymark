@@ -73,12 +73,14 @@ class Workspace {
     required this.openedAt,
     required this.files,
     required this.diagnostics,
+    List<String> openFilePaths = const [],
     this.activeFilePath,
     DateTime? activeFileModifiedAt,
     this.activeFileSnapshot,
     this.markdown,
     this.writersideModule,
-  }) : activeFileModifiedAt =
+  }) : openFilePaths = _normalizedOpenFilePaths(openFilePaths, activeFilePath),
+       activeFileModifiedAt =
            activeFileModifiedAt ?? activeFileSnapshot?.modifiedAt;
 
   final String id;
@@ -88,6 +90,7 @@ class Workspace {
   final String? activeFilePath;
   final DateTime? activeFileModifiedAt;
   final WorkspaceFileSnapshot? activeFileSnapshot;
+  final List<String> openFilePaths;
   final List<DocumentFile> files;
   final List<Diagnostic> diagnostics;
   final ParsedMarkdownDocument? markdown;
@@ -97,6 +100,7 @@ class Workspace {
     String? activeFilePath,
     DateTime? activeFileModifiedAt,
     WorkspaceFileSnapshot? activeFileSnapshot,
+    List<String>? openFilePaths,
     List<DocumentFile>? files,
     List<Diagnostic>? diagnostics,
     ParsedMarkdownDocument? markdown,
@@ -114,12 +118,33 @@ class Workspace {
           nextSnapshot?.modifiedAt ??
           this.activeFileModifiedAt,
       activeFileSnapshot: nextSnapshot,
+      openFilePaths: openFilePaths ?? this.openFilePaths,
       files: files ?? this.files,
       diagnostics: diagnostics ?? this.diagnostics,
       markdown: markdown ?? this.markdown,
       writersideModule: writersideModule ?? this.writersideModule,
     );
   }
+}
+
+List<String> _normalizedOpenFilePaths(
+  List<String> openFilePaths,
+  String? activeFilePath,
+) {
+  final seen = <String>{};
+  final result = <String>[];
+  for (final path in openFilePaths) {
+    if (path.isEmpty || !seen.add(path)) {
+      continue;
+    }
+    result.add(path);
+  }
+  if (activeFilePath != null &&
+      activeFilePath.isNotEmpty &&
+      seen.add(activeFilePath)) {
+    result.add(activeFilePath);
+  }
+  return List.unmodifiable(result);
 }
 
 class WorkspaceState {

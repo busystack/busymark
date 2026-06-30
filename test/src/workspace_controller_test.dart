@@ -209,6 +209,70 @@ void main() {
     settingsController.dispose();
   });
 
+  test('folder workspaces track open file tabs without duplicates', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final initialPath = controller.state.workspace!.activeFilePath!;
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+
+    expect(controller.state.workspace?.openFilePaths, [initialPath]);
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(initialPath);
+
+    expect(controller.state.workspace?.activeFilePath, initialPath);
+    expect(controller.state.workspace?.openFilePaths, [
+      initialPath,
+      otherFile.absolutePath,
+    ]);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('closing active file tabs selects a neighboring tab', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final initialPath = controller.state.workspace!.activeFilePath!;
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+    final linksFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'links_images.md',
+    );
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(linksFile.absolutePath);
+    await controller.closeOpenFileTab(otherFile.absolutePath);
+
+    expect(controller.state.workspace?.activeFilePath, linksFile.absolutePath);
+    expect(controller.state.workspace?.openFilePaths, [
+      initialPath,
+      linksFile.absolutePath,
+    ]);
+
+    await controller.closeOpenFileTab(linksFile.absolutePath);
+
+    expect(controller.state.workspace?.activeFilePath, initialPath);
+    expect(controller.state.workspace?.openFilePaths, [initialPath]);
+
+    await controller.closeOpenFileTab(initialPath);
+
+    expect(controller.state.workspace?.activeFilePath, initialPath);
+    expect(controller.state.workspace?.openFilePaths, [initialPath]);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
   test('failed open clears stale workspace state', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -373,6 +437,9 @@ class _WorkspaceControllerDriver {
       _notifier.createWritersideTopic(request);
 
   Future<void> openActiveFile(String path) => _notifier.openActiveFile(path);
+
+  Future<void> closeOpenFileTab(String path) =>
+      _notifier.closeOpenFileTab(path);
 
   void updateActiveText(String text, {bool updatePreview = true}) {
     _notifier.updateActiveText(text, updatePreview: updatePreview);

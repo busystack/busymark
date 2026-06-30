@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -175,10 +176,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final loadedWorkspace = load == null
           ? nextWorkspace
           : nextWorkspace.copyWith(activeFileSnapshot: load.snapshot);
+      final openFilePaths = _retainedOpenFileTabPaths(
+        current: workspace,
+        refreshed: loadedWorkspace,
+        activeFilePath: active,
+      );
+      final tabbedWorkspace = loadedWorkspace.copyWith(
+        openFilePaths: openFilePaths,
+      );
       state = WorkspaceState(
-        workspace: loadedWorkspace,
+        workspace: tabbedWorkspace,
         activeText: text,
-        preview: _safePreview(loadedWorkspace, text),
+        preview: _safePreview(tabbedWorkspace, text),
       );
       return true;
     } on Object catch (error, stackTrace) {
@@ -203,6 +212,42 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> openFolder(String path) => openPath(path);
 
   Future<void> openActiveFile(String path) async {
+    await _openActiveFile(path);
+  }
+
+  Future<void> closeOpenFileTab(String path) async {
+    final workspace = state.workspace;
+    if (workspace == null || !workspace.openFilePaths.contains(path)) {
+      return;
+    }
+    if (workspace.openFilePaths.length <= 1) {
+      return;
+    }
+    final closedIndex = workspace.openFilePaths.indexOf(path);
+    final nextOpenFilePaths = [
+      for (final openPath in workspace.openFilePaths)
+        if (openPath != path) openPath,
+    ];
+    if (workspace.activeFilePath != path) {
+      state = state.copyWith(
+        workspace: workspace.copyWith(openFilePaths: nextOpenFilePaths),
+        clearMessage: true,
+      );
+      return;
+    }
+    final nextIndex = closedIndex <= 0
+        ? 0
+        : math.min(closedIndex - 1, nextOpenFilePaths.length - 1);
+    await _openActiveFile(
+      nextOpenFilePaths[nextIndex],
+      openFilePaths: nextOpenFilePaths,
+    );
+  }
+
+  Future<void> _openActiveFile(
+    String path, {
+    List<String>? openFilePaths,
+  }) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return;
@@ -213,6 +258,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final nextWorkspace = workspace.copyWith(
         activeFilePath: path,
         activeFileSnapshot: load.snapshot,
+        openFilePaths: openFilePaths ?? _openFileTabPaths(workspace, path),
       );
       final reparsed = await _service.reparseActive(nextWorkspace, load.text);
       state = state.copyWith(
@@ -376,4 +422,29 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
     }
   }
+}
+
+List<String> _openFileTabPaths(Workspace workspace, String path) {
+  if (workspace.openFilePaths.contains(path)) {
+    return workspace.openFilePaths;
+  }
+  return [...workspace.openFilePaths, path];
+}
+
+List<String> _retainedOpenFileTabPaths({
+  required Workspace current,
+  required Workspace refreshed,
+  required String? activeFilePath,
+}) {
+  final availablePaths = {
+    for (final file in refreshed.files) file.absolutePath,
+  };
+  final retained = [
+    for (final path in current.openFilePaths)
+      if (availablePaths.contains(path)) path,
+  ];
+  if (activeFilePath == null || retained.contains(activeFilePath)) {
+    return retained;
+  }
+  return [...retained, activeFilePath];
 }

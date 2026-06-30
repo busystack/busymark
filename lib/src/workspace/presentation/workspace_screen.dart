@@ -462,13 +462,21 @@ class WorkspaceScreen extends ConsumerWidget {
                           ),
                         ),
                       Expanded(
-                        child: _EditorPreviewSplit(
-                          state: state,
-                          viewMode: settings.documentViewMode,
-                          editorFontSize: settings.editorFontSize,
-                          editorToolbarPlacement:
-                              settings.editorToolbarPlacement,
-                          wordWrap: settings.wordWrap,
+                        child: Column(
+                          children: [
+                            if (_shouldShowEditorTabs(workspace))
+                              _EditorTabStrip(state: state),
+                            Expanded(
+                              child: _EditorPreviewSplit(
+                                state: state,
+                                viewMode: settings.documentViewMode,
+                                editorFontSize: settings.editorFontSize,
+                                editorToolbarPlacement:
+                                    settings.editorToolbarPlacement,
+                                wordWrap: settings.wordWrap,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -2374,6 +2382,198 @@ class _SidebarEmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _shouldShowEditorTabs(Workspace workspace) {
+  return switch (workspace.kind) {
+        WorkspaceKind.markdownFolder || WorkspaceKind.writersideModule => true,
+        WorkspaceKind.untitledMarkdown || WorkspaceKind.singleMarkdown => false,
+      } &&
+      workspace.openFilePaths.isNotEmpty;
+}
+
+class _EditorTabStrip extends ConsumerWidget {
+  const _EditorTabStrip({required this.state});
+
+  final WorkspaceState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workspace = state.workspace;
+    if (workspace == null || workspace.openFilePaths.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.headerbarFlat,
+        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+      ),
+      child: SizedBox(
+        height: BusyMarkSizes.paneHeaderHeight,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(
+            BusyMarkSpacing.sm,
+            BusyMarkSpacing.xs,
+            BusyMarkSpacing.sm,
+            0,
+          ),
+          itemBuilder: (context, index) {
+            final path = workspace.openFilePaths[index];
+            final active = path == workspace.activeFilePath;
+            return _EditorTab(
+              workspace: workspace,
+              path: path,
+              active: active,
+              dirty: active && state.isDirty,
+              canClose: workspace.openFilePaths.length > 1,
+              onSelected: () async {
+                if (active) {
+                  return;
+                }
+                if (!await confirmSafeToContinue(context, ref) ||
+                    !context.mounted) {
+                  return;
+                }
+                await ref
+                    .read(workspaceControllerProvider.notifier)
+                    .openActiveFile(path);
+              },
+              onClose: () async {
+                if (active &&
+                    (!await confirmSafeToContinue(context, ref) ||
+                        !context.mounted)) {
+                  return;
+                }
+                await ref
+                    .read(workspaceControllerProvider.notifier)
+                    .closeOpenFileTab(path);
+              },
+            );
+          },
+          separatorBuilder: (context, index) =>
+              const SizedBox(width: BusyMarkSpacing.xs),
+          itemCount: workspace.openFilePaths.length,
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorTab extends StatelessWidget {
+  const _EditorTab({
+    required this.workspace,
+    required this.path,
+    required this.active,
+    required this.dirty,
+    required this.canClose,
+    required this.onSelected,
+    required this.onClose,
+  });
+
+  final Workspace workspace;
+  final String path;
+  final bool active;
+  final bool dirty;
+  final bool canClose;
+  final VoidCallback onSelected;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final file = _documentFileForPath(workspace, path);
+    final icon = _documentKindIcon(file?.kind ?? DocumentKind.markdown);
+    final foreground = active ? colors.foreground : colors.mutedForeground;
+    final background = active ? colors.view : BusyMarkLinuxPalette.transparent;
+    final borderColor = active
+        ? colors.subtleBorder
+        : BusyMarkLinuxPalette.transparent;
+    return Material(
+      color: background,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(BusyMarkRadius.sm),
+      ),
+      child: InkWell(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(BusyMarkRadius.sm),
+        ),
+        hoverColor: colors.controlHover,
+        onTap: onSelected,
+        child: Container(
+          height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
+          constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(BusyMarkRadius.sm),
+            ),
+            border: Border.all(color: borderColor),
+          ),
+          padding: const EdgeInsetsDirectional.only(
+            start: BusyMarkSpacing.sm,
+            end: BusyMarkSpacing.xs,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (dirty) ...[
+                Container(
+                  width: BusyMarkSizes.markerDot,
+                  height: BusyMarkSizes.markerDot,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ] else ...[
+                Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+              Flexible(
+                child: Text(
+                  _relativeDocumentPath(workspace, path),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: foreground,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (canClose) ...[
+                const SizedBox(width: BusyMarkSpacing.xs),
+                IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  icon: const Icon(BusyMarkGlyphs.clear),
+                  iconSize: 13,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 24,
+                    height: 24,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  color: foreground,
+                  onPressed: onClose,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+DocumentFile? _documentFileForPath(Workspace workspace, String path) {
+  for (final file in workspace.files) {
+    if (file.absolutePath == path) {
+      return file;
+    }
+  }
+  return null;
 }
 
 class _EditorPreviewSplit extends ConsumerStatefulWidget {
