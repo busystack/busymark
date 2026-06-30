@@ -7,6 +7,9 @@ import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
 
+const double _wysiwygTextFieldCursorWidth = 2.0;
+const double _wysiwygTextFieldLayoutInset = 1.0 + _wysiwygTextFieldCursorWidth;
+
 class BusyMarkWysiwygBlockField extends StatelessWidget {
   const BusyMarkWysiwygBlockField({
     super.key,
@@ -159,6 +162,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                   alpha: BusyMarkAlpha.previewHighlight,
                                 ),
                             textDirection: Directionality.of(context),
+                            textScaler: MediaQuery.textScalerOf(context),
+                            locale: Localizations.maybeLocaleOf(context),
+                            layoutWidthInset: _wysiwygTextFieldLayoutInset,
                           ),
                         ),
                       ),
@@ -175,6 +181,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                         maxLines: null,
                         minLines: 1,
                         style: style,
+                        cursorWidth: _wysiwygTextFieldCursorWidth,
                         decoration: const InputDecoration(
                           isCollapsed: true,
                           border: InputBorder.none,
@@ -789,6 +796,9 @@ class _WysiwygSelectionPainter extends CustomPainter {
     required this.selectionRange,
     required this.color,
     required this.textDirection,
+    required this.textScaler,
+    required this.locale,
+    required this.layoutWidthInset,
   });
 
   final String text;
@@ -796,6 +806,9 @@ class _WysiwygSelectionPainter extends CustomPainter {
   final BusyMarkWysiwygSelectionRange? selectionRange;
   final Color color;
   final TextDirection textDirection;
+  final TextScaler textScaler;
+  final Locale? locale;
+  final double layoutWidthInset;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -808,10 +821,16 @@ class _WysiwygSelectionPainter extends CustomPainter {
     if (end <= start) {
       return;
     }
+    final maxWidth = size.width - layoutWidthInset;
+    if (maxWidth <= 0) {
+      return;
+    }
     final textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: textDirection,
-    )..layout(maxWidth: size.width);
+      textScaler: textScaler,
+      locale: locale,
+    )..layout(maxWidth: maxWidth);
     final boxes = textPainter.getBoxesForSelection(
       TextSelection(baseOffset: start, extentOffset: end),
     );
@@ -840,7 +859,10 @@ class _WysiwygSelectionPainter extends CustomPainter {
         oldDelegate.selectionRange?.start != selectionRange?.start ||
         oldDelegate.selectionRange?.end != selectionRange?.end ||
         oldDelegate.color != color ||
-        oldDelegate.textDirection != textDirection;
+        oldDelegate.textDirection != textDirection ||
+        oldDelegate.textScaler != textScaler ||
+        oldDelegate.locale != locale ||
+        oldDelegate.layoutWidthInset != layoutWidthInset;
   }
 }
 
