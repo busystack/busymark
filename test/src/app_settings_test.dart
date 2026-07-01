@@ -17,6 +17,13 @@ void main() {
     expect(settings.previewVisible, isTrue);
   });
 
+  test('auto save defaults to enabled', () {
+    final settings = AppSettings.defaults();
+
+    expect(settings.autoSave, isTrue);
+    expect(settings.toJson()['autoSave'], isTrue);
+  });
+
   test('legacy preview visibility migrates to source mode when hidden', () {
     final settings = AppSettings.fromJson(<String, Object?>{
       'previewVisible': false,
@@ -74,6 +81,21 @@ void main() {
           .confirmCloseWithUnsavedChanges,
       isFalse,
     );
+  });
+
+  test('auto save setting persists', () async {
+    final store = _MemorySettingsStore();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.setAutoSave(false);
+
+    expect(store.value['autoSave'], isFalse);
+    expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
   });
 }
 

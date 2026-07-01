@@ -25,9 +25,10 @@ void main() {
     expect(source, contains('setTheme'));
     expect(source, contains('busymark-sidebar-header'));
     expect(source, contains('self->sidebar_width'));
+    expect(source, isNot(contains('self->save_button')));
     expect(
       source,
-      contains('connect_header_action(self, self->save_button, "save")'),
+      isNot(contains('connect_header_action(self, self->save_button, "save")')),
     );
     expect(source, isNot(contains('window-close-symbolic')));
     expect(source, isNot(contains('window-minimize-symbolic')));
@@ -183,7 +184,7 @@ void main() {
     expect(dialogs, contains('BusyMarkModalEditorSurface'));
   });
 
-  test('native GTK prefers dark theme for snap runtime widgets', () {
+  test('native GTK theme follows Flutter brightness for snap runtime widgets', () {
     final service = File(
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
@@ -198,15 +199,38 @@ void main() {
       native,
       contains('"gtk-application-prefer-dark-theme", prefer_dark'),
     );
-    expect(native, contains('set_gtk_theme_preference(TRUE);'));
     expect(native, contains('"gtk-theme-name"'));
     expect(native, contains('gtk_theme_exists'));
     expect(native, contains('available_gtk_theme_fallback'));
+    expect(
+      native,
+      contains(
+        'const gchar* fallback = available_gtk_theme_fallback(prefer_dark);',
+      ),
+    );
+    expect(native, contains('g_strcmp0(theme_name, fallback) != 0'));
+    expect(
+      native,
+      contains('g_object_set(settings, "gtk-theme-name", fallback, nullptr);'),
+    );
     expect(native, contains('"Yaru-dark"'));
     expect(native, contains('"Adwaita-dark"'));
     expect(native, contains('"gtk-icon-theme-name"'));
     expect(native, contains('icon_theme_exists'));
     expect(native, contains('available_icon_theme_fallback'));
+    expect(
+      native,
+      contains(
+        'const gchar* icon_fallback = available_icon_theme_fallback(prefer_dark);',
+      ),
+    );
+    expect(native, contains('g_strcmp0(icon_theme_name, icon_fallback) != 0'));
+    expect(
+      native,
+      contains(
+        'g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);',
+      ),
+    );
     expect(native, contains('gtk_icon_theme_set_custom_theme'));
     expect(native, contains('gtk_accent_css_provider'));
     expect(native, contains('@define-color theme_selected_bg_color %s;'));
@@ -216,7 +240,15 @@ void main() {
     expect(native, contains('GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1'));
     expect(native, isNot(contains('gtk_theme_name_for_preference')));
     expect(native, isNot(contains('icon_theme_name_for_preference')));
-    expect(native, contains('fl_lookup_bool_arg(args, "preferDark", TRUE)'));
+    expect(native, contains('fl_lookup_optional_bool_arg'));
+    expect(native, contains('fl_lookup_optional_bool_arg(args, "preferDark"'));
+    expect(native, contains('set_gtk_theme_preference(prefer_dark);'));
+    expect(native, isNot(contains('prefer_dark_gtk_theme')));
+    expect(native, isNot(contains('set_gtk_theme_preference(TRUE)')));
+    expect(
+      native,
+      isNot(contains('fl_lookup_bool_arg(args, "preferDark", TRUE)')),
+    );
     expect(snapcraft, contains('yaru-theme-gtk'));
     expect(snapcraft, contains('yaru-theme-icon'));
     expect(snapcraft, contains('override-build:'));
@@ -237,21 +269,25 @@ void main() {
     );
     expect(
       native,
-      matches(
-        RegExp(
-          r'static void my_application_startup[\s\S]*'
-          r'G_APPLICATION_CLASS\(my_application_parent_class\)->startup\(application\);[\s\S]*'
-          r'prefer_dark_gtk_theme\(\);',
+      isNot(
+        matches(
+          RegExp(
+            r'static void my_application_startup[\s\S]*'
+            r'G_APPLICATION_CLASS\(my_application_parent_class\)->startup\(application\);[\s\S]*'
+            r'set_gtk_theme_preference',
+          ),
         ),
       ),
     );
     expect(
       native,
-      matches(
-        RegExp(
-          r'static void my_application_activate\(GApplication\* application\) \{[\s\S]*'
-          r'prefer_dark_gtk_theme\(\);[\s\S]*'
-          r'gtk_application_window_new',
+      isNot(
+        matches(
+          RegExp(
+            r'static void my_application_activate\(GApplication\* application\) \{[\s\S]*'
+            r'set_gtk_theme_preference[\s\S]*'
+            r'gtk_application_window_new',
+          ),
         ),
       ),
     );
@@ -477,20 +513,26 @@ void main() {
     expect(service, contains('setCanSave'));
     expect(workspace, contains('case HeaderBarAction.save:'));
     expect(workspace, isNot(contains('case HeaderBarAction.problems:')));
-    expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
+    expect(workspace, isNot(contains('saveActiveWithOverwriteConfirmation')));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));
     expect(workspace, contains('_validateActiveAndShowProblems'));
-    expect(workspace, contains('setCanSave(state.isDirty)'));
-    expect(workspace, contains('accented: state.isDirty'));
+    expect(workspace, isNot(contains('setCanSave(state.isDirty)')));
+    expect(workspace, isNot(contains('accented: state.isDirty')));
     expect(
       service,
       contains('accentColor: Theme.of(context).colorScheme.primary'),
     );
     expect(service, contains('accentForegroundColor'));
-    expect(native, contains('create_header_icon_button("emblem-ok-symbolic")'));
-    expect(native, contains('busymark-save-button'));
-    expect(native, contains('busymark-save-dirty'));
-    expect(native, contains('set_save_dirty(self, fl_method_bool_arg(args))'));
+    expect(
+      native,
+      isNot(contains('create_header_icon_button("emblem-ok-symbolic")')),
+    );
+    expect(native, isNot(contains('busymark-save-button')));
+    expect(native, isNot(contains('busymark-save-dirty')));
+    expect(
+      native,
+      isNot(contains('set_save_dirty(self, fl_method_bool_arg(args))')),
+    );
     expect(
       native,
       contains('create_header_icon_button("tools-check-spelling-symbolic")'),
@@ -654,7 +696,9 @@ void main() {
     );
     expect(
       native,
-      contains('set_widget_visible(self->save_button, effective_visible)'),
+      isNot(
+        contains('set_widget_visible(self->save_button, effective_visible)'),
+      ),
     );
     expect(
       native,

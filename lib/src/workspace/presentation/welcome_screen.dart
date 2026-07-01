@@ -195,7 +195,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         await headerBar.setBackVisible(false);
         await headerBar.setDocumentControlsVisible(false);
         await headerBar.setCanRefresh(false);
-        await headerBar.setCanSave(false);
         await headerBar.setSearchActive(false);
       }());
     });

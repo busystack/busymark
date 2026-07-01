@@ -78,6 +78,20 @@ class BusyMarkApp extends ConsumerWidget {
                   _SaveActiveIntent(),
               SingleActivator(LogicalKeyboardKey.slash, control: true):
                   _KeyboardShortcutsIntent(),
+              SingleActivator(LogicalKeyboardKey.tab, control: true):
+                  _NextTabIntent(),
+              SingleActivator(
+                LogicalKeyboardKey.tab,
+                control: true,
+                shift: true,
+              ): _PreviousTabIntent(),
+              SingleActivator(LogicalKeyboardKey.keyW, control: true):
+                  _CloseTabIntent(),
+              SingleActivator(
+                LogicalKeyboardKey.keyW,
+                control: true,
+                shift: true,
+              ): _CloseAllTabsIntent(),
               SingleActivator(LogicalKeyboardKey.keyF, control: true):
                   _OpenSearchIntent(),
               SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
@@ -145,6 +159,50 @@ class BusyMarkApp extends ConsumerWidget {
                         return null;
                       },
                     ),
+                _NextTabIntent: CallbackAction<_NextTabIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(
+                        _activateOpenFileTab(navigatorContext, ref, next: true),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _PreviousTabIntent: CallbackAction<_PreviousTabIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(
+                        _activateOpenFileTab(
+                          navigatorContext,
+                          ref,
+                          next: false,
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+                _CloseTabIntent: CallbackAction<_CloseTabIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(_closeActiveOpenFileTab(navigatorContext, ref));
+                    }
+                    return null;
+                  },
+                ),
+                _CloseAllTabsIntent: CallbackAction<_CloseAllTabsIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      unawaited(_closeAllOpenFileTabs(navigatorContext, ref));
+                    }
+                    return null;
+                  },
+                ),
                 _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
                   onInvoke: (intent) {
                     if (ref.read(workspaceControllerProvider).workspace !=
@@ -259,6 +317,61 @@ class BusyMarkApp extends ConsumerWidget {
     return selected?.path;
   }
 
+  Future<void> _activateOpenFileTab(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool next,
+  }) async {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null || workspace.openFilePaths.length < 2) {
+      return;
+    }
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
+      return;
+    }
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    if (next) {
+      await controller.activateNextOpenFileTab();
+    } else {
+      await controller.activatePreviousOpenFileTab();
+    }
+  }
+
+  Future<void> _closeActiveOpenFileTab(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null ||
+        workspace.activeFilePath == null ||
+        workspace.openFilePaths.isEmpty) {
+      return;
+    }
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
+      return;
+    }
+    await ref
+        .read(workspaceControllerProvider.notifier)
+        .closeActiveOpenFileTab();
+  }
+
+  Future<void> _closeAllOpenFileTabs(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null || workspace.openFilePaths.isEmpty) {
+      return;
+    }
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
+      return;
+    }
+    await ref.read(workspaceControllerProvider.notifier).closeAllOpenFileTabs();
+  }
+
   Future<String?> _chooseWorkspaceFolder(WidgetRef ref) async {
     final context = rootNavigatorKey.currentContext;
     if (context == null) {
@@ -357,7 +470,13 @@ class _BusyMarkWindowLifecycleState
       return;
     }
     final settings = ref.read(appSettingsControllerProvider);
-    final workspace = ref.read(workspaceControllerProvider);
+    var workspace = ref.read(workspaceControllerProvider);
+    if (settings.autoSave && workspace.hasUnsavedChanges) {
+      await ref
+          .read(workspaceControllerProvider.notifier)
+          .autoSaveActiveIfNeeded();
+      workspace = ref.read(workspaceControllerProvider);
+    }
     await _windowControlService.handleCloseRequest(
       hasUnsavedChanges: workspace.hasUnsavedChanges,
       confirmCloseWithUnsavedChanges: settings.confirmCloseWithUnsavedChanges,
@@ -468,6 +587,22 @@ class _SaveActiveIntent extends Intent {
 
 class _KeyboardShortcutsIntent extends Intent {
   const _KeyboardShortcutsIntent();
+}
+
+class _NextTabIntent extends Intent {
+  const _NextTabIntent();
+}
+
+class _PreviousTabIntent extends Intent {
+  const _PreviousTabIntent();
+}
+
+class _CloseTabIntent extends Intent {
+  const _CloseTabIntent();
+}
+
+class _CloseAllTabsIntent extends Intent {
+  const _CloseAllTabsIntent();
 }
 
 class _OpenSearchIntent extends Intent {

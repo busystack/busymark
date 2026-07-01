@@ -7,6 +7,14 @@ projects.
 
 [![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/busymark)
 
+<p align="center">
+  <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split editor and preview view" width="900">
+</p>
+
+<p align="center">
+  <sub>Split view with a Writerside project tree, Markdown editor, and rendered preview.</sub>
+</p>
+
 ## Features
 
 - Open individual Markdown files.
@@ -20,6 +28,35 @@ projects.
 - Run basic diagnostics.
 - Reopen recent workspaces.
 - Use native Linux desktop chrome with a GTK headerbar.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-welcome.png" alt="BusyMark welcome screen">
+      <br>
+      <sub><b>Welcome screen</b> for creating or opening Markdown and Writerside workspaces.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-editor-view.png" alt="BusyMark editor view">
+      <br>
+      <sub><b>Editor view</b> with formatting tools and document outline navigation.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-preview-view.png" alt="BusyMark preview view">
+      <br>
+      <sub><b>Preview view</b> for rendered Markdown documentation.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/busymark-keyboard-shortcuts.png" alt="BusyMark keyboard shortcuts dialog">
+      <br>
+      <sub><b>Keyboard shortcuts</b> shown in the built-in shortcut reference.</sub>
+    </td>
+  </tr>
+</table>
 
 ## Supported platforms
 

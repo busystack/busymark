@@ -15,6 +15,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -209,6 +210,7 @@ void main() {}
   ) async {
     final parsed = parser.parse(filePath: 'Untitled.md', source: '');
     var markdown = '';
+    String? sourceFilePath;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -220,7 +222,10 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) {
+                sourceFilePath = filePath;
+                markdown = value;
+              },
             ),
           ),
         ),
@@ -240,6 +245,7 @@ void main() {}
     await tester.pump();
 
     expect(markdown, 'Editable text\n');
+    expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
   });
 
@@ -259,7 +265,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -271,6 +277,10 @@ void main() {}
     await tester.pump();
 
     expect(markdown, 'Changed\n');
+    final editedController = tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!;
+    editedController.selection = const TextSelection.collapsed(offset: 2);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
@@ -282,6 +292,14 @@ void main() {}
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Original',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller
+          ?.selection
+          .extentOffset,
+      2,
     );
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -296,6 +314,68 @@ void main() {}
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Changed',
+    );
+  });
+
+  testWidgets('WYSIWYG editor replaces document when active file changes', (
+    tester,
+  ) async {
+    final first = parser.parse(
+      filePath: 'first.md',
+      source: 'First original\n',
+    );
+    final second = parser.parse(
+      filePath: 'second.md',
+      source: 'Second original\n',
+    );
+    var activeDocument = first.busyDocument;
+
+    Widget buildEditor() {
+      return MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: activeDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildEditor());
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Unsaved first tab');
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Unsaved first tab',
+    );
+
+    activeDocument = second.busyDocument;
+    await tester.pumpWidget(buildEditor());
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Second original',
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Second original',
     );
   });
 
@@ -315,7 +395,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -362,7 +442,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -423,7 +503,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -493,7 +573,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -559,7 +639,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -583,6 +663,556 @@ void main() {}
     await tester.pump();
 
     expect(copiedText, 'First\n\nSecond');
+  });
+
+  testWidgets('WYSIWYG Shift drag extends selection across paragraphs', (
+    tester,
+  ) async {
+    const plannerParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## Planner Service\n\n$plannerParagraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingField = tester.widget<TextField>(find.byType(TextField).at(0));
+    headingField.focusNode!.requestFocus();
+    headingField.controller!.selection = const TextSelection.collapsed(
+      offset: 0,
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final paragraphRect = tester.getRect(find.byType(TextField).at(1));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    final gesture = await tester.startGesture(
+      headingRect.centerLeft + const Offset(2, 0),
+    );
+    await gesture.moveTo(paragraphRect.bottomRight - const Offset(2, 2));
+    await gesture.up();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, isNotNull);
+    expect(copiedText, contains('Planner Service'));
+    expect(copiedText, contains('as example.'));
+  });
+
+  testWidgets('WYSIWYG Shift drag from heading end hides native selection', (
+    tester,
+  ) async {
+    const heading = 'Planner Service';
+    const plannerParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## $heading\n\n$plannerParagraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingField = tester.widget<TextField>(find.byType(TextField).at(0));
+    headingField.focusNode!.requestFocus();
+    headingField.controller!.selection = TextSelection.collapsed(
+      offset: heading.length,
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final paragraphRect = tester.getRect(find.byType(TextField).at(1));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    final gesture = await tester.startGesture(
+      headingRect.centerRight - const Offset(2, 0),
+    );
+    await gesture.moveTo(paragraphRect.bottomRight - const Offset(2, 2));
+    await gesture.up();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    Color? nativeSelectionColorAt(int index) {
+      return TextSelectionTheme.of(
+        tester.element(find.byType(TextField).at(index)),
+      ).selectionColor;
+    }
+
+    expect(nativeSelectionColorAt(0), Colors.transparent);
+    expect(nativeSelectionColorAt(1), Colors.transparent);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, plannerParagraph);
+  });
+
+  testWidgets('WYSIWYG reverse drag updates selection on pointer up', (
+    tester,
+  ) async {
+    const heading = 'Planner Service';
+    const firstParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    const secondParagraph =
+        'It also has to call learner-model get all candos and to create '
+        'schedulers for learner for each cando.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## $heading\n\n$firstParagraph\n\n$secondParagraph\n',
+    );
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final firstParagraphRect = tester.getRect(find.byType(TextField).at(1));
+    final secondParagraphRect = tester.getRect(find.byType(TextField).at(2));
+    final gesture = await tester.createGesture(pointer: 42);
+    await gesture.down(secondParagraphRect.bottomRight - const Offset(2, 2));
+    await gesture.moveTo(firstParagraphRect.centerRight - const Offset(2, 0));
+    await gesture.updateWithCustomEvent(
+      PointerUpEvent(
+        pointer: 42,
+        position: headingRect.centerLeft + const Offset(2, 0),
+      ),
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyC);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, contains(heading));
+    expect(copiedText, contains('example.'));
+    expect(copiedText, contains('cando.'));
+  });
+
+  testWidgets('WYSIWYG reverse drag aligns wrapped trailing word highlight', (
+    tester,
+  ) async {
+    const heading = 'Planner Service';
+    const firstParagraph =
+        'Create a new service - planner-service. Spring Boot application. '
+        'Use learner-model and other spring boot services as example.';
+    const secondParagraph =
+        'It also has to call learner-model get all candos and to create '
+        'schedulers for learner for each cando.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '## $heading\n\n$firstParagraph\n\n$secondParagraph\n',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          return MediaQuery(
+            data: media.copyWith(textScaler: const TextScaler.linear(1.35)),
+            child: child!,
+          );
+        },
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 420,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final headingRect = tester.getRect(find.byType(TextField).at(0));
+    final firstParagraphRect = tester.getRect(find.byType(TextField).at(1));
+    final secondParagraphRect = tester.getRect(find.byType(TextField).at(2));
+    final gesture = await tester.createGesture(pointer: 43);
+    await gesture.down(secondParagraphRect.bottomRight - const Offset(2, 2));
+    await gesture.moveTo(firstParagraphRect.centerRight - const Offset(2, 0));
+    await gesture.updateWithCustomEvent(
+      PointerUpEvent(
+        pointer: 43,
+        position: headingRect.centerLeft + const Offset(2, 0),
+      ),
+    );
+    await tester.pump();
+
+    final textFieldRender = tester.renderObject<RenderObject>(
+      find.byType(TextField).at(1),
+    );
+    final renderEditable = _findRenderEditable(textFieldRender);
+    expect(renderEditable, isNotNull);
+    final exampleStart = firstParagraph.indexOf('example.');
+    final exampleBoxes = renderEditable!.getBoxesForSelection(
+      TextSelection(
+        baseOffset: exampleStart,
+        extentOffset: exampleStart + 'example.'.length,
+      ),
+    );
+    expect(exampleBoxes, isNotEmpty);
+
+    final painterFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint &&
+          widget.painter.runtimeType.toString() == '_WysiwygSelectionPainter',
+    );
+    final customPaint = tester.widget<CustomPaint>(painterFinder.at(1));
+    final painter = customPaint.painter! as dynamic;
+    expect(painter.selectionRange.start, 0);
+    expect(painter.selectionRange.end, firstParagraph.length);
+
+    final paintBox = tester.renderObject<RenderBox>(painterFinder.at(1));
+    final painterText =
+        TextPainter(
+          text: TextSpan(
+            text: firstParagraph,
+            style: painter.style as TextStyle,
+          ),
+          textDirection: painter.textDirection as TextDirection,
+          textScaler: painter.textScaler as TextScaler,
+          locale: painter.locale as Locale?,
+        )..layout(
+          maxWidth: paintBox.size.width - (painter.layoutWidthInset as double),
+        );
+    final highlightBoxes = painterText.getBoxesForSelection(
+      TextSelection(
+        baseOffset: exampleStart,
+        extentOffset: exampleStart + 'example.'.length,
+      ),
+    );
+    painterText.dispose();
+
+    expect(highlightBoxes, hasLength(exampleBoxes.length));
+    final lineTolerance =
+        (exampleBoxes.last.bottom - exampleBoxes.last.top) / 3;
+    expect(
+      (highlightBoxes.last.top - exampleBoxes.last.top).abs(),
+      lessThan(lineTolerance),
+    );
+    expect(
+      (highlightBoxes.last.bottom - exampleBoxes.last.bottom).abs(),
+      lessThan(lineTolerance),
+    );
+  });
+
+  testWidgets('WYSIWYG Ctrl+X cuts block selection', (tester) async {
+    const source = 'First\n\nSecond\n\nThird\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    var markdown = source;
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          copiedText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstFieldRect = tester.getRect(find.byType(TextField).at(0));
+    final secondFieldRect = tester.getRect(find.byType(TextField).at(1));
+    final gesture = await tester.startGesture(
+      firstFieldRect.centerLeft + const Offset(1, 0),
+    );
+    await gesture.moveTo(secondFieldRect.centerLeft + const Offset(80, 0));
+    await gesture.up();
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(copiedText, 'First\n\nSecond');
+    expect(markdown, contains('Third'));
+    expect(markdown, isNot(contains('First')));
+    expect(markdown, isNot(contains('Second')));
+  });
+
+  testWidgets('WYSIWYG cut paste preserves inline formatting', (tester) async {
+    const source = 'Hello **bold** world\n\nTarget\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    var markdown = source;
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        if (call.method == 'Clipboard.getData') {
+          return {'text': clipboardText};
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstField = tester.widget<TextField>(find.byType(TextField).at(0));
+    firstField.focusNode!.requestFocus();
+    firstField.controller!.selection = const TextSelection(
+      baseOffset: 6,
+      extentOffset: 10,
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(clipboardText, 'bold');
+
+    final secondField = tester.widget<TextField>(find.byType(TextField).at(1));
+    secondField.focusNode!.requestFocus();
+    secondField.controller!.selection = TextSelection.collapsed(
+      offset: secondField.controller!.text.length,
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, 'Hello  world\n\nTarget**bold**\n');
+  });
+
+  testWidgets('WYSIWYG cut paste preserves whole block formatting', (
+    tester,
+  ) async {
+    const source = '# Title\n\nPara with **bold** text\n\nTail\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    var markdown = source;
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        if (call.method == 'Clipboard.getData') {
+          return {'text': clipboardText};
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final titleField = tester.widget<TextField>(find.byType(TextField).at(0));
+    titleField.focusNode!.requestFocus();
+    titleField.controller!.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: titleField.controller!.text.length,
+    );
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyX);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(clipboardText, 'Title');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(markdown, source);
   });
 
   testWidgets('WYSIWYG drag selection preserves partial paragraph boundaries', (
@@ -620,7 +1250,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -667,7 +1297,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -705,7 +1335,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
-                onSourceChanged: (_) {},
+                onSourceChanged: (_, _) {},
               ),
             ),
           ),
@@ -743,7 +1373,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -785,7 +1415,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -818,7 +1448,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -859,7 +1489,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1119,7 +1749,7 @@ void main() {}
                 workspaceRoot: topicsDir.path,
                 writersideRoot: temp.path,
                 imagesDir: 'images',
-                onSourceChanged: (value) => markdown = value,
+                onSourceChanged: (filePath, value) => markdown = value,
               ),
             ),
           ),
@@ -1181,7 +1811,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
-                onSourceChanged: (_) {},
+                onSourceChanged: (_, _) {},
               ),
             ),
           ),
@@ -1284,7 +1914,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1325,7 +1955,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1367,7 +1997,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1424,7 +2054,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1473,7 +2103,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1505,7 +2135,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -1747,7 +2377,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1833,6 +2463,17 @@ TextStyle? _spanStyleForText(InlineSpan span, String text) {
     }
   }
   return null;
+}
+
+RenderEditable? _findRenderEditable(RenderObject root) {
+  if (root is RenderEditable) {
+    return root;
+  }
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findRenderEditable(child);
+  });
+  return result;
 }
 
 class _FakeImageHttpClient implements HttpClient {

@@ -10,11 +10,11 @@ import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
 
-const _busyMarkRepositoryUrl = 'https://github.com/busystack/busymark';
+const _busyMarkWebsiteUrl = 'https://busystack.org';
 const _busyMarkIssueUrl = 'https://github.com/busystack/busymark/issues';
 const _apacheLicenseUrl = 'https://www.apache.org/licenses/LICENSE-2.0';
 const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
-final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
+final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
 final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
 
@@ -113,7 +113,7 @@ void showBusyMarkAboutDialog(BuildContext context) {
 }
 
 Future<void> _openBusyMarkRepository() async {
-  await launchUrl(_busyMarkRepositoryUri, mode: LaunchMode.externalApplication);
+  await launchUrl(_busyMarkWebsiteUri, mode: LaunchMode.externalApplication);
 }
 
 Future<void> _openBusyMarkIssues() async {
@@ -167,6 +167,36 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 subtitle: context.l10n.shortcutKeyboardShortcutsDescription,
                 leading: const Icon(BusyMarkGlyphs.keyboard),
                 trailing: const _KeyboardShortcutBadge('Ctrl+/'),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.tabs,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.shortcutNextTab,
+                subtitle: context.l10n.shortcutNextTabDescription,
+                leading: const Icon(BusyMarkGlyphs.tab),
+                trailing: const _KeyboardShortcutBadge('Ctrl+Tab'),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutPreviousTab,
+                subtitle: context.l10n.shortcutPreviousTabDescription,
+                leading: const Icon(BusyMarkGlyphs.tab),
+                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+Tab'),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutCloseTab,
+                subtitle: context.l10n.shortcutCloseTabDescription,
+                leading: const Icon(BusyMarkGlyphs.clear),
+                trailing: const _KeyboardShortcutBadge('Ctrl+W'),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutCloseAllTabs,
+                subtitle: context.l10n.shortcutCloseAllTabsDescription,
+                leading: const Icon(BusyMarkGlyphs.clearAll),
+                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+W'),
               ),
             ],
           ),
@@ -407,7 +437,7 @@ class _BusyMarkAboutDialog extends StatelessWidget {
             ),
             BusyMarkActionRow(
               title: context.l10n.aboutWebsite,
-              subtitle: _busyMarkRepositoryUrl,
+              subtitle: _busyMarkWebsiteUrl,
               leading: const Icon(BusyMarkGlyphs.home),
               trailing: const Icon(BusyMarkGlyphs.externalLink),
               onTap: () => unawaited(_openBusyMarkRepository()),

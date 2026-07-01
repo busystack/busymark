@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -209,6 +210,199 @@ void main() {
     settingsController.dispose();
   });
 
+  test(
+    'stale validation after save and tab switch does not restore previous file',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Dirty A\n');
+
+      final validation = controller.validateActive();
+      await service.validationStarted.future;
+
+      expect(await controller.saveActive(), isTrue);
+      expect(await controller.openActiveFile(service.bPath), isTrue);
+      controller.updateActiveText('# Dirty B\n');
+      expect(await controller.saveActive(), isTrue);
+
+      expect(controller.state.workspace?.activeFilePath, service.bPath);
+      expect(controller.state.activeText, '# Dirty B\n');
+      expect(service.savedTexts, ['# Dirty A\n', '# Dirty B\n']);
+
+      service.finishValidation();
+      await validation;
+
+      expect(controller.state.workspace?.activeFilePath, service.bPath);
+      expect(controller.state.activeText, '# Dirty B\n');
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test(
+    'stale text update from previous file cannot dirty active tab',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(service.rootPath);
+      expect(await controller.openActiveFile(service.bPath), isTrue);
+
+      controller.updateActiveText('# Stale A\n', sourceFilePath: service.aPath);
+
+      expect(controller.state.workspace?.activeFilePath, service.bPath);
+      expect(controller.state.activeText, '# B\n');
+      expect(controller.state.isDirty, isFalse);
+      expect(await controller.autoSaveActiveIfNeeded(), isTrue);
+      expect(service.savedTexts, isEmpty);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test('folder workspaces track open file tabs without duplicates', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final initialPath = controller.state.workspace!.activeFilePath!;
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+
+    expect(controller.state.workspace?.openFilePaths, [initialPath]);
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(initialPath);
+
+    expect(controller.state.workspace?.activeFilePath, initialPath);
+    expect(controller.state.workspace?.openFilePaths, [
+      initialPath,
+      otherFile.absolutePath,
+    ]);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('closing active file tabs selects a neighboring tab', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final initialPath = controller.state.workspace!.activeFilePath!;
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+    final linksFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'links_images.md',
+    );
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(linksFile.absolutePath);
+    await controller.closeOpenFileTab(otherFile.absolutePath);
+
+    expect(controller.state.workspace?.activeFilePath, linksFile.absolutePath);
+    expect(controller.state.workspace?.openFilePaths, [
+      initialPath,
+      linksFile.absolutePath,
+    ]);
+
+    await controller.closeOpenFileTab(linksFile.absolutePath);
+
+    expect(controller.state.workspace?.activeFilePath, initialPath);
+    expect(controller.state.workspace?.openFilePaths, [initialPath]);
+
+    await controller.closeOpenFileTab(initialPath);
+
+    expect(controller.state.workspace?.activeFilePath, isNull);
+    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.workspace?.openFilePaths, isEmpty);
+    expect(controller.state.activeText, isEmpty);
+    expect(controller.state.preview, isNull);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('activating sibling file tabs wraps around the open tabs', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final initialPath = controller.state.workspace!.activeFilePath!;
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+    final linksFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'links_images.md',
+    );
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(linksFile.absolutePath);
+
+    expect(controller.state.workspace?.activeFilePath, linksFile.absolutePath);
+
+    await controller.activateNextOpenFileTab();
+
+    expect(controller.state.workspace?.activeFilePath, initialPath);
+
+    await controller.activatePreviousOpenFileTab();
+
+    expect(controller.state.workspace?.activeFilePath, linksFile.absolutePath);
+
+    await controller.activatePreviousOpenFileTab();
+
+    expect(controller.state.workspace?.activeFilePath, otherFile.absolutePath);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('closing all file tabs clears the active editor state', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+    final linksFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'links_images.md',
+    );
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(linksFile.absolutePath);
+
+    await controller.closeAllOpenFileTabs();
+
+    expect(controller.state.workspace?.activeFilePath, isNull);
+    expect(controller.state.workspace?.activeFileModifiedAt, isNull);
+    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.workspace?.openFilePaths, isEmpty);
+    expect(controller.state.workspace?.markdown, isNull);
+    expect(controller.state.workspace?.diagnostics, isEmpty);
+    expect(controller.state.activeText, isEmpty);
+    expect(controller.state.preview, isNull);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
   test('failed open clears stale workspace state', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -243,6 +437,57 @@ void main() {
     controller.dispose();
     settingsController.dispose();
   });
+
+  test('auto save waits for an idle delay before writing', () async {
+    final service = _AutosaveWorkspaceService();
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath(service.path);
+    controller.updateActiveText('# Draft\n');
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+
+    expect(service.savedTexts, isEmpty);
+    expect(controller.state.isDirty, isTrue);
+
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+    expect(service.savedTexts, ['# Draft\n']);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test(
+    'auto save preserves dirty state when edits happen during save',
+    () async {
+      final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(service.path);
+      controller.updateActiveText('# First\n');
+      final firstSave = controller.autoSaveActiveIfNeeded();
+      await service.firstSaveStarted.future;
+
+      controller.updateActiveText('# Second\n');
+      service.releaseFirstSave();
+
+      expect(await firstSave, isTrue);
+      expect(service.savedTexts, ['# First\n']);
+      expect(controller.state.isDirty, isTrue);
+
+      expect(await controller.autoSaveActiveIfNeeded(), isTrue);
+      expect(service.savedTexts, ['# First\n', '# Second\n']);
+      expect(controller.state.isDirty, isFalse);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
 
   test(
     'save refuses to overwrite external file changes without force',
@@ -328,11 +573,13 @@ void main() {
   });
 }
 
-Future<_WorkspaceControllerHarness> _createControllerHarness() async {
+Future<_WorkspaceControllerHarness> _createControllerHarness({
+  WorkspaceService service = const WorkspaceService(),
+}) async {
   final container = ProviderContainer(
     overrides: [
       localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-      workspaceServiceProvider.overrideWithValue(const WorkspaceService()),
+      workspaceServiceProvider.overrideWithValue(service),
     ],
   );
   addTearDown(container.dispose);
@@ -372,16 +619,38 @@ class _WorkspaceControllerDriver {
   Future<bool> createWritersideTopic(WritersideTopicCreateRequest request) =>
       _notifier.createWritersideTopic(request);
 
-  Future<void> openActiveFile(String path) => _notifier.openActiveFile(path);
+  Future<bool> openActiveFile(String path) => _notifier.openActiveFile(path);
 
-  void updateActiveText(String text, {bool updatePreview = true}) {
-    _notifier.updateActiveText(text, updatePreview: updatePreview);
+  Future<bool> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
+
+  Future<bool> activatePreviousOpenFileTab() =>
+      _notifier.activatePreviousOpenFileTab();
+
+  Future<bool> closeOpenFileTab(String path) =>
+      _notifier.closeOpenFileTab(path);
+
+  Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
+
+  void updateActiveText(
+    String text, {
+    bool updatePreview = true,
+    String? sourceFilePath,
+  }) {
+    _notifier.updateActiveText(
+      text,
+      updatePreview: updatePreview,
+      sourceFilePath: sourceFilePath,
+    );
   }
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
       _notifier.saveActive(overwriteExternalChanges: overwriteExternalChanges);
 
   Future<bool> saveActiveAs(String path) => _notifier.saveActiveAs(path);
+
+  Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
+
+  Future<void> validateActive() => _notifier.validateActive();
 
   void dispose() {}
 }
@@ -413,3 +682,173 @@ class _MemorySettingsStore implements LocalSettingsStore {
     value = json;
   }
 }
+
+class _AutosaveWorkspaceService extends WorkspaceService {
+  _AutosaveWorkspaceService({this.pauseFirstSave = false});
+
+  final bool pauseFirstSave;
+  final path = '/tmp/busymark-autosave.md';
+  final savedTexts = <String>[];
+  final firstSaveStarted = Completer<void>();
+  final _releaseFirstSave = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    return Workspace(
+      id: path,
+      rootPath: path,
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: path,
+      activeFileSnapshot: WorkspaceFileSnapshot(
+        modifiedAt: _autosaveInitialModifiedAt,
+        size: 11,
+        contentHash: 'initial',
+      ),
+      files: [
+        DocumentFile(
+          absolutePath: path,
+          relativePath: 'autosave.md',
+          kind: DocumentKind.markdown,
+          size: 11,
+          lastModified: _autosaveInitialModifiedAt,
+        ),
+      ],
+      diagnostics: const [],
+    );
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: '# Initial\n',
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: _autosaveInitialModifiedAt,
+        size: 11,
+        contentHash: 'initial',
+      ),
+    );
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    return false;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    savedTexts.add(text);
+    if (pauseFirstSave && savedTexts.length == 1) {
+      firstSaveStarted.complete();
+      await _releaseFirstSave.future;
+    } else if (!firstSaveStarted.isCompleted) {
+      firstSaveStarted.complete();
+    }
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, savedTexts.length + 1),
+      size: text.length,
+      contentHash: text,
+    );
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    return workspace.copyWith(diagnostics: const []);
+  }
+
+  void releaseFirstSave() {
+    if (!_releaseFirstSave.isCompleted) {
+      _releaseFirstSave.complete();
+    }
+  }
+}
+
+class _DelayedValidationWorkspaceService extends WorkspaceService {
+  final rootPath = '/tmp/busymark-delayed-validation';
+  late final aPath = p.join(rootPath, 'a.md');
+  late final bPath = p.join(rootPath, 'b.md');
+  final savedTexts = <String>[];
+  final validationStarted = Completer<void>();
+  final _finishValidation = Completer<void>();
+  var _pausedValidation = false;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    return Workspace(
+      id: rootPath,
+      rootPath: rootPath,
+      kind: WorkspaceKind.markdownFolder,
+      openedAt: DateTime(2026),
+      activeFilePath: aPath,
+      activeFileSnapshot: _delayedSnapshot('# A\n'),
+      openFilePaths: [aPath],
+      files: [
+        DocumentFile(
+          absolutePath: aPath,
+          relativePath: 'a.md',
+          kind: DocumentKind.markdown,
+          size: 4,
+          lastModified: _delayedInitialModifiedAt,
+        ),
+        DocumentFile(
+          absolutePath: bPath,
+          relativePath: 'b.md',
+          kind: DocumentKind.markdown,
+          size: 4,
+          lastModified: _delayedInitialModifiedAt,
+        ),
+      ],
+      diagnostics: const [],
+    );
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    final text = path == bPath ? '# B\n' : '# A\n';
+    return WorkspaceFileLoad(text: text, snapshot: _delayedSnapshot(text));
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    return false;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    savedTexts.add(text);
+    return _delayedSnapshot(text, savedTexts.length);
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    if (!_pausedValidation && source == '# Dirty A\n') {
+      _pausedValidation = true;
+      validationStarted.complete();
+      await _finishValidation.future;
+    }
+    return workspace.copyWith(diagnostics: const []);
+  }
+
+  void finishValidation() {
+    if (!_finishValidation.isCompleted) {
+      _finishValidation.complete();
+    }
+  }
+}
+
+WorkspaceFileSnapshot _delayedSnapshot(String text, [int revision = 0]) {
+  return WorkspaceFileSnapshot(
+    modifiedAt: DateTime(2026, 2, revision + 1),
+    size: text.length,
+    contentHash: text,
+  );
+}
+
+final _autosaveInitialModifiedAt = DateTime(2026);
+final _delayedInitialModifiedAt = DateTime(2026, 2);

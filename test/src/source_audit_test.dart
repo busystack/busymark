@@ -134,7 +134,7 @@ void main() {
     ]) {
       expect(combined, isNot(contains(removed)));
     }
-    expect(combined, isNot(contains('${'Ctrl'}+${'P'}')));
+    expect(RegExp(r'Ctrl\+P(?![A-Za-z])').hasMatch(combined), isFalse);
   });
 
   test('grouped action rows use one BusyMark-owned rounded surface', () {

@@ -361,6 +361,7 @@ class WorkspaceService {
       openedAt: DateTime.now(),
       activeFilePath: filePath,
       activeFileSnapshot: load.snapshot,
+      openFilePaths: [filePath],
       files: [await _documentFile(filePath, rootPath)],
       diagnostics: markdown.diagnostics,
       markdown: markdown,
@@ -408,6 +409,9 @@ class WorkspaceService {
       activeFileSnapshot: firstMarkdown == null
           ? null
           : await fileSnapshot(firstMarkdown.filePath),
+      openFilePaths: firstMarkdown == null
+          ? const []
+          : [firstMarkdown.filePath],
       files: files,
       diagnostics: sortDiagnostics(diagnostics),
       markdown: firstMarkdown,
@@ -445,6 +449,7 @@ class WorkspaceService {
       activeFileSnapshot: firstTopic == null
           ? null
           : await fileSnapshot(firstTopic),
+      openFilePaths: firstTopic == null ? const [] : [firstTopic],
       files: files,
       diagnostics: sortDiagnostics(diagnostics),
       writersideModule: module,

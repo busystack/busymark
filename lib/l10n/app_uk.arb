@@ -132,7 +132,7 @@
   "@open": {
     "description": "Open action label."
   },
-  "outline": "Контур",
+  "outline": "Структура",
   "@outline": {
     "description": "Outline sidebar tab label."
   },
@@ -176,11 +176,11 @@
   "@settings": {
     "description": "Settings action label."
   },
-  "source": "Джерело",
+  "source": "Вихідний текст",
   "@source": {
     "description": "Source view label."
   },
-  "split": "Розділений",
+  "split": "Розділений перегляд",
   "@split": {
     "description": "Split view label."
   },
@@ -260,7 +260,7 @@
   "@topLeft": {
     "description": "Editing button position option."
   },
-  "topRight": "Вгорі справа",
+  "topRight": "Вгорі праворуч",
   "@topRight": {
     "description": "Editing button position option."
   },
@@ -316,6 +316,10 @@
   "@markdownFolderOrWritersideProject": {
     "description": "Subtitle describing supported folder workspace types."
   },
+  "noOpenFile": "Немає відкритого файлу",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
+  },
   "shortcutGroupFile": "Файл",
   "@shortcutGroupFile": {
     "description": "Keyboard shortcut group for file commands."
@@ -344,11 +348,43 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
+  "shortcutNextTab": "Наступна вкладка",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next editor tab."
+  },
+  "shortcutNextTabDescription": "Перейти до наступної відкритої вкладки редактора",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next editor tab."
+  },
+  "shortcutPreviousTab": "Попередня вкладка",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous editor tab."
+  },
+  "shortcutPreviousTabDescription": "Перейти до попередньої відкритої вкладки редактора",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous editor tab."
+  },
+  "shortcutCloseTab": "Закрити вкладку",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active editor tab."
+  },
+  "shortcutCloseTabDescription": "Закрити активну вкладку редактора",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active editor tab."
+  },
+  "shortcutCloseAllTabs": "Закрити всі вкладки",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all editor tabs."
+  },
+  "shortcutCloseAllTabsDescription": "Закрити всі відкриті вкладки редактора",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all editor tabs."
+  },
   "shortcutGroupTextEditing": "Редагування тексту",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Виділити весь текст редактора",
+  "shortcutSelectAllDescription": "Виділити весь текст у редакторі",
   "@shortcutSelectAllDescription": {
     "description": "Keyboard shortcut description for selecting all text."
   },
@@ -368,7 +404,7 @@
   "@shortcutPastePlainTextDescription": {
     "description": "Keyboard shortcut description for plain text paste."
   },
-  "shortcutUndoDescription": "Скасувати останнє редагування",
+  "shortcutUndoDescription": "Скасувати останню зміну",
   "@shortcutUndoDescription": {
     "description": "Keyboard shortcut description for undo."
   },
@@ -376,11 +412,11 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "Очистити виділення в редакторі",
+  "clearEditorSelection": "Зняти виділення в редакторі",
   "@clearEditorSelection": {
     "description": "Keyboard shortcut label for clearing selection."
   },
-  "shortcutClearEditorSelectionDescription": "Очистити поточне виділення в редакторі або фокус пошуку",
+  "shortcutClearEditorSelectionDescription": "Зняти поточне виділення в редакторі або фокус із пошуку",
   "@shortcutClearEditorSelectionDescription": {
     "description": "Keyboard shortcut description for clearing selection."
   },
@@ -388,15 +424,15 @@
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "Застосувати жирний шрифт до виділеного тексту",
+  "shortcutBoldDescription": "Увімкнути або вимкнути жирний шрифт для виділеного тексту",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "Застосувати курсив до виділеного тексту",
+  "shortcutItalicDescription": "Увімкнути або вимкнути курсив для виділеного тексту",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "Застосувати підкреслення до виділеного тексту",
+  "shortcutUnderlineDescription": "Увімкнути або вимкнути підкреслення для виділеного тексту",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
@@ -404,11 +440,11 @@
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "Застосувати форматування вбудованого коду до виділеного тексту",
+  "shortcutInlineCodeDescription": "Увімкнути або вимкнути вбудований код для виділеного тексту",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "Застосувати закреслення до виділеного тексту",
+  "shortcutStrikethroughDescription": "Увімкнути або вимкнути закреслення для виділеного тексту",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
@@ -456,7 +492,7 @@
   "@shortcutNumberedListDescription": {
     "description": "Keyboard shortcut description for numbered list."
   },
-  "bulletedList": "Маркірований список",
+  "bulletedList": "Маркований список",
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
@@ -532,11 +568,11 @@
   "@directoryNameRequired": {
     "description": "Validation message for missing directory name."
   },
-  "useSingleSafeDirectoryName": "Використовуйте одну безпечну назву каталогу.",
+  "useSingleSafeDirectoryName": "Використовуйте одну допустиму назву каталогу.",
   "@useSingleSafeDirectoryName": {
     "description": "Validation message for unsafe directory names."
   },
-  "useLowercaseIdentifier": "Використовуйте ідентифікатор у нижньому регістрі з літерами, цифрами, підкресленням або дефісом.",
+  "useLowercaseIdentifier": "Використовуйте ідентифікатор у нижньому регістрі з літерами, цифрами, знаками підкреслення або дефісами.",
   "@useLowercaseIdentifier": {
     "description": "Validation message for invalid Writerside instance IDs."
   },
@@ -552,6 +588,14 @@
   "@settingsTitle": {
     "description": "Settings screen title."
   },
+  "autoSave": "Автозбереження",
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "Автоматично зберігати зміни у файлах після короткої паузи в редагуванні.",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
   "wordWrap": "Перенесення слів",
   "@wordWrap": {
     "description": "Word wrap setting label."
@@ -564,7 +608,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Очистити останні робочі області",
+  "clearRecentWorkspaces": "Очистити список останніх робочих областей",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -577,23 +621,46 @@
     "description": "Description for WYSIWYG editing button position setting."
   },
   "settingsWindowSectionTitle": "Вікно",
-  "@settingsWindowSectionTitle": {"description":"Settings section title for native window behavior."},
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "Підтверджувати закриття за наявності незбережених змін",
-  "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
   "settingsConfirmCloseWithUnsavedChangesDescription": "Запитувати перед закриттям BusyMark, якщо документи мають незбережені зміни.",
-  "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
   "closeUnsavedChangesTitle": "Незбережені зміни",
-  "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
   "closeUnsavedChangesSingleMessage": "Цей документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?",
-  "@closeUnsavedChangesSingleMessage": {"description":"Window close confirmation message when one document has unsaved changes."},
-  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Зберегти зміни перед закриттям BusyMark?} =1{1 документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?} few{{count} документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} many{{count} документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} other{{count} документа мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?}}",
-  "@closeUnsavedChangesMultipleMessage": {"description":"Window close confirmation message when multiple documents have unsaved changes.","placeholders":{"count":{"type":"int"}}},
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Зберегти зміни перед закриттям BusyMark?} one{{count} документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?} few{{count} документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} many{{count} документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} other{{count} документа має незбережені зміни. Зберегти зміни перед закриттям BusyMark?}}",
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "closeUnsavedChangesCancel": "Скасувати",
-  "@closeUnsavedChangesCancel": {"description":"Cancel button label in the window close unsaved-changes dialog."},
-  "closeUnsavedChangesDiscard": "Відхилити",
-  "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
+  "closeUnsavedChangesDiscard": "Відкинути",
+  "@closeUnsavedChangesDiscard": {
+    "description": "Discard button label in the window close unsaved-changes dialog."
+  },
   "closeUnsavedChangesSave": "Зберегти",
-  "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
   "currentFile": "поточний файл",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."
@@ -619,7 +686,7 @@
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
-  "untitledMarkdownFileName": "Untitled.md",
+  "untitledMarkdownFileName": "Без назви.md",
   "@untitledMarkdownFileName": {
     "description": "Display name for a new unsaved Markdown document."
   },
@@ -647,7 +714,7 @@
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
-  "blockquote": "Цитата",
+  "blockquote": "Блок цитати",
   "@blockquote": {
     "description": "Blockquote command label."
   },
@@ -683,7 +750,7 @@
   "@italic": {
     "description": "Italic command label."
   },
-  "underline": "Підкреслений",
+  "underline": "Підкреслення",
   "@underline": {
     "description": "Underline command label."
   },
@@ -794,7 +861,7 @@
   "@tableHeaderHint": {
     "description": "Hint for an empty table header cell."
   },
-  "tableCellHint": "Клітинка",
+  "tableCellHint": "Комірка",
   "@tableCellHint": {
     "description": "Hint for an empty table body cell."
   },
@@ -835,7 +902,7 @@
       }
     }
   },
-  "tableCellDefault": "Клітинка",
+  "tableCellDefault": "Комірка",
   "@tableCellDefault": {
     "description": "Default cell text for newly inserted table cells."
   },
@@ -863,7 +930,7 @@
   "@workspaceKindUnsavedMarkdown": {
     "description": "Workspace kind label for an unsaved Markdown file."
   },
-  "workspaceKindSingleMarkdown": "Один файл Markdown",
+  "workspaceKindSingleMarkdown": "Окремий файл Markdown",
   "@workspaceKindSingleMarkdown": {
     "description": "Workspace kind label for a single Markdown file."
   },
@@ -879,7 +946,7 @@
   "@problems": {
     "description": "Diagnostics dialog title."
   },
-  "diagnosticCount": "{count, plural, =0{Немає діагностик} one{{count} діагностика} few{{count} діагностики} many{{count} діагностик} other{{count} діагностики}}",
+  "diagnosticCount": "{count, plural, =0{Немає діагностичних повідомлень} one{{count} діагностичне повідомлення} few{{count} діагностичні повідомлення} many{{count} діагностичних повідомлень} other{{count} діагностичного повідомлення}}",
   "@diagnosticCount": {
     "description": "Count of diagnostics in the workspace.",
     "placeholders": {
@@ -892,7 +959,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "TOC",
+  "toc": "Зміст",
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
@@ -916,11 +983,11 @@
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "Немає TOC Writerside",
+  "noWritersideToc": "Немає змісту Writerside",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
-  "tocSection": "розділ TOC",
+  "tocSection": "розділ змісту",
   "@tocSection": {
     "description": "Fallback label for a Writerside TOC section."
   },
@@ -940,7 +1007,7 @@
   "@topicTitle": {
     "description": "Create topic dialog field label."
   },
-  "fileName": "Ім'я файлу",
+  "fileName": "Ім’я файлу",
   "@fileName": {
     "description": "Create topic dialog field label."
   },
@@ -952,7 +1019,7 @@
   "@fileNameRequired": {
     "description": "Validation message for missing file name."
   },
-  "useSingleSafeFileName": "Використовуйте одну безпечну назву файлу.",
+  "useSingleSafeFileName": "Використовуйте одну допустиму назву файлу.",
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
@@ -965,11 +1032,11 @@
       }
     }
   },
-  "useIdentifierCharacters": "Використовуйте літери, цифри, підкреслення або дефіси перед розширенням.",
+  "useIdentifierCharacters": "Використовуйте літери, цифри, знаки підкреслення або дефіси перед розширенням.",
   "@useIdentifierCharacters": {
     "description": "Validation message for invalid topic IDs."
   },
-  "topicIdAlreadyExists": "ID теми вже існує.",
+  "topicIdAlreadyExists": "Ідентифікатор теми вже існує.",
   "@topicIdAlreadyExists": {
     "description": "Validation message for duplicate topic IDs."
   },
@@ -981,7 +1048,7 @@
   "@noOutline": {
     "description": "Empty state shown when a document has no outline."
   },
-  "expandKind": "Розгорнути {kind}",
+  "expandKind": "Розгорнути: {kind}",
   "@expandKind": {
     "description": "Tooltip for expanding a foldable source section.",
     "placeholders": {
@@ -990,7 +1057,7 @@
       }
     }
   },
-  "collapseKind": "Згорнути {kind}",
+  "collapseKind": "Згорнути: {kind}",
   "@collapseKind": {
     "description": "Tooltip for collapsing a foldable source section.",
     "placeholders": {
@@ -1035,7 +1102,7 @@
   "@tabs": {
     "description": "Preview label for a tabs block."
   },
-  "tab": "вкладка",
+  "tab": "Вкладка",
   "@tab": {
     "description": "Preview label for a tab block."
   },
@@ -1051,7 +1118,7 @@
   "@topic": {
     "description": "Preview label for a topic element."
   },
-  "chapter": "Глава",
+  "chapter": "Розділ",
   "@chapter": {
     "description": "Preview label for a chapter element."
   },
@@ -1073,7 +1140,7 @@
       }
     }
   },
-  "cannotOpenFileTypeInEditor": "Цей тип файлу неможливо відкрити в редакторі",
+  "cannotOpenFileTypeInEditor": "Файл цього типу неможливо відкрити в редакторі",
   "@cannotOpenFileTypeInEditor": {
     "description": "Snackbar shown when a file type cannot be opened in the editor."
   },
@@ -1090,7 +1157,7 @@
   "@noProblemsFound": {
     "description": "Diagnostics empty state."
   },
-  "noResults": "Результатів немає",
+  "noResults": "Немає результатів",
   "@noResults": {
     "description": "Search empty state."
   },
@@ -1240,7 +1307,7 @@
       }
     }
   },
-  "errorParentDirectoryRequired": "Необхідний батьківський каталог.",
+  "errorParentDirectoryRequired": "Потрібно вказати батьківський каталог.",
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
@@ -1261,15 +1328,15 @@
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "Назва каталогу має бути одним безпечним сегментом шляху.",
+  "errorDirectoryNameUnsafe": "Назва каталогу має бути одним допустимим сегментом шляху.",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "Ідентифікатор екземпляра має починатися з малої літери та містити лише малі літери, цифри, підкреслення та дефіси.",
+  "errorInstanceIdInvalid": "Ідентифікатор екземпляра має починатися з малої літери та містити лише малі літери, цифри, знаки підкреслення та дефіси.",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
-  "errorTopicFileInvalid": "Назва файлу теми має бути назвою Markdown-файлу без роздільників шляху.",
+  "errorTopicFileInvalid": "Назва файлу теми має бути назвою файлу Markdown без роздільників шляху.",
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
@@ -1321,7 +1388,7 @@
       }
     }
   },
-  "errorReferenceTopicMissing": "Еталонна тема відсутня у вибраному дереві: {topic}",
+  "errorReferenceTopicMissing": "Вказаної теми немає у вибраному дереві: {topic}",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
     "placeholders": {
@@ -1330,11 +1397,11 @@
       }
     }
   },
-  "errorTopicsRootUnsafe": "Корінь тем має бути безпечним відносним каталогом.",
+  "errorTopicsRootUnsafe": "Кореневий каталог тем має бути допустимим відносним каталогом.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "Назва файлу теми має бути одним безпечним сегментом шляху.",
+  "errorTopicFileNameUnsafe": "Назва файлу теми має бути одним допустимим сегментом шляху.",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
@@ -1369,7 +1436,7 @@
       }
     }
   },
-  "diagnosticWorkspaceScanSkipped": "Виявлено великий робочий простір. Деякі файли пропущено, щоб програма не перестала відповідати.",
+  "diagnosticWorkspaceScanSkipped": "Виявлено велику робочу область. Деякі файли пропущено, щоб програма продовжувала швидко реагувати.",
   "@diagnosticWorkspaceScanSkipped": {
     "description": "Diagnostic shown when workspace scanning skips files."
   },
@@ -1382,7 +1449,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileTooLarge": "Файл перевищує бета-обмеження для автоматичного аналізу.",
+  "diagnosticWorkspaceFileTooLarge": "Файл перевищує обмеження бета-версії для автоматичного аналізу.",
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
@@ -1395,11 +1462,11 @@
       }
     }
   },
-  "diagnosticMarkdownAttributeMalformed": "Неправильний блок атрибутів заголовка Writerside.",
+  "diagnosticMarkdownAttributeMalformed": "Некоректний блок атрибутів заголовка Writerside.",
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "Дубльований ідентифікатор заголовка «{id}».",
+  "diagnosticMarkdownHeadingDuplicateId": "Повторюваний ідентифікатор заголовка «{id}».",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1408,11 +1475,11 @@
       }
     }
   },
-  "diagnosticWritersideTopicH1ConvertedToChapter": "Додаткові заголовки H1 верхнього рівня розглядаються як глави.",
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Додаткові заголовки H1 верхнього рівня розглядаються як розділи.",
   "@diagnosticWritersideTopicH1ConvertedToChapter": {
     "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
   },
-  "diagnosticWritersideMarkdownTopicMissingTitle": "Markdown-тема Writerside не має заголовка H1 або метаданих front matter.",
+  "diagnosticWritersideMarkdownTopicMissingTitle": "Markdown-тема Writerside не має заголовка H1 або заголовка у front matter.",
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
@@ -1420,7 +1487,7 @@
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
-  "diagnosticWritersideTopicFileMissingTitle": "Тема \"{fileName}\" не має назви.",
+  "diagnosticWritersideTopicFileMissingTitle": "Тема «{fileName}» не має назви.",
   "@diagnosticWritersideTopicFileMissingTitle": {
     "description": "Diagnostic for a Writerside topic file without a title.",
     "placeholders": {
@@ -1437,7 +1504,7 @@
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
-  "diagnosticMarkdownLinkUnresolvedTarget": "Цільове посилання не існує: {targetPath}",
+  "diagnosticMarkdownLinkUnresolvedTarget": "Ціль посилання не існує: {targetPath}",
   "@diagnosticMarkdownLinkUnresolvedTarget": {
     "description": "Markdown parser diagnostic for a missing link target.",
     "placeholders": {
@@ -1446,7 +1513,7 @@
       }
     }
   },
-  "diagnosticMarkdownLinkUnresolvedAnchor": "Якір \"{anchor}\" не існує.",
+  "diagnosticMarkdownLinkUnresolvedAnchor": "Якір «{anchor}» не існує.",
   "@diagnosticMarkdownLinkUnresolvedAnchor": {
     "description": "Markdown parser diagnostic for a missing local anchor.",
     "placeholders": {
@@ -1455,7 +1522,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingAlt": "На зображенні \"{destination}\" відсутній альтернативний текст.",
+  "diagnosticMarkdownImageMissingAlt": "Для зображення «{destination}» не вказано альтернативний текст.",
   "@diagnosticMarkdownImageMissingAlt": {
     "description": "Markdown parser diagnostic for a missing image alt text.",
     "placeholders": {
@@ -1482,15 +1549,15 @@
       }
     }
   },
-  "diagnosticWritersideConfigInvalidRoot": "Корінь writerside.cfg має бути <ihp>.",
+  "diagnosticWritersideConfigInvalidRoot": "Кореневим елементом writerside.cfg має бути <ihp>.",
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "У декларації snippets відсутній src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "В оголошенні snippets відсутній src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "У декларації instance-groups відсутній src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "В оголошенні instance-groups відсутній src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
@@ -1503,23 +1570,23 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "У декларації instance відсутній src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "В оголошенні instance відсутній src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "writerside.cfg не реєструє екземпляр.",
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg не реєструє жодного екземпляра.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": "Корінь .tree має бути <instance-profile>.",
+  "diagnosticWritersideTreeInvalidRoot": "Кореневим елементом .tree має бути <instance-profile>.",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "У профілі екземпляра відсутній ідентифікатор.",
+  "diagnosticWritersideTreeMissingId": "У профілі екземпляра відсутній id.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "Ім’я файлу дерева не відповідає ідентифікатору екземпляра «{id}».",
+  "diagnosticWritersideTreeIdMismatch": "Ім’я файлу дерева без розширення не відповідає ідентифікатору екземпляра «{id}».",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1532,7 +1599,7 @@
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
-  "diagnosticWritersideStartPageMissing": "Стартова сторінка \"{startPage}\" не існує.",
+  "diagnosticWritersideStartPageMissing": "Початкова сторінка «{startPage}» не існує.",
   "@diagnosticWritersideStartPageMissing": {
     "description": "Writerside diagnostic for a missing start page.",
     "placeholders": {
@@ -1541,7 +1608,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "Тема «{topic}» з’являється більше одного разу в цьому TOC екземпляра.",
+  "diagnosticWritersideTreeDuplicateTopic": "Тема «{topic}» трапляється більше ніж один раз у змісті цього екземпляра.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1550,7 +1617,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableMalformedDeclaration": "Оголошення змінної повинно мати назву та значення.",
+  "diagnosticWritersideVariableMalformedDeclaration": "Оголошення змінної має містити ім’я та значення.",
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
@@ -1563,7 +1630,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "У категорії відсутній ідентифікатор.",
+  "diagnosticWritersideCategoryMissingId": "У категорії відсутній id.",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
@@ -1576,7 +1643,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "Порядок категорії «{order}» оголошено кілька разів.",
+  "diagnosticWritersideCategoryDuplicateOrder": "Порядок категорії «{order}» оголошено більше одного разу.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -1585,15 +1652,15 @@
       }
     }
   },
-  "diagnosticWritersideTopicInvalidRoot": "Корінь .topic має бути <topic>.",
+  "diagnosticWritersideTopicInvalidRoot": "Кореневим елементом .topic має бути <topic>.",
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "У XML-теми відсутній кореневий ідентифікатор.",
+  "diagnosticWritersideTopicMissingRootId": "У XML-темі відсутній кореневий id.",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "Кореневий ідентифікатор XML-теми «{id}» має відповідати назві файлу «{expectedId}».",
+  "diagnosticWritersideTopicRootIdMismatch": "Кореневий id XML-теми «{id}» має відповідати назві файлу «{expectedId}».",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1622,7 +1689,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Налаштований каталог конфігурації збірки відсутній: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Вказаний каталог конфігурації збірки відсутній: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1631,7 +1698,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Налаштований каталог специфікацій API відсутній: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "Вказаний каталог специфікацій API відсутній: {relativePath}",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -1640,7 +1707,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "Налаштований каталог snippets відсутній: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "Вказаний каталог snippets відсутній: {relativePath}",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -1649,7 +1716,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "Налаштований файл змінних відсутній: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "Вказаний файл змінних відсутній: {relativePath}",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -1658,7 +1725,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "Налаштований файл категорій відсутній: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "Вказаний файл категорій відсутній: {relativePath}",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -1667,7 +1734,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Налаштований файл груп екземплярів відсутній: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "Вказаний файл груп екземплярів відсутній: {relativePath}",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -1730,7 +1797,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "TOC посилається на відсутню тему «{topic}».",
+  "diagnosticWritersideTreeMissingTopic": "У змісті є посилання на відсутню тему «{topic}».",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1739,7 +1806,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeInvalidHref": "Зовнішній href «{href}» недійсний.",
+  "diagnosticWritersideTreeInvalidHref": "Зовнішній href «{href}» некоректний.",
   "@diagnosticWritersideTreeInvalidHref": {
     "description": "Writerside module diagnostic for an invalid external href.",
     "placeholders": {
@@ -1778,7 +1845,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "У <include> відсутній атрибут from.",
+  "diagnosticWritersideIncludeMissingFrom": "В елементі <include> відсутній атрибут from.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
@@ -1803,7 +1870,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "Категорія «Див. також» «{ref}» не оголошена.",
+  "diagnosticWritersideCategoryUnresolved": "Категорія seealso «{ref}» не оголошена.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
@@ -1821,7 +1888,7 @@
       }
     }
   },
-  "diagnosticUnknown": "Невідома діагностика: {code}",
+  "diagnosticUnknown": "Невідоме діагностичне повідомлення: {code}",
   "@diagnosticUnknown": {
     "description": "Fallback text for an unknown diagnostic code.",
     "placeholders": {

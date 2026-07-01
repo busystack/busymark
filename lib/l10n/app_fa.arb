@@ -4,7 +4,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "ویرایشگر اسناد Markdown و Writerside.",
+  "appSubtitle": "ویرایشگر مستندات Markdown و سازگار با Writerside.",
   "@appSubtitle": {
     "description": "Short application description."
   },
@@ -28,7 +28,7 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "گزارش مشکل",
+  "aboutReportIssue": "گزارش اشکال",
   "@aboutReportIssue": {
     "description": "Label for the issue tracker row in the About dialog."
   },
@@ -48,11 +48,11 @@
   "@back": {
     "description": "Tooltip for navigating back."
   },
-  "bottomLeft": "پایین چپ",
+  "bottomLeft": "پایین سمت چپ",
   "@bottomLeft": {
     "description": "Editing button position option."
   },
-  "bottomRight": "پایین راست",
+  "bottomRight": "پایین سمت راست",
   "@bottomRight": {
     "description": "Editing button position option."
   },
@@ -64,7 +64,7 @@
   "@choose": {
     "description": "Button label for choosing a file or path."
   },
-  "chooseLocation": "انتخاب محل",
+  "chooseLocation": "انتخاب مکان",
   "@chooseLocation": {
     "description": "File picker confirmation label for choosing a directory."
   },
@@ -152,7 +152,7 @@
   "@preview": {
     "description": "Preview view label."
   },
-  "recent": "اخیر",
+  "recent": "موارد اخیر",
   "@recent": {
     "description": "Recent workspaces section title."
   },
@@ -256,11 +256,11 @@
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
-  "topLeft": "بالا چپ",
+  "topLeft": "بالا سمت چپ",
   "@topLeft": {
     "description": "Editing button position option."
   },
-  "topRight": "بالا راست",
+  "topRight": "بالا سمت راست",
   "@topRight": {
     "description": "Editing button position option."
   },
@@ -312,9 +312,13 @@
   "@openFolderOrWritersideProject": {
     "description": "Action label for opening a folder or Writerside project."
   },
-  "markdownFolderOrWritersideProject": "پوشه Markdown یا پروژه سازگار با Writerside",
+  "markdownFolderOrWritersideProject": "پوشهٔ Markdown یا پروژهٔ سازگار با Writerside",
   "@markdownFolderOrWritersideProject": {
     "description": "Subtitle describing supported folder workspace types."
+  },
+  "noOpenFile": "فایلی باز نیست",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
   "shortcutGroupFile": "فایل",
   "@shortcutGroupFile": {
@@ -328,7 +332,7 @@
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "باز کردن یک فایل Markdown، پوشه یا پروژه Writerside",
+  "shortcutOpenDescription": "باز کردن فایل Markdown، پوشه یا پروژهٔ Writerside",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -343,6 +347,38 @@
   "shortcutKeyboardShortcutsDescription": "نمایش مرجع میانبرهای صفحه‌کلید",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutNextTab": "تب بعدی",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next editor tab."
+  },
+  "shortcutNextTabDescription": "رفتن به تب باز بعدی ویرایشگر",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next editor tab."
+  },
+  "shortcutPreviousTab": "تب قبلی",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous editor tab."
+  },
+  "shortcutPreviousTabDescription": "رفتن به تب باز قبلی ویرایشگر",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous editor tab."
+  },
+  "shortcutCloseTab": "بستن تب",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active editor tab."
+  },
+  "shortcutCloseTabDescription": "بستن تب فعال ویرایشگر",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active editor tab."
+  },
+  "shortcutCloseAllTabs": "بستن همهٔ تب‌ها",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all editor tabs."
+  },
+  "shortcutCloseAllTabsDescription": "بستن همهٔ تب‌های باز ویرایشگر",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all editor tabs."
   },
   "shortcutGroupTextEditing": "ویرایش متن",
   "@shortcutGroupTextEditing": {
@@ -380,7 +416,7 @@
   "@clearEditorSelection": {
     "description": "Keyboard shortcut label for clearing selection."
   },
-  "shortcutClearEditorSelectionDescription": "پاک کردن انتخاب فعلی ویرایشگر یا خروج از تمرکز جستجو",
+  "shortcutClearEditorSelectionDescription": "خروج از انتخاب فعلی ویرایشگر یا فوکوس جستجو",
   "@shortcutClearEditorSelectionDescription": {
     "description": "Keyboard shortcut description for clearing selection."
   },
@@ -388,15 +424,15 @@
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "پررنگ کردن متن انتخاب‌شده",
+  "shortcutBoldDescription": "فعال یا غیرفعال کردن پررنگی متن انتخاب‌شده",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "کج کردن متن انتخاب‌شده",
+  "shortcutItalicDescription": "فعال یا غیرفعال کردن حالت مورب متن انتخاب‌شده",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "زیرخط‌دار کردن متن انتخاب‌شده",
+  "shortcutUnderlineDescription": "فعال یا غیرفعال کردن زیرخط متن انتخاب‌شده",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
@@ -404,11 +440,11 @@
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "تبدیل متن انتخاب‌شده به کد درون‌خطی",
+  "shortcutInlineCodeDescription": "فعال یا غیرفعال کردن کد درون‌خطی برای متن انتخاب‌شده",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "خط‌خورده کردن متن انتخاب‌شده",
+  "shortcutStrikethroughDescription": "فعال یا غیرفعال کردن خط‌خوردگی متن انتخاب‌شده",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
@@ -416,31 +452,31 @@
   "@shortcutGroupBlocks": {
     "description": "Keyboard shortcut group for block styles."
   },
-  "shortcutParagraphDescription": "تنظیم بلوک فعلی به پاراگراف",
+  "shortcutParagraphDescription": "تنظیم بلوک فعلی روی پاراگراف",
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "تنظیم بلوک فعلی به عنوان ۱",
+  "shortcutHeading1Description": "تنظیم بلوک فعلی روی عنوان ۱",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "تنظیم بلوک فعلی به عنوان ۲",
+  "shortcutHeading2Description": "تنظیم بلوک فعلی روی عنوان ۲",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "تنظیم بلوک فعلی به عنوان ۳",
+  "shortcutHeading3Description": "تنظیم بلوک فعلی روی عنوان ۳",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "تنظیم بلوک فعلی به عنوان ۴",
+  "shortcutHeading4Description": "تنظیم بلوک فعلی روی عنوان ۴",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "تنظیم بلوک فعلی به عنوان ۵",
+  "shortcutHeading5Description": "تنظیم بلوک فعلی روی عنوان ۵",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "تنظیم بلوک فعلی به عنوان ۶",
+  "shortcutHeading6Description": "تنظیم بلوک فعلی روی عنوان ۶",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
@@ -452,15 +488,15 @@
   "@numberedList": {
     "description": "Keyboard shortcut label for numbered list formatting."
   },
-  "shortcutNumberedListDescription": "تغییر قالب‌بندی فهرست شماره‌دار",
+  "shortcutNumberedListDescription": "فعال یا غیرفعال کردن قالب‌بندی فهرست شماره‌دار",
   "@shortcutNumberedListDescription": {
     "description": "Keyboard shortcut description for numbered list."
   },
-  "bulletedList": "فهرست گلوله‌ای",
+  "bulletedList": "فهرست نشانه‌دار",
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
-  "shortcutBulletedListDescription": "تغییر قالب‌بندی فهرست گلوله‌ای",
+  "shortcutBulletedListDescription": "فعال یا غیرفعال کردن قالب‌بندی فهرست نشانه‌دار",
   "@shortcutBulletedListDescription": {
     "description": "Keyboard shortcut description for bulleted list."
   },
@@ -468,7 +504,7 @@
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "تغییر قالب‌بندی چک‌لیست",
+  "shortcutChecklistDescription": "فعال یا غیرفعال کردن قالب‌بندی چک‌لیست",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
@@ -532,11 +568,11 @@
   "@directoryNameRequired": {
     "description": "Validation message for missing directory name."
   },
-  "useSingleSafeDirectoryName": "از یک نام پوشهٔ امن استفاده کنید.",
+  "useSingleSafeDirectoryName": "از یک نام پوشهٔ واحد و مجاز استفاده کنید.",
   "@useSingleSafeDirectoryName": {
     "description": "Validation message for unsafe directory names."
   },
-  "useLowercaseIdentifier": "از شناسه‌ای با حروف کوچک، اعداد، زیرخط یا خط تیره استفاده کنید.",
+  "useLowercaseIdentifier": "از شناسه‌ای با حروف کوچک لاتین، اعداد، زیرخط یا خط‌تیره استفاده کنید.",
   "@useLowercaseIdentifier": {
     "description": "Validation message for invalid Writerside instance IDs."
   },
@@ -552,11 +588,19 @@
   "@settingsTitle": {
     "description": "Settings screen title."
   },
+  "autoSave": "ذخیرهٔ خودکار",
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "تغییرات فایل را پس از مکثی کوتاه به‌طور خودکار ذخیره کنید.",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
   "wordWrap": "شکستن خودکار خطوط",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
-  "editorFontSize": "اندازه فونت ویرایشگر",
+  "editorFontSize": "اندازهٔ قلم ویرایشگر",
   "@editorFontSize": {
     "description": "Editor font size setting label."
   },
@@ -577,23 +621,46 @@
     "description": "Description for WYSIWYG editing button position setting."
   },
   "settingsWindowSectionTitle": "پنجره",
-  "@settingsWindowSectionTitle": {"description":"Settings section title for native window behavior."},
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "تأیید پیش از بستن با تغییرات ذخیره‌نشده",
-  "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
   "settingsConfirmCloseWithUnsavedChangesDescription": "وقتی سندها تغییرات ذخیره‌نشده دارند، پیش از بستن BusyMark پرسیده شود.",
-  "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
   "closeUnsavedChangesTitle": "تغییرات ذخیره‌نشده",
-  "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
   "closeUnsavedChangesSingleMessage": "این سند تغییرات ذخیره‌نشده دارد. پیش از بستن BusyMark تغییرات ذخیره شوند؟",
-  "@closeUnsavedChangesSingleMessage": {"description":"Window close confirmation message when one document has unsaved changes."},
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
   "closeUnsavedChangesMultipleMessage": "{count, plural, =0{پیش از بستن BusyMark تغییرات ذخیره شوند؟} =1{۱ سند تغییرات ذخیره‌نشده دارد. پیش از بستن BusyMark تغییرات ذخیره شوند؟} other{{count} سند تغییرات ذخیره‌نشده دارند. پیش از بستن BusyMark تغییرات ذخیره شوند؟}}",
-  "@closeUnsavedChangesMultipleMessage": {"description":"Window close confirmation message when multiple documents have unsaved changes.","placeholders":{"count":{"type":"int"}}},
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "closeUnsavedChangesCancel": "لغو",
-  "@closeUnsavedChangesCancel": {"description":"Cancel button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
   "closeUnsavedChangesDiscard": "دور انداختن",
-  "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesDiscard": {
+    "description": "Discard button label in the window close unsaved-changes dialog."
+  },
   "closeUnsavedChangesSave": "ذخیره",
-  "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
   "currentFile": "فایل فعلی",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."
@@ -623,7 +690,7 @@
   "@untitledMarkdownFileName": {
     "description": "Display name for a new unsaved Markdown document."
   },
-  "unorderedList": "فهرست نامرتب",
+  "unorderedList": "فهرست بدون ترتیب",
   "@unorderedList": {
     "description": "WYSIWYG toolbar tooltip for unordered list."
   },
@@ -639,11 +706,11 @@
   "@toggleTaskChecked": {
     "description": "WYSIWYG toolbar tooltip for toggling task state."
   },
-  "indentListItem": "افزایش تورفتگی آیتم فهرست",
+  "indentListItem": "افزایش تورفتگی مورد فهرست",
   "@indentListItem": {
     "description": "WYSIWYG toolbar tooltip for indenting a list item."
   },
-  "outdentListItem": "کاهش تورفتگی آیتم فهرست",
+  "outdentListItem": "کاهش تورفتگی مورد فهرست",
   "@outdentListItem": {
     "description": "WYSIWYG toolbar tooltip for outdenting a list item."
   },
@@ -679,11 +746,11 @@
   "@bold": {
     "description": "Bold command label."
   },
-  "italic": "کج",
+  "italic": "مورب",
   "@italic": {
     "description": "Italic command label."
   },
-  "underline": "زیرخط",
+  "underline": "زیرخط‌دار",
   "@underline": {
     "description": "Underline command label."
   },
@@ -757,11 +824,11 @@
       }
     }
   },
-  "insertColumnLeft": "درج ستون در چپ",
+  "insertColumnLeft": "درج ستون در سمت چپ",
   "@insertColumnLeft": {
     "description": "Menu item for inserting a table column to the left."
   },
-  "insertColumnRight": "درج ستون در راست",
+  "insertColumnRight": "درج ستون در سمت راست",
   "@insertColumnRight": {
     "description": "Menu item for inserting a table column to the right."
   },
@@ -863,7 +930,7 @@
   "@workspaceKindUnsavedMarkdown": {
     "description": "Workspace kind label for an unsaved Markdown file."
   },
-  "workspaceKindSingleMarkdown": "فایل Markdown تکی",
+  "workspaceKindSingleMarkdown": "فایل Markdown منفرد",
   "@workspaceKindSingleMarkdown": {
     "description": "Workspace kind label for a single Markdown file."
   },
@@ -879,7 +946,7 @@
   "@problems": {
     "description": "Diagnostics dialog title."
   },
-  "diagnosticCount": "{count, plural, =0{هیچ پیام تشخیصی وجود ندارد} one{1 پیام تشخیصی} other{{count} پیام تشخیصی}}",
+  "diagnosticCount": "{count, plural, =0{هیچ پیام تشخیصی وجود ندارد} =1{۱ پیام تشخیصی} other{{count} پیام تشخیصی}}",
   "@diagnosticCount": {
     "description": "Count of diagnostics in the workspace.",
     "placeholders": {
@@ -900,7 +967,7 @@
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
   },
-  "workspaceDetail": "{kind} — {count, plural, one{1 فایل} other{{count} فایل}}",
+  "workspaceDetail": "{kind} — {count, plural, =1{۱ فایل} other{{count} فایل}}",
   "@workspaceDetail": {
     "description": "Workspace detail with kind and file count.",
     "placeholders": {
@@ -952,7 +1019,7 @@
   "@fileNameRequired": {
     "description": "Validation message for missing file name."
   },
-  "useSingleSafeFileName": "از یک نام فایل امن استفاده کنید.",
+  "useSingleSafeFileName": "از یک نام فایل واحد و مجاز استفاده کنید.",
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
@@ -965,7 +1032,7 @@
       }
     }
   },
-  "useIdentifierCharacters": "پیش از پسوند فقط از حروف، اعداد، زیرخط یا خط تیره استفاده کنید.",
+  "useIdentifierCharacters": "پیش از پسوند فقط از حروف لاتین، اعداد، زیرخط یا خط‌تیره استفاده کنید.",
   "@useIdentifierCharacters": {
     "description": "Validation message for invalid topic IDs."
   },
@@ -981,7 +1048,7 @@
   "@noOutline": {
     "description": "Empty state shown when a document has no outline."
   },
-  "expandKind": "باز کردن {kind}",
+  "expandKind": "گسترش {kind}",
   "@expandKind": {
     "description": "Tooltip for expanding a foldable source section.",
     "placeholders": {
@@ -1019,7 +1086,7 @@
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
   },
-  "note": "توجه",
+  "note": "یادداشت",
   "@note": {
     "description": "Preview label for a note admonition."
   },
@@ -1064,7 +1131,7 @@
       }
     }
   },
-  "linkTargetNotFound": "هدف پیوند یافت نشد: {targetPath}",
+  "linkTargetNotFound": "مقصد پیوند یافت نشد: {targetPath}",
   "@linkTargetNotFound": {
     "description": "Snackbar shown when a link target path is missing.",
     "placeholders": {
@@ -1106,7 +1173,7 @@
       }
     }
   },
-  "untitledResult": "نتیجه بدون عنوان",
+  "untitledResult": "نتیجهٔ بدون عنوان",
   "@untitledResult": {
     "description": "Fallback search result title."
   },
@@ -1182,7 +1249,7 @@
   "@workspaceErrorChooseWhereToSaveMarkdown": {
     "description": "Workspace error message shown when an untitled file needs a save location."
   },
-  "workspaceErrorSaveBlockedFileChangedOnDisk": "ذخیره مسدود شد: فایل روی دیسک تغییر کرده است.",
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "ذخیره‌سازی مسدود شد: فایل روی دیسک تغییر کرده است.",
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
@@ -1261,11 +1328,11 @@
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "نام پوشه باید یک بخش مسیر امن باشد.",
+  "errorDirectoryNameUnsafe": "نام پوشه باید یک بخش مسیر واحد و مجاز باشد.",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
-  "errorInstanceIdInvalid": "شناسه نمونه باید با یک حرف کوچک شروع شود و فقط شامل حروف کوچک، اعداد، زیرخط و خط تیره باشد.",
+  "errorInstanceIdInvalid": "شناسهٔ نمونه باید با یک حرف کوچک لاتین شروع شود و فقط شامل حروف کوچک لاتین، اعداد، زیرخط و خط‌تیره باشد.",
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
@@ -1290,11 +1357,11 @@
   "@errorWritersideModuleNotOpen": {
     "description": "Detail shown when creating a topic without an open Writerside module."
   },
-  "errorWritersideInstanceTreeMissing": "ماژول Writerside درخت نمونهٔ کمکی ندارد.",
+  "errorWritersideInstanceTreeMissing": "ماژول Writerside درخت نمونهٔ راهنما ندارد.",
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
-  "errorWritersideTreeFileMissing": "فایل درختی Writerside وجود ندارد: {path}",
+  "errorWritersideTreeFileMissing": "فایل درخت Writerside وجود ندارد: {path}",
   "@errorWritersideTreeFileMissing": {
     "description": "Detail for a missing Writerside tree file.",
     "placeholders": {
@@ -1330,11 +1397,11 @@
       }
     }
   },
-  "errorTopicsRootUnsafe": "ریشه موضوع‌ها باید یک پوشه نسبی امن باشد.",
+  "errorTopicsRootUnsafe": "ریشهٔ موضوع‌ها باید یک پوشهٔ نسبی مجاز باشد.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "نام فایل موضوع باید یک بخش مسیر امن باشد.",
+  "errorTopicFileNameUnsafe": "نام فایل موضوع باید یک بخش مسیر واحد و مجاز باشد.",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
@@ -1347,7 +1414,7 @@
       }
     }
   },
-  "errorTopicFileNameInvalid": "نام فایل موضوع باید فقط شامل حروف، اعداد، زیرخط و خط تیره باشد.",
+  "errorTopicFileNameInvalid": "نام فایل موضوع باید فقط شامل حروف لاتین، اعداد، زیرخط و خط‌تیره باشد.",
   "@errorTopicFileNameInvalid": {
     "description": "Detail for a topic file name with invalid characters."
   },
@@ -1382,7 +1449,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileTooLarge": "فایل از حد پردازش خودکار نسخه بتا بزرگ‌تر است.",
+  "diagnosticWorkspaceFileTooLarge": "فایل از حد تجزیهٔ خودکار نسخهٔ بتا بزرگ‌تر است.",
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
@@ -1395,11 +1462,11 @@
       }
     }
   },
-  "diagnosticMarkdownAttributeMalformed": "بلوک ویژگی عنوان Writerside نامعتبر است.",
+  "diagnosticMarkdownAttributeMalformed": "بلوک ویژگی‌های عنوان Writerside نامعتبر است.",
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "شناسه عنوان «{id}» تکراری است.",
+  "diagnosticMarkdownHeadingDuplicateId": "شناسهٔ عنوان «{id}» تکراری است.",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1412,7 +1479,7 @@
   "@diagnosticWritersideTopicH1ConvertedToChapter": {
     "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
   },
-  "diagnosticWritersideMarkdownTopicMissingTitle": "موضوع Markdown در Writerside عنوان H1 یا عنوان اصلی ندارد.",
+  "diagnosticWritersideMarkdownTopicMissingTitle": "موضوع Markdown در Writerside عنوان H1 یا عنوان فرانت‌متر ندارد.",
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
@@ -1429,7 +1496,7 @@
       }
     }
   },
-  "diagnosticMarkdownFrontMatterMalformed": "بخش Front Matter بسته نشده است.",
+  "diagnosticMarkdownFrontMatterMalformed": "فرانت‌متر بسته نشده است.",
   "@diagnosticMarkdownFrontMatterMalformed": {
     "description": "Markdown parser diagnostic for unclosed front matter."
   },
@@ -1486,11 +1553,11 @@
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "اعلان src برای snippets وجود ندارد.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "در اعلان snippets، ویژگی src وجود ندارد.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "اعلان src برای instance-groups وجود ندارد.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "در اعلان instance-groups، ویژگی src وجود ندارد.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
@@ -1503,7 +1570,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "اعلان src برای نمونه وجود ندارد.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "در اعلان نمونه، ویژگی src وجود ندارد.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
@@ -1511,15 +1578,15 @@
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": "ریشه درخت باید <instance-profile> باشد.",
+  "diagnosticWritersideTreeInvalidRoot": "ریشهٔ .tree باید <instance-profile> باشد.",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "نمایه نمونه شناسه ندارد.",
+  "diagnosticWritersideTreeMissingId": "نمایهٔ نمونه ویژگی id ندارد.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "نام فایل درختی با شناسه نمونه «{id}» مطابقت ندارد.",
+  "diagnosticWritersideTreeIdMismatch": "نام بدون پسوند فایل درخت با شناسهٔ نمونه «{id}» مطابقت ندارد.",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1528,7 +1595,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "نمونهٔ غیرکتابخانه‌ای صفحه شروع ندارد.",
+  "diagnosticWritersideTreeMissingStartPage": "نمونهٔ غیرکتابخانه‌ای ویژگی start-page ندارد.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -1554,7 +1621,7 @@
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
-  "diagnosticWritersideVariableDuplicateName": "متغیر «{name}» بیش از یک بار اعلام شده است.",
+  "diagnosticWritersideVariableDuplicateName": "متغیر «{name}» بیش از یک بار تعریف شده است.",
   "@diagnosticWritersideVariableDuplicateName": {
     "description": "Writerside parser diagnostic for a duplicate variable name.",
     "placeholders": {
@@ -1563,11 +1630,11 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "شناسه دسته‌بندی وجود ندارد.",
+  "diagnosticWritersideCategoryMissingId": "دسته‌بندی ویژگی id ندارد.",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
-  "diagnosticWritersideCategoryDuplicateId": "دسته‌بندی «{id}» بیش از یک بار اعلام شده است.",
+  "diagnosticWritersideCategoryDuplicateId": "دسته‌بندی «{id}» بیش از یک بار تعریف شده است.",
   "@diagnosticWritersideCategoryDuplicateId": {
     "description": "Writerside parser diagnostic for a duplicate category ID.",
     "placeholders": {
@@ -1576,7 +1643,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "ترتیب دسته‌بندی «{order}» بیش از یک بار اعلام شده است.",
+  "diagnosticWritersideCategoryDuplicateOrder": "ترتیب دسته‌بندی «{order}» بیش از یک بار تعریف شده است.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -1589,7 +1656,7 @@
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "موضوع XML شناسه ریشه ندارد.",
+  "diagnosticWritersideTopicMissingRootId": "موضوع XML شناسهٔ ریشه ندارد.",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
@@ -1605,7 +1672,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "شناسه عنصر «{elementId}» بیش از یک بار ظاهر شده است.",
+  "diagnosticWritersideTopicDuplicateElementId": "شناسهٔ عنصر «{elementId}» بیش از یک بار ظاهر شده است.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -1614,7 +1681,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "<a> دارای href نیست.",
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> ویژگی href ندارد.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
@@ -1622,7 +1689,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "پوشه پیکربندی ساخت تنظیم‌شده وجود ندارد: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "پوشهٔ پیکربندی ساختِ تنظیم‌شده وجود ندارد: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1631,7 +1698,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "پوشه مشخصات API تنظیم‌شده وجود ندارد: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "پوشهٔ مشخصات API تنظیم‌شده وجود ندارد: {relativePath}",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -1640,7 +1707,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "پوشه snippets تنظیم‌شده وجود ندارد: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "پوشهٔ snippets تنظیم‌شده وجود ندارد: {relativePath}",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -1676,7 +1743,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceTree": "درخت نمونه ثبت‌شده «{source}» وجود ندارد.",
+  "diagnosticWritersideConfigMissingInstanceTree": "درخت نمونهٔ ثبت‌شده «{source}» وجود ندارد.",
   "@diagnosticWritersideConfigMissingInstanceTree": {
     "description": "Writerside module diagnostic for a missing registered instance tree.",
     "placeholders": {
@@ -1730,7 +1797,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "فهرست مطالب به موضوع گمشدهٔ «{topic}» اشاره می‌کند.",
+  "diagnosticWritersideTreeMissingTopic": "فهرست مطالب به موضوع ناموجود «{topic}» ارجاع می‌دهد.",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1748,7 +1815,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableUnresolved": "متغیر \"%{name}%\" اعلام نشده است.",
+  "diagnosticWritersideVariableUnresolved": "متغیر \"%{name}%\" تعریف نشده است.",
   "@diagnosticWritersideVariableUnresolved": {
     "description": "Writerside module diagnostic for an undeclared variable.",
     "placeholders": {
@@ -1757,7 +1824,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "پیوند موضوع «{destination}» حل نمی‌شود.",
+  "diagnosticWritersideTopicLinkUnresolved": "پیوند موضوع «{destination}» قابل حل نیست.",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -1803,7 +1870,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "دسته‌بندی «{ref}» اعلام نشده است.",
+  "diagnosticWritersideCategoryUnresolved": "دسته‌بندی seealso «{ref}» تعریف نشده است.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
