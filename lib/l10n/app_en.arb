@@ -300,7 +300,7 @@
   "@settingsTitle": {"description": "Settings screen title."},
   "autoSave": "Auto Save",
   "@autoSave": {"description": "Editor setting label for saving files automatically."},
-  "autoSaveDescription": "Save file changes automatically while editing.",
+  "autoSaveDescription": "Save file changes automatically after a short idle delay.",
   "@autoSaveDescription": {"description": "Editor setting description for saving files automatically."},
   "wordWrap": "Word wrap",
   "@wordWrap": {"description": "Word wrap setting label."},

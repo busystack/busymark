@@ -697,6 +697,52 @@ void main() {
     expect(nativeWindow.closeCount, 0);
   });
 
+  testWidgets('window close flushes autosave for saved files', (tester) async {
+    final nativeWindow = _FakeNativeWindowController();
+    final service = _StartupWorkspaceService();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(
+          'test/fixtures/markdown/basic.md',
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null &&
+          nativeWindow.listeners.isNotEmpty) {
+        break;
+      }
+    }
+
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText('# Closing\n');
+    await tester.pump();
+
+    nativeWindow.listeners.single.onWindowClose();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, 'test/fixtures/markdown/basic.md');
+    expect(service.savedText, '# Closing\n');
+    expect(find.text(l10n.closeUnsavedChangesTitle), findsNothing);
+    expect(nativeWindow.closeCount, 1);
+  });
+
   testWidgets('startup path opens a Markdown file workspace', (tester) async {
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(

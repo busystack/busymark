@@ -479,7 +479,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoSaveDescription =>
-      'Save file changes automatically while editing.';
+      'Save file changes automatically after a short idle delay.';
 
   @override
   String get wordWrap => 'Word wrap';

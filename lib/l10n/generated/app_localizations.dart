@@ -1011,7 +1011,7 @@ abstract class AppLocalizations {
   /// Editor setting description for saving files automatically.
   ///
   /// In en, this message translates to:
-  /// **'Save file changes automatically while editing.'**
+  /// **'Save file changes automatically after a short idle delay.'**
   String get autoSaveDescription;
 
   /// Word wrap setting label.

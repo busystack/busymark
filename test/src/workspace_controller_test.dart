@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -379,6 +380,57 @@ void main() {
     settingsController.dispose();
   });
 
+  test('auto save waits for an idle delay before writing', () async {
+    final service = _AutosaveWorkspaceService();
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath(service.path);
+    controller.updateActiveText('# Draft\n');
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+
+    expect(service.savedTexts, isEmpty);
+    expect(controller.state.isDirty, isTrue);
+
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+
+    expect(service.savedTexts, ['# Draft\n']);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test(
+    'auto save preserves dirty state when edits happen during save',
+    () async {
+      final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(service.path);
+      controller.updateActiveText('# First\n');
+      final firstSave = controller.autoSaveActiveIfNeeded();
+      await service.firstSaveStarted.future;
+
+      controller.updateActiveText('# Second\n');
+      service.releaseFirstSave();
+
+      expect(await firstSave, isTrue);
+      expect(service.savedTexts, ['# First\n']);
+      expect(controller.state.isDirty, isTrue);
+
+      expect(await controller.autoSaveActiveIfNeeded(), isTrue);
+      expect(service.savedTexts, ['# First\n', '# Second\n']);
+      expect(controller.state.isDirty, isFalse);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
   test(
     'save refuses to overwrite external file changes without force',
     () async {
@@ -463,11 +515,13 @@ void main() {
   });
 }
 
-Future<_WorkspaceControllerHarness> _createControllerHarness() async {
+Future<_WorkspaceControllerHarness> _createControllerHarness({
+  WorkspaceService service = const WorkspaceService(),
+}) async {
   final container = ProviderContainer(
     overrides: [
       localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-      workspaceServiceProvider.overrideWithValue(const WorkspaceService()),
+      workspaceServiceProvider.overrideWithValue(service),
     ],
   );
   addTearDown(container.dispose);
@@ -528,6 +582,8 @@ class _WorkspaceControllerDriver {
 
   Future<bool> saveActiveAs(String path) => _notifier.saveActiveAs(path);
 
+  Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
+
   void dispose() {}
 }
 
@@ -558,3 +614,88 @@ class _MemorySettingsStore implements LocalSettingsStore {
     value = json;
   }
 }
+
+class _AutosaveWorkspaceService extends WorkspaceService {
+  _AutosaveWorkspaceService({this.pauseFirstSave = false});
+
+  final bool pauseFirstSave;
+  final path = '/tmp/busymark-autosave.md';
+  final savedTexts = <String>[];
+  final firstSaveStarted = Completer<void>();
+  final _releaseFirstSave = Completer<void>();
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    return Workspace(
+      id: path,
+      rootPath: path,
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: path,
+      activeFileSnapshot: WorkspaceFileSnapshot(
+        modifiedAt: _autosaveInitialModifiedAt,
+        size: 11,
+        contentHash: 'initial',
+      ),
+      files: [
+        DocumentFile(
+          absolutePath: path,
+          relativePath: 'autosave.md',
+          kind: DocumentKind.markdown,
+          size: 11,
+          lastModified: _autosaveInitialModifiedAt,
+        ),
+      ],
+      diagnostics: const [],
+    );
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: '# Initial\n',
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: _autosaveInitialModifiedAt,
+        size: 11,
+        contentHash: 'initial',
+      ),
+    );
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    return false;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    savedTexts.add(text);
+    if (pauseFirstSave && savedTexts.length == 1) {
+      firstSaveStarted.complete();
+      await _releaseFirstSave.future;
+    } else if (!firstSaveStarted.isCompleted) {
+      firstSaveStarted.complete();
+    }
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, savedTexts.length + 1),
+      size: text.length,
+      contentHash: text,
+    );
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    return workspace.copyWith(diagnostics: const []);
+  }
+
+  void releaseFirstSave() {
+    if (!_releaseFirstSave.isCompleted) {
+      _releaseFirstSave.complete();
+    }
+  }
+}
+
+final _autosaveInitialModifiedAt = DateTime(2026);

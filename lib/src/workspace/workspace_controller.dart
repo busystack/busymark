@@ -42,12 +42,14 @@ class WorkspaceSearchRequestController extends Notifier<int> {
 }
 
 class WorkspaceController extends Notifier<WorkspaceState> {
-  static const _autoSaveDelay = Duration(milliseconds: 900);
+  static const _autoSaveDelay = Duration(milliseconds: 1500);
 
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
   Timer? _parseDebounce;
   Timer? _autoSaveDebounce;
+  Future<bool>? _activeSave;
+  var _editRevision = 0;
 
   @override
   WorkspaceState build() {
@@ -79,6 +81,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> createMarkdownFile() async {
     _parseDebounce?.cancel();
     _autoSaveDebounce?.cancel();
+    _resetSaveTracking(dirty: true);
     final workspace = _service.createUntitledMarkdown();
     state = WorkspaceState(
       workspace: workspace,
@@ -91,6 +94,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> openPath(String path) async {
     _parseDebounce?.cancel();
     _autoSaveDebounce?.cancel();
+    _resetSaveTracking();
     state = const WorkspaceState(isLoading: true);
     try {
       final workspace = await _service.openPath(path);
@@ -108,6 +112,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeText: text,
         preview: preview,
       );
+      _resetSaveTracking();
       final recentPath = workspace.kind == WorkspaceKind.singleMarkdown
           ? workspace.activeFilePath ?? workspace.rootPath
           : workspace.rootPath;
@@ -134,6 +139,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   ) async {
     _parseDebounce?.cancel();
     _autoSaveDebounce?.cancel();
+    _resetSaveTracking();
     state = const WorkspaceState(isLoading: true);
     try {
       final workspace = await _service.createWritersideProject(request);
@@ -151,6 +157,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeText: text,
         preview: preview,
       );
+      _resetSaveTracking();
       await _settingsController.recordOpenedWorkspace(
         path: workspace.rootPath,
         kind: workspace.kind.name,
@@ -182,6 +189,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     _parseDebounce?.cancel();
     _autoSaveDebounce?.cancel();
+    _resetSaveTracking();
     state = state.copyWith(isLoading: true, clearMessage: true);
     try {
       final nextWorkspace = await _service.createWritersideTopic(
@@ -209,6 +217,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeText: text,
         preview: _safePreview(tabbedWorkspace, text),
       );
+      _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
       stderr.writeln('[BusyMark] Create Writerside topic failed');
@@ -323,6 +332,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return;
     }
     _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
+    _resetSaveTracking();
     final List<Diagnostic> diagnostics = switch (workspace.kind) {
       WorkspaceKind.writersideModule =>
         workspace.writersideModule?.diagnostics ?? const [],
@@ -371,6 +382,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         isDirty: false,
         clearMessage: true,
       );
+      _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
       stderr.writeln('[BusyMark] Could not open file: $path');
@@ -388,6 +400,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   void updateActiveText(String text, {bool updatePreview = true}) {
     final workspace = state.workspace;
+    _editRevision++;
     state = state.copyWith(
       activeText: text,
       preview: workspace == null || !updatePreview
@@ -419,6 +432,31 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) async {
     _autoSaveDebounce?.cancel();
+    _parseDebounce?.cancel();
+    final inFlight = _activeSave;
+    if (inFlight != null) {
+      final completed = await inFlight;
+      if (!state.isDirty) {
+        return completed;
+      }
+      return saveActive(overwriteExternalChanges: overwriteExternalChanges);
+    }
+    late final Future<bool> operation;
+    operation = _saveActiveNow(
+      overwriteExternalChanges: overwriteExternalChanges,
+    );
+    _activeSave = operation;
+    unawaited(
+      operation.whenComplete(() {
+        if (identical(_activeSave, operation)) {
+          _activeSave = null;
+        }
+      }),
+    );
+    return operation;
+  }
+
+  Future<bool> _saveActiveNow({required bool overwriteExternalChanges}) async {
     final workspace = state.workspace;
     final active = workspace?.activeFilePath;
     if (active == null) {
@@ -441,32 +479,57 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return false;
     }
+    if (state.workspace?.activeFilePath != active) {
+      return true;
+    }
+    final revisionAtSaveStart = _editRevision;
+    final textAtSaveStart = state.activeText;
     try {
-      final snapshot = await _service.saveText(active, state.activeText);
+      final snapshot = await _service.saveText(active, textAtSaveStart);
+      final currentWorkspace = state.workspace;
+      if (currentWorkspace?.activeFilePath != active) {
+        return true;
+      }
       final reparsed = await _service.reparseActive(
         workspace!.copyWith(activeFileSnapshot: snapshot),
-        state.activeText,
+        textAtSaveStart,
       );
-      state = state.copyWith(
-        workspace: reparsed.copyWith(activeFileSnapshot: snapshot),
-        preview: _safePreview(reparsed, state.activeText),
-        isDirty: false,
-        clearMessage: true,
-      );
+      final latestWorkspace = state.workspace;
+      if (latestWorkspace?.activeFilePath != active) {
+        return true;
+      }
+      if (_editRevision == revisionAtSaveStart) {
+        state = state.copyWith(
+          workspace: reparsed.copyWith(activeFileSnapshot: snapshot),
+          preview: _safePreview(reparsed, textAtSaveStart),
+          isDirty: false,
+          clearMessage: true,
+        );
+      } else {
+        state = state.copyWith(
+          workspace: latestWorkspace!.copyWith(activeFileSnapshot: snapshot),
+          isDirty: true,
+          clearMessage: true,
+        );
+        _scheduleAutoSave();
+      }
       return true;
     } on Object catch (error) {
-      state = state.copyWith(
-        message: WorkspaceMessage(
-          WorkspaceMessageCode.saveFailed,
-          error: error,
-        ),
-      );
+      if (state.workspace?.activeFilePath == active) {
+        state = state.copyWith(
+          message: WorkspaceMessage(
+            WorkspaceMessageCode.saveFailed,
+            error: error,
+          ),
+        );
+      }
       return false;
     }
   }
 
   Future<bool> saveActiveAs(String path) async {
     _autoSaveDebounce?.cancel();
+    _parseDebounce?.cancel();
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
@@ -480,6 +543,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         activeText: text,
         preview: _safePreview(savedWorkspace, text),
       );
+      _resetSaveTracking();
       await _settingsController.recordOpenedWorkspace(
         path: path,
         kind: savedWorkspace.kind.name,
@@ -556,6 +620,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   bool _canAutoSaveActive() {
     final workspace = state.workspace;
     return workspace != null && workspace.activeFilePath != null;
+  }
+
+  void _resetSaveTracking({bool dirty = false}) {
+    _editRevision = dirty ? _editRevision + 1 : 0;
   }
 }
 
