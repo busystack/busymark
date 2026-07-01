@@ -171,6 +171,36 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
             ],
           ),
           BusyMarkGroupedList(
+            title: context.l10n.tabs,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.shortcutNextTab,
+                subtitle: context.l10n.shortcutNextTabDescription,
+                leading: const Icon(BusyMarkGlyphs.tab),
+                trailing: const _KeyboardShortcutBadge('Ctrl+Tab'),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutPreviousTab,
+                subtitle: context.l10n.shortcutPreviousTabDescription,
+                leading: const Icon(BusyMarkGlyphs.tab),
+                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+Tab'),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutCloseTab,
+                subtitle: context.l10n.shortcutCloseTabDescription,
+                leading: const Icon(BusyMarkGlyphs.clear),
+                trailing: const _KeyboardShortcutBadge('Ctrl+W'),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutCloseAllTabs,
+                subtitle: context.l10n.shortcutCloseAllTabsDescription,
+                leading: const Icon(BusyMarkGlyphs.clearAll),
+                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+W'),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
             title: context.l10n.shortcutGroupTextEditing,
             filled: true,
             children: [

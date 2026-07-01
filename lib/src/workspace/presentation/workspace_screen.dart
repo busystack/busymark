@@ -625,7 +625,12 @@ class WorkspaceScreen extends ConsumerWidget {
   String _activeFileName(BuildContext context, Workspace workspace) {
     final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (path == null || path.isEmpty) {
-      return context.l10n.untitledMarkdownFileName;
+      return switch (workspace.kind) {
+        WorkspaceKind.markdownFolder ||
+        WorkspaceKind.writersideModule => context.l10n.noOpenFile,
+        WorkspaceKind.untitledMarkdown ||
+        WorkspaceKind.singleMarkdown => context.l10n.untitledMarkdownFileName,
+      };
     }
     return p.basename(path);
   }
@@ -2427,7 +2432,7 @@ class _EditorTabStrip extends ConsumerWidget {
               path: path,
               active: active,
               dirty: active && state.isDirty,
-              canClose: workspace.openFilePaths.length > 1,
+              canClose: true,
               onSelected: () async {
                 if (active) {
                   return;

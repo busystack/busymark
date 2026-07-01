@@ -594,6 +594,12 @@ abstract class AppLocalizations {
   /// **'Markdown folder or Writerside-compatible project'**
   String get markdownFolderOrWritersideProject;
 
+  /// Header title when a folder or Writerside workspace has no open editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'No open file'**
+  String get noOpenFile;
+
   /// Keyboard shortcut group for file commands.
   ///
   /// In en, this message translates to:
@@ -635,6 +641,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show this keyboard shortcut reference'**
   String get shortcutKeyboardShortcutsDescription;
+
+  /// Keyboard shortcut label for moving to the next editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Next tab'**
+  String get shortcutNextTab;
+
+  /// Keyboard shortcut description for moving to the next editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to the next open editor tab'**
+  String get shortcutNextTabDescription;
+
+  /// Keyboard shortcut label for moving to the previous editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous tab'**
+  String get shortcutPreviousTab;
+
+  /// Keyboard shortcut description for moving to the previous editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to the previous open editor tab'**
+  String get shortcutPreviousTabDescription;
+
+  /// Keyboard shortcut label for closing the active editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Close tab'**
+  String get shortcutCloseTab;
+
+  /// Keyboard shortcut description for closing the active editor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the active editor tab'**
+  String get shortcutCloseTabDescription;
+
+  /// Keyboard shortcut label for closing all editor tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Close all tabs'**
+  String get shortcutCloseAllTabs;
+
+  /// Keyboard shortcut description for closing all editor tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Close all open editor tabs'**
+  String get shortcutCloseAllTabsDescription;
 
   /// Keyboard shortcut group for text editing commands.
   ///

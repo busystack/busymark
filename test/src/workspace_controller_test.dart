@@ -266,8 +266,79 @@ void main() {
 
     await controller.closeOpenFileTab(initialPath);
 
+    expect(controller.state.workspace?.activeFilePath, isNull);
+    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.workspace?.openFilePaths, isEmpty);
+    expect(controller.state.activeText, isEmpty);
+    expect(controller.state.preview, isNull);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('activating sibling file tabs wraps around the open tabs', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final initialPath = controller.state.workspace!.activeFilePath!;
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+    final linksFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'links_images.md',
+    );
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(linksFile.absolutePath);
+
+    expect(controller.state.workspace?.activeFilePath, linksFile.absolutePath);
+
+    await controller.activateNextOpenFileTab();
+
     expect(controller.state.workspace?.activeFilePath, initialPath);
-    expect(controller.state.workspace?.openFilePaths, [initialPath]);
+
+    await controller.activatePreviousOpenFileTab();
+
+    expect(controller.state.workspace?.activeFilePath, linksFile.absolutePath);
+
+    await controller.activatePreviousOpenFileTab();
+
+    expect(controller.state.workspace?.activeFilePath, otherFile.absolutePath);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('closing all file tabs clears the active editor state', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.openPath('test/fixtures/markdown');
+    final otherFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'other.md',
+    );
+    final linksFile = controller.state.workspace!.files.singleWhere(
+      (file) => file.relativePath == 'links_images.md',
+    );
+
+    await controller.openActiveFile(otherFile.absolutePath);
+    await controller.openActiveFile(linksFile.absolutePath);
+
+    controller.closeAllOpenFileTabs();
+
+    expect(controller.state.workspace?.activeFilePath, isNull);
+    expect(controller.state.workspace?.activeFileModifiedAt, isNull);
+    expect(controller.state.workspace?.activeFileSnapshot, isNull);
+    expect(controller.state.workspace?.openFilePaths, isEmpty);
+    expect(controller.state.workspace?.markdown, isNull);
+    expect(controller.state.workspace?.diagnostics, isEmpty);
+    expect(controller.state.activeText, isEmpty);
+    expect(controller.state.preview, isNull);
+    expect(controller.state.isDirty, isFalse);
 
     controller.dispose();
     settingsController.dispose();
@@ -438,8 +509,15 @@ class _WorkspaceControllerDriver {
 
   Future<void> openActiveFile(String path) => _notifier.openActiveFile(path);
 
+  Future<void> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
+
+  Future<void> activatePreviousOpenFileTab() =>
+      _notifier.activatePreviousOpenFileTab();
+
   Future<void> closeOpenFileTab(String path) =>
       _notifier.closeOpenFileTab(path);
+
+  void closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 
   void updateActiveText(String text, {bool updatePreview = true}) {
     _notifier.updateActiveText(text, updatePreview: updatePreview);

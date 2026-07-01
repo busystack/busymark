@@ -4,6 +4,12 @@ import '../markdown/preview_model.dart';
 import '../writerside/writerside_model.dart';
 import 'workspace_message.dart';
 
+const Object _copyWithUnset = _CopyWithUnset();
+
+class _CopyWithUnset {
+  const _CopyWithUnset();
+}
+
 enum WorkspaceKind {
   untitledMarkdown,
   singleMarkdown,
@@ -97,32 +103,45 @@ class Workspace {
   final WritersideModule? writersideModule;
 
   Workspace copyWith({
-    String? activeFilePath,
-    DateTime? activeFileModifiedAt,
-    WorkspaceFileSnapshot? activeFileSnapshot,
+    Object? activeFilePath = _copyWithUnset,
+    Object? activeFileModifiedAt = _copyWithUnset,
+    Object? activeFileSnapshot = _copyWithUnset,
     List<String>? openFilePaths,
     List<DocumentFile>? files,
     List<Diagnostic>? diagnostics,
-    ParsedMarkdownDocument? markdown,
-    WritersideModule? writersideModule,
+    Object? markdown = _copyWithUnset,
+    Object? writersideModule = _copyWithUnset,
   }) {
-    final nextSnapshot = activeFileSnapshot ?? this.activeFileSnapshot;
+    final nextActiveFilePath = identical(activeFilePath, _copyWithUnset)
+        ? this.activeFilePath
+        : activeFilePath as String?;
+    final nextSnapshot = identical(activeFileSnapshot, _copyWithUnset)
+        ? this.activeFileSnapshot
+        : activeFileSnapshot as WorkspaceFileSnapshot?;
+    final nextModifiedAt = identical(activeFileModifiedAt, _copyWithUnset)
+        ? identical(activeFileSnapshot, _copyWithUnset)
+              ? this.activeFileModifiedAt
+              : nextSnapshot?.modifiedAt
+        : activeFileModifiedAt as DateTime?;
+    final nextMarkdown = identical(markdown, _copyWithUnset)
+        ? this.markdown
+        : markdown as ParsedMarkdownDocument?;
+    final nextWritersideModule = identical(writersideModule, _copyWithUnset)
+        ? this.writersideModule
+        : writersideModule as WritersideModule?;
     return Workspace(
       id: id,
       rootPath: rootPath,
       kind: kind,
       openedAt: openedAt,
-      activeFilePath: activeFilePath ?? this.activeFilePath,
-      activeFileModifiedAt:
-          activeFileModifiedAt ??
-          nextSnapshot?.modifiedAt ??
-          this.activeFileModifiedAt,
+      activeFilePath: nextActiveFilePath,
+      activeFileModifiedAt: nextModifiedAt,
       activeFileSnapshot: nextSnapshot,
       openFilePaths: openFilePaths ?? this.openFilePaths,
       files: files ?? this.files,
       diagnostics: diagnostics ?? this.diagnostics,
-      markdown: markdown ?? this.markdown,
-      writersideModule: writersideModule ?? this.writersideModule,
+      markdown: nextMarkdown,
+      writersideModule: nextWritersideModule,
     );
   }
 }
@@ -169,16 +188,19 @@ class WorkspaceState {
   WorkspaceState copyWith({
     Workspace? workspace,
     String? activeText,
-    PreviewDocument? preview,
+    Object? preview = _copyWithUnset,
     bool? isDirty,
     bool? isLoading,
     WorkspaceMessage? message,
     bool clearMessage = false,
   }) {
+    final nextPreview = identical(preview, _copyWithUnset)
+        ? this.preview
+        : preview as PreviewDocument?;
     return WorkspaceState(
       workspace: workspace ?? this.workspace,
       activeText: activeText ?? this.activeText,
-      preview: preview ?? this.preview,
+      preview: nextPreview,
       isDirty: isDirty ?? this.isDirty,
       isLoading: isLoading ?? this.isLoading,
       message: clearMessage ? null : message ?? this.message,
