@@ -17,6 +17,9 @@ import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'wysiwyg_toolbar.dart';
 
+typedef BusyMarkWysiwygSourceChanged =
+    void Function(String filePath, String source);
+
 class BusyMarkWysiwygEditor extends StatefulWidget {
   const BusyMarkWysiwygEditor({
     super.key,
@@ -35,7 +38,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   });
 
   final BusyDocument document;
-  final ValueChanged<String> onSourceChanged;
+  final BusyMarkWysiwygSourceChanged onSourceChanged;
   final ValueChanged<BusyDocument>? onDocumentChanged;
   final String? workspaceRoot;
   final String? writersideRoot;
@@ -56,6 +59,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   late final BusyMarkWysiwygDocumentController _documentController;
   final _textControllers = <String, BusyMarkWysiwygTextController>{};
+  final _textUndoControllers = <String, UndoHistoryController>{};
   final _focusNodes = <String, FocusNode>{};
   final _blockKeys = <String, GlobalKey>{};
   final _undoStack = <BusyDocument>[];
@@ -118,6 +122,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
+    for (final controller in _textUndoControllers.values) {
+      controller.dispose();
+    }
     for (final focusNode in _focusNodes.values) {
       focusNode.dispose();
     }
@@ -130,10 +137,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
+    for (final controller in _textUndoControllers.values) {
+      controller.dispose();
+    }
     for (final focusNode in _focusNodes.values) {
       focusNode.dispose();
     }
     _textControllers.clear();
+    _textUndoControllers.clear();
     _focusNodes.clear();
     _blockKeys.clear();
     _pendingInlineKindsByBlockId.clear();
@@ -387,6 +398,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                           itemBuilder: (context, index) {
                             final entry = entries[index];
                             final block = entry.block;
+                            final documentFilePath =
+                                _documentController.document.filePath;
                             return Align(
                               alignment: Alignment.topCenter,
                               child: ConstrainedBox(
@@ -402,12 +415,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                   child: BusyMarkWysiwygBlockField(
                                     key: _blockKeyFor(block.id),
                                     block: block,
-                                    documentFilePath:
-                                        _documentController.document.filePath,
+                                    documentFilePath: documentFilePath,
                                     workspaceRoot: widget.workspaceRoot,
                                     writersideRoot: widget.writersideRoot,
                                     imagesDir: widget.imagesDir,
                                     controller: _textControllerFor(block),
+                                    undoController: _textUndoControllerFor(
+                                      block,
+                                    ),
                                     focusNode: _focusNodeFor(block),
                                     selected: selectedBlockIds.contains(
                                       block.id,
@@ -425,11 +440,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                         _handleBlockFocused(block.id),
                                     onChanged: (value) =>
                                         _handleBlockTextChanged(
+                                          documentFilePath,
                                           block.id,
                                           value,
                                         ),
                                     onTableCellChanged: (cellId, value) =>
                                         _handleTableCellTextChanged(
+                                          documentFilePath,
                                           block.id,
                                           cellId,
                                           value,
@@ -585,6 +602,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return controller;
   }
 
+  UndoHistoryController _textUndoControllerFor(BusyBlock block) {
+    return _textUndoControllers.putIfAbsent(
+      block.id,
+      UndoHistoryController.new,
+    );
+  }
+
   FocusNode _focusNodeFor(BusyBlock block) {
     final focusNode = _focusNodes.putIfAbsent(
       block.id,
@@ -669,29 +693,37 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _undoEditorChange() {
-    if (_undoStack.isEmpty) {
-      return false;
-    }
+    final filePath = _documentController.document.filePath;
     final current = _historySnapshot();
-    final previous = _undoStack.removeLast();
-    if (current.source != previous.source) {
-      _redoStack.add(current);
+    while (_undoStack.isNotEmpty) {
+      final previous = _undoStack.removeLast();
+      if (previous.filePath != filePath) {
+        continue;
+      }
+      if (current.source != previous.source) {
+        _redoStack.add(current);
+      }
+      _restoreEditorSnapshot(previous);
+      return true;
     }
-    _restoreEditorSnapshot(previous);
-    return true;
+    return false;
   }
 
   bool _redoEditorChange() {
-    if (_redoStack.isEmpty) {
-      return false;
-    }
+    final filePath = _documentController.document.filePath;
     final current = _historySnapshot();
-    final next = _redoStack.removeLast();
-    if (current.source != next.source) {
-      _undoStack.add(current);
+    while (_redoStack.isNotEmpty) {
+      final next = _redoStack.removeLast();
+      if (next.filePath != filePath) {
+        continue;
+      }
+      if (current.source != next.source) {
+        _undoStack.add(current);
+      }
+      _restoreEditorSnapshot(next);
+      return true;
     }
-    _restoreEditorSnapshot(next);
-    return true;
+    return false;
   }
 
   void _restoreEditorSnapshot(BusyDocument snapshot) {
@@ -716,7 +748,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _setActiveBlock(blockId);
   }
 
-  void _handleBlockTextChanged(String blockId, String value) {
+  void _handleBlockTextChanged(
+    String documentFilePath,
+    String blockId,
+    String value,
+  ) {
+    if (documentFilePath != _documentController.document.filePath) {
+      return;
+    }
     _clearBlockSelection();
     _setActiveBlock(blockId);
     if (_documentController.blockText(blockId) == value) {
@@ -752,10 +791,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleTableCellTextChanged(
+    String documentFilePath,
     String tableBlockId,
     String cellId,
     String value,
   ) {
+    if (documentFilePath != _documentController.document.filePath) {
+      return;
+    }
     _clearBlockSelection();
     _setActiveBlock(tableBlockId);
     _recordUndoSnapshot();
@@ -1604,7 +1647,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       text: nextText,
       selection: TextSelection.collapsed(offset: start + text.length),
     );
-    _handleBlockTextChanged(blockId, nextText);
+    _handleBlockTextChanged(
+      _documentController.document.filePath,
+      blockId,
+      nextText,
+    );
   }
 
   Future<void> _applyInlineImageCommand() async {
@@ -1920,7 +1967,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     widget.onDocumentChanged?.call(
       _documentController.document.copyWith(source: markdown),
     );
-    widget.onSourceChanged(markdown);
+    widget.onSourceChanged(_documentController.document.filePath, markdown);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _internalChange = false;
     });

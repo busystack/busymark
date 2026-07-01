@@ -210,6 +210,7 @@ void main() {}
   ) async {
     final parsed = parser.parse(filePath: 'Untitled.md', source: '');
     var markdown = '';
+    String? sourceFilePath;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -221,7 +222,10 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) {
+                sourceFilePath = filePath;
+                markdown = value;
+              },
             ),
           ),
         ),
@@ -241,6 +245,7 @@ void main() {}
     await tester.pump();
 
     expect(markdown, 'Editable text\n');
+    expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
   });
 
@@ -260,7 +265,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -315,8 +320,14 @@ void main() {}
   testWidgets('WYSIWYG editor replaces document when active file changes', (
     tester,
   ) async {
-    final first = parser.parse(filePath: 'first.md', source: 'Original\n');
-    final second = parser.parse(filePath: 'second.md', source: 'Original\n');
+    final first = parser.parse(
+      filePath: 'first.md',
+      source: 'First original\n',
+    );
+    final second = parser.parse(
+      filePath: 'second.md',
+      source: 'Second original\n',
+    );
     var activeDocument = first.busyDocument;
 
     Widget buildEditor() {
@@ -329,7 +340,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: activeDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -353,7 +364,18 @@ void main() {}
 
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
-      'Original',
+      'Second original',
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Second original',
     );
   });
 
@@ -373,7 +395,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -420,7 +442,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -481,7 +503,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -551,7 +573,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -617,7 +639,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -681,7 +703,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -757,7 +779,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -843,7 +865,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -907,7 +929,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -1019,7 +1041,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1083,7 +1105,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1160,7 +1182,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1228,7 +1250,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -1275,7 +1297,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1313,7 +1335,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
-                onSourceChanged: (_) {},
+                onSourceChanged: (_, _) {},
               ),
             ),
           ),
@@ -1351,7 +1373,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1393,7 +1415,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1426,7 +1448,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1467,7 +1489,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1727,7 +1749,7 @@ void main() {}
                 workspaceRoot: topicsDir.path,
                 writersideRoot: temp.path,
                 imagesDir: 'images',
-                onSourceChanged: (value) => markdown = value,
+                onSourceChanged: (filePath, value) => markdown = value,
               ),
             ),
           ),
@@ -1789,7 +1811,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
-                onSourceChanged: (_) {},
+                onSourceChanged: (_, _) {},
               ),
             ),
           ),
@@ -1892,7 +1914,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1933,7 +1955,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -1975,7 +1997,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -2032,7 +2054,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -2081,7 +2103,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),
@@ -2113,7 +2135,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (_) {},
+              onSourceChanged: (_, _) {},
             ),
           ),
         ),
@@ -2355,7 +2377,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
-              onSourceChanged: (value) => markdown = value,
+              onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
         ),

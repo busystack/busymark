@@ -664,6 +664,208 @@ void main() {
     expect(find.text(l10n.noOpenFile), findsWidgets);
   });
 
+  testWidgets('source undo cannot restore saved text from previous tab', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_source_undo_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/Introduction.md')
+      ..writeAsStringSync('# Introduction\n');
+    final second = File('${temp.path}/System-Design.md')
+      ..writeAsStringSync('# System Design\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, '# Edited Introduction\n');
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# Edited Introduction\n',
+    );
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    expect(await controller.saveActive(), isTrue);
+    await tester.pump();
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+
+    await controller.openActiveFile(second.path);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(sourceField).controller?.text,
+      '# System-Design.md\n',
+    );
+
+    await tester.tap(sourceField);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(sourceField).controller?.text,
+      '# System-Design.md\n',
+    );
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+  });
+
+  testWidgets('editor undo cannot restore saved text from previous tab', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_editor_undo_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/Introduction.md')
+      ..writeAsStringSync('# Introduction\n');
+    final second = File('${temp.path}/System-Design.md')
+      ..writeAsStringSync('# System Design\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.editor);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorField = find.byType(TextField).first;
+    await tester.tap(editorField);
+    await tester.enterText(editorField, 'Edited Introduction');
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# Edited Introduction\n',
+    );
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    expect(await controller.saveActive(), isTrue);
+    await tester.pump();
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+
+    await controller.openActiveFile(second.path);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(editorField).controller?.text,
+      'System-Design.md',
+    );
+
+    await tester.tap(editorField);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(editorField).controller?.text,
+      'System-Design.md',
+    );
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+  });
+
   testWidgets('window close still warns when active changes are unsaved', (
     tester,
   ) async {
@@ -1668,6 +1870,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
 
   final String rootPath;
   final List<String> paths;
+  final _sources = <String, String>{};
   String? savedPath;
   String? savedText;
   var saveCount = 0;
@@ -1699,7 +1902,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
 
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
-    final text = _sourceFor(path);
+    final text = _sources[path] ?? _sourceFor(path);
     return WorkspaceFileLoad(
       text: text,
       snapshot: WorkspaceFileSnapshot(
@@ -1728,6 +1931,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
     saveCount++;
     savedPath = path;
     savedText = text;
+    _sources[path] = text;
     return WorkspaceFileSnapshot(
       modifiedAt: DateTime(2026, 1, 2),
       size: text.length,

@@ -428,8 +428,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  void updateActiveText(String text, {bool updatePreview = true}) {
+  void updateActiveText(
+    String text, {
+    bool updatePreview = true,
+    String? sourceFilePath,
+  }) {
     final workspace = state.workspace;
+    if (sourceFilePath != null && workspace?.activeFilePath != sourceFilePath) {
+      return;
+    }
     _editRevision++;
     state = state.copyWith(
       activeText: text,

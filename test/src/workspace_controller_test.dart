@@ -244,6 +244,30 @@ void main() {
     },
   );
 
+  test(
+    'stale text update from previous file cannot dirty active tab',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(service.rootPath);
+      expect(await controller.openActiveFile(service.bPath), isTrue);
+
+      controller.updateActiveText('# Stale A\n', sourceFilePath: service.aPath);
+
+      expect(controller.state.workspace?.activeFilePath, service.bPath);
+      expect(controller.state.activeText, '# B\n');
+      expect(controller.state.isDirty, isFalse);
+      expect(await controller.autoSaveActiveIfNeeded(), isTrue);
+      expect(service.savedTexts, isEmpty);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
   test('folder workspaces track open file tabs without duplicates', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -607,8 +631,16 @@ class _WorkspaceControllerDriver {
 
   Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 
-  void updateActiveText(String text, {bool updatePreview = true}) {
-    _notifier.updateActiveText(text, updatePreview: updatePreview);
+  void updateActiveText(
+    String text, {
+    bool updatePreview = true,
+    String? sourceFilePath,
+  }) {
+    _notifier.updateActiveText(
+      text,
+      updatePreview: updatePreview,
+      sourceFilePath: sourceFilePath,
+    );
   }
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
