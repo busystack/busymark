@@ -19,6 +19,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.writersideRoot,
     this.imagesDir = 'images',
     required this.controller,
+    required this.undoController,
     required this.focusNode,
     required this.onChanged,
     required this.onTableCellChanged,
@@ -42,6 +43,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final String? writersideRoot;
   final String imagesDir;
   final BusyMarkWysiwygTextController controller;
+  final UndoHistoryController undoController;
   final FocusNode focusNode;
   final ValueChanged<String> onChanged;
   final void Function(String cellId, String text) onTableCellChanged;
@@ -176,7 +178,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                               selectionColor: BusyMarkLinuxPalette.transparent,
                             ),
                       child: TextField(
+                        key: ValueKey(
+                          'wysiwyg-field-$documentFilePath-${block.id}',
+                        ),
                         controller: controller,
+                        undoController: undoController,
                         focusNode: focusNode,
                         maxLines: null,
                         minLines: 1,

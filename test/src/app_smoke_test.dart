@@ -111,6 +111,8 @@ void main() {
     expect(find.text(l10n.settingsTitle), findsOneWidget);
     expect(find.text(l10n.appLanguage), findsOneWidget);
     expect(find.text(l10n.systemLanguage), findsWidgets);
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    expect(find.text(l10n.autoSaveDescription), findsOneWidget);
     expect(find.text(l10n.validateOnEdit), findsOneWidget);
     expect(find.byType(DropdownButton<String>), findsNothing);
     expect(find.text(l10n.settingsWindowSectionTitle), findsOneWidget);
@@ -131,6 +133,11 @@ void main() {
     expect(find.text('हिन्दी'), findsOneWidget);
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.autoSave));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['autoSave'], isFalse);
 
     await tester.ensureVisible(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
@@ -457,7 +464,7 @@ void main() {
     expect(find.text(l10n.aboutLicenseLabel), findsOneWidget);
     expect(find.text(l10n.aboutLicenseName), findsOneWidget);
     expect(find.text(l10n.aboutWebsite), findsOneWidget);
-    expect(find.text('https://github.com/busystack/busymark'), findsOneWidget);
+    expect(find.text('https://busystack.org'), findsOneWidget);
     expect(find.text(l10n.aboutReportIssue), findsOneWidget);
     expect(
       find.text('https://github.com/busystack/busymark/issues'),
@@ -612,8 +619,15 @@ void main() {
       third.path,
     );
 
+    controller.updateActiveText('# Edited third\n');
+    await tester.pump();
+
     await pressControlShortcut(LogicalKeyboardKey.tab);
 
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(service.saveCount, 1);
+    expect(service.savedPath, third.path);
+    expect(service.savedText, '# Edited third\n');
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       first.path,
@@ -648,6 +662,287 @@ void main() {
       isEmpty,
     );
     expect(find.text(l10n.noOpenFile), findsWidgets);
+  });
+
+  testWidgets('source undo cannot restore saved text from previous tab', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_source_undo_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/Introduction.md')
+      ..writeAsStringSync('# Introduction\n');
+    final second = File('${temp.path}/System-Design.md')
+      ..writeAsStringSync('# System Design\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, '# Edited Introduction\n');
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# Edited Introduction\n',
+    );
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    expect(await controller.saveActive(), isTrue);
+    await tester.pump();
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+
+    await controller.openActiveFile(second.path);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(sourceField).controller?.text,
+      '# System-Design.md\n',
+    );
+
+    await tester.tap(sourceField);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(sourceField).controller?.text,
+      '# System-Design.md\n',
+    );
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+  });
+
+  testWidgets('editor undo cannot restore saved text from previous tab', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_editor_undo_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/Introduction.md')
+      ..writeAsStringSync('# Introduction\n');
+    final second = File('${temp.path}/System-Design.md')
+      ..writeAsStringSync('# System Design\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.editor);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorField = find.byType(TextField).first;
+    await tester.tap(editorField);
+    await tester.enterText(editorField, 'Edited Introduction');
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# Edited Introduction\n',
+    );
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    expect(await controller.saveActive(), isTrue);
+    await tester.pump();
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+
+    await controller.openActiveFile(second.path);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(editorField).controller?.text,
+      'System-Design.md',
+    );
+
+    await tester.tap(editorField);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyZ);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '# System-Design.md\n',
+    );
+    expect(
+      tester.widget<TextField>(editorField).controller?.text,
+      'System-Design.md',
+    );
+    expect(service.savedPath, first.path);
+    expect(service.savedText, '# Edited Introduction\n');
+  });
+
+  testWidgets('window close still warns when active changes are unsaved', (
+    tester,
+  ) async {
+    final nativeWindow = _FakeNativeWindowController();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nativeWindow.listeners, hasLength(1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    nativeWindow.listeners.single.onWindowClose();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(l10n.closeUnsavedChangesTitle), findsOneWidget);
+    expect(nativeWindow.closeCount, 0);
+  });
+
+  testWidgets('window close flushes autosave for saved files', (tester) async {
+    final nativeWindow = _FakeNativeWindowController();
+    final service = _StartupWorkspaceService();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(
+          'test/fixtures/markdown/basic.md',
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null &&
+          nativeWindow.listeners.isNotEmpty) {
+        break;
+      }
+    }
+
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText('# Closing\n');
+    await tester.pump();
+
+    nativeWindow.listeners.single.onWindowClose();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, 'test/fixtures/markdown/basic.md');
+    expect(service.savedText, '# Closing\n');
+    expect(find.text(l10n.closeUnsavedChangesTitle), findsNothing);
+    expect(nativeWindow.closeCount, 1);
   });
 
   testWidgets('startup path opens a Markdown file workspace', (tester) async {
@@ -1571,10 +1866,14 @@ class _StartupWorkspaceService extends WorkspaceService {
 }
 
 class _TabbedWorkspaceService extends WorkspaceService {
-  const _TabbedWorkspaceService({required this.rootPath, required this.paths});
+  _TabbedWorkspaceService({required this.rootPath, required this.paths});
 
   final String rootPath;
   final List<String> paths;
+  final _sources = <String, String>{};
+  String? savedPath;
+  String? savedText;
+  var saveCount = 0;
 
   @override
   Future<Workspace> openPath(String path) async {
@@ -1603,7 +1902,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
 
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
-    final text = _sourceFor(path);
+    final text = _sources[path] ?? _sourceFor(path);
     return WorkspaceFileLoad(
       text: text,
       snapshot: WorkspaceFileSnapshot(
@@ -1617,6 +1916,27 @@ class _TabbedWorkspaceService extends WorkspaceService {
   @override
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
     return workspace.copyWith(diagnostics: const []);
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    return false;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    saveCount++;
+    savedPath = path;
+    savedText = text;
+    _sources[path] = text;
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, 2),
+      size: text.length,
+      contentHash: text,
+    );
   }
 
   String _sourceFor(String path) => '# ${path.split('/').last}\n';

@@ -13,7 +13,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'Editor de documentación compatible con Markdown y Writerside.';
+      'Editor de documentación para Markdown y proyectos compatibles con Writerside.';
 
   @override
   String get aboutBusyMark => 'Acerca de BusyMark';
@@ -220,7 +220,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get viewMode => 'Modo de visualización';
 
   @override
-  String get welcome => 'Bienvenido';
+  String get welcome => 'Bienvenida';
 
   @override
   String get writerside => 'Writerside';
@@ -249,7 +249,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Carpeta Markdown o proyecto compatible con Writerside';
 
   @override
-  String get noOpenFile => 'No open file';
+  String get noOpenFile => 'No hay ningún archivo abierto';
 
   @override
   String get shortcutGroupFile => 'Archivo';
@@ -259,11 +259,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Crear un nuevo documento Markdown no guardado';
+      'Crear un nuevo documento Markdown sin guardar';
 
   @override
   String get shortcutOpenDescription =>
-      'Abrir un archivo Markdown, una carpeta Markdown o un proyecto de Writerside';
+      'Abrir un archivo Markdown, una carpeta o un proyecto de Writerside';
 
   @override
   String get shortcutSaveDescription => 'Guardar el archivo Markdown actual';
@@ -276,29 +276,32 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mostrar esta referencia de atajos de teclado';
 
   @override
-  String get shortcutNextTab => 'Next tab';
+  String get shortcutNextTab => 'Siguiente pestaña';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription =>
+      'Ir a la siguiente pestaña abierta del editor';
 
   @override
-  String get shortcutPreviousTab => 'Previous tab';
+  String get shortcutPreviousTab => 'Pestaña anterior';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+      'Ir a la pestaña abierta anterior del editor';
 
   @override
-  String get shortcutCloseTab => 'Close tab';
+  String get shortcutCloseTab => 'Cerrar pestaña';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription =>
+      'Cerrar la pestaña activa del editor';
 
   @override
-  String get shortcutCloseAllTabs => 'Close all tabs';
+  String get shortcutCloseAllTabs => 'Cerrar todas las pestañas';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription =>
+      'Cerrar todas las pestañas abiertas del editor';
 
   @override
   String get shortcutGroupTextEditing => 'Edición de texto';
@@ -327,7 +330,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutRedoDescription => 'Rehacer la última edición deshecha';
 
   @override
-  String get clearEditorSelection => 'Borrar selección del editor';
+  String get clearEditorSelection => 'Quitar selección del editor';
 
   @override
   String get shortcutClearEditorSelectionDescription =>
@@ -338,57 +341,57 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutBoldDescription =>
-      'Alternar negrita en el texto seleccionado';
+      'Activar o desactivar la negrita en el texto seleccionado';
 
   @override
   String get shortcutItalicDescription =>
-      'Alternar cursiva en el texto seleccionado';
+      'Activar o desactivar la cursiva en el texto seleccionado';
 
   @override
   String get shortcutUnderlineDescription =>
-      'Alternar subrayado en el texto seleccionado';
+      'Activar o desactivar el subrayado en el texto seleccionado';
 
   @override
   String get shortcutLinkDescription => 'Insertar o editar un enlace';
 
   @override
   String get shortcutInlineCodeDescription =>
-      'Alternar código en línea en el texto seleccionado';
+      'Activar o desactivar el código en línea en el texto seleccionado';
 
   @override
   String get shortcutStrikethroughDescription =>
-      'Alternar tachado en el texto seleccionado';
+      'Activar o desactivar el tachado en el texto seleccionado';
 
   @override
   String get shortcutGroupBlocks => 'Bloques';
 
   @override
   String get shortcutParagraphDescription =>
-      'Establecer el bloque actual como párrafo';
+      'Convertir el bloque actual en párrafo';
 
   @override
   String get shortcutHeading1Description =>
-      'Establecer el bloque actual como Título 1';
+      'Convertir el bloque actual en encabezado 1';
 
   @override
   String get shortcutHeading2Description =>
-      'Establecer el bloque actual como Título 2';
+      'Convertir el bloque actual en encabezado 2';
 
   @override
   String get shortcutHeading3Description =>
-      'Establecer el bloque actual como Título 3';
+      'Convertir el bloque actual en encabezado 3';
 
   @override
   String get shortcutHeading4Description =>
-      'Establecer el bloque actual como Título 4';
+      'Convertir el bloque actual en encabezado 4';
 
   @override
   String get shortcutHeading5Description =>
-      'Establecer el bloque actual como Título 5';
+      'Convertir el bloque actual en encabezado 5';
 
   @override
   String get shortcutHeading6Description =>
-      'Establecer el bloque actual como Título 6';
+      'Convertir el bloque actual en encabezado 6';
 
   @override
   String get shortcutGroupLists => 'Listas';
@@ -398,35 +401,35 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shortcutNumberedListDescription =>
-      'Alternar formato de lista numerada';
+      'Activar o desactivar el formato de lista numerada';
 
   @override
   String get bulletedList => 'Lista con viñetas';
 
   @override
   String get shortcutBulletedListDescription =>
-      'Alternar formato de lista con viñetas';
+      'Activar o desactivar el formato de lista con viñetas';
 
   @override
   String get checklist => 'Lista de verificación';
 
   @override
   String get shortcutChecklistDescription =>
-      'Alternar formato de lista de verificación';
+      'Activar o desactivar el formato de lista de verificación';
 
   @override
   String get createMarkdownFile => 'Crear archivo Markdown';
 
   @override
   String get createMarkdownFileDescription =>
-      'Iniciar un documento Markdown local no guardado';
+      'Iniciar un documento Markdown local sin guardar';
 
   @override
   String get createWritersideProject => 'Crear proyecto de Writerside';
 
   @override
   String get createWritersideProjectDescription =>
-      'Crear un proyecto local compatible con Writerside';
+      'Iniciar un proyecto local compatible con Writerside';
 
   @override
   String get defaultProjectName => 'Documentación';
@@ -482,6 +485,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTitle => 'Configuración de BusyMark';
 
   @override
+  String get autoSave => 'Guardado automático';
+
+  @override
+  String get autoSaveDescription =>
+      'Guarda automáticamente los cambios del archivo después de un breve periodo de inactividad.';
+
+  @override
   String get wordWrap => 'Ajuste de línea';
 
   @override
@@ -509,7 +519,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'Preguntar antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.';
+      'Pregunta antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.';
 
   @override
   String get closeUnsavedChangesTitle => 'Cambios sin guardar';
@@ -542,22 +552,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get closeUnsavedChangesSave => 'Guardar';
 
   @override
-  String get currentFile => 'Archivo actual';
+  String get currentFile => 'archivo actual';
 
   @override
-  String get unsavedChanges => 'Cambios no guardados';
+  String get unsavedChanges => 'Cambios sin guardar';
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'Hay cambios no guardados en $fileName. ¿Desea guardarlos antes de continuar?';
+    return 'Hay cambios sin guardar en $fileName. ¿Guardarlos antes de continuar?';
   }
 
   @override
-  String get fileChangedOnDisk => 'Archivo modificado en el disco';
+  String get fileChangedOnDisk => 'Archivo modificado en disco';
 
   @override
   String get fileChangedOnDiskMessage =>
-      'Este archivo cambió en el disco desde que lo abrió. ¿Desea sobrescribirlo?';
+      'Este archivo ha cambiado en disco desde que se abrió. ¿Sobrescribirlo?';
 
   @override
   String get untitledMarkdownFileName => 'Sin título.md';
@@ -620,7 +630,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get link => 'Enlace';
 
   @override
-  String get hardLineBreak => 'Salto de línea fijo';
+  String get hardLineBreak => 'Salto de línea forzado';
 
   @override
   String get textStyle => 'Estilo de texto';
@@ -629,22 +639,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paragraph => 'Párrafo';
 
   @override
-  String get heading1 => 'Título 1';
+  String get heading1 => 'Encabezado 1';
 
   @override
-  String get heading2 => 'Título 2';
+  String get heading2 => 'Encabezado 2';
 
   @override
-  String get heading3 => 'Título 3';
+  String get heading3 => 'Encabezado 3';
 
   @override
-  String get heading4 => 'Título 4';
+  String get heading4 => 'Encabezado 4';
 
   @override
-  String get heading5 => 'Título 5';
+  String get heading5 => 'Encabezado 5';
 
   @override
-  String get heading6 => 'Título 6';
+  String get heading6 => 'Encabezado 6';
 
   @override
   String headingLevelAbbreviation(int level) {
@@ -733,10 +743,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hidePreview => 'Ocultar vista previa';
 
   @override
-  String get workspaceKindUnsavedMarkdown => 'Archivo Markdown no guardado';
+  String get workspaceKindUnsavedMarkdown => 'Archivo Markdown sin guardar';
 
   @override
-  String get workspaceKindSingleMarkdown => 'Archivo Markdown único';
+  String get workspaceKindSingleMarkdown => 'Archivo Markdown individual';
 
   @override
   String get workspaceKindMarkdownFolder => 'Carpeta Markdown';
@@ -766,7 +776,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get toc => 'Índice';
 
   @override
-  String get markdownUnsaved => 'Markdown — no guardado';
+  String get markdownUnsaved => 'Markdown — sin guardar';
 
   @override
   String workspaceDetail(String kind, int count) {
@@ -783,7 +793,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noFiles => 'No hay archivos';
 
   @override
-  String get noWritersideToc => 'Sin índice de Writerside';
+  String get noWritersideToc => 'No hay índice de Writerside';
 
   @override
   String get tocSection => 'sección del índice';
@@ -801,13 +811,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get topicTitle => 'Título del tema';
 
   @override
-  String get fileName => 'Nombre del archivo';
+  String get fileName => 'Nombre de archivo';
 
   @override
   String get topicTitleRequired => 'El título del tema es obligatorio.';
 
   @override
-  String get fileNameRequired => 'El nombre del archivo es obligatorio.';
+  String get fileNameRequired => 'El nombre de archivo es obligatorio.';
 
   @override
   String get useSingleSafeFileName =>
@@ -907,7 +917,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noProblemsFound => 'No se encontraron problemas';
 
   @override
-  String get noResults => 'Sin resultados';
+  String get noResults => 'No hay resultados';
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
@@ -968,7 +978,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'Guardado bloqueado: el archivo fue modificado en el disco.';
+      'Guardado bloqueado: el archivo ha cambiado en disco.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -1002,11 +1012,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorParentDirectoryRequired =>
-      'Se requiere el directorio principal.';
+      'El directorio padre es obligatorio.';
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'El directorio principal no existe: $path';
+    return 'El directorio padre no existe: $path';
   }
 
   @override
@@ -1027,7 +1037,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorTopicFileInvalid =>
-      'El nombre del archivo del tema debe ser un archivo Markdown sin separadores de ruta.';
+      'El nombre del archivo del tema debe ser un nombre de archivo Markdown sin separadores de ruta.';
 
   @override
   String get errorTopicTitleRequired => 'El título del tema es obligatorio.';
@@ -1121,11 +1131,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'Los títulos H1 adicionales de nivel superior se tratan como capítulos.';
+      'Los encabezados H1 de nivel superior adicionales se tratan como capítulos.';
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'El tema Markdown de Writerside no tiene H1 ni título inicial.';
+      'El tema Markdown de Writerside no tiene un encabezado H1 ni un título de front matter.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -1170,15 +1180,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigInvalidRoot =>
-      'La raíz de writeside.cfg debe ser <ihp>.';
+      'La raíz de writerside.cfg debe ser <ihp>.';
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'Falta src en la declaración de snippets.';
+      'A la declaración de snippets le falta el atributo src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'Falta src en la declaración de grupos de instancias.';
+      'A la declaración de instance-groups le falta el atributo src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -1187,19 +1197,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'Falta src en la declaración de instancia.';
+      'A la declaración de instancia le falta el atributo src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
-      'writeside.cfg no registra ninguna instancia.';
+      'writerside.cfg no registra ninguna instancia.';
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      'La raíz del árbol debe ser <instance-profile>.';
+      'La raíz de .tree debe ser <instance-profile>.';
 
   @override
   String get diagnosticWritersideTreeMissingId =>
-      'Al perfil de instancia le falta el ID.';
+      'Al perfil de instancia le falta el atributo id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
@@ -1208,7 +1218,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'A la instancia que no es de biblioteca le falta la página de inicio.';
+      'A la instancia que no es de biblioteca le falta start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -1217,7 +1227,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'El tema \"$topic\" aparece más de una vez en este índice de instancia.';
+    return 'El tema \"$topic\" aparece más de una vez en el índice de esta instancia.';
   }
 
   @override
@@ -1226,21 +1236,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'La variable \"$name\" se declara más de una vez.';
+    return 'La variable \"$name\" está declarada más de una vez.';
   }
 
   @override
   String get diagnosticWritersideCategoryMissingId =>
-      'A la categoría le falta el ID.';
+      'A la categoría le falta el atributo id.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'La categoría \"$id\" se declara más de una vez.';
+    return 'La categoría \"$id\" está declarada más de una vez.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'El orden de categoría \"$order\" se declara más de una vez.';
+    return 'El orden de categoría \"$order\" está declarado más de una vez.';
   }
 
   @override
@@ -1258,16 +1268,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'El ID de elemento \"$elementId\" aparece más de una vez.';
+    return 'El ID del elemento \"$elementId\" aparece más de una vez.';
   }
 
   @override
   String get diagnosticWritersideTopicAnchorMissingHref =>
-      'A <a> le falta href.';
+      'A <a> le falta el atributo href.';
 
   @override
   String get diagnosticWritersideConfigMissing =>
-      'El modo Writerside requiere writeside.cfg.';
+      'El modo Writerside requiere writerside.cfg.';
 
   @override
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
@@ -1336,12 +1346,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'El ID de elemento \"$id\" aparece más de una vez.';
+    return 'El ID del elemento \"$id\" aparece más de una vez.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'El índice hace referencia al tema ausente \"$topic\".';
+    return 'El índice hace referencia a un tema inexistente \"$topic\".';
   }
 
   @override
@@ -1369,7 +1379,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      'Falta el atributo from en <include>.';
+      'A <include> le falta el atributo from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -1386,7 +1396,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'La categoría de «véase también» \"$ref\" no está declarada.';
+    return 'La categoría seealso \"$ref\" no está declarada.';
   }
 
   @override

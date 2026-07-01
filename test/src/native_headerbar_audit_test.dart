@@ -25,9 +25,10 @@ void main() {
     expect(source, contains('setTheme'));
     expect(source, contains('busymark-sidebar-header'));
     expect(source, contains('self->sidebar_width'));
+    expect(source, isNot(contains('self->save_button')));
     expect(
       source,
-      contains('connect_header_action(self, self->save_button, "save")'),
+      isNot(contains('connect_header_action(self, self->save_button, "save")')),
     );
     expect(source, isNot(contains('window-close-symbolic')));
     expect(source, isNot(contains('window-minimize-symbolic')));
@@ -512,20 +513,26 @@ void main() {
     expect(service, contains('setCanSave'));
     expect(workspace, contains('case HeaderBarAction.save:'));
     expect(workspace, isNot(contains('case HeaderBarAction.problems:')));
-    expect(workspace, contains('saveActiveWithOverwriteConfirmation'));
+    expect(workspace, isNot(contains('saveActiveWithOverwriteConfirmation')));
     expect(workspace, contains('_showProblemsDialog(context, ref)'));
     expect(workspace, contains('_validateActiveAndShowProblems'));
-    expect(workspace, contains('setCanSave(state.isDirty)'));
-    expect(workspace, contains('accented: state.isDirty'));
+    expect(workspace, isNot(contains('setCanSave(state.isDirty)')));
+    expect(workspace, isNot(contains('accented: state.isDirty')));
     expect(
       service,
       contains('accentColor: Theme.of(context).colorScheme.primary'),
     );
     expect(service, contains('accentForegroundColor'));
-    expect(native, contains('create_header_icon_button("emblem-ok-symbolic")'));
-    expect(native, contains('busymark-save-button'));
-    expect(native, contains('busymark-save-dirty'));
-    expect(native, contains('set_save_dirty(self, fl_method_bool_arg(args))'));
+    expect(
+      native,
+      isNot(contains('create_header_icon_button("emblem-ok-symbolic")')),
+    );
+    expect(native, isNot(contains('busymark-save-button')));
+    expect(native, isNot(contains('busymark-save-dirty')));
+    expect(
+      native,
+      isNot(contains('set_save_dirty(self, fl_method_bool_arg(args))')),
+    );
     expect(
       native,
       contains('create_header_icon_button("tools-check-spelling-symbolic")'),
@@ -689,7 +696,9 @@ void main() {
     );
     expect(
       native,
-      contains('set_widget_visible(self->save_button, effective_visible)'),
+      isNot(
+        contains('set_widget_visible(self->save_button, effective_visible)'),
+      ),
     );
     expect(
       native,

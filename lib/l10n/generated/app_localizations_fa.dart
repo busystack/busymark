@@ -12,7 +12,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'ویرایشگر اسناد Markdown و Writerside.';
+  String get appSubtitle => 'ویرایشگر مستندات Markdown و سازگار با Writerside.';
 
   @override
   String get aboutBusyMark => 'دربارهٔ BusyMark';
@@ -30,7 +30,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutWebsite => 'وب‌سایت';
 
   @override
-  String get aboutReportIssue => 'گزارش مشکل';
+  String get aboutReportIssue => 'گزارش اشکال';
 
   @override
   String get advanced => 'پیشرفته';
@@ -45,10 +45,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get back => 'بازگشت';
 
   @override
-  String get bottomLeft => 'پایین چپ';
+  String get bottomLeft => 'پایین سمت چپ';
 
   @override
-  String get bottomRight => 'پایین راست';
+  String get bottomRight => 'پایین سمت راست';
 
   @override
   String get cancel => 'لغو';
@@ -57,7 +57,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get choose => 'انتخاب';
 
   @override
-  String get chooseLocation => 'انتخاب محل';
+  String get chooseLocation => 'انتخاب مکان';
 
   @override
   String get copy => 'کپی';
@@ -123,7 +123,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get preview => 'پیش‌نمایش';
 
   @override
-  String get recent => 'اخیر';
+  String get recent => 'موارد اخیر';
 
   @override
   String get redo => 'انجام دوباره';
@@ -201,10 +201,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get toggleSidebar => 'نمایش/پنهان کردن نوار کناری';
 
   @override
-  String get topLeft => 'بالا چپ';
+  String get topLeft => 'بالا سمت چپ';
 
   @override
-  String get topRight => 'بالا راست';
+  String get topRight => 'بالا سمت راست';
 
   @override
   String get undo => 'واگرد';
@@ -245,10 +245,10 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get markdownFolderOrWritersideProject =>
-      'پوشه Markdown یا پروژه سازگار با Writerside';
+      'پوشهٔ Markdown یا پروژهٔ سازگار با Writerside';
 
   @override
-  String get noOpenFile => 'No open file';
+  String get noOpenFile => 'فایلی باز نیست';
 
   @override
   String get shortcutGroupFile => 'فایل';
@@ -262,7 +262,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutOpenDescription =>
-      'باز کردن یک فایل Markdown، پوشه یا پروژه Writerside';
+      'باز کردن فایل Markdown، پوشه یا پروژهٔ Writerside';
 
   @override
   String get shortcutSaveDescription => 'ذخیرهٔ فایل Markdown فعلی';
@@ -275,29 +275,28 @@ class AppLocalizationsFa extends AppLocalizations {
       'نمایش مرجع میانبرهای صفحه‌کلید';
 
   @override
-  String get shortcutNextTab => 'Next tab';
+  String get shortcutNextTab => 'تب بعدی';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription => 'رفتن به تب باز بعدی ویرایشگر';
 
   @override
-  String get shortcutPreviousTab => 'Previous tab';
+  String get shortcutPreviousTab => 'تب قبلی';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+  String get shortcutPreviousTabDescription => 'رفتن به تب باز قبلی ویرایشگر';
 
   @override
-  String get shortcutCloseTab => 'Close tab';
+  String get shortcutCloseTab => 'بستن تب';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription => 'بستن تب فعال ویرایشگر';
 
   @override
-  String get shortcutCloseAllTabs => 'Close all tabs';
+  String get shortcutCloseAllTabs => 'بستن همهٔ تب‌ها';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription => 'بستن همهٔ تب‌های باز ویرایشگر';
 
   @override
   String get shortcutGroupTextEditing => 'ویرایش متن';
@@ -330,53 +329,57 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutClearEditorSelectionDescription =>
-      'پاک کردن انتخاب فعلی ویرایشگر یا خروج از تمرکز جستجو';
+      'خروج از انتخاب فعلی ویرایشگر یا فوکوس جستجو';
 
   @override
   String get shortcutGroupFormatting => 'قالب‌بندی';
 
   @override
-  String get shortcutBoldDescription => 'پررنگ کردن متن انتخاب‌شده';
+  String get shortcutBoldDescription =>
+      'فعال یا غیرفعال کردن پررنگی متن انتخاب‌شده';
 
   @override
-  String get shortcutItalicDescription => 'کج کردن متن انتخاب‌شده';
+  String get shortcutItalicDescription =>
+      'فعال یا غیرفعال کردن حالت مورب متن انتخاب‌شده';
 
   @override
-  String get shortcutUnderlineDescription => 'زیرخط‌دار کردن متن انتخاب‌شده';
+  String get shortcutUnderlineDescription =>
+      'فعال یا غیرفعال کردن زیرخط متن انتخاب‌شده';
 
   @override
   String get shortcutLinkDescription => 'درج یا ویرایش پیوند';
 
   @override
   String get shortcutInlineCodeDescription =>
-      'تبدیل متن انتخاب‌شده به کد درون‌خطی';
+      'فعال یا غیرفعال کردن کد درون‌خطی برای متن انتخاب‌شده';
 
   @override
-  String get shortcutStrikethroughDescription => 'خط‌خورده کردن متن انتخاب‌شده';
+  String get shortcutStrikethroughDescription =>
+      'فعال یا غیرفعال کردن خط‌خوردگی متن انتخاب‌شده';
 
   @override
   String get shortcutGroupBlocks => 'بلوک‌ها';
 
   @override
-  String get shortcutParagraphDescription => 'تنظیم بلوک فعلی به پاراگراف';
+  String get shortcutParagraphDescription => 'تنظیم بلوک فعلی روی پاراگراف';
 
   @override
-  String get shortcutHeading1Description => 'تنظیم بلوک فعلی به عنوان ۱';
+  String get shortcutHeading1Description => 'تنظیم بلوک فعلی روی عنوان ۱';
 
   @override
-  String get shortcutHeading2Description => 'تنظیم بلوک فعلی به عنوان ۲';
+  String get shortcutHeading2Description => 'تنظیم بلوک فعلی روی عنوان ۲';
 
   @override
-  String get shortcutHeading3Description => 'تنظیم بلوک فعلی به عنوان ۳';
+  String get shortcutHeading3Description => 'تنظیم بلوک فعلی روی عنوان ۳';
 
   @override
-  String get shortcutHeading4Description => 'تنظیم بلوک فعلی به عنوان ۴';
+  String get shortcutHeading4Description => 'تنظیم بلوک فعلی روی عنوان ۴';
 
   @override
-  String get shortcutHeading5Description => 'تنظیم بلوک فعلی به عنوان ۵';
+  String get shortcutHeading5Description => 'تنظیم بلوک فعلی روی عنوان ۵';
 
   @override
-  String get shortcutHeading6Description => 'تنظیم بلوک فعلی به عنوان ۶';
+  String get shortcutHeading6Description => 'تنظیم بلوک فعلی روی عنوان ۶';
 
   @override
   String get shortcutGroupLists => 'فهرست‌ها';
@@ -386,20 +389,21 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutNumberedListDescription =>
-      'تغییر قالب‌بندی فهرست شماره‌دار';
+      'فعال یا غیرفعال کردن قالب‌بندی فهرست شماره‌دار';
 
   @override
-  String get bulletedList => 'فهرست گلوله‌ای';
+  String get bulletedList => 'فهرست نشانه‌دار';
 
   @override
   String get shortcutBulletedListDescription =>
-      'تغییر قالب‌بندی فهرست گلوله‌ای';
+      'فعال یا غیرفعال کردن قالب‌بندی فهرست نشانه‌دار';
 
   @override
   String get checklist => 'چک‌لیست';
 
   @override
-  String get shortcutChecklistDescription => 'تغییر قالب‌بندی چک‌لیست';
+  String get shortcutChecklistDescription =>
+      'فعال یا غیرفعال کردن قالب‌بندی چک‌لیست';
 
   @override
   String get createMarkdownFile => 'ایجاد فایل Markdown';
@@ -449,11 +453,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get directoryNameRequired => 'نام پوشه الزامی است.';
 
   @override
-  String get useSingleSafeDirectoryName => 'از یک نام پوشهٔ امن استفاده کنید.';
+  String get useSingleSafeDirectoryName =>
+      'از یک نام پوشهٔ واحد و مجاز استفاده کنید.';
 
   @override
   String get useLowercaseIdentifier =>
-      'از شناسه‌ای با حروف کوچک، اعداد، زیرخط یا خط تیره استفاده کنید.';
+      'از شناسه‌ای با حروف کوچک لاتین، اعداد، زیرخط یا خط‌تیره استفاده کنید.';
 
   @override
   String get startTopicTitleRequired => 'عنوان موضوع آغازین الزامی است.';
@@ -466,10 +471,17 @@ class AppLocalizationsFa extends AppLocalizations {
   String get settingsTitle => 'تنظیمات BusyMark';
 
   @override
+  String get autoSave => 'ذخیرهٔ خودکار';
+
+  @override
+  String get autoSaveDescription =>
+      'تغییرات فایل را پس از مکثی کوتاه به‌طور خودکار ذخیره کنید.';
+
+  @override
   String get wordWrap => 'شکستن خودکار خطوط';
 
   @override
-  String get editorFontSize => 'اندازه فونت ویرایشگر';
+  String get editorFontSize => 'اندازهٔ قلم ویرایشگر';
 
   @override
   String get validateOnEdit => 'اعتبارسنجی هنگام ویرایش';
@@ -547,7 +559,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get untitledMarkdownFileName => 'بدون عنوان.md';
 
   @override
-  String get unorderedList => 'فهرست نامرتب';
+  String get unorderedList => 'فهرست بدون ترتیب';
 
   @override
   String get orderedList => 'فهرست شماره‌دار';
@@ -559,10 +571,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get toggleTaskChecked => 'تغییر وضعیت انجام‌شدهٔ کار';
 
   @override
-  String get indentListItem => 'افزایش تورفتگی آیتم فهرست';
+  String get indentListItem => 'افزایش تورفتگی مورد فهرست';
 
   @override
-  String get outdentListItem => 'کاهش تورفتگی آیتم فهرست';
+  String get outdentListItem => 'کاهش تورفتگی مورد فهرست';
 
   @override
   String get blockquote => 'نقل‌قول بلوکی';
@@ -589,10 +601,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get bold => 'پررنگ';
 
   @override
-  String get italic => 'کج';
+  String get italic => 'مورب';
 
   @override
-  String get underline => 'زیرخط';
+  String get underline => 'زیرخط‌دار';
 
   @override
   String get strikethrough => 'خط‌خورده';
@@ -644,10 +656,10 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get insertColumnLeft => 'درج ستون در چپ';
+  String get insertColumnLeft => 'درج ستون در سمت چپ';
 
   @override
-  String get insertColumnRight => 'درج ستون در راست';
+  String get insertColumnRight => 'درج ستون در سمت راست';
 
   @override
   String get deleteColumn => 'حذف ستون';
@@ -720,7 +732,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get workspaceKindUnsavedMarkdown => 'فایل Markdown ذخیره‌نشده';
 
   @override
-  String get workspaceKindSingleMarkdown => 'فایل Markdown تکی';
+  String get workspaceKindSingleMarkdown => 'فایل Markdown منفرد';
 
   @override
   String get workspaceKindMarkdownFolder => 'پوشه Markdown';
@@ -737,7 +749,7 @@ class AppLocalizationsFa extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count پیام تشخیصی',
-      one: '1 پیام تشخیصی',
+      one: '۱ پیام تشخیصی',
       zero: 'هیچ پیام تشخیصی وجود ندارد',
     );
     return '$_temp0';
@@ -758,7 +770,7 @@ class AppLocalizationsFa extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count فایل',
-      one: '1 فایل',
+      one: '۱ فایل',
     );
     return '$kind — $_temp0';
   }
@@ -794,7 +806,8 @@ class AppLocalizationsFa extends AppLocalizations {
   String get fileNameRequired => 'نام فایل الزامی است.';
 
   @override
-  String get useSingleSafeFileName => 'از یک نام فایل امن استفاده کنید.';
+  String get useSingleSafeFileName =>
+      'از یک نام فایل واحد و مجاز استفاده کنید.';
 
   @override
   String useExpectedExtension(String extension) {
@@ -803,7 +816,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get useIdentifierCharacters =>
-      'پیش از پسوند فقط از حروف، اعداد، زیرخط یا خط تیره استفاده کنید.';
+      'پیش از پسوند فقط از حروف لاتین، اعداد، زیرخط یا خط‌تیره استفاده کنید.';
 
   @override
   String get topicIdAlreadyExists => 'شناسه موضوع از قبل وجود دارد.';
@@ -817,7 +830,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String expandKind(String kind) {
-    return 'باز کردن $kind';
+    return 'گسترش $kind';
   }
 
   @override
@@ -841,7 +854,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noPreview => 'پیش‌نمایشی وجود ندارد';
 
   @override
-  String get note => 'توجه';
+  String get note => 'یادداشت';
 
   @override
   String get tip => 'نکته';
@@ -874,7 +887,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'هدف پیوند یافت نشد: $targetPath';
+    return 'مقصد پیوند یافت نشد: $targetPath';
   }
 
   @override
@@ -898,7 +911,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get untitledResult => 'نتیجه بدون عنوان';
+  String get untitledResult => 'نتیجهٔ بدون عنوان';
 
   @override
   String get documentKindMarkdownFile => 'فایل Markdown';
@@ -951,7 +964,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'ذخیره مسدود شد: فایل روی دیسک تغییر کرده است.';
+      'ذخیره‌سازی مسدود شد: فایل روی دیسک تغییر کرده است.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -998,11 +1011,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get errorDirectoryNameRequired => 'نام پوشه الزامی است.';
 
   @override
-  String get errorDirectoryNameUnsafe => 'نام پوشه باید یک بخش مسیر امن باشد.';
+  String get errorDirectoryNameUnsafe =>
+      'نام پوشه باید یک بخش مسیر واحد و مجاز باشد.';
 
   @override
   String get errorInstanceIdInvalid =>
-      'شناسه نمونه باید با یک حرف کوچک شروع شود و فقط شامل حروف کوچک، اعداد، زیرخط و خط تیره باشد.';
+      'شناسهٔ نمونه باید با یک حرف کوچک لاتین شروع شود و فقط شامل حروف کوچک لاتین، اعداد، زیرخط و خط‌تیره باشد.';
 
   @override
   String get errorTopicFileInvalid =>
@@ -1022,11 +1036,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'ماژول Writerside درخت نمونهٔ کمکی ندارد.';
+      'ماژول Writerside درخت نمونهٔ راهنما ندارد.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'فایل درختی Writerside وجود ندارد: $path';
+    return 'فایل درخت Writerside وجود ندارد: $path';
   }
 
   @override
@@ -1046,11 +1060,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get errorTopicsRootUnsafe =>
-      'ریشه موضوع‌ها باید یک پوشه نسبی امن باشد.';
+      'ریشهٔ موضوع‌ها باید یک پوشهٔ نسبی مجاز باشد.';
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'نام فایل موضوع باید یک بخش مسیر امن باشد.';
+      'نام فایل موضوع باید یک بخش مسیر واحد و مجاز باشد.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -1059,7 +1073,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get errorTopicFileNameInvalid =>
-      'نام فایل موضوع باید فقط شامل حروف، اعداد، زیرخط و خط تیره باشد.';
+      'نام فایل موضوع باید فقط شامل حروف لاتین، اعداد، زیرخط و خط‌تیره باشد.';
 
   @override
   String errorUnknown(String code) {
@@ -1082,7 +1096,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'فایل از حد پردازش خودکار نسخه بتا بزرگ‌تر است.';
+      'فایل از حد تجزیهٔ خودکار نسخهٔ بتا بزرگ‌تر است.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1091,11 +1105,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'بلوک ویژگی عنوان Writerside نامعتبر است.';
+      'بلوک ویژگی‌های عنوان Writerside نامعتبر است.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'شناسه عنوان «$id» تکراری است.';
+    return 'شناسهٔ عنوان «$id» تکراری است.';
   }
 
   @override
@@ -1104,7 +1118,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'موضوع Markdown در Writerside عنوان H1 یا عنوان اصلی ندارد.';
+      'موضوع Markdown در Writerside عنوان H1 یا عنوان فرانت‌متر ندارد.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -1117,7 +1131,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'بخش Front Matter بسته نشده است.';
+      'فرانت‌متر بسته نشده است.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'عنصر HTML ناامن است.';
@@ -1153,11 +1167,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'اعلان src برای snippets وجود ندارد.';
+      'در اعلان snippets، ویژگی src وجود ندارد.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'اعلان src برای instance-groups وجود ندارد.';
+      'در اعلان instance-groups، ویژگی src وجود ندارد.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -1166,7 +1180,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'اعلان src برای نمونه وجود ندارد.';
+      'در اعلان نمونه، ویژگی src وجود ندارد.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
@@ -1174,19 +1188,20 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      'ریشه درخت باید <instance-profile> باشد.';
+      'ریشهٔ .tree باید <instance-profile> باشد.';
 
   @override
-  String get diagnosticWritersideTreeMissingId => 'نمایه نمونه شناسه ندارد.';
+  String get diagnosticWritersideTreeMissingId =>
+      'نمایهٔ نمونه ویژگی id ندارد.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'نام فایل درختی با شناسه نمونه «$id» مطابقت ندارد.';
+    return 'نام بدون پسوند فایل درخت با شناسهٔ نمونه «$id» مطابقت ندارد.';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'نمونهٔ غیرکتابخانه‌ای صفحه شروع ندارد.';
+      'نمونهٔ غیرکتابخانه‌ای ویژگی start-page ندارد.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -1204,21 +1219,21 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'متغیر «$name» بیش از یک بار اعلام شده است.';
+    return 'متغیر «$name» بیش از یک بار تعریف شده است.';
   }
 
   @override
   String get diagnosticWritersideCategoryMissingId =>
-      'شناسه دسته‌بندی وجود ندارد.';
+      'دسته‌بندی ویژگی id ندارد.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'دسته‌بندی «$id» بیش از یک بار اعلام شده است.';
+    return 'دسته‌بندی «$id» بیش از یک بار تعریف شده است.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'ترتیب دسته‌بندی «$order» بیش از یک بار اعلام شده است.';
+    return 'ترتیب دسته‌بندی «$order» بیش از یک بار تعریف شده است.';
   }
 
   @override
@@ -1227,7 +1242,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
-      'موضوع XML شناسه ریشه ندارد.';
+      'موضوع XML شناسهٔ ریشه ندارد.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
@@ -1236,12 +1251,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'شناسه عنصر «$elementId» بیش از یک بار ظاهر شده است.';
+    return 'شناسهٔ عنصر «$elementId» بیش از یک بار ظاهر شده است.';
   }
 
   @override
   String get diagnosticWritersideTopicAnchorMissingHref =>
-      '<a> دارای href نیست.';
+      '<a> ویژگی href ندارد.';
 
   @override
   String get diagnosticWritersideConfigMissing =>
@@ -1251,21 +1266,21 @@ class AppLocalizationsFa extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'پوشه پیکربندی ساخت تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشهٔ پیکربندی ساختِ تنظیم‌شده وجود ندارد: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'پوشه مشخصات API تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشهٔ مشخصات API تنظیم‌شده وجود ندارد: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'پوشه snippets تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشهٔ snippets تنظیم‌شده وجود ندارد: $relativePath';
   }
 
   @override
@@ -1287,7 +1302,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'درخت نمونه ثبت‌شده «$source» وجود ندارد.';
+    return 'درخت نمونهٔ ثبت‌شده «$source» وجود ندارد.';
   }
 
   @override
@@ -1319,7 +1334,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'فهرست مطالب به موضوع گمشدهٔ «$topic» اشاره می‌کند.';
+    return 'فهرست مطالب به موضوع ناموجود «$topic» ارجاع می‌دهد.';
   }
 
   @override
@@ -1329,12 +1344,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'متغیر \"%$name%\" اعلام نشده است.';
+    return 'متغیر \"%$name%\" تعریف نشده است.';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'پیوند موضوع «$destination» حل نمی‌شود.';
+    return 'پیوند موضوع «$destination» قابل حل نیست.';
   }
 
   @override
@@ -1364,7 +1379,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'دسته‌بندی «$ref» اعلام نشده است.';
+    return 'دسته‌بندی seealso «$ref» تعریف نشده است.';
   }
 
   @override

@@ -372,15 +372,6 @@ class WorkspaceScreen extends ConsumerWidget {
                     actions: [
                       const SizedBox(width: BusyMarkSpacing.sm),
                       BusyMarkHeaderIconButton(
-                        tooltip: context.l10n.save,
-                        icon: BusyMarkGlyphs.check,
-                        accented: state.isDirty,
-                        shortcut: 'Ctrl+S',
-                        onPressed: () => unawaited(
-                          saveActiveWithOverwriteConfirmation(context, ref),
-                        ),
-                      ),
-                      BusyMarkHeaderIconButton(
                         tooltip: context.l10n.validate,
                         icon: BusyMarkGlyphs.diagnostics,
                         onPressed: () => unawaited(
@@ -557,7 +548,6 @@ class WorkspaceScreen extends ConsumerWidget {
           _headerBarViewMode(settings.documentViewMode),
         );
         await headerBar.setCanRefresh(true);
-        await headerBar.setCanSave(state.isDirty);
         await headerBar.setSearchActive(searchState.active);
       }());
     });
@@ -584,7 +574,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.refresh:
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
-        unawaited(saveActiveWithOverwriteConfirmation(context, ref));
+        break;
       case HeaderBarAction.settings:
         context.go('/settings');
       case HeaderBarAction.keyboardShortcuts:
@@ -666,7 +656,8 @@ class WorkspaceScreen extends ConsumerWidget {
     }
     final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (activePath != result.filePath) {
-      if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+          !context.mounted) {
         return;
       }
       await ref
@@ -1240,7 +1231,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                 }
               : openable
               ? () async {
-                  if (await confirmSafeToContinue(context, ref)) {
+                  if (await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(file.absolutePath);
@@ -1647,7 +1638,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           onToggle: hasChildren ? toggle : null,
           onTap: topic != null
               ? () async {
-                  if (await confirmSafeToContinue(context, ref)) {
+                  if (await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(topic);
@@ -2437,7 +2428,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 if (active) {
                   return;
                 }
-                if (!await confirmSafeToContinue(context, ref) ||
+                if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
                     !context.mounted) {
                   return;
                 }
@@ -2447,7 +2438,7 @@ class _EditorTabStrip extends ConsumerWidget {
               },
               onClose: () async {
                 if (active &&
-                    (!await confirmSafeToContinue(context, ref) ||
+                    (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
                         !context.mounted)) {
                   return;
                 }
@@ -2602,10 +2593,11 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
-  late final BusyMarkSourceEditingController _controller;
+  late BusyMarkSourceEditingController _controller;
   late final FocusNode _sourceFocusNode;
   late final ScrollController _sourceScrollController;
   late final ScrollController _previewScrollController;
+  late UndoHistoryController _sourceUndoController;
   final _sourceEditorKey = GlobalKey();
   final _previewHeadingKeys = <String, GlobalKey>{};
   final _previewSearchKeys = <int, GlobalKey>{};
@@ -2629,6 +2621,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _sourceFocusNode = FocusNode(onKeyEvent: _handleSourceKeyEvent);
     _sourceScrollController = ScrollController();
     _previewScrollController = ScrollController();
+    _sourceUndoController = UndoHistoryController();
     _lastPath = widget.state.workspace?.activeFilePath ?? '';
   }
 
@@ -2714,34 +2707,41 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
     final path = widget.state.workspace?.activeFilePath ?? '';
-    _controller.language = _sourceSyntaxLanguage(widget.state.workspace);
+    final language = _sourceSyntaxLanguage(widget.state.workspace);
     if (path != _lastPath) {
       _lastPath = path;
       _clearWysiwygCache();
       _foldedRegionKeys.clear();
-      _controller.clearFoldedRegions();
       _previewHeadingKeys.clear();
       _previewSearchKeys.clear();
       _wysiwygScrollHeadingId = null;
       _wysiwygSearchQuery = null;
       _wysiwygScrollRequest = 0;
-      _controller.text = widget.state.activeText;
+      _replaceSourceController(
+        text: widget.state.activeText,
+        language: language,
+      );
     } else if (widget.state.activeText != oldWidget.state.activeText &&
         !_sourceFocusNode.hasFocus) {
+      _controller.language = language;
       _controller.text = widget.state.activeText;
+    } else {
+      _controller.language = language;
     }
     if (oldWidget.viewMode == DocumentViewModePreference.editor &&
         widget.viewMode != DocumentViewModePreference.editor &&
         widget.viewMode != DocumentViewModePreference.source &&
         widget.state.workspace != null &&
         widget.state.isDirty) {
+      final activeText = widget.state.activeText;
+      final sourceFilePath = _activeEditorPath();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
         }
         ref
             .read(workspaceControllerProvider.notifier)
-            .updateActiveText(widget.state.activeText);
+            .updateActiveText(activeText, sourceFilePath: sourceFilePath);
       });
     }
   }
@@ -2751,6 +2751,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _previewScrollController.dispose();
     _sourceScrollController.dispose();
     _sourceFocusNode.dispose();
+    _sourceUndoController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -2804,6 +2805,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         !wysiwygVisible;
     final previewVisible =
         widget.viewMode != DocumentViewModePreference.source && !editorVisible;
+    final activeEditorPath = _activeEditorPath();
     final foldRegions = _syncSourceFoldRegions();
     final sourceStrutStyle = _sourceStrutStyle(
       folded: _foldedRegionKeys.isNotEmpty,
@@ -2860,182 +2862,189 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   onToggleFold: _toggleSourceFold,
                   child: SizedBox(
                     key: _sourceEditorKey,
-                    child: Shortcuts(
-                      shortcuts: const {
-                        SingleActivator(
-                          LogicalKeyboardKey.keyB,
-                          control: true,
-                        ): _SourceInlineMarkdownIntent(
-                          _SourceInlineMarkdownCommand.bold,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.keyI,
-                          control: true,
-                        ): _SourceInlineMarkdownIntent(
-                          _SourceInlineMarkdownCommand.italic,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.keyU,
-                          control: true,
-                        ): _SourceInlineMarkdownIntent(
-                          _SourceInlineMarkdownCommand.underline,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.keyK,
-                          control: true,
-                        ): _SourceInlineMarkdownIntent(
-                          _SourceInlineMarkdownCommand.link,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.keyE,
-                          control: true,
-                        ): _SourceInlineMarkdownIntent(
-                          _SourceInlineMarkdownCommand.code,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit5,
-                          alt: true,
-                          shift: true,
-                        ): _SourceInlineMarkdownIntent(
-                          _SourceInlineMarkdownCommand.strikethrough,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit0,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.paragraph,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit1,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.heading1,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit2,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.heading2,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit3,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.heading3,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit4,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.heading4,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit5,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.heading5,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit6,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.heading6,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit7,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.orderedList,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit8,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.unorderedList,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.digit9,
-                          control: true,
-                          shift: true,
-                        ): _SourceBlockMarkdownIntent(
-                          _SourceBlockMarkdownCommand.taskList,
-                        ),
-                        SingleActivator(
-                          LogicalKeyboardKey.keyV,
-                          control: true,
-                          shift: true,
-                        ): _SourcePastePlainTextIntent(),
-                      },
-                      child: Actions(
-                        actions: {
-                          _SourceInlineMarkdownIntent:
-                              CallbackAction<_SourceInlineMarkdownIntent>(
-                                onInvoke: (intent) {
-                                  _applySourceInlineMarkdownCommand(
-                                    intent.command,
-                                  );
-                                  return null;
-                                },
-                              ),
-                          _SourceBlockMarkdownIntent:
-                              CallbackAction<_SourceBlockMarkdownIntent>(
-                                onInvoke: (intent) {
-                                  _applySourceBlockMarkdownCommand(
-                                    intent.command,
-                                  );
-                                  return null;
-                                },
-                              ),
-                          _SourcePastePlainTextIntent:
-                              CallbackAction<_SourcePastePlainTextIntent>(
-                                onInvoke: (intent) {
-                                  unawaited(_pastePlainTextIntoSource());
-                                  return null;
-                                },
-                              ),
+                    child: KeyedSubtree(
+                      key: ValueKey(activeEditorPath),
+                      child: Shortcuts(
+                        shortcuts: const {
+                          SingleActivator(
+                            LogicalKeyboardKey.keyB,
+                            control: true,
+                          ): _SourceInlineMarkdownIntent(
+                            _SourceInlineMarkdownCommand.bold,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.keyI,
+                            control: true,
+                          ): _SourceInlineMarkdownIntent(
+                            _SourceInlineMarkdownCommand.italic,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.keyU,
+                            control: true,
+                          ): _SourceInlineMarkdownIntent(
+                            _SourceInlineMarkdownCommand.underline,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.keyK,
+                            control: true,
+                          ): _SourceInlineMarkdownIntent(
+                            _SourceInlineMarkdownCommand.link,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.keyE,
+                            control: true,
+                          ): _SourceInlineMarkdownIntent(
+                            _SourceInlineMarkdownCommand.code,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit5,
+                            alt: true,
+                            shift: true,
+                          ): _SourceInlineMarkdownIntent(
+                            _SourceInlineMarkdownCommand.strikethrough,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit0,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.paragraph,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit1,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.heading1,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit2,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.heading2,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit3,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.heading3,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit4,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.heading4,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit5,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.heading5,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit6,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.heading6,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit7,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.orderedList,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit8,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.unorderedList,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.digit9,
+                            control: true,
+                            shift: true,
+                          ): _SourceBlockMarkdownIntent(
+                            _SourceBlockMarkdownCommand.taskList,
+                          ),
+                          SingleActivator(
+                            LogicalKeyboardKey.keyV,
+                            control: true,
+                            shift: true,
+                          ): _SourcePastePlainTextIntent(),
                         },
-                        child: TextField(
-                          controller: _controller,
-                          focusNode: _sourceFocusNode,
-                          scrollController: _sourceScrollController,
-                          keyboardType: widget.wordWrap
-                              ? TextInputType.multiline
-                              : TextInputType.text,
-                          maxLines: null,
-                          expands: true,
-                          textAlignVertical: TextAlignVertical.top,
-                          style: _sourceTextStyle,
-                          strutStyle: sourceStrutStyle,
-                          selectionHeightStyle: BoxHeightStyle.max,
-                          selectionWidthStyle: BoxWidthStyle.tight,
-                          cursorColor: colors.foreground.withValues(
-                            alpha: BusyMarkAlpha.sourceCursor,
+                        child: Actions(
+                          actions: {
+                            _SourceInlineMarkdownIntent:
+                                CallbackAction<_SourceInlineMarkdownIntent>(
+                                  onInvoke: (intent) {
+                                    _applySourceInlineMarkdownCommand(
+                                      intent.command,
+                                    );
+                                    return null;
+                                  },
+                                ),
+                            _SourceBlockMarkdownIntent:
+                                CallbackAction<_SourceBlockMarkdownIntent>(
+                                  onInvoke: (intent) {
+                                    _applySourceBlockMarkdownCommand(
+                                      intent.command,
+                                    );
+                                    return null;
+                                  },
+                                ),
+                            _SourcePastePlainTextIntent:
+                                CallbackAction<_SourcePastePlainTextIntent>(
+                                  onInvoke: (intent) {
+                                    unawaited(_pastePlainTextIntoSource());
+                                    return null;
+                                  },
+                                ),
+                          },
+                          child: TextField(
+                            controller: _controller,
+                            undoController: _sourceUndoController,
+                            focusNode: _sourceFocusNode,
+                            scrollController: _sourceScrollController,
+                            keyboardType: widget.wordWrap
+                                ? TextInputType.multiline
+                                : TextInputType.text,
+                            maxLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            style: _sourceTextStyle,
+                            strutStyle: sourceStrutStyle,
+                            selectionHeightStyle: BoxHeightStyle.max,
+                            selectionWidthStyle: BoxWidthStyle.tight,
+                            cursorColor: colors.foreground.withValues(
+                              alpha: BusyMarkAlpha.sourceCursor,
+                            ),
+                            cursorHeight:
+                                widget.editorFontSize *
+                                BusyMarkTypography.sourceCursorHeightScale,
+                            cursorWidth: BusyMarkStroke.sourceCursor,
+                            decoration: InputDecoration(
+                              isCollapsed: true,
+                              filled: false,
+                              fillColor: BusyMarkLinuxPalette.transparent,
+                              hoverColor: BusyMarkLinuxPalette.transparent,
+                              focusColor: BusyMarkLinuxPalette.transparent,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: BusyMarkInsets.sourceEditor,
+                            ),
+                            onChanged: (value) => _handleSourceChanged(
+                              value,
+                              sourceFilePath: activeEditorPath,
+                            ),
                           ),
-                          cursorHeight:
-                              widget.editorFontSize *
-                              BusyMarkTypography.sourceCursorHeightScale,
-                          cursorWidth: BusyMarkStroke.sourceCursor,
-                          decoration: InputDecoration(
-                            isCollapsed: true,
-                            filled: false,
-                            fillColor: BusyMarkLinuxPalette.transparent,
-                            hoverColor: BusyMarkLinuxPalette.transparent,
-                            focusColor: BusyMarkLinuxPalette.transparent,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: BusyMarkInsets.sourceEditor,
-                          ),
-                          onChanged: _handleSourceChanged,
                         ),
                       ),
                     ),
@@ -3095,7 +3104,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     });
   }
 
-  void _handleSourceChanged(String value, {bool updatePreview = true}) {
+  void _handleSourceChanged(
+    String value, {
+    bool updatePreview = true,
+    String? sourceFilePath,
+  }) {
+    final activePath = _activeEditorPath();
+    if (sourceFilePath != null && sourceFilePath != activePath) {
+      return;
+    }
     if (_foldedRegionKeys.isNotEmpty) {
       setState(() {
         _foldedRegionKeys.clear();
@@ -3107,11 +3124,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     ref
         .read(workspaceControllerProvider.notifier)
-        .updateActiveText(value, updatePreview: updatePreview);
+        .updateActiveText(
+          value,
+          updatePreview: updatePreview,
+          sourceFilePath: sourceFilePath ?? activePath,
+        );
   }
 
-  void _handleWysiwygSourceChanged(String value) {
-    _handleSourceChanged(value, updatePreview: false);
+  void _handleWysiwygSourceChanged(String filePath, String value) {
+    _handleSourceChanged(value, updatePreview: false, sourceFilePath: filePath);
   }
 
   void _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand command) {
@@ -3270,6 +3291,32 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygDocument = null;
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
+  }
+
+  void _resetSourceUndoHistory() {
+    final previous = _sourceUndoController;
+    _sourceUndoController = UndoHistoryController();
+    previous.dispose();
+  }
+
+  void _replaceSourceController({
+    required String text,
+    required SourceSyntaxLanguage language,
+  }) {
+    final previous = _controller;
+    _controller =
+        BusyMarkSourceEditingController(text: text, language: language)
+          ..renderText = false
+          ..visualMarkdown = false;
+    _resetSourceUndoHistory();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      previous.dispose();
+    });
+  }
+
+  String? _activeEditorPath() {
+    final workspace = widget.state.workspace;
+    return workspace?.activeFilePath ?? workspace?.markdown?.filePath;
   }
 
   SourceSyntaxLanguage _sourceSyntaxLanguage(Workspace? workspace) {
@@ -5401,7 +5448,8 @@ Future<void> _openPreviewLink(
     return;
   }
   if (workspace.activeFilePath != file.absolutePath) {
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
       return;
     }
     await ref
@@ -5858,7 +5906,7 @@ class _DiagnosticRow extends ConsumerWidget {
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
         onTap: () async {
-          if (await confirmSafeToContinue(context, ref)) {
+          if (await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
             await ref
                 .read(workspaceControllerProvider.notifier)
                 .openActiveFile(diagnostic.filePath);

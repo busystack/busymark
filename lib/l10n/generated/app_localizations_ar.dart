@@ -12,7 +12,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'محرر مستندات متوافق مع Markdown وWriterside.';
+  String get appSubtitle => 'محرر وثائق متوافق مع Markdown وWriterside.';
 
   @override
   String get aboutBusyMark => 'حول BusyMark';
@@ -108,7 +108,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get open => 'فتح';
 
   @override
-  String get outline => 'المخطط';
+  String get outline => 'المخطط التفصيلي';
 
   @override
   String get overwrite => 'الكتابة فوق';
@@ -219,7 +219,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewMode => 'وضع العرض';
 
   @override
-  String get welcome => 'مرحباً';
+  String get welcome => 'مرحبًا';
 
   @override
   String get writerside => 'Writerside';
@@ -247,7 +247,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'مجلد Markdown أو مشروع متوافق مع Writerside';
 
   @override
-  String get noOpenFile => 'No open file';
+  String get noOpenFile => 'لا يوجد ملف مفتوح';
 
   @override
   String get shortcutGroupFile => 'ملف';
@@ -274,35 +274,37 @@ class AppLocalizationsAr extends AppLocalizations {
       'إظهار مرجع اختصارات لوحة المفاتيح';
 
   @override
-  String get shortcutNextTab => 'Next tab';
+  String get shortcutNextTab => 'علامة التبويب التالية';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription =>
+      'الانتقال إلى علامة تبويب المحرر التالية المفتوحة';
 
   @override
-  String get shortcutPreviousTab => 'Previous tab';
+  String get shortcutPreviousTab => 'علامة التبويب السابقة';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+      'الانتقال إلى علامة تبويب المحرر السابقة المفتوحة';
 
   @override
-  String get shortcutCloseTab => 'Close tab';
+  String get shortcutCloseTab => 'إغلاق علامة التبويب';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription => 'إغلاق علامة تبويب المحرر النشطة';
 
   @override
-  String get shortcutCloseAllTabs => 'Close all tabs';
+  String get shortcutCloseAllTabs => 'إغلاق كل علامات التبويب';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription =>
+      'إغلاق كل علامات تبويب المحرر المفتوحة';
 
   @override
   String get shortcutGroupTextEditing => 'تحرير النص';
 
   @override
-  String get shortcutSelectAllDescription => 'تحديد كل نص المحرر';
+  String get shortcutSelectAllDescription => 'تحديد النص كله في المحرر';
 
   @override
   String get shortcutCutDescription => 'قص النص المحدد';
@@ -323,56 +325,61 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutRedoDescription => 'إعادة آخر تعديل تم التراجع عنه';
 
   @override
-  String get clearEditorSelection => 'مسح تحديد المحرر';
+  String get clearEditorSelection => 'مسح تحديد النص في المحرر';
 
   @override
   String get shortcutClearEditorSelectionDescription =>
-      'إلغاء تحديد المحرر الحالي أو تركيز البحث';
+      'الخروج من تحديد المحرر الحالي أو تركيز البحث';
 
   @override
   String get shortcutGroupFormatting => 'التنسيق';
 
   @override
-  String get shortcutBoldDescription => 'تبديل الخط العريض للنص المحدد';
+  String get shortcutBoldDescription =>
+      'تطبيق/إزالة التنسيق العريض على النص المحدد';
 
   @override
-  String get shortcutItalicDescription => 'تبديل الخط المائل للنص المحدد';
+  String get shortcutItalicDescription =>
+      'تطبيق/إزالة التنسيق المائل على النص المحدد';
 
   @override
-  String get shortcutUnderlineDescription => 'تبديل التسطير للنص المحدد';
+  String get shortcutUnderlineDescription =>
+      'تطبيق/إزالة التسطير على النص المحدد';
 
   @override
   String get shortcutLinkDescription => 'إدراج رابط أو تحريره';
 
   @override
-  String get shortcutInlineCodeDescription => 'تبديل الكود المضمن للنص المحدد';
+  String get shortcutInlineCodeDescription =>
+      'تطبيق/إزالة الكود المضمن على النص المحدد';
 
   @override
-  String get shortcutStrikethroughDescription => 'تبديل الشطب للنص المحدد';
+  String get shortcutStrikethroughDescription =>
+      'تطبيق/إزالة الشطب على النص المحدد';
 
   @override
   String get shortcutGroupBlocks => 'الكتل';
 
   @override
-  String get shortcutParagraphDescription => 'تعيين الكتلة الحالية كفقرة';
+  String get shortcutParagraphDescription => 'تحويل الكتلة الحالية إلى فقرة';
 
   @override
-  String get shortcutHeading1Description => 'تعيين الكتلة الحالية كعنوان 1';
+  String get shortcutHeading1Description => 'تحويل الكتلة الحالية إلى عنوان 1';
 
   @override
-  String get shortcutHeading2Description => 'تعيين الكتلة الحالية كعنوان 2';
+  String get shortcutHeading2Description => 'تحويل الكتلة الحالية إلى عنوان 2';
 
   @override
-  String get shortcutHeading3Description => 'تعيين الكتلة الحالية كعنوان 3';
+  String get shortcutHeading3Description => 'تحويل الكتلة الحالية إلى عنوان 3';
 
   @override
-  String get shortcutHeading4Description => 'تعيين الكتلة الحالية كعنوان 4';
+  String get shortcutHeading4Description => 'تحويل الكتلة الحالية إلى عنوان 4';
 
   @override
-  String get shortcutHeading5Description => 'تعيين الكتلة الحالية كعنوان 5';
+  String get shortcutHeading5Description => 'تحويل الكتلة الحالية إلى عنوان 5';
 
   @override
-  String get shortcutHeading6Description => 'تعيين الكتلة الحالية كعنوان 6';
+  String get shortcutHeading6Description => 'تحويل الكتلة الحالية إلى عنوان 6';
 
   @override
   String get shortcutGroupLists => 'القوائم';
@@ -390,10 +397,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutBulletedListDescription => 'تبديل تنسيق القائمة النقطية';
 
   @override
-  String get checklist => 'قائمة مهام';
+  String get checklist => 'قائمة تحقق';
 
   @override
-  String get shortcutChecklistDescription => 'تبديل تنسيق قائمة المهام';
+  String get shortcutChecklistDescription => 'تطبيق/إزالة تنسيق قائمة التحقق';
 
   @override
   String get createMarkdownFile => 'إنشاء ملف Markdown';
@@ -416,7 +423,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get defaultInstanceName => 'دليل المستخدم';
 
   @override
-  String get defaultStartTopicTitle => 'البدء';
+  String get defaultStartTopicTitle => 'بدء الاستخدام';
 
   @override
   String get projectName => 'اسم المشروع';
@@ -443,20 +450,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get directoryNameRequired => 'اسم الدليل مطلوب.';
 
   @override
-  String get useSingleSafeDirectoryName => 'استخدم اسم دليل آمنًا واحدًا.';
+  String get useSingleSafeDirectoryName => 'استخدم اسم دليل واحدًا آمنًا.';
 
   @override
   String get useLowercaseIdentifier =>
-      'استخدم معرّفًا بأحرف صغيرة يحتوي فقط على أحرف أو أرقام أو شرطات سفلية أو واصلات.';
+      'استخدم معرّفًا بأحرف صغيرة يتكون من أحرف وأرقام وشرطات سفلية وواصلات.';
 
   @override
   String get startTopicTitleRequired => 'عنوان موضوع البداية مطلوب.';
 
   @override
-  String get createWritersideProjectFailed => 'لا يمكن إنشاء مشروع Writerside.';
+  String get createWritersideProjectFailed => 'تعذر إنشاء مشروع Writerside.';
 
   @override
   String get settingsTitle => 'إعدادات BusyMark';
+
+  @override
+  String get autoSave => 'الحفظ التلقائي';
+
+  @override
+  String get autoSaveDescription =>
+      'حفظ تغييرات الملف تلقائيًا بعد فترة قصيرة من عدم النشاط.';
 
   @override
   String get wordWrap => 'التفاف النص';
@@ -482,11 +496,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
-      'التأكيد قبل الإغلاق مع تغييرات غير محفوظة';
+      'التأكيد قبل الإغلاق عند وجود تغييرات غير محفوظة';
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'اسأل قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.';
+      'اطلب التأكيد قبل إغلاق BusyMark عندما تحتوي المستندات على تغييرات غير محفوظة.';
 
   @override
   String get closeUnsavedChangesTitle => 'تغييرات غير محفوظة';
@@ -501,7 +515,13 @@ class AppLocalizationsAr extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'تحتوي $count مستندات على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+          'توجد تغييرات غير محفوظة في $count مستند. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      many:
+          'توجد تغييرات غير محفوظة في $count مستندًا. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      few:
+          'توجد تغييرات غير محفوظة في $count مستندات. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
+      two:
+          'يحتوي مستندان على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
       one:
           'يحتوي مستند واحد على تغييرات غير محفوظة. هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
       zero: 'هل تريد حفظ التغييرات قبل إغلاق BusyMark؟',
@@ -530,14 +550,14 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get fileChangedOnDisk => 'تم تغيير الملف على القرص';
+  String get fileChangedOnDisk => 'تغيّر الملف على القرص';
 
   @override
   String get fileChangedOnDiskMessage =>
-      'تم تغيير هذا الملف على القرص منذ فتحه. هل تريد الكتابة فوقه؟';
+      'تغيّر هذا الملف على القرص منذ فتحه. هل تريد الكتابة فوقه؟';
 
   @override
-  String get untitledMarkdownFileName => 'بدون عنوان.md';
+  String get untitledMarkdownFileName => 'بلا عنوان.md';
 
   @override
   String get unorderedList => 'قائمة غير مرتبة';
@@ -549,13 +569,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get taskList => 'قائمة المهام';
 
   @override
-  String get toggleTaskChecked => 'تبديل حالة المهمة';
+  String get toggleTaskChecked => 'تبديل حالة إنجاز المهمة';
 
   @override
-  String get indentListItem => 'إضافة مسافة بادئة لعنصر القائمة';
+  String get indentListItem => 'زيادة إزاحة عنصر القائمة';
 
   @override
-  String get outdentListItem => 'إزالة المسافة البادئة لعنصر القائمة';
+  String get outdentListItem => 'تقليل إزاحة عنصر القائمة';
 
   @override
   String get blockquote => 'اقتباس كتلي';
@@ -606,22 +626,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paragraph => 'فقرة';
 
   @override
-  String get heading1 => 'العنوان 1';
+  String get heading1 => 'عنوان 1';
 
   @override
-  String get heading2 => 'العنوان 2';
+  String get heading2 => 'عنوان 2';
 
   @override
-  String get heading3 => 'العنوان 3';
+  String get heading3 => 'عنوان 3';
 
   @override
-  String get heading4 => 'العنوان 4';
+  String get heading4 => 'عنوان 4';
 
   @override
-  String get heading5 => 'العنوان 5';
+  String get heading5 => 'عنوان 5';
 
   @override
-  String get heading6 => 'العنوان 6';
+  String get heading6 => 'عنوان 6';
 
   @override
   String headingLevelAbbreviation(int level) {
@@ -651,10 +671,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get insertRowAbove => 'إدراج صف في الأعلى';
+  String get insertRowAbove => 'إدراج صف أعلى';
 
   @override
-  String get insertRowBelow => 'إدراج صف في الأسفل';
+  String get insertRowBelow => 'إدراج صف أسفل';
 
   @override
   String get deleteRow => 'حذف الصف';
@@ -675,16 +695,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get showEditingButtons => 'إظهار أزرار التحرير';
 
   @override
-  String get altText => 'نص بديل';
+  String get altText => 'النص البديل';
 
   @override
-  String get describeTheImage => 'وصف الصورة';
+  String get describeTheImage => 'صِف الصورة';
 
   @override
   String get columns => 'أعمدة';
 
   @override
-  String get rows => 'الصفوف';
+  String get rows => 'صفوف';
 
   @override
   String tableHeaderNumber(int columnNumber) {
@@ -713,7 +733,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get workspaceKindUnsavedMarkdown => 'ملف Markdown غير محفوظ';
 
   @override
-  String get workspaceKindSingleMarkdown => 'ملف Markdown واحد';
+  String get workspaceKindSingleMarkdown => 'ملف Markdown منفرد';
 
   @override
   String get workspaceKindMarkdownFolder => 'مجلد Markdown';
@@ -722,7 +742,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get workspaceKindWritersideModule => 'وحدة Writerside';
 
   @override
-  String get problems => 'مشاكل';
+  String get problems => 'المشكلات';
 
   @override
   String diagnosticCount(int count) {
@@ -758,6 +778,7 @@ class AppLocalizationsAr extends AppLocalizations {
       few: '$count ملفات',
       two: 'ملفان',
       one: 'ملف واحد',
+      zero: 'لا ملفات',
     );
     return '$kind - $_temp0';
   }
@@ -766,10 +787,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noFiles => 'لا توجد ملفات';
 
   @override
-  String get noWritersideToc => 'لا يوجد جدول محتويات Writerside';
+  String get noWritersideToc => 'لا يوجد جدول محتويات لـ Writerside';
 
   @override
-  String get tocSection => 'قسم جدول المحتويات';
+  String get tocSection => 'قسم في جدول المحتويات';
 
   @override
   String get newTopic => 'موضوع جديد';
@@ -793,7 +814,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fileNameRequired => 'اسم الملف مطلوب.';
 
   @override
-  String get useSingleSafeFileName => 'استخدم اسم ملف آمنًا واحدًا.';
+  String get useSingleSafeFileName => 'استخدم اسم ملف واحدًا آمنًا.';
 
   @override
   String useExpectedExtension(String extension) {
@@ -802,7 +823,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get useIdentifierCharacters =>
-      'استخدم أحرفًا أو أرقامًا أو شرطات سفلية أو واصلات قبل الامتداد.';
+      'استخدم الأحرف والأرقام والشرطات السفلية والواصلات قبل الامتداد.';
 
   @override
   String get topicIdAlreadyExists => 'معرّف الموضوع موجود بالفعل.';
@@ -811,7 +832,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get createWritersideTopicFailed => 'تعذر إنشاء موضوع Writerside.';
 
   @override
-  String get noOutline => 'لا يوجد مخطط';
+  String get noOutline => 'لا يوجد مخطط تفصيلي';
 
   @override
   String expandKind(String kind) {
@@ -839,7 +860,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noPreview => 'لا توجد معاينة';
 
   @override
-  String get note => 'ملحوظة';
+  String get note => 'ملاحظة';
 
   @override
   String get tip => 'نصيحة';
@@ -863,16 +884,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get topic => 'موضوع';
 
   @override
-  String get chapter => 'الفصل';
+  String get chapter => 'فصل';
 
   @override
   String couldNotOpenTarget(String target) {
-    return 'لا يمكن فتح $target';
+    return 'تعذر فتح $target';
   }
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'لم يتم العثور على هدف الارتباط: $targetPath';
+    return 'لم يتم العثور على هدف الرابط: $targetPath';
   }
 
   @override
@@ -881,11 +902,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String anchorNotFound(String anchor) {
-    return 'لم يتم العثور على المرساة: $anchor';
+    return 'لم يتم العثور على المُرسى: $anchor';
   }
 
   @override
-  String get noProblemsFound => 'لم يتم العثور على مشاكل';
+  String get noProblemsFound => 'لم يتم العثور على أي مشكلات';
 
   @override
   String get noResults => 'لا توجد نتائج';
@@ -939,7 +960,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceErrorCouldNotOpenFile(String error) {
-    return 'لا يمكن فتح الملف: $error';
+    return 'تعذر فتح الملف: $error';
   }
 
   @override
@@ -948,7 +969,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
-      'تم حظر الحفظ: تم تغيير الملف على القرص.';
+      'تم حظر الحفظ: تغيّر الملف على القرص.';
 
   @override
   String workspaceErrorSaveFailed(String error) {
@@ -977,15 +998,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'الملف الذي تم إنشاؤه موجود بالفعل: $path';
+    return 'الملف المُنشأ موجود بالفعل: $path';
   }
 
   @override
-  String get errorParentDirectoryRequired => 'الدليل الأصلي مطلوب.';
+  String get errorParentDirectoryRequired => 'الدليل الأصل مطلوب.';
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'الدليل الأصلي غير موجود: $path';
+    return 'الدليل الأصل غير موجود: $path';
   }
 
   @override
@@ -996,7 +1017,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'يجب أن يكون اسم الدليل عبارة عن مقطع مسار آمن واحد.';
+      'يجب أن يكون اسم الدليل مقطع مسار واحدًا آمنًا.';
 
   @override
   String get errorInstanceIdInvalid =>
@@ -1020,7 +1041,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'لا تحتوي وحدة Writerside على شجرة مثيل مساعدة.';
+      'لا تحتوي وحدة Writerside على شجرة مثيل للمساعدة.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
@@ -1029,7 +1050,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'معرّف الموضوع \"$topicId\" موجود بالفعل في وحدة التعليمات هذه.';
+    return 'معرّف الموضوع \"$topicId\" موجود بالفعل في وحدة المساعدة هذه.';
   }
 
   @override
@@ -1048,7 +1069,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'يجب أن يكون اسم ملف الموضوع عبارة عن مقطع مسار آمن واحد.';
+      'يجب أن يكون اسم ملف الموضوع مقطع مسار واحدًا آمنًا.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -1066,7 +1087,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceFileStatFailed(String error) {
-    return 'لا يمكن قراءة بيانات تعريف الملف: $error';
+    return 'تعذرت قراءة بيانات تعريف الملف: $error';
   }
 
   @override
@@ -1075,21 +1096,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
-    return 'لا يمكن فحص إدخال مساحة العمل: $error';
+    return 'تعذر فحص عنصر مساحة العمل: $error';
   }
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'الملف أكبر من حد التحليل التلقائي للإصدار التجريبي.';
+      'يتجاوز الملف حد التحليل التلقائي في الإصدار التجريبي.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
-    return 'لا يمكن قراءة ملف Markdown: $error';
+    return 'تعذرت قراءة ملف Markdown: $error';
   }
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'كتلة سمات عنوان Writerside غير صالحة.';
+      'كتلة سمات عنوان Writerside غير سليمة.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -1102,11 +1123,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'موضوع Writerside Markdown لا يحتوي على عنوان H1 أو عنوان في الترويسة.';
+      'لا يحتوي موضوع Writerside Markdown على عنوان H1 أو عنوان في البيانات التمهيدية.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
-      'موضوع XML لا يحتوي على عنوان.';
+      'موضوع XML يفتقد عنوانًا.';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
@@ -1115,7 +1136,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'الترويسة الأمامية غير مغلقة.';
+      'البيانات التمهيدية غير مغلقة.';
 
   @override
   String get diagnosticMarkdownRawHtmlUnsafe => 'عنصر HTML غير آمن.';
@@ -1142,7 +1163,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'ملف XML غير صالح: $message';
+    return 'XML غير صالح: $message';
   }
 
   @override
@@ -1151,20 +1172,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'إعلان المقتطفات يفتقد src.';
+      'إعلان snippets يفتقد السمة src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'إعلان مجموعات المثيلات يفتقد src.';
+      'إعلان instance-groups يفتقد السمة src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'وضع خرائط مفاتيح غير مدعوم: $mode';
+    return 'وضع keymaps غير مدعوم: $mode';
   }
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'إعلان المثيل يفتقد src.';
+      'إعلان instance يفتقد السمة src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
@@ -1172,23 +1193,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      'يجب أن يكون جذر الشجرة هو <instance-profile>.';
+      'يجب أن يكون جذر ملف .tree هو <instance-profile>.';
 
   @override
-  String get diagnosticWritersideTreeMissingId => 'ملف تعريف المثيل يفتقد id.';
+  String get diagnosticWritersideTreeMissingId =>
+      'ملف تعريف المثيل يفتقد السمة id.';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'لا يتطابق اسم ملف الشجرة مع معرّف المثيل \"$id\".';
+    return 'لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"$id\".';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'المثيل غير المخصص للمكتبة يفتقد صفحة البداية.';
+      'المثيل غير المخصص للمكتبة يفتقد start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'صفحة البداية \"$startPage\" غير موجودة.';
+    return 'صفحة البدء \"$startPage\" غير موجودة.';
   }
 
   @override
@@ -1206,7 +1228,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideCategoryMissingId => 'الفئة تفتقد id.';
+  String get diagnosticWritersideCategoryMissingId => 'الفئة تفتقد السمة id.';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
@@ -1220,7 +1242,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicInvalidRoot =>
-      'يجب أن يكون جذر الموضوع هو <topic>.';
+      'يجب أن يكون جذر ملف .topic هو <topic>.';
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
@@ -1237,7 +1259,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideTopicAnchorMissingHref => '<a> يفتقد href.';
+  String get diagnosticWritersideTopicAnchorMissingHref =>
+      '<a> يفتقد السمة href.';
 
   @override
   String get diagnosticWritersideConfigMissing =>
@@ -1247,48 +1270,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'دليل تكوين البناء الذي تم تكوينه مفقود: $relativePath';
+    return 'دليل تكوين البناء المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'دليل مواصفات API الذي تم تكوينه مفقود: $relativePath';
+    return 'دليل مواصفات API المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'دليل المقتطفات الذي تم تكوينه مفقود: $relativePath';
+    return 'دليل المقتطفات المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'ملف المتغيرات المكوّن مفقود: $relativePath';
+    return 'ملف المتغيرات المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'ملف الفئات المكوّن مفقود: $relativePath';
+    return 'ملف الفئات المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'ملف مجموعات المثيلات المكوّن مفقود: $relativePath';
+    return 'ملف مجموعات المثيلات المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'شجرة المثيلات المسجلة \"$source\" غير موجودة.';
+    return 'شجرة المثيل المسجلة \"$source\" غير موجودة.';
   }
 
   @override
   String diagnosticWritersideTopicReadFailed(String error) {
-    return 'لا يمكن قراءة ملف الموضوع: $error';
+    return 'تعذرت قراءة ملف الموضوع: $error';
   }
 
   @override
@@ -1300,12 +1323,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'دليل المواضيع الذي تم تكوينه مفقود: $relativePath';
+    return 'دليل المواضيع المحدد مفقود: $relativePath';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'دليل الصور الذي تم تكوينه مفقود: $relativePath';
+    return 'دليل الصور المحدد مفقود: $relativePath';
   }
 
   @override
@@ -1315,7 +1338,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'يشير جدول المحتويات إلى الموضوع المفقود \"$topic\".';
+    return 'يشير جدول المحتويات إلى موضوع مفقود \"$topic\".';
   }
 
   @override
@@ -1342,7 +1365,8 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideIncludeMissingFrom => '<include> يفتقد from.';
+  String get diagnosticWritersideIncludeMissingFrom =>
+      '<include> يفتقد السمة from.';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -1359,7 +1383,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'فئة \"انظر أيضًا\" \"$ref\" غير معلنة.';
+    return 'فئة seealso \"$ref\" غير معلنة.';
   }
 
   @override

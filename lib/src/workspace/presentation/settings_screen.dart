@@ -96,6 +96,13 @@ class SettingsScreen extends ConsumerWidget {
               filled: true,
               children: [
                 BusyMarkSwitchRow(
+                  title: context.l10n.autoSave,
+                  subtitle: context.l10n.autoSaveDescription,
+                  value: settings.autoSave,
+                  onChanged: controller.setAutoSave,
+                  leading: const Icon(BusyMarkGlyphs.save),
+                ),
+                BusyMarkSwitchRow(
                   title: context.l10n.wordWrap,
                   value: settings.wordWrap,
                   onChanged: controller.setWordWrap,
@@ -167,7 +174,6 @@ class SettingsScreen extends ConsumerWidget {
         await headerBar.setBackVisible(true);
         await headerBar.setDocumentControlsVisible(false);
         await headerBar.setCanRefresh(false);
-        await headerBar.setCanSave(false);
         await headerBar.setSearchActive(false);
       }());
     });

@@ -249,7 +249,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Pasta Markdown ou projeto compatível com Writerside';
 
   @override
-  String get noOpenFile => 'No open file';
+  String get noOpenFile => 'Nenhum arquivo aberto';
 
   @override
   String get shortcutGroupFile => 'Arquivo';
@@ -276,29 +276,31 @@ class AppLocalizationsPt extends AppLocalizations {
       'Mostrar esta referência de atalhos de teclado';
 
   @override
-  String get shortcutNextTab => 'Next tab';
+  String get shortcutNextTab => 'Próxima guia';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription =>
+      'Ir para a próxima guia aberta do editor';
 
   @override
-  String get shortcutPreviousTab => 'Previous tab';
+  String get shortcutPreviousTab => 'Guia anterior';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+      'Ir para a guia anterior aberta do editor';
 
   @override
-  String get shortcutCloseTab => 'Close tab';
+  String get shortcutCloseTab => 'Fechar guia';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription => 'Fechar a guia ativa do editor';
 
   @override
-  String get shortcutCloseAllTabs => 'Close all tabs';
+  String get shortcutCloseAllTabs => 'Fechar todas as guias';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription =>
+      'Fechar todas as guias abertas do editor';
 
   @override
   String get shortcutGroupTextEditing => 'Edição de texto';
@@ -308,7 +310,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Selecionar todo o texto do editor';
 
   @override
-  String get shortcutCutDescription => 'Cortar o texto selecionado';
+  String get shortcutCutDescription => 'Recortar o texto selecionado';
 
   @override
   String get shortcutCopyDescription => 'Copiar o texto selecionado';
@@ -452,7 +454,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get startTopicTitle => 'Título do tópico inicial';
 
   @override
-  String get location => 'Localização';
+  String get location => 'Local';
 
   @override
   String get projectNameRequired => 'O nome do projeto é obrigatório.';
@@ -466,7 +468,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get useLowercaseIdentifier =>
-      'Use um identificador minúsculo com letras, números, sublinhados ou hifens.';
+      'Use um identificador em minúsculas com letras, números, sublinhados ou hifens.';
 
   @override
   String get startTopicTitleRequired =>
@@ -478,6 +480,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsTitle => 'Configurações do BusyMark';
+
+  @override
+  String get autoSave => 'Salvamento automático';
+
+  @override
+  String get autoSaveDescription =>
+      'Salva automaticamente as alterações do arquivo após um curto período de inatividade.';
 
   @override
   String get wordWrap => 'Quebra de linha';
@@ -496,7 +505,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get editingButtonsDescription =>
-      'Escolha onde os botões flutuantes de edição WYSIWYG aparecerão.';
+      'Escolha onde os botões flutuantes de edição WYSIWYG aparecem.';
 
   @override
   String get settingsWindowSectionTitle => 'Janela';
@@ -925,7 +934,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get documentKindWritersideXmlTopic => 'Tópico XML do Writerside';
 
   @override
-  String get documentKindWritersideTree => 'Árvore Writerside';
+  String get documentKindWritersideTree => 'Árvore do Writerside';
 
   @override
   String get documentKindConfigurationFile => 'Arquivo de configuração';
@@ -1037,11 +1046,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get errorWritersideInstanceTreeMissing =>
-      'O módulo Writerside não possui árvore de instâncias de ajuda.';
+      'O módulo Writerside não tem uma árvore de instância de ajuda.';
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'O arquivo de árvore Writerside não existe: $path';
+    return 'O arquivo de árvore do Writerside não existe: $path';
   }
 
   @override
@@ -1088,7 +1097,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceScanSkipped =>
-      'Grande espaço de trabalho detectado. Alguns arquivos foram ignorados para manter o aplicativo responsivo.';
+      'Espaço de trabalho grande detectado. Alguns arquivos foram ignorados para manter o aplicativo responsivo.';
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
@@ -1097,7 +1106,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'O arquivo é maior que o limite de análise automática beta.';
+      'O arquivo excede o limite beta de análise automática.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1106,7 +1115,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'Bloco de atributos de título do Writerside malformado.';
+      'O bloco de atributos de título do Writerside está malformado.';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -1115,11 +1124,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'Títulos H1 adicionais de nível superior são tratados como capítulos.';
+      'Títulos H1 adicionais no nível superior são tratados como capítulos.';
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'O tópico Writerside Markdown não tem H1 ou título inicial.';
+      'O tópico Markdown do Writerside não tem H1 nem título no front matter.';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
@@ -1164,7 +1173,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigInvalidRoot =>
-      'A raiz de writerside.cfg deve ser <ihp>.';
+      'A raiz do arquivo writerside.cfg deve ser <ihp>.';
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
@@ -1176,7 +1185,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'Modo de mapas de teclado não compatível: $mode';
+    return 'Modo de keymaps não suportado: $mode';
   }
 
   @override
@@ -1189,7 +1198,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      'A raiz .tree deve ser <instance-profile>.';
+      'A raiz do arquivo .tree deve ser <instance-profile>.';
 
   @override
   String get diagnosticWritersideTreeMissingId =>
@@ -1197,12 +1206,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'O nome-base do arquivo de árvore não corresponde ao ID da instância \"$id\".';
+    return 'O nome-base do arquivo .tree não corresponde ao ID da instância \"$id\".';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'A instância que não é de biblioteca não tem página inicial.';
+      'A instância que não é de biblioteca não tem start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -1234,12 +1243,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'A ordem das categorias \"$order\" é declarada mais de uma vez.';
+    return 'A ordem da categoria \"$order\" foi declarada mais de uma vez.';
   }
 
   @override
   String get diagnosticWritersideTopicInvalidRoot =>
-      'A raiz .topic deve ser <topic>.';
+      'A raiz do arquivo .topic deve ser <topic>.';
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
@@ -1260,7 +1269,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissing =>
-      'O modo Writerside requer writerside.cfg.';
+      'O modo Writerside requer o arquivo writerside.cfg.';
 
   @override
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
@@ -1349,7 +1358,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'O link de tópico \"$destination\" não foi resolvido.';
+    return 'O link para o tópico \"$destination\" não pode ser resolvido.';
   }
 
   @override
@@ -1374,12 +1383,12 @@ class AppLocalizationsPt extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'O elemento de inclusão \"$elementId\" não existe em \"$from\".';
+    return 'O elemento incluído \"$elementId\" não existe em \"$from\".';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'A categoria \"$ref\" de Veja também não foi declarada.';
+    return 'A categoria seealso \"$ref\" não foi declarada.';
   }
 
   @override

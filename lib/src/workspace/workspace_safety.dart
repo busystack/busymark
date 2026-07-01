@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../app/app_settings.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
 import '../app/localization.dart';
@@ -65,6 +66,22 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
     return saveActiveWithOverwriteConfirmation(context, ref);
   }
   return false;
+}
+
+Future<bool> saveOrConfirmSafeToChangeActiveFile(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final state = ref.read(workspaceControllerProvider);
+  if (!state.hasUnsavedChanges) {
+    return true;
+  }
+  if (!ref.read(appSettingsControllerProvider).autoSave) {
+    return confirmSafeToContinue(context, ref);
+  }
+  return ref
+      .read(workspaceControllerProvider.notifier)
+      .autoSaveActiveIfNeeded();
 }
 
 Future<bool> saveActiveWithOverwriteConfirmation(
