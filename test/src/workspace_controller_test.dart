@@ -328,7 +328,7 @@ void main() {
     await controller.openActiveFile(otherFile.absolutePath);
     await controller.openActiveFile(linksFile.absolutePath);
 
-    controller.closeAllOpenFileTabs();
+    await controller.closeAllOpenFileTabs();
 
     expect(controller.state.workspace?.activeFilePath, isNull);
     expect(controller.state.workspace?.activeFileModifiedAt, isNull);
@@ -507,17 +507,17 @@ class _WorkspaceControllerDriver {
   Future<bool> createWritersideTopic(WritersideTopicCreateRequest request) =>
       _notifier.createWritersideTopic(request);
 
-  Future<void> openActiveFile(String path) => _notifier.openActiveFile(path);
+  Future<bool> openActiveFile(String path) => _notifier.openActiveFile(path);
 
-  Future<void> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
+  Future<bool> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
 
-  Future<void> activatePreviousOpenFileTab() =>
+  Future<bool> activatePreviousOpenFileTab() =>
       _notifier.activatePreviousOpenFileTab();
 
-  Future<void> closeOpenFileTab(String path) =>
+  Future<bool> closeOpenFileTab(String path) =>
       _notifier.closeOpenFileTab(path);
 
-  void closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
+  Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 
   void updateActiveText(String text, {bool updatePreview = true}) {
     _notifier.updateActiveText(text, updatePreview: updatePreview);

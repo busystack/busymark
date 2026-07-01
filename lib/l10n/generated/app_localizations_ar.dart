@@ -459,6 +459,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsTitle => 'إعدادات BusyMark';
 
   @override
+  String get autoSave => 'حفظ تلقائي';
+
+  @override
+  String get autoSaveDescription =>
+      'احفظ تغييرات الملفات تلقائيًا أثناء التحرير.';
+
+  @override
   String get wordWrap => 'التفاف النص';
 
   @override

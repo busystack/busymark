@@ -475,6 +475,13 @@ class AppLocalizationsNo extends AppLocalizations {
   String get settingsTitle => 'Innstillinger for BusyMark';
 
   @override
+  String get autoSave => 'Automatisk lagring';
+
+  @override
+  String get autoSaveDescription =>
+      'Lagre filendringer automatisk mens du redigerer.';
+
+  @override
   String get wordWrap => 'Tekstbryting';
 
   @override

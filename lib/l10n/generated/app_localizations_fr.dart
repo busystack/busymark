@@ -483,6 +483,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsTitle => 'Paramètres de BusyMark';
 
   @override
+  String get autoSave => 'Enregistrement automatique';
+
+  @override
+  String get autoSaveDescription =>
+      'Enregistrer automatiquement les modifications pendant l’édition.';
+
+  @override
   String get wordWrap => 'Retour à la ligne';
 
   @override

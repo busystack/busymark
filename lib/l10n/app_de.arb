@@ -552,6 +552,10 @@
   "@settingsTitle": {
     "description": "Settings screen title."
   },
+  "autoSave": "Automatisch speichern",
+  "@autoSave": {"description": "Editor setting label for saving files automatically."},
+  "autoSaveDescription": "Dateiänderungen beim Bearbeiten automatisch speichern.",
+  "@autoSaveDescription": {"description": "Editor setting description for saving files automatically."},
   "wordWrap": "Zeilenumbruch",
   "@wordWrap": {
     "description": "Word wrap setting label."

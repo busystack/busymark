@@ -479,6 +479,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsTitle => 'Настройки BusyMark';
 
   @override
+  String get autoSave => 'Автосохранение';
+
+  @override
+  String get autoSaveDescription =>
+      'Автоматически сохранять изменения файлов во время редактирования.';
+
+  @override
   String get wordWrap => 'Перенос строк';
 
   @override

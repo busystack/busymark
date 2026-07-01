@@ -326,7 +326,8 @@ class BusyMarkApp extends ConsumerWidget {
     if (workspace == null || workspace.openFilePaths.length < 2) {
       return;
     }
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
       return;
     }
     final controller = ref.read(workspaceControllerProvider.notifier);
@@ -347,7 +348,8 @@ class BusyMarkApp extends ConsumerWidget {
         workspace.openFilePaths.isEmpty) {
       return;
     }
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
       return;
     }
     await ref
@@ -363,10 +365,11 @@ class BusyMarkApp extends ConsumerWidget {
     if (workspace == null || workspace.openFilePaths.isEmpty) {
       return;
     }
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
       return;
     }
-    ref.read(workspaceControllerProvider.notifier).closeAllOpenFileTabs();
+    await ref.read(workspaceControllerProvider.notifier).closeAllOpenFileTabs();
   }
 
   Future<String?> _chooseWorkspaceFolder(WidgetRef ref) async {

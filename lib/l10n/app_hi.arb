@@ -552,6 +552,10 @@
   "@settingsTitle": {
     "description": "Settings screen title."
   },
+  "autoSave": "स्वतः सहेजें",
+  "@autoSave": {"description": "Editor setting label for saving files automatically."},
+  "autoSaveDescription": "संपादन करते समय फ़ाइल बदलावों को स्वतः सहेजें।",
+  "@autoSaveDescription": {"description": "Editor setting description for saving files automatically."},
   "wordWrap": "वर्ड रैप",
   "@wordWrap": {
     "description": "Word wrap setting label."

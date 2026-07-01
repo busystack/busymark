@@ -477,6 +477,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsTitle => 'BusyMark सेटिंग्स';
 
   @override
+  String get autoSave => 'स्वतः सहेजें';
+
+  @override
+  String get autoSaveDescription =>
+      'संपादन करते समय फ़ाइल बदलावों को स्वतः सहेजें।';
+
+  @override
   String get wordWrap => 'वर्ड रैप';
 
   @override

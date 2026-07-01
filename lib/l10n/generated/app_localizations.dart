@@ -1002,6 +1002,18 @@ abstract class AppLocalizations {
   /// **'BusyMark Settings'**
   String get settingsTitle;
 
+  /// Editor setting label for saving files automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Save'**
+  String get autoSave;
+
+  /// Editor setting description for saving files automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Save file changes automatically while editing.'**
+  String get autoSaveDescription;
+
   /// Word wrap setting label.
   ///
   /// In en, this message translates to:

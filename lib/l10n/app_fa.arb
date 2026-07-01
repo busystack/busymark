@@ -552,6 +552,10 @@
   "@settingsTitle": {
     "description": "Settings screen title."
   },
+  "autoSave": "ذخیرهٔ خودکار",
+  "@autoSave": {"description": "Editor setting label for saving files automatically."},
+  "autoSaveDescription": "تغییرات فایل را هنگام ویرایش به‌طور خودکار ذخیره کنید.",
+  "@autoSaveDescription": {"description": "Editor setting description for saving files automatically."},
   "wordWrap": "شکستن خودکار خطوط",
   "@wordWrap": {
     "description": "Word wrap setting label."

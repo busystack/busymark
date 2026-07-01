@@ -111,6 +111,8 @@ void main() {
     expect(find.text(l10n.settingsTitle), findsOneWidget);
     expect(find.text(l10n.appLanguage), findsOneWidget);
     expect(find.text(l10n.systemLanguage), findsWidgets);
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    expect(find.text(l10n.autoSaveDescription), findsOneWidget);
     expect(find.text(l10n.validateOnEdit), findsOneWidget);
     expect(find.byType(DropdownButton<String>), findsNothing);
     expect(find.text(l10n.settingsWindowSectionTitle), findsOneWidget);
@@ -131,6 +133,11 @@ void main() {
     expect(find.text('हिन्दी'), findsOneWidget);
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.autoSave));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['autoSave'], isFalse);
 
     await tester.ensureVisible(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
@@ -457,7 +464,7 @@ void main() {
     expect(find.text(l10n.aboutLicenseLabel), findsOneWidget);
     expect(find.text(l10n.aboutLicenseName), findsOneWidget);
     expect(find.text(l10n.aboutWebsite), findsOneWidget);
-    expect(find.text('https://github.com/busystack/busymark'), findsOneWidget);
+    expect(find.text('https://busystack.org'), findsOneWidget);
     expect(find.text(l10n.aboutReportIssue), findsOneWidget);
     expect(
       find.text('https://github.com/busystack/busymark/issues'),
@@ -612,8 +619,15 @@ void main() {
       third.path,
     );
 
+    controller.updateActiveText('# Edited third\n');
+    await tester.pump();
+
     await pressControlShortcut(LogicalKeyboardKey.tab);
 
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(service.saveCount, 1);
+    expect(service.savedPath, third.path);
+    expect(service.savedText, '# Edited third\n');
     expect(
       container.read(workspaceControllerProvider).workspace?.activeFilePath,
       first.path,
@@ -648,6 +662,39 @@ void main() {
       isEmpty,
     );
     expect(find.text(l10n.noOpenFile), findsWidgets);
+  });
+
+  testWidgets('window close still warns when active changes are unsaved', (
+    tester,
+  ) async {
+    final nativeWindow = _FakeNativeWindowController();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(nativeWindow.listeners, hasLength(1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    nativeWindow.listeners.single.onWindowClose();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(l10n.closeUnsavedChangesTitle), findsOneWidget);
+    expect(nativeWindow.closeCount, 0);
   });
 
   testWidgets('startup path opens a Markdown file workspace', (tester) async {
@@ -1571,10 +1618,13 @@ class _StartupWorkspaceService extends WorkspaceService {
 }
 
 class _TabbedWorkspaceService extends WorkspaceService {
-  const _TabbedWorkspaceService({required this.rootPath, required this.paths});
+  _TabbedWorkspaceService({required this.rootPath, required this.paths});
 
   final String rootPath;
   final List<String> paths;
+  String? savedPath;
+  String? savedText;
+  var saveCount = 0;
 
   @override
   Future<Workspace> openPath(String path) async {
@@ -1617,6 +1667,26 @@ class _TabbedWorkspaceService extends WorkspaceService {
   @override
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
     return workspace.copyWith(diagnostics: const []);
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    return false;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    saveCount++;
+    savedPath = path;
+    savedText = text;
+    return WorkspaceFileSnapshot(
+      modifiedAt: DateTime(2026, 1, 2),
+      size: text.length,
+      contentHash: text,
+    );
   }
 
   String _sourceFor(String path) => '# ${path.split('/').last}\n';

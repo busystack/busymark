@@ -479,6 +479,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsTitle => 'Налаштування BusyMark';
 
   @override
+  String get autoSave => 'Автозбереження';
+
+  @override
+  String get autoSaveDescription =>
+      'Автоматично зберігати зміни файлів під час редагування.';
+
+  @override
   String get wordWrap => 'Перенесення слів';
 
   @override

@@ -63,6 +63,7 @@ class AppSettings {
     required this.editorFontSize,
     required this.wordWrap,
     required this.editorToolbarPlacement,
+    required this.autoSave,
     required this.validateOnEdit,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
@@ -79,6 +80,7 @@ class AppSettings {
       editorFontSize: 14,
       wordWrap: true,
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,
+      autoSave: true,
       validateOnEdit: true,
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
@@ -116,6 +118,7 @@ class AppSettings {
         json['editorToolbarPlacement'],
         defaults.editorToolbarPlacement,
       ),
+      autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
       confirmCloseWithUnsavedChanges:
@@ -141,6 +144,7 @@ class AppSettings {
   final double editorFontSize;
   final bool wordWrap;
   final EditorToolbarPlacement editorToolbarPlacement;
+  final bool autoSave;
   final bool validateOnEdit;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
@@ -159,6 +163,7 @@ class AppSettings {
     'editorFontSize': editorFontSize,
     'wordWrap': wordWrap,
     'editorToolbarPlacement': editorToolbarPlacement.name,
+    'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
@@ -174,6 +179,7 @@ class AppSettings {
     double? editorFontSize,
     bool? wordWrap,
     EditorToolbarPlacement? editorToolbarPlacement,
+    bool? autoSave,
     bool? validateOnEdit,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
@@ -191,6 +197,7 @@ class AppSettings {
       wordWrap: wordWrap ?? this.wordWrap,
       editorToolbarPlacement:
           editorToolbarPlacement ?? this.editorToolbarPlacement,
+      autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
@@ -262,6 +269,10 @@ class AppSettingsController extends Notifier<AppSettings> {
 
   Future<void> setEditorToolbarPlacement(EditorToolbarPlacement placement) {
     return _save(state.copyWith(editorToolbarPlacement: placement));
+  }
+
+  Future<void> setAutoSave(bool enabled) {
+    return _save(state.copyWith(autoSave: enabled));
   }
 
   Future<void> setPreviewVisible(bool enabled) {

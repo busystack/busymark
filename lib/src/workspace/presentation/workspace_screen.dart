@@ -372,15 +372,6 @@ class WorkspaceScreen extends ConsumerWidget {
                     actions: [
                       const SizedBox(width: BusyMarkSpacing.sm),
                       BusyMarkHeaderIconButton(
-                        tooltip: context.l10n.save,
-                        icon: BusyMarkGlyphs.check,
-                        accented: state.isDirty,
-                        shortcut: 'Ctrl+S',
-                        onPressed: () => unawaited(
-                          saveActiveWithOverwriteConfirmation(context, ref),
-                        ),
-                      ),
-                      BusyMarkHeaderIconButton(
                         tooltip: context.l10n.validate,
                         icon: BusyMarkGlyphs.diagnostics,
                         onPressed: () => unawaited(
@@ -557,7 +548,6 @@ class WorkspaceScreen extends ConsumerWidget {
           _headerBarViewMode(settings.documentViewMode),
         );
         await headerBar.setCanRefresh(true);
-        await headerBar.setCanSave(state.isDirty);
         await headerBar.setSearchActive(searchState.active);
       }());
     });
@@ -584,7 +574,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.refresh:
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
-        unawaited(saveActiveWithOverwriteConfirmation(context, ref));
+        break;
       case HeaderBarAction.settings:
         context.go('/settings');
       case HeaderBarAction.keyboardShortcuts:
@@ -666,7 +656,8 @@ class WorkspaceScreen extends ConsumerWidget {
     }
     final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
     if (activePath != result.filePath) {
-      if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+          !context.mounted) {
         return;
       }
       await ref
@@ -1240,7 +1231,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                 }
               : openable
               ? () async {
-                  if (await confirmSafeToContinue(context, ref)) {
+                  if (await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(file.absolutePath);
@@ -1647,7 +1638,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           onToggle: hasChildren ? toggle : null,
           onTap: topic != null
               ? () async {
-                  if (await confirmSafeToContinue(context, ref)) {
+                  if (await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(topic);
@@ -2437,7 +2428,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 if (active) {
                   return;
                 }
-                if (!await confirmSafeToContinue(context, ref) ||
+                if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
                     !context.mounted) {
                   return;
                 }
@@ -2447,7 +2438,7 @@ class _EditorTabStrip extends ConsumerWidget {
               },
               onClose: () async {
                 if (active &&
-                    (!await confirmSafeToContinue(context, ref) ||
+                    (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
                         !context.mounted)) {
                   return;
                 }
@@ -5401,7 +5392,8 @@ Future<void> _openPreviewLink(
     return;
   }
   if (workspace.activeFilePath != file.absolutePath) {
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+        !context.mounted) {
       return;
     }
     await ref
@@ -5858,7 +5850,7 @@ class _DiagnosticRow extends ConsumerWidget {
       child: InkWell(
         hoverColor: busyMarkRowHoverColor(context),
         onTap: () async {
-          if (await confirmSafeToContinue(context, ref)) {
+          if (await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
             await ref
                 .read(workspaceControllerProvider.notifier)
                 .openActiveFile(diagnostic.filePath);

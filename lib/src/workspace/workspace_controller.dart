@@ -42,15 +42,30 @@ class WorkspaceSearchRequestController extends Notifier<int> {
 }
 
 class WorkspaceController extends Notifier<WorkspaceState> {
+  static const _autoSaveDelay = Duration(milliseconds: 900);
+
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
   Timer? _parseDebounce;
+  Timer? _autoSaveDebounce;
 
   @override
   WorkspaceState build() {
     _service = ref.read(workspaceServiceProvider);
     _settingsController = ref.read(appSettingsControllerProvider.notifier);
-    ref.onDispose(() => _parseDebounce?.cancel());
+    ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
+      if (!next.autoSave) {
+        _autoSaveDebounce?.cancel();
+        return;
+      }
+      if (state.isDirty) {
+        _scheduleAutoSave();
+      }
+    });
+    ref.onDispose(() {
+      _parseDebounce?.cancel();
+      _autoSaveDebounce?.cancel();
+    });
     return const WorkspaceState();
   }
 
@@ -63,6 +78,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> createMarkdownFile() async {
     _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
     final workspace = _service.createUntitledMarkdown();
     state = WorkspaceState(
       workspace: workspace,
@@ -74,6 +90,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> openPath(String path) async {
     _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
     state = const WorkspaceState(isLoading: true);
     try {
       final workspace = await _service.openPath(path);
@@ -116,6 +133,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     WritersideProjectCreateRequest request,
   ) async {
     _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
     state = const WorkspaceState(isLoading: true);
     try {
       final workspace = await _service.createWritersideProject(request);
@@ -163,6 +181,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
     state = state.copyWith(isLoading: true, clearMessage: true);
     try {
       final nextWorkspace = await _service.createWritersideTopic(
@@ -212,68 +231,79 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> openFolder(String path) => openPath(path);
 
-  Future<void> openActiveFile(String path) async {
-    await _openActiveFile(path);
+  Future<bool> openActiveFile(String path) async {
+    final workspace = state.workspace;
+    if (workspace?.activeFilePath != path && !await autoSaveActiveIfNeeded()) {
+      return false;
+    }
+    return _openActiveFile(path);
   }
 
-  Future<void> activateNextOpenFileTab() => _activateOpenFileTab(1);
+  Future<bool> activateNextOpenFileTab() => _activateOpenFileTab(1);
 
-  Future<void> activatePreviousOpenFileTab() => _activateOpenFileTab(-1);
+  Future<bool> activatePreviousOpenFileTab() => _activateOpenFileTab(-1);
 
-  Future<void> closeActiveOpenFileTab() async {
+  Future<bool> closeActiveOpenFileTab() async {
     final activeFilePath = state.workspace?.activeFilePath;
     if (activeFilePath == null) {
-      return;
+      return false;
     }
-    await closeOpenFileTab(activeFilePath);
+    return closeOpenFileTab(activeFilePath);
   }
 
-  void closeAllOpenFileTabs() {
+  Future<bool> closeAllOpenFileTabs() async {
     final workspace = state.workspace;
     if (workspace == null || workspace.openFilePaths.isEmpty) {
-      return;
+      return false;
+    }
+    if (!await autoSaveActiveIfNeeded()) {
+      return false;
     }
     _clearOpenFileTabs(workspace);
+    return true;
   }
 
-  Future<void> closeOpenFileTab(String path) async {
+  Future<bool> closeOpenFileTab(String path) async {
     final workspace = state.workspace;
     if (workspace == null ||
         !_supportsOpenFileTabs(workspace) ||
         !workspace.openFilePaths.contains(path)) {
-      return;
+      return false;
     }
     final closedIndex = workspace.openFilePaths.indexOf(path);
     final nextOpenFilePaths = [
       for (final openPath in workspace.openFilePaths)
         if (openPath != path) openPath,
     ];
+    if (workspace.activeFilePath == path && !await autoSaveActiveIfNeeded()) {
+      return false;
+    }
     if (nextOpenFilePaths.isEmpty) {
       _clearOpenFileTabs(workspace);
-      return;
+      return true;
     }
     if (workspace.activeFilePath != path) {
       state = state.copyWith(
         workspace: workspace.copyWith(openFilePaths: nextOpenFilePaths),
         clearMessage: true,
       );
-      return;
+      return true;
     }
     final nextIndex = closedIndex <= 0
         ? 0
         : math.min(closedIndex - 1, nextOpenFilePaths.length - 1);
-    await _openActiveFile(
+    return _openActiveFile(
       nextOpenFilePaths[nextIndex],
       openFilePaths: nextOpenFilePaths,
     );
   }
 
-  Future<void> _activateOpenFileTab(int delta) async {
+  Future<bool> _activateOpenFileTab(int delta) async {
     final workspace = state.workspace;
     if (workspace == null ||
         !_supportsOpenFileTabs(workspace) ||
         workspace.openFilePaths.length < 2) {
-      return;
+      return false;
     }
     final activeFilePath = workspace.activeFilePath;
     final activeIndex = activeFilePath == null
@@ -285,7 +315,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final normalizedIndex = nextIndex < 0
         ? nextIndex + workspace.openFilePaths.length
         : nextIndex;
-    await _openActiveFile(workspace.openFilePaths[normalizedIndex]);
+    return openActiveFile(workspace.openFilePaths[normalizedIndex]);
   }
 
   void _clearOpenFileTabs(Workspace workspace) {
@@ -316,15 +346,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
   }
 
-  Future<void> _openActiveFile(
+  Future<bool> _openActiveFile(
     String path, {
     List<String>? openFilePaths,
   }) async {
     final workspace = state.workspace;
     if (workspace == null) {
-      return;
+      return false;
     }
     _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
     try {
       final load = await _service.loadTextWithSnapshot(path);
       final nextWorkspace = workspace.copyWith(
@@ -340,6 +371,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         isDirty: false,
         clearMessage: true,
       );
+      return true;
     } on Object catch (error, stackTrace) {
       stderr.writeln('[BusyMark] Could not open file: $path');
       stderr.writeln('[BusyMark]   error: $error');
@@ -350,6 +382,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           error: error,
         ),
       );
+      return false;
     }
   }
 
@@ -364,14 +397,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
     _parseDebounce?.cancel();
     if (!_settingsController.state.validateOnEdit) {
+      _scheduleAutoSave();
       return;
     }
     _parseDebounce = Timer(const Duration(milliseconds: 350), () {
       unawaited(validateActive());
     });
+    _scheduleAutoSave();
+  }
+
+  Future<bool> autoSaveActiveIfNeeded() async {
+    _autoSaveDebounce?.cancel();
+    if (!_settingsController.state.autoSave || !state.isDirty) {
+      return true;
+    }
+    if (!_canAutoSaveActive()) {
+      return false;
+    }
+    return saveActive();
   }
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) async {
+    _autoSaveDebounce?.cancel();
     final workspace = state.workspace;
     final active = workspace?.activeFilePath;
     if (active == null) {
@@ -419,6 +466,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> saveActiveAs(String path) async {
+    _autoSaveDebounce?.cancel();
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
@@ -493,6 +541,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: text)],
       );
     }
+  }
+
+  void _scheduleAutoSave() {
+    _autoSaveDebounce?.cancel();
+    if (!_settingsController.state.autoSave || !_canAutoSaveActive()) {
+      return;
+    }
+    _autoSaveDebounce = Timer(_autoSaveDelay, () {
+      unawaited(autoSaveActiveIfNeeded());
+    });
+  }
+
+  bool _canAutoSaveActive() {
+    final workspace = state.workspace;
+    return workspace != null && workspace.activeFilePath != null;
   }
 }
 

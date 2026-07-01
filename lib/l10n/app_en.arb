@@ -298,6 +298,10 @@
 
   "settingsTitle": "BusyMark Settings",
   "@settingsTitle": {"description": "Settings screen title."},
+  "autoSave": "Auto Save",
+  "@autoSave": {"description": "Editor setting label for saving files automatically."},
+  "autoSaveDescription": "Save file changes automatically while editing.",
+  "@autoSaveDescription": {"description": "Editor setting description for saving files automatically."},
   "wordWrap": "Word wrap",
   "@wordWrap": {"description": "Word wrap setting label."},
   "editorFontSize": "Editor font size",

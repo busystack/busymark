@@ -466,6 +466,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get settingsTitle => 'تنظیمات BusyMark';
 
   @override
+  String get autoSave => 'ذخیرهٔ خودکار';
+
+  @override
+  String get autoSaveDescription =>
+      'تغییرات فایل را هنگام ویرایش به‌طور خودکار ذخیره کنید.';
+
+  @override
   String get wordWrap => 'شکستن خودکار خطوط';
 
   @override

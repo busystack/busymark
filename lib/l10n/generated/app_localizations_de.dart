@@ -476,6 +476,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsTitle => 'BusyMark-Einstellungen';
 
   @override
+  String get autoSave => 'Automatisch speichern';
+
+  @override
+  String get autoSaveDescription =>
+      'Dateiänderungen beim Bearbeiten automatisch speichern.';
+
+  @override
   String get wordWrap => 'Zeilenumbruch';
 
   @override

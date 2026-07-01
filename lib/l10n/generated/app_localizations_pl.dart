@@ -479,6 +479,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsTitle => 'Ustawienia BusyMark';
 
   @override
+  String get autoSave => 'Automatyczne zapisywanie';
+
+  @override
+  String get autoSaveDescription =>
+      'Automatycznie zapisuj zmiany plików podczas edycji.';
+
+  @override
   String get wordWrap => 'Zawijanie wierszy';
 
   @override

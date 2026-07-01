@@ -70,7 +70,6 @@ struct _MyApplication {
   GtkWidget* view_mode_source_item;
   GtkWidget* view_mode_preview_item;
   GtkWidget* view_mode_split_item;
-  GtkWidget* save_button;
   GtkWidget* refresh_button;
   gchar* view_mode;
   gchar* background_color;
@@ -349,19 +348,6 @@ static void update_title_stack_alignment(MyApplication* self) {
       self->search_active ? 0 : kHeaderWindowControlsBalanceWidth);
 }
 
-static void set_save_dirty(MyApplication* self, gboolean dirty) {
-  if (self->save_button == nullptr || !GTK_IS_WIDGET(self->save_button)) {
-    return;
-  }
-  GtkStyleContext* context = gtk_widget_get_style_context(self->save_button);
-  if (dirty) {
-    gtk_style_context_add_class(context, "busymark-save-dirty");
-  } else {
-    gtk_style_context_remove_class(context, "busymark-save-dirty");
-  }
-  gtk_widget_set_sensitive(self->save_button, TRUE);
-}
-
 static void set_toggle_button_active(MyApplication* self,
                                      GtkWidget* widget,
                                      gboolean active) {
@@ -402,8 +388,6 @@ static void refresh_header_bar_css(MyApplication* self) {
   const gchar* control_hover =
       css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
   const gchar* accent = css_color_or(self->accent_color, "#3584e4");
-  const gchar* accent_foreground =
-      css_color_or(self->accent_foreground_color, "#ffffff");
   const gchar* popover =
       css_color_or(self->popover_background_color, background);
   const gchar* border =
@@ -485,17 +469,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header {"
       "background-image: linear-gradient(%s, %s);"
       "}"
-      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty,"
-      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:hover,"
-      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:active,"
-      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty:checked {"
-      "color: %s;"
-      "background-color: %s;"
-      "}"
-      ".busymark-titlebar button.busymark-save-button.busymark-save-dirty image {"
-      "color: %s;"
-      "-gtk-icon-shadow: none;"
-      "}"
       "popover.busymark-header-popover,"
       "popover.background.busymark-header-popover,"
       "popover.background.busymark-header-popover > contents,"
@@ -568,8 +541,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       kHeaderWindowRadius, foreground, foreground, control, border,
       kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
       kHeaderControlHorizontalPadding, accent, modal, modal,
-      accent_foreground, accent, accent_foreground, popover, foreground, border,
-      shade, foreground,
+      popover, foreground, border, shade, foreground,
       kHeaderControlHeight, kHeaderControlHorizontalPadding,
       kHeaderButtonRadius, control_hover, foreground, muted,
       kHeaderButtonRadius,
@@ -1052,7 +1024,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* menu = fl_lookup_string_arg(args, "menu");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
-  const gchar* save = fl_lookup_string_arg(args, "save");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
   const gchar* keyboard_shortcuts =
       fl_lookup_string_arg(args, "keyboardShortcuts");
@@ -1068,7 +1039,6 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->header_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
-  set_widget_tooltip(self->save_button, save);
   set_widget_tooltip(self->view_mode_button, view_mode);
   set_menu_item_label(self->view_mode_editor_item, editor);
   set_menu_item_label(self->view_mode_source_item, source);
@@ -1126,7 +1096,6 @@ static void set_document_controls_visible(MyApplication* self,
                                           gboolean visible) {
   self->document_controls_visible = visible;
   const gboolean effective_visible = visible && !self->search_active;
-  set_widget_visible(self->save_button, effective_visible);
   set_widget_visible(self->refresh_button, effective_visible);
   set_widget_visible(self->view_mode_box, effective_visible);
 }
@@ -1144,7 +1113,6 @@ static void set_search_active(MyApplication* self, gboolean active) {
   }
   const gboolean document_controls_visible =
       self->document_controls_visible && !active;
-  set_widget_visible(self->save_button, document_controls_visible);
   set_widget_visible(self->refresh_button, document_controls_visible);
   set_widget_visible(self->view_mode_box, document_controls_visible);
   if (changed && active && self->search_entry != nullptr &&
@@ -1329,13 +1297,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->view_mode_box, FALSE, FALSE, 0);
 
-  self->save_button = create_header_icon_button("emblem-ok-symbolic");
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->save_button),
-                              "busymark-save-button");
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
-  connect_header_action(self, self->save_button, "save");
   connect_header_action(self, self->refresh_button, "refresh");
-  gtk_box_pack_start(GTK_BOX(end_box), self->save_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->refresh_button, FALSE, FALSE, 0);
   gtk_header_bar_pack_end(self->header_bar, end_box);
 
@@ -1371,7 +1334,6 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setCanSave") == 0) {
-    set_save_dirty(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));
@@ -1704,7 +1666,6 @@ static void my_application_init(MyApplication* self) {
   self->view_mode_source_item = nullptr;
   self->view_mode_preview_item = nullptr;
   self->view_mode_split_item = nullptr;
-  self->save_button = nullptr;
   self->refresh_button = nullptr;
   self->view_mode = nullptr;
   self->background_color = g_strdup(kDefaultHeaderbarBackground);
