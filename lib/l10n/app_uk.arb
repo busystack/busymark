@@ -640,7 +640,7 @@
   "@closeUnsavedChangesSingleMessage": {
     "description": "Window close confirmation message when one document has unsaved changes."
   },
-  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Зберегти зміни перед закриттям BusyMark?} =1{1 документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?} one{{count} документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?} few{{count} документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} many{{count} документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} other{{count} документа має незбережені зміни. Зберегти зміни перед закриттям BusyMark?}}",
+  "closeUnsavedChangesMultipleMessage": "{count, plural, =0{Зберегти зміни перед закриттям BusyMark?} one{{count} документ має незбережені зміни. Зберегти зміни перед закриттям BusyMark?} few{{count} документи мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} many{{count} документів мають незбережені зміни. Зберегти зміни перед закриттям BusyMark?} other{{count} документа має незбережені зміни. Зберегти зміни перед закриттям BusyMark?}}",
   "@closeUnsavedChangesMultipleMessage": {
     "description": "Window close confirmation message when multiple documents have unsaved changes.",
     "placeholders": {

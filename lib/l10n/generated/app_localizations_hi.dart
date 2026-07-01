@@ -12,7 +12,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'Markdown और Writerside-संगत दस्तावेज़ संपादक।';
+  String get appSubtitle => 'Markdown और Writerside-संगत दस्तावेज़ीकरण संपादक।';
 
   @override
   String get aboutBusyMark => 'BusyMark के बारे में';
@@ -30,19 +30,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutWebsite => 'वेबसाइट';
 
   @override
-  String get aboutReportIssue => 'समस्या की रिपोर्ट करें';
+  String get aboutReportIssue => 'समस्या रिपोर्ट करें';
 
   @override
   String get advanced => 'उन्नत';
 
   @override
-  String get appearance => 'उपस्थिति';
+  String get appearance => 'दिखावट';
 
   @override
   String get apply => 'लागू करें';
 
   @override
-  String get back => 'पीछे';
+  String get back => 'वापस';
 
   @override
   String get bottomLeft => 'नीचे बाएँ';
@@ -69,13 +69,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get creating => 'बनाया जा रहा है...';
 
   @override
-  String get cut => 'काटें';
+  String get cut => 'कट करें';
 
   @override
   String get darkTheme => 'डार्क';
 
   @override
-  String get discard => 'खारिज करें';
+  String get discard => 'त्यागें';
 
   @override
   String get editor => 'संपादक';
@@ -90,7 +90,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get folder => 'फ़ोल्डर';
 
   @override
-  String get insert => 'डालना';
+  String get insert => 'सम्मिलित करें';
 
   @override
   String get keyboardShortcuts => 'कीबोर्ड शॉर्टकट';
@@ -117,13 +117,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get paste => 'पेस्ट करें';
 
   @override
-  String get pasteWithoutFormatting => 'बिना फ़ॉर्मेट किए चिपकाएँ';
+  String get pasteWithoutFormatting => 'बिना फ़ॉर्मेटिंग पेस्ट करें';
 
   @override
   String get preview => 'पूर्वावलोकन';
 
   @override
-  String get recent => 'हाल के';
+  String get recent => 'हालिया';
 
   @override
   String get redo => 'फिर से करें';
@@ -132,10 +132,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get save => 'सहेजें';
 
   @override
-  String get search => 'खोज';
+  String get search => 'खोजें';
 
   @override
-  String get selectAll => 'सबका चयन करें';
+  String get selectAll => 'सभी चुनें';
 
   @override
   String get settings => 'सेटिंग्स';
@@ -144,7 +144,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get source => 'स्रोत';
 
   @override
-  String get split => 'स्प्लिट';
+  String get split => 'विभाजित';
 
   @override
   String get systemTheme => 'सिस्टम';
@@ -156,7 +156,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get appLanguage => 'भाषा';
 
   @override
-  String get systemLanguage => 'सिस्टम डिफ़ॉल्ट';
+  String get systemLanguage => 'सिस्टम';
 
   @override
   String get languageEnglish => 'English';
@@ -198,7 +198,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'साइडबार टॉगल करें';
+  String get toggleSidebar => 'साइडबार दिखाएँ/छिपाएँ';
 
   @override
   String get topLeft => 'ऊपर बाएँ';
@@ -207,7 +207,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get topRight => 'ऊपर दाएँ';
 
   @override
-  String get undo => 'पूर्ववत';
+  String get undo => 'पूर्ववत करें';
 
   @override
   String get validate => 'सत्यापित करें';
@@ -219,7 +219,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get viewMode => 'दृश्य मोड';
 
   @override
-  String get welcome => 'स्वागत';
+  String get welcome => 'स्वागत है';
 
   @override
   String get writerside => 'Writerside';
@@ -248,7 +248,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'Markdown फ़ोल्डर या Writerside-संगत प्रोजेक्ट';
 
   @override
-  String get noOpenFile => 'No open file';
+  String get noOpenFile => 'कोई फ़ाइल खुली नहीं है';
 
   @override
   String get shortcutGroupFile => 'फ़ाइल';
@@ -258,58 +258,57 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutNewDocumentDescription =>
-      'एक नया बिना सहेजा गया Markdown दस्तावेज़ बनाएँ';
+      'नया, सहेजा न गया Markdown दस्तावेज़ बनाएँ';
 
   @override
   String get shortcutOpenDescription =>
-      'एक Markdown फ़ाइल, फ़ोल्डर, या Writerside प्रोजेक्ट खोलें';
+      'Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें';
 
   @override
-  String get shortcutSaveDescription => 'वर्तमान Markdown फ़ाइल सहेजें';
+  String get shortcutSaveDescription => 'मौजूदा Markdown फ़ाइल सहेजें';
 
   @override
-  String get shortcutFindDescription => 'वर्तमान दस्तावेज़ खोजें';
+  String get shortcutFindDescription => 'मौजूदा दस्तावेज़ में खोजें';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
       'यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ';
 
   @override
-  String get shortcutNextTab => 'Next tab';
+  String get shortcutNextTab => 'अगला टैब';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription => 'अगले खुले संपादक टैब पर जाएँ';
 
   @override
-  String get shortcutPreviousTab => 'Previous tab';
+  String get shortcutPreviousTab => 'पिछला टैब';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+  String get shortcutPreviousTabDescription => 'पिछले खुले संपादक टैब पर जाएँ';
 
   @override
-  String get shortcutCloseTab => 'Close tab';
+  String get shortcutCloseTab => 'टैब बंद करें';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription => 'सक्रिय संपादक टैब बंद करें';
 
   @override
-  String get shortcutCloseAllTabs => 'Close all tabs';
+  String get shortcutCloseAllTabs => 'सभी टैब बंद करें';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription => 'सभी खुले संपादक टैब बंद करें';
 
   @override
-  String get shortcutGroupTextEditing => 'पाठ संपादन';
+  String get shortcutGroupTextEditing => 'टेक्स्ट संपादन';
 
   @override
   String get shortcutSelectAllDescription => 'संपादक का पूरा टेक्स्ट चुनें';
 
   @override
-  String get shortcutCutDescription => 'चयनित पाठ को काटें';
+  String get shortcutCutDescription => 'चयनित टेक्स्ट कट करें';
 
   @override
-  String get shortcutCopyDescription => 'चयनित पाठ को कॉपी करें';
+  String get shortcutCopyDescription => 'चयनित टेक्स्ट कॉपी करें';
 
   @override
   String get shortcutPasteDescription => 'क्लिपबोर्ड से चिपकाएँ';
@@ -322,14 +321,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutUndoDescription => 'अंतिम संपादन पूर्ववत करें';
 
   @override
-  String get shortcutRedoDescription => 'पिछला पूर्ववत संपादन पुनः करें';
+  String get shortcutRedoDescription => 'अंतिम पूर्ववत संपादन फिर से करें';
 
   @override
-  String get clearEditorSelection => 'संपादक चयन साफ़ करें';
+  String get clearEditorSelection => 'संपादक का चयन साफ़ करें';
 
   @override
   String get shortcutClearEditorSelectionDescription =>
-      'मौजूदा संपादक चयन या खोज फ़ोकस हटाएँ';
+      'मौजूदा संपादक चयन या खोज फ़ोकस से बाहर निकलें';
 
   @override
   String get shortcutGroupFormatting => 'फ़ॉर्मेटिंग';
@@ -360,32 +359,25 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutGroupBlocks => 'ब्लॉक';
 
   @override
-  String get shortcutParagraphDescription =>
-      'मौजूदा ब्लॉक को पैराग्राफ़ पर सेट करें';
+  String get shortcutParagraphDescription => 'मौजूदा ब्लॉक को अनुच्छेद बनाएँ';
 
   @override
-  String get shortcutHeading1Description =>
-      'मौजूदा ब्लॉक को शीर्षक 1 पर सेट करें';
+  String get shortcutHeading1Description => 'मौजूदा ब्लॉक को शीर्षक 1 बनाएँ';
 
   @override
-  String get shortcutHeading2Description =>
-      'मौजूदा ब्लॉक को शीर्षक 2 पर सेट करें';
+  String get shortcutHeading2Description => 'मौजूदा ब्लॉक को शीर्षक 2 बनाएँ';
 
   @override
-  String get shortcutHeading3Description =>
-      'मौजूदा ब्लॉक को शीर्षक 3 पर सेट करें';
+  String get shortcutHeading3Description => 'मौजूदा ब्लॉक को शीर्षक 3 बनाएँ';
 
   @override
-  String get shortcutHeading4Description =>
-      'मौजूदा ब्लॉक को शीर्षक 4 पर सेट करें';
+  String get shortcutHeading4Description => 'मौजूदा ब्लॉक को शीर्षक 4 बनाएँ';
 
   @override
-  String get shortcutHeading5Description =>
-      'मौजूदा ब्लॉक को शीर्षक 5 पर सेट करें';
+  String get shortcutHeading5Description => 'मौजूदा ब्लॉक को शीर्षक 5 बनाएँ';
 
   @override
-  String get shortcutHeading6Description =>
-      'मौजूदा ब्लॉक को शीर्षक 6 पर सेट करें';
+  String get shortcutHeading6Description => 'मौजूदा ब्लॉक को शीर्षक 6 बनाएँ';
 
   @override
   String get shortcutGroupLists => 'सूचियाँ';
@@ -398,7 +390,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'क्रमांकित सूची फ़ॉर्मेटिंग चालू/बंद करें';
 
   @override
-  String get bulletedList => 'बुलेटेड सूची';
+  String get bulletedList => 'बुलेट सूची';
 
   @override
   String get shortcutBulletedListDescription =>
@@ -416,23 +408,23 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get createMarkdownFileDescription =>
-      'एक नया, सहेजा न गया स्थानीय Markdown दस्तावेज़ शुरू करें';
+      'स्थानीय सहेजा न गया Markdown दस्तावेज़ शुरू करें';
 
   @override
   String get createWritersideProject => 'Writerside प्रोजेक्ट बनाएँ';
 
   @override
   String get createWritersideProjectDescription =>
-      'एक स्थानीय Writerside-संगत प्रोजेक्ट शुरू करें';
+      'स्थानीय Writerside-संगत प्रोजेक्ट शुरू करें';
 
   @override
   String get defaultProjectName => 'दस्तावेज़ीकरण';
 
   @override
-  String get defaultInstanceName => 'उपयोगकर्ता गाइड';
+  String get defaultInstanceName => 'उपयोगकर्ता मार्गदर्शिका';
 
   @override
-  String get defaultStartTopicTitle => 'शुरू करें';
+  String get defaultStartTopicTitle => 'आरंभ करना';
 
   @override
   String get projectName => 'प्रोजेक्ट का नाम';
@@ -447,7 +439,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get instanceId => 'इंस्टेंस ID';
 
   @override
-  String get startTopicTitle => 'प्रारंभिक विषय शीर्षक';
+  String get startTopicTitle => 'आरंभिक विषय शीर्षक';
 
   @override
   String get location => 'स्थान';
@@ -464,10 +456,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get useLowercaseIdentifier =>
-      'लोअरकेस पहचानकर्ता इस्तेमाल करें; उसमें केवल अक्षर, अंक, अंडरस्कोर या हाइफ़न हो सकते हैं।';
+      'छोटे अक्षरों वाला पहचानकर्ता इस्तेमाल करें, जिसमें केवल अक्षर, अंक, अंडरस्कोर या हाइफ़न हों।';
 
   @override
-  String get startTopicTitleRequired => 'प्रारंभिक विषय शीर्षक आवश्यक है।';
+  String get startTopicTitleRequired => 'आरंभिक विषय शीर्षक आवश्यक है।';
 
   @override
   String get createWritersideProjectFailed =>
@@ -481,7 +473,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get autoSaveDescription =>
-      'संपादन करते समय फ़ाइल बदलावों को स्वतः सहेजें।';
+      'थोड़ी देर निष्क्रिय रहने के बाद फ़ाइल बदलाव अपने-आप सहेजें।';
 
   @override
   String get wordWrap => 'वर्ड रैप';
@@ -493,7 +485,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get validateOnEdit => 'संपादन के समय सत्यापित करें';
 
   @override
-  String get clearRecentWorkspaces => 'हाल के कार्यस्थान साफ़ करें';
+  String get clearRecentWorkspaces => 'हालिया कार्यस्थान साफ़ करें';
 
   @override
   String get editingButtons => 'संपादन बटन';
@@ -507,18 +499,18 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesTitle =>
-      'सहेजे बिना बदलाव हों तो बंद करने से पहले पुष्टि करें';
+      'न सहेजे गए बदलाव हों तो बंद करने से पहले पुष्टि करें';
 
   @override
   String get settingsConfirmCloseWithUnsavedChangesDescription =>
-      'जब दस्तावेज़ों में सहेजे बिना बदलाव हों, तो BusyMark बंद करने से पहले पूछें।';
+      'दस्तावेज़ों में न सहेजे गए बदलाव हों तो BusyMark बंद करने से पहले पूछें।';
 
   @override
-  String get closeUnsavedChangesTitle => 'सहेजे बिना बदलाव';
+  String get closeUnsavedChangesTitle => 'न सहेजे गए बदलाव';
 
   @override
   String get closeUnsavedChangesSingleMessage =>
-      'इस दस्तावेज़ में सहेजे बिना बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?';
+      'इस दस्तावेज़ में न सहेजे गए बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?';
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
@@ -526,9 +518,9 @@ class AppLocalizationsHi extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count दस्तावेज़ों में सहेजे बिना बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?',
+          '$count दस्तावेज़ों में न सहेजे गए बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?',
       one:
-          '1 दस्तावेज़ में सहेजे बिना बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?',
+          '1 दस्तावेज़ में न सहेजे गए बदलाव हैं। BusyMark बंद करने से पहले बदलाव सहेजें?',
       zero: 'BusyMark बंद करने से पहले बदलाव सहेजें?',
     );
     return '$_temp0';
@@ -538,28 +530,28 @@ class AppLocalizationsHi extends AppLocalizations {
   String get closeUnsavedChangesCancel => 'रद्द करें';
 
   @override
-  String get closeUnsavedChangesDiscard => 'छोड़ें';
+  String get closeUnsavedChangesDiscard => 'त्यागें';
 
   @override
   String get closeUnsavedChangesSave => 'सहेजें';
 
   @override
-  String get currentFile => 'वर्तमान फ़ाइल';
+  String get currentFile => 'मौजूदा फ़ाइल';
 
   @override
-  String get unsavedChanges => 'सहेजे न गए परिवर्तन';
+  String get unsavedChanges => 'न सहेजे गए बदलाव';
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'आपके पास $fileName में सहेजे नहीं गए परिवर्तन हैं। जारी रखने से पहले उन्हें सहेजें?';
+    return '$fileName में न सहेजे गए बदलाव हैं। जारी रखने से पहले उन्हें सहेजें?';
   }
 
   @override
-  String get fileChangedOnDisk => 'डिस्क पर फ़ाइल बदल गई है';
+  String get fileChangedOnDisk => 'डिस्क पर फ़ाइल बदल गई';
 
   @override
   String get fileChangedOnDiskMessage =>
-      'आपके खोलने के बाद यह फ़ाइल डिस्क पर बदल गई है। क्या इसे ओवरराइट करना है?';
+      'आपके इसे खोलने के बाद यह फ़ाइल डिस्क पर बदल गई है। क्या इसे ओवरराइट करें?';
 
   @override
   String get untitledMarkdownFileName => 'शीर्षकहीन.md';
@@ -574,7 +566,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get taskList => 'कार्य सूची';
 
   @override
-  String get toggleTaskChecked => 'कार्य की चेक स्थिति बदलें';
+  String get toggleTaskChecked => 'कार्य को चेक/अनचेक करें';
 
   @override
   String get indentListItem => 'सूची आइटम का इंडेंट बढ़ाएँ';
@@ -607,7 +599,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get bold => 'बोल्ड';
 
   @override
-  String get italic => 'तिरछा';
+  String get italic => 'इटैलिक';
 
   @override
   String get underline => 'अंडरलाइन';
@@ -625,7 +617,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hardLineBreak => 'हार्ड लाइन ब्रेक';
 
   @override
-  String get textStyle => 'पाठ शैली';
+  String get textStyle => 'टेक्स्ट शैली';
 
   @override
   String get paragraph => 'अनुच्छेद';
@@ -662,10 +654,10 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get insertColumnLeft => 'बाईं ओर कॉलम डालें';
+  String get insertColumnLeft => 'बाईं ओर कॉलम सम्मिलित करें';
 
   @override
-  String get insertColumnRight => 'दाईं ओर कॉलम डालें';
+  String get insertColumnRight => 'दाईं ओर कॉलम सम्मिलित करें';
 
   @override
   String get deleteColumn => 'कॉलम हटाएँ';
@@ -676,10 +668,10 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get insertRowAbove => 'ऊपर पंक्ति डालें';
+  String get insertRowAbove => 'ऊपर पंक्ति सम्मिलित करें';
 
   @override
-  String get insertRowBelow => 'नीचे पंक्ति डालें';
+  String get insertRowBelow => 'नीचे पंक्ति सम्मिलित करें';
 
   @override
   String get deleteRow => 'पंक्ति हटाएँ';
@@ -700,7 +692,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get showEditingButtons => 'संपादन बटन दिखाएँ';
 
   @override
-  String get altText => 'वैकल्पिक टेक्स्ट';
+  String get altText => 'Alt टेक्स्ट';
 
   @override
   String get describeTheImage => 'छवि का वर्णन करें';
@@ -720,7 +712,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get tableCellDefault => 'सेल';
 
   @override
-  String get noImageSource => 'कोई छवि स्रोत नहीं है';
+  String get noImageSource => 'कोई छवि स्रोत नहीं';
 
   @override
   String get hideSidebar => 'साइडबार छिपाएँ';
@@ -754,9 +746,9 @@ class AppLocalizationsHi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count निदान',
-      one: '1 निदान',
-      zero: 'कोई निदान नहीं',
+      other: '$count डायग्नोस्टिक',
+      one: '1 डायग्नोस्टिक',
+      zero: 'कोई डायग्नोस्टिक नहीं',
     );
     return '$_temp0';
   }
@@ -803,7 +795,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get topicTitle => 'विषय शीर्षक';
 
   @override
-  String get fileName => 'फ़ाइल का नाम';
+  String get fileName => 'फ़ाइल नाम';
 
   @override
   String get topicTitleRequired => 'विषय शीर्षक आवश्यक है।';
@@ -816,12 +808,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String useExpectedExtension(String extension) {
-    return 'चयनित प्रारूप के लिए $extension एक्सटेंशन का उपयोग करें।';
+    return 'चयनित फ़ॉर्मैट के लिए $extension एक्सटेंशन इस्तेमाल करें।';
   }
 
   @override
   String get useIdentifierCharacters =>
-      'एक्सटेंशन से पहले अक्षरों, संख्याओं, अंडरस्कोर या हाइफ़न का उपयोग करें।';
+      'एक्सटेंशन से पहले अक्षर, अंक, अंडरस्कोर या हाइफ़न इस्तेमाल करें।';
 
   @override
   String get topicIdAlreadyExists => 'विषय ID पहले से मौजूद है।';
@@ -835,12 +827,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String expandKind(String kind) {
-    return '$kind का विस्तार करें';
+    return '$kind विस्तृत करें';
   }
 
   @override
   String collapseKind(String kind) {
-    return '$kind संक्षिप्त करें';
+    return '$kind समेटें';
   }
 
   @override
@@ -856,10 +848,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get foldKindTag => 'टैग';
 
   @override
-  String get noPreview => 'कोई पूर्वावलोकन';
+  String get noPreview => 'कोई पूर्वावलोकन नहीं';
 
   @override
-  String get note => 'टिप्पणी';
+  String get note => 'नोट';
 
   @override
   String get tip => 'सुझाव';
@@ -877,7 +869,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get procedure => 'प्रक्रिया';
 
   @override
-  String get step => 'कदम';
+  String get step => 'चरण';
 
   @override
   String get topic => 'विषय';
@@ -916,7 +908,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get untitledResult => 'शीर्षकरहित परिणाम';
+  String get untitledResult => 'शीर्षकहीन परिणाम';
 
   @override
   String get documentKindMarkdownFile => 'Markdown फ़ाइल';
@@ -944,7 +936,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workspaceErrorOpenFailed(String error) {
-    return 'खोलना विफल: $error';
+    return 'खोलना विफल रहा: $error';
   }
 
   @override
@@ -964,7 +956,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get workspaceErrorChooseWhereToSaveMarkdown =>
-      'चुनें कि इस Markdown फ़ाइल को कहाँ सहेजना है।';
+      'इस Markdown फ़ाइल को कहाँ सहेजना है, चुनें।';
 
   @override
   String get workspaceErrorSaveBlockedFileChangedOnDisk =>
@@ -972,40 +964,40 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workspaceErrorSaveFailed(String error) {
-    return 'सहेजना विफल: $error';
+    return 'सहेजना विफल रहा: $error';
   }
 
   @override
   String workspaceErrorValidationFailed(String error) {
-    return 'सत्यापन विफल: $error';
+    return 'सत्यापन विफल रहा: $error';
   }
 
   @override
   String errorPathDoesNotExist(String path) {
-    return 'पथ मौजूद नहीं है: $path';
+    return 'पाथ मौजूद नहीं है: $path';
   }
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'लक्ष्य निर्देशिका पहले से मौजूद है और खाली नहीं है: $path';
+    return 'लक्ष्य डायरेक्टरी पहले से मौजूद है और खाली नहीं है: $path';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'लक्ष्य पथ पहले से मौजूद है और निर्देशिका नहीं है: $path';
+    return 'लक्ष्य पाथ पहले से मौजूद है और डायरेक्टरी नहीं है: $path';
   }
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'जेनरेट की गई फ़ाइल पहले से मौजूद है: $path';
+    return 'बनाई गई फ़ाइल पहले से मौजूद है: $path';
   }
 
   @override
-  String get errorParentDirectoryRequired => 'मूल डायरेक्टरी आवश्यक है।';
+  String get errorParentDirectoryRequired => 'पैरेंट डायरेक्टरी आवश्यक है।';
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'मूल निर्देशिका मौजूद नहीं है: $path';
+    return 'पैरेंट डायरेक्टरी मौजूद नहीं है: $path';
   }
 
   @override
@@ -1016,15 +1008,15 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'डायरेक्टरी नाम एक ही सुरक्षित पथ खंड होना चाहिए।';
+      'डायरेक्टरी नाम एक ही सुरक्षित पाथ सेगमेंट होना चाहिए।';
 
   @override
   String get errorInstanceIdInvalid =>
-      'इंस्टेंस ID लोअरकेस अक्षर से शुरू होना चाहिए और उसमें केवल लोअरकेस अक्षर, अंक, अंडरस्कोर और हाइफ़न होने चाहिए।';
+      'इंस्टेंस ID छोटे अक्षर से शुरू होनी चाहिए और उसमें केवल छोटे अक्षर, अंक, अंडरस्कोर और हाइफ़न होने चाहिए।';
 
   @override
   String get errorTopicFileInvalid =>
-      'विषय फ़ाइल का नाम पथ विभाजक के बिना एक Markdown फ़ाइल नाम होना चाहिए।';
+      'विषय फ़ाइल नाम पाथ सेपरेटर के बिना Markdown फ़ाइल नाम होना चाहिए।';
 
   @override
   String get errorTopicTitleRequired => 'विषय शीर्षक आवश्यक है।';
@@ -1049,7 +1041,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'विषय ID \"$topicId\" इस सहायता मॉड्यूल में पहले से मौजूद है।';
+    return 'विषय ID \"$topicId\" इस हेल्प मॉड्यूल में पहले से मौजूद है।';
   }
 
   @override
@@ -1059,20 +1051,20 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String errorReferenceTopicMissing(String topic) {
-    return 'संदर्भ विषय चयनित ट्री में मौजूद नहीं है: $topic';
+    return 'संदर्भित विषय चयनित ट्री में मौजूद नहीं है: $topic';
   }
 
   @override
   String get errorTopicsRootUnsafe =>
-      'विषय रूट एक सुरक्षित सापेक्ष निर्देशिका होनी चाहिए।';
+      'विषय रूट सुरक्षित सापेक्ष डायरेक्टरी होना चाहिए।';
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'विषय फ़ाइल नाम एक ही सुरक्षित पथ खंड होना चाहिए।';
+      'विषय फ़ाइल नाम एक ही सुरक्षित पाथ सेगमेंट होना चाहिए।';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
-    return 'विषय फ़ाइल एक्सटेंशन चयनित प्रारूप ($extension) से मेल खाना चाहिए।';
+    return 'विषय फ़ाइल एक्सटेंशन चयनित फ़ॉर्मैट ($extension) से मेल खाना चाहिए।';
   }
 
   @override
@@ -1109,7 +1101,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get diagnosticMarkdownAttributeMalformed =>
-      'विकृत Writerside शीर्षक विशेषता ब्लॉक।';
+      'Writerside हेडिंग एट्रिब्यूट ब्लॉक गलत संरचना वाला है।';
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
@@ -1118,27 +1110,27 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicH1ConvertedToChapter =>
-      'अतिरिक्त शीर्ष-स्तरीय H1 शीर्षकों को अध्याय के रूप में माना जाता है।';
+      'अतिरिक्त शीर्ष-स्तरीय H1 शीर्षकों को अध्याय माना जाता है।';
 
   @override
   String get diagnosticWritersideMarkdownTopicMissingTitle =>
-      'Writerside Markdown विषय में कोई H1 या मुख्य शीर्षक नहीं है।';
+      'Writerside Markdown विषय में H1 या फ्रंट मैटर शीर्षक नहीं है।';
 
   @override
   String get diagnosticWritersideXmlTopicMissingTitle =>
-      'XML विषय का शीर्षक गुम है।';
+      'XML विषय में शीर्षक नहीं है।';
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'विषय \"$fileName\" में कोई शीर्षक नहीं है।';
+    return 'विषय \"$fileName\" में शीर्षक नहीं है।';
   }
 
   @override
   String get diagnosticMarkdownFrontMatterMalformed =>
-      'फ्रंट मैटर बंद नहीं किया गया है।';
+      'फ्रंट मैटर बंद नहीं है।';
 
   @override
-  String get diagnosticMarkdownRawHtmlUnsafe => 'असुरक्षित HTML तत्व।';
+  String get diagnosticMarkdownRawHtmlUnsafe => 'असुरक्षित HTML एलिमेंट।';
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
@@ -1152,7 +1144,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String diagnosticMarkdownImageMissingAlt(String destination) {
-    return 'छवि \"$destination\" में वैकल्पिक पाठ गायब है।';
+    return 'छवि \"$destination\" में Alt टेक्स्ट नहीं है।';
   }
 
   @override
@@ -1167,49 +1159,49 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigInvalidRoot =>
-      'Writerside.cfg का रूट <ihp> होना चाहिए।';
+      'writerside.cfg रूट <ihp> होना चाहिए।';
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'snippets घोषणा में src नहीं है।';
+      'snippets घोषणा में src अनुपस्थित है।';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'instance-groups घोषणा में src नहीं है।';
+      'instance-groups घोषणा में src अनुपस्थित है।';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'असमर्थित कीमैप मोड: $mode';
+    return 'असमर्थित keymaps मोड: $mode';
   }
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'इंस्टेंस घोषणा में src नहीं है।';
+      'इंस्टेंस घोषणा में src अनुपस्थित है।';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
-      'Writerside.cfg कोई इंस्टेंस पंजीकृत नहीं करता।';
+      'writerside.cfg कोई इंस्टेंस पंजीकृत नहीं करता है।';
 
   @override
   String get diagnosticWritersideTreeInvalidRoot =>
-      '.tree का रूट <instance-profile> होना चाहिए।';
+      '.tree रूट <instance-profile> होना चाहिए।';
 
   @override
   String get diagnosticWritersideTreeMissingId =>
-      'इंस्टेंस प्रोफ़ाइल में ID नहीं है।';
+      'इंस्टेंस प्रोफ़ाइल में id अनुपस्थित है।';
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'ट्री फ़ाइल का स्टेम इंस्टेंस ID \"$id\" से मेल नहीं खाता।';
+    return 'ट्री फ़ाइल का स्टेम इंस्टेंस id \"$id\" से मेल नहीं खाता।';
   }
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'गैर-लाइब्रेरी इंस्टेंस में start-page नहीं है।';
+      'गैर-लाइब्रेरी इंस्टेंस में start-page अनुपस्थित है।';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'प्रारंभ पृष्ठ \"$startPage\" मौजूद नहीं है।';
+    return 'आरंभ पेज \"$startPage\" मौजूद नहीं है।';
   }
 
   @override
@@ -1227,7 +1219,8 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get diagnosticWritersideCategoryMissingId => 'श्रेणी में ID नहीं है।';
+  String get diagnosticWritersideCategoryMissingId =>
+      'श्रेणी में id अनुपस्थित है।';
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
@@ -1241,66 +1234,66 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicInvalidRoot =>
-      '.topic का रूट <topic> होना चाहिए।';
+      '.topic रूट <topic> होना चाहिए।';
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
-      'XML विषय में रूट ID नहीं है।';
+      'XML विषय में रूट id अनुपस्थित है।';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'XML विषय रूट ID \"$id\" फ़ाइल नाम \"$expectedId\" से मेल खाना चाहिए।';
+    return 'XML विषय रूट id \"$id\" फ़ाइल नाम \"$expectedId\" से मेल खाना चाहिए।';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'तत्व आईडी \"$elementId\" एक से अधिक बार दिखाई देती है।';
+    return 'एलिमेंट id \"$elementId\" एक से अधिक बार दिखाई देता है।';
   }
 
   @override
   String get diagnosticWritersideTopicAnchorMissingHref =>
-      '<a> में href नहीं है।';
+      '<a> में href अनुपस्थित है।';
 
   @override
   String get diagnosticWritersideConfigMissing =>
-      'Writerside मोड के लिए Writerside.cfg की आवश्यकता होती है।';
+      'Writerside मोड के लिए writerside.cfg आवश्यक है।';
 
   @override
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'कॉन्फ़िगर की गई बिल्ड कॉन्फ़िगरेशन डायरेक्टरी अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई बिल्ड कॉन्फ़िगरेशन डायरेक्टरी नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'कॉन्फ़िगर की गई API विनिर्देश डायरेक्टरी अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई API विनिर्देश डायरेक्टरी नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'कॉन्फ़िगर की गई snippets डायरेक्टरी अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई स्निपेट्स डायरेक्टरी नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'कॉन्फ़िगर की गई variables फ़ाइल अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई वेरिएबल्स फ़ाइल नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'कॉन्फ़िगर की गई categories फ़ाइल अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई श्रेणी फ़ाइल नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'कॉन्फ़िगर की गई instance groups फ़ाइल अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई इंस्टेंस समूह फ़ाइल नहीं मिली: $relativePath';
   }
 
   @override
@@ -1317,27 +1310,27 @@ class AppLocalizationsHi extends AppLocalizations {
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'डिफ़ॉल्ट topics डायरेक्टरी अनुपलब्ध है: $relativePath';
+    return 'डिफ़ॉल्ट विषय डायरेक्टरी नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'कॉन्फ़िगर की गई topics डायरेक्टरी अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई विषय डायरेक्टरी नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'कॉन्फ़िगर की गई images डायरेक्टरी अनुपलब्ध है: $relativePath';
+    return 'कॉन्फ़िगर की गई छवि डायरेक्टरी नहीं मिली: $relativePath';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'तत्व आईडी \"$id\" एक से अधिक बार दिखाई देती है।';
+    return 'एलिमेंट id \"$id\" एक से अधिक बार दिखाई देता है।';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'TOC ऐसे विषय \"$topic\" का संदर्भ देता है जो मौजूद नहीं है।';
+    return 'TOC अनुपस्थित विषय \"$topic\" का संदर्भ देता है।';
   }
 
   @override
@@ -1347,12 +1340,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'वेरिएबल \"%$name%\" घोषित नहीं किया गया है।';
+    return 'वेरिएबल \"%$name%\" घोषित नहीं है।';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'विषय लिंक \"$destination\" का लक्ष्य नहीं मिला।';
+    return 'विषय लिंक \"$destination\" रिज़ॉल्व नहीं होता।';
   }
 
   @override
@@ -1365,7 +1358,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get diagnosticWritersideIncludeMissingFrom =>
-      '<include> में from नहीं है।';
+      '<include> में from अनुपस्थित है।';
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
@@ -1377,7 +1370,7 @@ class AppLocalizationsHi extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'include तत्व \"$elementId\" \"$from\" में मौजूद नहीं है।';
+    return 'include एलिमेंट \"$elementId\" \"$from\" में मौजूद नहीं है।';
   }
 
   @override
@@ -1392,6 +1385,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String diagnosticUnknown(String code) {
-    return 'अज्ञात निदान: $code';
+    return 'अज्ञात डायग्नोस्टिक: $code';
   }
 }
