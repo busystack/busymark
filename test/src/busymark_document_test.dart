@@ -272,6 +272,10 @@ void main() {}
     await tester.pump();
 
     expect(markdown, 'Changed\n');
+    final editedController = tester
+        .widget<TextField>(find.byType(TextField).first)
+        .controller!;
+    editedController.selection = const TextSelection.collapsed(offset: 2);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyZ);
@@ -283,6 +287,14 @@ void main() {}
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Original',
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller
+          ?.selection
+          .extentOffset,
+      2,
     );
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -297,6 +309,51 @@ void main() {}
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Changed',
+    );
+  });
+
+  testWidgets('WYSIWYG editor replaces document when active file changes', (
+    tester,
+  ) async {
+    final first = parser.parse(filePath: 'first.md', source: 'Original\n');
+    final second = parser.parse(filePath: 'second.md', source: 'Original\n');
+    var activeDocument = first.busyDocument;
+
+    Widget buildEditor() {
+      return MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: activeDocument,
+              onSourceChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildEditor());
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField).first, 'Unsaved first tab');
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Unsaved first tab',
+    );
+
+    activeDocument = second.busyDocument;
+    await tester.pumpWidget(buildEditor());
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Original',
     );
   });
 

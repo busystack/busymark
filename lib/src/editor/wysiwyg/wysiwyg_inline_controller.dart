@@ -31,12 +31,11 @@ class BusyMarkWysiwygTextController extends TextEditingController {
     final nextRanges = busyInlineStyleRanges(block.inlines);
     final rangesChanged = !_inlineStyleRangesEqual(_ranges, nextRanges);
     if (text != nextText) {
+      final previousSelection = selection;
       _ranges = nextRanges;
       value = value.copyWith(
         text: nextText,
-        selection: TextSelection.collapsed(
-          offset: nextText.length.clamp(0, nextText.length),
-        ),
+        selection: _clampedSelection(previousSelection, nextText.length),
         composing: TextRange.empty,
       );
     } else if (rangesChanged) {
@@ -129,6 +128,18 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       _ => baseStyle,
     };
   }
+}
+
+TextSelection _clampedSelection(TextSelection selection, int textLength) {
+  if (!selection.isValid) {
+    return TextSelection.collapsed(offset: textLength);
+  }
+  return TextSelection(
+    baseOffset: selection.baseOffset.clamp(0, textLength).toInt(),
+    extentOffset: selection.extentOffset.clamp(0, textLength).toInt(),
+    affinity: selection.affinity,
+    isDirectional: selection.isDirectional,
+  );
 }
 
 List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {

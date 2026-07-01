@@ -92,10 +92,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   @override
   void didUpdateWidget(covariant BusyMarkWysiwygEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.document.source != widget.document.source &&
-        !_internalChange) {
+    final fileChanged = oldWidget.document.filePath != widget.document.filePath;
+    final sourceChanged = oldWidget.document.source != widget.document.source;
+    if (fileChanged || (sourceChanged && !_internalChange)) {
       _undoStack.clear();
       _redoStack.clear();
+      if (fileChanged) {
+        _internalChange = false;
+        _resetPerDocumentState();
+      }
       _documentController.replaceDocument(widget.document);
       _initialFocusScheduled = false;
       _scheduleInitialFocus();
@@ -119,6 +124,25 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _scrollController.dispose();
     _selectionFocusNode.dispose();
     super.dispose();
+  }
+
+  void _resetPerDocumentState() {
+    for (final controller in _textControllers.values) {
+      controller.dispose();
+    }
+    for (final focusNode in _focusNodes.values) {
+      focusNode.dispose();
+    }
+    _textControllers.clear();
+    _focusNodes.clear();
+    _blockKeys.clear();
+    _pendingInlineKindsByBlockId.clear();
+    _activeBlockId = null;
+    _selectionStartBlockId = null;
+    _selectionEndBlockId = null;
+    _selectionStartOffset = null;
+    _selectionEndOffset = null;
+    _pointerDownBlockId = null;
   }
 
   @override

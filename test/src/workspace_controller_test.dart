@@ -210,6 +210,40 @@ void main() {
     settingsController.dispose();
   });
 
+  test(
+    'stale validation after save and tab switch does not restore previous file',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Dirty A\n');
+
+      final validation = controller.validateActive();
+      await service.validationStarted.future;
+
+      expect(await controller.saveActive(), isTrue);
+      expect(await controller.openActiveFile(service.bPath), isTrue);
+      controller.updateActiveText('# Dirty B\n');
+      expect(await controller.saveActive(), isTrue);
+
+      expect(controller.state.workspace?.activeFilePath, service.bPath);
+      expect(controller.state.activeText, '# Dirty B\n');
+      expect(service.savedTexts, ['# Dirty A\n', '# Dirty B\n']);
+
+      service.finishValidation();
+      await validation;
+
+      expect(controller.state.workspace?.activeFilePath, service.bPath);
+      expect(controller.state.activeText, '# Dirty B\n');
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
   test('folder workspaces track open file tabs without duplicates', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -584,6 +618,8 @@ class _WorkspaceControllerDriver {
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
 
+  Future<void> validateActive() => _notifier.validateActive();
+
   void dispose() {}
 }
 
@@ -698,4 +734,89 @@ class _AutosaveWorkspaceService extends WorkspaceService {
   }
 }
 
+class _DelayedValidationWorkspaceService extends WorkspaceService {
+  final rootPath = '/tmp/busymark-delayed-validation';
+  late final aPath = p.join(rootPath, 'a.md');
+  late final bPath = p.join(rootPath, 'b.md');
+  final savedTexts = <String>[];
+  final validationStarted = Completer<void>();
+  final _finishValidation = Completer<void>();
+  var _pausedValidation = false;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    return Workspace(
+      id: rootPath,
+      rootPath: rootPath,
+      kind: WorkspaceKind.markdownFolder,
+      openedAt: DateTime(2026),
+      activeFilePath: aPath,
+      activeFileSnapshot: _delayedSnapshot('# A\n'),
+      openFilePaths: [aPath],
+      files: [
+        DocumentFile(
+          absolutePath: aPath,
+          relativePath: 'a.md',
+          kind: DocumentKind.markdown,
+          size: 4,
+          lastModified: _delayedInitialModifiedAt,
+        ),
+        DocumentFile(
+          absolutePath: bPath,
+          relativePath: 'b.md',
+          kind: DocumentKind.markdown,
+          size: 4,
+          lastModified: _delayedInitialModifiedAt,
+        ),
+      ],
+      diagnostics: const [],
+    );
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    final text = path == bPath ? '# B\n' : '# A\n';
+    return WorkspaceFileLoad(text: text, snapshot: _delayedSnapshot(text));
+  }
+
+  @override
+  Future<bool> fileChangedSince(
+    String path,
+    WorkspaceFileSnapshot? knownSnapshot,
+  ) async {
+    return false;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
+    savedTexts.add(text);
+    return _delayedSnapshot(text, savedTexts.length);
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    if (!_pausedValidation && source == '# Dirty A\n') {
+      _pausedValidation = true;
+      validationStarted.complete();
+      await _finishValidation.future;
+    }
+    return workspace.copyWith(diagnostics: const []);
+  }
+
+  void finishValidation() {
+    if (!_finishValidation.isCompleted) {
+      _finishValidation.complete();
+    }
+  }
+}
+
+WorkspaceFileSnapshot _delayedSnapshot(String text, [int revision = 0]) {
+  return WorkspaceFileSnapshot(
+    modifiedAt: DateTime(2026, 2, revision + 1),
+    size: text.length,
+    contentHash: text,
+  );
+}
+
 final _autosaveInitialModifiedAt = DateTime(2026);
+final _delayedInitialModifiedAt = DateTime(2026, 2);
