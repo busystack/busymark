@@ -4,7 +4,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "Editor de documentación compatible con Markdown y Writerside.",
+  "appSubtitle": "Editor de documentación para Markdown y proyectos compatibles con Writerside.",
   "@appSubtitle": {
     "description": "Short application description."
   },
@@ -280,7 +280,7 @@
   "@viewMode": {
     "description": "Native header bar view mode control label."
   },
-  "welcome": "Bienvenido",
+  "welcome": "Bienvenida",
   "@welcome": {
     "description": "Welcome screen label and tooltip."
   },
@@ -316,6 +316,10 @@
   "@markdownFolderOrWritersideProject": {
     "description": "Subtitle describing supported folder workspace types."
   },
+  "noOpenFile": "No hay ningún archivo abierto",
+  "@noOpenFile": {
+    "description": "Header title when a folder or Writerside workspace has no open editor tab."
+  },
   "shortcutGroupFile": "Archivo",
   "@shortcutGroupFile": {
     "description": "Keyboard shortcut group for file commands."
@@ -324,11 +328,11 @@
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Crear un nuevo documento Markdown no guardado",
+  "shortcutNewDocumentDescription": "Crear un nuevo documento Markdown sin guardar",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
-  "shortcutOpenDescription": "Abrir un archivo Markdown, una carpeta Markdown o un proyecto de Writerside",
+  "shortcutOpenDescription": "Abrir un archivo Markdown, una carpeta o un proyecto de Writerside",
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
@@ -343,6 +347,38 @@
   "shortcutKeyboardShortcutsDescription": "Mostrar esta referencia de atajos de teclado",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutNextTab": "Siguiente pestaña",
+  "@shortcutNextTab": {
+    "description": "Keyboard shortcut label for moving to the next editor tab."
+  },
+  "shortcutNextTabDescription": "Ir a la siguiente pestaña abierta del editor",
+  "@shortcutNextTabDescription": {
+    "description": "Keyboard shortcut description for moving to the next editor tab."
+  },
+  "shortcutPreviousTab": "Pestaña anterior",
+  "@shortcutPreviousTab": {
+    "description": "Keyboard shortcut label for moving to the previous editor tab."
+  },
+  "shortcutPreviousTabDescription": "Ir a la pestaña abierta anterior del editor",
+  "@shortcutPreviousTabDescription": {
+    "description": "Keyboard shortcut description for moving to the previous editor tab."
+  },
+  "shortcutCloseTab": "Cerrar pestaña",
+  "@shortcutCloseTab": {
+    "description": "Keyboard shortcut label for closing the active editor tab."
+  },
+  "shortcutCloseTabDescription": "Cerrar la pestaña activa del editor",
+  "@shortcutCloseTabDescription": {
+    "description": "Keyboard shortcut description for closing the active editor tab."
+  },
+  "shortcutCloseAllTabs": "Cerrar todas las pestañas",
+  "@shortcutCloseAllTabs": {
+    "description": "Keyboard shortcut label for closing all editor tabs."
+  },
+  "shortcutCloseAllTabsDescription": "Cerrar todas las pestañas abiertas del editor",
+  "@shortcutCloseAllTabsDescription": {
+    "description": "Keyboard shortcut description for closing all editor tabs."
   },
   "shortcutGroupTextEditing": "Edición de texto",
   "@shortcutGroupTextEditing": {
@@ -376,7 +412,7 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "Borrar selección del editor",
+  "clearEditorSelection": "Quitar selección del editor",
   "@clearEditorSelection": {
     "description": "Keyboard shortcut label for clearing selection."
   },
@@ -388,15 +424,15 @@
   "@shortcutGroupFormatting": {
     "description": "Keyboard shortcut group for inline formatting."
   },
-  "shortcutBoldDescription": "Alternar negrita en el texto seleccionado",
+  "shortcutBoldDescription": "Activar o desactivar la negrita en el texto seleccionado",
   "@shortcutBoldDescription": {
     "description": "Keyboard shortcut description for bold."
   },
-  "shortcutItalicDescription": "Alternar cursiva en el texto seleccionado",
+  "shortcutItalicDescription": "Activar o desactivar la cursiva en el texto seleccionado",
   "@shortcutItalicDescription": {
     "description": "Keyboard shortcut description for italic."
   },
-  "shortcutUnderlineDescription": "Alternar subrayado en el texto seleccionado",
+  "shortcutUnderlineDescription": "Activar o desactivar el subrayado en el texto seleccionado",
   "@shortcutUnderlineDescription": {
     "description": "Keyboard shortcut description for underline."
   },
@@ -404,11 +440,11 @@
   "@shortcutLinkDescription": {
     "description": "Keyboard shortcut description for link insertion."
   },
-  "shortcutInlineCodeDescription": "Alternar código en línea en el texto seleccionado",
+  "shortcutInlineCodeDescription": "Activar o desactivar el código en línea en el texto seleccionado",
   "@shortcutInlineCodeDescription": {
     "description": "Keyboard shortcut description for inline code."
   },
-  "shortcutStrikethroughDescription": "Alternar tachado en el texto seleccionado",
+  "shortcutStrikethroughDescription": "Activar o desactivar el tachado en el texto seleccionado",
   "@shortcutStrikethroughDescription": {
     "description": "Keyboard shortcut description for strikethrough."
   },
@@ -416,31 +452,31 @@
   "@shortcutGroupBlocks": {
     "description": "Keyboard shortcut group for block styles."
   },
-  "shortcutParagraphDescription": "Establecer el bloque actual como párrafo",
+  "shortcutParagraphDescription": "Convertir el bloque actual en párrafo",
   "@shortcutParagraphDescription": {
     "description": "Keyboard shortcut description for paragraph style."
   },
-  "shortcutHeading1Description": "Establecer el bloque actual como Título 1",
+  "shortcutHeading1Description": "Convertir el bloque actual en encabezado 1",
   "@shortcutHeading1Description": {
     "description": "Keyboard shortcut description for heading 1."
   },
-  "shortcutHeading2Description": "Establecer el bloque actual como Título 2",
+  "shortcutHeading2Description": "Convertir el bloque actual en encabezado 2",
   "@shortcutHeading2Description": {
     "description": "Keyboard shortcut description for heading 2."
   },
-  "shortcutHeading3Description": "Establecer el bloque actual como Título 3",
+  "shortcutHeading3Description": "Convertir el bloque actual en encabezado 3",
   "@shortcutHeading3Description": {
     "description": "Keyboard shortcut description for heading 3."
   },
-  "shortcutHeading4Description": "Establecer el bloque actual como Título 4",
+  "shortcutHeading4Description": "Convertir el bloque actual en encabezado 4",
   "@shortcutHeading4Description": {
     "description": "Keyboard shortcut description for heading 4."
   },
-  "shortcutHeading5Description": "Establecer el bloque actual como Título 5",
+  "shortcutHeading5Description": "Convertir el bloque actual en encabezado 5",
   "@shortcutHeading5Description": {
     "description": "Keyboard shortcut description for heading 5."
   },
-  "shortcutHeading6Description": "Establecer el bloque actual como Título 6",
+  "shortcutHeading6Description": "Convertir el bloque actual en encabezado 6",
   "@shortcutHeading6Description": {
     "description": "Keyboard shortcut description for heading 6."
   },
@@ -452,7 +488,7 @@
   "@numberedList": {
     "description": "Keyboard shortcut label for numbered list formatting."
   },
-  "shortcutNumberedListDescription": "Alternar formato de lista numerada",
+  "shortcutNumberedListDescription": "Activar o desactivar el formato de lista numerada",
   "@shortcutNumberedListDescription": {
     "description": "Keyboard shortcut description for numbered list."
   },
@@ -460,7 +496,7 @@
   "@bulletedList": {
     "description": "Keyboard shortcut label for bulleted list formatting."
   },
-  "shortcutBulletedListDescription": "Alternar formato de lista con viñetas",
+  "shortcutBulletedListDescription": "Activar o desactivar el formato de lista con viñetas",
   "@shortcutBulletedListDescription": {
     "description": "Keyboard shortcut description for bulleted list."
   },
@@ -468,7 +504,7 @@
   "@checklist": {
     "description": "Keyboard shortcut label for checklist formatting."
   },
-  "shortcutChecklistDescription": "Alternar formato de lista de verificación",
+  "shortcutChecklistDescription": "Activar o desactivar el formato de lista de verificación",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
@@ -476,7 +512,7 @@
   "@createMarkdownFile": {
     "description": "Welcome screen action for creating a Markdown file."
   },
-  "createMarkdownFileDescription": "Iniciar un documento Markdown local no guardado",
+  "createMarkdownFileDescription": "Iniciar un documento Markdown local sin guardar",
   "@createMarkdownFileDescription": {
     "description": "Welcome screen subtitle for creating a Markdown file."
   },
@@ -484,7 +520,7 @@
   "@createWritersideProject": {
     "description": "Welcome screen action for creating a Writerside project."
   },
-  "createWritersideProjectDescription": "Crear un proyecto local compatible con Writerside",
+  "createWritersideProjectDescription": "Iniciar un proyecto local compatible con Writerside",
   "@createWritersideProjectDescription": {
     "description": "Welcome screen subtitle for creating a Writerside project."
   },
@@ -553,9 +589,13 @@
     "description": "Settings screen title."
   },
   "autoSave": "Guardado automático",
-  "@autoSave": {"description": "Editor setting label for saving files automatically."},
-  "autoSaveDescription": "Guarda automáticamente los cambios de archivos mientras editas.",
-  "@autoSaveDescription": {"description": "Editor setting description for saving files automatically."},
+  "@autoSave": {
+    "description": "Editor setting label for saving files automatically."
+  },
+  "autoSaveDescription": "Guarda automáticamente los cambios del archivo después de un breve periodo de inactividad.",
+  "@autoSaveDescription": {
+    "description": "Editor setting description for saving files automatically."
+  },
   "wordWrap": "Ajuste de línea",
   "@wordWrap": {
     "description": "Word wrap setting label."
@@ -581,32 +621,55 @@
     "description": "Description for WYSIWYG editing button position setting."
   },
   "settingsWindowSectionTitle": "Ventana",
-  "@settingsWindowSectionTitle": {"description":"Settings section title for native window behavior."},
+  "@settingsWindowSectionTitle": {
+    "description": "Settings section title for native window behavior."
+  },
   "settingsConfirmCloseWithUnsavedChangesTitle": "Confirmar antes de cerrar con cambios sin guardar",
-  "@settingsConfirmCloseWithUnsavedChangesTitle": {"description":"Settings switch title for close confirmation when documents have unsaved changes."},
-  "settingsConfirmCloseWithUnsavedChangesDescription": "Preguntar antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.",
-  "@settingsConfirmCloseWithUnsavedChangesDescription": {"description":"Settings switch description for close confirmation when documents have unsaved changes."},
+  "@settingsConfirmCloseWithUnsavedChangesTitle": {
+    "description": "Settings switch title for close confirmation when documents have unsaved changes."
+  },
+  "settingsConfirmCloseWithUnsavedChangesDescription": "Pregunta antes de cerrar BusyMark cuando haya documentos con cambios sin guardar.",
+  "@settingsConfirmCloseWithUnsavedChangesDescription": {
+    "description": "Settings switch description for close confirmation when documents have unsaved changes."
+  },
   "closeUnsavedChangesTitle": "Cambios sin guardar",
-  "@closeUnsavedChangesTitle": {"description":"Window close confirmation dialog title when documents have unsaved changes."},
+  "@closeUnsavedChangesTitle": {
+    "description": "Window close confirmation dialog title when documents have unsaved changes."
+  },
   "closeUnsavedChangesSingleMessage": "Este documento tiene cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?",
-  "@closeUnsavedChangesSingleMessage": {"description":"Window close confirmation message when one document has unsaved changes."},
+  "@closeUnsavedChangesSingleMessage": {
+    "description": "Window close confirmation message when one document has unsaved changes."
+  },
   "closeUnsavedChangesMultipleMessage": "{count, plural, =0{¿Guardar los cambios antes de cerrar BusyMark?} =1{1 documento tiene cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?} other{{count} documentos tienen cambios sin guardar. ¿Guardar los cambios antes de cerrar BusyMark?}}",
-  "@closeUnsavedChangesMultipleMessage": {"description":"Window close confirmation message when multiple documents have unsaved changes.","placeholders":{"count":{"type":"int"}}},
+  "@closeUnsavedChangesMultipleMessage": {
+    "description": "Window close confirmation message when multiple documents have unsaved changes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "closeUnsavedChangesCancel": "Cancelar",
-  "@closeUnsavedChangesCancel": {"description":"Cancel button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesCancel": {
+    "description": "Cancel button label in the window close unsaved-changes dialog."
+  },
   "closeUnsavedChangesDiscard": "Descartar",
-  "@closeUnsavedChangesDiscard": {"description":"Discard button label in the window close unsaved-changes dialog."},
+  "@closeUnsavedChangesDiscard": {
+    "description": "Discard button label in the window close unsaved-changes dialog."
+  },
   "closeUnsavedChangesSave": "Guardar",
-  "@closeUnsavedChangesSave": {"description":"Save button label in the window close unsaved-changes dialog."},
-  "currentFile": "Archivo actual",
+  "@closeUnsavedChangesSave": {
+    "description": "Save button label in the window close unsaved-changes dialog."
+  },
+  "currentFile": "archivo actual",
   "@currentFile": {
     "description": "Fallback file name in unsaved changes dialog."
   },
-  "unsavedChanges": "Cambios no guardados",
+  "unsavedChanges": "Cambios sin guardar",
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "Hay cambios no guardados en {fileName}. ¿Desea guardarlos antes de continuar?",
+  "unsavedChangesMessage": "Hay cambios sin guardar en {fileName}. ¿Guardarlos antes de continuar?",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -615,11 +678,11 @@
       }
     }
   },
-  "fileChangedOnDisk": "Archivo modificado en el disco",
+  "fileChangedOnDisk": "Archivo modificado en disco",
   "@fileChangedOnDisk": {
     "description": "File changed confirmation dialog title."
   },
-  "fileChangedOnDiskMessage": "Este archivo cambió en el disco desde que lo abrió. ¿Desea sobrescribirlo?",
+  "fileChangedOnDiskMessage": "Este archivo ha cambiado en disco desde que se abrió. ¿Sobrescribirlo?",
   "@fileChangedOnDiskMessage": {
     "description": "File changed confirmation dialog message."
   },
@@ -703,7 +766,7 @@
   "@link": {
     "description": "Link command and preview label."
   },
-  "hardLineBreak": "Salto de línea fijo",
+  "hardLineBreak": "Salto de línea forzado",
   "@hardLineBreak": {
     "description": "Hard line break command label."
   },
@@ -715,27 +778,27 @@
   "@paragraph": {
     "description": "Paragraph style label."
   },
-  "heading1": "Título 1",
+  "heading1": "Encabezado 1",
   "@heading1": {
     "description": "Heading 1 style label."
   },
-  "heading2": "Título 2",
+  "heading2": "Encabezado 2",
   "@heading2": {
     "description": "Heading 2 style label."
   },
-  "heading3": "Título 3",
+  "heading3": "Encabezado 3",
   "@heading3": {
     "description": "Heading 3 style label."
   },
-  "heading4": "Título 4",
+  "heading4": "Encabezado 4",
   "@heading4": {
     "description": "Heading 4 style label."
   },
-  "heading5": "Título 5",
+  "heading5": "Encabezado 5",
   "@heading5": {
     "description": "Heading 5 style label."
   },
-  "heading6": "Título 6",
+  "heading6": "Encabezado 6",
   "@heading6": {
     "description": "Heading 6 style label."
   },
@@ -863,11 +926,11 @@
   "@hidePreview": {
     "description": "Tooltip for hiding the preview pane."
   },
-  "workspaceKindUnsavedMarkdown": "Archivo Markdown no guardado",
+  "workspaceKindUnsavedMarkdown": "Archivo Markdown sin guardar",
   "@workspaceKindUnsavedMarkdown": {
     "description": "Workspace kind label for an unsaved Markdown file."
   },
-  "workspaceKindSingleMarkdown": "Archivo Markdown único",
+  "workspaceKindSingleMarkdown": "Archivo Markdown individual",
   "@workspaceKindSingleMarkdown": {
     "description": "Workspace kind label for a single Markdown file."
   },
@@ -900,7 +963,7 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
-  "markdownUnsaved": "Markdown — no guardado",
+  "markdownUnsaved": "Markdown — sin guardar",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
   },
@@ -920,7 +983,7 @@
   "@noFiles": {
     "description": "Empty state shown when there are no files."
   },
-  "noWritersideToc": "Sin índice de Writerside",
+  "noWritersideToc": "No hay índice de Writerside",
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
@@ -944,7 +1007,7 @@
   "@topicTitle": {
     "description": "Create topic dialog field label."
   },
-  "fileName": "Nombre del archivo",
+  "fileName": "Nombre de archivo",
   "@fileName": {
     "description": "Create topic dialog field label."
   },
@@ -952,7 +1015,7 @@
   "@topicTitleRequired": {
     "description": "Validation message for missing topic title."
   },
-  "fileNameRequired": "El nombre del archivo es obligatorio.",
+  "fileNameRequired": "El nombre de archivo es obligatorio.",
   "@fileNameRequired": {
     "description": "Validation message for missing file name."
   },
@@ -1094,7 +1157,7 @@
   "@noProblemsFound": {
     "description": "Diagnostics empty state."
   },
-  "noResults": "Sin resultados",
+  "noResults": "No hay resultados",
   "@noResults": {
     "description": "Search empty state."
   },
@@ -1186,7 +1249,7 @@
   "@workspaceErrorChooseWhereToSaveMarkdown": {
     "description": "Workspace error message shown when an untitled file needs a save location."
   },
-  "workspaceErrorSaveBlockedFileChangedOnDisk": "Guardado bloqueado: el archivo fue modificado en el disco.",
+  "workspaceErrorSaveBlockedFileChangedOnDisk": "Guardado bloqueado: el archivo ha cambiado en disco.",
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
@@ -1244,11 +1307,11 @@
       }
     }
   },
-  "errorParentDirectoryRequired": "Se requiere el directorio principal.",
+  "errorParentDirectoryRequired": "El directorio padre es obligatorio.",
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
-  "errorParentDirectoryMissing": "El directorio principal no existe: {path}",
+  "errorParentDirectoryMissing": "El directorio padre no existe: {path}",
   "@errorParentDirectoryMissing": {
     "description": "Detail for a missing parent directory.",
     "placeholders": {
@@ -1273,7 +1336,7 @@
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
-  "errorTopicFileInvalid": "El nombre del archivo del tema debe ser un archivo Markdown sin separadores de ruta.",
+  "errorTopicFileInvalid": "El nombre del archivo del tema debe ser un nombre de archivo Markdown sin separadores de ruta.",
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
@@ -1412,11 +1475,11 @@
       }
     }
   },
-  "diagnosticWritersideTopicH1ConvertedToChapter": "Los títulos H1 adicionales de nivel superior se tratan como capítulos.",
+  "diagnosticWritersideTopicH1ConvertedToChapter": "Los encabezados H1 de nivel superior adicionales se tratan como capítulos.",
   "@diagnosticWritersideTopicH1ConvertedToChapter": {
     "description": "Markdown parser diagnostic for additional H1 headings in Writerside mode."
   },
-  "diagnosticWritersideMarkdownTopicMissingTitle": "El tema Markdown de Writerside no tiene H1 ni título inicial.",
+  "diagnosticWritersideMarkdownTopicMissingTitle": "El tema Markdown de Writerside no tiene un encabezado H1 ni un título de front matter.",
   "@diagnosticWritersideMarkdownTopicMissingTitle": {
     "description": "Diagnostic for a Writerside Markdown topic without a title."
   },
@@ -1486,15 +1549,15 @@
       }
     }
   },
-  "diagnosticWritersideConfigInvalidRoot": "La raíz de writeside.cfg debe ser <ihp>.",
+  "diagnosticWritersideConfigInvalidRoot": "La raíz de writerside.cfg debe ser <ihp>.",
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "Falta src en la declaración de snippets.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "A la declaración de snippets le falta el atributo src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "Falta src en la declaración de grupos de instancias.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "A la declaración de instance-groups le falta el atributo src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
@@ -1507,19 +1570,19 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "Falta src en la declaración de instancia.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "A la declaración de instancia le falta el atributo src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstance": "writeside.cfg no registra ninguna instancia.",
+  "diagnosticWritersideConfigMissingInstance": "writerside.cfg no registra ninguna instancia.",
   "@diagnosticWritersideConfigMissingInstance": {
     "description": "Writerside parser diagnostic for a config with no instance."
   },
-  "diagnosticWritersideTreeInvalidRoot": "La raíz del árbol debe ser <instance-profile>.",
+  "diagnosticWritersideTreeInvalidRoot": "La raíz de .tree debe ser <instance-profile>.",
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "Al perfil de instancia le falta el ID.",
+  "diagnosticWritersideTreeMissingId": "Al perfil de instancia le falta el atributo id.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
@@ -1532,7 +1595,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "A la instancia que no es de biblioteca le falta la página de inicio.",
+  "diagnosticWritersideTreeMissingStartPage": "A la instancia que no es de biblioteca le falta start-page.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -1545,7 +1608,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "El tema \"{topic}\" aparece más de una vez en este índice de instancia.",
+  "diagnosticWritersideTreeDuplicateTopic": "El tema \"{topic}\" aparece más de una vez en el índice de esta instancia.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1558,7 +1621,7 @@
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
-  "diagnosticWritersideVariableDuplicateName": "La variable \"{name}\" se declara más de una vez.",
+  "diagnosticWritersideVariableDuplicateName": "La variable \"{name}\" está declarada más de una vez.",
   "@diagnosticWritersideVariableDuplicateName": {
     "description": "Writerside parser diagnostic for a duplicate variable name.",
     "placeholders": {
@@ -1567,11 +1630,11 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "A la categoría le falta el ID.",
+  "diagnosticWritersideCategoryMissingId": "A la categoría le falta el atributo id.",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
-  "diagnosticWritersideCategoryDuplicateId": "La categoría \"{id}\" se declara más de una vez.",
+  "diagnosticWritersideCategoryDuplicateId": "La categoría \"{id}\" está declarada más de una vez.",
   "@diagnosticWritersideCategoryDuplicateId": {
     "description": "Writerside parser diagnostic for a duplicate category ID.",
     "placeholders": {
@@ -1580,7 +1643,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "El orden de categoría \"{order}\" se declara más de una vez.",
+  "diagnosticWritersideCategoryDuplicateOrder": "El orden de categoría \"{order}\" está declarado más de una vez.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -1609,7 +1672,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "El ID de elemento \"{elementId}\" aparece más de una vez.",
+  "diagnosticWritersideTopicDuplicateElementId": "El ID del elemento \"{elementId}\" aparece más de una vez.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -1618,11 +1681,11 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "A <a> le falta href.",
+  "diagnosticWritersideTopicAnchorMissingHref": "A <a> le falta el atributo href.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
-  "diagnosticWritersideConfigMissing": "El modo Writerside requiere writeside.cfg.",
+  "diagnosticWritersideConfigMissing": "El modo Writerside requiere writerside.cfg.",
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
@@ -1725,7 +1788,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateId": "El ID de elemento \"{id}\" aparece más de una vez.",
+  "diagnosticWritersideTopicDuplicateId": "El ID del elemento \"{id}\" aparece más de una vez.",
   "@diagnosticWritersideTopicDuplicateId": {
     "description": "Writerside module diagnostic for a duplicate topic element ID.",
     "placeholders": {
@@ -1734,7 +1797,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "El índice hace referencia al tema ausente \"{topic}\".",
+  "diagnosticWritersideTreeMissingTopic": "El índice hace referencia a un tema inexistente \"{topic}\".",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -1782,7 +1845,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "Falta el atributo from en <include>.",
+  "diagnosticWritersideIncludeMissingFrom": "A <include> le falta el atributo from.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
@@ -1807,7 +1870,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "La categoría de «véase también» \"{ref}\" no está declarada.",
+  "diagnosticWritersideCategoryUnresolved": "La categoría seealso \"{ref}\" no está declarada.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
