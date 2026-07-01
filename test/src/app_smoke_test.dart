@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/l10n/generated/app_localizations_fr.dart';
 import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
@@ -346,6 +347,10 @@ void main() {
       find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
     );
+    expect(find.text(l10n.shortcutNextTabDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutPreviousTabDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutCloseTabDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutCloseAllTabsDescription), findsOneWidget);
     expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
     expect(find.text(l10n.shortcutUndoDescription), findsOneWidget);
     expect(find.text(l10n.shortcutRedoDescription), findsOneWidget);
@@ -363,6 +368,10 @@ void main() {
     expect(find.text('Ctrl+S'), findsOneWidget);
     expect(find.text('Ctrl+F'), findsOneWidget);
     expect(find.text('Ctrl+/'), findsOneWidget);
+    expect(find.text('Ctrl+Tab'), findsOneWidget);
+    expect(find.text('Ctrl+Shift+Tab'), findsOneWidget);
+    expect(find.text('Ctrl+W'), findsOneWidget);
+    expect(find.text('Ctrl+Shift+W'), findsOneWidget);
     expect(find.text('Ctrl+A'), findsOneWidget);
     expect(find.text('Ctrl+X'), findsAtLeastNWidgets(1));
     expect(find.text('Ctrl+C'), findsOneWidget);
@@ -389,6 +398,33 @@ void main() {
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);
+  });
+
+  testWidgets('keyboard shortcuts tabs section title is localized', (
+    tester,
+  ) async {
+    final fr = AppLocalizationsFr();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults().copyWith(localeTag: 'fr').toJson();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(fr.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(fr.keyboardShortcuts));
+    await tester.pumpAndSettle();
+
+    expect(find.text(fr.tabs), findsOneWidget);
+    expect(find.text('Tabs'), findsNothing);
   });
 
   testWidgets('about dialog shows the BusyMark logo', (tester) async {
@@ -503,6 +539,115 @@ void main() {
 
     expect(service.untitledCount, 1);
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
+  });
+
+  testWidgets('tab keyboard shortcuts move and close editor tabs', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_tabs_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/a.md')..writeAsStringSync('# A\n');
+    final second = File('${temp.path}/b.md')..writeAsStringSync('# B\n');
+    final third = File('${temp.path}/c.md')..writeAsStringSync('# C\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path, third.path],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    Future<void> pressControlShortcut(
+      LogicalKeyboardKey key, {
+      bool shift = false,
+    }) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      if (shift) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      if (shift) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 30; i += 1) {
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    await controller.openActiveFile(second.path);
+    await controller.openActiveFile(third.path);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.openFilePaths,
+      [first.path, second.path, third.path],
+    );
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      third.path,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.tab);
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      first.path,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.tab, shift: true);
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      third.path,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.keyW);
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      second.path,
+    );
+    expect(
+      container.read(workspaceControllerProvider).workspace?.openFilePaths,
+      [first.path, second.path],
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.keyW, shift: true);
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      isNull,
+    );
+    expect(
+      container.read(workspaceControllerProvider).workspace?.openFilePaths,
+      isEmpty,
+    );
+    expect(find.text(l10n.noOpenFile), findsWidgets);
   });
 
   testWidgets('startup path opens a Markdown file workspace', (tester) async {
@@ -1423,6 +1568,58 @@ class _StartupWorkspaceService extends WorkspaceService {
       contentHash: '',
     );
   }
+}
+
+class _TabbedWorkspaceService extends WorkspaceService {
+  const _TabbedWorkspaceService({required this.rootPath, required this.paths});
+
+  final String rootPath;
+  final List<String> paths;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    final files = [
+      for (final filePath in paths)
+        DocumentFile(
+          absolutePath: filePath,
+          relativePath: filePath.split('/').last,
+          kind: DocumentKind.markdown,
+          size: _sourceFor(filePath).length,
+          lastModified: DateTime(2026),
+        ),
+    ];
+    return Workspace(
+      id: rootPath,
+      rootPath: rootPath,
+      kind: WorkspaceKind.markdownFolder,
+      openedAt: DateTime(2026),
+      activeFilePath: paths.first,
+      activeFileModifiedAt: DateTime(2026),
+      openFilePaths: [paths.first],
+      files: files,
+      diagnostics: const [],
+    );
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    final text = _sourceFor(path);
+    return WorkspaceFileLoad(
+      text: text,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: text.length,
+        contentHash: path,
+      ),
+    );
+  }
+
+  @override
+  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+    return workspace.copyWith(diagnostics: const []);
+  }
+
+  String _sourceFor(String path) => '# ${path.split('/').last}\n';
 }
 
 class _SearchWorkspaceService extends WorkspaceService {

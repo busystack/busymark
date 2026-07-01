@@ -249,6 +249,9 @@ class AppLocalizationsNo extends AppLocalizations {
       'Markdown-mappe eller Writerside-kompatibelt prosjekt';
 
   @override
+  String get noOpenFile => 'No open file';
+
+  @override
   String get shortcutGroupFile => 'Fil';
 
   @override
@@ -271,6 +274,31 @@ class AppLocalizationsNo extends AppLocalizations {
   @override
   String get shortcutKeyboardShortcutsDescription =>
       'Vis denne hurtigtastreferansen';
+
+  @override
+  String get shortcutNextTab => 'Next tab';
+
+  @override
+  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+
+  @override
+  String get shortcutPreviousTab => 'Previous tab';
+
+  @override
+  String get shortcutPreviousTabDescription =>
+      'Move to the previous open editor tab';
+
+  @override
+  String get shortcutCloseTab => 'Close tab';
+
+  @override
+  String get shortcutCloseTabDescription => 'Close the active editor tab';
+
+  @override
+  String get shortcutCloseAllTabs => 'Close all tabs';
+
+  @override
+  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
 
   @override
   String get shortcutGroupTextEditing => 'Tekstredigering';

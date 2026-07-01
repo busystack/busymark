@@ -249,6 +249,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Папка Markdown или проект, совместимый с Writerside.';
 
   @override
+  String get noOpenFile => 'No open file';
+
+  @override
   String get shortcutGroupFile => 'Файл';
 
   @override
@@ -271,6 +274,31 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get shortcutKeyboardShortcutsDescription =>
       'Показать справку по сочетаниям клавиш.';
+
+  @override
+  String get shortcutNextTab => 'Next tab';
+
+  @override
+  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+
+  @override
+  String get shortcutPreviousTab => 'Previous tab';
+
+  @override
+  String get shortcutPreviousTabDescription =>
+      'Move to the previous open editor tab';
+
+  @override
+  String get shortcutCloseTab => 'Close tab';
+
+  @override
+  String get shortcutCloseTabDescription => 'Close the active editor tab';
+
+  @override
+  String get shortcutCloseAllTabs => 'Close all tabs';
+
+  @override
+  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
 
   @override
   String get shortcutGroupTextEditing => 'Редактирование текста';
