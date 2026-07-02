@@ -78,6 +78,44 @@ void main() {
     },
   );
 
+  test('discarding an untitled Markdown file clears the workspace', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText('# Draft\n');
+
+    expect(await controller.discardActiveChanges(), isTrue);
+    expect(controller.state.workspace, isNull);
+    expect(controller.state.activeText, isEmpty);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test(
+    'discarding a saved file reloads disk text and clears dirty state',
+    () async {
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final savedText = controller.state.activeText;
+      controller.updateActiveText('# Dirty\n');
+
+      expect(await controller.discardActiveChanges(), isTrue);
+      expect(controller.state.activeText, savedText);
+      expect(controller.state.isDirty, isFalse);
+      expect(controller.state.workspace?.activeFileSnapshot, isNotNull);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
   test('creates a Writerside project and records it as recent', () async {
     final parent = await Directory.systemTemp.createTemp(
       'busymark-controller-create-',
@@ -649,6 +687,8 @@ class _WorkspaceControllerDriver {
   Future<bool> saveActiveAs(String path) => _notifier.saveActiveAs(path);
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
+
+  Future<bool> discardActiveChanges() => _notifier.discardActiveChanges();
 
   Future<void> validateActive() => _notifier.validateActive();
 

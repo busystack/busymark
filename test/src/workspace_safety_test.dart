@@ -81,6 +81,67 @@ void main() {
     },
   );
 
+  testWidgets('discarding unsaved changes prevents repeated prompts', (
+    tester,
+  ) async {
+    var safeToContinueCount = 0;
+    late WidgetRef widgetRef;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: Colors.green,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) {
+                widgetRef = ref;
+                return TextButton(
+                  onPressed: () async {
+                    if (await confirmSafeToContinue(context, ref)) {
+                      safeToContinueCount++;
+                    }
+                  },
+                  child: const Text('Navigate'),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final controller = widgetRef.read(workspaceControllerProvider.notifier);
+    await tester.runAsync(() async {
+      await controller.openPath('test/fixtures/markdown/other.md');
+      controller.updateActiveText('# Dirty\n');
+    });
+
+    await tester.tap(find.text('Navigate'));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+
+    await tester.tap(find.text(l10n.discard));
+    await tester.pumpAndSettle();
+    expect(
+      widgetRef.read(workspaceControllerProvider).hasUnsavedChanges,
+      isFalse,
+    );
+    expect(safeToContinueCount, 1);
+
+    await tester.tap(find.text('Navigate'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(safeToContinueCount, 2);
+  });
+
   testWidgets('destructive dialog buttons stay readable on dark controls', (
     tester,
   ) async {
