@@ -644,6 +644,82 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return _service.fileChangedSince(active, workspace?.activeFileSnapshot);
   }
 
+  Future<bool> refreshWorkspaceFromDiskPreservingOpenTabs() async {
+    final workspace = state.workspace;
+    if (workspace == null || state.isDirty) {
+      return false;
+    }
+    final operationRevision = _invalidateActiveDocumentOperations();
+    _parseDebounce?.cancel();
+    _autoSaveDebounce?.cancel();
+    state = state.copyWith(isLoading: true, clearMessage: true);
+    try {
+      final openTarget = workspace.kind == WorkspaceKind.singleMarkdown
+          ? workspace.activeFilePath ?? workspace.rootPath
+          : workspace.rootPath;
+      final refreshed = await _service.openPath(openTarget);
+      final existingFiles = {
+        for (final file in refreshed.files) file.absolutePath: file,
+      };
+      final retainedTabs = [
+        for (final path in workspace.openFilePaths)
+          if (existingFiles.containsKey(path)) path,
+      ];
+      final previousActive = workspace.activeFilePath;
+      final active =
+          previousActive != null && existingFiles.containsKey(previousActive)
+          ? previousActive
+          : retainedTabs.isNotEmpty
+          ? retainedTabs.first
+          : refreshed.activeFilePath;
+      final load = active == null
+          ? null
+          : await _service.loadTextWithSnapshot(active);
+      final tabPaths = _supportsOpenFileTabs(refreshed)
+          ? _retainedOpenFileTabPaths(
+              current: workspace,
+              refreshed: refreshed,
+              activeFilePath: active,
+            )
+          : active == null
+          ? const <String>[]
+          : <String>[active];
+      final nextWorkspace = refreshed.copyWith(
+        activeFilePath: active,
+        activeFileSnapshot: load?.snapshot,
+        openFilePaths: tabPaths,
+      );
+      final reparsed = load == null
+          ? nextWorkspace.copyWith(markdown: null)
+          : await _service.reparseActive(nextWorkspace, load.text);
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+        return false;
+      }
+      state = WorkspaceState(
+        workspace: reparsed,
+        activeText: load?.text ?? '',
+        preview: load == null ? null : _safePreview(reparsed, load.text),
+      );
+      _resetSaveTracking();
+      return true;
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Workspace refresh failed');
+      stderr.writeln('[BusyMark]   root: ${workspace.rootPath}');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      if (_isCurrentActiveDocumentOperation(operationRevision)) {
+        state = state.copyWith(
+          isLoading: false,
+          message: WorkspaceMessage(
+            WorkspaceMessageCode.couldNotOpenFile,
+            error: error,
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
   Future<void> validateActive() async {
     final workspace = state.workspace;
     if (workspace == null) {

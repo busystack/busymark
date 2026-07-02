@@ -24,6 +24,10 @@ import '../../editor/markdown_image_view.dart';
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../git/application/git_controller.dart';
+import '../../git/domain/git_models.dart';
+import '../../git/presentation/git_diff_viewer.dart';
+import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
@@ -249,6 +253,7 @@ class WorkspaceScreen extends ConsumerWidget {
       return const WelcomeScreen();
     }
     final searchState = ref.watch(_workspaceSearchProvider);
+    final gitState = ref.watch(gitControllerProvider);
     final searchResults = _workspaceSearchResults(
       context,
       state,
@@ -270,6 +275,7 @@ class WorkspaceScreen extends ConsumerWidget {
         if (current.query == query && current.active) {
           return;
         }
+        _clearGitDetailSelection(ref);
         ref
             .read(_workspaceSearchProvider.notifier)
             .set(current.copyWith(active: true, query: query));
@@ -286,6 +292,18 @@ class WorkspaceScreen extends ConsumerWidget {
         _closeSearch(ref);
       }
     });
+    ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
+      final nextWorkspace = next.workspace;
+      if (nextWorkspace == null) {
+        return;
+      }
+      ref.read(gitControllerProvider.notifier).attachWorkspace(nextWorkspace);
+    });
+    if (gitState.attachedWorkspace?.id != workspace.id) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(gitControllerProvider.notifier).attachWorkspace(workspace);
+      });
+    }
     if (headerBar.isAvailable) {
       _configureHeaderBar(
         context,
@@ -385,9 +403,15 @@ class WorkspaceScreen extends ConsumerWidget {
                             : context.l10n.showSidebar,
                         icon: BusyMarkGlyphs.sidebar,
                         selected: settings.sidebarVisible,
-                        onPressed: () => settingsController.setSidebarVisible(
-                          !settings.sidebarVisible,
-                        ),
+                        onPressed: () {
+                          final visible = !settings.sidebarVisible;
+                          if (!visible) {
+                            _clearGitDetailSelection(ref);
+                          }
+                          unawaited(
+                            settingsController.setSidebarVisible(visible),
+                          );
+                        },
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.search,
@@ -458,14 +482,28 @@ class WorkspaceScreen extends ConsumerWidget {
                             if (_shouldShowEditorTabs(workspace))
                               _EditorTabStrip(state: state),
                             Expanded(
-                              child: _EditorPreviewSplit(
-                                state: state,
-                                viewMode: settings.documentViewMode,
-                                editorFontSize: settings.editorFontSize,
-                                editorToolbarPlacement:
-                                    settings.editorToolbarPlacement,
-                                wordWrap: settings.wordWrap,
-                              ),
+                              child: gitState.selectedDiff == null
+                                  ? _EditorPreviewSplit(
+                                      state: state,
+                                      viewMode: settings.documentViewMode,
+                                      editorFontSize: settings.editorFontSize,
+                                      editorToolbarPlacement:
+                                          settings.editorToolbarPlacement,
+                                      wordWrap: settings.wordWrap,
+                                    )
+                                  : GitDiffViewer(
+                                      diff: gitState.selectedDiff,
+                                      hasUnsavedEditorChanges: state.isDirty,
+                                      onOpenFile: (relativePath) =>
+                                          _openGitDiffFile(
+                                            context,
+                                            ref,
+                                            relativePath,
+                                          ),
+                                      onClose: () => ref
+                                          .read(gitControllerProvider.notifier)
+                                          .clearSelection(),
+                                    ),
                             ),
                           ],
                         ),
@@ -492,6 +530,7 @@ class WorkspaceScreen extends ConsumerWidget {
 
   void _openSearch(WidgetRef ref) {
     final search = ref.read(_workspaceSearchProvider);
+    _clearGitDetailSelection(ref);
     ref
         .read(_workspaceSearchProvider.notifier)
         .set(search.copyWith(active: true));
@@ -568,9 +607,11 @@ class WorkspaceScreen extends ConsumerWidget {
           }
         }());
       case HeaderBarAction.sidebarToggle:
-        unawaited(
-          settingsController.setSidebarVisible(!settings.sidebarVisible),
-        );
+        final visible = !settings.sidebarVisible;
+        if (!visible) {
+          _clearGitDetailSelection(ref);
+        }
+        unawaited(settingsController.setSidebarVisible(visible));
       case HeaderBarAction.refresh:
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
@@ -664,6 +705,7 @@ class WorkspaceScreen extends ConsumerWidget {
           .read(workspaceControllerProvider.notifier)
           .openActiveFile(result.filePath);
     }
+    _clearGitDetailSelection(ref);
     if (!context.mounted) {
       return;
     }
@@ -724,6 +766,199 @@ class WorkspaceScreen extends ConsumerWidget {
       return;
     }
     _showProblemsDialog(context, ref);
+  }
+}
+
+Future<void> _openGitDiffFile(
+  BuildContext context,
+  WidgetRef ref,
+  String repoRelativePath,
+) async {
+  final repo = ref.read(gitControllerProvider).repositoryInfo;
+  if (repo == null) {
+    return;
+  }
+  if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+      !context.mounted) {
+    return;
+  }
+  final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  final fileInWorkspace =
+      workspace?.files.any((file) => file.absolutePath == absolutePath) ??
+      false;
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  if (fileInWorkspace) {
+    await controller.openActiveFile(absolutePath);
+  } else {
+    await controller.openPath(absolutePath);
+  }
+  ref.read(gitControllerProvider.notifier).clearSelection();
+}
+
+void _clearGitDetailSelection(WidgetRef ref) {
+  final gitState = ref.read(gitControllerProvider);
+  if (gitState.selectedDiff != null ||
+      gitState.selectedFilePath != null ||
+      gitState.selectedCommitHash != null) {
+    ref.read(gitControllerProvider.notifier).clearSelection();
+  }
+}
+
+Future<bool> _confirmDiscardGitFiles(
+  BuildContext context,
+  WidgetRef ref,
+  List<GitFileStatus> files,
+) async {
+  if (files.isEmpty ||
+      !await confirmSafeToContinue(context, ref) ||
+      !context.mounted) {
+    return false;
+  }
+  final untracked = files.where((file) => file.untracked).toList();
+  final tracked = files.where((file) => !file.untracked).toList();
+  final title = context.l10n.gitConfirmDiscardTitle;
+  final message = tracked.isNotEmpty && untracked.isNotEmpty
+      ? context.l10n.gitConfirmDiscardMixed(files.length)
+      : untracked.isNotEmpty
+      ? context.l10n.gitConfirmDiscardUntracked(untracked.length)
+      : context.l10n.gitConfirmDiscardTracked(tracked.length);
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: title,
+      maxWidth: BusyMarkSizes.dialogWide,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.l10n.gitDiscard),
+        ),
+      ],
+      children: [
+        Text(message),
+        const SizedBox(height: BusyMarkSpacing.md),
+        _GitFileList(files: files),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+Future<bool> _confirmSwitchGitBranch(
+  BuildContext context,
+  WidgetRef ref,
+  String branchName,
+) async {
+  if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    return false;
+  }
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.gitConfirmSwitchBranchTitle(branchName),
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.l10n.gitSwitchBranch),
+        ),
+      ],
+      children: [Text(context.l10n.gitConfirmSwitchBranchMessage)],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+Future<bool> _confirmGitPushSetUpstream(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final repo = ref.read(gitControllerProvider).repositoryInfo;
+  if (repo?.upstreamBranch != null) {
+    return false;
+  }
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.gitConfirmPushSetUpstreamTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.l10n.gitPush),
+        ),
+      ],
+      children: [
+        Text(
+          context.l10n.gitConfirmPushSetUpstreamMessage(
+            repo?.currentBranch ?? '',
+          ),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+Future<void> _refreshWorkspaceAfterGitFileChanges(WidgetRef ref) async {
+  await ref
+      .read(workspaceControllerProvider.notifier)
+      .refreshWorkspaceFromDiskPreservingOpenTabs();
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  if (workspace != null) {
+    ref.read(gitControllerProvider.notifier).attachWorkspace(workspace);
+  }
+}
+
+class _GitFileList extends StatelessWidget {
+  const _GitFileList({required this.files});
+
+  final List<GitFileStatus> files;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.control,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 180),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          itemCount: files.length,
+          itemBuilder: (context, index) => Text(
+            files[index].repoRelativePath,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -917,7 +1152,7 @@ class _InlineMessage extends StatelessWidget {
   }
 }
 
-class _Sidebar extends StatefulWidget {
+class _Sidebar extends ConsumerStatefulWidget {
   const _Sidebar({
     required this.workspace,
     required this.searchState,
@@ -931,10 +1166,10 @@ class _Sidebar extends StatefulWidget {
   final Future<void> Function(_WorkspaceSearchResult result) onOpenSearchResult;
 
   @override
-  State<_Sidebar> createState() => _SidebarState();
+  ConsumerState<_Sidebar> createState() => _SidebarState();
 }
 
-class _SidebarState extends State<_Sidebar> {
+class _SidebarState extends ConsumerState<_Sidebar> {
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
@@ -950,6 +1185,9 @@ class _SidebarState extends State<_Sidebar> {
   @override
   void didUpdateWidget(covariant _Sidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.searchState.active && !oldWidget.searchState.active) {
+      _clearGitDetailSelection(ref);
+    }
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
@@ -1002,7 +1240,7 @@ class _SidebarState extends State<_Sidebar> {
                     ],
                     selected: {selectedIndex},
                     onSelectionChanged: (value) =>
-                        setState(() => _tab = value.first),
+                        _selectTab(value.first, tabs),
                   ),
                 ),
               ),
@@ -1020,6 +1258,19 @@ class _SidebarState extends State<_Sidebar> {
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
                     ),
+                    _SidebarTab.git => GitSidebarTab(
+                      workspace: widget.workspace,
+                      onOpenFile: (relativePath) =>
+                          _openGitDiffFile(context, ref, relativePath),
+                      onConfirmDiscard: (files) =>
+                          _confirmDiscardGitFiles(context, ref, files),
+                      onAfterWorkspaceFilesChanged: () =>
+                          _refreshWorkspaceAfterGitFileChanges(ref),
+                      onConfirmSwitchBranch: (branchName) =>
+                          _confirmSwitchGitBranch(context, ref, branchName),
+                      onConfirmPushSetUpstream: () =>
+                          _confirmGitPushSetUpstream(context, ref),
+                    ),
                     null => const SizedBox.shrink(),
                   },
           ),
@@ -1027,9 +1278,17 @@ class _SidebarState extends State<_Sidebar> {
       ),
     );
   }
+
+  void _selectTab(int index, List<_SidebarTab> tabs) {
+    setState(() => _tab = index);
+    final selectedTab = tabs[index.clamp(0, tabs.length - 1).toInt()];
+    if (selectedTab != _SidebarTab.git) {
+      _clearGitDetailSelection(ref);
+    }
+  }
 }
 
-enum _SidebarTab { files, toc, outline }
+enum _SidebarTab { files, toc, outline, git }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -1053,15 +1312,20 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
     WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
-    WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
+    WorkspaceKind.singleMarkdown => const [
+      _SidebarTab.outline,
+      _SidebarTab.git,
+    ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
+      _SidebarTab.git,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
+      _SidebarTab.git,
     ],
   };
 }
@@ -1071,6 +1335,7 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.files => context.l10n.files,
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
+    _SidebarTab.git => context.l10n.git,
   };
 }
 
@@ -1235,6 +1500,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(file.absolutePath);
+                    _clearGitDetailSelection(ref);
                   }
                 }
               : null,
@@ -1642,6 +1908,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(topic);
+                    _clearGitDetailSelection(ref);
                   }
                 }
               : hasChildren
@@ -2426,6 +2693,7 @@ class _EditorTabStrip extends ConsumerWidget {
               canClose: true,
               onSelected: () async {
                 if (active) {
+                  _clearGitDetailSelection(ref);
                   return;
                 }
                 if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
@@ -2435,6 +2703,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 await ref
                     .read(workspaceControllerProvider.notifier)
                     .openActiveFile(path);
+                _clearGitDetailSelection(ref);
               },
               onClose: () async {
                 if (active &&
@@ -2445,6 +2714,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 await ref
                     .read(workspaceControllerProvider.notifier)
                     .closeOpenFileTab(path);
+                _clearGitDetailSelection(ref);
               },
             );
           },
@@ -5455,6 +5725,7 @@ Future<void> _openPreviewLink(
     await ref
         .read(workspaceControllerProvider.notifier)
         .openActiveFile(file.absolutePath);
+    _clearGitDetailSelection(ref);
   }
   if (!context.mounted) {
     return;
@@ -5910,6 +6181,7 @@ class _DiagnosticRow extends ConsumerWidget {
             await ref
                 .read(workspaceControllerProvider.notifier)
                 .openActiveFile(diagnostic.filePath);
+            _clearGitDetailSelection(ref);
           }
         },
         child: Padding(
