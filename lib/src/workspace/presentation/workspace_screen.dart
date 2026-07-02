@@ -343,9 +343,9 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip: context.l10n.welcome,
                         icon: BusyMarkGlyphs.home,
                         onPressed: () async {
-                          if (await confirmSafeToContinue(context, ref) &&
-                              context.mounted) {
-                            context.go('/');
+                          final router = GoRouter.of(context);
+                          if (await confirmSafeToContinue(context, ref)) {
+                            router.go('/');
                           }
                         },
                       ),
@@ -611,9 +611,10 @@ class WorkspaceScreen extends ConsumerWidget {
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     switch (action) {
       case HeaderBarAction.back:
+        final router = GoRouter.of(context);
         unawaited(() async {
-          if (await confirmSafeToContinue(context, ref) && context.mounted) {
-            context.go('/');
+          if (await confirmSafeToContinue(context, ref)) {
+            router.go('/');
           }
         }());
       case HeaderBarAction.sidebarToggle:
