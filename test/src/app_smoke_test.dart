@@ -472,6 +472,11 @@ void main() {
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.shortcutNewDocumentDescription), findsNothing);
   });
 
   testWidgets('keyboard shortcuts tabs section title is localized', (
@@ -602,6 +607,21 @@ void main() {
         .read(workspaceControllerProvider.notifier)
         .updateActiveText('# Dirty\n');
     await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(service.untitledCount, 0);
+    expect(container.read(workspaceControllerProvider).isDirty, isTrue);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);

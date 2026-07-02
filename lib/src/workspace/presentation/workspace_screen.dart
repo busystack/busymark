@@ -195,10 +195,6 @@ class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
 }
 
-class _CloseSearchIntent extends Intent {
-  const _CloseSearchIntent();
-}
-
 enum _SourceInlineMarkdownCommand {
   bold,
   italic,
@@ -308,19 +304,12 @@ class WorkspaceScreen extends ConsumerWidget {
         shortcuts: const {
           SingleActivator(LogicalKeyboardKey.keyF, control: true):
               _OpenSearchIntent(),
-          SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
         },
         child: Actions(
           actions: {
             _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
               onInvoke: (intent) {
                 _openSearch(ref);
-                return null;
-              },
-            ),
-            _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
-              onInvoke: (intent) {
-                _closeSearch(ref);
                 return null;
               },
             ),
