@@ -72,8 +72,7 @@ class GitSidebarTab extends ConsumerWidget {
           children: [
             _RepositoryStrip(
               state: state,
-              onRefresh: controller.refresh,
-              onFetch: controller.fetch,
+              onSelectView: controller.selectView,
               onPull: () async {
                 await controller.pullFastForwardOnly();
                 await onAfterWorkspaceFilesChanged();
@@ -90,29 +89,6 @@ class GitSidebarTab extends ConsumerWidget {
               _GitMessage(failure: state.lastError!)
             else if (state.lastOperationMessage?.isNotEmpty ?? false)
               _GitOperationMessage(message: state.lastOperationMessage!),
-            Padding(
-              padding: BusyMarkInsets.sidebarTabs,
-              child: SegmentedButton<GitView>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: GitView.changes,
-                    label: Text(context.l10n.gitChanges),
-                  ),
-                  ButtonSegment(
-                    value: GitView.history,
-                    label: Text(context.l10n.gitHistory),
-                  ),
-                  ButtonSegment(
-                    value: GitView.branches,
-                    label: Text(context.l10n.gitBranches),
-                  ),
-                ],
-                selected: {state.selectedView},
-                onSelectionChanged: (value) =>
-                    controller.selectView(value.first),
-              ),
-            ),
             Expanded(
               child: switch (state.selectedView) {
                 GitView.changes => GitChangesView(
@@ -157,15 +133,13 @@ class GitSidebarTab extends ConsumerWidget {
 class _RepositoryStrip extends StatelessWidget {
   const _RepositoryStrip({
     required this.state,
-    required this.onRefresh,
-    required this.onFetch,
+    required this.onSelectView,
     required this.onPull,
     required this.onPush,
   });
 
   final GitState state;
-  final VoidCallback onRefresh;
-  final VoidCallback onFetch;
+  final ValueChanged<GitView> onSelectView;
   final VoidCallback onPull;
   final VoidCallback onPush;
 
@@ -206,11 +180,21 @@ class _RepositoryStrip extends StatelessWidget {
                     ),
                   ),
                 ),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.gitRefresh,
-                  icon: BusyMarkGlyphs.redo,
+                BusyMarkHeaderPopupMenuButton<GitView>(
+                  tooltip: _gitViewLabel(context, state.selectedView),
+                  icon: _gitViewIcon(state.selectedView),
                   transparent: true,
-                  onPressed: state.isRefreshing ? null : onRefresh,
+                  itemBuilder: (context) => [
+                    for (final view in GitView.values)
+                      BusyMarkPopupMenuItem(
+                        value: view,
+                        label: _gitViewLabel(context, view),
+                        icon: _gitViewIcon(view),
+                        checked: view == state.selectedView,
+                        trailingCheck: true,
+                      ),
+                  ],
+                  onSelected: onSelectView,
                 ),
               ],
             ),
@@ -226,13 +210,6 @@ class _RepositoryStrip extends StatelessWidget {
             const SizedBox(height: BusyMarkSpacing.sm),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: repo.hasRemote ? onFetch : null,
-                    child: Text(context.l10n.gitFetch),
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.xs),
                 Expanded(
                   child: OutlinedButton(
                     onPressed: repo.upstreamBranch == null ? null : onPull,
@@ -263,6 +240,22 @@ class _RepositoryStrip extends StatelessWidget {
               : context.l10n.gitAheadBehind(repo.aheadCount, repo.behindCount));
     return '$upstream - $state';
   }
+}
+
+String _gitViewLabel(BuildContext context, GitView view) {
+  return switch (view) {
+    GitView.changes => context.l10n.gitChanges,
+    GitView.history => context.l10n.gitHistory,
+    GitView.branches => context.l10n.gitBranches,
+  };
+}
+
+IconData _gitViewIcon(GitView view) {
+  return switch (view) {
+    GitView.changes => BusyMarkGlyphs.checklist,
+    GitView.history => BusyMarkGlyphs.history,
+    GitView.branches => BusyMarkGlyphs.tree,
+  };
 }
 
 class _GitMessage extends StatelessWidget {

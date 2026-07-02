@@ -1479,9 +1479,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitConflicts => 'Conflicts';
 
   @override
-  String get gitRefresh => 'Refresh Git status';
-
-  @override
   String get gitChanges => 'Changes';
 
   @override
@@ -1489,9 +1486,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitBranches => 'Branches';
-
-  @override
-  String get gitFetch => 'Fetch';
 
   @override
   String get gitPull => 'Pull';

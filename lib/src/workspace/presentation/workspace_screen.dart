@@ -1212,39 +1212,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SidebarHeader(workspace: widget.workspace),
-          if (!widget.searchState.active && tabs.length > 1)
-            Padding(
-              padding: BusyMarkInsets.sidebarTabs,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    BusyMarkRadius.headerButton,
-                  ),
-                  boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                    BusyMarkRadius.headerButton,
-                  ),
-                  child: SegmentedButton<int>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (var index = 0; index < tabs.length; index++)
-                        ButtonSegment(
-                          value: index,
-                          label: _SidebarSegmentLabel(
-                            _sidebarTabLabel(context, tabs[index]),
-                          ),
-                        ),
-                    ],
-                    selected: {selectedIndex},
-                    onSelectionChanged: (value) =>
-                        _selectTab(value.first, tabs),
-                  ),
-                ),
-              ),
-            ),
+          _SidebarHeader(
+            workspace: widget.workspace,
+            tabs: tabs,
+            selectedTab: selectedTab,
+            showTabMenu: !widget.searchState.active && tabs.length > 1,
+            onSelectTab: (tab) => _selectTab(tab, tabs),
+          ),
           Expanded(
             child: widget.searchState.active
                 ? _SearchSidebar(
@@ -1279,10 +1253,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     );
   }
 
-  void _selectTab(int index, List<_SidebarTab> tabs) {
+  void _selectTab(_SidebarTab tab, List<_SidebarTab> tabs) {
+    final index = tabs.indexOf(tab);
+    if (index < 0) {
+      return;
+    }
     setState(() => _tab = index);
-    final selectedTab = tabs[index.clamp(0, tabs.length - 1).toInt()];
-    if (selectedTab != _SidebarTab.git) {
+    if (tab != _SidebarTab.git) {
       _clearGitDetailSelection(ref);
     }
   }
@@ -1312,10 +1289,7 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
     WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
-    WorkspaceKind.singleMarkdown => const [
-      _SidebarTab.outline,
-      _SidebarTab.git,
-    ],
+    WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
@@ -1339,52 +1313,79 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
   };
 }
 
-class _SidebarSegmentLabel extends StatelessWidget {
-  const _SidebarSegmentLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      softWrap: false,
-      textAlign: TextAlign.center,
-    );
-  }
+IconData _sidebarTabIcon(_SidebarTab tab) {
+  return switch (tab) {
+    _SidebarTab.files => BusyMarkGlyphs.documentOpen,
+    _SidebarTab.toc => BusyMarkGlyphs.orderedList,
+    _SidebarTab.outline => BusyMarkGlyphs.indent,
+    _SidebarTab.git => BusyMarkGlyphs.history,
+  };
 }
 
 class _SidebarHeader extends StatelessWidget {
-  const _SidebarHeader({required this.workspace});
+  const _SidebarHeader({
+    required this.workspace,
+    required this.tabs,
+    required this.selectedTab,
+    required this.showTabMenu,
+    required this.onSelectTab,
+  });
 
   final Workspace workspace;
+  final List<_SidebarTab> tabs;
+  final _SidebarTab? selectedTab;
+  final bool showTabMenu;
+  final ValueChanged<_SidebarTab> onSelectTab;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Padding(
       padding: BusyMarkInsets.sidebarHeader,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            _workspaceName(context, workspace),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _workspaceName(context, workspace),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: colors.foreground,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: BusyMarkSpacing.xs),
+                Text(
+                  _workspaceDetail(context, workspace),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: BusyMarkSpacing.xs),
-          Text(
-            _workspaceDetail(context, workspace),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          if (showTabMenu && selectedTab != null) ...[
+            const SizedBox(width: BusyMarkSpacing.sm),
+            BusyMarkHeaderPopupMenuButton<_SidebarTab>(
+              tooltip: _sidebarTabLabel(context, selectedTab!),
+              icon: _sidebarTabIcon(selectedTab!),
+              itemBuilder: (context) => [
+                for (final tab in tabs)
+                  BusyMarkPopupMenuItem(
+                    value: tab,
+                    label: _sidebarTabLabel(context, tab),
+                    icon: _sidebarTabIcon(tab),
+                    checked: tab == selectedTab,
+                    trailingCheck: true,
+                  ),
+              ],
+              onSelected: onSelectTab,
+            ),
+          ],
         ],
       ),
     );

@@ -346,10 +346,6 @@ class _FakeGitGateway implements GitRepositoryGateway {
   ) async => _result();
 
   @override
-  Future<GitOperationResult> fetch(GitRepositoryInfo repository) async =>
-      _result();
-
-  @override
   Future<GitOperationResult> pullFastForwardOnly(
     GitRepositoryInfo repository,
   ) async => _result();

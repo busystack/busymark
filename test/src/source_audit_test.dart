@@ -389,9 +389,10 @@ void main() {
     expect(singleMarkdownClause, contains('_SidebarTab.outline'));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.files')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.toc')));
+    expect(singleMarkdownClause, isNot(contains('_SidebarTab.git')));
     expect(
       workspace,
-      contains('if (!widget.searchState.active && tabs.length > 1)'),
+      contains('showTabMenu: !widget.searchState.active && tabs.length > 1'),
     );
     expect(workspace, contains('_preferredSidebarTabIndex'));
     expect(workspace, contains('_shouldShowOutlineForOpenFile'));
@@ -414,10 +415,12 @@ void main() {
     );
     expect(folderClause, contains('_SidebarTab.files'));
     expect(folderClause, contains('_SidebarTab.outline'));
+    expect(folderClause, contains('_SidebarTab.git'));
     expect(folderClause, isNot(contains('_SidebarTab.toc')));
     expect(writersideClause, contains('_SidebarTab.files'));
     expect(writersideClause, contains('_SidebarTab.toc'));
     expect(writersideClause, contains('_SidebarTab.outline'));
+    expect(writersideClause, contains('_SidebarTab.git'));
   });
 
   test('sidebar tabs and editor hover use neutral native surfaces', () {
@@ -444,8 +447,8 @@ void main() {
       settings,
       contains('label: _SegmentLabel(context.l10n.bottomRight)'),
     );
-    expect(workspace, contains('class _SidebarSegmentLabel'));
-    expect(workspace, contains('label: _SidebarSegmentLabel('));
+    expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    expect(workspace, isNot(contains('class _SidebarSegmentLabel')));
     expect(workspace, contains('softWrap: false'));
     expect(workspace, contains('hoverColor: BusyMarkLinuxPalette.transparent'));
     expect(workspace, contains('focusColor: BusyMarkLinuxPalette.transparent'));
@@ -457,17 +460,59 @@ void main() {
     expect(workspace, contains('cursorWidth: BusyMarkStroke.sourceCursor'));
   });
 
-  test('sidebar selector uses shared semantic shadow', () {
+  test('sidebar header menu uses shared popup menu', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
 
-    expect(workspace, contains('SegmentedButton<int>'));
+    expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    expect(workspace, contains('BusyMarkPopupMenuItem('));
+    expect(workspace, contains('icon: _sidebarTabIcon(selectedTab!)'));
+    expect(workspace, contains('icon: _sidebarTabIcon(tab)'));
     expect(
       workspace,
-      contains('boxShadow: BusyMarkShadow.surfaceShadows(colors.shade)'),
+      contains('_SidebarTab.files => BusyMarkGlyphs.documentOpen'),
     );
-    expect(workspace, contains('BusyMarkRadius.headerButton'));
+    expect(
+      workspace,
+      contains('_SidebarTab.toc => BusyMarkGlyphs.orderedList'),
+    );
+    expect(workspace, contains('_SidebarTab.outline => BusyMarkGlyphs.indent'));
+    expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.history'));
+    expect(workspace, contains('checked: tab == selectedTab'));
+    expect(workspace, contains('trailingCheck: true'));
+    expect(workspace, isNot(contains('SegmentedButton<int>')));
+    expect(workspace, isNot(contains('DropdownButton<_SidebarTab>')));
+    expect(workspace, isNot(contains('BusyMarkMenuSelectorButton')));
+  });
+
+  test('shared header popup menu matches native popover shape', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+
+    expect(design, contains('showMenu<T>'));
+    expect(design, contains('_BusyMarkHeaderPopoverShape'));
+    expect(design, contains('_busyMarkHeaderPopoverArrowHeight'));
+    expect(design, contains('BorderRadius.circular(BusyMarkRadius.window)'));
+    expect(design, contains('color: colors.subtleBorder'));
+    expect(design, contains('constraints: const BoxConstraints.tightFor'));
+    expect(design, contains('popUpAnimationStyle: AnimationStyle.noAnimation'));
+    expect(design, contains('hoverColor: colors.controlHover'));
+    expect(
+      design,
+      contains('EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm)'),
+    );
+  });
+
+  test('Git sidebar view selector lives in repository strip', () {
+    final gitSidebar = File(
+      'lib/src/git/presentation/git_sidebar_tab.dart',
+    ).readAsStringSync();
+
+    expect(gitSidebar, contains('BusyMarkHeaderPopupMenuButton<GitView>'));
+    expect(gitSidebar, contains('icon: _gitViewIcon(state.selectedView)'));
+    expect(gitSidebar, contains('label: _gitViewLabel(context, view)'));
+    expect(gitSidebar, contains('checked: view == state.selectedView'));
+    expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));
   });
 
   test('settings language selector uses native hover and popover styling', () {

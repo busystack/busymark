@@ -370,10 +370,6 @@ class GitController extends Notifier<GitState> {
     await loadProjectHistory();
   }
 
-  Future<void> fetch() {
-    return _runOperation((repository) => _gateway.fetch(repository));
-  }
-
   Future<void> pullFastForwardOnly() {
     return _runOperation(
       (repository) => _gateway.pullFastForwardOnly(repository),
@@ -754,10 +750,6 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String message,
   ) => _unavailable();
-
-  @override
-  Future<GitOperationResult> fetch(GitRepositoryInfo repository) =>
-      _unavailable();
 
   @override
   Future<GitOperationResult> pullFastForwardOnly(

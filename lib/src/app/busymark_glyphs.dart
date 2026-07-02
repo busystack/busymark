@@ -23,6 +23,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData diagnostics = YaruIcons.task_list;
   static const IconData document = YaruIcons.document;
   static const IconData documentHistory = YaruIcons.document_history;
+  static const IconData documentOpen = YaruIcons.document_open;
   static const IconData edit = YaruIcons.pen;
   static const IconData error = YaruIcons.error;
   static const IconData externalLink = YaruIcons.external_link;

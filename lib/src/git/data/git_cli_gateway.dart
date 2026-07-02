@@ -376,11 +376,6 @@ class GitCliGateway implements GitRepositoryGateway {
   }
 
   @override
-  Future<GitOperationResult> fetch(GitRepositoryInfo repository) {
-    return _operation(repository, const ['fetch', '--prune'], 'fetch');
-  }
-
-  @override
   Future<GitOperationResult> pullFastForwardOnly(GitRepositoryInfo repository) {
     return _operation(repository, const ['pull', '--ff-only'], 'pull');
   }

@@ -2483,12 +2483,6 @@ abstract class AppLocalizations {
   /// **'Conflicts'**
   String get gitConflicts;
 
-  /// Tooltip for refreshing Git status.
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh Git status'**
-  String get gitRefresh;
-
   /// Git changes view or group label.
   ///
   /// In en, this message translates to:
@@ -2506,12 +2500,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Branches'**
   String get gitBranches;
-
-  /// Git fetch action label.
-  ///
-  /// In en, this message translates to:
-  /// **'Fetch'**
-  String get gitFetch;
 
   /// Git pull action label.
   ///

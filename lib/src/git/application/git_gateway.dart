@@ -46,7 +46,6 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     String message,
   );
-  Future<GitOperationResult> fetch(GitRepositoryInfo repository);
   Future<GitOperationResult> pullFastForwardOnly(GitRepositoryInfo repository);
   Future<GitOperationResult> push(GitRepositoryInfo repository);
   Future<GitOperationResult> pushSetUpstream(
