@@ -416,6 +416,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Alternar formatação de lista de verificação';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Criar arquivo Markdown';
 
   @override

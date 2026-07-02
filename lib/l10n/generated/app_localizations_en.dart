@@ -411,6 +411,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutChecklistDescription => 'Toggle checklist formatting';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Create Markdown File';
 
   @override

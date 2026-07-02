@@ -415,6 +415,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'Увімкнути або вимкнути форматування контрольного списку';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Створити файл Markdown';
 
   @override

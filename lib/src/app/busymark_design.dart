@@ -950,6 +950,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     required this.itemBuilder,
     required this.onSelected,
     this.transparent = false,
+    this.shortcut,
     this.foregroundColor,
     this.backgroundColor,
     this.boxShadow,
@@ -960,6 +961,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
   final PopupMenuItemBuilder<T> itemBuilder;
   final ValueChanged<T> onSelected;
   final bool transparent;
+  final String? shortcut;
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final List<BoxShadow>? boxShadow;
@@ -984,7 +986,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
       ),
       child: Builder(
         builder: (buttonContext) => IconButton(
-          tooltip: tooltip,
+          tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
           onPressed: () => _showMenu(buttonContext),
           icon: Icon(
             icon,

@@ -280,10 +280,8 @@ class BusyMarkApp extends ConsumerWidget {
                 subtitle: context.l10n.markdownFolderOrWritersideProject,
                 leading: const Icon(BusyMarkGlyphs.folder),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                onTap: () => Navigator.pop(
-                  dialogContext,
-                  const _OpenWorkspaceFolder(),
-                ),
+                onTap: () =>
+                    Navigator.pop(dialogContext, const _OpenWorkspaceFolder()),
               ),
             ],
           ),

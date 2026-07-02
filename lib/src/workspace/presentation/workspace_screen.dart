@@ -21,6 +21,7 @@ import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/markdown_image_view.dart';
+import '../../editor/editor_shortcuts.dart';
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
@@ -60,6 +61,10 @@ final _searchNavigationTargetProvider =
       _SearchNavigationTargetController,
       _SearchNavigationTarget?
     >(_SearchNavigationTargetController.new);
+final _sidebarShortcutRequestProvider =
+    NotifierProvider<_SidebarShortcutRequestController, _SidebarTab?>(
+      _SidebarShortcutRequestController.new,
+    );
 
 class _OutlineNavigationTargetController
     extends Notifier<_OutlineNavigationTarget?> {
@@ -97,6 +102,19 @@ class _SearchNavigationTargetController
 
   void set(_SearchNavigationTarget? target) {
     state = target;
+  }
+}
+
+class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
+  @override
+  _SidebarTab? build() => null;
+
+  void select(_SidebarTab tab) {
+    state = tab;
+  }
+
+  void clear() {
+    state = null;
   }
 }
 
@@ -203,42 +221,10 @@ enum _SourceBlockMarkdownCommand {
   taskList,
 }
 
-class _SourceInlineMarkdownIntent extends Intent {
-  const _SourceInlineMarkdownIntent(this.command);
+class _SourceEditorShortcutIntent extends Intent {
+  const _SourceEditorShortcutIntent(this.action);
 
-  final _SourceInlineMarkdownCommand command;
-}
-
-class _SourceBlockMarkdownIntent extends Intent {
-  const _SourceBlockMarkdownIntent(this.command);
-
-  final _SourceBlockMarkdownCommand command;
-}
-
-class _SourcePastePlainTextIntent extends Intent {
-  const _SourcePastePlainTextIntent();
-}
-
-_SourceBlockMarkdownCommand? _sourceHeadingShortcutBlockCommand(
-  LogicalKeyboardKey key,
-) {
-  return switch (key) {
-    LogicalKeyboardKey.digit0 ||
-    LogicalKeyboardKey.numpad0 => _SourceBlockMarkdownCommand.paragraph,
-    LogicalKeyboardKey.digit1 ||
-    LogicalKeyboardKey.numpad1 => _SourceBlockMarkdownCommand.heading1,
-    LogicalKeyboardKey.digit2 ||
-    LogicalKeyboardKey.numpad2 => _SourceBlockMarkdownCommand.heading2,
-    LogicalKeyboardKey.digit3 ||
-    LogicalKeyboardKey.numpad3 => _SourceBlockMarkdownCommand.heading3,
-    LogicalKeyboardKey.digit4 ||
-    LogicalKeyboardKey.numpad4 => _SourceBlockMarkdownCommand.heading4,
-    LogicalKeyboardKey.digit5 ||
-    LogicalKeyboardKey.numpad5 => _SourceBlockMarkdownCommand.heading5,
-    LogicalKeyboardKey.digit6 ||
-    LogicalKeyboardKey.numpad6 => _SourceBlockMarkdownCommand.heading6,
-    _ => null,
-  };
+  final BusyMarkEditorShortcutAction action;
 }
 
 class WorkspaceScreen extends ConsumerWidget {
@@ -317,6 +303,7 @@ class WorkspaceScreen extends ConsumerWidget {
 
     return Focus(
       autofocus: true,
+      onKeyEvent: (_, event) => _handleWorkspaceKeyEvent(event, ref),
       child: Shortcuts(
         shortcuts: const {
           SingleActivator(LogicalKeyboardKey.keyF, control: true):
@@ -551,6 +538,29 @@ class WorkspaceScreen extends ConsumerWidget {
         .read(_workspaceSearchProvider.notifier)
         .set(search.copyWith(active: false));
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchActive(false));
+  }
+
+  KeyEventResult _handleWorkspaceKeyEvent(KeyEvent event, WidgetRef ref) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (!keyboard.isControlPressed ||
+        keyboard.isShiftPressed ||
+        keyboard.isAltPressed ||
+        keyboard.isMetaPressed) {
+      return KeyEventResult.ignored;
+    }
+    final tab = _sidebarShortcutTabFor(event.logicalKey);
+    if (tab == null) {
+      return KeyEventResult.ignored;
+    }
+    _closeSearch(ref);
+    unawaited(
+      ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
+    );
+    ref.read(_sidebarShortcutRequestProvider.notifier).select(tab);
+    return KeyEventResult.handled;
   }
 
   void _setSearchQuery(WidgetRef ref, String query) {
@@ -1179,7 +1189,12 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     super.initState();
     _workspaceId = widget.workspace.id;
     _activeFilePath = widget.workspace.activeFilePath;
-    _tab = _preferredSidebarTabIndex(widget.workspace);
+    _tab = _initialSidebarTabIndex(widget.workspace);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(_sidebarShortcutRequestProvider.notifier).clear();
+      }
+    });
   }
 
   @override
@@ -1191,7 +1206,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
-      _tab = _preferredSidebarTabIndex(widget.workspace);
+      _tab = _initialSidebarTabIndex(widget.workspace);
       return;
     }
     if (widget.workspace.activeFilePath != _activeFilePath) {
@@ -1203,6 +1218,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final tabs = _sidebarTabsFor(widget.workspace.kind);
+    ref.listen<_SidebarTab?>(_sidebarShortcutRequestProvider, (_, next) {
+      if (next == null) {
+        return;
+      }
+      _selectTab(next, tabs);
+      ref.read(_sidebarShortcutRequestProvider.notifier).clear();
+    });
     final selectedIndex = tabs.isEmpty
         ? 0
         : _tab.clamp(0, tabs.length - 1).toInt();
@@ -1263,6 +1285,15 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _clearGitDetailSelection(ref);
     }
   }
+
+  int _initialSidebarTabIndex(Workspace workspace) {
+    final tabs = _sidebarTabsFor(workspace.kind);
+    final request = ref.read(_sidebarShortcutRequestProvider);
+    final requestedIndex = request == null ? -1 : tabs.indexOf(request);
+    return requestedIndex >= 0
+        ? requestedIndex
+        : _preferredSidebarTabIndex(workspace);
+  }
 }
 
 enum _SidebarTab { files, toc, outline, git }
@@ -1319,6 +1350,18 @@ IconData _sidebarTabIcon(_SidebarTab tab) {
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indent,
     _SidebarTab.git => BusyMarkGlyphs.history,
+  };
+}
+
+_SidebarTab? _sidebarShortcutTabFor(LogicalKeyboardKey key) {
+  return switch (key) {
+    LogicalKeyboardKey.digit1 ||
+    LogicalKeyboardKey.numpad1 => _SidebarTab.files,
+    LogicalKeyboardKey.digit2 || LogicalKeyboardKey.numpad2 => _SidebarTab.toc,
+    LogicalKeyboardKey.digit3 ||
+    LogicalKeyboardKey.numpad3 => _SidebarTab.outline,
+    LogicalKeyboardKey.digit4 || LogicalKeyboardKey.numpad4 => _SidebarTab.git,
+    _ => null,
   };
 }
 
@@ -2910,65 +2953,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyB) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.bold);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyI) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.italic);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyU) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.underline);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyK) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.link);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyE) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.code);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isAltPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit5) {
-      _applySourceInlineMarkdownCommand(
-        _SourceInlineMarkdownCommand.strikethrough,
-      );
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.keyV) {
-      unawaited(_pastePlainTextIntoSource());
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && keyboard.isShiftPressed) {
-      final command = _sourceHeadingShortcutBlockCommand(key);
-      if (command != null) {
-        _applySourceBlockMarkdownCommand(command);
-        return KeyEventResult.handled;
-      }
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit7) {
-      _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.orderedList);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit8) {
-      _applySourceBlockMarkdownCommand(
-        _SourceBlockMarkdownCommand.unorderedList,
-      );
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit9) {
-      _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.taskList);
+    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
+      event,
+      keyboard,
+    );
+    if (shortcutAction != null) {
+      _applySourceEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -3136,144 +3126,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     child: KeyedSubtree(
                       key: ValueKey(activeEditorPath),
                       child: Shortcuts(
-                        shortcuts: const {
-                          SingleActivator(
-                            LogicalKeyboardKey.keyB,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.bold,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyI,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.italic,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyU,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.underline,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyK,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.link,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyE,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.code,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit5,
-                            alt: true,
-                            shift: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.strikethrough,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit0,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.paragraph,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit1,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading1,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit2,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading2,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit3,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading3,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit4,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading4,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit5,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading5,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit6,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading6,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit7,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.orderedList,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit8,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.unorderedList,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit9,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.taskList,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyV,
-                            control: true,
-                            shift: true,
-                          ): _SourcePastePlainTextIntent(),
-                        },
+                        shortcuts: BusyMarkEditorShortcutActivators.intentMap(
+                          _SourceEditorShortcutIntent.new,
+                        ),
                         child: Actions(
                           actions: {
-                            _SourceInlineMarkdownIntent:
-                                CallbackAction<_SourceInlineMarkdownIntent>(
+                            _SourceEditorShortcutIntent:
+                                CallbackAction<_SourceEditorShortcutIntent>(
                                   onInvoke: (intent) {
-                                    _applySourceInlineMarkdownCommand(
-                                      intent.command,
+                                    _applySourceEditorShortcutAction(
+                                      intent.action,
                                     );
-                                    return null;
-                                  },
-                                ),
-                            _SourceBlockMarkdownIntent:
-                                CallbackAction<_SourceBlockMarkdownIntent>(
-                                  onInvoke: (intent) {
-                                    _applySourceBlockMarkdownCommand(
-                                      intent.command,
-                                    );
-                                    return null;
-                                  },
-                                ),
-                            _SourcePastePlainTextIntent:
-                                CallbackAction<_SourcePastePlainTextIntent>(
-                                  onInvoke: (intent) {
-                                    unawaited(_pastePlainTextIntoSource());
                                     return null;
                                   },
                                 ),
@@ -3406,6 +3269,108 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _handleSourceChanged(value, updatePreview: false, sourceFilePath: filePath);
   }
 
+  void _applySourceEditorShortcutAction(BusyMarkEditorShortcutAction action) {
+    switch (action) {
+      case BusyMarkEditorShortcutAction.bold:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.bold);
+        break;
+      case BusyMarkEditorShortcutAction.italic:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.italic);
+        break;
+      case BusyMarkEditorShortcutAction.underline:
+        _applySourceInlineMarkdownCommand(
+          _SourceInlineMarkdownCommand.underline,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.strikethrough:
+        _applySourceInlineMarkdownCommand(
+          _SourceInlineMarkdownCommand.strikethrough,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.inlineCode:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.code);
+        break;
+      case BusyMarkEditorShortcutAction.link:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.link);
+        break;
+      case BusyMarkEditorShortcutAction.paragraph:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.paragraph);
+        break;
+      case BusyMarkEditorShortcutAction.heading1:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading1);
+        break;
+      case BusyMarkEditorShortcutAction.heading2:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading2);
+        break;
+      case BusyMarkEditorShortcutAction.heading3:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading3);
+        break;
+      case BusyMarkEditorShortcutAction.heading4:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading4);
+        break;
+      case BusyMarkEditorShortcutAction.heading5:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading5);
+        break;
+      case BusyMarkEditorShortcutAction.heading6:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading6);
+        break;
+      case BusyMarkEditorShortcutAction.orderedList:
+        _applySourceBlockMarkdownCommand(
+          _SourceBlockMarkdownCommand.orderedList,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.unorderedList:
+        _applySourceBlockMarkdownCommand(
+          _SourceBlockMarkdownCommand.unorderedList,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.taskList:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.taskList);
+        break;
+      case BusyMarkEditorShortcutAction.toggleTask:
+        _toggleSourceTaskChecked();
+        break;
+      case BusyMarkEditorShortcutAction.indent:
+        _indentSourceSelection();
+        break;
+      case BusyMarkEditorShortcutAction.outdent:
+        _outdentSourceSelection();
+        break;
+      case BusyMarkEditorShortcutAction.blockquote:
+        _applySourceLinePrefix('> ');
+        break;
+      case BusyMarkEditorShortcutAction.codeBlock:
+        _insertSourceCodeBlock();
+        break;
+      case BusyMarkEditorShortcutAction.codeBlockLanguage:
+        _insertSourceCodeBlock(language: 'language');
+        break;
+      case BusyMarkEditorShortcutAction.image:
+        _insertSourceImage(block: true);
+        break;
+      case BusyMarkEditorShortcutAction.inlineImage:
+        _insertSourceImage(block: false);
+        break;
+      case BusyMarkEditorShortcutAction.table:
+        _insertSourceTable();
+        break;
+      case BusyMarkEditorShortcutAction.thematicBreak:
+        _insertSourceBlock('\n---\n');
+        break;
+      case BusyMarkEditorShortcutAction.hardLineBreak:
+        final selection = _normalizedSourceSelection();
+        _replaceSourceSelection(
+          '  \n',
+          selectionStart: selection.start + 3,
+          selectionEnd: selection.start + 3,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.pastePlainText:
+        unawaited(_pastePlainTextIntoSource());
+        break;
+    }
+  }
+
   void _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand command) {
     switch (command) {
       case _SourceInlineMarkdownCommand.bold:
@@ -3430,22 +3395,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand command) {
-    final selection = _normalizedSourceSelection();
+    final range = _selectedSourceLineRange();
     final text = _controller.text;
-    final lineStart =
-        text.lastIndexOf(
-          '\n',
-          (selection.start - 1).clamp(0, text.length).toInt(),
-        ) +
-        1;
-    final nextBreak = text.indexOf('\n', selection.end);
-    final lineEnd = nextBreak < 0 ? text.length : nextBreak;
-    final selectedLines = text.substring(lineStart, lineEnd).split('\n');
     final markerPattern = RegExp(
       r'^(\s*)(?:#{1,6}\s+)?(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)?(.*)$',
     );
     final replacementLines = <String>[];
-    for (final (index, line) in selectedLines.indexed) {
+    for (final (index, line) in range.lines.indexed) {
       final match = markerPattern.firstMatch(line);
       final indent = match?.group(1) ?? '';
       final content = match?.group(2) ?? line.trimLeft();
@@ -3464,12 +3420,140 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       replacementLines.add('$indent$marker$content');
     }
     final replacement = replacementLines.join('\n');
-    final nextText = text.replaceRange(lineStart, lineEnd, replacement);
+    final nextText = text.replaceRange(range.start, range.end, replacement);
     _controller.value = TextEditingValue(
       text: nextText,
       selection: TextSelection(
-        baseOffset: lineStart,
-        extentOffset: lineStart + replacement.length,
+        baseOffset: range.start,
+        extentOffset: range.start + replacement.length,
+      ),
+    );
+    _sourceFocusNode.requestFocus();
+    _handleSourceChanged(nextText);
+  }
+
+  void _toggleSourceTaskChecked() {
+    final range = _selectedSourceLineRange();
+    final replacement = [
+      for (final line in range.lines)
+        line.replaceFirstMapped(
+          RegExp(r'^(\s*[-*+]\s+\[)([ xX])(\]\s+)'),
+          (match) =>
+              '${match.group(1)}${match.group(2)!.trim().isEmpty ? 'x' : ' '}${match.group(3)}',
+        ),
+    ].join('\n');
+    _replaceSourceLineRange(range, replacement);
+  }
+
+  void _indentSourceSelection() {
+    final range = _selectedSourceLineRange();
+    _replaceSourceLineRange(
+      range,
+      [
+        for (final line in range.lines) line.isEmpty ? line : '  $line',
+      ].join('\n'),
+    );
+  }
+
+  void _outdentSourceSelection() {
+    final range = _selectedSourceLineRange();
+    _replaceSourceLineRange(
+      range,
+      [
+        for (final line in range.lines)
+          line.startsWith('  ')
+              ? line.substring(2)
+              : line.startsWith('\t')
+              ? line.substring(1)
+              : line,
+      ].join('\n'),
+    );
+  }
+
+  void _applySourceLinePrefix(String prefix) {
+    final range = _selectedSourceLineRange();
+    _replaceSourceLineRange(
+      range,
+      [
+        for (final line in range.lines)
+          line.isEmpty ? prefix.trimRight() : '$prefix$line',
+      ].join('\n'),
+    );
+  }
+
+  void _insertSourceCodeBlock({String language = ''}) {
+    final selection = _normalizedSourceSelection();
+    final selected = selection.textInside(_controller.text);
+    final content = selected.isEmpty ? 'code' : selected;
+    final languageSuffix = language.isEmpty ? '' : language;
+    final replacement = '```$languageSuffix\n$content\n```';
+    _replaceSourceSelection(
+      replacement,
+      selectionStart: selection.start + 3 + languageSuffix.length + 1,
+      selectionEnd:
+          selection.start + 3 + languageSuffix.length + 1 + content.length,
+    );
+  }
+
+  void _insertSourceImage({required bool block}) {
+    final selection = _normalizedSourceSelection();
+    final selected = selection.textInside(_controller.text).trim();
+    final alt = selected.isEmpty ? 'alt' : selected;
+    final replacement = '![${alt.replaceAll('\n', ' ')}](url)';
+    _replaceSourceSelection(
+      block ? '\n$replacement\n' : replacement,
+      selectionStart: selection.start + (block ? 3 : 2),
+      selectionEnd: selection.start + (block ? 3 : 2) + alt.length,
+    );
+  }
+
+  void _insertSourceTable() {
+    _insertSourceBlock(
+      '\n| Header 1 | Header 2 |\n| --- | --- |\n| Cell | Cell |\n',
+    );
+  }
+
+  void _insertSourceBlock(String markdown) {
+    final selection = _normalizedSourceSelection();
+    _replaceSourceSelection(
+      markdown,
+      selectionStart: selection.start + markdown.length,
+      selectionEnd: selection.start + markdown.length,
+    );
+  }
+
+  ({int start, int end, List<String> lines}) _selectedSourceLineRange() {
+    final selection = _normalizedSourceSelection();
+    final text = _controller.text;
+    final lineStart =
+        text.lastIndexOf(
+          '\n',
+          (selection.start - 1).clamp(0, text.length).toInt(),
+        ) +
+        1;
+    final nextBreak = text.indexOf('\n', selection.end);
+    final lineEnd = nextBreak < 0 ? text.length : nextBreak;
+    return (
+      start: lineStart,
+      end: lineEnd,
+      lines: text.substring(lineStart, lineEnd).split('\n'),
+    );
+  }
+
+  void _replaceSourceLineRange(
+    ({int start, int end, List<String> lines}) range,
+    String replacement,
+  ) {
+    final nextText = _controller.text.replaceRange(
+      range.start,
+      range.end,
+      replacement,
+    );
+    _controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection(
+        baseOffset: range.start,
+        extentOffset: range.start + replacement.length,
       ),
     );
     _sourceFocusNode.requestFocus();

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../editor/editor_shortcuts.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
 import 'busymark_design.dart';
@@ -262,37 +263,49 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.bold,
                 subtitle: context.l10n.shortcutBoldDescription,
                 leading: const Icon(BusyMarkGlyphs.bold),
-                trailing: const _KeyboardShortcutBadge('Ctrl+B'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.bold,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.italic,
                 subtitle: context.l10n.shortcutItalicDescription,
                 leading: const Icon(BusyMarkGlyphs.italic),
-                trailing: const _KeyboardShortcutBadge('Ctrl+I'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.italic,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.underline,
                 subtitle: context.l10n.shortcutUnderlineDescription,
                 leading: const Icon(BusyMarkGlyphs.underline),
-                trailing: const _KeyboardShortcutBadge('Ctrl+U'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.underline,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.link,
                 subtitle: context.l10n.shortcutLinkDescription,
                 leading: const Icon(BusyMarkGlyphs.link),
-                trailing: const _KeyboardShortcutBadge('Ctrl+K'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.link,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.inlineCode,
                 subtitle: context.l10n.shortcutInlineCodeDescription,
                 leading: const Icon(BusyMarkGlyphs.code),
-                trailing: const _KeyboardShortcutBadge('Ctrl+E'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.inlineCode,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.strikethrough,
                 subtitle: context.l10n.shortcutStrikethroughDescription,
                 leading: const Icon(BusyMarkGlyphs.strikethrough),
-                trailing: const _KeyboardShortcutBadge('Alt+Shift+5'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.strikethrough,
+                ),
               ),
             ],
           ),
@@ -304,43 +317,78 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.paragraph,
                 subtitle: context.l10n.shortcutParagraphDescription,
                 leading: const Icon(BusyMarkGlyphs.paragraph),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+0'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.paragraph,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.heading1,
                 subtitle: context.l10n.shortcutHeading1Description,
                 leading: const Icon(BusyMarkGlyphs.heading),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+1'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.heading1,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.heading2,
                 subtitle: context.l10n.shortcutHeading2Description,
                 leading: const Icon(BusyMarkGlyphs.heading),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+2'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.heading2,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.heading3,
                 subtitle: context.l10n.shortcutHeading3Description,
                 leading: const Icon(BusyMarkGlyphs.heading),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+3'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.heading3,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.heading4,
                 subtitle: context.l10n.shortcutHeading4Description,
                 leading: const Icon(BusyMarkGlyphs.heading),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+4'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.heading4,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.heading5,
                 subtitle: context.l10n.shortcutHeading5Description,
                 leading: const Icon(BusyMarkGlyphs.heading),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+5'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.heading5,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.heading6,
                 subtitle: context.l10n.shortcutHeading6Description,
                 leading: const Icon(BusyMarkGlyphs.heading),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+6'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.heading6,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.blockquote,
+                leading: const Icon(BusyMarkGlyphs.blockquote),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.blockquote,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.codeBlock,
+                leading: const Icon(BusyMarkGlyphs.code),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.codeBlock,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.codeBlockLanguage,
+                leading: const Icon(BusyMarkGlyphs.insertObject),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.codeBlockLanguage,
+                ),
               ),
             ],
           ),
@@ -352,19 +400,121 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.numberedList,
                 subtitle: context.l10n.shortcutNumberedListDescription,
                 leading: const Icon(BusyMarkGlyphs.orderedList),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+7'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.orderedList,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.bulletedList,
                 subtitle: context.l10n.shortcutBulletedListDescription,
                 leading: const Icon(BusyMarkGlyphs.unorderedList),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+8'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.unorderedList,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.checklist,
                 subtitle: context.l10n.shortcutChecklistDescription,
                 leading: const Icon(BusyMarkGlyphs.checklist),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+9'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.taskList,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.toggleTaskChecked,
+                leading: const Icon(BusyMarkGlyphs.checkedBox),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.toggleTask,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.indentListItem,
+                leading: const Icon(BusyMarkGlyphs.indent),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.indent,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.outdentListItem,
+                leading: const Icon(BusyMarkGlyphs.outdent),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.outdent,
+                ),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.insert,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.image,
+                leading: const Icon(BusyMarkGlyphs.image),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.image,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.inlineImage,
+                leading: const Icon(BusyMarkGlyphs.inlineImage),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.inlineImage,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.table,
+                leading: const Icon(BusyMarkGlyphs.table),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.table,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.thematicBreak,
+                leading: const Icon(BusyMarkGlyphs.thematicBreak),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.thematicBreak,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.hardLineBreak,
+                leading: const Icon(BusyMarkGlyphs.hardBreak),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.hardLineBreak,
+                ),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.shortcutGroupSidebar,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.files,
+                leading: const Icon(BusyMarkGlyphs.documentOpen),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.files,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.toc,
+                leading: const Icon(BusyMarkGlyphs.orderedList),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.toc,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.outline,
+                leading: const Icon(BusyMarkGlyphs.indent),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.outline,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.git,
+                leading: const Icon(BusyMarkGlyphs.history),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.git,
+                ),
               ),
             ],
           ),

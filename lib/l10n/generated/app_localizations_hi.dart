@@ -404,6 +404,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'चेकलिस्ट फ़ॉर्मेटिंग चालू/बंद करें';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Markdown फ़ाइल बनाएँ';
 
   @override

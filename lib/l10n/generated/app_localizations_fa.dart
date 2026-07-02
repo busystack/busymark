@@ -406,6 +406,9 @@ class AppLocalizationsFa extends AppLocalizations {
       'فعال یا غیرفعال کردن قالب‌بندی چک‌لیست';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'ایجاد فایل Markdown';
 
   @override

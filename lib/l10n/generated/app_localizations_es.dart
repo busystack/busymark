@@ -418,6 +418,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Activar o desactivar el formato de lista de verificación';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Crear archivo Markdown';
 
   @override

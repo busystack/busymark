@@ -767,6 +767,22 @@ void main() {
     ]) {
       expect(toolbar, contains(label));
     }
+    for (final shortcut in [
+      'BusyMarkEditorShortcutLabels.textStyle',
+      'BusyMarkEditorShortcutLabels.toggleTask',
+      'BusyMarkEditorShortcutLabels.indent',
+      'BusyMarkEditorShortcutLabels.outdent',
+      'BusyMarkEditorShortcutLabels.blockquote',
+      'BusyMarkEditorShortcutLabels.codeBlock',
+      'BusyMarkEditorShortcutLabels.codeBlockLanguage',
+      'BusyMarkEditorShortcutLabels.image',
+      'BusyMarkEditorShortcutLabels.inlineImage',
+      'BusyMarkEditorShortcutLabels.table',
+      'BusyMarkEditorShortcutLabels.thematicBreak',
+      'BusyMarkEditorShortcutLabels.hardLineBreak',
+    ]) {
+      expect(toolbar, contains(shortcut));
+    }
     expect(commands, contains('heading4'));
     expect(commands, contains('heading5'));
     expect(commands, contains('heading6'));

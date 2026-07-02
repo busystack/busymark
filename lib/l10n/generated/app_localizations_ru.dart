@@ -417,6 +417,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Включить или отключить форматирование списка задач.';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Создать файл Markdown';
 
   @override

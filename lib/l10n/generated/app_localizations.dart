@@ -882,6 +882,12 @@ abstract class AppLocalizations {
   /// **'Toggle checklist formatting'**
   String get shortcutChecklistDescription;
 
+  /// Keyboard shortcut group for sidebar view switching.
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar'**
+  String get shortcutGroupSidebar;
+
   /// Welcome screen action for creating a Markdown file.
   ///
   /// In en, this message translates to:

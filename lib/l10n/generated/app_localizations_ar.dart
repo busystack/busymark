@@ -403,6 +403,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutChecklistDescription => 'تطبيق/إزالة تنسيق قائمة التحقق';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'إنشاء ملف Markdown';
 
   @override

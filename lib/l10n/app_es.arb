@@ -508,6 +508,10 @@
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
+  "shortcutGroupSidebar": "Sidebar",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
   "createMarkdownFile": "Crear archivo Markdown",
   "@createMarkdownFile": {
     "description": "Welcome screen action for creating a Markdown file."

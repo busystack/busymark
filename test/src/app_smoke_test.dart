@@ -12,6 +12,7 @@ import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/editor/editor_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -370,6 +371,7 @@ void main() {
     expect(find.text(l10n.shortcutNumberedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
     expect(find.text('Ctrl+N'), findsOneWidget);
     expect(find.text('Ctrl+O'), findsOneWidget);
     expect(find.text('Ctrl+S'), findsOneWidget);
@@ -386,22 +388,52 @@ void main() {
     expect(find.text('Ctrl+Shift+V'), findsOneWidget);
     expect(find.text('Ctrl+Z'), findsOneWidget);
     expect(find.text('Ctrl+Shift+Z'), findsOneWidget);
-    expect(find.text('Ctrl+B'), findsOneWidget);
-    expect(find.text('Ctrl+I'), findsOneWidget);
-    expect(find.text('Ctrl+U'), findsOneWidget);
-    expect(find.text('Ctrl+K'), findsOneWidget);
-    expect(find.text('Ctrl+E'), findsOneWidget);
-    expect(find.text('Alt+Shift+5'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+0'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+1'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+2'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+3'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+4'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+5'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+6'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+7'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+8'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+9'), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.bold), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.italic), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.underline), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.link), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.inlineCode), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.strikethrough),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkEditorShortcutLabels.paragraph), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading1), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading2), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading3), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading4), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading5), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading6), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.orderedList), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.unorderedList),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkEditorShortcutLabels.taskList), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.toggleTask), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.indent), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.outdent), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.blockquote), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.codeBlock), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.codeBlockLanguage),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkEditorShortcutLabels.image), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.inlineImage), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.table), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.thematicBreak),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.hardLineBreak),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkSidebarShortcutLabels.files), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.toc), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.outline), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.git), findsOneWidget);
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);
@@ -664,6 +696,65 @@ void main() {
     expect(find.text(l10n.noOpenFile), findsWidgets);
   });
 
+  testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_keys_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final second = File('${temp.path}/Api.md')..writeAsStringSync('# API\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    Future<void> pressControlShortcut(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 30; i += 1) {
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Api.md'), findsNothing);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit1);
+    expect(find.text('Api.md'), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit4);
+    expect(find.text(l10n.gitUnavailableTitle), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit3);
+    expect(find.text(l10n.gitUnavailableTitle), findsNothing);
+    expect(find.text('Intro.md'), findsWidgets);
+  });
+
   testWidgets('source undo cannot restore saved text from previous tab', (
     tester,
   ) async {
@@ -763,6 +854,123 @@ void main() {
     );
     expect(service.savedPath, first.path);
     expect(service.savedText, '# Edited Introduction\n');
+  });
+
+  testWidgets('source view supports editor formatting shortcuts', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_source_keys_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('alpha');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    Future<void> pressShortcut(
+      LogicalKeyboardKey key, {
+      bool control = false,
+      bool alt = false,
+      bool shift = false,
+    }) async {
+      if (control) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      }
+      if (alt) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      }
+      if (shift) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      if (shift) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      if (alt) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      }
+      if (control) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, 'alpha');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.period, control: true, shift: true);
+    expect(container.read(workspaceControllerProvider).activeText, '> alpha');
+
+    await tester.enterText(sourceField, 'snippet');
+    final controller = tester.widget<TextField>(sourceField).controller!;
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
+    );
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.keyC, control: true, alt: true);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '```\nsnippet\n```',
+    );
+
+    await tester.enterText(sourceField, 'row');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.keyT, control: true, shift: true);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      contains('| Header 1 | Header 2 |'),
+    );
+
+    await tester.enterText(sourceField, 'line');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.enter, shift: true);
+    expect(container.read(workspaceControllerProvider).activeText, 'line  \n');
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
   });
 
   testWidgets('editor undo cannot restore saved text from previous tab', (

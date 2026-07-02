@@ -412,6 +412,9 @@ class AppLocalizationsNo extends AppLocalizations {
   String get shortcutChecklistDescription => 'Slå sjekkliste av/på';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Opprett Markdown-fil';
 
   @override

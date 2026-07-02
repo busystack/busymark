@@ -414,6 +414,9 @@ class AppLocalizationsPl extends AppLocalizations {
       'Włącz lub wyłącz formatowanie listy kontrolnej';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Utwórz plik Markdown';
 
   @override

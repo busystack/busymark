@@ -417,6 +417,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Formatierung als Checkliste umschalten';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Markdown-Datei erstellen';
 
   @override

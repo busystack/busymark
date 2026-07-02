@@ -420,6 +420,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Activer ou désactiver la liste de tâches';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Créer un fichier Markdown';
 
   @override

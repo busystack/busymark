@@ -418,6 +418,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Attiva/disattiva la formattazione come checklist';
 
   @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
   String get createMarkdownFile => 'Crea file Markdown';
 
   @override
