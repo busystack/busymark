@@ -1,5 +1,5 @@
 {
-  "@@locale": "no",
+  "@@locale": "nb",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Vis/skjul sidefelt",
+  "toggleSidebar": "Vis/skjul sidepanel",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -918,11 +918,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "Skjul sidefelt",
+  "hideSidebar": "Skjul sidepanel",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "Vis sidefelt",
+  "showSidebar": "Vis sidepanel",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },

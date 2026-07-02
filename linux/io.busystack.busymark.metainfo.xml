@@ -9,7 +9,7 @@
   <name>BusyMark</name>
   <name xml:lang="de">BusyMark</name>
   <name xml:lang="it">BusyMark</name>
-  <name xml:lang="no">BusyMark</name>
+  <name xml:lang="nb">BusyMark</name>
   <name xml:lang="fr">BusyMark</name>
   <name xml:lang="ru">BusyMark</name>
   <name xml:lang="uk">BusyMark</name>
@@ -22,7 +22,7 @@
   <summary>Markdown and Writerside documentation editor</summary>
   <summary xml:lang="de">Markdown- und Writerside-Dokumentationseditor</summary>
   <summary xml:lang="it">Editor della documentazione Markdown e Writerside</summary>
-  <summary xml:lang="no">Markdown og Writerside dokumentasjonsredigerer</summary>
+  <summary xml:lang="nb">Markdown og Writerside dokumentasjonsredigerer</summary>
   <summary xml:lang="fr">Éditeur de documentation Markdown et Writerside</summary>
   <summary xml:lang="ru">Редактор документации Markdown и Writerside</summary>
   <summary xml:lang="uk">Редактор документації Markdown і Writerside</summary>
@@ -36,7 +36,7 @@
     <p>BusyMark is a Linux editor for Markdown files and Writerside-compatible documentation projects.</p>
     <p xml:lang="de">BusyMark ist ein Linux-Editor für Markdown-Dateien und Writerside-kompatible Dokumentationsprojekte.</p>
     <p xml:lang="it">BusyMark è un editor Linux per file Markdown e progetti di documentazione compatibili con Writerside.</p>
-    <p xml:lang="no">BusyMark er en Linux-redigerer for Markdown-filer og Writerside-kompatible dokumentasjonsprosjekter.</p>
+    <p xml:lang="nb">BusyMark er en Linux-redigerer for Markdown-filer og Writerside-kompatible dokumentasjonsprosjekter.</p>
     <p xml:lang="fr">BusyMark est un éditeur Linux pour les fichiers Markdown et les projets de documentation compatibles Writerside.</p>
     <p xml:lang="ru">BusyMark — это редактор Linux для файлов Markdown и проектов документации, совместимых с Writerside.</p>
     <p xml:lang="uk">BusyMark — це редактор Linux для файлів Markdown і проектів документації, сумісних із Writerside.</p>
