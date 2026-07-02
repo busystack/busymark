@@ -644,6 +644,57 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return _service.fileChangedSince(active, workspace?.activeFileSnapshot);
   }
 
+  Future<bool> discardActiveChanges() async {
+    _autoSaveDebounce?.cancel();
+    _parseDebounce?.cancel();
+    final workspace = state.workspace;
+    if (workspace == null || !state.isDirty) {
+      return true;
+    }
+    final active = workspace.activeFilePath;
+    final operationRevision = _invalidateActiveDocumentOperations();
+    _resetSaveTracking();
+    if (workspace.kind == WorkspaceKind.untitledMarkdown || active == null) {
+      state = const WorkspaceState();
+      return true;
+    }
+    state = state.copyWith(isDirty: false, clearMessage: true);
+    try {
+      final load = await _service.loadTextWithSnapshot(active);
+      final nextWorkspace = workspace.copyWith(
+        activeFileSnapshot: load.snapshot,
+      );
+      final reparsed = await _service.reparseActive(nextWorkspace, load.text);
+      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+        return false;
+      }
+      state = state.copyWith(
+        workspace: reparsed,
+        activeText: load.text,
+        preview: _safePreview(reparsed, load.text),
+        isDirty: false,
+        clearMessage: true,
+      );
+      _resetSaveTracking();
+      return true;
+    } on Object catch (error, stackTrace) {
+      stderr.writeln('[BusyMark] Discard active changes failed');
+      stderr.writeln('[BusyMark]   active: $active');
+      stderr.writeln('[BusyMark]   error: $error');
+      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      if (_isCurrentActiveDocumentOperation(operationRevision)) {
+        state = state.copyWith(
+          isDirty: true,
+          message: WorkspaceMessage(
+            WorkspaceMessageCode.couldNotOpenFile,
+            error: error,
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
   Future<bool> refreshWorkspaceFromDiskPreservingOpenTabs() async {
     final workspace = state.workspace;
     if (workspace == null || state.isDirty) {

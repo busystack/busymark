@@ -63,6 +63,9 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   );
 
   if (action == _UnsavedChangesAction.discard) {
+    unawaited(
+      ref.read(workspaceControllerProvider.notifier).discardActiveChanges(),
+    );
     return true;
   }
   if (action == _UnsavedChangesAction.save) {
