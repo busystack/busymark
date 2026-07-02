@@ -508,9 +508,13 @@
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
   },
-  "shortcutGroupSidebar": "Sidebar",
+  "shortcutGroupSidebar": "Боковая панель",
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "Вид боковой панели",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
   },
   "createMarkdownFile": "Создать файл Markdown",
   "@createMarkdownFile": {
@@ -1912,7 +1916,8 @@
   "gitDetachedHead": "Detached HEAD",
   "gitDetachedHeadAt": "Detached at {commit}",
   "gitNoUpstream": "No upstream",
-  "gitAheadBehind": "{ahead, plural, =0{} =1{1 ahead} other{{ahead} ahead}}{behind, plural, =0{} =1{ 1 behind} other{ {behind} behind}}",
+  "gitAheadCount": "{count, plural, =1{1 unpushed commit} other{{count} unpushed commits}}",
+  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
   "gitClean": "Clean",
   "gitConflicts": "Conflicts",
   "gitChanges": "Changes",
@@ -1933,6 +1938,7 @@
   "gitCommitNoStagedFiles": "Stage at least one file before committing.",
   "gitCommitMessageRequired": "Enter a commit message.",
   "gitCreateBranch": "Create branch",
+  "gitNewBranch": "+ New Branch",
   "gitBranchName": "Branch name",
   "gitSwitchBranch": "Switch",
   "gitNoChanges": "No changes",

@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/busymark_design.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../workspace/workspace_model.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
-import 'git_branches_view.dart';
 import 'git_changes_view.dart';
 import 'git_history_view.dart';
 
@@ -72,7 +74,24 @@ class GitSidebarTab extends ConsumerWidget {
           children: [
             _RepositoryStrip(
               state: state,
+              onLoadBranches: controller.loadBranches,
               onSelectView: controller.selectView,
+              onCreateBranch: () async {
+                final branchName = await _showCreateBranchDialog(context);
+                if (branchName == null) {
+                  return;
+                }
+                await controller.createBranch(branchName);
+              },
+              onSwitchBranch: (branchName) async {
+                if (!await onConfirmSwitchBranch(branchName)) {
+                  return;
+                }
+                await controller.switchBranch(branchName);
+                if (ref.read(gitControllerProvider).lastError == null) {
+                  await onAfterWorkspaceFilesChanged();
+                }
+              },
               onPull: () async {
                 await controller.pullFastForwardOnly();
                 await onAfterWorkspaceFilesChanged();
@@ -108,19 +127,6 @@ class GitSidebarTab extends ConsumerWidget {
                   },
                   onSelectCommit: controller.loadCommitDetails,
                 ),
-                GitView.branches => GitBranchesView(
-                  state: state,
-                  onCreateBranch: controller.createBranch,
-                  onSwitchBranch: (branchName) async {
-                    if (!await onConfirmSwitchBranch(branchName)) {
-                      return;
-                    }
-                    await controller.switchBranch(branchName);
-                    if (ref.read(gitControllerProvider).lastError == null) {
-                      await onAfterWorkspaceFilesChanged();
-                    }
-                  },
-                ),
               },
             ),
           ],
@@ -133,15 +139,21 @@ class GitSidebarTab extends ConsumerWidget {
 class _RepositoryStrip extends StatelessWidget {
   const _RepositoryStrip({
     required this.state,
+    required this.onLoadBranches,
     required this.onSelectView,
+    required this.onCreateBranch,
+    required this.onSwitchBranch,
     required this.onPull,
     required this.onPush,
   });
 
   final GitState state;
+  final Future<List<GitBranch>> Function() onLoadBranches;
   final ValueChanged<GitView> onSelectView;
-  final VoidCallback onPull;
-  final VoidCallback onPush;
+  final Future<void> Function() onCreateBranch;
+  final Future<void> Function(String branchName) onSwitchBranch;
+  final Future<void> Function() onPull;
+  final Future<void> Function() onPush;
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +177,7 @@ class _RepositoryStrip extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  BusyMarkGlyphs.tree,
+                  BusyMarkGlyphs.branch,
                   size: BusyMarkSizes.iconSm,
                   color: colors.mutedForeground,
                 ),
@@ -179,6 +191,48 @@ class _RepositoryStrip extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                ),
+                BusyMarkHeaderPopupMenuButton<_BranchMenuAction>(
+                  tooltip: context.l10n.gitBranches,
+                  icon: BusyMarkGlyphs.branch,
+                  transparent: true,
+                  itemBuilder: (context) async {
+                    final newBranchLabel = context.l10n.gitNewBranch;
+                    final pullLabel = context.l10n.gitPull;
+                    final pushLabel = context.l10n.gitPush;
+                    final branches = await onLoadBranches();
+                    return [
+                      BusyMarkPopupMenuItem(
+                        value: const _PullBranchMenuAction(),
+                        label: pullLabel,
+                        icon: BusyMarkGlyphs.pull,
+                        enabled: repo.upstreamBranch != null,
+                      ),
+                      BusyMarkPopupMenuItem(
+                        value: const _PushBranchMenuAction(),
+                        label: pushLabel,
+                        icon: BusyMarkGlyphs.push,
+                        enabled: repo.hasRemote,
+                      ),
+                      BusyMarkPopupMenuItem(
+                        value: const _CreateBranchMenuAction(),
+                        label: newBranchLabel,
+                        icon: BusyMarkGlyphs.newDocument,
+                      ),
+                      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+                      for (final branch in branches)
+                        BusyMarkPopupMenuItem(
+                          value: _SwitchBranchMenuAction(branch.name),
+                          label: branch.name,
+                          icon: BusyMarkGlyphs.branch,
+                          checked: branch.current,
+                          trailingCheck: true,
+                        ),
+                    ];
+                  },
+                  onSelected: (action) {
+                    unawaited(_handleBranchAction(action));
+                  },
                 ),
                 BusyMarkHeaderPopupMenuButton<GitView>(
                   tooltip: _gitViewLabel(context, state.selectedView),
@@ -207,24 +261,6 @@ class _RepositoryStrip extends StatelessWidget {
                 context,
               ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
             ),
-            const SizedBox(height: BusyMarkSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: repo.upstreamBranch == null ? null : onPull,
-                    child: Text(context.l10n.gitPull),
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: repo.hasRemote ? onPush : null,
-                    child: Text(context.l10n.gitPush),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -232,13 +268,33 @@ class _RepositoryStrip extends StatelessWidget {
   }
 
   String _repositoryDetail(BuildContext context, GitRepositoryInfo repo) {
-    final upstream = repo.upstreamBranch ?? context.l10n.gitNoUpstream;
     final state = repo.hasConflicts
         ? context.l10n.gitConflicts
         : (repo.aheadCount == 0 && repo.behindCount == 0
               ? context.l10n.gitClean
-              : context.l10n.gitAheadBehind(repo.aheadCount, repo.behindCount));
-    return '$upstream - $state';
+              : [
+                  if (repo.aheadCount > 0)
+                    context.l10n.gitAheadCount(repo.aheadCount),
+                  if (repo.behindCount > 0)
+                    context.l10n.gitBehindCount(repo.behindCount),
+                ].join(', '));
+    return repo.upstreamBranch == null ? context.l10n.gitNoUpstream : state;
+  }
+
+  Future<void> _handleBranchAction(_BranchMenuAction action) async {
+    switch (action) {
+      case _SwitchBranchMenuAction(:final branchName):
+        if (branchName == state.repositoryInfo?.currentBranch) {
+          return;
+        }
+        await onSwitchBranch(branchName);
+      case _CreateBranchMenuAction():
+        await onCreateBranch();
+      case _PullBranchMenuAction():
+        await onPull();
+      case _PushBranchMenuAction():
+        await onPush();
+    }
   }
 }
 
@@ -246,7 +302,6 @@ String _gitViewLabel(BuildContext context, GitView view) {
   return switch (view) {
     GitView.changes => context.l10n.gitChanges,
     GitView.history => context.l10n.gitHistory,
-    GitView.branches => context.l10n.gitBranches,
   };
 }
 
@@ -254,8 +309,103 @@ IconData _gitViewIcon(GitView view) {
   return switch (view) {
     GitView.changes => BusyMarkGlyphs.checklist,
     GitView.history => BusyMarkGlyphs.history,
-    GitView.branches => BusyMarkGlyphs.tree,
   };
+}
+
+sealed class _BranchMenuAction {
+  const _BranchMenuAction();
+}
+
+final class _SwitchBranchMenuAction extends _BranchMenuAction {
+  const _SwitchBranchMenuAction(this.branchName);
+
+  final String branchName;
+}
+
+final class _CreateBranchMenuAction extends _BranchMenuAction {
+  const _CreateBranchMenuAction();
+}
+
+final class _PullBranchMenuAction extends _BranchMenuAction {
+  const _PullBranchMenuAction();
+}
+
+final class _PushBranchMenuAction extends _BranchMenuAction {
+  const _PushBranchMenuAction();
+}
+
+Future<String?> _showCreateBranchDialog(BuildContext context) {
+  return showBusyMarkModalDialog<String>(
+    context,
+    builder: (context) => const _CreateBranchDialog(),
+  );
+}
+
+class _CreateBranchDialog extends StatefulWidget {
+  const _CreateBranchDialog();
+
+  @override
+  State<_CreateBranchDialog> createState() => _CreateBranchDialogState();
+}
+
+class _CreateBranchDialogState extends State<_CreateBranchDialog> {
+  late final TextEditingController _controller;
+
+  bool get _canCreate => _controller.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController()..addListener(_handleChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkDialogShell(
+      title: context.l10n.gitCreateBranch,
+      maxWidth: BusyMarkSizes.dialogCompact,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.gitCreateBranch,
+          suggested: true,
+          onPressed: _canCreate ? _submit : null,
+        ),
+      ],
+      children: [
+        BusyMarkFloatingTextEntry(
+          label: context.l10n.gitBranchName,
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+        ),
+      ],
+    );
+  }
+
+  void _submit() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      return;
+    }
+    Navigator.pop(context, value);
+  }
+
+  void _handleChanged() {
+    setState(() {});
+  }
 }
 
 class _GitMessage extends StatelessWidget {

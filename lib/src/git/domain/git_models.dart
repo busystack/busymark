@@ -56,7 +56,7 @@ enum GitFailureCode {
   commandFailed,
 }
 
-enum GitView { changes, history, branches }
+enum GitView { changes, history }
 
 class GitAvailability {
   const GitAvailability({

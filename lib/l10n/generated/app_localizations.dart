@@ -888,6 +888,12 @@ abstract class AppLocalizations {
   /// **'Sidebar'**
   String get shortcutGroupSidebar;
 
+  /// Tooltip for the sidebar view selector button.
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar view'**
+  String get sidebarViewMenu;
+
   /// Welcome screen action for creating a Markdown file.
   ///
   /// In en, this message translates to:
@@ -2471,11 +2477,17 @@ abstract class AppLocalizations {
   /// **'No upstream'**
   String get gitNoUpstream;
 
-  /// Ahead/behind counts for a branch.
+  /// Count of local commits not pushed to the upstream branch.
   ///
   /// In en, this message translates to:
-  /// **'{ahead, plural, =0{} =1{1 ahead} other{{ahead} ahead}}{behind, plural, =0{} =1{ 1 behind} other{ {behind} behind}}'**
-  String gitAheadBehind(int ahead, int behind);
+  /// **'{count, plural, =1{1 unpushed commit} other{{count} unpushed commits}}'**
+  String gitAheadCount(int count);
+
+  /// Count of upstream commits not pulled into the local branch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 commit to pull} other{{count} commits to pull}}'**
+  String gitBehindCount(int count);
 
   /// Git clean state label.
   ///
@@ -2501,7 +2513,7 @@ abstract class AppLocalizations {
   /// **'History'**
   String get gitHistory;
 
-  /// Git branches view label.
+  /// Git branch menu label.
   ///
   /// In en, this message translates to:
   /// **'Branches'**
@@ -2596,6 +2608,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create branch'**
   String get gitCreateBranch;
+
+  /// Git branch dropdown action for creating a new branch.
+  ///
+  /// In en, this message translates to:
+  /// **'+ New Branch'**
+  String get gitNewBranch;
 
   /// Branch name field label.
   ///

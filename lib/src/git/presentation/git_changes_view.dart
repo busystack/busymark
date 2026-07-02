@@ -5,9 +5,8 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
-import 'git_commit_dialog.dart';
 
-class GitChangesView extends StatelessWidget {
+class GitChangesView extends StatefulWidget {
   const GitChangesView({
     super.key,
     required this.state,
@@ -22,88 +21,189 @@ class GitChangesView extends StatelessWidget {
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
 
   @override
+  State<GitChangesView> createState() => _GitChangesViewState();
+}
+
+class _GitChangesViewState extends State<GitChangesView> {
+  late final TextEditingController _commitMessageController;
+  var _committing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _commitMessageController = TextEditingController()
+      ..addListener(_handleCommitMessageChanged);
+  }
+
+  @override
+  void dispose() {
+    _commitMessageController
+      ..removeListener(_handleCommitMessageChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final snapshot = state.statusSnapshot;
+    final snapshot = widget.state.statusSnapshot;
     if (snapshot == null) {
       return Center(child: Text(context.l10n.gitNoChanges));
     }
     if (snapshot.clean) {
       return Center(child: Text(context.l10n.gitClean));
     }
-    return ListView(
-      padding: BusyMarkInsets.sidebarList,
+    return Column(
       children: [
-        _RepositoryActions(state: state),
-        _ChangeGroup(
-          title: context.l10n.gitConflicts,
-          files: snapshot.conflictedFiles,
-          selectedPath: state.selectedFilePath,
-          onSelectFile: onSelectFile,
-          onOpenFile: onOpenFile,
-          onConfirmDiscard: onConfirmDiscard,
+        Expanded(
+          child: ListView(
+            padding: BusyMarkInsets.sidebarList,
+            children: [
+              _ChangeGroup(
+                title: context.l10n.gitConflicts,
+                files: snapshot.conflictedFiles,
+                selectedPath: widget.state.selectedFilePath,
+                onSelectFile: widget.onSelectFile,
+                onOpenFile: widget.onOpenFile,
+                onConfirmDiscard: widget.onConfirmDiscard,
+              ),
+              _ChangeGroup(
+                title: context.l10n.gitStaged,
+                files: snapshot.stagedFiles,
+                selectedPath: widget.state.selectedFilePath,
+                onSelectFile: widget.onSelectFile,
+                onOpenFile: widget.onOpenFile,
+                onConfirmDiscard: widget.onConfirmDiscard,
+              ),
+              _ChangeGroup(
+                title: context.l10n.gitChanges,
+                files: snapshot.unstagedFiles,
+                selectedPath: widget.state.selectedFilePath,
+                onSelectFile: widget.onSelectFile,
+                onOpenFile: widget.onOpenFile,
+                onConfirmDiscard: widget.onConfirmDiscard,
+              ),
+              _ChangeGroup(
+                title: context.l10n.gitUntracked,
+                files: snapshot.untrackedFiles,
+                selectedPath: widget.state.selectedFilePath,
+                onSelectFile: widget.onSelectFile,
+                onOpenFile: widget.onOpenFile,
+                onConfirmDiscard: widget.onConfirmDiscard,
+              ),
+              const SizedBox(height: BusyMarkSpacing.xl),
+            ],
+          ),
         ),
-        _ChangeGroup(
-          title: context.l10n.gitStaged,
-          files: snapshot.stagedFiles,
-          selectedPath: state.selectedFilePath,
-          onSelectFile: onSelectFile,
-          onOpenFile: onOpenFile,
-          onConfirmDiscard: onConfirmDiscard,
+        _CommitPanel(
+          controller: _commitMessageController,
+          stagedFiles: snapshot.stagedFiles,
+          committing: _committing,
+          onCommit: _commit,
         ),
-        _ChangeGroup(
-          title: context.l10n.gitChanges,
-          files: snapshot.unstagedFiles,
-          selectedPath: state.selectedFilePath,
-          onSelectFile: onSelectFile,
-          onOpenFile: onOpenFile,
-          onConfirmDiscard: onConfirmDiscard,
-        ),
-        _ChangeGroup(
-          title: context.l10n.gitUntracked,
-          files: snapshot.untrackedFiles,
-          selectedPath: state.selectedFilePath,
-          onSelectFile: onSelectFile,
-          onOpenFile: onOpenFile,
-          onConfirmDiscard: onConfirmDiscard,
-        ),
-        const SizedBox(height: BusyMarkSpacing.xl),
       ],
     );
   }
+
+  Future<void> _commit() async {
+    if (_committing ||
+        _commitMessageController.text.trim().isEmpty ||
+        (widget.state.statusSnapshot?.stagedFiles.isEmpty ?? true)) {
+      return;
+    }
+    setState(() => _committing = true);
+    try {
+      await GitCommitActions.of(context).commit(_commitMessageController.text);
+    } finally {
+      if (mounted) {
+        setState(() => _committing = false);
+      }
+    }
+  }
+
+  void _handleCommitMessageChanged() {
+    setState(() {});
+  }
 }
 
-class _RepositoryActions extends StatelessWidget {
-  const _RepositoryActions({required this.state});
+class _CommitPanel extends StatelessWidget {
+  const _CommitPanel({
+    required this.controller,
+    required this.stagedFiles,
+    required this.committing,
+    required this.onCommit,
+  });
 
-  final GitState state;
+  final TextEditingController controller;
+  final List<GitFileStatus> stagedFiles;
+  final bool committing;
+  final Future<void> Function() onCommit;
 
   @override
   Widget build(BuildContext context) {
-    final staged = state.statusSnapshot?.stagedFiles ?? const [];
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BusyMarkSpacing.md),
-      child: Row(
-        children: [
-          Expanded(
-            child: FilledButton.icon(
-              onPressed: staged.isEmpty
-                  ? null
-                  : () => _showCommitDialog(context, staged),
-              icon: const Icon(BusyMarkGlyphs.check),
-              label: Text(context.l10n.gitCommit),
-            ),
-          ),
-        ],
+    final colors = BusyMarkSurfaceColors.of(context);
+    final canCommit =
+        !committing &&
+        stagedFiles.isNotEmpty &&
+        controller.text.trim().isNotEmpty;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.secondarySidebar,
+        border: Border(top: BorderSide(color: colors.subtleBorder)),
       ),
-    );
-  }
-
-  void _showCommitDialog(BuildContext context, List<GitFileStatus> staged) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => GitCommitDialog(
-        stagedFiles: staged,
-        onCommit: (message) => GitCommitActions.of(context).commit(message),
+      child: Padding(
+        padding: const EdgeInsets.all(BusyMarkSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              context.l10n.gitCommitMessage,
+              style: busyMarkSectionHeaderStyle(context),
+            ),
+            const SizedBox(height: BusyMarkSpacing.sm),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.control,
+                borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+                border: Border.all(color: colors.subtleBorder),
+              ),
+              child: TextField(
+                controller: controller,
+                minLines: 3,
+                maxLines: 5,
+                textInputAction: TextInputAction.newline,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.all(BusyMarkSpacing.sm),
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(height: BusyMarkSpacing.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    stagedFiles.isEmpty
+                        ? context.l10n.gitCommitNoStagedFiles
+                        : context.l10n.gitCommitStagedFiles,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                BusyMarkDialogButton(
+                  label: context.l10n.gitCommit,
+                  suggested: true,
+                  onPressed: canCommit ? () => onCommit() : null,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

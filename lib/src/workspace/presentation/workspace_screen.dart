@@ -1353,6 +1353,15 @@ IconData _sidebarTabIcon(_SidebarTab tab) {
   };
 }
 
+String _sidebarTabShortcut(_SidebarTab tab) {
+  return switch (tab) {
+    _SidebarTab.files => BusyMarkSidebarShortcutLabels.files,
+    _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
+    _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
+    _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
+  };
+}
+
 _SidebarTab? _sidebarShortcutTabFor(LogicalKeyboardKey key) {
   return switch (key) {
     LogicalKeyboardKey.digit1 ||
@@ -1414,14 +1423,17 @@ class _SidebarHeader extends StatelessWidget {
           if (showTabMenu && selectedTab != null) ...[
             const SizedBox(width: BusyMarkSpacing.sm),
             BusyMarkHeaderPopupMenuButton<_SidebarTab>(
-              tooltip: _sidebarTabLabel(context, selectedTab!),
+              tooltip: context.l10n.sidebarViewMenu,
               icon: _sidebarTabIcon(selectedTab!),
+              transparent: true,
+              borderRadius: BusyMarkRadius.nativeHeaderButton,
               itemBuilder: (context) => [
                 for (final tab in tabs)
                   BusyMarkPopupMenuItem(
                     value: tab,
                     label: _sidebarTabLabel(context, tab),
                     icon: _sidebarTabIcon(tab),
+                    shortcut: _sidebarTabShortcut(tab),
                     checked: tab == selectedTab,
                     trailingCheck: true,
                   ),

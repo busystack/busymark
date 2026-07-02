@@ -88,6 +88,27 @@ void main() {
     expect(find.textContaining('sign in'), findsNothing);
   });
 
+  testWidgets('Escape closes header popup menus', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.settings), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.settings), findsNothing);
+  });
+
   testWidgets('settings screen opens', (tester) async {
     final l10n = AppLocalizationsEn();
     final settingsStore = _MemorySettingsStore();
@@ -132,6 +153,15 @@ void main() {
     expect(find.text('Deutsch'), findsOneWidget);
     expect(find.text('العربية'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deutsch'), findsNothing);
+    expect(find.text('العربية'), findsNothing);
+    expect(find.text('हिन्दी'), findsNothing);
+
+    await tester.tap(find.byTooltip(l10n.appLanguage));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
 
@@ -463,7 +493,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(fr.tabs), findsOneWidget);
+    expect(fr.shortcutGroupSidebar, isNot('Sidebar'));
+    expect(find.text(fr.shortcutGroupSidebar), findsOneWidget);
     expect(find.text('Tabs'), findsNothing);
+    expect(find.text('Sidebar'), findsNothing);
   });
 
   testWidgets('about dialog shows the BusyMark logo', (tester) async {
@@ -746,6 +779,7 @@ void main() {
 
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitUnavailableTitle), findsOneWidget);
@@ -753,6 +787,24 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitUnavailableTitle), findsNothing);
     expect(find.text('Intro.md'), findsWidgets);
+
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byTooltip('${l10n.files} (${BusyMarkSidebarShortcutLabels.files})'),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.outline} (${BusyMarkSidebarShortcutLabels.outline})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip('${l10n.git} (${BusyMarkSidebarShortcutLabels.git})'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('source undo cannot restore saved text from previous tab', (

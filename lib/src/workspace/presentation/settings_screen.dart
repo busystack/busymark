@@ -273,6 +273,9 @@ class _LanguageControl extends StatelessWidget {
     final popupTheme = theme.popupMenuTheme;
     final selectedValue = selectedLocaleTag ?? _systemLocaleTag;
     final selectedLabel = _selectedLabel(context, selectedValue);
+    final escapeDismiss = BusyMarkPopupEscapeDismissBinding(
+      Navigator.of(context),
+    );
     return Align(
       alignment: AlignmentDirectional.centerEnd,
       child: PopupMenuButton<String>(
@@ -295,8 +298,13 @@ class _LanguageControl extends StatelessWidget {
           minWidth: BusyMarkSizes.languagePopupMinWidth,
           maxWidth: BusyMarkSizes.languagePopupMaxWidth,
         ),
-        onSelected: (value) =>
-            onChanged(value == _systemLocaleTag ? null : value),
+        requestFocus: true,
+        onOpened: escapeDismiss.attach,
+        onCanceled: escapeDismiss.detach,
+        onSelected: (value) {
+          escapeDismiss.detach();
+          onChanged(value == _systemLocaleTag ? null : value);
+        },
         itemBuilder: (context) => [
           _languageMenuItem(
             context,

@@ -206,9 +206,6 @@ class GitController extends Notifier<GitState> {
     if (view == GitView.history && state.history.isEmpty) {
       await loadProjectHistory();
     }
-    if (view == GitView.branches) {
-      await loadBranches();
-    }
   }
 
   void clearSelection() {
@@ -470,18 +467,20 @@ class GitController extends Notifier<GitState> {
     await _runRootOperation(workspace.rootPath, _gateway.initializeRepository);
   }
 
-  Future<void> loadBranches() async {
+  Future<List<GitBranch>> loadBranches() async {
     final repository = state.repositoryInfo;
     if (repository == null) {
-      return;
+      return state.branches;
     }
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
       final branches = await _gateway.branches(repository);
       state = state.copyWith(isRunningOperation: false, branches: branches);
+      return branches;
     } on Object catch (error) {
       _setFailure(error, commandName: 'branch');
       state = state.copyWith(isRunningOperation: false);
+      return state.branches;
     }
   }
 

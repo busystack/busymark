@@ -4,7 +4,6 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_changes_view.dart';
-import 'package:busymark/src/git/presentation/git_commit_dialog.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
 import 'package:busymark/src/app/system_accent.dart';
@@ -49,28 +48,40 @@ void main() {
     expect(find.text(l10n.gitUntracked), findsOneWidget);
   });
 
-  testWidgets('commit dialog enables only with staged files and message', (
+  testWidgets('changes view commit panel commits staged files with message', (
     tester,
   ) async {
+    String? committedMessage;
     await tester.pumpWidget(
       _localized(
-        GitCommitDialog(
-          stagedFiles: [_file('README.md', staged: true, unstaged: false)],
-          onCommit: (_) async {},
+        GitCommitActions(
+          commit: (message) async => committedMessage = message,
+          child: GitFileActions(
+            stage: (_) {},
+            unstage: (_) {},
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
         ),
       ),
     );
 
-    FilledButton button() {
-      return tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, l10n.gitCommit),
-      );
-    }
-
-    expect(button().onPressed, isNull);
+    expect(find.text(l10n.gitCommitMessage), findsOneWidget);
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pump();
+    expect(committedMessage, isNull);
     await tester.enterText(find.byType(TextField), 'Docs');
     await tester.pump();
-    expect(button().onPressed, isNotNull);
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pump();
+    expect(committedMessage, 'Docs');
   });
 
   testWidgets('conflict group is visible', (tester) async {
@@ -116,6 +127,147 @@ void main() {
     expect(find.text(l10n.gitUnavailableTitle), findsOneWidget);
   });
 
+  testWidgets('repository strip shows branch once with compact sync state', (
+    tester,
+  ) async {
+    const repo = GitRepositoryInfo(
+      rootPath: '/repo',
+      gitDirPath: '/repo/.git',
+      currentBranch: 'main',
+      upstreamBranch: 'origin/main',
+      hasRemote: true,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(_state(files: const [], repo: repo)),
+          ),
+        ],
+        child: _localized(
+          GitSidebarTab(
+            workspace: _workspace(),
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+            onAfterWorkspaceFilesChanged: () async {},
+            onConfirmSwitchBranch: (_) async => true,
+            onConfirmPushSetUpstream: () async => true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('main'), findsOneWidget);
+    expect(find.textContaining('origin/main'), findsNothing);
+    expect(find.textContaining('origin -'), findsNothing);
+    expect(find.text(l10n.gitClean), findsAtLeastNWidgets(1));
+  });
+
+  testWidgets(
+    'repository strip branch dropdown lists branches and new action',
+    (tester) async {
+      const repo = GitRepositoryInfo(
+        rootPath: '/repo',
+        gitDirPath: '/repo/.git',
+        currentBranch: 'main',
+        upstreamBranch: 'origin/main',
+        hasRemote: true,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gitControllerProvider.overrideWith(
+              () => _PresetGitController(
+                _state(
+                  files: const [],
+                  repo: repo,
+                  branches: const [
+                    GitBranch(name: 'main', current: true),
+                    GitBranch(name: 'docs', current: false),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          child: _localized(
+            GitSidebarTab(
+              workspace: _workspace(),
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              onAfterWorkspaceFilesChanged: () async {},
+              onConfirmSwitchBranch: (_) async => true,
+              onConfirmPushSetUpstream: () async => true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.byTooltip(l10n.gitBranches));
+      await tester.pumpAndSettle();
+
+      expect(find.text('docs'), findsOneWidget);
+      expect(find.text(l10n.gitNewBranch), findsOneWidget);
+      expect(find.text(l10n.gitPull), findsOneWidget);
+      expect(find.text(l10n.gitPush), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text(l10n.gitPull)).dy,
+        lessThan(tester.getTopLeft(find.text(l10n.gitPush)).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text(l10n.gitPush)).dy,
+        lessThan(tester.getTopLeft(find.text(l10n.gitNewBranch)).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text(l10n.gitNewBranch)).dy,
+        lessThan(tester.getTopLeft(find.text('docs')).dy),
+      );
+
+      await tester.tap(find.text(l10n.gitNewBranch));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.gitBranchName), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'repository strip describes unpushed commits without Git jargon',
+    (tester) async {
+      const repo = GitRepositoryInfo(
+        rootPath: '/repo',
+        gitDirPath: '/repo/.git',
+        currentBranch: 'main',
+        upstreamBranch: 'origin/main',
+        aheadCount: 2,
+        hasRemote: true,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            gitControllerProvider.overrideWith(
+              () => _PresetGitController(_state(files: const [], repo: repo)),
+            ),
+          ],
+          child: _localized(
+            GitSidebarTab(
+              workspace: _workspace(),
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              onAfterWorkspaceFilesChanged: () async {},
+              onConfirmSwitchBranch: (_) async => true,
+              onConfirmPushSetUpstream: () async => true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text(l10n.gitAheadCount(2)), findsOneWidget);
+      expect(find.textContaining('2 ahead'), findsNothing);
+    },
+  );
+
   testWidgets('dirty editor banner appears in diff viewer', (tester) async {
     await tester.pumpWidget(
       _localized(
@@ -149,8 +301,14 @@ Widget _localized(Widget child) {
   );
 }
 
-GitState _state({required List<GitFileStatus> files}) {
-  const repo = GitRepositoryInfo(rootPath: '/repo', gitDirPath: '/repo/.git');
+GitState _state({
+  required List<GitFileStatus> files,
+  GitRepositoryInfo repo = const GitRepositoryInfo(
+    rootPath: '/repo',
+    gitDirPath: '/repo/.git',
+  ),
+  List<GitBranch> branches = const [],
+}) {
   return GitState(
     availability: const GitAvailability(
       available: true,
@@ -164,6 +322,7 @@ GitState _state({required List<GitFileStatus> files}) {
       ),
       files: files,
     ),
+    branches: branches,
   );
 }
 
@@ -208,4 +367,16 @@ Workspace _workspace() {
     files: const [],
     diagnostics: const [],
   );
+}
+
+class _PresetGitController extends GitController {
+  _PresetGitController(this.initialState);
+
+  final GitState initialState;
+
+  @override
+  GitState build() => initialState;
+
+  @override
+  Future<List<GitBranch>> loadBranches() async => state.branches;
 }

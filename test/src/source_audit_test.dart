@@ -467,8 +467,15 @@ void main() {
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
+    expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
     expect(workspace, contains('icon: _sidebarTabIcon(selectedTab!)'));
+    expect(workspace, contains('transparent: true'));
+    expect(
+      workspace,
+      contains('borderRadius: BusyMarkRadius.nativeHeaderButton'),
+    );
     expect(workspace, contains('icon: _sidebarTabIcon(tab)'));
+    expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
     expect(
       workspace,
       contains('_SidebarTab.files => BusyMarkGlyphs.documentOpen'),
@@ -497,6 +504,20 @@ void main() {
     expect(design, contains('constraints: const BoxConstraints.tightFor'));
     expect(design, contains('popUpAnimationStyle: AnimationStyle.noAnimation'));
     expect(design, contains('hoverColor: colors.controlHover'));
+    expect(design, contains('static const double nativeHeaderButton = 6'));
+    expect(
+      design,
+      contains('double borderRadius = BusyMarkRadius.headerButton'),
+    );
+    expect(design, contains('BorderRadius.circular(borderRadius)'));
+    expect(design, contains('final String? shortcut;'));
+    expect(
+      design,
+      contains("Tooltip(message: '\${widget.label} (\$shortcut)'"),
+    );
+    expect(design, contains('this.enabled = true'));
+    expect(design, contains('enabled: widget.enabled'));
+    expect(design, contains('colors.disabledForeground'));
     expect(
       design,
       contains('EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm)'),
@@ -509,10 +530,47 @@ void main() {
     ).readAsStringSync();
 
     expect(gitSidebar, contains('BusyMarkHeaderPopupMenuButton<GitView>'));
+    expect(
+      gitSidebar,
+      contains('BusyMarkHeaderPopupMenuButton<_BranchMenuAction>'),
+    );
+    expect(gitSidebar, contains('onLoadBranches: controller.loadBranches'));
+    expect(
+      gitSidebar,
+      contains('final newBranchLabel = context.l10n.gitNewBranch'),
+    );
+    expect(gitSidebar, contains('final pullLabel = context.l10n.gitPull'));
+    expect(gitSidebar, contains('final pushLabel = context.l10n.gitPush'));
+    expect(gitSidebar, contains('label: newBranchLabel'));
+    expect(gitSidebar, contains('value: const _PullBranchMenuAction()'));
+    expect(gitSidebar, contains('value: const _PushBranchMenuAction()'));
+    expect(gitSidebar, contains('enabled: repo.upstreamBranch != null'));
+    expect(gitSidebar, contains('enabled: repo.hasRemote'));
+    expect(gitSidebar, contains('icon: BusyMarkGlyphs.branch'));
+    expect(
+      File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
+      contains('branch = YaruIcons.network_wired'),
+    );
     expect(gitSidebar, contains('icon: _gitViewIcon(state.selectedView)'));
     expect(gitSidebar, contains('label: _gitViewLabel(context, view)'));
     expect(gitSidebar, contains('checked: view == state.selectedView'));
+    expect(gitSidebar, isNot(contains('OutlinedButton(')));
     expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));
+    expect(gitSidebar, isNot(contains('GitBranchesView')));
+    expect(gitSidebar, isNot(contains('git_branches_view.dart')));
+  });
+
+  test('Git changes view uses an integrated commit panel', () {
+    final gitChanges = File(
+      'lib/src/git/presentation/git_changes_view.dart',
+    ).readAsStringSync();
+
+    expect(gitChanges, contains('class _CommitPanel'));
+    expect(gitChanges, contains('context.l10n.gitCommitMessage'));
+    expect(gitChanges, contains('BusyMarkDialogButton('));
+    expect(gitChanges, isNot(contains('FilledButton.icon')));
+    expect(gitChanges, isNot(contains('showDialog<void>')));
+    expect(gitChanges, isNot(contains('GitCommitDialog')));
   });
 
   test('settings language selector uses native hover and popover styling', () {

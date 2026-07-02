@@ -9,6 +9,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData back = YaruIcons.arrow_left;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData bold = YaruIcons.bold;
+  static const IconData branch = YaruIcons.network_wired;
   static const IconData category = YaruIcons.tag;
   static const IconData check = YaruIcons.checkmark;
   static const IconData checkedBox = YaruIcons.checkbox_checked;
@@ -54,6 +55,8 @@ abstract final class BusyMarkGlyphs {
   static const IconData paragraph = YaruIcons.insert_text;
   static const IconData paste = YaruIcons.paste;
   static const IconData preview = YaruIcons.eye;
+  static const IconData pull = YaruIcons.download;
+  static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
   static const IconData rightArrow = YaruIcons.go_next;
   static const IconData save = YaruIcons.save;

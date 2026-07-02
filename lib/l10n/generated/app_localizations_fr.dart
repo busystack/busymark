@@ -420,7 +420,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Activer ou désactiver la liste de tâches';
 
   @override
-  String get shortcutGroupSidebar => 'Sidebar';
+  String get shortcutGroupSidebar => 'Barre latérale';
+
+  @override
+  String get sidebarViewMenu => 'Vue de la barre latérale';
 
   @override
   String get createMarkdownFile => 'Créer un fichier Markdown';
@@ -1454,22 +1457,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitNoUpstream => 'No upstream';
 
   @override
-  String gitAheadBehind(int ahead, int behind) {
+  String gitAheadCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
-      ahead,
+      count,
       locale: localeName,
-      other: '$ahead ahead',
-      one: '1 ahead',
-      zero: '',
+      other: '$count unpushed commits',
+      one: '1 unpushed commit',
     );
-    String _temp1 = intl.Intl.pluralLogic(
-      behind,
+    return '$_temp0';
+  }
+
+  @override
+  String gitBehindCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
       locale: localeName,
-      other: ' $behind behind',
-      one: ' 1 behind',
-      zero: '',
+      other: '$count commits to pull',
+      one: '1 commit to pull',
     );
-    return '$_temp0$_temp1';
+    return '$_temp0';
   }
 
   @override
@@ -1532,6 +1538,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gitCreateBranch => 'Create branch';
+
+  @override
+  String get gitNewBranch => '+ New Branch';
 
   @override
   String get gitBranchName => 'Branch name';

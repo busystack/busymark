@@ -261,6 +261,10 @@
   "@shortcutGroupSidebar": {
     "description": "Keyboard shortcut group for sidebar view switching."
   },
+  "sidebarViewMenu": "Sidebar view",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
+  },
   "createMarkdownFile": "Create Markdown File",
   "@createMarkdownFile": {"description": "Welcome screen action for creating a Markdown file."},
   "createMarkdownFileDescription": "Start an unsaved local Markdown document",
@@ -1018,10 +1022,15 @@
   },
   "gitNoUpstream": "No upstream",
   "@gitNoUpstream": {"description": "Repository label when no upstream branch is configured."},
-  "gitAheadBehind": "{ahead, plural, =0{} =1{1 ahead} other{{ahead} ahead}}{behind, plural, =0{} =1{ 1 behind} other{ {behind} behind}}",
-  "@gitAheadBehind": {
-    "description": "Ahead/behind counts for a branch.",
-    "placeholders": {"ahead": {"type": "int"}, "behind": {"type": "int"}}
+  "gitAheadCount": "{count, plural, =1{1 unpushed commit} other{{count} unpushed commits}}",
+  "@gitAheadCount": {
+    "description": "Count of local commits not pushed to the upstream branch.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
+  "@gitBehindCount": {
+    "description": "Count of upstream commits not pulled into the local branch.",
+    "placeholders": {"count": {"type": "int"}}
   },
   "gitClean": "Clean",
   "@gitClean": {"description": "Git clean state label."},
@@ -1032,7 +1041,7 @@
   "gitHistory": "History",
   "@gitHistory": {"description": "Git history view label."},
   "gitBranches": "Branches",
-  "@gitBranches": {"description": "Git branches view label."},
+  "@gitBranches": {"description": "Git branch menu label."},
   "gitPull": "Pull",
   "@gitPull": {"description": "Git pull action label."},
   "gitPush": "Push",
@@ -1063,6 +1072,8 @@
   "@gitCommitMessageRequired": {"description": "Commit validation error when the message is empty."},
   "gitCreateBranch": "Create branch",
   "@gitCreateBranch": {"description": "Git create branch action label."},
+  "gitNewBranch": "+ New Branch",
+  "@gitNewBranch": {"description": "Git branch dropdown action for creating a new branch."},
   "gitBranchName": "Branch name",
   "@gitBranchName": {"description": "Branch name field label."},
   "gitSwitchBranch": "Switch",
