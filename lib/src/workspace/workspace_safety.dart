@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../app/app_settings.dart';
 import '../app/busymark_dialogs.dart';
 import '../app/busymark_design.dart';
+import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'workspace_controller.dart';
@@ -38,18 +39,23 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
       title: context.l10n.unsavedChanges,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          icon: BusyMarkGlyphs.clear,
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.cancel),
-          child: Text(context.l10n.cancel),
         ),
-        TextButton(
+        BusyMarkDialogButton(
+          label: context.l10n.discard,
+          icon: BusyMarkGlyphs.delete,
+          destructive: true,
           onPressed: () =>
               Navigator.pop(context, _UnsavedChangesAction.discard),
-          child: Text(context.l10n.discard),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: context.l10n.save,
+          icon: BusyMarkGlyphs.save,
+          suggested: true,
           onPressed: () => Navigator.pop(context, _UnsavedChangesAction.save),
-          child: Text(context.l10n.save),
         ),
       ],
       children: [Text(context.l10n.unsavedChangesMessage(fileName))],

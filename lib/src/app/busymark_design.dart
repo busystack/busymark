@@ -568,6 +568,14 @@ enum BusyMarkVcsFileColor {
   renamed,
 }
 
+Color busyMarkDestructiveForeground(BuildContext context) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) {
+    return const Color(0xFFFFA99B);
+  }
+  return theme.colorScheme.error;
+}
+
 Color busyMarkVcsFileStatusColor(
   BuildContext context,
   BusyMarkVcsFileColor status,
@@ -1607,8 +1615,9 @@ class BusyMarkActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = destructive ? TextStyle(color: colorScheme.error) : null;
+    final titleStyle = destructive
+        ? TextStyle(color: busyMarkDestructiveForeground(context))
+        : null;
     return _BusyMarkHoverBackground(
       enabled: enabled,
       child: YaruListTile.square(
@@ -1729,12 +1738,16 @@ class BusyMarkDialogButton extends StatefulWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.icon,
     this.suggested = false,
-  });
+    this.destructive = false,
+  }) : assert(!suggested || !destructive);
 
   final String label;
   final VoidCallback? onPressed;
+  final IconData? icon;
   final bool suggested;
+  final bool destructive;
 
   @override
   State<BusyMarkDialogButton> createState() => _BusyMarkDialogButtonState();
@@ -1757,6 +1770,8 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
         ? colors.disabledForeground
         : widget.suggested
         ? colorScheme.onPrimary
+        : widget.destructive
+        ? busyMarkDestructiveForeground(context)
         : colors.foreground;
     final button = Semantics(
       button: true,
@@ -1808,14 +1823,10 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
               borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
               elevated: _enabled,
             ),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                widget.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelLarge?.copyWith(color: foreground),
-              ),
+            child: _BusyMarkDialogButtonContent(
+              label: widget.label,
+              icon: widget.icon,
+              foreground: foreground,
             ),
           ),
         ),
@@ -1863,6 +1874,43 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
         ? BusyMarkLinuxPalette.white
         : BusyMarkLinuxPalette.black;
     return Color.lerp(color, target, amount)!;
+  }
+}
+
+class _BusyMarkDialogButtonContent extends StatelessWidget {
+  const _BusyMarkDialogButtonContent({
+    required this.label,
+    required this.foreground,
+    this.icon,
+  });
+
+  final String label;
+  final Color foreground;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(
+        context,
+      ).textTheme.labelLarge?.copyWith(color: foreground),
+    );
+    final icon = this.icon;
+    if (icon == null) {
+      return Center(widthFactor: 1, child: text);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
+        const SizedBox(width: BusyMarkSpacing.sm),
+        Flexible(child: text),
+      ],
+    );
   }
 }
 

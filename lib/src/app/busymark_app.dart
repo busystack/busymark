@@ -523,17 +523,22 @@ class _BusyMarkWindowLifecycleState
         title: l10n.closeUnsavedChangesTitle,
         maxWidth: BusyMarkSizes.dialog,
         actions: [
-          TextButton(
+          BusyMarkDialogButton(
+            label: l10n.closeUnsavedChangesCancel,
+            icon: BusyMarkGlyphs.clear,
             onPressed: () => Navigator.pop(context, WindowCloseAction.cancel),
-            child: Text(l10n.closeUnsavedChangesCancel),
           ),
-          TextButton(
+          BusyMarkDialogButton(
+            label: l10n.closeUnsavedChangesDiscard,
+            icon: BusyMarkGlyphs.delete,
+            destructive: true,
             onPressed: () => Navigator.pop(context, WindowCloseAction.discard),
-            child: Text(l10n.closeUnsavedChangesDiscard),
           ),
-          FilledButton(
+          BusyMarkDialogButton(
+            label: l10n.closeUnsavedChangesSave,
+            icon: BusyMarkGlyphs.save,
+            suggested: true,
             onPressed: () => Navigator.pop(context, WindowCloseAction.save),
-            child: Text(l10n.closeUnsavedChangesSave),
           ),
         ],
         children: [Text(_closeUnsavedChangesMessage(context))],
