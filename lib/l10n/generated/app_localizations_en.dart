@@ -1488,10 +1488,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitStage => 'Stage';
+  String get gitSelectForCommit => 'Select for commit';
 
   @override
-  String get gitUnstage => 'Unstage';
+  String get gitRemoveFromCommit => 'Leave out of commit';
 
   @override
   String get gitDiscard => 'Discard';
@@ -1500,23 +1500,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitOpenFile => 'Open file';
 
   @override
-  String get gitStageResolved => 'Stage as resolved';
+  String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitStaged => 'Staged';
-
-  @override
-  String get gitUntracked => 'Untracked';
+  String get gitUntracked => 'Unversioned Files';
 
   @override
   String get gitCommitMessage => 'Commit message';
 
   @override
-  String get gitCommitStagedFiles => 'Staged files';
+  String get gitCommitSelectedFiles => 'Selected files';
 
   @override
-  String get gitCommitNoStagedFiles =>
-      'Stage at least one file before committing.';
+  String get gitCommitNoSelectedFiles =>
+      'Select at least one file before committing.';
 
   @override
   String get gitCommitMessageRequired => 'Enter a commit message.';

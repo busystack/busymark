@@ -1458,8 +1458,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count unpushed commits',
-      one: '1 unpushed commit',
+      other: '$count nicht gepushte Commits',
+      one: '1 nicht gepushter Commit',
     );
     return '$_temp0';
   }
@@ -1482,13 +1482,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitConflicts => 'Conflicts';
 
   @override
-  String get gitChanges => 'Changes';
+  String get gitChanges => 'Änderungen';
 
   @override
   String get gitHistory => 'History';
 
   @override
-  String get gitBranches => 'Branches';
+  String get gitBranches => 'Zweige';
 
   @override
   String get gitPull => 'Pull';
@@ -1500,10 +1500,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitCommit => 'Commit';
 
   @override
-  String get gitStage => 'Stage';
+  String get gitSelectForCommit => 'Select for commit';
 
   @override
-  String get gitUnstage => 'Unstage';
+  String get gitRemoveFromCommit => 'Leave out of commit';
 
   @override
   String get gitDiscard => 'Discard';
@@ -1512,23 +1512,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitOpenFile => 'Open file';
 
   @override
-  String get gitStageResolved => 'Stage as resolved';
+  String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitStaged => 'Staged';
-
-  @override
-  String get gitUntracked => 'Untracked';
+  String get gitUntracked => 'Unversioned Files';
 
   @override
   String get gitCommitMessage => 'Commit message';
 
   @override
-  String get gitCommitStagedFiles => 'Staged files';
+  String get gitCommitSelectedFiles => 'Selected files';
 
   @override
-  String get gitCommitNoStagedFiles =>
-      'Stage at least one file before committing.';
+  String get gitCommitNoSelectedFiles =>
+      'Select at least one file before committing.';
 
   @override
   String get gitCommitMessageRequired => 'Enter a commit message.';
@@ -1555,7 +1552,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitNoBranches => 'No branches';
 
   @override
-  String get gitNoDiff => 'No diff to show';
+  String get gitNoDiff => 'Kein Diff anzuzeigen';
 
   @override
   String get gitBinaryFile =>

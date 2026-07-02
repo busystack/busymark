@@ -558,6 +558,40 @@ class BusyMarkSyntaxColors extends ThemeExtension<BusyMarkSyntaxColors> {
   }
 }
 
+enum BusyMarkVcsFileColor {
+  modified,
+  added,
+  deleted,
+  untracked,
+  conflicted,
+  copied,
+  renamed,
+}
+
+Color busyMarkVcsFileStatusColor(
+  BuildContext context,
+  BusyMarkVcsFileColor status,
+) {
+  final brightness = Theme.of(context).brightness;
+  final dark = brightness == Brightness.dark;
+  return switch (status) {
+    BusyMarkVcsFileColor.modified =>
+      dark ? const Color(0xFF99C1F1) : BusyMarkLinuxPalette.ubuntuBlueAccent,
+    BusyMarkVcsFileColor.added =>
+      dark ? const Color(0xFF8FF0A4) : BusyMarkLinuxPalette.ubuntuGreenAccent,
+    BusyMarkVcsFileColor.deleted =>
+      dark ? const Color(0xFFFF7B63) : BusyMarkLinuxPalette.red,
+    BusyMarkVcsFileColor.untracked =>
+      dark ? const Color(0xFFFFBE6F) : BusyMarkLinuxPalette.ubuntuBrownAccent,
+    BusyMarkVcsFileColor.conflicted =>
+      dark ? const Color(0xFFFF7B63) : BusyMarkLinuxPalette.ubuntuRedAccent,
+    BusyMarkVcsFileColor.copied =>
+      dark ? const Color(0xFF8FF0A4) : BusyMarkLinuxPalette.ubuntuOliveAccent,
+    BusyMarkVcsFileColor.renamed =>
+      dark ? const Color(0xFFDC8ADD) : BusyMarkLinuxPalette.ubuntuPurpleAccent,
+  };
+}
+
 @immutable
 class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
   const BusyMarkSurfaceColors({

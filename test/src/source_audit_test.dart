@@ -546,6 +546,9 @@ void main() {
     expect(gitSidebar, contains('value: const _PushBranchMenuAction()'));
     expect(gitSidebar, contains('enabled: repo.upstreamBranch != null'));
     expect(gitSidebar, contains('enabled: repo.hasRemote'));
+    expect(gitSidebar, contains('color: colors.sidebar'));
+    expect(gitSidebar, contains('color: colors.sidebarBorder'));
+    expect(gitSidebar, isNot(contains('color: colors.secondarySidebar')));
     expect(gitSidebar, contains('icon: BusyMarkGlyphs.branch'));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
@@ -567,7 +570,22 @@ void main() {
 
     expect(gitChanges, contains('class _CommitPanel'));
     expect(gitChanges, contains('context.l10n.gitCommitMessage'));
+    expect(gitChanges, contains('YaruCheckbox('));
+    expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
+    expect(gitChanges, contains('context.l10n.gitCommitSelectedFiles'));
+    expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
+    expect(gitChanges, contains('BusyMarkVcsFileColor.modified'));
     expect(gitChanges, contains('BusyMarkDialogButton('));
+    expect(gitChanges, isNot(contains('context.l10n.git${'Include'}InCommit')));
+    expect(
+      gitChanges,
+      isNot(contains('context.l10n.git${'Exclude'}FromCommit')),
+    );
+    expect(gitChanges, isNot(contains('context.l10n.git${'Not'}Included')));
+    expect(gitChanges, isNot(contains('_FileAction.${'include'}')));
+    expect(gitChanges, isNot(contains('_FileAction.${'exclude'}')));
+    expect(gitChanges, isNot(contains('context.l10n.gitStage')));
+    expect(gitChanges, isNot(contains('context.l10n.gitUnstage')));
     expect(gitChanges, isNot(contains('FilledButton.icon')));
     expect(gitChanges, isNot(contains('showDialog<void>')));
     expect(gitChanges, isNot(contains('GitCommitDialog')));

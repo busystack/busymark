@@ -63,8 +63,8 @@ class GitSidebarTab extends ConsumerWidget {
     return GitCommitActions(
       commit: controller.commit,
       child: GitFileActions(
-        stage: (paths) => controller.stageFiles(paths),
-        unstage: (paths) => controller.unstageFiles(paths),
+        select: (paths) => controller.stageFiles(paths),
+        unselect: (paths) => controller.unstageFiles(paths),
         discard: (paths) async {
           await controller.discardFiles(paths);
           await onAfterWorkspaceFilesChanged();
@@ -166,8 +166,8 @@ class _RepositoryStrip extends StatelessWidget {
             : context.l10n.gitDetachedHeadAt(repo.detachedHeadCommit!));
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.secondarySidebar,
-        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+        color: colors.sidebar,
+        border: Border(bottom: BorderSide(color: colors.sidebarBorder)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(BusyMarkSpacing.md),
@@ -458,7 +458,7 @@ class _GitMessage extends StatelessWidget {
         context.l10n.gitErrorInvalidBranchName,
       GitFailureCode.invalidCommitMessage =>
         context.l10n.gitCommitMessageRequired,
-      GitFailureCode.noStagedFiles => context.l10n.gitCommitNoStagedFiles,
+      GitFailureCode.noStagedFiles => context.l10n.gitCommitNoSelectedFiles,
       GitFailureCode.noRemote => context.l10n.gitErrorNoRemote,
       GitFailureCode.noUpstream => context.l10n.gitErrorNoUpstream,
       GitFailureCode.multipleRemotes => context.l10n.gitErrorMultipleRemotes,

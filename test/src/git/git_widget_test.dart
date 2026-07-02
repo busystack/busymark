@@ -1,16 +1,18 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_changes_view.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
-import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yaru/yaru.dart';
 
 void main() {
   final l10n = AppLocalizationsEn();
@@ -21,8 +23,8 @@ void main() {
         GitCommitActions(
           commit: (_) async {},
           child: GitFileActions(
-            stage: (_) {},
-            unstage: (_) {},
+            select: (_) {},
+            unselect: (_) {},
             discard: (_) {},
             child: GitChangesView(
               state: _state(
@@ -43,9 +45,101 @@ void main() {
     );
 
     expect(find.text(l10n.gitConflicts), findsOneWidget);
-    expect(find.text(l10n.gitStaged), findsOneWidget);
     expect(find.text(l10n.gitChanges), findsOneWidget);
     expect(find.text(l10n.gitUntracked), findsOneWidget);
+  });
+
+  testWidgets('file checkboxes select files for commit', (tester) async {
+    final selectedPaths = <String>[];
+    final unselectedPaths = <String>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async {},
+          child: GitFileActions(
+            select: selectedPaths.addAll,
+            unselect: unselectedPaths.addAll,
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(files: [_file('changed.md')]),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(YaruCheckbox).last);
+    await tester.pump();
+
+    expect(selectedPaths, ['changed.md']);
+    expect(unselectedPaths, isEmpty);
+  });
+
+  testWidgets('file action menu does not contain commit selection actions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async {},
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(files: [_file('changed.md')]),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip(l10n.gitFileActions));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.gitOpenFile), findsOneWidget);
+    expect(find.text(l10n.gitDiscard), findsOneWidget);
+    expect(find.text(l10n.gitSelectForCommit), findsNothing);
+    expect(find.text(l10n.gitRemoveFromCommit), findsNothing);
+  });
+
+  testWidgets('commit section colors files by Git status', (tester) async {
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async {},
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file('modified.md'),
+                  _file('added.md', category: GitFileStatusCategory.added),
+                  _file('deleted.md', category: GitFileStatusCategory.deleted),
+                  _file('draft.md', untracked: true),
+                ],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    _expectFileColor(tester, 'modified.md', BusyMarkVcsFileColor.modified);
+    _expectFileColor(tester, 'added.md', BusyMarkVcsFileColor.added);
+    _expectFileColor(tester, 'deleted.md', BusyMarkVcsFileColor.deleted);
+    _expectFileColor(tester, 'draft.md', BusyMarkVcsFileColor.untracked);
   });
 
   testWidgets('changes view commit panel commits staged files with message', (
@@ -57,8 +151,8 @@ void main() {
         GitCommitActions(
           commit: (message) async => committedMessage = message,
           child: GitFileActions(
-            stage: (_) {},
-            unstage: (_) {},
+            select: (_) {},
+            unselect: (_) {},
             discard: (_) {},
             child: GitChangesView(
               state: _state(
@@ -90,8 +184,8 @@ void main() {
         GitCommitActions(
           commit: (_) async {},
           child: GitFileActions(
-            stage: (_) {},
-            unstage: (_) {},
+            select: (_) {},
+            unselect: (_) {},
             discard: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('conflict.md', conflicted: true)]),
@@ -301,6 +395,17 @@ Widget _localized(Widget child) {
   );
 }
 
+void _expectFileColor(
+  WidgetTester tester,
+  String fileName,
+  BusyMarkVcsFileColor color,
+) {
+  final finder = find.text(fileName);
+  final context = tester.element(finder);
+  final widget = tester.widget<Text>(finder);
+  expect(widget.style?.color, busyMarkVcsFileStatusColor(context, color));
+}
+
 GitState _state({
   required List<GitFileStatus> files,
   GitRepositoryInfo repo = const GitRepositoryInfo(
@@ -332,7 +437,15 @@ GitFileStatus _file(
   bool unstaged = true,
   bool untracked = false,
   bool conflicted = false,
+  GitFileStatusCategory? category,
 }) {
+  final resolvedCategory =
+      category ??
+      (conflicted
+          ? GitFileStatusCategory.conflicted
+          : untracked
+          ? GitFileStatusCategory.untracked
+          : GitFileStatusCategory.modified);
   return GitFileStatus(
     repoRelativePath: path,
     absolutePath: '/repo/$path',
@@ -342,17 +455,13 @@ GitFileStatus _file(
     workTreeStatus: unstaged
         ? GitFileChangeStatus.modified
         : GitFileChangeStatus.unmodified,
-    category: conflicted
-        ? GitFileStatusCategory.conflicted
-        : untracked
-        ? GitFileStatusCategory.untracked
-        : GitFileStatusCategory.modified,
+    category: resolvedCategory,
     staged: staged,
     unstaged: unstaged,
     untracked: untracked,
-    deleted: false,
-    renamed: false,
-    copied: false,
+    deleted: resolvedCategory == GitFileStatusCategory.deleted,
+    renamed: resolvedCategory == GitFileStatusCategory.renamed,
+    copied: resolvedCategory == GitFileStatusCategory.copied,
     conflicted: conflicted,
     ignored: false,
   );

@@ -2501,7 +2501,7 @@ abstract class AppLocalizations {
   /// **'Conflicts'**
   String get gitConflicts;
 
-  /// Git changes view or group label.
+  /// Git changes view label.
   ///
   /// In en, this message translates to:
   /// **'Changes'**
@@ -2537,17 +2537,17 @@ abstract class AppLocalizations {
   /// **'Commit'**
   String get gitCommit;
 
-  /// Git stage action label.
+  /// Tooltip for selecting a Git file for the next commit.
   ///
   /// In en, this message translates to:
-  /// **'Stage'**
-  String get gitStage;
+  /// **'Select for commit'**
+  String get gitSelectForCommit;
 
-  /// Git unstage action label.
+  /// Tooltip for removing a Git file from the next commit selection.
   ///
   /// In en, this message translates to:
-  /// **'Unstage'**
-  String get gitUnstage;
+  /// **'Leave out of commit'**
+  String get gitRemoveFromCommit;
 
   /// Git discard action label.
   ///
@@ -2561,22 +2561,16 @@ abstract class AppLocalizations {
   /// **'Open file'**
   String get gitOpenFile;
 
-  /// Action label for staging a conflicted file as resolved.
+  /// Tooltip for marking a conflicted Git file as resolved.
   ///
   /// In en, this message translates to:
-  /// **'Stage as resolved'**
-  String get gitStageResolved;
-
-  /// Git staged changes group label.
-  ///
-  /// In en, this message translates to:
-  /// **'Staged'**
-  String get gitStaged;
+  /// **'Mark resolved'**
+  String get gitMarkResolved;
 
   /// Git untracked files group label.
   ///
   /// In en, this message translates to:
-  /// **'Untracked'**
+  /// **'Unversioned Files'**
   String get gitUntracked;
 
   /// Commit message field label.
@@ -2585,17 +2579,17 @@ abstract class AppLocalizations {
   /// **'Commit message'**
   String get gitCommitMessage;
 
-  /// Commit dialog staged files section label.
+  /// Commit panel selected files section label.
   ///
   /// In en, this message translates to:
-  /// **'Staged files'**
-  String get gitCommitStagedFiles;
+  /// **'Selected files'**
+  String get gitCommitSelectedFiles;
 
-  /// Commit validation error when no files are staged.
+  /// Commit validation error when no files are selected.
   ///
   /// In en, this message translates to:
-  /// **'Stage at least one file before committing.'**
-  String get gitCommitNoStagedFiles;
+  /// **'Select at least one file before committing.'**
+  String get gitCommitNoSelectedFiles;
 
   /// Commit validation error when the message is empty.
   ///
