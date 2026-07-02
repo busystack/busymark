@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
@@ -966,7 +968,6 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
-    final popupTheme = theme.popupMenuTheme;
     final effectiveForeground = foregroundColor ?? colors.mutedForeground;
     final button = Theme(
       data: theme.copyWith(
@@ -981,29 +982,16 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
           ),
         ),
       ),
-      child: PopupMenuButton<T>(
-        tooltip: tooltip,
-        icon: Icon(
-          icon,
-          size: BusyMarkSizes.iconSm,
-          color: effectiveForeground,
+      child: Builder(
+        builder: (buttonContext) => IconButton(
+          tooltip: tooltip,
+          onPressed: () => _showMenu(buttonContext),
+          icon: Icon(
+            icon,
+            size: BusyMarkSizes.iconSm,
+            color: effectiveForeground,
+          ),
         ),
-        padding: EdgeInsets.zero,
-        position: PopupMenuPosition.under,
-        color: popupTheme.color ?? colors.popover,
-        surfaceTintColor: BusyMarkLinuxPalette.transparent,
-        elevation: BusyMarkElevation.popover,
-        shadowColor: colors.shade,
-        shape:
-            popupTheme.shape ??
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            ),
-        constraints: const BoxConstraints(
-          minWidth: BusyMarkSizes.popupMenuMinWidth,
-        ),
-        itemBuilder: itemBuilder,
-        onSelected: onSelected,
       ),
     );
     final shadows = boxShadow;
@@ -1018,45 +1006,250 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
       child: button,
     );
   }
+
+  Future<void> _showMenu(BuildContext context) async {
+    final items = itemBuilder(context);
+    if (items.isEmpty) {
+      return;
+    }
+    final button = context.findRenderObject();
+    final navigator = Navigator.of(context);
+    final overlay = navigator.overlay?.context.findRenderObject();
+    if (button is! RenderBox || overlay is! RenderBox) {
+      return;
+    }
+
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    final buttonRect =
+        button.localToGlobal(Offset.zero, ancestor: overlay) & button.size;
+    const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+    final minLeft = BusyMarkSpacing.sm;
+    final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+    final rawLeft = buttonRect.center.dx - menuWidth / 2;
+    final left = maxLeft <= minLeft
+        ? minLeft
+        : rawLeft.clamp(minLeft, maxLeft).toDouble();
+    final top = buttonRect.bottom + BusyMarkSpacing.xs + BusyMarkSpacing.xxs;
+    final result = await showMenu<T>(
+      context: context,
+      items: items,
+      position: RelativeRect.fromLTRB(
+        left,
+        top,
+        math.max(minLeft, overlay.size.width - left - menuWidth),
+        math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+      ),
+      color: popupTheme.color ?? colors.popover,
+      surfaceTintColor: BusyMarkLinuxPalette.transparent,
+      elevation: BusyMarkElevation.popover,
+      shadowColor: colors.shade,
+      shape: _BusyMarkHeaderPopoverShape(
+        borderRadius: BorderRadius.circular(BusyMarkRadius.window),
+        side: BorderSide(
+          color: colors.subtleBorder,
+          width: BusyMarkStroke.hairline,
+        ),
+      ),
+      menuPadding: const EdgeInsets.only(
+        top: _busyMarkHeaderPopoverArrowHeight + BusyMarkSpacing.sm,
+        bottom: BusyMarkSpacing.sm,
+      ),
+      constraints: const BoxConstraints.tightFor(width: menuWidth),
+      clipBehavior: Clip.antiAlias,
+      popUpAnimationStyle: AnimationStyle.noAnimation,
+    );
+    if (result != null) {
+      onSelected(result);
+    }
+  }
 }
 
-class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
-  BusyMarkPopupMenuItem({
+const double _busyMarkHeaderPopoverArrowWidth = 16;
+const double _busyMarkHeaderPopoverArrowHeight = 8;
+
+class _BusyMarkHeaderPopoverShape extends ShapeBorder {
+  const _BusyMarkHeaderPopoverShape({
+    required this.borderRadius,
+    required this.side,
+  });
+
+  final BorderRadius borderRadius;
+  final BorderSide side;
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.all(side.width);
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
+    return getOuterPath(rect.deflate(side.width), textDirection: textDirection);
+  }
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    final resolved = borderRadius.resolve(textDirection);
+    final body = Rect.fromLTWH(
+      rect.left,
+      rect.top + _busyMarkHeaderPopoverArrowHeight,
+      rect.width,
+      math.max(0, rect.height - _busyMarkHeaderPopoverArrowHeight),
+    );
+    final maxRadius = math.min(body.width, body.height) / 2;
+    final topLeft = math.min(resolved.topLeft.x, maxRadius);
+    final topRight = math.min(resolved.topRight.x, maxRadius);
+    final bottomRight = math.min(resolved.bottomRight.x, maxRadius);
+    final bottomLeft = math.min(resolved.bottomLeft.x, maxRadius);
+    const arrowHalf = _busyMarkHeaderPopoverArrowWidth / 2;
+    final arrowCenter = body.center.dx.clamp(
+      body.left + topLeft + arrowHalf,
+      body.right - topRight - arrowHalf,
+    );
+
+    return Path()
+      ..moveTo(body.left + topLeft, body.top)
+      ..lineTo(arrowCenter - arrowHalf, body.top)
+      ..lineTo(arrowCenter, rect.top)
+      ..lineTo(arrowCenter + arrowHalf, body.top)
+      ..lineTo(body.right - topRight, body.top)
+      ..quadraticBezierTo(body.right, body.top, body.right, body.top + topRight)
+      ..lineTo(body.right, body.bottom - bottomRight)
+      ..quadraticBezierTo(
+        body.right,
+        body.bottom,
+        body.right - bottomRight,
+        body.bottom,
+      )
+      ..lineTo(body.left + bottomLeft, body.bottom)
+      ..quadraticBezierTo(
+        body.left,
+        body.bottom,
+        body.left,
+        body.bottom - bottomLeft,
+      )
+      ..lineTo(body.left, body.top + topLeft)
+      ..quadraticBezierTo(body.left, body.top, body.left + topLeft, body.top)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    if (side == BorderSide.none || side.width == 0) {
+      return;
+    }
+    canvas.drawPath(
+      getOuterPath(rect.deflate(side.width / 2), textDirection: textDirection),
+      side.toPaint(),
+    );
+  }
+
+  @override
+  ShapeBorder scale(double t) {
+    return _BusyMarkHeaderPopoverShape(
+      borderRadius: borderRadius * t,
+      side: side.scale(t),
+    );
+  }
+}
+
+class BusyMarkPopupMenuItem<T> extends PopupMenuEntry<T> {
+  const BusyMarkPopupMenuItem({
     super.key,
-    required T value,
-    required String label,
-    IconData? icon,
-  }) : super(
-         value: value,
-         height: BusyMarkSizes.popupMenuItemHeight,
-         padding: EdgeInsets.zero,
-         child: Builder(
-           builder: (context) {
-             final colors = BusyMarkSurfaceColors.of(context);
-             return Padding(
-               padding: const EdgeInsets.symmetric(
-                 horizontal: BusyMarkSpacing.sm,
-               ),
-               child: Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   if (icon != null) ...[
-                     Icon(
-                       icon,
-                       size: BusyMarkSizes.iconSm,
-                       color: colors.mutedForeground,
-                     ),
-                     const SizedBox(width: BusyMarkSpacing.sm),
-                   ],
-                   Flexible(
-                     child: Text(label, overflow: TextOverflow.ellipsis),
-                   ),
-                 ],
-               ),
-             );
-           },
-         ),
-       );
+    required this.value,
+    required this.label,
+    this.icon,
+    this.checked = false,
+    this.trailingCheck = false,
+  });
+
+  final T value;
+  final String label;
+  final IconData? icon;
+  final bool checked;
+  final bool trailingCheck;
+
+  @override
+  double get height => BusyMarkSizes.popupMenuItemHeight;
+
+  @override
+  bool represents(T? value) => value == this.value;
+
+  @override
+  State<BusyMarkPopupMenuItem<T>> createState() =>
+      _BusyMarkPopupMenuItemState<T>();
+}
+
+class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    final textStyle =
+        popupTheme.textStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
+    final labelText = Text(
+      widget.label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    return Semantics(
+      checked: widget.trailingCheck ? widget.checked : null,
+      button: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+        child: InkWell(
+          onTap: () => Navigator.pop<T>(context, widget.value),
+          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+          hoverColor: colors.controlHover,
+          focusColor: colors.controlHover,
+          highlightColor: colors.controlActive,
+          splashColor: BusyMarkLinuxPalette.transparent,
+          child: SizedBox(
+            height: BusyMarkSizes.popupMenuItemHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              child: DefaultTextStyle(
+                style: textStyle.copyWith(color: colors.foreground),
+                child: IconTheme(
+                  data: IconThemeData(
+                    size: BusyMarkSizes.iconSm,
+                    color: colors.mutedForeground,
+                  ),
+                  child: widget.trailingCheck
+                      ? Row(
+                          children: [
+                            if (widget.icon != null) ...[
+                              Icon(widget.icon),
+                              const SizedBox(width: BusyMarkSpacing.sm),
+                            ],
+                            Expanded(child: labelText),
+                            const SizedBox(width: BusyMarkSpacing.sm),
+                            Opacity(
+                              opacity: widget.checked ? 1 : 0,
+                              child: const Icon(BusyMarkGlyphs.check),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.icon != null) ...[
+                              Icon(widget.icon),
+                              const SizedBox(width: BusyMarkSpacing.sm),
+                            ],
+                            Flexible(child: labelText),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class BusyMarkClamp extends StatelessWidget {

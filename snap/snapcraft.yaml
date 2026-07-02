@@ -38,6 +38,7 @@ apps:
       - home
       - network
       - removable-media
+      - ssh-keys
     environment:
       GDK_BACKEND: wayland,x11
       XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
@@ -60,6 +61,8 @@ parts:
       - libwayland-egl1
       - libxcb-shm0
       - libxcb1
+      - git
+      - openssh-client
       - yaru-theme-gtk
       - yaru-theme-icon
     override-build: |

@@ -2398,6 +2398,456 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown diagnostic: {code}'**
   String diagnosticUnknown(String code);
+
+  /// Close action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// Git sidebar tab label.
+  ///
+  /// In en, this message translates to:
+  /// **'Git'**
+  String get git;
+
+  /// Title for the Git diff viewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Git diff'**
+  String get gitDiff;
+
+  /// Git empty state title when Git cannot be used.
+  ///
+  /// In en, this message translates to:
+  /// **'Git is unavailable'**
+  String get gitUnavailableTitle;
+
+  /// Git empty state message when Git cannot be used.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}'**
+  String gitUnavailableMessage(String reason);
+
+  /// Git empty state title for non-repository workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a Git repository'**
+  String get gitNotRepositoryTitle;
+
+  /// Git empty state message for non-repository workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is not inside a Git repository.'**
+  String get gitNotRepositoryMessage;
+
+  /// Action label for git init.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize repository'**
+  String get gitInitializeRepository;
+
+  /// Detached HEAD label.
+  ///
+  /// In en, this message translates to:
+  /// **'Detached HEAD'**
+  String get gitDetachedHead;
+
+  /// Detached HEAD label with short commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Detached at {commit}'**
+  String gitDetachedHeadAt(String commit);
+
+  /// Repository label when no upstream branch is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'No upstream'**
+  String get gitNoUpstream;
+
+  /// Ahead/behind counts for a branch.
+  ///
+  /// In en, this message translates to:
+  /// **'{ahead, plural, =0{} =1{1 ahead} other{{ahead} ahead}}{behind, plural, =0{} =1{ 1 behind} other{ {behind} behind}}'**
+  String gitAheadBehind(int ahead, int behind);
+
+  /// Git clean state label.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get gitClean;
+
+  /// Git conflicts group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts'**
+  String get gitConflicts;
+
+  /// Git changes view or group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get gitChanges;
+
+  /// Git history view label.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get gitHistory;
+
+  /// Git branches view label.
+  ///
+  /// In en, this message translates to:
+  /// **'Branches'**
+  String get gitBranches;
+
+  /// Git pull action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull'**
+  String get gitPull;
+
+  /// Git push action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Push'**
+  String get gitPush;
+
+  /// Git commit action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get gitCommit;
+
+  /// Git stage action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage'**
+  String get gitStage;
+
+  /// Git unstage action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage'**
+  String get gitUnstage;
+
+  /// Git discard action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get gitDiscard;
+
+  /// Action label for opening a file from a Git row or diff.
+  ///
+  /// In en, this message translates to:
+  /// **'Open file'**
+  String get gitOpenFile;
+
+  /// Action label for staging a conflicted file as resolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage as resolved'**
+  String get gitStageResolved;
+
+  /// Git staged changes group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Staged'**
+  String get gitStaged;
+
+  /// Git untracked files group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Untracked'**
+  String get gitUntracked;
+
+  /// Commit message field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit message'**
+  String get gitCommitMessage;
+
+  /// Commit dialog staged files section label.
+  ///
+  /// In en, this message translates to:
+  /// **'Staged files'**
+  String get gitCommitStagedFiles;
+
+  /// Commit validation error when no files are staged.
+  ///
+  /// In en, this message translates to:
+  /// **'Stage at least one file before committing.'**
+  String get gitCommitNoStagedFiles;
+
+  /// Commit validation error when the message is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a commit message.'**
+  String get gitCommitMessageRequired;
+
+  /// Git create branch action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Create branch'**
+  String get gitCreateBranch;
+
+  /// Branch name field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch name'**
+  String get gitBranchName;
+
+  /// Git switch branch action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get gitSwitchBranch;
+
+  /// Git empty state when there are no changes.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get gitNoChanges;
+
+  /// Git empty state when history is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No history'**
+  String get gitNoHistory;
+
+  /// Git empty state when branch list is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No branches'**
+  String get gitNoBranches;
+
+  /// Git diff empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'No diff to show'**
+  String get gitNoDiff;
+
+  /// Git diff binary file message.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary file. BusyMark does not render binary patches.'**
+  String get gitBinaryFile;
+
+  /// Git diff banner for unsaved editor changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved editor changes are not included until saved.'**
+  String get gitUnsavedChangesBanner;
+
+  /// Confirmation title for discarding Git changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Git changes?'**
+  String get gitConfirmDiscardTitle;
+
+  /// Confirmation body for discarding tracked changes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}'**
+  String gitConfirmDiscardTracked(int count);
+
+  /// Confirmation body for deleting untracked files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}'**
+  String gitConfirmDiscardUntracked(int count);
+
+  /// Confirmation body for discarding mixed tracked and untracked files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}'**
+  String gitConfirmDiscardMixed(int count);
+
+  /// Confirmation title for switching branches.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {branch}?'**
+  String gitConfirmSwitchBranchTitle(String branch);
+
+  /// Confirmation body for switching branches.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark will reload the workspace from disk after Git switches branches.'**
+  String get gitConfirmSwitchBranchMessage;
+
+  /// Confirmation title for pushing with set-upstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Set upstream branch?'**
+  String get gitConfirmPushSetUpstreamTitle;
+
+  /// Confirmation body for pushing with set-upstream.
+  ///
+  /// In en, this message translates to:
+  /// **'This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.'**
+  String gitConfirmPushSetUpstreamMessage(String branch);
+
+  /// Project history action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get gitProjectHistory;
+
+  /// Current file history action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Current file'**
+  String get gitFileHistory;
+
+  /// Diff additions and deletions count.
+  ///
+  /// In en, this message translates to:
+  /// **'+{additions} -{deletions}'**
+  String gitAdditionsDeletions(int additions, int deletions);
+
+  /// Tooltip for a changed file action menu.
+  ///
+  /// In en, this message translates to:
+  /// **'File actions'**
+  String get gitFileActions;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get gitStatusAdded;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get gitStatusDeleted;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed'**
+  String get gitStatusRenamed;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get gitStatusCopied;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Untracked'**
+  String get gitStatusUntracked;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicted'**
+  String get gitStatusConflicted;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignored'**
+  String get gitStatusIgnored;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Type changed'**
+  String get gitStatusTypeChanged;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get gitStatusModified;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get gitStatusUnknown;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git is unavailable.'**
+  String get gitErrorUnavailable;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is not a Git repository.'**
+  String get gitErrorNotRepository;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark blocked an unsafe Git path.'**
+  String get gitErrorUnsafePath;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid branch name.'**
+  String get gitErrorInvalidBranchName;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'No Git remote is configured.'**
+  String get gitErrorNoRemote;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'No upstream branch is configured.'**
+  String get gitErrorNoUpstream;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple remotes are configured. Choose an upstream outside this BusyMark version.'**
+  String get gitErrorMultipleRemotes;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or discard BusyMark editor changes before switching branches.'**
+  String get gitErrorDirtyWorkspace;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch has diverged. Resolve merge or rebase outside this BusyMark version.'**
+  String get gitErrorDiverged;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.'**
+  String get gitErrorAuthentication;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git network operation failed.'**
+  String get gitErrorNetwork;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git reported unresolved conflicts.'**
+  String get gitErrorConflict;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git command failed.'**
+  String get gitErrorCommandFailed;
 }
 
 class _AppLocalizationsDelegate
