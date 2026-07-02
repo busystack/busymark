@@ -975,6 +975,63 @@ void main() {
     expect(find.textContaining('Basic Markdown'), findsWidgets);
   });
 
+  testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
+    const startupPath = 'test/fixtures/markdown/basic.md';
+    const recentPath = '/tmp/busymark-recent-docs';
+    final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            recentWorkspaces: [
+              RecentWorkspace(
+                path: recentPath,
+                kind: 'markdownFolder',
+                lastOpenedAt: DateTime(2026, 1, 2),
+              ),
+            ],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(service.openedPath, startupPath);
+    expect(find.text(l10n.openMarkdownFile), findsNothing);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyO);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyO);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.openMarkdownFile), findsOneWidget);
+    expect(find.text(l10n.recent), findsOneWidget);
+    expect(find.text('busymark-recent-docs'), findsOneWidget);
+
+    await tester.tap(find.text('busymark-recent-docs'));
+    await tester.pumpAndSettle();
+
+    expect(service.openedPath, recentPath);
+    expect(find.text(l10n.openMarkdownFile), findsNothing);
+  });
+
   testWidgets('shared Markdown image renderer resolves local images', (
     tester,
   ) async {

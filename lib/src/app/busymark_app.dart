@@ -254,7 +254,10 @@ class BusyMarkApp extends ConsumerWidget {
     GoRouter router,
   ) async {
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final choice = await showBusyMarkModalDialog<String>(
+    final recentWorkspaces = ref
+        .read(appSettingsControllerProvider)
+        .recentWorkspaces;
+    final choice = await showBusyMarkModalDialog<_OpenChooserChoice>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => BusyMarkDialogShell(
@@ -269,17 +272,39 @@ class BusyMarkApp extends ConsumerWidget {
                 subtitle: context.l10n.markdownFileExtensions,
                 leading: const Icon(BusyMarkGlyphs.markdownFile),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                onTap: () => Navigator.pop(dialogContext, 'file'),
+                onTap: () =>
+                    Navigator.pop(dialogContext, const _OpenMarkdownFile()),
               ),
               BusyMarkActionRow(
                 title: context.l10n.openFolderOrWritersideProject,
                 subtitle: context.l10n.markdownFolderOrWritersideProject,
                 leading: const Icon(BusyMarkGlyphs.folder),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                onTap: () => Navigator.pop(dialogContext, 'folder'),
+                onTap: () => Navigator.pop(
+                  dialogContext,
+                  const _OpenWorkspaceFolder(),
+                ),
               ),
             ],
           ),
+          if (recentWorkspaces.isNotEmpty)
+            BusyMarkGroupedList(
+              title: context.l10n.recent,
+              filled: true,
+              children: [
+                for (final recent in recentWorkspaces)
+                  BusyMarkActionRow(
+                    title: _displayPath(recent.path),
+                    subtitle: recent.path,
+                    leading: const Icon(BusyMarkGlyphs.history),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: () => Navigator.pop(
+                      dialogContext,
+                      _OpenRecentWorkspace(recent.path),
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -287,9 +312,9 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     final path = switch (choice) {
-      'file' => await _chooseMarkdownFile(ref),
-      'folder' => await _chooseWorkspaceFolder(ref),
-      _ => null,
+      _OpenMarkdownFile() => await _chooseMarkdownFile(ref),
+      _OpenWorkspaceFolder() => await _chooseWorkspaceFolder(ref),
+      _OpenRecentWorkspace(:final path) => path,
     };
     if (path == null || path.isEmpty || !context.mounted) {
       return;
@@ -390,6 +415,11 @@ class BusyMarkApp extends ConsumerWidget {
       return null;
     }
     return p.extension(lastPath).isEmpty ? lastPath : p.dirname(lastPath);
+  }
+
+  String _displayPath(String path) {
+    final name = p.basename(path);
+    return name.isEmpty ? path : name;
   }
 
   void _configureNativeHeaderBar(BuildContext context, WidgetRef ref) {
@@ -579,6 +609,24 @@ class _NewMarkdownIntent extends Intent {
 
 class _OpenWorkspaceIntent extends Intent {
   const _OpenWorkspaceIntent();
+}
+
+sealed class _OpenChooserChoice {
+  const _OpenChooserChoice();
+}
+
+final class _OpenMarkdownFile extends _OpenChooserChoice {
+  const _OpenMarkdownFile();
+}
+
+final class _OpenWorkspaceFolder extends _OpenChooserChoice {
+  const _OpenWorkspaceFolder();
+}
+
+final class _OpenRecentWorkspace extends _OpenChooserChoice {
+  const _OpenRecentWorkspace(this.path);
+
+  final String path;
 }
 
 class _SaveActiveIntent extends Intent {
