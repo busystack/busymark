@@ -1,0 +1,808 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+
+import '../../workspace/workspace_controller.dart';
+import '../../workspace/workspace_model.dart';
+import '../domain/git_models.dart';
+import 'git_gateway.dart';
+import 'git_use_cases.dart';
+
+final gitRepositoryGatewayProvider = Provider<GitRepositoryGateway>(
+  (ref) => const UnavailableGitRepositoryGateway(),
+);
+
+final gitControllerProvider = NotifierProvider<GitController, GitState>(
+  GitController.new,
+);
+
+class GitState {
+  const GitState({
+    this.availability = const GitAvailability.unavailable(),
+    this.repositoryInfo,
+    this.statusSnapshot,
+    this.selectedView = GitView.changes,
+    this.selectedFilePath,
+    this.selectedCommitHash,
+    this.selectedDiff,
+    this.history = const [],
+    this.branches = const [],
+    this.isRefreshing = false,
+    this.isRunningOperation = false,
+    this.lastError,
+    this.lastOperationMessage,
+    this.attachedWorkspace,
+    this.scopedFilePath,
+  });
+
+  final GitAvailability availability;
+  final GitRepositoryInfo? repositoryInfo;
+  final GitStatusSnapshot? statusSnapshot;
+  final GitView selectedView;
+  final String? selectedFilePath;
+  final String? selectedCommitHash;
+  final GitDiff? selectedDiff;
+  final List<GitCommitSummary> history;
+  final List<GitBranch> branches;
+  final bool isRefreshing;
+  final bool isRunningOperation;
+  final GitFailure? lastError;
+  final String? lastOperationMessage;
+  final Workspace? attachedWorkspace;
+  final String? scopedFilePath;
+
+  bool get isRepository => repositoryInfo != null;
+
+  GitState copyWith({
+    GitAvailability? availability,
+    Object? repositoryInfo = _unset,
+    Object? statusSnapshot = _unset,
+    GitView? selectedView,
+    Object? selectedFilePath = _unset,
+    Object? selectedCommitHash = _unset,
+    Object? selectedDiff = _unset,
+    List<GitCommitSummary>? history,
+    List<GitBranch>? branches,
+    bool? isRefreshing,
+    bool? isRunningOperation,
+    Object? lastError = _unset,
+    Object? lastOperationMessage = _unset,
+    Object? attachedWorkspace = _unset,
+    Object? scopedFilePath = _unset,
+  }) {
+    return GitState(
+      availability: availability ?? this.availability,
+      repositoryInfo: identical(repositoryInfo, _unset)
+          ? this.repositoryInfo
+          : repositoryInfo as GitRepositoryInfo?,
+      statusSnapshot: identical(statusSnapshot, _unset)
+          ? this.statusSnapshot
+          : statusSnapshot as GitStatusSnapshot?,
+      selectedView: selectedView ?? this.selectedView,
+      selectedFilePath: identical(selectedFilePath, _unset)
+          ? this.selectedFilePath
+          : selectedFilePath as String?,
+      selectedCommitHash: identical(selectedCommitHash, _unset)
+          ? this.selectedCommitHash
+          : selectedCommitHash as String?,
+      selectedDiff: identical(selectedDiff, _unset)
+          ? this.selectedDiff
+          : selectedDiff as GitDiff?,
+      history: history ?? this.history,
+      branches: branches ?? this.branches,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      isRunningOperation: isRunningOperation ?? this.isRunningOperation,
+      lastError: identical(lastError, _unset)
+          ? this.lastError
+          : lastError as GitFailure?,
+      lastOperationMessage: identical(lastOperationMessage, _unset)
+          ? this.lastOperationMessage
+          : lastOperationMessage as String?,
+      attachedWorkspace: identical(attachedWorkspace, _unset)
+          ? this.attachedWorkspace
+          : attachedWorkspace as Workspace?,
+      scopedFilePath: identical(scopedFilePath, _unset)
+          ? this.scopedFilePath
+          : scopedFilePath as String?,
+    );
+  }
+}
+
+class GitController extends Notifier<GitState> {
+  static const _refreshDebounce = Duration(milliseconds: 350);
+
+  late GitRepositoryGateway _gateway;
+  final _validation = const GitValidation();
+  Timer? _debounce;
+  var _knownHashes = <String>{};
+
+  @override
+  GitState build() {
+    _gateway = ref.read(gitRepositoryGatewayProvider);
+    ref.onDispose(() => _debounce?.cancel());
+    return const GitState();
+  }
+
+  void attachWorkspace(Workspace workspace) {
+    if (_gateway is UnavailableGitRepositoryGateway) {
+      _debounce?.cancel();
+      state = state.copyWith(
+        availability: const GitAvailability.unavailable(
+          'Git gateway is not configured.',
+        ),
+        attachedWorkspace: workspace,
+      );
+      return;
+    }
+    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
+      _debounce?.cancel();
+      state = const GitState();
+      return;
+    }
+    final current = state.attachedWorkspace;
+    state = state.copyWith(attachedWorkspace: workspace);
+    if (current?.id != workspace.id) {
+      _knownHashes = {};
+      _scheduleRefresh(immediate: true);
+    } else {
+      _scheduleRefresh();
+    }
+  }
+
+  Future<void> refresh() async {
+    final workspace = state.attachedWorkspace;
+    if (workspace == null || workspace.kind == WorkspaceKind.untitledMarkdown) {
+      return;
+    }
+    _debounce?.cancel();
+    state = state.copyWith(
+      isRefreshing: true,
+      lastError: null,
+      availability: await _gateway.availability(),
+    );
+    if (!state.availability.available) {
+      state = state.copyWith(
+        isRefreshing: false,
+        repositoryInfo: null,
+        statusSnapshot: null,
+        selectedDiff: null,
+      );
+      return;
+    }
+    try {
+      final repository = await _gateway.detectRepository(
+        _workspaceGitPath(workspace),
+      );
+      if (repository == null) {
+        state = state.copyWith(
+          isRefreshing: false,
+          repositoryInfo: null,
+          statusSnapshot: null,
+          selectedDiff: null,
+          history: const [],
+          branches: const [],
+        );
+        return;
+      }
+      final status = await _gateway.status(repository);
+      final scoped = _workspaceScopedRepoPath(workspace, status.repositoryInfo);
+      state = state.copyWith(
+        isRefreshing: false,
+        repositoryInfo: status.repositoryInfo,
+        statusSnapshot: status,
+        scopedFilePath: scoped,
+        selectedFilePath: state.selectedFilePath ?? scoped,
+        lastError: null,
+      );
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'status');
+      state = state.copyWith(isRefreshing: false);
+    }
+  }
+
+  Future<void> selectView(GitView view) async {
+    state = state.copyWith(selectedView: view);
+    if (view == GitView.history && state.history.isEmpty) {
+      await loadProjectHistory();
+    }
+    if (view == GitView.branches) {
+      await loadBranches();
+    }
+  }
+
+  void clearSelection() {
+    state = state.copyWith(
+      selectedFilePath: null,
+      selectedCommitHash: null,
+      selectedDiff: null,
+    );
+  }
+
+  Future<void> selectChangedFile(String repoRelativePath) async {
+    final failure = _validation.validateRepoRelativePaths([repoRelativePath]);
+    if (failure != null) {
+      state = state.copyWith(lastError: failure);
+      return;
+    }
+    state = state.copyWith(
+      selectedFilePath: repoRelativePath,
+      selectedCommitHash: null,
+      selectedDiff: null,
+    );
+    await _loadChangedFileDiff(repoRelativePath);
+  }
+
+  Future<void> showCurrentFileDiff() async {
+    final path = state.scopedFilePath;
+    if (path != null) {
+      await selectChangedFile(path);
+    }
+  }
+
+  Future<void> loadFileHistory(String absolutePath) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    final relative = _repoRelativePath(repository.rootPath, absolutePath);
+    if (relative == null) {
+      return;
+    }
+    await _loadHistory(repoRelativePath: relative);
+  }
+
+  Future<void> loadProjectHistory() => _loadHistory();
+
+  Future<void> loadCommitDetails(String hash) async {
+    final repository = state.repositoryInfo;
+    if (repository == null || !_knownHashes.contains(hash)) {
+      state = state.copyWith(
+        lastError: GitFailure(
+          code: GitFailureCode.invalidPath,
+          userMessageKey: 'gitErrorInvalidCommit',
+          rawMessage: hash,
+          commandName: 'show',
+        ),
+      );
+      return;
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final details = await _gateway.commitDetails(repository, hash);
+      state = state.copyWith(
+        isRunningOperation: false,
+        selectedCommitHash: hash,
+        selectedFilePath: null,
+        selectedDiff: GitDiff(
+          title: details.summary.subject,
+          files: details.changedFiles,
+          rawPatch: details.patch,
+          hasBinaryFiles: details.changedFiles.any((file) => file.binary),
+        ),
+      );
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'show');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> stageFiles(List<String> repoRelativePaths) {
+    return _runPathOperation(
+      repoRelativePaths,
+      (repository, paths) => _gateway.stage(repository, paths),
+    );
+  }
+
+  Future<void> unstageFiles(List<String> repoRelativePaths) {
+    return _runPathOperation(
+      repoRelativePaths,
+      (repository, paths) => _gateway.unstage(repository, paths),
+    );
+  }
+
+  Future<void> discardFiles(List<String> repoRelativePaths) async {
+    final repository = state.repositoryInfo;
+    final snapshot = state.statusSnapshot;
+    if (repository == null || snapshot == null) {
+      return;
+    }
+    final failure = _validation.validateRepoRelativePaths(repoRelativePaths);
+    if (failure != null) {
+      state = state.copyWith(lastError: failure);
+      return;
+    }
+    final untracked = <String>[];
+    final tracked = <String>[];
+    for (final path in repoRelativePaths) {
+      final status = snapshot.files
+          .where((file) => file.repoRelativePath == path)
+          .firstOrNull;
+      if (status?.untracked ?? false) {
+        untracked.add(path);
+      } else {
+        tracked.add(path);
+      }
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      GitOperationResult? result;
+      if (tracked.isNotEmpty) {
+        result = await _gateway.discardTracked(repository, tracked);
+      }
+      if (untracked.isNotEmpty) {
+        result = await _gateway.discardUntracked(
+          repository,
+          untracked,
+          snapshot,
+        );
+      }
+      state = state.copyWith(
+        isRunningOperation: false,
+        lastOperationMessage: result?.message,
+      );
+      await refresh();
+      final selected = state.selectedFilePath;
+      if (selected != null && repoRelativePaths.contains(selected)) {
+        state = state.copyWith(selectedDiff: null);
+      }
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'restore');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> commit(String message) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    final messageFailure = _validation.validateCommitMessage(message);
+    final stagedFailure = _validation.validateHasStagedFiles(
+      state.statusSnapshot,
+    );
+    final failure = messageFailure ?? stagedFailure;
+    if (failure != null) {
+      state = state.copyWith(lastError: failure);
+      return;
+    }
+    await _runOperation((repository) => _gateway.commit(repository, message));
+    await loadProjectHistory();
+  }
+
+  Future<void> fetch() {
+    return _runOperation((repository) => _gateway.fetch(repository));
+  }
+
+  Future<void> pullFastForwardOnly() {
+    return _runOperation(
+      (repository) => _gateway.pullFastForwardOnly(repository),
+    );
+  }
+
+  Future<void> push({bool allowSetUpstream = false}) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    if (repository.upstreamBranch != null) {
+      await _runOperation((repository) => _gateway.push(repository));
+      return;
+    }
+    final branch = repository.currentBranch;
+    if (branch == null) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.noUpstream,
+          userMessageKey: 'gitErrorNoUpstream',
+          rawMessage: '',
+          commandName: 'push',
+        ),
+      );
+      return;
+    }
+    final remotes = await _gateway.remotes(repository);
+    if (remotes.isEmpty) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.noRemote,
+          userMessageKey: 'gitErrorNoRemote',
+          rawMessage: '',
+          commandName: 'push',
+        ),
+      );
+      return;
+    }
+    if (remotes.length > 1 || !allowSetUpstream) {
+      state = state.copyWith(
+        lastError: GitFailure(
+          code: remotes.length > 1
+              ? GitFailureCode.multipleRemotes
+              : GitFailureCode.noUpstream,
+          userMessageKey: remotes.length > 1
+              ? 'gitErrorMultipleRemotes'
+              : 'gitErrorNoUpstream',
+          rawMessage: remotes.join(', '),
+          commandName: 'push',
+        ),
+      );
+      return;
+    }
+    await _runOperation(
+      (repository) =>
+          _gateway.pushSetUpstream(repository, remotes.single, branch),
+    );
+  }
+
+  Future<void> createBranch(String branchName) async {
+    final failure = _validation.validateBranchNameShape(branchName);
+    if (failure != null) {
+      state = state.copyWith(lastError: failure);
+      return;
+    }
+    await _runOperation(
+      (repository) => _gateway.createBranch(repository, branchName.trim()),
+    );
+    await loadBranches();
+  }
+
+  Future<void> switchBranch(String branchName) async {
+    if (ref.read(workspaceControllerProvider).hasUnsavedChanges) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.dirtyWorkspace,
+          userMessageKey: 'gitErrorDirtyWorkspace',
+          rawMessage: '',
+          commandName: 'switch',
+        ),
+      );
+      return;
+    }
+    await _runOperation(
+      (repository) => _gateway.switchBranch(repository, branchName),
+    );
+    await loadBranches();
+  }
+
+  Future<void> initializeRepository() async {
+    final workspace = state.attachedWorkspace;
+    if (workspace == null ||
+        workspace.kind == WorkspaceKind.untitledMarkdown ||
+        workspace.kind == WorkspaceKind.singleMarkdown) {
+      return;
+    }
+    await _runRootOperation(workspace.rootPath, _gateway.initializeRepository);
+  }
+
+  Future<void> loadBranches() async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final branches = await _gateway.branches(repository);
+      state = state.copyWith(isRunningOperation: false, branches: branches);
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'branch');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> _loadHistory({String? repoRelativePath}) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final history = await _gateway.history(
+        repository,
+        repoRelativePath: repoRelativePath,
+      );
+      _knownHashes = {for (final commit in history) commit.fullHash};
+      state = state.copyWith(
+        isRunningOperation: false,
+        history: history,
+        selectedView: GitView.history,
+      );
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'log');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> _loadChangedFileDiff(String repoRelativePath) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final staged = await _gateway.diffFile(
+        repository,
+        repoRelativePath,
+        staged: true,
+      );
+      final unstaged = await _gateway.diffFile(
+        repository,
+        repoRelativePath,
+        staged: false,
+      );
+      state = state.copyWith(
+        isRunningOperation: false,
+        selectedDiff: _combineDiffs(
+          repoRelativePath,
+          staged: staged,
+          unstaged: unstaged,
+        ),
+      );
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'diff');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> _runPathOperation(
+    List<String> repoRelativePaths,
+    Future<GitOperationResult> Function(
+      GitRepositoryInfo repository,
+      List<String> paths,
+    )
+    operation,
+  ) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    final failure = _validation.validateRepoRelativePaths(repoRelativePaths);
+    if (failure != null) {
+      state = state.copyWith(lastError: failure);
+      return;
+    }
+    await _runOperation(
+      (repository) => operation(repository, repoRelativePaths),
+    );
+  }
+
+  Future<void> _runOperation(
+    Future<GitOperationResult> Function(GitRepositoryInfo repository) operation,
+  ) async {
+    final repository = state.repositoryInfo;
+    if (repository == null) {
+      return;
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final result = await operation(repository);
+      state = state.copyWith(
+        isRunningOperation: false,
+        lastOperationMessage: result.message,
+      );
+      await refresh();
+      final selected = state.selectedFilePath;
+      if (selected != null) {
+        await _loadChangedFileDiff(selected);
+      }
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'git');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> _runRootOperation(
+    String rootPath,
+    Future<GitOperationResult> Function(String rootPath) operation,
+  ) async {
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final result = await operation(rootPath);
+      state = state.copyWith(
+        isRunningOperation: false,
+        lastOperationMessage: result.message,
+      );
+      await refresh();
+    } on Object catch (error) {
+      _setFailure(error, commandName: 'git');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  void _scheduleRefresh({bool immediate = false}) {
+    _debounce?.cancel();
+    if (immediate) {
+      unawaited(refresh());
+      return;
+    }
+    _debounce = Timer(_refreshDebounce, () => unawaited(refresh()));
+  }
+
+  void _setFailure(Object error, {required String commandName}) {
+    final failure = error is GitFailure
+        ? error
+        : GitFailure(
+            code: GitFailureCode.commandFailed,
+            userMessageKey: 'gitErrorCommandFailed',
+            rawMessage: '$error',
+            commandName: commandName,
+          );
+    state = state.copyWith(lastError: failure);
+  }
+
+  String _workspaceGitPath(Workspace workspace) {
+    return workspace.rootPath;
+  }
+
+  String? _workspaceScopedRepoPath(
+    Workspace workspace,
+    GitRepositoryInfo repository,
+  ) {
+    final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (active == null) {
+      return null;
+    }
+    return _repoRelativePath(repository.rootPath, active);
+  }
+
+  String? _repoRelativePath(String rootPath, String absolutePath) {
+    final relative = p.normalize(p.relative(absolutePath, from: rootPath));
+    if (relative == '.' ||
+        relative.startsWith('..') ||
+        p.isAbsolute(relative)) {
+      return null;
+    }
+    return relative.replaceAll(r'\', '/');
+  }
+
+  GitDiff _combineDiffs(
+    String title, {
+    required GitDiff staged,
+    required GitDiff unstaged,
+  }) {
+    final raw = [
+      if (staged.rawPatch.trim().isNotEmpty)
+        '--- BusyMark staged changes ---\n${staged.rawPatch}',
+      if (unstaged.rawPatch.trim().isNotEmpty)
+        '--- BusyMark unstaged changes ---\n${unstaged.rawPatch}',
+    ].join('\n');
+    return GitDiff(
+      title: title,
+      files: [...staged.files, ...unstaged.files],
+      rawPatch: raw,
+      hasBinaryFiles: staged.hasBinaryFiles || unstaged.hasBinaryFiles,
+    );
+  }
+}
+
+class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
+  const UnavailableGitRepositoryGateway();
+
+  @override
+  Future<GitAvailability> availability() async {
+    return const GitAvailability.unavailable('Git gateway is not configured.');
+  }
+
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async =>
+      null;
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) =>
+      _unavailable();
+
+  @override
+  Future<GitDiff> diffFile(
+    GitRepositoryInfo repository,
+    String repoRelativePath, {
+    required bool staged,
+  }) => _unavailable();
+
+  @override
+  Future<GitDiff> diffAll(
+    GitRepositoryInfo repository, {
+    required bool staged,
+  }) => _unavailable();
+
+  @override
+  Future<List<GitCommitSummary>> history(
+    GitRepositoryInfo repository, {
+    String? repoRelativePath,
+    int limit = 200,
+    int skip = 0,
+  }) => _unavailable();
+
+  @override
+  Future<GitCommitDetails> commitDetails(
+    GitRepositoryInfo repository,
+    String hash,
+  ) => _unavailable();
+
+  @override
+  Future<List<GitBranch>> branches(GitRepositoryInfo repository) =>
+      _unavailable();
+
+  @override
+  Future<List<String>> remotes(GitRepositoryInfo repository) => _unavailable();
+
+  @override
+  Future<GitOperationResult> stage(
+    GitRepositoryInfo repository,
+    List<String> repoRelativePaths,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> unstage(
+    GitRepositoryInfo repository,
+    List<String> repoRelativePaths,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> discardTracked(
+    GitRepositoryInfo repository,
+    List<String> repoRelativePaths,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> discardUntracked(
+    GitRepositoryInfo repository,
+    List<String> repoRelativePaths,
+    GitStatusSnapshot snapshot,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> commit(
+    GitRepositoryInfo repository,
+    String message,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> fetch(GitRepositoryInfo repository) =>
+      _unavailable();
+
+  @override
+  Future<GitOperationResult> pullFastForwardOnly(
+    GitRepositoryInfo repository,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> push(GitRepositoryInfo repository) =>
+      _unavailable();
+
+  @override
+  Future<GitOperationResult> pushSetUpstream(
+    GitRepositoryInfo repository,
+    String remote,
+    String branch,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> createBranch(
+    GitRepositoryInfo repository,
+    String branchName,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> switchBranch(
+    GitRepositoryInfo repository,
+    String branchName,
+  ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> initializeRepository(String rootPath) =>
+      _unavailable();
+
+  Future<T> _unavailable<T>() {
+    throw const GitFailure(
+      code: GitFailureCode.unavailable,
+      userMessageKey: 'gitErrorUnavailable',
+      rawMessage: 'Git is unavailable.',
+      commandName: 'git',
+    );
+  }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
+}
+
+const Object _unset = Object();
