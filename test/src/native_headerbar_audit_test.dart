@@ -342,10 +342,9 @@ void main() {
     expect(headerbarBlock, contains('"padding-left: 0;"'));
     expect(
       native,
-      isNot(
-        contains(
-          '".busymark-titlebar.busymark-modal-barrier headerbar.busymark-headerbar {"',
-        ),
+      contains(
+        '".busymark-titlebar.busymark-modal-barrier "'
+        '\n      "headerbar.busymark-headerbar,"',
       ),
     );
     expect(native, isNot(contains('border-right: 1px solid')));
