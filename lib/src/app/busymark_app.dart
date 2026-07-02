@@ -97,7 +97,6 @@ class BusyMarkApp extends ConsumerWidget {
               SingleActivator(LogicalKeyboardKey.keyF, control: true):
                   _OpenSearchIntent(),
               SingleActivator(LogicalKeyboardKey.f9): _ToggleSidebarIntent(),
-              SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
             },
             child: Actions(
               actions: {
@@ -221,18 +220,6 @@ class BusyMarkApp extends ConsumerWidget {
                 _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
                   onInvoke: (intent) {
                     _toggleSidebar(ref);
-                    return null;
-                  },
-                ),
-                _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
-                  onInvoke: (intent) {
-                    if (ref.read(workspaceControllerProvider).workspace !=
-                        null) {
-                      final notifier = ref.read(
-                        workspaceSearchCloseRequestProvider.notifier,
-                      );
-                      notifier.request();
-                    }
                     return null;
                   },
                 ),
@@ -645,6 +632,9 @@ class _BusyMarkSearchShortcutHandlerState
       return true;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
+      if (rootNavigatorKey.currentState?.canPop() ?? false) {
+        return false;
+      }
       ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return false;
     }
@@ -711,8 +701,4 @@ class _OpenSearchIntent extends Intent {
 
 class _ToggleSidebarIntent extends Intent {
   const _ToggleSidebarIntent();
-}
-
-class _CloseSearchIntent extends Intent {
-  const _CloseSearchIntent();
 }
