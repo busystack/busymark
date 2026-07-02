@@ -199,7 +199,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Mostrar/ocultar barra lateral';
+  String get toggleSidebar => 'Panel lateral';
 
   @override
   String get topLeft => 'Arriba a la izquierda';
@@ -737,10 +737,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noImageSource => 'Sin origen de imagen';
 
   @override
-  String get hideSidebar => 'Ocultar barra lateral';
+  String get hideSidebar => 'Ocultar panel lateral';
 
   @override
-  String get showSidebar => 'Mostrar barra lateral';
+  String get showSidebar => 'Mostrar panel lateral';
 
   @override
   String get showPreview => 'Mostrar vista previa';

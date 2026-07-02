@@ -4,9 +4,9 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for Norwegian (`no`).
-class AppLocalizationsNo extends AppLocalizations {
-  AppLocalizationsNo([String locale = 'no']) : super(locale);
+/// The translations for Norwegian Bokmål (`nb`).
+class AppLocalizationsNb extends AppLocalizations {
+  AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
   String get appTitle => 'BusyMark';
@@ -199,7 +199,7 @@ class AppLocalizationsNo extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Vis/skjul sidefelt';
+  String get toggleSidebar => 'Sidepanel';
 
   @override
   String get topLeft => 'Øverst til venstre';
@@ -728,10 +728,10 @@ class AppLocalizationsNo extends AppLocalizations {
   String get noImageSource => 'Ingen bildekilde';
 
   @override
-  String get hideSidebar => 'Skjul sidefelt';
+  String get hideSidebar => 'Skjul sidepanel';
 
   @override
-  String get showSidebar => 'Vis sidefelt';
+  String get showSidebar => 'Vis sidepanel';
 
   @override
   String get showPreview => 'Vis forhåndsvisning';

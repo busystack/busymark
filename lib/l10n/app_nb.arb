@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Vis/skjul sidepanel",
+  "toggleSidebar": "Sidepanel",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },

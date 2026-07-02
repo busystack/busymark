@@ -199,7 +199,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Перемкнути бічну панель';
+  String get toggleSidebar => 'Бічна панель';
 
   @override
   String get topLeft => 'Вгорі ліворуч';

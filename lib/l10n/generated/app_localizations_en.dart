@@ -199,7 +199,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Toggle sidebar';
+  String get toggleSidebar => 'Sidebar panel';
 
   @override
   String get topLeft => 'Top left';
@@ -727,10 +727,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noImageSource => 'No image source';
 
   @override
-  String get hideSidebar => 'Hide sidebar';
+  String get hideSidebar => 'Hide sidebar panel';
 
   @override
-  String get showSidebar => 'Show sidebar';
+  String get showSidebar => 'Show sidebar panel';
 
   @override
   String get showPreview => 'Show preview';

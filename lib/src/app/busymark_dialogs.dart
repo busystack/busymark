@@ -489,6 +489,13 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
             filled: true,
             children: [
               BusyMarkActionRow(
+                title: context.l10n.toggleSidebar,
+                leading: const Icon(BusyMarkGlyphs.sidebar),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.toggleSidebar,
+                ),
+              ),
+              BusyMarkActionRow(
                 title: context.l10n.files,
                 leading: const Icon(BusyMarkGlyphs.documentOpen),
                 trailing: const _KeyboardShortcutBadge(

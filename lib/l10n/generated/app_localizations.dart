@@ -13,7 +13,7 @@ import 'app_localizations_fa.dart';
 import 'app_localizations_fr.dart';
 import 'app_localizations_hi.dart';
 import 'app_localizations_it.dart';
-import 'app_localizations_no.dart';
+import 'app_localizations_nb.dart';
 import 'app_localizations_pl.dart';
 import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
@@ -113,7 +113,7 @@ abstract class AppLocalizations {
     Locale('fr'),
     Locale('hi'),
     Locale('it'),
-    Locale('no'),
+    Locale('nb'),
     Locale('pl'),
     Locale('pt'),
     Locale('ru'),
@@ -498,10 +498,10 @@ abstract class AppLocalizations {
   /// **'हिन्दी'**
   String get languageHindi;
 
-  /// Native header bar sidebar toggle tooltip.
+  /// Keyboard shortcuts label for the sidebar panel toggle.
   ///
   /// In en, this message translates to:
-  /// **'Toggle sidebar'**
+  /// **'Sidebar panel'**
   String get toggleSidebar;
 
   /// Editing button position option.
@@ -1452,16 +1452,16 @@ abstract class AppLocalizations {
   /// **'No image source'**
   String get noImageSource;
 
-  /// Tooltip for hiding the workspace sidebar.
+  /// Tooltip for hiding the workspace sidebar panel.
   ///
   /// In en, this message translates to:
-  /// **'Hide sidebar'**
+  /// **'Hide sidebar panel'**
   String get hideSidebar;
 
-  /// Tooltip for showing the workspace sidebar.
+  /// Tooltip for showing the workspace sidebar panel.
   ///
   /// In en, this message translates to:
-  /// **'Show sidebar'**
+  /// **'Show sidebar panel'**
   String get showSidebar;
 
   /// Tooltip for showing the preview pane.
@@ -2887,7 +2887,7 @@ class _AppLocalizationsDelegate
     'fr',
     'hi',
     'it',
-    'no',
+    'nb',
     'pl',
     'pt',
     'ru',
@@ -2917,8 +2917,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsHi();
     case 'it':
       return AppLocalizationsIt();
-    case 'no':
-      return AppLocalizationsNo();
+    case 'nb':
+      return AppLocalizationsNb();
     case 'pl':
       return AppLocalizationsPl();
     case 'pt':

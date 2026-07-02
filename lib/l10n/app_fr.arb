@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Basculer la barre latérale",
+  "toggleSidebar": "Panneau latéral",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -918,11 +918,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "Masquer la barre latérale",
+  "hideSidebar": "Masquer le panneau latéral",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "Afficher la barre latérale",
+  "showSidebar": "Afficher le panneau latéral",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },

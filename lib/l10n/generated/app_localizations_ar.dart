@@ -198,7 +198,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'تبديل الشريط الجانبي';
+  String get toggleSidebar => 'اللوحة الجانبية';
 
   @override
   String get topLeft => 'أعلى اليسار';
@@ -724,10 +724,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noImageSource => 'لا يوجد مصدر للصورة';
 
   @override
-  String get hideSidebar => 'إخفاء الشريط الجانبي';
+  String get hideSidebar => 'إخفاء اللوحة الجانبية';
 
   @override
-  String get showSidebar => 'إظهار الشريط الجانبي';
+  String get showSidebar => 'إظهار اللوحة الجانبية';
 
   @override
   String get showPreview => 'إظهار المعاينة';

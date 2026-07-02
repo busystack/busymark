@@ -198,7 +198,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'نمایش/پنهان کردن نوار کناری';
+  String get toggleSidebar => 'پنل کناری';
 
   @override
   String get topLeft => 'بالا سمت چپ';
@@ -723,10 +723,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noImageSource => 'منبع تصویر وجود ندارد';
 
   @override
-  String get hideSidebar => 'پنهان کردن نوار کناری';
+  String get hideSidebar => 'پنهان کردن پنل کناری';
 
   @override
-  String get showSidebar => 'نمایش نوار کناری';
+  String get showSidebar => 'نمایش پنل کناری';
 
   @override
   String get showPreview => 'نمایش پیش‌نمایش';

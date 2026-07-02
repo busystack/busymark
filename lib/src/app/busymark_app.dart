@@ -10,7 +10,10 @@ import 'package:path/path.dart' as p;
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../git/application/git_controller.dart';
+import '../platform/linux_header_bar_service.dart';
 import '../workspace/workspace_controller.dart';
+import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
 import 'app_settings.dart';
@@ -20,7 +23,6 @@ import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
 import 'system_accent.dart';
-import '../platform/linux_header_bar_service.dart';
 import 'window_control_service.dart';
 
 class BusyMarkApp extends ConsumerWidget {
@@ -66,7 +68,7 @@ class BusyMarkApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
-        _configureNativeHeaderBar(context, ref);
+        _configureNativeHeaderBar(context, ref, settings);
         return _BusyMarkWindowLifecycle(
           child: Shortcuts(
             shortcuts: const {
@@ -94,6 +96,7 @@ class BusyMarkApp extends ConsumerWidget {
               ): _CloseAllTabsIntent(),
               SingleActivator(LogicalKeyboardKey.keyF, control: true):
                   _OpenSearchIntent(),
+              SingleActivator(LogicalKeyboardKey.f9): _ToggleSidebarIntent(),
               SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
             },
             child: Actions(
@@ -212,6 +215,12 @@ class BusyMarkApp extends ConsumerWidget {
                       );
                       notifier.request();
                     }
+                    return null;
+                  },
+                ),
+                _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
+                  onInvoke: (intent) {
+                    _toggleSidebar(ref);
                     return null;
                   },
                 ),
@@ -420,7 +429,47 @@ class BusyMarkApp extends ConsumerWidget {
     return name.isEmpty ? path : name;
   }
 
-  void _configureNativeHeaderBar(BuildContext context, WidgetRef ref) {
+  void _toggleSidebar(WidgetRef ref) {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (!_hasWorkspaceSidebar(workspace?.kind)) {
+      return;
+    }
+    final settings = ref.read(appSettingsControllerProvider);
+    final visible = !settings.sidebarVisible;
+    if (!visible) {
+      _clearGitDetailSelection(ref);
+    }
+    unawaited(
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setSidebarVisible(visible),
+    );
+  }
+
+  bool _hasWorkspaceSidebar(WorkspaceKind? kind) {
+    return switch (kind) {
+      WorkspaceKind.untitledMarkdown ||
+      WorkspaceKind.singleMarkdown ||
+      WorkspaceKind.markdownFolder ||
+      WorkspaceKind.writersideModule => true,
+      null => false,
+    };
+  }
+
+  void _clearGitDetailSelection(WidgetRef ref) {
+    final gitState = ref.read(gitControllerProvider);
+    if (gitState.selectedDiff != null ||
+        gitState.selectedFilePath != null ||
+        gitState.selectedCommitHash != null) {
+      ref.read(gitControllerProvider.notifier).clearSelection();
+    }
+  }
+
+  void _configureNativeHeaderBar(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) {
     final service = ref.watch(linuxHeaderBarServiceProvider);
     if (!service.isAvailable) {
       return;
@@ -437,7 +486,7 @@ class BusyMarkApp extends ConsumerWidget {
       search: material.searchFieldLabel,
       refresh: l10n.validate,
       menu: l10n.mainMenu,
-      sidebar: l10n.toggleSidebar,
+      sidebar: settings.sidebarVisible ? l10n.hideSidebar : l10n.showSidebar,
       back: material.backButtonTooltip,
       save: l10n.save,
       settings: l10n.settings,
@@ -658,6 +707,10 @@ class _CloseAllTabsIntent extends Intent {
 
 class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
+}
+
+class _ToggleSidebarIntent extends Intent {
+  const _ToggleSidebarIntent();
 }
 
 class _CloseSearchIntent extends Intent {

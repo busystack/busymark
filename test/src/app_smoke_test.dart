@@ -53,7 +53,8 @@ void main() {
     expect(app.supportedLocales, AppLocalizations.supportedLocales);
     expect(app.supportedLocales, contains(const Locale('de')));
     expect(app.supportedLocales, contains(const Locale('it')));
-    expect(app.supportedLocales, contains(const Locale('no')));
+    expect(app.supportedLocales, contains(const Locale('nb')));
+    expect(app.supportedLocales, isNot(contains(const Locale('no'))));
     expect(app.supportedLocales, contains(const Locale('fr')));
     expect(app.supportedLocales, contains(const Locale('ru')));
     expect(app.supportedLocales, contains(const Locale('uk')));
@@ -460,6 +461,10 @@ void main() {
       find.text(BusyMarkEditorShortcutLabels.hardLineBreak),
       findsOneWidget,
     );
+    expect(
+      find.text(BusyMarkSidebarShortcutLabels.toggleSidebar),
+      findsOneWidget,
+    );
     expect(find.text(BusyMarkSidebarShortcutLabels.files), findsOneWidget);
     expect(find.text(BusyMarkSidebarShortcutLabels.toc), findsOneWidget);
     expect(find.text(BusyMarkSidebarShortcutLabels.outline), findsOneWidget);
@@ -774,8 +779,29 @@ void main() {
       }
       await tester.pump(const Duration(milliseconds: 100));
     }
+    await tester.pumpAndSettle();
 
-    expect(find.text('Api.md'), findsNothing);
+    expect(find.text('Api.md'), findsOneWidget);
+
+    expect(
+      find.byTooltip(
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
+    expect(
+      find.byTooltip(
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);

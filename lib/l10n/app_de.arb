@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Seitenleiste umschalten",
+  "toggleSidebar": "Seitenbereich",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -918,11 +918,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "Seitenleiste ausblenden",
+  "hideSidebar": "Seitenbereich ausblenden",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "Seitenleiste anzeigen",
+  "showSidebar": "Seitenbereich anzeigen",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },

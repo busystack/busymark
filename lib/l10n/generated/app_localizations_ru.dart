@@ -199,7 +199,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Показать или скрыть боковую панель';
+  String get toggleSidebar => 'Боковая панель';
 
   @override
   String get topLeft => 'Вверху слева';

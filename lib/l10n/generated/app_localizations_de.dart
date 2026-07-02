@@ -199,7 +199,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Seitenleiste umschalten';
+  String get toggleSidebar => 'Seitenbereich';
 
   @override
   String get topLeft => 'Oben links';
@@ -736,10 +736,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noImageSource => 'Keine Bildquelle';
 
   @override
-  String get hideSidebar => 'Seitenleiste ausblenden';
+  String get hideSidebar => 'Seitenbereich ausblenden';
 
   @override
-  String get showSidebar => 'Seitenleiste anzeigen';
+  String get showSidebar => 'Seitenbereich anzeigen';
 
   @override
   String get showPreview => 'Vorschau anzeigen';

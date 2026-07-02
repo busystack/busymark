@@ -253,6 +253,7 @@ class BusyMarkEditorShortcutActivators {
 class BusyMarkSidebarShortcutLabels {
   const BusyMarkSidebarShortcutLabels._();
 
+  static const toggleSidebar = 'F9';
   static const files = 'Ctrl+1';
   static const toc = 'Ctrl+2';
   static const outline = 'Ctrl+3';

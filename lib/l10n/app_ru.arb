@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Показать или скрыть боковую панель",
+  "toggleSidebar": "Боковая панель",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },

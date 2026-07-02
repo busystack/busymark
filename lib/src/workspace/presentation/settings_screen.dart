@@ -274,7 +274,7 @@ class _LanguageControl extends StatelessWidget {
     final selectedValue = selectedLocaleTag ?? _systemLocaleTag;
     final selectedLabel = _selectedLabel(context, selectedValue);
     final escapeDismiss = BusyMarkPopupEscapeDismissBinding(
-      Navigator.of(context),
+      Navigator.of(context, rootNavigator: true),
     );
     return Align(
       alignment: AlignmentDirectional.centerEnd,
@@ -298,6 +298,7 @@ class _LanguageControl extends StatelessWidget {
           minWidth: BusyMarkSizes.languagePopupMinWidth,
           maxWidth: BusyMarkSizes.languagePopupMaxWidth,
         ),
+        useRootNavigator: true,
         requestFocus: true,
         onOpened: escapeDismiss.attach,
         onCanceled: escapeDismiss.detach,
@@ -377,7 +378,7 @@ class _LanguageControl extends StatelessWidget {
       _LanguageOption('en', 'English'),
       _LanguageOption('de', 'Deutsch'),
       _LanguageOption('it', 'Italiano'),
-      _LanguageOption('no', 'Norsk'),
+      _LanguageOption('nb', 'Norsk'),
       _LanguageOption('fr', 'Français'),
       _LanguageOption('ru', 'Русский'),
       _LanguageOption('uk', 'Українська'),

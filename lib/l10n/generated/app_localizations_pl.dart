@@ -198,7 +198,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Pokaż lub ukryj pasek boczny';
+  String get toggleSidebar => 'Panel boczny';
 
   @override
   String get topLeft => 'U góry po lewej';
@@ -737,10 +737,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noImageSource => 'Brak źródła obrazu';
 
   @override
-  String get hideSidebar => 'Ukryj pasek boczny';
+  String get hideSidebar => 'Ukryj panel boczny';
 
   @override
-  String get showSidebar => 'Pokaż pasek boczny';
+  String get showSidebar => 'Pokaż panel boczny';
 
   @override
   String get showPreview => 'Pokaż podgląd';

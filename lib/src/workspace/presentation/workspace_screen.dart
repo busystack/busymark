@@ -390,6 +390,7 @@ class WorkspaceScreen extends ConsumerWidget {
                             : context.l10n.showSidebar,
                         icon: BusyMarkGlyphs.sidebar,
                         selected: settings.sidebarVisible,
+                        shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
                         onPressed: () {
                           final visible = !settings.sidebarVisible;
                           if (!visible) {

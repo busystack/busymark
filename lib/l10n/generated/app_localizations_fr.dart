@@ -199,7 +199,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Basculer la barre latérale';
+  String get toggleSidebar => 'Panneau latéral';
 
   @override
   String get topLeft => 'En haut à gauche';
@@ -738,10 +738,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noImageSource => 'Aucune source d’image';
 
   @override
-  String get hideSidebar => 'Masquer la barre latérale';
+  String get hideSidebar => 'Masquer le panneau latéral';
 
   @override
-  String get showSidebar => 'Afficher la barre latérale';
+  String get showSidebar => 'Afficher le panneau latéral';
 
   @override
   String get showPreview => 'Afficher l’aperçu';

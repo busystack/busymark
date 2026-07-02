@@ -1060,7 +1060,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
 
   Future<void> _showMenu(BuildContext context) async {
     final button = context.findRenderObject();
-    final navigator = Navigator.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
     final overlay = navigator.overlay?.context.findRenderObject();
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
@@ -1089,6 +1089,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     try {
       result = await showMenu<T>(
         context: context,
+        useRootNavigator: true,
         items: items,
         position: RelativeRect.fromLTRB(
           left,

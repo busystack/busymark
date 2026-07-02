@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "تبديل الشريط الجانبي",
+  "toggleSidebar": "اللوحة الجانبية",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -918,11 +918,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "إخفاء الشريط الجانبي",
+  "hideSidebar": "إخفاء اللوحة الجانبية",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "إظهار الشريط الجانبي",
+  "showSidebar": "إظهار اللوحة الجانبية",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
