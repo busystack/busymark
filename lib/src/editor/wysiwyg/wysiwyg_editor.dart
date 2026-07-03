@@ -21,6 +21,14 @@ import 'wysiwyg_toolbar.dart';
 typedef BusyMarkWysiwygSourceChanged =
     void Function(String filePath, String source);
 
+bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.tab &&
+      !keyboard.isControlPressed &&
+      !keyboard.isShiftPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed;
+}
+
 class BusyMarkWysiwygEditor extends StatefulWidget {
   const BusyMarkWysiwygEditor({
     super.key,
@@ -931,11 +939,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   KeyEventResult _handleBlockKeyEvent(String blockId, KeyEvent event) {
+    final keyboard = HardwareKeyboard.instance;
+    final key = event.logicalKey;
+    if ((event is KeyDownEvent || event is KeyRepeatEvent) &&
+        _isPlainTabKey(keyboard, key)) {
+      _activeBlockId = blockId;
+      return _insertTabIntoBlock(blockId)
+          ? KeyEventResult.handled
+          : KeyEventResult.ignored;
+    }
     if (event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
-    final keyboard = HardwareKeyboard.instance;
-    final key = event.logicalKey;
     _activeBlockId = blockId;
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyA) {
       _selectAllForBlock(blockId);
@@ -1586,6 +1601,36 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blockId,
       nextText,
     );
+  }
+
+  bool _insertTabIntoBlock(String blockId) {
+    final controller = _textControllers[blockId];
+    if (controller == null) {
+      return false;
+    }
+    final currentText = controller.text;
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: currentText.length);
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, currentText.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, currentText.length)
+        .toInt();
+    final nextText = currentText.replaceRange(start, end, '\t');
+    controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: start + 1),
+    );
+    _handleBlockTextChanged(
+      _documentController.document.filePath,
+      blockId,
+      nextText,
+    );
+    return true;
   }
 
   Future<void> _applyInlineImageCommand() async {

@@ -165,15 +165,21 @@ List<TextSpan> _highlightMarkdown(
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
   final ranges = <_HighlightRange>[];
+  final blockMarkerStyle = baseStyle.copyWith(color: palette.keyword);
+  final inlineMarkerStyle = baseStyle.copyWith(color: palette.punctuation);
+  final linkDestinationStyle = baseStyle.copyWith(color: palette.string);
   var offset = 0;
   var inFence = false;
+  var fenceLanguage = '';
   var inFrontMatter = source.startsWith('---\n') || source == '---';
 
   for (final line in source.split('\n')) {
     final lineStart = offset;
     final lineEnd = lineStart + line.length;
     final trimmed = line.trimLeft();
-    final fence = RegExp(r'^\s*(```|~~~)').hasMatch(line);
+    final fence = RegExp(
+      r'^\s*(```|~~~)\s*([A-Za-z0-9_+.#-]*)?',
+    ).firstMatch(line);
 
     if (inFrontMatter) {
       _addRange(
@@ -189,16 +195,47 @@ List<TextSpan> _highlightMarkdown(
       continue;
     }
 
-    if (inFence || fence) {
+    if (inFence) {
+      if (fence == null) {
+        final highlighted = _addFencedCodeLineRanges(
+          ranges,
+          lineStart,
+          line,
+          fenceLanguage,
+          baseStyle,
+          palette,
+        );
+        if (!highlighted && line.isNotEmpty) {
+          _addRange(
+            ranges,
+            lineStart,
+            lineEnd,
+            baseStyle.copyWith(color: palette.literal),
+          );
+        }
+      } else {
+        _addRange(
+          ranges,
+          lineStart,
+          lineEnd,
+          baseStyle.copyWith(color: palette.keyword),
+        );
+        inFence = false;
+        fenceLanguage = '';
+      }
+      offset = lineEnd + 1;
+      continue;
+    }
+
+    if (fence != null) {
       _addRange(
         ranges,
         lineStart,
         lineEnd,
-        baseStyle.copyWith(color: fence ? palette.keyword : palette.literal),
+        baseStyle.copyWith(color: palette.keyword),
       );
-      if (fence) {
-        inFence = !inFence;
-      }
+      inFence = true;
+      fenceLanguage = _normalizedFenceLanguage(fence.group(2) ?? '');
       offset = lineEnd + 1;
       continue;
     }
@@ -208,6 +245,7 @@ List<TextSpan> _highlightMarkdown(
       final marker = heading.group(1)!;
       final content = heading.group(2)!;
       final level = marker.trim().length;
+      _addRange(ranges, lineStart, lineStart + marker.length, blockMarkerStyle);
       if (content.isNotEmpty) {
         _addRange(
           ranges,
@@ -226,7 +264,7 @@ List<TextSpan> _highlightMarkdown(
         ranges,
         lineStart,
         lineStart + blockquote.end,
-        baseStyle.copyWith(color: palette.keyword),
+        blockMarkerStyle,
       );
     }
 
@@ -236,8 +274,31 @@ List<TextSpan> _highlightMarkdown(
         ranges,
         lineStart,
         lineStart + listMarker.end,
-        baseStyle.copyWith(color: palette.keyword),
+        blockMarkerStyle,
       );
+    }
+
+    final taskMarker = RegExp(
+      r'^\s*(?:[-*+]|\d+\.)\s+(\[[ xX]\])\s+',
+    ).firstMatch(line);
+    if (taskMarker != null) {
+      final checkbox = taskMarker.group(1)!;
+      final checkboxStart = line.indexOf(checkbox, listMarker?.end ?? 0);
+      if (checkboxStart >= 0) {
+        _addRange(
+          ranges,
+          lineStart + checkboxStart,
+          lineStart + checkboxStart + checkbox.length,
+          inlineMarkerStyle,
+        );
+      }
+    }
+
+    final thematicBreak = RegExp(
+      r'^\s{0,3}(?:(?:[-*_])\s*){3,}$',
+    ).firstMatch(line);
+    if (thematicBreak != null) {
+      _addRange(ranges, lineStart, lineEnd, blockMarkerStyle);
     }
 
     _addDelimitedInlineMatches(
@@ -253,6 +314,7 @@ List<TextSpan> _highlightMarkdown(
       ),
       openingLength: 1,
       closingLength: 1,
+      markerStyle: inlineMarkerStyle,
     );
     _addLinkLabelMatches(
       ranges,
@@ -263,6 +325,8 @@ List<TextSpan> _highlightMarkdown(
         color: palette.link,
         decoration: TextDecoration.underline,
       ),
+      inlineMarkerStyle,
+      linkDestinationStyle,
     );
     _addInlineMatches(
       ranges,
@@ -279,6 +343,7 @@ List<TextSpan> _highlightMarkdown(
       baseStyle.copyWith(fontWeight: FontWeight.w700),
       openingLength: 2,
       closingLength: 2,
+      markerStyle: inlineMarkerStyle,
     );
     _addSingleDelimiterInlineMatches(
       ranges,
@@ -286,6 +351,7 @@ List<TextSpan> _highlightMarkdown(
       line,
       '*',
       baseStyle.copyWith(fontStyle: FontStyle.italic),
+      markerStyle: inlineMarkerStyle,
     );
     _addSingleDelimiterInlineMatches(
       ranges,
@@ -293,6 +359,7 @@ List<TextSpan> _highlightMarkdown(
       line,
       '_',
       baseStyle.copyWith(fontStyle: FontStyle.italic),
+      markerStyle: inlineMarkerStyle,
     );
     _addDelimitedInlineMatches(
       ranges,
@@ -302,6 +369,7 @@ List<TextSpan> _highlightMarkdown(
       baseStyle.copyWith(decoration: TextDecoration.lineThrough),
       openingLength: 2,
       closingLength: 2,
+      markerStyle: inlineMarkerStyle,
     );
 
     if (trimmed.startsWith('<!--')) {
@@ -324,6 +392,314 @@ List<TextSpan> _highlightMarkdown(
   );
 }
 
+bool _addFencedCodeLineRanges(
+  List<_HighlightRange> ranges,
+  int lineStart,
+  String line,
+  String rawLanguage,
+  TextStyle baseStyle,
+  BusyMarkSyntaxColors palette,
+) {
+  final before = ranges.length;
+  final language = _normalizedFenceLanguage(rawLanguage);
+  if (_xmlCodeLanguages.contains(language)) {
+    _addXmlRanges(ranges, line, lineStart, baseStyle, palette);
+    return ranges.length > before;
+  }
+
+  final commentStyle = baseStyle.copyWith(color: palette.comment);
+  final keywordStyle = baseStyle.copyWith(color: palette.keyword);
+  final stringStyle = baseStyle.copyWith(color: palette.string);
+  final literalStyle = baseStyle.copyWith(color: palette.literal);
+  final attributeStyle = baseStyle.copyWith(color: palette.attribute);
+  final tagStyle = baseStyle.copyWith(color: palette.tag);
+  final punctuationStyle = baseStyle.copyWith(color: palette.punctuation);
+
+  if (language == 'json') {
+    _addInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      RegExp(r'"(?:\\.|[^"\\])*"(?=\s*:)'),
+      attributeStyle,
+    );
+  }
+
+  _addCodeStringRanges(ranges, lineStart, line, language, stringStyle);
+  _addCodeCommentRanges(ranges, lineStart, line, language, commentStyle);
+
+  _addInlineMatches(
+    ranges,
+    lineStart,
+    line,
+    RegExp(r'\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b'),
+    literalStyle,
+  );
+
+  final keywords = _codeKeywords(language);
+  for (final word in RegExp(r'\b[A-Za-z_][A-Za-z0-9_]*\b').allMatches(line)) {
+    final token = word.group(0)!;
+    final style = _codeLiterals.contains(token.toLowerCase())
+        ? literalStyle
+        : keywords.contains(token)
+        ? keywordStyle
+        : null;
+    if (style != null) {
+      _addRange(ranges, lineStart + word.start, lineStart + word.end, style);
+    }
+  }
+
+  for (final type in RegExp(r'\b[A-Z][A-Za-z0-9_]*\b').allMatches(line)) {
+    _addRange(ranges, lineStart + type.start, lineStart + type.end, tagStyle);
+  }
+
+  for (final function in RegExp(
+    r'\b[A-Za-z_][A-Za-z0-9_]*\b(?=\s*\()',
+  ).allMatches(line)) {
+    final token = function.group(0)!;
+    if (!keywords.contains(token) &&
+        !_codeLiterals.contains(token.toLowerCase())) {
+      _addRange(
+        ranges,
+        lineStart + function.start,
+        lineStart + function.end,
+        attributeStyle,
+      );
+    }
+  }
+
+  _addInlineMatches(
+    ranges,
+    lineStart,
+    line,
+    RegExp(r'[{}()\[\],.;:+\-*/%=<>!&|?]+'),
+    punctuationStyle,
+  );
+
+  return ranges.length > before;
+}
+
+String _normalizedFenceLanguage(String value) {
+  var language = value.trim().toLowerCase();
+  if (language.startsWith('language-')) {
+    language = language.substring('language-'.length);
+  }
+  return switch (language) {
+    'c++' => 'cpp',
+    'c#' || 'cs' => 'csharp',
+    'htm' => 'html',
+    'js' || 'jsx' => 'javascript',
+    'kt' => 'kotlin',
+    'py' => 'python',
+    'sh' || 'bash' || 'zsh' => 'shell',
+    'ts' || 'tsx' => 'typescript',
+    'yml' => 'yaml',
+    'topic' => 'xml',
+    _ => language,
+  };
+}
+
+void _addCodeStringRanges(
+  List<_HighlightRange> ranges,
+  int lineStart,
+  String line,
+  String language,
+  TextStyle style,
+) {
+  final pattern = language == 'json'
+      ? RegExp(r'"(?:\\.|[^"\\])*"')
+      : RegExp(
+          "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|`(?:\\\\.|[^`\\\\])*`",
+        );
+  _addInlineMatches(ranges, lineStart, line, pattern, style);
+}
+
+void _addCodeCommentRanges(
+  List<_HighlightRange> ranges,
+  int lineStart,
+  String line,
+  String language,
+  TextStyle style,
+) {
+  for (final block in RegExp(r'/\*.*?(?:\*/|$)').allMatches(line)) {
+    _addRange(ranges, lineStart + block.start, lineStart + block.end, style);
+  }
+
+  for (final marker in _lineCommentMarkers(language)) {
+    var searchStart = 0;
+    while (searchStart < line.length) {
+      final index = line.indexOf(marker, searchStart);
+      if (index < 0) {
+        break;
+      }
+      final globalIndex = lineStart + index;
+      if (_positionInsideRange(ranges, globalIndex)) {
+        searchStart = index + marker.length;
+        continue;
+      }
+      _addRange(ranges, globalIndex, lineStart + line.length, style);
+      break;
+    }
+  }
+}
+
+List<String> _lineCommentMarkers(String language) {
+  return switch (language) {
+    'json' || 'xml' || 'html' => const [],
+    'python' || 'ruby' || 'shell' || 'yaml' => const ['#'],
+    'sql' => const ['--'],
+    _ => const ['//'],
+  };
+}
+
+Set<String> _codeKeywords(String language) {
+  return switch (language) {
+    'dart' => _dartKeywords,
+    'python' => _pythonKeywords,
+    'shell' => _shellKeywords,
+    'yaml' => _yamlKeywords,
+    _ => _cLikeKeywords,
+  };
+}
+
+bool _positionInsideRange(List<_HighlightRange> ranges, int offset) {
+  for (final range in ranges) {
+    if (range.start <= offset && offset < range.end) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const _xmlCodeLanguages = {'html', 'xml'};
+
+const _codeLiterals = {'false', 'nil', 'none', 'null', 'true', 'undefined'};
+
+const _cLikeKeywords = {
+  'abstract',
+  'as',
+  'async',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'default',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'final',
+  'finally',
+  'for',
+  'from',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'interface',
+  'is',
+  'let',
+  'new',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'switch',
+  'throw',
+  'try',
+  'type',
+  'var',
+  'void',
+  'while',
+};
+
+const _dartKeywords = {
+  ..._cLikeKeywords,
+  'assert',
+  'covariant',
+  'deferred',
+  'dynamic',
+  'extension',
+  'external',
+  'factory',
+  'get',
+  'late',
+  'library',
+  'mixin',
+  'operator',
+  'part',
+  'required',
+  'sealed',
+  'set',
+  'show',
+  'sync',
+  'typedef',
+  'with',
+  'yield',
+};
+
+const _pythonKeywords = {
+  'and',
+  'as',
+  'assert',
+  'async',
+  'await',
+  'break',
+  'class',
+  'continue',
+  'def',
+  'del',
+  'elif',
+  'else',
+  'except',
+  'finally',
+  'for',
+  'from',
+  'global',
+  'if',
+  'import',
+  'in',
+  'is',
+  'lambda',
+  'nonlocal',
+  'not',
+  'or',
+  'pass',
+  'raise',
+  'return',
+  'try',
+  'while',
+  'with',
+  'yield',
+};
+
+const _shellKeywords = {
+  'case',
+  'do',
+  'done',
+  'elif',
+  'else',
+  'esac',
+  'fi',
+  'for',
+  'function',
+  'if',
+  'in',
+  'select',
+  'then',
+  'until',
+  'while',
+};
+
+const _yamlKeywords = {'false', 'no', 'null', 'off', 'on', 'true', 'yes'};
+
 List<TextSpan> _highlightXml(
   String source,
   TextStyle baseStyle,
@@ -332,6 +708,24 @@ List<TextSpan> _highlightXml(
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
   final ranges = <_HighlightRange>[];
+  _addXmlRanges(ranges, source, 0, baseStyle, palette);
+
+  return _spansFromRanges(
+    source,
+    ranges,
+    hiddenRanges,
+    baseStyle,
+    styleOverride: styleOverride,
+  );
+}
+
+void _addXmlRanges(
+  List<_HighlightRange> ranges,
+  String source,
+  int sourceOffset,
+  TextStyle baseStyle,
+  BusyMarkSyntaxColors palette,
+) {
   final commentStyle = baseStyle.copyWith(color: palette.comment);
   final tagStyle = baseStyle.copyWith(color: palette.tag);
   final attributeStyle = baseStyle.copyWith(color: palette.attribute);
@@ -339,7 +733,12 @@ List<TextSpan> _highlightXml(
   final punctuationStyle = baseStyle.copyWith(color: palette.punctuation);
 
   for (final comment in RegExp(r'<!--[\s\S]*?-->').allMatches(source)) {
-    _addRange(ranges, comment.start, comment.end, commentStyle);
+    _addRange(
+      ranges,
+      sourceOffset + comment.start,
+      sourceOffset + comment.end,
+      commentStyle,
+    );
   }
 
   for (final tag in RegExp(r'</?[^>]+/?>').allMatches(source)) {
@@ -347,13 +746,33 @@ List<TextSpan> _highlightXml(
     if (text.startsWith('<!--')) {
       continue;
     }
-    _addRange(ranges, tag.start, tag.start + 1, punctuationStyle);
+    _addRange(
+      ranges,
+      sourceOffset + tag.start,
+      sourceOffset + tag.start + 1,
+      punctuationStyle,
+    );
     if (text.startsWith('</')) {
-      _addRange(ranges, tag.start + 1, tag.start + 2, punctuationStyle);
+      _addRange(
+        ranges,
+        sourceOffset + tag.start + 1,
+        sourceOffset + tag.start + 2,
+        punctuationStyle,
+      );
     }
-    _addRange(ranges, tag.end - 1, tag.end, punctuationStyle);
+    _addRange(
+      ranges,
+      sourceOffset + tag.end - 1,
+      sourceOffset + tag.end,
+      punctuationStyle,
+    );
     if (text.endsWith('/>') && tag.end - 2 > tag.start) {
-      _addRange(ranges, tag.end - 2, tag.end - 1, punctuationStyle);
+      _addRange(
+        ranges,
+        sourceOffset + tag.end - 2,
+        sourceOffset + tag.end - 1,
+        punctuationStyle,
+      );
     }
 
     final name = RegExp(r'^</?\s*([A-Za-z_][\w:.-]*)').firstMatch(text);
@@ -363,8 +782,8 @@ List<TextSpan> _highlightXml(
       if (nameOffset >= 0) {
         _addRange(
           ranges,
-          tag.start + nameOffset,
-          tag.start + nameOffset + nameText.length,
+          sourceOffset + tag.start + nameOffset,
+          sourceOffset + tag.start + nameOffset + nameText.length,
           tagStyle,
         );
       }
@@ -375,28 +794,20 @@ List<TextSpan> _highlightXml(
     ).allMatches(text)) {
       _addRange(
         ranges,
-        tag.start + attr.start,
-        tag.start + attr.end,
+        sourceOffset + tag.start + attr.start,
+        sourceOffset + tag.start + attr.end,
         attributeStyle,
       );
     }
     for (final literal in RegExp("\"[^\"\\n]*\"|'[^'\\n]*'").allMatches(text)) {
       _addRange(
         ranges,
-        tag.start + literal.start,
-        tag.start + literal.end,
+        sourceOffset + tag.start + literal.start,
+        sourceOffset + tag.start + literal.end,
         stringStyle,
       );
     }
   }
-
-  return _spansFromRanges(
-    source,
-    ranges,
-    hiddenRanges,
-    baseStyle,
-    styleOverride: styleOverride,
-  );
 }
 
 void _addInlineMatches(
@@ -419,10 +830,20 @@ void _addDelimitedInlineMatches(
   TextStyle style, {
   required int openingLength,
   required int closingLength,
+  TextStyle? markerStyle,
 }) {
   for (final match in pattern.allMatches(line)) {
     final start = match.start + openingLength;
     final end = match.end - closingLength;
+    if (markerStyle != null) {
+      _addRange(
+        ranges,
+        lineStart + match.start,
+        lineStart + start,
+        markerStyle,
+      );
+      _addRange(ranges, lineStart + end, lineStart + match.end, markerStyle);
+    }
     _addRange(ranges, lineStart + start, lineStart + end, style);
   }
 }
@@ -432,14 +853,49 @@ void _addLinkLabelMatches(
   int lineStart,
   String line,
   RegExp pattern,
-  TextStyle style,
+  TextStyle labelStyle,
+  TextStyle markerStyle,
+  TextStyle destinationStyle,
 ) {
   for (final match in pattern.allMatches(line)) {
     final image = line.startsWith('![', match.start);
     final labelStart = match.start + (image ? 2 : 1);
     final labelEnd = line.indexOf(']', labelStart);
     if (labelEnd > labelStart && labelEnd <= match.end) {
-      _addRange(ranges, lineStart + labelStart, lineStart + labelEnd, style);
+      final destinationStart = labelEnd + 2;
+      final destinationEnd = match.end - 1;
+      _addRange(
+        ranges,
+        lineStart + match.start,
+        lineStart + labelStart,
+        markerStyle,
+      );
+      _addRange(
+        ranges,
+        lineStart + labelStart,
+        lineStart + labelEnd,
+        labelStyle,
+      );
+      if (destinationStart <= destinationEnd && destinationEnd <= match.end) {
+        _addRange(
+          ranges,
+          lineStart + labelEnd,
+          lineStart + destinationStart,
+          markerStyle,
+        );
+        _addRange(
+          ranges,
+          lineStart + destinationStart,
+          lineStart + destinationEnd,
+          destinationStyle,
+        );
+        _addRange(
+          ranges,
+          lineStart + destinationEnd,
+          lineStart + match.end,
+          markerStyle,
+        );
+      }
     }
   }
 }
@@ -449,8 +905,9 @@ void _addSingleDelimiterInlineMatches(
   int lineStart,
   String line,
   String marker,
-  TextStyle style,
-) {
+  TextStyle style, {
+  TextStyle? markerStyle,
+}) {
   var index = 0;
   while (index < line.length) {
     final start = _nextSingleDelimiter(line, marker, index);
@@ -461,6 +918,10 @@ void _addSingleDelimiterInlineMatches(
     if (end <= start + 1) {
       index = start + 1;
       continue;
+    }
+    if (markerStyle != null) {
+      _addRange(ranges, lineStart + start, lineStart + start + 1, markerStyle);
+      _addRange(ranges, lineStart + end, lineStart + end + 1, markerStyle);
     }
     _addRange(ranges, lineStart + start + 1, lineStart + end, style);
     index = end + 1;
