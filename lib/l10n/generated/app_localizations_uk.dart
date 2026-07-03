@@ -1711,4 +1711,113 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown і HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'Блоки Markdown';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'Блокові структури, що підтримуються у вихідному Markdown і попередньому перегляді.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Вбудований Markdown';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'Форматування всередині абзаців, елементів списків і клітинок таблиць.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'Блоки raw HTML';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'Вбудовані HTML-теги';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'Безпечні вбудовані HTML-теги відображаються без показу самих тегів.';
+
+  @override
+  String get markdownHtmlSafety => 'Правила безпеки';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'Raw HTML аналізується й очищується перед попереднім переглядом.';
+
+  @override
+  String get markdownHtmlHeadings => 'Заголовки';
+
+  @override
+  String get markdownHtmlParagraphs => 'Абзаци';
+
+  @override
+  String get markdownHtmlLists => 'Списки';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'Контейнери';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'Текстові блоки';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'Фігури та зображення';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'Попередньо форматований код';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'Розкривні блоки';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'Списки описів';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'Теги форматування';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'Вбудовані теги коду';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'Семантичні текстові теги';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'Очищений перегляд';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не рендериться в браузері.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'Джерело зберігається';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'Незмінений raw HTML зберігається точно як вихідний текст.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown всередині HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'Markdown-розмітка всередині raw HTML відображається як звичайний текст.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'Активний вміст заблоковано';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'Скрипти, стилі, фрейми, форми, SVG, MathML, події та небезпечні атрибути блокуються.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'Лише безпечні URL';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.';
 }

@@ -1690,4 +1690,113 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown و HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'بلوک‌های Markdown';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'ساختارهای بلوکی پشتیبانی‌شده در متن Markdown و پیش‌نمایش.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Markdown درون‌خطی';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'قالب‌بندی درون پاراگراف‌ها، موارد فهرست و سلول‌های جدول.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'بلوک‌های HTML خام';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'تگ‌های بلوکی HTML امن که با ویجت‌های پیش‌نمایش BusyMark نمایش داده می‌شوند.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'تگ‌های HTML درون‌خطی';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.';
+
+  @override
+  String get markdownHtmlSafety => 'قوانین امنیتی';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.';
+
+  @override
+  String get markdownHtmlHeadings => 'عنوان‌ها';
+
+  @override
+  String get markdownHtmlParagraphs => 'پاراگراف‌ها';
+
+  @override
+  String get markdownHtmlLists => 'فهرست‌ها';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'کانتینرها';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'بلوک‌های متن';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'شکل‌ها و تصاویر';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'کد پیش‌قالب‌بندی‌شده';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'بلوک‌های بازشونده';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'فهرست‌های توصیفی';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'تگ‌های قالب‌بندی';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'تگ‌های کد درون‌خطی';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'تگ‌های متنی معنایی';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'پیش‌نمایش پاک‌سازی‌شده';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'منبع حفظ می‌شود';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown داخل HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'محتوای فعال مسدود است';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'فقط URLهای امن';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.';
 }

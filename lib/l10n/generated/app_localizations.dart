@@ -2866,6 +2866,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Git command failed.'**
   String get gitErrorCommandFailed;
+
+  /// Markdown and HTML reference dialog title and menu item.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown and HTML'**
+  String get markdownAndHtml;
+
+  /// Reference section title for Markdown block syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown Blocks'**
+  String get markdownHtmlMarkdownBlocks;
+
+  /// Reference section description for Markdown block syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Block structures supported in Markdown source and preview.'**
+  String get markdownHtmlMarkdownBlocksDescription;
+
+  /// Reference section title for Markdown inline syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline Markdown'**
+  String get markdownHtmlInlineFormatting;
+
+  /// Reference section description for Markdown inline syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatting that can appear inside paragraphs, list items, and table cells.'**
+  String get markdownHtmlInlineFormattingDescription;
+
+  /// Reference section title for supported raw HTML block tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw HTML Blocks'**
+  String get markdownHtmlRawHtmlBlocks;
+
+  /// Reference section description for supported raw HTML block tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe block-level HTML tags rendered through BusyMark preview widgets.'**
+  String get markdownHtmlRawHtmlBlocksDescription;
+
+  /// Reference section title for supported raw HTML inline tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw HTML Inline Tags'**
+  String get markdownHtmlRawHtmlInline;
+
+  /// Reference section description for supported raw HTML inline tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe inline HTML tags rendered without showing literal tags.'**
+  String get markdownHtmlRawHtmlInlineDescription;
+
+  /// Reference section title for raw HTML safety rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety Rules'**
+  String get markdownHtmlSafety;
+
+  /// Reference section description for raw HTML safety rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw HTML is parsed and sanitized before preview rendering.'**
+  String get markdownHtmlSafetyDescription;
+
+  /// Reference row label for Markdown headings.
+  ///
+  /// In en, this message translates to:
+  /// **'Headings'**
+  String get markdownHtmlHeadings;
+
+  /// Reference row label for Markdown paragraphs.
+  ///
+  /// In en, this message translates to:
+  /// **'Paragraphs'**
+  String get markdownHtmlParagraphs;
+
+  /// Reference row label for list syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get markdownHtmlLists;
+
+  /// Reference row label for HTML container tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Containers'**
+  String get markdownHtmlHtmlContainers;
+
+  /// Reference row label for HTML text block tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Text blocks'**
+  String get markdownHtmlHtmlTextBlocks;
+
+  /// Reference row label for HTML figure and image tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Figures and images'**
+  String get markdownHtmlHtmlFigures;
+
+  /// Reference row label for HTML preformatted/code tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Preformatted code'**
+  String get markdownHtmlHtmlPreformatted;
+
+  /// Reference row label for HTML details/summary tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Disclosure blocks'**
+  String get markdownHtmlHtmlDisclosure;
+
+  /// Reference row label for HTML description list tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Description lists'**
+  String get markdownHtmlHtmlDescriptionLists;
+
+  /// Reference row label for HTML inline formatting tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatting tags'**
+  String get markdownHtmlHtmlFormattingTags;
+
+  /// Reference row label for HTML inline code-related tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline code tags'**
+  String get markdownHtmlHtmlInlineCodeTags;
+
+  /// Reference row label for HTML inline semantic tags that render as text.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic text tags'**
+  String get markdownHtmlHtmlNeutralInlineTags;
+
+  /// Reference row label for sanitized preview behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Sanitized preview'**
+  String get markdownHtmlSanitizedPreview;
+
+  /// Reference row description for sanitized preview behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.'**
+  String get markdownHtmlSanitizedPreviewDescription;
+
+  /// Reference row label for raw source preservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source is preserved'**
+  String get markdownHtmlSourcePreserved;
+
+  /// Reference row description for raw source preservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unedited raw HTML is saved back exactly as source text.'**
+  String get markdownHtmlSourcePreservedDescription;
+
+  /// Reference row label for Markdown inside raw HTML.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown inside HTML'**
+  String get markdownHtmlMarkdownInsideHtml;
+
+  /// Reference row description for Markdown inside raw HTML.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown markers inside raw HTML render as literal text.'**
+  String get markdownHtmlMarkdownInsideHtmlDescription;
+
+  /// Reference row label for blocked HTML content.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked active content'**
+  String get markdownHtmlBlockedContent;
+
+  /// Reference row description for blocked HTML content.
+  ///
+  /// In en, this message translates to:
+  /// **'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.'**
+  String get markdownHtmlBlockedContentDescription;
+
+  /// Reference row label for safe URL policy.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe URLs only'**
+  String get markdownHtmlSafeUrls;
+
+  /// Reference row description for safe URL policy.
+  ///
+  /// In en, this message translates to:
+  /// **'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.'**
+  String get markdownHtmlSafeUrlsDescription;
 }
 
 class _AppLocalizationsDelegate

@@ -1709,4 +1709,113 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown i HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'Bloki Markdown';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'Struktury blokowe obsługiwane w źródle Markdown i podglądzie.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Markdown w tekście';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'Formatowanie w akapitach, elementach list i komórkach tabel.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'Surowe bloki HTML';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'Bezpieczne blokowe tagi HTML renderowane przez widżety podglądu BusyMark.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'Surowe tagi HTML w tekście';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'Bezpieczne tagi HTML w tekście renderowane bez pokazywania dosłownych tagów.';
+
+  @override
+  String get markdownHtmlSafety => 'Reguły bezpieczeństwa';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'Surowy HTML jest analizowany i oczyszczany przed renderowaniem podglądu.';
+
+  @override
+  String get markdownHtmlHeadings => 'Nagłówki';
+
+  @override
+  String get markdownHtmlParagraphs => 'Akapity';
+
+  @override
+  String get markdownHtmlLists => 'Listy';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'Kontenery';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'Bloki tekstowe';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'Figury i obrazy';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'Kod preformatowany';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'Bloki rozwijane';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'Listy opisów';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'Tagi formatowania';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'Tagi kodu w tekście';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'Semantyczne tagi tekstu';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'Oczyszczony podgląd';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'Dozwolony HTML jest konwertowany na bloki podglądu BusyMark, a nie renderowany w przeglądarce.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'Źródło jest zachowane';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'Nieedytowany surowy HTML jest zapisywany dokładnie jako tekst źródłowy.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown wewnątrz HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'Znaczniki Markdown wewnątrz surowego HTML są wyświetlane jako tekst dosłowny.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'Aktywna zawartość blokowana';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'Skrypty, style, ramki, formularze, SVG, MathML, zdarzenia i niebezpieczne atrybuty są blokowane.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'Tylko bezpieczne URL-e';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'Linki dopuszczają http, https, mailto, tel, URL-e względne i fragmenty; niebezpieczne schematy są blokowane.';
 }

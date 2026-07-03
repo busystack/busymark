@@ -1691,4 +1691,113 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown og HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'Markdown-blokker';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'Blokkstrukturer som støttes i Markdown-kilde og forhåndsvisning.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Inline-Markdown';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'Formatering i avsnitt, listeelementer og tabellceller.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'Rå HTML-blokker';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'Trygge HTML-blokktagger rendres med BusyMark-forhåndsvisning.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'Rå HTML-inline-tagger';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'Trygge inline-HTML-tagger rendres uten å vise taggene bokstavelig.';
+
+  @override
+  String get markdownHtmlSafety => 'Sikkerhetsregler';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'Rå HTML analyseres og renses før forhåndsvisning.';
+
+  @override
+  String get markdownHtmlHeadings => 'Overskrifter';
+
+  @override
+  String get markdownHtmlParagraphs => 'Avsnitt';
+
+  @override
+  String get markdownHtmlLists => 'Lister';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'Beholdere';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'Tekstblokker';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'Figurer og bilder';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'Forhåndsformatert kode';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'Utvidbare blokker';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'Beskrivelseslister';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'Formateringstagger';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'Inline-kodetagger';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'Semantiske teksttagger';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'Renset forhåndsvisning';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker, ikke rendret i en nettleser.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'Kilden bevares';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'Uendret rå HTML lagres nøyaktig som kildetekst.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown inni HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'Aktivt innhold blokkert';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'Bare trygge URL-er';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre skjemaer blokkeres.';
 }

@@ -1705,4 +1705,113 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown e HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'Blocchi Markdown';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'Strutture a blocchi supportate nel sorgente Markdown e nell’anteprima.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Markdown in linea';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'Formattazione dentro paragrafi, elementi di elenco e celle di tabella.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'Blocchi HTML grezzo';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'Tag HTML di blocco sicuri renderizzati dai widget di anteprima BusyMark.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'Tag HTML in linea';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'Tag HTML in linea sicuri renderizzati senza mostrare i tag letterali.';
+
+  @override
+  String get markdownHtmlSafety => 'Regole di sicurezza';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'L’HTML grezzo viene analizzato e sanificato prima dell’anteprima.';
+
+  @override
+  String get markdownHtmlHeadings => 'Titoli';
+
+  @override
+  String get markdownHtmlParagraphs => 'Paragrafi';
+
+  @override
+  String get markdownHtmlLists => 'Elenchi';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'Contenitori';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'Blocchi di testo';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'Figure e immagini';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'Codice preformattato';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'Blocchi espandibili';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'Elenchi descrittivi';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'Tag di formattazione';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'Tag di codice in linea';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'Tag di testo semantico';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'Anteprima sanificata';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'L’HTML consentito viene convertito in blocchi di anteprima BusyMark, non renderizzato in un browser.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'Sorgente conservato';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'L’HTML grezzo non modificato viene salvato esattamente come testo sorgente.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown dentro HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'I marcatori Markdown dentro HTML grezzo vengono visualizzati come testo letterale.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'Contenuto attivo bloccato';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'Script, stili, frame, moduli, SVG, MathML, eventi e attributi non sicuri vengono bloccati.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'Solo URL sicuri';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.';
 }

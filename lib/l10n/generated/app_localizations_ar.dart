@@ -1694,4 +1694,113 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown و HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'كتل Markdown';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'بنى الكتل المدعومة في مصدر Markdown والمعاينة.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Markdown داخل السطر';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'تنسيق يمكن استخدامه داخل الفقرات وعناصر القوائم وخلايا الجداول.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'كتل HTML الخام';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'وسوم HTML الكتلية الآمنة التي تعرضها ودجات معاينة BusyMark.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'وسوم HTML داخل السطر';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'وسوم HTML آمنة داخل السطر تعرض بدون إظهار الوسوم حرفيًا.';
+
+  @override
+  String get markdownHtmlSafety => 'قواعد الأمان';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'يتم تحليل HTML الخام وتنظيفه قبل عرضه في المعاينة.';
+
+  @override
+  String get markdownHtmlHeadings => 'العناوين';
+
+  @override
+  String get markdownHtmlParagraphs => 'الفقرات';
+
+  @override
+  String get markdownHtmlLists => 'القوائم';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'الحاويات';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'كتل النص';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'الأشكال والصور';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'كود منسق مسبقًا';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'كتل قابلة للفتح';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'قوائم وصفية';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'وسوم التنسيق';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'وسوم الكود داخل السطر';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'وسوم نصية دلالية';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'معاينة منظفة';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'يتم تحويل HTML المسموح به إلى كتل معاينة BusyMark، وليس عرضه في متصفح.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'يتم حفظ المصدر';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'يتم حفظ HTML الخام غير المعدل كما هو تمامًا كنص مصدر.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown داخل HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'تعرض علامات Markdown داخل HTML الخام كنص حرفي.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'المحتوى النشط محظور';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'يتم حظر السكربتات والأنماط والإطارات والنماذج وSVG وMathML والأحداث والسمات غير الآمنة.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'عناوين URL آمنة فقط';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
 }
