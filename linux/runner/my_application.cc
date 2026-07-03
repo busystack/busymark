@@ -49,12 +49,14 @@ struct _MyApplication {
   GtkWidget* sidebar_menu;
   GtkWidget* settings_item;
   GtkWidget* keyboard_shortcuts_item;
+  GtkWidget* markdown_html_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
   GtkWidget* header_menu_button;
   GtkWidget* header_menu;
   GtkWidget* header_settings_item;
   GtkWidget* header_keyboard_shortcuts_item;
+  GtkWidget* header_markdown_html_item;
   GtkWidget* header_about_item;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
@@ -1090,6 +1092,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* settings = fl_lookup_string_arg(args, "settings");
   const gchar* keyboard_shortcuts =
       fl_lookup_string_arg(args, "keyboardShortcuts");
+  const gchar* markdown_html = fl_lookup_string_arg(args, "markdownAndHtml");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
@@ -1109,10 +1112,12 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_split_item, split);
   set_menu_item_label(self->settings_item, settings);
   set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
+  set_menu_item_label(self->markdown_html_item, markdown_html);
   set_menu_item_label(self->about_item, about);
   set_menu_item_label(self->header_settings_item, settings);
   set_menu_item_label(self->header_keyboard_shortcuts_item,
                       keyboard_shortcuts);
+  set_menu_item_label(self->header_markdown_html_item, markdown_html);
   set_menu_item_label(self->header_about_item, about);
   update_view_mode_label(self);
 }
@@ -1235,11 +1240,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->settings_item = create_menu_item(self, "settings");
   self->keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
+  self->markdown_html_item = create_menu_item(self, "markdownAndHtml");
   self->about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
                      self->keyboard_shortcuts_item, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->markdown_html_item,
+                     FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(sidebar_menu_box);
@@ -1267,11 +1275,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->header_settings_item = create_menu_item(self, "settings");
   self->header_keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
+  self->header_markdown_html_item = create_menu_item(self, "markdownAndHtml");
   self->header_about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(header_menu_box), self->header_settings_item,
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(header_menu_box),
                      self->header_keyboard_shortcuts_item, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(header_menu_box),
+                     self->header_markdown_html_item, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(header_menu_box), self->header_about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(header_menu_box);
@@ -1719,12 +1730,14 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_menu = nullptr;
   self->settings_item = nullptr;
   self->keyboard_shortcuts_item = nullptr;
+  self->markdown_html_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
   self->header_menu_button = nullptr;
   self->header_menu = nullptr;
   self->header_settings_item = nullptr;
   self->header_keyboard_shortcuts_item = nullptr;
+  self->header_markdown_html_item = nullptr;
   self->header_about_item = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
