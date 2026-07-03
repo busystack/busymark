@@ -1789,6 +1789,56 @@ void main() {}
     }
   });
 
+  testWidgets('WYSIWYG editor renders absolute local image paths', (
+    tester,
+  ) async {
+    final workspace = Directory.systemTemp.createTempSync(
+      'busymark_wysiwyg_image_workspace_',
+    );
+    final outside = Directory.systemTemp.createTempSync(
+      'busymark_wysiwyg_image_outside_',
+    );
+    try {
+      final image = File('${outside.path}/example.jpg')
+        ..writeAsBytesSync(
+          base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+          ),
+        );
+      final documentPath = '${workspace.path}/topic.md';
+      final parsed = parser.parse(
+        filePath: documentPath,
+        workspaceRoot: workspace.path,
+        source: '![example.jpg](${image.path})\n',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                workspaceRoot: workspace.path,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.textContaining(image.path), findsNothing);
+    } finally {
+      workspace.deleteSync(recursive: true);
+      outside.deleteSync(recursive: true);
+    }
+  });
+
   testWidgets('WYSIWYG editor renders linked remote image blocks', (
     tester,
   ) async {

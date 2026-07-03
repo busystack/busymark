@@ -19,6 +19,7 @@ void main() {
     expect(source, contains('setModalBarrierVisible'));
     expect(source, contains('setSidebarWidth'));
     expect(source, contains('setSidebarToggleVisible'));
+    expect(source, contains('setTextDirection'));
     expect(source, contains('setCanSave'));
     expect(source, contains('setDocumentControlsVisible'));
     expect(source, contains('setLocalizedLabels'));
@@ -339,7 +340,9 @@ void main() {
     expect(headerbarBlock, contains('"border: none;"'));
     expect(headerbarBlock, contains('"box-shadow: none;"'));
     expect(headerbarBlock, contains('"border-top-left-radius: %dpx;"'));
+    expect(headerbarBlock, contains('"border-top-right-radius: %dpx;"'));
     expect(headerbarBlock, contains('"padding-left: 0;"'));
+    expect(headerbarBlock, contains('"padding-right: 0;"'));
     expect(
       native,
       contains(
@@ -351,12 +354,44 @@ void main() {
     expect(workspace, isNot(contains('Border(right:')));
   });
 
-  test('native headerbar restores the top-left corner without sidebar', () {
+  test('native headerbar mirrors sidebar surface for text direction', () {
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
+    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(service, contains('Future<void> setTextDirection'));
+    expect(service, contains("'setTextDirection'"));
+    expect(app, contains('Directionality.maybeOf(context)'));
+    expect(app, contains('service.setTextDirection(textDirection)'));
+    expect(native, contains('gboolean text_direction_rtl;'));
+    expect(native, contains('static void update_titlebar_direction'));
+    expect(native, contains('gtk_box_reorder_child'));
+    expect(native, contains('static void set_text_direction'));
+    expect(native, contains('strcmp(method, "setTextDirection")'));
+    expect(native, contains('g_strcmp0(value, "rtl") == 0'));
+    expect(native, contains('headerbar_right_radius'));
+    expect(native, contains('sidebar_right_radius'));
+  });
+
+  test('native headerbar restores outer corners without sidebar', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(native, contains('const gint headerbar_left_radius'));
-    expect(native, contains('self->sidebar_visible ? 0 : kHeaderWindowRadius'));
+    expect(native, contains('const gint headerbar_right_radius'));
+    expect(native, contains('const gint sidebar_left_radius'));
+    expect(native, contains('const gint sidebar_right_radius'));
+    expect(
+      native,
+      contains('self->sidebar_visible && !self->text_direction_rtl'),
+    );
+    expect(
+      native,
+      contains('self->sidebar_visible && self->text_direction_rtl'),
+    );
     expect(native, contains('headerbar_left_radius'));
+    expect(native, contains('headerbar_right_radius'));
     expect(native, contains('sidebar_background'));
     expect(native, contains('update_sidebar_header_geometry(self);'));
     expect(native, contains('refresh_header_bar_css(self);'));

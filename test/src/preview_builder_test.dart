@@ -163,6 +163,35 @@ void main() {
     );
   });
 
+  test('preview preserves nested list children', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '* Элемент списка А\n'
+          '  * Вложенный элемент (нужно сделать 2 или 4 пробела)\n'
+          '  * Еще один вложенный элемент\n'
+          '  * **Ссылка:** [Яндекс](https://yandex.ru)\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final parent = preview.blocks.singleWhere(
+      (block) => block.kind == PreviewBlockKind.list,
+    );
+
+    expect(parent.text, 'Элемент списка А');
+    expect(parent.children.map((block) => block.text), [
+      'Вложенный элемент (нужно сделать 2 или 4 пробела)',
+      'Еще один вложенный элемент',
+      'Ссылка: Яндекс',
+    ]);
+    expect(
+      parent.children.last.inlines
+          .where((inline) => inline.kind == PreviewInlineKind.link)
+          .single
+          .destination,
+      'https://yandex.ru',
+    );
+  });
+
   test('preview preserves inline Markdown semantics', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

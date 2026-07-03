@@ -219,6 +219,34 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test(
+    'save as preserves source edits for an untitled Markdown file',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-source-',
+      );
+      final file = File('${directory.path}/created.md');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+      const editedText = '# Created\n\nDraft text.';
+
+      await controller.createMarkdownFile();
+      controller.updateActiveText(editedText, sourceFilePath: '');
+
+      expect(controller.state.activeText, editedText);
+      expect(await controller.saveActiveAs(file.path), isTrue);
+      expect(await file.readAsString(), editedText);
+      expect(controller.state.activeText, editedText);
+      expect(controller.state.workspace?.activeFilePath, file.path);
+      expect(controller.state.isDirty, isFalse);
+
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+  );
+
   test('switching active files reparses outline for the new file', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;

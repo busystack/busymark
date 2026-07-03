@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
@@ -135,6 +136,35 @@ void main() {
     expect(codes, contains('markdown.raw-html.unsafe'));
   });
 
+  test('resolves home-relative local image references', () {
+    final fakeHome = Directory.systemTemp.createTempSync(
+      'busymark_home_image_',
+    );
+    try {
+      final downloads = Directory(p.join(fakeHome.path, 'Downloads'))
+        ..createSync();
+      File(p.join(downloads.path, 'example.jpg')).writeAsBytesSync([0]);
+      debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      addTearDown(() {
+        debugLocalImageHomeDirectoryOverride = null;
+      });
+
+      final parsed = parser.parse(
+        filePath: 'Untitled.md',
+        source: '![Пример изображения](~/Downloads/example.jpg)\n',
+      );
+
+      expect(parsed.images.single.destination, '~/Downloads/example.jpg');
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        isNot(contains('markdown.image.missing-file')),
+      );
+    } finally {
+      debugLocalImageHomeDirectoryOverride = null;
+      fakeHome.deleteSync(recursive: true);
+    }
+  });
+
   test(
     'derives diagnostic links and images from Markdown AST semantics',
     () async {
@@ -220,7 +250,7 @@ void main() {
   );
 
   test(
-    'local reference diagnostics reject parent, absolute, and symlink escapes',
+    'local reference diagnostics allow absolute images but reject other escapes',
     () async {
       final workspace = await Directory.systemTemp.createTemp(
         'busymark-reference-root-',
@@ -271,10 +301,10 @@ void main() {
         missingImages,
         containsAll([
           '../${p.basename(outside.path)}/outside.png',
-          outsideImage.path,
           'linked/outside.png',
         ]),
       );
+      expect(missingImages, isNot(contains(outsideImage.path)));
     },
     skip: Platform.isWindows
         ? 'POSIX symlink behavior is required for this coverage.'

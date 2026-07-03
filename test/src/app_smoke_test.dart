@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fr.dart';
@@ -12,6 +13,7 @@ import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/editor/editor_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
@@ -853,6 +855,66 @@ void main() {
     );
   });
 
+  testWidgets('workspace sidebar is on the right in Arabic', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final ar = AppLocalizationsAr();
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_rtl_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            localeTag: 'ar',
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null &&
+          find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    await tester.pumpAndSettle();
+
+    final sidebarRect = tester.getRect(find.byTooltip(ar.sidebarViewMenu));
+    final sourceRect = tester.getRect(find.byType(TextField).last);
+
+    expect(
+      Directionality.of(tester.element(find.byType(Scaffold))),
+      TextDirection.rtl,
+    );
+    expect(sidebarRect.left, greaterThan(sourceRect.right));
+  });
+
   testWidgets('source undo cannot restore saved text from previous tab', (
     tester,
   ) async {
@@ -1071,6 +1133,84 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('Tab and Shift+Tab update indentation in source view', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_source_tab_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('- Parent\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, '- Parent\n- Child\n');
+    final controller = tester.widget<TextField>(sourceField).controller!;
+    controller.selection = const TextSelection.collapsed(offset: 9);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '- Parent\n\t- Child\n',
+    );
+    expect(controller.text, '- Parent\n\t- Child\n');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '- Parent\n- Child\n',
+    );
+    expect(controller.text, '- Parent\n- Child\n');
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+  });
+
   testWidgets('editor undo cannot restore saved text from previous tab', (
     tester,
   ) async {
@@ -1170,6 +1310,53 @@ void main() {
     );
     expect(service.savedPath, first.path);
     expect(service.savedText, '# Edited Introduction\n');
+  });
+
+  testWidgets('Tab inserts a tab character in editor view', (tester) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    final service = _SearchWorkspaceService('- Item\n');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/editor-tab.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorField = find.byType(TextField).first;
+    await tester.tap(editorField);
+    final controller = tester.widget<TextField>(editorField).controller!;
+    controller.selection = const TextSelection.collapsed(offset: 0);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+
+    expect(controller.text, '\tItem');
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '- \tItem\n',
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
   });
 
   testWidgets('window close still warns when active changes are unsaved', (
@@ -1419,7 +1606,7 @@ void main() {
   );
 
   testWidgets(
-    'shared Markdown image renderer rejects absolute paths outside workspace',
+    'shared Markdown image renderer resolves absolute paths outside workspace',
     (tester) async {
       final workspace = Directory.systemTemp.createTempSync(
         'busymark_preview_image_workspace_',
@@ -1455,14 +1642,58 @@ void main() {
         );
         await tester.pump();
 
-        expect(find.byType(Image), findsNothing);
-        expect(find.textContaining(image.path), findsOneWidget);
+        expect(find.byType(Image), findsOneWidget);
+        expect(find.textContaining(image.path), findsNothing);
       } finally {
         workspace.deleteSync(recursive: true);
         outside.deleteSync(recursive: true);
       }
     },
   );
+
+  testWidgets('shared Markdown image renderer resolves home-relative paths', (
+    tester,
+  ) async {
+    final fakeHome = Directory.systemTemp.createTempSync(
+      'busymark_preview_image_home_',
+    );
+    try {
+      final downloads = Directory('${fakeHome.path}/Downloads')..createSync();
+      File('${downloads.path}/example.jpg').writeAsBytesSync(
+        base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+        ),
+      );
+      debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      addTearDown(() {
+        debugLocalImageHomeDirectoryOverride = null;
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(
+            body: MarkdownImageView(
+              source: '~/Downloads/example.jpg',
+              alt: 'Example',
+              activeFilePath: 'Untitled.md',
+              workspaceRoot: null,
+              writersideRoot: null,
+              imagesDir: 'images',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.textContaining('~/Downloads/example.jpg'), findsNothing);
+    } finally {
+      debugLocalImageHomeDirectoryOverride = null;
+      fakeHome.deleteSync(recursive: true);
+    }
+  });
 
   testWidgets('shared Markdown image renderer resolves local SVG images', (
     tester,
@@ -1923,6 +2154,101 @@ void main() {
     expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
   });
 
+  testWidgets('preview adds extra vertical space after a list', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '# Title\n\n'
+      '- First item\n'
+      '- Second item\n'
+      '\n'
+      'After list paragraph.\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/list-spacing.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final first = _rightmostTextRect(tester, 'First item');
+    final second = _rightmostTextRect(tester, 'Second item');
+    final after = _rightmostTextRect(tester, 'After list paragraph.');
+    final itemGap = second.top - first.bottom;
+    final afterListGap = after.top - second.bottom;
+
+    expect(afterListGap, greaterThan(itemGap + BusyMarkSpacing.xs));
+  });
+
+  testWidgets('preview renders nested list children', (tester) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '* Элемент списка А\n'
+      '  * Вложенный элемент (нужно сделать 2 или 4 пробела)\n'
+      '  * Еще один вложенный элемент\n'
+      '  * **Ссылка:** [Яндекс](https://yandex.ru)\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/nested-list.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(find.textContaining('Элемент списка А'), findsOneWidget);
+    expect(
+      find.textContaining('Вложенный элемент (нужно сделать 2 или 4 пробела)'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Еще один вложенный элемент'), findsOneWidget);
+    expect(find.textContaining('Ссылка:'), findsOneWidget);
+    expect(find.textContaining('Яндекс'), findsOneWidget);
+  });
+
   testWidgets('preview search result click lands on code block line', (
     tester,
   ) async {
@@ -2011,6 +2337,88 @@ void main() {
     expect(service.saveCount, 1);
     expect(service.savedPath, 'test/fixtures/markdown/basic.md');
     expect(service.savedText, '# Basic Markdown\n');
+  });
+
+  testWidgets('Ctrl+S saves source edits from an untitled Markdown document', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_untitled_save_');
+    final saveFile = File('${temp.path}/created.md');
+    const editedText = '# Created\n\nDraft text.';
+    const fileSelectorChannel = MethodChannel(
+      'plugins.flutter.io/file_selector',
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      fileSelectorChannel,
+      (call) async {
+        expect(call.method, 'getSavePath');
+        final args = call.arguments as Map<Object?, Object?>;
+        expect(args['suggestedName'], l10n.untitledMarkdownFileName);
+        return saveFile.path;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        null,
+      );
+      if (temp.existsSync()) {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createMarkdownFile));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 10; i += 1) {
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, editedText);
+    await tester.pump();
+
+    expect(container.read(workspaceControllerProvider).activeText, editedText);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, saveFile.path);
+    expect(service.savedText, editedText);
+    expect(container.read(workspaceControllerProvider).activeText, editedText);
+    expect(
+      tester.widget<TextField>(find.byType(TextField).last).controller?.text,
+      editedText,
+    );
   });
 }
 
