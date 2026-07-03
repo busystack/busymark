@@ -191,6 +191,8 @@ class SettingsScreen extends ConsumerWidget {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case HeaderBarAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:

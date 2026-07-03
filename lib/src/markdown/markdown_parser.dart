@@ -150,6 +150,16 @@ class MarkdownParser {
     String? previousSetextCandidateLine;
     int? previousSetextCandidateOffset;
     final lines = source.split(RegExp('(?<=\n)'));
+    final scannedLines = <_ScannedSourceLine>[];
+    var scannedOffset = 0;
+    for (final rawLine in lines) {
+      scannedLines.add(
+        _ScannedSourceLine(rawLine: rawLine, offset: scannedOffset),
+      );
+      scannedOffset += rawLine.length;
+    }
+    var lineIndex = 0;
+    var rawHtmlBlockEndOffset = 0;
 
     for (final rawLine in lines) {
       final line = rawLine.endsWith('\n')
@@ -187,17 +197,29 @@ class MarkdownParser {
           fenceLanguage = null;
         }
         offset += rawLine.length;
+        lineIndex += 1;
         continue;
       }
       if (inFence) {
         fenceContent.write(rawLine);
         offset += rawLine.length;
+        lineIndex += 1;
         continue;
       }
 
+      if (offset >= rawHtmlBlockEndOffset) {
+        final htmlEndIndex = _rawHtmlContainerSourceEndIndex(
+          scannedLines,
+          lineIndex,
+        );
+        rawHtmlBlockEndOffset = htmlEndIndex == null
+            ? 0
+            : scannedLines[htmlEndIndex - 1].endOffset;
+      }
+      final inRawHtmlBlock = offset < rawHtmlBlockEndOffset;
       final heading = RegExp(
         r'^(#{1,6})\s+(.+?)\s*(\{[^}]+\})?\s*$',
-      ).firstMatch(trimmed);
+      ).firstMatch(inRawHtmlBlock ? '' : trimmed);
       if (heading != null) {
         addScannedHeading(
           level: heading.group(1)!.length,
@@ -209,7 +231,8 @@ class MarkdownParser {
         previousSetextCandidateLine = null;
         previousSetextCandidateOffset = null;
       } else if (_setextUnderlineLevel(trimmed) case final level?
-          when previousSetextCandidateLine != null &&
+          when !inRawHtmlBlock &&
+              previousSetextCandidateLine != null &&
               previousSetextCandidateOffset != null) {
         addScannedHeading(
           level: level,
@@ -244,7 +267,10 @@ class MarkdownParser {
         diagnostics: diagnostics,
       );
 
-      if (_isSetextHeadingCandidate(trimmed)) {
+      if (inRawHtmlBlock) {
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
+      } else if (_isSetextHeadingCandidate(trimmed)) {
         previousSetextCandidateLine = line;
         previousSetextCandidateOffset = offset;
       } else if (trimmed.isEmpty) {
@@ -256,6 +282,7 @@ class MarkdownParser {
       }
 
       offset += rawLine.length;
+      lineIndex += 1;
     }
 
     if (mode == MarkdownMode.writersideMarkdown && title == null) {
@@ -534,6 +561,13 @@ class MarkdownParser {
         continue;
       }
 
+      final htmlEndIndex = _rawHtmlContainerSourceEndIndex(indexedLines, index);
+      if (htmlEndIndex != null) {
+        addChunk(startIndex, htmlEndIndex);
+        index = htmlEndIndex;
+        continue;
+      }
+
       if (_isAtxHeading(indexedLines[index].line) ||
           _isThematicBreak(indexedLines[index].trimmed)) {
         index += 1;
@@ -607,6 +641,69 @@ class MarkdownParser {
   int? _listItemIndent(String line) {
     final match = RegExp(r'^(\s*)([-+*]|\d+[.)])\s+').firstMatch(line);
     return match?.group(1)!.length;
+  }
+
+  int? _rawHtmlContainerSourceEndIndex(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    final tag = _rawHtmlContainerOpeningTag(lines[startIndex].line);
+    if (tag == null) {
+      return null;
+    }
+
+    var balance = 0;
+    for (var index = startIndex; index < lines.length; index += 1) {
+      balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if ((balance <= 0 && index > startIndex) || balance == 0) {
+        return index + 1;
+      }
+    }
+    return null;
+  }
+
+  String? _rawHtmlContainerOpeningTag(String line) {
+    final match = RegExp(
+      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).firstMatch(line);
+    if (match == null) {
+      return null;
+    }
+    final tag = match.group(1)!.toLowerCase();
+    if (voidHtmlTags.contains(tag)) {
+      return null;
+    }
+    if (!isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
+      return null;
+    }
+    return tag;
+  }
+
+  int _rawHtmlTagBalance(String line, String tag) {
+    final pattern = RegExp(
+      '</?\\s*${RegExp.escape(tag)}(?=\\s|>|/)',
+      caseSensitive: false,
+    );
+    var balance = 0;
+    for (final match in pattern.allMatches(line)) {
+      if (line.startsWith('</', match.start)) {
+        balance -= 1;
+        continue;
+      }
+      if (_rawHtmlTagLooksSelfClosing(line, match.start)) {
+        continue;
+      }
+      balance += 1;
+    }
+    return balance;
+  }
+
+  bool _rawHtmlTagLooksSelfClosing(String line, int start) {
+    final end = line.indexOf('>', start);
+    if (end == -1) {
+      return false;
+    }
+    return line.substring(start, end + 1).trimRight().endsWith('/>');
   }
 
   int _frontMatterEndOffset(String source) {

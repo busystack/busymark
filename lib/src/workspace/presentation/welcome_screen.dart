@@ -21,7 +21,12 @@ import '../workspace_controller.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 
-enum _WelcomeMenuAction { settings, keyboardShortcuts, aboutBusyMark }
+enum _WelcomeMenuAction {
+  settings,
+  keyboardShortcuts,
+  markdownAndHtml,
+  aboutBusyMark,
+}
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -93,6 +98,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       value: _WelcomeMenuAction.keyboardShortcuts,
                       label: l10n.keyboardShortcuts,
                       icon: BusyMarkGlyphs.keyboard,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _WelcomeMenuAction.markdownAndHtml,
+                      label: l10n.markdownAndHtml,
+                      icon: BusyMarkGlyphs.markdownFile,
                     ),
                     BusyMarkPopupMenuItem(
                       value: _WelcomeMenuAction.aboutBusyMark,
@@ -208,6 +218,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case HeaderBarAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case HeaderBarAction.back:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
@@ -231,6 +243,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go('/settings');
       case _WelcomeMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case _WelcomeMenuAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case _WelcomeMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }

@@ -317,12 +317,12 @@ bool _isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
     return true;
   }
   final parsed = Uri.tryParse(trimmed);
-  if (parsed == null || parsed.hasAuthority) {
+  if (parsed == null) {
     return false;
   }
   final scheme = parsed.scheme.toLowerCase();
   if (scheme.isEmpty) {
-    return _isSafeRelativeHtmlPath(parsed.path);
+    return !parsed.hasAuthority && _isSafeRelativeHtmlPath(parsed.path);
   }
   if (attribute == 'href') {
     return scheme == 'http' ||

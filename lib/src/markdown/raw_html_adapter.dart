@@ -140,9 +140,7 @@ class RawHtmlAdapter {
     for (final node in nodes) {
       if (node is html.Text) {
         if (node.data.trim().isNotEmpty) {
-          inlineBuffer.add(
-            BusyInline(kind: BusyInlineKind.text, text: node.data),
-          );
+          _appendInlineText(inlineBuffer, _collapseHtmlWhitespace(node.data));
         }
         continue;
       }
@@ -150,6 +148,11 @@ class RawHtmlAdapter {
         continue;
       }
       final tag = node.localName?.toLowerCase() ?? '';
+      if (tag == 'img') {
+        flushInlineBuffer();
+        blocks.addAll(_blocksFromElement(node, nextId));
+        continue;
+      }
       if (isSafeInlineHtmlTag(tag) && !isSafeBlockHtmlTag(tag)) {
         inlineBuffer.addAll(_inlineFromElement(node));
         continue;
@@ -196,8 +199,8 @@ class RawHtmlAdapter {
       'footer' ||
       'main' ||
       'nav' ||
-      'details' ||
-      'figure' => _blocksFromNodes(children, nextId),
+      'details' => _blocksFromNodes(children, nextId),
+      'figure' => _figureBlocksFromElement(attributes, children, nextId),
       'p' || 'address' || 'figcaption' || 'summary' || 'caption' => [
         BusyBlock(
           id: nextId(),
@@ -262,6 +265,29 @@ class RawHtmlAdapter {
     };
   }
 
+  List<BusyBlock> _figureBlocksFromElement(
+    Map<String, String> attributes,
+    Iterable<html.Node> children,
+    String Function() nextId,
+  ) {
+    final childBlocks = _blocksFromNodes(children, nextId);
+    if (childBlocks.isEmpty) {
+      return const [];
+    }
+    return [
+      BusyBlock(
+        id: nextId(),
+        kind: BusyBlockKind.htmlBlock,
+        children: childBlocks,
+        attributes: {
+          'sourceFormat': 'html',
+          'htmlTag': 'figure',
+          ...attributes,
+        },
+      ),
+    ];
+  }
+
   BusyBlock _codeBlockFromPre(
     html.Element element,
     Map<String, String> attributes,
@@ -324,7 +350,7 @@ class RawHtmlAdapter {
     for (final child in element.nodes) {
       if (child is html.Text) {
         if (child.data.trim().isNotEmpty) {
-          inlines.add(BusyInline(kind: BusyInlineKind.text, text: child.data));
+          _appendInlineText(inlines, _collapseHtmlWhitespace(child.data));
         }
         continue;
       }
@@ -484,7 +510,11 @@ class RawHtmlAdapter {
       if (node.data.isEmpty) {
         return const [];
       }
-      return [BusyInline(kind: BusyInlineKind.text, text: node.data)];
+      final text = _collapseHtmlWhitespace(node.data);
+      if (text.trim().isEmpty) {
+        return const [];
+      }
+      return [BusyInline(kind: BusyInlineKind.text, text: text)];
     }
     if (node is html.Element) {
       return _inlineFromElement(node);
@@ -584,6 +614,24 @@ class RawHtmlAdapter {
         if (inline.kind != BusyInlineKind.text || inline.text.isNotEmpty)
           inline,
     ];
+  }
+
+  void _appendInlineText(List<BusyInline> inlines, String text) {
+    if (text.isEmpty) {
+      return;
+    }
+    if (inlines.lastOrNull case final previous?
+        when previous.kind == BusyInlineKind.text) {
+      inlines[inlines.length - 1] = previous.copyWith(
+        text: previous.text + text,
+      );
+      return;
+    }
+    inlines.add(BusyInline(kind: BusyInlineKind.text, text: text));
+  }
+
+  String _collapseHtmlWhitespace(String value) {
+    return value.replaceAll(RegExp(r'\s+'), ' ');
   }
 
   String _plainTextFromNodes(Iterable<html.Node> nodes) {

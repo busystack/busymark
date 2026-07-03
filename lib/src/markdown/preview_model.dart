@@ -136,6 +136,7 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.paragraph,
         text: _plainText(block.inlines),
         inlines: _inlines(block.inlines),
+        attributes: block.attributes,
       ),
       BusyBlockKind.codeBlock => PreviewBlock(
         kind: PreviewBlockKind.code,

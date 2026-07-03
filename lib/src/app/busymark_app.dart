@@ -479,6 +479,7 @@ class BusyMarkApp extends ConsumerWidget {
       save: l10n.save,
       settings: l10n.settings,
       keyboardShortcuts: l10n.keyboardShortcuts,
+      markdownAndHtml: l10n.markdownAndHtml,
       aboutBusyMark: l10n.aboutBusyMark,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -22,14 +22,6 @@ class MarkdownAstAdapter {
     final markdownSource = frontMatter == null
         ? source
         : source.substring(frontMatter.endOffset).trimLeft();
-    final packageSource = _protectProseHyphenLines(
-      _protectImageDestinationsWithSpaces(markdownSource),
-    );
-    final document = md.Document(
-      extensionSet: md.ExtensionSet.gitHubWeb,
-      encodeHtml: false,
-    );
-    final nodes = document.parse(packageSource);
     var blockIndex = 0;
     final blocks = <BusyBlock>[
       if (frontMatter != null)
@@ -40,8 +32,11 @@ class MarkdownAstAdapter {
           preserveRaw: true,
           attributes: frontMatter.values,
         ),
-      for (final node in nodes)
-        ..._blocksFromNode(node, nextId: () => 'b${blockIndex++}', mode: mode),
+      ..._blocksFromMarkdownSource(
+        markdownSource,
+        nextId: () => 'b${blockIndex++}',
+        mode: mode,
+      ),
     ];
     return BusyDocument(
       filePath: filePath,
@@ -52,6 +47,56 @@ class MarkdownAstAdapter {
       rawFrontMatter: frontMatter?.raw,
       source: source,
     );
+  }
+
+  List<BusyBlock> _blocksFromMarkdownSource(
+    String source, {
+    required String Function() nextId,
+    required MarkdownMode mode,
+  }) {
+    final blocks = <BusyBlock>[];
+    for (final segment in _rawHtmlAwareSegments(source)) {
+      if (segment.rawHtml) {
+        final html = _rawHtmlAdapter.parseRawHtmlBlock(segment.text, nextId);
+        if (html != null) {
+          blocks.add(
+            BusyBlock(
+              id: nextId(),
+              kind: BusyBlockKind.htmlBlock,
+              children: html.safe ? html.blocks : const [],
+              rawSource: segment.text.trimRight(),
+              preserveRaw: true,
+              attributes: const {'sourceFormat': 'html'},
+            ),
+          );
+          continue;
+        }
+      }
+      blocks.addAll(_blocksFromMarkdownSegment(segment.text, nextId, mode));
+    }
+    return blocks;
+  }
+
+  List<BusyBlock> _blocksFromMarkdownSegment(
+    String source,
+    String Function() nextId,
+    MarkdownMode mode,
+  ) {
+    if (source.trim().isEmpty) {
+      return const [];
+    }
+    final packageSource = _protectProseHyphenLines(
+      _protectImageDestinationsWithSpaces(source),
+    );
+    final document = md.Document(
+      extensionSet: md.ExtensionSet.gitHubWeb,
+      encodeHtml: false,
+    );
+    final nodes = document.parse(packageSource);
+    return [
+      for (final node in nodes)
+        ..._blocksFromNode(node, nextId: nextId, mode: mode),
+    ];
   }
 
   List<BusyBlock> _applyImageAttributes(
@@ -838,6 +883,173 @@ class MarkdownAstAdapter {
     }
     return lines.join('\n');
   }
+
+  List<_MarkdownSourceSegment> _rawHtmlAwareSegments(String source) {
+    final lines = _markdownSourceLines(source);
+    final segments = <_MarkdownSourceSegment>[];
+    var segmentStart = 0;
+    var index = 0;
+    String? fence;
+
+    while (index < lines.length) {
+      final line = lines[index].line;
+      if (fence != null) {
+        if (_isClosingMarkdownFence(line, fence)) {
+          fence = null;
+        }
+        index += 1;
+        continue;
+      }
+
+      fence = _markdownFenceMarker(line);
+      if (fence != null) {
+        index += 1;
+        continue;
+      }
+
+      final htmlEndIndex = _rawHtmlContainerEndIndex(lines, index);
+      if (htmlEndIndex == null) {
+        index += 1;
+        continue;
+      }
+
+      final startOffset = lines[index].offset;
+      final endOffset = lines[htmlEndIndex - 1].endOffset;
+      if (segmentStart < startOffset) {
+        segments.add(
+          _MarkdownSourceSegment(
+            text: source.substring(segmentStart, startOffset),
+            rawHtml: false,
+          ),
+        );
+      }
+      segments.add(
+        _MarkdownSourceSegment(
+          text: source.substring(startOffset, endOffset),
+          rawHtml: true,
+        ),
+      );
+      segmentStart = endOffset;
+      index = htmlEndIndex;
+    }
+
+    if (segmentStart < source.length) {
+      segments.add(
+        _MarkdownSourceSegment(
+          text: source.substring(segmentStart),
+          rawHtml: false,
+        ),
+      );
+    }
+    return segments;
+  }
+
+  List<_MarkdownSourceLine> _markdownSourceLines(String source) {
+    final lines = <_MarkdownSourceLine>[];
+    var offset = 0;
+    for (final rawLine in source.split(RegExp('(?<=\n)'))) {
+      lines.add(_MarkdownSourceLine(rawLine: rawLine, offset: offset));
+      offset += rawLine.length;
+    }
+    return lines;
+  }
+
+  int? _rawHtmlContainerEndIndex(
+    List<_MarkdownSourceLine> lines,
+    int startIndex,
+  ) {
+    final tag = _rawHtmlContainerOpeningTag(lines[startIndex].line);
+    if (tag == null) {
+      return null;
+    }
+
+    var balance = 0;
+    for (var index = startIndex; index < lines.length; index += 1) {
+      balance += _rawHtmlTagBalance(lines[index].line, tag);
+      if (balance <= 0 && index > startIndex || balance == 0) {
+        return index + 1;
+      }
+    }
+    return null;
+  }
+
+  String? _rawHtmlContainerOpeningTag(String line) {
+    final match = RegExp(
+      r'^\s{0,3}<([A-Za-z][A-Za-z0-9_-]*)\b',
+    ).firstMatch(line);
+    if (match == null) {
+      return null;
+    }
+    final tag = match.group(1)!.toLowerCase();
+    if (voidHtmlTags.contains(tag)) {
+      return null;
+    }
+    if (!isSafeBlockHtmlTag(tag) && !isUnsafeHtmlTag(tag)) {
+      return null;
+    }
+    return tag;
+  }
+
+  int _rawHtmlTagBalance(String line, String tag) {
+    final pattern = RegExp(
+      '</?\\s*${RegExp.escape(tag)}(?=\\s|>|/)',
+      caseSensitive: false,
+    );
+    var balance = 0;
+    for (final match in pattern.allMatches(line)) {
+      final closing = line.startsWith('</', match.start);
+      if (closing) {
+        balance -= 1;
+        continue;
+      }
+      if (_rawHtmlTagLooksSelfClosing(line, match.start)) {
+        continue;
+      }
+      balance += 1;
+    }
+    return balance;
+  }
+
+  bool _rawHtmlTagLooksSelfClosing(String line, int start) {
+    final end = line.indexOf('>', start);
+    if (end == -1) {
+      return false;
+    }
+    return line.substring(start, end + 1).trimRight().endsWith('/>');
+  }
+
+  String? _markdownFenceMarker(String line) {
+    final match = RegExp(r'^\s*(`{3,}|~{3,})').firstMatch(line);
+    return match?.group(1);
+  }
+
+  bool _isClosingMarkdownFence(String line, String opener) {
+    final marker = _markdownFenceMarker(line);
+    if (marker == null || marker.codeUnitAt(0) != opener.codeUnitAt(0)) {
+      return false;
+    }
+    return marker.length >= opener.length;
+  }
+}
+
+class _MarkdownSourceSegment {
+  const _MarkdownSourceSegment({required this.text, required this.rawHtml});
+
+  final String text;
+  final bool rawHtml;
+}
+
+class _MarkdownSourceLine {
+  const _MarkdownSourceLine({required this.rawLine, required this.offset});
+
+  final String rawLine;
+  final int offset;
+
+  int get endOffset => offset + rawLine.length;
+
+  String get line => rawLine.endsWith('\n')
+      ? rawLine.substring(0, rawLine.length - 1)
+      : rawLine;
 }
 
 class _FrontMatter {

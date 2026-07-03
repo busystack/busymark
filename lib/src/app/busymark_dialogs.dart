@@ -15,6 +15,15 @@ const _busyMarkWebsiteUrl = 'https://busystack.org';
 const _busyMarkIssueUrl = 'https://github.com/busystack/busymark/issues';
 const _apacheLicenseUrl = 'https://www.apache.org/licenses/LICENSE-2.0';
 const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
+const _supportedRawHtmlBlockTags =
+    'article, aside, div, section, header, footer, main, nav, h1-h6, p, '
+    'blockquote, address, hr, ul, ol, li, dl, dt, dd, table, caption, '
+    'colgroup, col, thead, tbody, tfoot, tr, th, td, pre, details, summary, '
+    'figure, figcaption';
+const _supportedRawHtmlInlineTags =
+    'span, strong, em, b, i, u, s, small, mark, sub, sup, code, kbd, samp, '
+    'var, abbr, cite, q, dfn, time, data, bdi, bdo, wbr, ins, del, ruby, '
+    'rt, rp, a, img, br';
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
 final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
@@ -529,6 +538,258 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
       ),
     ),
   );
+}
+
+void showBusyMarkMarkdownHtmlDialog(BuildContext context) {
+  final headerBar = LinuxHeaderBarService.instance;
+  unawaited(
+    showBusyMarkModalDialog<void>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (context) => _BusyMarkInfoDialog(
+        title: context.l10n.markdownAndHtml,
+        maxWidth: BusyMarkSizes.dialogWide,
+        children: [
+          BusyMarkGroupedList(
+            title: context.l10n.markdownHtmlMarkdownBlocks,
+            description: context.l10n.markdownHtmlMarkdownBlocksDescription,
+            filled: true,
+            children: [
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHeadings,
+                syntax: '#, ##, ###',
+                icon: BusyMarkGlyphs.heading,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlParagraphs,
+                syntax: 'text',
+                icon: BusyMarkGlyphs.paragraph,
+              ),
+              _ReferenceRow(
+                title: context.l10n.blockquote,
+                syntax: '> quote',
+                icon: BusyMarkGlyphs.blockquote,
+              ),
+              _ReferenceRow(
+                title: context.l10n.codeBlock,
+                syntax: '```',
+                icon: BusyMarkGlyphs.code,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlLists,
+                syntax: '-, *, 1.',
+                icon: BusyMarkGlyphs.unorderedList,
+              ),
+              _ReferenceRow(
+                title: context.l10n.checklist,
+                syntax: '- [ ]',
+                icon: BusyMarkGlyphs.checklist,
+              ),
+              _ReferenceRow(
+                title: context.l10n.table,
+                syntax: '| --- |',
+                icon: BusyMarkGlyphs.table,
+              ),
+              _ReferenceRow(
+                title: context.l10n.image,
+                syntax: '![alt](src)',
+                icon: BusyMarkGlyphs.image,
+              ),
+              _ReferenceRow(
+                title: context.l10n.thematicBreak,
+                syntax: '---',
+                icon: BusyMarkGlyphs.thematicBreak,
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.markdownHtmlInlineFormatting,
+            description: context.l10n.markdownHtmlInlineFormattingDescription,
+            filled: true,
+            children: [
+              _ReferenceRow(
+                title: context.l10n.bold,
+                syntax: '**text**',
+                icon: BusyMarkGlyphs.bold,
+              ),
+              _ReferenceRow(
+                title: context.l10n.italic,
+                syntax: '*text*',
+                icon: BusyMarkGlyphs.italic,
+              ),
+              _ReferenceRow(
+                title: context.l10n.underline,
+                syntax: '<u>text</u>',
+                icon: BusyMarkGlyphs.underline,
+              ),
+              _ReferenceRow(
+                title: context.l10n.strikethrough,
+                syntax: '~~text~~',
+                icon: BusyMarkGlyphs.strikethrough,
+              ),
+              _ReferenceRow(
+                title: context.l10n.inlineCode,
+                syntax: '`code`',
+                icon: BusyMarkGlyphs.code,
+              ),
+              _ReferenceRow(
+                title: context.l10n.link,
+                syntax: '[text](url)',
+                icon: BusyMarkGlyphs.link,
+              ),
+              _ReferenceRow(
+                title: context.l10n.hardLineBreak,
+                syntax: '<br>',
+                icon: BusyMarkGlyphs.hardBreak,
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.markdownHtmlRawHtmlBlocks,
+            description:
+                '${context.l10n.markdownHtmlRawHtmlBlocksDescription}\n'
+                '$_supportedRawHtmlBlockTags.',
+            filled: true,
+            children: [
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlContainers,
+                syntax: 'div, section',
+                icon: BusyMarkGlyphs.insertObject,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlTextBlocks,
+                syntax: 'p, h1-h6',
+                icon: BusyMarkGlyphs.text,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlLists,
+                syntax: 'ul, ol, li',
+                icon: BusyMarkGlyphs.orderedList,
+              ),
+              _ReferenceRow(
+                title: context.l10n.table,
+                syntax: 'table, tr, td',
+                icon: BusyMarkGlyphs.table,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlFigures,
+                syntax: 'figure, img',
+                icon: BusyMarkGlyphs.image,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlPreformatted,
+                syntax: 'pre, code',
+                icon: BusyMarkGlyphs.code,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlDisclosure,
+                syntax: 'details',
+                icon: BusyMarkGlyphs.info,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlDescriptionLists,
+                syntax: 'dl, dt, dd',
+                icon: BusyMarkGlyphs.unorderedList,
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.markdownHtmlRawHtmlInline,
+            description:
+                '${context.l10n.markdownHtmlRawHtmlInlineDescription}\n'
+                '$_supportedRawHtmlInlineTags.',
+            filled: true,
+            children: [
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlFormattingTags,
+                syntax: 'strong, em, u',
+                icon: BusyMarkGlyphs.bold,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlInlineCodeTags,
+                syntax: 'kbd, samp, var',
+                icon: BusyMarkGlyphs.code,
+              ),
+              _ReferenceRow(
+                title: context.l10n.link,
+                syntax: 'a[href]',
+                icon: BusyMarkGlyphs.link,
+              ),
+              _ReferenceRow(
+                title: context.l10n.inlineImage,
+                syntax: 'img[src]',
+                icon: BusyMarkGlyphs.inlineImage,
+              ),
+              _ReferenceRow(
+                title: context.l10n.markdownHtmlHtmlNeutralInlineTags,
+                syntax: 'span, time',
+                icon: BusyMarkGlyphs.symbols,
+              ),
+              _ReferenceRow(
+                title: context.l10n.hardLineBreak,
+                syntax: 'br, wbr',
+                icon: BusyMarkGlyphs.hardBreak,
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: context.l10n.markdownHtmlSafety,
+            description: context.l10n.markdownHtmlSafetyDescription,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.markdownHtmlSanitizedPreview,
+                subtitle: context.l10n.markdownHtmlSanitizedPreviewDescription,
+                leading: const Icon(BusyMarkGlyphs.check),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.markdownHtmlSourcePreserved,
+                subtitle: context.l10n.markdownHtmlSourcePreservedDescription,
+                leading: const Icon(BusyMarkGlyphs.document),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.markdownHtmlMarkdownInsideHtml,
+                subtitle:
+                    context.l10n.markdownHtmlMarkdownInsideHtmlDescription,
+                leading: const Icon(BusyMarkGlyphs.markdownFile),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.markdownHtmlBlockedContent,
+                subtitle: context.l10n.markdownHtmlBlockedContentDescription,
+                leading: const Icon(BusyMarkGlyphs.warning),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.markdownHtmlSafeUrls,
+                subtitle: context.l10n.markdownHtmlSafeUrlsDescription,
+                leading: const Icon(BusyMarkGlyphs.link),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ReferenceRow extends StatelessWidget {
+  const _ReferenceRow({
+    required this.title,
+    required this.syntax,
+    required this.icon,
+  });
+
+  final String title;
+  final String syntax;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkActionRow(
+      title: title,
+      leading: Icon(icon),
+      trailing: _KeyboardShortcutBadge(syntax),
+    );
+  }
 }
 
 class _BusyMarkInfoDialog extends StatelessWidget {

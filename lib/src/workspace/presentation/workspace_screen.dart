@@ -636,6 +636,8 @@ class WorkspaceScreen extends ConsumerWidget {
         context.go('/settings');
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case HeaderBarAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.viewModeEditor:
@@ -5009,6 +5011,9 @@ class _PreviewBlockView extends StatelessWidget {
         child: const _PreviewThematicBreak(),
       ),
       PreviewBlockKind.table => _PreviewTable(block: displayBlock),
+      PreviewBlockKind.container
+          when displayBlock.attributes['htmlTag'] == 'figure' =>
+        _PreviewFigure(block: displayBlock, workspace: workspace, first: first),
       PreviewBlockKind.container => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -5479,11 +5484,128 @@ class _ListMarker extends StatelessWidget {
   }
 }
 
-class _PreviewImageBlock extends StatelessWidget {
-  const _PreviewImageBlock({required this.block, required this.workspace});
+class _PreviewFigure extends StatelessWidget {
+  const _PreviewFigure({
+    required this.block,
+    required this.workspace,
+    required this.first,
+  });
+
+  static const double _captionMinWidth = 240;
 
   final PreviewBlock block;
   final Workspace? workspace;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final contentBlocks = block.children.where(_isNotCaption).toList();
+    final captionBlocks = block.children.where(_isCaption).toList();
+    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: colors.mutedForeground,
+      height: BusyMarkTypography.bodyLineHeight,
+    );
+    final captionWidth = _captionWidth(contentBlocks);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        top: first ? 0 : BusyMarkSpacing.smPlus,
+        bottom: BusyMarkSpacing.smPlus,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (index, child) in contentBlocks.indexed)
+            _figureContentBlock(child, index, contentBlocks),
+          if (captionBlocks.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(
+                top: contentBlocks.isEmpty ? 0 : BusyMarkSpacing.xs,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: captionWidth),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final (index, caption) in captionBlocks.indexed)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: index == 0 ? 0 : BusyMarkSpacing.xs,
+                        ),
+                        child: _PreviewInlineText(
+                          block: caption,
+                          style: captionStyle,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _figureContentBlock(
+    PreviewBlock child,
+    int index,
+    List<PreviewBlock> contentBlocks,
+  ) {
+    if (child.kind == PreviewBlockKind.image) {
+      return _PreviewImageBlock(
+        block: child,
+        workspace: workspace,
+        padding: EdgeInsets.zero,
+      );
+    }
+    return _PreviewBlockView(
+      child,
+      workspace: workspace,
+      first: index == 0,
+      listRunEnd: _isLastListBlock(contentBlocks, index),
+      headingKey: null,
+    );
+  }
+
+  double _captionWidth(List<PreviewBlock> contentBlocks) {
+    for (final child in contentBlocks) {
+      if (child.kind != PreviewBlockKind.image) {
+        continue;
+      }
+      final width = _previewImageWidth(child);
+      if (width != null) {
+        return math.max(width, _captionMinWidth);
+      }
+    }
+    return BusyMarkSizes.previewImageMaxWidth;
+  }
+
+  bool _isLastListBlock(List<PreviewBlock> blocks, int index) {
+    return blocks[index].kind == PreviewBlockKind.list &&
+        (index == blocks.length - 1 ||
+            blocks[index + 1].kind != PreviewBlockKind.list);
+  }
+
+  bool _isCaption(PreviewBlock block) {
+    return block.attributes['htmlTag'] == 'figcaption';
+  }
+
+  bool _isNotCaption(PreviewBlock block) {
+    return !_isCaption(block);
+  }
+}
+
+class _PreviewImageBlock extends StatelessWidget {
+  const _PreviewImageBlock({
+    required this.block,
+    required this.workspace,
+    this.padding = const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
+  });
+
+  final PreviewBlock block;
+  final Workspace? workspace;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -5492,7 +5614,7 @@ class _PreviewImageBlock extends StatelessWidget {
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
+      padding: padding,
       child: Align(
         alignment: Alignment.centerLeft,
         child: MarkdownImageView(
