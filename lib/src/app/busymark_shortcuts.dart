@@ -33,8 +33,8 @@ abstract final class BusyMarkAppShortcuts {
   static const openLabel = 'Ctrl+O';
   static const saveLabel = 'Ctrl+S';
   static const findLabel = 'Ctrl+F';
-  static const keyboardShortcutsLabel = 'Ctrl+Shift+/';
-  static const markdownAndHtmlLabel = 'Ctrl+Shift+M';
+  static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
+  static const markdownAndHtmlLabel = 'Ctrl+Alt+M';
   static const settingsLabel = 'Ctrl+Alt+S';
   static const nextTabLabel = 'Ctrl+Tab';
   static const previousTabLabel = 'Ctrl+Shift+Tab';
@@ -61,9 +61,9 @@ abstract final class BusyMarkAppShortcuts {
   static const keyboardShortcuts = BusyMarkShortcutDefinition(
     label: keyboardShortcutsLabel,
     activator: SingleActivator(
-      LogicalKeyboardKey.slash,
+      LogicalKeyboardKey.keyK,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const markdownAndHtml = BusyMarkShortcutDefinition(
@@ -71,7 +71,7 @@ abstract final class BusyMarkAppShortcuts {
     activator: SingleActivator(
       LogicalKeyboardKey.keyM,
       control: true,
-      shift: true,
+      alt: true,
     ),
   );
   static const settings = BusyMarkShortcutDefinition(

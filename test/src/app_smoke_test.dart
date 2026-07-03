@@ -175,7 +175,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await pressShortcut(LogicalKeyboardKey.slash, control: true, shift: true);
+    await pressShortcut(LogicalKeyboardKey.keyK, control: true, alt: true);
     expect(
       find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
@@ -183,7 +183,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
-    await pressShortcut(LogicalKeyboardKey.keyM, control: true, shift: true);
+    await pressShortcut(LogicalKeyboardKey.keyM, control: true, alt: true);
     expect(find.text(l10n.markdownHtmlSafetyDescription), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
