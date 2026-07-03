@@ -12,17 +12,16 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
-import '../../app/app_shortcuts.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/markdown_image_view.dart';
-import '../../editor/editor_shortcuts.dart';
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
@@ -361,9 +360,8 @@ class WorkspaceScreen extends ConsumerWidget {
       autofocus: true,
       onKeyEvent: (_, event) => _handleWorkspaceKeyEvent(event, ref),
       child: Shortcuts(
-        shortcuts: const {
-          SingleActivator(LogicalKeyboardKey.keyF, control: true):
-              _OpenSearchIntent(),
+        shortcuts: {
+          BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
         },
         child: Actions(
           actions: {
@@ -454,7 +452,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip: context.l10n.search,
                         icon: BusyMarkGlyphs.search,
                         selected: searchState.active,
-                        shortcut: 'Ctrl+F',
+                        shortcut: BusyMarkAppShortcutLabels.find,
                         onPressed: () => _toggleSearch(ref),
                       ),
                       BusyMarkHeaderIconButton(
@@ -552,14 +550,11 @@ class WorkspaceScreen extends ConsumerWidget {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
-    final keyboard = HardwareKeyboard.instance;
-    if (!keyboard.isControlPressed ||
-        keyboard.isShiftPressed ||
-        keyboard.isAltPressed ||
-        keyboard.isMetaPressed) {
-      return KeyEventResult.ignored;
-    }
-    final tab = _sidebarShortcutTabFor(event.logicalKey);
+    final action = BusyMarkSidebarShortcutActivators.actionForKeyEvent(
+      event,
+      HardwareKeyboard.instance,
+    );
+    final tab = _sidebarShortcutTabFor(action);
     if (tab == null) {
       return KeyEventResult.ignored;
     }
@@ -1373,14 +1368,12 @@ String _sidebarTabShortcut(_SidebarTab tab) {
   };
 }
 
-_SidebarTab? _sidebarShortcutTabFor(LogicalKeyboardKey key) {
-  return switch (key) {
-    LogicalKeyboardKey.digit1 ||
-    LogicalKeyboardKey.numpad1 => _SidebarTab.files,
-    LogicalKeyboardKey.digit2 || LogicalKeyboardKey.numpad2 => _SidebarTab.toc,
-    LogicalKeyboardKey.digit3 ||
-    LogicalKeyboardKey.numpad3 => _SidebarTab.outline,
-    LogicalKeyboardKey.digit4 || LogicalKeyboardKey.numpad4 => _SidebarTab.git,
+_SidebarTab? _sidebarShortcutTabFor(BusyMarkSidebarShortcutAction? action) {
+  return switch (action) {
+    BusyMarkSidebarShortcutAction.files => _SidebarTab.files,
+    BusyMarkSidebarShortcutAction.toc => _SidebarTab.toc,
+    BusyMarkSidebarShortcutAction.outline => _SidebarTab.outline,
+    BusyMarkSidebarShortcutAction.git => _SidebarTab.git,
     _ => null,
   };
 }
@@ -2968,7 +2961,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyF) {
+    if (BusyMarkAppShortcutActivators.find.accepts(event, keyboard)) {
       ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }

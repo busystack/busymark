@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
-import '../editor_shortcuts.dart';
 import 'wysiwyg_commands.dart';
 
 class BusyMarkWysiwygToolbar extends StatelessWidget {

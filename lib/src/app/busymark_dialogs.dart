@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../editor/editor_shortcuts.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
-import 'app_shortcuts.dart';
+import 'busymark_shortcuts.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
@@ -153,25 +152,33 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.shortcutNewDocument,
                 subtitle: context.l10n.shortcutNewDocumentDescription,
                 leading: const Icon(BusyMarkGlyphs.newDocument),
-                trailing: const _KeyboardShortcutBadge('Ctrl+N'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.newDocument,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.open,
                 subtitle: context.l10n.shortcutOpenDescription,
                 leading: const Icon(BusyMarkGlyphs.folderOpen),
-                trailing: const _KeyboardShortcutBadge('Ctrl+O'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.open,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.save,
                 subtitle: context.l10n.shortcutSaveDescription,
                 leading: const Icon(BusyMarkGlyphs.save),
-                trailing: const _KeyboardShortcutBadge('Ctrl+S'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.save,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.find,
                 subtitle: context.l10n.shortcutFindDescription,
                 leading: const Icon(BusyMarkGlyphs.search),
-                trailing: const _KeyboardShortcutBadge('Ctrl+F'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.find,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.keyboardShortcuts,
@@ -207,25 +214,33 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.shortcutNextTab,
                 subtitle: context.l10n.shortcutNextTabDescription,
                 leading: const Icon(BusyMarkGlyphs.tab),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Tab'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.nextTab,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.shortcutPreviousTab,
                 subtitle: context.l10n.shortcutPreviousTabDescription,
                 leading: const Icon(BusyMarkGlyphs.tab),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+Tab'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.previousTab,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.shortcutCloseTab,
                 subtitle: context.l10n.shortcutCloseTabDescription,
                 leading: const Icon(BusyMarkGlyphs.clear),
-                trailing: const _KeyboardShortcutBadge('Ctrl+W'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.closeTab,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.shortcutCloseAllTabs,
                 subtitle: context.l10n.shortcutCloseAllTabsDescription,
                 leading: const Icon(BusyMarkGlyphs.clearAll),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+W'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.closeAllTabs,
+                ),
               ),
             ],
           ),
@@ -237,49 +252,65 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.selectAll,
                 subtitle: context.l10n.shortcutSelectAllDescription,
                 leading: const Icon(BusyMarkGlyphs.selectAll),
-                trailing: const _KeyboardShortcutBadge('Ctrl+A'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.selectAll,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.cut,
                 subtitle: context.l10n.shortcutCutDescription,
                 leading: const Icon(BusyMarkGlyphs.cut),
-                trailing: const _KeyboardShortcutBadge('Ctrl+X'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.cut,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.copy,
                 subtitle: context.l10n.shortcutCopyDescription,
                 leading: const Icon(BusyMarkGlyphs.copy),
-                trailing: const _KeyboardShortcutBadge('Ctrl+C'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.copy,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.paste,
                 subtitle: context.l10n.shortcutPasteDescription,
                 leading: const Icon(BusyMarkGlyphs.paste),
-                trailing: const _KeyboardShortcutBadge('Ctrl+V'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.paste,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.pasteWithoutFormatting,
                 subtitle: context.l10n.shortcutPastePlainTextDescription,
                 leading: const Icon(BusyMarkGlyphs.paste),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+V'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.pastePlainText,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.undo,
                 subtitle: context.l10n.shortcutUndoDescription,
                 leading: const Icon(BusyMarkGlyphs.undo),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Z'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.undo,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.redo,
                 subtitle: context.l10n.shortcutRedoDescription,
                 leading: const Icon(BusyMarkGlyphs.redo),
-                trailing: const _KeyboardShortcutBadge('Ctrl+Shift+Z'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.redo,
+                ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.clearEditorSelection,
                 subtitle: context.l10n.shortcutClearEditorSelectionDescription,
                 leading: const Icon(BusyMarkGlyphs.clear),
-                trailing: const _KeyboardShortcutBadge('Esc'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.clearSelection,
+                ),
               ),
             ],
           ),

@@ -10,10 +10,10 @@ import 'package:path/path.dart' as p;
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
-import '../../app/app_shortcuts.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';

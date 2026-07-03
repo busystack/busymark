@@ -17,7 +17,7 @@ import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
 import 'app_settings.dart';
-import 'app_shortcuts.dart';
+import 'busymark_shortcuts.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
@@ -72,45 +72,25 @@ class BusyMarkApp extends ConsumerWidget {
         _configureNativeHeaderBar(context, ref, settings);
         return _BusyMarkWindowLifecycle(
           child: Shortcuts(
-            shortcuts: const {
-              SingleActivator(LogicalKeyboardKey.keyN, control: true):
-                  _NewMarkdownIntent(),
-              SingleActivator(LogicalKeyboardKey.keyO, control: true):
-                  _OpenWorkspaceIntent(),
-              SingleActivator(LogicalKeyboardKey.keyS, control: true):
-                  _SaveActiveIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.slash,
-                control: true,
-                shift: true,
-              ): _KeyboardShortcutsIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.keyS,
-                control: true,
-                alt: true,
-              ): _SettingsIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.keyM,
-                control: true,
-                shift: true,
-              ): _MarkdownAndHtmlIntent(),
-              SingleActivator(LogicalKeyboardKey.tab, control: true):
-                  _NextTabIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.tab,
-                control: true,
-                shift: true,
-              ): _PreviousTabIntent(),
-              SingleActivator(LogicalKeyboardKey.keyW, control: true):
-                  _CloseTabIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.keyW,
-                control: true,
-                shift: true,
-              ): _CloseAllTabsIntent(),
-              SingleActivator(LogicalKeyboardKey.keyF, control: true):
-                  _OpenSearchIntent(),
-              SingleActivator(LogicalKeyboardKey.f9): _ToggleSidebarIntent(),
+            shortcuts: {
+              BusyMarkAppShortcutActivators.newDocument:
+                  const _NewMarkdownIntent(),
+              BusyMarkAppShortcutActivators.open: const _OpenWorkspaceIntent(),
+              BusyMarkAppShortcutActivators.save: const _SaveActiveIntent(),
+              BusyMarkAppShortcutActivators.keyboardShortcuts:
+                  const _KeyboardShortcutsIntent(),
+              BusyMarkAppShortcutActivators.settings: const _SettingsIntent(),
+              BusyMarkAppShortcutActivators.markdownAndHtml:
+                  const _MarkdownAndHtmlIntent(),
+              BusyMarkAppShortcutActivators.nextTab: const _NextTabIntent(),
+              BusyMarkAppShortcutActivators.previousTab:
+                  const _PreviousTabIntent(),
+              BusyMarkAppShortcutActivators.closeTab: const _CloseTabIntent(),
+              BusyMarkAppShortcutActivators.closeAllTabs:
+                  const _CloseAllTabsIntent(),
+              BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+              BusyMarkAppShortcutActivators.toggleSidebar:
+                  const _ToggleSidebarIntent(),
             },
             child: Actions(
               actions: {

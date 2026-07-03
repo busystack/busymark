@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
-import 'package:busymark/src/editor/editor_shortcuts.dart';
+import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';

@@ -9,8 +9,8 @@ import 'package:flutter/services.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
-import '../editor_shortcuts.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
@@ -192,22 +192,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         ...BusyMarkEditorShortcutActivators.intentMap(
           _EditorShortcutIntent.new,
         ),
-        const SingleActivator(LogicalKeyboardKey.keyV, control: true):
-            const _PasteTextIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyA, control: true):
+        BusyMarkTextEditingShortcutActivators.paste: const _PasteTextIntent(),
+        BusyMarkTextEditingShortcutActivators.selectAll:
             const _SelectAllTextIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
-            const _UndoEditorIntent(),
-        const SingleActivator(
-          LogicalKeyboardKey.keyZ,
-          control: true,
-          shift: true,
-        ): const _RedoEditorIntent(),
+        BusyMarkTextEditingShortcutActivators.undo: const _UndoEditorIntent(),
+        BusyMarkTextEditingShortcutActivators.redo: const _RedoEditorIntent(),
         if (blockSelectionActive)
-          const SingleActivator(LogicalKeyboardKey.keyC, control: true):
+          BusyMarkTextEditingShortcutActivators.copy:
               const _CopyBlockSelectionIntent(),
         if (blockSelectionActive)
-          const SingleActivator(LogicalKeyboardKey.keyX, control: true):
+          BusyMarkTextEditingShortcutActivators.cut:
               const _CutBlockSelectionIntent(),
         if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.backspace):
@@ -216,7 +210,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           const SingleActivator(LogicalKeyboardKey.delete):
               const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
-          const SingleActivator(LogicalKeyboardKey.escape):
+          BusyMarkTextEditingShortcutActivators.clearSelection:
               const _ClearBlockSelectionIntent(),
       },
       child: Actions(

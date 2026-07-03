@@ -102,6 +102,9 @@ void main() {
     final dialogs = File(
       'lib/src/app/busymark_dialogs.dart',
     ).readAsStringSync();
+    final shortcuts = File(
+      'lib/src/app/busymark_shortcuts.dart',
+    ).readAsStringSync();
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
@@ -122,10 +125,14 @@ void main() {
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
-    expect(dialogs, contains('Ctrl+N'));
-    expect(dialogs, contains('Ctrl+S'));
-    expect(dialogs, contains('Ctrl+Z'));
-    expect(dialogs, contains('Ctrl+Shift+Z'));
+    expect(dialogs, contains('BusyMarkAppShortcutLabels.newDocument'));
+    expect(dialogs, contains('BusyMarkAppShortcutLabels.save'));
+    expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.undo'));
+    expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.redo'));
+    expect(shortcuts, contains("newDocumentLabel = 'Ctrl+N'"));
+    expect(shortcuts, contains("saveLabel = 'Ctrl+S'"));
+    expect(shortcuts, contains("undoLabel = 'Ctrl+Z'"));
+    expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(workspace, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
