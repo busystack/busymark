@@ -254,6 +254,13 @@ class LinuxHeaderBarService {
     return _invoke('setSidebarWidth', value);
   }
 
+  Future<void> setTextDirection(TextDirection value) {
+    return _invoke(
+      'setTextDirection',
+      value == TextDirection.rtl ? 'rtl' : 'ltr',
+    );
+  }
+
   Future<void> setBackVisible(bool value) {
     return _invoke('setBackVisible', value);
   }
