@@ -87,6 +87,7 @@ struct _MyApplication {
   gchar* modal_barrier_color;
   gint sidebar_width;
   gboolean sidebar_visible;
+  gboolean text_direction_rtl;
   gboolean back_visible;
   gboolean search_active;
   gboolean modal_barrier_visible;
@@ -339,6 +340,16 @@ static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   }
 }
 
+static GtkTextDirection app_text_direction(MyApplication* self) {
+  return self->text_direction_rtl ? GTK_TEXT_DIR_RTL : GTK_TEXT_DIR_LTR;
+}
+
+static void set_widget_direction(GtkWidget* widget, GtkTextDirection direction) {
+  if (widget != nullptr && GTK_IS_WIDGET(widget)) {
+    gtk_widget_set_direction(widget, direction);
+  }
+}
+
 static void update_title_stack_alignment(MyApplication* self) {
   if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
     return;
@@ -370,6 +381,42 @@ static void update_sidebar_header_geometry(MyApplication* self) {
   set_widget_visible(self->sidebar_header_box, width > 0);
 }
 
+static void update_titlebar_direction(MyApplication* self) {
+  const GtkTextDirection direction = app_text_direction(self);
+  if (self->titlebar_box != nullptr && GTK_IS_BOX(self->titlebar_box) &&
+      has_header_bar(self) && self->sidebar_header_box != nullptr &&
+      GTK_IS_WIDGET(self->sidebar_header_box)) {
+    gtk_widget_set_direction(self->titlebar_box, GTK_TEXT_DIR_LTR);
+    if (self->text_direction_rtl) {
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            GTK_WIDGET(self->header_bar), 0);
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            self->sidebar_header_box, 1);
+    } else {
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            self->sidebar_header_box, 0);
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            GTK_WIDGET(self->header_bar), 1);
+    }
+  }
+
+  set_widget_direction(self->sidebar_header_box, direction);
+  set_widget_direction(GTK_WIDGET(self->header_bar), direction);
+  set_widget_direction(self->header_start_box, direction);
+  set_widget_direction(self->header_menu_button, direction);
+  set_widget_direction(self->sidebar_toggle_button, direction);
+  set_widget_direction(self->back_button, direction);
+  set_widget_direction(self->title_stack, direction);
+  set_widget_direction(self->title_label, direction);
+  set_widget_direction(self->search_entry, direction);
+  set_widget_direction(self->view_mode_box, direction);
+  set_widget_direction(self->view_mode_button, direction);
+  set_widget_direction(self->view_mode_label, direction);
+  set_widget_direction(self->refresh_button, direction);
+  set_widget_direction(self->sidebar_search_button, direction);
+  set_widget_direction(self->sidebar_menu_button, direction);
+}
+
 static void refresh_header_bar_css(MyApplication* self) {
   if (!has_header_bar(self)) {
     return;
@@ -396,7 +443,16 @@ static void refresh_header_bar_css(MyApplication* self) {
   const gchar* modal =
       css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
   const gint headerbar_left_radius =
-      self->sidebar_visible ? 0 : kHeaderWindowRadius;
+      self->sidebar_visible && !self->text_direction_rtl
+          ? 0
+          : kHeaderWindowRadius;
+  const gint headerbar_right_radius =
+      self->sidebar_visible && self->text_direction_rtl ? 0
+                                                        : kHeaderWindowRadius;
+  const gint sidebar_left_radius =
+      self->text_direction_rtl ? 0 : kHeaderWindowRadius;
+  const gint sidebar_right_radius =
+      self->text_direction_rtl ? kHeaderWindowRadius : 0;
 
   gtk_style_context_add_class(gtk_widget_get_style_context(self->titlebar_box),
                               "busymark-titlebar");
@@ -435,7 +491,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
+      "border-top-right-radius: %dpx;"
       "padding-left: 0;"
+      "padding-right: 0;"
       "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
@@ -443,7 +501,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
-      "border-top-right-radius: 0;"
+      "border-top-right-radius: %dpx;"
       "}"
       ".busymark-sidebar-header label,"
       ".busymark-header-title {"
@@ -541,8 +599,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
       kHeaderWindowRadius, background, headerbar_left_radius,
+      headerbar_right_radius,
       sidebar_background,
-      kHeaderWindowRadius, foreground, foreground, control, border,
+      sidebar_left_radius, sidebar_right_radius, foreground, foreground, control, border,
       kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
       kHeaderControlHorizontalPadding, accent, modal, modal,
       popover, foreground, border, shade, foreground,
@@ -1091,6 +1150,13 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
   update_sidebar_header_geometry(self);
 }
 
+static void set_text_direction(MyApplication* self, const gchar* value) {
+  self->text_direction_rtl = g_strcmp0(value, "rtl") == 0;
+  update_titlebar_direction(self);
+  update_title_stack_alignment(self);
+  refresh_header_bar_css(self);
+}
+
 static void set_back_visible(MyApplication* self, gboolean visible) {
   self->back_visible = visible;
   set_widget_visible(self->back_button, visible);
@@ -1308,6 +1374,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
                      TRUE, TRUE, 0);
+  update_titlebar_direction(self);
   set_view_mode(self, "split");
   set_document_controls_visible(self, FALSE);
   set_sidebar_visible(self, TRUE);
@@ -1363,6 +1430,9 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     respond_success(method_call);
   } else if (strcmp(method, "setSidebarWidth") == 0) {
     set_sidebar_width(self, fl_method_double_arg(args, 300));
+    respond_success(method_call);
+  } else if (strcmp(method, "setTextDirection") == 0) {
+    set_text_direction(self, fl_method_string_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setBackVisible") == 0) {
     set_back_visible(self, fl_method_bool_arg(args));
@@ -1687,6 +1757,7 @@ static void my_application_init(MyApplication* self) {
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
+  self->text_direction_rtl = FALSE;
   self->back_visible = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
