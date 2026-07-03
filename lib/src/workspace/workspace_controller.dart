@@ -434,7 +434,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? sourceFilePath,
   }) {
     final workspace = state.workspace;
-    if (sourceFilePath != null && workspace?.activeFilePath != sourceFilePath) {
+    final activeEditorPath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    if (sourceFilePath != null && activeEditorPath != sourceFilePath) {
       return;
     }
     _editRevision++;

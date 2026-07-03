@@ -136,6 +136,22 @@ double _safeMaxScrollExtent(ScrollController controller) {
   return _safeScrollPosition(controller)?.maxScrollExtent ?? 0.0;
 }
 
+bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.tab &&
+      !keyboard.isControlPressed &&
+      !keyboard.isShiftPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed;
+}
+
+bool _isPlainShiftTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.tab &&
+      !keyboard.isControlPressed &&
+      keyboard.isShiftPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed;
+}
+
 class _OutlineNavigationTarget {
   const _OutlineNavigationTarget({
     required this.filePath,
@@ -246,6 +262,49 @@ class WorkspaceScreen extends ConsumerWidget {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
+    final sidebarVisible =
+        settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
+    final sidebar = SizedBox(
+      width: BusyMarkSizes.sidebarWidth,
+      child: _Sidebar(
+        workspace: workspace,
+        searchState: searchState,
+        searchResults: searchResults,
+        onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
+      ),
+    );
+    final workspaceContent = Expanded(
+      child: Column(
+        children: [
+          if (_shouldShowEditorTabs(workspace)) _EditorTabStrip(state: state),
+          Expanded(
+            child: gitState.selectedDiff == null
+                ? _EditorPreviewSplit(
+                    state: state,
+                    viewMode: settings.documentViewMode,
+                    editorFontSize: settings.editorFontSize,
+                    editorToolbarPlacement: settings.editorToolbarPlacement,
+                    wordWrap: settings.wordWrap,
+                  )
+                : GitDiffViewer(
+                    diff: gitState.selectedDiff,
+                    hasUnsavedEditorChanges: state.isDirty,
+                    onOpenFile: (relativePath) =>
+                        _openGitDiffFile(context, ref, relativePath),
+                    onClose: () => ref
+                        .read(gitControllerProvider.notifier)
+                        .clearSelection(),
+                  ),
+          ),
+        ],
+      ),
+    );
+    final sidebarOnRight = Directionality.of(context) == TextDirection.rtl;
+    final workspaceChildren = [
+      if (!sidebarOnRight && sidebarVisible) sidebar,
+      workspaceContent,
+      if (sidebarOnRight && sidebarVisible) sidebar,
+    ];
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, ref, event.action);
@@ -440,52 +499,8 @@ class WorkspaceScreen extends ConsumerWidget {
                   ),
                 Expanded(
                   child: Row(
-                    children: [
-                      if (settings.sidebarVisible &&
-                          _hasWorkspaceSidebar(workspace))
-                        SizedBox(
-                          width: BusyMarkSizes.sidebarWidth,
-                          child: _Sidebar(
-                            workspace: workspace,
-                            searchState: searchState,
-                            searchResults: searchResults,
-                            onOpenSearchResult: (result) =>
-                                _openSearchResult(context, ref, result),
-                          ),
-                        ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            if (_shouldShowEditorTabs(workspace))
-                              _EditorTabStrip(state: state),
-                            Expanded(
-                              child: gitState.selectedDiff == null
-                                  ? _EditorPreviewSplit(
-                                      state: state,
-                                      viewMode: settings.documentViewMode,
-                                      editorFontSize: settings.editorFontSize,
-                                      editorToolbarPlacement:
-                                          settings.editorToolbarPlacement,
-                                      wordWrap: settings.wordWrap,
-                                    )
-                                  : GitDiffViewer(
-                                      diff: gitState.selectedDiff,
-                                      hasUnsavedEditorChanges: state.isDirty,
-                                      onOpenFile: (relativePath) =>
-                                          _openGitDiffFile(
-                                            context,
-                                            ref,
-                                            relativePath,
-                                          ),
-                                      onClose: () => ref
-                                          .read(gitControllerProvider.notifier)
-                                          .clearSelection(),
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    textDirection: TextDirection.ltr,
+                    children: workspaceChildren,
                   ),
                 ),
               ],
@@ -2952,6 +2967,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
+    if (_isPlainTabKey(keyboard, key)) {
+      _insertSourceTab();
+      return KeyEventResult.handled;
+    }
+    if (_isPlainShiftTabKey(keyboard, key)) {
+      _outdentSourceSelection();
+      return KeyEventResult.handled;
+    }
     if (key == LogicalKeyboardKey.escape) {
       ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return KeyEventResult.handled;
@@ -3603,6 +3626,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       text,
       selectionStart: selection.start + text.length,
       selectionEnd: selection.start + text.length,
+    );
+  }
+
+  void _insertSourceTab() {
+    final selection = _normalizedSourceSelection();
+    _replaceSourceSelection(
+      '\t',
+      selectionStart: selection.start + 1,
+      selectionEnd: selection.start + 1,
     );
   }
 
@@ -4816,6 +4848,7 @@ class _PreviewPane extends StatelessWidget {
     final child = _PreviewBlockView(
       block,
       first: index == 0,
+      listRunEnd: _isLastListBlock(index),
       workspace: workspace,
       headingKey: _keyForBlock(block),
     );
@@ -4823,6 +4856,15 @@ class _PreviewPane extends StatelessWidget {
       key: searchKeys.putIfAbsent(index, () => GlobalKey()),
       child: child,
     );
+  }
+
+  bool _isLastListBlock(int index) {
+    final blocks = preview?.blocks;
+    if (blocks == null || blocks[index].kind != PreviewBlockKind.list) {
+      return false;
+    }
+    return index == blocks.length - 1 ||
+        blocks[index + 1].kind != PreviewBlockKind.list;
   }
 
   Key? _keyForBlock(PreviewBlock block) {
@@ -4842,12 +4884,14 @@ class _PreviewBlockView extends StatelessWidget {
     this.block, {
     required this.workspace,
     required this.first,
+    required this.listRunEnd,
     required this.headingKey,
   });
 
   final PreviewBlock block;
   final Workspace? workspace;
   final bool first;
+  final bool listRunEnd;
   final Key? headingKey;
 
   @override
@@ -4906,21 +4950,52 @@ class _PreviewBlockView extends StatelessWidget {
         child: Text(displayBlock.text),
       ),
       PreviewBlockKind.list => Padding(
-        padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
-        child: Row(
+        padding: EdgeInsets.only(
+          top: BusyMarkSpacing.xs,
+          bottom: _listBottomSpacing(displayBlock),
+        ),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: BusyMarkSizes.previewListMarkerWidth,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  top: BusyMarkSizes.previewListMarkerTopInset,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: BusyMarkSizes.previewListMarkerWidth,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: BusyMarkSizes.previewListMarkerTopInset,
+                    ),
+                    child: _ListMarker(block: displayBlock),
+                  ),
                 ),
-                child: _ListMarker(block: block),
-              ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(child: _PreviewInlineText(block: displayBlock)),
+              ],
             ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(child: _PreviewInlineText(block: block)),
+            if (displayBlock.children.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left:
+                      BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (index, child) in displayBlock.children.indexed)
+                      _PreviewBlockView(
+                        child,
+                        workspace: workspace,
+                        first: false,
+                        listRunEnd: _isLastListBlock(
+                          displayBlock.children,
+                          index,
+                        ),
+                        headingKey: null,
+                      ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -4958,6 +5033,23 @@ class _PreviewBlockView extends StatelessWidget {
         child: _PreviewInlineText(block: displayBlock),
       ),
     };
+  }
+
+  double _listBottomSpacing(PreviewBlock displayBlock) {
+    if (!listRunEnd) {
+      return BusyMarkSpacing.xs;
+    }
+    if (displayBlock.children.isNotEmpty &&
+        displayBlock.children.last.kind == PreviewBlockKind.list) {
+      return BusyMarkSpacing.xs;
+    }
+    return BusyMarkSpacing.md;
+  }
+
+  bool _isLastListBlock(List<PreviewBlock> blocks, int index) {
+    return blocks[index].kind == PreviewBlockKind.list &&
+        (index == blocks.length - 1 ||
+            blocks[index + 1].kind != PreviewBlockKind.list);
   }
 
   PreviewBlock _localizedPreviewBlock(
