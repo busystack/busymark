@@ -10,6 +10,7 @@ import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
 import 'markdown_model.dart';
+import 'raw_html_policy.dart';
 
 // Cross-file diagnostics are intentionally scoped to Markdown files that
 // resolve inside the opened workspace. Targets outside that root, unsupported
@@ -733,7 +734,9 @@ class MarkdownParser {
       return;
     }
     final name = match.group(1)!;
-    if (_inlineHtmlNames.contains(name.toLowerCase())) {
+    final normalizedName = name.toLowerCase();
+    if (!_writersideXmlTag(normalizedName) &&
+        (isSafeHtmlTag(normalizedName) || isUnsafeHtmlTag(normalizedName))) {
       return;
     }
     xmlBlocks.add(
@@ -757,13 +760,15 @@ class MarkdownParser {
     required int lineOffset,
     required List<Diagnostic> diagnostics,
   }) {
-    final unsafe = RegExp(
-      r'<script\b|on[a-z]+\s*=|javascript:',
-      caseSensitive: false,
-    ).firstMatch(line);
-    if (unsafe == null) {
+    if (!hasUnsafeHtml(line)) {
       return;
     }
+    final unsafe =
+        RegExp(
+          r'</?\s*[A-Za-z][A-Za-z0-9_-]*\b|on[A-Za-z0-9_-]+\s*=|(?:java|vb)script:|data:',
+          caseSensitive: false,
+        ).firstMatch(line) ??
+        RegExp(r'\S+').firstMatch(line);
     diagnostics.add(
       Diagnostic(
         code: 'markdown.raw-html.unsafe',
@@ -772,11 +777,25 @@ class MarkdownParser {
         sourceSpan: SourceSpan.fromOffsets(
           filePath: filePath,
           source: source,
-          startOffset: lineOffset + unsafe.start,
-          endOffset: lineOffset + unsafe.end,
+          startOffset: lineOffset + (unsafe?.start ?? 0),
+          endOffset: lineOffset + (unsafe?.end ?? line.length),
         ),
       ),
     );
+  }
+
+  bool _writersideXmlTag(String tag) {
+    return {
+      'var',
+      'tabs',
+      'tab',
+      'code-block',
+      'chapter',
+      'procedure',
+      'note',
+      'tip',
+      'warning',
+    }.contains(tag);
   }
 
   List<Diagnostic> _validateLocalReferences({
@@ -1257,18 +1276,3 @@ class _ScannedSourceLine {
 
   int get endOffset => offset + rawLine.length;
 }
-
-const _inlineHtmlNames = {
-  'a',
-  'abbr',
-  'b',
-  'br',
-  'code',
-  'div',
-  'em',
-  'i',
-  'img',
-  'p',
-  'span',
-  'strong',
-};

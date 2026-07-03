@@ -432,4 +432,165 @@ Also visible.
       ]),
     );
   });
+
+  test('preview renders raw HTML paragraph without literal tags', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<p>Hello <strong>bold</strong><br>next</p>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final container = preview.blocks.single;
+    final paragraph = container.children.single;
+
+    expect(container.kind, PreviewBlockKind.container);
+    expect(paragraph.kind, PreviewBlockKind.paragraph);
+    expect(paragraph.text, 'Hello bold next');
+    expect(paragraph.text, isNot(contains('<p>')));
+    expect(
+      _flattenInlines(paragraph.inlines).map((inline) => inline.kind),
+      containsAll([PreviewInlineKind.strong, PreviewInlineKind.text]),
+    );
+  });
+
+  test(
+    'preview renders raw HTML table sections and inline cell formatting',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '''
+<table>
+  <thead>
+    <tr><th>Name</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>A</td><td><em>B</em></td></tr>
+  </tbody>
+</table>
+''',
+      );
+      final preview = previewBuilder.build(parsed);
+      final table = preview.blocks.single.children.singleWhere(
+        (block) => block.kind == PreviewBlockKind.table,
+      );
+
+      expect(preview.blocks.single.kind, PreviewBlockKind.container);
+      expect(table.children.first.attributes['header'], 'true');
+      expect(table.children.last.attributes['header'], 'false');
+      expect(table.text, isNot(contains('<table>')));
+      expect(
+        table.children
+            .expand((row) => row.children)
+            .map((cell) => cell.text)
+            .toList(),
+        ['Name', 'Value', 'A', 'B'],
+      );
+      expect(
+        _flattenInlines(
+          table.children.last.children.last.inlines,
+        ).map((inline) => inline.kind),
+        contains(PreviewInlineKind.emphasis),
+      );
+    },
+  );
+
+  test('preview renders direct rows under raw HTML table', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<table>\n  <tr><td>A</td><td>B</td></tr>\n</table>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final table = preview.blocks.single.children.single;
+
+    expect(table.kind, PreviewBlockKind.table);
+    expect(table.children.single.children.map((cell) => cell.text), ['A', 'B']);
+  });
+
+  test('preview renders raw HTML table captions before the table', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<table>\n  <caption>Metrics</caption>\n  <tr><td>A</td></tr>\n</table>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final children = preview.blocks.single.children;
+
+    expect(children.map((block) => block.kind), [
+      PreviewBlockKind.paragraph,
+      PreviewBlockKind.table,
+    ]);
+    expect(children.first.text, 'Metrics');
+    expect(children.last.children.single.children.single.text, 'A');
+  });
+
+  test('preview renders inline raw HTML safely', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Text with <u>underlined</u> and <a href="docs.md">link</a>.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single;
+    final inlines = _flattenInlines(paragraph.inlines).toList();
+
+    expect(paragraph.kind, PreviewBlockKind.paragraph);
+    expect(paragraph.text, 'Text with underlined and link.');
+    expect(
+      inlines.map((inline) => inline.kind),
+      contains(PreviewInlineKind.underline),
+    );
+    expect(
+      inlines
+          .where((inline) => inline.kind == PreviewInlineKind.link)
+          .single
+          .destination,
+      'docs.md',
+    );
+  });
+
+  test('preview renders safe raw HTML containers as child content', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<div><p>Inside</p></div>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(preview.blocks.single.children.single.text, 'Inside');
+  });
+
+  test('preview keeps unsafe raw HTML literal', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<script>alert(1)</script>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+    expect(preview.blocks.single.text, contains('<script>'));
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.raw-html.unsafe'),
+    );
+  });
+
+  test('preview does not parse Markdown inside raw HTML blocks', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<div>**bold**</div>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single.children.single;
+
+    expect(paragraph.text, '**bold**');
+    expect(
+      _flattenInlines(paragraph.inlines).map((inline) => inline.kind),
+      isNot(contains(PreviewInlineKind.strong)),
+    );
+  });
+}
+
+Iterable<PreviewInline> _flattenInlines(Iterable<PreviewInline> inlines) sync* {
+  for (final inline in inlines) {
+    yield inline;
+    yield* _flattenInlines(inline.children);
+  }
 }

@@ -2253,6 +2253,46 @@ void main() {
     expect(find.textContaining('Яндекс'), findsOneWidget);
   });
 
+  testWidgets('preview renders raw HTML table as table cells', (tester) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '<table>\n'
+      '  <tr><th>Name</th><th>Value</th></tr>\n'
+      '  <tr><td>A</td></tr>\n'
+      '</table>\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/raw-html-table.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(find.text('Name'), findsOneWidget);
+    expect(find.text('Value'), findsOneWidget);
+    expect(find.text('A'), findsOneWidget);
+    expect(find.textContaining('<table>'), findsNothing);
+  });
+
   testWidgets('preview search result click lands on code block line', (
     tester,
   ) async {

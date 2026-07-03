@@ -405,6 +405,89 @@ void main() {
     );
   });
 
+  test('safe raw HTML does not produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<p>Hello <strong>bold</strong></p>\n\n'
+          '<table><tr><td>A</td></tr></table>\n',
+    );
+
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('markdown.raw-html.unsafe')),
+    );
+  });
+
+  test('unsafe raw HTML tags produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<script>alert(1)</script>\n'
+          '<iframe src="https://example.com"></iframe>\n'
+          '<form><input name="x"></form>\n',
+    );
+
+    expect(
+      parsed.diagnostics
+          .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
+          .length,
+      3,
+    );
+  });
+
+  test('unsafe raw HTML attributes produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<p onclick="alert(1)">Click</p>\n',
+    );
+
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.raw-html.unsafe'),
+    );
+  });
+
+  test('unsafe raw HTML URLs produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<a href="javascript:alert(1)">bad</a>\n'
+          '<img src="vbscript:alert(1)">\n'
+          '<img src="data:image/png;base64,AAAA">\n',
+    );
+
+    expect(
+      parsed.diagnostics
+          .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
+          .length,
+      3,
+    );
+  });
+
+  test('safe HTML tags do not become Writerside XML blocks', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<table>\n'
+          '<tr><td>A</td></tr>\n'
+          '</table>\n'
+          '<section><p>Intro</p></section>\n'
+          '<var name="product" value="BusyMark"/>\n'
+          '<tabs>\n',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(
+      parsed.xmlBlocks.map((block) => block.elementName.toLowerCase()),
+      containsAll(['var', 'tabs']),
+    );
+    expect(
+      parsed.xmlBlocks.map((block) => block.elementName.toLowerCase()),
+      isNot(containsAll(['table', 'tr', 'section'])),
+    );
+  });
+
   test('extracts Writerside Markdown XML blocks and variables', () {
     final path = fixture('writerside_markdown.md');
     final parsed = parser.parse(

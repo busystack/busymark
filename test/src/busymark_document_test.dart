@@ -130,6 +130,42 @@ void main() {}
     expect(const BusyMarkMarkdownSerializer().serialize(document), '$raw\n');
   });
 
+  test('serializer preserves safe raw HTML source byte for byte', () {
+    const source =
+        '<table>\n'
+        '  <caption>Metrics</caption>\n'
+        '  <tr><td>A</td></tr>\n'
+        '</table>\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final block = parsed.busyDocument.blocks.single;
+
+    expect(block.kind, BusyBlockKind.htmlBlock);
+    expect(block.preserveRaw, isTrue);
+    expect(block.dirty, isFalse);
+    expect(block.attributes['sourceFormat'], 'html');
+    expect(
+      const BusyMarkMarkdownSerializer().serialize(parsed.busyDocument),
+      source,
+    );
+  });
+
+  test(
+    'serializer preserves unsafe raw HTML source while preview remains raw',
+    () {
+      const source = '<script>alert(1)</script>\n';
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final preview = const BusyMarkPreviewBuilder().build(parsed.busyDocument);
+
+      expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.htmlBlock);
+      expect(parsed.busyDocument.blocks.single.preserveRaw, isTrue);
+      expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+      expect(
+        const BusyMarkMarkdownSerializer().serialize(parsed.busyDocument),
+        source,
+      );
+    },
+  );
+
   test(
     'serializer patches dirty blocks without canonicalizing unchanged source',
     () {

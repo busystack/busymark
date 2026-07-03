@@ -3,6 +3,10 @@ import 'package:markdown/markdown.dart' as md;
 import '../core/path_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_model.dart';
+import 'raw_html_adapter.dart';
+import 'raw_html_policy.dart';
+
+const _rawHtmlAdapter = RawHtmlAdapter();
 
 class MarkdownAstAdapter {
   const MarkdownAstAdapter();
@@ -76,9 +80,23 @@ class MarkdownAstAdapter {
     required MarkdownMode mode,
   }) {
     if (node is md.Text) {
-      final text = node.text.trim();
+      final rawText = node.text;
+      final text = rawText.trim();
       if (text.isEmpty) {
         return const [];
+      }
+      final html = _rawHtmlAdapter.parseRawHtmlBlock(rawText, nextId);
+      if (html != null) {
+        return [
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.htmlBlock,
+            children: html.safe ? html.blocks : const [],
+            rawSource: rawText,
+            preserveRaw: true,
+            attributes: const {'sourceFormat': 'html'},
+          ),
+        ];
       }
       return [
         BusyBlock(
@@ -196,12 +214,10 @@ class MarkdownAstAdapter {
     }
 
     if (tag == 'table') {
+      final tableRows = _tableRows(node, nextId);
       return [
-        BusyBlock(
-          id: nextId(),
-          kind: BusyBlockKind.table,
-          children: _tableRows(node, nextId),
-        ),
+        if (_tableCaption(node, nextId) case final caption?) caption,
+        BusyBlock(id: nextId(), kind: BusyBlockKind.table, children: tableRows),
       ];
     }
 
@@ -218,7 +234,7 @@ class MarkdownAstAdapter {
       ];
     }
 
-    if (_dangerousHtmlTag(tag)) {
+    if (isUnsafeHtmlTag(tag)) {
       return [
         BusyBlock(
           id: nextId(),
@@ -304,6 +320,10 @@ class MarkdownAstAdapter {
       if (node.text.isEmpty) {
         return const [];
       }
+      final htmlInlines = _rawHtmlAdapter.parseRawHtmlInlineFragment(node.text);
+      if (htmlInlines != null) {
+        return htmlInlines;
+      }
       return [BusyInline(kind: BusyInlineKind.text, text: node.text)];
     }
     if (node is! md.Element) {
@@ -363,7 +383,7 @@ class MarkdownAstAdapter {
           attributes: node.attributes,
         ),
       ],
-      _ when _dangerousHtmlTag(tag) => [
+      _ when isUnsafeHtmlTag(tag) => [
         BusyInline(kind: BusyInlineKind.html, text: text),
       ],
       _ => [
@@ -427,40 +447,76 @@ class MarkdownAstAdapter {
 
   List<BusyBlock> _tableRows(md.Element table, String Function() nextId) {
     final rows = <BusyBlock>[];
-    for (final section
+
+    void addRow(md.Element row, {required bool sectionHeader}) {
+      final cells =
+          row.children
+              ?.whereType<md.Element>()
+              .where((cell) => cell.tag == 'th' || cell.tag == 'td')
+              .toList() ??
+          const <md.Element>[];
+      if (cells.isEmpty) {
+        return;
+      }
+      final allHeaderCells = cells.every((cell) => cell.tag == 'th');
+      rows.add(
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.table,
+          attributes: {'header': '${sectionHeader || allHeaderCells}'},
+          children: [
+            for (final cell in cells)
+              BusyBlock(
+                id: nextId(),
+                kind: BusyBlockKind.paragraph,
+                inlines: _inlinesFromNodes(cell.children ?? const []),
+                attributes: _tableCellAttributes(cell),
+              ),
+          ],
+        ),
+      );
+    }
+
+    for (final child
         in table.children?.whereType<md.Element>() ?? const <md.Element>[]) {
-      final header = section.tag == 'thead';
-      for (final row
-          in section.children?.whereType<md.Element>() ??
-              const <md.Element>[]) {
-        if (row.tag != 'tr') {
-          continue;
+      final tag = child.tag.toLowerCase();
+      if (tag == 'tr') {
+        addRow(child, sectionHeader: false);
+      } else if (tag == 'thead' || tag == 'tbody' || tag == 'tfoot') {
+        for (final row
+            in child.children?.whereType<md.Element>() ??
+                const <md.Element>[]) {
+          if (row.tag == 'tr') {
+            addRow(row, sectionHeader: tag == 'thead');
+          }
         }
-        rows.add(
-          BusyBlock(
-            id: nextId(),
-            kind: BusyBlockKind.table,
-            attributes: {'header': '$header'},
-            children: [
-              for (final cell
-                  in row.children?.whereType<md.Element>() ??
-                      const <md.Element>[])
-                BusyBlock(
-                  id: nextId(),
-                  kind: BusyBlockKind.paragraph,
-                  inlines: _inlinesFromNodes(cell.children ?? const []),
-                  attributes: {
-                    'cell': cell.tag,
-                    if (cell.attributes['align'] case final align?)
-                      'align': align,
-                  },
-                ),
-            ],
-          ),
-        );
       }
     }
     return rows;
+  }
+
+  BusyBlock? _tableCaption(md.Element table, String Function() nextId) {
+    final caption = table.children
+        ?.whereType<md.Element>()
+        .where((child) => child.tag == 'caption')
+        .firstOrNull;
+    if (caption == null) {
+      return null;
+    }
+    return BusyBlock(
+      id: nextId(),
+      kind: BusyBlockKind.paragraph,
+      inlines: _inlinesFromNodes(caption.children ?? const []),
+      attributes: const {'htmlTag': 'caption'},
+    );
+  }
+
+  Map<String, String> _tableCellAttributes(md.Element cell) {
+    return {
+      'cell': cell.tag,
+      for (final name in ['align', 'colspan', 'rowspan', 'scope'])
+        if (cell.attributes[name] case final value?) name: value,
+    };
   }
 
   BusyBlock? _writersideBlockFromText(
@@ -739,10 +795,6 @@ class MarkdownAstAdapter {
       'procedure' => BusyBlockKind.writersideProcedure,
       _ => BusyBlockKind.writersideRawXml,
     };
-  }
-
-  bool _dangerousHtmlTag(String tag) {
-    return {'script', 'style', 'iframe', 'object', 'embed'}.contains(tag);
   }
 
   _FrontMatter? _extractFrontMatter(String source) {

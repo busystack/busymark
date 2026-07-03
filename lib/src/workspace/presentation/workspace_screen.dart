@@ -5009,6 +5009,19 @@ class _PreviewBlockView extends StatelessWidget {
         child: const _PreviewThematicBreak(),
       ),
       PreviewBlockKind.table => _PreviewTable(block: displayBlock),
+      PreviewBlockKind.container => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, child) in displayBlock.children.indexed)
+            _PreviewBlockView(
+              child,
+              workspace: workspace,
+              first: first && index == 0,
+              listRunEnd: _isLastListBlock(displayBlock.children, index),
+              headingKey: null,
+            ),
+        ],
+      ),
       PreviewBlockKind.raw => Container(
         margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
         padding: BusyMarkInsets.previewCodeBlock,
@@ -5123,6 +5136,10 @@ class _PreviewTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final columnCount = block.children.fold<int>(
+      0,
+      (max, row) => math.max(max, row.children.length),
+    );
     return Container(
       margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
       decoration: BoxDecoration(
@@ -5146,17 +5163,18 @@ class _PreviewTable extends StatelessWidget {
                       : BusyMarkLinuxPalette.transparent,
                 ),
                 children: [
-                  for (final cell in row.children)
+                  for (var index = 0; index < columnCount; index += 1)
                     Padding(
                       padding: BusyMarkInsets.previewTableCell,
-                      child: _PreviewInlineText(
-                        block: cell,
-                        style: row.attributes['header'] == 'true'
-                            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              )
-                            : null,
-                      ),
+                      child: index < row.children.length
+                          ? _PreviewInlineText(
+                              block: row.children[index],
+                              style: row.attributes['header'] == 'true'
+                                  ? Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700)
+                                  : null,
+                            )
+                          : const SizedBox.shrink(),
                     ),
                 ],
               ),
