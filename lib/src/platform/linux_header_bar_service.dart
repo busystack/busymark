@@ -57,8 +57,11 @@ class HeaderBarLabels {
     required this.back,
     required this.save,
     required this.settings,
+    required this.settingsShortcut,
     required this.keyboardShortcuts,
+    required this.keyboardShortcutsShortcut,
     required this.markdownAndHtml,
+    required this.markdownAndHtmlShortcut,
     required this.aboutBusyMark,
   });
 
@@ -74,8 +77,11 @@ class HeaderBarLabels {
   final String back;
   final String save;
   final String settings;
+  final String settingsShortcut;
   final String keyboardShortcuts;
+  final String keyboardShortcutsShortcut;
   final String markdownAndHtml;
+  final String markdownAndHtmlShortcut;
   final String aboutBusyMark;
 
   Map<String, String> toMap() => {
@@ -91,8 +97,11 @@ class HeaderBarLabels {
     'back': back,
     'save': save,
     'settings': settings,
+    'settingsShortcut': settingsShortcut,
     'keyboardShortcuts': keyboardShortcuts,
+    'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
     'markdownAndHtml': markdownAndHtml,
+    'markdownAndHtmlShortcut': markdownAndHtmlShortcut,
     'aboutBusyMark': aboutBusyMark,
   };
 }

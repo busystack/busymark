@@ -348,6 +348,14 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
+  "shortcutMarkdownAndHtmlDescription": "فتح مرجع Markdown وHTML",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "فتح إعدادات BusyMark",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
   "shortcutNextTab": "علامة التبويب التالية",
   "@shortcutNextTab": {
     "description": "Keyboard shortcut label for moving to the next editor tab."
@@ -745,6 +753,26 @@
   "table": "جدول",
   "@table": {
     "description": "Table command label."
+  },
+  "htmlBlock": "كتلة HTML",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "إدراج كتلة HTML أو تحريرها",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "HTML معروض",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "تحرير HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "مصدر HTML",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
   },
   "thematicBreak": "فاصل أفقي",
   "@thematicBreak": {

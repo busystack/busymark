@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
+import 'package:busymark/src/editor/editor_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -1430,6 +1432,97 @@ void main() {}
     await tester.pump();
 
     expect(markdown, '- First\n\n- Second\n\nThird\n');
+  });
+
+  testWidgets('WYSIWYG renders safe HTML blocks and edits raw source', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<p>Hello <strong>HTML</strong></p>\n',
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.renderedHtml), findsOneWidget);
+    expect(find.text('Hello HTML'), findsOneWidget);
+    expect(find.textContaining('<p>'), findsNothing);
+
+    await tester.tap(find.byIcon(BusyMarkGlyphs.edit));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.editHtml), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('wysiwyg-html-source-field')),
+      '<p>Changed</p>',
+    );
+    await tester.tap(find.text(l10n.apply));
+    await tester.pumpAndSettle();
+
+    expect(markdown, '<p>Changed</p>\n');
+    expect(find.text('Changed'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG toolbar inserts an HTML block', (tester) async {
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.pump();
+    await tester.tap(
+      find.byTooltip(
+        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('wysiwyg-html-source-field')),
+      '<p>Inserted</p>',
+    );
+    await tester.tap(find.text(l10n.insert));
+    await tester.pumpAndSettle();
+
+    expect(markdown, 'Start\n\n<p>Inserted</p>\n');
+    expect(find.text(l10n.renderedHtml), findsOneWidget);
+    expect(find.text('Inserted'), findsOneWidget);
   });
 
   testWidgets('WYSIWYG typing preserves existing inline formatting', (

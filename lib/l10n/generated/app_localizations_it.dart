@@ -276,6 +276,13 @@ class AppLocalizationsIt extends AppLocalizations {
       'Mostra il riferimento alle scorciatoie da tastiera';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Apri il riferimento Markdown e HTML';
+
+  @override
+  String get shortcutSettingsDescription => 'Apri le impostazioni di BusyMark';
+
+  @override
   String get shortcutNextTab => 'Scheda successiva';
 
   @override
@@ -612,6 +619,22 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get table => 'Tabella';
+
+  @override
+  String get htmlBlock => 'Blocco HTML';
+
+  @override
+  String get shortcutHtmlBlockDescription =>
+      'Inserisci o modifica un blocco HTML';
+
+  @override
+  String get renderedHtml => 'HTML renderizzato';
+
+  @override
+  String get editHtml => 'Modifica HTML';
+
+  @override
+  String get htmlSource => 'Sorgente HTML';
 
   @override
   String get thematicBreak => 'Separatore tematico';

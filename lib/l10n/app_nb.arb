@@ -348,6 +348,14 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
+  "shortcutMarkdownAndHtmlDescription": "Åpne Markdown- og HTML-referansen",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "Åpne BusyMark-innstillinger",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
   "shortcutNextTab": "Neste fane",
   "@shortcutNextTab": {
     "description": "Keyboard shortcut label for moving to the next editor tab."
@@ -745,6 +753,26 @@
   "table": "Tabell",
   "@table": {
     "description": "Table command label."
+  },
+  "htmlBlock": "HTML-blokk",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "Sett inn eller rediger en HTML-blokk",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "Gjengitt HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "Rediger HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "HTML-kilde",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
   },
   "thematicBreak": "Tematisk skille",
   "@thematicBreak": {

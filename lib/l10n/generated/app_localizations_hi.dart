@@ -275,6 +275,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Markdown और HTML संदर्भ खोलें';
+
+  @override
+  String get shortcutSettingsDescription => 'BusyMark सेटिंग्स खोलें';
+
+  @override
   String get shortcutNextTab => 'अगला टैब';
 
   @override
@@ -597,6 +604,21 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get table => 'तालिका';
+
+  @override
+  String get htmlBlock => 'HTML ब्लॉक';
+
+  @override
+  String get shortcutHtmlBlockDescription => 'HTML ब्लॉक डालें या संपादित करें';
+
+  @override
+  String get renderedHtml => 'रेंडर किया गया HTML';
+
+  @override
+  String get editHtml => 'HTML संपादित करें';
+
+  @override
+  String get htmlSource => 'HTML स्रोत';
 
   @override
   String get thematicBreak => 'थीमैटिक ब्रेक';

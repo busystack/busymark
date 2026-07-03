@@ -348,6 +348,14 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
+  "shortcutMarkdownAndHtmlDescription": "Відкрити довідку з Markdown і HTML",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "Відкрити налаштування BusyMark",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
   "shortcutNextTab": "Наступна вкладка",
   "@shortcutNextTab": {
     "description": "Keyboard shortcut label for moving to the next editor tab."
@@ -745,6 +753,26 @@
   "table": "Таблиця",
   "@table": {
     "description": "Table command label."
+  },
+  "htmlBlock": "Блок HTML",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "Вставити або редагувати блок HTML",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "Відтворений HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "Редагувати HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "Вихідний HTML",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
   },
   "thematicBreak": "Горизонтальна лінія",
   "@thematicBreak": {

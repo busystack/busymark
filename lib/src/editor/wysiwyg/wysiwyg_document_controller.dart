@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../core/path_utils.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
+import '../../markdown/raw_html_adapter.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
 
@@ -327,6 +328,43 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return paragraphId;
   }
 
+  String? insertRawHtmlBlockAfter(String blockId, String rawSource) {
+    if (blockById(blockId) == null) {
+      return null;
+    }
+    final paragraphId = _nextGeneratedBlockId('paragraph');
+    _document = _document.copyWith(
+      blocks: _insertBlocksAfter(_document.blocks, blockId, [
+        _rawHtmlBlock(
+          id: _nextGeneratedBlockId('html'),
+          rawSource: rawSource,
+          dirty: true,
+        ),
+        BusyBlock(
+          id: paragraphId,
+          kind: BusyBlockKind.paragraph,
+          inlines: _textInlines(''),
+          dirty: true,
+        ),
+      ]),
+    );
+    notifyListeners();
+    return paragraphId;
+  }
+
+  void updateRawHtmlBlock(String blockId, String rawSource) {
+    _replaceBlock(blockId, (block) {
+      if (block.kind != BusyBlockKind.htmlBlock) {
+        return block;
+      }
+      return _rawHtmlBlock(
+        id: block.id,
+        rawSource: rawSource,
+        dirty: true,
+      ).copyWith(sourceSpan: block.sourceSpan);
+    });
+  }
+
   void replaceTable(
     String blockId, {
     required int columns,
@@ -485,6 +523,26 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       source: _serializer.serialize(nextDocument),
     );
     notifyListeners();
+  }
+
+  BusyBlock _rawHtmlBlock({
+    required String id,
+    required String rawSource,
+    required bool dirty,
+  }) {
+    final result = const RawHtmlAdapter().parseRawHtmlBlock(
+      rawSource,
+      () => _nextGeneratedBlockId('html'),
+    );
+    return BusyBlock(
+      id: id,
+      kind: BusyBlockKind.htmlBlock,
+      children: result?.safe == true ? result!.blocks : const [],
+      attributes: const {'sourceFormat': 'html'},
+      rawSource: rawSource,
+      preserveRaw: true,
+      dirty: dirty,
+    );
   }
 
   BusyBlock _generatedTableBlock({

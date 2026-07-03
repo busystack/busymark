@@ -9,6 +9,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fr.dart';
 import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/app_shortcuts.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -106,10 +107,90 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settings), findsOneWidget);
+    expect(
+      find.byTooltip(
+        '${l10n.settings} (${BusyMarkAppShortcutLabels.settings})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.keyboardShortcuts} '
+        '(${BusyMarkAppShortcutLabels.keyboardShortcuts})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.markdownAndHtml} '
+        '(${BusyMarkAppShortcutLabels.markdownAndHtml})',
+      ),
+      findsOneWidget,
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settings), findsNothing);
+  });
+
+  testWidgets('global reference and settings shortcuts open targets', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> pressShortcut(
+      LogicalKeyboardKey key, {
+      bool control = false,
+      bool shift = false,
+      bool alt = false,
+    }) async {
+      if (control) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      }
+      if (shift) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      if (alt) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      }
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      if (alt) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      }
+      if (shift) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      if (control) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+      await tester.pumpAndSettle();
+    }
+
+    await pressShortcut(LogicalKeyboardKey.slash, control: true, shift: true);
+    expect(
+      find.text(l10n.shortcutKeyboardShortcutsDescription),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await pressShortcut(LogicalKeyboardKey.keyM, control: true, shift: true);
+    expect(find.text(l10n.markdownHtmlSafetyDescription), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await pressShortcut(LogicalKeyboardKey.keyS, control: true, alt: true);
+    expect(find.text(l10n.settingsTitle), findsOneWidget);
   });
 
   testWidgets('settings screen opens', (tester) async {
@@ -388,6 +469,8 @@ void main() {
       find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
     );
+    expect(find.text(l10n.shortcutMarkdownAndHtmlDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutSettingsDescription), findsOneWidget);
     expect(find.text(l10n.shortcutNextTabDescription), findsOneWidget);
     expect(find.text(l10n.shortcutPreviousTabDescription), findsOneWidget);
     expect(find.text(l10n.shortcutCloseTabDescription), findsOneWidget);
@@ -409,7 +492,15 @@ void main() {
     expect(find.text('Ctrl+O'), findsOneWidget);
     expect(find.text('Ctrl+S'), findsOneWidget);
     expect(find.text('Ctrl+F'), findsOneWidget);
-    expect(find.text('Ctrl+/'), findsOneWidget);
+    expect(
+      find.text(BusyMarkAppShortcutLabels.keyboardShortcuts),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkAppShortcutLabels.markdownAndHtml),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkAppShortcutLabels.settings), findsOneWidget);
     expect(find.text('Ctrl+Tab'), findsOneWidget);
     expect(find.text('Ctrl+Shift+Tab'), findsOneWidget);
     expect(find.text('Ctrl+W'), findsOneWidget);
@@ -455,6 +546,7 @@ void main() {
     expect(find.text(BusyMarkEditorShortcutLabels.image), findsOneWidget);
     expect(find.text(BusyMarkEditorShortcutLabels.inlineImage), findsOneWidget);
     expect(find.text(BusyMarkEditorShortcutLabels.table), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.htmlBlock), findsOneWidget);
     expect(
       find.text(BusyMarkEditorShortcutLabels.thematicBreak),
       findsOneWidget,

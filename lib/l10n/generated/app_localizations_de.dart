@@ -276,6 +276,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Tastaturkürzelübersicht anzeigen';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Markdown- und HTML-Referenz öffnen';
+
+  @override
+  String get shortcutSettingsDescription => 'BusyMark-Einstellungen öffnen';
+
+  @override
   String get shortcutNextTab => 'Nächster Tab';
 
   @override
@@ -612,6 +619,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get table => 'Tabelle';
+
+  @override
+  String get htmlBlock => 'HTML-Block';
+
+  @override
+  String get shortcutHtmlBlockDescription =>
+      'HTML-Block einfügen oder bearbeiten';
+
+  @override
+  String get renderedHtml => 'Gerendertes HTML';
+
+  @override
+  String get editHtml => 'HTML bearbeiten';
+
+  @override
+  String get htmlSource => 'HTML-Quelle';
 
   @override
   String get thematicBreak => 'Trennlinie';

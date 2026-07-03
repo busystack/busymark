@@ -276,6 +276,13 @@ class AppLocalizationsUk extends AppLocalizations {
       'Показати довідку з комбінацій клавіш';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Відкрити довідку з Markdown і HTML';
+
+  @override
+  String get shortcutSettingsDescription => 'Відкрити налаштування BusyMark';
+
+  @override
   String get shortcutNextTab => 'Наступна вкладка';
 
   @override
@@ -614,6 +621,22 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get table => 'Таблиця';
+
+  @override
+  String get htmlBlock => 'Блок HTML';
+
+  @override
+  String get shortcutHtmlBlockDescription =>
+      'Вставити або редагувати блок HTML';
+
+  @override
+  String get renderedHtml => 'Відтворений HTML';
+
+  @override
+  String get editHtml => 'Редагувати HTML';
+
+  @override
+  String get htmlSource => 'Вихідний HTML';
 
   @override
   String get thematicBreak => 'Горизонтальна лінія';

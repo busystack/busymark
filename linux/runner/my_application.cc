@@ -1078,6 +1078,22 @@ static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
   }
 }
 
+static void set_menu_item_label_with_shortcut(GtkWidget* item,
+                                              const gchar* text,
+                                              const gchar* shortcut) {
+  set_menu_item_label(item, text);
+  if (item == nullptr || text == nullptr || !GTK_IS_WIDGET(item)) {
+    return;
+  }
+  if (shortcut == nullptr || shortcut[0] == '\0') {
+    gtk_widget_set_tooltip_text(item, text);
+    return;
+  }
+  gchar* tooltip = g_strdup_printf("%s (%s)", text, shortcut);
+  gtk_widget_set_tooltip_text(item, tooltip);
+  g_free(tooltip);
+}
+
 static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* editor = fl_lookup_string_arg(args, "editor");
   const gchar* source = fl_lookup_string_arg(args, "source");
@@ -1090,9 +1106,15 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
+  const gchar* settings_shortcut =
+      fl_lookup_string_arg(args, "settingsShortcut");
   const gchar* keyboard_shortcuts =
       fl_lookup_string_arg(args, "keyboardShortcuts");
+  const gchar* keyboard_shortcuts_shortcut =
+      fl_lookup_string_arg(args, "keyboardShortcutsShortcut");
   const gchar* markdown_html = fl_lookup_string_arg(args, "markdownAndHtml");
+  const gchar* markdown_html_shortcut =
+      fl_lookup_string_arg(args, "markdownAndHtmlShortcut");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
@@ -1110,14 +1132,21 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
   set_menu_item_label(self->view_mode_split_item, split);
-  set_menu_item_label(self->settings_item, settings);
-  set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
-  set_menu_item_label(self->markdown_html_item, markdown_html);
+  set_menu_item_label_with_shortcut(self->settings_item, settings,
+                                    settings_shortcut);
+  set_menu_item_label_with_shortcut(self->keyboard_shortcuts_item,
+                                    keyboard_shortcuts,
+                                    keyboard_shortcuts_shortcut);
+  set_menu_item_label_with_shortcut(self->markdown_html_item, markdown_html,
+                                    markdown_html_shortcut);
   set_menu_item_label(self->about_item, about);
-  set_menu_item_label(self->header_settings_item, settings);
-  set_menu_item_label(self->header_keyboard_shortcuts_item,
-                      keyboard_shortcuts);
-  set_menu_item_label(self->header_markdown_html_item, markdown_html);
+  set_menu_item_label_with_shortcut(self->header_settings_item, settings,
+                                    settings_shortcut);
+  set_menu_item_label_with_shortcut(self->header_keyboard_shortcuts_item,
+                                    keyboard_shortcuts,
+                                    keyboard_shortcuts_shortcut);
+  set_menu_item_label_with_shortcut(self->header_markdown_html_item,
+                                    markdown_html, markdown_html_shortcut);
   set_menu_item_label(self->header_about_item, about);
   update_view_mode_label(self);
 }

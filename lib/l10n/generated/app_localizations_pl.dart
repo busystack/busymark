@@ -275,6 +275,13 @@ class AppLocalizationsPl extends AppLocalizations {
       'Pokaż ten wykaz skrótów klawiaturowych';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Otwórz opis Markdown i HTML';
+
+  @override
+  String get shortcutSettingsDescription => 'Otwórz ustawienia BusyMark';
+
+  @override
   String get shortcutNextTab => 'Następna karta';
 
   @override
@@ -613,6 +620,21 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get table => 'Tabela';
+
+  @override
+  String get htmlBlock => 'Blok HTML';
+
+  @override
+  String get shortcutHtmlBlockDescription => 'Wstaw lub edytuj blok HTML';
+
+  @override
+  String get renderedHtml => 'Wyrenderowany HTML';
+
+  @override
+  String get editHtml => 'Edytuj HTML';
+
+  @override
+  String get htmlSource => 'Źródło HTML';
 
   @override
   String get thematicBreak => 'Linia pozioma';

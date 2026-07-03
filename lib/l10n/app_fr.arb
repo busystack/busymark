@@ -348,6 +348,14 @@
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
   },
+  "shortcutMarkdownAndHtmlDescription": "Ouvrir la référence Markdown et HTML",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "Ouvrir les paramètres de BusyMark",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
+  },
   "shortcutNextTab": "Onglet suivant",
   "@shortcutNextTab": {
     "description": "Keyboard shortcut label for moving to the next editor tab."
@@ -745,6 +753,26 @@
   "table": "Tableau",
   "@table": {
     "description": "Table command label."
+  },
+  "htmlBlock": "Bloc HTML",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "Insérer ou modifier un bloc HTML",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "HTML rendu",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "Modifier le HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "Source HTML",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
   },
   "thematicBreak": "Séparateur horizontal",
   "@thematicBreak": {

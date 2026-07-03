@@ -274,6 +274,12 @@ class AppLocalizationsAr extends AppLocalizations {
       'إظهار مرجع اختصارات لوحة المفاتيح';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription => 'فتح مرجع Markdown وHTML';
+
+  @override
+  String get shortcutSettingsDescription => 'فتح إعدادات BusyMark';
+
+  @override
   String get shortcutNextTab => 'علامة التبويب التالية';
 
   @override
@@ -600,6 +606,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get table => 'جدول';
+
+  @override
+  String get htmlBlock => 'كتلة HTML';
+
+  @override
+  String get shortcutHtmlBlockDescription => 'إدراج كتلة HTML أو تحريرها';
+
+  @override
+  String get renderedHtml => 'HTML معروض';
+
+  @override
+  String get editHtml => 'تحرير HTML';
+
+  @override
+  String get htmlSource => 'مصدر HTML';
 
   @override
   String get thematicBreak => 'فاصل أفقي';

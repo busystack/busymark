@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
+import '../../app/app_shortcuts.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -93,16 +94,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       value: _WelcomeMenuAction.settings,
                       label: l10n.settings,
                       icon: BusyMarkGlyphs.settings,
+                      shortcut: BusyMarkAppShortcutLabels.settings,
                     ),
                     BusyMarkPopupMenuItem(
                       value: _WelcomeMenuAction.keyboardShortcuts,
                       label: l10n.keyboardShortcuts,
                       icon: BusyMarkGlyphs.keyboard,
+                      shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
                     ),
                     BusyMarkPopupMenuItem(
                       value: _WelcomeMenuAction.markdownAndHtml,
                       label: l10n.markdownAndHtml,
                       icon: BusyMarkGlyphs.markdownFile,
+                      shortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
                     ),
                     BusyMarkPopupMenuItem(
                       value: _WelcomeMenuAction.aboutBusyMark,

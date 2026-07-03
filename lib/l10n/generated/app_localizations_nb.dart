@@ -276,6 +276,13 @@ class AppLocalizationsNb extends AppLocalizations {
       'Vis denne oversikten over tastatursnarveier';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Åpne Markdown- og HTML-referansen';
+
+  @override
+  String get shortcutSettingsDescription => 'Åpne BusyMark-innstillinger';
+
+  @override
   String get shortcutNextTab => 'Neste fane';
 
   @override
@@ -604,6 +611,22 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get table => 'Tabell';
+
+  @override
+  String get htmlBlock => 'HTML-blokk';
+
+  @override
+  String get shortcutHtmlBlockDescription =>
+      'Sett inn eller rediger en HTML-blokk';
+
+  @override
+  String get renderedHtml => 'Gjengitt HTML';
+
+  @override
+  String get editHtml => 'Rediger HTML';
+
+  @override
+  String get htmlSource => 'HTML-kilde';
 
   @override
   String get thematicBreak => 'Tematisk skille';

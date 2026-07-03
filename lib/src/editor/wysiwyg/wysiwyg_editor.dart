@@ -382,6 +382,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                     onImageEditRequested: () => unawaited(
                                       _handleImageBlockEditRequested(block.id),
                                     ),
+                                    onHtmlEditRequested: () => unawaited(
+                                      _handleHtmlBlockEditRequested(block.id),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -409,6 +412,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onInlineImageCommand: () =>
                           unawaited(_applyInlineImageCommand()),
                       onTableCommand: () => unawaited(_applyTableCommand()),
+                      onHtmlCommand: () => unawaited(_applyHtmlCommand()),
                       onIndentCommand: _applyIndentCommand,
                       onOutdentCommand: _applyOutdentCommand,
                       onToggleTaskCommand: _applyToggleTaskCommand,
@@ -782,6 +786,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       source: result.source,
       alt: result.alt,
     );
+    _emitMarkdown();
+  }
+
+  Future<void> _handleHtmlBlockEditRequested(String blockId) async {
+    _clearBlockSelection();
+    _setActiveBlock(blockId);
+    final block = _documentController.blockById(blockId);
+    if (block == null || block.kind != BusyBlockKind.htmlBlock) {
+      return;
+    }
+    final source = await _showHtmlDialog(
+      context,
+      initialSource: block.rawSource ?? '',
+      submitLabel: context.l10n.apply,
+    );
+    if (source == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    _documentController.updateRawHtmlBlock(blockId, source);
     _emitMarkdown();
   }
 
@@ -1373,6 +1397,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       case BusyMarkEditorShortcutAction.table:
         unawaited(_applyTableCommand());
         break;
+      case BusyMarkEditorShortcutAction.htmlBlock:
+        unawaited(_applyHtmlCommand());
+        break;
       case BusyMarkEditorShortcutAction.thematicBreak:
         _applyBlockCommand(BusyWysiwygBlockCommand.thematicBreak);
         break;
@@ -1743,6 +1770,35 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
+  Future<void> _applyHtmlCommand() async {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    final block = _documentController.blockById(blockId);
+    if (block?.kind == BusyBlockKind.htmlBlock) {
+      await _handleHtmlBlockEditRequested(blockId);
+      return;
+    }
+    final source = await _showHtmlDialog(
+      context,
+      initialSource: '<div>\n  <p>HTML content</p>\n</div>',
+      submitLabel: context.l10n.insert,
+    );
+    if (source == null || source.trim().isEmpty) {
+      return;
+    }
+    _recordUndoSnapshot();
+    final paragraphId = _documentController.insertRawHtmlBlockAfter(
+      blockId,
+      source,
+    );
+    _emitMarkdown();
+    if (paragraphId != null) {
+      _focusBlockAfterFrame(paragraphId, offset: 0);
+    }
+  }
+
   int _tableColumnCount(BusyBlock block) {
     if (block.kind != BusyBlockKind.table || block.children.isEmpty) {
       return 2;
@@ -1870,7 +1926,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           ),
         ],
       ),
-    ).whenComplete(controller.dispose);
+    );
   }
 
   Future<_ImageDialogResult?> _showImageDialog(
@@ -1901,6 +1957,45 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       builder: (context) => _TableDialog(
         initialColumns: initialColumns,
         initialRows: initialRows,
+      ),
+    );
+  }
+
+  Future<String?> _showHtmlDialog(
+    BuildContext context, {
+    required String initialSource,
+    required String submitLabel,
+  }) {
+    final controller = TextEditingController(text: initialSource);
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.editHtml),
+        content: SizedBox(
+          width: BusyMarkSizes.dialogNarrow,
+          child: TextField(
+            key: const ValueKey('wysiwyg-html-source-field'),
+            controller: controller,
+            autofocus: true,
+            minLines: 8,
+            maxLines: 16,
+            textInputAction: TextInputAction.newline,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+            ),
+            decoration: InputDecoration(labelText: context.l10n.htmlSource),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(submitLabel),
+          ),
+        ],
       ),
     );
   }

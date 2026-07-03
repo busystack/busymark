@@ -17,6 +17,7 @@ import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
 import 'app_settings.dart';
+import 'app_shortcuts.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
@@ -78,8 +79,21 @@ class BusyMarkApp extends ConsumerWidget {
                   _OpenWorkspaceIntent(),
               SingleActivator(LogicalKeyboardKey.keyS, control: true):
                   _SaveActiveIntent(),
-              SingleActivator(LogicalKeyboardKey.slash, control: true):
-                  _KeyboardShortcutsIntent(),
+              SingleActivator(
+                LogicalKeyboardKey.slash,
+                control: true,
+                shift: true,
+              ): _KeyboardShortcutsIntent(),
+              SingleActivator(
+                LogicalKeyboardKey.keyS,
+                control: true,
+                alt: true,
+              ): _SettingsIntent(),
+              SingleActivator(
+                LogicalKeyboardKey.keyM,
+                control: true,
+                shift: true,
+              ): _MarkdownAndHtmlIntent(),
               SingleActivator(LogicalKeyboardKey.tab, control: true):
                   _NextTabIntent(),
               SingleActivator(
@@ -161,6 +175,24 @@ class BusyMarkApp extends ConsumerWidget {
                         return null;
                       },
                     ),
+                _SettingsIntent: CallbackAction<_SettingsIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      GoRouter.of(navigatorContext).go('/settings');
+                    }
+                    return null;
+                  },
+                ),
+                _MarkdownAndHtmlIntent: CallbackAction<_MarkdownAndHtmlIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      showBusyMarkMarkdownHtmlDialog(navigatorContext);
+                    }
+                    return null;
+                  },
+                ),
                 _NextTabIntent: CallbackAction<_NextTabIntent>(
                   onInvoke: (intent) {
                     final navigatorContext = rootNavigatorKey.currentContext;
@@ -478,8 +510,11 @@ class BusyMarkApp extends ConsumerWidget {
       back: material.backButtonTooltip,
       save: l10n.save,
       settings: l10n.settings,
+      settingsShortcut: BusyMarkAppShortcutLabels.settings,
       keyboardShortcuts: l10n.keyboardShortcuts,
+      keyboardShortcutsShortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
       markdownAndHtml: l10n.markdownAndHtml,
+      markdownAndHtmlShortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
       aboutBusyMark: l10n.aboutBusyMark,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -680,6 +715,14 @@ class _SaveActiveIntent extends Intent {
 
 class _KeyboardShortcutsIntent extends Intent {
   const _KeyboardShortcutsIntent();
+}
+
+class _SettingsIntent extends Intent {
+  const _SettingsIntent();
+}
+
+class _MarkdownAndHtmlIntent extends Intent {
+  const _MarkdownAndHtmlIntent();
 }
 
 class _NextTabIntent extends Intent {

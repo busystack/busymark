@@ -15,6 +15,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onImageCommand,
     required this.onInlineImageCommand,
     required this.onTableCommand,
+    required this.onHtmlCommand,
     required this.onIndentCommand,
     required this.onOutdentCommand,
     required this.onToggleTaskCommand,
@@ -29,6 +30,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onImageCommand;
   final VoidCallback onInlineImageCommand;
   final VoidCallback onTableCommand;
+  final VoidCallback onHtmlCommand;
   final VoidCallback onIndentCommand;
   final VoidCallback onOutdentCommand;
   final VoidCallback onToggleTaskCommand;
@@ -137,6 +139,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               icon: BusyMarkGlyphs.table,
               shortcut: BusyMarkEditorShortcutLabels.table,
               onPressed: onTableCommand,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.htmlBlock,
+              icon: BusyMarkGlyphs.code,
+              shortcut: BusyMarkEditorShortcutLabels.htmlBlock,
+              onPressed: onHtmlCommand,
             ),
             _button(
               context,

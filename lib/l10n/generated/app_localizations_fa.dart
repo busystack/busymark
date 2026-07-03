@@ -275,6 +275,13 @@ class AppLocalizationsFa extends AppLocalizations {
       'نمایش مرجع میانبرهای صفحه‌کلید';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'باز کردن مرجع Markdown و HTML';
+
+  @override
+  String get shortcutSettingsDescription => 'باز کردن تنظیمات BusyMark';
+
+  @override
   String get shortcutNextTab => 'تب بعدی';
 
   @override
@@ -599,6 +606,21 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get table => 'جدول';
+
+  @override
+  String get htmlBlock => 'بلوک HTML';
+
+  @override
+  String get shortcutHtmlBlockDescription => 'درج یا ویرایش بلوک HTML';
+
+  @override
+  String get renderedHtml => 'HTML رندرشده';
+
+  @override
+  String get editHtml => 'ویرایش HTML';
+
+  @override
+  String get htmlSource => 'منبع HTML';
 
   @override
   String get thematicBreak => 'جداکنندهٔ موضوعی';

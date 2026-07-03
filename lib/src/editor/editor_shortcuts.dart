@@ -27,6 +27,7 @@ enum BusyMarkEditorShortcutAction {
   image,
   inlineImage,
   table,
+  htmlBlock,
   thematicBreak,
   hardLineBreak,
   pastePlainText,
@@ -61,6 +62,7 @@ class BusyMarkEditorShortcutLabels {
   static const image = 'Ctrl+Alt+I';
   static const inlineImage = 'Ctrl+Alt+Shift+I';
   static const table = 'Ctrl+Shift+T';
+  static const htmlBlock = 'Ctrl+Alt+H';
   static const thematicBreak = 'Ctrl+Alt+R';
   static const hardLineBreak = 'Shift+Enter';
 }
@@ -95,6 +97,7 @@ class BusyMarkEditorShortcutActivators {
         BusyMarkEditorShortcutAction.image: image,
         BusyMarkEditorShortcutAction.inlineImage: inlineImage,
         BusyMarkEditorShortcutAction.table: table,
+        BusyMarkEditorShortcutAction.htmlBlock: htmlBlock,
         BusyMarkEditorShortcutAction.thematicBreak: thematicBreak,
         BusyMarkEditorShortcutAction.hardLineBreak: hardLineBreak,
         BusyMarkEditorShortcutAction.pastePlainText: pastePlainText,
@@ -233,6 +236,11 @@ class BusyMarkEditorShortcutActivators {
     LogicalKeyboardKey.keyT,
     control: true,
     shift: true,
+  );
+  static const htmlBlock = SingleActivator(
+    LogicalKeyboardKey.keyH,
+    control: true,
+    alt: true,
   );
   static const thematicBreak = SingleActivator(
     LogicalKeyboardKey.keyR,

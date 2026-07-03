@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
+import '../../app/app_shortcuts.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -60,6 +61,7 @@ class SettingsScreen extends ConsumerWidget {
                 BusyMarkHeaderIconButton(
                   tooltip: context.l10n.keyboardShortcuts,
                   icon: BusyMarkGlyphs.keyboard,
+                  shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
                   onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(

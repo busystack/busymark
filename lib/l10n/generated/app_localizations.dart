@@ -642,6 +642,18 @@ abstract class AppLocalizations {
   /// **'Show this keyboard shortcut reference'**
   String get shortcutKeyboardShortcutsDescription;
 
+  /// Keyboard shortcut description for opening the Markdown and HTML reference.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Markdown and HTML reference'**
+  String get shortcutMarkdownAndHtmlDescription;
+
+  /// Keyboard shortcut description for opening settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open BusyMark settings'**
+  String get shortcutSettingsDescription;
+
   /// Keyboard shortcut label for moving to the next editor tab.
   ///
   /// In en, this message translates to:
@@ -1223,6 +1235,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Table'**
   String get table;
+
+  /// HTML block command label.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML block'**
+  String get htmlBlock;
+
+  /// Keyboard shortcut description for inserting or editing an HTML block.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert or edit an HTML block'**
+  String get shortcutHtmlBlockDescription;
+
+  /// Badge label for HTML rendered in the WYSIWYG editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Rendered HTML'**
+  String get renderedHtml;
+
+  /// Dialog title and tooltip for editing raw HTML source.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit HTML'**
+  String get editHtml;
+
+  /// Text field label for raw HTML source.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML source'**
+  String get htmlSource;
 
   /// Thematic break command label.
   ///

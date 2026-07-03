@@ -276,6 +276,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Показать справку по сочетаниям клавиш.';
 
   @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Открыть справку по Markdown и HTML';
+
+  @override
+  String get shortcutSettingsDescription => 'Открыть настройки BusyMark';
+
+  @override
   String get shortcutNextTab => 'Следующая вкладка';
 
   @override
@@ -615,6 +622,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get table => 'Таблица';
+
+  @override
+  String get htmlBlock => 'Блок HTML';
+
+  @override
+  String get shortcutHtmlBlockDescription => 'Вставить или изменить блок HTML';
+
+  @override
+  String get renderedHtml => 'Отрисованный HTML';
+
+  @override
+  String get editHtml => 'Редактировать HTML';
+
+  @override
+  String get htmlSource => 'Исходный HTML';
 
   @override
   String get thematicBreak => 'Горизонтальная линия';

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
+import '../../app/app_shortcuts.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -474,11 +475,13 @@ class WorkspaceScreen extends ConsumerWidget {
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.settings,
                         icon: BusyMarkGlyphs.settings,
+                        shortcut: BusyMarkAppShortcutLabels.settings,
                         onPressed: () => context.go('/settings'),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.keyboardShortcuts,
                         icon: BusyMarkGlyphs.keyboard,
+                        shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
                         onPressed: () =>
                             showBusyMarkKeyboardShortcutsDialog(context),
                       ),
@@ -3382,6 +3385,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       case BusyMarkEditorShortcutAction.table:
         _insertSourceTable();
         break;
+      case BusyMarkEditorShortcutAction.htmlBlock:
+        _insertSourceHtmlBlock();
+        break;
       case BusyMarkEditorShortcutAction.thematicBreak:
         _insertSourceBlock('\n---\n');
         break;
@@ -3538,6 +3544,19 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   void _insertSourceTable() {
     _insertSourceBlock(
       '\n| Header 1 | Header 2 |\n| --- | --- |\n| Cell | Cell |\n',
+    );
+  }
+
+  void _insertSourceHtmlBlock() {
+    final selection = _normalizedSourceSelection();
+    final selected = selection.textInside(_controller.text).trim();
+    final content = selected.isEmpty ? 'HTML content' : selected;
+    final replacement = '\n<div>\n  <p>$content</p>\n</div>\n';
+    final contentStart = replacement.indexOf(content);
+    _replaceSourceSelection(
+      replacement,
+      selectionStart: selection.start + contentStart,
+      selectionEnd: selection.start + contentStart + content.length,
     );
   }
 

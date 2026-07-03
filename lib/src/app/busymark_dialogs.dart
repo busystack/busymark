@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../editor/editor_shortcuts.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
+import 'app_shortcuts.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
@@ -176,7 +177,25 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 title: context.l10n.keyboardShortcuts,
                 subtitle: context.l10n.shortcutKeyboardShortcutsDescription,
                 leading: const Icon(BusyMarkGlyphs.keyboard),
-                trailing: const _KeyboardShortcutBadge('Ctrl+/'),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.keyboardShortcuts,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.markdownAndHtml,
+                subtitle: context.l10n.shortcutMarkdownAndHtmlDescription,
+                leading: const Icon(BusyMarkGlyphs.markdownFile),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.markdownAndHtml,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.settings,
+                subtitle: context.l10n.shortcutSettingsDescription,
+                leading: const Icon(BusyMarkGlyphs.settings),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.settings,
+                ),
               ),
             ],
           ),
@@ -475,6 +494,14 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.table),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkEditorShortcutLabels.table,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.htmlBlock,
+                subtitle: context.l10n.shortcutHtmlBlockDescription,
+                leading: const Icon(BusyMarkGlyphs.code),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkEditorShortcutLabels.htmlBlock,
                 ),
               ),
               BusyMarkActionRow(
