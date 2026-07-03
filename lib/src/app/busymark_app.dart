@@ -464,6 +464,7 @@ class BusyMarkApp extends ConsumerWidget {
     final material = MaterialLocalizations.of(context);
     final l10n = context.l10n;
     final theme = HeaderBarTheme.fromContext(context);
+    final textDirection = Directionality.maybeOf(context) ?? TextDirection.ltr;
     final labels = HeaderBarLabels(
       editor: l10n.editor,
       source: l10n.source,
@@ -482,6 +483,7 @@ class BusyMarkApp extends ConsumerWidget {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
+        await service.setTextDirection(textDirection);
         await service.setSidebarWidth(BusyMarkSizes.sidebarWidth);
         await service.setTheme(theme);
         await service.setLocalizedLabels(labels);
