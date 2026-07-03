@@ -477,6 +477,8 @@ void main() {
           '<img src="data:image/png;base64,AAAA">\n'
           '<img src="/home/albert/private.png">\n'
           '<img src="file:///home/albert/private.png">\n'
+          '<a href="ftp://example.com/private.md">ftp</a>\n'
+          '<a href="docs://topic/intro">custom</a>\n'
           '<a href="//example.com/path">protocol relative</a>\n',
     );
 
@@ -484,7 +486,7 @@ void main() {
       parsed.diagnostics
           .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
           .length,
-      6,
+      8,
     );
   });
 

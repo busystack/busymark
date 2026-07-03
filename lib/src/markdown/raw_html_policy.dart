@@ -2,6 +2,8 @@ import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
 import 'package:path/path.dart' as p;
 
+import '../core/uri_utils.dart';
+
 const maxRawHtmlDepth = 100;
 const maxRawHtmlNodes = 5000;
 
@@ -325,15 +327,12 @@ bool _isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
     return !parsed.hasAuthority && _isSafeRelativeHtmlPath(parsed.path);
   }
   if (attribute == 'href') {
-    return scheme == 'http' ||
-        scheme == 'https' ||
-        scheme == 'mailto' ||
-        scheme == 'tel';
+    return isLaunchableExternalUriScheme(scheme);
   }
   if (attribute == 'src' && tag == 'img') {
-    return scheme == 'http' || scheme == 'https';
+    return isRemoteResourceUriScheme(scheme);
   }
-  return scheme == 'http' || scheme == 'https';
+  return isRemoteResourceUriScheme(scheme);
 }
 
 bool _isSafeRelativeHtmlPath(String value) {

@@ -221,10 +221,12 @@ void main() {
     expect(paragraph.text, contains('*escaped* text'));
   });
 
-  test('inline autolinks support broad safe URI schemes', () {
+  test('inline autolinks only support launchable URI schemes', () {
     final inlines = parseInlineMarkdown(
-      '<ftp://example.com/doc.md> '
+      '<https://example.com/doc.md> '
+      '<mailto:docs@example.com> '
       '<tel:+15551234567> '
+      '<ftp://example.com/doc.md> '
       '<docs://topic/intro> '
       '<file:///tmp/topic.md> '
       '<javascript:alert(1)> '
@@ -238,12 +240,14 @@ void main() {
     expect(
       destinations,
       containsAll([
-        'ftp://example.com/doc.md',
+        'https://example.com/doc.md',
+        'mailto:docs@example.com',
         'tel:+15551234567',
-        'docs://topic/intro',
-        'file:///tmp/topic.md',
       ]),
     );
+    expect(destinations, isNot(contains('ftp://example.com/doc.md')));
+    expect(destinations, isNot(contains('docs://topic/intro')));
+    expect(destinations, isNot(contains('file:///tmp/topic.md')));
     expect(destinations, isNot(contains('javascript:alert(1)')));
     expect(destinations, isNot(contains('data:text/plain,hello')));
   });
