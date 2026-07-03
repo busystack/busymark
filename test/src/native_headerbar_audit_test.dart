@@ -319,6 +319,19 @@ void main() {
     );
   });
 
+  test('local snap builder stages bundled Git tools', () {
+    final script = File('tools/build_install_snap_local.sh').readAsStringSync();
+
+    expect(script, contains('stage_bundled_git_tools'));
+    expect(script, contains('git --exec-path'));
+    expect(script, contains(r'copy_tree_into_snap_root "$git_exec_path"'));
+    expect(script, contains('copy_tree_into_snap_root /usr/share/git-core'));
+    expect(script, contains('for tool in ssh scp sftp ssh-keyscan'));
+    expect(script, contains(r'stage_ldd_dependencies "$git_bin"'));
+    expect(script, contains('squashfs-root/usr/bin/git'));
+    expect(script, contains('--skip-bundled-git'));
+  });
+
   test('native headerbar tooltips keep GTK theme opacity', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final tooltipBlock = RegExp(
