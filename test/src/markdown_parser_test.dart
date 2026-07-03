@@ -454,14 +454,27 @@ void main() {
       source:
           '<a href="javascript:alert(1)">bad</a>\n'
           '<img src="vbscript:alert(1)">\n'
-          '<img src="data:image/png;base64,AAAA">\n',
+          '<img src="data:image/png;base64,AAAA">\n'
+          '<img src="/home/albert/private.png">\n'
+          '<img src="file:///home/albert/private.png">\n',
     );
 
     expect(
       parsed.diagnostics
           .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
           .length,
-      3,
+      5,
+    );
+  });
+
+  test('deeply nested raw HTML produces unsafe diagnostic', () {
+    final source =
+        '${List.filled(120, '<div>').join()}Deep${List.filled(120, '</div>').join()}\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.raw-html.unsafe'),
     );
   });
 

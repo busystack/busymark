@@ -546,6 +546,43 @@ Also visible.
     );
   });
 
+  test('preview does not make raw HTML links active without href', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'See <a>file:///home/albert/private.md</a> now.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single;
+    final inlines = _flattenInlines(paragraph.inlines).toList();
+
+    expect(paragraph.text, 'See file:///home/albert/private.md now.');
+    expect(
+      inlines.map((inline) => inline.kind),
+      isNot(contains(PreviewInlineKind.link)),
+    );
+  });
+
+  test('preview rejects absolute local image paths in raw HTML', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<img src="/home/albert/private.png" alt="Private">\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+    expect(preview.blocks.single.text, contains('/home/albert/private.png'));
+  });
+
+  test('preview rejects deeply nested raw HTML before conversion', () {
+    final source =
+        '${List.filled(120, '<div>').join()}Deep${List.filled(120, '</div>').join()}\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+    expect(preview.blocks.single.text, contains('Deep'));
+  });
+
   test('preview renders safe raw HTML containers as child content', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

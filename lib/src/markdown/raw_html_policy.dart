@@ -1,5 +1,9 @@
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
+import 'package:path/path.dart' as p;
+
+const maxRawHtmlDepth = 100;
+const maxRawHtmlNodes = 5000;
 
 const safeBlockHtmlTags = {
   'article',
@@ -244,7 +248,15 @@ bool hasUnsafeHtml(String content) {
   }
 }
 
-bool _hasUnsafeHtmlNode(html.Node node) {
+bool _hasUnsafeHtmlNode(
+  html.Node node, {
+  int depth = 0,
+  _HtmlWalkState? state,
+}) {
+  state ??= _HtmlWalkState();
+  if (!state.visit(depth)) {
+    return true;
+  }
   if (node is html.Element) {
     final tag = node.localName?.toLowerCase() ?? '';
     if (isUnsafeHtmlTag(tag)) {
@@ -256,11 +268,23 @@ bool _hasUnsafeHtmlNode(html.Node node) {
     }
   }
   for (final child in node.nodes) {
-    if (_hasUnsafeHtmlNode(child)) {
+    if (_hasUnsafeHtmlNode(child, depth: depth + 1, state: state)) {
       return true;
     }
   }
   return false;
+}
+
+class _HtmlWalkState {
+  var nodes = 0;
+
+  bool visit(int depth) {
+    if (depth > maxRawHtmlDepth || nodes >= maxRawHtmlNodes) {
+      return false;
+    }
+    nodes += 1;
+    return true;
+  }
 }
 
 bool _isAllowedAttribute(String tag, String attribute) {
@@ -278,13 +302,27 @@ bool _isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
   if (trimmed.isEmpty) {
     return false;
   }
+  if (RegExp(r'[\x00-\x1F\x7F]').hasMatch(trimmed)) {
+    return false;
+  }
+  final compactForScheme = trimmed.replaceAll(RegExp(r'\s+'), '');
+  final compactScheme = Uri.tryParse(compactForScheme)?.scheme.toLowerCase();
+  if (compactScheme == 'javascript' ||
+      compactScheme == 'vbscript' ||
+      compactScheme == 'data' ||
+      compactScheme == 'file') {
+    return false;
+  }
   if (trimmed.startsWith('#')) {
     return true;
   }
   final parsed = Uri.tryParse(trimmed);
-  final scheme = parsed?.scheme.toLowerCase() ?? '';
+  if (parsed == null || parsed.hasAuthority) {
+    return false;
+  }
+  final scheme = parsed.scheme.toLowerCase();
   if (scheme.isEmpty) {
-    return true;
+    return _isSafeRelativeHtmlPath(parsed.path);
   }
   if (attribute == 'href') {
     return scheme == 'http' ||
@@ -296,6 +334,16 @@ bool _isSafeHtmlUrlAttribute(String tag, String attribute, String value) {
     return scheme == 'http' || scheme == 'https';
   }
   return scheme == 'http' || scheme == 'https';
+}
+
+bool _isSafeRelativeHtmlPath(String value) {
+  final path = value.trim();
+  if (path.isEmpty) {
+    return false;
+  }
+  return !p.posix.isAbsolute(path) &&
+      !p.windows.isAbsolute(path) &&
+      !path.startsWith('\\');
 }
 
 String _normalizeName(String name) => name.trim().toLowerCase();

@@ -23,8 +23,14 @@ class RawHtmlAdapter {
       return null;
     }
     final fragment = _parseFragment(rawSource);
-    if (fragment == null || !_hasElement(fragment.nodes)) {
+    if (fragment == null) {
       return null;
+    }
+    final elementScan = _HtmlElementScanState();
+    if (!_hasElement(fragment.nodes, state: elementScan)) {
+      return elementScan.exceeded
+          ? const RawHtmlBlockParseResult(safe: false)
+          : null;
     }
     if (!_isSafeFragment(fragment, inlineOnly: false)) {
       return const RawHtmlBlockParseResult(safe: false);
@@ -38,7 +44,11 @@ class RawHtmlAdapter {
       return null;
     }
     final fragment = _parseFragment(text);
-    if (fragment == null || !_hasElement(fragment.nodes)) {
+    if (fragment == null) {
+      return null;
+    }
+    final elementScan = _HtmlElementScanState();
+    if (!_hasElement(fragment.nodes, state: elementScan)) {
       return null;
     }
     if (!_isSafeFragment(fragment, inlineOnly: true)) {
@@ -55,16 +65,35 @@ class RawHtmlAdapter {
     }
   }
 
-  bool _isSafeFragment(html.Node node, {required bool inlineOnly}) {
+  bool _isSafeFragment(
+    html.Node node, {
+    required bool inlineOnly,
+    int depth = 0,
+    _HtmlWalkState? state,
+  }) {
+    state ??= _HtmlWalkState();
     for (final child in node.nodes) {
-      if (!_isSafeNode(child, inlineOnly: inlineOnly)) {
+      if (!_isSafeNode(
+        child,
+        inlineOnly: inlineOnly,
+        depth: depth + 1,
+        state: state,
+      )) {
         return false;
       }
     }
     return true;
   }
 
-  bool _isSafeNode(html.Node node, {required bool inlineOnly}) {
+  bool _isSafeNode(
+    html.Node node, {
+    required bool inlineOnly,
+    required int depth,
+    required _HtmlWalkState state,
+  }) {
+    if (!state.visit(depth)) {
+      return false;
+    }
     if (node is! html.Element) {
       return true;
     }
@@ -78,7 +107,12 @@ class RawHtmlAdapter {
     if (sanitizeHtmlAttributes(tag, node.attributes) == null) {
       return false;
     }
-    return _isSafeFragment(node, inlineOnly: inlineOnly);
+    return _isSafeFragment(
+      node,
+      inlineOnly: inlineOnly,
+      depth: depth,
+      state: state,
+    );
   }
 
   List<BusyBlock> _blocksFromNodes(
@@ -497,13 +531,16 @@ class RawHtmlAdapter {
         ),
       ],
       'a' => [
-        BusyInline(
-          kind: BusyInlineKind.link,
-          text: text,
-          destination: attributes['href'],
-          children: children,
-          attributes: attributes,
-        ),
+        if (attributes['href'] case final href?)
+          BusyInline(
+            kind: BusyInlineKind.link,
+            text: text,
+            destination: href,
+            children: children,
+            attributes: attributes,
+          )
+        else
+          ...children,
       ],
       'img' => [
         BusyInline(
@@ -564,13 +601,57 @@ class RawHtmlAdapter {
     return int.parse(tag.substring(1));
   }
 
-  bool _hasElement(Iterable<html.Node> nodes) {
-    return nodes.any((node) => node is html.Element || _hasElement(node.nodes));
+  bool _hasElement(
+    Iterable<html.Node> nodes, {
+    required _HtmlElementScanState state,
+    int depth = 0,
+  }) {
+    for (final node in nodes) {
+      if (!state.visit(depth)) {
+        return false;
+      }
+      if (node is html.Element) {
+        return true;
+      }
+      if (_hasElement(node.nodes, state: state, depth: depth + 1)) {
+        return true;
+      }
+      if (state.exceeded) {
+        return false;
+      }
+    }
+    return false;
   }
 
   bool _mayContainHtml(String value) {
     return value.contains('<') &&
         value.contains('>') &&
         RegExp(r'</?\s*[A-Za-z][A-Za-z0-9_-]*(?:\s|/?>)').hasMatch(value);
+  }
+}
+
+class _HtmlWalkState {
+  var nodes = 0;
+
+  bool visit(int depth) {
+    if (depth > maxRawHtmlDepth || nodes >= maxRawHtmlNodes) {
+      return false;
+    }
+    nodes += 1;
+    return true;
+  }
+}
+
+class _HtmlElementScanState {
+  var nodes = 0;
+  var exceeded = false;
+
+  bool visit(int depth) {
+    if (depth > maxRawHtmlDepth || nodes >= maxRawHtmlNodes) {
+      exceeded = true;
+      return false;
+    }
+    nodes += 1;
+    return true;
   }
 }
