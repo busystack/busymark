@@ -29,6 +29,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onTableColumnDeleted,
     required this.onTableDeleted,
     required this.onImageEditRequested,
+    required this.onHtmlEditRequested,
     required this.onFocused,
     this.selected = false,
     this.selectionRange,
@@ -54,6 +55,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final ValueChanged<int> onTableColumnDeleted;
   final VoidCallback onTableDeleted;
   final VoidCallback onImageEditRequested;
+  final VoidCallback onHtmlEditRequested;
   final VoidCallback onFocused;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
@@ -82,6 +84,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
               ? onFocused
               : block.kind == BusyBlockKind.image
               ? _editImageBlock
+              : _isRenderedHtmlBlock
+              ? _editHtmlBlock
               : readOnly
               ? onFocused
               : _focusBlock,
@@ -124,6 +128,16 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         onColumnInserted: onTableColumnInserted,
         onColumnDeleted: onTableColumnDeleted,
         onTableDeleted: onTableDeleted,
+      );
+    }
+    if (_isRenderedHtmlBlock) {
+      return _RenderedHtmlBlockEditor(
+        block: block,
+        documentFilePath: documentFilePath,
+        workspaceRoot: workspaceRoot,
+        writersideRoot: writersideRoot,
+        imagesDir: imagesDir,
+        onEdit: _editHtmlBlock,
       );
     }
     return Row(
@@ -223,6 +237,17 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   void _editImageBlock() {
     onFocused();
     onImageEditRequested();
+  }
+
+  void _editHtmlBlock() {
+    onFocused();
+    onHtmlEditRequested();
+  }
+
+  bool get _isRenderedHtmlBlock {
+    return block.kind == BusyBlockKind.htmlBlock &&
+        block.attributes['sourceFormat'] == 'html' &&
+        block.children.isNotEmpty;
   }
 
   double _minimumHeight(BuildContext context) {
@@ -367,6 +392,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
+      BusyBlockKind.htmlBlock => Icon(
+        BusyMarkGlyphs.code,
+        size: BusyMarkSizes.iconSm,
+        color: colors.mutedForeground,
+      ),
       _ => null,
     };
   }
@@ -409,6 +439,625 @@ class BusyMarkWysiwygSelectionRange {
 
   final int start;
   final int end;
+}
+
+class _RenderedHtmlBlockEditor extends StatelessWidget {
+  const _RenderedHtmlBlockEditor({
+    required this.block,
+    required this.documentFilePath,
+    required this.workspaceRoot,
+    required this.writersideRoot,
+    required this.imagesDir,
+    required this.onEdit,
+  });
+
+  final BusyBlock block;
+  final String documentFilePath;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Tooltip(
+      message: context.l10n.editHtml,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.controlHover,
+                  borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+                  border: Border.all(color: colors.subtleBorder),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BusyMarkSpacing.sm,
+                    vertical: BusyMarkSpacing.xs,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        BusyMarkGlyphs.code,
+                        size: BusyMarkSizes.iconSm,
+                      ),
+                      const SizedBox(width: BusyMarkSpacing.xs),
+                      Text(
+                        context.l10n.renderedHtml,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: context.l10n.editHtml,
+                style: busyMarkHeaderIconButtonStyle(
+                  foregroundColor: colors.mutedForeground,
+                  backgroundColor: busyMarkHeaderButtonBackground(context),
+                ),
+                icon: const Icon(
+                  BusyMarkGlyphs.edit,
+                  size: BusyMarkSizes.iconSm,
+                ),
+                onPressed: onEdit,
+              ),
+            ],
+          ),
+          const SizedBox(height: BusyMarkSpacing.sm),
+          _RenderedHtmlBlocks(
+            blocks: block.children,
+            documentFilePath: documentFilePath,
+            workspaceRoot: workspaceRoot,
+            writersideRoot: writersideRoot,
+            imagesDir: imagesDir,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RenderedHtmlBlocks extends StatelessWidget {
+  const _RenderedHtmlBlocks({
+    required this.blocks,
+    required this.documentFilePath,
+    required this.workspaceRoot,
+    required this.writersideRoot,
+    required this.imagesDir,
+  });
+
+  final List<BusyBlock> blocks;
+  final String documentFilePath;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (index, block) in blocks.indexed)
+          _RenderedHtmlBlock(
+            block: block,
+            documentFilePath: documentFilePath,
+            workspaceRoot: workspaceRoot,
+            writersideRoot: writersideRoot,
+            imagesDir: imagesDir,
+            first: index == 0,
+          ),
+      ],
+    );
+  }
+}
+
+class _RenderedHtmlBlock extends StatelessWidget {
+  const _RenderedHtmlBlock({
+    required this.block,
+    required this.documentFilePath,
+    required this.workspaceRoot,
+    required this.writersideRoot,
+    required this.imagesDir,
+    required this.first,
+  });
+
+  final BusyBlock block;
+  final String documentFilePath;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    return switch (block.kind) {
+      BusyBlockKind.heading => Padding(
+        padding: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.smPlus,
+          bottom: BusyMarkSpacing.xs,
+        ),
+        child: _RenderedHtmlInlineText(
+          block: block,
+          style: _headingStyle(context, block),
+        ),
+      ),
+      BusyBlockKind.paragraph => Padding(
+        padding: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.xs,
+          bottom: BusyMarkSpacing.xs,
+        ),
+        child: _RenderedHtmlInlineText(
+          block: block,
+          style: textTheme.bodyMedium?.copyWith(
+            height: BusyMarkTypography.bodyLineHeight,
+          ),
+        ),
+      ),
+      BusyBlockKind.image => Padding(
+        padding: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.xs,
+          bottom: BusyMarkSpacing.xs,
+        ),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: MarkdownImageView(
+            source: _imageSource(block),
+            alt: block.plainText,
+            activeFilePath: documentFilePath,
+            workspaceRoot: workspaceRoot,
+            writersideRoot: writersideRoot,
+            imagesDir: imagesDir,
+          ),
+        ),
+      ),
+      BusyBlockKind.codeBlock => Container(
+        margin: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.xs,
+          bottom: BusyMarkSpacing.xs,
+        ),
+        padding: BusyMarkInsets.previewCodeBlock,
+        decoration: BoxDecoration(
+          color: colors.view,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Text(
+          block.plainText,
+          style: textTheme.bodyMedium?.copyWith(
+            fontFamily: BusyMarkTypography.monoFontFamily,
+            height: BusyMarkTypography.codeLineHeight,
+          ),
+        ),
+      ),
+      BusyBlockKind.blockquote => Container(
+        margin: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.xs,
+          bottom: BusyMarkSpacing.xs,
+        ),
+        padding: BusyMarkInsets.previewCallout,
+        decoration: BoxDecoration(
+          color: colors.view,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+          border: Border.all(color: colors.subtleBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              BusyMarkGlyphs.blockquote,
+              size: BusyMarkSizes.iconSm,
+              color: colors.mutedForeground,
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(
+              child: block.children.isEmpty
+                  ? _RenderedHtmlInlineText(block: block)
+                  : _RenderedHtmlBlocks(
+                      blocks: block.children,
+                      documentFilePath: documentFilePath,
+                      workspaceRoot: workspaceRoot,
+                      writersideRoot: writersideRoot,
+                      imagesDir: imagesDir,
+                    ),
+            ),
+          ],
+        ),
+      ),
+      BusyBlockKind.table => _RenderedHtmlTable(block: block, first: first),
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem => _RenderedHtmlListItem(
+        block: block,
+        documentFilePath: documentFilePath,
+        workspaceRoot: workspaceRoot,
+        writersideRoot: writersideRoot,
+        imagesDir: imagesDir,
+        first: first,
+      ),
+      BusyBlockKind.thematicBreak => Padding(
+        padding: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.sm,
+          bottom: BusyMarkSpacing.sm,
+        ),
+        child: Divider(height: BusyMarkStroke.thematicBreak),
+      ),
+      BusyBlockKind.htmlBlock when block.attributes['htmlTag'] == 'figure' =>
+        _RenderedHtmlFigure(
+          block: block,
+          documentFilePath: documentFilePath,
+          workspaceRoot: workspaceRoot,
+          writersideRoot: writersideRoot,
+          imagesDir: imagesDir,
+          first: first,
+        ),
+      BusyBlockKind.htmlBlock => _RenderedHtmlBlocks(
+        blocks: block.children,
+        documentFilePath: documentFilePath,
+        workspaceRoot: workspaceRoot,
+        writersideRoot: writersideRoot,
+        imagesDir: imagesDir,
+      ),
+      _ => Padding(
+        padding: EdgeInsets.only(
+          top: first ? 0 : BusyMarkSpacing.xs,
+          bottom: BusyMarkSpacing.xs,
+        ),
+        child: _RenderedHtmlInlineText(block: block),
+      ),
+    };
+  }
+
+  TextStyle? _headingStyle(BuildContext context, BusyBlock block) {
+    final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
+    final theme = Theme.of(context).textTheme;
+    return switch (level) {
+      1 => theme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+      2 => theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      3 => theme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+      4 => theme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      5 => theme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+      _ => theme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+    };
+  }
+}
+
+class _RenderedHtmlFigure extends StatelessWidget {
+  const _RenderedHtmlFigure({
+    required this.block,
+    required this.documentFilePath,
+    required this.workspaceRoot,
+    required this.writersideRoot,
+    required this.imagesDir,
+    required this.first,
+  });
+
+  final BusyBlock block;
+  final String documentFilePath;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final contentBlocks = block.children
+        .where((child) => child.attributes['htmlTag'] != 'figcaption')
+        .toList();
+    final captionBlocks = block.children
+        .where((child) => child.attributes['htmlTag'] == 'figcaption')
+        .toList();
+    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: colors.mutedForeground,
+      height: BusyMarkTypography.bodyLineHeight,
+    );
+    return Padding(
+      padding: EdgeInsets.only(
+        top: first ? 0 : BusyMarkSpacing.xs,
+        bottom: BusyMarkSpacing.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _RenderedHtmlBlocks(
+            blocks: contentBlocks,
+            documentFilePath: documentFilePath,
+            workspaceRoot: workspaceRoot,
+            writersideRoot: writersideRoot,
+            imagesDir: imagesDir,
+          ),
+          if (captionBlocks.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: BusyMarkSpacing.xs),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final caption in captionBlocks)
+                    _RenderedHtmlInlineText(
+                      block: caption,
+                      style: captionStyle,
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RenderedHtmlListItem extends StatelessWidget {
+  const _RenderedHtmlListItem({
+    required this.block,
+    required this.documentFilePath,
+    required this.workspaceRoot,
+    required this.writersideRoot,
+    required this.imagesDir,
+    required this.first,
+  });
+
+  final BusyBlock block;
+  final String documentFilePath;
+  final String? workspaceRoot;
+  final String? writersideRoot;
+  final String imagesDir;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final marker = block.kind == BusyBlockKind.orderedListItem
+        ? block.attributes['marker'] ?? '1.'
+        : '•';
+    return Padding(
+      padding: EdgeInsets.only(
+        top: first ? 0 : BusyMarkSpacing.xs,
+        bottom: block.children.isEmpty ? BusyMarkSpacing.xs : 0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: BusyMarkSizes.previewListMarkerWidth,
+                child: Text(
+                  marker,
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.mutedForeground,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              Expanded(child: _RenderedHtmlInlineText(block: block)),
+            ],
+          ),
+          if (block.children.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
+              ),
+              child: _RenderedHtmlBlocks(
+                blocks: block.children,
+                documentFilePath: documentFilePath,
+                workspaceRoot: workspaceRoot,
+                writersideRoot: writersideRoot,
+                imagesDir: imagesDir,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RenderedHtmlTable extends StatelessWidget {
+  const _RenderedHtmlTable({required this.block, required this.first});
+
+  final BusyBlock block;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final rows = block.children;
+    final columnCount = _columnCount(rows);
+    return Padding(
+      padding: EdgeInsets.only(
+        top: first ? 0 : BusyMarkSpacing.xs,
+        bottom: BusyMarkSpacing.sm,
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: BusyMarkSizes.tableMinWidth,
+          ),
+          child: Table(
+            border: TableBorder.all(
+              color: colors.subtleBorder,
+              borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+            ),
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            children: [
+              for (final (rowIndex, row) in rows.indexed)
+                TableRow(
+                  decoration: BoxDecoration(
+                    color: _isHeaderRow(row, rowIndex)
+                        ? colors.controlHover
+                        : BusyMarkLinuxPalette.transparent,
+                  ),
+                  children: [
+                    for (var column = 0; column < columnCount; column++)
+                      _RenderedHtmlTableCell(
+                        cell: column < row.children.length
+                            ? row.children[column]
+                            : null,
+                        header: _isHeaderRow(row, rowIndex),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _columnCount(List<BusyBlock> rows) {
+    var count = 1;
+    for (final row in rows) {
+      if (row.children.length > count) {
+        count = row.children.length;
+      }
+    }
+    return count;
+  }
+
+  bool _isHeaderRow(BusyBlock row, int index) {
+    return index == 0 || row.attributes['header'] == 'true';
+  }
+}
+
+class _RenderedHtmlTableCell extends StatelessWidget {
+  const _RenderedHtmlTableCell({required this.cell, required this.header});
+
+  final BusyBlock? cell;
+  final bool header;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      fontWeight: header ? FontWeight.w700 : FontWeight.w400,
+      height: BusyMarkTypography.bodyLineHeight,
+    );
+    return Padding(
+      padding: BusyMarkInsets.wysiwygTableCell,
+      child: cell == null
+          ? const SizedBox.shrink()
+          : _RenderedHtmlInlineText(block: cell!, style: style),
+    );
+  }
+}
+
+class _RenderedHtmlInlineText extends StatelessWidget {
+  const _RenderedHtmlInlineText({required this.block, this.style});
+
+  final BusyBlock block;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveStyle =
+        style ??
+        Theme.of(context).textTheme.bodyMedium?.copyWith(
+          height: BusyMarkTypography.bodyLineHeight,
+        );
+    return Text.rich(
+      TextSpan(
+        style: effectiveStyle,
+        children: [
+          for (final inline in block.inlines)
+            _spanForInline(context, inline, effectiveStyle),
+        ],
+      ),
+    );
+  }
+
+  InlineSpan _spanForInline(
+    BuildContext context,
+    BusyInline inline,
+    TextStyle? baseStyle,
+  ) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final childBaseStyle = _styleForInline(context, inline, baseStyle);
+    if (inline.kind == BusyInlineKind.image) {
+      final alt = inline.text.trim().isEmpty ? context.l10n.image : inline.text;
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                BusyMarkGlyphs.image,
+                size: BusyMarkSizes.iconSm,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: BusyMarkSpacing.xs),
+              Text(alt, style: childBaseStyle),
+            ],
+          ),
+        ),
+      );
+    }
+    if (inline.kind == BusyInlineKind.hardBreak) {
+      return const TextSpan(text: '\n');
+    }
+    if (inline.kind == BusyInlineKind.softBreak) {
+      return const TextSpan(text: ' ');
+    }
+    if (inline.children.isNotEmpty) {
+      return TextSpan(
+        style: childBaseStyle,
+        children: [
+          for (final child in inline.children)
+            _spanForInline(context, child, childBaseStyle),
+        ],
+      );
+    }
+    return TextSpan(
+      text: inline.text,
+      style: inline.kind == BusyInlineKind.link
+          ? childBaseStyle?.copyWith(color: scheme.primary)
+          : childBaseStyle,
+    );
+  }
+
+  TextStyle? _styleForInline(
+    BuildContext context,
+    BusyInline inline,
+    TextStyle? baseStyle,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    return switch (inline.kind) {
+      BusyInlineKind.strong => baseStyle?.copyWith(fontWeight: FontWeight.w700),
+      BusyInlineKind.emphasis => baseStyle?.copyWith(
+        fontStyle: FontStyle.italic,
+      ),
+      BusyInlineKind.underline => baseStyle?.copyWith(
+        decoration: TextDecoration.underline,
+      ),
+      BusyInlineKind.strikethrough => baseStyle?.copyWith(
+        decoration: TextDecoration.lineThrough,
+      ),
+      BusyInlineKind.code => baseStyle?.copyWith(
+        fontFamily: BusyMarkTypography.monoFontFamily,
+        backgroundColor: BusyMarkSurfaceColors.of(context).controlHover,
+      ),
+      BusyInlineKind.link => baseStyle?.copyWith(
+        color: scheme.primary,
+        decoration: TextDecoration.underline,
+      ),
+      _ => baseStyle,
+    };
+  }
 }
 
 class _ThematicBreakBlockView extends StatelessWidget {

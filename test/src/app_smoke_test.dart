@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fr.dart';
@@ -10,8 +11,10 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -52,7 +55,8 @@ void main() {
     expect(app.supportedLocales, AppLocalizations.supportedLocales);
     expect(app.supportedLocales, contains(const Locale('de')));
     expect(app.supportedLocales, contains(const Locale('it')));
-    expect(app.supportedLocales, contains(const Locale('no')));
+    expect(app.supportedLocales, contains(const Locale('nb')));
+    expect(app.supportedLocales, isNot(contains(const Locale('no'))));
     expect(app.supportedLocales, contains(const Locale('fr')));
     expect(app.supportedLocales, contains(const Locale('ru')));
     expect(app.supportedLocales, contains(const Locale('uk')));
@@ -85,6 +89,107 @@ void main() {
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
+  });
+
+  testWidgets('Escape closes header popup menus', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.settings), findsOneWidget);
+    expect(
+      find.byTooltip(
+        '${l10n.settings} (${BusyMarkAppShortcutLabels.settings})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.keyboardShortcuts} '
+        '(${BusyMarkAppShortcutLabels.keyboardShortcuts})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.markdownAndHtml} '
+        '(${BusyMarkAppShortcutLabels.markdownAndHtml})',
+      ),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.settings), findsNothing);
+  });
+
+  testWidgets('global reference and settings shortcuts open targets', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> pressShortcut(
+      LogicalKeyboardKey key, {
+      bool control = false,
+      bool shift = false,
+      bool alt = false,
+    }) async {
+      if (control) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      }
+      if (shift) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      if (alt) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      }
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      if (alt) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      }
+      if (shift) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      if (control) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+      await tester.pumpAndSettle();
+    }
+
+    await pressShortcut(LogicalKeyboardKey.keyK, control: true, alt: true);
+    expect(
+      find.text(l10n.shortcutKeyboardShortcutsDescription),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await pressShortcut(LogicalKeyboardKey.keyM, control: true, alt: true);
+    expect(find.text(l10n.markdownHtmlSafetyDescription), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await pressShortcut(LogicalKeyboardKey.keyS, control: true, alt: true);
+    expect(find.text(l10n.settingsTitle), findsOneWidget);
   });
 
   testWidgets('settings screen opens', (tester) async {
@@ -131,6 +236,15 @@ void main() {
     expect(find.text('Deutsch'), findsOneWidget);
     expect(find.text('العربية'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Deutsch'), findsNothing);
+    expect(find.text('العربية'), findsNothing);
+    expect(find.text('हिन्दी'), findsNothing);
+
+    await tester.tap(find.byTooltip(l10n.appLanguage));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
 
@@ -354,6 +468,8 @@ void main() {
       find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
     );
+    expect(find.text(l10n.shortcutMarkdownAndHtmlDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutSettingsDescription), findsOneWidget);
     expect(find.text(l10n.shortcutNextTabDescription), findsOneWidget);
     expect(find.text(l10n.shortcutPreviousTabDescription), findsOneWidget);
     expect(find.text(l10n.shortcutCloseTabDescription), findsOneWidget);
@@ -370,11 +486,20 @@ void main() {
     expect(find.text(l10n.shortcutNumberedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
     expect(find.text('Ctrl+N'), findsOneWidget);
     expect(find.text('Ctrl+O'), findsOneWidget);
     expect(find.text('Ctrl+S'), findsOneWidget);
     expect(find.text('Ctrl+F'), findsOneWidget);
-    expect(find.text('Ctrl+/'), findsOneWidget);
+    expect(
+      find.text(BusyMarkAppShortcutLabels.keyboardShortcuts),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkAppShortcutLabels.markdownAndHtml),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkAppShortcutLabels.settings), findsOneWidget);
     expect(find.text('Ctrl+Tab'), findsOneWidget);
     expect(find.text('Ctrl+Shift+Tab'), findsOneWidget);
     expect(find.text('Ctrl+W'), findsOneWidget);
@@ -386,25 +511,105 @@ void main() {
     expect(find.text('Ctrl+Shift+V'), findsOneWidget);
     expect(find.text('Ctrl+Z'), findsOneWidget);
     expect(find.text('Ctrl+Shift+Z'), findsOneWidget);
-    expect(find.text('Ctrl+B'), findsOneWidget);
-    expect(find.text('Ctrl+I'), findsOneWidget);
-    expect(find.text('Ctrl+U'), findsOneWidget);
-    expect(find.text('Ctrl+K'), findsOneWidget);
-    expect(find.text('Ctrl+E'), findsOneWidget);
-    expect(find.text('Alt+Shift+5'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+0'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+1'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+2'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+3'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+4'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+5'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+6'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+7'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+8'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+9'), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.bold), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.italic), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.underline), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.link), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.inlineCode), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.strikethrough),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkEditorShortcutLabels.paragraph), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading1), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading2), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading3), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading4), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading5), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.heading6), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.orderedList), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.unorderedList),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkEditorShortcutLabels.taskList), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.toggleTask), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.indent), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.outdent), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.blockquote), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.codeBlock), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.codeBlockLanguage),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkEditorShortcutLabels.image), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.inlineImage), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.table), findsOneWidget);
+    expect(find.text(BusyMarkEditorShortcutLabels.htmlBlock), findsOneWidget);
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.thematicBreak),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkEditorShortcutLabels.hardLineBreak),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkSidebarShortcutLabels.toggleSidebar),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkSidebarShortcutLabels.files), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.toc), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.outline), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.git), findsOneWidget);
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.shortcutNewDocumentDescription), findsNothing);
+  });
+
+  testWidgets('markdown and html dialog opens from the header', (tester) async {
+    final l10n = AppLocalizationsEn();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.markdownAndHtml));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.markdownAndHtml), findsWidgets);
+    expect(find.text(l10n.markdownHtmlMarkdownBlocks), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlInlineFormatting), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlRawHtmlBlocks), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlRawHtmlInline), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlSafety), findsOneWidget);
+    expect(find.textContaining('article, aside, div, section'), findsOneWidget);
+    expect(find.textContaining('span, strong, em, b'), findsOneWidget);
+    expect(
+      find.text(l10n.markdownHtmlMarkdownInsideHtmlDescription),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.markdownHtmlBlockedContentDescription),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.markdownHtmlMarkdownBlocks), findsNothing);
   });
 
   testWidgets('keyboard shortcuts tabs section title is localized', (
@@ -431,7 +636,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(fr.tabs), findsOneWidget);
+    expect(fr.shortcutGroupSidebar, isNot('Sidebar'));
+    expect(find.text(fr.shortcutGroupSidebar), findsOneWidget);
     expect(find.text('Tabs'), findsNothing);
+    expect(find.text('Sidebar'), findsNothing);
   });
 
   testWidgets('about dialog shows the BusyMark logo', (tester) async {
@@ -532,6 +740,21 @@ void main() {
         .read(workspaceControllerProvider.notifier)
         .updateActiveText('# Dirty\n');
     await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.unsavedChanges), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+    expect(service.untitledCount, 0);
+    expect(container.read(workspaceControllerProvider).isDirty, isTrue);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
@@ -664,6 +887,169 @@ void main() {
     expect(find.text(l10n.noOpenFile), findsWidgets);
   });
 
+  testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_keys_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final second = File('${temp.path}/Api.md')..writeAsStringSync('# API\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path, second.path],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    Future<void> pressControlShortcut(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 30; i += 1) {
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.text('Api.md'), findsOneWidget);
+
+    expect(
+      find.byTooltip(
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
+    expect(
+      find.byTooltip(
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit1);
+    expect(find.text('Api.md'), findsOneWidget);
+    expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit4);
+    expect(find.text(l10n.gitUnavailableTitle), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit3);
+    expect(find.text(l10n.gitUnavailableTitle), findsNothing);
+    expect(find.text('Intro.md'), findsWidgets);
+
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byTooltip('${l10n.files} (${BusyMarkSidebarShortcutLabels.files})'),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.outline} (${BusyMarkSidebarShortcutLabels.outline})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip('${l10n.git} (${BusyMarkSidebarShortcutLabels.git})'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('workspace sidebar is on the right in Arabic', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_rtl_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final ar = AppLocalizationsAr();
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            localeTag: 'ar',
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null &&
+          find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    final sidebarRect = tester.getRect(find.byTooltip(ar.sidebarViewMenu));
+    final sourceRect = tester.getRect(find.byType(TextField).last);
+    final scaffold = find.byType(Scaffold).last;
+    final resolvedHeaderPadding = BusyMarkInsets.sidebarHeader.resolve(
+      TextDirection.rtl,
+    );
+
+    expect(Directionality.of(tester.element(scaffold)), TextDirection.rtl);
+    expect(sidebarRect.left, greaterThan(sourceRect.right));
+    expect(resolvedHeaderPadding.right, BusyMarkSpacing.mdPlus);
+    expect(resolvedHeaderPadding.left, BusyMarkSpacing.sm);
+  });
+
   testWidgets('source undo cannot restore saved text from previous tab', (
     tester,
   ) async {
@@ -765,6 +1151,201 @@ void main() {
     expect(service.savedText, '# Edited Introduction\n');
   });
 
+  testWidgets('source view supports editor formatting shortcuts', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_source_keys_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('alpha');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    Future<void> pressShortcut(
+      LogicalKeyboardKey key, {
+      bool control = false,
+      bool alt = false,
+      bool shift = false,
+    }) async {
+      if (control) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      }
+      if (alt) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      }
+      if (shift) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      if (shift) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      if (alt) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      }
+      if (control) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, 'alpha');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.period, control: true, shift: true);
+    expect(container.read(workspaceControllerProvider).activeText, '> alpha');
+
+    await tester.enterText(sourceField, 'snippet');
+    final controller = tester.widget<TextField>(sourceField).controller!;
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
+    );
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.keyC, control: true, alt: true);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '```\nsnippet\n```',
+    );
+
+    await tester.enterText(sourceField, 'row');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.keyT, control: true, shift: true);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      contains('| Header 1 | Header 2 |'),
+    );
+
+    await tester.enterText(sourceField, 'line');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.enter, shift: true);
+    expect(container.read(workspaceControllerProvider).activeText, 'line  \n');
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+  });
+
+  testWidgets('Tab and Shift+Tab update indentation in source view', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_source_tab_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('- Parent\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+    }
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, '- Parent\n- Child\n');
+    final controller = tester.widget<TextField>(sourceField).controller!;
+    controller.selection = const TextSelection.collapsed(offset: 9);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '- Parent\n\t- Child\n',
+    );
+    expect(controller.text, '- Parent\n\t- Child\n');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '- Parent\n- Child\n',
+    );
+    expect(controller.text, '- Parent\n- Child\n');
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+  });
+
   testWidgets('editor undo cannot restore saved text from previous tab', (
     tester,
   ) async {
@@ -864,6 +1445,53 @@ void main() {
     );
     expect(service.savedPath, first.path);
     expect(service.savedText, '# Edited Introduction\n');
+  });
+
+  testWidgets('Tab inserts a tab character in editor view', (tester) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    final service = _SearchWorkspaceService('- Item\n');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/editor-tab.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorField = find.byType(TextField).first;
+    await tester.tap(editorField);
+    final controller = tester.widget<TextField>(editorField).controller!;
+    controller.selection = const TextSelection.collapsed(offset: 0);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+
+    expect(controller.text, '\tItem');
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      '- \tItem\n',
+    );
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
   });
 
   testWidgets('window close still warns when active changes are unsaved', (
@@ -975,6 +1603,63 @@ void main() {
     expect(find.textContaining('Basic Markdown'), findsWidgets);
   });
 
+  testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
+    const startupPath = 'test/fixtures/markdown/basic.md';
+    const recentPath = '/tmp/busymark-recent-docs';
+    final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            recentWorkspaces: [
+              RecentWorkspace(
+                path: recentPath,
+                kind: 'markdownFolder',
+                lastOpenedAt: DateTime(2026, 1, 2),
+              ),
+            ],
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 10; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(service.openedPath, startupPath);
+    expect(find.text(l10n.openMarkdownFile), findsNothing);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyO);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyO);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.openMarkdownFile), findsOneWidget);
+    expect(find.text(l10n.recent), findsOneWidget);
+    expect(find.text('busymark-recent-docs'), findsOneWidget);
+
+    await tester.tap(find.text('busymark-recent-docs'));
+    await tester.pumpAndSettle();
+
+    expect(service.openedPath, recentPath);
+    expect(find.text(l10n.openMarkdownFile), findsNothing);
+  });
+
   testWidgets('shared Markdown image renderer resolves local images', (
     tester,
   ) async {
@@ -1056,7 +1741,7 @@ void main() {
   );
 
   testWidgets(
-    'shared Markdown image renderer rejects absolute paths outside workspace',
+    'shared Markdown image renderer resolves absolute paths outside workspace',
     (tester) async {
       final workspace = Directory.systemTemp.createTempSync(
         'busymark_preview_image_workspace_',
@@ -1092,14 +1777,58 @@ void main() {
         );
         await tester.pump();
 
-        expect(find.byType(Image), findsNothing);
-        expect(find.textContaining(image.path), findsOneWidget);
+        expect(find.byType(Image), findsOneWidget);
+        expect(find.textContaining(image.path), findsNothing);
       } finally {
         workspace.deleteSync(recursive: true);
         outside.deleteSync(recursive: true);
       }
     },
   );
+
+  testWidgets('shared Markdown image renderer resolves home-relative paths', (
+    tester,
+  ) async {
+    final fakeHome = Directory.systemTemp.createTempSync(
+      'busymark_preview_image_home_',
+    );
+    try {
+      final downloads = Directory('${fakeHome.path}/Downloads')..createSync();
+      File('${downloads.path}/example.jpg').writeAsBytesSync(
+        base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+        ),
+      );
+      debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      addTearDown(() {
+        debugLocalImageHomeDirectoryOverride = null;
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(
+            body: MarkdownImageView(
+              source: '~/Downloads/example.jpg',
+              alt: 'Example',
+              activeFilePath: 'Untitled.md',
+              workspaceRoot: null,
+              writersideRoot: null,
+              imagesDir: 'images',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.textContaining('~/Downloads/example.jpg'), findsNothing);
+    } finally {
+      debugLocalImageHomeDirectoryOverride = null;
+      fakeHome.deleteSync(recursive: true);
+    }
+  });
 
   testWidgets('shared Markdown image renderer resolves local SVG images', (
     tester,
@@ -1560,6 +2289,141 @@ void main() {
     expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
   });
 
+  testWidgets('preview adds extra vertical space after a list', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '# Title\n\n'
+      '- First item\n'
+      '- Second item\n'
+      '\n'
+      'After list paragraph.\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/list-spacing.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final first = _rightmostTextRect(tester, 'First item');
+    final second = _rightmostTextRect(tester, 'Second item');
+    final after = _rightmostTextRect(tester, 'After list paragraph.');
+    final itemGap = second.top - first.bottom;
+    final afterListGap = after.top - second.bottom;
+
+    expect(afterListGap, greaterThan(itemGap + BusyMarkSpacing.xs));
+  });
+
+  testWidgets('preview renders nested list children', (tester) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '* Элемент списка А\n'
+      '  * Вложенный элемент (нужно сделать 2 или 4 пробела)\n'
+      '  * Еще один вложенный элемент\n'
+      '  * **Ссылка:** [Яндекс](https://yandex.ru)\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/nested-list.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(find.textContaining('Элемент списка А'), findsOneWidget);
+    expect(
+      find.textContaining('Вложенный элемент (нужно сделать 2 или 4 пробела)'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Еще один вложенный элемент'), findsOneWidget);
+    expect(find.textContaining('Ссылка:'), findsOneWidget);
+    expect(find.textContaining('Яндекс'), findsOneWidget);
+  });
+
+  testWidgets('preview renders raw HTML table as table cells', (tester) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(
+      '<table>\n'
+      '  <tr><th>Name</th><th>Value</th></tr>\n'
+      '  <tr><td>A</td></tr>\n'
+      '</table>\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/raw-html-table.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(find.text('Name'), findsOneWidget);
+    expect(find.text('Value'), findsOneWidget);
+    expect(find.text('A'), findsOneWidget);
+    expect(find.textContaining('<table>'), findsNothing);
+  });
+
   testWidgets('preview search result click lands on code block line', (
     tester,
   ) async {
@@ -1648,6 +2512,88 @@ void main() {
     expect(service.saveCount, 1);
     expect(service.savedPath, 'test/fixtures/markdown/basic.md');
     expect(service.savedText, '# Basic Markdown\n');
+  });
+
+  testWidgets('Ctrl+S saves source edits from an untitled Markdown document', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_untitled_save_');
+    final saveFile = File('${temp.path}/created.md');
+    const editedText = '# Created\n\nDraft text.';
+    const fileSelectorChannel = MethodChannel(
+      'plugins.flutter.io/file_selector',
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      fileSelectorChannel,
+      (call) async {
+        expect(call.method, 'getSavePath');
+        final args = call.arguments as Map<Object?, Object?>;
+        expect(args['suggestedName'], l10n.untitledMarkdownFileName);
+        return saveFile.path;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        null,
+      );
+      if (temp.existsSync()) {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createMarkdownFile));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 10; i += 1) {
+      if (find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final sourceField = find.byType(TextField).last;
+    await tester.tap(sourceField);
+    await tester.enterText(sourceField, editedText);
+    await tester.pump();
+
+    expect(container.read(workspaceControllerProvider).activeText, editedText);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(service.saveCount, 1);
+    expect(service.savedPath, saveFile.path);
+    expect(service.savedText, editedText);
+    expect(container.read(workspaceControllerProvider).activeText, editedText);
+    expect(
+      tester.widget<TextField>(find.byType(TextField).last).controller?.text,
+      editedText,
+    );
   });
 }
 

@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
+import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -129,6 +131,42 @@ void main() {}
 
     expect(const BusyMarkMarkdownSerializer().serialize(document), '$raw\n');
   });
+
+  test('serializer preserves safe raw HTML source byte for byte', () {
+    const source =
+        '<table>\n'
+        '  <caption>Metrics</caption>\n'
+        '  <tr><td>A</td></tr>\n'
+        '</table>\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final block = parsed.busyDocument.blocks.single;
+
+    expect(block.kind, BusyBlockKind.htmlBlock);
+    expect(block.preserveRaw, isTrue);
+    expect(block.dirty, isFalse);
+    expect(block.attributes['sourceFormat'], 'html');
+    expect(
+      const BusyMarkMarkdownSerializer().serialize(parsed.busyDocument),
+      source,
+    );
+  });
+
+  test(
+    'serializer preserves unsafe raw HTML source while preview remains raw',
+    () {
+      const source = '<script>alert(1)</script>\n';
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final preview = const BusyMarkPreviewBuilder().build(parsed.busyDocument);
+
+      expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.htmlBlock);
+      expect(parsed.busyDocument.blocks.single.preserveRaw, isTrue);
+      expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+      expect(
+        const BusyMarkMarkdownSerializer().serialize(parsed.busyDocument),
+        source,
+      );
+    },
+  );
 
   test(
     'serializer patches dirty blocks without canonicalizing unchanged source',
@@ -1396,6 +1434,97 @@ void main() {}
     expect(markdown, '- First\n\n- Second\n\nThird\n');
   });
 
+  testWidgets('WYSIWYG renders safe HTML blocks and edits raw source', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<p>Hello <strong>HTML</strong></p>\n',
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.renderedHtml), findsOneWidget);
+    expect(find.text('Hello HTML'), findsOneWidget);
+    expect(find.textContaining('<p>'), findsNothing);
+
+    await tester.tap(find.byIcon(BusyMarkGlyphs.edit));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.editHtml), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('wysiwyg-html-source-field')),
+      '<p>Changed</p>',
+    );
+    await tester.tap(find.text(l10n.apply));
+    await tester.pumpAndSettle();
+
+    expect(markdown, '<p>Changed</p>\n');
+    expect(find.text('Changed'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG toolbar inserts an HTML block', (tester) async {
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.pump();
+    await tester.tap(
+      find.byTooltip(
+        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('wysiwyg-html-source-field')),
+      '<p>Inserted</p>',
+    );
+    await tester.tap(find.text(l10n.insert));
+    await tester.pumpAndSettle();
+
+    expect(markdown, 'Start\n\n<p>Inserted</p>\n');
+    expect(find.text(l10n.renderedHtml), findsOneWidget);
+    expect(find.text('Inserted'), findsOneWidget);
+  });
+
   testWidgets('WYSIWYG typing preserves existing inline formatting', (
     tester,
   ) async {
@@ -1786,6 +1915,56 @@ void main() {}
       expect(markdown, '![Updated alt](images/updated.png)\n');
     } finally {
       temp.deleteSync(recursive: true);
+    }
+  });
+
+  testWidgets('WYSIWYG editor renders absolute local image paths', (
+    tester,
+  ) async {
+    final workspace = Directory.systemTemp.createTempSync(
+      'busymark_wysiwyg_image_workspace_',
+    );
+    final outside = Directory.systemTemp.createTempSync(
+      'busymark_wysiwyg_image_outside_',
+    );
+    try {
+      final image = File('${outside.path}/example.jpg')
+        ..writeAsBytesSync(
+          base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
+          ),
+        );
+      final documentPath = '${workspace.path}/topic.md';
+      final parsed = parser.parse(
+        filePath: documentPath,
+        workspaceRoot: workspace.path,
+        source: '![example.jpg](${image.path})\n',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                workspaceRoot: workspace.path,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.textContaining(image.path), findsNothing);
+    } finally {
+      workspace.deleteSync(recursive: true);
+      outside.deleteSync(recursive: true);
     }
   });
 

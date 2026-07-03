@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_block_widgets.dart';
@@ -19,6 +20,14 @@ import 'wysiwyg_toolbar.dart';
 
 typedef BusyMarkWysiwygSourceChanged =
     void Function(String filePath, String source);
+
+bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.tab &&
+      !keyboard.isControlPressed &&
+      !keyboard.isShiftPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed;
+}
 
 class BusyMarkWysiwygEditor extends StatefulWidget {
   const BusyMarkWysiwygEditor({
@@ -180,114 +189,19 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final selectedBlockIds = _fullySelectedBlockIds(blocks);
     return Shortcuts(
       shortcuts: {
-        const SingleActivator(LogicalKeyboardKey.keyB, control: true):
-            _InlineCommandIntent(BusyWysiwygInlineCommand.bold),
-        const SingleActivator(LogicalKeyboardKey.keyI, control: true):
-            _InlineCommandIntent(BusyWysiwygInlineCommand.italic),
-        const SingleActivator(LogicalKeyboardKey.keyU, control: true):
-            _InlineCommandIntent(BusyWysiwygInlineCommand.underline),
-        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
-            const _LinkCommandIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyE, control: true):
-            _InlineCommandIntent(BusyWysiwygInlineCommand.code),
-        const SingleActivator(
-          LogicalKeyboardKey.digit5,
-          alt: true,
-          shift: true,
-        ): _InlineCommandIntent(
-          BusyWysiwygInlineCommand.strikethrough,
+        ...BusyMarkEditorShortcutActivators.intentMap(
+          _EditorShortcutIntent.new,
         ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit0,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.paragraph,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit1,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.heading1,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit2,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.heading2,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit3,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.heading3,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit4,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.heading4,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit5,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.heading5,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit6,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.heading6,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit7,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.orderedList,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit8,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.unorderedList,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.digit9,
-          control: true,
-          shift: true,
-        ): _BlockCommandIntent(
-          BusyWysiwygBlockCommand.taskList,
-        ),
-        const SingleActivator(
-          LogicalKeyboardKey.keyV,
-          control: true,
-          shift: true,
-        ): const _PastePlainTextIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyV, control: true):
-            const _PasteTextIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyA, control: true):
+        BusyMarkTextEditingShortcutActivators.paste: const _PasteTextIntent(),
+        BusyMarkTextEditingShortcutActivators.selectAll:
             const _SelectAllTextIntent(),
-        const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
-            const _UndoEditorIntent(),
-        const SingleActivator(
-          LogicalKeyboardKey.keyZ,
-          control: true,
-          shift: true,
-        ): const _RedoEditorIntent(),
+        BusyMarkTextEditingShortcutActivators.undo: const _UndoEditorIntent(),
+        BusyMarkTextEditingShortcutActivators.redo: const _RedoEditorIntent(),
         if (blockSelectionActive)
-          const SingleActivator(LogicalKeyboardKey.keyC, control: true):
+          BusyMarkTextEditingShortcutActivators.copy:
               const _CopyBlockSelectionIntent(),
         if (blockSelectionActive)
-          const SingleActivator(LogicalKeyboardKey.keyX, control: true):
+          BusyMarkTextEditingShortcutActivators.cut:
               const _CutBlockSelectionIntent(),
         if (blockSelectionActive)
           const SingleActivator(LogicalKeyboardKey.backspace):
@@ -296,32 +210,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           const SingleActivator(LogicalKeyboardKey.delete):
               const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
-          const SingleActivator(LogicalKeyboardKey.escape):
+          BusyMarkTextEditingShortcutActivators.clearSelection:
               const _ClearBlockSelectionIntent(),
       },
       child: Actions(
         actions: {
-          _InlineCommandIntent: CallbackAction<_InlineCommandIntent>(
+          _EditorShortcutIntent: CallbackAction<_EditorShortcutIntent>(
             onInvoke: (intent) {
-              _applyInlineCommand(intent.command);
-              return null;
-            },
-          ),
-          _LinkCommandIntent: CallbackAction<_LinkCommandIntent>(
-            onInvoke: (intent) {
-              unawaited(_applyLinkCommand());
-              return null;
-            },
-          ),
-          _BlockCommandIntent: CallbackAction<_BlockCommandIntent>(
-            onInvoke: (intent) {
-              _applyBlockCommand(intent.command);
-              return null;
-            },
-          ),
-          _PastePlainTextIntent: CallbackAction<_PastePlainTextIntent>(
-            onInvoke: (intent) {
-              unawaited(_pastePlainTextIntoActiveBlock());
+              _applyEditorShortcutAction(intent.action);
               return null;
             },
           ),
@@ -480,6 +376,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                     onImageEditRequested: () => unawaited(
                                       _handleImageBlockEditRequested(block.id),
                                     ),
+                                    onHtmlEditRequested: () => unawaited(
+                                      _handleHtmlBlockEditRequested(block.id),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -507,6 +406,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onInlineImageCommand: () =>
                           unawaited(_applyInlineImageCommand()),
                       onTableCommand: () => unawaited(_applyTableCommand()),
+                      onHtmlCommand: () => unawaited(_applyHtmlCommand()),
                       onIndentCommand: _applyIndentCommand,
                       onOutdentCommand: _applyOutdentCommand,
                       onToggleTaskCommand: _applyToggleTaskCommand,
@@ -883,6 +783,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _emitMarkdown();
   }
 
+  Future<void> _handleHtmlBlockEditRequested(String blockId) async {
+    _clearBlockSelection();
+    _setActiveBlock(blockId);
+    final block = _documentController.blockById(blockId);
+    if (block == null || block.kind != BusyBlockKind.htmlBlock) {
+      return;
+    }
+    final source = await _showHtmlDialog(
+      context,
+      initialSource: block.rawSource ?? '',
+      submitLabel: context.l10n.apply,
+    );
+    if (source == null) {
+      return;
+    }
+    _recordUndoSnapshot();
+    _documentController.updateRawHtmlBlock(blockId, source);
+    _emitMarkdown();
+  }
+
   void _scheduleInitialFocus() {
     if (_initialFocusScheduled) {
       return;
@@ -1037,11 +957,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   KeyEventResult _handleBlockKeyEvent(String blockId, KeyEvent event) {
+    final keyboard = HardwareKeyboard.instance;
+    final key = event.logicalKey;
+    if ((event is KeyDownEvent || event is KeyRepeatEvent) &&
+        _isPlainTabKey(keyboard, key)) {
+      _activeBlockId = blockId;
+      return _insertTabIntoBlock(blockId)
+          ? KeyEventResult.handled
+          : KeyEventResult.ignored;
+    }
     if (event is! KeyDownEvent) {
       return KeyEventResult.ignored;
     }
-    final keyboard = HardwareKeyboard.instance;
-    final key = event.logicalKey;
     _activeBlockId = blockId;
     if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyA) {
       _selectAllForBlock(blockId);
@@ -1081,61 +1008,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       widget.onCloseSearch?.call();
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyB) {
-      _applyInlineCommand(BusyWysiwygInlineCommand.bold);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyI) {
-      _applyInlineCommand(BusyWysiwygInlineCommand.italic);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyU) {
-      _applyInlineCommand(BusyWysiwygInlineCommand.underline);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyK) {
-      unawaited(_applyLinkCommand());
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyE) {
-      _applyInlineCommand(BusyWysiwygInlineCommand.code);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isAltPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit5) {
-      _applyInlineCommand(BusyWysiwygInlineCommand.strikethrough);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.keyV) {
-      unawaited(_pastePlainTextIntoActiveBlock());
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && keyboard.isShiftPressed) {
-      final command = _headingShortcutBlockCommand(key);
-      if (command != null) {
-        _applyBlockCommand(command);
-        return KeyEventResult.handled;
-      }
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit7) {
-      _applyBlockCommand(BusyWysiwygBlockCommand.orderedList);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit8) {
-      _applyBlockCommand(BusyWysiwygBlockCommand.unorderedList);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit9) {
-      _applyBlockCommand(BusyWysiwygBlockCommand.taskList);
+    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
+      event,
+      keyboard,
+    );
+    if (shortcutAction != null) {
+      _applyEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
     if (_hasCommandModifierPressed()) {
@@ -1436,6 +1314,98 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _emitMarkdown();
   }
 
+  void _applyEditorShortcutAction(BusyMarkEditorShortcutAction action) {
+    switch (action) {
+      case BusyMarkEditorShortcutAction.bold:
+        _applyInlineCommand(BusyWysiwygInlineCommand.bold);
+        break;
+      case BusyMarkEditorShortcutAction.italic:
+        _applyInlineCommand(BusyWysiwygInlineCommand.italic);
+        break;
+      case BusyMarkEditorShortcutAction.underline:
+        _applyInlineCommand(BusyWysiwygInlineCommand.underline);
+        break;
+      case BusyMarkEditorShortcutAction.strikethrough:
+        _applyInlineCommand(BusyWysiwygInlineCommand.strikethrough);
+        break;
+      case BusyMarkEditorShortcutAction.inlineCode:
+        _applyInlineCommand(BusyWysiwygInlineCommand.code);
+        break;
+      case BusyMarkEditorShortcutAction.link:
+        unawaited(_applyLinkCommand());
+        break;
+      case BusyMarkEditorShortcutAction.paragraph:
+        _applyBlockCommand(BusyWysiwygBlockCommand.paragraph);
+        break;
+      case BusyMarkEditorShortcutAction.heading1:
+        _applyBlockCommand(BusyWysiwygBlockCommand.heading1);
+        break;
+      case BusyMarkEditorShortcutAction.heading2:
+        _applyBlockCommand(BusyWysiwygBlockCommand.heading2);
+        break;
+      case BusyMarkEditorShortcutAction.heading3:
+        _applyBlockCommand(BusyWysiwygBlockCommand.heading3);
+        break;
+      case BusyMarkEditorShortcutAction.heading4:
+        _applyBlockCommand(BusyWysiwygBlockCommand.heading4);
+        break;
+      case BusyMarkEditorShortcutAction.heading5:
+        _applyBlockCommand(BusyWysiwygBlockCommand.heading5);
+        break;
+      case BusyMarkEditorShortcutAction.heading6:
+        _applyBlockCommand(BusyWysiwygBlockCommand.heading6);
+        break;
+      case BusyMarkEditorShortcutAction.orderedList:
+        _applyBlockCommand(BusyWysiwygBlockCommand.orderedList);
+        break;
+      case BusyMarkEditorShortcutAction.unorderedList:
+        _applyBlockCommand(BusyWysiwygBlockCommand.unorderedList);
+        break;
+      case BusyMarkEditorShortcutAction.taskList:
+        _applyBlockCommand(BusyWysiwygBlockCommand.taskList);
+        break;
+      case BusyMarkEditorShortcutAction.toggleTask:
+        _applyToggleTaskCommand();
+        break;
+      case BusyMarkEditorShortcutAction.indent:
+        _applyIndentCommand();
+        break;
+      case BusyMarkEditorShortcutAction.outdent:
+        _applyOutdentCommand();
+        break;
+      case BusyMarkEditorShortcutAction.blockquote:
+        _applyBlockCommand(BusyWysiwygBlockCommand.blockquote);
+        break;
+      case BusyMarkEditorShortcutAction.codeBlock:
+        _applyBlockCommand(BusyWysiwygBlockCommand.codeBlock);
+        break;
+      case BusyMarkEditorShortcutAction.codeBlockLanguage:
+        unawaited(_applyCodeLanguageCommand());
+        break;
+      case BusyMarkEditorShortcutAction.image:
+        unawaited(_applyImageCommand());
+        break;
+      case BusyMarkEditorShortcutAction.inlineImage:
+        unawaited(_applyInlineImageCommand());
+        break;
+      case BusyMarkEditorShortcutAction.table:
+        unawaited(_applyTableCommand());
+        break;
+      case BusyMarkEditorShortcutAction.htmlBlock:
+        unawaited(_applyHtmlCommand());
+        break;
+      case BusyMarkEditorShortcutAction.thematicBreak:
+        _applyBlockCommand(BusyWysiwygBlockCommand.thematicBreak);
+        break;
+      case BusyMarkEditorShortcutAction.hardLineBreak:
+        _applyHardBreakCommand();
+        break;
+      case BusyMarkEditorShortcutAction.pastePlainText:
+        unawaited(_pastePlainTextIntoActiveBlock());
+        break;
+    }
+  }
+
   Set<BusyInlineKind> _activeInlineKindsAt(String blockId, int offset) {
     final block = _documentController.blockById(blockId);
     final active = <BusyInlineKind>{...?_pendingInlineKindsByBlockId[blockId]};
@@ -1654,6 +1624,36 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
+  bool _insertTabIntoBlock(String blockId) {
+    final controller = _textControllers[blockId];
+    if (controller == null) {
+      return false;
+    }
+    final currentText = controller.text;
+    final selection = controller.selection.isValid
+        ? controller.selection
+        : TextSelection.collapsed(offset: currentText.length);
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, currentText.length)
+        .toInt();
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, currentText.length)
+        .toInt();
+    final nextText = currentText.replaceRange(start, end, '\t');
+    controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: start + 1),
+    );
+    _handleBlockTextChanged(
+      _documentController.document.filePath,
+      blockId,
+      nextText,
+    );
+    return true;
+  }
+
   Future<void> _applyInlineImageCommand() async {
     final selectedRanges = _selectedTextRanges();
     final activeBlockId = _activeBlockId;
@@ -1757,6 +1757,35 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       rows: result.rows,
       headerTextForColumn: headerTextForColumn,
       cellText: cellText,
+    );
+    _emitMarkdown();
+    if (paragraphId != null) {
+      _focusBlockAfterFrame(paragraphId, offset: 0);
+    }
+  }
+
+  Future<void> _applyHtmlCommand() async {
+    final blockId = _activeBlockId;
+    if (blockId == null) {
+      return;
+    }
+    final block = _documentController.blockById(blockId);
+    if (block?.kind == BusyBlockKind.htmlBlock) {
+      await _handleHtmlBlockEditRequested(blockId);
+      return;
+    }
+    final source = await _showHtmlDialog(
+      context,
+      initialSource: '<div>\n  <p>HTML content</p>\n</div>',
+      submitLabel: context.l10n.insert,
+    );
+    if (source == null || source.trim().isEmpty) {
+      return;
+    }
+    _recordUndoSnapshot();
+    final paragraphId = _documentController.insertRawHtmlBlockAfter(
+      blockId,
+      source,
     );
     _emitMarkdown();
     if (paragraphId != null) {
@@ -1891,7 +1920,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           ),
         ],
       ),
-    ).whenComplete(controller.dispose);
+    );
   }
 
   Future<_ImageDialogResult?> _showImageDialog(
@@ -1922,6 +1951,45 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       builder: (context) => _TableDialog(
         initialColumns: initialColumns,
         initialRows: initialRows,
+      ),
+    );
+  }
+
+  Future<String?> _showHtmlDialog(
+    BuildContext context, {
+    required String initialSource,
+    required String submitLabel,
+  }) {
+    final controller = TextEditingController(text: initialSource);
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.editHtml),
+        content: SizedBox(
+          width: BusyMarkSizes.dialogNarrow,
+          child: TextField(
+            key: const ValueKey('wysiwyg-html-source-field'),
+            controller: controller,
+            autofocus: true,
+            minLines: 8,
+            maxLines: 16,
+            textInputAction: TextInputAction.newline,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+            ),
+            decoration: InputDecoration(labelText: context.l10n.htmlSource),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(submitLabel),
+          ),
+        ],
       ),
     );
   }
@@ -2784,24 +2852,10 @@ extension _EditorToolbarPlacementX on EditorToolbarPlacement {
   }
 }
 
-class _InlineCommandIntent extends Intent {
-  const _InlineCommandIntent(this.command);
+class _EditorShortcutIntent extends Intent {
+  const _EditorShortcutIntent(this.action);
 
-  final BusyWysiwygInlineCommand command;
-}
-
-class _LinkCommandIntent extends Intent {
-  const _LinkCommandIntent();
-}
-
-class _BlockCommandIntent extends Intent {
-  const _BlockCommandIntent(this.command);
-
-  final BusyWysiwygBlockCommand command;
-}
-
-class _PastePlainTextIntent extends Intent {
-  const _PastePlainTextIntent();
+  final BusyMarkEditorShortcutAction action;
 }
 
 class _PasteTextIntent extends Intent {
@@ -2838,26 +2892,6 @@ class _RedoEditorIntent extends Intent {
 
 class _MoveToBlockEnd {
   const _MoveToBlockEnd();
-}
-
-BusyWysiwygBlockCommand? _headingShortcutBlockCommand(LogicalKeyboardKey key) {
-  return switch (key) {
-    LogicalKeyboardKey.digit0 ||
-    LogicalKeyboardKey.numpad0 => BusyWysiwygBlockCommand.paragraph,
-    LogicalKeyboardKey.digit1 ||
-    LogicalKeyboardKey.numpad1 => BusyWysiwygBlockCommand.heading1,
-    LogicalKeyboardKey.digit2 ||
-    LogicalKeyboardKey.numpad2 => BusyWysiwygBlockCommand.heading2,
-    LogicalKeyboardKey.digit3 ||
-    LogicalKeyboardKey.numpad3 => BusyWysiwygBlockCommand.heading3,
-    LogicalKeyboardKey.digit4 ||
-    LogicalKeyboardKey.numpad4 => BusyWysiwygBlockCommand.heading4,
-    LogicalKeyboardKey.digit5 ||
-    LogicalKeyboardKey.numpad5 => BusyWysiwygBlockCommand.heading5,
-    LogicalKeyboardKey.digit6 ||
-    LogicalKeyboardKey.numpad6 => BusyWysiwygBlockCommand.heading6,
-    _ => null,
-  };
 }
 
 String _imageSourceForBlock(BusyBlock block) {

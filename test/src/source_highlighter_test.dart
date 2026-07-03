@@ -12,6 +12,7 @@ void main() {
   ) async {
     late List<TextSpan> spans;
     late Color foreground;
+    late BusyMarkSyntaxColors syntax;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -24,6 +25,7 @@ void main() {
         home: Builder(
           builder: (context) {
             foreground = BusyMarkSurfaceColors.of(context).foreground;
+            syntax = BusyMarkSyntaxColors.of(context);
             final controller = BusyMarkSourceEditingController(
               text:
                   '# Title\n'
@@ -43,19 +45,79 @@ void main() {
       ),
     );
 
+    expect(_spanStyle(spans, '# ')?.color, syntax.keyword);
     expect(_spanStyle(spans, 'Title')?.fontSize, 14 * 1.55);
     expect(_spanStyle(spans, 'Title')?.fontWeight, FontWeight.w700);
     expect(_spanStyle(spans, 'Title')?.color, foreground);
+    expect(_spanStyle(spans, '`')?.color, syntax.punctuation);
     expect(_spanStyle(spans, 'code')?.fontFamily, 'Ubuntu Mono');
     expect(_spanStyle(spans, 'code')?.color, foreground);
+    expect(_spanStyle(spans, '[')?.color, syntax.punctuation);
     expect(_spanColor(spans, 'link'), isNot(foreground));
     expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
+    expect(_spanStyle(spans, '](')?.color, syntax.punctuation);
+    expect(_spanStyle(spans, 'target.md')?.color, syntax.string);
+    expect(_spanStyle(spans, ')')?.color, syntax.punctuation);
+    expect(_spanStyle(spans, '**')?.color, syntax.punctuation);
     expect(_spanStyle(spans, 'bold')?.fontWeight, FontWeight.w700);
     expect(_spanStyle(spans, 'bold')?.color, foreground);
+    expect(_spanStyle(spans, '*')?.color, syntax.punctuation);
     expect(_spanStyle(spans, 'italic')?.fontStyle, FontStyle.italic);
     expect(_spanStyle(spans, 'italic')?.color, foreground);
+    expect(_spanStyle(spans, '~~')?.color, syntax.punctuation);
     expect(_spanStyle(spans, 'done')?.decoration, TextDecoration.lineThrough);
     expect(_spanStyle(spans, 'done')?.color, foreground);
+  });
+
+  testWidgets('markdown source highlighter formats fenced code', (
+    tester,
+  ) async {
+    late List<TextSpan> spans;
+    late Color foreground;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            foreground = BusyMarkSurfaceColors.of(context).foreground;
+            final controller = BusyMarkSourceEditingController(
+              text:
+                  '```dart\n'
+                  'final count = 42;\n'
+                  'print("done"); // comment\n'
+                  '```\n'
+                  '```json\n'
+                  '{ "name": "BusyMark", "enabled": true }\n'
+                  '```\n',
+              language: SourceSyntaxLanguage.markdown,
+            );
+            spans = _flattenTextSpans(
+              controller.buildTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                withComposing: false,
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(_spanColor(spans, 'final'), isNot(foreground));
+    expect(_spanColor(spans, '42'), isNot(foreground));
+    expect(_spanColor(spans, 'print'), isNot(foreground));
+    expect(_spanColor(spans, '"done"'), isNot(foreground));
+    expect(_spanColor(spans, '// comment'), isNot(foreground));
+    expect(_spanColor(spans, '"name"'), isNot(foreground));
+    expect(_spanColor(spans, '"BusyMark"'), isNot(foreground));
+    expect(_spanColor(spans, 'true'), isNot(foreground));
   });
 
   testWidgets('xml source highlighter colors tags attributes and strings', (

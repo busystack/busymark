@@ -41,6 +41,37 @@ void main() {
     },
   );
 
+  test('headerbar forwards text direction updates', () async {
+    if (!Platform.isLinux) {
+      return;
+    }
+    TestWidgetsFlutterBinding.ensureInitialized();
+    const channel = MethodChannel('com.busymark.test/headerbar-direction');
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          if (call.method == 'initialize') {
+            return true;
+          }
+          return null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    final service = LinuxHeaderBarService(channel: channel);
+
+    await service.setTextDirection(TextDirection.rtl);
+
+    expect(calls.map((call) => call.method), [
+      'initialize',
+      'setTextDirection',
+    ]);
+    expect(calls.last.arguments, 'rtl');
+  });
+
   test('headerbar action events preserve repeated identical clicks', () async {
     if (!Platform.isLinux) {
       return;

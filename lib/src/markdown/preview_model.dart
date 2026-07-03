@@ -12,6 +12,7 @@ enum PreviewBlockKind {
   thematicBreak,
   image,
   table,
+  container,
   raw,
   link,
   admonition,
@@ -135,6 +136,7 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.paragraph,
         text: _plainText(block.inlines),
         inlines: _inlines(block.inlines),
+        attributes: block.attributes,
       ),
       BusyBlockKind.codeBlock => PreviewBlock(
         kind: PreviewBlockKind.code,
@@ -201,6 +203,12 @@ class BusyMarkPreviewBuilder {
         text: _plainText(block.inlines).isEmpty
             ? block.attributes['title'] ?? ''
             : _plainText(block.inlines),
+        attributes: block.attributes,
+      ),
+      BusyBlockKind.htmlBlock when block.children.isNotEmpty => PreviewBlock(
+        kind: PreviewBlockKind.container,
+        text: block.children.map((child) => child.plainText).join('\n'),
+        children: block.children.map(_block).toList(),
         attributes: block.attributes,
       ),
       BusyBlockKind.htmlBlock ||

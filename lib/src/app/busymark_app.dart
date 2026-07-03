@@ -10,17 +10,20 @@ import 'package:path/path.dart' as p;
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../git/application/git_controller.dart';
+import '../platform/linux_header_bar_service.dart';
 import '../workspace/workspace_controller.dart';
+import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
 import 'app_router.dart';
 import 'app_settings.dart';
+import 'busymark_shortcuts.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'localization.dart';
 import 'system_accent.dart';
-import '../platform/linux_header_bar_service.dart';
 import 'window_control_service.dart';
 
 class BusyMarkApp extends ConsumerWidget {
@@ -66,35 +69,28 @@ class BusyMarkApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
-        _configureNativeHeaderBar(context, ref);
+        _configureNativeHeaderBar(context, ref, settings);
         return _BusyMarkWindowLifecycle(
           child: Shortcuts(
-            shortcuts: const {
-              SingleActivator(LogicalKeyboardKey.keyN, control: true):
-                  _NewMarkdownIntent(),
-              SingleActivator(LogicalKeyboardKey.keyO, control: true):
-                  _OpenWorkspaceIntent(),
-              SingleActivator(LogicalKeyboardKey.keyS, control: true):
-                  _SaveActiveIntent(),
-              SingleActivator(LogicalKeyboardKey.slash, control: true):
-                  _KeyboardShortcutsIntent(),
-              SingleActivator(LogicalKeyboardKey.tab, control: true):
-                  _NextTabIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.tab,
-                control: true,
-                shift: true,
-              ): _PreviousTabIntent(),
-              SingleActivator(LogicalKeyboardKey.keyW, control: true):
-                  _CloseTabIntent(),
-              SingleActivator(
-                LogicalKeyboardKey.keyW,
-                control: true,
-                shift: true,
-              ): _CloseAllTabsIntent(),
-              SingleActivator(LogicalKeyboardKey.keyF, control: true):
-                  _OpenSearchIntent(),
-              SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
+            shortcuts: {
+              BusyMarkAppShortcutActivators.newDocument:
+                  const _NewMarkdownIntent(),
+              BusyMarkAppShortcutActivators.open: const _OpenWorkspaceIntent(),
+              BusyMarkAppShortcutActivators.save: const _SaveActiveIntent(),
+              BusyMarkAppShortcutActivators.keyboardShortcuts:
+                  const _KeyboardShortcutsIntent(),
+              BusyMarkAppShortcutActivators.settings: const _SettingsIntent(),
+              BusyMarkAppShortcutActivators.markdownAndHtml:
+                  const _MarkdownAndHtmlIntent(),
+              BusyMarkAppShortcutActivators.nextTab: const _NextTabIntent(),
+              BusyMarkAppShortcutActivators.previousTab:
+                  const _PreviousTabIntent(),
+              BusyMarkAppShortcutActivators.closeTab: const _CloseTabIntent(),
+              BusyMarkAppShortcutActivators.closeAllTabs:
+                  const _CloseAllTabsIntent(),
+              BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+              BusyMarkAppShortcutActivators.toggleSidebar:
+                  const _ToggleSidebarIntent(),
             },
             child: Actions(
               actions: {
@@ -159,6 +155,24 @@ class BusyMarkApp extends ConsumerWidget {
                         return null;
                       },
                     ),
+                _SettingsIntent: CallbackAction<_SettingsIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      GoRouter.of(navigatorContext).go('/settings');
+                    }
+                    return null;
+                  },
+                ),
+                _MarkdownAndHtmlIntent: CallbackAction<_MarkdownAndHtmlIntent>(
+                  onInvoke: (intent) {
+                    final navigatorContext = rootNavigatorKey.currentContext;
+                    if (navigatorContext != null) {
+                      showBusyMarkMarkdownHtmlDialog(navigatorContext);
+                    }
+                    return null;
+                  },
+                ),
                 _NextTabIntent: CallbackAction<_NextTabIntent>(
                   onInvoke: (intent) {
                     final navigatorContext = rootNavigatorKey.currentContext;
@@ -215,15 +229,9 @@ class BusyMarkApp extends ConsumerWidget {
                     return null;
                   },
                 ),
-                _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
+                _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
                   onInvoke: (intent) {
-                    if (ref.read(workspaceControllerProvider).workspace !=
-                        null) {
-                      final notifier = ref.read(
-                        workspaceSearchCloseRequestProvider.notifier,
-                      );
-                      notifier.request();
-                    }
+                    _toggleSidebar(ref);
                     return null;
                   },
                 ),
@@ -254,7 +262,10 @@ class BusyMarkApp extends ConsumerWidget {
     GoRouter router,
   ) async {
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final choice = await showBusyMarkModalDialog<String>(
+    final recentWorkspaces = ref
+        .read(appSettingsControllerProvider)
+        .recentWorkspaces;
+    final choice = await showBusyMarkModalDialog<_OpenChooserChoice>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (dialogContext) => BusyMarkDialogShell(
@@ -269,17 +280,37 @@ class BusyMarkApp extends ConsumerWidget {
                 subtitle: context.l10n.markdownFileExtensions,
                 leading: const Icon(BusyMarkGlyphs.markdownFile),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                onTap: () => Navigator.pop(dialogContext, 'file'),
+                onTap: () =>
+                    Navigator.pop(dialogContext, const _OpenMarkdownFile()),
               ),
               BusyMarkActionRow(
                 title: context.l10n.openFolderOrWritersideProject,
                 subtitle: context.l10n.markdownFolderOrWritersideProject,
                 leading: const Icon(BusyMarkGlyphs.folder),
                 trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                onTap: () => Navigator.pop(dialogContext, 'folder'),
+                onTap: () =>
+                    Navigator.pop(dialogContext, const _OpenWorkspaceFolder()),
               ),
             ],
           ),
+          if (recentWorkspaces.isNotEmpty)
+            BusyMarkGroupedList(
+              title: context.l10n.recent,
+              filled: true,
+              children: [
+                for (final recent in recentWorkspaces)
+                  BusyMarkActionRow(
+                    title: _displayPath(recent.path),
+                    subtitle: recent.path,
+                    leading: const Icon(BusyMarkGlyphs.history),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: () => Navigator.pop(
+                      dialogContext,
+                      _OpenRecentWorkspace(recent.path),
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -287,9 +318,9 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     final path = switch (choice) {
-      'file' => await _chooseMarkdownFile(ref),
-      'folder' => await _chooseWorkspaceFolder(ref),
-      _ => null,
+      _OpenMarkdownFile() => await _chooseMarkdownFile(ref),
+      _OpenWorkspaceFolder() => await _chooseWorkspaceFolder(ref),
+      _OpenRecentWorkspace(:final path) => path,
     };
     if (path == null || path.isEmpty || !context.mounted) {
       return;
@@ -392,7 +423,52 @@ class BusyMarkApp extends ConsumerWidget {
     return p.extension(lastPath).isEmpty ? lastPath : p.dirname(lastPath);
   }
 
-  void _configureNativeHeaderBar(BuildContext context, WidgetRef ref) {
+  String _displayPath(String path) {
+    final name = p.basename(path);
+    return name.isEmpty ? path : name;
+  }
+
+  void _toggleSidebar(WidgetRef ref) {
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (!_hasWorkspaceSidebar(workspace?.kind)) {
+      return;
+    }
+    final settings = ref.read(appSettingsControllerProvider);
+    final visible = !settings.sidebarVisible;
+    if (!visible) {
+      _clearGitDetailSelection(ref);
+    }
+    unawaited(
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setSidebarVisible(visible),
+    );
+  }
+
+  bool _hasWorkspaceSidebar(WorkspaceKind? kind) {
+    return switch (kind) {
+      WorkspaceKind.untitledMarkdown ||
+      WorkspaceKind.singleMarkdown ||
+      WorkspaceKind.markdownFolder ||
+      WorkspaceKind.writersideModule => true,
+      null => false,
+    };
+  }
+
+  void _clearGitDetailSelection(WidgetRef ref) {
+    final gitState = ref.read(gitControllerProvider);
+    if (gitState.selectedDiff != null ||
+        gitState.selectedFilePath != null ||
+        gitState.selectedCommitHash != null) {
+      ref.read(gitControllerProvider.notifier).clearSelection();
+    }
+  }
+
+  void _configureNativeHeaderBar(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) {
     final service = ref.watch(linuxHeaderBarServiceProvider);
     if (!service.isAvailable) {
       return;
@@ -400,6 +476,7 @@ class BusyMarkApp extends ConsumerWidget {
     final material = MaterialLocalizations.of(context);
     final l10n = context.l10n;
     final theme = HeaderBarTheme.fromContext(context);
+    final textDirection = Directionality.maybeOf(context) ?? TextDirection.ltr;
     final labels = HeaderBarLabels(
       editor: l10n.editor,
       source: l10n.source,
@@ -409,15 +486,20 @@ class BusyMarkApp extends ConsumerWidget {
       search: material.searchFieldLabel,
       refresh: l10n.validate,
       menu: l10n.mainMenu,
-      sidebar: l10n.toggleSidebar,
+      sidebar: settings.sidebarVisible ? l10n.hideSidebar : l10n.showSidebar,
       back: material.backButtonTooltip,
       save: l10n.save,
       settings: l10n.settings,
+      settingsShortcut: BusyMarkAppShortcutLabels.settings,
       keyboardShortcuts: l10n.keyboardShortcuts,
+      keyboardShortcutsShortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
+      markdownAndHtml: l10n.markdownAndHtml,
+      markdownAndHtmlShortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
       aboutBusyMark: l10n.aboutBusyMark,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
+        await service.setTextDirection(textDirection);
         await service.setSidebarWidth(BusyMarkSizes.sidebarWidth);
         await service.setTheme(theme);
         await service.setLocalizedLabels(labels);
@@ -495,17 +577,22 @@ class _BusyMarkWindowLifecycleState
         title: l10n.closeUnsavedChangesTitle,
         maxWidth: BusyMarkSizes.dialog,
         actions: [
-          TextButton(
+          BusyMarkDialogButton(
+            label: l10n.closeUnsavedChangesCancel,
+            icon: BusyMarkGlyphs.clear,
             onPressed: () => Navigator.pop(context, WindowCloseAction.cancel),
-            child: Text(l10n.closeUnsavedChangesCancel),
           ),
-          TextButton(
+          BusyMarkDialogButton(
+            label: l10n.closeUnsavedChangesDiscard,
+            icon: BusyMarkGlyphs.delete,
+            destructive: true,
             onPressed: () => Navigator.pop(context, WindowCloseAction.discard),
-            child: Text(l10n.closeUnsavedChangesDiscard),
           ),
-          FilledButton(
+          BusyMarkDialogButton(
+            label: l10n.closeUnsavedChangesSave,
+            icon: BusyMarkGlyphs.save,
+            suggested: true,
             onPressed: () => Navigator.pop(context, WindowCloseAction.save),
-            child: Text(l10n.closeUnsavedChangesSave),
           ),
         ],
         children: [Text(_closeUnsavedChangesMessage(context))],
@@ -563,6 +650,9 @@ class _BusyMarkSearchShortcutHandlerState
       return true;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
+      if (rootNavigatorKey.currentState?.canPop() ?? false) {
+        return false;
+      }
       ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return false;
     }
@@ -581,12 +671,38 @@ class _OpenWorkspaceIntent extends Intent {
   const _OpenWorkspaceIntent();
 }
 
+sealed class _OpenChooserChoice {
+  const _OpenChooserChoice();
+}
+
+final class _OpenMarkdownFile extends _OpenChooserChoice {
+  const _OpenMarkdownFile();
+}
+
+final class _OpenWorkspaceFolder extends _OpenChooserChoice {
+  const _OpenWorkspaceFolder();
+}
+
+final class _OpenRecentWorkspace extends _OpenChooserChoice {
+  const _OpenRecentWorkspace(this.path);
+
+  final String path;
+}
+
 class _SaveActiveIntent extends Intent {
   const _SaveActiveIntent();
 }
 
 class _KeyboardShortcutsIntent extends Intent {
   const _KeyboardShortcutsIntent();
+}
+
+class _SettingsIntent extends Intent {
+  const _SettingsIntent();
+}
+
+class _MarkdownAndHtmlIntent extends Intent {
+  const _MarkdownAndHtmlIntent();
 }
 
 class _NextTabIntent extends Intent {
@@ -609,6 +725,6 @@ class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
 }
 
-class _CloseSearchIntent extends Intent {
-  const _CloseSearchIntent();
+class _ToggleSidebarIntent extends Intent {
+  const _ToggleSidebarIntent();
 }

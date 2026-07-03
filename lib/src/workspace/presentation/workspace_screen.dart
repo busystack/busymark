@@ -15,6 +15,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
@@ -24,6 +25,10 @@ import '../../editor/markdown_image_view.dart';
 import '../../editor/source_folding.dart';
 import '../../editor/source_highlighter.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../git/application/git_controller.dart';
+import '../../git/domain/git_models.dart';
+import '../../git/presentation/git_diff_viewer.dart';
+import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
@@ -56,6 +61,10 @@ final _searchNavigationTargetProvider =
       _SearchNavigationTargetController,
       _SearchNavigationTarget?
     >(_SearchNavigationTargetController.new);
+final _sidebarShortcutRequestProvider =
+    NotifierProvider<_SidebarShortcutRequestController, _SidebarTab?>(
+      _SidebarShortcutRequestController.new,
+    );
 
 class _OutlineNavigationTargetController
     extends Notifier<_OutlineNavigationTarget?> {
@@ -96,6 +105,19 @@ class _SearchNavigationTargetController
   }
 }
 
+class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
+  @override
+  _SidebarTab? build() => null;
+
+  void select(_SidebarTab tab) {
+    state = tab;
+  }
+
+  void clear() {
+    state = null;
+  }
+}
+
 const _sourceTextHeightBehavior = TextHeightBehavior(
   applyHeightToFirstAscent: true,
   applyHeightToLastDescent: true,
@@ -112,6 +134,22 @@ double _safeScrollOffset(ScrollController controller) {
 
 double _safeMaxScrollExtent(ScrollController controller) {
   return _safeScrollPosition(controller)?.maxScrollExtent ?? 0.0;
+}
+
+bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.tab &&
+      !keyboard.isControlPressed &&
+      !keyboard.isShiftPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed;
+}
+
+bool _isPlainShiftTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
+  return key == LogicalKeyboardKey.tab &&
+      !keyboard.isControlPressed &&
+      keyboard.isShiftPressed &&
+      !keyboard.isAltPressed &&
+      !keyboard.isMetaPressed;
 }
 
 class _OutlineNavigationTarget {
@@ -173,10 +211,6 @@ class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
 }
 
-class _CloseSearchIntent extends Intent {
-  const _CloseSearchIntent();
-}
-
 enum _SourceInlineMarkdownCommand {
   bold,
   italic,
@@ -199,42 +233,10 @@ enum _SourceBlockMarkdownCommand {
   taskList,
 }
 
-class _SourceInlineMarkdownIntent extends Intent {
-  const _SourceInlineMarkdownIntent(this.command);
+class _SourceEditorShortcutIntent extends Intent {
+  const _SourceEditorShortcutIntent(this.action);
 
-  final _SourceInlineMarkdownCommand command;
-}
-
-class _SourceBlockMarkdownIntent extends Intent {
-  const _SourceBlockMarkdownIntent(this.command);
-
-  final _SourceBlockMarkdownCommand command;
-}
-
-class _SourcePastePlainTextIntent extends Intent {
-  const _SourcePastePlainTextIntent();
-}
-
-_SourceBlockMarkdownCommand? _sourceHeadingShortcutBlockCommand(
-  LogicalKeyboardKey key,
-) {
-  return switch (key) {
-    LogicalKeyboardKey.digit0 ||
-    LogicalKeyboardKey.numpad0 => _SourceBlockMarkdownCommand.paragraph,
-    LogicalKeyboardKey.digit1 ||
-    LogicalKeyboardKey.numpad1 => _SourceBlockMarkdownCommand.heading1,
-    LogicalKeyboardKey.digit2 ||
-    LogicalKeyboardKey.numpad2 => _SourceBlockMarkdownCommand.heading2,
-    LogicalKeyboardKey.digit3 ||
-    LogicalKeyboardKey.numpad3 => _SourceBlockMarkdownCommand.heading3,
-    LogicalKeyboardKey.digit4 ||
-    LogicalKeyboardKey.numpad4 => _SourceBlockMarkdownCommand.heading4,
-    LogicalKeyboardKey.digit5 ||
-    LogicalKeyboardKey.numpad5 => _SourceBlockMarkdownCommand.heading5,
-    LogicalKeyboardKey.digit6 ||
-    LogicalKeyboardKey.numpad6 => _SourceBlockMarkdownCommand.heading6,
-    _ => null,
-  };
+  final BusyMarkEditorShortcutAction action;
 }
 
 class WorkspaceScreen extends ConsumerWidget {
@@ -249,6 +251,7 @@ class WorkspaceScreen extends ConsumerWidget {
       return const WelcomeScreen();
     }
     final searchState = ref.watch(_workspaceSearchProvider);
+    final gitState = ref.watch(gitControllerProvider);
     final searchResults = _workspaceSearchResults(
       context,
       state,
@@ -259,6 +262,49 @@ class WorkspaceScreen extends ConsumerWidget {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
+    final sidebarVisible =
+        settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
+    final sidebar = SizedBox(
+      width: BusyMarkSizes.sidebarWidth,
+      child: _Sidebar(
+        workspace: workspace,
+        searchState: searchState,
+        searchResults: searchResults,
+        onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
+      ),
+    );
+    final workspaceContent = Expanded(
+      child: Column(
+        children: [
+          if (_shouldShowEditorTabs(workspace)) _EditorTabStrip(state: state),
+          Expanded(
+            child: gitState.selectedDiff == null
+                ? _EditorPreviewSplit(
+                    state: state,
+                    viewMode: settings.documentViewMode,
+                    editorFontSize: settings.editorFontSize,
+                    editorToolbarPlacement: settings.editorToolbarPlacement,
+                    wordWrap: settings.wordWrap,
+                  )
+                : GitDiffViewer(
+                    diff: gitState.selectedDiff,
+                    hasUnsavedEditorChanges: state.isDirty,
+                    onOpenFile: (relativePath) =>
+                        _openGitDiffFile(context, ref, relativePath),
+                    onClose: () => ref
+                        .read(gitControllerProvider.notifier)
+                        .clearSelection(),
+                  ),
+          ),
+        ],
+      ),
+    );
+    final sidebarOnRight = Directionality.of(context) == TextDirection.rtl;
+    final workspaceChildren = [
+      if (!sidebarOnRight && sidebarVisible) sidebar,
+      workspaceContent,
+      if (sidebarOnRight && sidebarVisible) sidebar,
+    ];
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, ref, event.action);
@@ -270,6 +316,7 @@ class WorkspaceScreen extends ConsumerWidget {
         if (current.query == query && current.active) {
           return;
         }
+        _clearGitDetailSelection(ref);
         ref
             .read(_workspaceSearchProvider.notifier)
             .set(current.copyWith(active: true, query: query));
@@ -286,6 +333,18 @@ class WorkspaceScreen extends ConsumerWidget {
         _closeSearch(ref);
       }
     });
+    ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
+      final nextWorkspace = next.workspace;
+      if (nextWorkspace == null) {
+        return;
+      }
+      ref.read(gitControllerProvider.notifier).attachWorkspace(nextWorkspace);
+    });
+    if (gitState.attachedWorkspace?.id != workspace.id) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(gitControllerProvider.notifier).attachWorkspace(workspace);
+      });
+    }
     if (headerBar.isAvailable) {
       _configureHeaderBar(
         context,
@@ -299,23 +358,16 @@ class WorkspaceScreen extends ConsumerWidget {
 
     return Focus(
       autofocus: true,
+      onKeyEvent: (_, event) => _handleWorkspaceKeyEvent(event, ref),
       child: Shortcuts(
-        shortcuts: const {
-          SingleActivator(LogicalKeyboardKey.keyF, control: true):
-              _OpenSearchIntent(),
-          SingleActivator(LogicalKeyboardKey.escape): _CloseSearchIntent(),
+        shortcuts: {
+          BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
         },
         child: Actions(
           actions: {
             _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
               onInvoke: (intent) {
                 _openSearch(ref);
-                return null;
-              },
-            ),
-            _CloseSearchIntent: CallbackAction<_CloseSearchIntent>(
-              onInvoke: (intent) {
-                _closeSearch(ref);
                 return null;
               },
             ),
@@ -338,9 +390,9 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip: context.l10n.welcome,
                         icon: BusyMarkGlyphs.home,
                         onPressed: () async {
-                          if (await confirmSafeToContinue(context, ref) &&
-                              context.mounted) {
-                            context.go('/');
+                          final router = GoRouter.of(context);
+                          if (await confirmSafeToContinue(context, ref)) {
+                            router.go('/');
                           }
                         },
                       ),
@@ -385,15 +437,22 @@ class WorkspaceScreen extends ConsumerWidget {
                             : context.l10n.showSidebar,
                         icon: BusyMarkGlyphs.sidebar,
                         selected: settings.sidebarVisible,
-                        onPressed: () => settingsController.setSidebarVisible(
-                          !settings.sidebarVisible,
-                        ),
+                        shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                        onPressed: () {
+                          final visible = !settings.sidebarVisible;
+                          if (!visible) {
+                            _clearGitDetailSelection(ref);
+                          }
+                          unawaited(
+                            settingsController.setSidebarVisible(visible),
+                          );
+                        },
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.search,
                         icon: BusyMarkGlyphs.search,
                         selected: searchState.active,
-                        shortcut: 'Ctrl+F',
+                        shortcut: BusyMarkAppShortcutLabels.find,
                         onPressed: () => _toggleSearch(ref),
                       ),
                       BusyMarkHeaderIconButton(
@@ -414,11 +473,13 @@ class WorkspaceScreen extends ConsumerWidget {
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.settings,
                         icon: BusyMarkGlyphs.settings,
+                        shortcut: BusyMarkAppShortcutLabels.settings,
                         onPressed: () => context.go('/settings'),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.keyboardShortcuts,
                         icon: BusyMarkGlyphs.keyboard,
+                        shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
                         onPressed: () =>
                             showBusyMarkKeyboardShortcutsDialog(context),
                       ),
@@ -439,38 +500,8 @@ class WorkspaceScreen extends ConsumerWidget {
                   ),
                 Expanded(
                   child: Row(
-                    children: [
-                      if (settings.sidebarVisible &&
-                          _hasWorkspaceSidebar(workspace))
-                        SizedBox(
-                          width: BusyMarkSizes.sidebarWidth,
-                          child: _Sidebar(
-                            workspace: workspace,
-                            searchState: searchState,
-                            searchResults: searchResults,
-                            onOpenSearchResult: (result) =>
-                                _openSearchResult(context, ref, result),
-                          ),
-                        ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            if (_shouldShowEditorTabs(workspace))
-                              _EditorTabStrip(state: state),
-                            Expanded(
-                              child: _EditorPreviewSplit(
-                                state: state,
-                                viewMode: settings.documentViewMode,
-                                editorFontSize: settings.editorFontSize,
-                                editorToolbarPlacement:
-                                    settings.editorToolbarPlacement,
-                                wordWrap: settings.wordWrap,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    textDirection: TextDirection.ltr,
+                    children: workspaceChildren,
                   ),
                 ),
               ],
@@ -492,6 +523,7 @@ class WorkspaceScreen extends ConsumerWidget {
 
   void _openSearch(WidgetRef ref) {
     final search = ref.read(_workspaceSearchProvider);
+    _clearGitDetailSelection(ref);
     ref
         .read(_workspaceSearchProvider.notifier)
         .set(search.copyWith(active: true));
@@ -512,6 +544,26 @@ class WorkspaceScreen extends ConsumerWidget {
         .read(_workspaceSearchProvider.notifier)
         .set(search.copyWith(active: false));
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchActive(false));
+  }
+
+  KeyEventResult _handleWorkspaceKeyEvent(KeyEvent event, WidgetRef ref) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final action = BusyMarkSidebarShortcutActivators.actionForKeyEvent(
+      event,
+      HardwareKeyboard.instance,
+    );
+    final tab = _sidebarShortcutTabFor(action);
+    if (tab == null) {
+      return KeyEventResult.ignored;
+    }
+    _closeSearch(ref);
+    unawaited(
+      ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
+    );
+    ref.read(_sidebarShortcutRequestProvider.notifier).select(tab);
+    return KeyEventResult.handled;
   }
 
   void _setSearchQuery(WidgetRef ref, String query) {
@@ -562,15 +614,18 @@ class WorkspaceScreen extends ConsumerWidget {
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     switch (action) {
       case HeaderBarAction.back:
+        final router = GoRouter.of(context);
         unawaited(() async {
-          if (await confirmSafeToContinue(context, ref) && context.mounted) {
-            context.go('/');
+          if (await confirmSafeToContinue(context, ref)) {
+            router.go('/');
           }
         }());
       case HeaderBarAction.sidebarToggle:
-        unawaited(
-          settingsController.setSidebarVisible(!settings.sidebarVisible),
-        );
+        final visible = !settings.sidebarVisible;
+        if (!visible) {
+          _clearGitDetailSelection(ref);
+        }
+        unawaited(settingsController.setSidebarVisible(visible));
       case HeaderBarAction.refresh:
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
@@ -579,6 +634,8 @@ class WorkspaceScreen extends ConsumerWidget {
         context.go('/settings');
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case HeaderBarAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.viewModeEditor:
@@ -664,6 +721,7 @@ class WorkspaceScreen extends ConsumerWidget {
           .read(workspaceControllerProvider.notifier)
           .openActiveFile(result.filePath);
     }
+    _clearGitDetailSelection(ref);
     if (!context.mounted) {
       return;
     }
@@ -724,6 +782,199 @@ class WorkspaceScreen extends ConsumerWidget {
       return;
     }
     _showProblemsDialog(context, ref);
+  }
+}
+
+Future<void> _openGitDiffFile(
+  BuildContext context,
+  WidgetRef ref,
+  String repoRelativePath,
+) async {
+  final repo = ref.read(gitControllerProvider).repositoryInfo;
+  if (repo == null) {
+    return;
+  }
+  if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+      !context.mounted) {
+    return;
+  }
+  final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  final fileInWorkspace =
+      workspace?.files.any((file) => file.absolutePath == absolutePath) ??
+      false;
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  if (fileInWorkspace) {
+    await controller.openActiveFile(absolutePath);
+  } else {
+    await controller.openPath(absolutePath);
+  }
+  ref.read(gitControllerProvider.notifier).clearSelection();
+}
+
+void _clearGitDetailSelection(WidgetRef ref) {
+  final gitState = ref.read(gitControllerProvider);
+  if (gitState.selectedDiff != null ||
+      gitState.selectedFilePath != null ||
+      gitState.selectedCommitHash != null) {
+    ref.read(gitControllerProvider.notifier).clearSelection();
+  }
+}
+
+Future<bool> _confirmDiscardGitFiles(
+  BuildContext context,
+  WidgetRef ref,
+  List<GitFileStatus> files,
+) async {
+  if (files.isEmpty ||
+      !await confirmSafeToContinue(context, ref) ||
+      !context.mounted) {
+    return false;
+  }
+  final untracked = files.where((file) => file.untracked).toList();
+  final tracked = files.where((file) => !file.untracked).toList();
+  final title = context.l10n.gitConfirmDiscardTitle;
+  final message = tracked.isNotEmpty && untracked.isNotEmpty
+      ? context.l10n.gitConfirmDiscardMixed(files.length)
+      : untracked.isNotEmpty
+      ? context.l10n.gitConfirmDiscardUntracked(untracked.length)
+      : context.l10n.gitConfirmDiscardTracked(tracked.length);
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: title,
+      maxWidth: BusyMarkSizes.dialogWide,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.l10n.gitDiscard),
+        ),
+      ],
+      children: [
+        Text(message),
+        const SizedBox(height: BusyMarkSpacing.md),
+        _GitFileList(files: files),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+Future<bool> _confirmSwitchGitBranch(
+  BuildContext context,
+  WidgetRef ref,
+  String branchName,
+) async {
+  if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+    return false;
+  }
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.gitConfirmSwitchBranchTitle(branchName),
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.l10n.gitSwitchBranch),
+        ),
+      ],
+      children: [Text(context.l10n.gitConfirmSwitchBranchMessage)],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+Future<bool> _confirmGitPushSetUpstream(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final repo = ref.read(gitControllerProvider).repositoryInfo;
+  if (repo?.upstreamBranch != null) {
+    return false;
+  }
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.gitConfirmPushSetUpstreamTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.l10n.gitPush),
+        ),
+      ],
+      children: [
+        Text(
+          context.l10n.gitConfirmPushSetUpstreamMessage(
+            repo?.currentBranch ?? '',
+          ),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
+}
+
+Future<void> _refreshWorkspaceAfterGitFileChanges(WidgetRef ref) async {
+  await ref
+      .read(workspaceControllerProvider.notifier)
+      .refreshWorkspaceFromDiskPreservingOpenTabs();
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  if (workspace != null) {
+    ref.read(gitControllerProvider.notifier).attachWorkspace(workspace);
+  }
+}
+
+class _GitFileList extends StatelessWidget {
+  const _GitFileList({required this.files});
+
+  final List<GitFileStatus> files;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.control,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 180),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          itemCount: files.length,
+          itemBuilder: (context, index) => Text(
+            files[index].repoRelativePath,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -917,7 +1168,7 @@ class _InlineMessage extends StatelessWidget {
   }
 }
 
-class _Sidebar extends StatefulWidget {
+class _Sidebar extends ConsumerStatefulWidget {
   const _Sidebar({
     required this.workspace,
     required this.searchState,
@@ -931,10 +1182,10 @@ class _Sidebar extends StatefulWidget {
   final Future<void> Function(_WorkspaceSearchResult result) onOpenSearchResult;
 
   @override
-  State<_Sidebar> createState() => _SidebarState();
+  ConsumerState<_Sidebar> createState() => _SidebarState();
 }
 
-class _SidebarState extends State<_Sidebar> {
+class _SidebarState extends ConsumerState<_Sidebar> {
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
@@ -944,16 +1195,24 @@ class _SidebarState extends State<_Sidebar> {
     super.initState();
     _workspaceId = widget.workspace.id;
     _activeFilePath = widget.workspace.activeFilePath;
-    _tab = _preferredSidebarTabIndex(widget.workspace);
+    _tab = _initialSidebarTabIndex(widget.workspace);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(_sidebarShortcutRequestProvider.notifier).clear();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(covariant _Sidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.searchState.active && !oldWidget.searchState.active) {
+      _clearGitDetailSelection(ref);
+    }
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
-      _tab = _preferredSidebarTabIndex(widget.workspace);
+      _tab = _initialSidebarTabIndex(widget.workspace);
       return;
     }
     if (widget.workspace.activeFilePath != _activeFilePath) {
@@ -965,6 +1224,13 @@ class _SidebarState extends State<_Sidebar> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final tabs = _sidebarTabsFor(widget.workspace.kind);
+    ref.listen<_SidebarTab?>(_sidebarShortcutRequestProvider, (_, next) {
+      if (next == null) {
+        return;
+      }
+      _selectTab(next, tabs);
+      ref.read(_sidebarShortcutRequestProvider.notifier).clear();
+    });
     final selectedIndex = tabs.isEmpty
         ? 0
         : _tab.clamp(0, tabs.length - 1).toInt();
@@ -974,39 +1240,13 @@ class _SidebarState extends State<_Sidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _SidebarHeader(workspace: widget.workspace),
-          if (!widget.searchState.active && tabs.length > 1)
-            Padding(
-              padding: BusyMarkInsets.sidebarTabs,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    BusyMarkRadius.headerButton,
-                  ),
-                  boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                    BusyMarkRadius.headerButton,
-                  ),
-                  child: SegmentedButton<int>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (var index = 0; index < tabs.length; index++)
-                        ButtonSegment(
-                          value: index,
-                          label: _SidebarSegmentLabel(
-                            _sidebarTabLabel(context, tabs[index]),
-                          ),
-                        ),
-                    ],
-                    selected: {selectedIndex},
-                    onSelectionChanged: (value) =>
-                        setState(() => _tab = value.first),
-                  ),
-                ),
-              ),
-            ),
+          _SidebarHeader(
+            workspace: widget.workspace,
+            tabs: tabs,
+            selectedTab: selectedTab,
+            showTabMenu: !widget.searchState.active && tabs.length > 1,
+            onSelectTab: (tab) => _selectTab(tab, tabs),
+          ),
           Expanded(
             child: widget.searchState.active
                 ? _SearchSidebar(
@@ -1020,6 +1260,19 @@ class _SidebarState extends State<_Sidebar> {
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
                     ),
+                    _SidebarTab.git => GitSidebarTab(
+                      workspace: widget.workspace,
+                      onOpenFile: (relativePath) =>
+                          _openGitDiffFile(context, ref, relativePath),
+                      onConfirmDiscard: (files) =>
+                          _confirmDiscardGitFiles(context, ref, files),
+                      onAfterWorkspaceFilesChanged: () =>
+                          _refreshWorkspaceAfterGitFileChanges(ref),
+                      onConfirmSwitchBranch: (branchName) =>
+                          _confirmSwitchGitBranch(context, ref, branchName),
+                      onConfirmPushSetUpstream: () =>
+                          _confirmGitPushSetUpstream(context, ref),
+                    ),
                     null => const SizedBox.shrink(),
                   },
           ),
@@ -1027,9 +1280,29 @@ class _SidebarState extends State<_Sidebar> {
       ),
     );
   }
+
+  void _selectTab(_SidebarTab tab, List<_SidebarTab> tabs) {
+    final index = tabs.indexOf(tab);
+    if (index < 0) {
+      return;
+    }
+    setState(() => _tab = index);
+    if (tab != _SidebarTab.git) {
+      _clearGitDetailSelection(ref);
+    }
+  }
+
+  int _initialSidebarTabIndex(Workspace workspace) {
+    final tabs = _sidebarTabsFor(workspace.kind);
+    final request = ref.read(_sidebarShortcutRequestProvider);
+    final requestedIndex = request == null ? -1 : tabs.indexOf(request);
+    return requestedIndex >= 0
+        ? requestedIndex
+        : _preferredSidebarTabIndex(workspace);
+  }
 }
 
-enum _SidebarTab { files, toc, outline }
+enum _SidebarTab { files, toc, outline, git }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -1057,11 +1330,13 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
+      _SidebarTab.git,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
+      _SidebarTab.git,
     ],
   };
 }
@@ -1071,55 +1346,105 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.files => context.l10n.files,
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
+    _SidebarTab.git => context.l10n.git,
   };
 }
 
-class _SidebarSegmentLabel extends StatelessWidget {
-  const _SidebarSegmentLabel(this.text);
+IconData _sidebarTabIcon(_SidebarTab tab) {
+  return switch (tab) {
+    _SidebarTab.files => BusyMarkGlyphs.documentOpen,
+    _SidebarTab.toc => BusyMarkGlyphs.orderedList,
+    _SidebarTab.outline => BusyMarkGlyphs.indent,
+    _SidebarTab.git => BusyMarkGlyphs.history,
+  };
+}
 
-  final String text;
+String _sidebarTabShortcut(_SidebarTab tab) {
+  return switch (tab) {
+    _SidebarTab.files => BusyMarkSidebarShortcutLabels.files,
+    _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
+    _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
+    _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
+  };
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      softWrap: false,
-      textAlign: TextAlign.center,
-    );
-  }
+_SidebarTab? _sidebarShortcutTabFor(BusyMarkSidebarShortcutAction? action) {
+  return switch (action) {
+    BusyMarkSidebarShortcutAction.files => _SidebarTab.files,
+    BusyMarkSidebarShortcutAction.toc => _SidebarTab.toc,
+    BusyMarkSidebarShortcutAction.outline => _SidebarTab.outline,
+    BusyMarkSidebarShortcutAction.git => _SidebarTab.git,
+    _ => null,
+  };
 }
 
 class _SidebarHeader extends StatelessWidget {
-  const _SidebarHeader({required this.workspace});
+  const _SidebarHeader({
+    required this.workspace,
+    required this.tabs,
+    required this.selectedTab,
+    required this.showTabMenu,
+    required this.onSelectTab,
+  });
 
   final Workspace workspace;
+  final List<_SidebarTab> tabs;
+  final _SidebarTab? selectedTab;
+  final bool showTabMenu;
+  final ValueChanged<_SidebarTab> onSelectTab;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return Padding(
       padding: BusyMarkInsets.sidebarHeader,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            _workspaceName(context, workspace),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _workspaceName(context, workspace),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: colors.foreground,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: BusyMarkSpacing.xs),
+                Text(
+                  _workspaceDetail(context, workspace),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: BusyMarkSpacing.xs),
-          Text(
-            _workspaceDetail(context, workspace),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          if (showTabMenu && selectedTab != null) ...[
+            const SizedBox(width: BusyMarkSpacing.sm),
+            BusyMarkHeaderPopupMenuButton<_SidebarTab>(
+              tooltip: context.l10n.sidebarViewMenu,
+              icon: _sidebarTabIcon(selectedTab!),
+              transparent: true,
+              borderRadius: BusyMarkRadius.nativeHeaderButton,
+              itemBuilder: (context) => [
+                for (final tab in tabs)
+                  BusyMarkPopupMenuItem(
+                    value: tab,
+                    label: _sidebarTabLabel(context, tab),
+                    icon: _sidebarTabIcon(tab),
+                    shortcut: _sidebarTabShortcut(tab),
+                    checked: tab == selectedTab,
+                    trailingCheck: true,
+                  ),
+              ],
+              onSelected: onSelectTab,
+            ),
+          ],
         ],
       ),
     );
@@ -1235,6 +1560,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(file.absolutePath);
+                    _clearGitDetailSelection(ref);
                   }
                 }
               : null,
@@ -1642,6 +1968,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     await ref
                         .read(workspaceControllerProvider.notifier)
                         .openActiveFile(topic);
+                    _clearGitDetailSelection(ref);
                   }
                 }
               : hasChildren
@@ -2426,6 +2753,7 @@ class _EditorTabStrip extends ConsumerWidget {
               canClose: true,
               onSelected: () async {
                 if (active) {
+                  _clearGitDetailSelection(ref);
                   return;
                 }
                 if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
@@ -2435,6 +2763,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 await ref
                     .read(workspaceControllerProvider.notifier)
                     .openActiveFile(path);
+                _clearGitDetailSelection(ref);
               },
               onClose: () async {
                 if (active &&
@@ -2445,6 +2774,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 await ref
                     .read(workspaceControllerProvider.notifier)
                     .closeOpenFileTab(path);
+                _clearGitDetailSelection(ref);
               },
             );
           },
@@ -2631,73 +2961,28 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyF) {
+    if (BusyMarkAppShortcutActivators.find.accepts(event, keyboard)) {
       ref.read(workspaceSearchOpenRequestProvider.notifier).request();
+      return KeyEventResult.handled;
+    }
+    if (_isPlainTabKey(keyboard, key)) {
+      _insertSourceTab();
+      return KeyEventResult.handled;
+    }
+    if (_isPlainShiftTabKey(keyboard, key)) {
+      _outdentSourceSelection();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.escape) {
       ref.read(workspaceSearchCloseRequestProvider.notifier).request();
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyB) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.bold);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyI) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.italic);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyU) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.underline);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyK) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.link);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyE) {
-      _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.code);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isAltPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit5) {
-      _applySourceInlineMarkdownCommand(
-        _SourceInlineMarkdownCommand.strikethrough,
-      );
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.keyV) {
-      unawaited(_pastePlainTextIntoSource());
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed && keyboard.isShiftPressed) {
-      final command = _sourceHeadingShortcutBlockCommand(key);
-      if (command != null) {
-        _applySourceBlockMarkdownCommand(command);
-        return KeyEventResult.handled;
-      }
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit7) {
-      _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.orderedList);
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit8) {
-      _applySourceBlockMarkdownCommand(
-        _SourceBlockMarkdownCommand.unorderedList,
-      );
-      return KeyEventResult.handled;
-    }
-    if (keyboard.isControlPressed &&
-        keyboard.isShiftPressed &&
-        key == LogicalKeyboardKey.digit9) {
-      _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.taskList);
+    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
+      event,
+      keyboard,
+    );
+    if (shortcutAction != null) {
+      _applySourceEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -2865,144 +3150,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     child: KeyedSubtree(
                       key: ValueKey(activeEditorPath),
                       child: Shortcuts(
-                        shortcuts: const {
-                          SingleActivator(
-                            LogicalKeyboardKey.keyB,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.bold,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyI,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.italic,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyU,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.underline,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyK,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.link,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyE,
-                            control: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.code,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit5,
-                            alt: true,
-                            shift: true,
-                          ): _SourceInlineMarkdownIntent(
-                            _SourceInlineMarkdownCommand.strikethrough,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit0,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.paragraph,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit1,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading1,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit2,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading2,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit3,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading3,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit4,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading4,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit5,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading5,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit6,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.heading6,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit7,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.orderedList,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit8,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.unorderedList,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.digit9,
-                            control: true,
-                            shift: true,
-                          ): _SourceBlockMarkdownIntent(
-                            _SourceBlockMarkdownCommand.taskList,
-                          ),
-                          SingleActivator(
-                            LogicalKeyboardKey.keyV,
-                            control: true,
-                            shift: true,
-                          ): _SourcePastePlainTextIntent(),
-                        },
+                        shortcuts: BusyMarkEditorShortcutActivators.intentMap(
+                          _SourceEditorShortcutIntent.new,
+                        ),
                         child: Actions(
                           actions: {
-                            _SourceInlineMarkdownIntent:
-                                CallbackAction<_SourceInlineMarkdownIntent>(
+                            _SourceEditorShortcutIntent:
+                                CallbackAction<_SourceEditorShortcutIntent>(
                                   onInvoke: (intent) {
-                                    _applySourceInlineMarkdownCommand(
-                                      intent.command,
+                                    _applySourceEditorShortcutAction(
+                                      intent.action,
                                     );
-                                    return null;
-                                  },
-                                ),
-                            _SourceBlockMarkdownIntent:
-                                CallbackAction<_SourceBlockMarkdownIntent>(
-                                  onInvoke: (intent) {
-                                    _applySourceBlockMarkdownCommand(
-                                      intent.command,
-                                    );
-                                    return null;
-                                  },
-                                ),
-                            _SourcePastePlainTextIntent:
-                                CallbackAction<_SourcePastePlainTextIntent>(
-                                  onInvoke: (intent) {
-                                    unawaited(_pastePlainTextIntoSource());
                                     return null;
                                   },
                                 ),
@@ -3135,6 +3293,111 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _handleSourceChanged(value, updatePreview: false, sourceFilePath: filePath);
   }
 
+  void _applySourceEditorShortcutAction(BusyMarkEditorShortcutAction action) {
+    switch (action) {
+      case BusyMarkEditorShortcutAction.bold:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.bold);
+        break;
+      case BusyMarkEditorShortcutAction.italic:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.italic);
+        break;
+      case BusyMarkEditorShortcutAction.underline:
+        _applySourceInlineMarkdownCommand(
+          _SourceInlineMarkdownCommand.underline,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.strikethrough:
+        _applySourceInlineMarkdownCommand(
+          _SourceInlineMarkdownCommand.strikethrough,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.inlineCode:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.code);
+        break;
+      case BusyMarkEditorShortcutAction.link:
+        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.link);
+        break;
+      case BusyMarkEditorShortcutAction.paragraph:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.paragraph);
+        break;
+      case BusyMarkEditorShortcutAction.heading1:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading1);
+        break;
+      case BusyMarkEditorShortcutAction.heading2:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading2);
+        break;
+      case BusyMarkEditorShortcutAction.heading3:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading3);
+        break;
+      case BusyMarkEditorShortcutAction.heading4:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading4);
+        break;
+      case BusyMarkEditorShortcutAction.heading5:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading5);
+        break;
+      case BusyMarkEditorShortcutAction.heading6:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading6);
+        break;
+      case BusyMarkEditorShortcutAction.orderedList:
+        _applySourceBlockMarkdownCommand(
+          _SourceBlockMarkdownCommand.orderedList,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.unorderedList:
+        _applySourceBlockMarkdownCommand(
+          _SourceBlockMarkdownCommand.unorderedList,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.taskList:
+        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.taskList);
+        break;
+      case BusyMarkEditorShortcutAction.toggleTask:
+        _toggleSourceTaskChecked();
+        break;
+      case BusyMarkEditorShortcutAction.indent:
+        _indentSourceSelection();
+        break;
+      case BusyMarkEditorShortcutAction.outdent:
+        _outdentSourceSelection();
+        break;
+      case BusyMarkEditorShortcutAction.blockquote:
+        _applySourceLinePrefix('> ');
+        break;
+      case BusyMarkEditorShortcutAction.codeBlock:
+        _insertSourceCodeBlock();
+        break;
+      case BusyMarkEditorShortcutAction.codeBlockLanguage:
+        _insertSourceCodeBlock(language: 'language');
+        break;
+      case BusyMarkEditorShortcutAction.image:
+        _insertSourceImage(block: true);
+        break;
+      case BusyMarkEditorShortcutAction.inlineImage:
+        _insertSourceImage(block: false);
+        break;
+      case BusyMarkEditorShortcutAction.table:
+        _insertSourceTable();
+        break;
+      case BusyMarkEditorShortcutAction.htmlBlock:
+        _insertSourceHtmlBlock();
+        break;
+      case BusyMarkEditorShortcutAction.thematicBreak:
+        _insertSourceBlock('\n---\n');
+        break;
+      case BusyMarkEditorShortcutAction.hardLineBreak:
+        final selection = _normalizedSourceSelection();
+        _replaceSourceSelection(
+          '  \n',
+          selectionStart: selection.start + 3,
+          selectionEnd: selection.start + 3,
+        );
+        break;
+      case BusyMarkEditorShortcutAction.pastePlainText:
+        unawaited(_pastePlainTextIntoSource());
+        break;
+    }
+  }
+
   void _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand command) {
     switch (command) {
       case _SourceInlineMarkdownCommand.bold:
@@ -3159,22 +3422,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand command) {
-    final selection = _normalizedSourceSelection();
+    final range = _selectedSourceLineRange();
     final text = _controller.text;
-    final lineStart =
-        text.lastIndexOf(
-          '\n',
-          (selection.start - 1).clamp(0, text.length).toInt(),
-        ) +
-        1;
-    final nextBreak = text.indexOf('\n', selection.end);
-    final lineEnd = nextBreak < 0 ? text.length : nextBreak;
-    final selectedLines = text.substring(lineStart, lineEnd).split('\n');
     final markerPattern = RegExp(
       r'^(\s*)(?:#{1,6}\s+)?(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)?(.*)$',
     );
     final replacementLines = <String>[];
-    for (final (index, line) in selectedLines.indexed) {
+    for (final (index, line) in range.lines.indexed) {
       final match = markerPattern.firstMatch(line);
       final indent = match?.group(1) ?? '';
       final content = match?.group(2) ?? line.trimLeft();
@@ -3193,12 +3447,153 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       replacementLines.add('$indent$marker$content');
     }
     final replacement = replacementLines.join('\n');
-    final nextText = text.replaceRange(lineStart, lineEnd, replacement);
+    final nextText = text.replaceRange(range.start, range.end, replacement);
     _controller.value = TextEditingValue(
       text: nextText,
       selection: TextSelection(
-        baseOffset: lineStart,
-        extentOffset: lineStart + replacement.length,
+        baseOffset: range.start,
+        extentOffset: range.start + replacement.length,
+      ),
+    );
+    _sourceFocusNode.requestFocus();
+    _handleSourceChanged(nextText);
+  }
+
+  void _toggleSourceTaskChecked() {
+    final range = _selectedSourceLineRange();
+    final replacement = [
+      for (final line in range.lines)
+        line.replaceFirstMapped(
+          RegExp(r'^(\s*[-*+]\s+\[)([ xX])(\]\s+)'),
+          (match) =>
+              '${match.group(1)}${match.group(2)!.trim().isEmpty ? 'x' : ' '}${match.group(3)}',
+        ),
+    ].join('\n');
+    _replaceSourceLineRange(range, replacement);
+  }
+
+  void _indentSourceSelection() {
+    final range = _selectedSourceLineRange();
+    _replaceSourceLineRange(
+      range,
+      [
+        for (final line in range.lines) line.isEmpty ? line : '  $line',
+      ].join('\n'),
+    );
+  }
+
+  void _outdentSourceSelection() {
+    final range = _selectedSourceLineRange();
+    _replaceSourceLineRange(
+      range,
+      [
+        for (final line in range.lines)
+          line.startsWith('  ')
+              ? line.substring(2)
+              : line.startsWith('\t')
+              ? line.substring(1)
+              : line,
+      ].join('\n'),
+    );
+  }
+
+  void _applySourceLinePrefix(String prefix) {
+    final range = _selectedSourceLineRange();
+    _replaceSourceLineRange(
+      range,
+      [
+        for (final line in range.lines)
+          line.isEmpty ? prefix.trimRight() : '$prefix$line',
+      ].join('\n'),
+    );
+  }
+
+  void _insertSourceCodeBlock({String language = ''}) {
+    final selection = _normalizedSourceSelection();
+    final selected = selection.textInside(_controller.text);
+    final content = selected.isEmpty ? 'code' : selected;
+    final languageSuffix = language.isEmpty ? '' : language;
+    final replacement = '```$languageSuffix\n$content\n```';
+    _replaceSourceSelection(
+      replacement,
+      selectionStart: selection.start + 3 + languageSuffix.length + 1,
+      selectionEnd:
+          selection.start + 3 + languageSuffix.length + 1 + content.length,
+    );
+  }
+
+  void _insertSourceImage({required bool block}) {
+    final selection = _normalizedSourceSelection();
+    final selected = selection.textInside(_controller.text).trim();
+    final alt = selected.isEmpty ? 'alt' : selected;
+    final replacement = '![${alt.replaceAll('\n', ' ')}](url)';
+    _replaceSourceSelection(
+      block ? '\n$replacement\n' : replacement,
+      selectionStart: selection.start + (block ? 3 : 2),
+      selectionEnd: selection.start + (block ? 3 : 2) + alt.length,
+    );
+  }
+
+  void _insertSourceTable() {
+    _insertSourceBlock(
+      '\n| Header 1 | Header 2 |\n| --- | --- |\n| Cell | Cell |\n',
+    );
+  }
+
+  void _insertSourceHtmlBlock() {
+    final selection = _normalizedSourceSelection();
+    final selected = selection.textInside(_controller.text).trim();
+    final content = selected.isEmpty ? 'HTML content' : selected;
+    final replacement = '\n<div>\n  <p>$content</p>\n</div>\n';
+    final contentStart = replacement.indexOf(content);
+    _replaceSourceSelection(
+      replacement,
+      selectionStart: selection.start + contentStart,
+      selectionEnd: selection.start + contentStart + content.length,
+    );
+  }
+
+  void _insertSourceBlock(String markdown) {
+    final selection = _normalizedSourceSelection();
+    _replaceSourceSelection(
+      markdown,
+      selectionStart: selection.start + markdown.length,
+      selectionEnd: selection.start + markdown.length,
+    );
+  }
+
+  ({int start, int end, List<String> lines}) _selectedSourceLineRange() {
+    final selection = _normalizedSourceSelection();
+    final text = _controller.text;
+    final lineStart =
+        text.lastIndexOf(
+          '\n',
+          (selection.start - 1).clamp(0, text.length).toInt(),
+        ) +
+        1;
+    final nextBreak = text.indexOf('\n', selection.end);
+    final lineEnd = nextBreak < 0 ? text.length : nextBreak;
+    return (
+      start: lineStart,
+      end: lineEnd,
+      lines: text.substring(lineStart, lineEnd).split('\n'),
+    );
+  }
+
+  void _replaceSourceLineRange(
+    ({int start, int end, List<String> lines}) range,
+    String replacement,
+  ) {
+    final nextText = _controller.text.replaceRange(
+      range.start,
+      range.end,
+      replacement,
+    );
+    _controller.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection(
+        baseOffset: range.start,
+        extentOffset: range.start + replacement.length,
       ),
     );
     _sourceFocusNode.requestFocus();
@@ -3245,6 +3640,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       text,
       selectionStart: selection.start + text.length,
       selectionEnd: selection.start + text.length,
+    );
+  }
+
+  void _insertSourceTab() {
+    final selection = _normalizedSourceSelection();
+    _replaceSourceSelection(
+      '\t',
+      selectionStart: selection.start + 1,
+      selectionEnd: selection.start + 1,
     );
   }
 
@@ -4458,6 +4862,7 @@ class _PreviewPane extends StatelessWidget {
     final child = _PreviewBlockView(
       block,
       first: index == 0,
+      listRunEnd: _isLastListBlock(index),
       workspace: workspace,
       headingKey: _keyForBlock(block),
     );
@@ -4465,6 +4870,15 @@ class _PreviewPane extends StatelessWidget {
       key: searchKeys.putIfAbsent(index, () => GlobalKey()),
       child: child,
     );
+  }
+
+  bool _isLastListBlock(int index) {
+    final blocks = preview?.blocks;
+    if (blocks == null || blocks[index].kind != PreviewBlockKind.list) {
+      return false;
+    }
+    return index == blocks.length - 1 ||
+        blocks[index + 1].kind != PreviewBlockKind.list;
   }
 
   Key? _keyForBlock(PreviewBlock block) {
@@ -4484,12 +4898,14 @@ class _PreviewBlockView extends StatelessWidget {
     this.block, {
     required this.workspace,
     required this.first,
+    required this.listRunEnd,
     required this.headingKey,
   });
 
   final PreviewBlock block;
   final Workspace? workspace;
   final bool first;
+  final bool listRunEnd;
   final Key? headingKey;
 
   @override
@@ -4548,21 +4964,52 @@ class _PreviewBlockView extends StatelessWidget {
         child: Text(displayBlock.text),
       ),
       PreviewBlockKind.list => Padding(
-        padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
-        child: Row(
+        padding: EdgeInsets.only(
+          top: BusyMarkSpacing.xs,
+          bottom: _listBottomSpacing(displayBlock),
+        ),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: BusyMarkSizes.previewListMarkerWidth,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  top: BusyMarkSizes.previewListMarkerTopInset,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: BusyMarkSizes.previewListMarkerWidth,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: BusyMarkSizes.previewListMarkerTopInset,
+                    ),
+                    child: _ListMarker(block: displayBlock),
+                  ),
                 ),
-                child: _ListMarker(block: block),
-              ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(child: _PreviewInlineText(block: displayBlock)),
+              ],
             ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(child: _PreviewInlineText(block: block)),
+            if (displayBlock.children.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left:
+                      BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (index, child) in displayBlock.children.indexed)
+                      _PreviewBlockView(
+                        child,
+                        workspace: workspace,
+                        first: false,
+                        listRunEnd: _isLastListBlock(
+                          displayBlock.children,
+                          index,
+                        ),
+                        headingKey: null,
+                      ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -4576,6 +5023,22 @@ class _PreviewBlockView extends StatelessWidget {
         child: const _PreviewThematicBreak(),
       ),
       PreviewBlockKind.table => _PreviewTable(block: displayBlock),
+      PreviewBlockKind.container
+          when displayBlock.attributes['htmlTag'] == 'figure' =>
+        _PreviewFigure(block: displayBlock, workspace: workspace, first: first),
+      PreviewBlockKind.container => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, child) in displayBlock.children.indexed)
+            _PreviewBlockView(
+              child,
+              workspace: workspace,
+              first: first && index == 0,
+              listRunEnd: _isLastListBlock(displayBlock.children, index),
+              headingKey: null,
+            ),
+        ],
+      ),
       PreviewBlockKind.raw => Container(
         margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
         padding: BusyMarkInsets.previewCodeBlock,
@@ -4600,6 +5063,23 @@ class _PreviewBlockView extends StatelessWidget {
         child: _PreviewInlineText(block: displayBlock),
       ),
     };
+  }
+
+  double _listBottomSpacing(PreviewBlock displayBlock) {
+    if (!listRunEnd) {
+      return BusyMarkSpacing.xs;
+    }
+    if (displayBlock.children.isNotEmpty &&
+        displayBlock.children.last.kind == PreviewBlockKind.list) {
+      return BusyMarkSpacing.xs;
+    }
+    return BusyMarkSpacing.md;
+  }
+
+  bool _isLastListBlock(List<PreviewBlock> blocks, int index) {
+    return blocks[index].kind == PreviewBlockKind.list &&
+        (index == blocks.length - 1 ||
+            blocks[index + 1].kind != PreviewBlockKind.list);
   }
 
   PreviewBlock _localizedPreviewBlock(
@@ -4673,6 +5153,10 @@ class _PreviewTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final columnCount = block.children.fold<int>(
+      0,
+      (max, row) => math.max(max, row.children.length),
+    );
     return Container(
       margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
       decoration: BoxDecoration(
@@ -4696,17 +5180,18 @@ class _PreviewTable extends StatelessWidget {
                       : BusyMarkLinuxPalette.transparent,
                 ),
                 children: [
-                  for (final cell in row.children)
+                  for (var index = 0; index < columnCount; index += 1)
                     Padding(
                       padding: BusyMarkInsets.previewTableCell,
-                      child: _PreviewInlineText(
-                        block: cell,
-                        style: row.attributes['header'] == 'true'
-                            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              )
-                            : null,
-                      ),
+                      child: index < row.children.length
+                          ? _PreviewInlineText(
+                              block: row.children[index],
+                              style: row.attributes['header'] == 'true'
+                                  ? Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700)
+                                  : null,
+                            )
+                          : const SizedBox.shrink(),
                     ),
                 ],
               ),
@@ -5011,11 +5496,128 @@ class _ListMarker extends StatelessWidget {
   }
 }
 
-class _PreviewImageBlock extends StatelessWidget {
-  const _PreviewImageBlock({required this.block, required this.workspace});
+class _PreviewFigure extends StatelessWidget {
+  const _PreviewFigure({
+    required this.block,
+    required this.workspace,
+    required this.first,
+  });
+
+  static const double _captionMinWidth = 240;
 
   final PreviewBlock block;
   final Workspace? workspace;
+  final bool first;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final contentBlocks = block.children.where(_isNotCaption).toList();
+    final captionBlocks = block.children.where(_isCaption).toList();
+    final captionStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: colors.mutedForeground,
+      height: BusyMarkTypography.bodyLineHeight,
+    );
+    final captionWidth = _captionWidth(contentBlocks);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        top: first ? 0 : BusyMarkSpacing.smPlus,
+        bottom: BusyMarkSpacing.smPlus,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (index, child) in contentBlocks.indexed)
+            _figureContentBlock(child, index, contentBlocks),
+          if (captionBlocks.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(
+                top: contentBlocks.isEmpty ? 0 : BusyMarkSpacing.xs,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: captionWidth),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final (index, caption) in captionBlocks.indexed)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: index == 0 ? 0 : BusyMarkSpacing.xs,
+                        ),
+                        child: _PreviewInlineText(
+                          block: caption,
+                          style: captionStyle,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _figureContentBlock(
+    PreviewBlock child,
+    int index,
+    List<PreviewBlock> contentBlocks,
+  ) {
+    if (child.kind == PreviewBlockKind.image) {
+      return _PreviewImageBlock(
+        block: child,
+        workspace: workspace,
+        padding: EdgeInsets.zero,
+      );
+    }
+    return _PreviewBlockView(
+      child,
+      workspace: workspace,
+      first: index == 0,
+      listRunEnd: _isLastListBlock(contentBlocks, index),
+      headingKey: null,
+    );
+  }
+
+  double _captionWidth(List<PreviewBlock> contentBlocks) {
+    for (final child in contentBlocks) {
+      if (child.kind != PreviewBlockKind.image) {
+        continue;
+      }
+      final width = _previewImageWidth(child);
+      if (width != null) {
+        return math.max(width, _captionMinWidth);
+      }
+    }
+    return BusyMarkSizes.previewImageMaxWidth;
+  }
+
+  bool _isLastListBlock(List<PreviewBlock> blocks, int index) {
+    return blocks[index].kind == PreviewBlockKind.list &&
+        (index == blocks.length - 1 ||
+            blocks[index + 1].kind != PreviewBlockKind.list);
+  }
+
+  bool _isCaption(PreviewBlock block) {
+    return block.attributes['htmlTag'] == 'figcaption';
+  }
+
+  bool _isNotCaption(PreviewBlock block) {
+    return !_isCaption(block);
+  }
+}
+
+class _PreviewImageBlock extends StatelessWidget {
+  const _PreviewImageBlock({
+    required this.block,
+    required this.workspace,
+    this.padding = const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
+  });
+
+  final PreviewBlock block;
+  final Workspace? workspace;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -5024,7 +5626,7 @@ class _PreviewImageBlock extends StatelessWidget {
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
+      padding: padding,
       child: Align(
         alignment: Alignment.centerLeft,
         child: MarkdownImageView(
@@ -5455,6 +6057,7 @@ Future<void> _openPreviewLink(
     await ref
         .read(workspaceControllerProvider.notifier)
         .openActiveFile(file.absolutePath);
+    _clearGitDetailSelection(ref);
   }
   if (!context.mounted) {
     return;
@@ -5910,6 +6513,7 @@ class _DiagnosticRow extends ConsumerWidget {
             await ref
                 .read(workspaceControllerProvider.notifier)
                 .openActiveFile(diagnostic.filePath);
+            _clearGitDetailSelection(ref);
           }
         },
         child: Padding(

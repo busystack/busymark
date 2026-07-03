@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "साइडबार दिखाएँ/छिपाएँ",
+  "toggleSidebar": "साइडबार पैनल",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -347,6 +347,14 @@
   "shortcutKeyboardShortcutsDescription": "यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutMarkdownAndHtmlDescription": "Markdown और HTML संदर्भ खोलें",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "BusyMark सेटिंग्स खोलें",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
   },
   "shortcutNextTab": "अगला टैब",
   "@shortcutNextTab": {
@@ -507,6 +515,14 @@
   "shortcutChecklistDescription": "चेकलिस्ट फ़ॉर्मेटिंग चालू/बंद करें",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "साइडबार",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "साइडबार दृश्य",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
   },
   "createMarkdownFile": "Markdown फ़ाइल बनाएँ",
   "@createMarkdownFile": {
@@ -738,6 +754,26 @@
   "@table": {
     "description": "Table command label."
   },
+  "htmlBlock": "HTML ब्लॉक",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "HTML ब्लॉक डालें या संपादित करें",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "रेंडर किया गया HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "HTML संपादित करें",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "HTML स्रोत",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
   "thematicBreak": "थीमैटिक ब्रेक",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -910,11 +946,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "साइडबार छिपाएँ",
+  "hideSidebar": "साइडबार पैनल छिपाएँ",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "साइडबार दिखाएँ",
+  "showSidebar": "साइडबार पैनल दिखाएँ",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
@@ -1896,5 +1932,149 @@
         "type": "String"
       }
     }
-  }
+  },
+  "close": "Close",
+  "git": "Git",
+  "gitDiff": "Git diff",
+  "gitUnavailableTitle": "Git is unavailable",
+  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
+  "gitNotRepositoryTitle": "Not a Git repository",
+  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
+  "gitInitializeRepository": "Initialize repository",
+  "gitDetachedHead": "Detached HEAD",
+  "gitDetachedHeadAt": "Detached at {commit}",
+  "gitNoUpstream": "No upstream",
+  "gitAheadCount": "{count, plural, =1{1 नहीं भेजा गया कमिट} other{{count} नहीं भेजे गए कमिट}}",
+  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
+  "gitClean": "Clean",
+  "gitConflicts": "Conflicts",
+  "gitChanges": "बदलाव",
+  "gitHistory": "History",
+  "gitBranches": "शाखाएं",
+  "gitPull": "Pull",
+  "gitPush": "Push",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Select for commit",
+  "gitRemoveFromCommit": "Leave out of commit",
+  "gitDiscard": "Discard",
+  "gitOpenFile": "Open file",
+  "gitMarkResolved": "Mark resolved",
+  "gitUntracked": "Unversioned Files",
+  "gitCommitMessage": "Commit message",
+  "gitCommitSelectedFiles": "Selected files",
+  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
+  "gitCommitMessageRequired": "Enter a commit message.",
+  "gitCreateBranch": "Create branch",
+  "gitNewBranch": "+ New Branch",
+  "gitBranchName": "Branch name",
+  "gitSwitchBranch": "Switch",
+  "gitNoChanges": "No changes",
+  "gitNoHistory": "No history",
+  "gitNoBranches": "No branches",
+  "gitNoDiff": "दिखाने के लिए कोई अंतर नहीं",
+  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
+  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
+  "gitConfirmDiscardTitle": "Discard Git changes?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
+  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
+  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
+  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
+  "gitProjectHistory": "Project",
+  "gitFileHistory": "Current file",
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "gitFileActions": "File actions",
+  "gitStatusAdded": "Added",
+  "gitStatusDeleted": "Deleted",
+  "gitStatusRenamed": "Renamed",
+  "gitStatusCopied": "Copied",
+  "gitStatusUntracked": "Untracked",
+  "gitStatusConflicted": "Conflicted",
+  "gitStatusIgnored": "Ignored",
+  "gitStatusTypeChanged": "Type changed",
+  "gitStatusModified": "Modified",
+  "gitStatusUnknown": "Unknown",
+  "gitErrorUnavailable": "Git is unavailable.",
+  "gitErrorNotRepository": "This workspace is not a Git repository.",
+  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
+  "gitErrorInvalidBranchName": "Enter a valid branch name.",
+  "gitErrorNoRemote": "No Git remote is configured.",
+  "gitErrorNoUpstream": "No upstream branch is configured.",
+  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
+  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
+  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
+  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
+  "gitErrorNetwork": "Git network operation failed.",
+  "gitErrorConflict": "Git reported unresolved conflicts.",
+  "gitErrorCommandFailed": "Git command failed.",
+
+  "markdownAndHtml": "Markdown और HTML",
+  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
+  "markdownHtmlMarkdownBlocks": "Markdown ब्लॉक",
+  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
+  "markdownHtmlMarkdownBlocksDescription": "Markdown स्रोत और प्रीव्यू में समर्थित ब्लॉक संरचनाएँ।",
+  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
+  "markdownHtmlInlineFormatting": "इनलाइन Markdown",
+  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
+  "markdownHtmlInlineFormattingDescription": "पैराग्राफ, सूची आइटम और तालिका सेल के अंदर इस्तेमाल होने वाला फ़ॉर्मैटिंग।",
+  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
+  "markdownHtmlRawHtmlBlocks": "कच्चे HTML ब्लॉक",
+  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
+  "markdownHtmlRawHtmlBlocksDescription": "सुरक्षित ब्लॉक-स्तर HTML टैग जिन्हें BusyMark प्रीव्यू विजेट से दिखाया जाता है।",
+  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
+  "markdownHtmlRawHtmlInline": "इनलाइन HTML टैग",
+  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
+  "markdownHtmlRawHtmlInlineDescription": "सुरक्षित इनलाइन HTML टैग जिन्हें शाब्दिक टैग दिखाए बिना रेंडर किया जाता है।",
+  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
+  "markdownHtmlSafety": "सुरक्षा नियम",
+  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
+  "markdownHtmlSafetyDescription": "कच्चे HTML को प्रीव्यू से पहले पार्स और साफ किया जाता है।",
+  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
+  "markdownHtmlHeadings": "शीर्षक",
+  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
+  "markdownHtmlParagraphs": "पैराग्राफ",
+  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
+  "markdownHtmlLists": "सूचियाँ",
+  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
+  "markdownHtmlHtmlContainers": "कंटेनर",
+  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
+  "markdownHtmlHtmlTextBlocks": "टेक्स्ट ब्लॉक",
+  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
+  "markdownHtmlHtmlFigures": "फ़िगर और चित्र",
+  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
+  "markdownHtmlHtmlPreformatted": "पूर्व-स्वरूपित कोड",
+  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
+  "markdownHtmlHtmlDisclosure": "खुलने वाले ब्लॉक",
+  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
+  "markdownHtmlHtmlDescriptionLists": "विवरण सूचियाँ",
+  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
+  "markdownHtmlHtmlFormattingTags": "फ़ॉर्मैटिंग टैग",
+  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
+  "markdownHtmlHtmlInlineCodeTags": "इनलाइन कोड टैग",
+  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
+  "markdownHtmlHtmlNeutralInlineTags": "अर्थपूर्ण टेक्स्ट टैग",
+  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
+  "markdownHtmlSanitizedPreview": "साफ किया गया प्रीव्यू",
+  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
+  "markdownHtmlSanitizedPreviewDescription": "अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।",
+  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
+  "markdownHtmlSourcePreserved": "स्रोत सुरक्षित रहता है",
+  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
+  "markdownHtmlSourcePreservedDescription": "बिना संपादित कच्चा HTML ठीक उसी स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
+  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
+  "markdownHtmlMarkdownInsideHtml": "HTML के अंदर Markdown",
+  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
+  "markdownHtmlMarkdownInsideHtmlDescription": "कच्चे HTML के अंदर Markdown चिह्न शाब्दिक टेक्स्ट की तरह दिखते हैं।",
+  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
+  "markdownHtmlBlockedContent": "सक्रिय सामग्री अवरुद्ध",
+  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
+  "markdownHtmlBlockedContentDescription": "स्क्रिप्ट, स्टाइल, फ़्रेम, फ़ॉर्म, SVG, MathML, इवेंट और असुरक्षित एट्रिब्यूट अवरुद्ध किए जाते हैं।",
+  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
+  "markdownHtmlSafeUrls": "केवल सुरक्षित URL",
+  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
+  "markdownHtmlSafeUrlsDescription": "लिंक http, https, mailto, tel, relative URL और fragment स्वीकार करते हैं; असुरक्षित scheme अवरुद्ध होती हैं।",
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+
 }

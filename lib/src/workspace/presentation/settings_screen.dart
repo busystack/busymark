@@ -9,6 +9,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
@@ -60,6 +61,7 @@ class SettingsScreen extends ConsumerWidget {
                 BusyMarkHeaderIconButton(
                   tooltip: context.l10n.keyboardShortcuts,
                   icon: BusyMarkGlyphs.keyboard,
+                  shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
                   onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
                 ),
                 BusyMarkHeaderIconButton(
@@ -191,6 +193,8 @@ class SettingsScreen extends ConsumerWidget {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case HeaderBarAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
@@ -273,6 +277,9 @@ class _LanguageControl extends StatelessWidget {
     final popupTheme = theme.popupMenuTheme;
     final selectedValue = selectedLocaleTag ?? _systemLocaleTag;
     final selectedLabel = _selectedLabel(context, selectedValue);
+    final escapeDismiss = BusyMarkPopupEscapeDismissBinding(
+      Navigator.of(context, rootNavigator: true),
+    );
     return Align(
       alignment: AlignmentDirectional.centerEnd,
       child: PopupMenuButton<String>(
@@ -295,8 +302,14 @@ class _LanguageControl extends StatelessWidget {
           minWidth: BusyMarkSizes.languagePopupMinWidth,
           maxWidth: BusyMarkSizes.languagePopupMaxWidth,
         ),
-        onSelected: (value) =>
-            onChanged(value == _systemLocaleTag ? null : value),
+        useRootNavigator: true,
+        requestFocus: true,
+        onOpened: escapeDismiss.attach,
+        onCanceled: escapeDismiss.detach,
+        onSelected: (value) {
+          escapeDismiss.detach();
+          onChanged(value == _systemLocaleTag ? null : value);
+        },
         itemBuilder: (context) => [
           _languageMenuItem(
             context,
@@ -369,7 +382,7 @@ class _LanguageControl extends StatelessWidget {
       _LanguageOption('en', 'English'),
       _LanguageOption('de', 'Deutsch'),
       _LanguageOption('it', 'Italiano'),
-      _LanguageOption('no', 'Norsk'),
+      _LanguageOption('nb', 'Norsk'),
       _LanguageOption('fr', 'Français'),
       _LanguageOption('ru', 'Русский'),
       _LanguageOption('uk', 'Українська'),

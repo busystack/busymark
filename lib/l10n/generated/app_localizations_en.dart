@@ -199,7 +199,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
-  String get toggleSidebar => 'Toggle sidebar';
+  String get toggleSidebar => 'Sidebar panel';
 
   @override
   String get topLeft => 'Top left';
@@ -274,6 +274,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shortcutKeyboardShortcutsDescription =>
       'Show this keyboard shortcut reference';
+
+  @override
+  String get shortcutMarkdownAndHtmlDescription =>
+      'Open the Markdown and HTML reference';
+
+  @override
+  String get shortcutSettingsDescription => 'Open BusyMark settings';
 
   @override
   String get shortcutNextTab => 'Next tab';
@@ -409,6 +416,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutChecklistDescription => 'Toggle checklist formatting';
+
+  @override
+  String get shortcutGroupSidebar => 'Sidebar';
+
+  @override
+  String get sidebarViewMenu => 'Sidebar view';
 
   @override
   String get createMarkdownFile => 'Create Markdown File';
@@ -599,6 +612,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get table => 'Table';
 
   @override
+  String get htmlBlock => 'HTML block';
+
+  @override
+  String get shortcutHtmlBlockDescription => 'Insert or edit an HTML block';
+
+  @override
+  String get renderedHtml => 'Rendered HTML';
+
+  @override
+  String get editHtml => 'Edit HTML';
+
+  @override
+  String get htmlSource => 'HTML source';
+
+  @override
   String get thematicBreak => 'Thematic break';
 
   @override
@@ -721,10 +749,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noImageSource => 'No image source';
 
   @override
-  String get hideSidebar => 'Hide sidebar';
+  String get hideSidebar => 'Hide sidebar panel';
 
   @override
-  String get showSidebar => 'Show sidebar';
+  String get showSidebar => 'Show sidebar panel';
 
   @override
   String get showPreview => 'Show preview';
@@ -1392,4 +1420,406 @@ class AppLocalizationsEn extends AppLocalizations {
   String diagnosticUnknown(String code) {
     return 'Unknown diagnostic: $code';
   }
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get git => 'Git';
+
+  @override
+  String get gitDiff => 'Git diff';
+
+  @override
+  String get gitUnavailableTitle => 'Git is unavailable';
+
+  @override
+  String gitUnavailableMessage(String reason) {
+    String _temp0 = intl.Intl.selectLogic(reason, {
+      'other':
+          'Install Git or configure BusyMark to use an available Git executable. $reason',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get gitNotRepositoryTitle => 'Not a Git repository';
+
+  @override
+  String get gitNotRepositoryMessage =>
+      'This workspace is not inside a Git repository.';
+
+  @override
+  String get gitInitializeRepository => 'Initialize repository';
+
+  @override
+  String get gitDetachedHead => 'Detached HEAD';
+
+  @override
+  String gitDetachedHeadAt(String commit) {
+    return 'Detached at $commit';
+  }
+
+  @override
+  String get gitNoUpstream => 'No upstream';
+
+  @override
+  String gitAheadCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unpushed commits',
+      one: '1 unpushed commit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gitBehindCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count commits to pull',
+      one: '1 commit to pull',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitClean => 'Clean';
+
+  @override
+  String get gitConflicts => 'Conflicts';
+
+  @override
+  String get gitChanges => 'Changes';
+
+  @override
+  String get gitHistory => 'History';
+
+  @override
+  String get gitBranches => 'Branches';
+
+  @override
+  String get gitPull => 'Pull';
+
+  @override
+  String get gitPush => 'Push';
+
+  @override
+  String get gitCommit => 'Commit';
+
+  @override
+  String get gitSelectForCommit => 'Select for commit';
+
+  @override
+  String get gitRemoveFromCommit => 'Leave out of commit';
+
+  @override
+  String get gitDiscard => 'Discard';
+
+  @override
+  String get gitOpenFile => 'Open file';
+
+  @override
+  String get gitMarkResolved => 'Mark resolved';
+
+  @override
+  String get gitUntracked => 'Unversioned Files';
+
+  @override
+  String get gitCommitMessage => 'Commit message';
+
+  @override
+  String get gitCommitSelectedFiles => 'Selected files';
+
+  @override
+  String get gitCommitNoSelectedFiles =>
+      'Select at least one file before committing.';
+
+  @override
+  String get gitCommitMessageRequired => 'Enter a commit message.';
+
+  @override
+  String get gitCreateBranch => 'Create branch';
+
+  @override
+  String get gitNewBranch => '+ New Branch';
+
+  @override
+  String get gitBranchName => 'Branch name';
+
+  @override
+  String get gitSwitchBranch => 'Switch';
+
+  @override
+  String get gitNoChanges => 'No changes';
+
+  @override
+  String get gitNoHistory => 'No history';
+
+  @override
+  String get gitNoBranches => 'No branches';
+
+  @override
+  String get gitNoDiff => 'No diff to show';
+
+  @override
+  String get gitBinaryFile =>
+      'Binary file. BusyMark does not render binary patches.';
+
+  @override
+  String get gitUnsavedChangesBanner =>
+      'Unsaved editor changes are not included until saved.';
+
+  @override
+  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+
+  @override
+  String gitConfirmDiscardTracked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The selected tracked files will be restored from Git.',
+      one: 'The selected tracked file will be restored from Git.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gitConfirmDiscardUntracked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The selected untracked files will be deleted.',
+      one: 'The selected untracked file will be deleted.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gitConfirmDiscardMixed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'The selected files will be restored or deleted based on their Git status.',
+      one:
+          'The selected file will be restored or deleted based on its Git status.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String gitConfirmSwitchBranchTitle(String branch) {
+    return 'Switch to $branch?';
+  }
+
+  @override
+  String get gitConfirmSwitchBranchMessage =>
+      'BusyMark will reload the workspace from disk after Git switches branches.';
+
+  @override
+  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+
+  @override
+  String gitConfirmPushSetUpstreamMessage(String branch) {
+    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+  }
+
+  @override
+  String get gitProjectHistory => 'Project';
+
+  @override
+  String get gitFileHistory => 'Current file';
+
+  @override
+  String gitAdditionsDeletions(int additions, int deletions) {
+    return '+$additions -$deletions';
+  }
+
+  @override
+  String get gitFileActions => 'File actions';
+
+  @override
+  String get gitStatusAdded => 'Added';
+
+  @override
+  String get gitStatusDeleted => 'Deleted';
+
+  @override
+  String get gitStatusRenamed => 'Renamed';
+
+  @override
+  String get gitStatusCopied => 'Copied';
+
+  @override
+  String get gitStatusUntracked => 'Untracked';
+
+  @override
+  String get gitStatusConflicted => 'Conflicted';
+
+  @override
+  String get gitStatusIgnored => 'Ignored';
+
+  @override
+  String get gitStatusTypeChanged => 'Type changed';
+
+  @override
+  String get gitStatusModified => 'Modified';
+
+  @override
+  String get gitStatusUnknown => 'Unknown';
+
+  @override
+  String get gitErrorUnavailable => 'Git is unavailable.';
+
+  @override
+  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+
+  @override
+  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+
+  @override
+  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+
+  @override
+  String get gitErrorNoRemote => 'No Git remote is configured.';
+
+  @override
+  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+
+  @override
+  String get gitErrorMultipleRemotes =>
+      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+
+  @override
+  String get gitErrorDirtyWorkspace =>
+      'Save or discard BusyMark editor changes before switching branches.';
+
+  @override
+  String get gitErrorDiverged =>
+      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+
+  @override
+  String get gitErrorAuthentication =>
+      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+
+  @override
+  String get gitErrorNetwork => 'Git network operation failed.';
+
+  @override
+  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+
+  @override
+  String get gitErrorCommandFailed => 'Git command failed.';
+
+  @override
+  String get markdownAndHtml => 'Markdown and HTML';
+
+  @override
+  String get markdownHtmlMarkdownBlocks => 'Markdown Blocks';
+
+  @override
+  String get markdownHtmlMarkdownBlocksDescription =>
+      'Block structures supported in Markdown source and preview.';
+
+  @override
+  String get markdownHtmlInlineFormatting => 'Inline Markdown';
+
+  @override
+  String get markdownHtmlInlineFormattingDescription =>
+      'Formatting that can appear inside paragraphs, list items, and table cells.';
+
+  @override
+  String get markdownHtmlRawHtmlBlocks => 'Raw HTML Blocks';
+
+  @override
+  String get markdownHtmlRawHtmlBlocksDescription =>
+      'Safe block-level HTML tags rendered through BusyMark preview widgets.';
+
+  @override
+  String get markdownHtmlRawHtmlInline => 'Raw HTML Inline Tags';
+
+  @override
+  String get markdownHtmlRawHtmlInlineDescription =>
+      'Safe inline HTML tags rendered without showing literal tags.';
+
+  @override
+  String get markdownHtmlSafety => 'Safety Rules';
+
+  @override
+  String get markdownHtmlSafetyDescription =>
+      'Raw HTML is parsed and sanitized before preview rendering.';
+
+  @override
+  String get markdownHtmlHeadings => 'Headings';
+
+  @override
+  String get markdownHtmlParagraphs => 'Paragraphs';
+
+  @override
+  String get markdownHtmlLists => 'Lists';
+
+  @override
+  String get markdownHtmlHtmlContainers => 'Containers';
+
+  @override
+  String get markdownHtmlHtmlTextBlocks => 'Text blocks';
+
+  @override
+  String get markdownHtmlHtmlFigures => 'Figures and images';
+
+  @override
+  String get markdownHtmlHtmlPreformatted => 'Preformatted code';
+
+  @override
+  String get markdownHtmlHtmlDisclosure => 'Disclosure blocks';
+
+  @override
+  String get markdownHtmlHtmlDescriptionLists => 'Description lists';
+
+  @override
+  String get markdownHtmlHtmlFormattingTags => 'Formatting tags';
+
+  @override
+  String get markdownHtmlHtmlInlineCodeTags => 'Inline code tags';
+
+  @override
+  String get markdownHtmlHtmlNeutralInlineTags => 'Semantic text tags';
+
+  @override
+  String get markdownHtmlSanitizedPreview => 'Sanitized preview';
+
+  @override
+  String get markdownHtmlSanitizedPreviewDescription =>
+      'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.';
+
+  @override
+  String get markdownHtmlSourcePreserved => 'Source is preserved';
+
+  @override
+  String get markdownHtmlSourcePreservedDescription =>
+      'Unedited raw HTML is saved back exactly as source text.';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtml => 'Markdown inside HTML';
+
+  @override
+  String get markdownHtmlMarkdownInsideHtmlDescription =>
+      'Markdown markers inside raw HTML render as literal text.';
+
+  @override
+  String get markdownHtmlBlockedContent => 'Blocked active content';
+
+  @override
+  String get markdownHtmlBlockedContentDescription =>
+      'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.';
+
+  @override
+  String get markdownHtmlSafeUrls => 'Safe URLs only';
+
+  @override
+  String get markdownHtmlSafeUrlsDescription =>
+      'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.';
 }

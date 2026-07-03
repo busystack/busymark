@@ -50,6 +50,14 @@ void main() {
     expect(settings.copyWith(localeTag: null).locale, isNull);
   });
 
+  test('legacy Norwegian locale tag migrates to Bokmal', () {
+    final settings = AppSettings.fromJson(<String, Object?>{'localeTag': 'no'});
+
+    expect(settings.localeTag, 'nb');
+    expect(settings.locale, const Locale('nb'));
+    expect(settings.toJson()['localeTag'], 'nb');
+  });
+
   test('unused product settings are not persisted', () {
     final json = AppSettings.defaults().toJson();
 

@@ -16,6 +16,7 @@ enum HeaderBarAction {
   menu,
   settings,
   keyboardShortcuts,
+  markdownAndHtml,
   aboutBusyMark,
   viewModeEditor,
   viewModeSource,
@@ -56,7 +57,11 @@ class HeaderBarLabels {
     required this.back,
     required this.save,
     required this.settings,
+    required this.settingsShortcut,
     required this.keyboardShortcuts,
+    required this.keyboardShortcutsShortcut,
+    required this.markdownAndHtml,
+    required this.markdownAndHtmlShortcut,
     required this.aboutBusyMark,
   });
 
@@ -72,7 +77,11 @@ class HeaderBarLabels {
   final String back;
   final String save;
   final String settings;
+  final String settingsShortcut;
   final String keyboardShortcuts;
+  final String keyboardShortcutsShortcut;
+  final String markdownAndHtml;
+  final String markdownAndHtmlShortcut;
   final String aboutBusyMark;
 
   Map<String, String> toMap() => {
@@ -88,7 +97,11 @@ class HeaderBarLabels {
     'back': back,
     'save': save,
     'settings': settings,
+    'settingsShortcut': settingsShortcut,
     'keyboardShortcuts': keyboardShortcuts,
+    'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
+    'markdownAndHtml': markdownAndHtml,
+    'markdownAndHtmlShortcut': markdownAndHtmlShortcut,
     'aboutBusyMark': aboutBusyMark,
   };
 }
@@ -254,6 +267,13 @@ class LinuxHeaderBarService {
     return _invoke('setSidebarWidth', value);
   }
 
+  Future<void> setTextDirection(TextDirection value) {
+    return _invoke(
+      'setTextDirection',
+      value == TextDirection.rtl ? 'rtl' : 'ltr',
+    );
+  }
+
   Future<void> setBackVisible(bool value) {
     return _invoke('setBackVisible', value);
   }
@@ -323,6 +343,7 @@ class LinuxHeaderBarService {
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
+      'markdownAndHtml' => HeaderBarAction.markdownAndHtml,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
       'viewModeEditor' => HeaderBarAction.viewModeEditor,
       'viewModeSource' => HeaderBarAction.viewModeSource,

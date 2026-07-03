@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
@@ -135,6 +136,35 @@ void main() {
     expect(codes, contains('markdown.raw-html.unsafe'));
   });
 
+  test('resolves home-relative local image references', () {
+    final fakeHome = Directory.systemTemp.createTempSync(
+      'busymark_home_image_',
+    );
+    try {
+      final downloads = Directory(p.join(fakeHome.path, 'Downloads'))
+        ..createSync();
+      File(p.join(downloads.path, 'example.jpg')).writeAsBytesSync([0]);
+      debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      addTearDown(() {
+        debugLocalImageHomeDirectoryOverride = null;
+      });
+
+      final parsed = parser.parse(
+        filePath: 'Untitled.md',
+        source: '![Пример изображения](~/Downloads/example.jpg)\n',
+      );
+
+      expect(parsed.images.single.destination, '~/Downloads/example.jpg');
+      expect(
+        parsed.diagnostics.map((item) => item.code),
+        isNot(contains('markdown.image.missing-file')),
+      );
+    } finally {
+      debugLocalImageHomeDirectoryOverride = null;
+      fakeHome.deleteSync(recursive: true);
+    }
+  });
+
   test(
     'derives diagnostic links and images from Markdown AST semantics',
     () async {
@@ -220,7 +250,7 @@ void main() {
   );
 
   test(
-    'local reference diagnostics reject parent, absolute, and symlink escapes',
+    'local reference diagnostics allow absolute images but reject other escapes',
     () async {
       final workspace = await Directory.systemTemp.createTemp(
         'busymark-reference-root-',
@@ -271,10 +301,10 @@ void main() {
         missingImages,
         containsAll([
           '../${p.basename(outside.path)}/outside.png',
-          outsideImage.path,
           'linked/outside.png',
         ]),
       );
+      expect(missingImages, isNot(contains(outsideImage.path)));
     },
     skip: Platform.isWindows
         ? 'POSIX symlink behavior is required for this coverage.'
@@ -372,6 +402,123 @@ void main() {
     expect(
       parsed.diagnostics.map((item) => item.code),
       contains('markdown.raw-html.unsafe'),
+    );
+  });
+
+  test('safe raw HTML does not produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<p>Hello <strong>bold</strong></p>\n\n'
+          '<table><tr><td>A</td></tr></table>\n'
+          '<blockquote cite="https://example.com">Quote</blockquote>\n'
+          '<a href="https://example.com">Link</a>\n'
+          '<img src="https://example.com/image.png" alt="Image">\n',
+    );
+
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('markdown.raw-html.unsafe')),
+    );
+  });
+
+  test('Markdown headings inside paired raw HTML are not outline headings', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+# Document
+
+<div>
+
+# Literal heading
+
+</div>
+''',
+    );
+
+    expect(parsed.headings.map((heading) => heading.text), ['Document']);
+  });
+
+  test('unsafe raw HTML tags produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<script>alert(1)</script>\n'
+          '<iframe src="https://example.com"></iframe>\n'
+          '<form><input name="x"></form>\n',
+    );
+
+    expect(
+      parsed.diagnostics
+          .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
+          .length,
+      3,
+    );
+  });
+
+  test('unsafe raw HTML attributes produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<p onclick="alert(1)">Click</p>\n',
+    );
+
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.raw-html.unsafe'),
+    );
+  });
+
+  test('unsafe raw HTML URLs produce unsafe diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<a href="javascript:alert(1)">bad</a>\n'
+          '<img src="vbscript:alert(1)">\n'
+          '<img src="data:image/png;base64,AAAA">\n'
+          '<img src="/home/albert/private.png">\n'
+          '<img src="file:///home/albert/private.png">\n'
+          '<a href="//example.com/path">protocol relative</a>\n',
+    );
+
+    expect(
+      parsed.diagnostics
+          .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
+          .length,
+      6,
+    );
+  });
+
+  test('deeply nested raw HTML produces unsafe diagnostic', () {
+    final source =
+        '${List.filled(120, '<div>').join()}Deep${List.filled(120, '</div>').join()}\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.raw-html.unsafe'),
+    );
+  });
+
+  test('safe HTML tags do not become Writerside XML blocks', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<table>\n'
+          '<tr><td>A</td></tr>\n'
+          '</table>\n'
+          '<section><p>Intro</p></section>\n'
+          '<var name="product" value="BusyMark"/>\n'
+          '<tabs>\n',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(
+      parsed.xmlBlocks.map((block) => block.elementName.toLowerCase()),
+      containsAll(['var', 'tabs']),
+    );
+    expect(
+      parsed.xmlBlocks.map((block) => block.elementName.toLowerCase()),
+      isNot(containsAll(['table', 'tr', 'section'])),
     );
   });
 

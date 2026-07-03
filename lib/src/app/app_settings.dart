@@ -152,7 +152,7 @@ class AppSettings {
 
   ThemeMode get themeMode => themeModePreference.themeMode;
 
-  Locale? get locale => _localeFromTag(localeTag);
+  Locale? get locale => _localeFromTag(_normalizeLocaleTag(localeTag));
 
   Map<String, Object?> toJson() => {
     'themeModePreference': themeModePreference.name,
@@ -256,7 +256,7 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> setLocaleTag(String? localeTag) {
-    return _save(state.copyWith(localeTag: localeTag));
+    return _save(state.copyWith(localeTag: _normalizeLocaleTag(localeTag)));
   }
 
   Future<void> setEditorFontSize(double size) {
@@ -365,7 +365,24 @@ String? _localeTagFromJson(Object? value) {
     return null;
   }
   final tag = value.toString().trim();
-  return tag.isEmpty ? null : tag;
+  return _normalizeLocaleTag(tag);
+}
+
+String? _normalizeLocaleTag(String? tag) {
+  if (tag == null) {
+    return null;
+  }
+  final trimmed = tag.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+  if (trimmed == 'no') {
+    return 'nb';
+  }
+  if (trimmed.startsWith('no_') || trimmed.startsWith('no-')) {
+    return 'nb${trimmed.substring(2)}';
+  }
+  return trimmed;
 }
 
 Locale? _localeFromTag(String? tag) {

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
@@ -24,6 +27,7 @@ abstract final class BusyMarkRadius {
   static const double md = 8;
   static const double lg = 12;
   static const double headerButton = 8;
+  static const double nativeHeaderButton = 6;
   static const double window = 14;
   static const double pill = 999;
   static const double selection = 3;
@@ -214,10 +218,10 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.smPlus,
     BusyMarkSpacing.sm,
   );
-  static const sidebarHeader = EdgeInsets.fromLTRB(
+  static const sidebarHeader = EdgeInsetsDirectional.fromSTEB(
     BusyMarkSpacing.mdPlus,
     BusyMarkSpacing.mdPlus,
-    BusyMarkSpacing.mdPlus,
+    BusyMarkSpacing.sm,
     BusyMarkSpacing.md,
   );
   static const sidebarList = EdgeInsets.fromLTRB(
@@ -554,6 +558,48 @@ class BusyMarkSyntaxColors extends ThemeExtension<BusyMarkSyntaxColors> {
   }
 }
 
+enum BusyMarkVcsFileColor {
+  modified,
+  added,
+  deleted,
+  untracked,
+  conflicted,
+  copied,
+  renamed,
+}
+
+Color busyMarkDestructiveForeground(BuildContext context) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) {
+    return const Color(0xFFFFA99B);
+  }
+  return theme.colorScheme.error;
+}
+
+Color busyMarkVcsFileStatusColor(
+  BuildContext context,
+  BusyMarkVcsFileColor status,
+) {
+  final brightness = Theme.of(context).brightness;
+  final dark = brightness == Brightness.dark;
+  return switch (status) {
+    BusyMarkVcsFileColor.modified =>
+      dark ? const Color(0xFF99C1F1) : BusyMarkLinuxPalette.ubuntuBlueAccent,
+    BusyMarkVcsFileColor.added =>
+      dark ? const Color(0xFF8FF0A4) : BusyMarkLinuxPalette.ubuntuGreenAccent,
+    BusyMarkVcsFileColor.deleted =>
+      dark ? const Color(0xFFFF7B63) : BusyMarkLinuxPalette.red,
+    BusyMarkVcsFileColor.untracked =>
+      dark ? const Color(0xFFFFBE6F) : BusyMarkLinuxPalette.ubuntuBrownAccent,
+    BusyMarkVcsFileColor.conflicted =>
+      dark ? const Color(0xFFFF7B63) : BusyMarkLinuxPalette.ubuntuRedAccent,
+    BusyMarkVcsFileColor.copied =>
+      dark ? const Color(0xFF8FF0A4) : BusyMarkLinuxPalette.ubuntuOliveAccent,
+    BusyMarkVcsFileColor.renamed =>
+      dark ? const Color(0xFFDC8ADD) : BusyMarkLinuxPalette.ubuntuPurpleAccent,
+  };
+}
+
 @immutable
 class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
   const BusyMarkSurfaceColors({
@@ -796,6 +842,7 @@ ButtonStyle busyMarkHeaderIconButtonStyle({
   Color? foregroundColor,
   WidgetStateProperty<Color?>? backgroundColor,
   WidgetStateProperty<Color?>? overlayColor,
+  double borderRadius = BusyMarkRadius.headerButton,
 }) {
   return ButtonStyle(
     fixedSize: const WidgetStatePropertyAll(
@@ -816,9 +863,7 @@ ButtonStyle busyMarkHeaderIconButtonStyle({
     overlayColor: overlayColor,
     side: const WidgetStatePropertyAll(BorderSide.none),
     shape: WidgetStatePropertyAll(
-      RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-      ),
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
     ),
   );
 }
@@ -886,6 +931,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.foregroundColor,
     this.backgroundColor,
     this.boxShadow,
+    this.borderRadius = BusyMarkRadius.headerButton,
   });
 
   final String tooltip;
@@ -898,6 +944,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final List<BoxShadow>? boxShadow;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -948,25 +995,29 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     required this.itemBuilder,
     required this.onSelected,
     this.transparent = false,
+    this.shortcut,
     this.foregroundColor,
     this.backgroundColor,
     this.boxShadow,
+    this.borderRadius = BusyMarkRadius.headerButton,
   });
 
   final String tooltip;
   final IconData icon;
-  final PopupMenuItemBuilder<T> itemBuilder;
+  final FutureOr<List<PopupMenuEntry<T>>> Function(BuildContext context)
+  itemBuilder;
   final ValueChanged<T> onSelected;
   final bool transparent;
+  final String? shortcut;
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final List<BoxShadow>? boxShadow;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
-    final popupTheme = theme.popupMenuTheme;
     final effectiveForeground = foregroundColor ?? colors.mutedForeground;
     final button = Theme(
       data: theme.copyWith(
@@ -978,32 +1029,20 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
                 (transparent
                     ? busyMarkTransparentHeaderButtonBackground(context)
                     : busyMarkHeaderButtonBackground(context)),
+            borderRadius: borderRadius,
           ),
         ),
       ),
-      child: PopupMenuButton<T>(
-        tooltip: tooltip,
-        icon: Icon(
-          icon,
-          size: BusyMarkSizes.iconSm,
-          color: effectiveForeground,
+      child: Builder(
+        builder: (buttonContext) => IconButton(
+          tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
+          onPressed: () => _showMenu(buttonContext),
+          icon: Icon(
+            icon,
+            size: BusyMarkSizes.iconSm,
+            color: effectiveForeground,
+          ),
         ),
-        padding: EdgeInsets.zero,
-        position: PopupMenuPosition.under,
-        color: popupTheme.color ?? colors.popover,
-        surfaceTintColor: BusyMarkLinuxPalette.transparent,
-        elevation: BusyMarkElevation.popover,
-        shadowColor: colors.shade,
-        shape:
-            popupTheme.shape ??
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            ),
-        constraints: const BoxConstraints(
-          minWidth: BusyMarkSizes.popupMenuMinWidth,
-        ),
-        itemBuilder: itemBuilder,
-        onSelected: onSelected,
       ),
     );
     final shadows = boxShadow;
@@ -1012,51 +1051,319 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     }
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: shadows,
       ),
       child: button,
     );
   }
+
+  Future<void> _showMenu(BuildContext context) async {
+    final button = context.findRenderObject();
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final overlay = navigator.overlay?.context.findRenderObject();
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    final items = await itemBuilder(context);
+    if (!context.mounted || items.isEmpty) {
+      return;
+    }
+    if (button is! RenderBox || overlay is! RenderBox) {
+      return;
+    }
+
+    final escapeDismiss = BusyMarkPopupEscapeDismissBinding(navigator);
+    final buttonRect =
+        button.localToGlobal(Offset.zero, ancestor: overlay) & button.size;
+    const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+    final minLeft = BusyMarkSpacing.sm;
+    final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+    final rawLeft = buttonRect.center.dx - menuWidth / 2;
+    final left = maxLeft <= minLeft
+        ? minLeft
+        : rawLeft.clamp(minLeft, maxLeft).toDouble();
+    final top = buttonRect.bottom + BusyMarkSpacing.xs + BusyMarkSpacing.xxs;
+    T? result;
+    escapeDismiss.attach();
+    try {
+      result = await showMenu<T>(
+        context: context,
+        useRootNavigator: true,
+        items: items,
+        position: RelativeRect.fromLTRB(
+          left,
+          top,
+          math.max(minLeft, overlay.size.width - left - menuWidth),
+          math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+        ),
+        color: popupTheme.color ?? colors.popover,
+        surfaceTintColor: BusyMarkLinuxPalette.transparent,
+        elevation: BusyMarkElevation.popover,
+        shadowColor: colors.shade,
+        shape: _BusyMarkHeaderPopoverShape(
+          borderRadius: BorderRadius.circular(BusyMarkRadius.window),
+          side: BorderSide(
+            color: colors.subtleBorder,
+            width: BusyMarkStroke.hairline,
+          ),
+        ),
+        menuPadding: const EdgeInsets.only(
+          top: _busyMarkHeaderPopoverArrowHeight + BusyMarkSpacing.sm,
+          bottom: BusyMarkSpacing.sm,
+        ),
+        constraints: const BoxConstraints.tightFor(width: menuWidth),
+        clipBehavior: Clip.antiAlias,
+        popUpAnimationStyle: AnimationStyle.noAnimation,
+        requestFocus: true,
+      );
+    } finally {
+      escapeDismiss.detach();
+    }
+    if (result != null) {
+      onSelected(result);
+    }
+  }
 }
 
-class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
-  BusyMarkPopupMenuItem({
+class BusyMarkPopupEscapeDismissBinding {
+  BusyMarkPopupEscapeDismissBinding(this.navigator);
+
+  final NavigatorState navigator;
+  bool _attached = false;
+
+  void attach() {
+    if (_attached) {
+      return;
+    }
+    _attached = true;
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+  }
+
+  void detach() {
+    if (!_attached) {
+      return;
+    }
+    _attached = false;
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+  }
+
+  bool _handleKeyEvent(KeyEvent event) {
+    if (!_attached ||
+        event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.escape) {
+      return false;
+    }
+    detach();
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
+    return true;
+  }
+}
+
+const double _busyMarkHeaderPopoverArrowWidth = 16;
+const double _busyMarkHeaderPopoverArrowHeight = 8;
+
+class _BusyMarkHeaderPopoverShape extends ShapeBorder {
+  const _BusyMarkHeaderPopoverShape({
+    required this.borderRadius,
+    required this.side,
+  });
+
+  final BorderRadius borderRadius;
+  final BorderSide side;
+
+  @override
+  EdgeInsetsGeometry get dimensions => EdgeInsets.all(side.width);
+
+  @override
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) {
+    return getOuterPath(rect.deflate(side.width), textDirection: textDirection);
+  }
+
+  @override
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
+    final resolved = borderRadius.resolve(textDirection);
+    final body = Rect.fromLTWH(
+      rect.left,
+      rect.top + _busyMarkHeaderPopoverArrowHeight,
+      rect.width,
+      math.max(0, rect.height - _busyMarkHeaderPopoverArrowHeight),
+    );
+    final maxRadius = math.min(body.width, body.height) / 2;
+    final topLeft = math.min(resolved.topLeft.x, maxRadius);
+    final topRight = math.min(resolved.topRight.x, maxRadius);
+    final bottomRight = math.min(resolved.bottomRight.x, maxRadius);
+    final bottomLeft = math.min(resolved.bottomLeft.x, maxRadius);
+    const arrowHalf = _busyMarkHeaderPopoverArrowWidth / 2;
+    final arrowCenter = body.center.dx.clamp(
+      body.left + topLeft + arrowHalf,
+      body.right - topRight - arrowHalf,
+    );
+
+    return Path()
+      ..moveTo(body.left + topLeft, body.top)
+      ..lineTo(arrowCenter - arrowHalf, body.top)
+      ..lineTo(arrowCenter, rect.top)
+      ..lineTo(arrowCenter + arrowHalf, body.top)
+      ..lineTo(body.right - topRight, body.top)
+      ..quadraticBezierTo(body.right, body.top, body.right, body.top + topRight)
+      ..lineTo(body.right, body.bottom - bottomRight)
+      ..quadraticBezierTo(
+        body.right,
+        body.bottom,
+        body.right - bottomRight,
+        body.bottom,
+      )
+      ..lineTo(body.left + bottomLeft, body.bottom)
+      ..quadraticBezierTo(
+        body.left,
+        body.bottom,
+        body.left,
+        body.bottom - bottomLeft,
+      )
+      ..lineTo(body.left, body.top + topLeft)
+      ..quadraticBezierTo(body.left, body.top, body.left + topLeft, body.top)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
+    if (side == BorderSide.none || side.width == 0) {
+      return;
+    }
+    canvas.drawPath(
+      getOuterPath(rect.deflate(side.width / 2), textDirection: textDirection),
+      side.toPaint(),
+    );
+  }
+
+  @override
+  ShapeBorder scale(double t) {
+    return _BusyMarkHeaderPopoverShape(
+      borderRadius: borderRadius * t,
+      side: side.scale(t),
+    );
+  }
+}
+
+class BusyMarkPopupMenuItem<T> extends PopupMenuEntry<T> {
+  const BusyMarkPopupMenuItem({
     super.key,
-    required T value,
-    required String label,
-    IconData? icon,
-  }) : super(
-         value: value,
-         height: BusyMarkSizes.popupMenuItemHeight,
-         padding: EdgeInsets.zero,
-         child: Builder(
-           builder: (context) {
-             final colors = BusyMarkSurfaceColors.of(context);
-             return Padding(
-               padding: const EdgeInsets.symmetric(
-                 horizontal: BusyMarkSpacing.sm,
-               ),
-               child: Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   if (icon != null) ...[
-                     Icon(
-                       icon,
-                       size: BusyMarkSizes.iconSm,
-                       color: colors.mutedForeground,
-                     ),
-                     const SizedBox(width: BusyMarkSpacing.sm),
-                   ],
-                   Flexible(
-                     child: Text(label, overflow: TextOverflow.ellipsis),
-                   ),
-                 ],
-               ),
-             );
-           },
-         ),
-       );
+    required this.value,
+    required this.label,
+    this.icon,
+    this.shortcut,
+    this.enabled = true,
+    this.checked = false,
+    this.trailingCheck = false,
+  });
+
+  final T value;
+  final String label;
+  final IconData? icon;
+  final String? shortcut;
+  final bool enabled;
+  final bool checked;
+  final bool trailingCheck;
+
+  @override
+  double get height => BusyMarkSizes.popupMenuItemHeight;
+
+  @override
+  bool represents(T? value) => value == this.value;
+
+  @override
+  State<BusyMarkPopupMenuItem<T>> createState() =>
+      _BusyMarkPopupMenuItemState<T>();
+}
+
+class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = theme.popupMenuTheme;
+    final textStyle =
+        popupTheme.textStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
+    final foreground = widget.enabled
+        ? colors.foreground
+        : colors.disabledForeground;
+    final iconColor = widget.enabled
+        ? colors.mutedForeground
+        : colors.disabledForeground;
+    final labelText = Text(
+      widget.label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final item = Semantics(
+      checked: widget.trailingCheck ? widget.checked : null,
+      button: true,
+      enabled: widget.enabled,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+        child: InkWell(
+          onTap: widget.enabled
+              ? () => Navigator.pop<T>(context, widget.value)
+              : null,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
+          hoverColor: colors.controlHover,
+          focusColor: colors.controlHover,
+          highlightColor: colors.controlActive,
+          splashColor: BusyMarkLinuxPalette.transparent,
+          child: SizedBox(
+            height: BusyMarkSizes.popupMenuItemHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              child: DefaultTextStyle(
+                style: textStyle.copyWith(color: foreground),
+                child: IconTheme(
+                  data: IconThemeData(
+                    size: BusyMarkSizes.iconSm,
+                    color: iconColor,
+                  ),
+                  child: widget.trailingCheck
+                      ? Row(
+                          children: [
+                            if (widget.icon != null) ...[
+                              Icon(widget.icon),
+                              const SizedBox(width: BusyMarkSpacing.sm),
+                            ],
+                            Expanded(child: labelText),
+                            const SizedBox(width: BusyMarkSpacing.sm),
+                            Opacity(
+                              opacity: widget.checked ? 1 : 0,
+                              child: const Icon(BusyMarkGlyphs.check),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.icon != null) ...[
+                              Icon(widget.icon),
+                              const SizedBox(width: BusyMarkSpacing.sm),
+                            ],
+                            Flexible(child: labelText),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final shortcut = widget.shortcut;
+    if (shortcut == null || shortcut.isEmpty) {
+      return item;
+    }
+    return Tooltip(message: '${widget.label} ($shortcut)', child: item);
+  }
 }
 
 class BusyMarkClamp extends StatelessWidget {
@@ -1309,8 +1616,9 @@ class BusyMarkActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = destructive ? TextStyle(color: colorScheme.error) : null;
+    final titleStyle = destructive
+        ? TextStyle(color: busyMarkDestructiveForeground(context))
+        : null;
     return _BusyMarkHoverBackground(
       enabled: enabled,
       child: YaruListTile.square(
@@ -1431,12 +1739,16 @@ class BusyMarkDialogButton extends StatefulWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.icon,
     this.suggested = false,
-  });
+    this.destructive = false,
+  }) : assert(!suggested || !destructive);
 
   final String label;
   final VoidCallback? onPressed;
+  final IconData? icon;
   final bool suggested;
+  final bool destructive;
 
   @override
   State<BusyMarkDialogButton> createState() => _BusyMarkDialogButtonState();
@@ -1459,6 +1771,8 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
         ? colors.disabledForeground
         : widget.suggested
         ? colorScheme.onPrimary
+        : widget.destructive
+        ? busyMarkDestructiveForeground(context)
         : colors.foreground;
     final button = Semantics(
       button: true,
@@ -1510,14 +1824,10 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
               borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
               elevated: _enabled,
             ),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                widget.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelLarge?.copyWith(color: foreground),
-              ),
+            child: _BusyMarkDialogButtonContent(
+              label: widget.label,
+              icon: widget.icon,
+              foreground: foreground,
             ),
           ),
         ),
@@ -1565,6 +1875,43 @@ class _BusyMarkDialogButtonState extends State<BusyMarkDialogButton> {
         ? BusyMarkLinuxPalette.white
         : BusyMarkLinuxPalette.black;
     return Color.lerp(color, target, amount)!;
+  }
+}
+
+class _BusyMarkDialogButtonContent extends StatelessWidget {
+  const _BusyMarkDialogButtonContent({
+    required this.label,
+    required this.foreground,
+    this.icon,
+  });
+
+  final String label;
+  final Color foreground;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(
+        context,
+      ).textTheme.labelLarge?.copyWith(color: foreground),
+    );
+    final icon = this.icon;
+    if (icon == null) {
+      return Center(widthFactor: 1, child: text);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
+        const SizedBox(width: BusyMarkSpacing.sm),
+        Flexible(child: text),
+      ],
+    );
   }
 }
 

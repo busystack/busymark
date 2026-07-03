@@ -13,6 +13,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
@@ -21,7 +22,12 @@ import '../workspace_controller.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 
-enum _WelcomeMenuAction { settings, keyboardShortcuts, aboutBusyMark }
+enum _WelcomeMenuAction {
+  settings,
+  keyboardShortcuts,
+  markdownAndHtml,
+  aboutBusyMark,
+}
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -88,11 +94,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       value: _WelcomeMenuAction.settings,
                       label: l10n.settings,
                       icon: BusyMarkGlyphs.settings,
+                      shortcut: BusyMarkAppShortcutLabels.settings,
                     ),
                     BusyMarkPopupMenuItem(
                       value: _WelcomeMenuAction.keyboardShortcuts,
                       label: l10n.keyboardShortcuts,
                       icon: BusyMarkGlyphs.keyboard,
+                      shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
+                    ),
+                    BusyMarkPopupMenuItem(
+                      value: _WelcomeMenuAction.markdownAndHtml,
+                      label: l10n.markdownAndHtml,
+                      icon: BusyMarkGlyphs.markdownFile,
+                      shortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
                     ),
                     BusyMarkPopupMenuItem(
                       value: _WelcomeMenuAction.aboutBusyMark,
@@ -208,6 +222,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case HeaderBarAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case HeaderBarAction.back:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
@@ -231,6 +247,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go('/settings');
       case _WelcomeMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case _WelcomeMenuAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
       case _WelcomeMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }

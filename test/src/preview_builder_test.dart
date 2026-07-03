@@ -163,6 +163,35 @@ void main() {
     );
   });
 
+  test('preview preserves nested list children', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '* Элемент списка А\n'
+          '  * Вложенный элемент (нужно сделать 2 или 4 пробела)\n'
+          '  * Еще один вложенный элемент\n'
+          '  * **Ссылка:** [Яндекс](https://yandex.ru)\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final parent = preview.blocks.singleWhere(
+      (block) => block.kind == PreviewBlockKind.list,
+    );
+
+    expect(parent.text, 'Элемент списка А');
+    expect(parent.children.map((block) => block.text), [
+      'Вложенный элемент (нужно сделать 2 или 4 пробела)',
+      'Еще один вложенный элемент',
+      'Ссылка: Яндекс',
+    ]);
+    expect(
+      parent.children.last.inlines
+          .where((inline) => inline.kind == PreviewInlineKind.link)
+          .single
+          .destination,
+      'https://yandex.ru',
+    );
+  });
+
   test('preview preserves inline Markdown semantics', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -403,4 +432,340 @@ Also visible.
       ]),
     );
   });
+
+  test('preview renders raw HTML paragraph without literal tags', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<p>Hello <strong>bold</strong><br>next</p>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final container = preview.blocks.single;
+    final paragraph = container.children.single;
+
+    expect(container.kind, PreviewBlockKind.container);
+    expect(paragraph.kind, PreviewBlockKind.paragraph);
+    expect(paragraph.text, 'Hello bold next');
+    expect(paragraph.text, isNot(contains('<p>')));
+    expect(
+      _flattenInlines(paragraph.inlines).map((inline) => inline.kind),
+      containsAll([PreviewInlineKind.strong, PreviewInlineKind.text]),
+    );
+  });
+
+  test(
+    'preview renders raw HTML table sections and inline cell formatting',
+    () {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '''
+<table>
+  <thead>
+    <tr><th>Name</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>A</td><td><em>B</em></td></tr>
+  </tbody>
+</table>
+''',
+      );
+      final preview = previewBuilder.build(parsed);
+      final table = preview.blocks.single.children.singleWhere(
+        (block) => block.kind == PreviewBlockKind.table,
+      );
+
+      expect(preview.blocks.single.kind, PreviewBlockKind.container);
+      expect(table.children.first.attributes['header'], 'true');
+      expect(table.children.last.attributes['header'], 'false');
+      expect(table.text, isNot(contains('<table>')));
+      expect(
+        table.children
+            .expand((row) => row.children)
+            .map((cell) => cell.text)
+            .toList(),
+        ['Name', 'Value', 'A', 'B'],
+      );
+      expect(
+        _flattenInlines(
+          table.children.last.children.last.inlines,
+        ).map((inline) => inline.kind),
+        contains(PreviewInlineKind.emphasis),
+      );
+    },
+  );
+
+  test('preview renders direct rows under raw HTML table', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<table>\n  <tr><td>A</td><td>B</td></tr>\n</table>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final table = preview.blocks.single.children.single;
+
+    expect(table.kind, PreviewBlockKind.table);
+    expect(table.children.single.children.map((cell) => cell.text), ['A', 'B']);
+  });
+
+  test('preview renders raw HTML table captions before the table', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '<table>\n  <caption>Metrics</caption>\n  <tr><td>A</td></tr>\n</table>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final children = preview.blocks.single.children;
+
+    expect(children.map((block) => block.kind), [
+      PreviewBlockKind.paragraph,
+      PreviewBlockKind.table,
+    ]);
+    expect(children.first.text, 'Metrics');
+    expect(children.last.children.single.children.single.text, 'A');
+  });
+
+  test('preview renders inline raw HTML safely', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Text with <u>underlined</u> and <a href="docs.md">link</a>.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single;
+    final inlines = _flattenInlines(paragraph.inlines).toList();
+
+    expect(paragraph.kind, PreviewBlockKind.paragraph);
+    expect(paragraph.text, 'Text with underlined and link.');
+    expect(
+      inlines.map((inline) => inline.kind),
+      contains(PreviewInlineKind.underline),
+    );
+    expect(
+      inlines
+          .where((inline) => inline.kind == PreviewInlineKind.link)
+          .single
+          .destination,
+      'docs.md',
+    );
+  });
+
+  test('preview does not make raw HTML links active without href', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'See <a>file:///home/albert/private.md</a> now.\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single;
+    final inlines = _flattenInlines(paragraph.inlines).toList();
+
+    expect(paragraph.text, 'See file:///home/albert/private.md now.');
+    expect(
+      inlines.map((inline) => inline.kind),
+      isNot(contains(PreviewInlineKind.link)),
+    );
+  });
+
+  test('preview rejects absolute local image paths in raw HTML', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<img src="/home/albert/private.png" alt="Private">\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+    expect(preview.blocks.single.text, contains('/home/albert/private.png'));
+  });
+
+  test('preview rejects deeply nested raw HTML before conversion', () {
+    final source =
+        '${List.filled(120, '<div>').join()}Deep${List.filled(120, '</div>').join()}\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+    expect(preview.blocks.single.text, contains('Deep'));
+  });
+
+  test('preview renders safe raw HTML containers as child content', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<div><p>Inside</p></div>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(preview.blocks.single.children.single.text, 'Inside');
+  });
+
+  test('preview renders top-level raw HTML image as image block', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<img src="https://example.com/image.png" alt="Image">\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final image = preview.blocks.single.children.single;
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(image.kind, PreviewBlockKind.image);
+    expect(image.attributes['src'], 'https://example.com/image.png');
+    expect(image.text, 'Image');
+  });
+
+  test('preview preserves raw HTML figure caption relationship', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+<figure>
+  <img src="https://example.com/image.png" alt="Image" width="120">
+  <figcaption>Example image with caption.</figcaption>
+</figure>
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final figure = preview.blocks.single.children.single;
+    final caption = figure.children.singleWhere(
+      (block) => block.attributes['htmlTag'] == 'figcaption',
+    );
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(figure.kind, PreviewBlockKind.container);
+    expect(figure.attributes['htmlTag'], 'figure');
+    expect(figure.children.map((block) => block.kind), [
+      PreviewBlockKind.image,
+      PreviewBlockKind.paragraph,
+    ]);
+    expect(caption.text, 'Example image with caption.');
+  });
+
+  test('preview allows safe remote raw HTML links images and citations', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+<section>
+  <blockquote cite="https://example.com">
+    Quoted text.
+  </blockquote>
+  <p>
+    Visit <a href="https://example.com">Example</a>
+    or <a href="docs/getting-started.md">local documentation</a>.
+  </p>
+  <figure>
+    <img
+      src="https://busystack.org/img/busymark/screenshots/busymark-split-view.png"
+      alt="BusyMark Logo"
+      width="120"
+      height="120">
+    <figcaption>Example image with caption.</figcaption>
+  </figure>
+</section>
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = _flattenPreviewBlocks(preview.blocks).singleWhere(
+      (block) => block.text == 'Visit Example or local documentation.',
+    );
+    final links = _flattenPreviewBlocks(
+      preview.blocks,
+    ).expand((block) => _flattenInlines(block.inlines));
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(paragraph.kind, PreviewBlockKind.paragraph);
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('markdown.raw-html.unsafe')),
+    );
+    expect(
+      links
+          .where((inline) => inline.kind == PreviewInlineKind.link)
+          .map((inline) => inline.destination),
+      containsAll(['https://example.com', 'docs/getting-started.md']),
+    );
+    expect(
+      _flattenPreviewBlocks(preview.blocks).map((block) => block.kind),
+      contains(PreviewBlockKind.image),
+    );
+  });
+
+  test('preview keeps unsafe raw HTML literal', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<script>alert(1)</script>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.raw);
+    expect(preview.blocks.single.text, contains('<script>'));
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.raw-html.unsafe'),
+    );
+  });
+
+  test('preview does not parse Markdown inside raw HTML blocks', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<div>**bold**</div>\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = preview.blocks.single.children.single;
+
+    expect(paragraph.text, '**bold**');
+    expect(
+      _flattenInlines(paragraph.inlines).map((inline) => inline.kind),
+      isNot(contains(PreviewInlineKind.strong)),
+    );
+  });
+
+  test('preview keeps paired raw HTML blocks together across blank lines', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+## Markdown inside HTML
+
+<div>
+
+**This should remain literal text unless explicitly supported.**
+
+</div>
+
+---
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final htmlBlock = preview.blocks.singleWhere(
+      (block) =>
+          block.kind == PreviewBlockKind.container &&
+          block.text.contains('This should remain literal text'),
+    );
+    final paragraph = htmlBlock.children.single;
+
+    expect(preview.blocks.map((block) => block.kind), [
+      PreviewBlockKind.heading,
+      PreviewBlockKind.container,
+      PreviewBlockKind.thematicBreak,
+    ]);
+    expect(htmlBlock.sourceStartLine, 3);
+    expect(htmlBlock.sourceEndLine, 7);
+    expect(
+      paragraph.text,
+      '**This should remain literal text unless explicitly supported.**',
+    );
+    expect(
+      _flattenInlines(paragraph.inlines).map((inline) => inline.kind),
+      isNot(contains(PreviewInlineKind.strong)),
+    );
+  });
+}
+
+Iterable<PreviewInline> _flattenInlines(Iterable<PreviewInline> inlines) sync* {
+  for (final inline in inlines) {
+    yield inline;
+    yield* _flattenInlines(inline.children);
+  }
+}
+
+Iterable<PreviewBlock> _flattenPreviewBlocks(
+  Iterable<PreviewBlock> blocks,
+) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _flattenPreviewBlocks(block.children);
+  }
 }

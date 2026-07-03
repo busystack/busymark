@@ -19,6 +19,7 @@ void main() {
     expect(source, contains('setModalBarrierVisible'));
     expect(source, contains('setSidebarWidth'));
     expect(source, contains('setSidebarToggleVisible'));
+    expect(source, contains('setTextDirection'));
     expect(source, contains('setCanSave'));
     expect(source, contains('setDocumentControlsVisible'));
     expect(source, contains('setLocalizedLabels'));
@@ -89,6 +90,7 @@ void main() {
     expect(source, isNot(contains('"Print"')));
     expect(source, isNot(contains('"Settings"')));
     expect(source, isNot(contains('"Keyboard Shortcuts"')));
+    expect(source, isNot(contains('"Markdown and HTML"')));
     expect(source, isNot(contains('"About BusyMark"')));
   });
 
@@ -99,6 +101,9 @@ void main() {
     final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
     final dialogs = File(
       'lib/src/app/busymark_dialogs.dart',
+    ).readAsStringSync();
+    final shortcuts = File(
+      'lib/src/app/busymark_shortcuts.dart',
     ).readAsStringSync();
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -112,28 +117,42 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
+    expect(service, contains('markdownAndHtml'));
     expect(app, contains('menu: l10n.mainMenu'));
     expect(app, contains('settings: l10n.settings'));
     expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
+    expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
-    expect(dialogs, contains('Ctrl+N'));
-    expect(dialogs, contains('Ctrl+S'));
-    expect(dialogs, contains('Ctrl+Z'));
-    expect(dialogs, contains('Ctrl+Shift+Z'));
+    expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
+    expect(dialogs, contains('BusyMarkAppShortcutLabels.newDocument'));
+    expect(dialogs, contains('BusyMarkAppShortcutLabels.save'));
+    expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.undo'));
+    expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.redo'));
+    expect(shortcuts, contains("newDocumentLabel = 'Ctrl+N'"));
+    expect(shortcuts, contains("saveLabel = 'Ctrl+S'"));
+    expect(shortcuts, contains("undoLabel = 'Ctrl+Z'"));
+    expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(workspace, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(settings, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(welcome, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(
       welcome,
       contains('BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>'),
     );
     expect(welcome, contains('tooltip: l10n.mainMenu'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
+    expect(native, contains('GtkWidget* markdown_html_item;'));
     expect(native, contains('GtkWidget* header_menu_button;'));
     expect(native, contains('GtkWidget* header_keyboard_shortcuts_item;'));
+    expect(native, contains('GtkWidget* header_markdown_html_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
+    expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
+    expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
     expect(native, contains('close_menu_button(self->header_menu_button)'));
     expect(
       native,
@@ -144,6 +163,13 @@ void main() {
       contains(
         'gtk_box_pack_start(GTK_BOX(sidebar_menu_box),\n'
         '                     self->keyboard_shortcuts_item',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), '
+        'self->markdown_html_item',
       ),
     );
   });
@@ -293,6 +319,19 @@ void main() {
     );
   });
 
+  test('local snap builder stages bundled Git tools', () {
+    final script = File('tools/build_install_snap_local.sh').readAsStringSync();
+
+    expect(script, contains('stage_bundled_git_tools'));
+    expect(script, contains('git --exec-path'));
+    expect(script, contains(r'copy_tree_into_snap_root "$git_exec_path"'));
+    expect(script, contains('copy_tree_into_snap_root /usr/share/git-core'));
+    expect(script, contains('for tool in ssh scp sftp ssh-keyscan'));
+    expect(script, contains(r'stage_ldd_dependencies "$git_bin"'));
+    expect(script, contains('squashfs-root/usr/bin/git'));
+    expect(script, contains('--skip-bundled-git'));
+  });
+
   test('native headerbar tooltips keep GTK theme opacity', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final tooltipBlock = RegExp(
@@ -339,25 +378,58 @@ void main() {
     expect(headerbarBlock, contains('"border: none;"'));
     expect(headerbarBlock, contains('"box-shadow: none;"'));
     expect(headerbarBlock, contains('"border-top-left-radius: %dpx;"'));
+    expect(headerbarBlock, contains('"border-top-right-radius: %dpx;"'));
     expect(headerbarBlock, contains('"padding-left: 0;"'));
+    expect(headerbarBlock, contains('"padding-right: 0;"'));
     expect(
       native,
-      isNot(
-        contains(
-          '".busymark-titlebar.busymark-modal-barrier headerbar.busymark-headerbar {"',
-        ),
+      contains(
+        '".busymark-titlebar.busymark-modal-barrier "'
+        '\n      "headerbar.busymark-headerbar,"',
       ),
     );
     expect(native, isNot(contains('border-right: 1px solid')));
     expect(workspace, isNot(contains('Border(right:')));
   });
 
-  test('native headerbar restores the top-left corner without sidebar', () {
+  test('native headerbar mirrors sidebar surface for text direction', () {
+    final service = File(
+      'lib/src/platform/linux_header_bar_service.dart',
+    ).readAsStringSync();
+    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(service, contains('Future<void> setTextDirection'));
+    expect(service, contains("'setTextDirection'"));
+    expect(app, contains('Directionality.maybeOf(context)'));
+    expect(app, contains('service.setTextDirection(textDirection)'));
+    expect(native, contains('gboolean text_direction_rtl;'));
+    expect(native, contains('static void update_titlebar_direction'));
+    expect(native, contains('gtk_box_reorder_child'));
+    expect(native, contains('static void set_text_direction'));
+    expect(native, contains('strcmp(method, "setTextDirection")'));
+    expect(native, contains('g_strcmp0(value, "rtl") == 0'));
+    expect(native, contains('headerbar_right_radius'));
+    expect(native, contains('sidebar_right_radius'));
+  });
+
+  test('native headerbar restores outer corners without sidebar', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(native, contains('const gint headerbar_left_radius'));
-    expect(native, contains('self->sidebar_visible ? 0 : kHeaderWindowRadius'));
+    expect(native, contains('const gint headerbar_right_radius'));
+    expect(native, contains('const gint sidebar_left_radius'));
+    expect(native, contains('const gint sidebar_right_radius'));
+    expect(
+      native,
+      contains('self->sidebar_visible && !self->text_direction_rtl'),
+    );
+    expect(
+      native,
+      contains('self->sidebar_visible && self->text_direction_rtl'),
+    );
     expect(native, contains('headerbar_left_radius'));
+    expect(native, contains('headerbar_right_radius'));
     expect(native, contains('sidebar_background'));
     expect(native, contains('update_sidebar_header_geometry(self);'));
     expect(native, contains('refresh_header_bar_css(self);'));

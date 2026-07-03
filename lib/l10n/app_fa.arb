@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "نمایش/پنهان کردن نوار کناری",
+  "toggleSidebar": "پنل کناری",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -347,6 +347,14 @@
   "shortcutKeyboardShortcutsDescription": "نمایش مرجع میانبرهای صفحه‌کلید",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutMarkdownAndHtmlDescription": "باز کردن مرجع Markdown و HTML",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "باز کردن تنظیمات BusyMark",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
   },
   "shortcutNextTab": "تب بعدی",
   "@shortcutNextTab": {
@@ -507,6 +515,14 @@
   "shortcutChecklistDescription": "فعال یا غیرفعال کردن قالب‌بندی چک‌لیست",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "نوار کناری",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "نمای نوار کناری",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
   },
   "createMarkdownFile": "ایجاد فایل Markdown",
   "@createMarkdownFile": {
@@ -738,6 +754,26 @@
   "@table": {
     "description": "Table command label."
   },
+  "htmlBlock": "بلوک HTML",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "درج یا ویرایش بلوک HTML",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "HTML رندرشده",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "ویرایش HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "منبع HTML",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
   "thematicBreak": "جداکنندهٔ موضوعی",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -910,11 +946,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "پنهان کردن نوار کناری",
+  "hideSidebar": "پنهان کردن پنل کناری",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "نمایش نوار کناری",
+  "showSidebar": "نمایش پنل کناری",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
@@ -1896,5 +1932,149 @@
         "type": "String"
       }
     }
-  }
+  },
+  "close": "Close",
+  "git": "Git",
+  "gitDiff": "Git diff",
+  "gitUnavailableTitle": "Git is unavailable",
+  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
+  "gitNotRepositoryTitle": "Not a Git repository",
+  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
+  "gitInitializeRepository": "Initialize repository",
+  "gitDetachedHead": "Detached HEAD",
+  "gitDetachedHeadAt": "Detached at {commit}",
+  "gitNoUpstream": "No upstream",
+  "gitAheadCount": "{count, plural, =1{یک کامیت ارسال‌نشده} other{{count} کامیت ارسال‌نشده}}",
+  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
+  "gitClean": "Clean",
+  "gitConflicts": "Conflicts",
+  "gitChanges": "تغییرات",
+  "gitHistory": "History",
+  "gitBranches": "شاخه‌ها",
+  "gitPull": "Pull",
+  "gitPush": "Push",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Select for commit",
+  "gitRemoveFromCommit": "Leave out of commit",
+  "gitDiscard": "Discard",
+  "gitOpenFile": "Open file",
+  "gitMarkResolved": "Mark resolved",
+  "gitUntracked": "Unversioned Files",
+  "gitCommitMessage": "Commit message",
+  "gitCommitSelectedFiles": "Selected files",
+  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
+  "gitCommitMessageRequired": "Enter a commit message.",
+  "gitCreateBranch": "Create branch",
+  "gitNewBranch": "+ New Branch",
+  "gitBranchName": "Branch name",
+  "gitSwitchBranch": "Switch",
+  "gitNoChanges": "No changes",
+  "gitNoHistory": "No history",
+  "gitNoBranches": "No branches",
+  "gitNoDiff": "تفاوتی برای نمایش نیست",
+  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
+  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
+  "gitConfirmDiscardTitle": "Discard Git changes?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
+  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
+  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
+  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
+  "gitProjectHistory": "Project",
+  "gitFileHistory": "Current file",
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "gitFileActions": "File actions",
+  "gitStatusAdded": "Added",
+  "gitStatusDeleted": "Deleted",
+  "gitStatusRenamed": "Renamed",
+  "gitStatusCopied": "Copied",
+  "gitStatusUntracked": "Untracked",
+  "gitStatusConflicted": "Conflicted",
+  "gitStatusIgnored": "Ignored",
+  "gitStatusTypeChanged": "Type changed",
+  "gitStatusModified": "Modified",
+  "gitStatusUnknown": "Unknown",
+  "gitErrorUnavailable": "Git is unavailable.",
+  "gitErrorNotRepository": "This workspace is not a Git repository.",
+  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
+  "gitErrorInvalidBranchName": "Enter a valid branch name.",
+  "gitErrorNoRemote": "No Git remote is configured.",
+  "gitErrorNoUpstream": "No upstream branch is configured.",
+  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
+  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
+  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
+  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
+  "gitErrorNetwork": "Git network operation failed.",
+  "gitErrorConflict": "Git reported unresolved conflicts.",
+  "gitErrorCommandFailed": "Git command failed.",
+
+  "markdownAndHtml": "Markdown و HTML",
+  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
+  "markdownHtmlMarkdownBlocks": "بلوک‌های Markdown",
+  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
+  "markdownHtmlMarkdownBlocksDescription": "ساختارهای بلوکی پشتیبانی‌شده در متن Markdown و پیش‌نمایش.",
+  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
+  "markdownHtmlInlineFormatting": "Markdown درون‌خطی",
+  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
+  "markdownHtmlInlineFormattingDescription": "قالب‌بندی درون پاراگراف‌ها، موارد فهرست و سلول‌های جدول.",
+  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
+  "markdownHtmlRawHtmlBlocks": "بلوک‌های HTML خام",
+  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
+  "markdownHtmlRawHtmlBlocksDescription": "تگ‌های بلوکی HTML امن که با ویجت‌های پیش‌نمایش BusyMark نمایش داده می‌شوند.",
+  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
+  "markdownHtmlRawHtmlInline": "تگ‌های HTML درون‌خطی",
+  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
+  "markdownHtmlRawHtmlInlineDescription": "تگ‌های HTML درون‌خطی امن بدون نمایش خود تگ‌ها رندر می‌شوند.",
+  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
+  "markdownHtmlSafety": "قوانین امنیتی",
+  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
+  "markdownHtmlSafetyDescription": "HTML خام پیش از پیش‌نمایش تحلیل و پاک‌سازی می‌شود.",
+  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
+  "markdownHtmlHeadings": "عنوان‌ها",
+  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
+  "markdownHtmlParagraphs": "پاراگراف‌ها",
+  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
+  "markdownHtmlLists": "فهرست‌ها",
+  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
+  "markdownHtmlHtmlContainers": "کانتینرها",
+  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
+  "markdownHtmlHtmlTextBlocks": "بلوک‌های متن",
+  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
+  "markdownHtmlHtmlFigures": "شکل‌ها و تصاویر",
+  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
+  "markdownHtmlHtmlPreformatted": "کد پیش‌قالب‌بندی‌شده",
+  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
+  "markdownHtmlHtmlDisclosure": "بلوک‌های بازشونده",
+  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
+  "markdownHtmlHtmlDescriptionLists": "فهرست‌های توصیفی",
+  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
+  "markdownHtmlHtmlFormattingTags": "تگ‌های قالب‌بندی",
+  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
+  "markdownHtmlHtmlInlineCodeTags": "تگ‌های کد درون‌خطی",
+  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
+  "markdownHtmlHtmlNeutralInlineTags": "تگ‌های متنی معنایی",
+  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
+  "markdownHtmlSanitizedPreview": "پیش‌نمایش پاک‌سازی‌شده",
+  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
+  "markdownHtmlSanitizedPreviewDescription": "HTML مجاز به بلوک‌های پیش‌نمایش BusyMark تبدیل می‌شود، نه اینکه در مرورگر رندر شود.",
+  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
+  "markdownHtmlSourcePreserved": "منبع حفظ می‌شود",
+  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
+  "markdownHtmlSourcePreservedDescription": "HTML خام ویرایش‌نشده دقیقاً به‌عنوان متن منبع ذخیره می‌شود.",
+  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
+  "markdownHtmlMarkdownInsideHtml": "Markdown داخل HTML",
+  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
+  "markdownHtmlMarkdownInsideHtmlDescription": "نشانه‌های Markdown داخل HTML خام به‌صورت متن واقعی نمایش داده می‌شوند.",
+  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
+  "markdownHtmlBlockedContent": "محتوای فعال مسدود است",
+  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
+  "markdownHtmlBlockedContentDescription": "اسکریپت‌ها، استایل‌ها، فریم‌ها، فرم‌ها، SVG، MathML، رویدادها و ویژگی‌های ناامن مسدود می‌شوند.",
+  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
+  "markdownHtmlSafeUrls": "فقط URLهای امن",
+  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
+  "markdownHtmlSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+
 }

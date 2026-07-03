@@ -4,6 +4,8 @@ import 'package:path/path.dart' as p;
 
 import 'path_utils.dart';
 
+String? debugLocalImageHomeDirectoryOverride;
+
 String? resolveLocalImagePath({
   required String activeFilePath,
   required String destination,
@@ -16,6 +18,10 @@ String? resolveLocalImagePath({
   if (decoded.isEmpty) {
     return null;
   }
+  final expanded = _expandHomeDirectory(decoded);
+  if (p.isAbsolute(expanded)) {
+    return _canonicalExistingFile(expanded);
+  }
   final allowedRoots = _canonicalAllowedImageRoots(
     workspaceRoot: workspaceRoot,
     writersideRoot: writersideRoot,
@@ -25,25 +31,21 @@ String? resolveLocalImagePath({
     return null;
   }
   final candidates = <String>[];
-  if (p.isAbsolute(decoded)) {
-    candidates.add(decoded);
-  } else {
-    candidates.add(p.normalize(p.join(p.dirname(activeFilePath), decoded)));
-    if (workspaceRoot != null) {
-      candidates
-        ..add(p.normalize(p.join(workspaceRoot, decoded)))
-        ..add(p.normalize(p.join(workspaceRoot, imagesDir, decoded)));
-    }
-    if (writersideRoot != null) {
-      candidates.addAll(
-        _writersideImageCandidates(
-          rootPath: writersideRoot,
-          imagesDir: imagesDir,
-          activeFilePath: activeFilePath,
-          destination: decoded,
-        ),
-      );
-    }
+  candidates.add(p.normalize(p.join(p.dirname(activeFilePath), expanded)));
+  if (workspaceRoot != null) {
+    candidates
+      ..add(p.normalize(p.join(workspaceRoot, expanded)))
+      ..add(p.normalize(p.join(workspaceRoot, imagesDir, expanded)));
+  }
+  if (writersideRoot != null) {
+    candidates.addAll(
+      _writersideImageCandidates(
+        rootPath: writersideRoot,
+        imagesDir: imagesDir,
+        activeFilePath: activeFilePath,
+        destination: expanded,
+      ),
+    );
   }
 
   for (final candidate in candidates.toSet()) {
@@ -57,13 +59,13 @@ String? resolveLocalImagePath({
   }
 
   final imagesRoot = _imagesRoot(workspaceRoot, writersideRoot, imagesDir);
-  if (imagesRoot == null || p.split(decoded).length > 1) {
+  if (imagesRoot == null || p.split(expanded).length > 1) {
     return null;
   }
   return _findImageByBasename(
     imagesRoot: imagesRoot,
     allowedRoots: allowedRoots,
-    basename: decoded,
+    basename: expanded,
     maxEntries: maxRecursiveEntries,
   );
 }
@@ -120,21 +122,33 @@ String? _canonicalExistingDirectory(String path) {
   }
 }
 
-String? _canonicalExistingFileWithinAllowedRoots(
-  String path,
-  List<String> allowedRoots,
-) {
+String? _canonicalExistingFile(String path) {
   try {
     final file = File(p.normalize(p.absolute(path)));
     if (!file.existsSync()) {
       return null;
     }
     final canonical = p.normalize(file.resolveSymbolicLinksSync());
+    final type = FileSystemEntity.typeSync(canonical, followLinks: false);
+    return type == FileSystemEntityType.file ? canonical : null;
+  } on FileSystemException {
+    return null;
+  }
+}
+
+String? _canonicalExistingFileWithinAllowedRoots(
+  String path,
+  List<String> allowedRoots,
+) {
+  try {
+    final canonical = _canonicalExistingFile(path);
+    if (canonical == null) {
+      return null;
+    }
     if (!_isWithinAnyRoot(canonical, allowedRoots)) {
       return null;
     }
-    final type = FileSystemEntity.typeSync(canonical, followLinks: false);
-    return type == FileSystemEntityType.file ? canonical : null;
+    return canonical;
   } on FileSystemException {
     return null;
   }
@@ -223,4 +237,21 @@ String _decodeImageDestination(String value) {
   } on FormatException {
     return withoutFragment;
   }
+}
+
+String _expandHomeDirectory(String value) {
+  if (value != '~' && !value.startsWith('~/') && !value.startsWith(r'~\')) {
+    return value;
+  }
+  final home =
+      debugLocalImageHomeDirectoryOverride ??
+      Platform.environment['HOME'] ??
+      Platform.environment['USERPROFILE'];
+  if (home == null || home.trim().isEmpty) {
+    return value;
+  }
+  if (value == '~') {
+    return p.normalize(home);
+  }
+  return p.normalize(p.join(home, value.substring(2)));
 }

@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "0.1.3"
+version: "0.2.0"
 summary: Markdown and Writerside documentation editor
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
@@ -38,6 +38,7 @@ apps:
       - home
       - network
       - removable-media
+      - ssh-keys
     environment:
       GDK_BACKEND: wayland,x11
       XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
@@ -60,6 +61,8 @@ parts:
       - libwayland-egl1
       - libxcb-shm0
       - libxcb1
+      - git
+      - openssh-client
       - yaru-theme-gtk
       - yaru-theme-icon
     override-build: |

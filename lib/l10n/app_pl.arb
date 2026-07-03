@@ -252,7 +252,7 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
-  "toggleSidebar": "Pokaż lub ukryj pasek boczny",
+  "toggleSidebar": "Panel boczny",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
   },
@@ -347,6 +347,14 @@
   "shortcutKeyboardShortcutsDescription": "Pokaż ten wykaz skrótów klawiaturowych",
   "@shortcutKeyboardShortcutsDescription": {
     "description": "Keyboard shortcut description for opening shortcuts."
+  },
+  "shortcutMarkdownAndHtmlDescription": "Otwórz opis Markdown i HTML",
+  "@shortcutMarkdownAndHtmlDescription": {
+    "description": "Keyboard shortcut description for opening the Markdown and HTML reference."
+  },
+  "shortcutSettingsDescription": "Otwórz ustawienia BusyMark",
+  "@shortcutSettingsDescription": {
+    "description": "Keyboard shortcut description for opening settings."
   },
   "shortcutNextTab": "Następna karta",
   "@shortcutNextTab": {
@@ -507,6 +515,14 @@
   "shortcutChecklistDescription": "Włącz lub wyłącz formatowanie listy kontrolnej",
   "@shortcutChecklistDescription": {
     "description": "Keyboard shortcut description for checklist."
+  },
+  "shortcutGroupSidebar": "Pasek boczny",
+  "@shortcutGroupSidebar": {
+    "description": "Keyboard shortcut group for sidebar view switching."
+  },
+  "sidebarViewMenu": "Widok paska bocznego",
+  "@sidebarViewMenu": {
+    "description": "Tooltip for the sidebar view selector button."
   },
   "createMarkdownFile": "Utwórz plik Markdown",
   "@createMarkdownFile": {
@@ -738,6 +754,26 @@
   "@table": {
     "description": "Table command label."
   },
+  "htmlBlock": "Blok HTML",
+  "@htmlBlock": {
+    "description": "HTML block command label."
+  },
+  "shortcutHtmlBlockDescription": "Wstaw lub edytuj blok HTML",
+  "@shortcutHtmlBlockDescription": {
+    "description": "Keyboard shortcut description for inserting or editing an HTML block."
+  },
+  "renderedHtml": "Wyrenderowany HTML",
+  "@renderedHtml": {
+    "description": "Badge label for HTML rendered in the WYSIWYG editor."
+  },
+  "editHtml": "Edytuj HTML",
+  "@editHtml": {
+    "description": "Dialog title and tooltip for editing raw HTML source."
+  },
+  "htmlSource": "Źródło HTML",
+  "@htmlSource": {
+    "description": "Text field label for raw HTML source."
+  },
   "thematicBreak": "Linia pozioma",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -910,11 +946,11 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "hideSidebar": "Ukryj pasek boczny",
+  "hideSidebar": "Ukryj panel boczny",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
   },
-  "showSidebar": "Pokaż pasek boczny",
+  "showSidebar": "Pokaż panel boczny",
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
@@ -1896,5 +1932,149 @@
         "type": "String"
       }
     }
-  }
+  },
+  "close": "Close",
+  "git": "Git",
+  "gitDiff": "Git diff",
+  "gitUnavailableTitle": "Git is unavailable",
+  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
+  "gitNotRepositoryTitle": "Not a Git repository",
+  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
+  "gitInitializeRepository": "Initialize repository",
+  "gitDetachedHead": "Detached HEAD",
+  "gitDetachedHeadAt": "Detached at {commit}",
+  "gitNoUpstream": "No upstream",
+  "gitAheadCount": "{count, plural, =1{1 niewysłany commit} few{{count} niewysłane commity} other{{count} niewysłanych commitów}}",
+  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
+  "gitClean": "Clean",
+  "gitConflicts": "Conflicts",
+  "gitChanges": "Zmiany",
+  "gitHistory": "History",
+  "gitBranches": "Gałęzie",
+  "gitPull": "Pull",
+  "gitPush": "Push",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Select for commit",
+  "gitRemoveFromCommit": "Leave out of commit",
+  "gitDiscard": "Discard",
+  "gitOpenFile": "Open file",
+  "gitMarkResolved": "Mark resolved",
+  "gitUntracked": "Unversioned Files",
+  "gitCommitMessage": "Commit message",
+  "gitCommitSelectedFiles": "Selected files",
+  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
+  "gitCommitMessageRequired": "Enter a commit message.",
+  "gitCreateBranch": "Create branch",
+  "gitNewBranch": "+ New Branch",
+  "gitBranchName": "Branch name",
+  "gitSwitchBranch": "Switch",
+  "gitNoChanges": "No changes",
+  "gitNoHistory": "No history",
+  "gitNoBranches": "No branches",
+  "gitNoDiff": "Brak różnic do pokazania",
+  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
+  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
+  "gitConfirmDiscardTitle": "Discard Git changes?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
+  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
+  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
+  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
+  "gitProjectHistory": "Project",
+  "gitFileHistory": "Current file",
+  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "gitFileActions": "File actions",
+  "gitStatusAdded": "Added",
+  "gitStatusDeleted": "Deleted",
+  "gitStatusRenamed": "Renamed",
+  "gitStatusCopied": "Copied",
+  "gitStatusUntracked": "Untracked",
+  "gitStatusConflicted": "Conflicted",
+  "gitStatusIgnored": "Ignored",
+  "gitStatusTypeChanged": "Type changed",
+  "gitStatusModified": "Modified",
+  "gitStatusUnknown": "Unknown",
+  "gitErrorUnavailable": "Git is unavailable.",
+  "gitErrorNotRepository": "This workspace is not a Git repository.",
+  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
+  "gitErrorInvalidBranchName": "Enter a valid branch name.",
+  "gitErrorNoRemote": "No Git remote is configured.",
+  "gitErrorNoUpstream": "No upstream branch is configured.",
+  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
+  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
+  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
+  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
+  "gitErrorNetwork": "Git network operation failed.",
+  "gitErrorConflict": "Git reported unresolved conflicts.",
+  "gitErrorCommandFailed": "Git command failed.",
+
+  "markdownAndHtml": "Markdown i HTML",
+  "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
+  "markdownHtmlMarkdownBlocks": "Bloki Markdown",
+  "@markdownHtmlMarkdownBlocks": {"description": "Reference section title for Markdown block syntax."},
+  "markdownHtmlMarkdownBlocksDescription": "Struktury blokowe obsługiwane w źródle Markdown i podglądzie.",
+  "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
+  "markdownHtmlInlineFormatting": "Markdown w tekście",
+  "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
+  "markdownHtmlInlineFormattingDescription": "Formatowanie w akapitach, elementach list i komórkach tabel.",
+  "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
+  "markdownHtmlRawHtmlBlocks": "Surowe bloki HTML",
+  "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
+  "markdownHtmlRawHtmlBlocksDescription": "Bezpieczne blokowe tagi HTML renderowane przez widżety podglądu BusyMark.",
+  "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
+  "markdownHtmlRawHtmlInline": "Surowe tagi HTML w tekście",
+  "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
+  "markdownHtmlRawHtmlInlineDescription": "Bezpieczne tagi HTML w tekście renderowane bez pokazywania dosłownych tagów.",
+  "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
+  "markdownHtmlSafety": "Reguły bezpieczeństwa",
+  "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
+  "markdownHtmlSafetyDescription": "Surowy HTML jest analizowany i oczyszczany przed renderowaniem podglądu.",
+  "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
+  "markdownHtmlHeadings": "Nagłówki",
+  "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
+  "markdownHtmlParagraphs": "Akapity",
+  "@markdownHtmlParagraphs": {"description": "Reference row label for Markdown paragraphs."},
+  "markdownHtmlLists": "Listy",
+  "@markdownHtmlLists": {"description": "Reference row label for list syntax."},
+  "markdownHtmlHtmlContainers": "Kontenery",
+  "@markdownHtmlHtmlContainers": {"description": "Reference row label for HTML container tags."},
+  "markdownHtmlHtmlTextBlocks": "Bloki tekstowe",
+  "@markdownHtmlHtmlTextBlocks": {"description": "Reference row label for HTML text block tags."},
+  "markdownHtmlHtmlFigures": "Figury i obrazy",
+  "@markdownHtmlHtmlFigures": {"description": "Reference row label for HTML figure and image tags."},
+  "markdownHtmlHtmlPreformatted": "Kod preformatowany",
+  "@markdownHtmlHtmlPreformatted": {"description": "Reference row label for HTML preformatted/code tags."},
+  "markdownHtmlHtmlDisclosure": "Bloki rozwijane",
+  "@markdownHtmlHtmlDisclosure": {"description": "Reference row label for HTML details/summary tags."},
+  "markdownHtmlHtmlDescriptionLists": "Listy opisów",
+  "@markdownHtmlHtmlDescriptionLists": {"description": "Reference row label for HTML description list tags."},
+  "markdownHtmlHtmlFormattingTags": "Tagi formatowania",
+  "@markdownHtmlHtmlFormattingTags": {"description": "Reference row label for HTML inline formatting tags."},
+  "markdownHtmlHtmlInlineCodeTags": "Tagi kodu w tekście",
+  "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
+  "markdownHtmlHtmlNeutralInlineTags": "Semantyczne tagi tekstu",
+  "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
+  "markdownHtmlSanitizedPreview": "Oczyszczony podgląd",
+  "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
+  "markdownHtmlSanitizedPreviewDescription": "Dozwolony HTML jest konwertowany na bloki podglądu BusyMark, a nie renderowany w przeglądarce.",
+  "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
+  "markdownHtmlSourcePreserved": "Źródło jest zachowane",
+  "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
+  "markdownHtmlSourcePreservedDescription": "Nieedytowany surowy HTML jest zapisywany dokładnie jako tekst źródłowy.",
+  "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
+  "markdownHtmlMarkdownInsideHtml": "Markdown wewnątrz HTML",
+  "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
+  "markdownHtmlMarkdownInsideHtmlDescription": "Znaczniki Markdown wewnątrz surowego HTML są wyświetlane jako tekst dosłowny.",
+  "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
+  "markdownHtmlBlockedContent": "Aktywna zawartość blokowana",
+  "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
+  "markdownHtmlBlockedContentDescription": "Skrypty, style, ramki, formularze, SVG, MathML, zdarzenia i niebezpieczne atrybuty są blokowane.",
+  "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
+  "markdownHtmlSafeUrls": "Tylko bezpieczne URL-e",
+  "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
+  "markdownHtmlSafeUrlsDescription": "Linki dopuszczają http, https, mailto, tel, URL-e względne i fragmenty; niebezpieczne schematy są blokowane.",
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+
 }

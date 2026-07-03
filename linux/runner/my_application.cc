@@ -49,12 +49,14 @@ struct _MyApplication {
   GtkWidget* sidebar_menu;
   GtkWidget* settings_item;
   GtkWidget* keyboard_shortcuts_item;
+  GtkWidget* markdown_html_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
   GtkWidget* header_menu_button;
   GtkWidget* header_menu;
   GtkWidget* header_settings_item;
   GtkWidget* header_keyboard_shortcuts_item;
+  GtkWidget* header_markdown_html_item;
   GtkWidget* header_about_item;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
@@ -87,6 +89,7 @@ struct _MyApplication {
   gchar* modal_barrier_color;
   gint sidebar_width;
   gboolean sidebar_visible;
+  gboolean text_direction_rtl;
   gboolean back_visible;
   gboolean search_active;
   gboolean modal_barrier_visible;
@@ -339,6 +342,16 @@ static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   }
 }
 
+static GtkTextDirection app_text_direction(MyApplication* self) {
+  return self->text_direction_rtl ? GTK_TEXT_DIR_RTL : GTK_TEXT_DIR_LTR;
+}
+
+static void set_widget_direction(GtkWidget* widget, GtkTextDirection direction) {
+  if (widget != nullptr && GTK_IS_WIDGET(widget)) {
+    gtk_widget_set_direction(widget, direction);
+  }
+}
+
 static void update_title_stack_alignment(MyApplication* self) {
   if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
     return;
@@ -370,6 +383,42 @@ static void update_sidebar_header_geometry(MyApplication* self) {
   set_widget_visible(self->sidebar_header_box, width > 0);
 }
 
+static void update_titlebar_direction(MyApplication* self) {
+  const GtkTextDirection direction = app_text_direction(self);
+  if (self->titlebar_box != nullptr && GTK_IS_BOX(self->titlebar_box) &&
+      has_header_bar(self) && self->sidebar_header_box != nullptr &&
+      GTK_IS_WIDGET(self->sidebar_header_box)) {
+    gtk_widget_set_direction(self->titlebar_box, GTK_TEXT_DIR_LTR);
+    if (self->text_direction_rtl) {
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            GTK_WIDGET(self->header_bar), 0);
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            self->sidebar_header_box, 1);
+    } else {
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            self->sidebar_header_box, 0);
+      gtk_box_reorder_child(GTK_BOX(self->titlebar_box),
+                            GTK_WIDGET(self->header_bar), 1);
+    }
+  }
+
+  set_widget_direction(self->sidebar_header_box, direction);
+  set_widget_direction(GTK_WIDGET(self->header_bar), direction);
+  set_widget_direction(self->header_start_box, direction);
+  set_widget_direction(self->header_menu_button, direction);
+  set_widget_direction(self->sidebar_toggle_button, direction);
+  set_widget_direction(self->back_button, direction);
+  set_widget_direction(self->title_stack, direction);
+  set_widget_direction(self->title_label, direction);
+  set_widget_direction(self->search_entry, direction);
+  set_widget_direction(self->view_mode_box, direction);
+  set_widget_direction(self->view_mode_button, direction);
+  set_widget_direction(self->view_mode_label, direction);
+  set_widget_direction(self->refresh_button, direction);
+  set_widget_direction(self->sidebar_search_button, direction);
+  set_widget_direction(self->sidebar_menu_button, direction);
+}
+
 static void refresh_header_bar_css(MyApplication* self) {
   if (!has_header_bar(self)) {
     return;
@@ -396,7 +445,16 @@ static void refresh_header_bar_css(MyApplication* self) {
   const gchar* modal =
       css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
   const gint headerbar_left_radius =
-      self->sidebar_visible ? 0 : kHeaderWindowRadius;
+      self->sidebar_visible && !self->text_direction_rtl
+          ? 0
+          : kHeaderWindowRadius;
+  const gint headerbar_right_radius =
+      self->sidebar_visible && self->text_direction_rtl ? 0
+                                                        : kHeaderWindowRadius;
+  const gint sidebar_left_radius =
+      self->text_direction_rtl ? 0 : kHeaderWindowRadius;
+  const gint sidebar_right_radius =
+      self->text_direction_rtl ? kHeaderWindowRadius : 0;
 
   gtk_style_context_add_class(gtk_widget_get_style_context(self->titlebar_box),
                               "busymark-titlebar");
@@ -435,7 +493,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
+      "border-top-right-radius: %dpx;"
       "padding-left: 0;"
+      "padding-right: 0;"
       "}"
       ".busymark-sidebar-header {"
       "background-color: %s;"
@@ -443,7 +503,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
-      "border-top-right-radius: 0;"
+      "border-top-right-radius: %dpx;"
       "}"
       ".busymark-sidebar-header label,"
       ".busymark-header-title {"
@@ -466,6 +526,10 @@ static void refresh_header_bar_css(MyApplication* self) {
       "box-shadow: none;"
       "}"
       ".busymark-titlebar.busymark-modal-barrier,"
+      ".busymark-titlebar.busymark-modal-barrier "
+      "headerbar.busymark-headerbar,"
+      ".busymark-titlebar.busymark-modal-barrier "
+      "headerbar.busymark-headerbar:backdrop,"
       ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header {"
       "background-image: linear-gradient(%s, %s);"
       "}"
@@ -537,8 +601,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "}",
       kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
       kHeaderWindowRadius, background, headerbar_left_radius,
+      headerbar_right_radius,
       sidebar_background,
-      kHeaderWindowRadius, foreground, foreground, control, border,
+      sidebar_left_radius, sidebar_right_radius, foreground, foreground, control, border,
       kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
       kHeaderControlHorizontalPadding, accent, modal, modal,
       popover, foreground, border, shade, foreground,
@@ -1013,6 +1078,22 @@ static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
   }
 }
 
+static void set_menu_item_label_with_shortcut(GtkWidget* item,
+                                              const gchar* text,
+                                              const gchar* shortcut) {
+  set_menu_item_label(item, text);
+  if (item == nullptr || text == nullptr || !GTK_IS_WIDGET(item)) {
+    return;
+  }
+  if (shortcut == nullptr || shortcut[0] == '\0') {
+    gtk_widget_set_tooltip_text(item, text);
+    return;
+  }
+  gchar* tooltip = g_strdup_printf("%s (%s)", text, shortcut);
+  gtk_widget_set_tooltip_text(item, tooltip);
+  g_free(tooltip);
+}
+
 static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* editor = fl_lookup_string_arg(args, "editor");
   const gchar* source = fl_lookup_string_arg(args, "source");
@@ -1025,8 +1106,15 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* back = fl_lookup_string_arg(args, "back");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
+  const gchar* settings_shortcut =
+      fl_lookup_string_arg(args, "settingsShortcut");
   const gchar* keyboard_shortcuts =
       fl_lookup_string_arg(args, "keyboardShortcuts");
+  const gchar* keyboard_shortcuts_shortcut =
+      fl_lookup_string_arg(args, "keyboardShortcutsShortcut");
+  const gchar* markdown_html = fl_lookup_string_arg(args, "markdownAndHtml");
+  const gchar* markdown_html_shortcut =
+      fl_lookup_string_arg(args, "markdownAndHtmlShortcut");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
@@ -1044,12 +1132,21 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label(self->view_mode_source_item, source);
   set_menu_item_label(self->view_mode_preview_item, preview);
   set_menu_item_label(self->view_mode_split_item, split);
-  set_menu_item_label(self->settings_item, settings);
-  set_menu_item_label(self->keyboard_shortcuts_item, keyboard_shortcuts);
+  set_menu_item_label_with_shortcut(self->settings_item, settings,
+                                    settings_shortcut);
+  set_menu_item_label_with_shortcut(self->keyboard_shortcuts_item,
+                                    keyboard_shortcuts,
+                                    keyboard_shortcuts_shortcut);
+  set_menu_item_label_with_shortcut(self->markdown_html_item, markdown_html,
+                                    markdown_html_shortcut);
   set_menu_item_label(self->about_item, about);
-  set_menu_item_label(self->header_settings_item, settings);
-  set_menu_item_label(self->header_keyboard_shortcuts_item,
-                      keyboard_shortcuts);
+  set_menu_item_label_with_shortcut(self->header_settings_item, settings,
+                                    settings_shortcut);
+  set_menu_item_label_with_shortcut(self->header_keyboard_shortcuts_item,
+                                    keyboard_shortcuts,
+                                    keyboard_shortcuts_shortcut);
+  set_menu_item_label_with_shortcut(self->header_markdown_html_item,
+                                    markdown_html, markdown_html_shortcut);
   set_menu_item_label(self->header_about_item, about);
   update_view_mode_label(self);
 }
@@ -1085,6 +1182,13 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
   }
   self->sidebar_width = static_cast<gint>(width);
   update_sidebar_header_geometry(self);
+}
+
+static void set_text_direction(MyApplication* self, const gchar* value) {
+  self->text_direction_rtl = g_strcmp0(value, "rtl") == 0;
+  update_titlebar_direction(self);
+  update_title_stack_alignment(self);
+  refresh_header_bar_css(self);
 }
 
 static void set_back_visible(MyApplication* self, gboolean visible) {
@@ -1165,11 +1269,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->settings_item = create_menu_item(self, "settings");
   self->keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
+  self->markdown_html_item = create_menu_item(self, "markdownAndHtml");
   self->about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
                      self->keyboard_shortcuts_item, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->markdown_html_item,
+                     FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(sidebar_menu_box);
@@ -1197,11 +1304,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->header_settings_item = create_menu_item(self, "settings");
   self->header_keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
+  self->header_markdown_html_item = create_menu_item(self, "markdownAndHtml");
   self->header_about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(header_menu_box), self->header_settings_item,
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(header_menu_box),
                      self->header_keyboard_shortcuts_item, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(header_menu_box),
+                     self->header_markdown_html_item, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(header_menu_box), self->header_about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(header_menu_box);
@@ -1304,6 +1414,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
                      TRUE, TRUE, 0);
+  update_titlebar_direction(self);
   set_view_mode(self, "split");
   set_document_controls_visible(self, FALSE);
   set_sidebar_visible(self, TRUE);
@@ -1359,6 +1470,9 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
     respond_success(method_call);
   } else if (strcmp(method, "setSidebarWidth") == 0) {
     set_sidebar_width(self, fl_method_double_arg(args, 300));
+    respond_success(method_call);
+  } else if (strcmp(method, "setTextDirection") == 0) {
+    set_text_direction(self, fl_method_string_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setBackVisible") == 0) {
     set_back_visible(self, fl_method_bool_arg(args));
@@ -1645,12 +1759,14 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_menu = nullptr;
   self->settings_item = nullptr;
   self->keyboard_shortcuts_item = nullptr;
+  self->markdown_html_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
   self->header_menu_button = nullptr;
   self->header_menu = nullptr;
   self->header_settings_item = nullptr;
   self->header_keyboard_shortcuts_item = nullptr;
+  self->header_markdown_html_item = nullptr;
   self->header_about_item = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
@@ -1683,6 +1799,7 @@ static void my_application_init(MyApplication* self) {
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
+  self->text_direction_rtl = FALSE;
   self->back_visible = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;

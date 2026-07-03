@@ -13,7 +13,7 @@ import 'app_localizations_fa.dart';
 import 'app_localizations_fr.dart';
 import 'app_localizations_hi.dart';
 import 'app_localizations_it.dart';
-import 'app_localizations_no.dart';
+import 'app_localizations_nb.dart';
 import 'app_localizations_pl.dart';
 import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
@@ -113,7 +113,7 @@ abstract class AppLocalizations {
     Locale('fr'),
     Locale('hi'),
     Locale('it'),
-    Locale('no'),
+    Locale('nb'),
     Locale('pl'),
     Locale('pt'),
     Locale('ru'),
@@ -498,10 +498,10 @@ abstract class AppLocalizations {
   /// **'हिन्दी'**
   String get languageHindi;
 
-  /// Native header bar sidebar toggle tooltip.
+  /// Keyboard shortcuts label for the sidebar panel toggle.
   ///
   /// In en, this message translates to:
-  /// **'Toggle sidebar'**
+  /// **'Sidebar panel'**
   String get toggleSidebar;
 
   /// Editing button position option.
@@ -641,6 +641,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show this keyboard shortcut reference'**
   String get shortcutKeyboardShortcutsDescription;
+
+  /// Keyboard shortcut description for opening the Markdown and HTML reference.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Markdown and HTML reference'**
+  String get shortcutMarkdownAndHtmlDescription;
+
+  /// Keyboard shortcut description for opening settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open BusyMark settings'**
+  String get shortcutSettingsDescription;
 
   /// Keyboard shortcut label for moving to the next editor tab.
   ///
@@ -881,6 +893,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toggle checklist formatting'**
   String get shortcutChecklistDescription;
+
+  /// Keyboard shortcut group for sidebar view switching.
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar'**
+  String get shortcutGroupSidebar;
+
+  /// Tooltip for the sidebar view selector button.
+  ///
+  /// In en, this message translates to:
+  /// **'Sidebar view'**
+  String get sidebarViewMenu;
 
   /// Welcome screen action for creating a Markdown file.
   ///
@@ -1212,6 +1236,36 @@ abstract class AppLocalizations {
   /// **'Table'**
   String get table;
 
+  /// HTML block command label.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML block'**
+  String get htmlBlock;
+
+  /// Keyboard shortcut description for inserting or editing an HTML block.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert or edit an HTML block'**
+  String get shortcutHtmlBlockDescription;
+
+  /// Badge label for HTML rendered in the WYSIWYG editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Rendered HTML'**
+  String get renderedHtml;
+
+  /// Dialog title and tooltip for editing raw HTML source.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit HTML'**
+  String get editHtml;
+
+  /// Text field label for raw HTML source.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML source'**
+  String get htmlSource;
+
   /// Thematic break command label.
   ///
   /// In en, this message translates to:
@@ -1440,16 +1494,16 @@ abstract class AppLocalizations {
   /// **'No image source'**
   String get noImageSource;
 
-  /// Tooltip for hiding the workspace sidebar.
+  /// Tooltip for hiding the workspace sidebar panel.
   ///
   /// In en, this message translates to:
-  /// **'Hide sidebar'**
+  /// **'Hide sidebar panel'**
   String get hideSidebar;
 
-  /// Tooltip for showing the workspace sidebar.
+  /// Tooltip for showing the workspace sidebar panel.
   ///
   /// In en, this message translates to:
-  /// **'Show sidebar'**
+  /// **'Show sidebar panel'**
   String get showSidebar;
 
   /// Tooltip for showing the preview pane.
@@ -2398,6 +2452,660 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown diagnostic: {code}'**
   String diagnosticUnknown(String code);
+
+  /// Close action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// Git sidebar tab label.
+  ///
+  /// In en, this message translates to:
+  /// **'Git'**
+  String get git;
+
+  /// Title for the Git diff viewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Git diff'**
+  String get gitDiff;
+
+  /// Git empty state title when Git cannot be used.
+  ///
+  /// In en, this message translates to:
+  /// **'Git is unavailable'**
+  String get gitUnavailableTitle;
+
+  /// Git empty state message when Git cannot be used.
+  ///
+  /// In en, this message translates to:
+  /// **'{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}'**
+  String gitUnavailableMessage(String reason);
+
+  /// Git empty state title for non-repository workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a Git repository'**
+  String get gitNotRepositoryTitle;
+
+  /// Git empty state message for non-repository workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is not inside a Git repository.'**
+  String get gitNotRepositoryMessage;
+
+  /// Action label for git init.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize repository'**
+  String get gitInitializeRepository;
+
+  /// Detached HEAD label.
+  ///
+  /// In en, this message translates to:
+  /// **'Detached HEAD'**
+  String get gitDetachedHead;
+
+  /// Detached HEAD label with short commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Detached at {commit}'**
+  String gitDetachedHeadAt(String commit);
+
+  /// Repository label when no upstream branch is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'No upstream'**
+  String get gitNoUpstream;
+
+  /// Count of local commits not pushed to the upstream branch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unpushed commit} other{{count} unpushed commits}}'**
+  String gitAheadCount(int count);
+
+  /// Count of upstream commits not pulled into the local branch.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 commit to pull} other{{count} commits to pull}}'**
+  String gitBehindCount(int count);
+
+  /// Git clean state label.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get gitClean;
+
+  /// Git conflicts group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts'**
+  String get gitConflicts;
+
+  /// Git changes view label.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get gitChanges;
+
+  /// Git history view label.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get gitHistory;
+
+  /// Git branch menu label.
+  ///
+  /// In en, this message translates to:
+  /// **'Branches'**
+  String get gitBranches;
+
+  /// Git pull action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull'**
+  String get gitPull;
+
+  /// Git push action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Push'**
+  String get gitPush;
+
+  /// Git commit action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit'**
+  String get gitCommit;
+
+  /// Tooltip for selecting a Git file for the next commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Select for commit'**
+  String get gitSelectForCommit;
+
+  /// Tooltip for removing a Git file from the next commit selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave out of commit'**
+  String get gitRemoveFromCommit;
+
+  /// Git discard action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get gitDiscard;
+
+  /// Action label for opening a file from a Git row or diff.
+  ///
+  /// In en, this message translates to:
+  /// **'Open file'**
+  String get gitOpenFile;
+
+  /// Tooltip for marking a conflicted Git file as resolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark resolved'**
+  String get gitMarkResolved;
+
+  /// Git untracked files group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unversioned Files'**
+  String get gitUntracked;
+
+  /// Commit message field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit message'**
+  String get gitCommitMessage;
+
+  /// Commit panel selected files section label.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected files'**
+  String get gitCommitSelectedFiles;
+
+  /// Commit validation error when no files are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one file before committing.'**
+  String get gitCommitNoSelectedFiles;
+
+  /// Commit validation error when the message is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a commit message.'**
+  String get gitCommitMessageRequired;
+
+  /// Git create branch action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Create branch'**
+  String get gitCreateBranch;
+
+  /// Git branch dropdown action for creating a new branch.
+  ///
+  /// In en, this message translates to:
+  /// **'+ New Branch'**
+  String get gitNewBranch;
+
+  /// Branch name field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch name'**
+  String get gitBranchName;
+
+  /// Git switch branch action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get gitSwitchBranch;
+
+  /// Git empty state when there are no changes.
+  ///
+  /// In en, this message translates to:
+  /// **'No changes'**
+  String get gitNoChanges;
+
+  /// Git empty state when history is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No history'**
+  String get gitNoHistory;
+
+  /// Git empty state when branch list is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No branches'**
+  String get gitNoBranches;
+
+  /// Git diff empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'No diff to show'**
+  String get gitNoDiff;
+
+  /// Git diff binary file message.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary file. BusyMark does not render binary patches.'**
+  String get gitBinaryFile;
+
+  /// Git diff banner for unsaved editor changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved editor changes are not included until saved.'**
+  String get gitUnsavedChangesBanner;
+
+  /// Confirmation title for discarding Git changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Git changes?'**
+  String get gitConfirmDiscardTitle;
+
+  /// Confirmation body for discarding tracked changes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}'**
+  String gitConfirmDiscardTracked(int count);
+
+  /// Confirmation body for deleting untracked files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}'**
+  String gitConfirmDiscardUntracked(int count);
+
+  /// Confirmation body for discarding mixed tracked and untracked files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}'**
+  String gitConfirmDiscardMixed(int count);
+
+  /// Confirmation title for switching branches.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to {branch}?'**
+  String gitConfirmSwitchBranchTitle(String branch);
+
+  /// Confirmation body for switching branches.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark will reload the workspace from disk after Git switches branches.'**
+  String get gitConfirmSwitchBranchMessage;
+
+  /// Confirmation title for pushing with set-upstream.
+  ///
+  /// In en, this message translates to:
+  /// **'Set upstream branch?'**
+  String get gitConfirmPushSetUpstreamTitle;
+
+  /// Confirmation body for pushing with set-upstream.
+  ///
+  /// In en, this message translates to:
+  /// **'This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.'**
+  String gitConfirmPushSetUpstreamMessage(String branch);
+
+  /// Project history action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get gitProjectHistory;
+
+  /// Current file history action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Current file'**
+  String get gitFileHistory;
+
+  /// Diff additions and deletions count.
+  ///
+  /// In en, this message translates to:
+  /// **'+{additions} -{deletions}'**
+  String gitAdditionsDeletions(int additions, int deletions);
+
+  /// Tooltip for a changed file action menu.
+  ///
+  /// In en, this message translates to:
+  /// **'File actions'**
+  String get gitFileActions;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get gitStatusAdded;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get gitStatusDeleted;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed'**
+  String get gitStatusRenamed;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get gitStatusCopied;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Untracked'**
+  String get gitStatusUntracked;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicted'**
+  String get gitStatusConflicted;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignored'**
+  String get gitStatusIgnored;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Type changed'**
+  String get gitStatusTypeChanged;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get gitStatusModified;
+
+  /// Git file status label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get gitStatusUnknown;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git is unavailable.'**
+  String get gitErrorUnavailable;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'This workspace is not a Git repository.'**
+  String get gitErrorNotRepository;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark blocked an unsafe Git path.'**
+  String get gitErrorUnsafePath;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid branch name.'**
+  String get gitErrorInvalidBranchName;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'No Git remote is configured.'**
+  String get gitErrorNoRemote;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'No upstream branch is configured.'**
+  String get gitErrorNoUpstream;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple remotes are configured. Choose an upstream outside this BusyMark version.'**
+  String get gitErrorMultipleRemotes;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or discard BusyMark editor changes before switching branches.'**
+  String get gitErrorDirtyWorkspace;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch has diverged. Resolve merge or rebase outside this BusyMark version.'**
+  String get gitErrorDiverged;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.'**
+  String get gitErrorAuthentication;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git network operation failed.'**
+  String get gitErrorNetwork;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git reported unresolved conflicts.'**
+  String get gitErrorConflict;
+
+  /// Git error message.
+  ///
+  /// In en, this message translates to:
+  /// **'Git command failed.'**
+  String get gitErrorCommandFailed;
+
+  /// Markdown and HTML reference dialog title and menu item.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown and HTML'**
+  String get markdownAndHtml;
+
+  /// Reference section title for Markdown block syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown Blocks'**
+  String get markdownHtmlMarkdownBlocks;
+
+  /// Reference section description for Markdown block syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Block structures supported in Markdown source and preview.'**
+  String get markdownHtmlMarkdownBlocksDescription;
+
+  /// Reference section title for Markdown inline syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline Markdown'**
+  String get markdownHtmlInlineFormatting;
+
+  /// Reference section description for Markdown inline syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatting that can appear inside paragraphs, list items, and table cells.'**
+  String get markdownHtmlInlineFormattingDescription;
+
+  /// Reference section title for supported raw HTML block tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw HTML Blocks'**
+  String get markdownHtmlRawHtmlBlocks;
+
+  /// Reference section description for supported raw HTML block tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe block-level HTML tags rendered through BusyMark preview widgets.'**
+  String get markdownHtmlRawHtmlBlocksDescription;
+
+  /// Reference section title for supported raw HTML inline tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw HTML Inline Tags'**
+  String get markdownHtmlRawHtmlInline;
+
+  /// Reference section description for supported raw HTML inline tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe inline HTML tags rendered without showing literal tags.'**
+  String get markdownHtmlRawHtmlInlineDescription;
+
+  /// Reference section title for raw HTML safety rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety Rules'**
+  String get markdownHtmlSafety;
+
+  /// Reference section description for raw HTML safety rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw HTML is parsed and sanitized before preview rendering.'**
+  String get markdownHtmlSafetyDescription;
+
+  /// Reference row label for Markdown headings.
+  ///
+  /// In en, this message translates to:
+  /// **'Headings'**
+  String get markdownHtmlHeadings;
+
+  /// Reference row label for Markdown paragraphs.
+  ///
+  /// In en, this message translates to:
+  /// **'Paragraphs'**
+  String get markdownHtmlParagraphs;
+
+  /// Reference row label for list syntax.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get markdownHtmlLists;
+
+  /// Reference row label for HTML container tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Containers'**
+  String get markdownHtmlHtmlContainers;
+
+  /// Reference row label for HTML text block tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Text blocks'**
+  String get markdownHtmlHtmlTextBlocks;
+
+  /// Reference row label for HTML figure and image tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Figures and images'**
+  String get markdownHtmlHtmlFigures;
+
+  /// Reference row label for HTML preformatted/code tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Preformatted code'**
+  String get markdownHtmlHtmlPreformatted;
+
+  /// Reference row label for HTML details/summary tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Disclosure blocks'**
+  String get markdownHtmlHtmlDisclosure;
+
+  /// Reference row label for HTML description list tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Description lists'**
+  String get markdownHtmlHtmlDescriptionLists;
+
+  /// Reference row label for HTML inline formatting tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatting tags'**
+  String get markdownHtmlHtmlFormattingTags;
+
+  /// Reference row label for HTML inline code-related tags.
+  ///
+  /// In en, this message translates to:
+  /// **'Inline code tags'**
+  String get markdownHtmlHtmlInlineCodeTags;
+
+  /// Reference row label for HTML inline semantic tags that render as text.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic text tags'**
+  String get markdownHtmlHtmlNeutralInlineTags;
+
+  /// Reference row label for sanitized preview behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Sanitized preview'**
+  String get markdownHtmlSanitizedPreview;
+
+  /// Reference row description for sanitized preview behavior.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed HTML is converted to BusyMark preview blocks, not rendered in a browser.'**
+  String get markdownHtmlSanitizedPreviewDescription;
+
+  /// Reference row label for raw source preservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source is preserved'**
+  String get markdownHtmlSourcePreserved;
+
+  /// Reference row description for raw source preservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unedited raw HTML is saved back exactly as source text.'**
+  String get markdownHtmlSourcePreservedDescription;
+
+  /// Reference row label for Markdown inside raw HTML.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown inside HTML'**
+  String get markdownHtmlMarkdownInsideHtml;
+
+  /// Reference row description for Markdown inside raw HTML.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown markers inside raw HTML render as literal text.'**
+  String get markdownHtmlMarkdownInsideHtmlDescription;
+
+  /// Reference row label for blocked HTML content.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked active content'**
+  String get markdownHtmlBlockedContent;
+
+  /// Reference row description for blocked HTML content.
+  ///
+  /// In en, this message translates to:
+  /// **'Scripts, styles, frames, forms, SVG, MathML, events, and unsafe attributes are blocked.'**
+  String get markdownHtmlBlockedContentDescription;
+
+  /// Reference row label for safe URL policy.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe URLs only'**
+  String get markdownHtmlSafeUrls;
+
+  /// Reference row description for safe URL policy.
+  ///
+  /// In en, this message translates to:
+  /// **'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.'**
+  String get markdownHtmlSafeUrlsDescription;
 }
 
 class _AppLocalizationsDelegate
@@ -2419,7 +3127,7 @@ class _AppLocalizationsDelegate
     'fr',
     'hi',
     'it',
-    'no',
+    'nb',
     'pl',
     'pt',
     'ru',
@@ -2449,8 +3157,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsHi();
     case 'it':
       return AppLocalizationsIt();
-    case 'no':
-      return AppLocalizationsNo();
+    case 'nb':
+      return AppLocalizationsNb();
     case 'pl':
       return AppLocalizationsPl();
     case 'pt':
