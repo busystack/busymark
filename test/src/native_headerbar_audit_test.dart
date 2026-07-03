@@ -90,6 +90,7 @@ void main() {
     expect(source, isNot(contains('"Print"')));
     expect(source, isNot(contains('"Settings"')));
     expect(source, isNot(contains('"Keyboard Shortcuts"')));
+    expect(source, isNot(contains('"Markdown and HTML"')));
     expect(source, isNot(contains('"About BusyMark"')));
   });
 
@@ -113,28 +114,38 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
+    expect(service, contains('markdownAndHtml'));
     expect(app, contains('menu: l10n.mainMenu'));
     expect(app, contains('settings: l10n.settings'));
     expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
+    expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
+    expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
     expect(dialogs, contains('Ctrl+N'));
     expect(dialogs, contains('Ctrl+S'));
     expect(dialogs, contains('Ctrl+Z'));
     expect(dialogs, contains('Ctrl+Shift+Z'));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(workspace, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(settings, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
+    expect(welcome, contains('case HeaderBarAction.markdownAndHtml:'));
     expect(
       welcome,
       contains('BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>'),
     );
     expect(welcome, contains('tooltip: l10n.mainMenu'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
+    expect(native, contains('GtkWidget* markdown_html_item;'));
     expect(native, contains('GtkWidget* header_menu_button;'));
     expect(native, contains('GtkWidget* header_keyboard_shortcuts_item;'));
+    expect(native, contains('GtkWidget* header_markdown_html_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
+    expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
+    expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
     expect(native, contains('close_menu_button(self->header_menu_button)'));
     expect(
       native,
@@ -145,6 +156,13 @@ void main() {
       contains(
         'gtk_box_pack_start(GTK_BOX(sidebar_menu_box),\n'
         '                     self->keyboard_shortcuts_item',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), '
+        'self->markdown_html_item',
       ),
     );
   });

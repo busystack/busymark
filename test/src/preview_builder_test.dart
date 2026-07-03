@@ -594,6 +594,95 @@ Also visible.
     expect(preview.blocks.single.children.single.text, 'Inside');
   });
 
+  test('preview renders top-level raw HTML image as image block', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '<img src="https://example.com/image.png" alt="Image">\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final image = preview.blocks.single.children.single;
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(image.kind, PreviewBlockKind.image);
+    expect(image.attributes['src'], 'https://example.com/image.png');
+    expect(image.text, 'Image');
+  });
+
+  test('preview preserves raw HTML figure caption relationship', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+<figure>
+  <img src="https://example.com/image.png" alt="Image" width="120">
+  <figcaption>Example image with caption.</figcaption>
+</figure>
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final figure = preview.blocks.single.children.single;
+    final caption = figure.children.singleWhere(
+      (block) => block.attributes['htmlTag'] == 'figcaption',
+    );
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(figure.kind, PreviewBlockKind.container);
+    expect(figure.attributes['htmlTag'], 'figure');
+    expect(figure.children.map((block) => block.kind), [
+      PreviewBlockKind.image,
+      PreviewBlockKind.paragraph,
+    ]);
+    expect(caption.text, 'Example image with caption.');
+  });
+
+  test('preview allows safe remote raw HTML links images and citations', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+<section>
+  <blockquote cite="https://example.com">
+    Quoted text.
+  </blockquote>
+  <p>
+    Visit <a href="https://example.com">Example</a>
+    or <a href="docs/getting-started.md">local documentation</a>.
+  </p>
+  <figure>
+    <img
+      src="https://busystack.org/img/busymark/screenshots/busymark-split-view.png"
+      alt="BusyMark Logo"
+      width="120"
+      height="120">
+    <figcaption>Example image with caption.</figcaption>
+  </figure>
+</section>
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final paragraph = _flattenPreviewBlocks(preview.blocks).singleWhere(
+      (block) => block.text == 'Visit Example or local documentation.',
+    );
+    final links = _flattenPreviewBlocks(
+      preview.blocks,
+    ).expand((block) => _flattenInlines(block.inlines));
+
+    expect(preview.blocks.single.kind, PreviewBlockKind.container);
+    expect(paragraph.kind, PreviewBlockKind.paragraph);
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('markdown.raw-html.unsafe')),
+    );
+    expect(
+      links
+          .where((inline) => inline.kind == PreviewInlineKind.link)
+          .map((inline) => inline.destination),
+      containsAll(['https://example.com', 'docs/getting-started.md']),
+    );
+    expect(
+      _flattenPreviewBlocks(preview.blocks).map((block) => block.kind),
+      contains(PreviewBlockKind.image),
+    );
+  });
+
   test('preview keeps unsafe raw HTML literal', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -623,11 +712,60 @@ Also visible.
       isNot(contains(PreviewInlineKind.strong)),
     );
   });
+
+  test('preview keeps paired raw HTML blocks together across blank lines', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+## Markdown inside HTML
+
+<div>
+
+**This should remain literal text unless explicitly supported.**
+
+</div>
+
+---
+''',
+    );
+    final preview = previewBuilder.build(parsed);
+    final htmlBlock = preview.blocks.singleWhere(
+      (block) =>
+          block.kind == PreviewBlockKind.container &&
+          block.text.contains('This should remain literal text'),
+    );
+    final paragraph = htmlBlock.children.single;
+
+    expect(preview.blocks.map((block) => block.kind), [
+      PreviewBlockKind.heading,
+      PreviewBlockKind.container,
+      PreviewBlockKind.thematicBreak,
+    ]);
+    expect(htmlBlock.sourceStartLine, 3);
+    expect(htmlBlock.sourceEndLine, 7);
+    expect(
+      paragraph.text,
+      '**This should remain literal text unless explicitly supported.**',
+    );
+    expect(
+      _flattenInlines(paragraph.inlines).map((inline) => inline.kind),
+      isNot(contains(PreviewInlineKind.strong)),
+    );
+  });
 }
 
 Iterable<PreviewInline> _flattenInlines(Iterable<PreviewInline> inlines) sync* {
   for (final inline in inlines) {
     yield inline;
     yield* _flattenInlines(inline.children);
+  }
+}
+
+Iterable<PreviewBlock> _flattenPreviewBlocks(
+  Iterable<PreviewBlock> blocks,
+) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _flattenPreviewBlocks(block.children);
   }
 }

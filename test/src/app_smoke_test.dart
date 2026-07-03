@@ -481,6 +481,46 @@ void main() {
     expect(find.text(l10n.shortcutNewDocumentDescription), findsNothing);
   });
 
+  testWidgets('markdown and html dialog opens from the header', (tester) async {
+    final l10n = AppLocalizationsEn();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.markdownAndHtml));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.markdownAndHtml), findsWidgets);
+    expect(find.text(l10n.markdownHtmlMarkdownBlocks), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlInlineFormatting), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlRawHtmlBlocks), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlRawHtmlInline), findsOneWidget);
+    expect(find.text(l10n.markdownHtmlSafety), findsOneWidget);
+    expect(find.textContaining('article, aside, div, section'), findsOneWidget);
+    expect(find.textContaining('span, strong, em, b'), findsOneWidget);
+    expect(
+      find.text(l10n.markdownHtmlMarkdownInsideHtmlDescription),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.markdownHtmlBlockedContentDescription),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.markdownHtmlMarkdownBlocks), findsNothing);
+  });
+
   testWidgets('keyboard shortcuts tabs section title is localized', (
     tester,
   ) async {

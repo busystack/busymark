@@ -410,13 +410,33 @@ void main() {
       filePath: 'topic.md',
       source:
           '<p>Hello <strong>bold</strong></p>\n\n'
-          '<table><tr><td>A</td></tr></table>\n',
+          '<table><tr><td>A</td></tr></table>\n'
+          '<blockquote cite="https://example.com">Quote</blockquote>\n'
+          '<a href="https://example.com">Link</a>\n'
+          '<img src="https://example.com/image.png" alt="Image">\n',
     );
 
     expect(
       parsed.diagnostics.map((diagnostic) => diagnostic.code),
       isNot(contains('markdown.raw-html.unsafe')),
     );
+  });
+
+  test('Markdown headings inside paired raw HTML are not outline headings', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+# Document
+
+<div>
+
+# Literal heading
+
+</div>
+''',
+    );
+
+    expect(parsed.headings.map((heading) => heading.text), ['Document']);
   });
 
   test('unsafe raw HTML tags produce unsafe diagnostics', () {
@@ -456,14 +476,15 @@ void main() {
           '<img src="vbscript:alert(1)">\n'
           '<img src="data:image/png;base64,AAAA">\n'
           '<img src="/home/albert/private.png">\n'
-          '<img src="file:///home/albert/private.png">\n',
+          '<img src="file:///home/albert/private.png">\n'
+          '<a href="//example.com/path">protocol relative</a>\n',
     );
 
     expect(
       parsed.diagnostics
           .where((diagnostic) => diagnostic.code == 'markdown.raw-html.unsafe')
           .length,
-      5,
+      6,
     );
   });
 
