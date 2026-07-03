@@ -1603,6 +1603,57 @@ void main() {
     expect(find.textContaining('Basic Markdown'), findsWidgets);
   });
 
+  testWidgets('blocked remote image prompt allows the current workspace', (
+    tester,
+  ) async {
+    const startupPath = '/tmp/remote-image.md';
+    final service = _SearchWorkspaceService(
+      '![Remote](https://example.com/logo.png)\n',
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.text(l10n.remoteImageBlocked).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
+
+    await tester.tap(find.text(l10n.remoteImageBlocked));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.remoteImagesBlockedTitle), findsOneWidget);
+
+    await tester.tap(find.text(l10n.loadRemoteImagesForWorkspace));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      settingsStore.value['remoteImageAllowedWorkspacePaths'],
+      contains(startupPath),
+    );
+  });
+
   testWidgets('Ctrl+O open chooser lists recent workspaces', (tester) async {
     const startupPath = 'test/fixtures/markdown/basic.md';
     const recentPath = '/tmp/busymark-recent-docs';
@@ -1685,6 +1736,7 @@ void main() {
               workspaceRoot: temp.path,
               writersideRoot: null,
               imagesDir: 'images',
+              allowRemoteImages: true,
             ),
           ),
         ),
@@ -1697,6 +1749,43 @@ void main() {
       temp.deleteSync(recursive: true);
     }
   });
+
+  testWidgets(
+    'shared Markdown image renderer blocks remote images by default',
+    (tester) async {
+      var promptCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: MarkdownImageView(
+              source: 'https://example.com/logo.png',
+              alt: 'Logo',
+              activeFilePath: 'doc.md',
+              workspaceRoot: null,
+              writersideRoot: null,
+              imagesDir: 'images',
+              allowRemoteImages: false,
+              onRemoteImageBlocked: () {
+                promptCount += 1;
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text(l10n.remoteImageBlocked), findsOneWidget);
+      expect(find.byType(Image), findsNothing);
+
+      await tester.tap(find.text(l10n.remoteImageBlocked));
+      await tester.pump();
+
+      expect(promptCount, 1);
+    },
+  );
 
   testWidgets(
     'shared Markdown image renderer resolves absolute paths with spaces',
@@ -1726,6 +1815,7 @@ void main() {
                 workspaceRoot: temp.path,
                 writersideRoot: null,
                 imagesDir: 'images',
+                allowRemoteImages: true,
               ),
             ),
           ),
@@ -1771,6 +1861,7 @@ void main() {
                 workspaceRoot: workspace.path,
                 writersideRoot: null,
                 imagesDir: 'images',
+                allowRemoteImages: true,
               ),
             ),
           ),
@@ -1816,6 +1907,7 @@ void main() {
               workspaceRoot: null,
               writersideRoot: null,
               imagesDir: 'images',
+              allowRemoteImages: true,
             ),
           ),
         ),
@@ -1855,6 +1947,7 @@ void main() {
               workspaceRoot: temp.path,
               writersideRoot: null,
               imagesDir: 'images',
+              allowRemoteImages: true,
             ),
           ),
         ),
@@ -1904,6 +1997,7 @@ void main() {
                 workspaceRoot: temp.path,
                 writersideRoot: null,
                 imagesDir: 'images',
+                allowRemoteImages: true,
               ),
             ),
           ),
@@ -1986,6 +2080,7 @@ void main() {
                 workspaceRoot: temp.path,
                 writersideRoot: null,
                 imagesDir: 'images',
+                allowRemoteImages: true,
               ),
             ),
           ),

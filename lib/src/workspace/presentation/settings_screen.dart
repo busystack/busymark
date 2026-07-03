@@ -147,6 +147,27 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             BusyMarkGroupedList(
+              title: context.l10n.privacy,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: context.l10n.allowRemoteImages,
+                  subtitle: context.l10n.allowRemoteImagesDescription,
+                  value: settings.allowRemoteImages,
+                  onChanged: controller.setAllowRemoteImages,
+                  leading: const Icon(BusyMarkGlyphs.image),
+                ),
+                if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
+                  BusyMarkActionRow(
+                    title: context.l10n.clearRemoteImagePermissions,
+                    subtitle:
+                        context.l10n.clearRemoteImagePermissionsDescription,
+                    leading: const Icon(BusyMarkGlyphs.clearAll),
+                    onTap: controller.clearRemoteImageWorkspacePermissions,
+                  ),
+              ],
+            ),
+            BusyMarkGroupedList(
               title: context.l10n.advanced,
               filled: true,
               children: [

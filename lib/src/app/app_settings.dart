@@ -65,6 +65,8 @@ class AppSettings {
     required this.editorToolbarPlacement,
     required this.autoSave,
     required this.validateOnEdit,
+    required this.allowRemoteImages,
+    required this.remoteImageAllowedWorkspacePaths,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -82,6 +84,8 @@ class AppSettings {
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,
       autoSave: true,
       validateOnEdit: true,
+      allowRemoteImages: false,
+      remoteImageAllowedWorkspacePaths: [],
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -121,6 +125,11 @@ class AppSettings {
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
+      allowRemoteImages:
+          json['allowRemoteImages'] as bool? ?? defaults.allowRemoteImages,
+      remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
+        json['remoteImageAllowedWorkspacePaths'],
+      ),
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
@@ -146,6 +155,8 @@ class AppSettings {
   final EditorToolbarPlacement editorToolbarPlacement;
   final bool autoSave;
   final bool validateOnEdit;
+  final bool allowRemoteImages;
+  final List<String> remoteImageAllowedWorkspacePaths;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -165,10 +176,20 @@ class AppSettings {
     'editorToolbarPlacement': editorToolbarPlacement.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
+    'allowRemoteImages': allowRemoteImages,
+    'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
   };
+
+  bool allowsRemoteImagesForWorkspace(String? workspacePath) {
+    if (allowRemoteImages) {
+      return true;
+    }
+    final key = _normalizedWorkspacePath(workspacePath);
+    return key != null && remoteImageAllowedWorkspacePaths.contains(key);
+  }
 
   AppSettings copyWith({
     BusyMarkThemeModePreference? themeModePreference,
@@ -181,6 +202,8 @@ class AppSettings {
     EditorToolbarPlacement? editorToolbarPlacement,
     bool? autoSave,
     bool? validateOnEdit,
+    bool? allowRemoteImages,
+    List<String>? remoteImageAllowedWorkspacePaths,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -199,6 +222,10 @@ class AppSettings {
           editorToolbarPlacement ?? this.editorToolbarPlacement,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
+      allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
+      remoteImageAllowedWorkspacePaths:
+          remoteImageAllowedWorkspacePaths ??
+          this.remoteImageAllowedWorkspacePaths,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -300,6 +327,24 @@ class AppSettingsController extends Notifier<AppSettings> {
     return _save(state.copyWith(validateOnEdit: enabled));
   }
 
+  Future<void> setAllowRemoteImages(bool enabled) {
+    return _save(state.copyWith(allowRemoteImages: enabled));
+  }
+
+  Future<void> allowRemoteImagesForWorkspace(String workspacePath) {
+    final key = _normalizedWorkspacePath(workspacePath);
+    if (key == null) {
+      return Future<void>.value();
+    }
+    final allowed = {key, ...state.remoteImageAllowedWorkspacePaths}.toList()
+      ..sort();
+    return _save(state.copyWith(remoteImageAllowedWorkspacePaths: allowed));
+  }
+
+  Future<void> clearRemoteImageWorkspacePermissions() {
+    return _save(state.copyWith(remoteImageAllowedWorkspacePaths: []));
+  }
+
   Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
     return _save(state.copyWith(confirmCloseWithUnsavedChanges: enabled));
   }
@@ -358,6 +403,25 @@ T _enumFromName<T extends Enum>(List<T> values, Object? name, T fallback) {
     }
   }
   return fallback;
+}
+
+List<String> _workspacePathListFromJson(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final paths = {
+    for (final item in value)
+      if (_normalizedWorkspacePath(item?.toString()) case final path?) path,
+  }.toList()..sort();
+  return paths;
+}
+
+String? _normalizedWorkspacePath(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return null;
+  }
+  return p.normalize(trimmed);
 }
 
 String? _localeTagFromJson(Object? value) {

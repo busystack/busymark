@@ -38,6 +38,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    this.allowRemoteImages = false,
+    this.onRemoteImageBlocked,
     this.toolbarPlacement = EditorToolbarPlacement.topLeft,
     this.scrollToHeadingId,
     this.scrollToSearchQuery,
@@ -52,6 +54,8 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final EditorToolbarPlacement toolbarPlacement;
   final String? scrollToHeadingId;
   final String? scrollToSearchQuery;
@@ -315,6 +319,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                     workspaceRoot: widget.workspaceRoot,
                                     writersideRoot: widget.writersideRoot,
                                     imagesDir: widget.imagesDir,
+                                    allowRemoteImages: widget.allowRemoteImages,
+                                    onRemoteImageBlocked:
+                                        widget.onRemoteImageBlocked,
                                     controller: _textControllerFor(block),
                                     undoController: _textUndoControllerFor(
                                       block,

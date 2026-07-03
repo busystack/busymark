@@ -22,6 +22,8 @@ class MarkdownImageView extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    this.onRemoteImageBlocked,
     this.width,
     this.height,
     this.maxWidth = 760,
@@ -34,6 +36,8 @@ class MarkdownImageView extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final double? width;
   final double? height;
   final double maxWidth;
@@ -84,6 +88,14 @@ class MarkdownImageView extends StatelessWidget {
         return _fileImage(File(resolvedPath), source, _isSvgPath(resolvedPath));
       }
       if (uri.scheme == 'http' || uri.scheme == 'https') {
+        if (!allowRemoteImages) {
+          return _RemoteImageBlockedPlaceholder(
+            source: source,
+            alt: alt,
+            height: height ?? 120,
+            onTap: onRemoteImageBlocked,
+          );
+        }
         if (_isSvgPath(uri.path)) {
           return _networkSvg(source);
         }
@@ -886,6 +898,8 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
               Text(
                 label,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
@@ -894,6 +908,68 @@ class _MarkdownImagePlaceholder extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RemoteImageBlockedPlaceholder extends StatelessWidget {
+  const _RemoteImageBlockedPlaceholder({
+    required this.source,
+    required this.alt,
+    required this.height,
+    required this.onTap,
+  });
+
+  final String source;
+  final String alt;
+  final double height;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final label = alt.trim().isEmpty ? source : '$alt\n$source';
+    final content = SizedBox(
+      height: height,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                BusyMarkGlyphs.imageMissing,
+                size: BusyMarkSizes.iconMd,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(height: BusyMarkSpacing.xs),
+              Text(
+                context.l10n.remoteImageBlocked,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.foreground,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: BusyMarkSpacing.xxs),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (onTap == null) {
+      return content;
+    }
+    return Tooltip(
+      message: context.l10n.remoteImageBlockedTooltip,
+      child: InkWell(onTap: onTap, child: content),
     );
   }
 }

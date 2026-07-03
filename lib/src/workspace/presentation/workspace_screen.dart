@@ -3076,6 +3076,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _scrollToSearchTarget(next);
     });
     final colors = BusyMarkSurfaceColors.of(context);
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(widget.state.workspace),
+    );
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
     final wysiwygDocument =
         editorVisible && _canUseWysiwyg(widget.state.workspace)
@@ -3118,6 +3122,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                         ?.config
                         .imagesDir ??
                     'images',
+                allowRemoteImages: allowRemoteImages,
+                onRemoteImageBlocked: () =>
+                    unawaited(_showRemoteImagesPrompt(context, ref)),
                 onDocumentChanged: _cacheWysiwygDocument,
                 onSourceChanged: _handleWysiwygSourceChanged,
                 toolbarPlacement: widget.editorToolbarPlacement,
@@ -5233,6 +5240,10 @@ class _PreviewInlineText extends ConsumerWidget {
     final baseStyle = style ?? Theme.of(context).textTheme.bodyMedium;
     final searchState = ref.watch(_workspaceSearchProvider);
     final workspace = ref.watch(workspaceControllerProvider).workspace;
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(workspace),
+    );
     final highlightQuery = searchState.active ? searchState.query.trim() : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
@@ -5247,6 +5258,9 @@ class _PreviewInlineText extends ConsumerWidget {
               inline,
               workspace: workspace,
               highlightQuery: highlightQuery,
+              allowRemoteImages: allowRemoteImages,
+              onRemoteImageBlocked: () =>
+                  unawaited(_showRemoteImagesPrompt(context, ref)),
               onLinkTap: (destination) =>
                   _openPreviewLink(context, ref, destination),
             ),
@@ -5608,7 +5622,7 @@ class _PreviewFigure extends StatelessWidget {
   }
 }
 
-class _PreviewImageBlock extends StatelessWidget {
+class _PreviewImageBlock extends ConsumerWidget {
   const _PreviewImageBlock({
     required this.block,
     required this.workspace,
@@ -5620,11 +5634,15 @@ class _PreviewImageBlock extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final width = _previewImageWidth(block);
     final source = _previewImageSource(block);
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(workspace),
+    );
     return Padding(
       padding: padding,
       child: Align(
@@ -5636,6 +5654,9 @@ class _PreviewImageBlock extends StatelessWidget {
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: () =>
+              unawaited(_showRemoteImagesPrompt(context, ref)),
           width: width,
           maxWidth: width ?? BusyMarkSizes.previewImageMaxWidth,
         ),
@@ -5714,6 +5735,8 @@ InlineSpan _previewInlineSpan(
   PreviewInline inline, {
   required Workspace? workspace,
   required String highlightQuery,
+  required bool allowRemoteImages,
+  required VoidCallback? onRemoteImageBlocked,
   required Future<void> Function(String destination) onLinkTap,
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
@@ -5751,6 +5774,8 @@ InlineSpan _previewInlineSpan(
       child,
       workspace: workspace,
       highlightQuery: highlightQuery,
+      allowRemoteImages: allowRemoteImages,
+      onRemoteImageBlocked: onRemoteImageBlocked,
       onLinkTap: onLinkTap,
       inheritedLinkDestination: linkDestination,
       inheritedStyle: style,
@@ -5874,6 +5899,8 @@ InlineSpan _previewInlineSpan(
       context,
       inline,
       workspace,
+      allowRemoteImages: allowRemoteImages,
+      onRemoteImageBlocked: onRemoteImageBlocked,
       style: mergeStyle(
         TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
       ),
@@ -5885,6 +5912,8 @@ InlineSpan _previewInlineImageSpan(
   BuildContext context,
   PreviewInline inline,
   Workspace? workspace, {
+  required bool allowRemoteImages,
+  required VoidCallback? onRemoteImageBlocked,
   required TextStyle? style,
 }) {
   final activeFilePath =
@@ -5906,6 +5935,8 @@ InlineSpan _previewInlineImageSpan(
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: onRemoteImageBlocked,
           maxWidth: BusyMarkSizes.previewMinWidth,
           maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
           height: BusyMarkSizes.previewInlineImageHeight,
@@ -6117,6 +6148,76 @@ void _navigatePreviewAnchor(
 
 void _showPreviewLinkMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+enum _RemoteImagesPromptAction { cancel, allowWorkspace, allowAlways }
+
+Future<void> _showRemoteImagesPrompt(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final workspacePath = _remoteImageWorkspacePath(
+    ref.read(workspaceControllerProvider).workspace,
+  );
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final action = await showBusyMarkModalDialog<_RemoteImagesPromptAction>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.remoteImagesBlockedTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          icon: BusyMarkGlyphs.clear,
+          onPressed: () =>
+              Navigator.pop(context, _RemoteImagesPromptAction.cancel),
+        ),
+        if (workspacePath != null)
+          BusyMarkDialogButton(
+            label: context.l10n.loadRemoteImagesForWorkspace,
+            icon: BusyMarkGlyphs.folder,
+            onPressed: () => Navigator.pop(
+              context,
+              _RemoteImagesPromptAction.allowWorkspace,
+            ),
+          ),
+        BusyMarkDialogButton(
+          label: context.l10n.alwaysLoadRemoteImages,
+          icon: BusyMarkGlyphs.image,
+          suggested: true,
+          onPressed: () =>
+              Navigator.pop(context, _RemoteImagesPromptAction.allowAlways),
+        ),
+      ],
+      children: [Text(context.l10n.remoteImagesBlockedMessage)],
+    ),
+  );
+  if (action == _RemoteImagesPromptAction.allowWorkspace &&
+      workspacePath != null) {
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .allowRemoteImagesForWorkspace(workspacePath);
+    return;
+  }
+  if (action == _RemoteImagesPromptAction.allowAlways) {
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setAllowRemoteImages(true);
+  }
+}
+
+String? _remoteImageWorkspacePath(Workspace? workspace) {
+  if (workspace == null) {
+    return null;
+  }
+  final root = workspace.rootPath.trim();
+  if (root.isNotEmpty) {
+    return root;
+  }
+  final fallback = workspace.activeFilePath ?? workspace.markdown?.filePath;
+  final trimmed = fallback?.trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 String _decodePreviewAnchor(String value) {

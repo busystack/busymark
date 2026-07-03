@@ -24,6 +24,15 @@ void main() {
     expect(settings.toJson()['autoSave'], isTrue);
   });
 
+  test('remote images default to blocked', () {
+    final settings = AppSettings.defaults();
+
+    expect(settings.allowRemoteImages, isFalse);
+    expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/docs'), isFalse);
+    expect(settings.toJson()['allowRemoteImages'], isFalse);
+  });
+
   test('legacy preview visibility migrates to source mode when hidden', () {
     final settings = AppSettings.fromJson(<String, Object?>{
       'previewVisible': false,
@@ -104,6 +113,37 @@ void main() {
 
     expect(store.value['autoSave'], isFalse);
     expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
+  });
+
+  test('remote image permissions persist globally and per workspace', () async {
+    final store = _MemorySettingsStore();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.allowRemoteImagesForWorkspace('/tmp/docs/../docs');
+
+    var settings = container.read(appSettingsControllerProvider);
+    expect(settings.allowRemoteImages, isFalse);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/docs'), isTrue);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/other'), isFalse);
+    expect(store.value['remoteImageAllowedWorkspacePaths'], ['/tmp/docs']);
+
+    await controller.setAllowRemoteImages(true);
+
+    settings = container.read(appSettingsControllerProvider);
+    expect(settings.allowRemoteImages, isTrue);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/other'), isTrue);
+    expect(store.value['allowRemoteImages'], isTrue);
+
+    await controller.clearRemoteImageWorkspacePermissions();
+
+    settings = container.read(appSettingsControllerProvider);
+    expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
+    expect(store.value['remoteImageAllowedWorkspacePaths'], isEmpty);
   });
 }
 

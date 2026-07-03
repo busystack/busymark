@@ -1074,6 +1074,36 @@ abstract class AppLocalizations {
   /// **'Choose where the floating WYSIWYG editing buttons appear.'**
   String get editingButtonsDescription;
 
+  /// Settings section title for privacy options.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
+  /// Settings switch title for loading remote images.
+  ///
+  /// In en, this message translates to:
+  /// **'Load remote images'**
+  String get allowRemoteImages;
+
+  /// Settings switch description for loading remote images.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Markdown preview and editor images to load from http and https URLs.'**
+  String get allowRemoteImagesDescription;
+
+  /// Settings action label for clearing per-workspace remote image permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear remote image permissions'**
+  String get clearRemoteImagePermissions;
+
+  /// Settings action description for clearing per-workspace remote image permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget workspaces that were allowed to load remote images.'**
+  String get clearRemoteImagePermissionsDescription;
+
   /// Settings section title for native window behavior.
   ///
   /// In en, this message translates to:
@@ -1493,6 +1523,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No image source'**
   String get noImageSource;
+
+  /// Placeholder label shown when a remote image is blocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote image blocked'**
+  String get remoteImageBlocked;
+
+  /// Tooltip for a blocked remote image placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether BusyMark can load remote images.'**
+  String get remoteImageBlockedTooltip;
+
+  /// Dialog title for remote image loading permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote images are blocked'**
+  String get remoteImagesBlockedTitle;
+
+  /// Dialog message explaining the privacy risk of remote images.
+  ///
+  /// In en, this message translates to:
+  /// **'This document references images from the internet. Loading them can reveal network information to the image host.'**
+  String get remoteImagesBlockedMessage;
+
+  /// Dialog button that allows remote images for the current workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Load for this workspace'**
+  String get loadRemoteImagesForWorkspace;
+
+  /// Dialog button that enables remote images globally.
+  ///
+  /// In en, this message translates to:
+  /// **'Always load remote images'**
+  String get alwaysLoadRemoteImages;
 
   /// Tooltip for hiding the workspace sidebar panel.
   ///
