@@ -218,7 +218,7 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.smPlus,
     BusyMarkSpacing.sm,
   );
-  static const sidebarHeader = EdgeInsets.fromLTRB(
+  static const sidebarHeader = EdgeInsetsDirectional.fromSTEB(
     BusyMarkSpacing.mdPlus,
     BusyMarkSpacing.mdPlus,
     BusyMarkSpacing.sm,

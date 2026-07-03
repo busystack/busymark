@@ -863,11 +863,11 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    final ar = AppLocalizationsAr();
     final temp = Directory.systemTemp.createTempSync('busymark_sidebar_rtl_');
     addTearDown(() {
       temp.deleteSync(recursive: true);
     });
+    final ar = AppLocalizationsAr();
     final file = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
     final service = _TabbedWorkspaceService(
       rootPath: temp.path,
@@ -903,16 +903,20 @@ void main() {
         break;
       }
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
 
     final sidebarRect = tester.getRect(find.byTooltip(ar.sidebarViewMenu));
     final sourceRect = tester.getRect(find.byType(TextField).last);
-
-    expect(
-      Directionality.of(tester.element(find.byType(Scaffold))),
+    final scaffold = find.byType(Scaffold).last;
+    final resolvedHeaderPadding = BusyMarkInsets.sidebarHeader.resolve(
       TextDirection.rtl,
     );
+
+    expect(Directionality.of(tester.element(scaffold)), TextDirection.rtl);
     expect(sidebarRect.left, greaterThan(sourceRect.right));
+    expect(resolvedHeaderPadding.right, BusyMarkSpacing.mdPlus);
+    expect(resolvedHeaderPadding.left, BusyMarkSpacing.sm);
   });
 
   testWidgets('source undo cannot restore saved text from previous tab', (
