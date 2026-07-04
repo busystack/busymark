@@ -732,8 +732,16 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(welcome, contains('_WelcomeSidebar'));
+    expect(welcome, contains('_WelcomeRecentRow'));
+    expect(welcome, contains('_recentWorkspaceIcon'));
+    expect(welcome, contains('BusyMarkGlyphs.markdownFile'));
+    expect(welcome, contains('BusyMarkGlyphs.folder'));
+    expect(welcome, contains('BusyMarkGlyphs.writersideProject'));
+    expect(welcome, contains('BorderRadius.circular(BusyMarkRadius.md)'));
     expect(welcome, contains('setSidebarVisible(true)'));
-    expect(welcome, contains('backgroundColor: colors.window'));
+    expect(welcome, contains('welcomeMainColor = colors.view'));
+    expect(welcome, contains('backgroundColor: welcomeMainColor'));
+    expect(welcome, contains('crossAxisAlignment: CrossAxisAlignment.stretch'));
     expect(welcome, contains('setSidebarToggleVisible(false)'));
     expect(welcome, contains('setSearchVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));

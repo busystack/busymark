@@ -73,6 +73,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       });
     }
 
+    final welcomeMainColor = colors.view;
     final welcomeSidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
       child: _WelcomeSidebar(
@@ -82,7 +83,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     );
     final welcomeContent = Expanded(
       child: ColoredBox(
-        color: colors.view,
+        color: welcomeMainColor,
         child: BusyMarkClamp(
           maxWidth: BusyMarkSizes.contentWidth,
           margin: EdgeInsets.zero,
@@ -153,7 +154,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: colors.window,
+      backgroundColor: welcomeMainColor,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
@@ -200,7 +201,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
             ),
-      body: Row(textDirection: TextDirection.ltr, children: bodyChildren),
+      body: Row(
+        textDirection: TextDirection.ltr,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: bodyChildren,
+      ),
     );
   }
 
@@ -447,15 +452,12 @@ class _WelcomeSidebar extends StatelessWidget {
               padding: BusyMarkInsets.sidebarList,
               children: [
                 if (recentWorkspaces.isNotEmpty)
-                  BusyMarkGroupedList(
+                  _WelcomeSidebarSection(
                     title: context.l10n.recent,
-                    children: [
+                    children: <Widget>[
                       for (final recent in recentWorkspaces)
-                        BusyMarkActionRow(
-                          title: _displayPath(recent.path),
-                          subtitle: recent.path,
-                          leading: const Icon(BusyMarkGlyphs.history),
-                          trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                        _WelcomeRecentRow(
+                          recent: recent,
                           onTap: () => unawaited(onOpenRecent(recent.path)),
                         ),
                     ],
@@ -469,9 +471,117 @@ class _WelcomeSidebar extends StatelessWidget {
   }
 }
 
+class _WelcomeSidebarSection extends StatelessWidget {
+  const _WelcomeSidebarSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: BusyMarkSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
+            child: Text(title, style: busyMarkSectionHeaderStyle(context)),
+          ),
+          const SizedBox(height: BusyMarkSpacing.sm),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _WelcomeRecentRow extends StatelessWidget {
+  const _WelcomeRecentRow({required this.recent, required this.onTap});
+
+  final RecentWorkspace recent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: colors.foreground);
+    final detailStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
+      child: Material(
+        color: BusyMarkLinuxPalette.transparent,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          hoverColor: busyMarkRowHoverColor(context),
+          onTap: onTap,
+          child: SizedBox(
+            height: BusyMarkSizes.sidebarTreeRowHeight * 2,
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Icon(
+                  _recentWorkspaceIcon(recent),
+                  size: BusyMarkSizes.iconSm,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _displayPath(recent.path),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle,
+                      ),
+                      const SizedBox(height: BusyMarkSpacing.xxs),
+                      Text(
+                        recent.path,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: detailStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 String _displayPath(String path) {
   final name = p.basename(path);
   return name.isEmpty ? path : name;
+}
+
+IconData _recentWorkspaceIcon(RecentWorkspace recent) {
+  return switch (recent.kind) {
+    'singleMarkdown' || 'untitledMarkdown' => BusyMarkGlyphs.markdownFile,
+    'markdownFolder' => BusyMarkGlyphs.folder,
+    'writersideModule' => BusyMarkGlyphs.writersideProject,
+    _ => _recentWorkspaceIconForPath(recent.path),
+  };
+}
+
+IconData _recentWorkspaceIconForPath(String path) {
+  final extension = p.extension(path).toLowerCase();
+  return switch (extension) {
+    '.md' || '.markdown' => BusyMarkGlyphs.markdownFile,
+    _ => BusyMarkGlyphs.folder,
+  };
 }
 
 class _CreateWritersideProjectDialog extends StatefulWidget {
