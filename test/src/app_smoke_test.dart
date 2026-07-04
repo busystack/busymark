@@ -567,6 +567,7 @@ void main() {
     expect(find.text(BusyMarkSidebarShortcutLabels.toc), findsOneWidget);
     expect(find.text(BusyMarkSidebarShortcutLabels.outline), findsOneWidget);
     expect(find.text(BusyMarkSidebarShortcutLabels.git), findsOneWidget);
+    expect(find.text(BusyMarkSidebarShortcutLabels.history), findsOneWidget);
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);
@@ -1261,6 +1262,9 @@ void main() {
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(_gitSidebarShortcutState(temp.path)),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -1316,10 +1320,14 @@ void main() {
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
-    expect(find.text(l10n.gitUnavailableTitle), findsOneWidget);
+    expect(find.text(l10n.gitNoChanges), findsOneWidget);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit5);
+    expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit3);
-    expect(find.text(l10n.gitUnavailableTitle), findsNothing);
+    expect(find.text(l10n.gitNoChanges), findsNothing);
+    expect(find.text('Sidebar history shortcut commit'), findsNothing);
     expect(find.text('Intro.md'), findsWidgets);
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
@@ -1338,6 +1346,12 @@ void main() {
     expect(
       find.byTooltip(
         '${l10n.gitCommit} (${BusyMarkSidebarShortcutLabels.git})',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byTooltip(
+        '${l10n.gitHistory} (${BusyMarkSidebarShortcutLabels.history})',
       ),
       findsOneWidget,
     );
@@ -3467,6 +3481,37 @@ GitState _gitDiffState(String rootPath) {
     ),
     selectedCommitFilePath: 'guide.md',
     openDiffFilePaths: const ['README.md', 'guide.md'],
+  );
+}
+
+GitState _gitSidebarShortcutState(String rootPath) {
+  final repository = GitRepositoryInfo(
+    rootPath: rootPath,
+    gitDirPath: '$rootPath/.git',
+    currentBranch: 'main',
+  );
+  return GitState(
+    availability: const GitAvailability(
+      available: true,
+      executablePath: '/usr/bin/git',
+      version: '2.50.0',
+    ),
+    repositoryInfo: repository,
+    statusSnapshot: GitStatusSnapshot(
+      repositoryInfo: repository,
+      files: const [],
+    ),
+    history: [
+      GitCommitSummary(
+        fullHash: '21e982c772a5cf43f4a99de6d7db9fb1283f50d1',
+        shortHash: '21e982c',
+        authorName: 'BusyMark Test',
+        authorEmail: 'test@example.invalid',
+        authorDate: DateTime(2026),
+        subject: 'Sidebar history shortcut commit',
+        parentHashes: const [],
+      ),
+    ],
   );
 }
 

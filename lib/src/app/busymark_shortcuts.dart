@@ -697,7 +697,7 @@ abstract final class BusyMarkEditorShortcutActivators {
       BusyMarkEditorShortcuts.pastePlainText.activator;
 }
 
-enum BusyMarkSidebarShortcutAction { files, toc, outline, git }
+enum BusyMarkSidebarShortcutAction { files, toc, outline, git, history }
 
 abstract final class BusyMarkSidebarShortcuts {
   const BusyMarkSidebarShortcuts._();
@@ -706,6 +706,7 @@ abstract final class BusyMarkSidebarShortcuts {
   static const tocLabel = 'Ctrl+2';
   static const outlineLabel = 'Ctrl+3';
   static const gitLabel = 'Ctrl+4';
+  static const historyLabel = 'Ctrl+5';
 
   static const toggleSidebar = BusyMarkAppShortcuts.toggleSidebar;
   static const files = BusyMarkShortcutDefinition(
@@ -724,6 +725,10 @@ abstract final class BusyMarkSidebarShortcuts {
     label: gitLabel,
     activator: SingleActivator(LogicalKeyboardKey.digit4, control: true),
   );
+  static const history = BusyMarkShortcutDefinition(
+    label: historyLabel,
+    activator: SingleActivator(LogicalKeyboardKey.digit5, control: true),
+  );
 
   static const definitions =
       <BusyMarkSidebarShortcutAction, BusyMarkShortcutDefinition>{
@@ -731,6 +736,7 @@ abstract final class BusyMarkSidebarShortcuts {
         BusyMarkSidebarShortcutAction.toc: toc,
         BusyMarkSidebarShortcutAction.outline: outline,
         BusyMarkSidebarShortcutAction.git: git,
+        BusyMarkSidebarShortcutAction.history: history,
       };
 }
 
@@ -742,6 +748,7 @@ abstract final class BusyMarkSidebarShortcutLabels {
   static const toc = BusyMarkSidebarShortcuts.tocLabel;
   static const outline = BusyMarkSidebarShortcuts.outlineLabel;
   static const git = BusyMarkSidebarShortcuts.gitLabel;
+  static const history = BusyMarkSidebarShortcuts.historyLabel;
 }
 
 abstract final class BusyMarkSidebarShortcutActivators {
@@ -755,6 +762,8 @@ abstract final class BusyMarkSidebarShortcutActivators {
   static ShortcutActivator get outline =>
       BusyMarkSidebarShortcuts.outline.activator;
   static ShortcutActivator get git => BusyMarkSidebarShortcuts.git.activator;
+  static ShortcutActivator get history =>
+      BusyMarkSidebarShortcuts.history.activator;
 
   static BusyMarkSidebarShortcutAction? actionForKeyEvent(
     KeyEvent event,
@@ -778,6 +787,8 @@ abstract final class BusyMarkSidebarShortcutActivators {
       LogicalKeyboardKey.numpad3 => BusyMarkSidebarShortcutAction.outline,
       LogicalKeyboardKey.digit4 ||
       LogicalKeyboardKey.numpad4 => BusyMarkSidebarShortcutAction.git,
+      LogicalKeyboardKey.digit5 ||
+      LogicalKeyboardKey.numpad5 => BusyMarkSidebarShortcutAction.history,
       _ => null,
     };
   }

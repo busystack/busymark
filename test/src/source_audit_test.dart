@@ -509,6 +509,8 @@ void main() {
     );
     expect(workspace, contains('icon: _sidebarTabIcon(tab)'));
     expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
+    expect(workspace, contains('BusyMarkSidebarShortcutActivators.history'));
+    expect(workspace, contains('LogicalKeyboardKey.numpad5'));
     expect(
       workspace,
       contains('_SidebarTab.files => BusyMarkGlyphs.documentOpen'),
@@ -522,6 +524,12 @@ void main() {
     expect(
       workspace,
       contains('_SidebarTab.gitHistory => BusyMarkGlyphs.history'),
+    );
+    expect(
+      workspace,
+      contains(
+        '_SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history',
+      ),
     );
     expect(workspace, contains('checked: tab == selectedTab'));
     expect(workspace, contains('trailingCheck: true'));

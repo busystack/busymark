@@ -365,6 +365,10 @@ class WorkspaceScreen extends ConsumerWidget {
         ),
         const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
             const _SelectSidebarTabIntent(_SidebarTab.git),
+        BusyMarkSidebarShortcutActivators.history:
+            const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
+        const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
+            const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
       },
       child: Actions(
         actions: {
@@ -1628,7 +1632,7 @@ String? _sidebarTabShortcut(_SidebarTab tab) {
     _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
     _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
     _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
-    _SidebarTab.gitHistory => null,
+    _SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history,
   };
 }
 
