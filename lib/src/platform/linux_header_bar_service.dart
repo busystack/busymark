@@ -251,6 +251,10 @@ class LinuxHeaderBarService {
     return _invoke('setSearchActive', value);
   }
 
+  Future<void> setSearchVisible(bool value) {
+    return _invoke('setSearchVisible', value);
+  }
+
   Future<void> setSearchQuery(String value) {
     return _invoke('setSearchQuery', value);
   }

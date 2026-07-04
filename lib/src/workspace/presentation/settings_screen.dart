@@ -194,6 +194,7 @@ class SettingsScreen extends ConsumerWidget {
         await headerBar.setTitleRange(context.l10n.settings);
         await headerBar.setSidebarVisible(false);
         await headerBar.setSidebarToggleVisible(false);
+        await headerBar.setSearchVisible(false);
         await headerBar.setBackVisible(true);
         await headerBar.setDocumentControlsVisible(false);
         await headerBar.setCanRefresh(false);

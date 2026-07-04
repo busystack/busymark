@@ -144,34 +144,16 @@ void main() {
       contains('BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>'),
     );
     expect(welcome, contains('tooltip: l10n.mainMenu'));
+    expect(native, contains('GtkWidget* sidebar_menu_button;'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
     expect(native, contains('GtkWidget* markdown_html_item;'));
-    expect(native, contains('GtkWidget* header_menu_button;'));
-    expect(native, contains('GtkWidget* header_keyboard_shortcuts_item;'));
-    expect(native, contains('GtkWidget* header_markdown_html_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
     expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
     expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
-    expect(native, contains('close_menu_button(self->header_menu_button)'));
-    expect(
-      native,
-      contains('set_widget_visible(self->header_menu_button, !visible)'),
-    );
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box),\n'
-        '                     self->keyboard_shortcuts_item',
-      ),
-    );
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), '
-        'self->markdown_html_item',
-      ),
-    );
+    expect(native, contains('close_menu_button(self->sidebar_menu_button)'));
+    expect(native, isNot(contains('GtkWidget* header_menu_button;')));
+    expect(native, isNot(contains('GtkWidget* header_menu;')));
   });
 
   test(
@@ -737,7 +719,7 @@ void main() {
     expect(native, isNot(contains('viewModeAgenda')));
   });
 
-  test('welcome page has no sidebar rail or document controls', () {
+  test('welcome page has a sidebar but no document controls', () {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
@@ -749,19 +731,23 @@ void main() {
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(welcome, isNot(contains('_WelcomeRail')));
-    expect(welcome, contains('setSidebarVisible(false)'));
-    expect(welcome, contains('backgroundColor: colors.view'));
+    expect(welcome, contains('_WelcomeSidebar'));
+    expect(welcome, contains('setSidebarVisible(true)'));
+    expect(welcome, contains('backgroundColor: colors.window'));
     expect(welcome, contains('setSidebarToggleVisible(false)'));
+    expect(welcome, contains('setSearchVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
     expect(workspace, contains('settings.sidebarVisible && hasSidebar'));
     expect(workspace, contains('setSidebarToggleVisible(hasSidebar)'));
+    expect(workspace, contains('setSearchVisible(true)'));
     expect(workspace, contains('setDocumentControlsVisible(true)'));
     expect(service, contains('setDocumentControlsVisible'));
     expect(service, contains('setSidebarToggleVisible'));
+    expect(service, contains('setSearchVisible'));
     expect(native, contains('set_document_controls_visible'));
     expect(native, contains('set_sidebar_toggle_visible'));
+    expect(native, contains('set_search_visible'));
     expect(
       native,
       contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
@@ -782,15 +768,11 @@ void main() {
     );
   });
 
-  test('no-sidebar pages use themed page surfaces under the headerbar', () {
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
-    ).readAsStringSync();
+  test('settings page uses themed page surface under the headerbar', () {
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
-    expect(welcome, contains('backgroundColor: colors.view'));
     expect(settings, contains('backgroundColor: colors.view'));
     expect(settings, isNot(contains('backgroundColor: colors.window')));
   });

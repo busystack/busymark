@@ -572,6 +572,7 @@ class WorkspaceScreen extends ConsumerWidget {
           settings.sidebarVisible && hasSidebar,
         );
         await headerBar.setSidebarToggleVisible(hasSidebar);
+        await headerBar.setSearchVisible(true);
         await headerBar.setBackVisible(true);
         await headerBar.setDocumentControlsVisible(true);
         await headerBar.setViewMode(
