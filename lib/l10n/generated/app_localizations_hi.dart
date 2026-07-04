@@ -1576,7 +1576,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'असंस्करणित फ़ाइलें';
 
   @override
   String get gitCommitMessage => 'Commit message';

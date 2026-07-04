@@ -1590,7 +1590,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'Arquivos não versionados';
 
   @override
   String get gitCommitMessage => 'Commit message';

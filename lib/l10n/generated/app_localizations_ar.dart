@@ -1583,7 +1583,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'الملفات غير المتتبعة';
 
   @override
   String get gitCommitMessage => 'Commit message';

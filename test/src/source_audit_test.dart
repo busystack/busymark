@@ -603,7 +603,13 @@ void main() {
 
     expect(gitChanges, contains('class _CommitPanel'));
     expect(gitChanges, contains('context.l10n.gitCommitMessage'));
-    expect(gitChanges, contains('YaruCheckbox('));
+    expect(gitChanges, contains('BusyMarkCheckbox('));
+    expect(gitChanges, isNot(contains('_CommitSelectionCheckbox')));
+    expect(gitChanges, isNot(contains('YaruCheckbox(')));
+    expect(
+      File('lib/src/app/busymark_design.dart').readAsStringSync(),
+      contains('YaruCheckbox('),
+    );
     expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
     expect(gitChanges, contains('context.l10n.gitCommitSelectedFiles'));
     expect(gitChanges, contains('busyMarkVcsFileStatusColor'));

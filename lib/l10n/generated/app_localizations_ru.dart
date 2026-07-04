@@ -1600,7 +1600,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'Неотслеживаемые файлы';
 
   @override
   String get gitCommitMessage => 'Commit message';

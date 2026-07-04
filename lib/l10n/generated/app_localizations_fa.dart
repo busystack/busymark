@@ -1580,7 +1580,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'فایل‌های نسخه‌بندی‌نشده';
 
   @override
   String get gitCommitMessage => 'Commit message';

@@ -7,6 +7,7 @@ import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_changes_view.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
+import 'package:busymark/src/git/presentation/git_history_view.dart';
 import 'package:busymark/src/git/presentation/git_sidebar_tab.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,7 @@ void main() {
     expect(find.text(l10n.gitConflicts), findsOneWidget);
     expect(find.text(l10n.gitChanges), findsOneWidget);
     expect(find.text(l10n.gitUntracked), findsOneWidget);
+    expect(find.byType(YaruCheckbox), findsNWidgets(4));
   });
 
   testWidgets('file checkboxes select files for commit', (tester) async {
@@ -71,7 +73,12 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byType(YaruCheckbox).last);
+    final fileCheckbox = find.byType(YaruCheckbox).last;
+    final checkboxSize = tester.getSize(fileCheckbox);
+    expect(checkboxSize.width, greaterThanOrEqualTo(32));
+    expect(checkboxSize.height, greaterThanOrEqualTo(32));
+
+    await tester.tap(fileCheckbox);
     await tester.pump();
 
     expect(selectedPaths, ['changed.md']);
@@ -362,6 +369,40 @@ void main() {
     },
   );
 
+  testWidgets('history scope controls use matching labeled buttons', (
+    tester,
+  ) async {
+    var projectHistoryLoaded = false;
+    var fileHistoryLoaded = false;
+    await tester.pumpWidget(
+      _localized(
+        GitHistoryView(
+          state: _state(files: const [], scopedFilePath: 'docs/topic.md'),
+          onLoadProjectHistory: () => projectHistoryLoaded = true,
+          onLoadFileHistory: () => fileHistoryLoaded = true,
+          onSelectCommit: (_) {},
+        ),
+      ),
+    );
+
+    expect(
+      find.widgetWithText(OutlinedButton, l10n.gitProjectHistory),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(OutlinedButton, l10n.gitFileHistory),
+      findsOneWidget,
+    );
+    expect(find.byType(BusyMarkHeaderIconButton), findsNothing);
+    expect(find.byType(OutlinedButton), findsNWidgets(2));
+
+    await tester.tap(find.text(l10n.gitProjectHistory));
+    await tester.tap(find.text(l10n.gitFileHistory));
+
+    expect(projectHistoryLoaded, isTrue);
+    expect(fileHistoryLoaded, isTrue);
+  });
+
   testWidgets('dirty editor banner appears in diff viewer', (tester) async {
     await tester.pumpWidget(
       _localized(
@@ -413,6 +454,7 @@ GitState _state({
     gitDirPath: '/repo/.git',
   ),
   List<GitBranch> branches = const [],
+  String? scopedFilePath,
 }) {
   return GitState(
     availability: const GitAvailability(
@@ -428,6 +470,7 @@ GitState _state({
       files: files,
     ),
     branches: branches,
+    scopedFilePath: scopedFilePath,
   );
 }
 

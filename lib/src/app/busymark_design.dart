@@ -1675,6 +1675,35 @@ class BusyMarkSwitchRow extends StatelessWidget {
   }
 }
 
+class BusyMarkCheckbox extends StatelessWidget {
+  const BusyMarkCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.tooltip,
+    this.tristate = false,
+  });
+
+  final bool? value;
+  final bool tristate;
+  final String? tooltip;
+  final ValueChanged<bool?>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final checkbox = YaruCheckbox(
+      value: value,
+      tristate: tristate,
+      onChanged: onChanged,
+    );
+    final message = tooltip;
+    if (message == null || message.isEmpty) {
+      return checkbox;
+    }
+    return Tooltip(message: message, child: checkbox);
+  }
+}
+
 class BusyMarkDialogShell extends StatelessWidget {
   const BusyMarkDialogShell({
     super.key,

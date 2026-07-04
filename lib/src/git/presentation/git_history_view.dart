@@ -38,16 +38,26 @@ class GitHistoryView extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onLoadProjectHistory,
                   icon: const Icon(BusyMarkGlyphs.history),
-                  label: Text(context.l10n.gitProjectHistory),
+                  label: Text(
+                    context.l10n.gitProjectHistory,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
-              BusyMarkHeaderIconButton(
-                tooltip: context.l10n.gitFileHistory,
-                icon: BusyMarkGlyphs.documentHistory,
-                onPressed: state.scopedFilePath == null
-                    ? null
-                    : onLoadFileHistory,
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: state.scopedFilePath == null
+                      ? null
+                      : onLoadFileHistory,
+                  icon: const Icon(BusyMarkGlyphs.documentHistory),
+                  label: Text(
+                    context.l10n.gitFileHistory,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ],
           ),
