@@ -20,6 +20,7 @@ class GitDiffViewer extends StatefulWidget {
     this.showCloseButton = true,
     this.editorFontSize = BusyMarkTypography.defaultFontSize,
     this.showChangeNavigator = false,
+    this.changeNavigatorController,
   });
 
   final GitDiff? diff;
@@ -31,18 +32,56 @@ class GitDiffViewer extends StatefulWidget {
   final bool showCloseButton;
   final double editorFontSize;
   final bool showChangeNavigator;
+  final GitDiffChangeNavigatorController? changeNavigatorController;
 
   @override
   State<GitDiffViewer> createState() => _GitDiffViewerState();
 }
 
+class GitDiffChangeNavigatorController {
+  ValueChanged<int>? _onJumpToChange;
+
+  void jumpToChange(int index) {
+    _onJumpToChange?.call(index);
+  }
+
+  void _attach(ValueChanged<int> onJumpToChange) {
+    _onJumpToChange = onJumpToChange;
+  }
+
+  void _detach(ValueChanged<int> onJumpToChange) {
+    if (identical(_onJumpToChange, onJumpToChange)) {
+      _onJumpToChange = null;
+    }
+  }
+}
+
 class _GitDiffViewerState extends State<GitDiffViewer> {
   final _scrollController = ScrollController();
   final _changeKeys = <int, GlobalKey>{};
+  late final ValueChanged<int> _jumpToChangeIndexHandler;
   int _currentChangeIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _jumpToChangeIndexHandler = _jumpToChangeIndex;
+    widget.changeNavigatorController?._attach(_jumpToChangeIndexHandler);
+  }
+
+  @override
+  void didUpdateWidget(covariant GitDiffViewer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.changeNavigatorController !=
+        widget.changeNavigatorController) {
+      oldWidget.changeNavigatorController?._detach(_jumpToChangeIndexHandler);
+      widget.changeNavigatorController?._attach(_jumpToChangeIndexHandler);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.changeNavigatorController?._detach(_jumpToChangeIndexHandler);
     _scrollController.dispose();
     super.dispose();
   }
@@ -51,7 +90,9 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final diff = widget.diff;
-    final changeCount = _sourceChangeCount(diff);
+    final changeCount = gitDiffSourceChangeCount(diff);
+    final changeNavigationEnabled =
+        widget.showChangeNavigator || widget.changeNavigatorController != null;
     if (_currentChangeIndex >= changeCount) {
       _currentChangeIndex = 0;
     }
@@ -120,11 +161,15 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
                     padding: const EdgeInsets.only(bottom: BusyMarkSpacing.xl),
                     itemCount: diff.files.length,
                     itemBuilder: (context, index) {
+                      final file = diff.files[index];
                       return _DiffFileSection(
-                        file: diff.files[index],
-                        snapshot:
-                            diff.fileSnapshots[diff.files[index].displayPath],
-                        changeKeys: widget.showChangeNavigator
+                        file: file,
+                        snapshot: diff.fileSnapshots[file.displayPath],
+                        changeIndexOffset: _changeIndexOffset(
+                          diff.files,
+                          index,
+                        ),
+                        changeKeys: changeNavigationEnabled
                             ? _changeKeys
                             : null,
                         onOpenFile: widget.onOpenFile,
@@ -146,11 +191,24 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
     }
     final nextIndex =
         (_currentChangeIndex + direction + changeCount) % changeCount;
+    _setCurrentChangeIndex(nextIndex);
+  }
+
+  void _jumpToChangeIndex(int index) {
+    final changeCount = gitDiffSourceChangeCount(widget.diff);
+    if (changeCount == 0) {
+      return;
+    }
+    final nextIndex = index.clamp(0, changeCount - 1);
+    _setCurrentChangeIndex(nextIndex);
+  }
+
+  void _setCurrentChangeIndex(int index) {
     setState(() {
-      _currentChangeIndex = nextIndex;
+      _currentChangeIndex = index;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = _changeKeys[nextIndex]?.currentContext;
+      final context = _changeKeys[index]?.currentContext;
       if (context == null) {
         return;
       }
@@ -164,11 +222,19 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
   }
 }
 
-int _sourceChangeCount(GitDiff? diff) {
+int gitDiffSourceChangeCount(GitDiff? diff) {
   if (diff == null) {
     return 0;
   }
   return diff.files.fold<int>(0, (count, file) => count + file.hunks.length);
+}
+
+int _changeIndexOffset(List<GitDiffFile> files, int fileIndex) {
+  var offset = 0;
+  for (var index = 0; index < fileIndex; index += 1) {
+    offset += files[index].hunks.length;
+  }
+  return offset;
 }
 
 class _SourceDiffChangeNavigator extends StatelessWidget {
@@ -259,6 +325,7 @@ class _DiffFileSection extends StatelessWidget {
   const _DiffFileSection({
     required this.file,
     required this.snapshot,
+    required this.changeIndexOffset,
     required this.changeKeys,
     required this.onOpenFile,
     required this.showHeader,
@@ -268,6 +335,7 @@ class _DiffFileSection extends StatelessWidget {
 
   final GitDiffFile file;
   final String? snapshot;
+  final int changeIndexOffset;
   final Map<int, GlobalKey>? changeKeys;
   final ValueChanged<String> onOpenFile;
   final bool showHeader;
@@ -295,7 +363,7 @@ class _DiffFileSection extends StatelessWidget {
             padding: const EdgeInsets.only(
               bottom: BusyMarkSourceEditorMetrics.paddingBottom,
             ),
-            lines: _diffSourceLines(file, snapshot),
+            lines: _diffSourceLines(file, snapshot, changeIndexOffset),
             changeKeys: changeKeys,
           );
     return DecoratedBox(
@@ -377,19 +445,21 @@ class _DiffFileSection extends StatelessWidget {
 List<BusyMarkReadOnlySourceLine> _diffSourceLines(
   GitDiffFile file,
   String? snapshot,
+  int changeIndexOffset,
 ) {
   if (snapshot == null) {
     return [
       for (final (index, hunk) in file.hunks.indexed)
-        ..._diffHunkLines(hunk, index),
+        ..._diffHunkLines(hunk, changeIndexOffset + index),
     ];
   }
-  return _fullFileUnifiedLines(file, snapshot);
+  return _fullFileUnifiedLines(file, snapshot, changeIndexOffset);
 }
 
 List<BusyMarkReadOnlySourceLine> _fullFileUnifiedLines(
   GitDiffFile file,
   String snapshot,
+  int changeIndexOffset,
 ) {
   final snapshotLines = _sourceLines(snapshot);
   if (file.status == GitDiffFileStatus.deleted) {
@@ -399,7 +469,7 @@ List<BusyMarkReadOnlySourceLine> _fullFileUnifiedLines(
           text: line,
           oldLineNumber: index + 1,
           tone: BusyMarkReadOnlySourceLineTone.removed,
-          changeTargetIndex: index == 0 ? 0 : null,
+          changeTargetIndex: index == 0 ? changeIndexOffset : null,
         ),
     ];
   }
@@ -410,7 +480,7 @@ List<BusyMarkReadOnlySourceLine> _fullFileUnifiedLines(
           text: line,
           newLineNumber: index + 1,
           tone: BusyMarkReadOnlySourceLineTone.added,
-          changeTargetIndex: index == 0 ? 0 : null,
+          changeTargetIndex: index == 0 ? changeIndexOffset : null,
         ),
     ];
   }
@@ -435,12 +505,14 @@ List<BusyMarkReadOnlySourceLine> _fullFileUnifiedLines(
     for (final line in hunk.lines) {
       switch (line.kind) {
         case GitDiffLineKind.removed:
-          pendingRemoved.add(_RemovedSourceLine(line, hunkIndex));
+          pendingRemoved.add(
+            _RemovedSourceLine(line, changeIndexOffset + hunkIndex),
+          );
           break;
         case GitDiffLineKind.added:
           flushRemoved(line.newLineNumber ?? hunk.newStart);
           if (line.newLineNumber case final newLine?) {
-            addedNewLines[newLine] = hunkIndex;
+            addedNewLines[newLine] = changeIndexOffset + hunkIndex;
           }
           break;
         case GitDiffLineKind.context:

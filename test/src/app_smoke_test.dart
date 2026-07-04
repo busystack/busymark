@@ -92,6 +92,7 @@ void main() {
     expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     expect(find.text(l10n.createWritersideProject), findsOneWidget);
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
+    expect(find.text(l10n.markdownFolderOrWritersideProject), findsOneWidget);
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
   });
@@ -1158,8 +1159,8 @@ void main() {
       find.textContaining('Unchanged context after change', findRichText: true),
       findsWidgets,
     );
-    expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsNWidgets(2));
-    expect(find.byTooltip(l10n.sourceSearchNextMatch), findsNWidgets(2));
+    expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
+    expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
 
     await container
         .read(appSettingsControllerProvider.notifier)

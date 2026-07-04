@@ -15,14 +15,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) =>
+            const NoTransitionPage<void>(child: WelcomeScreen()),
+      ),
       GoRoute(
         path: '/workspace',
-        builder: (context, state) => const WorkspaceScreen(),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage<void>(child: WorkspaceScreen()),
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage<void>(child: SettingsScreen()),
       ),
     ],
   );

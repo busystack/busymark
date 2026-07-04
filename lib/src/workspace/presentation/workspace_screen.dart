@@ -3849,6 +3849,7 @@ class _GitDiffDocumentView extends StatefulWidget {
 
 class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
   late final ScrollController _previewScrollController;
+  late final GitDiffChangeNavigatorController _sourceChangeNavigatorController;
   final _previewHeadingKeys = <String, GlobalKey>{};
   final _previewSearchKeys = <int, GlobalKey>{};
   int _currentChangeIndex = 0;
@@ -3857,6 +3858,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
   void initState() {
     super.initState();
     _previewScrollController = ScrollController();
+    _sourceChangeNavigatorController = GitDiffChangeNavigatorController();
   }
 
   @override
@@ -3887,61 +3889,97 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
         : null;
     final changeTargets =
         previewData?.changeTargets ?? const <_DiffPreviewChangeTarget>[];
-    if (_currentChangeIndex >= changeTargets.length) {
+    final splitVisible = sourceVisible && previewVisible;
+    final sourceChangeCount = sourceVisible
+        ? gitDiffSourceChangeCount(diff)
+        : 0;
+    final navigatorChangeCount = splitVisible
+        ? sourceChangeCount
+        : changeTargets.length;
+    if (_currentChangeIndex >= navigatorChangeCount) {
       _currentChangeIndex = 0;
     }
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
-      child: Row(
+      child: Column(
         children: [
-          if (sourceVisible)
-            Expanded(
-              child: GitDiffViewer(
-                diff: diff,
-                hasUnsavedEditorChanges: widget.hasUnsavedEditorChanges,
-                showHeader: false,
-                showFileHeaders: false,
-                showCloseButton: false,
-                editorFontSize: widget.editorFontSize,
-                showChangeNavigator: true,
-                onOpenFile: widget.onOpenFile,
-                onClose: () {},
+          if (splitVisible && sourceChangeCount > 0)
+            _DiffChangeNavigator(
+              currentIndex: _currentChangeIndex,
+              total: sourceChangeCount,
+              onPrevious: () => _jumpToSplitChange(
+                sourceChangeCount: sourceChangeCount,
+                previewTargets: changeTargets,
+                direction: -1,
+              ),
+              onNext: () => _jumpToSplitChange(
+                sourceChangeCount: sourceChangeCount,
+                previewTargets: changeTargets,
+                direction: 1,
               ),
             ),
-          if (sourceVisible && previewVisible)
-            VerticalDivider(
-              width: BusyMarkStroke.hairline,
-              color: colors.subtleBorder,
-            ),
-          if (previewVisible)
-            Expanded(
-              child: Column(
-                children: [
-                  if (changeTargets.isNotEmpty)
-                    _DiffChangeNavigator(
-                      currentIndex: _currentChangeIndex,
-                      total: changeTargets.length,
-                      onPrevious: () => _jumpToChange(changeTargets, -1),
-                      onNext: () => _jumpToChange(changeTargets, 1),
-                    ),
+          Expanded(
+            child: Row(
+              children: [
+                if (sourceVisible)
                   Expanded(
-                    child: _PreviewPane(
-                      preview: previewData?.document,
-                      workspace: widget.workspace,
-                      controller: _previewScrollController,
-                      headingKeys: _previewHeadingKeys,
-                      searchKeys: _previewSearchKeys,
+                    child: GitDiffViewer(
+                      diff: diff,
+                      hasUnsavedEditorChanges: widget.hasUnsavedEditorChanges,
+                      showHeader: false,
+                      showFileHeaders: false,
+                      showCloseButton: false,
+                      editorFontSize: widget.editorFontSize,
+                      showChangeNavigator: !previewVisible,
+                      changeNavigatorController: splitVisible
+                          ? _sourceChangeNavigatorController
+                          : null,
+                      onOpenFile: widget.onOpenFile,
+                      onClose: () {},
                     ),
                   ),
-                ],
-              ),
+                if (sourceVisible && previewVisible)
+                  VerticalDivider(
+                    width: BusyMarkStroke.hairline,
+                    color: colors.subtleBorder,
+                  ),
+                if (previewVisible)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        if (!splitVisible && changeTargets.isNotEmpty)
+                          _DiffChangeNavigator(
+                            currentIndex: _currentChangeIndex,
+                            total: changeTargets.length,
+                            onPrevious: () =>
+                                _jumpToPreviewChange(changeTargets, -1),
+                            onNext: () =>
+                                _jumpToPreviewChange(changeTargets, 1),
+                          ),
+                        Expanded(
+                          child: _PreviewPane(
+                            preview: previewData?.document,
+                            workspace: widget.workspace,
+                            controller: _previewScrollController,
+                            headingKeys: _previewHeadingKeys,
+                            searchKeys: _previewSearchKeys,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
   }
 
-  void _jumpToChange(List<_DiffPreviewChangeTarget> targets, int direction) {
+  void _jumpToPreviewChange(
+    List<_DiffPreviewChangeTarget> targets,
+    int direction,
+  ) {
     if (targets.isEmpty) {
       return;
     }
@@ -3951,18 +3989,50 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
       _currentChangeIndex = nextIndex;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context =
-          _previewSearchKeys[targets[nextIndex].blockIndex]?.currentContext;
-      if (context == null) {
-        return;
-      }
-      Scrollable.ensureVisible(
-        context,
-        duration: BusyMarkMotion.scroll,
-        curve: Curves.easeOutCubic,
-        alignment: 0.1,
-      );
+      _scrollPreviewToChange(targets, nextIndex);
     });
+  }
+
+  void _jumpToSplitChange({
+    required int sourceChangeCount,
+    required List<_DiffPreviewChangeTarget> previewTargets,
+    required int direction,
+  }) {
+    if (sourceChangeCount == 0) {
+      return;
+    }
+    final nextIndex =
+        (_currentChangeIndex + direction + sourceChangeCount) %
+        sourceChangeCount;
+    setState(() {
+      _currentChangeIndex = nextIndex;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sourceChangeNavigatorController.jumpToChange(nextIndex);
+      if (previewTargets.isNotEmpty) {
+        _scrollPreviewToChange(
+          previewTargets,
+          math.min(nextIndex, previewTargets.length - 1),
+        );
+      }
+    });
+  }
+
+  void _scrollPreviewToChange(
+    List<_DiffPreviewChangeTarget> targets,
+    int index,
+  ) {
+    final context =
+        _previewSearchKeys[targets[index].blockIndex]?.currentContext;
+    if (context == null) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      context,
+      duration: BusyMarkMotion.scroll,
+      curve: Curves.easeOutCubic,
+      alignment: 0.1,
+    );
   }
 }
 

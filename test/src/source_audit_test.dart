@@ -85,6 +85,19 @@ void main() {
     expect(File('pubspec.yaml').readAsStringSync(), contains('name: busymark'));
   });
 
+  test('top-level app routes do not animate between desktop surfaces', () {
+    final router = File('lib/src/app/app_router.dart').readAsStringSync();
+
+    expect(router, contains('NoTransitionPage<void>(child: WelcomeScreen())'));
+    expect(
+      router,
+      contains('NoTransitionPage<void>(child: WorkspaceScreen())'),
+    );
+    expect(router, contains('NoTransitionPage<void>(child: SettingsScreen())'));
+    expect(router, isNot(contains('builder: (context, state)')));
+    expect(router, isNot(contains('CustomTransitionPage')));
+  });
+
   test('Flutter UI uses Yaru glyphs instead of Material icon constants', () {
     final materialIconUse = RegExp(r'(^|[^A-Za-z])Icons\.', multiLine: true);
     final files = <File>[
