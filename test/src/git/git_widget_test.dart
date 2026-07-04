@@ -311,43 +311,42 @@ void main() {
     expect(find.text('docs'), findsNothing);
   });
 
-  testWidgets(
-    'commit view does not describe branch sync state',
-    (tester) async {
-      const repo = GitRepositoryInfo(
-        rootPath: '/repo',
-        gitDirPath: '/repo/.git',
-        currentBranch: 'main',
-        upstreamBranch: 'origin/main',
-        aheadCount: 2,
-        hasRemote: true,
-      );
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gitControllerProvider.overrideWith(
-              () => _PresetGitController(_state(files: const [], repo: repo)),
-            ),
-          ],
-          child: _localized(
-            GitSidebarTab(
-              workspace: _workspace(),
-              onOpenFile: (_) {},
-              onConfirmDiscard: (_) async => true,
-              onAfterWorkspaceFilesChanged: () async {},
-              onConfirmSwitchBranch: (_) async => true,
-              onConfirmPushSetUpstream: () async => true,
-            ),
+  testWidgets('commit view does not describe branch sync state', (
+    tester,
+  ) async {
+    const repo = GitRepositoryInfo(
+      rootPath: '/repo',
+      gitDirPath: '/repo/.git',
+      currentBranch: 'main',
+      upstreamBranch: 'origin/main',
+      aheadCount: 2,
+      hasRemote: true,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(_state(files: const [], repo: repo)),
+          ),
+        ],
+        child: _localized(
+          GitSidebarTab(
+            workspace: _workspace(),
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+            onAfterWorkspaceFilesChanged: () async {},
+            onConfirmSwitchBranch: (_) async => true,
+            onConfirmPushSetUpstream: () async => true,
           ),
         ),
-      );
-      await tester.pump();
+      ),
+    );
+    await tester.pump();
 
-      expect(find.text(l10n.gitAheadCount(2)), findsNothing);
-      expect(find.textContaining('2 ahead'), findsNothing);
-      expect(find.text(l10n.gitNoChanges), findsOneWidget);
-    },
-  );
+    expect(find.text(l10n.gitAheadCount(2)), findsNothing);
+    expect(find.textContaining('2 ahead'), findsNothing);
+    expect(find.text(l10n.gitNoChanges), findsOneWidget);
+  });
 
   testWidgets('history view does not show project or current file controls', (
     tester,

@@ -518,7 +518,11 @@ void main() {
       contains('_SidebarTab.toc => BusyMarkGlyphs.orderedList'),
     );
     expect(workspace, contains('_SidebarTab.outline => BusyMarkGlyphs.indent'));
-    expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.history'));
+    expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.checklist'));
+    expect(
+      workspace,
+      contains('_SidebarTab.gitHistory => BusyMarkGlyphs.history'),
+    );
     expect(workspace, contains('checked: tab == selectedTab'));
     expect(workspace, contains('trailingCheck: true'));
     expect(workspace, isNot(contains('SegmentedButton<int>')));
@@ -557,39 +561,46 @@ void main() {
     );
   });
 
-  test('Git sidebar view selector lives in repository strip', () {
+  test('Git branch menu lives in workspace header outside Commit panel', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
     final gitSidebar = File(
       'lib/src/git/presentation/git_sidebar_tab.dart',
     ).readAsStringSync();
 
-    expect(gitSidebar, contains('BusyMarkHeaderPopupMenuButton<GitView>'));
+    expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
+    expect(workspace, contains('Future<void> _showWorkspaceBranchMenu'));
+    expect(
+      workspace,
+      contains('Future<_BranchMenuAction?> _showSidebarBranchMenu'),
+    );
+    expect(workspace, contains('controller.loadBranches()'));
+    expect(workspace, contains('label: context.l10n.gitNewBranch'));
+    expect(workspace, contains('label: context.l10n.gitPull'));
+    expect(workspace, contains('label: context.l10n.gitPush'));
+    expect(workspace, contains('value: const _PullBranchMenuAction()'));
+    expect(workspace, contains('value: const _PushBranchMenuAction()'));
+    expect(workspace, contains('enabled: repository.upstreamBranch != null'));
+    expect(workspace, contains('enabled: repository.hasRemote'));
+    expect(workspace, contains('tooltip: context.l10n.gitBranches'));
+    expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
+    expect(gitSidebar, isNot(contains('_RepositoryStrip')));
     expect(
       gitSidebar,
-      contains('BusyMarkHeaderPopupMenuButton<_BranchMenuAction>'),
+      isNot(contains('BusyMarkHeaderPopupMenuButton<GitView>')),
     );
-    expect(gitSidebar, contains('onLoadBranches: controller.loadBranches'));
     expect(
       gitSidebar,
-      contains('final newBranchLabel = context.l10n.gitNewBranch'),
+      isNot(contains('BusyMarkHeaderPopupMenuButton<_BranchMenuAction>')),
     );
-    expect(gitSidebar, contains('final pullLabel = context.l10n.gitPull'));
-    expect(gitSidebar, contains('final pushLabel = context.l10n.gitPush'));
-    expect(gitSidebar, contains('label: newBranchLabel'));
-    expect(gitSidebar, contains('value: const _PullBranchMenuAction()'));
-    expect(gitSidebar, contains('value: const _PushBranchMenuAction()'));
-    expect(gitSidebar, contains('enabled: repo.upstreamBranch != null'));
-    expect(gitSidebar, contains('enabled: repo.hasRemote'));
-    expect(gitSidebar, contains('color: colors.sidebar'));
-    expect(gitSidebar, contains('color: colors.sidebarBorder'));
+    expect(gitSidebar, isNot(contains('context.l10n.gitClean')));
+    expect(gitSidebar, isNot(contains('context.l10n.gitAheadCount')));
     expect(gitSidebar, isNot(contains('color: colors.secondarySidebar')));
-    expect(gitSidebar, contains('icon: BusyMarkGlyphs.branch'));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
       contains('branch = YaruIcons.network_wired'),
     );
-    expect(gitSidebar, contains('icon: _gitViewIcon(state.selectedView)'));
-    expect(gitSidebar, contains('label: _gitViewLabel(context, view)'));
-    expect(gitSidebar, contains('checked: view == state.selectedView'));
     expect(gitSidebar, isNot(contains('OutlinedButton(')));
     expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));
     expect(gitSidebar, isNot(contains('GitBranchesView')));

@@ -50,7 +50,7 @@ class _GitChangesViewState extends State<GitChangesView> {
       return Center(child: Text(context.l10n.gitNoChanges));
     }
     if (snapshot.clean) {
-      return Center(child: Text(context.l10n.gitClean));
+      return Center(child: Text(context.l10n.gitNoChanges));
     }
     final trackedFiles = _trackedFiles(snapshot);
     return Column(

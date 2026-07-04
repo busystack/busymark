@@ -1278,7 +1278,9 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byTooltip('${l10n.git} (${BusyMarkSidebarShortcutLabels.git})'),
+      find.byTooltip(
+        '${l10n.gitCommit} (${BusyMarkSidebarShortcutLabels.git})',
+      ),
       findsOneWidget,
     );
   });

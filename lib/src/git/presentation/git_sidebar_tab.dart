@@ -76,7 +76,6 @@ class GitSidebarTab extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _RepositoryStrip(state: state),
             if (state.lastError != null)
               _GitMessage(failure: state.lastError!)
             else if (state.lastOperationMessage?.isNotEmpty ?? false)
@@ -100,49 +99,6 @@ class GitSidebarTab extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-class _RepositoryStrip extends StatelessWidget {
-  const _RepositoryStrip({required this.state});
-
-  final GitState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final repo = state.repositoryInfo!;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.sidebar,
-        border: Border(bottom: BorderSide(color: colors.sidebarBorder)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.md),
-        child: Text(
-          _repositoryDetail(context, repo),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
-        ),
-      ),
-    );
-  }
-
-  String _repositoryDetail(BuildContext context, GitRepositoryInfo repo) {
-    final state = repo.hasConflicts
-        ? context.l10n.gitConflicts
-        : (repo.aheadCount == 0 && repo.behindCount == 0
-              ? context.l10n.gitClean
-              : [
-                  if (repo.aheadCount > 0)
-                    context.l10n.gitAheadCount(repo.aheadCount),
-                  if (repo.behindCount > 0)
-                    context.l10n.gitBehindCount(repo.behindCount),
-                ].join(', '));
-    return repo.upstreamBranch == null ? context.l10n.gitNoUpstream : state;
   }
 }
 
