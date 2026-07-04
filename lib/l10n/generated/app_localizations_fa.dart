@@ -1550,7 +1550,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitChanges => 'تغییرات';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'تاریخچه';
 
   @override
   String get gitBranches => 'شاخه‌ها';
@@ -1562,7 +1562,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'ثبت';
 
   @override
   String get gitSelectForCommit => 'Select for commit';

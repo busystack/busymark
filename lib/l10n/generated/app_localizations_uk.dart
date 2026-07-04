@@ -1572,7 +1572,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitChanges => 'Зміни';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Історія';
 
   @override
   String get gitBranches => 'Гілки';
@@ -1584,7 +1584,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Зафіксувати';
 
   @override
   String get gitSelectForCommit => 'Select for commit';

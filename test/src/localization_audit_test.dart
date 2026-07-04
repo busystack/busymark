@@ -88,16 +88,19 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
-  test('Git unversioned files label is translated in supplied locales', () {
-    final english = _arbMessages(File('lib/l10n/app_en.arb'))['gitUntracked'];
+  test('Git sidebar labels are translated in supplied locales', () {
+    const keys = <String>{'gitUntracked', 'gitHistory', 'gitCommit'};
+    final english = _arbMessages(File('lib/l10n/app_en.arb'));
     final failures = <String>[];
     for (final file in _arbFiles()) {
       if (file.path.endsWith('app_en.arb')) {
         continue;
       }
       final messages = _arbMessages(file);
-      if (messages['gitUntracked'] == english) {
-        failures.add('${file.path}: gitUntracked still matches English');
+      for (final key in keys) {
+        if (messages[key] == english[key]) {
+          failures.add('${file.path}: $key still matches English');
+        }
       }
     }
 

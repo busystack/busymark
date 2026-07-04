@@ -1570,7 +1570,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitChanges => 'Изменения';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'История';
 
   @override
   String get gitBranches => 'Ветки';
@@ -1582,7 +1582,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Зафиксировать';
 
   @override
   String get gitSelectForCommit => 'Select for commit';

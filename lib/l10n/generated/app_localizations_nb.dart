@@ -1552,7 +1552,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitChanges => 'Endringer';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Historikk';
 
   @override
   String get gitBranches => 'Grener';
@@ -1564,7 +1564,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Innsjekk';
 
   @override
   String get gitSelectForCommit => 'Select for commit';

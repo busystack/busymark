@@ -1566,7 +1566,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitChanges => 'Modifiche';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Cronologia';
 
   @override
   String get gitBranches => 'Rami';
@@ -1578,7 +1578,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Conferma';
 
   @override
   String get gitSelectForCommit => 'Select for commit';

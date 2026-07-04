@@ -1568,7 +1568,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitChanges => 'Cambios';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Historial';
 
   @override
   String get gitBranches => 'Ramas';
@@ -1580,7 +1580,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Confirmar';
 
   @override
   String get gitSelectForCommit => 'Select for commit';

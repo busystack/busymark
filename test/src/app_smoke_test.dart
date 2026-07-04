@@ -1158,6 +1158,8 @@ void main() {
       find.textContaining('Unchanged context after change', findRichText: true),
       findsWidgets,
     );
+    expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsNWidgets(2));
+    expect(find.byTooltip(l10n.sourceSearchNextMatch), findsNWidgets(2));
 
     await container
         .read(appSettingsControllerProvider.notifier)

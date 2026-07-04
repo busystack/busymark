@@ -3903,7 +3903,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                 showFileHeaders: false,
                 showCloseButton: false,
                 editorFontSize: widget.editorFontSize,
-                showChangeNavigator: !previewVisible,
+                showChangeNavigator: true,
                 onOpenFile: widget.onOpenFile,
                 onClose: () {},
               ),
