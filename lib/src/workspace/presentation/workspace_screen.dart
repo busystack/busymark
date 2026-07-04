@@ -5123,6 +5123,7 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.noPreview,
       );
     }
+    final keyedHeadingIds = <String>{};
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: SelectionArea(
@@ -5140,7 +5141,12 @@ class _PreviewPane extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (final (index, block) in document.blocks.indexed)
-                      _keyedPreviewBlock(context, index, block),
+                      _keyedPreviewBlock(
+                        context,
+                        index,
+                        block,
+                        keyedHeadingIds,
+                      ),
                   ],
                 ),
               ),
@@ -5155,13 +5161,14 @@ class _PreviewPane extends StatelessWidget {
     BuildContext context,
     int index,
     PreviewBlock block,
+    Set<String> keyedHeadingIds,
   ) {
     final child = _PreviewBlockView(
       block,
       first: index == 0,
       listRunEnd: _isLastListBlock(index),
       workspace: workspace,
-      headingKey: _keyForBlock(block),
+      headingKey: _keyForBlock(block, keyedHeadingIds),
     );
     return KeyedSubtree(
       key: searchKeys.putIfAbsent(index, () => GlobalKey()),
@@ -5178,12 +5185,15 @@ class _PreviewPane extends StatelessWidget {
         blocks[index + 1].kind != PreviewBlockKind.list;
   }
 
-  Key? _keyForBlock(PreviewBlock block) {
+  Key? _keyForBlock(PreviewBlock block, Set<String> keyedHeadingIds) {
     if (block.kind != PreviewBlockKind.heading) {
       return null;
     }
     final id = block.attributes['id'];
     if (id == null || id.isEmpty) {
+      return null;
+    }
+    if (!keyedHeadingIds.add(id)) {
       return null;
     }
     return headingKeys.putIfAbsent(id, () => GlobalKey());

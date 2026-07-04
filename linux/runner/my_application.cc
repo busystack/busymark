@@ -206,10 +206,6 @@ static void set_gtk_theme_preference(gboolean prefer_dark) {
       if (!icon_theme_exists(icon_theme_name) ||
           g_strcmp0(icon_theme_name, icon_fallback) != 0) {
         g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);
-        GtkIconTheme* icon_theme = gtk_icon_theme_get_default();
-        if (icon_theme != nullptr) {
-          gtk_icon_theme_set_custom_theme(icon_theme, icon_fallback);
-        }
       }
     }
   }

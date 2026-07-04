@@ -1983,6 +1983,51 @@ void main() {
     expect(find.textContaining('Basic Markdown'), findsWidgets);
   });
 
+  testWidgets('preview tolerates duplicate heading anchors', (tester) async {
+    const startupPath = '/tmp/duplicate-headings.md';
+    const source = '''
+# Title
+
+## First {id="same"}
+
+## Second {id="same"}
+''';
+    final service = _SearchWorkspaceService(source);
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 20; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .textContaining('Second', findRichText: true)
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('First', findRichText: true), findsWidgets);
+    expect(find.textContaining('Second', findRichText: true), findsWidgets);
+  });
+
   testWidgets('blocked remote image prompt allows the current workspace', (
     tester,
   ) async {

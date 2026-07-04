@@ -783,7 +783,12 @@ void main() {
     expect(workspace, contains('alignment: 0.0'));
     expect(workspace, isNot(contains('alignment: 0.04')));
     expect(workspace, contains('headingKeys: _previewHeadingKeys'));
-    expect(workspace, contains('headingKey: _keyForBlock(block)'));
+    expect(workspace, contains('keyedHeadingIds'));
+    expect(
+      workspace,
+      contains('headingKey: _keyForBlock(block, keyedHeadingIds)'),
+    );
+    expect(workspace, contains('if (!keyedHeadingIds.add(id))'));
     expect(workspace, contains('key: headingKey'));
     expect(workspace, contains('scrollToHeadingId: _wysiwygScrollHeadingId'));
     expect(workspace, contains('scrollRequest: _wysiwygScrollRequest'));

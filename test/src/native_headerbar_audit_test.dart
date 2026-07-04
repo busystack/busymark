@@ -239,7 +239,7 @@ void main() {
         'g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);',
       ),
     );
-    expect(native, contains('gtk_icon_theme_set_custom_theme'));
+    expect(native, isNot(contains('gtk_icon_theme_set_custom_theme')));
     expect(native, contains('gtk_accent_css_provider'));
     expect(native, contains('@define-color theme_selected_bg_color %s;'));
     expect(native, contains('@define-color accent_bg_color %s;'));
