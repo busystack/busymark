@@ -15,6 +15,7 @@ import '../platform/linux_header_bar_service.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
+import '../workspace/workspace_tabs.dart';
 import 'app_router.dart';
 import 'app_settings.dart';
 import 'busymark_shortcuts.dart';
@@ -354,19 +355,24 @@ class BusyMarkApp extends ConsumerWidget {
     required bool next,
   }) async {
     final workspace = ref.read(workspaceControllerProvider).workspace;
-    if (workspace == null || workspace.openFilePaths.length < 2) {
+    final gitState = ref.read(gitControllerProvider);
+    if (workspace == null) {
+      return;
+    }
+    final tabs = workspaceTabEntries(workspace: workspace, gitState: gitState);
+    if (tabs.length < 2) {
       return;
     }
     if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
         !context.mounted) {
       return;
     }
-    final controller = ref.read(workspaceControllerProvider.notifier);
-    if (next) {
-      await controller.activateNextOpenFileTab();
-    } else {
-      await controller.activatePreviousOpenFileTab();
-    }
+    final activeIndex = activeWorkspaceTabIndex(tabs);
+    final nextIndex = activeIndex < 0
+        ? 0
+        : (activeIndex + (next ? 1 : -1)) % tabs.length;
+    final normalizedIndex = nextIndex < 0 ? nextIndex + tabs.length : nextIndex;
+    await _activateWorkspaceTab(ref, tabs[normalizedIndex]);
   }
 
   Future<void> _closeActiveOpenFileTab(
@@ -374,18 +380,23 @@ class BusyMarkApp extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final workspace = ref.read(workspaceControllerProvider).workspace;
-    if (workspace == null ||
-        workspace.activeFilePath == null ||
-        workspace.openFilePaths.isEmpty) {
+    final gitState = ref.read(gitControllerProvider);
+    if (workspace == null) {
       return;
     }
-    if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
-        !context.mounted) {
+    final tabs = workspaceTabEntries(workspace: workspace, gitState: gitState);
+    final activeIndex = activeWorkspaceTabIndex(tabs);
+    if (activeIndex < 0) {
       return;
     }
-    await ref
-        .read(workspaceControllerProvider.notifier)
-        .closeActiveOpenFileTab();
+    final activeTab = tabs[activeIndex];
+    if (activeTab.kind == WorkspaceTabKind.file) {
+      if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+          !context.mounted) {
+        return;
+      }
+    }
+    await _closeWorkspaceTab(ref, activeTab);
   }
 
   Future<void> _closeAllOpenFileTabs(
@@ -393,7 +404,9 @@ class BusyMarkApp extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final workspace = ref.read(workspaceControllerProvider).workspace;
-    if (workspace == null || workspace.openFilePaths.isEmpty) {
+    final gitState = ref.read(gitControllerProvider);
+    if (workspace == null ||
+        workspaceTabEntries(workspace: workspace, gitState: gitState).isEmpty) {
       return;
     }
     if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
@@ -401,6 +414,43 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     await ref.read(workspaceControllerProvider.notifier).closeAllOpenFileTabs();
+    ref.read(gitControllerProvider.notifier).clearSelection();
+  }
+
+  Future<void> _activateWorkspaceTab(
+    WidgetRef ref,
+    WorkspaceTabEntry tab,
+  ) async {
+    final gitController = ref.read(gitControllerProvider.notifier);
+    switch (tab.kind) {
+      case WorkspaceTabKind.file:
+        await ref
+            .read(workspaceControllerProvider.notifier)
+            .openActiveFile(tab.path);
+        gitController.deactivateDiffFile();
+      case WorkspaceTabKind.gitDiff:
+        if (tab.path.isEmpty) {
+          return;
+        }
+        gitController.selectCommitFile(tab.path);
+    }
+  }
+
+  Future<void> _closeWorkspaceTab(WidgetRef ref, WorkspaceTabEntry tab) async {
+    final gitController = ref.read(gitControllerProvider.notifier);
+    switch (tab.kind) {
+      case WorkspaceTabKind.file:
+        await ref
+            .read(workspaceControllerProvider.notifier)
+            .closeOpenFileTab(tab.path);
+        gitController.deactivateDiffFile();
+      case WorkspaceTabKind.gitDiff:
+        if (tab.path.isEmpty) {
+          gitController.clearSelection();
+        } else {
+          gitController.closeDiffFile(tab.path);
+        }
+    }
   }
 
   Future<String?> _chooseWorkspaceFolder(WidgetRef ref) async {
@@ -459,7 +509,9 @@ class BusyMarkApp extends ConsumerWidget {
     final gitState = ref.read(gitControllerProvider);
     if (gitState.selectedDiff != null ||
         gitState.selectedFilePath != null ||
-        gitState.selectedCommitHash != null) {
+        gitState.selectedCommitHash != null ||
+        gitState.selectedCommitFilePath != null ||
+        gitState.openDiffFilePaths.isNotEmpty) {
       ref.read(gitControllerProvider.notifier).clearSelection();
     }
   }
