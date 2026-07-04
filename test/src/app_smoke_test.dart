@@ -16,6 +16,10 @@ import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/source/source_read_only_view.dart';
+import 'package:busymark/src/git/application/git_controller.dart';
+import 'package:busymark/src/git/domain/git_models.dart';
+import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -885,6 +889,299 @@ void main() {
       isEmpty,
     );
     expect(find.text(l10n.noOpenFile), findsWidgets);
+  });
+
+  testWidgets('Git diff files are shown as separate editor tabs', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_git_diff_tab_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final first = File('${temp.path}/current.md')..writeAsStringSync('# A\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [first.path],
+    );
+    Future<void> pressControlShortcut(
+      LogicalKeyboardKey key, {
+      bool shift = false,
+    }) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      if (shift) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      if (shift) {
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(_gitDiffState(temp.path)),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 30; i += 1) {
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+    expect(find.text('current.md'), findsWidgets);
+    expect(find.text('README.md'), findsOneWidget);
+    expect(find.text('guide.md'), findsOneWidget);
+    expect(find.text(l10n.gitDiff), findsNothing);
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('Guide change', findRichText: true),
+      findsWidgets,
+    );
+
+    await tester.tap(find.text('current.md').at(1));
+    await tester.pump();
+
+    expect(find.text('README.md'), findsOneWidget);
+    expect(find.text('guide.md'), findsOneWidget);
+    expect(
+      find.textContaining('Guide change', findRichText: true),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('guide.md'));
+    await tester.pump();
+
+    expect(
+      find.textContaining('Guide change', findRichText: true),
+      findsWidgets,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.tab);
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      first.path,
+    );
+    expect(
+      container.read(gitControllerProvider).selectedCommitFilePath,
+      isNull,
+    );
+    expect(
+      find.textContaining('Guide change', findRichText: true),
+      findsNothing,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.tab);
+    expect(
+      container.read(gitControllerProvider).selectedCommitFilePath,
+      'README.md',
+    );
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsWidgets,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.tab, shift: true);
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      first.path,
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.tab, shift: true);
+    expect(
+      container.read(gitControllerProvider).selectedCommitFilePath,
+      'guide.md',
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.keyW);
+    expect(container.read(gitControllerProvider).openDiffFilePaths, [
+      'README.md',
+    ]);
+    expect(
+      container.read(gitControllerProvider).selectedCommitFilePath,
+      'README.md',
+    );
+
+    await pressControlShortcut(LogicalKeyboardKey.digit4);
+    expect(find.text(l10n.gitNoChanges), findsOneWidget);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(GitDiffViewer), findsNothing);
+    expect(find.byType(BusyMarkReadOnlySourceLines), findsNothing);
+    expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
+    expect(
+      find.textContaining('# Readme change', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('# Readme old', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('@@ -1,1 +1,3 @@', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining(
+        'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
+        findRichText: true,
+      ),
+      findsNothing,
+    );
+    expect(find.textContaining('Readme old', findRichText: true), findsWidgets);
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('Unchanged context after change', findRichText: true),
+      findsWidgets,
+    );
+    expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
+    expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(GitDiffViewer), findsNothing);
+    expect(find.byType(BusyMarkReadOnlySourceLines), findsNothing);
+    expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
+    expect(
+      find.textContaining('# Readme change', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('# Readme old', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('@@ -1,1 +1,3 @@', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining(
+        'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
+        findRichText: true,
+      ),
+      findsNothing,
+    );
+    expect(find.textContaining('Readme old', findRichText: true), findsWidgets);
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('Unchanged context after change', findRichText: true),
+      findsWidgets,
+    );
+    expect(find.byType(TextField), findsNothing);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.split);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(GitDiffViewer), findsOneWidget);
+    expect(find.byType(BusyMarkReadOnlySourceLines), findsOneWidget);
+    expect(find.byTooltip(l10n.gitOpenFile), findsOneWidget);
+    expect(
+      find.textContaining('# Readme old', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('# Readme change', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('Readme old', findRichText: true),
+      findsAtLeastNWidgets(2),
+    );
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsAtLeastNWidgets(2),
+    );
+    expect(
+      find.textContaining('@@ -1,1 +1,3 @@', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining(
+        'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
+        findRichText: true,
+      ),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('Unchanged context after change', findRichText: true),
+      findsWidgets,
+    );
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(GitDiffViewer), findsOneWidget);
+    expect(find.byType(BusyMarkReadOnlySourceLines), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byTooltip(l10n.gitOpenFile), findsOneWidget);
+    expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
+    expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
+    expect(
+      find.textContaining('# Readme change', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('# Readme old', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('@@ -1,1 +1,3 @@', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining(
+        'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
+        findRichText: true,
+      ),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('Unchanged context after change', findRichText: true),
+      findsWidgets,
+    );
   });
 
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
@@ -3024,6 +3321,96 @@ class _SearchWorkspaceService extends WorkspaceService {
       ),
     );
   }
+}
+
+class _PresetGitController extends GitController {
+  _PresetGitController(this.initialState);
+
+  final GitState initialState;
+
+  @override
+  GitState build() => initialState;
+
+  @override
+  void attachWorkspace(Workspace workspace) {
+    state = state.copyWith(attachedWorkspace: workspace);
+  }
+}
+
+GitState _gitDiffState(String rootPath) {
+  final repository = GitRepositoryInfo(
+    rootPath: rootPath,
+    gitDirPath: '$rootPath/.git',
+  );
+  return GitState(
+    availability: const GitAvailability(
+      available: true,
+      executablePath: '/usr/bin/git',
+      version: '2.50.0',
+    ),
+    repositoryInfo: repository,
+    statusSnapshot: GitStatusSnapshot(
+      repositoryInfo: repository,
+      files: const [],
+    ),
+    selectedDiff: GitDiff(
+      title: 'Update docs',
+      files: [
+        _gitDiffFile(
+          'README.md',
+          '# Readme old',
+          '# Readme change',
+          hunkHeading: 'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
+        ),
+        _gitDiffFile('guide.md', '# Guide old', '# Guide change'),
+      ],
+      rawPatch: '',
+      hasBinaryFiles: false,
+      fileSnapshots: const {
+        'README.md': '# Readme change\n\nUnchanged context after change.\n',
+        'guide.md': '# Guide change\n\nGuide context.\n',
+      },
+    ),
+    selectedCommitFilePath: 'guide.md',
+    openDiffFilePaths: const ['README.md', 'guide.md'],
+  );
+}
+
+GitDiffFile _gitDiffFile(
+  String path,
+  String oldContent,
+  String newContent, {
+  String hunkHeading = '',
+}) {
+  return GitDiffFile(
+    oldPath: path,
+    newPath: path,
+    status: GitDiffFileStatus.modified,
+    hunks: [
+      GitDiffHunk(
+        oldStart: 1,
+        oldCount: 1,
+        newStart: 1,
+        newCount: 3,
+        heading: hunkHeading,
+        lines: [
+          GitDiffLine(
+            kind: GitDiffLineKind.removed,
+            content: oldContent,
+            oldLineNumber: 1,
+          ),
+          GitDiffLine(
+            kind: GitDiffLineKind.added,
+            content: newContent,
+            newLineNumber: 1,
+          ),
+        ],
+      ),
+    ],
+    binary: false,
+    additions: 1,
+    deletions: 1,
+  );
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {
