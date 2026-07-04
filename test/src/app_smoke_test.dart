@@ -24,6 +24,7 @@ import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -899,10 +900,13 @@ void main() {
       temp.deleteSync(recursive: true);
     });
     final first = File('${temp.path}/current.md')..writeAsStringSync('# A\n');
+    final readme = File('${temp.path}/README.md')
+      ..writeAsStringSync('# Readme current\n');
     final service = _TabbedWorkspaceService(
       rootPath: temp.path,
-      paths: [first.path],
+      paths: [first.path, readme.path],
     );
+    final gitController = _PresetGitController(_gitDiffState(temp.path));
     Future<void> pressControlShortcut(
       LogicalKeyboardKey key, {
       bool shift = false,
@@ -927,9 +931,7 @@ void main() {
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
-        gitControllerProvider.overrideWith(
-          () => _PresetGitController(_gitDiffState(temp.path)),
-        ),
+        gitControllerProvider.overrideWith(() => gitController),
       ],
     );
     addTearDown(container.dispose);
@@ -952,7 +954,9 @@ void main() {
 
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
     expect(find.text('current.md'), findsWidgets);
-    expect(find.text('README.md'), findsOneWidget);
+    expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
+    expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
+    expect(find.text('README.md'), findsWidgets);
     expect(find.text('guide.md'), findsOneWidget);
     expect(find.text(l10n.gitDiff), findsNothing);
     expect(
@@ -967,7 +971,7 @@ void main() {
     await tester.tap(find.text('current.md').at(1));
     await tester.pump();
 
-    expect(find.text('README.md'), findsOneWidget);
+    expect(find.text('README.md'), findsWidgets);
     expect(find.text('guide.md'), findsOneWidget);
     expect(
       find.textContaining('Guide change', findRichText: true),
@@ -1182,6 +1186,60 @@ void main() {
       find.textContaining('Unchanged context after change', findRichText: true),
       findsWidgets,
     );
+
+    await tester.tap(find.byTooltip(l10n.gitOpenFile));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    var workspace = container.read(workspaceControllerProvider).workspace!;
+    var gitState = container.read(gitControllerProvider);
+    expect(workspace.activeFilePath, readme.path);
+    expect(workspace.openFilePaths.where((path) => path == readme.path), [
+      readme.path,
+    ]);
+    expect(workspace.openFilePaths, containsAll([first.path, readme.path]));
+    expect(gitState.openDiffFilePaths, ['README.md']);
+    expect(gitState.selectedCommitFilePath, isNull);
+    expect(find.byType(GitDiffViewer), findsNothing);
+    expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
+
+    container
+        .read(gitControllerProvider.notifier)
+        .selectCommitFile('README.md');
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(GitDiffViewer), findsOneWidget);
+    expect(find.byTooltip(l10n.gitOpenFile), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.gitOpenFile));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    workspace = container.read(workspaceControllerProvider).workspace!;
+    gitState = container.read(gitControllerProvider);
+    expect(workspace.activeFilePath, readme.path);
+    expect(workspace.openFilePaths.where((path) => path == readme.path), [
+      readme.path,
+    ]);
+    expect(gitState.openDiffFilePaths, ['README.md']);
+    expect(gitState.selectedCommitFilePath, isNull);
+
+    await pressControlShortcut(LogicalKeyboardKey.digit1);
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.text('README.md').first,
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.gitHistory).last);
+    await tester.pumpAndSettle();
+
+    gitState = container.read(gitControllerProvider);
+    expect(gitController.loadedFileHistoryPath, readme.path);
+    expect(gitState.selectedView, GitView.history);
+    expect(gitState.historyFilePath, 'README.md');
+    expect(find.text('File history test commit'), findsOneWidget);
   });
 
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
@@ -3329,6 +3387,7 @@ class _PresetGitController extends GitController {
   _PresetGitController(this.initialState);
 
   final GitState initialState;
+  String? loadedFileHistoryPath;
 
   @override
   GitState build() => initialState;
@@ -3337,12 +3396,45 @@ class _PresetGitController extends GitController {
   void attachWorkspace(Workspace workspace) {
     state = state.copyWith(attachedWorkspace: workspace);
   }
+
+  @override
+  Future<void> loadFileHistory(String absolutePath) async {
+    loadedFileHistoryPath = absolutePath;
+    final repositoryRoot = state.repositoryInfo?.rootPath;
+    final repoRelativePath =
+        repositoryRoot != null && absolutePath.startsWith('$repositoryRoot/')
+        ? absolutePath.substring(repositoryRoot.length + 1)
+        : absolutePath;
+    state = state.copyWith(
+      selectedView: GitView.history,
+      selectedCommitHash: null,
+      selectedCommitFilePath: null,
+      openDiffFilePaths: const [],
+      selectedDiff: null,
+      historyFilePath: repoRelativePath,
+      history: [
+        GitCommitSummary(
+          fullHash: '45a2b81a41822ad4171f62205ef996f5752a3bbd',
+          shortHash: '45a2b81',
+          authorName: 'BusyMark Test',
+          authorEmail: 'test@example.invalid',
+          authorDate: DateTime(2026),
+          subject: 'File history test commit',
+          parentHashes: const [],
+        ),
+      ],
+    );
+  }
 }
 
 GitState _gitDiffState(String rootPath) {
   final repository = GitRepositoryInfo(
     rootPath: rootPath,
     gitDirPath: '$rootPath/.git',
+    currentBranch: 'main',
+    upstreamBranch: 'origin/main',
+    aheadCount: 2,
+    behindCount: 3,
   );
   return GitState(
     availability: const GitAvailability(

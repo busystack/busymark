@@ -174,6 +174,7 @@ class _CommitFileRow extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           hoverColor: busyMarkRowHoverColor(context),
+          onTap: path.isEmpty ? null : onShowDiff,
           onSecondaryTapDown: path.isEmpty
               ? null
               : (details) async {

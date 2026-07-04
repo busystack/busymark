@@ -809,7 +809,7 @@ Future<void> _openGitDiffFile(
   } else {
     await controller.openPath(absolutePath);
   }
-  ref.read(gitControllerProvider.notifier).clearSelection();
+  ref.read(gitControllerProvider.notifier).deactivateDiffFile();
 }
 
 void _clearGitDetailSelection(WidgetRef ref) {
@@ -1483,7 +1483,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     onOpenResult: widget.onOpenSearchResult,
                   )
                 : switch (selectedTab) {
-                    _SidebarTab.files => _FilesTab(workspace: widget.workspace),
+                    _SidebarTab.files => _FilesTab(
+                      workspace: widget.workspace,
+                      onShowFileHistory: (file) => _showFileHistory(file, tabs),
+                    ),
                     _SidebarTab.toc => _TocTab(workspace: widget.workspace),
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
@@ -1533,6 +1536,19 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (tab != _SidebarTab.git && tab != _SidebarTab.gitHistory) {
       _clearGitDetailSelection(ref);
     }
+  }
+
+  Future<void> _showFileHistory(
+    DocumentFile file,
+    List<_SidebarTab> tabs,
+  ) async {
+    await ref
+        .read(gitControllerProvider.notifier)
+        .loadFileHistory(file.absolutePath);
+    if (!mounted) {
+      return;
+    }
+    _selectTab(_SidebarTab.gitHistory, tabs);
   }
 
   int _initialSidebarTabIndex(Workspace workspace) {
@@ -1720,6 +1736,11 @@ class _SidebarHeader extends StatelessWidget {
               text: branchLabel,
               style: branchStyle,
               boldLeadingIcon: true,
+              inlineTrailing: _branchSyncIndicators(
+                context,
+                repository,
+                branchStyle,
+              ),
               trailingIcon: BusyMarkGlyphs.downArrow,
               trailingIconColor: accentColor,
               boldTrailingIcon: true,
@@ -1754,6 +1775,29 @@ class _SidebarHeader extends StatelessWidget {
   }
 }
 
+List<Widget> _branchSyncIndicators(
+  BuildContext context,
+  GitRepositoryInfo repository,
+  TextStyle? style,
+) {
+  return [
+    if (repository.behindCount > 0)
+      _BranchSyncIndicator(
+        direction: _BranchSyncDirection.incoming,
+        count: repository.behindCount,
+        tooltip: context.l10n.gitBehindCount(repository.behindCount),
+        style: style,
+      ),
+    if (repository.aheadCount > 0)
+      _BranchSyncIndicator(
+        direction: _BranchSyncDirection.outgoing,
+        count: repository.aheadCount,
+        tooltip: context.l10n.gitAheadCount(repository.aheadCount),
+        style: style,
+      ),
+  ];
+}
+
 class _SidebarHeaderLine extends StatelessWidget {
   const _SidebarHeaderLine({
     required this.icon,
@@ -1761,6 +1805,7 @@ class _SidebarHeaderLine extends StatelessWidget {
     required this.style,
     this.boldLeadingIcon = false,
     this.leadingEllipsis = false,
+    this.inlineTrailing = const [],
     this.trailingIcon,
     this.trailingIconColor,
     this.boldTrailingIcon = false,
@@ -1773,6 +1818,7 @@ class _SidebarHeaderLine extends StatelessWidget {
   final TextStyle? style;
   final bool boldLeadingIcon;
   final bool leadingEllipsis;
+  final List<Widget> inlineTrailing;
   final IconData? trailingIcon;
   final Color? trailingIconColor;
   final bool boldTrailingIcon;
@@ -1812,6 +1858,10 @@ class _SidebarHeaderLine extends StatelessWidget {
           child: Row(
             children: [
               Flexible(child: text),
+              for (final trailing in inlineTrailing) ...[
+                const SizedBox(width: BusyMarkSpacing.sm),
+                trailing,
+              ],
               if (trailingIcon != null) ...[
                 const SizedBox(width: BusyMarkSpacing.xs),
                 if (boldTrailingIcon)
@@ -1849,6 +1899,128 @@ class _SidebarHeaderLine extends StatelessWidget {
     return tooltip == null
         ? clickable
         : Tooltip(message: tooltip, child: clickable);
+  }
+}
+
+enum _BranchSyncDirection { incoming, outgoing }
+
+class _BranchSyncIndicator extends StatelessWidget {
+  const _BranchSyncIndicator({
+    required this.direction,
+    required this.count,
+    required this.tooltip,
+    required this.style,
+  });
+
+  final _BranchSyncDirection direction;
+  final int count;
+  final String tooltip;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final effectiveStyle =
+        style ??
+        Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w700,
+        );
+    final color = effectiveStyle?.color ?? colors.mutedForeground;
+    final textScale = MediaQuery.textScalerOf(context);
+    final iconSize = textScale.scale(
+      effectiveStyle?.fontSize ?? BusyMarkSizes.iconSm,
+    );
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _BoldVerticalArrowIcon(
+            direction: direction,
+            size: iconSize,
+            color: color,
+          ),
+          const SizedBox(width: BusyMarkSpacing.xxs),
+          Text('$count', style: effectiveStyle),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoldVerticalArrowIcon extends StatelessWidget {
+  const _BoldVerticalArrowIcon({
+    required this.direction,
+    required this.size,
+    required this.color,
+  });
+
+  final _BranchSyncDirection direction;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        painter: _BoldVerticalArrowIconPainter(direction, color),
+      ),
+    );
+  }
+}
+
+class _BoldVerticalArrowIconPainter extends CustomPainter {
+  const _BoldVerticalArrowIconPainter(this.direction, this.color);
+
+  final _BranchSyncDirection direction;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / BusyMarkSizes.iconSm;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.15 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final centerX = size.width * 0.5;
+    final topY = size.height * 0.25;
+    final bottomY = size.height * 0.75;
+    final head = size.width * 0.18;
+    switch (direction) {
+      case _BranchSyncDirection.incoming:
+        canvas.drawLine(Offset(centerX, topY), Offset(centerX, bottomY), paint);
+        canvas.drawLine(
+          Offset(centerX, bottomY),
+          Offset(centerX - head, bottomY - head),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(centerX, bottomY),
+          Offset(centerX + head, bottomY - head),
+          paint,
+        );
+      case _BranchSyncDirection.outgoing:
+        canvas.drawLine(Offset(centerX, bottomY), Offset(centerX, topY), paint);
+        canvas.drawLine(
+          Offset(centerX, topY),
+          Offset(centerX - head, topY + head),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(centerX, topY),
+          Offset(centerX + head, topY + head),
+          paint,
+        );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BoldVerticalArrowIconPainter oldDelegate) {
+    return direction != oldDelegate.direction || color != oldDelegate.color;
   }
 }
 
@@ -2023,9 +2195,10 @@ class _LeadingEllipsisText extends StatelessWidget {
 }
 
 class _FilesTab extends ConsumerStatefulWidget {
-  const _FilesTab({required this.workspace});
+  const _FilesTab({required this.workspace, required this.onShowFileHistory});
 
   final Workspace workspace;
+  final Future<void> Function(DocumentFile file) onShowFileHistory;
 
   @override
   ConsumerState<_FilesTab> createState() => _FilesTabState();
@@ -2074,6 +2247,16 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final file = node.file;
         final expanded = _expandedPaths.contains(node.relativePath);
         final openable = file != null && _isOpenableTextDocument(file);
+        final historyFile = openable ? file : null;
+        GestureTapDownCallback? onSecondaryTapDown;
+        if (historyFile != null) {
+          final selectedFile = historyFile;
+          onSecondaryTapDown = (details) => _showFileContextMenu(
+            context,
+            selectedFile,
+            details.globalPosition,
+          );
+        }
         return _SidebarTreeRow(
           title: node.name,
           depth: entry.depth,
@@ -2104,10 +2287,79 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                   }
                 }
               : null,
+          onSecondaryTapDown: onSecondaryTapDown,
         );
       },
     );
   }
+
+  Future<void> _showFileContextMenu(
+    BuildContext context,
+    DocumentFile file,
+    Offset position,
+  ) async {
+    final action = await _showFileTreeMenu(context, position);
+    if (!context.mounted || action == null) {
+      return;
+    }
+    switch (action) {
+      case _FileTreeAction.history:
+        await widget.onShowFileHistory(file);
+    }
+  }
+}
+
+enum _FileTreeAction { history }
+
+Future<_FileTreeAction?> _showFileTreeMenu(
+  BuildContext context,
+  Offset position,
+) {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (overlay is! RenderBox) {
+    return Future.value(null);
+  }
+  final theme = Theme.of(context);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final popupTheme = theme.popupMenuTheme;
+  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+  final minLeft = BusyMarkSpacing.sm;
+  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+  final localPosition = overlay.globalToLocal(position);
+  final left = maxLeft <= minLeft
+      ? minLeft
+      : localPosition.dx.clamp(minLeft, maxLeft).toDouble();
+  final maxTop = math.max(
+    BusyMarkSpacing.sm,
+    overlay.size.height - BusyMarkSpacing.sm,
+  );
+  final top = localPosition.dy.clamp(BusyMarkSpacing.sm, maxTop).toDouble();
+  return showMenu<_FileTreeAction>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromLTRB(
+      left,
+      top,
+      math.max(minLeft, overlay.size.width - left - menuWidth),
+      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+    ),
+    items: [
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.history,
+        label: context.l10n.gitHistory,
+        icon: BusyMarkGlyphs.documentHistory,
+      ),
+    ],
+    color: popupTheme.color ?? colors.popover,
+    surfaceTintColor: BusyMarkLinuxPalette.transparent,
+    elevation: BusyMarkElevation.popover,
+    shadowColor: colors.shade,
+    constraints: const BoxConstraints.tightFor(width: menuWidth),
+    clipBehavior: Clip.antiAlias,
+    popUpAnimationStyle: AnimationStyle.noAnimation,
+    requestFocus: true,
+  );
 }
 
 class _SidebarTreeRow extends StatelessWidget {
@@ -2123,6 +2375,7 @@ class _SidebarTreeRow extends StatelessWidget {
     this.muted = false,
     this.onToggle,
     this.onTap,
+    this.onSecondaryTapDown,
   });
 
   final String title;
@@ -2136,11 +2389,12 @@ class _SidebarTreeRow extends StatelessWidget {
   final bool muted;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
+  final GestureTapDownCallback? onSecondaryTapDown;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final clickable = enabled && onTap != null;
+    final clickable = enabled && (onTap != null || onSecondaryTapDown != null);
     final foreground = !enabled || muted
         ? colors.disabledForeground
         : selected
@@ -2164,7 +2418,8 @@ class _SidebarTreeRow extends StatelessWidget {
           hoverColor: clickable
               ? busyMarkRowHoverColor(context)
               : BusyMarkLinuxPalette.transparent,
-          onTap: clickable ? onTap : null,
+          onTap: enabled ? onTap : null,
+          onSecondaryTapDown: enabled ? onSecondaryTapDown : null,
           child: SizedBox(
             height: BusyMarkSizes.sidebarTreeRowHeight,
             child: Row(

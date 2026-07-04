@@ -367,7 +367,7 @@ void main() {
     expect(find.byType(OutlinedButton), findsNothing);
   });
 
-  testWidgets('project history file context menu shows selected file diff', (
+  testWidgets('project history file rows show selected file diff', (
     tester,
   ) async {
     final commit = GitCommitSummary(
@@ -448,12 +448,7 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.text('guide.md'), buttons: kSecondaryMouseButton);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Show diff'), findsOneWidget);
-
-    await tester.tap(find.text('Show diff'));
+    await tester.tap(find.text('guide.md'));
     await tester.pump();
 
     expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
@@ -463,6 +458,27 @@ void main() {
     );
     expect(
       find.textContaining('Readme change', findRichText: true),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.text('README.md').first,
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Show diff'), findsOneWidget);
+
+    await tester.tap(find.text('Show diff'));
+    await tester.pump();
+
+    expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Guide change', findRichText: true),
       findsNothing,
     );
   });

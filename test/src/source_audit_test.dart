@@ -585,6 +585,12 @@ void main() {
     expect(workspace, contains('enabled: repository.hasRemote'));
     expect(workspace, contains('tooltip: context.l10n.gitBranches'));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
+    expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
+    expect(workspace, contains('repository.behindCount > 0'));
+    expect(workspace, contains('context.l10n.gitBehindCount'));
+    expect(workspace, contains('repository.aheadCount > 0'));
+    expect(workspace, contains('context.l10n.gitAheadCount'));
+    expect(workspace, contains('class _BranchSyncIndicator'));
     expect(gitSidebar, isNot(contains('_RepositoryStrip')));
     expect(
       gitSidebar,
@@ -734,6 +740,12 @@ void main() {
     expect(workspace, contains('_isOpenableTextDocument(file)'));
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
+    expect(workspace, contains('_showFileTreeMenu'));
+    expect(workspace, contains('onSecondaryTapDown'));
+    expect(workspace, contains('label: context.l10n.gitHistory'));
+    expect(workspace, contains('loadFileHistory('));
+    expect(workspace, contains('file.absolutePath'));
+    expect(workspace, contains('_selectTab(_SidebarTab.gitHistory, tabs)'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));
     expect(workspace, isNot(contains('title: file.relativePath')));
