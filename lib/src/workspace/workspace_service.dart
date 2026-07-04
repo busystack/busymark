@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
 import '../core/busymark_exception.dart';
+import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
@@ -107,19 +108,15 @@ class WorkspaceService {
     String normalizedPath,
     FileSystemEntityType fileType,
   ) {
-    stderr.writeln('[BusyMark] Open path requested');
-    stderr.writeln('[BusyMark]   raw: $rawPath');
-    stderr.writeln('[BusyMark]   normalized: $normalizedPath');
-    stderr.writeln(
+    busyMarkDebugLogLines([
+      '[BusyMark] Open path requested',
+      '[BusyMark]   raw: ${busyMarkLogPath(rawPath)}',
+      '[BusyMark]   normalized: ${busyMarkLogPath(normalizedPath)}',
       '[BusyMark]   raw startsWith file://: ${isFileUriPath(rawPath)}',
-    );
-    stderr.writeln(
       '[BusyMark]   raw startsWith /run/user/: ${rawPath.startsWith('/run/user/')}',
-    );
-    stderr.writeln(
       '[BusyMark]   normalized startsWith /run/user/: ${normalizedPath.startsWith('/run/user/')}',
-    );
-    stderr.writeln('[BusyMark]   entity type: ${_fileTypeLabel(fileType)}');
+      '[BusyMark]   entity type: ${_fileTypeLabel(fileType)}',
+    ]);
   }
 
   String _fileTypeLabel(FileSystemEntityType type) {

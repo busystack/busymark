@@ -137,6 +137,27 @@ void main() {
     expect(RegExp(r'Ctrl\+P(?![A-Za-z])').hasMatch(combined), isFalse);
   });
 
+  test('product stderr logging is isolated behind debug logging', () {
+    final files = <File>[
+      for (final path in ['lib'])
+        ...Directory(path)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => _isText(file.path)),
+    ];
+
+    for (final file in files) {
+      if (file.path.endsWith('lib/src/core/debug_log.dart')) {
+        continue;
+      }
+      expect(
+        file.readAsStringSync(),
+        isNot(contains('stderr.writeln')),
+        reason: file.path,
+      );
+    }
+  });
+
   test('grouped action rows use one BusyMark-owned rounded surface', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 

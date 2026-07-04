@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,6 +117,65 @@ void main() {
     expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
   });
 
+  test(
+    'initial load preserves user actions made before it completes',
+    () async {
+      final store = _DelayedSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+
+      final autoSaveFuture = controller.setAutoSave(false);
+      final recentFuture = controller.recordOpenedWorkspace(
+        path: '/tmp/new.md',
+        kind: WorkspaceKindForTest.singleMarkdown,
+      );
+      var initialActionsCompleted = false;
+      unawaited(
+        Future.wait([autoSaveFuture, recentFuture]).then((_) {
+          initialActionsCompleted = true;
+        }),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      expect(initialActionsCompleted, isTrue);
+
+      store.completeLoad(
+        AppSettings.defaults()
+            .copyWith(
+              wordWrap: false,
+              recentWorkspaces: [
+                RecentWorkspace(
+                  path: '/tmp/old.md',
+                  kind: WorkspaceKindForTest.singleMarkdown,
+                  lastOpenedAt: DateTime(2026),
+                ),
+              ],
+            )
+            .toJson(),
+      );
+      await store.saved;
+
+      final settings = container.read(appSettingsControllerProvider);
+      expect(settings.wordWrap, isFalse);
+      expect(settings.autoSave, isFalse);
+      expect(settings.recentWorkspaces.map((item) => item.path), [
+        '/tmp/new.md',
+        '/tmp/old.md',
+      ]);
+      expect(store.value['wordWrap'], isFalse);
+      expect(store.value['autoSave'], isFalse);
+      expect(
+        (store.value['recentWorkspaces'] as List)
+            .cast<Map<String, Object?>>()
+            .map((item) => item['path']),
+        ['/tmp/new.md', '/tmp/old.md'],
+      );
+    },
+  );
+
   test('remote image permissions persist globally and per workspace', () async {
     final store = _MemorySettingsStore();
     final container = ProviderContainer(
@@ -147,6 +208,10 @@ void main() {
   });
 }
 
+abstract final class WorkspaceKindForTest {
+  static const singleMarkdown = 'singleMarkdown';
+}
+
 class _MemorySettingsStore implements LocalSettingsStore {
   Map<String, Object?> value = <String, Object?>{};
 
@@ -156,5 +221,29 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _DelayedSettingsStore implements LocalSettingsStore {
+  final _load = Completer<Map<String, Object?>>();
+  final _saved = Completer<void>();
+  Map<String, Object?> value = <String, Object?>{};
+
+  Future<void> get saved => _saved.future;
+
+  void completeLoad(Map<String, Object?> json) {
+    value = json;
+    _load.complete(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> load() => _load.future;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    value = json;
+    if (!_saved.isCompleted) {
+      _saved.complete();
+    }
   }
 }

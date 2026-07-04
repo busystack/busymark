@@ -15,6 +15,7 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../core/debug_log.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
@@ -290,24 +291,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     try {
       final normalizedPath = normalizePath(rawPath);
       final fileType = FileSystemEntity.typeSync(normalizedPath);
-      stderr.writeln('[BusyMark] Picker selected path');
-      stderr.writeln('[BusyMark]   raw: $rawPath');
-      stderr.writeln('[BusyMark]   normalized: $normalizedPath');
-      stderr.writeln(
+      busyMarkDebugLogLines([
+        '[BusyMark] Picker selected path',
+        '[BusyMark]   raw: ${busyMarkLogPath(rawPath)}',
+        '[BusyMark]   normalized: ${busyMarkLogPath(normalizedPath)}',
         '[BusyMark]   raw startsWith file://: ${isFileUriPath(rawPath)}',
-      );
-      stderr.writeln(
         '[BusyMark]   raw startsWith /run/user/: ${rawPath.startsWith('/run/user/')}',
-      );
-      stderr.writeln(
         '[BusyMark]   normalized startsWith /run/user/: ${normalizedPath.startsWith('/run/user/')}',
-      );
-      stderr.writeln('[BusyMark]   entity type: ${_fileTypeLabel(fileType)}');
+        '[BusyMark]   entity type: ${_fileTypeLabel(fileType)}',
+      ]);
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Picker path logging failed');
-      stderr.writeln('[BusyMark]   raw: $rawPath');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Picker path logging failed',
+        error,
+        stackTrace,
+        context: {'raw': busyMarkLogPath(rawPath)},
+      );
     }
   }
 

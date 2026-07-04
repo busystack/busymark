@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/app_settings.dart';
+import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
@@ -127,9 +127,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         kind: workspace.kind.name,
       );
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Open failed for path: $path');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Open failed',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(path)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -176,11 +179,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Create Writerside project failed');
-      stderr.writeln('[BusyMark]   parent: ${request.parentDirectoryPath}');
-      stderr.writeln('[BusyMark]   directory: ${request.directoryName}');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Create Writerside project failed',
+        error,
+        stackTrace,
+        context: {
+          'parent': busyMarkLogPath(request.parentDirectoryPath),
+          'directory': request.directoryName,
+        },
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -238,11 +245,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Create Writerside topic failed');
-      stderr.writeln('[BusyMark]   title: ${request.title}');
-      stderr.writeln('[BusyMark]   file name: ${request.fileName}');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Create Writerside topic failed',
+        error,
+        stackTrace,
+        context: {'title': request.title, 'file name': request.fileName},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -413,9 +421,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Could not open file: $path');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Could not open file',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(path)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           message: WorkspaceMessage(
@@ -680,10 +691,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Discard active changes failed');
-      stderr.writeln('[BusyMark]   active: $active');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Discard active changes failed',
+        error,
+        stackTrace,
+        context: {'active': busyMarkLogPath(active)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isDirty: true,
@@ -756,10 +769,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Workspace refresh failed');
-      stderr.writeln('[BusyMark]   root: ${workspace.rootPath}');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Workspace refresh failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
