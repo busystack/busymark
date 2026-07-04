@@ -1,4 +1,5 @@
 import 'source_language.dart';
+import 'source/source_line_index.dart';
 
 enum SourceFoldKind { section, list, blockquote, code, xml }
 
@@ -61,48 +62,16 @@ class SourceGutterEntry {
 }
 
 List<SourceLineInfo> sourceLineInfos(String source) {
-  if (source.isEmpty) {
-    return const [
+  return [
+    for (final line in SourceLineIndex(source).lines)
       SourceLineInfo(
-        number: 1,
-        startOffset: 0,
-        endOffset: 0,
-        endOffsetIncludingLineBreak: 0,
-        text: '',
+        number: line.number,
+        startOffset: line.startOffset,
+        endOffset: line.endOffset,
+        endOffsetIncludingLineBreak: line.endOffsetIncludingLineBreak,
+        text: line.text,
       ),
-    ];
-  }
-
-  final lines = <SourceLineInfo>[];
-  var lineStart = 0;
-  var lineNumber = 1;
-  for (var index = 0; index < source.length; index++) {
-    if (source.codeUnitAt(index) != 10) {
-      continue;
-    }
-    lines.add(
-      SourceLineInfo(
-        number: lineNumber,
-        startOffset: lineStart,
-        endOffset: index,
-        endOffsetIncludingLineBreak: index + 1,
-        text: source.substring(lineStart, index),
-      ),
-    );
-    lineStart = index + 1;
-    lineNumber++;
-  }
-
-  lines.add(
-    SourceLineInfo(
-      number: lineNumber,
-      startOffset: lineStart,
-      endOffset: source.length,
-      endOffsetIncludingLineBreak: source.length,
-      text: source.substring(lineStart),
-    ),
-  );
-  return lines;
+  ];
 }
 
 List<SourceFoldRegion> sourceFoldRegions(
@@ -346,30 +315,63 @@ void _addMarkdownBlockquoteRegions(
 
 List<SourceFoldRegion> _xmlFoldRegions(List<SourceLineInfo> lines) {
   final regions = <SourceFoldRegion>[];
+  final stack = <({String tag, int lineIndex})>[];
   for (var index = 0; index < lines.length; index++) {
-    final opening = RegExp(
-      r'<([A-Za-z_][\w:.-]*)(?:\s|>)(?![^>]*\/>)',
-    ).firstMatch(lines[index].text);
-    if (opening == null || lines[index].text.trimLeft().startsWith('</')) {
-      continue;
-    }
-    final tag = opening.group(1)!;
-    final closingPattern = RegExp('</${RegExp.escape(tag)}>');
-    for (var next = index + 1; next < lines.length; next++) {
-      if (!closingPattern.hasMatch(lines[next].text)) {
+    final text = _xmlLineWithoutComments(lines[index].text);
+    for (final tag in _xmlTagsInLine(text)) {
+      if (tag.selfClosing || tag.declaration) {
         continue;
       }
-      _addRegion(
-        regions,
-        lines,
-        kind: SourceFoldKind.xml,
-        startIndex: index,
-        endIndex: next,
-      );
-      break;
+      if (!tag.closing) {
+        stack.add((tag: tag.name, lineIndex: index));
+        continue;
+      }
+      if (stack.isEmpty) {
+        continue;
+      }
+      final opening = stack.removeLast();
+      if (opening.tag != tag.name) {
+        stack.clear();
+        continue;
+      }
+      if (opening.lineIndex < index) {
+        _addRegion(
+          regions,
+          lines,
+          kind: SourceFoldKind.xml,
+          startIndex: opening.lineIndex,
+          endIndex: index,
+        );
+      }
     }
   }
   return regions;
+}
+
+String _xmlLineWithoutComments(String line) {
+  return line.replaceAll(RegExp(r'<!--.*?-->'), '');
+}
+
+Iterable<({String name, bool closing, bool selfClosing, bool declaration})>
+_xmlTagsInLine(String line) sync* {
+  for (final match in RegExp(r'<[^>]+>').allMatches(line)) {
+    final text = match.group(0)!;
+    if (text.startsWith('<!--')) {
+      continue;
+    }
+    final declaration =
+        text.startsWith('<?') || text.startsWith('<!') || text.startsWith('<!');
+    final name = RegExp(r'^</?\s*([A-Za-z_][\w:.-]*)').firstMatch(text);
+    if (name == null) {
+      continue;
+    }
+    yield (
+      name: name.group(1)!,
+      closing: text.startsWith('</'),
+      selfClosing: text.endsWith('/>'),
+      declaration: declaration,
+    );
+  }
 }
 
 bool _isMarkdownListLine(String text) {

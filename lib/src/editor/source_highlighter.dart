@@ -1,6 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
+import 'source/source_document.dart';
+import 'source/source_hidden_ranges.dart';
+import 'source/source_search.dart';
 import 'source_folding.dart';
 import 'source_language.dart';
 
@@ -8,12 +13,20 @@ export 'source_language.dart';
 
 class BusyMarkSourceEditingController extends TextEditingController {
   BusyMarkSourceEditingController({
-    super.text,
+    String? text,
     SourceSyntaxLanguage language = SourceSyntaxLanguage.markdown,
-  }) : _language = language;
+    this.onFullTextChanged,
+  }) : _language = language,
+       _document = SourceDocument(fullText: text ?? '') {
+    super.value = TextEditingValue(text: _document.visibleText);
+  }
 
   SourceSyntaxLanguage _language;
   List<SourceFoldRegion> _foldedRegions = const [];
+  SourceDocument _document;
+  SourceVisibleEdit? lastVisibleEdit;
+  SourceSearchResult _searchResult = SourceSearchResult.empty;
+  void Function(String fullText, SourceVisibleEdit? edit)? onFullTextChanged;
   bool renderText = true;
   bool visualMarkdown = false;
 
@@ -29,12 +42,151 @@ class BusyMarkSourceEditingController extends TextEditingController {
 
   List<SourceFoldRegion> get foldedRegions => _foldedRegions;
 
+  SourceDocument get document => _document;
+
+  bool get sourceFeaturesDegraded => super.text.length > 300000;
+
+  SourceSearchResult get searchResult => _searchResult;
+
+  String get fullText => _document.fullText;
+
+  set fullText(String value) {
+    setFullText(value);
+  }
+
+  @override
+  set text(String value) {
+    setFullText(value);
+  }
+
+  TextSelection get fullSelection {
+    return _document.visibleSelectionToFullSelection(selection);
+  }
+
+  set fullSelection(TextSelection value) {
+    selection = _document.fullSelectionToVisibleSelection(value);
+  }
+
+  int fullOffsetToVisibleOffset(int offset) {
+    return _document.fullOffsetToVisibleOffset(offset);
+  }
+
+  int visibleOffsetToFullOffset(
+    int offset, {
+    SourceHiddenAffinity affinity = SourceHiddenAffinity.downstream,
+  }) {
+    return _document.visibleOffsetToFullOffset(offset, affinity: affinity);
+  }
+
+  void setFullText(String value, {TextSelection? fullSelection}) {
+    final selectionSnapshot = fullSelection ?? this.fullSelection;
+    _document = _createDocument(value, _foldedRegions);
+    lastVisibleEdit = null;
+    super.value = TextEditingValue(
+      text: _document.visibleText,
+      selection: _document.fullSelectionToVisibleSelection(selectionSnapshot),
+    );
+  }
+
+  void setFullEditingValue(TextEditingValue value) {
+    _foldedRegions = _preserveFoldedRegionsForFullReplacement(
+      _foldedRegions,
+      _document.fullText,
+      value.text,
+    );
+    _document = _createDocument(value.text, _foldedRegions);
+    lastVisibleEdit = null;
+    super.value = TextEditingValue(
+      text: _document.visibleText,
+      selection: _document.fullSelectionToVisibleSelection(value.selection),
+    );
+    onFullTextChanged?.call(_document.fullText, null);
+  }
+
   void setFoldedRegions(Iterable<SourceFoldRegion> regions) {
-    _foldedRegions = _normalizedFoldRegions(regions);
+    final fullSelectionSnapshot = fullSelection;
+    final normalized = _normalizedFoldRegions(regions);
+    if (_foldRegionsEqual(_foldedRegions, normalized)) {
+      return;
+    }
+    _foldedRegions = normalized;
+    _document = _createDocument(_document.fullText, _foldedRegions);
+    super.value = TextEditingValue(
+      text: _document.visibleText,
+      selection: _document.fullSelectionToVisibleSelection(
+        fullSelectionSnapshot,
+      ),
+    );
   }
 
   void clearFoldedRegions() {
+    if (_foldedRegions.isEmpty) {
+      return;
+    }
+    final fullSelectionSnapshot = fullSelection;
     _foldedRegions = const [];
+    _document = _createDocument(_document.fullText, _foldedRegions);
+    super.value = TextEditingValue(
+      text: _document.visibleText,
+      selection: _document.fullSelectionToVisibleSelection(
+        fullSelectionSnapshot,
+      ),
+    );
+  }
+
+  void setSearchResult(SourceSearchResult result) {
+    if (_searchResult == result) {
+      return;
+    }
+    _searchResult = result;
+    notifyListeners();
+  }
+
+  @override
+  set value(TextEditingValue newValue) {
+    final hasTextChanged = newValue.text != super.value.text;
+    if (!hasTextChanged) {
+      super.value = newValue;
+      return;
+    }
+
+    final oldDocument = _document;
+    final edit = oldDocument.describeVisibleEdit(newValue.text);
+    final nextFullText = oldDocument.fullText.replaceRange(
+      edit.fullStart,
+      edit.fullEnd,
+      edit.replacement,
+    );
+    final affectedKeys = {
+      for (final range in oldDocument.hiddenRanges.hiddenRangesIntersecting(
+        edit.fullStart,
+        edit.fullEnd,
+      ))
+        if (range.key != null) range.key!,
+    };
+    _foldedRegions = _preserveFoldedRegionsAfterVisibleEdit(
+      _foldedRegions,
+      edit,
+      affectedKeys,
+    );
+    _document = _createDocument(nextFullText, _foldedRegions);
+    lastVisibleEdit = edit;
+    final selection = TextSelection(
+      baseOffset: newValue.selection.baseOffset
+          .clamp(0, _document.visibleText.length)
+          .toInt(),
+      extentOffset: newValue.selection.extentOffset
+          .clamp(0, _document.visibleText.length)
+          .toInt(),
+      affinity: newValue.selection.affinity,
+      isDirectional: newValue.selection.isDirectional,
+    );
+    super.value = TextEditingValue(
+      text: _document.visibleText,
+      selection: selection,
+      composing: TextRange.empty,
+    );
+    onFullTextChanged?.call(_document.fullText, edit);
   }
 
   @override
@@ -62,17 +214,18 @@ class BusyMarkSourceEditingController extends TextEditingController {
       color: visible ? colors.foreground : BusyMarkLinuxPalette.transparent,
       backgroundColor: BusyMarkLinuxPalette.transparent,
     );
-    final source = text;
+    final source = super.text;
     if (source.isEmpty || source.length > 300000) {
       return TextSpan(text: source, style: baseStyle);
     }
-    final hiddenRanges = _foldedHiddenRanges(
-      source,
-      _foldedRegions,
-      hideCollapsedStartLines: hideCollapsedStartLines,
-    );
+    final hiddenRanges = hideCollapsedStartLines
+        ? _collapsedStartLineHiddenRanges()
+        : const <_HiddenRange>[];
     final palette = BusyMarkSyntaxColors.of(context);
     final styleOverride = visible ? null : _transparentLayoutStyle;
+    final searchRanges = visible
+        ? _searchHighlightRanges(source, baseStyle, colors, _searchResult)
+        : const <_HighlightRange>[];
     if (visible &&
         visualMarkdown &&
         _language == SourceSyntaxLanguage.markdown) {
@@ -86,6 +239,7 @@ class BusyMarkSourceEditingController extends TextEditingController {
           baseStyle,
           palette,
           hiddenRanges,
+          overlayRanges: searchRanges,
           styleOverride: styleOverride,
         ),
         SourceSyntaxLanguage.xml => _highlightXml(
@@ -93,12 +247,13 @@ class BusyMarkSourceEditingController extends TextEditingController {
           baseStyle,
           palette,
           hiddenRanges,
+          overlayRanges: searchRanges,
           styleOverride: styleOverride,
         ),
         SourceSyntaxLanguage.plain => [
           ..._spansFromRanges(
             source,
-            const [],
+            searchRanges,
             hiddenRanges,
             baseStyle,
             styleOverride: styleOverride,
@@ -107,14 +262,55 @@ class BusyMarkSourceEditingController extends TextEditingController {
       },
     );
   }
+
+  SourceDocument _createDocument(
+    String fullText,
+    Iterable<SourceFoldRegion> foldedRegions,
+  ) {
+    return SourceDocument(
+      fullText: fullText,
+      hiddenRanges: SourceHiddenRanges(
+        ranges: [
+          for (final region in foldedRegions)
+            SourceHiddenRange(
+              start: region.hiddenStartOffset,
+              end: region.hiddenEndOffset,
+              key: region.key,
+            ),
+        ],
+        textLength: fullText.length,
+      ),
+    );
+  }
+
+  List<_HiddenRange> _collapsedStartLineHiddenRanges() {
+    final ranges = <_HiddenRange>[];
+    for (final region in _foldedRegions) {
+      final line = _document.lineIndex.lineAt(region.startLine);
+      if (line.endOffset <= line.startOffset) {
+        continue;
+      }
+      final visibleStart = _document.fullOffsetToVisibleOffset(
+        line.startOffset,
+      );
+      final visibleEnd = _document.fullOffsetToVisibleOffset(line.endOffset);
+      if (visibleEnd > visibleStart) {
+        ranges.add(
+          _HiddenRange(visibleStart, visibleEnd, preserveLayout: true),
+        );
+      }
+    }
+    return ranges;
+  }
 }
 
 class _HighlightRange {
-  const _HighlightRange(this.start, this.end, this.style);
+  const _HighlightRange(this.start, this.end, this.style, {this.priority = 0});
 
   final int start;
   final int end;
   final TextStyle style;
+  final int priority;
 
   bool overlaps(int otherStart, int otherEnd) {
     return start < otherEnd && otherStart < end;
@@ -133,35 +329,12 @@ class _HiddenRange {
   }
 }
 
-List<_HiddenRange> _foldedHiddenRanges(
-  String source,
-  Iterable<SourceFoldRegion> regions, {
-  required bool hideCollapsedStartLines,
-}) {
-  final ranges = <_HiddenRange>[];
-  final linesByNumber = hideCollapsedStartLines
-      ? {for (final line in sourceLineInfos(source)) line.number: line}
-      : const <int, SourceLineInfo>{};
-
-  for (final region in regions) {
-    if (hideCollapsedStartLines) {
-      final line = linesByNumber[region.startLine];
-      if (line != null && line.endOffset > line.startOffset) {
-        ranges.add(
-          _HiddenRange(line.startOffset, line.endOffset, preserveLayout: true),
-        );
-      }
-    }
-    ranges.add(_HiddenRange(region.hiddenStartOffset, region.hiddenEndOffset));
-  }
-  return ranges;
-}
-
 List<TextSpan> _highlightMarkdown(
   String source,
   TextStyle baseStyle,
   BusyMarkSyntaxColors palette,
   List<_HiddenRange> hiddenRanges, {
+  Iterable<_HighlightRange> overlayRanges = const [],
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
   final ranges = <_HighlightRange>[];
@@ -383,6 +556,7 @@ List<TextSpan> _highlightMarkdown(
     offset = lineEnd + 1;
   }
 
+  ranges.addAll(overlayRanges);
   return _spansFromRanges(
     source,
     ranges,
@@ -705,10 +879,12 @@ List<TextSpan> _highlightXml(
   TextStyle baseStyle,
   BusyMarkSyntaxColors palette,
   List<_HiddenRange> hiddenRanges, {
+  Iterable<_HighlightRange> overlayRanges = const [],
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
   final ranges = <_HighlightRange>[];
   _addXmlRanges(ranges, source, 0, baseStyle, palette);
+  ranges.addAll(overlayRanges);
 
   return _spansFromRanges(
     source,
@@ -945,17 +1121,50 @@ void _addRange(
   List<_HighlightRange> ranges,
   int start,
   int end,
-  TextStyle style,
-) {
+  TextStyle style, {
+  int priority = 0,
+}) {
   if (start < 0 || end <= start) {
     return;
   }
-  for (final range in ranges) {
-    if (range.overlaps(start, end)) {
-      return;
-    }
+  ranges.add(_HighlightRange(start, end, style, priority: priority));
+}
+
+List<_HighlightRange> _searchHighlightRanges(
+  String source,
+  TextStyle baseStyle,
+  BusyMarkSurfaceColors colors,
+  SourceSearchResult result,
+) {
+  if (source.isEmpty || result.matches.isEmpty) {
+    return const [];
   }
-  ranges.add(_HighlightRange(start, end, style));
+  final ranges = <_HighlightRange>[];
+  final matchBackground = Color.alphaBlend(
+    BusyMarkLinuxPalette.yellow.withValues(alpha: 0.32),
+    colors.view,
+  );
+  final currentBackground = Color.alphaBlend(
+    colors.controlActive.withValues(alpha: 0.42),
+    colors.view,
+  );
+  final matchStyle = baseStyle.copyWith(backgroundColor: matchBackground);
+  final currentStyle = baseStyle.copyWith(backgroundColor: currentBackground);
+  final currentIndex = result.currentMatchIndex;
+  for (final (index, match) in result.matches.indexed) {
+    if (match.hidden || match.visibleEnd <= match.visibleStart) {
+      continue;
+    }
+    ranges.add(
+      _HighlightRange(
+        match.visibleStart.clamp(0, source.length).toInt(),
+        match.visibleEnd.clamp(0, source.length).toInt(),
+        index == currentIndex ? currentStyle : matchStyle,
+        priority: index == currentIndex ? 100 : 90,
+      ),
+    );
+  }
+  return ranges;
 }
 
 List<TextSpan> _spansFromRanges(
@@ -965,7 +1174,14 @@ List<TextSpan> _spansFromRanges(
   TextStyle baseStyle, {
   TextStyle Function(TextStyle style)? styleOverride,
 }) {
-  final sortedRanges = [...ranges]..sort((a, b) => a.start.compareTo(b.start));
+  final sortedRanges = [...ranges]
+    ..sort((a, b) {
+      final start = a.start.compareTo(b.start);
+      if (start != 0) {
+        return start;
+      }
+      return a.priority.compareTo(b.priority);
+    });
   final sortedHiddenRanges = [...hiddenRanges]
     ..sort((a, b) => a.start.compareTo(b.start));
   final hiddenStyle = baseStyle.copyWith(
@@ -999,14 +1215,14 @@ List<TextSpan> _spansFromRanges(
         break;
       }
     }
-    _HighlightRange? highlight;
+    final highlights = <_HighlightRange>[];
     for (final range in sortedRanges) {
       if (range.start <= start && end <= range.end) {
-        highlight = range;
-        break;
+        highlights.add(range);
       }
     }
-    final style = highlight?.style;
+    highlights.sort((a, b) => a.priority.compareTo(b.priority));
+    final style = _mergeHighlightStyles(baseStyle, highlights);
     final visibleStyle = style == null
         ? baseStyle
         : styleOverride?.call(style) ?? style;
@@ -1024,6 +1240,20 @@ List<TextSpan> _spansFromRanges(
     );
   }
   return spans;
+}
+
+TextStyle? _mergeHighlightStyles(
+  TextStyle baseStyle,
+  List<_HighlightRange> highlights,
+) {
+  if (highlights.isEmpty) {
+    return null;
+  }
+  var style = baseStyle;
+  for (final highlight in highlights) {
+    style = style.merge(highlight.style);
+  }
+  return style;
 }
 
 TextSpan _visualMarkdownTextSpan(
@@ -1373,4 +1603,131 @@ List<SourceFoldRegion> _normalizedFoldRegions(
     hiddenUntil = region.hiddenEndOffset;
   }
   return normalized;
+}
+
+bool _foldRegionsEqual(
+  List<SourceFoldRegion> left,
+  List<SourceFoldRegion> right,
+) {
+  if (left.length != right.length) {
+    return false;
+  }
+  for (var index = 0; index < left.length; index++) {
+    final a = left[index];
+    final b = right[index];
+    if (a.kind != b.kind ||
+        a.startLine != b.startLine ||
+        a.endLine != b.endLine ||
+        a.startOffset != b.startOffset ||
+        a.endOffset != b.endOffset ||
+        a.hiddenStartOffset != b.hiddenStartOffset ||
+        a.hiddenEndOffset != b.hiddenEndOffset) {
+      return false;
+    }
+  }
+  return true;
+}
+
+List<SourceFoldRegion> _preserveFoldedRegionsAfterVisibleEdit(
+  Iterable<SourceFoldRegion> regions,
+  SourceVisibleEdit edit,
+  Set<String> affectedKeys,
+) {
+  final result = <SourceFoldRegion>[];
+  for (final region in regions) {
+    if (affectedKeys.contains(region.key)) {
+      continue;
+    }
+    if (edit.fullEnd <= region.startOffset) {
+      result.add(
+        _shiftFoldRegion(
+          region,
+          offsetDelta: edit.fullDelta,
+          lineDelta: edit.lineDelta,
+        ),
+      );
+      continue;
+    }
+    if (region.startOffset <= edit.fullStart &&
+        edit.fullEnd <= region.hiddenStartOffset) {
+      result.add(_shiftFoldRegionAfterStartLineEdit(region, edit));
+      continue;
+    }
+    if (edit.fullStart >= region.hiddenEndOffset) {
+      result.add(region);
+      continue;
+    }
+  }
+  return _normalizedFoldRegions(result);
+}
+
+List<SourceFoldRegion> _preserveFoldedRegionsForFullReplacement(
+  Iterable<SourceFoldRegion> regions,
+  String oldText,
+  String newText,
+) {
+  final edit = _fullReplacementEdit(oldText, newText);
+  return _preserveFoldedRegionsAfterVisibleEdit(regions, edit, const {});
+}
+
+SourceVisibleEdit _fullReplacementEdit(String oldText, String newText) {
+  var start = 0;
+  final shortest = math.min(oldText.length, newText.length);
+  while (start < shortest &&
+      oldText.codeUnitAt(start) == newText.codeUnitAt(start)) {
+    start++;
+  }
+  var oldEnd = oldText.length;
+  var newEnd = newText.length;
+  while (oldEnd > start &&
+      newEnd > start &&
+      oldText.codeUnitAt(oldEnd - 1) == newText.codeUnitAt(newEnd - 1)) {
+    oldEnd--;
+    newEnd--;
+  }
+  return SourceVisibleEdit(
+    visibleStart: start,
+    visibleEnd: oldEnd,
+    fullStart: start,
+    fullEnd: oldEnd,
+    replacement: newText.substring(start, newEnd),
+    replacedFullText: oldText.substring(start, oldEnd),
+  );
+}
+
+SourceFoldRegion _shiftFoldRegion(
+  SourceFoldRegion region, {
+  required int offsetDelta,
+  required int lineDelta,
+}) {
+  if (offsetDelta == 0 && lineDelta == 0) {
+    return region;
+  }
+  return SourceFoldRegion(
+    kind: region.kind,
+    startLine: region.startLine + lineDelta,
+    endLine: region.endLine + lineDelta,
+    startOffset: region.startOffset + offsetDelta,
+    endOffset: region.endOffset + offsetDelta,
+    hiddenStartOffset: region.hiddenStartOffset + offsetDelta,
+    hiddenEndOffset: region.hiddenEndOffset + offsetDelta,
+  );
+}
+
+SourceFoldRegion _shiftFoldRegionAfterStartLineEdit(
+  SourceFoldRegion region,
+  SourceVisibleEdit edit,
+) {
+  if (edit.fullDelta == 0 && edit.lineDelta == 0) {
+    return region;
+  }
+  return SourceFoldRegion(
+    kind: region.kind,
+    startLine: region.startLine,
+    endLine: region.endLine + edit.lineDelta,
+    startOffset: region.startOffset,
+    endOffset: region.endOffset + edit.fullDelta,
+    hiddenStartOffset: region.hiddenStartOffset + edit.fullDelta,
+    hiddenEndOffset: region.hiddenEndOffset + edit.fullDelta,
+  );
 }
