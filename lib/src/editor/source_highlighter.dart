@@ -11,6 +11,47 @@ import 'source_language.dart';
 
 export 'source_language.dart';
 
+TextSpan buildBusyMarkReadOnlySourceTextSpan({
+  required BuildContext context,
+  required String source,
+  required SourceSyntaxLanguage language,
+  TextStyle? style,
+  Color? foreground,
+}) {
+  final colors = BusyMarkSurfaceColors.of(context);
+  final baseStyle = (style ?? DefaultTextStyle.of(context).style).copyWith(
+    color: foreground ?? colors.foreground,
+    backgroundColor: BusyMarkLinuxPalette.transparent,
+  );
+  if (source.isEmpty || source.length > 300000) {
+    return TextSpan(text: source, style: baseStyle);
+  }
+  final palette = BusyMarkSyntaxColors.of(context);
+  return TextSpan(
+    style: baseStyle,
+    children: switch (language) {
+      SourceSyntaxLanguage.markdown => _highlightMarkdown(
+        source,
+        baseStyle,
+        palette,
+        const <_HiddenRange>[],
+      ),
+      SourceSyntaxLanguage.xml => _highlightXml(
+        source,
+        baseStyle,
+        palette,
+        const <_HiddenRange>[],
+      ),
+      SourceSyntaxLanguage.plain => _spansFromRanges(
+        source,
+        const <_HighlightRange>[],
+        const <_HiddenRange>[],
+        baseStyle,
+      ),
+    },
+  );
+}
+
 class BusyMarkSourceEditingController extends TextEditingController {
   BusyMarkSourceEditingController({
     String? text,
