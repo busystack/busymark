@@ -1776,6 +1776,42 @@ abstract class AppLocalizations {
   /// **'tag'**
   String get foldKindTag;
 
+  /// Tooltip for moving to the previous source search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get sourceSearchPreviousMatch;
+
+  /// Tooltip for moving to the next source search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get sourceSearchNextMatch;
+
+  /// Tooltip for toggling case-sensitive source search.
+  ///
+  /// In en, this message translates to:
+  /// **'Case sensitive'**
+  String get sourceSearchCaseSensitive;
+
+  /// Tooltip for toggling whole-word source search.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole word'**
+  String get sourceSearchWholeWord;
+
+  /// Tooltip for toggling regular-expression source search.
+  ///
+  /// In en, this message translates to:
+  /// **'Regex'**
+  String get sourceSearchRegex;
+
+  /// Status banner shown when source highlighting and folding are disabled for a large file.
+  ///
+  /// In en, this message translates to:
+  /// **'Large file: highlighting and folding are paused'**
+  String get sourceLargeFileFeaturesPaused;
+
   /// Empty state shown when there is no preview.
   ///
   /// In en, this message translates to:

@@ -929,6 +929,25 @@ class AppLocalizationsIt extends AppLocalizations {
   String get foldKindTag => 'tag';
 
   @override
+  String get sourceSearchPreviousMatch => 'Previous match';
+
+  @override
+  String get sourceSearchNextMatch => 'Next match';
+
+  @override
+  String get sourceSearchCaseSensitive => 'Case sensitive';
+
+  @override
+  String get sourceSearchWholeWord => 'Whole word';
+
+  @override
+  String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceLargeFileFeaturesPaused =>
+      'Large file: highlighting and folding are paused';
+
+  @override
   String get noPreview => 'Nessuna anteprima';
 
   @override
