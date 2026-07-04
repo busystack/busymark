@@ -20,8 +20,10 @@ import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
+import '../workspace_glyphs.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
+import 'workspace_identity_row.dart';
 
 enum _WelcomeMenuAction {
   settings,
@@ -527,13 +529,6 @@ class _WelcomeRecentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final titleStyle = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: colors.foreground);
-    final detailStyle = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
       child: Material(
@@ -543,41 +538,11 @@ class _WelcomeRecentRow extends StatelessWidget {
         child: InkWell(
           hoverColor: busyMarkRowHoverColor(context),
           onTap: onTap,
-          child: SizedBox(
+          child: WorkspaceIdentityRow(
             height: BusyMarkSizes.sidebarTreeRowHeight * 2,
-            child: Row(
-              children: [
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Icon(
-                  _recentWorkspaceIcon(recent),
-                  size: BusyMarkSizes.iconSm,
-                  color: colors.mutedForeground,
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _displayPath(recent.path),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: titleStyle,
-                      ),
-                      const SizedBox(height: BusyMarkSpacing.xxs),
-                      Text(
-                        recent.path,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: detailStyle,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ],
-            ),
+            icon: WorkspaceGlyphs.forRecent(recent),
+            name: _displayPath(recent.path),
+            path: recent.path,
           ),
         ),
       ),
@@ -588,23 +553,6 @@ class _WelcomeRecentRow extends StatelessWidget {
 String _displayPath(String path) {
   final name = p.basename(path);
   return name.isEmpty ? path : name;
-}
-
-IconData _recentWorkspaceIcon(RecentWorkspace recent) {
-  return switch (recent.kind) {
-    'singleMarkdown' || 'untitledMarkdown' => BusyMarkGlyphs.markdownFile,
-    'markdownFolder' => BusyMarkGlyphs.folder,
-    'writersideModule' => BusyMarkGlyphs.writersideProject,
-    _ => _recentWorkspaceIconForPath(recent.path),
-  };
-}
-
-IconData _recentWorkspaceIconForPath(String path) {
-  final extension = p.extension(path).toLowerCase();
-  return switch (extension) {
-    '.md' || '.markdown' => BusyMarkGlyphs.markdownFile,
-    _ => BusyMarkGlyphs.folder,
-  };
 }
 
 class _CreateWritersideProjectDialog extends StatefulWidget {
