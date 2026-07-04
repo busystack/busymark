@@ -1328,9 +1328,9 @@ void main() {
 
     expect(
       container.read(workspaceControllerProvider).activeText,
-      '- Parent\n\t- Child\n',
+      '- Parent\n  - Child\n',
     );
-    expect(controller.text, '- Parent\n\t- Child\n');
+    expect(controller.text, '- Parent\n  - Child\n');
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);

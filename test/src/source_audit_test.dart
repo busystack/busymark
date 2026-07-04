@@ -449,6 +449,9 @@ void main() {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final sourceEditor = File(
+      'lib/src/editor/source/source_editor.dart',
+    ).readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
@@ -471,14 +474,23 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, isNot(contains('class _SidebarSegmentLabel')));
     expect(workspace, contains('softWrap: false'));
-    expect(workspace, contains('hoverColor: BusyMarkLinuxPalette.transparent'));
-    expect(workspace, contains('focusColor: BusyMarkLinuxPalette.transparent'));
-    expect(workspace, contains('selectionHeightStyle: BoxHeightStyle.max'));
-    expect(workspace, contains('selectionWidthStyle: BoxWidthStyle.tight'));
-    expect(workspace, contains('cursorColor: colors.foreground.withValues'));
-    expect(workspace, contains('BusyMarkAlpha.sourceCursor'));
-    expect(workspace, contains('BusyMarkTypography.sourceCursorHeightScale'));
-    expect(workspace, contains('cursorWidth: BusyMarkStroke.sourceCursor'));
+    expect(
+      sourceEditor,
+      contains('hoverColor: BusyMarkLinuxPalette.transparent'),
+    );
+    expect(
+      sourceEditor,
+      contains('focusColor: BusyMarkLinuxPalette.transparent'),
+    );
+    expect(sourceEditor, contains('selectionHeightStyle: BoxHeightStyle.max'));
+    expect(sourceEditor, contains('selectionWidthStyle: BoxWidthStyle.tight'));
+    expect(sourceEditor, contains('cursorColor: colors.foreground.withValues'));
+    expect(sourceEditor, contains('BusyMarkAlpha.sourceCursor'));
+    expect(
+      sourceEditor,
+      contains('BusyMarkTypography.sourceCursorHeightScale'),
+    );
+    expect(sourceEditor, contains('cursorWidth: BusyMarkStroke.sourceCursor'));
   });
 
   test('sidebar header menu uses shared popup menu', () {
@@ -715,17 +727,21 @@ void main() {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final sourceEditor = File(
+      'lib/src/editor/source/source_editor.dart',
+    ).readAsStringSync();
 
     expect(workspace, contains('_outlineNavigationTargetProvider'));
     expect(workspace, contains('_OutlineNavigationTarget'));
     expect(workspace, contains('headingId: heading.id'));
     expect(workspace, contains('line: heading.span.startLine'));
-    expect(workspace, contains('_sourceFocusNode.requestFocus()'));
-    expect(workspace, contains('_unfoldSourceLine(line)'));
-    expect(workspace, contains('_sourceLineLayoutEntries'));
-    expect(workspace, contains('_sourceScrollOffsetForLine'));
-    expect(workspace, contains('_jumpSourceScrollToLine'));
-    expect(workspace, contains('scrollController: _sourceScrollController'));
+    expect(workspace, contains('_sourceEditorKey.currentState?.scrollToLine'));
+    expect(sourceEditor, contains('_focusNode.requestFocus()'));
+    expect(sourceEditor, contains('_unfoldSourceLine(line)'));
+    expect(sourceEditor, contains('sourceLineLayoutEntries'));
+    expect(sourceEditor, contains('_scrollOffsetForLine'));
+    expect(sourceEditor, contains('_jumpScrollToLine'));
+    expect(sourceEditor, contains('scrollController: _scrollController'));
     expect(workspace, contains('Scrollable.ensureVisible'));
     expect(workspace, contains('alignment: 0.0'));
     expect(workspace, isNot(contains('alignment: 0.04')));
@@ -772,35 +788,50 @@ void main() {
   });
 
   test('source editor line numbers use measured editor layout', () {
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
+    final sourceEditor = File(
+      'lib/src/editor/source/source_editor.dart',
+    ).readAsStringSync();
+    final sourceGutter = File(
+      'lib/src/editor/source/source_gutter.dart',
+    ).readAsStringSync();
+    final sourceController = File(
+      'lib/src/editor/source/source_controller.dart',
     ).readAsStringSync();
 
-    expect(workspace, contains('isCollapsed: true'));
-    expect(workspace, contains('_sourceLineHeight(context, sourceStrutStyle)'));
-    expect(workspace, contains('_SourceRenderedTextLayer'));
-    expect(workspace, contains('renderText = false'));
-    expect(workspace, contains('controller.buildSourceTextSpan'));
-    expect(workspace, contains('TextPainter('));
-    expect(workspace, contains('computeLineMetrics()'));
-    expect(workspace, contains('getOffsetForCaret'));
-    expect(workspace, contains('_sourceTextHeightForLine'));
-    expect(workspace, contains('_CollapsedSourceLineOverlay'));
-    expect(workspace, contains('_sourceStrutStyle('));
-    expect(workspace, contains('folded: _foldedRegionKeys.isNotEmpty'));
-    expect(workspace, contains('if (folded)'));
-    expect(workspace, contains('return null'));
-    expect(workspace, contains('StrutStyle.fromTextStyle(_sourceTextStyle)'));
-    expect(workspace, contains('strutStyle: sourceStrutStyle'));
-    expect(workspace, contains('TextOverflow.ellipsis'));
-    expect(workspace, contains('Color.alphaBlend'));
-    expect(workspace, contains("'\$trimmed ...'"));
+    expect(sourceEditor, contains('isCollapsed: true'));
+    expect(
+      sourceEditor,
+      contains('_sourceLineHeight(context, sourceStrutStyle)'),
+    );
+    expect(sourceEditor, contains('_SourceRenderedTextLayer'));
+    expect(sourceController, contains('renderText = false'));
+    expect(sourceEditor, contains('controller.buildSourceTextSpan'));
+    expect(sourceGutter, contains('TextPainter('));
+    expect(sourceGutter, contains('computeLineMetrics()'));
+    expect(sourceGutter, contains('getOffsetForCaret'));
+    expect(sourceGutter, contains('sourceTextHeightForLine'));
+    expect(sourceEditor, contains('_CollapsedSourceLineOverlay'));
+    expect(sourceEditor, contains('_sourceStrutStyle('));
+    expect(sourceEditor, contains('folded: _foldedRegionKeys.isNotEmpty'));
+    expect(sourceEditor, contains('if (folded)'));
+    expect(sourceEditor, contains('return null'));
+    expect(
+      sourceEditor,
+      contains('StrutStyle.fromTextStyle(_sourceTextStyle)'),
+    );
+    expect(sourceEditor, contains('strutStyle: sourceStrutStyle'));
+    expect(sourceEditor, contains('TextOverflow.ellipsis'));
+    expect(sourceEditor, contains('Color.alphaBlend'));
+    expect(sourceEditor, contains("'\$trimmed ...'"));
   });
 
   test('document view modes drive source preview and split layouts', () {
     final settings = File('lib/src/app/app_settings.dart').readAsStringSync();
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final sourceController = File(
+      'lib/src/editor/source/source_controller.dart',
     ).readAsStringSync();
     final settingsScreen = File(
       'lib/src/workspace/presentation/settings_screen.dart',
@@ -828,7 +859,7 @@ void main() {
       contains('widget.viewMode != DocumentViewModePreference.source'),
     );
     expect(workspace, contains('BusyMarkWysiwygEditor'));
-    expect(workspace, contains('visualMarkdown = false'));
+    expect(sourceController, contains('visualMarkdown = false'));
     expect(workspace, isNot(contains('class _VisualMarkdownEditorPane')));
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
@@ -974,22 +1005,28 @@ void main() {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final sourceEditor = File(
+      'lib/src/editor/source/source_editor.dart',
+    ).readAsStringSync();
+    final sourceGutter = File(
+      'lib/src/editor/source/source_gutter.dart',
+    ).readAsStringSync();
 
     expect(
-      workspace,
+      sourceEditor,
       contains(
         'static const double _gutterWidth = BusyMarkSizes.sourceGutterWidth;',
       ),
     );
     expect(
-      workspace,
+      sourceGutter,
       contains(
         'static const double _foldButtonSize = BusyMarkSizes.sourceFoldButton;',
       ),
     );
-    expect(workspace, contains('BusyMarkSizes.sourceFoldButtonRightInset'));
-    expect(workspace, contains('Positioned.fill('));
-    expect(workspace, contains('alignment: Alignment.center'));
+    expect(sourceGutter, contains('BusyMarkSizes.sourceFoldButtonRightInset'));
+    expect(sourceEditor, contains('Positioned.fill('));
+    expect(sourceGutter, contains('alignment: Alignment.center'));
     expect(workspace, contains('padding: BusyMarkInsets.previewPane'));
     expect(workspace, contains('first: index == 0'));
     expect(
