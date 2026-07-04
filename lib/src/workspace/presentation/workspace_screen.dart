@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +22,10 @@ import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/markdown_image_view.dart';
-import '../../editor/source_folding.dart';
-import '../../editor/source_highlighter.dart';
+import '../../editor/source/source_controller.dart';
+import '../../editor/source/source_document.dart';
+import '../../editor/source/source_editor.dart';
+import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
@@ -118,38 +120,8 @@ class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
   }
 }
 
-const _sourceTextHeightBehavior = TextHeightBehavior(
-  applyHeightToFirstAscent: true,
-  applyHeightToLastDescent: true,
-  leadingDistribution: TextLeadingDistribution.even,
-);
-
 ScrollPosition? _safeScrollPosition(ScrollController controller) {
   return controller.positions.isEmpty ? null : controller.positions.last;
-}
-
-double _safeScrollOffset(ScrollController controller) {
-  return _safeScrollPosition(controller)?.pixels ?? 0.0;
-}
-
-double _safeMaxScrollExtent(ScrollController controller) {
-  return _safeScrollPosition(controller)?.maxScrollExtent ?? 0.0;
-}
-
-bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      !keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
-}
-
-bool _isPlainShiftTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
 }
 
 class _OutlineNavigationTarget {
@@ -172,15 +144,49 @@ class _SourceNavigationTarget {
 }
 
 class _WorkspaceSearchState {
-  const _WorkspaceSearchState({this.active = false, this.query = ''});
+  const _WorkspaceSearchState({
+    this.active = false,
+    this.query = '',
+    this.caseSensitive = false,
+    this.wholeWord = false,
+    this.regex = false,
+  });
 
   final bool active;
   final String query;
+  final bool caseSensitive;
+  final bool wholeWord;
+  final bool regex;
 
-  _WorkspaceSearchState copyWith({bool? active, String? query}) {
+  SourceSearchOptions get options => SourceSearchOptions(
+    query: query.trim(),
+    caseSensitive: caseSensitive,
+    wholeWord: wholeWord,
+    regex: regex,
+  );
+
+  _WorkspaceSearchState copyWith({
+    bool? active,
+    String? query,
+    bool? caseSensitive,
+    bool? wholeWord,
+    bool? regex,
+  }) {
     return _WorkspaceSearchState(
       active: active ?? this.active,
       query: query ?? this.query,
+      caseSensitive: caseSensitive ?? this.caseSensitive,
+      wholeWord: wholeWord ?? this.wholeWord,
+      regex: regex ?? this.regex,
+    );
+  }
+
+  _WorkspaceSearchState withOptions(SourceSearchOptions options) {
+    return copyWith(
+      query: options.query,
+      caseSensitive: options.caseSensitive,
+      wholeWord: options.wholeWord,
+      regex: options.regex,
     );
   }
 }
@@ -211,34 +217,6 @@ class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
 }
 
-enum _SourceInlineMarkdownCommand {
-  bold,
-  italic,
-  underline,
-  strikethrough,
-  code,
-  link,
-}
-
-enum _SourceBlockMarkdownCommand {
-  paragraph,
-  heading1,
-  heading2,
-  heading3,
-  heading4,
-  heading5,
-  heading6,
-  orderedList,
-  unorderedList,
-  taskList,
-}
-
-class _SourceEditorShortcutIntent extends Intent {
-  const _SourceEditorShortcutIntent(this.action);
-
-  final BusyMarkEditorShortcutAction action;
-}
-
 class WorkspaceScreen extends ConsumerWidget {
   const WorkspaceScreen({super.key});
 
@@ -255,7 +233,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final searchResults = _workspaceSearchResults(
       context,
       state,
-      searchState.query,
+      searchState.options,
     );
 
     final colors = BusyMarkSurfaceColors.of(context);
@@ -2923,15 +2901,10 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
-  late BusyMarkSourceEditingController _controller;
-  late final FocusNode _sourceFocusNode;
-  late final ScrollController _sourceScrollController;
   late final ScrollController _previewScrollController;
-  late UndoHistoryController _sourceUndoController;
-  final _sourceEditorKey = GlobalKey();
+  final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
   final _previewHeadingKeys = <String, GlobalKey>{};
   final _previewSearchKeys = <int, GlobalKey>{};
-  final _foldedRegionKeys = <String>{};
   String _lastPath = '';
   var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
@@ -2944,74 +2917,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
-    _controller = BusyMarkSourceEditingController(
-      text: widget.state.activeText,
-      language: _sourceSyntaxLanguage(widget.state.workspace),
-    )..renderText = false;
-    _sourceFocusNode = FocusNode(onKeyEvent: _handleSourceKeyEvent);
-    _sourceScrollController = ScrollController();
     _previewScrollController = ScrollController();
-    _sourceUndoController = UndoHistoryController();
     _lastPath = widget.state.workspace?.activeFilePath ?? '';
-  }
-
-  KeyEventResult _handleSourceKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
-    final keyboard = HardwareKeyboard.instance;
-    final key = event.logicalKey;
-    if (BusyMarkAppShortcutActivators.find.accepts(event, keyboard)) {
-      ref.read(workspaceSearchOpenRequestProvider.notifier).request();
-      return KeyEventResult.handled;
-    }
-    if (_isPlainTabKey(keyboard, key)) {
-      _insertSourceTab();
-      return KeyEventResult.handled;
-    }
-    if (_isPlainShiftTabKey(keyboard, key)) {
-      _outdentSourceSelection();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.escape) {
-      ref.read(workspaceSearchCloseRequestProvider.notifier).request();
-      return KeyEventResult.handled;
-    }
-    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
-      event,
-      keyboard,
-    );
-    if (shortcutAction != null) {
-      _applySourceEditorShortcutAction(shortcutAction);
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
   }
 
   @override
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
     final path = widget.state.workspace?.activeFilePath ?? '';
-    final language = _sourceSyntaxLanguage(widget.state.workspace);
     if (path != _lastPath) {
       _lastPath = path;
       _clearWysiwygCache();
-      _foldedRegionKeys.clear();
       _previewHeadingKeys.clear();
       _previewSearchKeys.clear();
       _wysiwygScrollHeadingId = null;
       _wysiwygSearchQuery = null;
       _wysiwygScrollRequest = 0;
-      _replaceSourceController(
-        text: widget.state.activeText,
-        language: language,
-      );
-    } else if (widget.state.activeText != oldWidget.state.activeText &&
-        !_sourceFocusNode.hasFocus) {
-      _controller.language = language;
-      _controller.text = widget.state.activeText;
-    } else {
-      _controller.language = language;
     }
     if (oldWidget.viewMode == DocumentViewModePreference.editor &&
         widget.viewMode != DocumentViewModePreference.editor &&
@@ -3034,10 +2955,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void dispose() {
     _previewScrollController.dispose();
-    _sourceScrollController.dispose();
-    _sourceFocusNode.dispose();
-    _sourceUndoController.dispose();
-    _controller.dispose();
     super.dispose();
   }
 
@@ -3061,7 +2978,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _scrollSourceToLine(next.line);
+          _sourceEditorKey.currentState?.scrollToLine(next.line);
         }
       });
     });
@@ -3095,14 +3012,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final previewVisible =
         widget.viewMode != DocumentViewModePreference.source && !editorVisible;
     final activeEditorPath = _activeEditorPath();
-    final foldRegions = _syncSourceFoldRegions();
-    final sourceStrutStyle = _sourceStrutStyle(
-      folded: _foldedRegionKeys.isNotEmpty,
-    );
-    final sourceLineHeight = _sourceLineHeight(context, sourceStrutStyle);
-    _controller
-      ..renderText = false
-      ..visualMarkdown = false;
+    final searchState = ref.watch(_workspaceSearchProvider);
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
@@ -3141,80 +3051,30 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             ),
           if (sourceVisible)
             Expanded(
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: colors.view),
-                child: _SourceEditorFrame(
-                  controller: _controller,
-                  scrollController: _sourceScrollController,
-                  lineHeight: sourceLineHeight,
-                  textStyle: _sourceTextStyle,
-                  strutStyle: sourceStrutStyle,
-                  collapsedRegionKeys: _foldedRegionKeys,
-                  foldRegions: foldRegions,
-                  onToggleFold: _toggleSourceFold,
-                  child: SizedBox(
-                    key: _sourceEditorKey,
-                    child: KeyedSubtree(
-                      key: ValueKey(activeEditorPath),
-                      child: Shortcuts(
-                        shortcuts: BusyMarkEditorShortcutActivators.intentMap(
-                          _SourceEditorShortcutIntent.new,
-                        ),
-                        child: Actions(
-                          actions: {
-                            _SourceEditorShortcutIntent:
-                                CallbackAction<_SourceEditorShortcutIntent>(
-                                  onInvoke: (intent) {
-                                    _applySourceEditorShortcutAction(
-                                      intent.action,
-                                    );
-                                    return null;
-                                  },
-                                ),
-                          },
-                          child: TextField(
-                            controller: _controller,
-                            undoController: _sourceUndoController,
-                            focusNode: _sourceFocusNode,
-                            scrollController: _sourceScrollController,
-                            keyboardType: widget.wordWrap
-                                ? TextInputType.multiline
-                                : TextInputType.text,
-                            maxLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
-                            style: _sourceTextStyle,
-                            strutStyle: sourceStrutStyle,
-                            selectionHeightStyle: BoxHeightStyle.max,
-                            selectionWidthStyle: BoxWidthStyle.tight,
-                            cursorColor: colors.foreground.withValues(
-                              alpha: BusyMarkAlpha.sourceCursor,
-                            ),
-                            cursorHeight:
-                                widget.editorFontSize *
-                                BusyMarkTypography.sourceCursorHeightScale,
-                            cursorWidth: BusyMarkStroke.sourceCursor,
-                            decoration: InputDecoration(
-                              isCollapsed: true,
-                              filled: false,
-                              fillColor: BusyMarkLinuxPalette.transparent,
-                              hoverColor: BusyMarkLinuxPalette.transparent,
-                              focusColor: BusyMarkLinuxPalette.transparent,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: BusyMarkInsets.sourceEditor,
-                            ),
-                            onChanged: (value) => _handleSourceChanged(
-                              value,
-                              sourceFilePath: activeEditorPath,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              child: BusyMarkSourceEditor(
+                key: _sourceEditorKey,
+                text: widget.state.activeText,
+                language: _sourceSyntaxLanguage(widget.state.workspace),
+                filePath: activeEditorPath,
+                diagnostics:
+                    widget.state.workspace?.diagnostics ?? const <Diagnostic>[],
+                editorFontSize: widget.editorFontSize,
+                wordWrap: widget.wordWrap,
+                searchActive: searchState.active,
+                searchOptions: searchState.options,
+                onSearchOptionsChanged: (options) {
+                  final current = ref.read(_workspaceSearchProvider);
+                  ref
+                      .read(_workspaceSearchProvider.notifier)
+                      .set(current.withOptions(options));
+                },
+                onOpenSearch: () => ref
+                    .read(workspaceSearchOpenRequestProvider.notifier)
+                    .request(),
+                onCloseSearch: () => ref
+                    .read(workspaceSearchCloseRequestProvider.notifier)
+                    .request(),
+                onChanged: _handleSourceChanged,
               ),
             ),
           if (sourceVisible && previewVisible)
@@ -3237,52 +3097,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
-  List<SourceFoldRegion> _syncSourceFoldRegions() {
-    final foldRegions = sourceFoldRegions(
-      _controller.text,
-      _controller.language,
-    );
-    final validKeys = {for (final region in foldRegions) region.key};
-    _foldedRegionKeys.removeWhere((key) => !validKeys.contains(key));
-    _applyFoldedRegions();
-    return foldRegions;
-  }
-
-  void _applyFoldedRegions() {
-    _controller.setFoldedRegions(
-      collapsedSourceFoldRegions(
-        _controller.text,
-        _controller.language,
-        _foldedRegionKeys,
-      ),
-    );
-  }
-
-  void _toggleSourceFold(SourceFoldRegion region) {
-    setState(() {
-      if (_foldedRegionKeys.contains(region.key)) {
-        _foldedRegionKeys.remove(region.key);
-      } else {
-        _foldedRegionKeys.add(region.key);
-      }
-      _applyFoldedRegions();
-    });
-  }
-
   void _handleSourceChanged(
-    String value, {
+    String value,
+    String? sourceFilePath, {
     bool updatePreview = true,
-    String? sourceFilePath,
   }) {
     final activePath = _activeEditorPath();
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
-    }
-    if (_foldedRegionKeys.isNotEmpty) {
-      setState(() {
-        _foldedRegionKeys.clear();
-        _controller.clearFoldedRegions();
-      });
     }
     if (updatePreview) {
       _clearWysiwygCache();
@@ -3297,399 +3119,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _handleWysiwygSourceChanged(String filePath, String value) {
-    _handleSourceChanged(value, updatePreview: false, sourceFilePath: filePath);
-  }
-
-  void _applySourceEditorShortcutAction(BusyMarkEditorShortcutAction action) {
-    switch (action) {
-      case BusyMarkEditorShortcutAction.bold:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.bold);
-        break;
-      case BusyMarkEditorShortcutAction.italic:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.italic);
-        break;
-      case BusyMarkEditorShortcutAction.underline:
-        _applySourceInlineMarkdownCommand(
-          _SourceInlineMarkdownCommand.underline,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.strikethrough:
-        _applySourceInlineMarkdownCommand(
-          _SourceInlineMarkdownCommand.strikethrough,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.inlineCode:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.code);
-        break;
-      case BusyMarkEditorShortcutAction.link:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.link);
-        break;
-      case BusyMarkEditorShortcutAction.paragraph:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.paragraph);
-        break;
-      case BusyMarkEditorShortcutAction.heading1:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading1);
-        break;
-      case BusyMarkEditorShortcutAction.heading2:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading2);
-        break;
-      case BusyMarkEditorShortcutAction.heading3:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading3);
-        break;
-      case BusyMarkEditorShortcutAction.heading4:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading4);
-        break;
-      case BusyMarkEditorShortcutAction.heading5:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading5);
-        break;
-      case BusyMarkEditorShortcutAction.heading6:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading6);
-        break;
-      case BusyMarkEditorShortcutAction.orderedList:
-        _applySourceBlockMarkdownCommand(
-          _SourceBlockMarkdownCommand.orderedList,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.unorderedList:
-        _applySourceBlockMarkdownCommand(
-          _SourceBlockMarkdownCommand.unorderedList,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.taskList:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.taskList);
-        break;
-      case BusyMarkEditorShortcutAction.toggleTask:
-        _toggleSourceTaskChecked();
-        break;
-      case BusyMarkEditorShortcutAction.indent:
-        _indentSourceSelection();
-        break;
-      case BusyMarkEditorShortcutAction.outdent:
-        _outdentSourceSelection();
-        break;
-      case BusyMarkEditorShortcutAction.blockquote:
-        _applySourceLinePrefix('> ');
-        break;
-      case BusyMarkEditorShortcutAction.codeBlock:
-        _insertSourceCodeBlock();
-        break;
-      case BusyMarkEditorShortcutAction.codeBlockLanguage:
-        _insertSourceCodeBlock(language: 'language');
-        break;
-      case BusyMarkEditorShortcutAction.image:
-        _insertSourceImage(block: true);
-        break;
-      case BusyMarkEditorShortcutAction.inlineImage:
-        _insertSourceImage(block: false);
-        break;
-      case BusyMarkEditorShortcutAction.table:
-        _insertSourceTable();
-        break;
-      case BusyMarkEditorShortcutAction.htmlBlock:
-        _insertSourceHtmlBlock();
-        break;
-      case BusyMarkEditorShortcutAction.thematicBreak:
-        _insertSourceBlock('\n---\n');
-        break;
-      case BusyMarkEditorShortcutAction.hardLineBreak:
-        final selection = _normalizedSourceSelection();
-        _replaceSourceSelection(
-          '  \n',
-          selectionStart: selection.start + 3,
-          selectionEnd: selection.start + 3,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.pastePlainText:
-        unawaited(_pastePlainTextIntoSource());
-        break;
-    }
-  }
-
-  void _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand command) {
-    switch (command) {
-      case _SourceInlineMarkdownCommand.bold:
-        _wrapSourceSelection(prefix: '**', suffix: '**');
-        break;
-      case _SourceInlineMarkdownCommand.italic:
-        _wrapSourceSelection(prefix: '*', suffix: '*');
-        break;
-      case _SourceInlineMarkdownCommand.underline:
-        _wrapSourceSelection(prefix: '<u>', suffix: '</u>');
-        break;
-      case _SourceInlineMarkdownCommand.strikethrough:
-        _wrapSourceSelection(prefix: '~~', suffix: '~~');
-        break;
-      case _SourceInlineMarkdownCommand.code:
-        _wrapSourceSelection(prefix: '`', suffix: '`');
-        break;
-      case _SourceInlineMarkdownCommand.link:
-        _insertSourceLink();
-        break;
-    }
-  }
-
-  void _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand command) {
-    final range = _selectedSourceLineRange();
-    final text = _controller.text;
-    final markerPattern = RegExp(
-      r'^(\s*)(?:#{1,6}\s+)?(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)?(.*)$',
-    );
-    final replacementLines = <String>[];
-    for (final (index, line) in range.lines.indexed) {
-      final match = markerPattern.firstMatch(line);
-      final indent = match?.group(1) ?? '';
-      final content = match?.group(2) ?? line.trimLeft();
-      final marker = switch (command) {
-        _SourceBlockMarkdownCommand.paragraph => '',
-        _SourceBlockMarkdownCommand.heading1 => '# ',
-        _SourceBlockMarkdownCommand.heading2 => '## ',
-        _SourceBlockMarkdownCommand.heading3 => '### ',
-        _SourceBlockMarkdownCommand.heading4 => '#### ',
-        _SourceBlockMarkdownCommand.heading5 => '##### ',
-        _SourceBlockMarkdownCommand.heading6 => '###### ',
-        _SourceBlockMarkdownCommand.orderedList => '${index + 1}. ',
-        _SourceBlockMarkdownCommand.unorderedList => '- ',
-        _SourceBlockMarkdownCommand.taskList => '- [ ] ',
-      };
-      replacementLines.add('$indent$marker$content');
-    }
-    final replacement = replacementLines.join('\n');
-    final nextText = text.replaceRange(range.start, range.end, replacement);
-    _controller.value = TextEditingValue(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: range.start,
-        extentOffset: range.start + replacement.length,
-      ),
-    );
-    _sourceFocusNode.requestFocus();
-    _handleSourceChanged(nextText);
-  }
-
-  void _toggleSourceTaskChecked() {
-    final range = _selectedSourceLineRange();
-    final replacement = [
-      for (final line in range.lines)
-        line.replaceFirstMapped(
-          RegExp(r'^(\s*[-*+]\s+\[)([ xX])(\]\s+)'),
-          (match) =>
-              '${match.group(1)}${match.group(2)!.trim().isEmpty ? 'x' : ' '}${match.group(3)}',
-        ),
-    ].join('\n');
-    _replaceSourceLineRange(range, replacement);
-  }
-
-  void _indentSourceSelection() {
-    final range = _selectedSourceLineRange();
-    _replaceSourceLineRange(
-      range,
-      [
-        for (final line in range.lines) line.isEmpty ? line : '  $line',
-      ].join('\n'),
-    );
-  }
-
-  void _outdentSourceSelection() {
-    final range = _selectedSourceLineRange();
-    _replaceSourceLineRange(
-      range,
-      [
-        for (final line in range.lines)
-          line.startsWith('  ')
-              ? line.substring(2)
-              : line.startsWith('\t')
-              ? line.substring(1)
-              : line,
-      ].join('\n'),
-    );
-  }
-
-  void _applySourceLinePrefix(String prefix) {
-    final range = _selectedSourceLineRange();
-    _replaceSourceLineRange(
-      range,
-      [
-        for (final line in range.lines)
-          line.isEmpty ? prefix.trimRight() : '$prefix$line',
-      ].join('\n'),
-    );
-  }
-
-  void _insertSourceCodeBlock({String language = ''}) {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text);
-    final content = selected.isEmpty ? 'code' : selected;
-    final languageSuffix = language.isEmpty ? '' : language;
-    final replacement = '```$languageSuffix\n$content\n```';
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: selection.start + 3 + languageSuffix.length + 1,
-      selectionEnd:
-          selection.start + 3 + languageSuffix.length + 1 + content.length,
-    );
-  }
-
-  void _insertSourceImage({required bool block}) {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text).trim();
-    final alt = selected.isEmpty ? 'alt' : selected;
-    final replacement = '![${alt.replaceAll('\n', ' ')}](url)';
-    _replaceSourceSelection(
-      block ? '\n$replacement\n' : replacement,
-      selectionStart: selection.start + (block ? 3 : 2),
-      selectionEnd: selection.start + (block ? 3 : 2) + alt.length,
-    );
-  }
-
-  void _insertSourceTable() {
-    _insertSourceBlock(
-      '\n| Header 1 | Header 2 |\n| --- | --- |\n| Cell | Cell |\n',
-    );
-  }
-
-  void _insertSourceHtmlBlock() {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text).trim();
-    final content = selected.isEmpty ? 'HTML content' : selected;
-    final replacement = '\n<div>\n  <p>$content</p>\n</div>\n';
-    final contentStart = replacement.indexOf(content);
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: selection.start + contentStart,
-      selectionEnd: selection.start + contentStart + content.length,
-    );
-  }
-
-  void _insertSourceBlock(String markdown) {
-    final selection = _normalizedSourceSelection();
-    _replaceSourceSelection(
-      markdown,
-      selectionStart: selection.start + markdown.length,
-      selectionEnd: selection.start + markdown.length,
-    );
-  }
-
-  ({int start, int end, List<String> lines}) _selectedSourceLineRange() {
-    final selection = _normalizedSourceSelection();
-    final text = _controller.text;
-    final lineStart =
-        text.lastIndexOf(
-          '\n',
-          (selection.start - 1).clamp(0, text.length).toInt(),
-        ) +
-        1;
-    final nextBreak = text.indexOf('\n', selection.end);
-    final lineEnd = nextBreak < 0 ? text.length : nextBreak;
-    return (
-      start: lineStart,
-      end: lineEnd,
-      lines: text.substring(lineStart, lineEnd).split('\n'),
-    );
-  }
-
-  void _replaceSourceLineRange(
-    ({int start, int end, List<String> lines}) range,
-    String replacement,
-  ) {
-    final nextText = _controller.text.replaceRange(
-      range.start,
-      range.end,
-      replacement,
-    );
-    _controller.value = TextEditingValue(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: range.start,
-        extentOffset: range.start + replacement.length,
-      ),
-    );
-    _sourceFocusNode.requestFocus();
-    _handleSourceChanged(nextText);
-  }
-
-  void _wrapSourceSelection({
-    required String prefix,
-    required String suffix,
-    String placeholder = 'text',
-  }) {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text);
-    final content = selected.isEmpty ? placeholder : selected;
-    final replacement = '$prefix$content$suffix';
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: selection.start + prefix.length,
-      selectionEnd: selection.start + prefix.length + content.length,
-    );
-  }
-
-  void _insertSourceLink() {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text);
-    final label = selected.isEmpty ? 'text' : selected;
-    final replacement = '[$label](url)';
-    final urlStart = selection.start + label.length + 3;
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: urlStart,
-      selectionEnd: urlStart + 3,
-    );
-  }
-
-  Future<void> _pastePlainTextIntoSource() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text == null || text.isEmpty) {
-      return;
-    }
-    final selection = _normalizedSourceSelection();
-    _replaceSourceSelection(
-      text,
-      selectionStart: selection.start + text.length,
-      selectionEnd: selection.start + text.length,
-    );
-  }
-
-  void _insertSourceTab() {
-    final selection = _normalizedSourceSelection();
-    _replaceSourceSelection(
-      '\t',
-      selectionStart: selection.start + 1,
-      selectionEnd: selection.start + 1,
-    );
-  }
-
-  TextSelection _normalizedSourceSelection() {
-    final selection = _controller.selection;
-    if (!selection.isValid) {
-      return TextSelection.collapsed(offset: _controller.text.length);
-    }
-    final start = selection.start.clamp(0, _controller.text.length).toInt();
-    final end = selection.end.clamp(0, _controller.text.length).toInt();
-    return TextSelection(
-      baseOffset: math.min(start, end),
-      extentOffset: math.max(start, end),
-    );
-  }
-
-  void _replaceSourceSelection(
-    String replacement, {
-    required int selectionStart,
-    required int selectionEnd,
-  }) {
-    final selection = _normalizedSourceSelection();
-    final text = _controller.text;
-    final nextText =
-        selection.textBefore(text) + replacement + selection.textAfter(text);
-    _controller.value = TextEditingValue(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: selectionStart.clamp(0, nextText.length).toInt(),
-        extentOffset: selectionEnd.clamp(0, nextText.length).toInt(),
-      ),
-    );
-    _sourceFocusNode.requestFocus();
-    _handleSourceChanged(nextText);
+    _handleSourceChanged(value, filePath, updatePreview: false);
   }
 
   void _cacheWysiwygDocument(BusyDocument document) {
@@ -3702,27 +3132,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygDocument = null;
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
-  }
-
-  void _resetSourceUndoHistory() {
-    final previous = _sourceUndoController;
-    _sourceUndoController = UndoHistoryController();
-    previous.dispose();
-  }
-
-  void _replaceSourceController({
-    required String text,
-    required SourceSyntaxLanguage language,
-  }) {
-    final previous = _controller;
-    _controller =
-        BusyMarkSourceEditingController(text: text, language: language)
-          ..renderText = false
-          ..visualMarkdown = false;
-    _resetSourceUndoHistory();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      previous.dispose();
-    });
   }
 
   String? _activeEditorPath() {
@@ -3776,7 +3185,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _wysiwygSearchQuery = null;
         _wysiwygScrollRequest += 1;
       });
-      _scrollSourceToLine(target.line);
+      _sourceEditorKey.currentState?.scrollToLine(target.line);
       _scrollPreviewToHeading(target.headingId);
     });
   }
@@ -3807,151 +3216,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         });
       }
       if (sourceVisible) {
-        _scrollSourceToSearchRange(target);
+        _sourceEditorKey.currentState?.scrollToSearchRange(
+          line: target.line,
+          startOffset: target.startOffset,
+          endOffset: target.endOffset,
+        );
       }
       if (previewVisible) {
         _schedulePreviewSearchScroll(target);
       }
     });
-  }
-
-  void _scrollSourceToLine(int line) {
-    _unfoldSourceLine(line);
-    final textOffset = _textOffsetForLine(_controller.text, line);
-    _sourceFocusNode.requestFocus();
-    _controller.selection = TextSelection.collapsed(offset: textOffset);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateSourceScrollToLine(line);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _jumpSourceScrollToLine(line);
-      });
-      unawaited(
-        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
-          _jumpSourceScrollToLine(line);
-        }),
-      );
-    });
-  }
-
-  void _scrollSourceToSearchRange(_SearchNavigationTarget target) {
-    _unfoldSourceLine(target.line);
-    final start = target.startOffset.clamp(0, _controller.text.length).toInt();
-    final end = target.endOffset.clamp(start, _controller.text.length).toInt();
-    _sourceFocusNode.requestFocus();
-    _controller.selection = TextSelection(baseOffset: start, extentOffset: end);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateSourceScrollToLine(target.line);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _jumpSourceScrollToLine(target.line);
-      });
-      unawaited(
-        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
-          _jumpSourceScrollToLine(target.line);
-        }),
-      );
-    });
-  }
-
-  void _unfoldSourceLine(int line) {
-    final region = collapsedRegionContainingLine(
-      _controller.text,
-      _controller.language,
-      _foldedRegionKeys,
-      line,
-    );
-    if (region == null) {
-      return;
-    }
-    setState(() {
-      _foldedRegionKeys.remove(region.key);
-      _applyFoldedRegions();
-    });
-  }
-
-  TextStyle get _sourceTextStyle => TextStyle(
-    fontFamily: BusyMarkTypography.monoFontFamily,
-    fontSize: widget.editorFontSize,
-    height: BusyMarkTypography.codeLineHeight,
-    leadingDistribution: TextLeadingDistribution.even,
-  );
-
-  StrutStyle? _sourceStrutStyle({required bool folded}) {
-    if (folded) {
-      return null;
-    }
-    return StrutStyle.fromTextStyle(_sourceTextStyle);
-  }
-
-  double _sourceLineHeight(BuildContext context, StrutStyle? strutStyle) {
-    final painter = TextPainter(
-      text: TextSpan(text: ' ', style: _sourceTextStyle),
-      strutStyle: strutStyle,
-      textDirection: Directionality.of(context),
-      textHeightBehavior: _sourceTextHeightBehavior,
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
-    final metrics = painter.computeLineMetrics();
-    painter.dispose();
-    return metrics.isEmpty
-        ? widget.editorFontSize * 1.45
-        : metrics.first.height;
-  }
-
-  void _animateSourceScrollToLine(int line) {
-    if (!mounted || !_sourceScrollController.hasClients) {
-      return;
-    }
-    _sourceScrollController.animateTo(
-      _sourceScrollOffsetForLine(line),
-      duration: BusyMarkMotion.scroll,
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  void _jumpSourceScrollToLine(int line) {
-    if (!mounted || !_sourceScrollController.hasClients) {
-      return;
-    }
-    _sourceScrollController.jumpTo(_sourceScrollOffsetForLine(line));
-  }
-
-  double _sourceScrollOffsetForLine(int line) {
-    final textWidth = _sourceTextLayoutWidth();
-    final strutStyle = _sourceStrutStyle(folded: _foldedRegionKeys.isNotEmpty);
-    final lineHeight = _sourceLineHeight(context, strutStyle);
-    final layouts = _sourceLineLayoutEntries(
-      context,
-      controller: _controller,
-      foldRegions: sourceFoldRegions(_controller.text, _controller.language),
-      collapsedRegionKeys: _foldedRegionKeys,
-      textStyle: _sourceTextStyle,
-      strutStyle: strutStyle,
-      lineHeight: lineHeight,
-      textWidth: textWidth,
-    );
-    final targetOffset = layouts
-        .firstWhere(
-          (entry) => entry.gutterEntry.lineNumber >= line,
-          orElse: () => layouts.isEmpty
-              ? const _SourceLineLayoutEntry.empty()
-              : layouts.last,
-        )
-        .top;
-    return targetOffset
-        .clamp(0.0, _safeMaxScrollExtent(_sourceScrollController))
-        .toDouble();
-  }
-
-  double _sourceTextLayoutWidth() {
-    final renderBox =
-        _sourceEditorKey.currentContext?.findRenderObject() as RenderBox?;
-    final editorWidth = renderBox?.size.width ?? 800;
-    return math.max(
-      1,
-      editorWidth -
-          _SourceEditorFrame.editorPaddingLeft -
-          _SourceEditorFrame.editorPaddingRight,
-    );
   }
 
   void _scrollPreviewToHeading(String headingId) {
@@ -4102,22 +3376,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     return true;
   }
 
-  int _textOffsetForLine(String text, int line) {
-    if (line <= 1) {
-      return 0;
-    }
-    var currentLine = 1;
-    for (var index = 0; index < text.length; index++) {
-      if (text.codeUnitAt(index) == 10) {
-        currentLine++;
-        if (currentLine == line) {
-          return index + 1;
-        }
-      }
-    }
-    return text.length;
-  }
-
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
     return kind == DocumentKind.markdown ||
@@ -4156,656 +3414,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       return workspace.markdown?.busyDocument;
     }
   }
-}
-
-class _SourceEditorFrame extends StatelessWidget {
-  const _SourceEditorFrame({
-    required this.controller,
-    required this.scrollController,
-    required this.lineHeight,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.foldRegions,
-    required this.collapsedRegionKeys,
-    required this.onToggleFold,
-    required this.child,
-  });
-
-  static const double editorPaddingTop = BusyMarkSourceEditorMetrics.paddingTop;
-  static const double editorPaddingLeft =
-      BusyMarkSourceEditorMetrics.paddingLeft;
-  static const double editorPaddingRight =
-      BusyMarkSourceEditorMetrics.paddingRight;
-  static const double _gutterWidth = BusyMarkSizes.sourceGutterWidth;
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final double lineHeight;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final List<SourceFoldRegion> foldRegions;
-  final Set<String> collapsedRegionKeys;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final editorWidth = math
-            .max(
-              BusyMarkStroke.hairline,
-              constraints.maxWidth - _gutterWidth - BusyMarkStroke.hairline,
-            )
-            .toDouble();
-        final textWidth = math
-            .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
-            .toDouble();
-        return DecoratedBox(
-          decoration: BoxDecoration(color: colors.view),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: _gutterWidth,
-                child: _SourceLineNumberGutter(
-                  controller: controller,
-                  scrollController: scrollController,
-                  lineHeight: lineHeight,
-                  textStyle: textStyle,
-                  strutStyle: strutStyle,
-                  textWidth: textWidth,
-                  foldRegions: foldRegions,
-                  collapsedRegionKeys: collapsedRegionKeys,
-                  onToggleFold: onToggleFold,
-                ),
-              ),
-              VerticalDivider(
-                width: BusyMarkStroke.hairline,
-                color: colors.subtleBorder,
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: _SourceRenderedTextLayer(
-                        controller: controller,
-                        scrollController: scrollController,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        textWidth: textWidth,
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: _CollapsedSourceLineOverlay(
-                        controller: controller,
-                        scrollController: scrollController,
-                        lineHeight: lineHeight,
-                        textWidth: textWidth,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        foldRegions: foldRegions,
-                        collapsedRegionKeys: collapsedRegionKeys,
-                      ),
-                    ),
-                    Positioned.fill(child: child),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SourceRenderedTextLayer extends StatelessWidget {
-  const _SourceRenderedTextLayer({
-    required this.controller,
-    required this.scrollController,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.textWidth,
-  });
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final double textWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ClipRect(
-        child: AnimatedBuilder(
-          animation: Listenable.merge([controller, scrollController]),
-          builder: (context, _) {
-            final scrollOffset = _safeScrollOffset(scrollController);
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
-                  left: _SourceEditorFrame.editorPaddingLeft,
-                  width: textWidth,
-                  child: RichText(
-                    text: controller.buildSourceTextSpan(
-                      context: context,
-                      style: textStyle,
-                      hideCollapsedStartLines: true,
-                    ),
-                    strutStyle: strutStyle,
-                    textHeightBehavior: _sourceTextHeightBehavior,
-                    textScaler: MediaQuery.textScalerOf(context),
-                    textWidthBasis: TextWidthBasis.parent,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _SourceLineNumberGutter extends StatelessWidget {
-  const _SourceLineNumberGutter({
-    required this.controller,
-    required this.scrollController,
-    required this.lineHeight,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.textWidth,
-    required this.foldRegions,
-    required this.collapsedRegionKeys,
-    required this.onToggleFold,
-  });
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final double lineHeight;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final double textWidth;
-  final List<SourceFoldRegion> foldRegions;
-  final Set<String> collapsedRegionKeys;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: ClipRect(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return AnimatedBuilder(
-              animation: Listenable.merge([controller, scrollController]),
-              builder: (context, _) {
-                final layouts = _sourceLineLayoutEntries(
-                  context,
-                  controller: controller,
-                  foldRegions: foldRegions,
-                  collapsedRegionKeys: collapsedRegionKeys,
-                  textStyle: textStyle,
-                  strutStyle: strutStyle,
-                  lineHeight: lineHeight,
-                  textWidth: textWidth,
-                );
-                final activeLine = sourceLineNumberForOffset(
-                  controller.text,
-                  controller.selection.extentOffset,
-                );
-                final scrollOffset = _safeScrollOffset(scrollController);
-                final children = <Widget>[];
-                for (final layout in layouts) {
-                  final top = layout.top - scrollOffset;
-                  if (top < -lineHeight || top > constraints.maxHeight) {
-                    continue;
-                  }
-                  final entry = layout.gutterEntry;
-                  children.add(
-                    Positioned(
-                      top: top,
-                      left: 0,
-                      right: 0,
-                      height: lineHeight,
-                      child: _SourceGutterRow(
-                        entry: entry,
-                        active: entry.lineNumber == activeLine,
-                        lineHeight: lineHeight,
-                        textStyle: textStyle,
-                        onToggleFold: onToggleFold,
-                      ),
-                    ),
-                  );
-                }
-                return Stack(children: children);
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CollapsedSourceLineOverlay extends StatelessWidget {
-  const _CollapsedSourceLineOverlay({
-    required this.controller,
-    required this.scrollController,
-    required this.lineHeight,
-    required this.textWidth,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.foldRegions,
-    required this.collapsedRegionKeys,
-  });
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final double lineHeight;
-  final double textWidth;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final List<SourceFoldRegion> foldRegions;
-  final Set<String> collapsedRegionKeys;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ClipRect(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return AnimatedBuilder(
-              animation: Listenable.merge([controller, scrollController]),
-              builder: (context, _) {
-                final layouts = _sourceLineLayoutEntries(
-                  context,
-                  controller: controller,
-                  foldRegions: foldRegions,
-                  collapsedRegionKeys: collapsedRegionKeys,
-                  textStyle: textStyle,
-                  strutStyle: strutStyle,
-                  lineHeight: lineHeight,
-                  textWidth: textWidth,
-                );
-                final linesByNumber = {
-                  for (final line in sourceLineInfos(controller.text))
-                    line.number: line,
-                };
-                final scrollOffset = _safeScrollOffset(scrollController);
-                final children = <Widget>[];
-                for (final layout in layouts) {
-                  final entry = layout.gutterEntry;
-                  if (!entry.collapsed) {
-                    continue;
-                  }
-                  final top = layout.top - scrollOffset;
-                  if (top < -layout.height || top > constraints.maxHeight) {
-                    continue;
-                  }
-                  final line = linesByNumber[entry.lineNumber];
-                  if (line == null) {
-                    continue;
-                  }
-                  children.add(
-                    Positioned(
-                      top: top,
-                      left: 0,
-                      right: 0,
-                      height: layout.height,
-                      child: _CollapsedSourceLine(
-                        text: _collapsedLineText(line.text),
-                        height: lineHeight,
-                        textStyle: textStyle,
-                      ),
-                    ),
-                  );
-                }
-                return Stack(children: children);
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CollapsedSourceLine extends StatelessWidget {
-  const _CollapsedSourceLine({
-    required this.text,
-    required this.height,
-    required this.textStyle,
-  });
-
-  final String text;
-  final double height;
-  final TextStyle textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final background = Color.alphaBlend(
-      colors.foreground.withValues(alpha: BusyMarkAlpha.sourceCollapsedLine),
-      colors.view,
-    );
-    return DecoratedBox(
-      decoration: BoxDecoration(color: background),
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(
-          height: height,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: _SourceEditorFrame.editorPaddingLeft,
-              right: _SourceEditorFrame.editorPaddingRight,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textStyle.copyWith(color: colors.mutedForeground),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SourceGutterRow extends StatelessWidget {
-  const _SourceGutterRow({
-    required this.entry,
-    required this.active,
-    required this.lineHeight,
-    required this.textStyle,
-    required this.onToggleFold,
-  });
-
-  static const double _foldButtonSize = BusyMarkSizes.sourceFoldButton;
-  static const double _foldButtonRightInset =
-      BusyMarkSizes.sourceFoldButtonRightInset;
-
-  final SourceGutterEntry entry;
-  final bool active;
-  final double lineHeight;
-  final TextStyle textStyle;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final region = entry.region;
-    final activeColor = colors.foreground.withValues(
-      alpha: BusyMarkAlpha.sourceCollapsedLine,
-    );
-    final numberStyle = textStyle.copyWith(
-      color: active ? colors.foreground : colors.mutedForeground,
-      fontSize:
-          (textStyle.fontSize ?? BusyMarkTypography.defaultFontSize) *
-          BusyMarkTypography.sourceLineNumberScale,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: active ? activeColor : BusyMarkLinuxPalette.transparent,
-      ),
-      child: SizedBox(
-        height: lineHeight,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.center,
-                child: Text('${entry.lineNumber}', style: numberStyle),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: _foldButtonRightInset,
-              width: _foldButtonSize,
-              height: lineHeight,
-              child: Align(
-                alignment: Alignment.center,
-                child: region == null
-                    ? const SizedBox.shrink()
-                    : _SourceFoldButton(
-                        region: region,
-                        collapsed: entry.collapsed,
-                        onToggleFold: onToggleFold,
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SourceFoldButton extends StatelessWidget {
-  const _SourceFoldButton({
-    required this.region,
-    required this.collapsed,
-    required this.onToggleFold,
-  });
-
-  final SourceFoldRegion region;
-  final bool collapsed;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Tooltip(
-      message: collapsed
-          ? context.l10n.expandKind(_foldKindLabel(context, region.kind))
-          : context.l10n.collapseKind(_foldKindLabel(context, region.kind)),
-      waitDuration: BusyMarkMotion.tooltipWait,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onToggleFold(region),
-          child: SizedBox.square(
-            dimension: _SourceGutterRow._foldButtonSize,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-              ),
-              child: Icon(
-                collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
-                size: 12,
-                color: colors.mutedForeground,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-List<SourceGutterEntry> _sourceGutterEntriesFromRegions(
-  String source,
-  List<SourceFoldRegion> foldRegions,
-  Set<String> collapsedRegionKeys,
-) {
-  final lines = sourceLineInfos(source);
-  final regionByStartLine = <int, SourceFoldRegion>{};
-  for (final region in foldRegions.reversed) {
-    regionByStartLine.putIfAbsent(region.startLine, () => region);
-  }
-
-  final entries = <SourceGutterEntry>[];
-  for (var index = 0; index < lines.length; index++) {
-    final lineNumber = lines[index].number;
-    final region = regionByStartLine[lineNumber];
-    final collapsed =
-        region != null && collapsedRegionKeys.contains(region.key);
-    entries.add(
-      SourceGutterEntry(
-        lineNumber: lineNumber,
-        region: region,
-        collapsed: collapsed,
-      ),
-    );
-    if (collapsed) {
-      index += region.foldedLineCount;
-    }
-  }
-  return entries;
-}
-
-class _SourceLineLayoutEntry {
-  const _SourceLineLayoutEntry({
-    required this.gutterEntry,
-    required this.top,
-    required this.height,
-  });
-
-  const _SourceLineLayoutEntry.empty()
-    : gutterEntry = const SourceGutterEntry(
-        lineNumber: 1,
-        region: null,
-        collapsed: false,
-      ),
-      top = 0,
-      height = 0;
-
-  final SourceGutterEntry gutterEntry;
-  final double top;
-  final double height;
-}
-
-List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
-  BuildContext context, {
-  required BusyMarkSourceEditingController controller,
-  required List<SourceFoldRegion> foldRegions,
-  required Set<String> collapsedRegionKeys,
-  required TextStyle textStyle,
-  required StrutStyle? strutStyle,
-  required double lineHeight,
-  required double textWidth,
-}) {
-  final source = controller.text;
-  final linesByNumber = {
-    for (final line in sourceLineInfos(source)) line.number: line,
-  };
-  final entries = _sourceGutterEntriesFromRegions(
-    source,
-    foldRegions,
-    collapsedRegionKeys,
-  );
-  final layouts = <_SourceLineLayoutEntry>[];
-  final painter = _sourceTextPainter(
-    context,
-    controller: controller,
-    textStyle: textStyle,
-    strutStyle: strutStyle,
-    textWidth: textWidth,
-    hideCollapsedStartLines: true,
-  );
-  for (final entry in entries) {
-    final line = linesByNumber[entry.lineNumber];
-    final top =
-        _SourceEditorFrame.editorPaddingTop +
-        (line == null ? 0 : _sourceTextTopForOffset(painter, line.startOffset));
-    final height = line == null
-        ? lineHeight
-        : _sourceTextHeightForLine(
-            painter,
-            linesByNumber,
-            entry.lineNumber,
-            lineHeight,
-          );
-    layouts.add(
-      _SourceLineLayoutEntry(gutterEntry: entry, top: top, height: height),
-    );
-  }
-  painter.dispose();
-  return layouts;
-}
-
-TextPainter _sourceTextPainter(
-  BuildContext context, {
-  required BusyMarkSourceEditingController controller,
-  required TextStyle textStyle,
-  required StrutStyle? strutStyle,
-  required double textWidth,
-  bool hideCollapsedStartLines = false,
-}) {
-  final painter = TextPainter(
-    text: controller.buildSourceTextSpan(
-      context: context,
-      style: textStyle,
-      hideCollapsedStartLines: hideCollapsedStartLines,
-    ),
-    strutStyle: strutStyle,
-    textDirection: Directionality.of(context),
-    textHeightBehavior: _sourceTextHeightBehavior,
-    textScaler: MediaQuery.textScalerOf(context),
-  )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));
-  return painter;
-}
-
-double _sourceTextTopForOffset(TextPainter painter, int offset) {
-  return painter.getOffsetForCaret(TextPosition(offset: offset), Rect.zero).dy;
-}
-
-double _sourceTextHeightForLine(
-  TextPainter painter,
-  Map<int, SourceLineInfo> linesByNumber,
-  int lineNumber,
-  double fallback,
-) {
-  final line = linesByNumber[lineNumber];
-  if (line == null) {
-    return fallback;
-  }
-  final top = _sourceTextTopForOffset(painter, line.startOffset);
-  final nextLine = linesByNumber[lineNumber + 1];
-  if (nextLine != null) {
-    final nextTop = _sourceTextTopForOffset(painter, nextLine.startOffset);
-    if (nextTop > top) {
-      return math.max(fallback, nextTop - top);
-    }
-  }
-  final metrics = painter.computeLineMetrics();
-  for (final metric in metrics) {
-    final metricTop = metric.baseline - metric.ascent;
-    if (top >= metricTop - 0.5 && top < metricTop + metric.height + 0.5) {
-      return math.max(fallback, metric.height);
-    }
-  }
-  return fallback;
-}
-
-String _collapsedLineText(String text) {
-  final trimmed = text.trimRight();
-  if (trimmed.isEmpty) {
-    return '...';
-  }
-  return '$trimmed ...';
-}
-
-String _foldKindLabel(BuildContext context, SourceFoldKind kind) {
-  return switch (kind) {
-    SourceFoldKind.section => context.l10n.foldKindSection,
-    SourceFoldKind.list => context.l10n.foldKindList,
-    SourceFoldKind.blockquote => context.l10n.foldKindQuote,
-    SourceFoldKind.code => context.l10n.codeBlock,
-    SourceFoldKind.xml => context.l10n.foldKindTag,
-  };
 }
 
 class _PreviewPane extends StatelessWidget {
@@ -6326,17 +4934,41 @@ class _SearchSidebar extends StatelessWidget {
         title: context.l10n.noResults,
       );
     }
-    return ListView.separated(
+    final groups = _workspaceSearchFileGroups(results);
+    return ListView(
       padding: BusyMarkInsets.sidebarList,
-      itemCount: results.length,
-      separatorBuilder: (context, index) =>
-          Divider(height: BusyMarkStroke.hairline, color: colors.subtleBorder),
-      itemBuilder: (context, index) {
-        return _SearchResultRow(
-          result: results[index],
-          onOpen: () => onOpenResult(results[index]),
-        );
-      },
+      children: [
+        for (final group in groups) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.xxs,
+            ),
+            child: Text(
+              group.relativePath,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+          for (final result in group.results) ...[
+            _SearchResultRow(
+              result: result,
+              onOpen: () => onOpenResult(result),
+            ),
+            Divider(
+              height: BusyMarkStroke.hairline,
+              color: colors.subtleBorder,
+            ),
+          ],
+        ],
+      ],
     );
   }
 }
@@ -6404,6 +5036,7 @@ class _SearchResultRow extends StatelessWidget {
 class _WorkspaceSearchResult {
   const _WorkspaceSearchResult({
     required this.filePath,
+    required this.relativePath,
     required this.line,
     required this.startOffset,
     required this.endOffset,
@@ -6414,6 +5047,7 @@ class _WorkspaceSearchResult {
   });
 
   final String filePath;
+  final String relativePath;
   final int line;
   final int startOffset;
   final int endOffset;
@@ -6423,58 +5057,87 @@ class _WorkspaceSearchResult {
   final IconData icon;
 }
 
+class _WorkspaceSearchFileGroup {
+  const _WorkspaceSearchFileGroup({
+    required this.relativePath,
+    required this.results,
+  });
+
+  final String relativePath;
+  final List<_WorkspaceSearchResult> results;
+}
+
+List<_WorkspaceSearchFileGroup> _workspaceSearchFileGroups(
+  List<_WorkspaceSearchResult> results,
+) {
+  final groups = <String, List<_WorkspaceSearchResult>>{};
+  for (final result in results) {
+    groups.putIfAbsent(result.relativePath, () => []).add(result);
+  }
+  return [
+    for (final entry in groups.entries)
+      _WorkspaceSearchFileGroup(
+        relativePath: entry.key,
+        results: List.unmodifiable(entry.value),
+      ),
+  ];
+}
+
 List<_WorkspaceSearchResult> _workspaceSearchResults(
   BuildContext context,
   WorkspaceState state,
-  String query,
+  SourceSearchOptions options,
 ) {
   final workspace = state.workspace;
-  final trimmedQuery = query.trim();
-  final normalizedQuery = trimmedQuery.toLowerCase();
-  if (workspace == null || normalizedQuery.isEmpty) {
+  final trimmedQuery = options.query.trim();
+  if (workspace == null || trimmedQuery.isEmpty) {
     return const [];
   }
   final results = <_WorkspaceSearchResult>[];
   final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  if (activePath != null) {
-    final relativePath = _relativeDocumentPath(workspace, activePath);
-    final lines = state.activeText.split('\n');
-    var lineStartOffset = 0;
-    for (var index = 0; index < lines.length; index++) {
-      final line = lines[index];
-      final matchColumn = line.toLowerCase().indexOf(normalizedQuery);
-      if (matchColumn < 0) {
-        lineStartOffset += line.length + 1;
-        continue;
-      }
-      final lineNumber = index + 1;
-      final startOffset = lineStartOffset + matchColumn;
-      results.add(
-        _WorkspaceSearchResult(
-          filePath: activePath,
-          line: lineNumber,
-          startOffset: startOffset,
-          endOffset: startOffset + trimmedQuery.length,
-          query: trimmedQuery,
-          title: _searchResultTitle(context, line),
-          subtitle: context.l10n.searchResultLine(relativePath, lineNumber),
-          icon: BusyMarkGlyphs.paragraph,
-        ),
-      );
-      if (results.length >= _maxWorkspaceSearchResults) {
-        return results;
-      }
-      lineStartOffset += line.length + 1;
-    }
-  }
-
   final sortedFiles = [...workspace.files]
     ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  if (activePath != null &&
+      sortedFiles.every((file) => file.absolutePath != activePath)) {
+    _addWorkspaceSearchTextResults(
+      context: context,
+      workspace: workspace,
+      file: DocumentFile(
+        absolutePath: activePath,
+        relativePath: p.basename(activePath),
+        kind: DocumentKind.markdown,
+        size: state.activeText.length,
+        lastModified: DateTime.fromMillisecondsSinceEpoch(0),
+      ),
+      text: state.activeText,
+      options: options.copyWith(query: trimmedQuery),
+      results: results,
+    );
+    if (results.length >= _maxWorkspaceSearchResults) {
+      return results;
+    }
+  }
   for (final file in sortedFiles) {
     if (!_isOpenableTextDocument(file)) {
       continue;
     }
-    if (!file.relativePath.toLowerCase().contains(normalizedQuery)) {
+    final text = file.absolutePath == activePath
+        ? state.activeText
+        : _readWorkspaceSearchText(file);
+    if (text != null) {
+      _addWorkspaceSearchTextResults(
+        context: context,
+        workspace: workspace,
+        file: file,
+        text: text,
+        options: options.copyWith(query: trimmedQuery),
+        results: results,
+      );
+      if (results.length >= _maxWorkspaceSearchResults) {
+        return results;
+      }
+    }
+    if (!_fileNameMatchesSearch(file.relativePath, options)) {
       continue;
     }
     final displayPath = file.relativePath;
@@ -6482,6 +5145,7 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
     results.add(
       _WorkspaceSearchResult(
         filePath: file.absolutePath,
+        relativePath: displayPath,
         line: 1,
         startOffset: 0,
         endOffset: 0,
@@ -6499,6 +5163,64 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 }
 
 const int _maxWorkspaceSearchResults = 80;
+const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
+
+String? _readWorkspaceSearchText(DocumentFile file) {
+  if (file.size > _maxWorkspaceSearchFileBytes) {
+    return null;
+  }
+  try {
+    return File(file.absolutePath).readAsStringSync();
+  } on Object {
+    return null;
+  }
+}
+
+void _addWorkspaceSearchTextResults({
+  required BuildContext context,
+  required Workspace workspace,
+  required DocumentFile file,
+  required String text,
+  required SourceSearchOptions options,
+  required List<_WorkspaceSearchResult> results,
+}) {
+  final relativePath = _relativeDocumentPath(workspace, file.absolutePath);
+  final document = SourceDocument(fullText: text);
+  final searchResult = searchSourceDocument(document, options);
+  for (final match in searchResult.matches) {
+    final lineNumber = document.lineIndex.lineNumberAtOffset(match.fullStart);
+    final line = document.lineIndex.lineAt(lineNumber).text;
+    results.add(
+      _WorkspaceSearchResult(
+        filePath: file.absolutePath,
+        relativePath: relativePath,
+        line: lineNumber,
+        startOffset: match.fullStart,
+        endOffset: match.fullEnd,
+        query: options.query,
+        title: _searchResultTitle(context, line),
+        subtitle: context.l10n.searchResultLine(relativePath, lineNumber),
+        icon: BusyMarkGlyphs.paragraph,
+      ),
+    );
+    if (results.length >= _maxWorkspaceSearchResults) {
+      return;
+    }
+  }
+}
+
+bool _fileNameMatchesSearch(String relativePath, SourceSearchOptions options) {
+  if (options.regex || options.wholeWord) {
+    return false;
+  }
+  final haystack = options.caseSensitive
+      ? relativePath
+      : relativePath.toLowerCase();
+  final needle = options.caseSensitive
+      ? options.query
+      : options.query.toLowerCase();
+  return haystack.contains(needle);
+}
 
 String _searchResultTitle(BuildContext context, String line) {
   final trimmed = _stripMarkdownForSearchResult(line, context: context);
@@ -6614,6 +5336,17 @@ class _DiagnosticRow extends ConsumerWidget {
             await ref
                 .read(workspaceControllerProvider.notifier)
                 .openActiveFile(diagnostic.filePath);
+            final line = diagnostic.line;
+            if (line != null) {
+              ref
+                  .read(_sourceNavigationTargetProvider.notifier)
+                  .set(
+                    _SourceNavigationTarget(
+                      filePath: diagnostic.filePath,
+                      line: line,
+                    ),
+                  );
+            }
             _clearGitDetailSelection(ref);
           }
         },
@@ -6622,9 +5355,12 @@ class _DiagnosticRow extends ConsumerWidget {
           child: Row(
             children: [
               Icon(
-                _diagnosticIcon(diagnostic.severity),
+                _diagnosticIconForSeverity(diagnostic.severity),
                 size: BusyMarkSizes.iconMd,
-                color: _diagnosticColor(context, diagnostic.severity),
+                color: _diagnosticColorForSeverity(
+                  context,
+                  diagnostic.severity,
+                ),
               ),
               const SizedBox(width: BusyMarkSpacing.md),
               Expanded(
@@ -6656,24 +5392,27 @@ class _DiagnosticRow extends ConsumerWidget {
       ),
     );
   }
+}
 
-  IconData _diagnosticIcon(DiagnosticSeverity severity) {
-    return switch (severity) {
-      DiagnosticSeverity.error => BusyMarkGlyphs.error,
-      DiagnosticSeverity.warning => BusyMarkGlyphs.warning,
-      DiagnosticSeverity.info => BusyMarkGlyphs.info,
-      DiagnosticSeverity.hint => BusyMarkGlyphs.tip,
-    };
-  }
+IconData _diagnosticIconForSeverity(DiagnosticSeverity severity) {
+  return switch (severity) {
+    DiagnosticSeverity.error => BusyMarkGlyphs.error,
+    DiagnosticSeverity.warning => BusyMarkGlyphs.warning,
+    DiagnosticSeverity.info => BusyMarkGlyphs.info,
+    DiagnosticSeverity.hint => BusyMarkGlyphs.tip,
+  };
+}
 
-  Color _diagnosticColor(BuildContext context, DiagnosticSeverity severity) {
-    return switch (severity) {
-      DiagnosticSeverity.error => Theme.of(context).colorScheme.error,
-      DiagnosticSeverity.warning => BusyMarkLinuxPalette.yellow,
-      DiagnosticSeverity.info => Theme.of(context).colorScheme.primary,
-      DiagnosticSeverity.hint => BusyMarkSurfaceColors.of(context).muted,
-    };
-  }
+Color _diagnosticColorForSeverity(
+  BuildContext context,
+  DiagnosticSeverity severity,
+) {
+  return switch (severity) {
+    DiagnosticSeverity.error => Theme.of(context).colorScheme.error,
+    DiagnosticSeverity.warning => BusyMarkLinuxPalette.yellow,
+    DiagnosticSeverity.info => Theme.of(context).colorScheme.primary,
+    DiagnosticSeverity.hint => BusyMarkSurfaceColors.of(context).muted,
+  };
 }
 
 class _EmptyPane extends StatelessWidget {
