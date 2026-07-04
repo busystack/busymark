@@ -53,13 +53,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
+    final sidebarVisible = settings.sidebarVisible;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, event.action);
       });
     });
     if (headerBar.isAvailable) {
-      _configureHeaderBar(headerBar);
+      _configureHeaderBar(headerBar, sidebarVisible);
     }
     final startupPath = ref.watch(startupPathProvider);
     if (!_startupPathConsumed &&
@@ -148,9 +149,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     );
     final sidebarOnRight = Directionality.of(context) == TextDirection.rtl;
     final bodyChildren = [
-      if (!sidebarOnRight) welcomeSidebar,
+      if (!sidebarOnRight && sidebarVisible) welcomeSidebar,
       welcomeContent,
-      if (sidebarOnRight) welcomeSidebar,
+      if (sidebarOnRight && sidebarVisible) welcomeSidebar,
     ];
 
     return Scaffold(
@@ -167,6 +168,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               actions: [
+                BusyMarkHeaderIconButton(
+                  tooltip: sidebarVisible
+                      ? context.l10n.hideSidebar
+                      : context.l10n.showSidebar,
+                  icon: BusyMarkGlyphs.sidebar,
+                  selected: sidebarVisible,
+                  shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                  onPressed: _toggleSidebar,
+                ),
                 BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>(
                   tooltip: l10n.mainMenu,
                   icon: BusyMarkGlyphs.menuVertical,
@@ -209,13 +219,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     );
   }
 
-  void _configureHeaderBar(LinuxHeaderBarService headerBar) {
+  void _configureHeaderBar(
+    LinuxHeaderBarService headerBar,
+    bool sidebarVisible,
+  ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
         await headerBar.setTitleRange(context.l10n.appTitle);
         await headerBar.setSidebarWidth(BusyMarkSizes.sidebarWidth);
-        await headerBar.setSidebarVisible(true);
-        await headerBar.setSidebarToggleVisible(false);
+        await headerBar.setSidebarVisible(sidebarVisible);
+        await headerBar.setSidebarToggleVisible(true);
         await headerBar.setSearchVisible(false);
         await headerBar.setBackVisible(false);
         await headerBar.setDocumentControlsVisible(false);
@@ -235,8 +248,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
-      case HeaderBarAction.back:
       case HeaderBarAction.sidebarToggle:
+        _toggleSidebar();
+      case HeaderBarAction.back:
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
@@ -247,6 +261,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.viewModeSplit:
         break;
     }
+  }
+
+  void _toggleSidebar() {
+    final settings = ref.read(appSettingsControllerProvider);
+    unawaited(
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setSidebarVisible(!settings.sidebarVisible),
+    );
   }
 
   void _handleWelcomeMenuAction(

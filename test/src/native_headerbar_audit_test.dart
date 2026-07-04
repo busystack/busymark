@@ -738,11 +738,15 @@ void main() {
     expect(welcome, contains('BusyMarkGlyphs.folder'));
     expect(welcome, contains('BusyMarkGlyphs.writersideProject'));
     expect(welcome, contains('BorderRadius.circular(BusyMarkRadius.md)'));
-    expect(welcome, contains('setSidebarVisible(true)'));
+    expect(welcome, contains('if (!sidebarOnRight && sidebarVisible)'));
+    expect(welcome, contains('if (sidebarOnRight && sidebarVisible)'));
+    expect(welcome, contains('setSidebarVisible(sidebarVisible)'));
     expect(welcome, contains('welcomeMainColor = colors.view'));
     expect(welcome, contains('backgroundColor: welcomeMainColor'));
     expect(welcome, contains('crossAxisAlignment: CrossAxisAlignment.stretch'));
-    expect(welcome, contains('setSidebarToggleVisible(false)'));
+    expect(welcome, contains('setSidebarToggleVisible(true)'));
+    expect(welcome, contains('case HeaderBarAction.sidebarToggle:'));
+    expect(welcome, contains('setSidebarVisible(!settings.sidebarVisible)'));
     expect(welcome, contains('setSearchVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
