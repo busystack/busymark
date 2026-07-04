@@ -1070,6 +1070,15 @@ void main() {
       find.textContaining('Unchanged context after change', findRichText: true),
       findsWidgets,
     );
+    final codeSpan = _richTextSpanContaining(tester, 'echo added');
+    expect(
+      _textSpanStyleForText(codeSpan, 'echo before')?.backgroundColor,
+      null,
+    );
+    expect(
+      _textSpanStyleForText(codeSpan, 'echo added')?.backgroundColor,
+      isNotNull,
+    );
     expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
@@ -3096,6 +3105,34 @@ Future<void> _tapLeftmostText(WidgetTester tester, String text) async {
   await tester.tap(leftmostFinder!);
 }
 
+TextSpan _richTextSpanContaining(WidgetTester tester, String text) {
+  for (final richText in tester.widgetList<RichText>(find.byType(RichText))) {
+    final span = richText.text;
+    if (span is TextSpan && span.toPlainText().contains(text)) {
+      return span;
+    }
+  }
+  throw StateError('No rich text contains "$text".');
+}
+
+TextStyle? _textSpanStyleForText(TextSpan span, String text) {
+  for (final child in _flattenTextSpans(span)) {
+    if (child.text == text) {
+      return child.style;
+    }
+  }
+  throw StateError('No text span equals "$text".');
+}
+
+Iterable<TextSpan> _flattenTextSpans(InlineSpan span) sync* {
+  if (span is TextSpan) {
+    yield span;
+    for (final child in span.children ?? const <InlineSpan>[]) {
+      yield* _flattenTextSpans(child);
+    }
+  }
+}
+
 Rect _rightmostTextRect(WidgetTester tester, String text) {
   final finder = find.textContaining(text);
   expect(finder, findsAtLeastNWidgets(1));
@@ -3464,23 +3501,95 @@ GitState _gitDiffState(String rootPath) {
     selectedDiff: GitDiff(
       title: 'Update docs',
       files: [
-        _gitDiffFile(
-          'README.md',
-          '# Readme old',
-          '# Readme change',
-          hunkHeading: 'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
-        ),
+        _readmeCodeBlockDiffFile(),
         _gitDiffFile('guide.md', '# Guide old', '# Guide change'),
       ],
       rawPatch: '',
       hasBinaryFiles: false,
       fileSnapshots: const {
-        'README.md': '# Readme change\n\nUnchanged context after change.\n',
+        'README.md':
+            '# Readme change\n\n'
+            '```bash\n'
+            'echo before\n'
+            'echo added\n'
+            'echo after\n'
+            '```\n\n'
+            'Unchanged context after change.\n',
         'guide.md': '# Guide change\n\nGuide context.\n',
       },
     ),
     selectedCommitFilePath: 'guide.md',
     openDiffFilePaths: const ['README.md', 'guide.md'],
+  );
+}
+
+GitDiffFile _readmeCodeBlockDiffFile() {
+  return const GitDiffFile(
+    oldPath: 'README.md',
+    newPath: 'README.md',
+    status: GitDiffFileStatus.modified,
+    hunks: [
+      GitDiffHunk(
+        oldStart: 1,
+        oldCount: 1,
+        newStart: 1,
+        newCount: 1,
+        heading: 'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
+        lines: [
+          GitDiffLine(
+            kind: GitDiffLineKind.removed,
+            content: '# Readme old',
+            oldLineNumber: 1,
+          ),
+          GitDiffLine(
+            kind: GitDiffLineKind.added,
+            content: '# Readme change',
+            newLineNumber: 1,
+          ),
+        ],
+      ),
+      GitDiffHunk(
+        oldStart: 3,
+        oldCount: 4,
+        newStart: 3,
+        newCount: 5,
+        heading: '',
+        lines: [
+          GitDiffLine(
+            kind: GitDiffLineKind.context,
+            content: '```bash',
+            oldLineNumber: 3,
+            newLineNumber: 3,
+          ),
+          GitDiffLine(
+            kind: GitDiffLineKind.context,
+            content: 'echo before',
+            oldLineNumber: 4,
+            newLineNumber: 4,
+          ),
+          GitDiffLine(
+            kind: GitDiffLineKind.added,
+            content: 'echo added',
+            newLineNumber: 5,
+          ),
+          GitDiffLine(
+            kind: GitDiffLineKind.context,
+            content: 'echo after',
+            oldLineNumber: 5,
+            newLineNumber: 6,
+          ),
+          GitDiffLine(
+            kind: GitDiffLineKind.context,
+            content: '```',
+            oldLineNumber: 6,
+            newLineNumber: 7,
+          ),
+        ],
+      ),
+    ],
+    binary: false,
+    additions: 2,
+    deletions: 1,
   );
 }
 

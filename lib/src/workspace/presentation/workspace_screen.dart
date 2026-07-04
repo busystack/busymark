@@ -4030,7 +4030,10 @@ _DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {
           source: snapshot.source,
           workspace: workspace,
         );
-  return _DiffPreviewData(document, _diffPreviewChangeTargets(diff, document));
+  return _DiffPreviewData(
+    document,
+    _diffPreviewChangeTargets(diff, document, filePath: snapshot?.path),
+  );
 }
 
 _DiffPreviewSnapshot? _diffPreviewSnapshot(GitDiff diff) {
@@ -4058,7 +4061,8 @@ PreviewDocument _diffPreviewDocumentFromSnapshot({
     filePath: filePath,
     workspace: workspace,
   );
-  final changedRanges = _diffChangedLineRanges(diff);
+  final changedRanges = _diffChangedLineRanges(diff, filePath: filePath);
+  final changedLineTones = _diffChangedLineTones(diff, filePath: filePath);
   final removedBlocksByIndex = _diffRemovedBlocksByPreviewBlock(
     diff: diff,
     document: document,
@@ -4072,9 +4076,11 @@ PreviewDocument _diffPreviewDocumentFromSnapshot({
     blocks: [
       for (final (index, block) in document.blocks.indexed) ...[
         ...?removedBlocksByIndex[index],
-        _blockOverlapsAnyChangedLine(block, changedRanges)
-            ? _withDiffPreviewTone(block, _DiffPreviewTone.changed)
-            : block,
+        _diffPreviewBlockFromSnapshot(
+          block: block,
+          changedRanges: changedRanges,
+          changedLineTones: changedLineTones,
+        ),
       ],
     ],
   );
@@ -4177,9 +4183,35 @@ List<PreviewBlock> _previewBlocksForDiffRun({
   }
 }
 
-List<_DiffChangedLineRange> _diffChangedLineRanges(GitDiff diff) {
+PreviewBlock _diffPreviewBlockFromSnapshot({
+  required PreviewBlock block,
+  required List<_DiffChangedLineRange> changedRanges,
+  required Map<int, _DiffPreviewTone> changedLineTones,
+}) {
+  final blockWithCodeLineTones = _withDiffPreviewCodeLineTones(
+    block,
+    changedLineTones,
+  );
+  final changed = _blockOverlapsAnyChangedLine(block, changedRanges);
+  if (!changed) {
+    return blockWithCodeLineTones;
+  }
+  if (block.kind == PreviewBlockKind.code &&
+      _diffPreviewCodeLineTones(blockWithCodeLineTones).isNotEmpty) {
+    return blockWithCodeLineTones;
+  }
+  return _withDiffPreviewTone(blockWithCodeLineTones, _DiffPreviewTone.changed);
+}
+
+List<_DiffChangedLineRange> _diffChangedLineRanges(
+  GitDiff diff, {
+  String? filePath,
+}) {
   final ranges = <_DiffChangedLineRange>[];
   for (final file in diff.files) {
+    if (filePath != null && !file.matchesPath(filePath)) {
+      continue;
+    }
     for (final hunk in file.hunks) {
       final changedNewLines = [
         for (final line in hunk.lines)
@@ -4204,6 +4236,30 @@ List<_DiffChangedLineRange> _diffChangedLineRanges(GitDiff diff) {
     }
   }
   return ranges;
+}
+
+Map<int, _DiffPreviewTone> _diffChangedLineTones(
+  GitDiff diff, {
+  required String filePath,
+}) {
+  final tones = <int, _DiffPreviewTone>{};
+  for (final file in diff.files) {
+    if (!file.matchesPath(filePath)) {
+      continue;
+    }
+    for (final hunk in file.hunks) {
+      for (final line in hunk.lines) {
+        if (line.kind != GitDiffLineKind.added) {
+          continue;
+        }
+        final lineNumber = line.newLineNumber;
+        if (lineNumber != null) {
+          tones[lineNumber] = _DiffPreviewTone.changed;
+        }
+      }
+    }
+  }
+  return tones;
 }
 
 Map<int, List<PreviewBlock>> _diffRemovedBlocksByPreviewBlock({
@@ -4252,10 +4308,11 @@ Map<int, List<PreviewBlock>> _diffRemovedBlocksByPreviewBlock({
 
 List<_DiffPreviewChangeTarget> _diffPreviewChangeTargets(
   GitDiff diff,
-  PreviewDocument document,
-) {
+  PreviewDocument document, {
+  String? filePath,
+}) {
   final targets = <_DiffPreviewChangeTarget>[];
-  for (final range in _diffChangedLineRanges(diff)) {
+  for (final range in _diffChangedLineRanges(diff, filePath: filePath)) {
     final blockIndex = _blockIndexForChangedLineRange(document.blocks, range);
     if (blockIndex == null) {
       continue;
@@ -4375,6 +4432,78 @@ PreviewBlock _withDiffPreviewTone(PreviewBlock block, _DiffPreviewTone? tone) {
   );
 }
 
+PreviewBlock _withDiffPreviewCodeLineTones(
+  PreviewBlock block,
+  Map<int, _DiffPreviewTone> sourceLineTones,
+) {
+  if (block.kind != PreviewBlockKind.code || sourceLineTones.isEmpty) {
+    return block;
+  }
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (startLine == null || endLine == null) {
+    return block;
+  }
+  final lines = block.text.split('\n');
+  final contentLineCount = lines.isNotEmpty && lines.last.isEmpty
+      ? lines.length - 1
+      : lines.length;
+  final firstContentSourceLine =
+      startLine + ((endLine - startLine + 1) >= contentLineCount + 2 ? 1 : 0);
+  final lineTones = <int, _DiffPreviewTone>{};
+  for (var index = 0; index < contentLineCount; index += 1) {
+    final tone = sourceLineTones[firstContentSourceLine + index];
+    if (tone != null) {
+      lineTones[index] = tone;
+    }
+  }
+  if (lineTones.isEmpty) {
+    return block;
+  }
+  return PreviewBlock(
+    kind: block.kind,
+    text: block.text,
+    level: block.level,
+    language: block.language,
+    inlines: block.inlines,
+    children: block.children,
+    attributes: {
+      ...block.attributes,
+      'diffCodeLineTones': _encodeDiffPreviewCodeLineTones(lineTones),
+    },
+    sourceStartLine: block.sourceStartLine,
+    sourceEndLine: block.sourceEndLine,
+    sourceStartOffset: block.sourceStartOffset,
+    sourceEndOffset: block.sourceEndOffset,
+  );
+}
+
+String _encodeDiffPreviewCodeLineTones(Map<int, _DiffPreviewTone> lineTones) {
+  final entries = lineTones.entries.toList()
+    ..sort((a, b) => a.key.compareTo(b.key));
+  return entries.map((entry) => '${entry.key}:${entry.value.name}').join(',');
+}
+
+Map<int, _DiffPreviewTone> _diffPreviewCodeLineTones(PreviewBlock block) {
+  final encoded = block.attributes['diffCodeLineTones'];
+  if (encoded == null || encoded.isEmpty) {
+    return const {};
+  }
+  final tones = <int, _DiffPreviewTone>{};
+  for (final part in encoded.split(',')) {
+    final separator = part.indexOf(':');
+    if (separator <= 0 || separator == part.length - 1) {
+      continue;
+    }
+    final lineIndex = int.tryParse(part.substring(0, separator));
+    final tone = _diffPreviewToneFromName(part.substring(separator + 1));
+    if (lineIndex != null && tone != null) {
+      tones[lineIndex] = tone;
+    }
+  }
+  return tones;
+}
+
 class _DiffPreviewData {
   const _DiffPreviewData(this.document, this.changeTargets);
 
@@ -4414,6 +4543,15 @@ class _DiffPreviewRun {
 }
 
 enum _DiffPreviewTone { added, removed, changed }
+
+_DiffPreviewTone? _diffPreviewToneFromName(String? name) {
+  if (name == null) {
+    return null;
+  }
+  return _DiffPreviewTone.values
+      .where((value) => value.name == name)
+      .firstOrNull;
+}
 
 DocumentFile? _documentFileForPath(Workspace workspace, String path) {
   for (final file in workspace.files) {
@@ -5095,9 +5233,8 @@ class _PreviewBlockView extends StatelessWidget {
           borderRadius: BorderRadius.circular(BusyMarkRadius.md),
           border: Border.all(color: colors.subtleBorder),
         ),
-        child: Text(
-          displayBlock.text,
-          style: _diffPreviewTextStyle(
+        child: Text.rich(
+          _diffPreviewCodeTextSpan(
             context,
             displayBlock,
             Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -5248,6 +5385,9 @@ class _PreviewBlockView extends StatelessWidget {
 
   Color _diffPreviewCodeBackground(BuildContext context, PreviewBlock block) {
     final colors = BusyMarkSurfaceColors.of(context);
+    if (_diffPreviewCodeLineTones(block).isNotEmpty) {
+      return colors.panel;
+    }
     return switch (block.attributes['diffTone']) {
       'added' => colors.admonitionTip,
       'changed' => colors.admonitionTip,
@@ -5256,25 +5396,63 @@ class _PreviewBlockView extends StatelessWidget {
     };
   }
 
+  TextSpan _diffPreviewCodeTextSpan(
+    BuildContext context,
+    PreviewBlock block,
+    TextStyle? base,
+  ) {
+    final lineTones = _diffPreviewCodeLineTones(block);
+    final blockStyle = _diffPreviewTextStyle(context, block, base);
+    if (lineTones.isEmpty) {
+      return TextSpan(text: block.text, style: blockStyle);
+    }
+    final spans = <InlineSpan>[];
+    final lines = block.text.split('\n');
+    for (final (index, line) in lines.indexed) {
+      final tone = lineTones[index];
+      spans.add(
+        TextSpan(
+          text: line,
+          style: tone == null
+              ? blockStyle
+              : _diffPreviewTextStyleForTone(context, tone, base),
+        ),
+      );
+      if (index < lines.length - 1) {
+        spans.add(const TextSpan(text: '\n'));
+      }
+    }
+    return TextSpan(style: blockStyle, children: spans);
+  }
+
   TextStyle? _diffPreviewTextStyle(
     BuildContext context,
     PreviewBlock block,
     TextStyle? base,
   ) {
+    return _diffPreviewTextStyleForTone(
+      context,
+      _diffPreviewToneFromName(block.attributes['diffTone']),
+      base,
+    );
+  }
+
+  TextStyle? _diffPreviewTextStyleForTone(
+    BuildContext context,
+    _DiffPreviewTone? tone,
+    TextStyle? base,
+  ) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return switch (block.attributes['diffTone']) {
-      'added' => (base ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
-        backgroundColor: colors.admonitionTip,
-      ),
-      'changed' => (base ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
-        backgroundColor: colors.admonitionTip,
-      ),
-      'removed' => (base ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
+    final effectiveBase = base ?? Theme.of(context).textTheme.bodyMedium;
+    return switch (tone) {
+      _DiffPreviewTone.added || _DiffPreviewTone.changed =>
+        effectiveBase?.copyWith(backgroundColor: colors.admonitionTip),
+      _DiffPreviewTone.removed => effectiveBase?.copyWith(
         color: colors.mutedForeground,
         backgroundColor: colors.admonitionWarning,
         decoration: TextDecoration.lineThrough,
       ),
-      _ => base,
+      null => base,
     };
   }
 
