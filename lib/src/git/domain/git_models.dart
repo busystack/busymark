@@ -230,12 +230,14 @@ class GitCommitDetails {
     this.body,
     required this.changedFiles,
     required this.patch,
+    this.fileSnapshots = const {},
   });
 
   final GitCommitSummary summary;
   final String? body;
   final List<GitDiffFile> changedFiles;
   final String patch;
+  final Map<String, String> fileSnapshots;
 }
 
 class GitDiff {
@@ -244,12 +246,14 @@ class GitDiff {
     required this.files,
     required this.rawPatch,
     required this.hasBinaryFiles,
+    this.fileSnapshots = const {},
   });
 
   final String title;
   final List<GitDiffFile> files;
   final String rawPatch;
   final bool hasBinaryFiles;
+  final Map<String, String> fileSnapshots;
 }
 
 class GitDiffFile {
@@ -270,6 +274,11 @@ class GitDiffFile {
   final bool binary;
   final int additions;
   final int deletions;
+
+  String get displayPath => newPath ?? oldPath ?? '';
+
+  bool matchesPath(String repoRelativePath) =>
+      newPath == repoRelativePath || oldPath == repoRelativePath;
 
   GitDiffFile copyWith({
     String? oldPath,

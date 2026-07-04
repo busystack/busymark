@@ -21,8 +21,9 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
   });
   Future<GitCommitDetails> commitDetails(
     GitRepositoryInfo repository,
-    String hash,
-  );
+    String hash, {
+    String? repoRelativePath,
+  });
   Future<List<GitBranch>> branches(GitRepositoryInfo repository);
   Future<List<String>> remotes(GitRepositoryInfo repository);
   Future<GitOperationResult> stage(

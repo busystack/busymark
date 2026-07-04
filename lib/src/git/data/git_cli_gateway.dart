@@ -207,8 +207,9 @@ class GitCliGateway implements GitRepositoryGateway {
   @override
   Future<GitCommitDetails> commitDetails(
     GitRepositoryInfo repository,
-    String hash,
-  ) async {
+    String hash, {
+    String? repoRelativePath,
+  }) async {
     if (!RegExp(r'^[0-9a-fA-F]{7,64}$').hasMatch(hash)) {
       throw GitFailure(
         code: GitFailureCode.invalidPath,
@@ -216,6 +217,9 @@ class GitCliGateway implements GitRepositoryGateway {
         rawMessage: hash,
         commandName: 'show',
       );
+    }
+    if (repoRelativePath != null) {
+      _validateRepoPath(repository, repoRelativePath);
     }
     final result = await _runGit(await _executable(), repository.rootPath, [
       'show',
@@ -226,6 +230,7 @@ class GitCliGateway implements GitRepositoryGateway {
       '--format=$_logFormat',
       '--patch',
       hash,
+      if (repoRelativePath != null) ...['--', repoRelativePath],
     ], commandName: 'show');
     final output = result.stdoutText;
     final diffIndex = output.indexOf('\ndiff --git ');
@@ -242,10 +247,34 @@ class GitCliGateway implements GitRepositoryGateway {
       );
     }
     final diff = diffParser.parse(patch, title: summary.subject);
+    final snapshots = <String, String>{};
+    final executable = await _executable();
+    for (final file in diff.files) {
+      if (file.binary) {
+        continue;
+      }
+      final path = file.displayPath;
+      if (path.isEmpty) {
+        continue;
+      }
+      final revision = file.status == GitDiffFileStatus.deleted
+          ? '$hash^'
+          : hash;
+      final content = await _fileContentAtRevision(
+        executable,
+        repository.rootPath,
+        revision,
+        path,
+      );
+      if (content != null) {
+        snapshots[path] = content;
+      }
+    }
     return GitCommitDetails(
       summary: summary,
       changedFiles: diff.files,
       patch: patch,
+      fileSnapshots: snapshots,
     );
   }
 
@@ -507,6 +536,22 @@ class GitCliGateway implements GitRepositoryGateway {
       stdout: result.stdoutText,
       stderr: result.stderrText,
     );
+  }
+
+  Future<String?> _fileContentAtRevision(
+    String executable,
+    String repoRoot,
+    String revision,
+    String repoRelativePath,
+  ) async {
+    final result = await _runGitMaybe(executable, repoRoot, [
+      'show',
+      '$revision:$repoRelativePath',
+    ], commandName: 'show');
+    if (result == null || !result.success) {
+      return null;
+    }
+    return result.stdoutText;
   }
 
   GitFailure _failureForResult(GitProcessResult result, String commandName) {
