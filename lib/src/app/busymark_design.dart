@@ -52,6 +52,7 @@ abstract final class BusyMarkSizes {
   static const double dialogCompact = 460;
   static const double dialogWide = 560;
   static const double popupMenuMinWidth = 180;
+  static const double popupMenuShortcutWidth = 240;
   static const double popupMenuItemHeight = 36;
   static const double languagePopupMinWidth = 220;
   static const double languagePopupMaxWidth = 280;
@@ -1076,7 +1077,15 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     final escapeDismiss = BusyMarkPopupEscapeDismissBinding(navigator);
     final buttonRect =
         button.localToGlobal(Offset.zero, ancestor: overlay) & button.size;
-    const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+    final hasShortcutItems = items.whereType<BusyMarkPopupMenuItem<T>>().any((
+      item,
+    ) {
+      final shortcut = item.shortcut;
+      return shortcut != null && shortcut.isNotEmpty;
+    });
+    final menuWidth = hasShortcutItems
+        ? BusyMarkSizes.popupMenuShortcutWidth
+        : BusyMarkSizes.popupMenuMinWidth;
     final minLeft = BusyMarkSpacing.sm;
     final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
     final rawLeft = buttonRect.center.dx - menuWidth / 2;
@@ -1112,7 +1121,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
           top: _busyMarkHeaderPopoverArrowHeight + BusyMarkSpacing.sm,
           bottom: BusyMarkSpacing.sm,
         ),
-        constraints: const BoxConstraints.tightFor(width: menuWidth),
+        constraints: BoxConstraints.tightFor(width: menuWidth),
         clipBehavior: Clip.antiAlias,
         popUpAnimationStyle: AnimationStyle.noAnimation,
         requestFocus: true,
@@ -1298,6 +1307,15 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
+    final shortcut = widget.shortcut;
+    final shortcutText = shortcut == null || shortcut.isEmpty
+        ? null
+        : Text(
+            shortcut,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textStyle.copyWith(color: colors.mutedForeground),
+          );
     final item = Semantics(
       checked: widget.trailingCheck ? widget.checked : null,
       button: true,
@@ -1335,6 +1353,10 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
                             ],
                             Expanded(child: labelText),
                             const SizedBox(width: BusyMarkSpacing.sm),
+                            if (shortcutText != null) ...[
+                              shortcutText,
+                              const SizedBox(width: BusyMarkSpacing.sm),
+                            ],
                             Opacity(
                               opacity: widget.checked ? 1 : 0,
                               child: const Icon(BusyMarkGlyphs.check),
@@ -1342,13 +1364,16 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
                           ],
                         )
                       : Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (widget.icon != null) ...[
                               Icon(widget.icon),
                               const SizedBox(width: BusyMarkSpacing.sm),
                             ],
-                            Flexible(child: labelText),
+                            Expanded(child: labelText),
+                            if (shortcutText != null) ...[
+                              const SizedBox(width: BusyMarkSpacing.sm),
+                              shortcutText,
+                            ],
                           ],
                         ),
                 ),
@@ -1358,7 +1383,6 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
         ),
       ),
     );
-    final shortcut = widget.shortcut;
     if (shortcut == null || shortcut.isEmpty) {
       return item;
     }

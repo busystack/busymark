@@ -510,6 +510,24 @@ void main() {
     expect(find.text('Ctrl+Shift+Tab'), findsOneWidget);
     expect(find.text('Ctrl+W'), findsOneWidget);
     expect(find.text('Ctrl+Shift+W'), findsOneWidget);
+    expect(find.text(l10n.viewMode), findsOneWidget);
+    expect(find.text(l10n.editor), findsOneWidget);
+    expect(find.text(l10n.source), findsOneWidget);
+    expect(find.text(l10n.preview), findsOneWidget);
+    expect(find.text(l10n.split), findsOneWidget);
+    expect(
+      find.text(BusyMarkDocumentViewShortcutLabels.editor),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkDocumentViewShortcutLabels.source),
+      findsOneWidget,
+    );
+    expect(
+      find.text(BusyMarkDocumentViewShortcutLabels.preview),
+      findsOneWidget,
+    );
+    expect(find.text(BusyMarkDocumentViewShortcutLabels.split), findsOneWidget);
     expect(find.text('Ctrl+A'), findsOneWidget);
     expect(find.text('Ctrl+X'), findsAtLeastNWidgets(1));
     expect(find.text('Ctrl+C'), findsOneWidget);
@@ -820,6 +838,17 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    Future<void> pressControlAltShortcut(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -834,6 +863,27 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
+
+    await pressControlAltShortcut(LogicalKeyboardKey.digit3);
+    expect(
+      container.read(appSettingsControllerProvider).documentViewMode,
+      DocumentViewModePreference.preview,
+    );
+    await pressControlAltShortcut(LogicalKeyboardKey.digit2);
+    expect(
+      container.read(appSettingsControllerProvider).documentViewMode,
+      DocumentViewModePreference.source,
+    );
+    await pressControlAltShortcut(LogicalKeyboardKey.digit1);
+    expect(
+      container.read(appSettingsControllerProvider).documentViewMode,
+      DocumentViewModePreference.editor,
+    );
+    await pressControlAltShortcut(LogicalKeyboardKey.digit4);
+    expect(
+      container.read(appSettingsControllerProvider).documentViewMode,
+      DocumentViewModePreference.split,
+    );
 
     final controller = container.read(workspaceControllerProvider.notifier);
     await controller.openActiveFile(second.path);

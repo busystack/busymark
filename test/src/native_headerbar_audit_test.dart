@@ -646,6 +646,26 @@ void main() {
     expect(app, contains('source: l10n.source'));
     expect(app, contains('preview: l10n.preview'));
     expect(app, contains('split: l10n.split'));
+    expect(
+      app,
+      contains('editorShortcut: BusyMarkDocumentViewShortcutLabels.editor'),
+    );
+    expect(
+      app,
+      contains('sourceShortcut: BusyMarkDocumentViewShortcutLabels.source'),
+    );
+    expect(
+      app,
+      contains('previewShortcut: BusyMarkDocumentViewShortcutLabels.preview'),
+    );
+    expect(
+      app,
+      contains('splitShortcut: BusyMarkDocumentViewShortcutLabels.split'),
+    );
+    expect(
+      app,
+      contains('sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar'),
+    );
     expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
@@ -661,26 +681,41 @@ void main() {
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));
     expect(native, contains('object-select-symbolic'));
+    final viewModeItemOffset = native.indexOf(
+      'static GtkWidget* create_view_mode_item',
+    );
     final viewModeLabelPack = native.indexOf(
       'gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0)',
+      viewModeItemOffset,
+    );
+    final viewModeIconPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0)',
+      viewModeItemOffset,
+    );
+    final viewModeShortcutPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0)',
+      viewModeItemOffset,
     );
     final viewModeCheckPack = native.indexOf(
       'gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0)',
+      viewModeItemOffset,
     );
+    expect(viewModeItemOffset, isNonNegative);
+    expect(viewModeIconPack, isNonNegative);
     expect(viewModeLabelPack, isNonNegative);
+    expect(viewModeShortcutPack, isNonNegative);
     expect(viewModeCheckPack, isNonNegative);
+    expect(viewModeIconPack, lessThan(viewModeLabelPack));
     expect(viewModeLabelPack, lessThan(viewModeCheckPack));
+    expect(viewModeShortcutPack, lessThan(viewModeCheckPack));
+    expect(native, contains('view_mode_icon_name(mode)'));
+    expect(native, contains('view_mode_icon_name("split")'));
+    expect(native, contains('"busymark-shortcut-widget", shortcut'));
+    expect(native, contains('set_menu_item_shortcut(item, shortcut)'));
     expect(native, contains('button.busymark-menu-row:focus'));
     expect(native, contains('button.busymark-menu-row:active'));
     expect(native, contains('outline-width: 0;'));
     expect(native, contains('self->view_mode_button = gtk_menu_button_new()'));
-    expect(
-      native,
-      contains(
-        'gtk_widget_set_size_request(self->view_mode_button, -1,\n'
-        '                              kHeaderButtonHeight)',
-      ),
-    );
     expect(
       native,
       contains(
@@ -689,25 +724,30 @@ void main() {
     );
     expect(
       native,
-      contains('gtk_label_set_text(GTK_LABEL(self->view_mode_label)'),
+      contains('gtk_image_set_from_icon_name(GTK_IMAGE(self->view_mode_icon)'),
     );
     expect(
       native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(view_button_box), self->view_mode_label',
-      ),
+      contains('gtk_container_add(GTK_CONTAINER(self->view_mode_button)'),
     );
-    expect(native, contains('kHeaderButtonContentSpacing = 4'));
-    expect(
-      native,
-      contains(
-        'gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonContentSpacing)',
-      ),
-    );
+    expect(native, contains('make_icon_button_square(self->view_mode_button)'));
     expect(native, isNot(contains('create_menu_button(self->view_mode_menu')));
+    expect(native, isNot(contains('self->view_mode_label')));
+    expect(
+      native,
+      contains(
+        'set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar',
+      ),
+    );
     expect(
       native,
       contains('set_widget_tooltip(self->view_mode_button, view_mode)'),
+    );
+    expect(
+      native,
+      contains(
+        'set_menu_item_label_with_shortcut(self->view_mode_editor_item, editor',
+      ),
     );
     expect(
       native,

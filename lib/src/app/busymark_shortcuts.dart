@@ -170,6 +170,80 @@ abstract final class BusyMarkAppShortcutActivators {
       BusyMarkAppShortcuts.toggleSidebar.activator;
 }
 
+enum BusyMarkDocumentViewShortcutAction { editor, source, preview, split }
+
+abstract final class BusyMarkDocumentViewShortcuts {
+  const BusyMarkDocumentViewShortcuts._();
+
+  static const editorLabel = 'Ctrl+Alt+1';
+  static const sourceLabel = 'Ctrl+Alt+2';
+  static const previewLabel = 'Ctrl+Alt+3';
+  static const splitLabel = 'Ctrl+Alt+4';
+
+  static const editor = BusyMarkShortcutDefinition(
+    label: editorLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit1,
+      control: true,
+      alt: true,
+    ),
+  );
+  static const source = BusyMarkShortcutDefinition(
+    label: sourceLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit2,
+      control: true,
+      alt: true,
+    ),
+  );
+  static const preview = BusyMarkShortcutDefinition(
+    label: previewLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit3,
+      control: true,
+      alt: true,
+    ),
+  );
+  static const split = BusyMarkShortcutDefinition(
+    label: splitLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.digit4,
+      control: true,
+      alt: true,
+    ),
+  );
+
+  static const definitions =
+      <BusyMarkDocumentViewShortcutAction, BusyMarkShortcutDefinition>{
+        BusyMarkDocumentViewShortcutAction.editor: editor,
+        BusyMarkDocumentViewShortcutAction.source: source,
+        BusyMarkDocumentViewShortcutAction.preview: preview,
+        BusyMarkDocumentViewShortcutAction.split: split,
+      };
+}
+
+abstract final class BusyMarkDocumentViewShortcutLabels {
+  const BusyMarkDocumentViewShortcutLabels._();
+
+  static const editor = BusyMarkDocumentViewShortcuts.editorLabel;
+  static const source = BusyMarkDocumentViewShortcuts.sourceLabel;
+  static const preview = BusyMarkDocumentViewShortcuts.previewLabel;
+  static const split = BusyMarkDocumentViewShortcuts.splitLabel;
+}
+
+abstract final class BusyMarkDocumentViewShortcutActivators {
+  const BusyMarkDocumentViewShortcutActivators._();
+
+  static ShortcutActivator get editor =>
+      BusyMarkDocumentViewShortcuts.editor.activator;
+  static ShortcutActivator get source =>
+      BusyMarkDocumentViewShortcuts.source.activator;
+  static ShortcutActivator get preview =>
+      BusyMarkDocumentViewShortcuts.preview.activator;
+  static ShortcutActivator get split =>
+      BusyMarkDocumentViewShortcuts.split.activator;
+}
+
 enum BusyMarkTextEditingShortcutAction {
   selectAll,
   cut,

@@ -92,6 +92,22 @@ class BusyMarkApp extends ConsumerWidget {
               BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
               BusyMarkAppShortcutActivators.toggleSidebar:
                   const _ToggleSidebarIntent(),
+              BusyMarkDocumentViewShortcutActivators.editor:
+                  const _DocumentViewModeIntent(
+                    DocumentViewModePreference.editor,
+                  ),
+              BusyMarkDocumentViewShortcutActivators.source:
+                  const _DocumentViewModeIntent(
+                    DocumentViewModePreference.source,
+                  ),
+              BusyMarkDocumentViewShortcutActivators.preview:
+                  const _DocumentViewModeIntent(
+                    DocumentViewModePreference.preview,
+                  ),
+              BusyMarkDocumentViewShortcutActivators.split:
+                  const _DocumentViewModeIntent(
+                    DocumentViewModePreference.split,
+                  ),
             },
             child: Actions(
               actions: {
@@ -236,6 +252,17 @@ class BusyMarkApp extends ConsumerWidget {
                     return null;
                   },
                 ),
+                _DocumentViewModeIntent:
+                    CallbackAction<_DocumentViewModeIntent>(
+                      onInvoke: (intent) {
+                        unawaited(
+                          ref
+                              .read(appSettingsControllerProvider.notifier)
+                              .setDocumentViewMode(intent.mode),
+                        );
+                        return null;
+                      },
+                    ),
               },
               child: _BusyMarkSearchShortcutHandler(
                 child: ClipRRect(
@@ -535,10 +562,15 @@ class BusyMarkApp extends ConsumerWidget {
       preview: l10n.preview,
       split: l10n.split,
       viewMode: l10n.viewMode,
+      editorShortcut: BusyMarkDocumentViewShortcutLabels.editor,
+      sourceShortcut: BusyMarkDocumentViewShortcutLabels.source,
+      previewShortcut: BusyMarkDocumentViewShortcutLabels.preview,
+      splitShortcut: BusyMarkDocumentViewShortcutLabels.split,
       search: material.searchFieldLabel,
       refresh: l10n.validate,
       menu: l10n.mainMenu,
       sidebar: settings.sidebarVisible ? l10n.hideSidebar : l10n.showSidebar,
+      sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
       back: material.backButtonTooltip,
       save: l10n.save,
       settings: l10n.settings,
@@ -779,4 +811,10 @@ class _OpenSearchIntent extends Intent {
 
 class _ToggleSidebarIntent extends Intent {
   const _ToggleSidebarIntent();
+}
+
+class _DocumentViewModeIntent extends Intent {
+  const _DocumentViewModeIntent(this.mode);
+
+  final DocumentViewModePreference mode;
 }

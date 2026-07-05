@@ -472,20 +472,25 @@ class WorkspaceScreen extends ConsumerWidget {
                         shortcut: BusyMarkAppShortcutLabels.find,
                         onPressed: () => _toggleSearch(ref),
                       ),
-                      BusyMarkHeaderIconButton(
-                        tooltip:
-                            settings.documentViewMode ==
-                                DocumentViewModePreference.source
-                            ? context.l10n.showPreview
-                            : context.l10n.hidePreview,
-                        icon: BusyMarkGlyphs.preview,
-                        selected:
-                            settings.documentViewMode !=
-                            DocumentViewModePreference.source,
-                        onPressed: () => settingsController.setPreviewVisible(
-                          settings.documentViewMode ==
-                              DocumentViewModePreference.source,
+                      BusyMarkHeaderPopupMenuButton<DocumentViewModePreference>(
+                        tooltip: context.l10n.viewMode,
+                        icon: _documentViewModeIcon(settings.documentViewMode),
+                        shortcut: _documentViewModeShortcut(
+                          settings.documentViewMode,
                         ),
+                        itemBuilder: (context) => [
+                          for (final mode in DocumentViewModePreference.values)
+                            BusyMarkPopupMenuItem(
+                              value: mode,
+                              label: _documentViewModeLabel(context, mode),
+                              icon: _documentViewModeIcon(mode),
+                              shortcut: _documentViewModeShortcut(mode),
+                              checked: mode == settings.documentViewMode,
+                              trailingCheck: true,
+                            ),
+                        ],
+                        onSelected: (mode) =>
+                            settingsController.setDocumentViewMode(mode),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.settings,
@@ -705,6 +710,40 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.source => AppViewMode.source,
       DocumentViewModePreference.preview => AppViewMode.preview,
       DocumentViewModePreference.split => AppViewMode.split,
+    };
+  }
+
+  IconData _documentViewModeIcon(DocumentViewModePreference mode) {
+    return switch (mode) {
+      DocumentViewModePreference.editor => BusyMarkGlyphs.editorView,
+      DocumentViewModePreference.source => BusyMarkGlyphs.sourceView,
+      DocumentViewModePreference.preview => BusyMarkGlyphs.previewView,
+      DocumentViewModePreference.split => BusyMarkGlyphs.splitView,
+    };
+  }
+
+  String _documentViewModeLabel(
+    BuildContext context,
+    DocumentViewModePreference mode,
+  ) {
+    return switch (mode) {
+      DocumentViewModePreference.editor => context.l10n.editor,
+      DocumentViewModePreference.source => context.l10n.source,
+      DocumentViewModePreference.preview => context.l10n.preview,
+      DocumentViewModePreference.split => context.l10n.split,
+    };
+  }
+
+  String _documentViewModeShortcut(DocumentViewModePreference mode) {
+    return switch (mode) {
+      DocumentViewModePreference.editor =>
+        BusyMarkDocumentViewShortcutLabels.editor,
+      DocumentViewModePreference.source =>
+        BusyMarkDocumentViewShortcutLabels.source,
+      DocumentViewModePreference.preview =>
+        BusyMarkDocumentViewShortcutLabels.preview,
+      DocumentViewModePreference.split =>
+        BusyMarkDocumentViewShortcutLabels.split,
     };
   }
 

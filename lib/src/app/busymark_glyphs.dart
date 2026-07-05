@@ -26,6 +26,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData documentHistory = YaruIcons.document_history;
   static const IconData documentOpen = YaruIcons.document_open;
   static const IconData edit = YaruIcons.pen;
+  static const IconData editorView = YaruIcons.text_editor;
   static const IconData error = YaruIcons.error;
   static const IconData externalLink = YaruIcons.external_link;
   static const IconData folder = YaruIcons.folder;
@@ -55,6 +56,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData paragraph = YaruIcons.insert_text;
   static const IconData paste = YaruIcons.paste;
   static const IconData preview = YaruIcons.eye;
+  static const IconData previewView = YaruIcons.eye;
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
@@ -67,6 +69,8 @@ abstract final class BusyMarkGlyphs {
   static const IconData sidebar = YaruIcons.sidebar;
   static const IconData startTopic = YaruIcons.document;
   static const IconData strikethrough = YaruIcons.strikethrough;
+  static const IconData sourceView = YaruIcons.code;
+  static const IconData splitView = YaruIcons.panel_look;
   static const IconData symbols = YaruIcons.symbols;
   static const IconData tab = YaruIcons.tab_new;
   static const IconData table = YaruIcons.office_spreadsheet;

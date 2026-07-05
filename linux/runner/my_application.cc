@@ -23,7 +23,6 @@ constexpr gint kHeaderSearchEntryContentHeight =
 constexpr gint kHeaderButtonRadius = 8;
 constexpr gint kHeaderControlHorizontalPadding = 8;
 constexpr gint kHeaderButtonSpacing = 8;
-constexpr gint kHeaderButtonContentSpacing = 4;
 constexpr gint kHeaderSidebarInset = 8;
 constexpr gint kHeaderWindowRadius = 14;
 constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
@@ -61,7 +60,7 @@ struct _MyApplication {
   gboolean search_visible;
   GtkWidget* view_mode_box;
   GtkWidget* view_mode_button;
-  GtkWidget* view_mode_label;
+  GtkWidget* view_mode_icon;
   GtkWidget* view_mode_menu;
   GtkWidget* view_mode_editor_item;
   GtkWidget* view_mode_source_item;
@@ -403,7 +402,7 @@ static void update_titlebar_direction(MyApplication* self) {
   set_widget_direction(self->search_entry, direction);
   set_widget_direction(self->view_mode_box, direction);
   set_widget_direction(self->view_mode_button, direction);
-  set_widget_direction(self->view_mode_label, direction);
+  set_widget_direction(self->view_mode_icon, direction);
   set_widget_direction(self->refresh_button, direction);
   set_widget_direction(self->sidebar_search_button, direction);
   set_widget_direction(self->sidebar_menu_button, direction);
@@ -922,32 +921,20 @@ static const gchar* view_mode_action(const gchar* mode) {
   return nullptr;
 }
 
-static GtkWidget* view_mode_item(MyApplication* self, const gchar* mode) {
+static const gchar* view_mode_icon_name(const gchar* mode) {
   if (g_strcmp0(mode, "editor") == 0) {
-    return self->view_mode_editor_item;
+    return "accessories-text-editor-symbolic";
   }
   if (g_strcmp0(mode, "source") == 0) {
-    return self->view_mode_source_item;
+    return "text-x-generic-symbolic";
   }
   if (g_strcmp0(mode, "preview") == 0) {
-    return self->view_mode_preview_item;
+    return "document-print-preview-symbolic";
   }
   if (g_strcmp0(mode, "split") == 0) {
-    return self->view_mode_split_item;
+    return "view-dual-symbolic";
   }
-  return nullptr;
-}
-
-static const gchar* menu_item_label(GtkWidget* item) {
-  if (item == nullptr) {
-    return "";
-  }
-  GtkWidget* label = static_cast<GtkWidget*>(
-      g_object_get_data(G_OBJECT(item), "busymark-label-widget"));
-  if (label != nullptr && GTK_IS_LABEL(label)) {
-    return gtk_label_get_text(GTK_LABEL(label));
-  }
-  return "";
+  return "view-dual-symbolic";
 }
 
 static void set_menu_item_label(GtkWidget* item, const gchar* text) {
@@ -958,6 +945,18 @@ static void set_menu_item_label(GtkWidget* item, const gchar* text) {
       g_object_get_data(G_OBJECT(item), "busymark-label-widget"));
   if (label != nullptr && GTK_IS_LABEL(label)) {
     gtk_label_set_text(GTK_LABEL(label), text);
+  }
+}
+
+static void set_menu_item_shortcut(GtkWidget* item, const gchar* shortcut) {
+  if (item == nullptr) {
+    return;
+  }
+  GtkWidget* label = static_cast<GtkWidget*>(
+      g_object_get_data(G_OBJECT(item), "busymark-shortcut-widget"));
+  if (label != nullptr && GTK_IS_LABEL(label)) {
+    gtk_label_set_text(GTK_LABEL(label), shortcut != nullptr ? shortcut : "");
+    gtk_widget_set_visible(label, shortcut != nullptr && shortcut[0] != '\0');
   }
 }
 
@@ -972,14 +971,14 @@ static void set_menu_item_checked(GtkWidget* item, gboolean checked) {
   }
 }
 
-static void update_view_mode_label(MyApplication* self) {
-  if (self->view_mode_label == nullptr ||
-      !GTK_IS_LABEL(self->view_mode_label)) {
+static void update_view_mode_icon(MyApplication* self) {
+  if (self->view_mode_icon == nullptr ||
+      !GTK_IS_IMAGE(self->view_mode_icon)) {
     return;
   }
   const gchar* mode = self->view_mode != nullptr ? self->view_mode : "split";
-  gtk_label_set_text(GTK_LABEL(self->view_mode_label),
-                     menu_item_label(view_mode_item(self, mode)));
+  gtk_image_set_from_icon_name(GTK_IMAGE(self->view_mode_icon),
+                               view_mode_icon_name(mode), GTK_ICON_SIZE_MENU);
 }
 
 static void set_view_mode(MyApplication* self, const gchar* mode) {
@@ -996,7 +995,7 @@ static void set_view_mode(MyApplication* self, const gchar* mode) {
                         g_strcmp0(mode, "preview") == 0);
   set_menu_item_checked(self->view_mode_split_item,
                         g_strcmp0(mode, "split") == 0);
-  update_view_mode_label(self);
+  update_view_mode_icon(self);
 }
 
 static void view_mode_clicked_cb(GtkWidget* widget, gpointer user_data) {
@@ -1017,16 +1016,26 @@ static GtkWidget* create_view_mode_item(MyApplication* self,
                                         const gchar* mode) {
   GtkWidget* item = gtk_button_new();
   GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  GtkWidget* icon =
+      gtk_image_new_from_icon_name(view_mode_icon_name(mode), GTK_ICON_SIZE_MENU);
   GtkWidget* check =
       gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
+  GtkWidget* shortcut = gtk_label_new("");
   gtk_widget_set_opacity(check, 0.0);
   gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(icon, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(shortcut, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
+  gtk_label_set_xalign(GTK_LABEL(shortcut), 1.0);
   gtk_widget_set_hexpand(label, TRUE);
+  gtk_style_context_add_class(gtk_widget_get_style_context(shortcut),
+                              "dim-label");
+  gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(item), box);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
@@ -1037,6 +1046,7 @@ static GtkWidget* create_view_mode_item(MyApplication* self,
   gtk_style_context_add_class(gtk_widget_get_style_context(item),
                               "busymark-menu-row");
   g_object_set_data(G_OBJECT(item), "busymark-label-widget", label);
+  g_object_set_data(G_OBJECT(item), "busymark-shortcut-widget", shortcut);
   g_object_set_data(G_OBJECT(item), "busymark-check-widget", check);
   g_object_set_data_full(G_OBJECT(item), "busymark-view-mode",
                          g_strdup(mode), g_free);
@@ -1067,10 +1077,26 @@ static void set_widget_tooltip(GtkWidget* widget, const gchar* tooltip) {
   }
 }
 
+static void set_widget_tooltip_with_shortcut(GtkWidget* widget,
+                                             const gchar* tooltip,
+                                             const gchar* shortcut) {
+  if (widget == nullptr || !GTK_IS_WIDGET(widget) || tooltip == nullptr) {
+    return;
+  }
+  if (shortcut == nullptr || shortcut[0] == '\0') {
+    gtk_widget_set_tooltip_text(widget, tooltip);
+    return;
+  }
+  gchar* value = g_strdup_printf("%s (%s)", tooltip, shortcut);
+  gtk_widget_set_tooltip_text(widget, value);
+  g_free(value);
+}
+
 static void set_menu_item_label_with_shortcut(GtkWidget* item,
                                               const gchar* text,
                                               const gchar* shortcut) {
   set_menu_item_label(item, text);
+  set_menu_item_shortcut(item, shortcut);
   if (item == nullptr || text == nullptr || !GTK_IS_WIDGET(item)) {
     return;
   }
@@ -1089,10 +1115,16 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* preview = fl_lookup_string_arg(args, "preview");
   const gchar* split = fl_lookup_string_arg(args, "split");
   const gchar* view_mode = fl_lookup_string_arg(args, "viewMode");
+  const gchar* editor_shortcut = fl_lookup_string_arg(args, "editorShortcut");
+  const gchar* source_shortcut = fl_lookup_string_arg(args, "sourceShortcut");
+  const gchar* preview_shortcut = fl_lookup_string_arg(args, "previewShortcut");
+  const gchar* split_shortcut = fl_lookup_string_arg(args, "splitShortcut");
   const gchar* search = fl_lookup_string_arg(args, "search");
   const gchar* refresh = fl_lookup_string_arg(args, "refresh");
   const gchar* menu = fl_lookup_string_arg(args, "menu");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
+  const gchar* sidebar_shortcut =
+      fl_lookup_string_arg(args, "sidebarShortcut");
   const gchar* back = fl_lookup_string_arg(args, "back");
   const gchar* settings = fl_lookup_string_arg(args, "settings");
   const gchar* settings_shortcut =
@@ -1107,7 +1139,8 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
-  set_widget_tooltip(self->sidebar_toggle_button, sidebar);
+  set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar,
+                                   sidebar_shortcut);
   set_widget_tooltip(self->sidebar_search_button, search);
   if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
       search != nullptr) {
@@ -1116,10 +1149,14 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
   set_widget_tooltip(self->view_mode_button, view_mode);
-  set_menu_item_label(self->view_mode_editor_item, editor);
-  set_menu_item_label(self->view_mode_source_item, source);
-  set_menu_item_label(self->view_mode_preview_item, preview);
-  set_menu_item_label(self->view_mode_split_item, split);
+  set_menu_item_label_with_shortcut(self->view_mode_editor_item, editor,
+                                    editor_shortcut);
+  set_menu_item_label_with_shortcut(self->view_mode_source_item, source,
+                                    source_shortcut);
+  set_menu_item_label_with_shortcut(self->view_mode_preview_item, preview,
+                                    preview_shortcut);
+  set_menu_item_label_with_shortcut(self->view_mode_split_item, split,
+                                    split_shortcut);
   set_menu_item_label_with_shortcut(self->settings_item, settings,
                                     settings_shortcut);
   set_menu_item_label_with_shortcut(self->keyboard_shortcuts_item,
@@ -1128,7 +1165,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_menu_item_label_with_shortcut(self->markdown_html_item,
                                     markdown_html, markdown_html_shortcut);
   set_menu_item_label(self->about_item, about);
-  update_view_mode_label(self);
+  update_view_mode_icon(self);
 }
 
 static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
@@ -1346,8 +1383,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->view_mode_button = gtk_menu_button_new();
   gtk_button_set_relief(GTK_BUTTON(self->view_mode_button), GTK_RELIEF_NONE);
-  gtk_widget_set_size_request(self->view_mode_button, -1,
-                              kHeaderButtonHeight);
   gtk_widget_set_valign(self->view_mode_button, GTK_ALIGN_CENTER);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
                               GTK_STYLE_CLASS_FLAT);
@@ -1359,17 +1394,12 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                                   TRUE);
   gtk_menu_button_set_popover(GTK_MENU_BUTTON(self->view_mode_button),
                               self->view_mode_menu);
-  GtkWidget* view_button_box =
-      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonContentSpacing);
-  self->view_mode_label = gtk_label_new("");
-  gtk_label_set_ellipsize(GTK_LABEL(self->view_mode_label),
-                          PANGO_ELLIPSIZE_END);
-  GtkWidget* view_arrow =
-      gtk_image_new_from_icon_name("pan-down-symbolic", GTK_ICON_SIZE_MENU);
-  gtk_box_pack_start(GTK_BOX(view_button_box), self->view_mode_label, TRUE,
-                     TRUE, 0);
-  gtk_box_pack_start(GTK_BOX(view_button_box), view_arrow, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(self->view_mode_button), view_button_box);
+  self->view_mode_icon =
+      gtk_image_new_from_icon_name(view_mode_icon_name("split"),
+                                   GTK_ICON_SIZE_MENU);
+  gtk_container_add(GTK_CONTAINER(self->view_mode_button),
+                    self->view_mode_icon);
+  make_icon_button_square(self->view_mode_button);
   gtk_box_pack_start(GTK_BOX(self->view_mode_box), self->view_mode_button,
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->view_mode_box, FALSE, FALSE, 0);
@@ -1741,7 +1771,7 @@ static void my_application_init(MyApplication* self) {
   self->search_visible = TRUE;
   self->view_mode_box = nullptr;
   self->view_mode_button = nullptr;
-  self->view_mode_label = nullptr;
+  self->view_mode_icon = nullptr;
   self->view_mode_menu = nullptr;
   self->view_mode_editor_item = nullptr;
   self->view_mode_source_item = nullptr;
