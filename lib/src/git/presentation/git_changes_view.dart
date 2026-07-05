@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
+import 'git_file_status_colors.dart';
 
 class GitChangesView extends StatefulWidget {
   const GitChangesView({
@@ -51,7 +51,7 @@ class _GitChangesViewState extends State<GitChangesView> {
       return Center(child: Text(context.l10n.gitNoChanges));
     }
     if (snapshot.clean) {
-      return Center(child: Text(context.l10n.gitClean));
+      return Center(child: Text(context.l10n.gitNoChanges));
     }
     final trackedFiles = _trackedFiles(snapshot);
     return Column(
@@ -244,7 +244,6 @@ class _ChangeGroup extends StatelessWidget {
     if (files.isEmpty) {
       return const SizedBox.shrink();
     }
-    final groupValue = _groupSelectionValue(files);
     return Padding(
       padding: const EdgeInsets.only(bottom: BusyMarkSpacing.md),
       child: Column(
@@ -252,27 +251,11 @@ class _ChangeGroup extends StatelessWidget {
         children: [
           Padding(
             padding: BusyMarkInsets.sectionLabel,
-            child: Row(
-              children: [
-                _CommitSelectionCheckbox(
-                  value: groupValue,
-                  tristate: true,
-                  tooltip: context.l10n.gitSelectForCommit,
-                  onChanged: (value) {
-                    final shouldSelect = groupValue == null || value == true;
-                    _setFilesSelected(context, shouldSelect);
-                  },
-                ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: busyMarkSectionHeaderStyle(context),
-                  ),
-                ),
-              ],
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: busyMarkSectionHeaderStyle(context),
             ),
           ),
           for (final file in files)
@@ -299,30 +282,6 @@ class _ChangeGroup extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  bool? _groupSelectionValue(List<GitFileStatus> files) {
-    final selectedCount = files.where((file) => file.staged).length;
-    if (selectedCount == files.length) {
-      return true;
-    }
-    if (selectedCount == 0) {
-      return false;
-    }
-    return null;
-  }
-
-  void _setFilesSelected(BuildContext context, bool selected) {
-    final paths = files.map((file) => file.repoRelativePath).toList();
-    if (paths.isEmpty) {
-      return;
-    }
-    final actions = GitFileActions.of(context);
-    if (selected) {
-      actions.select(paths);
-    } else {
-      actions.unselect(paths);
-    }
   }
 }
 
@@ -374,7 +333,7 @@ class _ChangedFileRow extends StatelessWidget {
     final directory = _directoryLabel(file.repoRelativePath);
     final statusColor = busyMarkVcsFileStatusColor(
       context,
-      _vcsFileColor(file),
+      busyMarkVcsFileColorForGitStatus(file),
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
@@ -394,7 +353,7 @@ class _ChangedFileRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _CommitSelectionCheckbox(
+                BusyMarkCheckbox(
                   value: file.staged,
                   tooltip: file.conflicted
                       ? context.l10n.gitMarkResolved
@@ -478,38 +437,6 @@ class _ChangedFileRow extends StatelessWidget {
 
 enum _FileAction { open, discard }
 
-class _CommitSelectionCheckbox extends StatelessWidget {
-  const _CommitSelectionCheckbox({
-    required this.value,
-    required this.tooltip,
-    required this.onChanged,
-    this.tristate = false,
-  });
-
-  final bool? value;
-  final bool tristate;
-  final String tooltip;
-  final ValueChanged<bool?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: SizedBox(
-        width: 24,
-        height: 24,
-        child: Center(
-          child: YaruCheckbox(
-            value: value,
-            tristate: tristate,
-            onChanged: onChanged,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.file, required this.color});
 
@@ -571,21 +498,6 @@ class _StatusBadge extends StatelessWidget {
       GitFileStatusCategory.unknown => context.l10n.gitStatusUnknown,
     };
   }
-}
-
-BusyMarkVcsFileColor _vcsFileColor(GitFileStatus file) {
-  return switch (file.category) {
-    GitFileStatusCategory.added => BusyMarkVcsFileColor.added,
-    GitFileStatusCategory.deleted => BusyMarkVcsFileColor.deleted,
-    GitFileStatusCategory.renamed => BusyMarkVcsFileColor.renamed,
-    GitFileStatusCategory.copied => BusyMarkVcsFileColor.copied,
-    GitFileStatusCategory.untracked => BusyMarkVcsFileColor.untracked,
-    GitFileStatusCategory.conflicted => BusyMarkVcsFileColor.conflicted,
-    GitFileStatusCategory.ignored ||
-    GitFileStatusCategory.typeChanged ||
-    GitFileStatusCategory.modified ||
-    GitFileStatusCategory.unknown => BusyMarkVcsFileColor.modified,
-  };
 }
 
 List<GitFileStatus> _trackedFiles(GitStatusSnapshot snapshot) {

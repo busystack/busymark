@@ -50,10 +50,15 @@ class HeaderBarLabels {
     required this.preview,
     required this.split,
     required this.viewMode,
+    required this.editorShortcut,
+    required this.sourceShortcut,
+    required this.previewShortcut,
+    required this.splitShortcut,
     required this.search,
     required this.refresh,
     required this.menu,
     required this.sidebar,
+    required this.sidebarShortcut,
     required this.back,
     required this.save,
     required this.settings,
@@ -70,10 +75,15 @@ class HeaderBarLabels {
   final String preview;
   final String split;
   final String viewMode;
+  final String editorShortcut;
+  final String sourceShortcut;
+  final String previewShortcut;
+  final String splitShortcut;
   final String search;
   final String refresh;
   final String menu;
   final String sidebar;
+  final String sidebarShortcut;
   final String back;
   final String save;
   final String settings;
@@ -90,10 +100,15 @@ class HeaderBarLabels {
     'preview': preview,
     'split': split,
     'viewMode': viewMode,
+    'editorShortcut': editorShortcut,
+    'sourceShortcut': sourceShortcut,
+    'previewShortcut': previewShortcut,
+    'splitShortcut': splitShortcut,
     'search': search,
     'refresh': refresh,
     'menu': menu,
     'sidebar': sidebar,
+    'sidebarShortcut': sidebarShortcut,
     'back': back,
     'save': save,
     'settings': settings,
@@ -249,6 +264,10 @@ class LinuxHeaderBarService {
 
   Future<void> setSearchActive(bool value) {
     return _invoke('setSearchActive', value);
+  }
+
+  Future<void> setSearchVisible(bool value) {
+    return _invoke('setSearchVisible', value);
   }
 
   Future<void> setSearchQuery(String value) {

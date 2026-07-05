@@ -36,6 +36,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get advanced => 'پیشرفته';
 
   @override
+  String get addToGit => 'افزودن به Git';
+
+  @override
   String get appearance => 'ظاهر';
 
   @override
@@ -63,6 +66,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get copy => 'کپی';
 
   @override
+  String get copyName => 'کپی نام';
+
+  @override
+  String get copyPath => 'کپی مسیر';
+
+  @override
   String get create => 'ایجاد';
 
   @override
@@ -75,6 +84,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get darkTheme => 'تیره';
 
   @override
+  String get delete => 'حذف';
+
+  @override
   String get discard => 'دور انداختن';
 
   @override
@@ -82,6 +94,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get file => 'فایل';
+
+  @override
+  String get fileHistory => 'تاریخچهٔ فایل';
 
   @override
   String get find => 'یافتن';
@@ -106,6 +121,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get open => 'باز کردن';
+
+  @override
+  String get openInFiles => 'باز کردن در Files';
 
   @override
   String get outline => 'ساختار سند';
@@ -510,6 +528,23 @@ class AppLocalizationsFa extends AppLocalizations {
       'محل نمایش دکمه‌های شناور ویرایش WYSIWYG را انتخاب کنید.';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get allowRemoteImages => 'Load remote images';
+
+  @override
+  String get allowRemoteImagesDescription =>
+      'Allow Markdown preview and editor images to load from http and https URLs.';
+
+  @override
+  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+
+  @override
+  String get clearRemoteImagePermissionsDescription =>
+      'Forget workspaces that were allowed to load remote images.';
+
+  @override
   String get settingsWindowSectionTitle => 'پنجره';
 
   @override
@@ -745,6 +780,26 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noImageSource => 'منبع تصویر وجود ندارد';
 
   @override
+  String get remoteImageBlocked => 'Remote image blocked';
+
+  @override
+  String get remoteImageBlockedTooltip =>
+      'Choose whether BusyMark can load remote images.';
+
+  @override
+  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+
+  @override
+  String get remoteImagesBlockedMessage =>
+      'This document references images from the internet. Loading them can reveal network information to the image host.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+
+  @override
+  String get alwaysLoadRemoteImages => 'Always load remote images';
+
+  @override
   String get hideSidebar => 'پنهان کردن پنل کناری';
 
   @override
@@ -807,6 +862,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noFiles => 'فایلی وجود ندارد';
 
   @override
+  String get newFile => 'فایل جدید';
+
+  @override
   String get noWritersideToc => 'فهرست مطالب Writerside وجود ندارد';
 
   @override
@@ -832,6 +890,25 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'نام فایل الزامی است.';
+
+  @override
+  String get rename => 'تغییر نام';
+
+  @override
+  String get confirmDeleteFileTitle => 'فایل حذف شود؟';
+
+  @override
+  String get confirmDeleteFolderTitle => 'پوشه حذف شود؟';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return '$name حذف شود؟ این کار قابل بازگشت نیست.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return '$name و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.';
+  }
 
   @override
   String get useSingleSafeFileName =>
@@ -877,6 +954,25 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get foldKindTag => 'برچسب';
+
+  @override
+  String get sourceSearchPreviousMatch => 'Previous match';
+
+  @override
+  String get sourceSearchNextMatch => 'Next match';
+
+  @override
+  String get sourceSearchCaseSensitive => 'Case sensitive';
+
+  @override
+  String get sourceSearchWholeWord => 'Whole word';
+
+  @override
+  String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceLargeFileFeaturesPaused =>
+      'Large file: highlighting and folding are paused';
 
   @override
   String get noPreview => 'پیش‌نمایشی وجود ندارد';
@@ -1000,6 +1096,11 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'عملیات فایل ناموفق بود: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'اعتبارسنجی ناموفق بود: $error';
   }
@@ -1031,6 +1132,34 @@ class AppLocalizationsFa extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'پوشه والد وجود ندارد: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'پوشه وجود ندارد: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'مسیر از قبل وجود دارد: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'نام فایل لازم است.';
+
+  @override
+  String get errorFileNameUnsafe => 'نام فایل باید یک بخش مسیر امن باشد.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'نمی‌توان یک پوشه را به داخل خودش منتقل کرد.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'عملیات فایل باید داخل فضای کاری بماند.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'ریشهٔ فضای کاری را نمی‌توان از درخت فایل تغییر داد.';
 
   @override
   String get errorProjectNameRequired => 'نام پروژه الزامی است.';
@@ -1494,7 +1623,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitChanges => 'تغییرات';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'تاریخچه';
 
   @override
   String get gitBranches => 'شاخه‌ها';
@@ -1506,7 +1635,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'ثبت';
 
   @override
   String get gitSelectForCommit => 'Select for commit';
@@ -1524,7 +1653,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'فایل‌های نسخه‌بندی‌نشده';
 
   @override
   String get gitCommitMessage => 'Commit message';

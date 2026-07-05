@@ -11,6 +11,7 @@ enum WorkspaceMessageCode {
   chooseWhereToSaveMarkdown,
   saveBlockedFileChangedOnDisk,
   saveFailed,
+  fileOperationFailed,
   validationFailed,
 }
 
@@ -40,6 +41,8 @@ String localizeWorkspaceMessage(
     WorkspaceMessageCode.saveBlockedFileChangedOnDisk =>
       l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
     WorkspaceMessageCode.saveFailed => l10n.workspaceErrorSaveFailed(error),
+    WorkspaceMessageCode.fileOperationFailed =>
+      l10n.workspaceErrorFileOperationFailed(error),
     WorkspaceMessageCode.validationFailed =>
       l10n.workspaceErrorValidationFailed(error),
   };
@@ -92,6 +95,19 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
       'writerside.topic.file-extension-mismatch' =>
         l10n.errorTopicFileExtensionMismatch(value('extension')),
       'writerside.topic.file-name-invalid' => l10n.errorTopicFileNameInvalid,
+      'workspace.directory-missing' => l10n.errorDirectoryMissing(
+        value('path'),
+      ),
+      'workspace.file-name-required' => l10n.errorFileNameRequired,
+      'workspace.file-name-unsafe' => l10n.errorFileNameUnsafe,
+      'workspace.file-operation-invalid-target' =>
+        l10n.errorFileOperationInvalidTarget,
+      'workspace.file-operation-outside-root' =>
+        l10n.errorFileOperationOutsideRoot,
+      'workspace.file-operation-root' => l10n.errorFileOperationRoot,
+      'workspace.path-already-exists' => l10n.errorPathAlreadyExists(
+        value('path'),
+      ),
       _ => l10n.errorUnknown(error.code),
     };
   }

@@ -1,4 +1,5 @@
-const _blockedExternalUriSchemes = {'javascript', 'data', 'vbscript'};
+const _launchableExternalUriSchemes = {'http', 'https', 'mailto', 'tel'};
+const _remoteResourceUriSchemes = {'http', 'https'};
 
 Uri? parseSchemedUri(String value) {
   final uri = Uri.tryParse(value.trim());
@@ -7,10 +8,14 @@ Uri? parseSchemedUri(String value) {
 
 bool hasUriScheme(String value) => parseSchemedUri(value) != null;
 
-bool isBlockedExternalUriScheme(String scheme) {
-  return _blockedExternalUriSchemes.contains(scheme.toLowerCase());
+bool isLaunchableExternalUriScheme(String scheme) {
+  return _launchableExternalUriSchemes.contains(scheme.toLowerCase());
 }
 
 bool isLaunchableExternalUri(Uri uri) {
-  return uri.hasScheme && !isBlockedExternalUriScheme(uri.scheme);
+  return uri.hasScheme && isLaunchableExternalUriScheme(uri.scheme);
+}
+
+bool isRemoteResourceUriScheme(String scheme) {
+  return _remoteResourceUriSchemes.contains(scheme.toLowerCase());
 }

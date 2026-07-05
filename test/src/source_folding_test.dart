@@ -161,4 +161,118 @@ Done.
       isTrue,
     );
   });
+
+  test(
+    'markdown folding detects nested headings task lists and blockquotes',
+    () {
+      const source =
+          '# A\n'
+          'a\n'
+          '## B\n'
+          'b\n'
+          '- [ ] task\n'
+          '  continuation\n'
+          '> quote\n'
+          '> more\n'
+          '# C\n';
+
+      final regions = sourceFoldRegions(source, SourceSyntaxLanguage.markdown);
+
+      expect(
+        regions.any(
+          (region) =>
+              region.kind == SourceFoldKind.section &&
+              region.startLine == 1 &&
+              region.endLine == 8,
+        ),
+        isTrue,
+      );
+      expect(
+        regions.any(
+          (region) =>
+              region.kind == SourceFoldKind.section &&
+              region.startLine == 3 &&
+              region.endLine == 8,
+        ),
+        isTrue,
+      );
+      expect(
+        regions.any(
+          (region) =>
+              region.kind == SourceFoldKind.list &&
+              region.startLine == 5 &&
+              region.endLine == 6,
+        ),
+        isTrue,
+      );
+      expect(
+        regions.any(
+          (region) =>
+              region.kind == SourceFoldKind.blockquote &&
+              region.startLine == 7 &&
+              region.endLine == 8,
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test('xml folding handles nested same-name tags with a stack', () {
+    const source =
+        '<topic>\n'
+        '  <chapter>\n'
+        '    <chapter>\n'
+        '      <p>Nested</p>\n'
+        '    </chapter>\n'
+        '  </chapter>\n'
+        '</topic>\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.xml);
+
+    expect(
+      regions.any(
+        (region) =>
+            region.kind == SourceFoldKind.xml &&
+            region.startLine == 3 &&
+            region.endLine == 5,
+      ),
+      isTrue,
+    );
+    expect(
+      regions.any(
+        (region) =>
+            region.kind == SourceFoldKind.xml &&
+            region.startLine == 2 &&
+            region.endLine == 6,
+      ),
+      isTrue,
+    );
+    expect(
+      regions.any(
+        (region) =>
+            region.kind == SourceFoldKind.xml &&
+            region.startLine == 1 &&
+            region.endLine == 7,
+      ),
+      isTrue,
+    );
+  });
+
+  test('malformed xml does not create unsafe fold ranges', () {
+    const source =
+        '<topic>\n'
+        '  <chapter>\n'
+        '</topic>\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.xml);
+
+    expect(regions, isEmpty);
+  });
+
+  test('line info supports CRLF endings', () {
+    final lines = sourceLineInfos('a\r\nb\r\n');
+
+    expect(lines.map((line) => line.text), ['a', 'b', '']);
+    expect(lines[1].startOffset, 3);
+  });
 }

@@ -144,34 +144,43 @@ void main() {
       contains('BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>'),
     );
     expect(welcome, contains('tooltip: l10n.mainMenu'));
+    expect(native, contains('GtkWidget* sidebar_menu_button;'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
     expect(native, contains('GtkWidget* markdown_html_item;'));
-    expect(native, contains('GtkWidget* header_menu_button;'));
-    expect(native, contains('GtkWidget* header_keyboard_shortcuts_item;'));
-    expect(native, contains('GtkWidget* header_markdown_html_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
     expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
     expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
-    expect(native, contains('close_menu_button(self->header_menu_button)'));
-    expect(
-      native,
-      contains('set_widget_visible(self->header_menu_button, !visible)'),
+    expect(native, contains('main_menu_icon_name(action)'));
+    expect(native, contains('"preferences-system-symbolic"'));
+    expect(native, contains('"input-keyboard-symbolic"'));
+    expect(native, contains('"text-x-generic-symbolic"'));
+    expect(native, contains('"help-about-symbolic"'));
+    final mainMenuItemOffset = native.indexOf(
+      'static GtkWidget* create_menu_item',
     );
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box),\n'
-        '                     self->keyboard_shortcuts_item',
-      ),
+    final mainMenuIconPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0)',
+      mainMenuItemOffset,
     );
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), '
-        'self->markdown_html_item',
-      ),
+    final mainMenuLabelPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0)',
+      mainMenuItemOffset,
     );
+    final mainMenuShortcutPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0)',
+      mainMenuItemOffset,
+    );
+    expect(mainMenuItemOffset, isNonNegative);
+    expect(mainMenuIconPack, isNonNegative);
+    expect(mainMenuLabelPack, isNonNegative);
+    expect(mainMenuShortcutPack, isNonNegative);
+    expect(mainMenuIconPack, lessThan(mainMenuLabelPack));
+    expect(mainMenuLabelPack, lessThan(mainMenuShortcutPack));
+    expect(native, contains('"busymark-shortcut-widget", shortcut'));
+    expect(native, contains('close_menu_button(self->sidebar_menu_button)'));
+    expect(native, isNot(contains('GtkWidget* header_menu_button;')));
+    expect(native, isNot(contains('GtkWidget* header_menu;')));
   });
 
   test(
@@ -257,7 +266,7 @@ void main() {
         'g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);',
       ),
     );
-    expect(native, contains('gtk_icon_theme_set_custom_theme'));
+    expect(native, isNot(contains('gtk_icon_theme_set_custom_theme')));
     expect(native, contains('gtk_accent_css_provider'));
     expect(native, contains('@define-color theme_selected_bg_color %s;'));
     expect(native, contains('@define-color accent_bg_color %s;'));
@@ -664,6 +673,26 @@ void main() {
     expect(app, contains('source: l10n.source'));
     expect(app, contains('preview: l10n.preview'));
     expect(app, contains('split: l10n.split'));
+    expect(
+      app,
+      contains('editorShortcut: BusyMarkDocumentViewShortcutLabels.editor'),
+    );
+    expect(
+      app,
+      contains('sourceShortcut: BusyMarkDocumentViewShortcutLabels.source'),
+    );
+    expect(
+      app,
+      contains('previewShortcut: BusyMarkDocumentViewShortcutLabels.preview'),
+    );
+    expect(
+      app,
+      contains('splitShortcut: BusyMarkDocumentViewShortcutLabels.split'),
+    );
+    expect(
+      app,
+      contains('sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar'),
+    );
     expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
@@ -679,26 +708,41 @@ void main() {
     expect(native, contains('create_view_mode_item(self, "preview")'));
     expect(native, contains('create_view_mode_item(self, "split")'));
     expect(native, contains('object-select-symbolic'));
+    final viewModeItemOffset = native.indexOf(
+      'static GtkWidget* create_view_mode_item',
+    );
     final viewModeLabelPack = native.indexOf(
       'gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0)',
+      viewModeItemOffset,
+    );
+    final viewModeIconPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0)',
+      viewModeItemOffset,
+    );
+    final viewModeShortcutPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0)',
+      viewModeItemOffset,
     );
     final viewModeCheckPack = native.indexOf(
       'gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0)',
+      viewModeItemOffset,
     );
+    expect(viewModeItemOffset, isNonNegative);
+    expect(viewModeIconPack, isNonNegative);
     expect(viewModeLabelPack, isNonNegative);
+    expect(viewModeShortcutPack, isNonNegative);
     expect(viewModeCheckPack, isNonNegative);
+    expect(viewModeIconPack, lessThan(viewModeLabelPack));
     expect(viewModeLabelPack, lessThan(viewModeCheckPack));
+    expect(viewModeShortcutPack, lessThan(viewModeCheckPack));
+    expect(native, contains('view_mode_icon_name(mode)'));
+    expect(native, contains('view_mode_icon_name("split")'));
+    expect(native, contains('"busymark-shortcut-widget", shortcut'));
+    expect(native, contains('set_menu_item_shortcut(item, shortcut)'));
     expect(native, contains('button.busymark-menu-row:focus'));
     expect(native, contains('button.busymark-menu-row:active'));
     expect(native, contains('outline-width: 0;'));
     expect(native, contains('self->view_mode_button = gtk_menu_button_new()'));
-    expect(
-      native,
-      contains(
-        'gtk_widget_set_size_request(self->view_mode_button, -1,\n'
-        '                              kHeaderButtonHeight)',
-      ),
-    );
     expect(
       native,
       contains(
@@ -707,25 +751,30 @@ void main() {
     );
     expect(
       native,
-      contains('gtk_label_set_text(GTK_LABEL(self->view_mode_label)'),
+      contains('gtk_image_set_from_icon_name(GTK_IMAGE(self->view_mode_icon)'),
     );
     expect(
       native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(view_button_box), self->view_mode_label',
-      ),
+      contains('gtk_container_add(GTK_CONTAINER(self->view_mode_button)'),
     );
-    expect(native, contains('kHeaderButtonContentSpacing = 4'));
-    expect(
-      native,
-      contains(
-        'gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonContentSpacing)',
-      ),
-    );
+    expect(native, contains('make_icon_button_square(self->view_mode_button)'));
     expect(native, isNot(contains('create_menu_button(self->view_mode_menu')));
+    expect(native, isNot(contains('self->view_mode_label')));
+    expect(
+      native,
+      contains(
+        'set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar',
+      ),
+    );
     expect(
       native,
       contains('set_widget_tooltip(self->view_mode_button, view_mode)'),
+    );
+    expect(
+      native,
+      contains(
+        'set_menu_item_label_with_shortcut(self->view_mode_editor_item, editor',
+      ),
     );
     expect(
       native,
@@ -737,7 +786,7 @@ void main() {
     expect(native, isNot(contains('viewModeAgenda')));
   });
 
-  test('welcome page has no sidebar rail or document controls', () {
+  test('welcome page has a sidebar but no document controls', () {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
@@ -749,19 +798,36 @@ void main() {
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(welcome, isNot(contains('_WelcomeRail')));
-    expect(welcome, contains('setSidebarVisible(false)'));
-    expect(welcome, contains('backgroundColor: colors.view'));
-    expect(welcome, contains('setSidebarToggleVisible(false)'));
+    expect(welcome, contains('_WelcomeSidebar'));
+    expect(welcome, contains('_WelcomeRecentRow'));
+    expect(welcome, contains('WorkspaceIdentityRow'));
+    expect(welcome, contains('WorkspaceGlyphs.forRecent(recent)'));
+    expect(welcome, contains('BusyMarkGlyphs.markdownFile'));
+    expect(welcome, contains('BusyMarkGlyphs.folder'));
+    expect(welcome, contains('BusyMarkGlyphs.writersideProject'));
+    expect(welcome, contains('BorderRadius.circular(BusyMarkRadius.md)'));
+    expect(welcome, contains('if (!sidebarOnRight && sidebarVisible)'));
+    expect(welcome, contains('if (sidebarOnRight && sidebarVisible)'));
+    expect(welcome, contains('setSidebarVisible(sidebarVisible)'));
+    expect(welcome, contains('welcomeMainColor = colors.view'));
+    expect(welcome, contains('backgroundColor: welcomeMainColor'));
+    expect(welcome, contains('crossAxisAlignment: CrossAxisAlignment.stretch'));
+    expect(welcome, contains('setSidebarToggleVisible(true)'));
+    expect(welcome, contains('case HeaderBarAction.sidebarToggle:'));
+    expect(welcome, contains('setSidebarVisible(!settings.sidebarVisible)'));
+    expect(welcome, contains('setSearchVisible(false)'));
     expect(welcome, contains('setDocumentControlsVisible(false)'));
     expect(workspace, contains('setSidebarVisible('));
     expect(workspace, contains('settings.sidebarVisible && hasSidebar'));
     expect(workspace, contains('setSidebarToggleVisible(hasSidebar)'));
+    expect(workspace, contains('setSearchVisible(true)'));
     expect(workspace, contains('setDocumentControlsVisible(true)'));
     expect(service, contains('setDocumentControlsVisible'));
     expect(service, contains('setSidebarToggleVisible'));
+    expect(service, contains('setSearchVisible'));
     expect(native, contains('set_document_controls_visible'));
     expect(native, contains('set_sidebar_toggle_visible'));
+    expect(native, contains('set_search_visible'));
     expect(
       native,
       contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
@@ -782,15 +848,11 @@ void main() {
     );
   });
 
-  test('no-sidebar pages use themed page surfaces under the headerbar', () {
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
-    ).readAsStringSync();
+  test('settings page uses themed page surface under the headerbar', () {
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
-    expect(welcome, contains('backgroundColor: colors.view'));
     expect(settings, contains('backgroundColor: colors.view'));
     expect(settings, isNot(contains('backgroundColor: colors.window')));
   });

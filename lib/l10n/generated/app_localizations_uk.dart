@@ -37,6 +37,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get advanced => 'Додатково';
 
   @override
+  String get addToGit => 'Додати до Git';
+
+  @override
   String get appearance => 'Зовнішній вигляд';
 
   @override
@@ -64,6 +67,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copy => 'Копіювати';
 
   @override
+  String get copyName => 'Копіювати назву';
+
+  @override
+  String get copyPath => 'Копіювати шлях';
+
+  @override
   String get create => 'Створити';
 
   @override
@@ -76,6 +85,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get darkTheme => 'Темна';
 
   @override
+  String get delete => 'Видалити';
+
+  @override
   String get discard => 'Відкинути';
 
   @override
@@ -83,6 +95,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get file => 'Файл';
+
+  @override
+  String get fileHistory => 'Історія файлу';
 
   @override
   String get find => 'Знайти';
@@ -107,6 +122,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get open => 'Відкрити';
+
+  @override
+  String get openInFiles => 'Відкрити у Файлах';
 
   @override
   String get outline => 'Структура';
@@ -521,6 +539,23 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get allowRemoteImages => 'Load remote images';
+
+  @override
+  String get allowRemoteImagesDescription =>
+      'Allow Markdown preview and editor images to load from http and https URLs.';
+
+  @override
+  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+
+  @override
+  String get clearRemoteImagePermissionsDescription =>
+      'Forget workspaces that were allowed to load remote images.';
+
+  @override
   String get settingsWindowSectionTitle => 'Вікно';
 
   @override
@@ -761,6 +796,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noImageSource => 'Немає джерела зображення';
 
   @override
+  String get remoteImageBlocked => 'Remote image blocked';
+
+  @override
+  String get remoteImageBlockedTooltip =>
+      'Choose whether BusyMark can load remote images.';
+
+  @override
+  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+
+  @override
+  String get remoteImagesBlockedMessage =>
+      'This document references images from the internet. Loading them can reveal network information to the image host.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+
+  @override
+  String get alwaysLoadRemoteImages => 'Always load remote images';
+
+  @override
   String get hideSidebar => 'Приховати бічну панель';
 
   @override
@@ -827,6 +882,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noFiles => 'Немає файлів';
 
   @override
+  String get newFile => 'Новий файл';
+
+  @override
   String get noWritersideToc => 'Немає змісту Writerside';
 
   @override
@@ -852,6 +910,25 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'Потрібно вказати назву файлу.';
+
+  @override
+  String get rename => 'Перейменувати';
+
+  @override
+  String get confirmDeleteFileTitle => 'Видалити файл?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Видалити папку?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Видалити $name? Цю дію не можна скасувати.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Видалити $name і всі файли всередині? Цю дію не можна скасувати.';
+  }
 
   @override
   String get useSingleSafeFileName =>
@@ -897,6 +974,25 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get foldKindTag => 'тег';
+
+  @override
+  String get sourceSearchPreviousMatch => 'Previous match';
+
+  @override
+  String get sourceSearchNextMatch => 'Next match';
+
+  @override
+  String get sourceSearchCaseSensitive => 'Case sensitive';
+
+  @override
+  String get sourceSearchWholeWord => 'Whole word';
+
+  @override
+  String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceLargeFileFeaturesPaused =>
+      'Large file: highlighting and folding are paused';
 
   @override
   String get noPreview => 'Немає попереднього перегляду';
@@ -1019,6 +1115,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'Не вдалося виконати файлову операцію: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Помилка перевірки: $error';
   }
@@ -1051,6 +1152,35 @@ class AppLocalizationsUk extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'Батьківський каталог не існує: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'Каталог не існує: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'Шлях уже існує: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'Потрібна назва файлу.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'Назва файлу має бути одним безпечним сегментом шляху.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Не можна перемістити папку всередину самої себе.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'Файлова операція має залишатися в межах workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'Корінь workspace не можна змінити з дерева файлів.';
 
   @override
   String get errorProjectNameRequired => 'Потрібно вказати назву проєкту.';
@@ -1516,7 +1646,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitChanges => 'Зміни';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Історія';
 
   @override
   String get gitBranches => 'Гілки';
@@ -1528,7 +1658,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Зафіксувати';
 
   @override
   String get gitSelectForCommit => 'Select for commit';
@@ -1546,7 +1676,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'Невідстежувані файли';
 
   @override
   String get gitCommitMessage => 'Commit message';

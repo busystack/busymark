@@ -32,6 +32,8 @@ void main() {
     expect((await gateway.status(info)).clean, isTrue);
 
     await readme.writeAsString('# Docs\n\nChanged.\n');
+    final guide = File(p.join(root.path, 'guide.md'));
+    await guide.writeAsString('# Guide\n');
     final modified = await gateway.status(info);
     expect(modified.unstagedFiles.single.repoRelativePath, 'README.md');
     expect(
@@ -39,13 +41,36 @@ void main() {
       contains('Changed.'),
     );
 
-    await gateway.stage(info, ['README.md']);
+    await gateway.stage(info, ['README.md', 'guide.md']);
     expect(
-      (await gateway.status(info)).stagedFiles.single.repoRelativePath,
-      'README.md',
+      (await gateway.status(
+        info,
+      )).stagedFiles.map((file) => file.repoRelativePath),
+      containsAll(['README.md', 'guide.md']),
     );
     await gateway.commit(info, 'Update docs\n\nMultiline body.');
-    expect((await gateway.history(info)).first.subject, 'Update docs');
+    final latestCommit = (await gateway.history(info)).first;
+    expect(latestCommit.subject, 'Update docs');
+    final fullDetails = await gateway.commitDetails(
+      info,
+      latestCommit.fullHash,
+    );
+    expect(
+      fullDetails.changedFiles.map((file) => file.newPath ?? file.oldPath),
+      containsAll(['README.md', 'guide.md']),
+    );
+    expect(fullDetails.fileSnapshots['README.md'], contains('Changed.'));
+    expect(fullDetails.fileSnapshots['guide.md'], contains('# Guide'));
+    final readmeDetails = await gateway.commitDetails(
+      info,
+      latestCommit.fullHash,
+      repoRelativePath: 'README.md',
+    );
+    expect(
+      readmeDetails.changedFiles.map((file) => file.newPath ?? file.oldPath),
+      ['README.md'],
+    );
+    expect(readmeDetails.fileSnapshots['README.md'], contains('Changed.'));
 
     await gateway.createBranch(info, 'feature/docs');
     expect(

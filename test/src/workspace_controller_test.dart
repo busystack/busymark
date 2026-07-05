@@ -59,6 +59,59 @@ void main() {
   });
 
   test(
+    'workspace file operations refresh and preserve active moved files',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-file-ops-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final first = File(p.join(directory.path, 'first.md'))
+        ..writeAsStringSync('# First\n');
+      final docs = Directory(p.join(directory.path, 'docs'))..createSync();
+      File(p.join(docs.path, 'existing.md')).writeAsStringSync('# Existing\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(directory.path);
+
+      final created = p.join(directory.path, 'new.md');
+      expect(
+        await controller.createWorkspaceFile(directory.path, 'new.md'),
+        isTrue,
+      );
+      expect(File(created).existsSync(), isTrue);
+      expect(controller.state.workspace?.activeFilePath, created);
+
+      final renamed = p.join(directory.path, 'renamed.md');
+      expect(
+        await controller.renameWorkspaceEntity(created, 'renamed.md'),
+        isTrue,
+      );
+      expect(File(created).existsSync(), isFalse);
+      expect(File(renamed).existsSync(), isTrue);
+      expect(controller.state.workspace?.activeFilePath, renamed);
+
+      final moved = p.join(docs.path, 'renamed.md');
+      expect(await controller.moveWorkspaceEntity(renamed, docs.path), isTrue);
+      expect(File(renamed).existsSync(), isFalse);
+      expect(File(moved).existsSync(), isTrue);
+      expect(controller.state.workspace?.activeFilePath, moved);
+
+      expect(await controller.deleteWorkspaceEntity(moved), isTrue);
+      expect(File(moved).existsSync(), isFalse);
+      expect(controller.state.workspace?.activeFilePath, isNot(moved));
+      expect([
+        first.path,
+        p.join(docs.path, 'existing.md'),
+      ], contains(controller.state.workspace?.activeFilePath));
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test(
     'creates an unsaved Markdown file without adding it to recent',
     () async {
       final harness = await _createControllerHarness();
@@ -677,6 +730,18 @@ class _WorkspaceControllerDriver {
   Future<void> openPath(String path) => _notifier.openPath(path);
 
   Future<void> createMarkdownFile() => _notifier.createMarkdownFile();
+
+  Future<bool> createWorkspaceFile(String directoryPath, String fileName) =>
+      _notifier.createWorkspaceFile(directoryPath, fileName);
+
+  Future<bool> renameWorkspaceEntity(String path, String newName) =>
+      _notifier.renameWorkspaceEntity(path, newName);
+
+  Future<bool> moveWorkspaceEntity(String sourcePath, String targetDirectory) =>
+      _notifier.moveWorkspaceEntity(sourcePath, targetDirectory);
+
+  Future<bool> deleteWorkspaceEntity(String path) =>
+      _notifier.deleteWorkspaceEntity(path);
 
   Future<bool> createWritersideProject(
     WritersideProjectCreateRequest request,

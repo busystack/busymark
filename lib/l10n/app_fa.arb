@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "کپی نام",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "کپی مسیر",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "ایجاد",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "فایل",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "تاریخچهٔ فایل",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "یافتن",
   "@find": {
@@ -131,6 +143,10 @@
   "open": "باز کردن",
   "@open": {
     "description": "Open action label."
+  },
+  "openInFiles": "باز کردن در Files",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
   },
   "outline": "ساختار سند",
   "@outline": {
@@ -636,6 +652,17 @@
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
+  "privacy": "Privacy",
+  "@privacy": {"description": "Settings section title for privacy options."},
+  "allowRemoteImages": "Load remote images",
+  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+
   "settingsWindowSectionTitle": "پنجره",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -946,6 +973,19 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
+  "remoteImageBlocked": "Remote image blocked",
+  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "alwaysLoadRemoteImages": "Always load remote images",
+  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
+
   "hideSidebar": "پنهان کردن پنل کناری",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1949,17 +1989,17 @@
   "gitClean": "Clean",
   "gitConflicts": "Conflicts",
   "gitChanges": "تغییرات",
-  "gitHistory": "History",
+  "gitHistory": "تاریخچه",
   "gitBranches": "شاخه‌ها",
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Commit",
+  "gitCommit": "ثبت",
   "gitSelectForCommit": "Select for commit",
   "gitRemoveFromCommit": "Leave out of commit",
   "gitDiscard": "Discard",
   "gitOpenFile": "Open file",
   "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Unversioned Files",
+  "gitUntracked": "فایل‌های نسخه‌بندی‌نشده",
   "gitCommitMessage": "Commit message",
   "gitCommitSelectedFiles": "Selected files",
   "gitCommitNoSelectedFiles": "Select at least one file before committing.",
@@ -2075,6 +2115,22 @@
   "markdownHtmlSafeUrls": "فقط URLهای امن",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "افزودن به Git",
+  "delete": "حذف",
+  "newFile": "فایل جدید",
+  "rename": "تغییر نام",
+  "confirmDeleteFileTitle": "فایل حذف شود؟",
+  "confirmDeleteFolderTitle": "پوشه حذف شود؟",
+  "confirmDeleteFileMessage": "{name} حذف شود؟ این کار قابل بازگشت نیست.",
+  "confirmDeleteFolderMessage": "{name} و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.",
+  "workspaceErrorFileOperationFailed": "عملیات فایل ناموفق بود: {error}",
+  "errorDirectoryMissing": "پوشه وجود ندارد: {path}",
+  "errorPathAlreadyExists": "مسیر از قبل وجود دارد: {path}",
+  "errorFileNameRequired": "نام فایل لازم است.",
+  "errorFileNameUnsafe": "نام فایل باید یک بخش مسیر امن باشد.",
+  "errorFileOperationInvalidTarget": "نمی‌توان یک پوشه را به داخل خودش منتقل کرد.",
+  "errorFileOperationOutsideRoot": "عملیات فایل باید داخل فضای کاری بماند.",
+  "errorFileOperationRoot": "ریشهٔ فضای کاری را نمی‌توان از درخت فایل تغییر داد."
 
 }

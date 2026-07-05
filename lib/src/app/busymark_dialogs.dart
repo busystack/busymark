@@ -245,6 +245,40 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
             ],
           ),
           BusyMarkGroupedList(
+            title: context.l10n.viewMode,
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.editor,
+                leading: const Icon(BusyMarkGlyphs.editorView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.editor,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.source,
+                leading: const Icon(BusyMarkGlyphs.sourceView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.source,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.preview,
+                leading: const Icon(BusyMarkGlyphs.previewView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.preview,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.split,
+                leading: const Icon(BusyMarkGlyphs.splitView),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkDocumentViewShortcutLabels.split,
+                ),
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
             title: context.l10n.shortcutGroupTextEditing,
             filled: true,
             children: [
@@ -584,10 +618,17 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.git,
-                leading: const Icon(BusyMarkGlyphs.history),
+                title: context.l10n.gitCommit,
+                leading: const Icon(BusyMarkGlyphs.checklist),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.git,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.gitHistory,
+                leading: const Icon(BusyMarkGlyphs.history),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkSidebarShortcutLabels.history,
                 ),
               ),
             ],

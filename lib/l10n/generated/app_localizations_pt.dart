@@ -37,6 +37,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get advanced => 'Avançado';
 
   @override
+  String get addToGit => 'Adicionar ao Git';
+
+  @override
   String get appearance => 'Aparência';
 
   @override
@@ -64,6 +67,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get copy => 'Copiar';
 
   @override
+  String get copyName => 'Copiar nome';
+
+  @override
+  String get copyPath => 'Copiar caminho';
+
+  @override
   String get create => 'Criar';
 
   @override
@@ -76,6 +85,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get darkTheme => 'Escuro';
 
   @override
+  String get delete => 'Excluir';
+
+  @override
   String get discard => 'Descartar';
 
   @override
@@ -83,6 +95,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get file => 'Arquivo';
+
+  @override
+  String get fileHistory => 'Histórico do arquivo';
 
   @override
   String get find => 'Localizar';
@@ -107,6 +122,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get open => 'Abrir';
+
+  @override
+  String get openInFiles => 'Abrir em Arquivos';
 
   @override
   String get outline => 'Estrutura';
@@ -522,6 +540,23 @@ class AppLocalizationsPt extends AppLocalizations {
       'Escolha onde os botões flutuantes de edição WYSIWYG aparecem.';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get allowRemoteImages => 'Load remote images';
+
+  @override
+  String get allowRemoteImagesDescription =>
+      'Allow Markdown preview and editor images to load from http and https URLs.';
+
+  @override
+  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+
+  @override
+  String get clearRemoteImagePermissionsDescription =>
+      'Forget workspaces that were allowed to load remote images.';
+
+  @override
   String get settingsWindowSectionTitle => 'Janela';
 
   @override
@@ -757,6 +792,26 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noImageSource => 'Nenhuma origem de imagem';
 
   @override
+  String get remoteImageBlocked => 'Remote image blocked';
+
+  @override
+  String get remoteImageBlockedTooltip =>
+      'Choose whether BusyMark can load remote images.';
+
+  @override
+  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+
+  @override
+  String get remoteImagesBlockedMessage =>
+      'This document references images from the internet. Loading them can reveal network information to the image host.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+
+  @override
+  String get alwaysLoadRemoteImages => 'Always load remote images';
+
+  @override
   String get hideSidebar => 'Ocultar painel lateral';
 
   @override
@@ -819,6 +874,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noFiles => 'Nenhum arquivo';
 
   @override
+  String get newFile => 'Novo arquivo';
+
+  @override
   String get noWritersideToc => 'Nenhum TOC do Writerside';
 
   @override
@@ -844,6 +902,25 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'O nome do arquivo é obrigatório.';
+
+  @override
+  String get rename => 'Renomear';
+
+  @override
+  String get confirmDeleteFileTitle => 'Excluir arquivo?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Excluir pasta?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Excluir $name? Isso não pode ser desfeito.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Excluir $name e todos os arquivos dentro dela? Isso não pode ser desfeito.';
+  }
 
   @override
   String get useSingleSafeFileName => 'Use um único nome de arquivo seguro.';
@@ -888,6 +965,25 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get foldKindTag => 'tag';
+
+  @override
+  String get sourceSearchPreviousMatch => 'Previous match';
+
+  @override
+  String get sourceSearchNextMatch => 'Next match';
+
+  @override
+  String get sourceSearchCaseSensitive => 'Case sensitive';
+
+  @override
+  String get sourceSearchWholeWord => 'Whole word';
+
+  @override
+  String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceLargeFileFeaturesPaused =>
+      'Large file: highlighting and folding are paused';
 
   @override
   String get noPreview => 'Sem visualização';
@@ -1011,6 +1107,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'Falha na operação de arquivo: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Falha na validação: $error';
   }
@@ -1042,6 +1143,35 @@ class AppLocalizationsPt extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'O diretório pai não existe: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'O diretório não existe: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'O caminho já existe: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'O nome do arquivo é obrigatório.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'O nome do arquivo deve ser um único segmento de caminho seguro.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Não é possível mover uma pasta para dentro dela mesma.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'A operação de arquivo deve permanecer dentro do workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'A raiz do workspace não pode ser alterada pela árvore de arquivos.';
 
   @override
   String get errorProjectNameRequired => 'O nome do projeto é obrigatório.';
@@ -1504,7 +1634,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitChanges => 'Alterações';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Histórico';
 
   @override
   String get gitBranches => 'Ramos';
@@ -1516,7 +1646,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Confirmar';
 
   @override
   String get gitSelectForCommit => 'Select for commit';
@@ -1534,7 +1664,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'Arquivos não versionados';
 
   @override
   String get gitCommitMessage => 'Commit message';

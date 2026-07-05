@@ -1990,6 +1990,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: parsed.busyDocument,
+                allowRemoteImages: true,
                 onSourceChanged: (_, _) {},
               ),
             ),

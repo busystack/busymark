@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +24,15 @@ void main() {
 
     expect(settings.autoSave, isTrue);
     expect(settings.toJson()['autoSave'], isTrue);
+  });
+
+  test('remote images default to blocked', () {
+    final settings = AppSettings.defaults();
+
+    expect(settings.allowRemoteImages, isFalse);
+    expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/docs'), isFalse);
+    expect(settings.toJson()['allowRemoteImages'], isFalse);
   });
 
   test('legacy preview visibility migrates to source mode when hidden', () {
@@ -105,6 +116,100 @@ void main() {
     expect(store.value['autoSave'], isFalse);
     expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
   });
+
+  test(
+    'initial load preserves user actions made before it completes',
+    () async {
+      final store = _DelayedSettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+
+      final autoSaveFuture = controller.setAutoSave(false);
+      final recentFuture = controller.recordOpenedWorkspace(
+        path: '/tmp/new.md',
+        kind: WorkspaceKindForTest.singleMarkdown,
+      );
+      var initialActionsCompleted = false;
+      unawaited(
+        Future.wait([autoSaveFuture, recentFuture]).then((_) {
+          initialActionsCompleted = true;
+        }),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      expect(initialActionsCompleted, isTrue);
+
+      store.completeLoad(
+        AppSettings.defaults()
+            .copyWith(
+              wordWrap: false,
+              recentWorkspaces: [
+                RecentWorkspace(
+                  path: '/tmp/old.md',
+                  kind: WorkspaceKindForTest.singleMarkdown,
+                  lastOpenedAt: DateTime(2026),
+                ),
+              ],
+            )
+            .toJson(),
+      );
+      await store.saved;
+
+      final settings = container.read(appSettingsControllerProvider);
+      expect(settings.wordWrap, isFalse);
+      expect(settings.autoSave, isFalse);
+      expect(settings.recentWorkspaces.map((item) => item.path), [
+        '/tmp/new.md',
+        '/tmp/old.md',
+      ]);
+      expect(store.value['wordWrap'], isFalse);
+      expect(store.value['autoSave'], isFalse);
+      expect(
+        (store.value['recentWorkspaces'] as List)
+            .cast<Map<String, Object?>>()
+            .map((item) => item['path']),
+        ['/tmp/new.md', '/tmp/old.md'],
+      );
+    },
+  );
+
+  test('remote image permissions persist globally and per workspace', () async {
+    final store = _MemorySettingsStore();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.allowRemoteImagesForWorkspace('/tmp/docs/../docs');
+
+    var settings = container.read(appSettingsControllerProvider);
+    expect(settings.allowRemoteImages, isFalse);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/docs'), isTrue);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/other'), isFalse);
+    expect(store.value['remoteImageAllowedWorkspacePaths'], ['/tmp/docs']);
+
+    await controller.setAllowRemoteImages(true);
+
+    settings = container.read(appSettingsControllerProvider);
+    expect(settings.allowRemoteImages, isTrue);
+    expect(settings.allowsRemoteImagesForWorkspace('/tmp/other'), isTrue);
+    expect(store.value['allowRemoteImages'], isTrue);
+
+    await controller.clearRemoteImageWorkspacePermissions();
+
+    settings = container.read(appSettingsControllerProvider);
+    expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
+    expect(store.value['remoteImageAllowedWorkspacePaths'], isEmpty);
+  });
+}
+
+abstract final class WorkspaceKindForTest {
+  static const singleMarkdown = 'singleMarkdown';
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {
@@ -116,5 +221,29 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _DelayedSettingsStore implements LocalSettingsStore {
+  final _load = Completer<Map<String, Object?>>();
+  final _saved = Completer<void>();
+  Map<String, Object?> value = <String, Object?>{};
+
+  Future<void> get saved => _saved.future;
+
+  void completeLoad(Map<String, Object?> json) {
+    value = json;
+    _load.complete(json);
+  }
+
+  @override
+  Future<Map<String, Object?>> load() => _load.future;
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {
+    value = json;
+    if (!_saved.isCompleted) {
+      _saved.complete();
+    }
   }
 }

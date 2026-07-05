@@ -37,6 +37,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get advanced => 'Avansert';
 
   @override
+  String get addToGit => 'Legg til i Git';
+
+  @override
   String get appearance => 'Utseende';
 
   @override
@@ -64,6 +67,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get copy => 'Kopier';
 
   @override
+  String get copyName => 'Kopier navn';
+
+  @override
+  String get copyPath => 'Kopier sti';
+
+  @override
   String get create => 'Opprett';
 
   @override
@@ -76,6 +85,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get darkTheme => 'Mørk';
 
   @override
+  String get delete => 'Slett';
+
+  @override
   String get discard => 'Forkast';
 
   @override
@@ -83,6 +95,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get file => 'Fil';
+
+  @override
+  String get fileHistory => 'Filhistorikk';
 
   @override
   String get find => 'Finn';
@@ -107,6 +122,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get open => 'Åpne';
+
+  @override
+  String get openInFiles => 'Åpne i Filer';
 
   @override
   String get outline => 'Disposisjon';
@@ -515,6 +533,23 @@ class AppLocalizationsNb extends AppLocalizations {
       'Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get allowRemoteImages => 'Load remote images';
+
+  @override
+  String get allowRemoteImagesDescription =>
+      'Allow Markdown preview and editor images to load from http and https URLs.';
+
+  @override
+  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+
+  @override
+  String get clearRemoteImagePermissionsDescription =>
+      'Forget workspaces that were allowed to load remote images.';
+
+  @override
   String get settingsWindowSectionTitle => 'Vindu';
 
   @override
@@ -751,6 +786,26 @@ class AppLocalizationsNb extends AppLocalizations {
   String get noImageSource => 'Ingen bildekilde';
 
   @override
+  String get remoteImageBlocked => 'Remote image blocked';
+
+  @override
+  String get remoteImageBlockedTooltip =>
+      'Choose whether BusyMark can load remote images.';
+
+  @override
+  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+
+  @override
+  String get remoteImagesBlockedMessage =>
+      'This document references images from the internet. Loading them can reveal network information to the image host.';
+
+  @override
+  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+
+  @override
+  String get alwaysLoadRemoteImages => 'Always load remote images';
+
+  @override
   String get hideSidebar => 'Skjul sidepanel';
 
   @override
@@ -813,6 +868,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get noFiles => 'Ingen filer';
 
   @override
+  String get newFile => 'Ny fil';
+
+  @override
   String get noWritersideToc => 'Ingen Writerside-innholdsfortegnelse';
 
   @override
@@ -838,6 +896,25 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'Filnavn er påkrevd.';
+
+  @override
+  String get rename => 'Gi nytt navn';
+
+  @override
+  String get confirmDeleteFileTitle => 'Slette fil?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Slette mappe?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Slette $name? Dette kan ikke angres.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Slette $name og alle filene i den? Dette kan ikke angres.';
+  }
 
   @override
   String get useSingleSafeFileName => 'Bruk ett enkelt, trygt filnavn.';
@@ -882,6 +959,25 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get foldKindTag => 'tagg';
+
+  @override
+  String get sourceSearchPreviousMatch => 'Previous match';
+
+  @override
+  String get sourceSearchNextMatch => 'Next match';
+
+  @override
+  String get sourceSearchCaseSensitive => 'Case sensitive';
+
+  @override
+  String get sourceSearchWholeWord => 'Whole word';
+
+  @override
+  String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceLargeFileFeaturesPaused =>
+      'Large file: highlighting and folding are paused';
 
   @override
   String get noPreview => 'Ingen forhåndsvisning';
@@ -1004,6 +1100,11 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'Filoperasjonen mislyktes: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Validering mislyktes: $error';
   }
@@ -1035,6 +1136,34 @@ class AppLocalizationsNb extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'Overordnet mappe finnes ikke: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'Mappen finnes ikke: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'Stien finnes allerede: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'Filnavn kreves.';
+
+  @override
+  String get errorFileNameUnsafe => 'Filnavnet må være ett trygt stisegment.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Kan ikke flytte en mappe inn i seg selv.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'Filoperasjonen må holde seg i workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'Workspace-roten kan ikke endres fra filtreet.';
 
   @override
   String get errorProjectNameRequired => 'Prosjektnavn er påkrevd.';
@@ -1496,7 +1625,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitChanges => 'Endringer';
 
   @override
-  String get gitHistory => 'History';
+  String get gitHistory => 'Historikk';
 
   @override
   String get gitBranches => 'Grener';
@@ -1508,7 +1637,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Commit';
+  String get gitCommit => 'Innsjekk';
 
   @override
   String get gitSelectForCommit => 'Select for commit';
@@ -1526,7 +1655,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'Uversjonerte filer';
 
   @override
   String get gitCommitMessage => 'Commit message';

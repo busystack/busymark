@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show BoxHeightStyle, BoxWidthStyle;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -22,12 +22,16 @@ import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/markdown_image_view.dart';
-import '../../editor/source_folding.dart';
-import '../../editor/source_highlighter.dart';
+import '../../editor/source/source_controller.dart';
+import '../../editor/source/source_document.dart';
+import '../../editor/source/source_editor.dart';
+import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
+import '../../git/presentation/git_file_status_colors.dart';
+import '../../git/presentation/git_history_view.dart';
 import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
@@ -37,9 +41,11 @@ import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../workspace_controller.dart';
+import '../workspace_glyphs.dart';
 import '../workspace_model.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
+import '../workspace_tabs.dart';
 import 'welcome_screen.dart';
 
 final _outlineNavigationTargetProvider =
@@ -118,38 +124,8 @@ class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
   }
 }
 
-const _sourceTextHeightBehavior = TextHeightBehavior(
-  applyHeightToFirstAscent: true,
-  applyHeightToLastDescent: true,
-  leadingDistribution: TextLeadingDistribution.even,
-);
-
 ScrollPosition? _safeScrollPosition(ScrollController controller) {
   return controller.positions.isEmpty ? null : controller.positions.last;
-}
-
-double _safeScrollOffset(ScrollController controller) {
-  return _safeScrollPosition(controller)?.pixels ?? 0.0;
-}
-
-double _safeMaxScrollExtent(ScrollController controller) {
-  return _safeScrollPosition(controller)?.maxScrollExtent ?? 0.0;
-}
-
-bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      !keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
-}
-
-bool _isPlainShiftTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
 }
 
 class _OutlineNavigationTarget {
@@ -172,15 +148,49 @@ class _SourceNavigationTarget {
 }
 
 class _WorkspaceSearchState {
-  const _WorkspaceSearchState({this.active = false, this.query = ''});
+  const _WorkspaceSearchState({
+    this.active = false,
+    this.query = '',
+    this.caseSensitive = false,
+    this.wholeWord = false,
+    this.regex = false,
+  });
 
   final bool active;
   final String query;
+  final bool caseSensitive;
+  final bool wholeWord;
+  final bool regex;
 
-  _WorkspaceSearchState copyWith({bool? active, String? query}) {
+  SourceSearchOptions get options => SourceSearchOptions(
+    query: query.trim(),
+    caseSensitive: caseSensitive,
+    wholeWord: wholeWord,
+    regex: regex,
+  );
+
+  _WorkspaceSearchState copyWith({
+    bool? active,
+    String? query,
+    bool? caseSensitive,
+    bool? wholeWord,
+    bool? regex,
+  }) {
     return _WorkspaceSearchState(
       active: active ?? this.active,
       query: query ?? this.query,
+      caseSensitive: caseSensitive ?? this.caseSensitive,
+      wholeWord: wholeWord ?? this.wholeWord,
+      regex: regex ?? this.regex,
+    );
+  }
+
+  _WorkspaceSearchState withOptions(SourceSearchOptions options) {
+    return copyWith(
+      query: options.query,
+      caseSensitive: options.caseSensitive,
+      wholeWord: options.wholeWord,
+      regex: options.regex,
     );
   }
 }
@@ -211,32 +221,10 @@ class _OpenSearchIntent extends Intent {
   const _OpenSearchIntent();
 }
 
-enum _SourceInlineMarkdownCommand {
-  bold,
-  italic,
-  underline,
-  strikethrough,
-  code,
-  link,
-}
+class _SelectSidebarTabIntent extends Intent {
+  const _SelectSidebarTabIntent(this.tab);
 
-enum _SourceBlockMarkdownCommand {
-  paragraph,
-  heading1,
-  heading2,
-  heading3,
-  heading4,
-  heading5,
-  heading6,
-  orderedList,
-  unorderedList,
-  taskList,
-}
-
-class _SourceEditorShortcutIntent extends Intent {
-  const _SourceEditorShortcutIntent(this.action);
-
-  final BusyMarkEditorShortcutAction action;
+  final _SidebarTab tab;
 }
 
 class WorkspaceScreen extends ConsumerWidget {
@@ -255,7 +243,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final searchResults = _workspaceSearchResults(
       context,
       state,
-      searchState.query,
+      searchState.options,
     );
 
     final colors = BusyMarkSurfaceColors.of(context);
@@ -276,9 +264,10 @@ class WorkspaceScreen extends ConsumerWidget {
     final workspaceContent = Expanded(
       child: Column(
         children: [
-          if (_shouldShowEditorTabs(workspace)) _EditorTabStrip(state: state),
+          if (_shouldShowEditorTabs(workspace, gitState))
+            _EditorTabStrip(state: state, gitState: gitState),
           Expanded(
-            child: gitState.selectedDiff == null
+            child: gitState.selectedDiffForDisplay == null
                 ? _EditorPreviewSplit(
                     state: state,
                     viewMode: settings.documentViewMode,
@@ -286,14 +275,14 @@ class WorkspaceScreen extends ConsumerWidget {
                     editorToolbarPlacement: settings.editorToolbarPlacement,
                     wordWrap: settings.wordWrap,
                   )
-                : GitDiffViewer(
-                    diff: gitState.selectedDiff,
+                : _GitDiffDocumentView(
+                    diff: gitState.selectedDiffForDisplay,
+                    workspace: workspace,
+                    viewMode: settings.documentViewMode,
                     hasUnsavedEditorChanges: state.isDirty,
+                    editorFontSize: settings.editorFontSize,
                     onOpenFile: (relativePath) =>
                         _openGitDiffFile(context, ref, relativePath),
-                    onClose: () => ref
-                        .read(gitControllerProvider.notifier)
-                        .clearSelection(),
                   ),
           ),
         ],
@@ -356,28 +345,56 @@ class WorkspaceScreen extends ConsumerWidget {
       );
     }
 
-    return Focus(
-      autofocus: true,
-      onKeyEvent: (_, event) => _handleWorkspaceKeyEvent(event, ref),
-      child: Shortcuts(
-        shortcuts: {
-          BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+    return Shortcuts(
+      shortcuts: {
+        BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+        BusyMarkSidebarShortcutActivators.files: const _SelectSidebarTabIntent(
+          _SidebarTab.files,
+        ),
+        const SingleActivator(LogicalKeyboardKey.numpad1, control: true):
+            const _SelectSidebarTabIntent(_SidebarTab.files),
+        BusyMarkSidebarShortcutActivators.toc: const _SelectSidebarTabIntent(
+          _SidebarTab.toc,
+        ),
+        const SingleActivator(LogicalKeyboardKey.numpad2, control: true):
+            const _SelectSidebarTabIntent(_SidebarTab.toc),
+        BusyMarkSidebarShortcutActivators.outline:
+            const _SelectSidebarTabIntent(_SidebarTab.outline),
+        const SingleActivator(LogicalKeyboardKey.numpad3, control: true):
+            const _SelectSidebarTabIntent(_SidebarTab.outline),
+        BusyMarkSidebarShortcutActivators.git: const _SelectSidebarTabIntent(
+          _SidebarTab.git,
+        ),
+        const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
+            const _SelectSidebarTabIntent(_SidebarTab.git),
+        BusyMarkSidebarShortcutActivators.history:
+            const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
+        const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
+            const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
+      },
+      child: Actions(
+        actions: {
+          _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
+            onInvoke: (intent) {
+              _openSearch(ref);
+              return null;
+            },
+          ),
+          _ToggleSearchIntent: CallbackAction<_ToggleSearchIntent>(
+            onInvoke: (intent) {
+              _toggleSearch(ref);
+              return null;
+            },
+          ),
+          _SelectSidebarTabIntent: CallbackAction<_SelectSidebarTabIntent>(
+            onInvoke: (intent) {
+              _selectSidebarShortcut(ref, intent.tab);
+              return null;
+            },
+          ),
         },
-        child: Actions(
-          actions: {
-            _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
-              onInvoke: (intent) {
-                _openSearch(ref);
-                return null;
-              },
-            ),
-            _ToggleSearchIntent: CallbackAction<_ToggleSearchIntent>(
-              onInvoke: (intent) {
-                _toggleSearch(ref);
-                return null;
-              },
-            ),
-          },
+        child: Focus(
+          autofocus: true,
           child: Scaffold(
             backgroundColor: colors.window,
             appBar: useNativeHeaderBar
@@ -455,20 +472,25 @@ class WorkspaceScreen extends ConsumerWidget {
                         shortcut: BusyMarkAppShortcutLabels.find,
                         onPressed: () => _toggleSearch(ref),
                       ),
-                      BusyMarkHeaderIconButton(
-                        tooltip:
-                            settings.documentViewMode ==
-                                DocumentViewModePreference.source
-                            ? context.l10n.showPreview
-                            : context.l10n.hidePreview,
-                        icon: BusyMarkGlyphs.preview,
-                        selected:
-                            settings.documentViewMode !=
-                            DocumentViewModePreference.source,
-                        onPressed: () => settingsController.setPreviewVisible(
-                          settings.documentViewMode ==
-                              DocumentViewModePreference.source,
+                      BusyMarkHeaderPopupMenuButton<DocumentViewModePreference>(
+                        tooltip: context.l10n.viewMode,
+                        icon: _documentViewModeIcon(settings.documentViewMode),
+                        shortcut: _documentViewModeShortcut(
+                          settings.documentViewMode,
                         ),
+                        itemBuilder: (context) => [
+                          for (final mode in DocumentViewModePreference.values)
+                            BusyMarkPopupMenuItem(
+                              value: mode,
+                              label: _documentViewModeLabel(context, mode),
+                              icon: _documentViewModeIcon(mode),
+                              shortcut: _documentViewModeShortcut(mode),
+                              checked: mode == settings.documentViewMode,
+                              trailingCheck: true,
+                            ),
+                        ],
+                        onSelected: (mode) =>
+                            settingsController.setDocumentViewMode(mode),
                       ),
                       BusyMarkHeaderIconButton(
                         tooltip: context.l10n.settings,
@@ -546,24 +568,12 @@ class WorkspaceScreen extends ConsumerWidget {
     unawaited(ref.read(linuxHeaderBarServiceProvider).setSearchActive(false));
   }
 
-  KeyEventResult _handleWorkspaceKeyEvent(KeyEvent event, WidgetRef ref) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
-    final action = BusyMarkSidebarShortcutActivators.actionForKeyEvent(
-      event,
-      HardwareKeyboard.instance,
-    );
-    final tab = _sidebarShortcutTabFor(action);
-    if (tab == null) {
-      return KeyEventResult.ignored;
-    }
+  void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
     _closeSearch(ref);
     unawaited(
       ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
     );
     ref.read(_sidebarShortcutRequestProvider.notifier).select(tab);
-    return KeyEventResult.handled;
   }
 
   void _setSearchQuery(WidgetRef ref, String query) {
@@ -594,6 +604,7 @@ class WorkspaceScreen extends ConsumerWidget {
           settings.sidebarVisible && hasSidebar,
         );
         await headerBar.setSidebarToggleVisible(hasSidebar);
+        await headerBar.setSearchVisible(true);
         await headerBar.setBackVisible(true);
         await headerBar.setDocumentControlsVisible(true);
         await headerBar.setViewMode(
@@ -699,6 +710,40 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.source => AppViewMode.source,
       DocumentViewModePreference.preview => AppViewMode.preview,
       DocumentViewModePreference.split => AppViewMode.split,
+    };
+  }
+
+  IconData _documentViewModeIcon(DocumentViewModePreference mode) {
+    return switch (mode) {
+      DocumentViewModePreference.editor => BusyMarkGlyphs.editorView,
+      DocumentViewModePreference.source => BusyMarkGlyphs.sourceView,
+      DocumentViewModePreference.preview => BusyMarkGlyphs.previewView,
+      DocumentViewModePreference.split => BusyMarkGlyphs.splitView,
+    };
+  }
+
+  String _documentViewModeLabel(
+    BuildContext context,
+    DocumentViewModePreference mode,
+  ) {
+    return switch (mode) {
+      DocumentViewModePreference.editor => context.l10n.editor,
+      DocumentViewModePreference.source => context.l10n.source,
+      DocumentViewModePreference.preview => context.l10n.preview,
+      DocumentViewModePreference.split => context.l10n.split,
+    };
+  }
+
+  String _documentViewModeShortcut(DocumentViewModePreference mode) {
+    return switch (mode) {
+      DocumentViewModePreference.editor =>
+        BusyMarkDocumentViewShortcutLabels.editor,
+      DocumentViewModePreference.source =>
+        BusyMarkDocumentViewShortcutLabels.source,
+      DocumentViewModePreference.preview =>
+        BusyMarkDocumentViewShortcutLabels.preview,
+      DocumentViewModePreference.split =>
+        BusyMarkDocumentViewShortcutLabels.split,
     };
   }
 
@@ -809,14 +854,16 @@ Future<void> _openGitDiffFile(
   } else {
     await controller.openPath(absolutePath);
   }
-  ref.read(gitControllerProvider.notifier).clearSelection();
+  ref.read(gitControllerProvider.notifier).deactivateDiffFile();
 }
 
 void _clearGitDetailSelection(WidgetRef ref) {
   final gitState = ref.read(gitControllerProvider);
   if (gitState.selectedDiff != null ||
       gitState.selectedFilePath != null ||
-      gitState.selectedCommitHash != null) {
+      gitState.selectedCommitHash != null ||
+      gitState.selectedCommitFilePath != null ||
+      gitState.openDiffFilePaths.isNotEmpty) {
     ref.read(gitControllerProvider.notifier).clearSelection();
   }
 }
@@ -932,6 +979,303 @@ Future<bool> _confirmGitPushSetUpstream(
     ),
   );
   return confirmed ?? false;
+}
+
+Future<void> _showWorkspaceBranchMenu(
+  BuildContext context,
+  WidgetRef ref,
+  GitRepositoryInfo repository,
+) async {
+  final controller = ref.read(gitControllerProvider.notifier);
+  final branches = await controller.loadBranches();
+  if (!context.mounted) {
+    return;
+  }
+  final latestRepository =
+      ref.read(gitControllerProvider).repositoryInfo ?? repository;
+  final action = await _showSidebarBranchMenu(
+    context,
+    latestRepository,
+    branches,
+  );
+  if (action == null || !context.mounted) {
+    return;
+  }
+  switch (action) {
+    case _SwitchBranchMenuAction(:final branchName):
+      if (branchName ==
+          ref.read(gitControllerProvider).repositoryInfo?.currentBranch) {
+        return;
+      }
+      if (!await _confirmSwitchGitBranch(context, ref, branchName) ||
+          !context.mounted) {
+        return;
+      }
+      await controller.switchBranch(branchName);
+      if (ref.read(gitControllerProvider).lastError == null) {
+        await _refreshWorkspaceAfterGitFileChanges(ref);
+      }
+    case _CreateBranchMenuAction():
+      final branchName = await _showCreateBranchDialog(context);
+      if (branchName == null) {
+        return;
+      }
+      await controller.createBranch(branchName);
+    case _PullBranchMenuAction():
+      await controller.pullFastForwardOnly();
+      await _refreshWorkspaceAfterGitFileChanges(ref);
+    case _PushBranchMenuAction():
+      final repo = ref.read(gitControllerProvider).repositoryInfo;
+      final allowSetUpstream =
+          repo?.upstreamBranch == null &&
+          await _confirmGitPushSetUpstream(context, ref);
+      await controller.push(allowSetUpstream: allowSetUpstream);
+  }
+}
+
+Future<void> _showWorkspacePathMenu(
+  BuildContext context, {
+  required String name,
+  required String path,
+}) async {
+  final action = await _showSidebarPathMenu(context);
+  if (action == null || !context.mounted) {
+    return;
+  }
+  switch (action) {
+    case _PathMenuAction.copyName:
+      await _copyToClipboard(name);
+    case _PathMenuAction.copyPath:
+      await _copyToClipboard(path);
+    case _PathMenuAction.openInFiles:
+      await _openInFiles(context, path);
+  }
+}
+
+enum _PathMenuAction { copyName, copyPath, openInFiles }
+
+Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
+  final anchor = context.findRenderObject();
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (anchor is! RenderBox || overlay is! RenderBox) {
+    return Future.value(null);
+  }
+  final theme = Theme.of(context);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final popupTheme = theme.popupMenuTheme;
+  final anchorRect =
+      anchor.localToGlobal(Offset.zero, ancestor: overlay) & anchor.size;
+  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+  final minLeft = BusyMarkSpacing.sm;
+  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+  final left = maxLeft <= minLeft
+      ? minLeft
+      : anchorRect.left.clamp(minLeft, maxLeft).toDouble();
+  final top = anchorRect.bottom + BusyMarkSpacing.xs;
+  return showMenu<_PathMenuAction>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromLTRB(
+      left,
+      top,
+      math.max(minLeft, overlay.size.width - left - menuWidth),
+      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+    ),
+    items: [
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.copyName,
+        label: context.l10n.copyName,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.copyPath,
+        label: context.l10n.copyPath,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.openInFiles,
+        label: context.l10n.openInFiles,
+        icon: BusyMarkGlyphs.folderOpen,
+      ),
+    ],
+    color: popupTheme.color ?? colors.popover,
+    surfaceTintColor: BusyMarkLinuxPalette.transparent,
+    elevation: BusyMarkElevation.popover,
+    shadowColor: colors.shade,
+    constraints: const BoxConstraints.tightFor(width: menuWidth),
+    clipBehavior: Clip.antiAlias,
+    popUpAnimationStyle: AnimationStyle.noAnimation,
+    requestFocus: true,
+  );
+}
+
+Future<_BranchMenuAction?> _showSidebarBranchMenu(
+  BuildContext context,
+  GitRepositoryInfo repository,
+  List<GitBranch> branches,
+) {
+  final anchor = context.findRenderObject();
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (anchor is! RenderBox || overlay is! RenderBox) {
+    return Future.value(null);
+  }
+  final theme = Theme.of(context);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final popupTheme = theme.popupMenuTheme;
+  final anchorRect =
+      anchor.localToGlobal(Offset.zero, ancestor: overlay) & anchor.size;
+  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+  final minLeft = BusyMarkSpacing.sm;
+  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+  final left = maxLeft <= minLeft
+      ? minLeft
+      : anchorRect.left.clamp(minLeft, maxLeft).toDouble();
+  final top = anchorRect.bottom + BusyMarkSpacing.xs;
+  return showMenu<_BranchMenuAction>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromLTRB(
+      left,
+      top,
+      math.max(minLeft, overlay.size.width - left - menuWidth),
+      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+    ),
+    items: [
+      BusyMarkPopupMenuItem(
+        value: const _PullBranchMenuAction(),
+        label: context.l10n.gitPull,
+        icon: BusyMarkGlyphs.pull,
+        enabled: repository.upstreamBranch != null,
+      ),
+      BusyMarkPopupMenuItem(
+        value: const _PushBranchMenuAction(),
+        label: context.l10n.gitPush,
+        icon: BusyMarkGlyphs.push,
+        enabled: repository.hasRemote,
+      ),
+      BusyMarkPopupMenuItem(
+        value: const _CreateBranchMenuAction(),
+        label: context.l10n.gitNewBranch,
+        icon: BusyMarkGlyphs.newDocument,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      for (final branch in branches)
+        BusyMarkPopupMenuItem(
+          value: _SwitchBranchMenuAction(branch.name),
+          label: branch.name,
+          icon: BusyMarkGlyphs.branch,
+          checked: branch.current,
+          trailingCheck: true,
+        ),
+    ],
+    color: popupTheme.color ?? colors.popover,
+    surfaceTintColor: BusyMarkLinuxPalette.transparent,
+    elevation: BusyMarkElevation.popover,
+    shadowColor: colors.shade,
+    constraints: const BoxConstraints.tightFor(width: menuWidth),
+    clipBehavior: Clip.antiAlias,
+    popUpAnimationStyle: AnimationStyle.noAnimation,
+    requestFocus: true,
+  );
+}
+
+Future<String?> _showCreateBranchDialog(BuildContext context) {
+  return showBusyMarkModalDialog<String>(
+    context,
+    builder: (context) => const _CreateBranchDialog(),
+  );
+}
+
+sealed class _BranchMenuAction {
+  const _BranchMenuAction();
+}
+
+final class _SwitchBranchMenuAction extends _BranchMenuAction {
+  const _SwitchBranchMenuAction(this.branchName);
+
+  final String branchName;
+}
+
+final class _CreateBranchMenuAction extends _BranchMenuAction {
+  const _CreateBranchMenuAction();
+}
+
+final class _PullBranchMenuAction extends _BranchMenuAction {
+  const _PullBranchMenuAction();
+}
+
+final class _PushBranchMenuAction extends _BranchMenuAction {
+  const _PushBranchMenuAction();
+}
+
+class _CreateBranchDialog extends StatefulWidget {
+  const _CreateBranchDialog();
+
+  @override
+  State<_CreateBranchDialog> createState() => _CreateBranchDialogState();
+}
+
+class _CreateBranchDialogState extends State<_CreateBranchDialog> {
+  late final TextEditingController _controller;
+
+  bool get _canCreate => _controller.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController()..addListener(_handleChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkDialogShell(
+      title: context.l10n.gitCreateBranch,
+      maxWidth: BusyMarkSizes.dialogCompact,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.gitCreateBranch,
+          suggested: true,
+          onPressed: _canCreate ? _submit : null,
+        ),
+      ],
+      children: [
+        BusyMarkFloatingTextEntry(
+          label: context.l10n.gitBranchName,
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+        ),
+      ],
+    );
+  }
+
+  void _submit() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      return;
+    }
+    Navigator.pop(context, value);
+  }
+
+  void _handleChanged() {
+    setState(() {});
+  }
 }
 
 Future<void> _refreshWorkspaceAfterGitFileChanges(WidgetRef ref) async {
@@ -1189,6 +1533,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
+  DocumentFile? _fileHistoryFile;
 
   @override
   void initState() {
@@ -1212,6 +1557,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
+      _fileHistoryFile = null;
       _tab = _initialSidebarTabIndex(widget.workspace);
       return;
     }
@@ -1224,6 +1570,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final tabs = _sidebarTabsFor(widget.workspace.kind);
+    final gitState = ref.watch(gitControllerProvider);
+    final repositoryInfo = gitState.attachedWorkspace?.id == widget.workspace.id
+        ? gitState.repositoryInfo
+        : null;
     ref.listen<_SidebarTab?>(_sidebarShortcutRequestProvider, (_, next) {
       if (next == null) {
         return;
@@ -1244,8 +1594,11 @@ class _SidebarState extends ConsumerState<_Sidebar> {
             workspace: widget.workspace,
             tabs: tabs,
             selectedTab: selectedTab,
+            repositoryInfo: repositoryInfo,
             showTabMenu: !widget.searchState.active && tabs.length > 1,
             onSelectTab: (tab) => _selectTab(tab, tabs),
+            onShowBranchMenu: (menuContext, repository) =>
+                _showWorkspaceBranchMenu(menuContext, ref, repository),
           ),
           Expanded(
             child: widget.searchState.active
@@ -1255,13 +1608,39 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     onOpenResult: widget.onOpenSearchResult,
                   )
                 : switch (selectedTab) {
-                    _SidebarTab.files => _FilesTab(workspace: widget.workspace),
+                    _SidebarTab.files =>
+                      _fileHistoryFile == null
+                          ? _FilesTab(
+                              workspace: widget.workspace,
+                              onShowFileHistory: _showFileHistory,
+                            )
+                          : _FileHistorySidebar(
+                              file: _fileHistoryFile!,
+                              onBack: _closeFileHistory,
+                              onOpenFile: (relativePath) =>
+                                  _openGitDiffFile(context, ref, relativePath),
+                            ),
                     _SidebarTab.toc => _TocTab(workspace: widget.workspace),
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
                     ),
                     _SidebarTab.git => GitSidebarTab(
                       workspace: widget.workspace,
+                      view: GitView.changes,
+                      onOpenFile: (relativePath) =>
+                          _openGitDiffFile(context, ref, relativePath),
+                      onConfirmDiscard: (files) =>
+                          _confirmDiscardGitFiles(context, ref, files),
+                      onAfterWorkspaceFilesChanged: () =>
+                          _refreshWorkspaceAfterGitFileChanges(ref),
+                      onConfirmSwitchBranch: (branchName) =>
+                          _confirmSwitchGitBranch(context, ref, branchName),
+                      onConfirmPushSetUpstream: () =>
+                          _confirmGitPushSetUpstream(context, ref),
+                    ),
+                    _SidebarTab.gitHistory => GitSidebarTab(
+                      workspace: widget.workspace,
+                      view: GitView.history,
                       onOpenFile: (relativePath) =>
                           _openGitDiffFile(context, ref, relativePath),
                       onConfirmDiscard: (files) =>
@@ -1286,10 +1665,38 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (index < 0) {
       return;
     }
-    setState(() => _tab = index);
-    if (tab != _SidebarTab.git) {
+    setState(() {
+      _tab = index;
+      if (tab != _SidebarTab.files) {
+        _fileHistoryFile = null;
+      }
+    });
+    if (tab != _SidebarTab.git && tab != _SidebarTab.gitHistory) {
       _clearGitDetailSelection(ref);
     }
+  }
+
+  Future<void> _showFileHistory(DocumentFile file) async {
+    await ref
+        .read(gitControllerProvider.notifier)
+        .loadFileHistory(file.absolutePath);
+    if (!mounted) {
+      return;
+    }
+    final loadedPath = ref.read(gitControllerProvider).historyFilePath;
+    if (loadedPath == null) {
+      return;
+    }
+    setState(() {
+      _fileHistoryFile = file;
+    });
+  }
+
+  void _closeFileHistory() {
+    setState(() {
+      _fileHistoryFile = null;
+    });
+    _clearGitDetailSelection(ref);
   }
 
   int _initialSidebarTabIndex(Workspace workspace) {
@@ -1302,7 +1709,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git }
+enum _SidebarTab { files, toc, outline, git, gitHistory }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -1331,12 +1738,14 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.files,
       _SidebarTab.outline,
       _SidebarTab.git,
+      _SidebarTab.gitHistory,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
       _SidebarTab.git,
+      _SidebarTab.gitHistory,
     ],
   };
 }
@@ -1346,7 +1755,8 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.files => context.l10n.files,
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
-    _SidebarTab.git => context.l10n.git,
+    _SidebarTab.git => context.l10n.gitCommit,
+    _SidebarTab.gitHistory => context.l10n.gitHistory,
   };
 }
 
@@ -1355,27 +1765,29 @@ IconData _sidebarTabIcon(_SidebarTab tab) {
     _SidebarTab.files => BusyMarkGlyphs.documentOpen,
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indent,
-    _SidebarTab.git => BusyMarkGlyphs.history,
+    _SidebarTab.git => BusyMarkGlyphs.checklist,
+    _SidebarTab.gitHistory => BusyMarkGlyphs.history,
   };
 }
 
-String _sidebarTabShortcut(_SidebarTab tab) {
+String? _sidebarTabShortcut(_SidebarTab tab) {
   return switch (tab) {
     _SidebarTab.files => BusyMarkSidebarShortcutLabels.files,
     _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
     _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
     _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
+    _SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history,
   };
 }
 
-_SidebarTab? _sidebarShortcutTabFor(BusyMarkSidebarShortcutAction? action) {
-  return switch (action) {
-    BusyMarkSidebarShortcutAction.files => _SidebarTab.files,
-    BusyMarkSidebarShortcutAction.toc => _SidebarTab.toc,
-    BusyMarkSidebarShortcutAction.outline => _SidebarTab.outline,
-    BusyMarkSidebarShortcutAction.git => _SidebarTab.git,
-    _ => null,
-  };
+String? _gitBranchLabel(BuildContext context, GitRepositoryInfo? repository) {
+  if (repository == null) {
+    return null;
+  }
+  return repository.currentBranch ??
+      (repository.detachedHeadCommit == null
+          ? context.l10n.gitDetachedHead
+          : context.l10n.gitDetachedHeadAt(repository.detachedHeadCommit!));
 }
 
 class _SidebarHeader extends StatelessWidget {
@@ -1383,66 +1795,111 @@ class _SidebarHeader extends StatelessWidget {
     required this.workspace,
     required this.tabs,
     required this.selectedTab,
+    required this.repositoryInfo,
     required this.showTabMenu,
     required this.onSelectTab,
+    required this.onShowBranchMenu,
   });
 
   final Workspace workspace;
   final List<_SidebarTab> tabs;
   final _SidebarTab? selectedTab;
+  final GitRepositoryInfo? repositoryInfo;
   final bool showTabMenu;
   final ValueChanged<_SidebarTab> onSelectTab;
+  final Future<void> Function(
+    BuildContext context,
+    GitRepositoryInfo repository,
+  )
+  onShowBranchMenu;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final path = _workspacePath(workspace);
+    final repository = repositoryInfo;
+    final branchLabel = _gitBranchLabel(context, repositoryInfo);
+    final detailsStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
+    final accentColor = Theme.of(context).colorScheme.primary;
+    final branchStyle = detailsStyle?.copyWith(
+      color: accentColor,
+      fontWeight: FontWeight.w700,
+    );
     return Padding(
       padding: BusyMarkInsets.sidebarHeader,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _workspaceName(context, workspace),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: colors.foreground,
-                    fontWeight: FontWeight.w700,
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: _SidebarHeaderLine(
+                  icon: WorkspaceGlyphs.forKind(workspace.kind),
+                  text: _workspaceName(context, workspace),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
                 ),
-                const SizedBox(height: BusyMarkSpacing.xs),
-                Text(
-                  _workspaceDetail(context, workspace),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall,
+              ),
+              if (showTabMenu && selectedTab != null) ...[
+                const SizedBox(width: BusyMarkSpacing.sm),
+                BusyMarkHeaderPopupMenuButton<_SidebarTab>(
+                  tooltip: context.l10n.sidebarViewMenu,
+                  icon: _sidebarTabIcon(selectedTab!),
+                  transparent: true,
+                  borderRadius: BusyMarkRadius.nativeHeaderButton,
+                  itemBuilder: (context) => [
+                    for (final tab in tabs)
+                      BusyMarkPopupMenuItem(
+                        value: tab,
+                        label: _sidebarTabLabel(context, tab),
+                        icon: _sidebarTabIcon(tab),
+                        shortcut: _sidebarTabShortcut(tab),
+                        checked: tab == selectedTab,
+                        trailingCheck: true,
+                      ),
+                  ],
+                  onSelected: onSelectTab,
                 ),
               ],
-            ),
+            ],
           ),
-          if (showTabMenu && selectedTab != null) ...[
-            const SizedBox(width: BusyMarkSpacing.sm),
-            BusyMarkHeaderPopupMenuButton<_SidebarTab>(
-              tooltip: context.l10n.sidebarViewMenu,
-              icon: _sidebarTabIcon(selectedTab!),
-              transparent: true,
-              borderRadius: BusyMarkRadius.nativeHeaderButton,
-              itemBuilder: (context) => [
-                for (final tab in tabs)
-                  BusyMarkPopupMenuItem(
-                    value: tab,
-                    label: _sidebarTabLabel(context, tab),
-                    icon: _sidebarTabIcon(tab),
-                    shortcut: _sidebarTabShortcut(tab),
-                    checked: tab == selectedTab,
-                    trailingCheck: true,
-                  ),
-              ],
-              onSelected: onSelectTab,
+          if (path.isNotEmpty) ...[
+            const SizedBox(height: BusyMarkSpacing.sm),
+            _SidebarHeaderLine(
+              icon: WorkspaceGlyphs.pathForKind(workspace.kind),
+              text: path,
+              style: detailsStyle,
+              leadingEllipsis: true,
+              tooltip: context.l10n.openInFiles,
+              onTap: (lineContext) => _showWorkspacePathMenu(
+                lineContext,
+                name: _workspaceName(context, workspace),
+                path: path,
+              ),
+            ),
+          ],
+          if (repository != null &&
+              branchLabel != null &&
+              branchLabel.trim().isNotEmpty) ...[
+            const SizedBox(height: BusyMarkSpacing.sm),
+            _SidebarHeaderLine(
+              icon: WorkspaceGlyphs.branch,
+              text: branchLabel,
+              style: branchStyle,
+              boldLeadingIcon: true,
+              inlineTrailing: _branchSyncIndicators(
+                context,
+                repository,
+                branchStyle,
+              ),
+              trailingIcon: BusyMarkGlyphs.downArrow,
+              trailingIconColor: accentColor,
+              boldTrailingIcon: true,
+              tooltip: context.l10n.gitBranches,
+              onTap: (lineContext) => onShowBranchMenu(lineContext, repository),
             ),
           ],
         ],
@@ -1457,35 +1914,516 @@ class _SidebarHeader extends StatelessWidget {
           ? context.l10n.untitledMarkdownFileName
           : filePath;
     }
-    final path = workspace.rootPath;
+    final path = _workspacePath(workspace);
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
     return segments.isEmpty ? path : segments.last;
   }
 
-  String _workspaceDetail(BuildContext context, Workspace workspace) {
-    if (workspace.kind == WorkspaceKind.untitledMarkdown) {
-      return context.l10n.markdownUnsaved;
+  String _workspacePath(Workspace workspace) {
+    if (workspace.kind == WorkspaceKind.singleMarkdown) {
+      return workspace.activeFilePath ??
+          workspace.markdown?.filePath ??
+          workspace.rootPath;
     }
-    return context.l10n.workspaceDetail(
-      _workspaceKindLabel(context, workspace.kind),
-      workspace.files.length,
+    return workspace.rootPath;
+  }
+}
+
+List<Widget> _branchSyncIndicators(
+  BuildContext context,
+  GitRepositoryInfo repository,
+  TextStyle? style,
+) {
+  return [
+    if (repository.behindCount > 0)
+      _BranchSyncIndicator(
+        direction: _BranchSyncDirection.incoming,
+        count: repository.behindCount,
+        tooltip: context.l10n.gitBehindCount(repository.behindCount),
+        style: style,
+      ),
+    if (repository.aheadCount > 0)
+      _BranchSyncIndicator(
+        direction: _BranchSyncDirection.outgoing,
+        count: repository.aheadCount,
+        tooltip: context.l10n.gitAheadCount(repository.aheadCount),
+        style: style,
+      ),
+  ];
+}
+
+class _SidebarHeaderLine extends StatelessWidget {
+  const _SidebarHeaderLine({
+    required this.icon,
+    required this.text,
+    required this.style,
+    this.boldLeadingIcon = false,
+    this.leadingEllipsis = false,
+    this.inlineTrailing = const [],
+    this.trailingIcon,
+    this.trailingIconColor,
+    this.boldTrailingIcon = false,
+    this.tooltip,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String text;
+  final TextStyle? style;
+  final bool boldLeadingIcon;
+  final bool leadingEllipsis;
+  final List<Widget> inlineTrailing;
+  final IconData? trailingIcon;
+  final Color? trailingIconColor;
+  final bool boldTrailingIcon;
+  final String? tooltip;
+  final Future<void> Function(BuildContext context)? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final iconColor = style?.color ?? colors.mutedForeground;
+    final iconFontWeight = style?.fontWeight;
+    final iconWeight = iconFontWeight?.value.toDouble();
+    final textScale = MediaQuery.textScalerOf(context);
+    final iconSize = textScale.scale(style?.fontSize ?? BusyMarkSizes.iconSm);
+    final text = leadingEllipsis
+        ? _LeadingEllipsisText(text: this.text, style: style)
+        : Text(
+            this.text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          );
+    final line = Row(
+      children: [
+        if (boldLeadingIcon)
+          _BoldBranchIcon(size: iconSize, color: iconColor)
+        else
+          Icon(
+            icon,
+            size: iconSize,
+            color: iconColor,
+            weight: iconWeight,
+            fontWeight: iconFontWeight,
+          ),
+        const SizedBox(width: BusyMarkSpacing.sm),
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(child: text),
+              for (final trailing in inlineTrailing) ...[
+                const SizedBox(width: BusyMarkSpacing.sm),
+                trailing,
+              ],
+              if (trailingIcon != null) ...[
+                const SizedBox(width: BusyMarkSpacing.xs),
+                if (boldTrailingIcon)
+                  _BoldDownArrowIcon(
+                    size: iconSize,
+                    color: trailingIconColor ?? iconColor,
+                  )
+                else
+                  Icon(
+                    trailingIcon,
+                    size: iconSize,
+                    color: trailingIconColor ?? iconColor,
+                    weight: iconWeight,
+                    fontWeight: iconFontWeight,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+    final tapHandler = onTap;
+    if (tapHandler == null) {
+      return line;
+    }
+    final clickable = MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => unawaited(tapHandler(context)),
+        child: line,
+      ),
+    );
+    final tooltip = this.tooltip;
+    return tooltip == null
+        ? clickable
+        : Tooltip(message: tooltip, child: clickable);
+  }
+}
+
+enum _BranchSyncDirection { incoming, outgoing }
+
+class _BranchSyncIndicator extends StatelessWidget {
+  const _BranchSyncIndicator({
+    required this.direction,
+    required this.count,
+    required this.tooltip,
+    required this.style,
+  });
+
+  final _BranchSyncDirection direction;
+  final int count;
+  final String tooltip;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final effectiveStyle =
+        style ??
+        Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: colors.mutedForeground,
+          fontWeight: FontWeight.w700,
+        );
+    final color = effectiveStyle?.color ?? colors.mutedForeground;
+    final textScale = MediaQuery.textScalerOf(context);
+    final iconSize = textScale.scale(
+      effectiveStyle?.fontSize ?? BusyMarkSizes.iconSm,
+    );
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _BoldVerticalArrowIcon(
+            direction: direction,
+            size: iconSize,
+            color: color,
+          ),
+          const SizedBox(width: BusyMarkSpacing.xxs),
+          Text('$count', style: effectiveStyle),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoldVerticalArrowIcon extends StatelessWidget {
+  const _BoldVerticalArrowIcon({
+    required this.direction,
+    required this.size,
+    required this.color,
+  });
+
+  final _BranchSyncDirection direction;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        painter: _BoldVerticalArrowIconPainter(direction, color),
+      ),
+    );
+  }
+}
+
+class _BoldVerticalArrowIconPainter extends CustomPainter {
+  const _BoldVerticalArrowIconPainter(this.direction, this.color);
+
+  final _BranchSyncDirection direction;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / BusyMarkSizes.iconSm;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.15 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final centerX = size.width * 0.5;
+    final topY = size.height * 0.25;
+    final bottomY = size.height * 0.75;
+    final head = size.width * 0.18;
+    switch (direction) {
+      case _BranchSyncDirection.incoming:
+        canvas.drawLine(Offset(centerX, topY), Offset(centerX, bottomY), paint);
+        canvas.drawLine(
+          Offset(centerX, bottomY),
+          Offset(centerX - head, bottomY - head),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(centerX, bottomY),
+          Offset(centerX + head, bottomY - head),
+          paint,
+        );
+      case _BranchSyncDirection.outgoing:
+        canvas.drawLine(Offset(centerX, bottomY), Offset(centerX, topY), paint);
+        canvas.drawLine(
+          Offset(centerX, topY),
+          Offset(centerX - head, topY + head),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(centerX, topY),
+          Offset(centerX + head, topY + head),
+          paint,
+        );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BoldVerticalArrowIconPainter oldDelegate) {
+    return direction != oldDelegate.direction || color != oldDelegate.color;
+  }
+}
+
+class _BoldDownArrowIcon extends StatelessWidget {
+  const _BoldDownArrowIcon({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(painter: _BoldDownArrowIconPainter(color)),
+    );
+  }
+}
+
+class _BoldDownArrowIconPainter extends CustomPainter {
+  const _BoldDownArrowIconPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / BusyMarkSizes.iconSm;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.25 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final path = Path()
+      ..moveTo(size.width * 0.25, size.height * 0.38)
+      ..lineTo(size.width * 0.5, size.height * 0.62)
+      ..lineTo(size.width * 0.75, size.height * 0.38);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_BoldDownArrowIconPainter oldDelegate) {
+    return color != oldDelegate.color;
+  }
+}
+
+class _BoldBranchIcon extends StatelessWidget {
+  const _BoldBranchIcon({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(painter: _BoldBranchIconPainter(color)),
+    );
+  }
+}
+
+class _BoldBranchIconPainter extends CustomPainter {
+  const _BoldBranchIconPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / BusyMarkSizes.iconSm;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.15 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final fill = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final leftX = size.width * 0.32;
+    final topY = size.height * 0.25;
+    final bottomY = size.height * 0.75;
+    final rightX = size.width * 0.72;
+    final midY = size.height * 0.5;
+    final radius = 2.25 * scale;
+
+    canvas.drawLine(Offset(leftX, topY), Offset(leftX, bottomY), paint);
+    canvas.drawCircle(Offset(leftX, topY), radius, fill);
+    canvas.drawCircle(Offset(leftX, bottomY), radius, fill);
+    canvas.drawPath(
+      Path()
+        ..moveTo(leftX, midY)
+        ..cubicTo(
+          size.width * 0.48,
+          midY,
+          size.width * 0.54,
+          midY,
+          rightX,
+          midY,
+        ),
+      paint,
+    );
+    canvas.drawCircle(Offset(rightX, midY), radius, fill);
+  }
+
+  @override
+  bool shouldRepaint(_BoldBranchIconPainter oldDelegate) {
+    return color != oldDelegate.color;
+  }
+}
+
+class _LeadingEllipsisText extends StatelessWidget {
+  const _LeadingEllipsisText({required this.text, required this.style});
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final value = constraints.hasBoundedWidth
+            ? _truncateStart(context, text, style, constraints.maxWidth)
+            : text;
+        return Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.clip,
+          softWrap: false,
+          style: style,
+        );
+      },
     );
   }
 
-  String _workspaceKindLabel(BuildContext context, WorkspaceKind kind) {
-    return switch (kind) {
-      WorkspaceKind.untitledMarkdown => context.l10n.markdown,
-      WorkspaceKind.singleMarkdown => context.l10n.markdown,
-      WorkspaceKind.markdownFolder => context.l10n.folder,
-      WorkspaceKind.writersideModule => context.l10n.writerside,
-    };
+  String _truncateStart(
+    BuildContext context,
+    String value,
+    TextStyle? style,
+    double maxWidth,
+  ) {
+    if (maxWidth <= 0 || value.isEmpty) {
+      return '';
+    }
+    final painter = TextPainter(
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+
+    bool fits(String candidate) {
+      painter.text = TextSpan(text: candidate, style: style);
+      painter.layout(maxWidth: double.infinity);
+      return painter.width <= maxWidth;
+    }
+
+    if (fits(value)) {
+      return value;
+    }
+
+    const prefix = '...';
+    var low = 0;
+    var high = value.length;
+    while (low < high) {
+      final mid = (low + high) >> 1;
+      if (fits(prefix + value.substring(mid))) {
+        high = mid;
+      } else {
+        low = mid + 1;
+      }
+    }
+    return prefix + value.substring(low);
+  }
+}
+
+class _FileHistorySidebar extends ConsumerWidget {
+  const _FileHistorySidebar({
+    required this.file,
+    required this.onBack,
+    required this.onOpenFile,
+  });
+
+  final DocumentFile file;
+  final VoidCallback onBack;
+  final ValueChanged<String> onOpenFile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final controller = ref.read(gitControllerProvider.notifier);
+    final basename = p.basename(file.relativePath);
+    final fileName = basename.isEmpty ? file.relativePath : basename;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.sidebar,
+            border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+          ),
+          child: SizedBox(
+            height: BusyMarkSizes.paneHeaderHeight,
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.xs),
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.back,
+                  icon: BusyMarkGlyphs.back,
+                  transparent: true,
+                  onPressed: onBack,
+                ),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                Icon(
+                  WorkspaceGlyphs.forPath(file.absolutePath),
+                  size: BusyMarkSizes.iconSm,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Text(
+                    fileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.foreground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: GitHistoryView(
+            state: ref.watch(gitControllerProvider),
+            onSelectCommit: controller.loadCommitDetails,
+            onShowFileDiff: onOpenFile,
+          ),
+        ),
+      ],
+    );
   }
 }
 
 class _FilesTab extends ConsumerStatefulWidget {
-  const _FilesTab({required this.workspace});
+  const _FilesTab({required this.workspace, required this.onShowFileHistory});
 
   final Workspace workspace;
+  final Future<void> Function(DocumentFile file) onShowFileHistory;
 
   @override
   ConsumerState<_FilesTab> createState() => _FilesTabState();
@@ -1494,6 +2432,7 @@ class _FilesTab extends ConsumerStatefulWidget {
 class _FilesTabState extends ConsumerState<_FilesTab> {
   late String _workspaceId;
   late Set<String> _expandedPaths;
+  _FileTreeClipboardEntry? _cutEntry;
 
   @override
   void initState() {
@@ -1519,6 +2458,10 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
   Widget build(BuildContext context) {
     final tree = _buildFileTree(widget.workspace.files);
     final entries = _visibleFileTreeEntries(tree, _expandedPaths);
+    final vcsStatusColors = _FileTreeVcsStatusColors.fromSnapshot(
+      widget.workspace,
+      ref.watch(gitControllerProvider.select((state) => state.statusSnapshot)),
+    );
     if (widget.workspace.files.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.folder,
@@ -1534,10 +2477,26 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final file = node.file;
         final expanded = _expandedPaths.contains(node.relativePath);
         final openable = file != null && _isOpenableTextDocument(file);
+        final historyFile = openable ? file : null;
+        final menuPath =
+            file?.absolutePath ??
+            p.join(widget.workspace.rootPath, node.relativePath);
+        final menuName = node.name;
+        final menuIsFolder = node.isFolder;
+        final selectedHistoryFile = historyFile;
+        void onSecondaryTapDown(TapDownDetails details) => _showFileContextMenu(
+          context,
+          menuName,
+          menuPath,
+          menuIsFolder,
+          selectedHistoryFile,
+          details.globalPosition,
+        );
         return _SidebarTreeRow(
           title: node.name,
           depth: entry.depth,
           icon: _fileTreeIcon(node, expanded: expanded),
+          vcsColor: vcsStatusColors.colorForNode(node),
           hasChildren: node.isFolder && node.children.isNotEmpty,
           expanded: expanded,
           selected:
@@ -1564,10 +2523,448 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                   }
                 }
               : null,
+          onSecondaryTapDown: onSecondaryTapDown,
         );
       },
     );
   }
+
+  Future<void> _showFileContextMenu(
+    BuildContext context,
+    String name,
+    String path,
+    bool isFolder,
+    DocumentFile? historyFile,
+    Offset position,
+  ) async {
+    final cutEntry = _cutEntry;
+    final canPaste =
+        cutEntry != null &&
+        _canPasteFileTreeEntry(cutEntry.path, path, isFolder);
+    final gitRelativePath = _gitRelativePathForFileTreeEntry(ref, path);
+    final canUseGitFileActions = gitRelativePath != null;
+    final action = await _showFileTreeMenu(
+      context,
+      position,
+      showHistory: historyFile != null,
+      showPaste: canPaste,
+      enableGitActions: canUseGitFileActions,
+    );
+    if (!context.mounted || action == null) {
+      return;
+    }
+    switch (action) {
+      case _FileTreeAction.newFile:
+        final directory = isFolder ? path : p.dirname(path);
+        final fileName = await _showFileNameDialog(
+          context,
+          title: context.l10n.newFile,
+          actionLabel: context.l10n.create,
+          initialValue: 'untitled.md',
+        );
+        if (fileName == null ||
+            !context.mounted ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final created = await ref
+            .read(workspaceControllerProvider.notifier)
+            .createWorkspaceFile(directory, fileName);
+        if (created) {
+          _expandedPaths.addAll(_directoryAncestorPaths(directory));
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.rename:
+        final newName = await _showFileNameDialog(
+          context,
+          title: context.l10n.rename,
+          actionLabel: context.l10n.rename,
+          initialValue: name,
+        );
+        if (newName == null ||
+            !context.mounted ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final renamed = await ref
+            .read(workspaceControllerProvider.notifier)
+            .renameWorkspaceEntity(path, newName);
+        if (renamed) {
+          setState(() => _cutEntry = null);
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.cut:
+        setState(() {
+          _cutEntry = _FileTreeClipboardEntry(path: path);
+        });
+      case _FileTreeAction.paste:
+        final entry = _cutEntry;
+        if (entry == null ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final directory = isFolder ? path : p.dirname(path);
+        final moved = await ref
+            .read(workspaceControllerProvider.notifier)
+            .moveWorkspaceEntity(entry.path, directory);
+        if (moved) {
+          setState(() => _cutEntry = null);
+          _expandedPaths.addAll(_directoryAncestorPaths(directory));
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.delete:
+        final confirmed = await _confirmDeleteFileTreeEntry(
+          context,
+          ref,
+          name: name,
+          isFolder: isFolder,
+        );
+        if (!confirmed ||
+            !context.mounted ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final deleted = await ref
+            .read(workspaceControllerProvider.notifier)
+            .deleteWorkspaceEntity(path);
+        if (deleted) {
+          final entry = _cutEntry;
+          if (entry != null &&
+              (p.equals(entry.path, path) || p.isWithin(path, entry.path))) {
+            setState(() => _cutEntry = null);
+          }
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.addToGit:
+        final relativePath = gitRelativePath;
+        if (relativePath == null) {
+          return;
+        }
+        await ref.read(gitControllerProvider.notifier).stageFiles([
+          relativePath,
+        ]);
+      case _FileTreeAction.copyName:
+        await _copyToClipboard(name);
+      case _FileTreeAction.copyPath:
+        await _copyToClipboard(path);
+      case _FileTreeAction.openInFiles:
+        await _openInFiles(context, path);
+      case _FileTreeAction.fileHistory:
+        final file = historyFile;
+        if (file != null && canUseGitFileActions) {
+          await widget.onShowFileHistory(file);
+        }
+    }
+  }
+
+  Iterable<String> _directoryAncestorPaths(String absoluteDirectory) {
+    final relative = p
+        .normalize(
+          p.relative(absoluteDirectory, from: widget.workspace.rootPath),
+        )
+        .replaceAll(r'\', '/');
+    if (relative == '.' || relative.isEmpty || relative.startsWith('../')) {
+      return const [];
+    }
+    final parts = p.posix.split(relative);
+    final paths = <String>[];
+    for (var index = 1; index <= parts.length; index += 1) {
+      paths.add(p.posix.joinAll(parts.take(index)));
+    }
+    return paths;
+  }
+}
+
+class _FileTreeClipboardEntry {
+  const _FileTreeClipboardEntry({required this.path});
+
+  final String path;
+}
+
+enum _FileTreeAction {
+  newFile,
+  rename,
+  cut,
+  paste,
+  delete,
+  addToGit,
+  copyName,
+  copyPath,
+  openInFiles,
+  fileHistory,
+}
+
+Future<_FileTreeAction?> _showFileTreeMenu(
+  BuildContext context,
+  Offset position, {
+  required bool showHistory,
+  required bool showPaste,
+  required bool enableGitActions,
+}) {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (overlay is! RenderBox) {
+    return Future.value(null);
+  }
+  final theme = Theme.of(context);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final popupTheme = theme.popupMenuTheme;
+  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+  final minLeft = BusyMarkSpacing.sm;
+  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+  final localPosition = overlay.globalToLocal(position);
+  final left = maxLeft <= minLeft
+      ? minLeft
+      : localPosition.dx.clamp(minLeft, maxLeft).toDouble();
+  final maxTop = math.max(
+    BusyMarkSpacing.sm,
+    overlay.size.height - BusyMarkSpacing.sm,
+  );
+  final top = localPosition.dy.clamp(BusyMarkSpacing.sm, maxTop).toDouble();
+  return showMenu<_FileTreeAction>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromLTRB(
+      left,
+      top,
+      math.max(minLeft, overlay.size.width - left - menuWidth),
+      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+    ),
+    items: [
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.newFile,
+        label: context.l10n.newFile,
+        icon: BusyMarkGlyphs.newDocument,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.rename,
+        label: context.l10n.rename,
+        icon: BusyMarkGlyphs.edit,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.cut,
+        label: context.l10n.cut,
+        icon: BusyMarkGlyphs.cut,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.paste,
+        label: context.l10n.paste,
+        icon: BusyMarkGlyphs.paste,
+        enabled: showPaste,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.delete,
+        label: context.l10n.delete,
+        icon: BusyMarkGlyphs.delete,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.copyName,
+        label: context.l10n.copyName,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.copyPath,
+        label: context.l10n.copyPath,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.openInFiles,
+        label: context.l10n.openInFiles,
+        icon: BusyMarkGlyphs.folderOpen,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.addToGit,
+        label: context.l10n.addToGit,
+        icon: BusyMarkGlyphs.branch,
+        enabled: enableGitActions,
+      ),
+      if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      if (showHistory)
+        BusyMarkPopupMenuItem(
+          value: _FileTreeAction.fileHistory,
+          label: context.l10n.fileHistory,
+          icon: BusyMarkGlyphs.documentHistory,
+          enabled: enableGitActions,
+        ),
+    ],
+    color: popupTheme.color ?? colors.popover,
+    surfaceTintColor: BusyMarkLinuxPalette.transparent,
+    elevation: BusyMarkElevation.popover,
+    shadowColor: colors.shade,
+    constraints: const BoxConstraints.tightFor(width: menuWidth),
+    clipBehavior: Clip.antiAlias,
+    popUpAnimationStyle: AnimationStyle.noAnimation,
+    requestFocus: true,
+  );
+}
+
+bool _canPasteFileTreeEntry(
+  String sourcePath,
+  String targetPath,
+  bool targetIsFolder,
+) {
+  final source = p.normalize(sourcePath);
+  final targetDirectory = p.normalize(
+    targetIsFolder ? targetPath : p.dirname(targetPath),
+  );
+  if (p.equals(p.dirname(source), targetDirectory)) {
+    return false;
+  }
+  if (p.equals(source, targetDirectory) ||
+      p.isWithin(source, targetDirectory)) {
+    return false;
+  }
+  return true;
+}
+
+String? _gitRelativePathForFileTreeEntry(WidgetRef ref, String absolutePath) {
+  final repository = ref.read(gitControllerProvider).repositoryInfo;
+  if (repository == null) {
+    return null;
+  }
+  final root = p.normalize(repository.rootPath);
+  final path = p.normalize(absolutePath);
+  if (!p.equals(root, path) && !p.isWithin(root, path)) {
+    return null;
+  }
+  final relative = p.relative(path, from: root).replaceAll(r'\', '/');
+  if (relative.isEmpty || relative == '.') {
+    return null;
+  }
+  return relative;
+}
+
+Future<String?> _showFileNameDialog(
+  BuildContext context, {
+  required String title,
+  required String actionLabel,
+  required String initialValue,
+}) {
+  return showBusyMarkModalDialog<String>(
+    context,
+    builder: (context) => _FileNameDialog(
+      title: title,
+      actionLabel: actionLabel,
+      initialValue: initialValue,
+    ),
+  );
+}
+
+class _FileNameDialog extends StatefulWidget {
+  const _FileNameDialog({
+    required this.title,
+    required this.actionLabel,
+    required this.initialValue,
+  });
+
+  final String title;
+  final String actionLabel;
+  final String initialValue;
+
+  @override
+  State<_FileNameDialog> createState() => _FileNameDialogState();
+}
+
+class _FileNameDialogState extends State<_FileNameDialog> {
+  late final TextEditingController _controller;
+
+  bool get _canSubmit => _controller.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue)
+      ..addListener(_handleChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkDialogShell(
+      title: widget.title,
+      maxWidth: BusyMarkSizes.dialogCompact,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: widget.actionLabel,
+          suggested: true,
+          onPressed: _canSubmit ? _submit : null,
+        ),
+      ],
+      children: [
+        BusyMarkFloatingTextEntry(
+          label: context.l10n.fileName,
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+        ),
+      ],
+    );
+  }
+
+  void _submit() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      return;
+    }
+    Navigator.pop(context, value);
+  }
+
+  void _handleChanged() {
+    setState(() {});
+  }
+}
+
+Future<bool> _confirmDeleteFileTreeEntry(
+  BuildContext context,
+  WidgetRef ref, {
+  required String name,
+  required bool isFolder,
+}) async {
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: isFolder
+          ? context.l10n.confirmDeleteFolderTitle
+          : context.l10n.confirmDeleteFileTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.delete,
+          icon: BusyMarkGlyphs.delete,
+          destructive: true,
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
+      children: [
+        Text(
+          isFolder
+              ? context.l10n.confirmDeleteFolderMessage(name)
+              : context.l10n.confirmDeleteFileMessage(name),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
 }
 
 class _SidebarTreeRow extends StatelessWidget {
@@ -1581,8 +2978,10 @@ class _SidebarTreeRow extends StatelessWidget {
     this.selected = false,
     this.enabled = true,
     this.muted = false,
+    this.vcsColor,
     this.onToggle,
     this.onTap,
+    this.onSecondaryTapDown,
   });
 
   final String title;
@@ -1594,21 +2993,25 @@ class _SidebarTreeRow extends StatelessWidget {
   final bool selected;
   final bool enabled;
   final bool muted;
+  final BusyMarkVcsFileColor? vcsColor;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
+  final GestureTapDownCallback? onSecondaryTapDown;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final clickable = enabled && onTap != null;
+    final clickable = enabled && (onTap != null || onSecondaryTapDown != null);
+    final vcsForeground = vcsColor == null
+        ? null
+        : busyMarkVcsFileStatusColor(context, vcsColor!);
     final foreground = !enabled || muted
         ? colors.disabledForeground
-        : selected
-        ? colors.foreground
-        : colors.mutedForeground;
+        : vcsForeground ??
+              (selected ? colors.foreground : colors.mutedForeground);
     final titleColor = !enabled || muted
         ? colors.disabledForeground
-        : colors.foreground;
+        : vcsForeground ?? colors.foreground;
     final titleStyle = Theme.of(
       context,
     ).textTheme.bodyMedium?.copyWith(color: titleColor);
@@ -1624,7 +3027,8 @@ class _SidebarTreeRow extends StatelessWidget {
           hoverColor: clickable
               ? busyMarkRowHoverColor(context)
               : BusyMarkLinuxPalette.transparent,
-          onTap: clickable ? onTap : null,
+          onTap: enabled ? onTap : null,
+          onSecondaryTapDown: enabled ? onSecondaryTapDown : null,
           child: SizedBox(
             height: BusyMarkSizes.sidebarTreeRowHeight,
             child: Row(
@@ -1745,6 +3149,108 @@ class _FileTreeEntry {
 
   final _FileTreeNode node;
   final int depth;
+}
+
+class _FileTreeVcsStatusColors {
+  const _FileTreeVcsStatusColors({
+    required Map<String, BusyMarkVcsFileColor> files,
+    required Map<String, BusyMarkVcsFileColor> folders,
+  }) : _files = files,
+       _folders = folders;
+
+  const _FileTreeVcsStatusColors.empty()
+    : _files = const {},
+      _folders = const {};
+
+  final Map<String, BusyMarkVcsFileColor> _files;
+  final Map<String, BusyMarkVcsFileColor> _folders;
+
+  factory _FileTreeVcsStatusColors.fromSnapshot(
+    Workspace workspace,
+    GitStatusSnapshot? snapshot,
+  ) {
+    if (snapshot == null || snapshot.files.isEmpty) {
+      return const _FileTreeVcsStatusColors.empty();
+    }
+    final workspaceRoot = p.normalize(workspace.rootPath);
+    final files = <String, BusyMarkVcsFileColor>{};
+    final folders = <String, BusyMarkVcsFileColor>{};
+
+    for (final status in snapshot.files) {
+      final color = busyMarkVcsFileColorForGitStatus(status);
+      final absolutePath = p.normalize(status.absolutePath);
+      final relativePath = _workspaceRelativePath(
+        workspaceRoot: workspaceRoot,
+        absolutePath: absolutePath,
+      );
+      if (relativePath == null) {
+        continue;
+      }
+      files[absolutePath] = _dominantVcsFileColor(files[absolutePath], color);
+      final parts = p.posix
+          .split(relativePath)
+          .where((part) => part.isNotEmpty)
+          .toList();
+      for (var index = 1; index < parts.length; index += 1) {
+        final folderPath = p.posix.joinAll(parts.take(index));
+        folders[folderPath] = _dominantVcsFileColor(folders[folderPath], color);
+      }
+    }
+
+    return _FileTreeVcsStatusColors(files: files, folders: folders);
+  }
+
+  BusyMarkVcsFileColor? colorForNode(_FileTreeNode node) {
+    if (node.isFolder) {
+      return _folders[node.relativePath];
+    }
+    final file = node.file;
+    if (file == null) {
+      return null;
+    }
+    return _files[p.normalize(file.absolutePath)];
+  }
+}
+
+String? _workspaceRelativePath({
+  required String workspaceRoot,
+  required String absolutePath,
+}) {
+  if (!p.equals(workspaceRoot, absolutePath) &&
+      !p.isWithin(workspaceRoot, absolutePath)) {
+    return null;
+  }
+  final relativePath = p
+      .relative(absolutePath, from: workspaceRoot)
+      .replaceAll(r'\', '/');
+  if (relativePath.isEmpty || relativePath == '.') {
+    return null;
+  }
+  return relativePath;
+}
+
+BusyMarkVcsFileColor _dominantVcsFileColor(
+  BusyMarkVcsFileColor? current,
+  BusyMarkVcsFileColor candidate,
+) {
+  if (current == null) {
+    return candidate;
+  }
+  return _vcsFileColorPriority(candidate) > _vcsFileColorPriority(current)
+      ? candidate
+      : current;
+}
+
+int _vcsFileColorPriority(BusyMarkVcsFileColor color) {
+  return switch (color) {
+    BusyMarkVcsFileColor.modified => 10,
+    BusyMarkVcsFileColor.untracked => 20,
+    BusyMarkVcsFileColor.copied => 30,
+    BusyMarkVcsFileColor.renamed => 40,
+    BusyMarkVcsFileColor.added => 50,
+    BusyMarkVcsFileColor.deleted => 60,
+    BusyMarkVcsFileColor.conflicted => 70,
+  };
 }
 
 List<_FileTreeNode> _buildFileTree(List<DocumentFile> files) {
@@ -2707,23 +4213,33 @@ class _SidebarEmptyState extends StatelessWidget {
   }
 }
 
-bool _shouldShowEditorTabs(Workspace workspace) {
+bool _shouldShowEditorTabs(Workspace workspace, GitState gitState) {
   return switch (workspace.kind) {
         WorkspaceKind.markdownFolder || WorkspaceKind.writersideModule => true,
         WorkspaceKind.untitledMarkdown || WorkspaceKind.singleMarkdown => false,
       } &&
-      workspace.openFilePaths.isNotEmpty;
+      (workspace.openFilePaths.isNotEmpty ||
+          gitState.openDiffFilePaths.isNotEmpty ||
+          gitState.selectedDiffForDisplay != null);
 }
 
 class _EditorTabStrip extends ConsumerWidget {
-  const _EditorTabStrip({required this.state});
+  const _EditorTabStrip({required this.state, required this.gitState});
 
   final WorkspaceState state;
+  final GitState gitState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final workspace = state.workspace;
-    if (workspace == null || workspace.openFilePaths.isEmpty) {
+    if (workspace == null) {
+      return const SizedBox.shrink();
+    }
+    final entries = workspaceTabEntries(
+      workspace: workspace,
+      gitState: gitState,
+    );
+    if (entries.isEmpty) {
       return const SizedBox.shrink();
     }
     final colors = BusyMarkSurfaceColors.of(context);
@@ -2743,74 +4259,131 @@ class _EditorTabStrip extends ConsumerWidget {
             0,
           ),
           itemBuilder: (context, index) {
-            final path = workspace.openFilePaths[index];
-            final active = path == workspace.activeFilePath;
-            return _EditorTab(
-              workspace: workspace,
-              path: path,
-              active: active,
-              dirty: active && state.isDirty,
-              canClose: true,
-              onSelected: () async {
-                if (active) {
-                  _clearGitDetailSelection(ref);
-                  return;
-                }
-                if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
-                    !context.mounted) {
-                  return;
-                }
-                await ref
-                    .read(workspaceControllerProvider.notifier)
-                    .openActiveFile(path);
-                _clearGitDetailSelection(ref);
-              },
-              onClose: () async {
-                if (active &&
-                    (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
-                        !context.mounted)) {
-                  return;
-                }
-                await ref
-                    .read(workspaceControllerProvider.notifier)
-                    .closeOpenFileTab(path);
-                _clearGitDetailSelection(ref);
-              },
+            final entry = entries[index];
+            return _WorkspaceTabButton(
+              title: _tabTitle(context, workspace, entry),
+              icon: _tabIcon(workspace, entry),
+              diff: entry.kind == WorkspaceTabKind.gitDiff,
+              active: entry.active,
+              dirty: _tabDirty(workspace, entry),
+              onSelected: () => _selectTab(context, ref, workspace, entry),
+              onClose: () => _closeTab(context, ref, workspace, entry),
             );
           },
           separatorBuilder: (context, index) =>
               const SizedBox(width: BusyMarkSpacing.xs),
-          itemCount: workspace.openFilePaths.length,
+          itemCount: entries.length,
         ),
       ),
     );
   }
+
+  String _tabTitle(
+    BuildContext context,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+  ) {
+    return switch (entry.kind) {
+      WorkspaceTabKind.file => _relativeDocumentPath(workspace, entry.path),
+      WorkspaceTabKind.gitDiff =>
+        entry.path.isEmpty ? context.l10n.gitDiff : _diffTabTitle(entry.path),
+    };
+  }
+
+  IconData? _tabIcon(Workspace workspace, WorkspaceTabEntry entry) {
+    if (entry.kind == WorkspaceTabKind.gitDiff) {
+      return null;
+    }
+    final file = _documentFileForPath(workspace, entry.path);
+    return _documentKindIcon(file?.kind ?? DocumentKind.markdown);
+  }
+
+  bool _tabDirty(Workspace workspace, WorkspaceTabEntry entry) {
+    return entry.kind == WorkspaceTabKind.file &&
+        entry.path == workspace.activeFilePath &&
+        state.isDirty;
+  }
+
+  Future<void> _selectTab(
+    BuildContext context,
+    WidgetRef ref,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+  ) async {
+    final gitController = ref.read(gitControllerProvider.notifier);
+    switch (entry.kind) {
+      case WorkspaceTabKind.file:
+        if (entry.path == workspace.activeFilePath) {
+          gitController.deactivateDiffFile();
+          return;
+        }
+        if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+            !context.mounted) {
+          return;
+        }
+        await ref
+            .read(workspaceControllerProvider.notifier)
+            .openActiveFile(entry.path);
+        gitController.deactivateDiffFile();
+      case WorkspaceTabKind.gitDiff:
+        if (entry.path.isEmpty) {
+          return;
+        }
+        gitController.selectCommitFile(entry.path);
+    }
+  }
+
+  Future<void> _closeTab(
+    BuildContext context,
+    WidgetRef ref,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+  ) async {
+    final gitController = ref.read(gitControllerProvider.notifier);
+    switch (entry.kind) {
+      case WorkspaceTabKind.file:
+        final currentWorkspaceFile = entry.path == workspace.activeFilePath;
+        if (currentWorkspaceFile &&
+            (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+                !context.mounted)) {
+          return;
+        }
+        await ref
+            .read(workspaceControllerProvider.notifier)
+            .closeOpenFileTab(entry.path);
+        gitController.deactivateDiffFile();
+      case WorkspaceTabKind.gitDiff:
+        if (entry.path.isEmpty) {
+          gitController.clearSelection();
+        } else {
+          gitController.closeDiffFile(entry.path);
+        }
+    }
+  }
 }
 
-class _EditorTab extends StatelessWidget {
-  const _EditorTab({
-    required this.workspace,
-    required this.path,
+class _WorkspaceTabButton extends StatelessWidget {
+  const _WorkspaceTabButton({
+    required this.title,
+    required this.icon,
+    required this.diff,
     required this.active,
     required this.dirty,
-    required this.canClose,
     required this.onSelected,
     required this.onClose,
   });
 
-  final Workspace workspace;
-  final String path;
+  final String title;
+  final IconData? icon;
+  final bool diff;
   final bool active;
   final bool dirty;
-  final bool canClose;
   final VoidCallback onSelected;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final file = _documentFileForPath(workspace, path);
-    final icon = _documentKindIcon(file?.kind ?? DocumentKind.markdown);
     final foreground = active ? colors.foreground : colors.mutedForeground;
     final background = active ? colors.view : BusyMarkLinuxPalette.transparent;
     final borderColor = active
@@ -2854,12 +4427,15 @@ class _EditorTab extends StatelessWidget {
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
               ] else ...[
-                Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
+                if (diff)
+                  _DiffCompareIcon(color: foreground)
+                else
+                  Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
               Flexible(
                 child: Text(
-                  _relativeDocumentPath(workspace, path),
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
@@ -2869,28 +4445,975 @@ class _EditorTab extends StatelessWidget {
                   ),
                 ),
               ),
-              if (canClose) ...[
-                const SizedBox(width: BusyMarkSpacing.xs),
-                IconButton(
-                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  icon: const Icon(BusyMarkGlyphs.clear),
-                  iconSize: 13,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(
-                    width: 24,
-                    height: 24,
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  color: foreground,
-                  onPressed: onClose,
+              const SizedBox(width: BusyMarkSpacing.xs),
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(BusyMarkGlyphs.clear),
+                iconSize: 13,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: 24,
+                  height: 24,
                 ),
-              ],
+                visualDensity: VisualDensity.compact,
+                color: foreground,
+                onPressed: onClose,
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+class _DiffCompareIcon extends StatelessWidget {
+  const _DiffCompareIcon({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: BusyMarkSizes.iconSm,
+      child: CustomPaint(
+        painter: _DiffCompareIconPainter(color),
+        size: const Size.square(BusyMarkSizes.iconSm),
+      ),
+    );
+  }
+}
+
+class _DiffCompareIconPainter extends CustomPainter {
+  const _DiffCompareIconPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / BusyMarkSizes.iconSm;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.7 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final topY = 5 * scale;
+    final bottomY = 11 * scale;
+    final left = 3 * scale;
+    final right = 13 * scale;
+    final arrow = 3 * scale;
+
+    final top = Path()
+      ..moveTo(right, topY)
+      ..lineTo(left, topY)
+      ..lineTo(left + arrow, topY - arrow)
+      ..moveTo(left, topY)
+      ..lineTo(left + arrow, topY + arrow);
+    final bottom = Path()
+      ..moveTo(left, bottomY)
+      ..lineTo(right, bottomY)
+      ..lineTo(right - arrow, bottomY - arrow)
+      ..moveTo(right, bottomY)
+      ..lineTo(right - arrow, bottomY + arrow);
+
+    canvas.drawPath(top, paint);
+    canvas.drawPath(bottom, paint);
+  }
+
+  @override
+  bool shouldRepaint(_DiffCompareIconPainter oldDelegate) {
+    return color != oldDelegate.color;
+  }
+}
+
+String _diffTabTitle(String path) {
+  final name = p.basename(path);
+  return name.isEmpty ? path : name;
+}
+
+class _GitDiffDocumentView extends StatefulWidget {
+  const _GitDiffDocumentView({
+    required this.diff,
+    required this.workspace,
+    required this.viewMode,
+    required this.hasUnsavedEditorChanges,
+    required this.editorFontSize,
+    required this.onOpenFile,
+  });
+
+  final GitDiff? diff;
+  final Workspace workspace;
+  final DocumentViewModePreference viewMode;
+  final bool hasUnsavedEditorChanges;
+  final double editorFontSize;
+  final ValueChanged<String> onOpenFile;
+
+  @override
+  State<_GitDiffDocumentView> createState() => _GitDiffDocumentViewState();
+}
+
+class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
+  late final ScrollController _previewScrollController;
+  late final GitDiffChangeNavigatorController _sourceChangeNavigatorController;
+  final _previewHeadingKeys = <String, GlobalKey>{};
+  final _previewSearchKeys = <int, GlobalKey>{};
+  int _currentChangeIndex = 0;
+  String? _initialScrollToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _previewScrollController = ScrollController();
+    _sourceChangeNavigatorController = GitDiffChangeNavigatorController();
+  }
+
+  @override
+  void dispose() {
+    _previewScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final diff = widget.diff;
+    if (diff == null) {
+      return _EmptyPane(
+        icon: BusyMarkGlyphs.history,
+        title: context.l10n.gitDiff,
+      );
+    }
+    final colors = BusyMarkSurfaceColors.of(context);
+    final sourceVisible =
+        widget.viewMode == DocumentViewModePreference.source ||
+        widget.viewMode == DocumentViewModePreference.split;
+    final previewVisible =
+        widget.viewMode == DocumentViewModePreference.preview ||
+        widget.viewMode == DocumentViewModePreference.split ||
+        widget.viewMode == DocumentViewModePreference.editor;
+    final previewData = previewVisible
+        ? _diffPreviewData(diff, widget.workspace)
+        : null;
+    final changeTargets =
+        previewData?.changeTargets ?? const <_DiffPreviewChangeTarget>[];
+    final splitVisible = sourceVisible && previewVisible;
+    final sourceChangeCount = sourceVisible
+        ? gitDiffSourceChangeCount(diff)
+        : 0;
+    final navigatorChangeCount = splitVisible
+        ? sourceChangeCount
+        : changeTargets.length;
+    if (_currentChangeIndex >= navigatorChangeCount) {
+      _currentChangeIndex = 0;
+    }
+    if (navigatorChangeCount > 0) {
+      _scheduleInitialScroll(
+        diff: diff,
+        splitVisible: splitVisible,
+        sourceChangeCount: sourceChangeCount,
+        previewTargets: changeTargets,
+      );
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(color: colors.view),
+      child: Column(
+        children: [
+          if (splitVisible && sourceChangeCount > 0)
+            _DiffChangeNavigator(
+              currentIndex: _currentChangeIndex,
+              total: sourceChangeCount,
+              onPrevious: () => _jumpToSplitChange(
+                sourceChangeCount: sourceChangeCount,
+                previewTargets: changeTargets,
+                direction: -1,
+              ),
+              onNext: () => _jumpToSplitChange(
+                sourceChangeCount: sourceChangeCount,
+                previewTargets: changeTargets,
+                direction: 1,
+              ),
+              target: _diffChangeTarget(diff, _currentChangeIndex),
+              onOpenFile: widget.onOpenFile,
+            ),
+          Expanded(
+            child: Row(
+              children: [
+                if (sourceVisible)
+                  Expanded(
+                    child: GitDiffViewer(
+                      diff: diff,
+                      hasUnsavedEditorChanges: widget.hasUnsavedEditorChanges,
+                      showHeader: false,
+                      showFileHeaders: false,
+                      showCloseButton: false,
+                      showFileActions: !splitVisible,
+                      showHunkHeaders: !splitVisible,
+                      editorFontSize: widget.editorFontSize,
+                      showChangeNavigator: !previewVisible,
+                      changeNavigatorController: splitVisible
+                          ? _sourceChangeNavigatorController
+                          : null,
+                      onOpenFile: widget.onOpenFile,
+                      onClose: () {},
+                    ),
+                  ),
+                if (sourceVisible && previewVisible)
+                  VerticalDivider(
+                    width: BusyMarkStroke.hairline,
+                    color: colors.subtleBorder,
+                  ),
+                if (previewVisible)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        if (!splitVisible && changeTargets.isNotEmpty)
+                          _DiffChangeNavigator(
+                            currentIndex: _currentChangeIndex,
+                            total: changeTargets.length,
+                            onPrevious: () =>
+                                _jumpToPreviewChange(changeTargets, -1),
+                            onNext: () =>
+                                _jumpToPreviewChange(changeTargets, 1),
+                            target: null,
+                            onOpenFile: null,
+                          ),
+                        Expanded(
+                          child: _PreviewPane(
+                            preview: previewData?.document,
+                            workspace: widget.workspace,
+                            controller: _previewScrollController,
+                            headingKeys: _previewHeadingKeys,
+                            searchKeys: _previewSearchKeys,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _jumpToPreviewChange(
+    List<_DiffPreviewChangeTarget> targets,
+    int direction,
+  ) {
+    if (targets.isEmpty) {
+      return;
+    }
+    final nextIndex =
+        (_currentChangeIndex + direction + targets.length) % targets.length;
+    setState(() {
+      _currentChangeIndex = nextIndex;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollPreviewToChange(targets, nextIndex);
+    });
+  }
+
+  void _jumpToSplitChange({
+    required int sourceChangeCount,
+    required List<_DiffPreviewChangeTarget> previewTargets,
+    required int direction,
+  }) {
+    if (sourceChangeCount == 0) {
+      return;
+    }
+    final nextIndex =
+        (_currentChangeIndex + direction + sourceChangeCount) %
+        sourceChangeCount;
+    setState(() {
+      _currentChangeIndex = nextIndex;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sourceChangeNavigatorController.jumpToChange(nextIndex);
+      if (previewTargets.isNotEmpty) {
+        _scrollPreviewToChange(
+          previewTargets,
+          math.min(nextIndex, previewTargets.length - 1),
+        );
+      }
+    });
+  }
+
+  void _scrollPreviewToChange(
+    List<_DiffPreviewChangeTarget> targets,
+    int index,
+  ) {
+    final context =
+        _previewSearchKeys[targets[index].blockIndex]?.currentContext;
+    if (context == null) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      context,
+      duration: BusyMarkMotion.scroll,
+      curve: Curves.easeOutCubic,
+      alignment: 0.1,
+    );
+  }
+
+  void _scheduleInitialScroll({
+    required GitDiff diff,
+    required bool splitVisible,
+    required int sourceChangeCount,
+    required List<_DiffPreviewChangeTarget> previewTargets,
+  }) {
+    final token = gitDiffChangeNavigationToken(diff, widget.viewMode);
+    if (_initialScrollToken == token) {
+      return;
+    }
+    _initialScrollToken = token;
+    _currentChangeIndex = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialScrollToken != token) {
+        return;
+      }
+      if (splitVisible && sourceChangeCount > 0) {
+        _sourceChangeNavigatorController.jumpToChange(0);
+      }
+      if (previewTargets.isNotEmpty) {
+        _scrollPreviewToChange(previewTargets, 0);
+      }
+    });
+  }
+}
+
+class _DiffChangeNavigator extends StatelessWidget {
+  const _DiffChangeNavigator({
+    required this.currentIndex,
+    required this.total,
+    required this.onPrevious,
+    required this.onNext,
+    required this.target,
+    required this.onOpenFile,
+  });
+
+  final int currentIndex;
+  final int total;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final _DiffChangeTarget? target;
+  final ValueChanged<String>? onOpenFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final path = target?.file.displayPath ?? '';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.headerbarFlat,
+        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+      ),
+      child: SizedBox(
+        height: BusyMarkSizes.paneHeaderHeight,
+        child: Row(
+          children: [
+            const SizedBox(width: BusyMarkSpacing.md),
+            Text(
+              '${currentIndex + 1} / $total',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.mutedForeground,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            if (target != null) ...[
+              const SizedBox(width: BusyMarkSpacing.md),
+              Expanded(
+                child: Text(
+                  gitDiffHunkRangeText(target!.hunk),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.mutedForeground,
+                    fontFamily: BusyMarkTypography.monoFontFamily,
+                  ),
+                ),
+              ),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.gitOpenFile,
+                icon: BusyMarkGlyphs.externalLink,
+                transparent: true,
+                onPressed: path.isEmpty || onOpenFile == null
+                    ? null
+                    : () => onOpenFile!(path),
+              ),
+            ] else
+              const Spacer(),
+            BusyMarkHeaderIconButton(
+              tooltip: context.l10n.sourceSearchPreviousMatch,
+              icon: YaruIcons.pan_up,
+              transparent: true,
+              onPressed: onPrevious,
+            ),
+            BusyMarkHeaderIconButton(
+              tooltip: context.l10n.sourceSearchNextMatch,
+              icon: BusyMarkGlyphs.downArrow,
+              transparent: true,
+              onPressed: onNext,
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiffChangeTarget {
+  const _DiffChangeTarget({required this.file, required this.hunk});
+
+  final GitDiffFile file;
+  final GitDiffHunk hunk;
+}
+
+_DiffChangeTarget? _diffChangeTarget(GitDiff diff, int changeIndex) {
+  var remaining = changeIndex;
+  for (final file in diff.files) {
+    if (remaining < file.hunks.length) {
+      return _DiffChangeTarget(file: file, hunk: file.hunks[remaining]);
+    }
+    remaining -= file.hunks.length;
+  }
+  return null;
+}
+
+_DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {
+  final snapshot = _diffPreviewSnapshot(diff);
+  final document = snapshot == null
+      ? _diffPreviewDocumentFromPatch(diff, workspace)
+      : _diffPreviewDocumentFromSnapshot(
+          diff: diff,
+          filePath: snapshot.path,
+          source: snapshot.source,
+          workspace: workspace,
+        );
+  return _DiffPreviewData(
+    document,
+    _diffPreviewChangeTargets(diff, document, filePath: snapshot?.path),
+  );
+}
+
+_DiffPreviewSnapshot? _diffPreviewSnapshot(GitDiff diff) {
+  for (final file in diff.files) {
+    final path = file.displayPath;
+    if (path.isEmpty) {
+      continue;
+    }
+    final source = diff.fileSnapshots[path];
+    if (source != null) {
+      return _DiffPreviewSnapshot(path: path, source: source);
+    }
+  }
+  return null;
+}
+
+PreviewDocument _diffPreviewDocumentFromSnapshot({
+  required GitDiff diff,
+  required String filePath,
+  required String source,
+  required Workspace workspace,
+}) {
+  final document = _safePreviewDocument(
+    source: source,
+    filePath: filePath,
+    workspace: workspace,
+  );
+  final changedRanges = _diffChangedLineRanges(diff, filePath: filePath);
+  final changedLineTones = _diffChangedLineTones(diff, filePath: filePath);
+  final removedBlocksByIndex = _diffRemovedBlocksByPreviewBlock(
+    diff: diff,
+    document: document,
+    filePath: filePath,
+    workspace: workspace,
+  );
+  return PreviewDocument(
+    title: document.title,
+    modeLabel: document.modeLabel,
+    compatibility: document.compatibility,
+    blocks: [
+      for (final (index, block) in document.blocks.indexed) ...[
+        ...?removedBlocksByIndex[index],
+        _diffPreviewBlockFromSnapshot(
+          block: block,
+          changedRanges: changedRanges,
+          changedLineTones: changedLineTones,
+        ),
+      ],
+    ],
+  );
+}
+
+PreviewDocument _safePreviewDocument({
+  required String source,
+  required String filePath,
+  required Workspace workspace,
+}) {
+  try {
+    return _parsePreviewDocument(
+      source: source,
+      filePath: filePath,
+      workspace: workspace,
+    );
+  } on Object {
+    return PreviewDocument(
+      title: '',
+      modeLabel: '',
+      compatibility: '',
+      blocks: _plainPreviewBlocks(source),
+    );
+  }
+}
+
+PreviewDocument _diffPreviewDocumentFromPatch(
+  GitDiff diff,
+  Workspace workspace,
+) {
+  final blocks = <PreviewBlock>[];
+  for (final file in diff.files) {
+    if (file.binary) {
+      continue;
+    }
+    final filePath = file.displayPath.isEmpty ? diff.title : file.displayPath;
+    for (final hunk in file.hunks) {
+      for (final run in _diffPreviewRuns(hunk.lines)) {
+        final runBlocks = _previewBlocksForDiffRun(
+          source: run.source,
+          filePath: filePath,
+          workspace: workspace,
+        );
+        blocks.addAll([
+          for (final block in runBlocks) _withDiffPreviewTone(block, run.tone),
+        ]);
+      }
+    }
+  }
+  if (blocks.isEmpty) {
+    return const PreviewDocument(
+      title: '',
+      modeLabel: '',
+      compatibility: '',
+      blocks: [],
+    );
+  }
+  return PreviewDocument(
+    title: diff.title,
+    modeLabel: '',
+    compatibility: '',
+    blocks: blocks,
+  );
+}
+
+PreviewDocument _parsePreviewDocument({
+  required String source,
+  required String filePath,
+  required Workspace workspace,
+}) {
+  final mode = workspace.kind == WorkspaceKind.writersideModule
+      ? MarkdownMode.writersideMarkdown
+      : MarkdownMode.commonMark;
+  final parsed = const MarkdownParser().parse(
+    filePath: filePath,
+    source: source,
+    mode: mode,
+    workspaceRoot: workspace.rootPath,
+    validateLocalReferences: false,
+  );
+  return const MarkdownPreviewBuilder().build(parsed);
+}
+
+List<PreviewBlock> _previewBlocksForDiffRun({
+  required String source,
+  required String filePath,
+  required Workspace workspace,
+}) {
+  if (source.trim().isEmpty) {
+    return const [];
+  }
+  try {
+    return _parsePreviewDocument(
+      source: source,
+      filePath: filePath,
+      workspace: workspace,
+    ).blocks;
+  } on Object {
+    return _plainPreviewBlocks(source);
+  }
+}
+
+PreviewBlock _diffPreviewBlockFromSnapshot({
+  required PreviewBlock block,
+  required List<_DiffChangedLineRange> changedRanges,
+  required Map<int, _DiffPreviewTone> changedLineTones,
+}) {
+  final blockWithCodeLineTones = _withDiffPreviewCodeLineTones(
+    block,
+    changedLineTones,
+  );
+  final changed = _blockOverlapsAnyChangedLine(block, changedRanges);
+  if (!changed) {
+    return blockWithCodeLineTones;
+  }
+  if (block.kind == PreviewBlockKind.code &&
+      _diffPreviewCodeLineTones(blockWithCodeLineTones).isNotEmpty) {
+    return blockWithCodeLineTones;
+  }
+  return _withDiffPreviewTone(blockWithCodeLineTones, _DiffPreviewTone.changed);
+}
+
+List<_DiffChangedLineRange> _diffChangedLineRanges(
+  GitDiff diff, {
+  String? filePath,
+}) {
+  final ranges = <_DiffChangedLineRange>[];
+  for (final file in diff.files) {
+    if (filePath != null && !file.matchesPath(filePath)) {
+      continue;
+    }
+    for (final hunk in file.hunks) {
+      final changedNewLines = [
+        for (final line in hunk.lines)
+          if (line.kind == GitDiffLineKind.added && line.newLineNumber != null)
+            line.newLineNumber!,
+      ];
+      if (changedNewLines.isEmpty) {
+        ranges.add(
+          _DiffChangedLineRange(
+            startLine: hunk.newStart,
+            endLine: hunk.newStart,
+          ),
+        );
+      } else {
+        ranges.add(
+          _DiffChangedLineRange(
+            startLine: changedNewLines.reduce(math.min),
+            endLine: changedNewLines.reduce(math.max),
+          ),
+        );
+      }
+    }
+  }
+  return ranges;
+}
+
+Map<int, _DiffPreviewTone> _diffChangedLineTones(
+  GitDiff diff, {
+  required String filePath,
+}) {
+  final tones = <int, _DiffPreviewTone>{};
+  for (final file in diff.files) {
+    if (!file.matchesPath(filePath)) {
+      continue;
+    }
+    for (final hunk in file.hunks) {
+      for (final line in hunk.lines) {
+        if (line.kind != GitDiffLineKind.added) {
+          continue;
+        }
+        final lineNumber = line.newLineNumber;
+        if (lineNumber != null) {
+          tones[lineNumber] = _DiffPreviewTone.changed;
+        }
+      }
+    }
+  }
+  return tones;
+}
+
+Map<int, List<PreviewBlock>> _diffRemovedBlocksByPreviewBlock({
+  required GitDiff diff,
+  required PreviewDocument document,
+  required String filePath,
+  required Workspace workspace,
+}) {
+  final blocksByIndex = <int, List<PreviewBlock>>{};
+  for (final file in diff.files) {
+    if (!file.matchesPath(filePath)) {
+      continue;
+    }
+    for (final hunk in file.hunks) {
+      final removedLines = [
+        for (final line in hunk.lines)
+          if (line.kind == GitDiffLineKind.removed) line.content,
+      ];
+      if (removedLines.isEmpty) {
+        continue;
+      }
+      final targetRange = _DiffChangedLineRange(
+        startLine: hunk.newStart,
+        endLine: hunk.newStart,
+      );
+      final blockIndex =
+          _blockIndexForChangedLineRange(document.blocks, targetRange) ?? 0;
+      final removedBlocks = [
+        for (final block in _previewBlocksForDiffRun(
+          source: removedLines.join('\n'),
+          filePath: filePath,
+          workspace: workspace,
+        ))
+          _withDiffPreviewTone(block, _DiffPreviewTone.removed),
+      ];
+      if (removedBlocks.isEmpty) {
+        continue;
+      }
+      blocksByIndex
+          .putIfAbsent(blockIndex, () => <PreviewBlock>[])
+          .addAll(removedBlocks);
+    }
+  }
+  return blocksByIndex;
+}
+
+List<_DiffPreviewChangeTarget> _diffPreviewChangeTargets(
+  GitDiff diff,
+  PreviewDocument document, {
+  String? filePath,
+}) {
+  final targets = <_DiffPreviewChangeTarget>[];
+  for (final range in _diffChangedLineRanges(diff, filePath: filePath)) {
+    final blockIndex = _blockIndexForChangedLineRange(document.blocks, range);
+    if (blockIndex == null) {
+      continue;
+    }
+    if (targets.any((target) => target.blockIndex == blockIndex)) {
+      continue;
+    }
+    targets.add(
+      _DiffPreviewChangeTarget(blockIndex: blockIndex, line: range.startLine),
+    );
+  }
+  return targets;
+}
+
+int? _blockIndexForChangedLineRange(
+  List<PreviewBlock> blocks,
+  _DiffChangedLineRange range,
+) {
+  for (final (index, block) in blocks.indexed) {
+    if (_blockOverlapsChangedLine(block, range)) {
+      return index;
+    }
+  }
+  for (final (index, block) in blocks.indexed) {
+    final startLine = block.sourceStartLine;
+    if (startLine != null && startLine >= range.startLine) {
+      return index;
+    }
+  }
+  return blocks.isEmpty ? null : blocks.length - 1;
+}
+
+bool _blockOverlapsAnyChangedLine(
+  PreviewBlock block,
+  List<_DiffChangedLineRange> ranges,
+) {
+  return ranges.any((range) => _blockOverlapsChangedLine(block, range));
+}
+
+bool _blockOverlapsChangedLine(
+  PreviewBlock block,
+  _DiffChangedLineRange range,
+) {
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine ?? startLine;
+  if (startLine == null || endLine == null) {
+    return false;
+  }
+  return startLine <= range.endLine && endLine >= range.startLine;
+}
+
+List<_DiffPreviewRun> _diffPreviewRuns(List<GitDiffLine> lines) {
+  final runs = <_DiffPreviewRun>[];
+  var currentLines = <String>[];
+  _DiffPreviewTone? currentTone;
+
+  void flush() {
+    if (currentLines.isEmpty) {
+      return;
+    }
+    runs.add(_DiffPreviewRun(currentLines.join('\n'), currentTone));
+    currentLines = <String>[];
+  }
+
+  for (final line in lines) {
+    final tone = switch (line.kind) {
+      GitDiffLineKind.added => _DiffPreviewTone.added,
+      GitDiffLineKind.removed => _DiffPreviewTone.removed,
+      GitDiffLineKind.context => null,
+      GitDiffLineKind.header => null,
+    };
+    if (line.kind == GitDiffLineKind.header) {
+      continue;
+    }
+    if (currentTone != tone) {
+      flush();
+      currentTone = tone;
+    }
+    currentLines.add(line.content);
+  }
+  flush();
+  return runs;
+}
+
+List<PreviewBlock> _plainPreviewBlocks(String source) {
+  return [
+    for (final line in source.split('\n'))
+      if (line.trim().isNotEmpty)
+        PreviewBlock(
+          kind: PreviewBlockKind.paragraph,
+          text: line.trim(),
+          inlines: [
+            PreviewInline(kind: PreviewInlineKind.text, text: line.trim()),
+          ],
+        ),
+  ];
+}
+
+PreviewBlock _withDiffPreviewTone(PreviewBlock block, _DiffPreviewTone? tone) {
+  if (tone == null) {
+    return block;
+  }
+  return PreviewBlock(
+    kind: block.kind,
+    text: block.text,
+    level: block.level,
+    language: block.language,
+    inlines: block.inlines,
+    children: [
+      for (final child in block.children) _withDiffPreviewTone(child, tone),
+    ],
+    attributes: {...block.attributes, 'diffTone': tone.name},
+    sourceStartLine: block.sourceStartLine,
+    sourceEndLine: block.sourceEndLine,
+    sourceStartOffset: block.sourceStartOffset,
+    sourceEndOffset: block.sourceEndOffset,
+  );
+}
+
+PreviewBlock _withDiffPreviewCodeLineTones(
+  PreviewBlock block,
+  Map<int, _DiffPreviewTone> sourceLineTones,
+) {
+  if (block.kind != PreviewBlockKind.code || sourceLineTones.isEmpty) {
+    return block;
+  }
+  final startLine = block.sourceStartLine;
+  final endLine = block.sourceEndLine;
+  if (startLine == null || endLine == null) {
+    return block;
+  }
+  final lines = block.text.split('\n');
+  final contentLineCount = lines.isNotEmpty && lines.last.isEmpty
+      ? lines.length - 1
+      : lines.length;
+  final firstContentSourceLine =
+      startLine + ((endLine - startLine + 1) >= contentLineCount + 2 ? 1 : 0);
+  final lineTones = <int, _DiffPreviewTone>{};
+  for (var index = 0; index < contentLineCount; index += 1) {
+    final tone = sourceLineTones[firstContentSourceLine + index];
+    if (tone != null) {
+      lineTones[index] = tone;
+    }
+  }
+  if (lineTones.isEmpty) {
+    return block;
+  }
+  return PreviewBlock(
+    kind: block.kind,
+    text: block.text,
+    level: block.level,
+    language: block.language,
+    inlines: block.inlines,
+    children: block.children,
+    attributes: {
+      ...block.attributes,
+      'diffCodeLineTones': _encodeDiffPreviewCodeLineTones(lineTones),
+    },
+    sourceStartLine: block.sourceStartLine,
+    sourceEndLine: block.sourceEndLine,
+    sourceStartOffset: block.sourceStartOffset,
+    sourceEndOffset: block.sourceEndOffset,
+  );
+}
+
+String _encodeDiffPreviewCodeLineTones(Map<int, _DiffPreviewTone> lineTones) {
+  final entries = lineTones.entries.toList()
+    ..sort((a, b) => a.key.compareTo(b.key));
+  return entries.map((entry) => '${entry.key}:${entry.value.name}').join(',');
+}
+
+Map<int, _DiffPreviewTone> _diffPreviewCodeLineTones(PreviewBlock block) {
+  final encoded = block.attributes['diffCodeLineTones'];
+  if (encoded == null || encoded.isEmpty) {
+    return const {};
+  }
+  final tones = <int, _DiffPreviewTone>{};
+  for (final part in encoded.split(',')) {
+    final separator = part.indexOf(':');
+    if (separator <= 0 || separator == part.length - 1) {
+      continue;
+    }
+    final lineIndex = int.tryParse(part.substring(0, separator));
+    final tone = _diffPreviewToneFromName(part.substring(separator + 1));
+    if (lineIndex != null && tone != null) {
+      tones[lineIndex] = tone;
+    }
+  }
+  return tones;
+}
+
+class _DiffPreviewData {
+  const _DiffPreviewData(this.document, this.changeTargets);
+
+  final PreviewDocument document;
+  final List<_DiffPreviewChangeTarget> changeTargets;
+}
+
+class _DiffPreviewSnapshot {
+  const _DiffPreviewSnapshot({required this.path, required this.source});
+
+  final String path;
+  final String source;
+}
+
+class _DiffPreviewChangeTarget {
+  const _DiffPreviewChangeTarget({
+    required this.blockIndex,
+    required this.line,
+  });
+
+  final int blockIndex;
+  final int line;
+}
+
+class _DiffChangedLineRange {
+  const _DiffChangedLineRange({required this.startLine, required this.endLine});
+
+  final int startLine;
+  final int endLine;
+}
+
+class _DiffPreviewRun {
+  const _DiffPreviewRun(this.source, this.tone);
+
+  final String source;
+  final _DiffPreviewTone? tone;
+}
+
+enum _DiffPreviewTone { added, removed, changed }
+
+_DiffPreviewTone? _diffPreviewToneFromName(String? name) {
+  if (name == null) {
+    return null;
+  }
+  return _DiffPreviewTone.values
+      .where((value) => value.name == name)
+      .firstOrNull;
 }
 
 DocumentFile? _documentFileForPath(Workspace workspace, String path) {
@@ -2923,15 +5446,10 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
-  late BusyMarkSourceEditingController _controller;
-  late final FocusNode _sourceFocusNode;
-  late final ScrollController _sourceScrollController;
   late final ScrollController _previewScrollController;
-  late UndoHistoryController _sourceUndoController;
-  final _sourceEditorKey = GlobalKey();
+  final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
   final _previewHeadingKeys = <String, GlobalKey>{};
   final _previewSearchKeys = <int, GlobalKey>{};
-  final _foldedRegionKeys = <String>{};
   String _lastPath = '';
   var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
@@ -2944,74 +5462,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
-    _controller = BusyMarkSourceEditingController(
-      text: widget.state.activeText,
-      language: _sourceSyntaxLanguage(widget.state.workspace),
-    )..renderText = false;
-    _sourceFocusNode = FocusNode(onKeyEvent: _handleSourceKeyEvent);
-    _sourceScrollController = ScrollController();
     _previewScrollController = ScrollController();
-    _sourceUndoController = UndoHistoryController();
     _lastPath = widget.state.workspace?.activeFilePath ?? '';
-  }
-
-  KeyEventResult _handleSourceKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
-      return KeyEventResult.ignored;
-    }
-    final keyboard = HardwareKeyboard.instance;
-    final key = event.logicalKey;
-    if (BusyMarkAppShortcutActivators.find.accepts(event, keyboard)) {
-      ref.read(workspaceSearchOpenRequestProvider.notifier).request();
-      return KeyEventResult.handled;
-    }
-    if (_isPlainTabKey(keyboard, key)) {
-      _insertSourceTab();
-      return KeyEventResult.handled;
-    }
-    if (_isPlainShiftTabKey(keyboard, key)) {
-      _outdentSourceSelection();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.escape) {
-      ref.read(workspaceSearchCloseRequestProvider.notifier).request();
-      return KeyEventResult.handled;
-    }
-    final shortcutAction = BusyMarkEditorShortcutActivators.actionForKeyEvent(
-      event,
-      keyboard,
-    );
-    if (shortcutAction != null) {
-      _applySourceEditorShortcutAction(shortcutAction);
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
   }
 
   @override
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
     final path = widget.state.workspace?.activeFilePath ?? '';
-    final language = _sourceSyntaxLanguage(widget.state.workspace);
     if (path != _lastPath) {
       _lastPath = path;
       _clearWysiwygCache();
-      _foldedRegionKeys.clear();
       _previewHeadingKeys.clear();
       _previewSearchKeys.clear();
       _wysiwygScrollHeadingId = null;
       _wysiwygSearchQuery = null;
       _wysiwygScrollRequest = 0;
-      _replaceSourceController(
-        text: widget.state.activeText,
-        language: language,
-      );
-    } else if (widget.state.activeText != oldWidget.state.activeText &&
-        !_sourceFocusNode.hasFocus) {
-      _controller.language = language;
-      _controller.text = widget.state.activeText;
-    } else {
-      _controller.language = language;
     }
     if (oldWidget.viewMode == DocumentViewModePreference.editor &&
         widget.viewMode != DocumentViewModePreference.editor &&
@@ -3034,10 +5500,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void dispose() {
     _previewScrollController.dispose();
-    _sourceScrollController.dispose();
-    _sourceFocusNode.dispose();
-    _sourceUndoController.dispose();
-    _controller.dispose();
     super.dispose();
   }
 
@@ -3061,7 +5523,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _scrollSourceToLine(next.line);
+          _sourceEditorKey.currentState?.scrollToLine(next.line);
         }
       });
     });
@@ -3076,6 +5538,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _scrollToSearchTarget(next);
     });
     final colors = BusyMarkSurfaceColors.of(context);
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(widget.state.workspace),
+    );
     final editorVisible = widget.viewMode == DocumentViewModePreference.editor;
     final wysiwygDocument =
         editorVisible && _canUseWysiwyg(widget.state.workspace)
@@ -3091,14 +5557,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final previewVisible =
         widget.viewMode != DocumentViewModePreference.source && !editorVisible;
     final activeEditorPath = _activeEditorPath();
-    final foldRegions = _syncSourceFoldRegions();
-    final sourceStrutStyle = _sourceStrutStyle(
-      folded: _foldedRegionKeys.isNotEmpty,
-    );
-    final sourceLineHeight = _sourceLineHeight(context, sourceStrutStyle);
-    _controller
-      ..renderText = false
-      ..visualMarkdown = false;
+    final searchState = ref.watch(_workspaceSearchProvider);
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Row(
@@ -3118,6 +5577,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                         ?.config
                         .imagesDir ??
                     'images',
+                allowRemoteImages: allowRemoteImages,
+                onRemoteImageBlocked: () =>
+                    unawaited(_showRemoteImagesPrompt(context, ref)),
                 onDocumentChanged: _cacheWysiwygDocument,
                 onSourceChanged: _handleWysiwygSourceChanged,
                 toolbarPlacement: widget.editorToolbarPlacement,
@@ -3134,80 +5596,30 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             ),
           if (sourceVisible)
             Expanded(
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: colors.view),
-                child: _SourceEditorFrame(
-                  controller: _controller,
-                  scrollController: _sourceScrollController,
-                  lineHeight: sourceLineHeight,
-                  textStyle: _sourceTextStyle,
-                  strutStyle: sourceStrutStyle,
-                  collapsedRegionKeys: _foldedRegionKeys,
-                  foldRegions: foldRegions,
-                  onToggleFold: _toggleSourceFold,
-                  child: SizedBox(
-                    key: _sourceEditorKey,
-                    child: KeyedSubtree(
-                      key: ValueKey(activeEditorPath),
-                      child: Shortcuts(
-                        shortcuts: BusyMarkEditorShortcutActivators.intentMap(
-                          _SourceEditorShortcutIntent.new,
-                        ),
-                        child: Actions(
-                          actions: {
-                            _SourceEditorShortcutIntent:
-                                CallbackAction<_SourceEditorShortcutIntent>(
-                                  onInvoke: (intent) {
-                                    _applySourceEditorShortcutAction(
-                                      intent.action,
-                                    );
-                                    return null;
-                                  },
-                                ),
-                          },
-                          child: TextField(
-                            controller: _controller,
-                            undoController: _sourceUndoController,
-                            focusNode: _sourceFocusNode,
-                            scrollController: _sourceScrollController,
-                            keyboardType: widget.wordWrap
-                                ? TextInputType.multiline
-                                : TextInputType.text,
-                            maxLines: null,
-                            expands: true,
-                            textAlignVertical: TextAlignVertical.top,
-                            style: _sourceTextStyle,
-                            strutStyle: sourceStrutStyle,
-                            selectionHeightStyle: BoxHeightStyle.max,
-                            selectionWidthStyle: BoxWidthStyle.tight,
-                            cursorColor: colors.foreground.withValues(
-                              alpha: BusyMarkAlpha.sourceCursor,
-                            ),
-                            cursorHeight:
-                                widget.editorFontSize *
-                                BusyMarkTypography.sourceCursorHeightScale,
-                            cursorWidth: BusyMarkStroke.sourceCursor,
-                            decoration: InputDecoration(
-                              isCollapsed: true,
-                              filled: false,
-                              fillColor: BusyMarkLinuxPalette.transparent,
-                              hoverColor: BusyMarkLinuxPalette.transparent,
-                              focusColor: BusyMarkLinuxPalette.transparent,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: BusyMarkInsets.sourceEditor,
-                            ),
-                            onChanged: (value) => _handleSourceChanged(
-                              value,
-                              sourceFilePath: activeEditorPath,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              child: BusyMarkSourceEditor(
+                key: _sourceEditorKey,
+                text: widget.state.activeText,
+                language: _sourceSyntaxLanguage(widget.state.workspace),
+                filePath: activeEditorPath,
+                diagnostics:
+                    widget.state.workspace?.diagnostics ?? const <Diagnostic>[],
+                editorFontSize: widget.editorFontSize,
+                wordWrap: widget.wordWrap,
+                searchActive: searchState.active,
+                searchOptions: searchState.options,
+                onSearchOptionsChanged: (options) {
+                  final current = ref.read(_workspaceSearchProvider);
+                  ref
+                      .read(_workspaceSearchProvider.notifier)
+                      .set(current.withOptions(options));
+                },
+                onOpenSearch: () => ref
+                    .read(workspaceSearchOpenRequestProvider.notifier)
+                    .request(),
+                onCloseSearch: () => ref
+                    .read(workspaceSearchCloseRequestProvider.notifier)
+                    .request(),
+                onChanged: _handleSourceChanged,
               ),
             ),
           if (sourceVisible && previewVisible)
@@ -3230,52 +5642,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
-  List<SourceFoldRegion> _syncSourceFoldRegions() {
-    final foldRegions = sourceFoldRegions(
-      _controller.text,
-      _controller.language,
-    );
-    final validKeys = {for (final region in foldRegions) region.key};
-    _foldedRegionKeys.removeWhere((key) => !validKeys.contains(key));
-    _applyFoldedRegions();
-    return foldRegions;
-  }
-
-  void _applyFoldedRegions() {
-    _controller.setFoldedRegions(
-      collapsedSourceFoldRegions(
-        _controller.text,
-        _controller.language,
-        _foldedRegionKeys,
-      ),
-    );
-  }
-
-  void _toggleSourceFold(SourceFoldRegion region) {
-    setState(() {
-      if (_foldedRegionKeys.contains(region.key)) {
-        _foldedRegionKeys.remove(region.key);
-      } else {
-        _foldedRegionKeys.add(region.key);
-      }
-      _applyFoldedRegions();
-    });
-  }
-
   void _handleSourceChanged(
-    String value, {
+    String value,
+    String? sourceFilePath, {
     bool updatePreview = true,
-    String? sourceFilePath,
   }) {
     final activePath = _activeEditorPath();
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
-    }
-    if (_foldedRegionKeys.isNotEmpty) {
-      setState(() {
-        _foldedRegionKeys.clear();
-        _controller.clearFoldedRegions();
-      });
     }
     if (updatePreview) {
       _clearWysiwygCache();
@@ -3290,399 +5664,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _handleWysiwygSourceChanged(String filePath, String value) {
-    _handleSourceChanged(value, updatePreview: false, sourceFilePath: filePath);
-  }
-
-  void _applySourceEditorShortcutAction(BusyMarkEditorShortcutAction action) {
-    switch (action) {
-      case BusyMarkEditorShortcutAction.bold:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.bold);
-        break;
-      case BusyMarkEditorShortcutAction.italic:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.italic);
-        break;
-      case BusyMarkEditorShortcutAction.underline:
-        _applySourceInlineMarkdownCommand(
-          _SourceInlineMarkdownCommand.underline,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.strikethrough:
-        _applySourceInlineMarkdownCommand(
-          _SourceInlineMarkdownCommand.strikethrough,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.inlineCode:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.code);
-        break;
-      case BusyMarkEditorShortcutAction.link:
-        _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand.link);
-        break;
-      case BusyMarkEditorShortcutAction.paragraph:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.paragraph);
-        break;
-      case BusyMarkEditorShortcutAction.heading1:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading1);
-        break;
-      case BusyMarkEditorShortcutAction.heading2:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading2);
-        break;
-      case BusyMarkEditorShortcutAction.heading3:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading3);
-        break;
-      case BusyMarkEditorShortcutAction.heading4:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading4);
-        break;
-      case BusyMarkEditorShortcutAction.heading5:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading5);
-        break;
-      case BusyMarkEditorShortcutAction.heading6:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.heading6);
-        break;
-      case BusyMarkEditorShortcutAction.orderedList:
-        _applySourceBlockMarkdownCommand(
-          _SourceBlockMarkdownCommand.orderedList,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.unorderedList:
-        _applySourceBlockMarkdownCommand(
-          _SourceBlockMarkdownCommand.unorderedList,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.taskList:
-        _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand.taskList);
-        break;
-      case BusyMarkEditorShortcutAction.toggleTask:
-        _toggleSourceTaskChecked();
-        break;
-      case BusyMarkEditorShortcutAction.indent:
-        _indentSourceSelection();
-        break;
-      case BusyMarkEditorShortcutAction.outdent:
-        _outdentSourceSelection();
-        break;
-      case BusyMarkEditorShortcutAction.blockquote:
-        _applySourceLinePrefix('> ');
-        break;
-      case BusyMarkEditorShortcutAction.codeBlock:
-        _insertSourceCodeBlock();
-        break;
-      case BusyMarkEditorShortcutAction.codeBlockLanguage:
-        _insertSourceCodeBlock(language: 'language');
-        break;
-      case BusyMarkEditorShortcutAction.image:
-        _insertSourceImage(block: true);
-        break;
-      case BusyMarkEditorShortcutAction.inlineImage:
-        _insertSourceImage(block: false);
-        break;
-      case BusyMarkEditorShortcutAction.table:
-        _insertSourceTable();
-        break;
-      case BusyMarkEditorShortcutAction.htmlBlock:
-        _insertSourceHtmlBlock();
-        break;
-      case BusyMarkEditorShortcutAction.thematicBreak:
-        _insertSourceBlock('\n---\n');
-        break;
-      case BusyMarkEditorShortcutAction.hardLineBreak:
-        final selection = _normalizedSourceSelection();
-        _replaceSourceSelection(
-          '  \n',
-          selectionStart: selection.start + 3,
-          selectionEnd: selection.start + 3,
-        );
-        break;
-      case BusyMarkEditorShortcutAction.pastePlainText:
-        unawaited(_pastePlainTextIntoSource());
-        break;
-    }
-  }
-
-  void _applySourceInlineMarkdownCommand(_SourceInlineMarkdownCommand command) {
-    switch (command) {
-      case _SourceInlineMarkdownCommand.bold:
-        _wrapSourceSelection(prefix: '**', suffix: '**');
-        break;
-      case _SourceInlineMarkdownCommand.italic:
-        _wrapSourceSelection(prefix: '*', suffix: '*');
-        break;
-      case _SourceInlineMarkdownCommand.underline:
-        _wrapSourceSelection(prefix: '<u>', suffix: '</u>');
-        break;
-      case _SourceInlineMarkdownCommand.strikethrough:
-        _wrapSourceSelection(prefix: '~~', suffix: '~~');
-        break;
-      case _SourceInlineMarkdownCommand.code:
-        _wrapSourceSelection(prefix: '`', suffix: '`');
-        break;
-      case _SourceInlineMarkdownCommand.link:
-        _insertSourceLink();
-        break;
-    }
-  }
-
-  void _applySourceBlockMarkdownCommand(_SourceBlockMarkdownCommand command) {
-    final range = _selectedSourceLineRange();
-    final text = _controller.text;
-    final markerPattern = RegExp(
-      r'^(\s*)(?:#{1,6}\s+)?(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)?(.*)$',
-    );
-    final replacementLines = <String>[];
-    for (final (index, line) in range.lines.indexed) {
-      final match = markerPattern.firstMatch(line);
-      final indent = match?.group(1) ?? '';
-      final content = match?.group(2) ?? line.trimLeft();
-      final marker = switch (command) {
-        _SourceBlockMarkdownCommand.paragraph => '',
-        _SourceBlockMarkdownCommand.heading1 => '# ',
-        _SourceBlockMarkdownCommand.heading2 => '## ',
-        _SourceBlockMarkdownCommand.heading3 => '### ',
-        _SourceBlockMarkdownCommand.heading4 => '#### ',
-        _SourceBlockMarkdownCommand.heading5 => '##### ',
-        _SourceBlockMarkdownCommand.heading6 => '###### ',
-        _SourceBlockMarkdownCommand.orderedList => '${index + 1}. ',
-        _SourceBlockMarkdownCommand.unorderedList => '- ',
-        _SourceBlockMarkdownCommand.taskList => '- [ ] ',
-      };
-      replacementLines.add('$indent$marker$content');
-    }
-    final replacement = replacementLines.join('\n');
-    final nextText = text.replaceRange(range.start, range.end, replacement);
-    _controller.value = TextEditingValue(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: range.start,
-        extentOffset: range.start + replacement.length,
-      ),
-    );
-    _sourceFocusNode.requestFocus();
-    _handleSourceChanged(nextText);
-  }
-
-  void _toggleSourceTaskChecked() {
-    final range = _selectedSourceLineRange();
-    final replacement = [
-      for (final line in range.lines)
-        line.replaceFirstMapped(
-          RegExp(r'^(\s*[-*+]\s+\[)([ xX])(\]\s+)'),
-          (match) =>
-              '${match.group(1)}${match.group(2)!.trim().isEmpty ? 'x' : ' '}${match.group(3)}',
-        ),
-    ].join('\n');
-    _replaceSourceLineRange(range, replacement);
-  }
-
-  void _indentSourceSelection() {
-    final range = _selectedSourceLineRange();
-    _replaceSourceLineRange(
-      range,
-      [
-        for (final line in range.lines) line.isEmpty ? line : '  $line',
-      ].join('\n'),
-    );
-  }
-
-  void _outdentSourceSelection() {
-    final range = _selectedSourceLineRange();
-    _replaceSourceLineRange(
-      range,
-      [
-        for (final line in range.lines)
-          line.startsWith('  ')
-              ? line.substring(2)
-              : line.startsWith('\t')
-              ? line.substring(1)
-              : line,
-      ].join('\n'),
-    );
-  }
-
-  void _applySourceLinePrefix(String prefix) {
-    final range = _selectedSourceLineRange();
-    _replaceSourceLineRange(
-      range,
-      [
-        for (final line in range.lines)
-          line.isEmpty ? prefix.trimRight() : '$prefix$line',
-      ].join('\n'),
-    );
-  }
-
-  void _insertSourceCodeBlock({String language = ''}) {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text);
-    final content = selected.isEmpty ? 'code' : selected;
-    final languageSuffix = language.isEmpty ? '' : language;
-    final replacement = '```$languageSuffix\n$content\n```';
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: selection.start + 3 + languageSuffix.length + 1,
-      selectionEnd:
-          selection.start + 3 + languageSuffix.length + 1 + content.length,
-    );
-  }
-
-  void _insertSourceImage({required bool block}) {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text).trim();
-    final alt = selected.isEmpty ? 'alt' : selected;
-    final replacement = '![${alt.replaceAll('\n', ' ')}](url)';
-    _replaceSourceSelection(
-      block ? '\n$replacement\n' : replacement,
-      selectionStart: selection.start + (block ? 3 : 2),
-      selectionEnd: selection.start + (block ? 3 : 2) + alt.length,
-    );
-  }
-
-  void _insertSourceTable() {
-    _insertSourceBlock(
-      '\n| Header 1 | Header 2 |\n| --- | --- |\n| Cell | Cell |\n',
-    );
-  }
-
-  void _insertSourceHtmlBlock() {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text).trim();
-    final content = selected.isEmpty ? 'HTML content' : selected;
-    final replacement = '\n<div>\n  <p>$content</p>\n</div>\n';
-    final contentStart = replacement.indexOf(content);
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: selection.start + contentStart,
-      selectionEnd: selection.start + contentStart + content.length,
-    );
-  }
-
-  void _insertSourceBlock(String markdown) {
-    final selection = _normalizedSourceSelection();
-    _replaceSourceSelection(
-      markdown,
-      selectionStart: selection.start + markdown.length,
-      selectionEnd: selection.start + markdown.length,
-    );
-  }
-
-  ({int start, int end, List<String> lines}) _selectedSourceLineRange() {
-    final selection = _normalizedSourceSelection();
-    final text = _controller.text;
-    final lineStart =
-        text.lastIndexOf(
-          '\n',
-          (selection.start - 1).clamp(0, text.length).toInt(),
-        ) +
-        1;
-    final nextBreak = text.indexOf('\n', selection.end);
-    final lineEnd = nextBreak < 0 ? text.length : nextBreak;
-    return (
-      start: lineStart,
-      end: lineEnd,
-      lines: text.substring(lineStart, lineEnd).split('\n'),
-    );
-  }
-
-  void _replaceSourceLineRange(
-    ({int start, int end, List<String> lines}) range,
-    String replacement,
-  ) {
-    final nextText = _controller.text.replaceRange(
-      range.start,
-      range.end,
-      replacement,
-    );
-    _controller.value = TextEditingValue(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: range.start,
-        extentOffset: range.start + replacement.length,
-      ),
-    );
-    _sourceFocusNode.requestFocus();
-    _handleSourceChanged(nextText);
-  }
-
-  void _wrapSourceSelection({
-    required String prefix,
-    required String suffix,
-    String placeholder = 'text',
-  }) {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text);
-    final content = selected.isEmpty ? placeholder : selected;
-    final replacement = '$prefix$content$suffix';
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: selection.start + prefix.length,
-      selectionEnd: selection.start + prefix.length + content.length,
-    );
-  }
-
-  void _insertSourceLink() {
-    final selection = _normalizedSourceSelection();
-    final selected = selection.textInside(_controller.text);
-    final label = selected.isEmpty ? 'text' : selected;
-    final replacement = '[$label](url)';
-    final urlStart = selection.start + label.length + 3;
-    _replaceSourceSelection(
-      replacement,
-      selectionStart: urlStart,
-      selectionEnd: urlStart + 3,
-    );
-  }
-
-  Future<void> _pastePlainTextIntoSource() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text;
-    if (text == null || text.isEmpty) {
-      return;
-    }
-    final selection = _normalizedSourceSelection();
-    _replaceSourceSelection(
-      text,
-      selectionStart: selection.start + text.length,
-      selectionEnd: selection.start + text.length,
-    );
-  }
-
-  void _insertSourceTab() {
-    final selection = _normalizedSourceSelection();
-    _replaceSourceSelection(
-      '\t',
-      selectionStart: selection.start + 1,
-      selectionEnd: selection.start + 1,
-    );
-  }
-
-  TextSelection _normalizedSourceSelection() {
-    final selection = _controller.selection;
-    if (!selection.isValid) {
-      return TextSelection.collapsed(offset: _controller.text.length);
-    }
-    final start = selection.start.clamp(0, _controller.text.length).toInt();
-    final end = selection.end.clamp(0, _controller.text.length).toInt();
-    return TextSelection(
-      baseOffset: math.min(start, end),
-      extentOffset: math.max(start, end),
-    );
-  }
-
-  void _replaceSourceSelection(
-    String replacement, {
-    required int selectionStart,
-    required int selectionEnd,
-  }) {
-    final selection = _normalizedSourceSelection();
-    final text = _controller.text;
-    final nextText =
-        selection.textBefore(text) + replacement + selection.textAfter(text);
-    _controller.value = TextEditingValue(
-      text: nextText,
-      selection: TextSelection(
-        baseOffset: selectionStart.clamp(0, nextText.length).toInt(),
-        extentOffset: selectionEnd.clamp(0, nextText.length).toInt(),
-      ),
-    );
-    _sourceFocusNode.requestFocus();
-    _handleSourceChanged(nextText);
+    _handleSourceChanged(value, filePath, updatePreview: false);
   }
 
   void _cacheWysiwygDocument(BusyDocument document) {
@@ -3695,27 +5677,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygDocument = null;
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
-  }
-
-  void _resetSourceUndoHistory() {
-    final previous = _sourceUndoController;
-    _sourceUndoController = UndoHistoryController();
-    previous.dispose();
-  }
-
-  void _replaceSourceController({
-    required String text,
-    required SourceSyntaxLanguage language,
-  }) {
-    final previous = _controller;
-    _controller =
-        BusyMarkSourceEditingController(text: text, language: language)
-          ..renderText = false
-          ..visualMarkdown = false;
-    _resetSourceUndoHistory();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      previous.dispose();
-    });
   }
 
   String? _activeEditorPath() {
@@ -3769,7 +5730,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         _wysiwygSearchQuery = null;
         _wysiwygScrollRequest += 1;
       });
-      _scrollSourceToLine(target.line);
+      _sourceEditorKey.currentState?.scrollToLine(target.line);
       _scrollPreviewToHeading(target.headingId);
     });
   }
@@ -3800,151 +5761,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         });
       }
       if (sourceVisible) {
-        _scrollSourceToSearchRange(target);
+        _sourceEditorKey.currentState?.scrollToSearchRange(
+          line: target.line,
+          startOffset: target.startOffset,
+          endOffset: target.endOffset,
+        );
       }
       if (previewVisible) {
         _schedulePreviewSearchScroll(target);
       }
     });
-  }
-
-  void _scrollSourceToLine(int line) {
-    _unfoldSourceLine(line);
-    final textOffset = _textOffsetForLine(_controller.text, line);
-    _sourceFocusNode.requestFocus();
-    _controller.selection = TextSelection.collapsed(offset: textOffset);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateSourceScrollToLine(line);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _jumpSourceScrollToLine(line);
-      });
-      unawaited(
-        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
-          _jumpSourceScrollToLine(line);
-        }),
-      );
-    });
-  }
-
-  void _scrollSourceToSearchRange(_SearchNavigationTarget target) {
-    _unfoldSourceLine(target.line);
-    final start = target.startOffset.clamp(0, _controller.text.length).toInt();
-    final end = target.endOffset.clamp(start, _controller.text.length).toInt();
-    _sourceFocusNode.requestFocus();
-    _controller.selection = TextSelection(baseOffset: start, extentOffset: end);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _animateSourceScrollToLine(target.line);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _jumpSourceScrollToLine(target.line);
-      });
-      unawaited(
-        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
-          _jumpSourceScrollToLine(target.line);
-        }),
-      );
-    });
-  }
-
-  void _unfoldSourceLine(int line) {
-    final region = collapsedRegionContainingLine(
-      _controller.text,
-      _controller.language,
-      _foldedRegionKeys,
-      line,
-    );
-    if (region == null) {
-      return;
-    }
-    setState(() {
-      _foldedRegionKeys.remove(region.key);
-      _applyFoldedRegions();
-    });
-  }
-
-  TextStyle get _sourceTextStyle => TextStyle(
-    fontFamily: BusyMarkTypography.monoFontFamily,
-    fontSize: widget.editorFontSize,
-    height: BusyMarkTypography.codeLineHeight,
-    leadingDistribution: TextLeadingDistribution.even,
-  );
-
-  StrutStyle? _sourceStrutStyle({required bool folded}) {
-    if (folded) {
-      return null;
-    }
-    return StrutStyle.fromTextStyle(_sourceTextStyle);
-  }
-
-  double _sourceLineHeight(BuildContext context, StrutStyle? strutStyle) {
-    final painter = TextPainter(
-      text: TextSpan(text: ' ', style: _sourceTextStyle),
-      strutStyle: strutStyle,
-      textDirection: Directionality.of(context),
-      textHeightBehavior: _sourceTextHeightBehavior,
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
-    final metrics = painter.computeLineMetrics();
-    painter.dispose();
-    return metrics.isEmpty
-        ? widget.editorFontSize * 1.45
-        : metrics.first.height;
-  }
-
-  void _animateSourceScrollToLine(int line) {
-    if (!mounted || !_sourceScrollController.hasClients) {
-      return;
-    }
-    _sourceScrollController.animateTo(
-      _sourceScrollOffsetForLine(line),
-      duration: BusyMarkMotion.scroll,
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  void _jumpSourceScrollToLine(int line) {
-    if (!mounted || !_sourceScrollController.hasClients) {
-      return;
-    }
-    _sourceScrollController.jumpTo(_sourceScrollOffsetForLine(line));
-  }
-
-  double _sourceScrollOffsetForLine(int line) {
-    final textWidth = _sourceTextLayoutWidth();
-    final strutStyle = _sourceStrutStyle(folded: _foldedRegionKeys.isNotEmpty);
-    final lineHeight = _sourceLineHeight(context, strutStyle);
-    final layouts = _sourceLineLayoutEntries(
-      context,
-      controller: _controller,
-      foldRegions: sourceFoldRegions(_controller.text, _controller.language),
-      collapsedRegionKeys: _foldedRegionKeys,
-      textStyle: _sourceTextStyle,
-      strutStyle: strutStyle,
-      lineHeight: lineHeight,
-      textWidth: textWidth,
-    );
-    final targetOffset = layouts
-        .firstWhere(
-          (entry) => entry.gutterEntry.lineNumber >= line,
-          orElse: () => layouts.isEmpty
-              ? const _SourceLineLayoutEntry.empty()
-              : layouts.last,
-        )
-        .top;
-    return targetOffset
-        .clamp(0.0, _safeMaxScrollExtent(_sourceScrollController))
-        .toDouble();
-  }
-
-  double _sourceTextLayoutWidth() {
-    final renderBox =
-        _sourceEditorKey.currentContext?.findRenderObject() as RenderBox?;
-    final editorWidth = renderBox?.size.width ?? 800;
-    return math.max(
-      1,
-      editorWidth -
-          _SourceEditorFrame.editorPaddingLeft -
-          _SourceEditorFrame.editorPaddingRight,
-    );
   }
 
   void _scrollPreviewToHeading(String headingId) {
@@ -4095,22 +5921,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     return true;
   }
 
-  int _textOffsetForLine(String text, int line) {
-    if (line <= 1) {
-      return 0;
-    }
-    var currentLine = 1;
-    for (var index = 0; index < text.length; index++) {
-      if (text.codeUnitAt(index) == 10) {
-        currentLine++;
-        if (currentLine == line) {
-          return index + 1;
-        }
-      }
-    }
-    return text.length;
-  }
-
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
     return kind == DocumentKind.markdown ||
@@ -4151,656 +5961,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 }
 
-class _SourceEditorFrame extends StatelessWidget {
-  const _SourceEditorFrame({
-    required this.controller,
-    required this.scrollController,
-    required this.lineHeight,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.foldRegions,
-    required this.collapsedRegionKeys,
-    required this.onToggleFold,
-    required this.child,
-  });
-
-  static const double editorPaddingTop = BusyMarkSourceEditorMetrics.paddingTop;
-  static const double editorPaddingLeft =
-      BusyMarkSourceEditorMetrics.paddingLeft;
-  static const double editorPaddingRight =
-      BusyMarkSourceEditorMetrics.paddingRight;
-  static const double _gutterWidth = BusyMarkSizes.sourceGutterWidth;
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final double lineHeight;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final List<SourceFoldRegion> foldRegions;
-  final Set<String> collapsedRegionKeys;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final editorWidth = math
-            .max(
-              BusyMarkStroke.hairline,
-              constraints.maxWidth - _gutterWidth - BusyMarkStroke.hairline,
-            )
-            .toDouble();
-        final textWidth = math
-            .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
-            .toDouble();
-        return DecoratedBox(
-          decoration: BoxDecoration(color: colors.view),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: _gutterWidth,
-                child: _SourceLineNumberGutter(
-                  controller: controller,
-                  scrollController: scrollController,
-                  lineHeight: lineHeight,
-                  textStyle: textStyle,
-                  strutStyle: strutStyle,
-                  textWidth: textWidth,
-                  foldRegions: foldRegions,
-                  collapsedRegionKeys: collapsedRegionKeys,
-                  onToggleFold: onToggleFold,
-                ),
-              ),
-              VerticalDivider(
-                width: BusyMarkStroke.hairline,
-                color: colors.subtleBorder,
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: _SourceRenderedTextLayer(
-                        controller: controller,
-                        scrollController: scrollController,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        textWidth: textWidth,
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: _CollapsedSourceLineOverlay(
-                        controller: controller,
-                        scrollController: scrollController,
-                        lineHeight: lineHeight,
-                        textWidth: textWidth,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        foldRegions: foldRegions,
-                        collapsedRegionKeys: collapsedRegionKeys,
-                      ),
-                    ),
-                    Positioned.fill(child: child),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SourceRenderedTextLayer extends StatelessWidget {
-  const _SourceRenderedTextLayer({
-    required this.controller,
-    required this.scrollController,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.textWidth,
-  });
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final double textWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ClipRect(
-        child: AnimatedBuilder(
-          animation: Listenable.merge([controller, scrollController]),
-          builder: (context, _) {
-            final scrollOffset = _safeScrollOffset(scrollController);
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
-                  left: _SourceEditorFrame.editorPaddingLeft,
-                  width: textWidth,
-                  child: RichText(
-                    text: controller.buildSourceTextSpan(
-                      context: context,
-                      style: textStyle,
-                      hideCollapsedStartLines: true,
-                    ),
-                    strutStyle: strutStyle,
-                    textHeightBehavior: _sourceTextHeightBehavior,
-                    textScaler: MediaQuery.textScalerOf(context),
-                    textWidthBasis: TextWidthBasis.parent,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _SourceLineNumberGutter extends StatelessWidget {
-  const _SourceLineNumberGutter({
-    required this.controller,
-    required this.scrollController,
-    required this.lineHeight,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.textWidth,
-    required this.foldRegions,
-    required this.collapsedRegionKeys,
-    required this.onToggleFold,
-  });
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final double lineHeight;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final double textWidth;
-  final List<SourceFoldRegion> foldRegions;
-  final Set<String> collapsedRegionKeys;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: ClipRect(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return AnimatedBuilder(
-              animation: Listenable.merge([controller, scrollController]),
-              builder: (context, _) {
-                final layouts = _sourceLineLayoutEntries(
-                  context,
-                  controller: controller,
-                  foldRegions: foldRegions,
-                  collapsedRegionKeys: collapsedRegionKeys,
-                  textStyle: textStyle,
-                  strutStyle: strutStyle,
-                  lineHeight: lineHeight,
-                  textWidth: textWidth,
-                );
-                final activeLine = sourceLineNumberForOffset(
-                  controller.text,
-                  controller.selection.extentOffset,
-                );
-                final scrollOffset = _safeScrollOffset(scrollController);
-                final children = <Widget>[];
-                for (final layout in layouts) {
-                  final top = layout.top - scrollOffset;
-                  if (top < -lineHeight || top > constraints.maxHeight) {
-                    continue;
-                  }
-                  final entry = layout.gutterEntry;
-                  children.add(
-                    Positioned(
-                      top: top,
-                      left: 0,
-                      right: 0,
-                      height: lineHeight,
-                      child: _SourceGutterRow(
-                        entry: entry,
-                        active: entry.lineNumber == activeLine,
-                        lineHeight: lineHeight,
-                        textStyle: textStyle,
-                        onToggleFold: onToggleFold,
-                      ),
-                    ),
-                  );
-                }
-                return Stack(children: children);
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CollapsedSourceLineOverlay extends StatelessWidget {
-  const _CollapsedSourceLineOverlay({
-    required this.controller,
-    required this.scrollController,
-    required this.lineHeight,
-    required this.textWidth,
-    required this.textStyle,
-    required this.strutStyle,
-    required this.foldRegions,
-    required this.collapsedRegionKeys,
-  });
-
-  final BusyMarkSourceEditingController controller;
-  final ScrollController scrollController;
-  final double lineHeight;
-  final double textWidth;
-  final TextStyle textStyle;
-  final StrutStyle? strutStyle;
-  final List<SourceFoldRegion> foldRegions;
-  final Set<String> collapsedRegionKeys;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ClipRect(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return AnimatedBuilder(
-              animation: Listenable.merge([controller, scrollController]),
-              builder: (context, _) {
-                final layouts = _sourceLineLayoutEntries(
-                  context,
-                  controller: controller,
-                  foldRegions: foldRegions,
-                  collapsedRegionKeys: collapsedRegionKeys,
-                  textStyle: textStyle,
-                  strutStyle: strutStyle,
-                  lineHeight: lineHeight,
-                  textWidth: textWidth,
-                );
-                final linesByNumber = {
-                  for (final line in sourceLineInfos(controller.text))
-                    line.number: line,
-                };
-                final scrollOffset = _safeScrollOffset(scrollController);
-                final children = <Widget>[];
-                for (final layout in layouts) {
-                  final entry = layout.gutterEntry;
-                  if (!entry.collapsed) {
-                    continue;
-                  }
-                  final top = layout.top - scrollOffset;
-                  if (top < -layout.height || top > constraints.maxHeight) {
-                    continue;
-                  }
-                  final line = linesByNumber[entry.lineNumber];
-                  if (line == null) {
-                    continue;
-                  }
-                  children.add(
-                    Positioned(
-                      top: top,
-                      left: 0,
-                      right: 0,
-                      height: layout.height,
-                      child: _CollapsedSourceLine(
-                        text: _collapsedLineText(line.text),
-                        height: lineHeight,
-                        textStyle: textStyle,
-                      ),
-                    ),
-                  );
-                }
-                return Stack(children: children);
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _CollapsedSourceLine extends StatelessWidget {
-  const _CollapsedSourceLine({
-    required this.text,
-    required this.height,
-    required this.textStyle,
-  });
-
-  final String text;
-  final double height;
-  final TextStyle textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final background = Color.alphaBlend(
-      colors.foreground.withValues(alpha: BusyMarkAlpha.sourceCollapsedLine),
-      colors.view,
-    );
-    return DecoratedBox(
-      decoration: BoxDecoration(color: background),
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SizedBox(
-          height: height,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: _SourceEditorFrame.editorPaddingLeft,
-              right: _SourceEditorFrame.editorPaddingRight,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textStyle.copyWith(color: colors.mutedForeground),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SourceGutterRow extends StatelessWidget {
-  const _SourceGutterRow({
-    required this.entry,
-    required this.active,
-    required this.lineHeight,
-    required this.textStyle,
-    required this.onToggleFold,
-  });
-
-  static const double _foldButtonSize = BusyMarkSizes.sourceFoldButton;
-  static const double _foldButtonRightInset =
-      BusyMarkSizes.sourceFoldButtonRightInset;
-
-  final SourceGutterEntry entry;
-  final bool active;
-  final double lineHeight;
-  final TextStyle textStyle;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final region = entry.region;
-    final activeColor = colors.foreground.withValues(
-      alpha: BusyMarkAlpha.sourceCollapsedLine,
-    );
-    final numberStyle = textStyle.copyWith(
-      color: active ? colors.foreground : colors.mutedForeground,
-      fontSize:
-          (textStyle.fontSize ?? BusyMarkTypography.defaultFontSize) *
-          BusyMarkTypography.sourceLineNumberScale,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: active ? activeColor : BusyMarkLinuxPalette.transparent,
-      ),
-      child: SizedBox(
-        height: lineHeight,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.center,
-                child: Text('${entry.lineNumber}', style: numberStyle),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: _foldButtonRightInset,
-              width: _foldButtonSize,
-              height: lineHeight,
-              child: Align(
-                alignment: Alignment.center,
-                child: region == null
-                    ? const SizedBox.shrink()
-                    : _SourceFoldButton(
-                        region: region,
-                        collapsed: entry.collapsed,
-                        onToggleFold: onToggleFold,
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SourceFoldButton extends StatelessWidget {
-  const _SourceFoldButton({
-    required this.region,
-    required this.collapsed,
-    required this.onToggleFold,
-  });
-
-  final SourceFoldRegion region;
-  final bool collapsed;
-  final ValueChanged<SourceFoldRegion> onToggleFold;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Tooltip(
-      message: collapsed
-          ? context.l10n.expandKind(_foldKindLabel(context, region.kind))
-          : context.l10n.collapseKind(_foldKindLabel(context, region.kind)),
-      waitDuration: BusyMarkMotion.tooltipWait,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onToggleFold(region),
-          child: SizedBox.square(
-            dimension: _SourceGutterRow._foldButtonSize,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-              ),
-              child: Icon(
-                collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
-                size: 12,
-                color: colors.mutedForeground,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-List<SourceGutterEntry> _sourceGutterEntriesFromRegions(
-  String source,
-  List<SourceFoldRegion> foldRegions,
-  Set<String> collapsedRegionKeys,
-) {
-  final lines = sourceLineInfos(source);
-  final regionByStartLine = <int, SourceFoldRegion>{};
-  for (final region in foldRegions.reversed) {
-    regionByStartLine.putIfAbsent(region.startLine, () => region);
-  }
-
-  final entries = <SourceGutterEntry>[];
-  for (var index = 0; index < lines.length; index++) {
-    final lineNumber = lines[index].number;
-    final region = regionByStartLine[lineNumber];
-    final collapsed =
-        region != null && collapsedRegionKeys.contains(region.key);
-    entries.add(
-      SourceGutterEntry(
-        lineNumber: lineNumber,
-        region: region,
-        collapsed: collapsed,
-      ),
-    );
-    if (collapsed) {
-      index += region.foldedLineCount;
-    }
-  }
-  return entries;
-}
-
-class _SourceLineLayoutEntry {
-  const _SourceLineLayoutEntry({
-    required this.gutterEntry,
-    required this.top,
-    required this.height,
-  });
-
-  const _SourceLineLayoutEntry.empty()
-    : gutterEntry = const SourceGutterEntry(
-        lineNumber: 1,
-        region: null,
-        collapsed: false,
-      ),
-      top = 0,
-      height = 0;
-
-  final SourceGutterEntry gutterEntry;
-  final double top;
-  final double height;
-}
-
-List<_SourceLineLayoutEntry> _sourceLineLayoutEntries(
-  BuildContext context, {
-  required BusyMarkSourceEditingController controller,
-  required List<SourceFoldRegion> foldRegions,
-  required Set<String> collapsedRegionKeys,
-  required TextStyle textStyle,
-  required StrutStyle? strutStyle,
-  required double lineHeight,
-  required double textWidth,
-}) {
-  final source = controller.text;
-  final linesByNumber = {
-    for (final line in sourceLineInfos(source)) line.number: line,
-  };
-  final entries = _sourceGutterEntriesFromRegions(
-    source,
-    foldRegions,
-    collapsedRegionKeys,
-  );
-  final layouts = <_SourceLineLayoutEntry>[];
-  final painter = _sourceTextPainter(
-    context,
-    controller: controller,
-    textStyle: textStyle,
-    strutStyle: strutStyle,
-    textWidth: textWidth,
-    hideCollapsedStartLines: true,
-  );
-  for (final entry in entries) {
-    final line = linesByNumber[entry.lineNumber];
-    final top =
-        _SourceEditorFrame.editorPaddingTop +
-        (line == null ? 0 : _sourceTextTopForOffset(painter, line.startOffset));
-    final height = line == null
-        ? lineHeight
-        : _sourceTextHeightForLine(
-            painter,
-            linesByNumber,
-            entry.lineNumber,
-            lineHeight,
-          );
-    layouts.add(
-      _SourceLineLayoutEntry(gutterEntry: entry, top: top, height: height),
-    );
-  }
-  painter.dispose();
-  return layouts;
-}
-
-TextPainter _sourceTextPainter(
-  BuildContext context, {
-  required BusyMarkSourceEditingController controller,
-  required TextStyle textStyle,
-  required StrutStyle? strutStyle,
-  required double textWidth,
-  bool hideCollapsedStartLines = false,
-}) {
-  final painter = TextPainter(
-    text: controller.buildSourceTextSpan(
-      context: context,
-      style: textStyle,
-      hideCollapsedStartLines: hideCollapsedStartLines,
-    ),
-    strutStyle: strutStyle,
-    textDirection: Directionality.of(context),
-    textHeightBehavior: _sourceTextHeightBehavior,
-    textScaler: MediaQuery.textScalerOf(context),
-  )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));
-  return painter;
-}
-
-double _sourceTextTopForOffset(TextPainter painter, int offset) {
-  return painter.getOffsetForCaret(TextPosition(offset: offset), Rect.zero).dy;
-}
-
-double _sourceTextHeightForLine(
-  TextPainter painter,
-  Map<int, SourceLineInfo> linesByNumber,
-  int lineNumber,
-  double fallback,
-) {
-  final line = linesByNumber[lineNumber];
-  if (line == null) {
-    return fallback;
-  }
-  final top = _sourceTextTopForOffset(painter, line.startOffset);
-  final nextLine = linesByNumber[lineNumber + 1];
-  if (nextLine != null) {
-    final nextTop = _sourceTextTopForOffset(painter, nextLine.startOffset);
-    if (nextTop > top) {
-      return math.max(fallback, nextTop - top);
-    }
-  }
-  final metrics = painter.computeLineMetrics();
-  for (final metric in metrics) {
-    final metricTop = metric.baseline - metric.ascent;
-    if (top >= metricTop - 0.5 && top < metricTop + metric.height + 0.5) {
-      return math.max(fallback, metric.height);
-    }
-  }
-  return fallback;
-}
-
-String _collapsedLineText(String text) {
-  final trimmed = text.trimRight();
-  if (trimmed.isEmpty) {
-    return '...';
-  }
-  return '$trimmed ...';
-}
-
-String _foldKindLabel(BuildContext context, SourceFoldKind kind) {
-  return switch (kind) {
-    SourceFoldKind.section => context.l10n.foldKindSection,
-    SourceFoldKind.list => context.l10n.foldKindList,
-    SourceFoldKind.blockquote => context.l10n.foldKindQuote,
-    SourceFoldKind.code => context.l10n.codeBlock,
-    SourceFoldKind.xml => context.l10n.foldKindTag,
-  };
-}
-
 class _PreviewPane extends StatelessWidget {
   const _PreviewPane({
     required this.preview,
@@ -4826,6 +5986,7 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.noPreview,
       );
     }
+    final keyedHeadingIds = <String>{};
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: SelectionArea(
@@ -4843,7 +6004,12 @@ class _PreviewPane extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (final (index, block) in document.blocks.indexed)
-                      _keyedPreviewBlock(context, index, block),
+                      _keyedPreviewBlock(
+                        context,
+                        index,
+                        block,
+                        keyedHeadingIds,
+                      ),
                   ],
                 ),
               ),
@@ -4858,13 +6024,14 @@ class _PreviewPane extends StatelessWidget {
     BuildContext context,
     int index,
     PreviewBlock block,
+    Set<String> keyedHeadingIds,
   ) {
     final child = _PreviewBlockView(
       block,
       first: index == 0,
       listRunEnd: _isLastListBlock(index),
       workspace: workspace,
-      headingKey: _keyForBlock(block),
+      headingKey: _keyForBlock(block, keyedHeadingIds),
     );
     return KeyedSubtree(
       key: searchKeys.putIfAbsent(index, () => GlobalKey()),
@@ -4881,12 +6048,15 @@ class _PreviewPane extends StatelessWidget {
         blocks[index + 1].kind != PreviewBlockKind.list;
   }
 
-  Key? _keyForBlock(PreviewBlock block) {
+  Key? _keyForBlock(PreviewBlock block, Set<String> keyedHeadingIds) {
     if (block.kind != PreviewBlockKind.heading) {
       return null;
     }
     final id = block.attributes['id'];
     if (id == null || id.isEmpty) {
+      return null;
+    }
+    if (!keyedHeadingIds.add(id)) {
       return null;
     }
     return headingKeys.putIfAbsent(id, () => GlobalKey());
@@ -4921,22 +6091,29 @@ class _PreviewBlockView extends StatelessWidget {
         child: _PreviewInlineText(
           key: headingKey,
           block: displayBlock,
-          style: _headingStyle(context, displayBlock.level),
+          style: _diffPreviewTextStyle(
+            context,
+            displayBlock,
+            _headingStyle(context, displayBlock.level),
+          ),
         ),
       ),
       PreviewBlockKind.code => Container(
         margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
         padding: BusyMarkInsets.previewCodeBlock,
         decoration: BoxDecoration(
-          color: colors.panel,
+          color: _diffPreviewCodeBackground(context, displayBlock),
           borderRadius: BorderRadius.circular(BusyMarkRadius.md),
           border: Border.all(color: colors.subtleBorder),
         ),
-        child: Text(
-          displayBlock.text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
-            height: BusyMarkTypography.codeLineHeight,
+        child: Text.rich(
+          _diffPreviewCodeTextSpan(
+            context,
+            displayBlock,
+            Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+              height: BusyMarkTypography.codeLineHeight,
+            ),
           ),
         ),
       ),
@@ -4951,7 +6128,10 @@ class _PreviewBlockView extends StatelessWidget {
           'tip' => colors.admonitionTip,
           _ => colors.admonitionNote,
         },
-        child: _PreviewInlineText(block: displayBlock),
+        child: _PreviewInlineText(
+          block: displayBlock,
+          style: _diffPreviewTextStyle(context, displayBlock, null),
+        ),
       ),
       PreviewBlockKind.tabs => _PreviewCallout(
         icon: BusyMarkGlyphs.tab,
@@ -4984,7 +6164,12 @@ class _PreviewBlockView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(child: _PreviewInlineText(block: displayBlock)),
+                Expanded(
+                  child: _PreviewInlineText(
+                    block: displayBlock,
+                    style: _diffPreviewTextStyle(context, displayBlock, null),
+                  ),
+                ),
               ],
             ),
             if (displayBlock.children.isNotEmpty)
@@ -5016,7 +6201,10 @@ class _PreviewBlockView extends StatelessWidget {
       PreviewBlockKind.quote => _PreviewCallout(
         icon: BusyMarkGlyphs.blockquote,
         color: colors.panel,
-        child: _PreviewInlineText(block: block),
+        child: _PreviewInlineText(
+          block: block,
+          style: _diffPreviewTextStyle(context, displayBlock, null),
+        ),
       ),
       PreviewBlockKind.thematicBreak => Padding(
         padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.mdPlus),
@@ -5060,8 +6248,84 @@ class _PreviewBlockView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
           vertical: BusyMarkSizes.previewHeadingBottom,
         ),
-        child: _PreviewInlineText(block: displayBlock),
+        child: _PreviewInlineText(
+          block: displayBlock,
+          style: _diffPreviewTextStyle(context, displayBlock, null),
+        ),
       ),
+    };
+  }
+
+  Color _diffPreviewCodeBackground(BuildContext context, PreviewBlock block) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    if (_diffPreviewCodeLineTones(block).isNotEmpty) {
+      return colors.panel;
+    }
+    return switch (block.attributes['diffTone']) {
+      'added' => colors.admonitionTip,
+      'changed' => colors.admonitionTip,
+      'removed' => colors.admonitionWarning,
+      _ => colors.panel,
+    };
+  }
+
+  TextSpan _diffPreviewCodeTextSpan(
+    BuildContext context,
+    PreviewBlock block,
+    TextStyle? base,
+  ) {
+    final lineTones = _diffPreviewCodeLineTones(block);
+    final blockStyle = _diffPreviewTextStyle(context, block, base);
+    if (lineTones.isEmpty) {
+      return TextSpan(text: block.text, style: blockStyle);
+    }
+    final spans = <InlineSpan>[];
+    final lines = block.text.split('\n');
+    for (final (index, line) in lines.indexed) {
+      final tone = lineTones[index];
+      spans.add(
+        TextSpan(
+          text: line,
+          style: tone == null
+              ? blockStyle
+              : _diffPreviewTextStyleForTone(context, tone, base),
+        ),
+      );
+      if (index < lines.length - 1) {
+        spans.add(const TextSpan(text: '\n'));
+      }
+    }
+    return TextSpan(style: blockStyle, children: spans);
+  }
+
+  TextStyle? _diffPreviewTextStyle(
+    BuildContext context,
+    PreviewBlock block,
+    TextStyle? base,
+  ) {
+    return _diffPreviewTextStyleForTone(
+      context,
+      _diffPreviewToneFromName(block.attributes['diffTone']),
+      base,
+    );
+  }
+
+  TextStyle? _diffPreviewTextStyleForTone(
+    BuildContext context,
+    _DiffPreviewTone? tone,
+    TextStyle? base,
+  ) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final effectiveBase = base ?? Theme.of(context).textTheme.bodyMedium;
+    return switch (tone) {
+      _DiffPreviewTone.added || _DiffPreviewTone.changed =>
+        effectiveBase?.copyWith(backgroundColor: colors.admonitionTip),
+      _DiffPreviewTone.removed => effectiveBase?.copyWith(
+        color: colors.mutedForeground,
+        backgroundColor: colors.admonitionWarning,
+        decoration: TextDecoration.lineThrough,
+      ),
+      null => base,
     };
   }
 
@@ -5233,6 +6497,10 @@ class _PreviewInlineText extends ConsumerWidget {
     final baseStyle = style ?? Theme.of(context).textTheme.bodyMedium;
     final searchState = ref.watch(_workspaceSearchProvider);
     final workspace = ref.watch(workspaceControllerProvider).workspace;
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(workspace),
+    );
     final highlightQuery = searchState.active ? searchState.query.trim() : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
@@ -5247,6 +6515,9 @@ class _PreviewInlineText extends ConsumerWidget {
               inline,
               workspace: workspace,
               highlightQuery: highlightQuery,
+              allowRemoteImages: allowRemoteImages,
+              onRemoteImageBlocked: () =>
+                  unawaited(_showRemoteImagesPrompt(context, ref)),
               onLinkTap: (destination) =>
                   _openPreviewLink(context, ref, destination),
             ),
@@ -5608,7 +6879,7 @@ class _PreviewFigure extends StatelessWidget {
   }
 }
 
-class _PreviewImageBlock extends StatelessWidget {
+class _PreviewImageBlock extends ConsumerWidget {
   const _PreviewImageBlock({
     required this.block,
     required this.workspace,
@@ -5620,11 +6891,15 @@ class _PreviewImageBlock extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final width = _previewImageWidth(block);
     final source = _previewImageSource(block);
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    final settings = ref.watch(appSettingsControllerProvider);
+    final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
+      _remoteImageWorkspacePath(workspace),
+    );
     return Padding(
       padding: padding,
       child: Align(
@@ -5636,6 +6911,9 @@ class _PreviewImageBlock extends StatelessWidget {
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: () =>
+              unawaited(_showRemoteImagesPrompt(context, ref)),
           width: width,
           maxWidth: width ?? BusyMarkSizes.previewImageMaxWidth,
         ),
@@ -5714,6 +6992,8 @@ InlineSpan _previewInlineSpan(
   PreviewInline inline, {
   required Workspace? workspace,
   required String highlightQuery,
+  required bool allowRemoteImages,
+  required VoidCallback? onRemoteImageBlocked,
   required Future<void> Function(String destination) onLinkTap,
   String? inheritedLinkDestination,
   TextStyle? inheritedStyle,
@@ -5751,6 +7031,8 @@ InlineSpan _previewInlineSpan(
       child,
       workspace: workspace,
       highlightQuery: highlightQuery,
+      allowRemoteImages: allowRemoteImages,
+      onRemoteImageBlocked: onRemoteImageBlocked,
       onLinkTap: onLinkTap,
       inheritedLinkDestination: linkDestination,
       inheritedStyle: style,
@@ -5874,6 +7156,8 @@ InlineSpan _previewInlineSpan(
       context,
       inline,
       workspace,
+      allowRemoteImages: allowRemoteImages,
+      onRemoteImageBlocked: onRemoteImageBlocked,
       style: mergeStyle(
         TextStyle(color: colors.mutedForeground, fontStyle: FontStyle.italic),
       ),
@@ -5885,6 +7169,8 @@ InlineSpan _previewInlineImageSpan(
   BuildContext context,
   PreviewInline inline,
   Workspace? workspace, {
+  required bool allowRemoteImages,
+  required VoidCallback? onRemoteImageBlocked,
   required TextStyle? style,
 }) {
   final activeFilePath =
@@ -5906,6 +7192,8 @@ InlineSpan _previewInlineImageSpan(
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
           imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: onRemoteImageBlocked,
           maxWidth: BusyMarkSizes.previewMinWidth,
           maxHeight: BusyMarkSizes.previewInlineImageMaxHeight,
           height: BusyMarkSizes.previewInlineImageHeight,
@@ -6065,6 +7353,37 @@ Future<void> _openPreviewLink(
   _navigatePreviewAnchor(context, ref, file.absolutePath, anchor);
 }
 
+Future<void> _openInFiles(BuildContext context, String path) async {
+  final target = _openInFilesTargetPath(path);
+  if (target.isEmpty) {
+    return;
+  }
+  final launched = await launchUrl(
+    Uri.file(target),
+    mode: LaunchMode.externalApplication,
+  );
+  if (!launched && context.mounted) {
+    _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
+  }
+}
+
+String _openInFilesTargetPath(String path) {
+  final trimmed = path.trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+  final normalized = p.normalize(trimmed);
+  final type = FileSystemEntity.typeSync(normalized);
+  if (type == FileSystemEntityType.directory) {
+    return normalized;
+  }
+  return p.dirname(normalized);
+}
+
+Future<void> _copyToClipboard(String value) {
+  return Clipboard.setData(ClipboardData(text: value));
+}
+
 String _decodePreviewLinkPart(String value) {
   try {
     return Uri.decodeComponent(value);
@@ -6117,6 +7436,76 @@ void _navigatePreviewAnchor(
 
 void _showPreviewLinkMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+enum _RemoteImagesPromptAction { cancel, allowWorkspace, allowAlways }
+
+Future<void> _showRemoteImagesPrompt(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final workspacePath = _remoteImageWorkspacePath(
+    ref.read(workspaceControllerProvider).workspace,
+  );
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final action = await showBusyMarkModalDialog<_RemoteImagesPromptAction>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.remoteImagesBlockedTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          icon: BusyMarkGlyphs.clear,
+          onPressed: () =>
+              Navigator.pop(context, _RemoteImagesPromptAction.cancel),
+        ),
+        if (workspacePath != null)
+          BusyMarkDialogButton(
+            label: context.l10n.loadRemoteImagesForWorkspace,
+            icon: BusyMarkGlyphs.folder,
+            onPressed: () => Navigator.pop(
+              context,
+              _RemoteImagesPromptAction.allowWorkspace,
+            ),
+          ),
+        BusyMarkDialogButton(
+          label: context.l10n.alwaysLoadRemoteImages,
+          icon: BusyMarkGlyphs.image,
+          suggested: true,
+          onPressed: () =>
+              Navigator.pop(context, _RemoteImagesPromptAction.allowAlways),
+        ),
+      ],
+      children: [Text(context.l10n.remoteImagesBlockedMessage)],
+    ),
+  );
+  if (action == _RemoteImagesPromptAction.allowWorkspace &&
+      workspacePath != null) {
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .allowRemoteImagesForWorkspace(workspacePath);
+    return;
+  }
+  if (action == _RemoteImagesPromptAction.allowAlways) {
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setAllowRemoteImages(true);
+  }
+}
+
+String? _remoteImageWorkspacePath(Workspace? workspace) {
+  if (workspace == null) {
+    return null;
+  }
+  final root = workspace.rootPath.trim();
+  if (root.isNotEmpty) {
+    return root;
+  }
+  final fallback = workspace.activeFilePath ?? workspace.markdown?.filePath;
+  final trimmed = fallback?.trim();
+  return trimmed == null || trimmed.isEmpty ? null : trimmed;
 }
 
 String _decodePreviewAnchor(String value) {
@@ -6225,17 +7614,41 @@ class _SearchSidebar extends StatelessWidget {
         title: context.l10n.noResults,
       );
     }
-    return ListView.separated(
+    final groups = _workspaceSearchFileGroups(results);
+    return ListView(
       padding: BusyMarkInsets.sidebarList,
-      itemCount: results.length,
-      separatorBuilder: (context, index) =>
-          Divider(height: BusyMarkStroke.hairline, color: colors.subtleBorder),
-      itemBuilder: (context, index) {
-        return _SearchResultRow(
-          result: results[index],
-          onOpen: () => onOpenResult(results[index]),
-        );
-      },
+      children: [
+        for (final group in groups) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.sm,
+              BusyMarkSpacing.xxs,
+            ),
+            child: Text(
+              group.relativePath,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colors.mutedForeground,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+          for (final result in group.results) ...[
+            _SearchResultRow(
+              result: result,
+              onOpen: () => onOpenResult(result),
+            ),
+            Divider(
+              height: BusyMarkStroke.hairline,
+              color: colors.subtleBorder,
+            ),
+          ],
+        ],
+      ],
     );
   }
 }
@@ -6303,6 +7716,7 @@ class _SearchResultRow extends StatelessWidget {
 class _WorkspaceSearchResult {
   const _WorkspaceSearchResult({
     required this.filePath,
+    required this.relativePath,
     required this.line,
     required this.startOffset,
     required this.endOffset,
@@ -6313,6 +7727,7 @@ class _WorkspaceSearchResult {
   });
 
   final String filePath;
+  final String relativePath;
   final int line;
   final int startOffset;
   final int endOffset;
@@ -6322,58 +7737,87 @@ class _WorkspaceSearchResult {
   final IconData icon;
 }
 
+class _WorkspaceSearchFileGroup {
+  const _WorkspaceSearchFileGroup({
+    required this.relativePath,
+    required this.results,
+  });
+
+  final String relativePath;
+  final List<_WorkspaceSearchResult> results;
+}
+
+List<_WorkspaceSearchFileGroup> _workspaceSearchFileGroups(
+  List<_WorkspaceSearchResult> results,
+) {
+  final groups = <String, List<_WorkspaceSearchResult>>{};
+  for (final result in results) {
+    groups.putIfAbsent(result.relativePath, () => []).add(result);
+  }
+  return [
+    for (final entry in groups.entries)
+      _WorkspaceSearchFileGroup(
+        relativePath: entry.key,
+        results: List.unmodifiable(entry.value),
+      ),
+  ];
+}
+
 List<_WorkspaceSearchResult> _workspaceSearchResults(
   BuildContext context,
   WorkspaceState state,
-  String query,
+  SourceSearchOptions options,
 ) {
   final workspace = state.workspace;
-  final trimmedQuery = query.trim();
-  final normalizedQuery = trimmedQuery.toLowerCase();
-  if (workspace == null || normalizedQuery.isEmpty) {
+  final trimmedQuery = options.query.trim();
+  if (workspace == null || trimmedQuery.isEmpty) {
     return const [];
   }
   final results = <_WorkspaceSearchResult>[];
   final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  if (activePath != null) {
-    final relativePath = _relativeDocumentPath(workspace, activePath);
-    final lines = state.activeText.split('\n');
-    var lineStartOffset = 0;
-    for (var index = 0; index < lines.length; index++) {
-      final line = lines[index];
-      final matchColumn = line.toLowerCase().indexOf(normalizedQuery);
-      if (matchColumn < 0) {
-        lineStartOffset += line.length + 1;
-        continue;
-      }
-      final lineNumber = index + 1;
-      final startOffset = lineStartOffset + matchColumn;
-      results.add(
-        _WorkspaceSearchResult(
-          filePath: activePath,
-          line: lineNumber,
-          startOffset: startOffset,
-          endOffset: startOffset + trimmedQuery.length,
-          query: trimmedQuery,
-          title: _searchResultTitle(context, line),
-          subtitle: context.l10n.searchResultLine(relativePath, lineNumber),
-          icon: BusyMarkGlyphs.paragraph,
-        ),
-      );
-      if (results.length >= _maxWorkspaceSearchResults) {
-        return results;
-      }
-      lineStartOffset += line.length + 1;
-    }
-  }
-
   final sortedFiles = [...workspace.files]
     ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  if (activePath != null &&
+      sortedFiles.every((file) => file.absolutePath != activePath)) {
+    _addWorkspaceSearchTextResults(
+      context: context,
+      workspace: workspace,
+      file: DocumentFile(
+        absolutePath: activePath,
+        relativePath: p.basename(activePath),
+        kind: DocumentKind.markdown,
+        size: state.activeText.length,
+        lastModified: DateTime.fromMillisecondsSinceEpoch(0),
+      ),
+      text: state.activeText,
+      options: options.copyWith(query: trimmedQuery),
+      results: results,
+    );
+    if (results.length >= _maxWorkspaceSearchResults) {
+      return results;
+    }
+  }
   for (final file in sortedFiles) {
     if (!_isOpenableTextDocument(file)) {
       continue;
     }
-    if (!file.relativePath.toLowerCase().contains(normalizedQuery)) {
+    final text = file.absolutePath == activePath
+        ? state.activeText
+        : _readWorkspaceSearchText(file);
+    if (text != null) {
+      _addWorkspaceSearchTextResults(
+        context: context,
+        workspace: workspace,
+        file: file,
+        text: text,
+        options: options.copyWith(query: trimmedQuery),
+        results: results,
+      );
+      if (results.length >= _maxWorkspaceSearchResults) {
+        return results;
+      }
+    }
+    if (!_fileNameMatchesSearch(file.relativePath, options)) {
       continue;
     }
     final displayPath = file.relativePath;
@@ -6381,6 +7825,7 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
     results.add(
       _WorkspaceSearchResult(
         filePath: file.absolutePath,
+        relativePath: displayPath,
         line: 1,
         startOffset: 0,
         endOffset: 0,
@@ -6398,6 +7843,64 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
 }
 
 const int _maxWorkspaceSearchResults = 80;
+const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
+
+String? _readWorkspaceSearchText(DocumentFile file) {
+  if (file.size > _maxWorkspaceSearchFileBytes) {
+    return null;
+  }
+  try {
+    return File(file.absolutePath).readAsStringSync();
+  } on Object {
+    return null;
+  }
+}
+
+void _addWorkspaceSearchTextResults({
+  required BuildContext context,
+  required Workspace workspace,
+  required DocumentFile file,
+  required String text,
+  required SourceSearchOptions options,
+  required List<_WorkspaceSearchResult> results,
+}) {
+  final relativePath = _relativeDocumentPath(workspace, file.absolutePath);
+  final document = SourceDocument(fullText: text);
+  final searchResult = searchSourceDocument(document, options);
+  for (final match in searchResult.matches) {
+    final lineNumber = document.lineIndex.lineNumberAtOffset(match.fullStart);
+    final line = document.lineIndex.lineAt(lineNumber).text;
+    results.add(
+      _WorkspaceSearchResult(
+        filePath: file.absolutePath,
+        relativePath: relativePath,
+        line: lineNumber,
+        startOffset: match.fullStart,
+        endOffset: match.fullEnd,
+        query: options.query,
+        title: _searchResultTitle(context, line),
+        subtitle: context.l10n.searchResultLine(relativePath, lineNumber),
+        icon: BusyMarkGlyphs.paragraph,
+      ),
+    );
+    if (results.length >= _maxWorkspaceSearchResults) {
+      return;
+    }
+  }
+}
+
+bool _fileNameMatchesSearch(String relativePath, SourceSearchOptions options) {
+  if (options.regex || options.wholeWord) {
+    return false;
+  }
+  final haystack = options.caseSensitive
+      ? relativePath
+      : relativePath.toLowerCase();
+  final needle = options.caseSensitive
+      ? options.query
+      : options.query.toLowerCase();
+  return haystack.contains(needle);
+}
 
 String _searchResultTitle(BuildContext context, String line) {
   final trimmed = _stripMarkdownForSearchResult(line, context: context);
@@ -6513,6 +8016,17 @@ class _DiagnosticRow extends ConsumerWidget {
             await ref
                 .read(workspaceControllerProvider.notifier)
                 .openActiveFile(diagnostic.filePath);
+            final line = diagnostic.line;
+            if (line != null) {
+              ref
+                  .read(_sourceNavigationTargetProvider.notifier)
+                  .set(
+                    _SourceNavigationTarget(
+                      filePath: diagnostic.filePath,
+                      line: line,
+                    ),
+                  );
+            }
             _clearGitDetailSelection(ref);
           }
         },
@@ -6521,9 +8035,12 @@ class _DiagnosticRow extends ConsumerWidget {
           child: Row(
             children: [
               Icon(
-                _diagnosticIcon(diagnostic.severity),
+                _diagnosticIconForSeverity(diagnostic.severity),
                 size: BusyMarkSizes.iconMd,
-                color: _diagnosticColor(context, diagnostic.severity),
+                color: _diagnosticColorForSeverity(
+                  context,
+                  diagnostic.severity,
+                ),
               ),
               const SizedBox(width: BusyMarkSpacing.md),
               Expanded(
@@ -6555,24 +8072,27 @@ class _DiagnosticRow extends ConsumerWidget {
       ),
     );
   }
+}
 
-  IconData _diagnosticIcon(DiagnosticSeverity severity) {
-    return switch (severity) {
-      DiagnosticSeverity.error => BusyMarkGlyphs.error,
-      DiagnosticSeverity.warning => BusyMarkGlyphs.warning,
-      DiagnosticSeverity.info => BusyMarkGlyphs.info,
-      DiagnosticSeverity.hint => BusyMarkGlyphs.tip,
-    };
-  }
+IconData _diagnosticIconForSeverity(DiagnosticSeverity severity) {
+  return switch (severity) {
+    DiagnosticSeverity.error => BusyMarkGlyphs.error,
+    DiagnosticSeverity.warning => BusyMarkGlyphs.warning,
+    DiagnosticSeverity.info => BusyMarkGlyphs.info,
+    DiagnosticSeverity.hint => BusyMarkGlyphs.tip,
+  };
+}
 
-  Color _diagnosticColor(BuildContext context, DiagnosticSeverity severity) {
-    return switch (severity) {
-      DiagnosticSeverity.error => Theme.of(context).colorScheme.error,
-      DiagnosticSeverity.warning => BusyMarkLinuxPalette.yellow,
-      DiagnosticSeverity.info => Theme.of(context).colorScheme.primary,
-      DiagnosticSeverity.hint => BusyMarkSurfaceColors.of(context).muted,
-    };
-  }
+Color _diagnosticColorForSeverity(
+  BuildContext context,
+  DiagnosticSeverity severity,
+) {
+  return switch (severity) {
+    DiagnosticSeverity.error => Theme.of(context).colorScheme.error,
+    DiagnosticSeverity.warning => BusyMarkLinuxPalette.yellow,
+    DiagnosticSeverity.info => Theme.of(context).colorScheme.primary,
+    DiagnosticSeverity.hint => BusyMarkSurfaceColors.of(context).muted,
+  };
 }
 
 class _EmptyPane extends StatelessWidget {

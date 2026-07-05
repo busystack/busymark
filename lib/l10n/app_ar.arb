@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "نسخ الاسم",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "نسخ المسار",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "إنشاء",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "ملف",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "سجل الملف",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "بحث",
   "@find": {
@@ -131,6 +143,10 @@
   "open": "فتح",
   "@open": {
     "description": "Open action label."
+  },
+  "openInFiles": "فتح في الملفات",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
   },
   "outline": "المخطط التفصيلي",
   "@outline": {
@@ -636,6 +652,17 @@
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
+  "privacy": "Privacy",
+  "@privacy": {"description": "Settings section title for privacy options."},
+  "allowRemoteImages": "Load remote images",
+  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+
   "settingsWindowSectionTitle": "النافذة",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -946,6 +973,19 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
+  "remoteImageBlocked": "Remote image blocked",
+  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "alwaysLoadRemoteImages": "Always load remote images",
+  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
+
   "hideSidebar": "إخفاء اللوحة الجانبية",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1949,17 +1989,17 @@
   "gitClean": "Clean",
   "gitConflicts": "Conflicts",
   "gitChanges": "التغييرات",
-  "gitHistory": "History",
+  "gitHistory": "السجل",
   "gitBranches": "الفروع",
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Commit",
+  "gitCommit": "تثبيت",
   "gitSelectForCommit": "Select for commit",
   "gitRemoveFromCommit": "Leave out of commit",
   "gitDiscard": "Discard",
   "gitOpenFile": "Open file",
   "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Unversioned Files",
+  "gitUntracked": "الملفات غير المتتبعة",
   "gitCommitMessage": "Commit message",
   "gitCommitSelectedFiles": "Selected files",
   "gitCommitNoSelectedFiles": "Select at least one file before committing.",
@@ -2075,6 +2115,22 @@
   "markdownHtmlSafeUrls": "عناوين URL آمنة فقط",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "إضافة إلى Git",
+  "delete": "حذف",
+  "newFile": "ملف جديد",
+  "rename": "إعادة تسمية",
+  "confirmDeleteFileTitle": "حذف الملف؟",
+  "confirmDeleteFolderTitle": "حذف المجلد؟",
+  "confirmDeleteFileMessage": "حذف {name}؟ لا يمكن التراجع عن هذا.",
+  "confirmDeleteFolderMessage": "حذف {name} وكل الملفات داخله؟ لا يمكن التراجع عن هذا.",
+  "workspaceErrorFileOperationFailed": "فشلت عملية الملف: {error}",
+  "errorDirectoryMissing": "المجلد غير موجود: {path}",
+  "errorPathAlreadyExists": "المسار موجود بالفعل: {path}",
+  "errorFileNameRequired": "اسم الملف مطلوب.",
+  "errorFileNameUnsafe": "يجب أن يكون اسم الملف مقطع مسار آمنًا واحدًا.",
+  "errorFileOperationInvalidTarget": "لا يمكن نقل مجلد إلى داخل نفسه.",
+  "errorFileOperationOutsideRoot": "يجب أن تبقى عملية الملف داخل مساحة العمل.",
+  "errorFileOperationRoot": "لا يمكن تغيير جذر مساحة العمل من شجرة الملفات."
 
 }

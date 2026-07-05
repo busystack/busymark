@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/application/git_gateway.dart';
@@ -156,6 +158,216 @@ void main() {
       isTrue,
     );
   });
+
+  test('clears previous workspace Git state immediately on attach', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
+    await controller.refresh();
+    await controller.loadProjectHistory();
+    await controller.loadCommitDetails('1234567890abcdef');
+    await controller.stageFiles(['../outside.md']);
+
+    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
+
+    final state = container.read(gitControllerProvider);
+    expect(state.attachedWorkspace?.id, '/other');
+    expect(state.repositoryInfo, isNull);
+    expect(state.statusSnapshot, isNull);
+    expect(state.selectedFilePath, isNull);
+    expect(state.selectedCommitHash, isNull);
+    expect(state.selectedCommitFilePath, isNull);
+    expect(state.openDiffFilePaths, isEmpty);
+    expect(state.selectedDiff, isNull);
+    expect(state.history, isEmpty);
+    expect(state.historyFilePath, isNull);
+    expect(state.branches, isEmpty);
+    expect(state.lastError, isNull);
+    expect(state.lastOperationMessage, isNull);
+    expect(state.scopedFilePath, isNull);
+  });
+
+  test('ignores stale refresh results after workspace switch', () async {
+    final gateway = _DeferredDetectGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+
+    controller.attachWorkspace(_workspace());
+    await Future<void>.delayed(Duration.zero);
+    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
+    await Future<void>.delayed(Duration.zero);
+
+    gateway.completeDetect('/repo', _DeferredDetectGitGateway.repo('/repo'));
+    await Future<void>.delayed(Duration.zero);
+
+    var state = container.read(gitControllerProvider);
+    expect(state.attachedWorkspace?.id, '/other');
+    expect(state.repositoryInfo, isNull);
+
+    gateway.completeDetect('/other', _DeferredDetectGitGateway.repo('/other'));
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    state = container.read(gitControllerProvider);
+    expect(state.repositoryInfo?.rootPath, '/other');
+    expect(state.statusSnapshot?.repositoryInfo.rootPath, '/other');
+  });
+
+  test('history tab reloads project history after workspace switch', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+    await controller.selectView(GitView.history);
+    expect(container.read(gitControllerProvider).history, isNotEmpty);
+
+    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
+    await controller.refresh();
+    expect(container.read(gitControllerProvider).selectedView, GitView.changes);
+    expect(container.read(gitControllerProvider).history, isEmpty);
+
+    await controller.selectView(GitView.history);
+
+    final state = container.read(gitControllerProvider);
+    expect(state.selectedView, GitView.history);
+    expect(state.history, isNotEmpty);
+    expect(gateway.lastHistoryPath, isNull);
+  });
+
+  test(
+    'current file history scopes selected commit details to the file',
+    () async {
+      final gateway = _FakeGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
+      await controller.refresh();
+
+      await controller.loadFileHistory('/repo/README.md');
+      await controller.loadCommitDetails('1234567890abcdef');
+
+      expect(gateway.lastHistoryPath, 'README.md');
+      expect(gateway.lastCommitDetailsPath, 'README.md');
+      expect(
+        container.read(gitControllerProvider).selectedView,
+        GitView.changes,
+      );
+      expect(
+        container.read(gitControllerProvider).selectedCommitHash,
+        isNotNull,
+      );
+    },
+  );
+
+  test(
+    'project history loads selected commit details without a file scope',
+    () async {
+      final gateway = _FakeGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
+      await controller.refresh();
+
+      await controller.loadFileHistory('/repo/README.md');
+      await controller.loadProjectHistory();
+      await controller.loadCommitDetails('1234567890abcdef');
+
+      expect(gateway.lastHistoryPath, isNull);
+      expect(gateway.lastCommitDetailsPath, isNull);
+    },
+  );
+
+  test(
+    'project commit details display the first changed file by default',
+    () async {
+      final gateway = _FakeGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
+      await controller.refresh();
+
+      await controller.loadProjectHistory();
+      await controller.loadCommitDetails('1234567890abcdef');
+
+      final state = container.read(gitControllerProvider);
+      expect(state.selectedDiff?.files.map((file) => file.displayPath), [
+        'README.md',
+        'guide.md',
+      ]);
+      expect(state.selectedCommitFilePath, 'README.md');
+      expect(state.openDiffFilePaths, ['README.md']);
+      expect(
+        state.selectedDiffForDisplay?.files.single.displayPath,
+        'README.md',
+      );
+    },
+  );
+
+  test('selected commit file opens a project commit diff tab', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+
+    await controller.loadProjectHistory();
+    await controller.loadCommitDetails('1234567890abcdef');
+    controller.selectCommitFile('guide.md');
+
+    final state = container.read(gitControllerProvider);
+    expect(state.selectedCommitFilePath, 'guide.md');
+    expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
+    expect(state.selectedDiff?.files, hasLength(2));
+    expect(state.selectedDiffForDisplay?.files.single.displayPath, 'guide.md');
+    expect(
+      state.selectedDiffForDisplay?.fileSnapshots['guide.md'],
+      contains('Full revision text'),
+    );
+  });
+
+  test(
+    'closing a commit diff file tab activates the neighboring tab',
+    () async {
+      final gateway = _FakeGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      controller.attachWorkspace(_workspace());
+      await controller.refresh();
+
+      await controller.loadProjectHistory();
+      await controller.loadCommitDetails('1234567890abcdef');
+      controller.selectCommitFile('guide.md');
+      controller.closeDiffFile('guide.md');
+
+      final state = container.read(gitControllerProvider);
+      expect(state.selectedCommitFilePath, 'README.md');
+      expect(state.openDiffFilePaths, ['README.md']);
+      expect(
+        state.selectedDiffForDisplay?.files.single.displayPath,
+        'README.md',
+      );
+    },
+  );
+
+  test('deactivating a diff file keeps open diff tabs', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+
+    await controller.loadProjectHistory();
+    await controller.loadCommitDetails('1234567890abcdef');
+    controller.selectCommitFile('guide.md');
+    controller.deactivateDiffFile();
+
+    final state = container.read(gitControllerProvider);
+    expect(state.selectedCommitFilePath, isNull);
+    expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
+    expect(state.selectedDiffForDisplay, isNull);
+  });
 }
 
 ProviderContainer _container(GitRepositoryGateway gateway) {
@@ -171,12 +383,17 @@ ProviderContainer _container(GitRepositoryGateway gateway) {
   return container;
 }
 
-Workspace _workspace() {
+Workspace _workspace({
+  String id = '/repo',
+  String rootPath = '/repo',
+  String? activeFilePath,
+}) {
   return Workspace(
-    id: '/repo',
-    rootPath: '/repo',
+    id: id,
+    rootPath: rootPath,
     kind: WorkspaceKind.markdownFolder,
     openedAt: DateTime(2026),
+    activeFilePath: activeFilePath,
     files: const [],
     diagnostics: const [],
   );
@@ -195,6 +412,8 @@ class _FakeGitGateway implements GitRepositoryGateway {
   var detectCalls = 0;
   var commitCalls = 0;
   var switchCalls = 0;
+  String? lastHistoryPath;
+  String? lastCommitDetailsPath;
 
   static const repo = GitRepositoryInfo(
     rootPath: '/repo',
@@ -286,7 +505,18 @@ class _FakeGitGateway implements GitRepositoryGateway {
     int limit = 200,
     int skip = 0,
   }) async {
-    return const [];
+    lastHistoryPath = repoRelativePath;
+    return [
+      GitCommitSummary(
+        fullHash: '1234567890abcdef',
+        shortHash: '1234567',
+        authorName: 'BusyMark Test',
+        authorEmail: 'busymark@example.com',
+        authorDate: DateTime(2026),
+        subject: 'Update docs',
+        parentHashes: [],
+      ),
+    ];
   }
 
   @override
@@ -319,9 +549,30 @@ class _FakeGitGateway implements GitRepositoryGateway {
   @override
   Future<GitCommitDetails> commitDetails(
     GitRepositoryInfo repository,
-    String hash,
-  ) {
-    throw UnimplementedError();
+    String hash, {
+    String? repoRelativePath,
+  }) async {
+    lastCommitDetailsPath = repoRelativePath;
+    final changedFiles = repoRelativePath == null
+        ? [_diffFile('README.md'), _diffFile('guide.md')]
+        : [_diffFile(repoRelativePath)];
+    return GitCommitDetails(
+      summary: GitCommitSummary(
+        fullHash: hash,
+        shortHash: hash.substring(0, 7),
+        authorName: 'BusyMark Test',
+        authorEmail: 'busymark@example.com',
+        authorDate: DateTime(2026),
+        subject: 'Update docs',
+        parentHashes: const [],
+      ),
+      changedFiles: changedFiles,
+      patch: '',
+      fileSnapshots: {
+        for (final file in changedFiles)
+          file.displayPath: '# ${file.displayPath}\n\nFull revision text.\n',
+      },
+    );
   }
 
   @override
@@ -406,6 +657,68 @@ class _FakeGitGateway implements GitRepositoryGateway {
       ignored: false,
     );
   }
+}
+
+class _DeferredDetectGitGateway extends _FakeGitGateway {
+  final _detectCompleters = <String, Completer<GitRepositoryInfo?>>{};
+
+  static GitRepositoryInfo repo(String rootPath) {
+    return GitRepositoryInfo(rootPath: rootPath, gitDirPath: '$rootPath/.git');
+  }
+
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) {
+    detectCalls++;
+    return _detectCompleters
+        .putIfAbsent(workspacePath, Completer<GitRepositoryInfo?>.new)
+        .future;
+  }
+
+  void completeDetect(String workspacePath, GitRepositoryInfo? repository) {
+    final completer = _detectCompleters.putIfAbsent(
+      workspacePath,
+      Completer<GitRepositoryInfo?>.new,
+    );
+    if (!completer.isCompleted) {
+      completer.complete(repository);
+    }
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
+    return GitStatusSnapshot(
+      repositoryInfo: repository,
+      files: [
+        GitFileStatus(
+          repoRelativePath: 'README.md',
+          absolutePath: '${repository.rootPath}/README.md',
+          indexStatus: GitFileChangeStatus.unmodified,
+          workTreeStatus: GitFileChangeStatus.modified,
+          category: GitFileStatusCategory.modified,
+          staged: false,
+          unstaged: true,
+          untracked: false,
+          deleted: false,
+          renamed: false,
+          copied: false,
+          conflicted: false,
+          ignored: false,
+        ),
+      ],
+    );
+  }
+}
+
+GitDiffFile _diffFile(String path) {
+  return GitDiffFile(
+    oldPath: path,
+    newPath: path,
+    status: GitDiffFileStatus.modified,
+    hunks: const [],
+    binary: false,
+    additions: 1,
+    deletions: 0,
+  );
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

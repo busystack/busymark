@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
+import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
@@ -127,9 +128,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         kind: workspace.kind.name,
       );
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Open failed for path: $path');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Open failed',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(path)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -176,11 +180,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Create Writerside project failed');
-      stderr.writeln('[BusyMark]   parent: ${request.parentDirectoryPath}');
-      stderr.writeln('[BusyMark]   directory: ${request.directoryName}');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Create Writerside project failed',
+        error,
+        stackTrace,
+        context: {
+          'parent': busyMarkLogPath(request.parentDirectoryPath),
+          'directory': request.directoryName,
+        },
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -238,11 +246,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Create Writerside topic failed');
-      stderr.writeln('[BusyMark]   title: ${request.title}');
-      stderr.writeln('[BusyMark]   file name: ${request.fileName}');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Create Writerside topic failed',
+        error,
+        stackTrace,
+        context: {'title': request.title, 'file name': request.fileName},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -290,6 +299,45 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     _clearOpenFileTabs(workspace);
     return true;
+  }
+
+  Future<bool> createWorkspaceFile(
+    String directoryPath,
+    String fileName,
+  ) async {
+    return _runWorkspaceFileOperation((workspace) async {
+      return _service.createFile(workspace, directoryPath, fileName);
+    });
+  }
+
+  Future<bool> renameWorkspaceEntity(String path, String newName) async {
+    final activeFilePath = state.workspace?.activeFilePath;
+    return _runWorkspaceFileOperation((workspace) async {
+      final target = await _service.renameEntity(workspace, path, newName);
+      return _remapMovedPath(activeFilePath, path, target);
+    });
+  }
+
+  Future<bool> moveWorkspaceEntity(
+    String sourcePath,
+    String targetDirectoryPath,
+  ) async {
+    final activeFilePath = state.workspace?.activeFilePath;
+    return _runWorkspaceFileOperation((workspace) async {
+      final target = await _service.moveEntity(
+        workspace,
+        sourcePath,
+        targetDirectoryPath,
+      );
+      return _remapMovedPath(activeFilePath, sourcePath, target);
+    });
+  }
+
+  Future<bool> deleteWorkspaceEntity(String path) async {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.deleteEntity(workspace, path);
+      return null;
+    });
   }
 
   Future<bool> closeOpenFileTab(String path) async {
@@ -413,9 +461,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Could not open file: $path');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Could not open file',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(path)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           message: WorkspaceMessage(
@@ -680,10 +731,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Discard active changes failed');
-      stderr.writeln('[BusyMark]   active: $active');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Discard active changes failed',
+        error,
+        stackTrace,
+        context: {'active': busyMarkLogPath(active)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isDirty: true,
@@ -756,10 +809,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _resetSaveTracking();
       return true;
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Workspace refresh failed');
-      stderr.writeln('[BusyMark]   root: ${workspace.rootPath}');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Workspace refresh failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
       if (_isCurrentActiveDocumentOperation(operationRevision)) {
         state = state.copyWith(
           isLoading: false,
@@ -769,6 +824,41 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ),
         );
       }
+      return false;
+    }
+  }
+
+  Future<bool> _runWorkspaceFileOperation(
+    Future<String?> Function(Workspace workspace) operation,
+  ) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    try {
+      final preferredActivePath = await operation(workspace);
+      final refreshed = await refreshWorkspaceFromDiskPreservingOpenTabs();
+      if (!refreshed) {
+        return false;
+      }
+      if (preferredActivePath != null) {
+        return _openActiveFile(preferredActivePath);
+      }
+      return true;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Workspace file operation failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
       return false;
     }
   }
@@ -903,4 +993,25 @@ List<String> _retainedOpenFileTabPaths({
     return retained;
   }
   return [...retained, activeFilePath];
+}
+
+String? _remapMovedPath(String? path, String source, String target) {
+  if (path == null) {
+    return null;
+  }
+  final normalizedPath = p.normalize(path);
+  final normalizedSource = p.normalize(source);
+  final normalizedTarget = p.normalize(target);
+  if (p.equals(normalizedPath, normalizedSource)) {
+    return normalizedTarget;
+  }
+  if (!p.isWithin(normalizedSource, normalizedPath)) {
+    return null;
+  }
+  return p.normalize(
+    p.join(
+      normalizedTarget,
+      p.relative(normalizedPath, from: normalizedSource),
+    ),
+  );
 }

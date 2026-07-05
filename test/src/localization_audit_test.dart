@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -87,6 +88,25 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
+  test('Git sidebar labels are translated in supplied locales', () {
+    const keys = <String>{'gitUntracked', 'gitHistory', 'gitCommit'};
+    final english = _arbMessages(File('lib/l10n/app_en.arb'));
+    final failures = <String>[];
+    for (final file in _arbFiles()) {
+      if (file.path.endsWith('app_en.arb')) {
+        continue;
+      }
+      final messages = _arbMessages(file);
+      for (final key in keys) {
+        if (messages[key] == english[key]) {
+          failures.add('${file.path}: $key still matches English');
+        }
+      }
+    }
+
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
   testWidgets('diagnostics localize at render time from codes and args', (
     tester,
   ) async {
@@ -138,6 +158,18 @@ Iterable<File> _productionDartFiles() sync* {
     }
     yield entity;
   }
+}
+
+Iterable<File> _arbFiles() sync* {
+  for (final entity in Directory('lib/l10n').listSync()) {
+    if (entity is File && entity.path.endsWith('.arb')) {
+      yield entity;
+    }
+  }
+}
+
+Map<String, Object?> _arbMessages(File file) {
+  return jsonDecode(file.readAsStringSync()) as Map<String, Object?>;
 }
 
 Iterable<File> _nativeLinuxSourceFiles() sync* {

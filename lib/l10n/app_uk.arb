@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Копіювати назву",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Копіювати шлях",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Створити",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "Файл",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Історія файлу",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Знайти",
   "@find": {
@@ -131,6 +143,10 @@
   "open": "Відкрити",
   "@open": {
     "description": "Open action label."
+  },
+  "openInFiles": "Відкрити у Файлах",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
   },
   "outline": "Структура",
   "@outline": {
@@ -636,6 +652,17 @@
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
+  "privacy": "Privacy",
+  "@privacy": {"description": "Settings section title for privacy options."},
+  "allowRemoteImages": "Load remote images",
+  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+
   "settingsWindowSectionTitle": "Вікно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -946,6 +973,19 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
+  "remoteImageBlocked": "Remote image blocked",
+  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "alwaysLoadRemoteImages": "Always load remote images",
+  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
+
   "hideSidebar": "Приховати бічну панель",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1949,17 +1989,17 @@
   "gitClean": "Clean",
   "gitConflicts": "Conflicts",
   "gitChanges": "Зміни",
-  "gitHistory": "History",
+  "gitHistory": "Історія",
   "gitBranches": "Гілки",
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Commit",
+  "gitCommit": "Зафіксувати",
   "gitSelectForCommit": "Select for commit",
   "gitRemoveFromCommit": "Leave out of commit",
   "gitDiscard": "Discard",
   "gitOpenFile": "Open file",
   "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Unversioned Files",
+  "gitUntracked": "Невідстежувані файли",
   "gitCommitMessage": "Commit message",
   "gitCommitSelectedFiles": "Selected files",
   "gitCommitNoSelectedFiles": "Select at least one file before committing.",
@@ -2075,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Лише безпечні URL",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Додати до Git",
+  "delete": "Видалити",
+  "newFile": "Новий файл",
+  "rename": "Перейменувати",
+  "confirmDeleteFileTitle": "Видалити файл?",
+  "confirmDeleteFolderTitle": "Видалити папку?",
+  "confirmDeleteFileMessage": "Видалити {name}? Цю дію не можна скасувати.",
+  "confirmDeleteFolderMessage": "Видалити {name} і всі файли всередині? Цю дію не можна скасувати.",
+  "workspaceErrorFileOperationFailed": "Не вдалося виконати файлову операцію: {error}",
+  "errorDirectoryMissing": "Каталог не існує: {path}",
+  "errorPathAlreadyExists": "Шлях уже існує: {path}",
+  "errorFileNameRequired": "Потрібна назва файлу.",
+  "errorFileNameUnsafe": "Назва файлу має бути одним безпечним сегментом шляху.",
+  "errorFileOperationInvalidTarget": "Не можна перемістити папку всередину самої себе.",
+  "errorFileOperationOutsideRoot": "Файлова операція має залишатися в межах workspace.",
+  "errorFileOperationRoot": "Корінь workspace не можна змінити з дерева файлів."
 
 }

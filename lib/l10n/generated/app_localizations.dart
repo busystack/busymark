@@ -174,6 +174,12 @@ abstract class AppLocalizations {
   /// **'Advanced'**
   String get advanced;
 
+  /// Menu action that stages the selected file or folder in Git.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Git'**
+  String get addToGit;
+
   /// Settings section title for appearance options.
   ///
   /// In en, this message translates to:
@@ -228,6 +234,18 @@ abstract class AppLocalizations {
   /// **'Copy'**
   String get copy;
 
+  /// Menu action that copies the selected file, folder, or workspace name.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy name'**
+  String get copyName;
+
+  /// Menu action that copies the selected file, folder, or workspace path.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get copyPath;
+
   /// Create action label.
   ///
   /// In en, this message translates to:
@@ -252,6 +270,12 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get darkTheme;
 
+  /// Delete command label.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
   /// Discard unsaved changes button label.
   ///
   /// In en, this message translates to:
@@ -269,6 +293,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File'**
   String get file;
+
+  /// Menu action and sidebar title for showing Git history for a single file.
+  ///
+  /// In en, this message translates to:
+  /// **'File History'**
+  String get fileHistory;
 
   /// Find command label.
   ///
@@ -317,6 +347,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get open;
+
+  /// Menu action that opens the selected file or folder location in the system file manager.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Files'**
+  String get openInFiles;
 
   /// Outline sidebar tab label.
   ///
@@ -1074,6 +1110,36 @@ abstract class AppLocalizations {
   /// **'Choose where the floating WYSIWYG editing buttons appear.'**
   String get editingButtonsDescription;
 
+  /// Settings section title for privacy options.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
+  /// Settings switch title for loading remote images.
+  ///
+  /// In en, this message translates to:
+  /// **'Load remote images'**
+  String get allowRemoteImages;
+
+  /// Settings switch description for loading remote images.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Markdown preview and editor images to load from http and https URLs.'**
+  String get allowRemoteImagesDescription;
+
+  /// Settings action label for clearing per-workspace remote image permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear remote image permissions'**
+  String get clearRemoteImagePermissions;
+
+  /// Settings action description for clearing per-workspace remote image permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget workspaces that were allowed to load remote images.'**
+  String get clearRemoteImagePermissionsDescription;
+
   /// Settings section title for native window behavior.
   ///
   /// In en, this message translates to:
@@ -1494,6 +1560,42 @@ abstract class AppLocalizations {
   /// **'No image source'**
   String get noImageSource;
 
+  /// Placeholder label shown when a remote image is blocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote image blocked'**
+  String get remoteImageBlocked;
+
+  /// Tooltip for a blocked remote image placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether BusyMark can load remote images.'**
+  String get remoteImageBlockedTooltip;
+
+  /// Dialog title for remote image loading permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote images are blocked'**
+  String get remoteImagesBlockedTitle;
+
+  /// Dialog message explaining the privacy risk of remote images.
+  ///
+  /// In en, this message translates to:
+  /// **'This document references images from the internet. Loading them can reveal network information to the image host.'**
+  String get remoteImagesBlockedMessage;
+
+  /// Dialog button that allows remote images for the current workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Load for this workspace'**
+  String get loadRemoteImagesForWorkspace;
+
+  /// Dialog button that enables remote images globally.
+  ///
+  /// In en, this message translates to:
+  /// **'Always load remote images'**
+  String get alwaysLoadRemoteImages;
+
   /// Tooltip for hiding the workspace sidebar panel.
   ///
   /// In en, this message translates to:
@@ -1584,6 +1686,12 @@ abstract class AppLocalizations {
   /// **'No files'**
   String get noFiles;
 
+  /// Menu action and dialog title for creating a new file.
+  ///
+  /// In en, this message translates to:
+  /// **'New file'**
+  String get newFile;
+
   /// Empty state shown when there is no Writerside TOC.
   ///
   /// In en, this message translates to:
@@ -1637,6 +1745,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File name is required.'**
   String get fileNameRequired;
+
+  /// Rename command label.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// Confirmation dialog title before deleting a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete file?'**
+  String get confirmDeleteFileTitle;
+
+  /// Confirmation dialog title before deleting a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete folder?'**
+  String get confirmDeleteFolderTitle;
+
+  /// Confirmation dialog message before deleting a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}? This cannot be undone.'**
+  String confirmDeleteFileMessage(String name);
+
+  /// Confirmation dialog message before deleting a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} and all files inside it? This cannot be undone.'**
+  String confirmDeleteFolderMessage(String name);
 
   /// Validation message for unsafe file names.
   ///
@@ -1709,6 +1847,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'tag'**
   String get foldKindTag;
+
+  /// Tooltip for moving to the previous source search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get sourceSearchPreviousMatch;
+
+  /// Tooltip for moving to the next source search match.
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get sourceSearchNextMatch;
+
+  /// Tooltip for toggling case-sensitive source search.
+  ///
+  /// In en, this message translates to:
+  /// **'Case sensitive'**
+  String get sourceSearchCaseSensitive;
+
+  /// Tooltip for toggling whole-word source search.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole word'**
+  String get sourceSearchWholeWord;
+
+  /// Tooltip for toggling regular-expression source search.
+  ///
+  /// In en, this message translates to:
+  /// **'Regex'**
+  String get sourceSearchRegex;
+
+  /// Status banner shown when source highlighting and folding are disabled for a large file.
+  ///
+  /// In en, this message translates to:
+  /// **'Large file: highlighting and folding are paused'**
+  String get sourceLargeFileFeaturesPaused;
 
   /// Empty state shown when there is no preview.
   ///
@@ -1908,6 +2082,12 @@ abstract class AppLocalizations {
   /// **'Save failed: {error}'**
   String workspaceErrorSaveFailed(String error);
 
+  /// Workspace error message shown when creating, renaming, moving, or deleting a file fails.
+  ///
+  /// In en, this message translates to:
+  /// **'File operation failed: {error}'**
+  String workspaceErrorFileOperationFailed(String error);
+
   /// Workspace error message shown when validation fails.
   ///
   /// In en, this message translates to:
@@ -1949,6 +2129,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parent directory does not exist: {path}'**
   String errorParentDirectoryMissing(String path);
+
+  /// Detail for a missing directory.
+  ///
+  /// In en, this message translates to:
+  /// **'Directory does not exist: {path}'**
+  String errorDirectoryMissing(String path);
+
+  /// Detail for a file operation target that already exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Path already exists: {path}'**
+  String errorPathAlreadyExists(String path);
+
+  /// Detail for a missing file name in a file operation.
+  ///
+  /// In en, this message translates to:
+  /// **'File name is required.'**
+  String get errorFileNameRequired;
+
+  /// Detail for an unsafe file name in a file operation.
+  ///
+  /// In en, this message translates to:
+  /// **'File name must be a single safe path segment.'**
+  String get errorFileNameUnsafe;
+
+  /// Detail for an invalid file operation target.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot move a folder into itself.'**
+  String get errorFileOperationInvalidTarget;
+
+  /// Detail for a file operation outside the workspace root.
+  ///
+  /// In en, this message translates to:
+  /// **'File operation must stay inside the workspace.'**
+  String get errorFileOperationOutsideRoot;
+
+  /// Detail for a file operation attempted on the workspace root.
+  ///
+  /// In en, this message translates to:
+  /// **'The workspace root cannot be changed from the file tree.'**
+  String get errorFileOperationRoot;
 
   /// Detail for a missing project name.
   ///

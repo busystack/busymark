@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Copia nome",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Copia percorso",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Crea",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "File",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Cronologia file",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Trova",
   "@find": {
@@ -131,6 +143,10 @@
   "open": "Apri",
   "@open": {
     "description": "Open action label."
+  },
+  "openInFiles": "Apri in File",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
   },
   "outline": "Struttura",
   "@outline": {
@@ -636,6 +652,17 @@
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
+  "privacy": "Privacy",
+  "@privacy": {"description": "Settings section title for privacy options."},
+  "allowRemoteImages": "Load remote images",
+  "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
+  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
+  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
+  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+
   "settingsWindowSectionTitle": "Finestra",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -946,6 +973,19 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
+  "remoteImageBlocked": "Remote image blocked",
+  "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
+  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
+  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
+  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
+  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
+  "alwaysLoadRemoteImages": "Always load remote images",
+  "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
+
   "hideSidebar": "Nascondi il pannello laterale",
   "@hideSidebar": {
     "description": "Tooltip for hiding the workspace sidebar."
@@ -1949,17 +1989,17 @@
   "gitClean": "Clean",
   "gitConflicts": "Conflicts",
   "gitChanges": "Modifiche",
-  "gitHistory": "History",
+  "gitHistory": "Cronologia",
   "gitBranches": "Rami",
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Commit",
+  "gitCommit": "Conferma",
   "gitSelectForCommit": "Select for commit",
   "gitRemoveFromCommit": "Leave out of commit",
   "gitDiscard": "Discard",
   "gitOpenFile": "Open file",
   "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Unversioned Files",
+  "gitUntracked": "File non versionati",
   "gitCommitMessage": "Commit message",
   "gitCommitSelectedFiles": "Selected files",
   "gitCommitNoSelectedFiles": "Select at least one file before committing.",
@@ -2075,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Solo URL sicuri",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Aggiungi a Git",
+  "delete": "Elimina",
+  "newFile": "Nuovo file",
+  "rename": "Rinomina",
+  "confirmDeleteFileTitle": "Eliminare il file?",
+  "confirmDeleteFolderTitle": "Eliminare la cartella?",
+  "confirmDeleteFileMessage": "Eliminare {name}? Questa operazione non può essere annullata.",
+  "confirmDeleteFolderMessage": "Eliminare {name} e tutti i file al suo interno? Questa operazione non può essere annullata.",
+  "workspaceErrorFileOperationFailed": "Operazione sul file non riuscita: {error}",
+  "errorDirectoryMissing": "La directory non esiste: {path}",
+  "errorPathAlreadyExists": "Il percorso esiste già: {path}",
+  "errorFileNameRequired": "Il nome file è obbligatorio.",
+  "errorFileNameUnsafe": "Il nome file deve essere un singolo segmento di percorso sicuro.",
+  "errorFileOperationInvalidTarget": "Non è possibile spostare una cartella dentro se stessa.",
+  "errorFileOperationOutsideRoot": "L’operazione sul file deve restare nel workspace.",
+  "errorFileOperationRoot": "La radice del workspace non può essere modificata dall’albero dei file."
 
 }

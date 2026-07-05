@@ -18,6 +18,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.workspaceRoot,
     this.writersideRoot,
     this.imagesDir = 'images',
+    required this.allowRemoteImages,
+    this.onRemoteImageBlocked,
     required this.controller,
     required this.undoController,
     required this.focusNode,
@@ -43,6 +45,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final BusyMarkWysiwygTextController controller;
   final UndoHistoryController undoController;
   final FocusNode focusNode;
@@ -137,6 +141,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
+        allowRemoteImages: allowRemoteImages,
+        onRemoteImageBlocked: onRemoteImageBlocked,
         onEdit: _editHtmlBlock,
       );
     }
@@ -155,6 +161,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                   workspaceRoot: workspaceRoot,
                   writersideRoot: writersideRoot,
                   imagesDir: imagesDir,
+                  allowRemoteImages: allowRemoteImages,
+                  onRemoteImageBlocked: onRemoteImageBlocked,
                 )
               : readOnly
               ? SelectableText(
@@ -448,6 +456,8 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    required this.onRemoteImageBlocked,
     required this.onEdit,
   });
 
@@ -456,6 +466,8 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final VoidCallback onEdit;
 
   @override
@@ -519,6 +531,8 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
             workspaceRoot: workspaceRoot,
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
         ],
       ),
@@ -533,6 +547,8 @@ class _RenderedHtmlBlocks extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    required this.onRemoteImageBlocked,
   });
 
   final List<BusyBlock> blocks;
@@ -540,6 +556,8 @@ class _RenderedHtmlBlocks extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -553,6 +571,8 @@ class _RenderedHtmlBlocks extends StatelessWidget {
             workspaceRoot: workspaceRoot,
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: onRemoteImageBlocked,
             first: index == 0,
           ),
       ],
@@ -567,6 +587,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -575,6 +597,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -618,6 +642,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
             workspaceRoot: workspaceRoot,
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
         ),
       ),
@@ -669,6 +695,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
                       workspaceRoot: workspaceRoot,
                       writersideRoot: writersideRoot,
                       imagesDir: imagesDir,
+                      allowRemoteImages: allowRemoteImages,
+                      onRemoteImageBlocked: onRemoteImageBlocked,
                     ),
             ),
           ],
@@ -683,6 +711,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
+        allowRemoteImages: allowRemoteImages,
+        onRemoteImageBlocked: onRemoteImageBlocked,
         first: first,
       ),
       BusyBlockKind.thematicBreak => Padding(
@@ -699,6 +729,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
           workspaceRoot: workspaceRoot,
           writersideRoot: writersideRoot,
           imagesDir: imagesDir,
+          allowRemoteImages: allowRemoteImages,
+          onRemoteImageBlocked: onRemoteImageBlocked,
           first: first,
         ),
       BusyBlockKind.htmlBlock => _RenderedHtmlBlocks(
@@ -707,6 +739,8 @@ class _RenderedHtmlBlock extends StatelessWidget {
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
+        allowRemoteImages: allowRemoteImages,
+        onRemoteImageBlocked: onRemoteImageBlocked,
       ),
       _ => Padding(
         padding: EdgeInsets.only(
@@ -739,6 +773,8 @@ class _RenderedHtmlFigure extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -747,6 +783,8 @@ class _RenderedHtmlFigure extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -776,6 +814,8 @@ class _RenderedHtmlFigure extends StatelessWidget {
             workspaceRoot: workspaceRoot,
             writersideRoot: writersideRoot,
             imagesDir: imagesDir,
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: onRemoteImageBlocked,
           ),
           if (captionBlocks.isNotEmpty)
             Padding(
@@ -804,6 +844,8 @@ class _RenderedHtmlListItem extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    required this.onRemoteImageBlocked,
     required this.first,
   });
 
@@ -812,6 +854,8 @@ class _RenderedHtmlListItem extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
   final bool first;
 
   @override
@@ -857,6 +901,8 @@ class _RenderedHtmlListItem extends StatelessWidget {
                 workspaceRoot: workspaceRoot,
                 writersideRoot: writersideRoot,
                 imagesDir: imagesDir,
+                allowRemoteImages: allowRemoteImages,
+                onRemoteImageBlocked: onRemoteImageBlocked,
               ),
             ),
         ],
@@ -1528,6 +1574,8 @@ class _ImageBlockEditor extends StatelessWidget {
     required this.workspaceRoot,
     required this.writersideRoot,
     required this.imagesDir,
+    required this.allowRemoteImages,
+    required this.onRemoteImageBlocked,
   });
 
   final BusyBlock block;
@@ -1535,6 +1583,8 @@ class _ImageBlockEditor extends StatelessWidget {
   final String? workspaceRoot;
   final String? writersideRoot;
   final String imagesDir;
+  final bool allowRemoteImages;
+  final VoidCallback? onRemoteImageBlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -1548,6 +1598,8 @@ class _ImageBlockEditor extends StatelessWidget {
         workspaceRoot: workspaceRoot,
         writersideRoot: writersideRoot,
         imagesDir: imagesDir,
+        allowRemoteImages: allowRemoteImages,
+        onRemoteImageBlocked: onRemoteImageBlocked,
       ),
     );
   }

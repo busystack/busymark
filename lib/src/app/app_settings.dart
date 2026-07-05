@@ -65,6 +65,8 @@ class AppSettings {
     required this.editorToolbarPlacement,
     required this.autoSave,
     required this.validateOnEdit,
+    required this.allowRemoteImages,
+    required this.remoteImageAllowedWorkspacePaths,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -82,6 +84,8 @@ class AppSettings {
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,
       autoSave: true,
       validateOnEdit: true,
+      allowRemoteImages: false,
+      remoteImageAllowedWorkspacePaths: [],
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -121,6 +125,11 @@ class AppSettings {
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
+      allowRemoteImages:
+          json['allowRemoteImages'] as bool? ?? defaults.allowRemoteImages,
+      remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
+        json['remoteImageAllowedWorkspacePaths'],
+      ),
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
@@ -146,6 +155,8 @@ class AppSettings {
   final EditorToolbarPlacement editorToolbarPlacement;
   final bool autoSave;
   final bool validateOnEdit;
+  final bool allowRemoteImages;
+  final List<String> remoteImageAllowedWorkspacePaths;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -165,10 +176,20 @@ class AppSettings {
     'editorToolbarPlacement': editorToolbarPlacement.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
+    'allowRemoteImages': allowRemoteImages,
+    'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
   };
+
+  bool allowsRemoteImagesForWorkspace(String? workspacePath) {
+    if (allowRemoteImages) {
+      return true;
+    }
+    final key = _normalizedWorkspacePath(workspacePath);
+    return key != null && remoteImageAllowedWorkspacePaths.contains(key);
+  }
 
   AppSettings copyWith({
     BusyMarkThemeModePreference? themeModePreference,
@@ -181,6 +202,8 @@ class AppSettings {
     EditorToolbarPlacement? editorToolbarPlacement,
     bool? autoSave,
     bool? validateOnEdit,
+    bool? allowRemoteImages,
+    List<String>? remoteImageAllowedWorkspacePaths,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -199,6 +222,10 @@ class AppSettings {
           editorToolbarPlacement ?? this.editorToolbarPlacement,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
+      allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
+      remoteImageAllowedWorkspacePaths:
+          remoteImageAllowedWorkspacePaths ??
+          this.remoteImageAllowedWorkspacePaths,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -243,6 +270,9 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
 
 class AppSettingsController extends Notifier<AppSettings> {
   late LocalSettingsStore _store;
+  Future<void>? _lastSave;
+  final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
+  var _loaded = false;
 
   @override
   AppSettings build() {
@@ -252,27 +282,36 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> setThemeModePreference(BusyMarkThemeModePreference preference) {
-    return _save(state.copyWith(themeModePreference: preference));
+    return _mutate(
+      (settings) => settings.copyWith(themeModePreference: preference),
+    );
   }
 
   Future<void> setLocaleTag(String? localeTag) {
-    return _save(state.copyWith(localeTag: _normalizeLocaleTag(localeTag)));
+    return _mutate(
+      (settings) =>
+          settings.copyWith(localeTag: _normalizeLocaleTag(localeTag)),
+    );
   }
 
   Future<void> setEditorFontSize(double size) {
-    return _save(state.copyWith(editorFontSize: size.clamp(11, 24)));
+    return _mutate(
+      (settings) => settings.copyWith(editorFontSize: size.clamp(11, 24)),
+    );
   }
 
   Future<void> setWordWrap(bool enabled) {
-    return _save(state.copyWith(wordWrap: enabled));
+    return _mutate((settings) => settings.copyWith(wordWrap: enabled));
   }
 
   Future<void> setEditorToolbarPlacement(EditorToolbarPlacement placement) {
-    return _save(state.copyWith(editorToolbarPlacement: placement));
+    return _mutate(
+      (settings) => settings.copyWith(editorToolbarPlacement: placement),
+    );
   }
 
   Future<void> setAutoSave(bool enabled) {
-    return _save(state.copyWith(autoSave: enabled));
+    return _mutate((settings) => settings.copyWith(autoSave: enabled));
   }
 
   Future<void> setPreviewVisible(bool enabled) {
@@ -284,8 +323,8 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> setDocumentViewMode(DocumentViewModePreference mode) {
-    return _save(
-      state.copyWith(
+    return _mutate(
+      (settings) => settings.copyWith(
         documentViewMode: mode,
         previewVisible: mode != DocumentViewModePreference.source,
       ),
@@ -293,49 +332,103 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> setSidebarVisible(bool enabled) {
-    return _save(state.copyWith(sidebarVisible: enabled));
+    return _mutate((settings) => settings.copyWith(sidebarVisible: enabled));
   }
 
   Future<void> setValidateOnEdit(bool enabled) {
-    return _save(state.copyWith(validateOnEdit: enabled));
+    return _mutate((settings) => settings.copyWith(validateOnEdit: enabled));
+  }
+
+  Future<void> setAllowRemoteImages(bool enabled) {
+    return _mutate((settings) => settings.copyWith(allowRemoteImages: enabled));
+  }
+
+  Future<void> allowRemoteImagesForWorkspace(String workspacePath) {
+    final key = _normalizedWorkspacePath(workspacePath);
+    if (key == null) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final allowed = {
+        key,
+        ...settings.remoteImageAllowedWorkspacePaths,
+      }.toList()..sort();
+      return settings.copyWith(remoteImageAllowedWorkspacePaths: allowed);
+    });
+  }
+
+  Future<void> clearRemoteImageWorkspacePermissions() {
+    return _mutate(
+      (settings) => settings.copyWith(remoteImageAllowedWorkspacePaths: []),
+    );
   }
 
   Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
-    return _save(state.copyWith(confirmCloseWithUnsavedChanges: enabled));
+    return _mutate(
+      (settings) => settings.copyWith(confirmCloseWithUnsavedChanges: enabled),
+    );
   }
 
   Future<void> recordOpenedWorkspace({
     required String path,
     required String kind,
   }) {
-    final recent = [
-      RecentWorkspace(path: path, kind: kind, lastOpenedAt: DateTime.now()),
-      ...state.recentWorkspaces.where((item) => item.path != path),
-    ].take(12).toList();
-    return _save(
-      state.copyWith(lastOpenedPath: path, recentWorkspaces: recent),
-    );
+    final openedAt = DateTime.now();
+    return _mutate((settings) {
+      final recent = [
+        RecentWorkspace(path: path, kind: kind, lastOpenedAt: openedAt),
+        ...settings.recentWorkspaces.where((item) => item.path != path),
+      ].take(12).toList();
+      return settings.copyWith(lastOpenedPath: path, recentWorkspaces: recent);
+    });
   }
 
   Future<void> clearRecentWorkspaces() {
-    return _save(state.copyWith(recentWorkspaces: []));
+    return _mutate((settings) => settings.copyWith(recentWorkspaces: []));
   }
 
   Future<void> _load() async {
+    AppSettings loaded;
     try {
-      state = AppSettings.fromJson(await _store.load());
+      loaded = AppSettings.fromJson(await _store.load());
     } on Object {
-      state = AppSettings.defaults();
+      loaded = AppSettings.defaults();
     }
+    final hadPendingInitialMutations = _pendingInitialMutations.isNotEmpty;
+    for (final mutation in _pendingInitialMutations) {
+      loaded = mutation(loaded);
+    }
+    _pendingInitialMutations.clear();
+    _loaded = true;
+    state = loaded;
+    if (hadPendingInitialMutations) {
+      await _save(loaded);
+    }
+  }
+
+  Future<void> _mutate(AppSettings Function(AppSettings) mutation) {
+    if (!_loaded) {
+      _pendingInitialMutations.add(mutation);
+      state = mutation(state);
+      return Future<void>.value();
+    }
+    return _save(mutation(state));
   }
 
   Future<void> _save(AppSettings next) async {
     state = next;
-    try {
-      await _store.save(next.toJson());
-    } on Object {
-      // Keep the in-memory preference even when local persistence is unavailable.
-    }
+    final json = next.toJson();
+    final previousSave = _lastSave;
+    final save = () async {
+      await previousSave;
+      try {
+        await _store.save(json);
+      } on Object {
+        // Keep the in-memory preference even when local persistence is unavailable.
+      }
+    }();
+    _lastSave = save;
+    await save;
   }
 }
 
@@ -358,6 +451,25 @@ T _enumFromName<T extends Enum>(List<T> values, Object? name, T fallback) {
     }
   }
   return fallback;
+}
+
+List<String> _workspacePathListFromJson(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final paths = {
+    for (final item in value)
+      if (_normalizedWorkspacePath(item?.toString()) case final path?) path,
+  }.toList()..sort();
+  return paths;
+}
+
+String? _normalizedWorkspacePath(String? value) {
+  final trimmed = value?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return null;
+  }
+  return p.normalize(trimmed);
 }
 
 String? _localeTagFromJson(Object? value) {

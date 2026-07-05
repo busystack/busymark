@@ -15,12 +15,15 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../core/debug_log.dart';
 import '../../core/path_utils.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
+import '../workspace_glyphs.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
+import 'workspace_identity_row.dart';
 
 enum _WelcomeMenuAction {
   settings,
@@ -52,13 +55,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
+    final sidebarVisible = settings.sidebarVisible;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, event.action);
       });
     });
     if (headerBar.isAvailable) {
-      _configureHeaderBar(headerBar);
+      _configureHeaderBar(headerBar, sidebarVisible);
     }
     final startupPath = ref.watch(startupPathProvider);
     if (!_startupPathConsumed &&
@@ -72,8 +76,88 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       });
     }
 
+    final welcomeMainColor = colors.view;
+    final welcomeSidebar = SizedBox(
+      width: BusyMarkSizes.sidebarWidth,
+      child: _WelcomeSidebar(
+        recentWorkspaces: settings.recentWorkspaces,
+        onOpenRecent: _openPath,
+      ),
+    );
+    final welcomeContent = Expanded(
+      child: ColoredBox(
+        color: welcomeMainColor,
+        child: BusyMarkClamp(
+          maxWidth: BusyMarkSizes.contentWidth,
+          margin: EdgeInsets.zero,
+          padding: BusyMarkInsets.welcomePage,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BusyMarkGroupedList(
+                title: context.l10n.create,
+                filled: true,
+                children: [
+                  BusyMarkActionRow(
+                    title: context.l10n.createMarkdownFile,
+                    subtitle: context.l10n.createMarkdownFileDescription,
+                    leading: const Icon(BusyMarkGlyphs.newDocument),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: _createMarkdownFile,
+                  ),
+                  BusyMarkActionRow(
+                    title: context.l10n.createWritersideProject,
+                    subtitle: context.l10n.createWritersideProjectDescription,
+                    leading: const Icon(BusyMarkGlyphs.writersideProject),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: _createWritersideProject,
+                  ),
+                ],
+              ),
+              BusyMarkGroupedList(
+                title: context.l10n.open,
+                filled: true,
+                children: [
+                  BusyMarkActionRow(
+                    title: context.l10n.openMarkdownFile,
+                    subtitle: context.l10n.markdownFileExtensions,
+                    leading: const Icon(BusyMarkGlyphs.markdownFile),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: _chooseMarkdownFile,
+                  ),
+                  BusyMarkActionRow(
+                    title: context.l10n.openFolderOrWritersideProject,
+                    subtitle: context.l10n.markdownFolderOrWritersideProject,
+                    leading: const Icon(BusyMarkGlyphs.folder),
+                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    onTap: () => _chooseDirectory(context.l10n.open),
+                  ),
+                ],
+              ),
+              if (state.isLoading) ...[
+                const SizedBox(height: BusyMarkSpacing.lg),
+                const LinearProgressIndicator(),
+              ],
+              if (state.message != null) ...[
+                const SizedBox(height: BusyMarkSpacing.lg),
+                _WelcomeMessage(
+                  message: localizeWorkspaceMessage(context, state.message!),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    final sidebarOnRight = Directionality.of(context) == TextDirection.rtl;
+    final bodyChildren = [
+      if (!sidebarOnRight && sidebarVisible) welcomeSidebar,
+      welcomeContent,
+      if (sidebarOnRight && sidebarVisible) welcomeSidebar,
+    ];
+
     return Scaffold(
-      backgroundColor: colors.view,
+      backgroundColor: welcomeMainColor,
       appBar: useNativeHeaderBar
           ? null
           : AppBar(
@@ -86,6 +170,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               actions: [
+                BusyMarkHeaderIconButton(
+                  tooltip: sidebarVisible
+                      ? context.l10n.hideSidebar
+                      : context.l10n.showSidebar,
+                  icon: BusyMarkGlyphs.sidebar,
+                  selected: sidebarVisible,
+                  shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                  onPressed: _toggleSidebar,
+                ),
                 BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>(
                   tooltip: l10n.mainMenu,
                   icon: BusyMarkGlyphs.menuVertical,
@@ -120,92 +213,25 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
             ),
-      body: BusyMarkClamp(
-        maxWidth: BusyMarkSizes.contentWidth,
-        margin: EdgeInsets.zero,
-        padding: BusyMarkInsets.welcomePage,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            BusyMarkGroupedList(
-              title: context.l10n.create,
-              filled: true,
-              children: [
-                BusyMarkActionRow(
-                  title: context.l10n.createMarkdownFile,
-                  subtitle: context.l10n.createMarkdownFileDescription,
-                  leading: const Icon(BusyMarkGlyphs.newDocument),
-                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                  onTap: _createMarkdownFile,
-                ),
-                BusyMarkActionRow(
-                  title: context.l10n.createWritersideProject,
-                  subtitle: context.l10n.createWritersideProjectDescription,
-                  leading: const Icon(BusyMarkGlyphs.writersideProject),
-                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                  onTap: _createWritersideProject,
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: context.l10n.open,
-              filled: true,
-              children: [
-                BusyMarkActionRow(
-                  title: context.l10n.openMarkdownFile,
-                  subtitle: context.l10n.markdownFileExtensions,
-                  leading: const Icon(BusyMarkGlyphs.markdownFile),
-                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                  onTap: _chooseMarkdownFile,
-                ),
-                BusyMarkActionRow(
-                  title: context.l10n.openFolderOrWritersideProject,
-                  subtitle: context.l10n.markdownFolderOrWritersideProject,
-                  leading: const Icon(BusyMarkGlyphs.folder),
-                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                  onTap: () => _chooseDirectory(context.l10n.open),
-                ),
-              ],
-            ),
-            if (state.isLoading) ...[
-              const SizedBox(height: BusyMarkSpacing.lg),
-              const LinearProgressIndicator(),
-            ],
-            if (state.message != null) ...[
-              const SizedBox(height: BusyMarkSpacing.lg),
-              _WelcomeMessage(
-                message: localizeWorkspaceMessage(context, state.message!),
-              ),
-            ],
-            if (settings.recentWorkspaces.isNotEmpty)
-              BusyMarkGroupedList(
-                title: context.l10n.recent,
-                filled: true,
-                children: [
-                  for (final recent in settings.recentWorkspaces)
-                    BusyMarkActionRow(
-                      title: _displayPath(recent.path),
-                      subtitle: recent.path,
-                      leading: const Icon(BusyMarkGlyphs.history),
-                      trailing: const Icon(BusyMarkGlyphs.rightArrow),
-                      onTap: () async {
-                        await _openPath(recent.path);
-                      },
-                    ),
-                ],
-              ),
-          ],
-        ),
+      body: Row(
+        textDirection: TextDirection.ltr,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: bodyChildren,
       ),
     );
   }
 
-  void _configureHeaderBar(LinuxHeaderBarService headerBar) {
+  void _configureHeaderBar(
+    LinuxHeaderBarService headerBar,
+    bool sidebarVisible,
+  ) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
         await headerBar.setTitleRange(context.l10n.appTitle);
-        await headerBar.setSidebarVisible(false);
-        await headerBar.setSidebarToggleVisible(false);
+        await headerBar.setSidebarWidth(BusyMarkSizes.sidebarWidth);
+        await headerBar.setSidebarVisible(sidebarVisible);
+        await headerBar.setSidebarToggleVisible(true);
+        await headerBar.setSearchVisible(false);
         await headerBar.setBackVisible(false);
         await headerBar.setDocumentControlsVisible(false);
         await headerBar.setCanRefresh(false);
@@ -224,8 +250,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
-      case HeaderBarAction.back:
       case HeaderBarAction.sidebarToggle:
+        _toggleSidebar();
+      case HeaderBarAction.back:
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
@@ -236,6 +263,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.viewModeSplit:
         break;
     }
+  }
+
+  void _toggleSidebar() {
+    final settings = ref.read(appSettingsControllerProvider);
+    unawaited(
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setSidebarVisible(!settings.sidebarVisible),
+    );
   }
 
   void _handleWelcomeMenuAction(
@@ -252,11 +288,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case _WelcomeMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }
-  }
-
-  String _displayPath(String path) {
-    final name = p.basename(path);
-    return name.isEmpty ? path : name;
   }
 
   Future<void> _chooseMarkdownFile() async {
@@ -290,24 +321,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     try {
       final normalizedPath = normalizePath(rawPath);
       final fileType = FileSystemEntity.typeSync(normalizedPath);
-      stderr.writeln('[BusyMark] Picker selected path');
-      stderr.writeln('[BusyMark]   raw: $rawPath');
-      stderr.writeln('[BusyMark]   normalized: $normalizedPath');
-      stderr.writeln(
+      busyMarkDebugLogLines([
+        '[BusyMark] Picker selected path',
+        '[BusyMark]   raw: ${busyMarkLogPath(rawPath)}',
+        '[BusyMark]   normalized: ${busyMarkLogPath(normalizedPath)}',
         '[BusyMark]   raw startsWith file://: ${isFileUriPath(rawPath)}',
-      );
-      stderr.writeln(
         '[BusyMark]   raw startsWith /run/user/: ${rawPath.startsWith('/run/user/')}',
-      );
-      stderr.writeln(
         '[BusyMark]   normalized startsWith /run/user/: ${normalizedPath.startsWith('/run/user/')}',
-      );
-      stderr.writeln('[BusyMark]   entity type: ${_fileTypeLabel(fileType)}');
+        '[BusyMark]   entity type: ${_fileTypeLabel(fileType)}',
+      ]);
     } on Object catch (error, stackTrace) {
-      stderr.writeln('[BusyMark] Picker path logging failed');
-      stderr.writeln('[BusyMark]   raw: $rawPath');
-      stderr.writeln('[BusyMark]   error: $error');
-      stderr.writeln('[BusyMark]   stack trace:\n$stackTrace');
+      busyMarkDebugLogError(
+        '[BusyMark] Picker path logging failed',
+        error,
+        stackTrace,
+        context: {'raw': busyMarkLogPath(rawPath)},
+      );
     }
   }
 
@@ -400,6 +429,106 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       context.go('/workspace');
     }
   }
+}
+
+class _WelcomeSidebar extends StatelessWidget {
+  const _WelcomeSidebar({
+    required this.recentWorkspaces,
+    required this.onOpenRecent,
+  });
+
+  final List<RecentWorkspace> recentWorkspaces;
+  final Future<void> Function(String path) onOpenRecent;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(color: colors.sidebar),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ListView(
+              padding: BusyMarkInsets.sidebarList,
+              children: [
+                if (recentWorkspaces.isNotEmpty)
+                  _WelcomeSidebarSection(
+                    title: context.l10n.recent,
+                    children: <Widget>[
+                      for (final recent in recentWorkspaces)
+                        _WelcomeRecentRow(
+                          recent: recent,
+                          onTap: () => unawaited(onOpenRecent(recent.path)),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WelcomeSidebarSection extends StatelessWidget {
+  const _WelcomeSidebarSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: BusyMarkSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
+            child: Text(title, style: busyMarkSectionHeaderStyle(context)),
+          ),
+          const SizedBox(height: BusyMarkSpacing.sm),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _WelcomeRecentRow extends StatelessWidget {
+  const _WelcomeRecentRow({required this.recent, required this.onTap});
+
+  final RecentWorkspace recent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
+      child: Material(
+        color: BusyMarkLinuxPalette.transparent,
+        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          hoverColor: busyMarkRowHoverColor(context),
+          onTap: onTap,
+          child: WorkspaceIdentityRow(
+            height: BusyMarkSizes.sidebarTreeRowHeight * 2,
+            icon: WorkspaceGlyphs.forRecent(recent),
+            name: _displayPath(recent.path),
+            path: recent.path,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _displayPath(String path) {
+  final name = p.basename(path);
+  return name.isEmpty ? path : name;
 }
 
 class _CreateWritersideProjectDialog extends StatefulWidget {

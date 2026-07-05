@@ -114,9 +114,9 @@ void main() {
     expect(_spanColor(spans, '42'), isNot(foreground));
     expect(_spanColor(spans, 'print'), isNot(foreground));
     expect(_spanColor(spans, '"done"'), isNot(foreground));
-    expect(_spanColor(spans, '// comment'), isNot(foreground));
+    expect(_spanColor(spans, 'comment'), isNot(foreground));
     expect(_spanColor(spans, '"name"'), isNot(foreground));
-    expect(_spanColor(spans, '"BusyMark"'), isNot(foreground));
+    expect(_spanColor(spans, 'BusyMark'), isNot(foreground));
     expect(_spanColor(spans, 'true'), isNot(foreground));
   });
 
@@ -233,11 +233,12 @@ void main() {
     },
   );
 
-  testWidgets('folded regions hide body lines without changing source text', (
+  testWidgets('folded regions project body lines out of editable text', (
     tester,
   ) async {
     const source = '# Title\nIntro.\nMore.\n';
     late List<TextSpan> spans;
+    late BusyMarkSourceEditingController controller;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -253,7 +254,7 @@ void main() {
               source,
               SourceSyntaxLanguage.markdown,
             ).first;
-            final controller = BusyMarkSourceEditingController(
+            controller = BusyMarkSourceEditingController(
               text: source,
               language: SourceSyntaxLanguage.markdown,
             )..setFoldedRegions([region]);
@@ -270,16 +271,10 @@ void main() {
       ),
     );
 
-    expect(spans.map((span) => span.text).join(), source);
-    expect(
-      spans.any(
-        (span) =>
-            span.text == 'Intro.\nMore.\n' &&
-            span.style?.color == Colors.transparent &&
-            span.style?.fontSize == 0.01,
-      ),
-      isTrue,
-    );
+    expect(controller.fullText, source);
+    expect(controller.text, '# Title\n');
+    expect(spans.map((span) => span.text).join(), '# Title\n');
+    expect(spans.map((span) => span.text).join(), isNot(contains('Intro.')));
   });
 
   testWidgets('rendered folded regions hide collapsed header text', (
@@ -319,20 +314,12 @@ void main() {
       ),
     );
 
-    expect(spans.map((span) => span.text).join(), source);
+    expect(spans.map((span) => span.text).join(), '# Title\n# Next\n');
     expect(_spanStyle(spans, '# ')?.color, Colors.transparent);
     expect(_spanStyle(spans, 'Title')?.color, Colors.transparent);
     expect(_spanStyle(spans, '# ')?.fontSize, 14);
     expect(_spanStyle(spans, 'Title')?.fontSize, 14);
-    expect(
-      spans.any(
-        (span) =>
-            span.text == 'Intro.\nMore.\n' &&
-            span.style?.color == Colors.transparent &&
-            span.style?.fontSize == 0.01,
-      ),
-      isTrue,
-    );
+    expect(spans.map((span) => span.text).join(), isNot(contains('Intro.')));
     expect(_spanStyle(spans, 'Next')?.color, isNot(Colors.transparent));
   });
 
@@ -441,14 +428,112 @@ void main() {
       expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
     },
   );
+
+  testWidgets('markdown highlighter merges nested emphasis inside links', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(
+      tester,
+      'Read [**bold**](target.md) now.\n',
+    );
+
+    final bold = _spanStyle(spans, 'bold');
+    expect(bold?.fontWeight, FontWeight.w700);
+    expect(bold?.decoration, TextDecoration.underline);
+    expect(_spanStyle(spans, 'target.md')?.color, isNotNull);
+  });
+
+  testWidgets('markdown highlighter keeps inline code inside list items', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(tester, '- run `busy` now\n');
+
+    expect(_spanStyle(spans, '- ')?.color, isNotNull);
+    expect(_spanStyle(spans, 'busy')?.fontFamily, 'Ubuntu Mono');
+  });
+
+  testWidgets('markdown highlighter merges bold and italic nesting', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(tester, '__bold *italic*__\n');
+
+    expect(_spanStyle(spans, 'bold ')?.fontWeight, FontWeight.w700);
+    final italic = _spanStyle(spans, 'italic');
+    expect(italic?.fontWeight, FontWeight.w700);
+    expect(italic?.fontStyle, FontStyle.italic);
+  });
+
+  testWidgets('markdown highlighter merges links inside blockquotes', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(tester, '> See [docs](docs.md)\n');
+
+    expect(_spanStyle(spans, '> ')?.color, isNot(_spanColor(spans, 'See ')));
+    expect(_spanStyle(spans, 'docs')?.decoration, TextDecoration.underline);
+  });
+
+  testWidgets('markdown highlighter keeps emphasis inside table cells', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(
+      tester,
+      '| Column |\n| --- |\n| *value* |\n',
+    );
+
+    expect(_spanStyle(spans, 'value')?.fontStyle, FontStyle.italic);
+  });
+}
+
+Future<List<TextSpan>> _highlightMarkdown(
+  WidgetTester tester,
+  String source,
+) async {
+  late List<TextSpan> spans;
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: buildBusyMarkTheme(
+        brightness: Brightness.dark,
+        accentColor: BusyMarkLinuxPalette.blueAccent,
+      ),
+      home: Builder(
+        builder: (context) {
+          final controller = BusyMarkSourceEditingController(
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+          );
+          spans = _flattenTextSpans(
+            controller.buildTextSpan(
+              context: context,
+              style: const TextStyle(fontSize: 14),
+              withComposing: false,
+            ),
+          );
+          return const SizedBox.shrink();
+        },
+      ),
+    ),
+  );
+  return spans;
 }
 
 Color? _spanColor(List<TextSpan> spans, String text) {
-  return spans.firstWhere((span) => span.text == text).style?.color;
+  return _spanStyle(spans, text)?.color;
 }
 
 TextStyle? _spanStyle(List<TextSpan> spans, String text) {
-  return spans.firstWhere((span) => span.text == text).style;
+  for (final span in spans) {
+    if (span.text == text) {
+      return span.style;
+    }
+  }
+  for (final span in spans) {
+    if (span.text?.contains(text) ?? false) {
+      return span.style;
+    }
+  }
+  throw StateError('No span contains "$text"');
 }
 
 List<TextSpan> _flattenTextSpans(InlineSpan span) {
