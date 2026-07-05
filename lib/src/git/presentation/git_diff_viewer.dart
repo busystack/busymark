@@ -638,7 +638,7 @@ List<BusyMarkReadOnlySourceLine> _diffHunkLines(
   return [
     if (showHeader)
       BusyMarkReadOnlySourceLine(
-        text: gitDiffHunkHeaderText(hunk),
+        text: gitDiffHunkRangeText(hunk),
         tone: BusyMarkReadOnlySourceLineTone.header,
         language: SourceSyntaxLanguage.plain,
         changeTargetIndex: changeTargetIndex,
@@ -654,9 +654,19 @@ List<BusyMarkReadOnlySourceLine> _diffHunkLines(
   ];
 }
 
-String gitDiffHunkHeaderText(GitDiffHunk hunk) {
-  final heading = hunk.heading.isEmpty ? '' : ' ${hunk.heading}';
-  return '@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@$heading';
+String gitDiffHunkRangeText(GitDiffHunk hunk) {
+  return 'old ${_gitDiffLineRangeText(hunk.oldStart, hunk.oldCount)} -> '
+      'new ${_gitDiffLineRangeText(hunk.newStart, hunk.newCount)}';
+}
+
+String _gitDiffLineRangeText(int start, int count) {
+  if (count <= 0) {
+    return 'no lines';
+  }
+  if (count == 1) {
+    return '$start';
+  }
+  return '$start-${start + count - 1}';
 }
 
 BusyMarkReadOnlySourceLineTone _diffLineTone(GitDiffLineKind kind) {

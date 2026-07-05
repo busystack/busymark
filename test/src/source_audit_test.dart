@@ -957,7 +957,7 @@ void main() {
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
     expect(workspace, contains('class _DiffSharedHunkHeader'));
-    expect(workspace, contains('gitDiffHunkHeaderText(target!.hunk)'));
+    expect(workspace, contains('gitDiffHunkRangeText(target!.hunk)'));
     expect(workspace, contains('showFileActions: !splitVisible'));
     expect(workspace, contains('showHunkHeaders: !splitVisible'));
     expect(settingsScreen, isNot(contains('Show preview pane')));

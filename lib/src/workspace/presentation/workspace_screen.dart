@@ -4797,7 +4797,7 @@ class _DiffSharedHunkHeader extends StatelessWidget {
                 target == null
                     ? ''
                     : showHunkHeader
-                    ? gitDiffHunkHeaderText(target!.hunk)
+                    ? gitDiffHunkRangeText(target!.hunk)
                     : '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

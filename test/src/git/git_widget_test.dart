@@ -20,6 +20,22 @@ import 'package:yaru/yaru.dart';
 void main() {
   final l10n = AppLocalizationsEn();
 
+  test('hunk range text hides raw unified diff markers', () {
+    const hunk = GitDiffHunk(
+      oldStart: 1,
+      oldCount: 5,
+      newStart: 1,
+      newCount: 6,
+      heading: 'git checkout abcdef0',
+      lines: [],
+    );
+
+    final text = gitDiffHunkRangeText(hunk);
+    expect(text, 'old 1-5 -> new 1-6');
+    expect(text, isNot(contains('@@')));
+    expect(text, isNot(contains('git checkout abcdef0')));
+  });
+
   testWidgets('changes are grouped correctly', (tester) async {
     await tester.pumpWidget(
       _localized(
@@ -569,9 +585,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('@@ -1,0 +1,1 @@', findRichText: true),
+      find.textContaining('old no lines -> new 1', findRichText: true),
       findsOneWidget,
     );
+    expect(find.textContaining('@@', findRichText: true), findsNothing);
   });
 
   testWidgets('embedded diff can hide hunk headers and file action', (
@@ -596,9 +613,10 @@ void main() {
     );
 
     expect(
-      find.textContaining('@@ -1,0 +1,1 @@', findRichText: true),
+      find.textContaining('old no lines -> new 1', findRichText: true),
       findsNothing,
     );
+    expect(find.textContaining('@@', findRichText: true), findsNothing);
     expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
     expect(
       find.textContaining('Readme change', findRichText: true),
