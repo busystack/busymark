@@ -18,6 +18,8 @@ class GitDiffViewer extends StatefulWidget {
     this.showHeader = true,
     this.showFileHeaders = true,
     this.showCloseButton = true,
+    this.showFileActions = true,
+    this.showHunkHeaders = true,
     this.editorFontSize = BusyMarkTypography.defaultFontSize,
     this.showChangeNavigator = false,
     this.changeNavigatorController,
@@ -30,6 +32,8 @@ class GitDiffViewer extends StatefulWidget {
   final bool showHeader;
   final bool showFileHeaders;
   final bool showCloseButton;
+  final bool showFileActions;
+  final bool showHunkHeaders;
   final double editorFontSize;
   final bool showChangeNavigator;
   final GitDiffChangeNavigatorController? changeNavigatorController;
@@ -174,7 +178,8 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
                             : null,
                         onOpenFile: widget.onOpenFile,
                         showHeader: widget.showFileHeaders,
-                        showActions: true,
+                        showActions: widget.showFileActions,
+                        showHunkHeaders: widget.showHunkHeaders,
                         editorFontSize: widget.editorFontSize,
                       );
                     },
@@ -330,6 +335,7 @@ class _DiffFileSection extends StatelessWidget {
     required this.onOpenFile,
     required this.showHeader,
     required this.showActions,
+    required this.showHunkHeaders,
     required this.editorFontSize,
   });
 
@@ -340,6 +346,7 @@ class _DiffFileSection extends StatelessWidget {
   final ValueChanged<String> onOpenFile;
   final bool showHeader;
   final bool showActions;
+  final bool showHunkHeaders;
   final double editorFontSize;
 
   @override
@@ -363,7 +370,12 @@ class _DiffFileSection extends StatelessWidget {
             padding: const EdgeInsets.only(
               bottom: BusyMarkSourceEditorMetrics.paddingBottom,
             ),
-            lines: _diffSourceLines(file, snapshot, changeIndexOffset),
+            lines: _diffSourceLines(
+              file,
+              snapshot,
+              changeIndexOffset,
+              showHunkHeaders: showHunkHeaders,
+            ),
             changeKeys: changeKeys,
           );
     return DecoratedBox(
@@ -445,12 +457,17 @@ class _DiffFileSection extends StatelessWidget {
 List<BusyMarkReadOnlySourceLine> _diffSourceLines(
   GitDiffFile file,
   String? snapshot,
-  int changeIndexOffset,
-) {
+  int changeIndexOffset, {
+  required bool showHunkHeaders,
+}) {
   if (snapshot == null) {
     return [
       for (final (index, hunk) in file.hunks.indexed)
-        ..._diffHunkLines(hunk, changeIndexOffset + index),
+        ..._diffHunkLines(
+          hunk,
+          changeIndexOffset + index,
+          showHeader: showHunkHeaders,
+        ),
     ];
   }
   return _fullFileUnifiedLines(file, snapshot, changeIndexOffset);
@@ -606,24 +623,40 @@ List<String> _sourceLines(String source) {
 
 List<BusyMarkReadOnlySourceLine> _diffHunkLines(
   GitDiffHunk hunk,
-  int changeTargetIndex,
-) {
+  int changeTargetIndex, {
+  required bool showHeader,
+}) {
+  var targetAssigned = false;
+  int? lineTarget() {
+    if (showHeader || targetAssigned) {
+      return null;
+    }
+    targetAssigned = true;
+    return changeTargetIndex;
+  }
+
   return [
-    BusyMarkReadOnlySourceLine(
-      text:
-          '@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@ ${hunk.heading}',
-      tone: BusyMarkReadOnlySourceLineTone.header,
-      language: SourceSyntaxLanguage.plain,
-      changeTargetIndex: changeTargetIndex,
-    ),
+    if (showHeader)
+      BusyMarkReadOnlySourceLine(
+        text: gitDiffHunkHeaderText(hunk),
+        tone: BusyMarkReadOnlySourceLineTone.header,
+        language: SourceSyntaxLanguage.plain,
+        changeTargetIndex: changeTargetIndex,
+      ),
     for (final line in hunk.lines)
       BusyMarkReadOnlySourceLine(
         text: line.content,
         oldLineNumber: line.oldLineNumber,
         newLineNumber: line.newLineNumber,
         tone: _diffLineTone(line.kind),
+        changeTargetIndex: lineTarget(),
       ),
   ];
+}
+
+String gitDiffHunkHeaderText(GitDiffHunk hunk) {
+  final heading = hunk.heading.isEmpty ? '' : ' ${hunk.heading}';
+  return '@@ -${hunk.oldStart},${hunk.oldCount} +${hunk.newStart},${hunk.newCount} @@$heading';
 }
 
 BusyMarkReadOnlySourceLineTone _diffLineTone(GitDiffLineKind kind) {

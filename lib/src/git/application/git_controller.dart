@@ -619,7 +619,9 @@ class GitController extends Notifier<GitState> {
         selectedCommitFilePath: null,
         openDiffFilePaths: const [],
         selectedDiff: null,
-        selectedView: GitView.history,
+        selectedView: repoRelativePath == null
+            ? GitView.history
+            : state.selectedView,
       );
     } on Object catch (error) {
       _setFailure(error, commandName: 'log');

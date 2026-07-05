@@ -568,6 +568,42 @@ void main() {
       find.textContaining('**Readme** change', findRichText: true),
       findsOneWidget,
     );
+    expect(
+      find.textContaining('@@ -0,0 +1,1 @@', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('embedded diff can hide hunk headers and file action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: GitDiff(
+            title: 'README.md',
+            files: [_diffFile('README.md', 'Readme change')],
+            rawPatch: '',
+            hasBinaryFiles: false,
+          ),
+          hasUnsavedEditorChanges: false,
+          showFileActions: false,
+          showHunkHeaders: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    expect(
+      find.textContaining('@@ -0,0 +1,1 @@', findRichText: true),
+      findsNothing,
+    );
+    expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
+    expect(
+      find.textContaining('Readme change', findRichText: true),
+      findsOneWidget,
+    );
   });
 
   testWidgets('diff viewer source uses full file snapshot when available', (

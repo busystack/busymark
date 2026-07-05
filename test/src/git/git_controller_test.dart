@@ -172,6 +172,10 @@ void main() {
       expect(gateway.lastHistoryPath, 'README.md');
       expect(gateway.lastCommitDetailsPath, 'README.md');
       expect(
+        container.read(gitControllerProvider).selectedView,
+        GitView.changes,
+      );
+      expect(
         container.read(gitControllerProvider).selectedCommitHash,
         isNotNull,
       );
