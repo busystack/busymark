@@ -132,6 +132,10 @@
   "@open": {
     "description": "Open action label."
   },
+  "openInFiles": "Files में खोलें",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
   "outline": "रूपरेखा",
   "@outline": {
     "description": "Outline sidebar tab label."

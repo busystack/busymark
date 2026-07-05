@@ -1239,12 +1239,21 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     await tester.pumpAndSettle();
 
+    expect(find.byTooltip(l10n.openInFiles), findsOneWidget);
+    await tester.tap(find.byTooltip(l10n.openInFiles));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
     await tester.tap(
       find.text('README.md').first,
       buttons: kSecondaryMouseButton,
     );
     await tester.pumpAndSettle();
 
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+    expect(find.text(l10n.gitHistory), findsWidgets);
     await tester.tap(find.text(l10n.gitHistory).last);
     await tester.pumpAndSettle();
 

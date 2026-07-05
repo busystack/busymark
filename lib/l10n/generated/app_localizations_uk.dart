@@ -109,6 +109,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get open => 'Відкрити';
 
   @override
+  String get openInFiles => 'Відкрити у Файлах';
+
+  @override
   String get outline => 'Структура';
 
   @override

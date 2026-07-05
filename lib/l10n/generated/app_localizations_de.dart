@@ -109,6 +109,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get open => 'Öffnen';
 
   @override
+  String get openInFiles => 'In Dateien öffnen';
+
+  @override
   String get outline => 'Gliederung';
 
   @override

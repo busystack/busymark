@@ -992,6 +992,65 @@ Future<void> _showWorkspaceBranchMenu(
   }
 }
 
+Future<void> _showWorkspacePathMenu(BuildContext context, String path) async {
+  final action = await _showSidebarPathMenu(context);
+  if (action == null || !context.mounted) {
+    return;
+  }
+  switch (action) {
+    case _PathMenuAction.openInFiles:
+      await _openInFiles(context, path);
+  }
+}
+
+enum _PathMenuAction { openInFiles }
+
+Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
+  final anchor = context.findRenderObject();
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (anchor is! RenderBox || overlay is! RenderBox) {
+    return Future.value(null);
+  }
+  final theme = Theme.of(context);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final popupTheme = theme.popupMenuTheme;
+  final anchorRect =
+      anchor.localToGlobal(Offset.zero, ancestor: overlay) & anchor.size;
+  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
+  final minLeft = BusyMarkSpacing.sm;
+  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
+  final left = maxLeft <= minLeft
+      ? minLeft
+      : anchorRect.left.clamp(minLeft, maxLeft).toDouble();
+  final top = anchorRect.bottom + BusyMarkSpacing.xs;
+  return showMenu<_PathMenuAction>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromLTRB(
+      left,
+      top,
+      math.max(minLeft, overlay.size.width - left - menuWidth),
+      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+    ),
+    items: [
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.openInFiles,
+        label: context.l10n.openInFiles,
+        icon: BusyMarkGlyphs.folderOpen,
+      ),
+    ],
+    color: popupTheme.color ?? colors.popover,
+    surfaceTintColor: BusyMarkLinuxPalette.transparent,
+    elevation: BusyMarkElevation.popover,
+    shadowColor: colors.shade,
+    constraints: const BoxConstraints.tightFor(width: menuWidth),
+    clipBehavior: Clip.antiAlias,
+    popUpAnimationStyle: AnimationStyle.noAnimation,
+    requestFocus: true,
+  );
+}
+
 Future<_BranchMenuAction?> _showSidebarBranchMenu(
   BuildContext context,
   GitRepositoryInfo repository,
@@ -1729,6 +1788,8 @@ class _SidebarHeader extends StatelessWidget {
               text: path,
               style: detailsStyle,
               leadingEllipsis: true,
+              tooltip: context.l10n.openInFiles,
+              onTap: (lineContext) => _showWorkspacePathMenu(lineContext, path),
             ),
           ],
           if (repository != null &&
@@ -2252,15 +2313,16 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final expanded = _expandedPaths.contains(node.relativePath);
         final openable = file != null && _isOpenableTextDocument(file);
         final historyFile = openable ? file : null;
-        GestureTapDownCallback? onSecondaryTapDown;
-        if (historyFile != null) {
-          final selectedFile = historyFile;
-          onSecondaryTapDown = (details) => _showFileContextMenu(
-            context,
-            selectedFile,
-            details.globalPosition,
-          );
-        }
+        final menuPath =
+            file?.absolutePath ??
+            p.join(widget.workspace.rootPath, node.relativePath);
+        final selectedHistoryFile = historyFile;
+        void onSecondaryTapDown(TapDownDetails details) => _showFileContextMenu(
+          context,
+          menuPath,
+          selectedHistoryFile,
+          details.globalPosition,
+        );
         return _SidebarTreeRow(
           title: node.name,
           depth: entry.depth,
@@ -2299,26 +2361,37 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   Future<void> _showFileContextMenu(
     BuildContext context,
-    DocumentFile file,
+    String path,
+    DocumentFile? historyFile,
     Offset position,
   ) async {
-    final action = await _showFileTreeMenu(context, position);
+    final action = await _showFileTreeMenu(
+      context,
+      position,
+      showHistory: historyFile != null,
+    );
     if (!context.mounted || action == null) {
       return;
     }
     switch (action) {
+      case _FileTreeAction.openInFiles:
+        await _openInFiles(context, path);
       case _FileTreeAction.history:
-        await widget.onShowFileHistory(file);
+        final file = historyFile;
+        if (file != null) {
+          await widget.onShowFileHistory(file);
+        }
     }
   }
 }
 
-enum _FileTreeAction { history }
+enum _FileTreeAction { openInFiles, history }
 
 Future<_FileTreeAction?> _showFileTreeMenu(
   BuildContext context,
-  Offset position,
-) {
+  Offset position, {
+  required bool showHistory,
+}) {
   final navigator = Navigator.of(context, rootNavigator: true);
   final overlay = navigator.overlay?.context.findRenderObject();
   if (overlay is! RenderBox) {
@@ -2350,10 +2423,17 @@ Future<_FileTreeAction?> _showFileTreeMenu(
     ),
     items: [
       BusyMarkPopupMenuItem(
-        value: _FileTreeAction.history,
-        label: context.l10n.gitHistory,
-        icon: BusyMarkGlyphs.documentHistory,
+        value: _FileTreeAction.openInFiles,
+        label: context.l10n.openInFiles,
+        icon: BusyMarkGlyphs.folderOpen,
       ),
+      if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      if (showHistory)
+        BusyMarkPopupMenuItem(
+          value: _FileTreeAction.history,
+          label: context.l10n.gitHistory,
+          icon: BusyMarkGlyphs.documentHistory,
+        ),
     ],
     color: popupTheme.color ?? colors.popover,
     surfaceTintColor: BusyMarkLinuxPalette.transparent,
@@ -6558,6 +6638,33 @@ Future<void> _openPreviewLink(
     return;
   }
   _navigatePreviewAnchor(context, ref, file.absolutePath, anchor);
+}
+
+Future<void> _openInFiles(BuildContext context, String path) async {
+  final target = _openInFilesTargetPath(path);
+  if (target.isEmpty) {
+    return;
+  }
+  final launched = await launchUrl(
+    Uri.file(target),
+    mode: LaunchMode.externalApplication,
+  );
+  if (!launched && context.mounted) {
+    _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
+  }
+}
+
+String _openInFilesTargetPath(String path) {
+  final trimmed = path.trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+  final normalized = p.normalize(trimmed);
+  final type = FileSystemEntity.typeSync(normalized);
+  if (type == FileSystemEntityType.directory) {
+    return normalized;
+  }
+  return p.dirname(normalized);
 }
 
 String _decodePreviewLinkPart(String value) {

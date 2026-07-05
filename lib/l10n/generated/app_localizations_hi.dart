@@ -108,6 +108,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get open => 'खोलें';
 
   @override
+  String get openInFiles => 'Files में खोलें';
+
+  @override
   String get outline => 'रूपरेखा';
 
   @override

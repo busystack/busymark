@@ -318,6 +318,12 @@ abstract class AppLocalizations {
   /// **'Open'**
   String get open;
 
+  /// Menu action that opens the selected file or folder location in the system file manager.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Files'**
+  String get openInFiles;
+
   /// Outline sidebar tab label.
   ///
   /// In en, this message translates to:

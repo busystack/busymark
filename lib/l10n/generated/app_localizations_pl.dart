@@ -108,6 +108,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get open => 'Otwórz';
 
   @override
+  String get openInFiles => 'Otwórz w Plikach';
+
+  @override
   String get outline => 'Konspekt';
 
   @override

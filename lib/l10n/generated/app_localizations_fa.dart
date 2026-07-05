@@ -108,6 +108,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get open => 'باز کردن';
 
   @override
+  String get openInFiles => 'باز کردن در Files';
+
+  @override
   String get outline => 'ساختار سند';
 
   @override

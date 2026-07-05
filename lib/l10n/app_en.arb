@@ -66,6 +66,8 @@
   "@markdown": {"description": "Markdown format label."},
   "open": "Open",
   "@open": {"description": "Open action label."},
+  "openInFiles": "Open in Files",
+  "@openInFiles": {"description": "Menu action that opens the selected file or folder location in the system file manager."},
   "outline": "Outline",
   "@outline": {"description": "Outline sidebar tab label."},
   "overwrite": "Overwrite",

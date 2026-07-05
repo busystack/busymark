@@ -605,6 +605,12 @@ void main() {
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
     expect(workspace, contains('tooltip: context.l10n.gitBranches'));
+    expect(workspace, contains('Future<void> _showWorkspacePathMenu'));
+    expect(
+      workspace,
+      contains('Future<_PathMenuAction?> _showSidebarPathMenu'),
+    );
+    expect(workspace, contains('tooltip: context.l10n.openInFiles'));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
     expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
     expect(workspace, contains('repository.behindCount > 0'));
@@ -763,6 +769,8 @@ void main() {
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
     expect(workspace, contains('onSecondaryTapDown'));
+    expect(workspace, contains('label: context.l10n.openInFiles'));
+    expect(workspace, contains('_FileTreeAction.openInFiles'));
     expect(workspace, contains('label: context.l10n.gitHistory'));
     expect(workspace, contains('loadFileHistory('));
     expect(workspace, contains('file.absolutePath'));

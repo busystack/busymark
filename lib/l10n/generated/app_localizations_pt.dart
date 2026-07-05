@@ -109,6 +109,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get open => 'Abrir';
 
   @override
+  String get openInFiles => 'Abrir em Arquivos';
+
+  @override
   String get outline => 'Estrutura';
 
   @override

@@ -132,6 +132,10 @@
   "@open": {
     "description": "Open action label."
   },
+  "openInFiles": "In Dateien öffnen",
+  "@openInFiles": {
+    "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
   "outline": "Gliederung",
   "@outline": {
     "description": "Outline sidebar tab label."
