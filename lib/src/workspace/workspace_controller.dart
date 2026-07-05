@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../app/app_settings.dart';
 import '../core/debug_log.dart';
@@ -298,6 +299,45 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     _clearOpenFileTabs(workspace);
     return true;
+  }
+
+  Future<bool> createWorkspaceFile(
+    String directoryPath,
+    String fileName,
+  ) async {
+    return _runWorkspaceFileOperation((workspace) async {
+      return _service.createFile(workspace, directoryPath, fileName);
+    });
+  }
+
+  Future<bool> renameWorkspaceEntity(String path, String newName) async {
+    final activeFilePath = state.workspace?.activeFilePath;
+    return _runWorkspaceFileOperation((workspace) async {
+      final target = await _service.renameEntity(workspace, path, newName);
+      return _remapMovedPath(activeFilePath, path, target);
+    });
+  }
+
+  Future<bool> moveWorkspaceEntity(
+    String sourcePath,
+    String targetDirectoryPath,
+  ) async {
+    final activeFilePath = state.workspace?.activeFilePath;
+    return _runWorkspaceFileOperation((workspace) async {
+      final target = await _service.moveEntity(
+        workspace,
+        sourcePath,
+        targetDirectoryPath,
+      );
+      return _remapMovedPath(activeFilePath, sourcePath, target);
+    });
+  }
+
+  Future<bool> deleteWorkspaceEntity(String path) async {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.deleteEntity(workspace, path);
+      return null;
+    });
   }
 
   Future<bool> closeOpenFileTab(String path) async {
@@ -788,6 +828,41 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  Future<bool> _runWorkspaceFileOperation(
+    Future<String?> Function(Workspace workspace) operation,
+  ) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return false;
+    }
+    try {
+      final preferredActivePath = await operation(workspace);
+      final refreshed = await refreshWorkspaceFromDiskPreservingOpenTabs();
+      if (!refreshed) {
+        return false;
+      }
+      if (preferredActivePath != null) {
+        return _openActiveFile(preferredActivePath);
+      }
+      return true;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Workspace file operation failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return false;
+    }
+  }
+
   Future<void> validateActive() async {
     final workspace = state.workspace;
     if (workspace == null) {
@@ -918,4 +993,25 @@ List<String> _retainedOpenFileTabPaths({
     return retained;
   }
   return [...retained, activeFilePath];
+}
+
+String? _remapMovedPath(String? path, String source, String target) {
+  if (path == null) {
+    return null;
+  }
+  final normalizedPath = p.normalize(path);
+  final normalizedSource = p.normalize(source);
+  final normalizedTarget = p.normalize(target);
+  if (p.equals(normalizedPath, normalizedSource)) {
+    return normalizedTarget;
+  }
+  if (!p.isWithin(normalizedSource, normalizedPath)) {
+    return null;
+  }
+  return p.normalize(
+    p.join(
+      normalizedTarget,
+      p.relative(normalizedPath, from: normalizedSource),
+    ),
+  );
 }

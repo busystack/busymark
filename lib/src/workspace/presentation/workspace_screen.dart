@@ -30,6 +30,7 @@ import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
+import '../../git/presentation/git_history_view.dart';
 import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
@@ -992,18 +993,26 @@ Future<void> _showWorkspaceBranchMenu(
   }
 }
 
-Future<void> _showWorkspacePathMenu(BuildContext context, String path) async {
+Future<void> _showWorkspacePathMenu(
+  BuildContext context, {
+  required String name,
+  required String path,
+}) async {
   final action = await _showSidebarPathMenu(context);
   if (action == null || !context.mounted) {
     return;
   }
   switch (action) {
+    case _PathMenuAction.copyName:
+      await _copyToClipboard(name);
+    case _PathMenuAction.copyPath:
+      await _copyToClipboard(path);
     case _PathMenuAction.openInFiles:
       await _openInFiles(context, path);
   }
 }
 
-enum _PathMenuAction { openInFiles }
+enum _PathMenuAction { copyName, copyPath, openInFiles }
 
 Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
   final anchor = context.findRenderObject();
@@ -1034,6 +1043,17 @@ Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
       math.max(BusyMarkSpacing.sm, overlay.size.height - top),
     ),
     items: [
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.copyName,
+        label: context.l10n.copyName,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _PathMenuAction.copyPath,
+        label: context.l10n.copyPath,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
       BusyMarkPopupMenuItem(
         value: _PathMenuAction.openInFiles,
         label: context.l10n.openInFiles,
@@ -1473,6 +1493,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
+  DocumentFile? _fileHistoryFile;
 
   @override
   void initState() {
@@ -1496,6 +1517,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
+      _fileHistoryFile = null;
       _tab = _initialSidebarTabIndex(widget.workspace);
       return;
     }
@@ -1546,10 +1568,18 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     onOpenResult: widget.onOpenSearchResult,
                   )
                 : switch (selectedTab) {
-                    _SidebarTab.files => _FilesTab(
-                      workspace: widget.workspace,
-                      onShowFileHistory: (file) => _showFileHistory(file, tabs),
-                    ),
+                    _SidebarTab.files =>
+                      _fileHistoryFile == null
+                          ? _FilesTab(
+                              workspace: widget.workspace,
+                              onShowFileHistory: _showFileHistory,
+                            )
+                          : _FileHistorySidebar(
+                              file: _fileHistoryFile!,
+                              onBack: _closeFileHistory,
+                              onOpenFile: (relativePath) =>
+                                  _openGitDiffFile(context, ref, relativePath),
+                            ),
                     _SidebarTab.toc => _TocTab(workspace: widget.workspace),
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
@@ -1595,23 +1625,38 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (index < 0) {
       return;
     }
-    setState(() => _tab = index);
+    setState(() {
+      _tab = index;
+      if (tab != _SidebarTab.files) {
+        _fileHistoryFile = null;
+      }
+    });
     if (tab != _SidebarTab.git && tab != _SidebarTab.gitHistory) {
       _clearGitDetailSelection(ref);
     }
   }
 
-  Future<void> _showFileHistory(
-    DocumentFile file,
-    List<_SidebarTab> tabs,
-  ) async {
+  Future<void> _showFileHistory(DocumentFile file) async {
     await ref
         .read(gitControllerProvider.notifier)
         .loadFileHistory(file.absolutePath);
     if (!mounted) {
       return;
     }
-    _selectTab(_SidebarTab.gitHistory, tabs);
+    final loadedPath = ref.read(gitControllerProvider).historyFilePath;
+    if (loadedPath == null) {
+      return;
+    }
+    setState(() {
+      _fileHistoryFile = file;
+    });
+  }
+
+  void _closeFileHistory() {
+    setState(() {
+      _fileHistoryFile = null;
+    });
+    _clearGitDetailSelection(ref);
   }
 
   int _initialSidebarTabIndex(Workspace workspace) {
@@ -1789,7 +1834,11 @@ class _SidebarHeader extends StatelessWidget {
               style: detailsStyle,
               leadingEllipsis: true,
               tooltip: context.l10n.openInFiles,
-              onTap: (lineContext) => _showWorkspacePathMenu(lineContext, path),
+              onTap: (lineContext) => _showWorkspacePathMenu(
+                lineContext,
+                name: _workspaceName(context, workspace),
+                path: path,
+              ),
             ),
           ],
           if (repository != null &&
@@ -2259,6 +2308,77 @@ class _LeadingEllipsisText extends StatelessWidget {
   }
 }
 
+class _FileHistorySidebar extends ConsumerWidget {
+  const _FileHistorySidebar({
+    required this.file,
+    required this.onBack,
+    required this.onOpenFile,
+  });
+
+  final DocumentFile file;
+  final VoidCallback onBack;
+  final ValueChanged<String> onOpenFile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final controller = ref.read(gitControllerProvider.notifier);
+    final basename = p.basename(file.relativePath);
+    final fileName = basename.isEmpty ? file.relativePath : basename;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.sidebar,
+            border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+          ),
+          child: SizedBox(
+            height: BusyMarkSizes.paneHeaderHeight,
+            child: Row(
+              children: [
+                const SizedBox(width: BusyMarkSpacing.xs),
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.back,
+                  icon: BusyMarkGlyphs.back,
+                  transparent: true,
+                  onPressed: onBack,
+                ),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                Icon(
+                  WorkspaceGlyphs.forPath(file.absolutePath),
+                  size: BusyMarkSizes.iconSm,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: Text(
+                    fileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.foreground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: GitHistoryView(
+            state: ref.watch(gitControllerProvider),
+            onSelectCommit: controller.loadCommitDetails,
+            onShowFileDiff: onOpenFile,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _FilesTab extends ConsumerStatefulWidget {
   const _FilesTab({required this.workspace, required this.onShowFileHistory});
 
@@ -2272,6 +2392,7 @@ class _FilesTab extends ConsumerStatefulWidget {
 class _FilesTabState extends ConsumerState<_FilesTab> {
   late String _workspaceId;
   late Set<String> _expandedPaths;
+  _FileTreeClipboardEntry? _cutEntry;
 
   @override
   void initState() {
@@ -2316,10 +2437,14 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         final menuPath =
             file?.absolutePath ??
             p.join(widget.workspace.rootPath, node.relativePath);
+        final menuName = node.name;
+        final menuIsFolder = node.isFolder;
         final selectedHistoryFile = historyFile;
         void onSecondaryTapDown(TapDownDetails details) => _showFileContextMenu(
           context,
+          menuName,
           menuPath,
+          menuIsFolder,
           selectedHistoryFile,
           details.globalPosition,
         );
@@ -2361,36 +2486,174 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   Future<void> _showFileContextMenu(
     BuildContext context,
+    String name,
     String path,
+    bool isFolder,
     DocumentFile? historyFile,
     Offset position,
   ) async {
+    final cutEntry = _cutEntry;
+    final canPaste =
+        cutEntry != null &&
+        _canPasteFileTreeEntry(cutEntry.path, path, isFolder);
+    final gitRelativePath = _gitRelativePathForFileTreeEntry(ref, path);
     final action = await _showFileTreeMenu(
       context,
       position,
       showHistory: historyFile != null,
+      showPaste: canPaste,
+      showAddToGit: gitRelativePath != null,
     );
     if (!context.mounted || action == null) {
       return;
     }
     switch (action) {
+      case _FileTreeAction.newFile:
+        final directory = isFolder ? path : p.dirname(path);
+        final fileName = await _showFileNameDialog(
+          context,
+          title: context.l10n.newFile,
+          actionLabel: context.l10n.create,
+          initialValue: 'untitled.md',
+        );
+        if (fileName == null ||
+            !context.mounted ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final created = await ref
+            .read(workspaceControllerProvider.notifier)
+            .createWorkspaceFile(directory, fileName);
+        if (created) {
+          _expandedPaths.addAll(_directoryAncestorPaths(directory));
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.rename:
+        final newName = await _showFileNameDialog(
+          context,
+          title: context.l10n.rename,
+          actionLabel: context.l10n.rename,
+          initialValue: name,
+        );
+        if (newName == null ||
+            !context.mounted ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final renamed = await ref
+            .read(workspaceControllerProvider.notifier)
+            .renameWorkspaceEntity(path, newName);
+        if (renamed) {
+          setState(() => _cutEntry = null);
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.cut:
+        setState(() {
+          _cutEntry = _FileTreeClipboardEntry(path: path);
+        });
+      case _FileTreeAction.paste:
+        final entry = _cutEntry;
+        if (entry == null ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final directory = isFolder ? path : p.dirname(path);
+        final moved = await ref
+            .read(workspaceControllerProvider.notifier)
+            .moveWorkspaceEntity(entry.path, directory);
+        if (moved) {
+          setState(() => _cutEntry = null);
+          _expandedPaths.addAll(_directoryAncestorPaths(directory));
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.delete:
+        final confirmed = await _confirmDeleteFileTreeEntry(
+          context,
+          ref,
+          name: name,
+          isFolder: isFolder,
+        );
+        if (!confirmed ||
+            !context.mounted ||
+            !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
+          return;
+        }
+        final deleted = await ref
+            .read(workspaceControllerProvider.notifier)
+            .deleteWorkspaceEntity(path);
+        if (deleted) {
+          final entry = _cutEntry;
+          if (entry != null &&
+              (p.equals(entry.path, path) || p.isWithin(path, entry.path))) {
+            setState(() => _cutEntry = null);
+          }
+          _clearGitDetailSelection(ref);
+        }
+      case _FileTreeAction.addToGit:
+        final relativePath = gitRelativePath;
+        if (relativePath == null) {
+          return;
+        }
+        await ref.read(gitControllerProvider.notifier).stageFiles([
+          relativePath,
+        ]);
+      case _FileTreeAction.copyName:
+        await _copyToClipboard(name);
+      case _FileTreeAction.copyPath:
+        await _copyToClipboard(path);
       case _FileTreeAction.openInFiles:
         await _openInFiles(context, path);
-      case _FileTreeAction.history:
+      case _FileTreeAction.fileHistory:
         final file = historyFile;
         if (file != null) {
           await widget.onShowFileHistory(file);
         }
     }
   }
+
+  Iterable<String> _directoryAncestorPaths(String absoluteDirectory) {
+    final relative = p
+        .normalize(
+          p.relative(absoluteDirectory, from: widget.workspace.rootPath),
+        )
+        .replaceAll(r'\', '/');
+    if (relative == '.' || relative.isEmpty || relative.startsWith('../')) {
+      return const [];
+    }
+    final parts = p.posix.split(relative);
+    final paths = <String>[];
+    for (var index = 1; index <= parts.length; index += 1) {
+      paths.add(p.posix.joinAll(parts.take(index)));
+    }
+    return paths;
+  }
 }
 
-enum _FileTreeAction { openInFiles, history }
+class _FileTreeClipboardEntry {
+  const _FileTreeClipboardEntry({required this.path});
+
+  final String path;
+}
+
+enum _FileTreeAction {
+  newFile,
+  rename,
+  cut,
+  paste,
+  delete,
+  addToGit,
+  copyName,
+  copyPath,
+  openInFiles,
+  fileHistory,
+}
 
 Future<_FileTreeAction?> _showFileTreeMenu(
   BuildContext context,
   Offset position, {
   required bool showHistory,
+  required bool showPaste,
+  required bool showAddToGit,
 }) {
   final navigator = Navigator.of(context, rootNavigator: true);
   final overlay = navigator.overlay?.context.findRenderObject();
@@ -2423,15 +2686,59 @@ Future<_FileTreeAction?> _showFileTreeMenu(
     ),
     items: [
       BusyMarkPopupMenuItem(
+        value: _FileTreeAction.newFile,
+        label: context.l10n.newFile,
+        icon: BusyMarkGlyphs.newDocument,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.rename,
+        label: context.l10n.rename,
+        icon: BusyMarkGlyphs.edit,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.cut,
+        label: context.l10n.cut,
+        icon: BusyMarkGlyphs.cut,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.paste,
+        label: context.l10n.paste,
+        icon: BusyMarkGlyphs.paste,
+        enabled: showPaste,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.delete,
+        label: context.l10n.delete,
+        icon: BusyMarkGlyphs.delete,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.copyName,
+        label: context.l10n.copyName,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.copyPath,
+        label: context.l10n.copyPath,
+        icon: BusyMarkGlyphs.copy,
+      ),
+      const PopupMenuDivider(height: BusyMarkSpacing.sm),
+      BusyMarkPopupMenuItem(
         value: _FileTreeAction.openInFiles,
         label: context.l10n.openInFiles,
         icon: BusyMarkGlyphs.folderOpen,
       ),
+      BusyMarkPopupMenuItem(
+        value: _FileTreeAction.addToGit,
+        label: context.l10n.addToGit,
+        icon: BusyMarkGlyphs.branch,
+        enabled: showAddToGit,
+      ),
       if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
       if (showHistory)
         BusyMarkPopupMenuItem(
-          value: _FileTreeAction.history,
-          label: context.l10n.gitHistory,
+          value: _FileTreeAction.fileHistory,
+          label: context.l10n.fileHistory,
           icon: BusyMarkGlyphs.documentHistory,
         ),
     ],
@@ -2444,6 +2751,173 @@ Future<_FileTreeAction?> _showFileTreeMenu(
     popUpAnimationStyle: AnimationStyle.noAnimation,
     requestFocus: true,
   );
+}
+
+bool _canPasteFileTreeEntry(
+  String sourcePath,
+  String targetPath,
+  bool targetIsFolder,
+) {
+  final source = p.normalize(sourcePath);
+  final targetDirectory = p.normalize(
+    targetIsFolder ? targetPath : p.dirname(targetPath),
+  );
+  if (p.equals(p.dirname(source), targetDirectory)) {
+    return false;
+  }
+  if (p.equals(source, targetDirectory) ||
+      p.isWithin(source, targetDirectory)) {
+    return false;
+  }
+  return true;
+}
+
+String? _gitRelativePathForFileTreeEntry(WidgetRef ref, String absolutePath) {
+  final repository = ref.read(gitControllerProvider).repositoryInfo;
+  if (repository == null) {
+    return null;
+  }
+  final root = p.normalize(repository.rootPath);
+  final path = p.normalize(absolutePath);
+  if (!p.equals(root, path) && !p.isWithin(root, path)) {
+    return null;
+  }
+  final relative = p.relative(path, from: root).replaceAll(r'\', '/');
+  if (relative.isEmpty || relative == '.') {
+    return null;
+  }
+  return relative;
+}
+
+Future<String?> _showFileNameDialog(
+  BuildContext context, {
+  required String title,
+  required String actionLabel,
+  required String initialValue,
+}) {
+  return showBusyMarkModalDialog<String>(
+    context,
+    builder: (context) => _FileNameDialog(
+      title: title,
+      actionLabel: actionLabel,
+      initialValue: initialValue,
+    ),
+  );
+}
+
+class _FileNameDialog extends StatefulWidget {
+  const _FileNameDialog({
+    required this.title,
+    required this.actionLabel,
+    required this.initialValue,
+  });
+
+  final String title;
+  final String actionLabel;
+  final String initialValue;
+
+  @override
+  State<_FileNameDialog> createState() => _FileNameDialogState();
+}
+
+class _FileNameDialogState extends State<_FileNameDialog> {
+  late final TextEditingController _controller;
+
+  bool get _canSubmit => _controller.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue)
+      ..addListener(_handleChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkDialogShell(
+      title: widget.title,
+      maxWidth: BusyMarkSizes.dialogCompact,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: widget.actionLabel,
+          suggested: true,
+          onPressed: _canSubmit ? _submit : null,
+        ),
+      ],
+      children: [
+        BusyMarkFloatingTextEntry(
+          label: context.l10n.fileName,
+          controller: _controller,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+        ),
+      ],
+    );
+  }
+
+  void _submit() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      return;
+    }
+    Navigator.pop(context, value);
+  }
+
+  void _handleChanged() {
+    setState(() {});
+  }
+}
+
+Future<bool> _confirmDeleteFileTreeEntry(
+  BuildContext context,
+  WidgetRef ref, {
+  required String name,
+  required bool isFolder,
+}) async {
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: isFolder
+          ? context.l10n.confirmDeleteFolderTitle
+          : context.l10n.confirmDeleteFileTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.delete,
+          icon: BusyMarkGlyphs.delete,
+          destructive: true,
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
+      children: [
+        Text(
+          isFolder
+              ? context.l10n.confirmDeleteFolderMessage(name)
+              : context.l10n.confirmDeleteFileMessage(name),
+        ),
+      ],
+    ),
+  );
+  return confirmed ?? false;
 }
 
 class _SidebarTreeRow extends StatelessWidget {
@@ -3998,6 +4472,11 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                 direction: 1,
               ),
             ),
+          if (splitVisible && sourceChangeCount > 0)
+            _DiffSharedHunkHeader(
+              target: _diffChangeTarget(diff, _currentChangeIndex),
+              onOpenFile: widget.onOpenFile,
+            ),
           Expanded(
             child: Row(
               children: [
@@ -4009,6 +4488,8 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                       showHeader: false,
                       showFileHeaders: false,
                       showCloseButton: false,
+                      showFileActions: false,
+                      showHunkHeaders: !splitVisible,
                       editorFontSize: widget.editorFontSize,
                       showChangeNavigator: !previewVisible,
                       changeNavigatorController: splitVisible
@@ -4168,6 +4649,70 @@ class _DiffChangeNavigator extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DiffSharedHunkHeader extends StatelessWidget {
+  const _DiffSharedHunkHeader({required this.target, required this.onOpenFile});
+
+  final _DiffChangeTarget? target;
+  final ValueChanged<String> onOpenFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final path = target?.file.displayPath ?? '';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.control,
+        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+      ),
+      child: SizedBox(
+        height: BusyMarkSizes.paneHeaderHeight,
+        child: Row(
+          children: [
+            const SizedBox(width: BusyMarkSpacing.md),
+            Expanded(
+              child: Text(
+                target == null ? '' : gitDiffHunkHeaderText(target!.hunk),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.mutedForeground,
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                ),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            BusyMarkHeaderIconButton(
+              tooltip: context.l10n.gitOpenFile,
+              icon: BusyMarkGlyphs.externalLink,
+              transparent: true,
+              onPressed: path.isEmpty ? null : () => onOpenFile(path),
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiffChangeTarget {
+  const _DiffChangeTarget({required this.file, required this.hunk});
+
+  final GitDiffFile file;
+  final GitDiffHunk hunk;
+}
+
+_DiffChangeTarget? _diffChangeTarget(GitDiff diff, int changeIndex) {
+  var remaining = changeIndex;
+  for (final file in diff.files) {
+    if (remaining < file.hunks.length) {
+      return _DiffChangeTarget(file: file, hunk: file.hunks[remaining]);
+    }
+    remaining -= file.hunks.length;
+  }
+  return null;
 }
 
 _DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {
@@ -6665,6 +7210,10 @@ String _openInFilesTargetPath(String path) {
     return normalized;
   }
   return p.dirname(normalized);
+}
+
+Future<void> _copyToClipboard(String value) {
+  return Clipboard.setData(ClipboardData(text: value));
 }
 
 String _decodePreviewLinkPart(String value) {

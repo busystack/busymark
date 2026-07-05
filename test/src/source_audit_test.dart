@@ -769,12 +769,31 @@ void main() {
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
     expect(workspace, contains('onSecondaryTapDown'));
+    expect(workspace, contains('label: context.l10n.newFile'));
+    expect(workspace, contains('label: context.l10n.rename'));
+    expect(workspace, contains('label: context.l10n.cut'));
+    expect(workspace, contains('label: context.l10n.paste'));
+    expect(workspace, contains('label: context.l10n.delete'));
+    expect(workspace, contains('label: context.l10n.addToGit'));
+    expect(workspace, contains('createWorkspaceFile('));
+    expect(workspace, contains('renameWorkspaceEntity('));
+    expect(workspace, contains('moveWorkspaceEntity('));
+    expect(workspace, contains('deleteWorkspaceEntity('));
+    expect(workspace, contains('stageFiles(['));
+    expect(workspace, contains('label: context.l10n.copyName'));
+    expect(workspace, contains('label: context.l10n.copyPath'));
     expect(workspace, contains('label: context.l10n.openInFiles'));
     expect(workspace, contains('_FileTreeAction.openInFiles'));
-    expect(workspace, contains('label: context.l10n.gitHistory'));
+    expect(workspace, contains('class _FileHistorySidebar'));
+    expect(workspace, contains('_fileHistoryFile'));
+    expect(workspace, contains('onBack: _closeFileHistory'));
+    expect(workspace, contains('label: context.l10n.fileHistory'));
     expect(workspace, contains('loadFileHistory('));
     expect(workspace, contains('file.absolutePath'));
-    expect(workspace, contains('_selectTab(_SidebarTab.gitHistory, tabs)'));
+    expect(
+      workspace,
+      isNot(contains('_selectTab(_SidebarTab.gitHistory, tabs)')),
+    );
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));
     expect(workspace, isNot(contains('title: file.relativePath')));
@@ -926,6 +945,10 @@ void main() {
     expect(workspace, isNot(contains('class _VisualMarkdownEditorPane')));
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
+    expect(workspace, contains('class _DiffSharedHunkHeader'));
+    expect(workspace, contains('gitDiffHunkHeaderText(target!.hunk)'));
+    expect(workspace, contains('showFileActions: false'));
+    expect(workspace, contains('showHunkHeaders: !splitVisible'));
     expect(settingsScreen, isNot(contains('Show preview pane')));
     expect(settingsScreen, isNot(contains('setPreviewVisible')));
   });

@@ -205,6 +205,189 @@ class WorkspaceService {
     }
   }
 
+  Future<String> createFile(
+    Workspace workspace,
+    String directoryPath,
+    String fileName,
+  ) async {
+    final directory = await _safeWorkspaceDirectory(workspace, directoryPath);
+    final target = _safeWorkspaceChildPath(
+      workspace,
+      p.join(directory, _safeEntityName(fileName)),
+      allowRoot: false,
+    );
+    await _ensurePathAvailable(target);
+    await File(target).create(exclusive: true);
+    return target;
+  }
+
+  Future<String> renameEntity(
+    Workspace workspace,
+    String sourcePath,
+    String newName,
+  ) async {
+    final source = _safeWorkspaceChildPath(
+      workspace,
+      sourcePath,
+      allowRoot: false,
+    );
+    final target = _safeWorkspaceChildPath(
+      workspace,
+      p.join(p.dirname(source), _safeEntityName(newName)),
+      allowRoot: false,
+    );
+    if (p.equals(source, target)) {
+      return source;
+    }
+    await _ensurePathAvailable(target);
+    await _renameEntity(source, target);
+    return target;
+  }
+
+  Future<String> moveEntity(
+    Workspace workspace,
+    String sourcePath,
+    String targetDirectoryPath,
+  ) async {
+    final source = _safeWorkspaceChildPath(
+      workspace,
+      sourcePath,
+      allowRoot: false,
+    );
+    final directory = await _safeWorkspaceDirectory(
+      workspace,
+      targetDirectoryPath,
+    );
+    if (p.equals(p.dirname(source), directory)) {
+      return source;
+    }
+    if (p.isWithin(source, directory)) {
+      throw BusyMarkException(
+        'workspace.file-operation-invalid-target',
+        args: {'path': directory},
+      );
+    }
+    final target = _safeWorkspaceChildPath(
+      workspace,
+      p.join(directory, p.basename(source)),
+      allowRoot: false,
+    );
+    await _ensurePathAvailable(target);
+    await _renameEntity(source, target);
+    return target;
+  }
+
+  Future<void> deleteEntity(Workspace workspace, String sourcePath) async {
+    final source = _safeWorkspaceChildPath(
+      workspace,
+      sourcePath,
+      allowRoot: false,
+    );
+    final type = await FileSystemEntity.type(source, followLinks: false);
+    if (type == FileSystemEntityType.directory) {
+      await Directory(source).delete(recursive: true);
+      return;
+    }
+    if (type == FileSystemEntityType.file) {
+      await File(source).delete();
+      return;
+    }
+    if (type == FileSystemEntityType.link) {
+      await Link(source).delete();
+      return;
+    }
+    throw BusyMarkException(
+      'workspace.path-does-not-exist',
+      args: {'path': source},
+    );
+  }
+
+  String _safeWorkspaceChildPath(
+    Workspace workspace,
+    String path, {
+    required bool allowRoot,
+  }) {
+    final root = normalizePath(workspace.rootPath);
+    final normalized = normalizePath(path);
+    final inside = p.equals(root, normalized) || p.isWithin(root, normalized);
+    if (!inside) {
+      throw BusyMarkException(
+        'workspace.file-operation-outside-root',
+        args: {'path': normalized},
+      );
+    }
+    if (!allowRoot && p.equals(root, normalized)) {
+      throw BusyMarkException(
+        'workspace.file-operation-root',
+        args: {'path': normalized},
+      );
+    }
+    return normalized;
+  }
+
+  Future<String> _safeWorkspaceDirectory(
+    Workspace workspace,
+    String path,
+  ) async {
+    final directory = _safeWorkspaceChildPath(workspace, path, allowRoot: true);
+    final type = await FileSystemEntity.type(directory, followLinks: false);
+    if (type != FileSystemEntityType.directory) {
+      throw BusyMarkException(
+        'workspace.directory-missing',
+        args: {'path': directory},
+      );
+    }
+    return directory;
+  }
+
+  String _safeEntityName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw const BusyMarkException('workspace.file-name-required');
+    }
+    if (trimmed == '.' ||
+        trimmed == '..' ||
+        trimmed.contains('/') ||
+        trimmed.contains(r'\') ||
+        p.basename(trimmed) != trimmed) {
+      throw BusyMarkException(
+        'workspace.file-name-unsafe',
+        args: {'name': trimmed},
+      );
+    }
+    return trimmed;
+  }
+
+  Future<void> _ensurePathAvailable(String path) async {
+    final type = await FileSystemEntity.type(path, followLinks: false);
+    if (type != FileSystemEntityType.notFound) {
+      throw BusyMarkException(
+        'workspace.path-already-exists',
+        args: {'path': path},
+      );
+    }
+  }
+
+  Future<void> _renameEntity(String source, String target) async {
+    final type = await FileSystemEntity.type(source, followLinks: false);
+    if (type == FileSystemEntityType.directory) {
+      await Directory(source).rename(target);
+      return;
+    }
+    if (type == FileSystemEntityType.file) {
+      await File(source).rename(target);
+      return;
+    }
+    if (type == FileSystemEntityType.link) {
+      await Link(source).rename(target);
+      return;
+    }
+    throw BusyMarkException(
+      'workspace.path-does-not-exist',
+      args: {'path': source},
+    );
+  }
+
   Future<String> _saveTargetPath(String path) async {
     final type = await FileSystemEntity.type(path, followLinks: false);
     if (type != FileSystemEntityType.link) {

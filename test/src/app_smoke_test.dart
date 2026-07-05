@@ -1252,16 +1252,49 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text(l10n.newFile), findsOneWidget);
+    expect(find.text(l10n.rename), findsOneWidget);
+    expect(find.text(l10n.cut), findsOneWidget);
+    expect(find.text(l10n.paste), findsOneWidget);
+    expect(find.text(l10n.delete), findsOneWidget);
+    expect(find.text(l10n.addToGit), findsOneWidget);
+    expect(find.text(l10n.copyName), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
-    expect(find.text(l10n.gitHistory), findsWidgets);
-    await tester.tap(find.text(l10n.gitHistory).last);
+    expect(find.text(l10n.fileHistory), findsOneWidget);
+
+    await tester.tap(find.text(l10n.addToGit));
+    await tester.pumpAndSettle();
+
+    expect(gitController.stagedPaths, ['README.md']);
+
+    await tester.tap(
+      find.text('README.md').first,
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.fileHistory));
     await tester.pumpAndSettle();
 
     gitState = container.read(gitControllerProvider);
     expect(gitController.loadedFileHistoryPath, readme.path);
-    expect(gitState.selectedView, GitView.history);
+    expect(gitState.selectedView, GitView.changes);
     expect(gitState.historyFilePath, 'README.md');
+    expect(find.byTooltip(l10n.back), findsOneWidget);
     expect(find.text('File history test commit'), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.files), findsWidgets);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('File history test commit'), findsNothing);
+    expect(find.text('README.md'), findsWidgets);
   });
 
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
@@ -3496,6 +3529,7 @@ class _PresetGitController extends GitController {
 
   final GitState initialState;
   String? loadedFileHistoryPath;
+  List<String> stagedPaths = const [];
 
   @override
   GitState build() => initialState;
@@ -3514,7 +3548,6 @@ class _PresetGitController extends GitController {
         ? absolutePath.substring(repositoryRoot.length + 1)
         : absolutePath;
     state = state.copyWith(
-      selectedView: GitView.history,
       selectedCommitHash: null,
       selectedCommitFilePath: null,
       openDiffFilePaths: const [],
@@ -3532,6 +3565,11 @@ class _PresetGitController extends GitController {
         ),
       ],
     );
+  }
+
+  @override
+  Future<void> stageFiles(List<String> repoRelativePaths) async {
+    stagedPaths = repoRelativePaths;
   }
 }
 
