@@ -800,7 +800,8 @@ void main() {
 
     expect(welcome, contains('_WelcomeSidebar'));
     expect(welcome, contains('_WelcomeRecentRow'));
-    expect(welcome, contains('_recentWorkspaceIcon'));
+    expect(welcome, contains('WorkspaceIdentityRow'));
+    expect(welcome, contains('WorkspaceGlyphs.forRecent(recent)'));
     expect(welcome, contains('BusyMarkGlyphs.markdownFile'));
     expect(welcome, contains('BusyMarkGlyphs.folder'));
     expect(welcome, contains('BusyMarkGlyphs.writersideProject'));

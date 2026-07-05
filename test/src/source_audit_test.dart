@@ -559,7 +559,8 @@ void main() {
     expect(design, contains('_busyMarkHeaderPopoverArrowHeight'));
     expect(design, contains('BorderRadius.circular(BusyMarkRadius.window)'));
     expect(design, contains('color: colors.subtleBorder'));
-    expect(design, contains('constraints: const BoxConstraints.tightFor'));
+    expect(design, contains('popupMenuShortcutWidth'));
+    expect(design, contains('BoxConstraints.tightFor(width: menuWidth)'));
     expect(design, contains('popUpAnimationStyle: AnimationStyle.noAnimation'));
     expect(design, contains('hoverColor: colors.controlHover'));
     expect(design, contains('static const double nativeHeaderButton = 6'));
