@@ -881,15 +881,42 @@ static void menu_item_clicked_cb(GtkWidget* widget, gpointer user_data) {
   invoke_header_bar_action(self, action);
 }
 
+static const gchar* main_menu_icon_name(const gchar* action) {
+  if (g_strcmp0(action, "settings") == 0) {
+    return "preferences-system-symbolic";
+  }
+  if (g_strcmp0(action, "keyboardShortcuts") == 0) {
+    return "input-keyboard-symbolic";
+  }
+  if (g_strcmp0(action, "markdownAndHtml") == 0) {
+    return "text-x-generic-symbolic";
+  }
+  if (g_strcmp0(action, "aboutBusyMark") == 0) {
+    return "help-about-symbolic";
+  }
+  return "open-menu-symbolic";
+}
+
 static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
   GtkWidget* item = gtk_button_new();
   GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  GtkWidget* icon =
+      gtk_image_new_from_icon_name(main_menu_icon_name(action),
+                                   GTK_ICON_SIZE_MENU);
   GtkWidget* label = gtk_label_new("");
+  GtkWidget* shortcut = gtk_label_new("");
   gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(icon, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(shortcut, GTK_ALIGN_CENTER);
   gtk_label_set_xalign(GTK_LABEL(label), 0.0);
+  gtk_label_set_xalign(GTK_LABEL(shortcut), 1.0);
   gtk_widget_set_hexpand(label, TRUE);
+  gtk_style_context_add_class(gtk_widget_get_style_context(shortcut),
+                              "dim-label");
+  gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(item), box);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
   gtk_widget_set_halign(item, GTK_ALIGN_FILL);
@@ -899,6 +926,7 @@ static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
   gtk_style_context_add_class(gtk_widget_get_style_context(item),
                               "busymark-menu-row");
   g_object_set_data(G_OBJECT(item), "busymark-label-widget", label);
+  g_object_set_data(G_OBJECT(item), "busymark-shortcut-widget", shortcut);
   g_object_set_data_full(G_OBJECT(item), "busymark-action",
                          g_strdup(action), g_free);
   g_signal_connect(item, "clicked", G_CALLBACK(menu_item_clicked_cb), self);

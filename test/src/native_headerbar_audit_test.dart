@@ -151,6 +151,33 @@ void main() {
     expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
     expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
+    expect(native, contains('main_menu_icon_name(action)'));
+    expect(native, contains('"preferences-system-symbolic"'));
+    expect(native, contains('"input-keyboard-symbolic"'));
+    expect(native, contains('"text-x-generic-symbolic"'));
+    expect(native, contains('"help-about-symbolic"'));
+    final mainMenuItemOffset = native.indexOf(
+      'static GtkWidget* create_menu_item',
+    );
+    final mainMenuIconPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0)',
+      mainMenuItemOffset,
+    );
+    final mainMenuLabelPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0)',
+      mainMenuItemOffset,
+    );
+    final mainMenuShortcutPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0)',
+      mainMenuItemOffset,
+    );
+    expect(mainMenuItemOffset, isNonNegative);
+    expect(mainMenuIconPack, isNonNegative);
+    expect(mainMenuLabelPack, isNonNegative);
+    expect(mainMenuShortcutPack, isNonNegative);
+    expect(mainMenuIconPack, lessThan(mainMenuLabelPack));
+    expect(mainMenuLabelPack, lessThan(mainMenuShortcutPack));
+    expect(native, contains('"busymark-shortcut-widget", shortcut'));
     expect(native, contains('close_menu_button(self->sidebar_menu_button)'));
     expect(native, isNot(contains('GtkWidget* header_menu_button;')));
     expect(native, isNot(contains('GtkWidget* header_menu;')));
