@@ -5,6 +5,7 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
+import 'git_file_status_colors.dart';
 
 class GitChangesView extends StatefulWidget {
   const GitChangesView({
@@ -332,7 +333,7 @@ class _ChangedFileRow extends StatelessWidget {
     final directory = _directoryLabel(file.repoRelativePath);
     final statusColor = busyMarkVcsFileStatusColor(
       context,
-      _vcsFileColor(file),
+      busyMarkVcsFileColorForGitStatus(file),
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
@@ -497,21 +498,6 @@ class _StatusBadge extends StatelessWidget {
       GitFileStatusCategory.unknown => context.l10n.gitStatusUnknown,
     };
   }
-}
-
-BusyMarkVcsFileColor _vcsFileColor(GitFileStatus file) {
-  return switch (file.category) {
-    GitFileStatusCategory.added => BusyMarkVcsFileColor.added,
-    GitFileStatusCategory.deleted => BusyMarkVcsFileColor.deleted,
-    GitFileStatusCategory.renamed => BusyMarkVcsFileColor.renamed,
-    GitFileStatusCategory.copied => BusyMarkVcsFileColor.copied,
-    GitFileStatusCategory.untracked => BusyMarkVcsFileColor.untracked,
-    GitFileStatusCategory.conflicted => BusyMarkVcsFileColor.conflicted,
-    GitFileStatusCategory.ignored ||
-    GitFileStatusCategory.typeChanged ||
-    GitFileStatusCategory.modified ||
-    GitFileStatusCategory.unknown => BusyMarkVcsFileColor.modified,
-  };
 }
 
 List<GitFileStatus> _trackedFiles(GitStatusSnapshot snapshot) {
