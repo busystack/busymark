@@ -1225,6 +1225,10 @@ void main() {
       findsNothing,
     );
     expect(
+      find.textContaining('old 1 -> new 1', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
       find.textContaining(
         'git checkout 30af618a6e962623a0098ad6a33b468f33dc49c7',
         findRichText: true,

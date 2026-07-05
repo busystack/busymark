@@ -4558,6 +4558,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
   final _previewHeadingKeys = <String, GlobalKey>{};
   final _previewSearchKeys = <int, GlobalKey>{};
   int _currentChangeIndex = 0;
+  String? _initialScrollToken;
 
   @override
   void initState() {
@@ -4604,6 +4605,14 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
     if (_currentChangeIndex >= navigatorChangeCount) {
       _currentChangeIndex = 0;
     }
+    if (navigatorChangeCount > 0) {
+      _scheduleInitialScroll(
+        diff: diff,
+        splitVisible: splitVisible,
+        sourceChangeCount: sourceChangeCount,
+        previewTargets: changeTargets,
+      );
+    }
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Column(
@@ -4622,14 +4631,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                 previewTargets: changeTargets,
                 direction: 1,
               ),
-            ),
-          if (splitVisible && sourceChangeCount > 0)
-            _DiffSharedHunkHeader(
               target: _diffChangeTarget(diff, _currentChangeIndex),
-              showHunkHeader: !_diffHasSnapshotForChange(
-                diff,
-                _currentChangeIndex,
-              ),
               onOpenFile: widget.onOpenFile,
             ),
           Expanded(
@@ -4671,6 +4673,8 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                                 _jumpToPreviewChange(changeTargets, -1),
                             onNext: () =>
                                 _jumpToPreviewChange(changeTargets, 1),
+                            target: null,
+                            onOpenFile: null,
                           ),
                         Expanded(
                           child: _PreviewPane(
@@ -4750,6 +4754,31 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
       alignment: 0.1,
     );
   }
+
+  void _scheduleInitialScroll({
+    required GitDiff diff,
+    required bool splitVisible,
+    required int sourceChangeCount,
+    required List<_DiffPreviewChangeTarget> previewTargets,
+  }) {
+    final token = gitDiffChangeNavigationToken(diff, widget.viewMode);
+    if (_initialScrollToken == token) {
+      return;
+    }
+    _initialScrollToken = token;
+    _currentChangeIndex = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialScrollToken != token) {
+        return;
+      }
+      if (splitVisible && sourceChangeCount > 0) {
+        _sourceChangeNavigatorController.jumpToChange(0);
+      }
+      if (previewTargets.isNotEmpty) {
+        _scrollPreviewToChange(previewTargets, 0);
+      }
+    });
+  }
 }
 
 class _DiffChangeNavigator extends StatelessWidget {
@@ -4758,16 +4787,21 @@ class _DiffChangeNavigator extends StatelessWidget {
     required this.total,
     required this.onPrevious,
     required this.onNext,
+    required this.target,
+    required this.onOpenFile,
   });
 
   final int currentIndex;
   final int total;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final _DiffChangeTarget? target;
+  final ValueChanged<String>? onOpenFile;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final path = target?.file.displayPath ?? '';
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.headerbarFlat,
@@ -4785,7 +4819,30 @@ class _DiffChangeNavigator extends StatelessWidget {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-            const Spacer(),
+            if (target != null) ...[
+              const SizedBox(width: BusyMarkSpacing.md),
+              Expanded(
+                child: Text(
+                  gitDiffHunkRangeText(target!.hunk),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.mutedForeground,
+                    fontFamily: BusyMarkTypography.monoFontFamily,
+                  ),
+                ),
+              ),
+              const SizedBox(width: BusyMarkSpacing.sm),
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.gitOpenFile,
+                icon: BusyMarkGlyphs.externalLink,
+                transparent: true,
+                onPressed: path.isEmpty || onOpenFile == null
+                    ? null
+                    : () => onOpenFile!(path),
+              ),
+            ] else
+              const Spacer(),
             BusyMarkHeaderIconButton(
               tooltip: context.l10n.sourceSearchPreviousMatch,
               icon: YaruIcons.pan_up,
@@ -4797,61 +4854,6 @@ class _DiffChangeNavigator extends StatelessWidget {
               icon: BusyMarkGlyphs.downArrow,
               transparent: true,
               onPressed: onNext,
-            ),
-            const SizedBox(width: BusyMarkSpacing.xs),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DiffSharedHunkHeader extends StatelessWidget {
-  const _DiffSharedHunkHeader({
-    required this.target,
-    required this.showHunkHeader,
-    required this.onOpenFile,
-  });
-
-  final _DiffChangeTarget? target;
-  final bool showHunkHeader;
-  final ValueChanged<String> onOpenFile;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final path = target?.file.displayPath ?? '';
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.control,
-        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-      ),
-      child: SizedBox(
-        height: BusyMarkSizes.paneHeaderHeight,
-        child: Row(
-          children: [
-            const SizedBox(width: BusyMarkSpacing.md),
-            Expanded(
-              child: Text(
-                target == null
-                    ? ''
-                    : showHunkHeader
-                    ? gitDiffHunkRangeText(target!.hunk)
-                    : '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.mutedForeground,
-                  fontFamily: BusyMarkTypography.monoFontFamily,
-                ),
-              ),
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.gitOpenFile,
-              icon: BusyMarkGlyphs.externalLink,
-              transparent: true,
-              onPressed: path.isEmpty ? null : () => onOpenFile(path),
             ),
             const SizedBox(width: BusyMarkSpacing.xs),
           ],
@@ -4877,15 +4879,6 @@ _DiffChangeTarget? _diffChangeTarget(GitDiff diff, int changeIndex) {
     remaining -= file.hunks.length;
   }
   return null;
-}
-
-bool _diffHasSnapshotForChange(GitDiff diff, int changeIndex) {
-  final target = _diffChangeTarget(diff, changeIndex);
-  if (target == null) {
-    return false;
-  }
-  final path = target.file.displayPath;
-  return path.isNotEmpty && diff.fileSnapshots.containsKey(path);
 }
 
 _DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {

@@ -65,6 +65,7 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
   final _changeKeys = <int, GlobalKey>{};
   late final ValueChanged<int> _jumpToChangeIndexHandler;
   int _currentChangeIndex = 0;
+  String? _initialScrollToken;
 
   @override
   void initState() {
@@ -99,6 +100,9 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
         widget.showChangeNavigator || widget.changeNavigatorController != null;
     if (_currentChangeIndex >= changeCount) {
       _currentChangeIndex = 0;
+    }
+    if (diff != null && changeNavigationEnabled && changeCount > 0) {
+      _scheduleInitialScroll(diff);
     }
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
@@ -225,6 +229,53 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
       );
     });
   }
+
+  void _scheduleInitialScroll(GitDiff diff) {
+    final token = gitDiffChangeNavigationToken(diff);
+    if (_initialScrollToken == token) {
+      return;
+    }
+    _initialScrollToken = token;
+    _currentChangeIndex = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialScrollToken != token) {
+        return;
+      }
+      _jumpToChangeIndex(0);
+    });
+  }
+}
+
+String gitDiffChangeNavigationToken(GitDiff diff, [Object? qualifier]) {
+  final buffer = StringBuffer()
+    ..write(qualifier)
+    ..write('\u0000')
+    ..write(diff.title)
+    ..write('\u0000')
+    ..write(diff.rawPatch.hashCode)
+    ..write('\u0000')
+    ..write(diff.files.length);
+  for (final file in diff.files) {
+    buffer
+      ..write('\u0000')
+      ..write(file.oldPath)
+      ..write('>')
+      ..write(file.newPath)
+      ..write(':')
+      ..write(file.hunks.length);
+    for (final hunk in file.hunks) {
+      buffer
+        ..write(':')
+        ..write(hunk.oldStart)
+        ..write(',')
+        ..write(hunk.oldCount)
+        ..write('>')
+        ..write(hunk.newStart)
+        ..write(',')
+        ..write(hunk.newCount);
+    }
+  }
+  return buffer.toString();
 }
 
 int gitDiffSourceChangeCount(GitDiff? diff) {

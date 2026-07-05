@@ -957,7 +957,11 @@ void main() {
     expect(workspace, isNot(contains('class _VisualMarkdownEditorPane')));
     expect(workspace, contains('if (sourceVisible && previewVisible)'));
     expect(workspace, contains('if (previewVisible)'));
-    expect(workspace, contains('class _DiffSharedHunkHeader'));
+    expect(workspace, isNot(contains('class _DiffSharedHunkHeader')));
+    expect(
+      workspace,
+      contains('target: _diffChangeTarget(diff, _currentChangeIndex)'),
+    );
     expect(workspace, contains('gitDiffHunkRangeText(target!.hunk)'));
     expect(workspace, contains('showFileActions: !splitVisible'));
     expect(workspace, contains('showHunkHeaders: !splitVisible'));

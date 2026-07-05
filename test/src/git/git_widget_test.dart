@@ -676,6 +676,73 @@ void main() {
     );
   });
 
+  testWidgets('diff viewer scrolls to the first source change on open', (
+    tester,
+  ) async {
+    final lines = List.generate(120, (index) => 'unchanged line ${index + 1}');
+    lines[89] = 'changed target line';
+
+    await tester.pumpWidget(
+      _localized(
+        SizedBox(
+          height: 220,
+          child: GitDiffViewer(
+            diff: GitDiff(
+              title: 'README.md',
+              files: const [
+                GitDiffFile(
+                  oldPath: 'README.md',
+                  newPath: 'README.md',
+                  status: GitDiffFileStatus.modified,
+                  hunks: [
+                    GitDiffHunk(
+                      oldStart: 90,
+                      oldCount: 1,
+                      newStart: 90,
+                      newCount: 1,
+                      heading: '',
+                      lines: [
+                        GitDiffLine(
+                          kind: GitDiffLineKind.removed,
+                          content: 'old target line',
+                          oldLineNumber: 90,
+                        ),
+                        GitDiffLine(
+                          kind: GitDiffLineKind.added,
+                          content: 'changed target line',
+                          newLineNumber: 90,
+                        ),
+                      ],
+                    ),
+                  ],
+                  binary: false,
+                  additions: 1,
+                  deletions: 1,
+                ),
+              ],
+              rawPatch: '',
+              hasBinaryFiles: false,
+              fileSnapshots: {'README.md': lines.join('\n')},
+            ),
+            hasUnsavedEditorChanges: false,
+            showChangeNavigator: true,
+            onOpenFile: (_) {},
+            onClose: () {},
+          ),
+        ),
+      ),
+    );
+
+    final listView = tester.widget<ListView>(find.byType(ListView));
+    expect(listView.controller?.offset, 0);
+
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+
+    expect(listView.controller?.offset, greaterThan(0));
+  });
+
   testWidgets('diff viewer source rows use configured editor font size', (
     tester,
   ) async {
