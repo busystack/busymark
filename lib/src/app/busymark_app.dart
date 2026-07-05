@@ -248,7 +248,11 @@ class BusyMarkApp extends ConsumerWidget {
                 ),
                 _ToggleSidebarIntent: CallbackAction<_ToggleSidebarIntent>(
                   onInvoke: (intent) {
-                    _toggleSidebar(ref);
+                    _toggleSidebar(
+                      ref,
+                      allowWithoutWorkspace:
+                          router.routeInformationProvider.value.uri.path == '/',
+                    );
                     return null;
                   },
                 ),
@@ -505,9 +509,12 @@ class BusyMarkApp extends ConsumerWidget {
     return name.isEmpty ? path : name;
   }
 
-  void _toggleSidebar(WidgetRef ref) {
+  void _toggleSidebar(WidgetRef ref, {required bool allowWithoutWorkspace}) {
     final workspace = ref.read(workspaceControllerProvider).workspace;
-    if (!_hasWorkspaceSidebar(workspace?.kind)) {
+    if (workspace == null && !allowWithoutWorkspace) {
+      return;
+    }
+    if (workspace != null && !_hasWorkspaceSidebar(workspace.kind)) {
       return;
     }
     final settings = ref.read(appSettingsControllerProvider);
@@ -522,13 +529,12 @@ class BusyMarkApp extends ConsumerWidget {
     );
   }
 
-  bool _hasWorkspaceSidebar(WorkspaceKind? kind) {
+  bool _hasWorkspaceSidebar(WorkspaceKind kind) {
     return switch (kind) {
       WorkspaceKind.untitledMarkdown ||
       WorkspaceKind.singleMarkdown ||
       WorkspaceKind.markdownFolder ||
       WorkspaceKind.writersideModule => true,
-      null => false,
     };
   }
 

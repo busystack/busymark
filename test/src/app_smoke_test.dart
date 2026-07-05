@@ -95,6 +95,32 @@ void main() {
     expect(find.text(l10n.markdownFolderOrWritersideProject), findsOneWidget);
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
+    expect(
+      find.byTooltip(
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      find.byTooltip(
+        '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      find.byTooltip(
+        '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Escape closes header popup menus', (tester) async {
