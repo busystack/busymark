@@ -569,7 +569,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('@@ -0,0 +1,1 @@', findRichText: true),
+      find.textContaining('@@ -1,0 +1,1 @@', findRichText: true),
       findsOneWidget,
     );
   });
@@ -596,7 +596,7 @@ void main() {
     );
 
     expect(
-      find.textContaining('@@ -0,0 +1,1 @@', findRichText: true),
+      find.textContaining('@@ -1,0 +1,1 @@', findRichText: true),
       findsNothing,
     );
     expect(find.byTooltip(l10n.gitOpenFile), findsNothing);

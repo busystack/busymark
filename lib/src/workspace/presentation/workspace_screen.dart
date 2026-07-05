@@ -4475,6 +4475,10 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
           if (splitVisible && sourceChangeCount > 0)
             _DiffSharedHunkHeader(
               target: _diffChangeTarget(diff, _currentChangeIndex),
+              showHunkHeader: !_diffHasSnapshotForChange(
+                diff,
+                _currentChangeIndex,
+              ),
               onOpenFile: widget.onOpenFile,
             ),
           Expanded(
@@ -4488,7 +4492,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                       showHeader: false,
                       showFileHeaders: false,
                       showCloseButton: false,
-                      showFileActions: false,
+                      showFileActions: !splitVisible,
                       showHunkHeaders: !splitVisible,
                       editorFontSize: widget.editorFontSize,
                       showChangeNavigator: !previewVisible,
@@ -4652,9 +4656,14 @@ class _DiffChangeNavigator extends StatelessWidget {
 }
 
 class _DiffSharedHunkHeader extends StatelessWidget {
-  const _DiffSharedHunkHeader({required this.target, required this.onOpenFile});
+  const _DiffSharedHunkHeader({
+    required this.target,
+    required this.showHunkHeader,
+    required this.onOpenFile,
+  });
 
   final _DiffChangeTarget? target;
+  final bool showHunkHeader;
   final ValueChanged<String> onOpenFile;
 
   @override
@@ -4673,7 +4682,11 @@ class _DiffSharedHunkHeader extends StatelessWidget {
             const SizedBox(width: BusyMarkSpacing.md),
             Expanded(
               child: Text(
-                target == null ? '' : gitDiffHunkHeaderText(target!.hunk),
+                target == null
+                    ? ''
+                    : showHunkHeader
+                    ? gitDiffHunkHeaderText(target!.hunk)
+                    : '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -4713,6 +4726,15 @@ _DiffChangeTarget? _diffChangeTarget(GitDiff diff, int changeIndex) {
     remaining -= file.hunks.length;
   }
   return null;
+}
+
+bool _diffHasSnapshotForChange(GitDiff diff, int changeIndex) {
+  final target = _diffChangeTarget(diff, changeIndex);
+  if (target == null) {
+    return false;
+  }
+  final path = target.file.displayPath;
+  return path.isNotEmpty && diff.fileSnapshots.containsKey(path);
 }
 
 _DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {
