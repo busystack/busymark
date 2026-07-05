@@ -1411,6 +1411,93 @@ void main() {
     );
   });
 
+  testWidgets('Files view colors entries by Git status', (tester) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_file_vcs_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final docs = Directory('${temp.path}/docs')..createSync();
+    final readme = File('${temp.path}/README.md')..writeAsStringSync('# R\n');
+    final api = File('${docs.path}/api.md')..writeAsStringSync('# API\n');
+    final draft = File('${temp.path}/draft.md')..writeAsStringSync('# D\n');
+    final repository = GitRepositoryInfo(
+      rootPath: temp.path,
+      gitDirPath: '${temp.path}/.git',
+      currentBranch: 'main',
+    );
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [readme.path, api.path, draft.path],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(
+            GitState(
+              availability: const GitAvailability(
+                available: true,
+                executablePath: '/usr/bin/git',
+                version: '2.50.0',
+              ),
+              repositoryInfo: repository,
+              statusSnapshot: GitStatusSnapshot(
+                repositoryInfo: repository,
+                files: [
+                  _gitStatusFile(
+                    repository,
+                    'README.md',
+                    category: GitFileStatusCategory.modified,
+                  ),
+                  _gitStatusFile(
+                    repository,
+                    'docs/api.md',
+                    category: GitFileStatusCategory.added,
+                    indexStatus: GitFileChangeStatus.added,
+                    staged: true,
+                    unstaged: false,
+                  ),
+                  _gitStatusFile(
+                    repository,
+                    'draft.md',
+                    category: GitFileStatusCategory.untracked,
+                    indexStatus: GitFileChangeStatus.untracked,
+                    workTreeStatus: GitFileChangeStatus.untracked,
+                    untracked: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 30; i += 1) {
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+
+    _expectTextWithVcsColor(tester, 'README.md', BusyMarkVcsFileColor.modified);
+    _expectTextWithVcsColor(tester, 'docs', BusyMarkVcsFileColor.added);
+    _expectTextWithVcsColor(tester, 'api.md', BusyMarkVcsFileColor.added);
+    _expectTextWithVcsColor(tester, 'draft.md', BusyMarkVcsFileColor.untracked);
+  });
+
   testWidgets('workspace sidebar is on the right in Arabic', (tester) async {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1;
@@ -3420,7 +3507,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
       for (final filePath in paths)
         DocumentFile(
           absolutePath: filePath,
-          relativePath: filePath.split('/').last,
+          relativePath: _workspaceRelativePath(rootPath, filePath),
           kind: DocumentKind.markdown,
           size: _sourceFor(filePath).length,
           lastModified: DateTime(2026),
@@ -3479,6 +3566,58 @@ class _TabbedWorkspaceService extends WorkspaceService {
   }
 
   String _sourceFor(String path) => '# ${path.split('/').last}\n';
+}
+
+String _workspaceRelativePath(String rootPath, String filePath) {
+  final prefix = '$rootPath/';
+  return filePath.startsWith(prefix)
+      ? filePath.substring(prefix.length)
+      : filePath.split('/').last;
+}
+
+void _expectTextWithVcsColor(
+  WidgetTester tester,
+  String text,
+  BusyMarkVcsFileColor color,
+) {
+  final elements = find.text(text).evaluate().toList();
+  expect(elements, isNotEmpty);
+  final expected = busyMarkVcsFileStatusColor(elements.first, color);
+  expect(
+    elements.where((element) {
+      final widget = element.widget;
+      return widget is Text && widget.style?.color == expected;
+    }),
+    isNotEmpty,
+  );
+}
+
+GitFileStatus _gitStatusFile(
+  GitRepositoryInfo repository,
+  String repoRelativePath, {
+  required GitFileStatusCategory category,
+  GitFileChangeStatus indexStatus = GitFileChangeStatus.unmodified,
+  GitFileChangeStatus workTreeStatus = GitFileChangeStatus.modified,
+  bool staged = false,
+  bool unstaged = true,
+  bool untracked = false,
+  bool conflicted = false,
+}) {
+  return GitFileStatus(
+    repoRelativePath: repoRelativePath,
+    absolutePath: '${repository.rootPath}/$repoRelativePath',
+    indexStatus: indexStatus,
+    workTreeStatus: workTreeStatus,
+    category: category,
+    staged: staged,
+    unstaged: unstaged,
+    untracked: untracked,
+    deleted: category == GitFileStatusCategory.deleted,
+    renamed: category == GitFileStatusCategory.renamed,
+    copied: category == GitFileStatusCategory.copied,
+    conflicted: conflicted,
+    ignored: category == GitFileStatusCategory.ignored,
+  );
 }
 
 class _SearchWorkspaceService extends WorkspaceService {

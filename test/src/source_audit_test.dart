@@ -644,6 +644,9 @@ void main() {
     final gitChanges = File(
       'lib/src/git/presentation/git_changes_view.dart',
     ).readAsStringSync();
+    final gitFileStatusColors = File(
+      'lib/src/git/presentation/git_file_status_colors.dart',
+    ).readAsStringSync();
 
     expect(gitChanges, contains('class _CommitPanel'));
     expect(gitChanges, contains('context.l10n.gitCommitMessage'));
@@ -657,7 +660,8 @@ void main() {
     expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
     expect(gitChanges, contains('context.l10n.gitCommitSelectedFiles'));
     expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
-    expect(gitChanges, contains('BusyMarkVcsFileColor.modified'));
+    expect(gitChanges, contains('busyMarkVcsFileColorForGitStatus(file)'));
+    expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
     expect(gitChanges, contains('BusyMarkDialogButton('));
     expect(gitChanges, isNot(contains('context.l10n.git${'Include'}InCommit')));
     expect(
@@ -764,6 +768,13 @@ void main() {
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
+    expect(workspace, contains('_FileTreeVcsStatusColors.fromSnapshot'));
+    expect(workspace, contains('vcsColor: vcsStatusColors.colorForNode(node)'));
+    expect(
+      workspace,
+      contains('busyMarkVcsFileStatusColor(context, vcsColor!)'),
+    );
+    expect(workspace, contains('busyMarkVcsFileColorForGitStatus(status)'));
     expect(workspace, contains('_isOpenableTextDocument(file)'));
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
