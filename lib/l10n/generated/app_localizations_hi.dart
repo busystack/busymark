@@ -36,6 +36,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get advanced => 'उन्नत';
 
   @override
+  String get addToGit => 'Git में जोड़ें';
+
+  @override
   String get appearance => 'दिखावट';
 
   @override
@@ -63,6 +66,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get copy => 'कॉपी करें';
 
   @override
+  String get copyName => 'नाम कॉपी करें';
+
+  @override
+  String get copyPath => 'पथ कॉपी करें';
+
+  @override
   String get create => 'बनाएँ';
 
   @override
@@ -75,6 +84,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get darkTheme => 'डार्क';
 
   @override
+  String get delete => 'हटाएँ';
+
+  @override
   String get discard => 'त्यागें';
 
   @override
@@ -82,6 +94,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get file => 'फ़ाइल';
+
+  @override
+  String get fileHistory => 'फ़ाइल इतिहास';
 
   @override
   String get find => 'ढूँढें';
@@ -845,6 +860,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get noFiles => 'कोई फ़ाइल नहीं';
 
   @override
+  String get newFile => 'नई फ़ाइल';
+
+  @override
   String get noWritersideToc => 'कोई Writerside TOC नहीं';
 
   @override
@@ -870,6 +888,25 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'फ़ाइल नाम आवश्यक है।';
+
+  @override
+  String get rename => 'नाम बदलें';
+
+  @override
+  String get confirmDeleteFileTitle => 'फ़ाइल हटाएँ?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'फ़ोल्डर हटाएँ?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return '$name हटाएँ? इसे वापस नहीं किया जा सकता.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return '$name और उसके अंदर की सभी फ़ाइलें हटाएँ? इसे वापस नहीं किया जा सकता.';
+  }
 
   @override
   String get useSingleSafeFileName => 'एक ही सुरक्षित फ़ाइल नाम इस्तेमाल करें।';
@@ -1055,6 +1092,11 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'फ़ाइल ऑपरेशन विफल रहा: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'सत्यापन विफल रहा: $error';
   }
@@ -1086,6 +1128,34 @@ class AppLocalizationsHi extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'पैरेंट डायरेक्टरी मौजूद नहीं है: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'डायरेक्टरी मौजूद नहीं है: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'पथ पहले से मौजूद है: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'फ़ाइल नाम आवश्यक है.';
+
+  @override
+  String get errorFileNameUnsafe => 'फ़ाइल नाम एक सुरक्षित पथ खंड होना चाहिए.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'किसी फ़ोल्डर को उसी के अंदर नहीं ले जाया जा सकता.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'फ़ाइल ऑपरेशन workspace के अंदर ही रहना चाहिए.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'workspace root को फ़ाइल tree से नहीं बदला जा सकता.';
 
   @override
   String get errorProjectNameRequired => 'प्रोजेक्ट का नाम आवश्यक है।';

@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "نسخ الاسم",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "نسخ المسار",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "إنشاء",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "ملف",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "سجل الملف",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "بحث",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "عناوين URL آمنة فقط",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "إضافة إلى Git",
+  "delete": "حذف",
+  "newFile": "ملف جديد",
+  "rename": "إعادة تسمية",
+  "confirmDeleteFileTitle": "حذف الملف؟",
+  "confirmDeleteFolderTitle": "حذف المجلد؟",
+  "confirmDeleteFileMessage": "حذف {name}؟ لا يمكن التراجع عن هذا.",
+  "confirmDeleteFolderMessage": "حذف {name} وكل الملفات داخله؟ لا يمكن التراجع عن هذا.",
+  "workspaceErrorFileOperationFailed": "فشلت عملية الملف: {error}",
+  "errorDirectoryMissing": "المجلد غير موجود: {path}",
+  "errorPathAlreadyExists": "المسار موجود بالفعل: {path}",
+  "errorFileNameRequired": "اسم الملف مطلوب.",
+  "errorFileNameUnsafe": "يجب أن يكون اسم الملف مقطع مسار آمنًا واحدًا.",
+  "errorFileOperationInvalidTarget": "لا يمكن نقل مجلد إلى داخل نفسه.",
+  "errorFileOperationOutsideRoot": "يجب أن تبقى عملية الملف داخل مساحة العمل.",
+  "errorFileOperationRoot": "لا يمكن تغيير جذر مساحة العمل من شجرة الملفات."
 
 }

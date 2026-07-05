@@ -37,6 +37,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get advanced => 'Avanzate';
 
   @override
+  String get addToGit => 'Aggiungi a Git';
+
+  @override
   String get appearance => 'Aspetto';
 
   @override
@@ -64,6 +67,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get copy => 'Copia';
 
   @override
+  String get copyName => 'Copia nome';
+
+  @override
+  String get copyPath => 'Copia percorso';
+
+  @override
   String get create => 'Crea';
 
   @override
@@ -76,6 +85,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get darkTheme => 'Scuro';
 
   @override
+  String get delete => 'Elimina';
+
+  @override
   String get discard => 'Scarta';
 
   @override
@@ -83,6 +95,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get file => 'File';
+
+  @override
+  String get fileHistory => 'Cronologia file';
 
   @override
   String get find => 'Trova';
@@ -861,6 +876,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get noFiles => 'Nessun file';
 
   @override
+  String get newFile => 'Nuovo file';
+
+  @override
   String get noWritersideToc => 'Nessun TOC Writerside';
 
   @override
@@ -886,6 +904,25 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'Il nome del file è obbligatorio.';
+
+  @override
+  String get rename => 'Rinomina';
+
+  @override
+  String get confirmDeleteFileTitle => 'Eliminare il file?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Eliminare la cartella?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Eliminare $name? Questa operazione non può essere annullata.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Eliminare $name e tutti i file al suo interno? Questa operazione non può essere annullata.';
+  }
 
   @override
   String get useSingleSafeFileName => 'Usa un unico nome di file sicuro.';
@@ -1072,6 +1109,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'Operazione sul file non riuscita: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Convalida non riuscita: $error';
   }
@@ -1104,6 +1146,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'La directory padre non esiste: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'La directory non esiste: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'Il percorso esiste già: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'Il nome file è obbligatorio.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'Il nome file deve essere un singolo segmento di percorso sicuro.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Non è possibile spostare una cartella dentro se stessa.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'L’operazione sul file deve restare nel workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'La radice del workspace non può essere modificata dall’albero dei file.';
 
   @override
   String get errorProjectNameRequired => 'Il nome del progetto è obbligatorio.';

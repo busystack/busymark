@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Копіювати назву",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Копіювати шлях",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Створити",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "Файл",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Історія файлу",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Знайти",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Лише безпечні URL",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "Посилання дозволяють http, https, mailto, tel, відносні URL і фрагменти; небезпечні схеми блокуються.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Додати до Git",
+  "delete": "Видалити",
+  "newFile": "Новий файл",
+  "rename": "Перейменувати",
+  "confirmDeleteFileTitle": "Видалити файл?",
+  "confirmDeleteFolderTitle": "Видалити папку?",
+  "confirmDeleteFileMessage": "Видалити {name}? Цю дію не можна скасувати.",
+  "confirmDeleteFolderMessage": "Видалити {name} і всі файли всередині? Цю дію не можна скасувати.",
+  "workspaceErrorFileOperationFailed": "Не вдалося виконати файлову операцію: {error}",
+  "errorDirectoryMissing": "Каталог не існує: {path}",
+  "errorPathAlreadyExists": "Шлях уже існує: {path}",
+  "errorFileNameRequired": "Потрібна назва файлу.",
+  "errorFileNameUnsafe": "Назва файлу має бути одним безпечним сегментом шляху.",
+  "errorFileOperationInvalidTarget": "Не можна перемістити папку всередину самої себе.",
+  "errorFileOperationOutsideRoot": "Файлова операція має залишатися в межах workspace.",
+  "errorFileOperationRoot": "Корінь workspace не можна змінити з дерева файлів."
 
 }

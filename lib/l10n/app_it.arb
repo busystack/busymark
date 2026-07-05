@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Copia nome",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Copia percorso",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Crea",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "File",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Cronologia file",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Trova",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Solo URL sicuri",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "I link consentono http, https, mailto, tel, URL relativi e frammenti; gli schemi non sicuri sono bloccati.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Aggiungi a Git",
+  "delete": "Elimina",
+  "newFile": "Nuovo file",
+  "rename": "Rinomina",
+  "confirmDeleteFileTitle": "Eliminare il file?",
+  "confirmDeleteFolderTitle": "Eliminare la cartella?",
+  "confirmDeleteFileMessage": "Eliminare {name}? Questa operazione non può essere annullata.",
+  "confirmDeleteFolderMessage": "Eliminare {name} e tutti i file al suo interno? Questa operazione non può essere annullata.",
+  "workspaceErrorFileOperationFailed": "Operazione sul file non riuscita: {error}",
+  "errorDirectoryMissing": "La directory non esiste: {path}",
+  "errorPathAlreadyExists": "Il percorso esiste già: {path}",
+  "errorFileNameRequired": "Il nome file è obbligatorio.",
+  "errorFileNameUnsafe": "Il nome file deve essere un singolo segmento di percorso sicuro.",
+  "errorFileOperationInvalidTarget": "Non è possibile spostare una cartella dentro se stessa.",
+  "errorFileOperationOutsideRoot": "L’operazione sul file deve restare nel workspace.",
+  "errorFileOperationRoot": "La radice del workspace non può essere modificata dall’albero dei file."
 
 }

@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Copiar nome",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Copiar caminho",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Criar",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "Arquivo",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Histórico do arquivo",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Localizar",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Somente URLs seguras",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "Links permitem http, https, mailto, tel, URLs relativas e fragmentos; esquemas inseguros são bloqueados.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Adicionar ao Git",
+  "delete": "Excluir",
+  "newFile": "Novo arquivo",
+  "rename": "Renomear",
+  "confirmDeleteFileTitle": "Excluir arquivo?",
+  "confirmDeleteFolderTitle": "Excluir pasta?",
+  "confirmDeleteFileMessage": "Excluir {name}? Isso não pode ser desfeito.",
+  "confirmDeleteFolderMessage": "Excluir {name} e todos os arquivos dentro dela? Isso não pode ser desfeito.",
+  "workspaceErrorFileOperationFailed": "Falha na operação de arquivo: {error}",
+  "errorDirectoryMissing": "O diretório não existe: {path}",
+  "errorPathAlreadyExists": "O caminho já existe: {path}",
+  "errorFileNameRequired": "O nome do arquivo é obrigatório.",
+  "errorFileNameUnsafe": "O nome do arquivo deve ser um único segmento de caminho seguro.",
+  "errorFileOperationInvalidTarget": "Não é possível mover uma pasta para dentro dela mesma.",
+  "errorFileOperationOutsideRoot": "A operação de arquivo deve permanecer dentro do workspace.",
+  "errorFileOperationRoot": "A raiz do workspace não pode ser alterada pela árvore de arquivos."
 
 }

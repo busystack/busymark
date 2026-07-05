@@ -36,6 +36,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get advanced => 'پیشرفته';
 
   @override
+  String get addToGit => 'افزودن به Git';
+
+  @override
   String get appearance => 'ظاهر';
 
   @override
@@ -63,6 +66,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get copy => 'کپی';
 
   @override
+  String get copyName => 'کپی نام';
+
+  @override
+  String get copyPath => 'کپی مسیر';
+
+  @override
   String get create => 'ایجاد';
 
   @override
@@ -75,6 +84,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get darkTheme => 'تیره';
 
   @override
+  String get delete => 'حذف';
+
+  @override
   String get discard => 'دور انداختن';
 
   @override
@@ -82,6 +94,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get file => 'فایل';
+
+  @override
+  String get fileHistory => 'تاریخچهٔ فایل';
 
   @override
   String get find => 'یافتن';
@@ -847,6 +862,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noFiles => 'فایلی وجود ندارد';
 
   @override
+  String get newFile => 'فایل جدید';
+
+  @override
   String get noWritersideToc => 'فهرست مطالب Writerside وجود ندارد';
 
   @override
@@ -872,6 +890,25 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'نام فایل الزامی است.';
+
+  @override
+  String get rename => 'تغییر نام';
+
+  @override
+  String get confirmDeleteFileTitle => 'فایل حذف شود؟';
+
+  @override
+  String get confirmDeleteFolderTitle => 'پوشه حذف شود؟';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return '$name حذف شود؟ این کار قابل بازگشت نیست.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return '$name و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.';
+  }
 
   @override
   String get useSingleSafeFileName =>
@@ -1059,6 +1096,11 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'عملیات فایل ناموفق بود: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'اعتبارسنجی ناموفق بود: $error';
   }
@@ -1090,6 +1132,34 @@ class AppLocalizationsFa extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'پوشه والد وجود ندارد: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'پوشه وجود ندارد: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'مسیر از قبل وجود دارد: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'نام فایل لازم است.';
+
+  @override
+  String get errorFileNameUnsafe => 'نام فایل باید یک بخش مسیر امن باشد.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'نمی‌توان یک پوشه را به داخل خودش منتقل کرد.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'عملیات فایل باید داخل فضای کاری بماند.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'ریشهٔ فضای کاری را نمی‌توان از درخت فایل تغییر داد.';
 
   @override
   String get errorProjectNameRequired => 'نام پروژه الزامی است.';

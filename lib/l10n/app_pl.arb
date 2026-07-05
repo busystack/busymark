@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Kopiuj nazwę",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Kopiuj ścieżkę",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Utwórz",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "Plik",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Historia pliku",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Znajdź",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Tylko bezpieczne URL-e",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "Linki dopuszczają http, https, mailto, tel, URL-e względne i fragmenty; niebezpieczne schematy są blokowane.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Dodaj do Git",
+  "delete": "Usuń",
+  "newFile": "Nowy plik",
+  "rename": "Zmień nazwę",
+  "confirmDeleteFileTitle": "Usunąć plik?",
+  "confirmDeleteFolderTitle": "Usunąć folder?",
+  "confirmDeleteFileMessage": "Usunąć {name}? Tej operacji nie można cofnąć.",
+  "confirmDeleteFolderMessage": "Usunąć {name} i wszystkie pliki w środku? Tej operacji nie można cofnąć.",
+  "workspaceErrorFileOperationFailed": "Operacja na pliku nie powiodła się: {error}",
+  "errorDirectoryMissing": "Katalog nie istnieje: {path}",
+  "errorPathAlreadyExists": "Ścieżka już istnieje: {path}",
+  "errorFileNameRequired": "Nazwa pliku jest wymagana.",
+  "errorFileNameUnsafe": "Nazwa pliku musi być pojedynczym bezpiecznym segmentem ścieżki.",
+  "errorFileOperationInvalidTarget": "Nie można przenieść folderu do niego samego.",
+  "errorFileOperationOutsideRoot": "Operacja na pliku musi pozostać w workspace.",
+  "errorFileOperationRoot": "Nie można zmienić katalogu głównego workspace z drzewa plików."
 
 }

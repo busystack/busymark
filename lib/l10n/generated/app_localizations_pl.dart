@@ -36,6 +36,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get advanced => 'Zaawansowane';
 
   @override
+  String get addToGit => 'Dodaj do Git';
+
+  @override
   String get appearance => 'Wygląd';
 
   @override
@@ -63,6 +66,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get copy => 'Kopiuj';
 
   @override
+  String get copyName => 'Kopiuj nazwę';
+
+  @override
+  String get copyPath => 'Kopiuj ścieżkę';
+
+  @override
   String get create => 'Utwórz';
 
   @override
@@ -75,6 +84,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get darkTheme => 'Ciemny';
 
   @override
+  String get delete => 'Usuń';
+
+  @override
   String get discard => 'Odrzuć';
 
   @override
@@ -82,6 +94,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get file => 'Plik';
+
+  @override
+  String get fileHistory => 'Historia pliku';
 
   @override
   String get find => 'Znajdź';
@@ -866,6 +881,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noFiles => 'Brak plików';
 
   @override
+  String get newFile => 'Nowy plik';
+
+  @override
   String get noWritersideToc => 'Brak spisu treści Writerside';
 
   @override
@@ -891,6 +909,25 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'Nazwa pliku jest wymagana.';
+
+  @override
+  String get rename => 'Zmień nazwę';
+
+  @override
+  String get confirmDeleteFileTitle => 'Usunąć plik?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Usunąć folder?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Usunąć $name? Tej operacji nie można cofnąć.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Usunąć $name i wszystkie pliki w środku? Tej operacji nie można cofnąć.';
+  }
 
   @override
   String get useSingleSafeFileName => 'Użyj jednej bezpiecznej nazwy pliku.';
@@ -1077,6 +1114,11 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'Operacja na pliku nie powiodła się: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Sprawdzanie poprawności nie powiodło się: $error';
   }
@@ -1108,6 +1150,35 @@ class AppLocalizationsPl extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'Katalog nadrzędny nie istnieje: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'Katalog nie istnieje: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'Ścieżka już istnieje: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'Nazwa pliku jest wymagana.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'Nazwa pliku musi być pojedynczym bezpiecznym segmentem ścieżki.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Nie można przenieść folderu do niego samego.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'Operacja na pliku musi pozostać w workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'Nie można zmienić katalogu głównego workspace z drzewa plików.';
 
   @override
   String get errorProjectNameRequired => 'Nazwa projektu jest wymagana.';

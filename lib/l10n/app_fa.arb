@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "کپی نام",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "کپی مسیر",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "ایجاد",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "فایل",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "تاریخچهٔ فایل",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "یافتن",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "فقط URLهای امن",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "افزودن به Git",
+  "delete": "حذف",
+  "newFile": "فایل جدید",
+  "rename": "تغییر نام",
+  "confirmDeleteFileTitle": "فایل حذف شود؟",
+  "confirmDeleteFolderTitle": "پوشه حذف شود؟",
+  "confirmDeleteFileMessage": "{name} حذف شود؟ این کار قابل بازگشت نیست.",
+  "confirmDeleteFolderMessage": "{name} و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.",
+  "workspaceErrorFileOperationFailed": "عملیات فایل ناموفق بود: {error}",
+  "errorDirectoryMissing": "پوشه وجود ندارد: {path}",
+  "errorPathAlreadyExists": "مسیر از قبل وجود دارد: {path}",
+  "errorFileNameRequired": "نام فایل لازم است.",
+  "errorFileNameUnsafe": "نام فایل باید یک بخش مسیر امن باشد.",
+  "errorFileOperationInvalidTarget": "نمی‌توان یک پوشه را به داخل خودش منتقل کرد.",
+  "errorFileOperationOutsideRoot": "عملیات فایل باید داخل فضای کاری بماند.",
+  "errorFileOperationRoot": "ریشهٔ فضای کاری را نمی‌توان از درخت فایل تغییر داد."
 
 }

@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Copier le nom",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Copier le chemin",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Créer",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "Fichier",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Historique du fichier",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Rechercher",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "URL sûres uniquement",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "Les liens acceptent http, https, mailto, tel, les URL relatives et les fragments; les schémas dangereux sont bloqués.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Ajouter à Git",
+  "delete": "Supprimer",
+  "newFile": "Nouveau fichier",
+  "rename": "Renommer",
+  "confirmDeleteFileTitle": "Supprimer le fichier ?",
+  "confirmDeleteFolderTitle": "Supprimer le dossier ?",
+  "confirmDeleteFileMessage": "Supprimer {name} ? Cette action est irréversible.",
+  "confirmDeleteFolderMessage": "Supprimer {name} et tous les fichiers qu’il contient ? Cette action est irréversible.",
+  "workspaceErrorFileOperationFailed": "Échec de l’opération sur le fichier : {error}",
+  "errorDirectoryMissing": "Le dossier n’existe pas : {path}",
+  "errorPathAlreadyExists": "Le chemin existe déjà : {path}",
+  "errorFileNameRequired": "Le nom de fichier est requis.",
+  "errorFileNameUnsafe": "Le nom de fichier doit être un seul segment de chemin sûr.",
+  "errorFileOperationInvalidTarget": "Impossible de déplacer un dossier dans lui-même.",
+  "errorFileOperationOutsideRoot": "L’opération sur le fichier doit rester dans le workspace.",
+  "errorFileOperationRoot": "La racine du workspace ne peut pas être modifiée depuis l’arborescence."
 
 }

@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "नाम कॉपी करें",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "पथ कॉपी करें",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "बनाएँ",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "फ़ाइल",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "फ़ाइल इतिहास",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "ढूँढें",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "केवल सुरक्षित URL",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "लिंक http, https, mailto, tel, relative URL और fragment स्वीकार करते हैं; असुरक्षित scheme अवरुद्ध होती हैं।",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Git में जोड़ें",
+  "delete": "हटाएँ",
+  "newFile": "नई फ़ाइल",
+  "rename": "नाम बदलें",
+  "confirmDeleteFileTitle": "फ़ाइल हटाएँ?",
+  "confirmDeleteFolderTitle": "फ़ोल्डर हटाएँ?",
+  "confirmDeleteFileMessage": "{name} हटाएँ? इसे वापस नहीं किया जा सकता.",
+  "confirmDeleteFolderMessage": "{name} और उसके अंदर की सभी फ़ाइलें हटाएँ? इसे वापस नहीं किया जा सकता.",
+  "workspaceErrorFileOperationFailed": "फ़ाइल ऑपरेशन विफल रहा: {error}",
+  "errorDirectoryMissing": "डायरेक्टरी मौजूद नहीं है: {path}",
+  "errorPathAlreadyExists": "पथ पहले से मौजूद है: {path}",
+  "errorFileNameRequired": "फ़ाइल नाम आवश्यक है.",
+  "errorFileNameUnsafe": "फ़ाइल नाम एक सुरक्षित पथ खंड होना चाहिए.",
+  "errorFileOperationInvalidTarget": "किसी फ़ोल्डर को उसी के अंदर नहीं ले जाया जा सकता.",
+  "errorFileOperationOutsideRoot": "फ़ाइल ऑपरेशन workspace के अंदर ही रहना चाहिए.",
+  "errorFileOperationRoot": "workspace root को फ़ाइल tree से नहीं बदला जा सकता."
 
 }

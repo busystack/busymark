@@ -37,6 +37,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get advanced => 'Додатково';
 
   @override
+  String get addToGit => 'Додати до Git';
+
+  @override
   String get appearance => 'Зовнішній вигляд';
 
   @override
@@ -64,6 +67,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copy => 'Копіювати';
 
   @override
+  String get copyName => 'Копіювати назву';
+
+  @override
+  String get copyPath => 'Копіювати шлях';
+
+  @override
   String get create => 'Створити';
 
   @override
@@ -76,6 +85,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get darkTheme => 'Темна';
 
   @override
+  String get delete => 'Видалити';
+
+  @override
   String get discard => 'Відкинути';
 
   @override
@@ -83,6 +95,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get file => 'Файл';
+
+  @override
+  String get fileHistory => 'Історія файлу';
 
   @override
   String get find => 'Знайти';
@@ -867,6 +882,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noFiles => 'Немає файлів';
 
   @override
+  String get newFile => 'Новий файл';
+
+  @override
   String get noWritersideToc => 'Немає змісту Writerside';
 
   @override
@@ -892,6 +910,25 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'Потрібно вказати назву файлу.';
+
+  @override
+  String get rename => 'Перейменувати';
+
+  @override
+  String get confirmDeleteFileTitle => 'Видалити файл?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Видалити папку?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Видалити $name? Цю дію не можна скасувати.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Видалити $name і всі файли всередині? Цю дію не можна скасувати.';
+  }
 
   @override
   String get useSingleSafeFileName =>
@@ -1078,6 +1115,11 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'Не вдалося виконати файлову операцію: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Помилка перевірки: $error';
   }
@@ -1110,6 +1152,35 @@ class AppLocalizationsUk extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'Батьківський каталог не існує: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'Каталог не існує: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'Шлях уже існує: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'Потрібна назва файлу.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'Назва файлу має бути одним безпечним сегментом шляху.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Не можна перемістити папку всередину самої себе.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'Файлова операція має залишатися в межах workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'Корінь workspace не можна змінити з дерева файлів.';
 
   @override
   String get errorProjectNameRequired => 'Потрібно вказати назву проєкту.';

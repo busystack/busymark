@@ -72,6 +72,14 @@
   "@copy": {
     "description": "Copy command label."
   },
+  "copyName": "Namen kopieren",
+  "@copyName": {
+    "description": "Menu action that copies the selected file, folder, or workspace name."
+  },
+  "copyPath": "Pfad kopieren",
+  "@copyPath": {
+    "description": "Menu action that copies the selected file, folder, or workspace path."
+  },
   "create": "Erstellen",
   "@create": {
     "description": "Create action label."
@@ -99,6 +107,10 @@
   "file": "Datei",
   "@file": {
     "description": "Generic file kind label."
+  },
+  "fileHistory": "Dateiverlauf",
+  "@fileHistory": {
+    "description": "Menu action and sidebar title for showing Git history for a single file."
   },
   "find": "Suchen",
   "@find": {
@@ -2103,6 +2115,22 @@
   "markdownHtmlSafeUrls": "Nur sichere URLs",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
   "markdownHtmlSafeUrlsDescription": "Links erlauben http, https, mailto, tel, relative URLs und Fragmente; unsichere Schemes werden blockiert.",
-  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."}
+  "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
+  "addToGit": "Zu Git hinzufügen",
+  "delete": "Löschen",
+  "newFile": "Neue Datei",
+  "rename": "Umbenennen",
+  "confirmDeleteFileTitle": "Datei löschen?",
+  "confirmDeleteFolderTitle": "Ordner löschen?",
+  "confirmDeleteFileMessage": "{name} löschen? Dies kann nicht rückgängig gemacht werden.",
+  "confirmDeleteFolderMessage": "{name} und alle enthaltenen Dateien löschen? Dies kann nicht rückgängig gemacht werden.",
+  "workspaceErrorFileOperationFailed": "Dateivorgang fehlgeschlagen: {error}",
+  "errorDirectoryMissing": "Verzeichnis existiert nicht: {path}",
+  "errorPathAlreadyExists": "Pfad existiert bereits: {path}",
+  "errorFileNameRequired": "Dateiname ist erforderlich.",
+  "errorFileNameUnsafe": "Dateiname muss ein einzelnes sicheres Pfadsegment sein.",
+  "errorFileOperationInvalidTarget": "Ein Ordner kann nicht in sich selbst verschoben werden.",
+  "errorFileOperationOutsideRoot": "Dateivorgang muss im Workspace bleiben.",
+  "errorFileOperationRoot": "Der Workspace-Stamm kann nicht über den Dateibaum geändert werden."
 
 }

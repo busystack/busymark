@@ -36,6 +36,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get advanced => 'خيارات متقدمة';
 
   @override
+  String get addToGit => 'إضافة إلى Git';
+
+  @override
   String get appearance => 'المظهر';
 
   @override
@@ -63,6 +66,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copy => 'نسخ';
 
   @override
+  String get copyName => 'نسخ الاسم';
+
+  @override
+  String get copyPath => 'نسخ المسار';
+
+  @override
   String get create => 'إنشاء';
 
   @override
@@ -75,6 +84,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get darkTheme => 'داكن';
 
   @override
+  String get delete => 'حذف';
+
+  @override
   String get discard => 'تجاهل';
 
   @override
@@ -82,6 +94,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get file => 'ملف';
+
+  @override
+  String get fileHistory => 'سجل الملف';
 
   @override
   String get find => 'بحث';
@@ -854,6 +869,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noFiles => 'لا توجد ملفات';
 
   @override
+  String get newFile => 'ملف جديد';
+
+  @override
   String get noWritersideToc => 'لا يوجد جدول محتويات لـ Writerside';
 
   @override
@@ -879,6 +897,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'اسم الملف مطلوب.';
+
+  @override
+  String get rename => 'إعادة تسمية';
+
+  @override
+  String get confirmDeleteFileTitle => 'حذف الملف؟';
+
+  @override
+  String get confirmDeleteFolderTitle => 'حذف المجلد؟';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'حذف $name؟ لا يمكن التراجع عن هذا.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'حذف $name وكل الملفات داخله؟ لا يمكن التراجع عن هذا.';
+  }
 
   @override
   String get useSingleSafeFileName => 'استخدم اسم ملف واحدًا آمنًا.';
@@ -1063,6 +1100,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'فشلت عملية الملف: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'فشل التحقق: $error';
   }
@@ -1094,6 +1136,35 @@ class AppLocalizationsAr extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'الدليل الأصل غير موجود: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'المجلد غير موجود: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'المسار موجود بالفعل: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'اسم الملف مطلوب.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'يجب أن يكون اسم الملف مقطع مسار آمنًا واحدًا.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'لا يمكن نقل مجلد إلى داخل نفسه.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'يجب أن تبقى عملية الملف داخل مساحة العمل.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'لا يمكن تغيير جذر مساحة العمل من شجرة الملفات.';
 
   @override
   String get errorProjectNameRequired => 'اسم المشروع مطلوب.';

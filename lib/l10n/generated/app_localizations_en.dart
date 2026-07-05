@@ -37,6 +37,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get advanced => 'Advanced';
 
   @override
+  String get addToGit => 'Add to Git';
+
+  @override
   String get appearance => 'Appearance';
 
   @override
@@ -64,6 +67,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copy => 'Copy';
 
   @override
+  String get copyName => 'Copy name';
+
+  @override
+  String get copyPath => 'Copy path';
+
+  @override
   String get create => 'Create';
 
   @override
@@ -76,6 +85,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get darkTheme => 'Dark';
 
   @override
+  String get delete => 'Delete';
+
+  @override
   String get discard => 'Discard';
 
   @override
@@ -83,6 +95,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get file => 'File';
+
+  @override
+  String get fileHistory => 'File History';
 
   @override
   String get find => 'Find';
@@ -851,6 +866,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFiles => 'No files';
 
   @override
+  String get newFile => 'New file';
+
+  @override
   String get noWritersideToc => 'No Writerside TOC';
 
   @override
@@ -876,6 +894,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileNameRequired => 'File name is required.';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get confirmDeleteFileTitle => 'Delete file?';
+
+  @override
+  String get confirmDeleteFolderTitle => 'Delete folder?';
+
+  @override
+  String confirmDeleteFileMessage(String name) {
+    return 'Delete $name? This cannot be undone.';
+  }
+
+  @override
+  String confirmDeleteFolderMessage(String name) {
+    return 'Delete $name and all files inside it? This cannot be undone.';
+  }
 
   @override
   String get useSingleSafeFileName => 'Use a single safe file name.';
@@ -1061,6 +1098,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String workspaceErrorFileOperationFailed(String error) {
+    return 'File operation failed: $error';
+  }
+
+  @override
   String workspaceErrorValidationFailed(String error) {
     return 'Validation failed: $error';
   }
@@ -1092,6 +1134,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorParentDirectoryMissing(String path) {
     return 'Parent directory does not exist: $path';
   }
+
+  @override
+  String errorDirectoryMissing(String path) {
+    return 'Directory does not exist: $path';
+  }
+
+  @override
+  String errorPathAlreadyExists(String path) {
+    return 'Path already exists: $path';
+  }
+
+  @override
+  String get errorFileNameRequired => 'File name is required.';
+
+  @override
+  String get errorFileNameUnsafe =>
+      'File name must be a single safe path segment.';
+
+  @override
+  String get errorFileOperationInvalidTarget =>
+      'Cannot move a folder into itself.';
+
+  @override
+  String get errorFileOperationOutsideRoot =>
+      'File operation must stay inside the workspace.';
+
+  @override
+  String get errorFileOperationRoot =>
+      'The workspace root cannot be changed from the file tree.';
 
   @override
   String get errorProjectNameRequired => 'Project name is required.';
