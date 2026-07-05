@@ -1377,6 +1377,72 @@ void main() {
     expect(find.text('README.md'), findsWidgets);
   });
 
+  testWidgets('file tree disables Git file actions without a repository', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync(
+      'busymark_no_git_file_menu_',
+    );
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final readme = File('${temp.path}/README.md')..writeAsStringSync('# A\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [readme.path],
+    );
+    final gitController = _PresetGitController(
+      const GitState(
+        availability: GitAvailability(
+          available: true,
+          executablePath: '/usr/bin/git',
+          version: '2.50.0',
+        ),
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+        gitControllerProvider.overrideWith(() => gitController),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var i = 0; i < 30; i += 1) {
+      if (container.read(workspaceControllerProvider).workspace != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.text('README.md').first,
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.addToGit), findsOneWidget);
+    expect(find.text(l10n.fileHistory), findsOneWidget);
+
+    await tester.tap(find.text(l10n.fileHistory));
+    await tester.pumpAndSettle();
+
+    expect(gitController.loadedFileHistoryPath, isNull);
+    expect(gitController.stagedPaths, isEmpty);
+    expect(find.text(l10n.fileHistory), findsOneWidget);
+  });
+
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
     tester,
   ) async {

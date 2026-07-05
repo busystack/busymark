@@ -2542,12 +2542,13 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         cutEntry != null &&
         _canPasteFileTreeEntry(cutEntry.path, path, isFolder);
     final gitRelativePath = _gitRelativePathForFileTreeEntry(ref, path);
+    final canUseGitFileActions = gitRelativePath != null;
     final action = await _showFileTreeMenu(
       context,
       position,
       showHistory: historyFile != null,
       showPaste: canPaste,
-      showAddToGit: gitRelativePath != null,
+      enableGitActions: canUseGitFileActions,
     );
     if (!context.mounted || action == null) {
       return;
@@ -2650,7 +2651,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
         await _openInFiles(context, path);
       case _FileTreeAction.fileHistory:
         final file = historyFile;
-        if (file != null) {
+        if (file != null && canUseGitFileActions) {
           await widget.onShowFileHistory(file);
         }
     }
@@ -2698,7 +2699,7 @@ Future<_FileTreeAction?> _showFileTreeMenu(
   Offset position, {
   required bool showHistory,
   required bool showPaste,
-  required bool showAddToGit,
+  required bool enableGitActions,
 }) {
   final navigator = Navigator.of(context, rootNavigator: true);
   final overlay = navigator.overlay?.context.findRenderObject();
@@ -2777,7 +2778,7 @@ Future<_FileTreeAction?> _showFileTreeMenu(
         value: _FileTreeAction.addToGit,
         label: context.l10n.addToGit,
         icon: BusyMarkGlyphs.branch,
-        enabled: showAddToGit,
+        enabled: enableGitActions,
       ),
       if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
       if (showHistory)
@@ -2785,6 +2786,7 @@ Future<_FileTreeAction?> _showFileTreeMenu(
           value: _FileTreeAction.fileHistory,
           label: context.l10n.fileHistory,
           icon: BusyMarkGlyphs.documentHistory,
+          enabled: enableGitActions,
         ),
     ],
     color: popupTheme.color ?? colors.popover,

@@ -175,25 +175,29 @@ class GitController extends Notifier<GitState> {
   void attachWorkspace(Workspace workspace) {
     if (_gateway is UnavailableGitRepositoryGateway) {
       _debounce?.cancel();
-      state = state.copyWith(
+      _knownHashes = {};
+      state = _workspaceResetState(
+        workspace,
         availability: const GitAvailability.unavailable(
           'Git gateway is not configured.',
         ),
-        attachedWorkspace: workspace,
       );
       return;
     }
     if (workspace.kind == WorkspaceKind.untitledMarkdown) {
       _debounce?.cancel();
+      _knownHashes = {};
       state = const GitState();
       return;
     }
     final current = state.attachedWorkspace;
-    state = state.copyWith(attachedWorkspace: workspace);
     if (current?.id != workspace.id) {
+      _debounce?.cancel();
       _knownHashes = {};
+      state = _workspaceResetState(workspace);
       _scheduleRefresh(immediate: true);
     } else {
+      state = state.copyWith(attachedWorkspace: workspace);
       _scheduleRefresh();
     }
   }
@@ -203,20 +207,29 @@ class GitController extends Notifier<GitState> {
     if (workspace == null || workspace.kind == WorkspaceKind.untitledMarkdown) {
       return;
     }
+    final workspaceId = workspace.id;
     _debounce?.cancel();
-    state = state.copyWith(
-      isRefreshing: true,
-      lastError: null,
-      availability: await _gateway.availability(),
-    );
-    if (!state.availability.available) {
+    state = state.copyWith(isRefreshing: true, lastError: null);
+    final availability = await _gateway.availability();
+    if (!_isCurrentWorkspace(workspaceId)) {
+      return;
+    }
+    state = state.copyWith(availability: availability);
+    if (!availability.available) {
       state = state.copyWith(
         isRefreshing: false,
         repositoryInfo: null,
         statusSnapshot: null,
+        selectedFilePath: null,
+        selectedCommitHash: null,
         selectedDiff: null,
         selectedCommitFilePath: null,
         openDiffFilePaths: const [],
+        history: const [],
+        historyFilePath: null,
+        branches: const [],
+        lastOperationMessage: null,
+        scopedFilePath: null,
       );
       return;
     }
@@ -224,20 +237,31 @@ class GitController extends Notifier<GitState> {
       final repository = await _gateway.detectRepository(
         _workspaceGitPath(workspace),
       );
+      if (!_isCurrentWorkspace(workspaceId)) {
+        return;
+      }
       if (repository == null) {
         state = state.copyWith(
           isRefreshing: false,
           repositoryInfo: null,
           statusSnapshot: null,
+          selectedFilePath: null,
+          selectedCommitHash: null,
           selectedDiff: null,
           selectedCommitFilePath: null,
           openDiffFilePaths: const [],
           history: const [],
+          historyFilePath: null,
           branches: const [],
+          lastOperationMessage: null,
+          scopedFilePath: null,
         );
         return;
       }
       final status = await _gateway.status(repository);
+      if (!_isCurrentWorkspace(workspaceId)) {
+        return;
+      }
       final scoped = _workspaceScopedRepoPath(workspace, status.repositoryInfo);
       state = state.copyWith(
         isRefreshing: false,
@@ -248,6 +272,9 @@ class GitController extends Notifier<GitState> {
         lastError: null,
       );
     } on Object catch (error) {
+      if (!_isCurrentWorkspace(workspaceId)) {
+        return;
+      }
       _setFailure(error, commandName: 'status');
       state = state.copyWith(isRefreshing: false);
     }
@@ -746,6 +773,21 @@ class GitController extends Notifier<GitState> {
             commandName: commandName,
           );
     state = state.copyWith(lastError: failure);
+  }
+
+  GitState _workspaceResetState(
+    Workspace workspace, {
+    GitAvailability? availability,
+  }) {
+    return GitState(
+      availability: availability ?? state.availability,
+      selectedView: GitView.changes,
+      attachedWorkspace: workspace,
+    );
+  }
+
+  bool _isCurrentWorkspace(String workspaceId) {
+    return ref.mounted && state.attachedWorkspace?.id == workspaceId;
   }
 
   String _workspaceGitPath(Workspace workspace) {
