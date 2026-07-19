@@ -29,7 +29,7 @@ void main() {
     File(p.join(root.path, 'topics', 'intro.md')).writeAsStringSync('''
 # Intro
 ''');
-    return root;
+    return Directory(await root.resolveSymbolicLinks());
   }
 
   test(
@@ -97,4 +97,60 @@ void main() {
       false,
     );
   });
+
+  test('creates a missing nested topics directory', () async {
+    final root = await tempModule();
+
+    final result = await creator.create(
+      WritersideTopicCreateTarget(
+        rootPath: root.path,
+        treePath: p.join(root.path, 'ug.tree'),
+        topicsRootDir: p.join('docs', 'topics'),
+        existingTopicIds: const {'intro'},
+      ),
+      const WritersideTopicCreateRequest(title: 'Details', fileName: 'details'),
+    );
+
+    expect(Directory(p.join(root.path, 'docs', 'topics')).existsSync(), isTrue);
+    expect(result.topicPath, p.join(root.path, 'docs', 'topics', 'details.md'));
+    expect(File(result.topicPath).existsSync(), isTrue);
+  });
+
+  test(
+    'rejects a symlinked topics directory without writing outside',
+    () async {
+      final root = await tempModule();
+      final outside = await Directory.systemTemp.createTemp(
+        'busymark-writerside-topic-outside-',
+      );
+      addTearDown(() async {
+        if (await outside.exists()) {
+          await outside.delete(recursive: true);
+        }
+      });
+      final topics = Directory(p.join(root.path, 'topics'));
+      await topics.delete(recursive: true);
+      await Link(topics.path).create(outside.path);
+      final escapedTopic = File(p.join(outside.path, 'details.md'));
+
+      await expectLater(
+        creator.create(
+          WritersideTopicCreateTarget(
+            rootPath: root.path,
+            treePath: p.join(root.path, 'ug.tree'),
+            topicsRootDir: 'topics',
+            existingTopicIds: const {'intro'},
+          ),
+          const WritersideTopicCreateRequest(
+            title: 'Details',
+            fileName: 'details',
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(escapedTopic.existsSync(), isFalse);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 }

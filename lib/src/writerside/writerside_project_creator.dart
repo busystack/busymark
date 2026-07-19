@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 
@@ -100,11 +101,15 @@ class WritersideProjectCreator {
     WritersideProjectCreateRequest request,
   ) async {
     final validated = _validate(request);
-    final rootPath = normalizePath(
-      p.join(validated.parentDirectoryPath, validated.directoryName),
+    final parentAnchor = await _parentAnchor(validated.parentDirectoryPath);
+    final requestedRootPath = p.join(
+      parentAnchor.rootPath,
+      validated.directoryName,
     );
+    final rootResolution = await _projectPath(parentAnchor, requestedRootPath);
+    final rootPath = rootResolution.path;
     final rootDirectory = Directory(rootPath);
-    final rootType = await FileSystemEntity.type(rootPath);
+    final rootType = rootResolution.type;
     if (rootType == FileSystemEntityType.directory) {
       if (!await _isDirectoryEmpty(rootDirectory)) {
         throw BusyMarkException(
@@ -120,47 +125,129 @@ class WritersideProjectCreator {
         args: {'path': rootPath},
       );
     }
+    final rootAnchor = await _projectRootAnchor(parentAnchor, rootPath);
 
     final treeFileName = '${validated.instanceId}.tree';
-    final configFile = File(p.join(rootPath, 'writerside.cfg'));
-    final treeFile = File(p.join(rootPath, treeFileName));
-    final topicFile = File(p.join(rootPath, 'topics', validated.topicFileName));
-    for (final file in [configFile, treeFile, topicFile]) {
-      if (await file.exists()) {
-        throw BusyMarkException(
-          'writerside.project.generated-file-exists',
-          args: {'path': file.path},
-        );
-      }
-    }
+    final configPath = p.join(rootAnchor.rootPath, 'writerside.cfg');
+    final treePath = p.join(rootAnchor.rootPath, treeFileName);
+    final topicPath = p.join(
+      rootAnchor.rootPath,
+      'topics',
+      validated.topicFileName,
+    );
 
-    await Directory(p.join(rootPath, 'topics')).create();
-    await Directory(p.join(rootPath, 'images')).create();
-    await Directory(p.join(rootPath, 'cfg')).create();
+    await _createProjectDirectory(rootAnchor, 'topics');
+    await _createProjectDirectory(rootAnchor, 'images');
+    await _createProjectDirectory(rootAnchor, 'cfg');
 
     await _writeNewFile(
-      configFile,
+      rootAnchor,
+      configPath,
       _writersideConfig(
         moduleName: validated.moduleName,
         treeFileName: treeFileName,
       ),
     );
     await _writeNewFile(
-      treeFile,
+      rootAnchor,
+      treePath,
       _writersideTree(
         instanceId: validated.instanceId,
         instanceName: validated.instanceName,
         topicFileName: validated.topicFileName,
       ),
     );
-    await _writeNewFile(topicFile, _startTopic(title: validated.topicTitle));
+    await _writeNewFile(
+      rootAnchor,
+      topicPath,
+      _startTopic(title: validated.topicTitle),
+    );
 
     return WritersideProjectCreateResult(
-      rootPath: rootPath,
-      configPath: configFile.path,
-      treePath: treeFile.path,
-      startTopicPath: topicFile.path,
+      rootPath: rootAnchor.rootPath,
+      configPath: configPath,
+      treePath: treePath,
+      startTopicPath: topicPath,
     );
+  }
+
+  Future<CanonicalPathAnchor> _parentAnchor(String path) async {
+    try {
+      return await captureCanonicalDirectoryAnchor(path);
+    } on AnchoredPathViolation catch (error) {
+      throw BusyMarkException(
+        'writerside.project.parent-directory-missing',
+        args: {'path': error.path},
+      );
+    }
+  }
+
+  Future<CanonicalPathAnchor> _projectRootAnchor(
+    CanonicalPathAnchor parentAnchor,
+    String rootPath,
+  ) async {
+    try {
+      final parentResolution = await resolveAnchoredPath(
+        parentAnchor,
+        rootPath,
+        allowRoot: false,
+      );
+      if (parentResolution.type != FileSystemEntityType.directory) {
+        throw AnchoredPathViolation(
+          reason: AnchoredPathViolationReason.rootNotDirectory,
+          path: rootPath,
+        );
+      }
+      final rootAnchor = await captureCanonicalDirectoryAnchor(rootPath);
+      if (!p.equals(rootAnchor.rootPath, rootPath)) {
+        throw AnchoredPathViolation(
+          reason: AnchoredPathViolationReason.symlinkComponent,
+          path: rootPath,
+        );
+      }
+      return rootAnchor;
+    } on AnchoredPathViolation catch (error) {
+      throw BusyMarkException(
+        'writerside.project.target-path-not-directory',
+        args: {'path': error.path},
+      );
+    }
+  }
+
+  Future<AnchoredPathResolution> _projectPath(
+    CanonicalPathAnchor anchor,
+    String path,
+  ) async {
+    try {
+      return await resolveAnchoredPath(anchor, path, allowRoot: false);
+    } on AnchoredPathViolation catch (error) {
+      throw BusyMarkException(
+        'writerside.project.target-path-not-directory',
+        args: {'path': error.path},
+      );
+    }
+  }
+
+  Future<void> _createProjectDirectory(
+    CanonicalPathAnchor anchor,
+    String name,
+  ) async {
+    final path = p.join(anchor.rootPath, name);
+    final target = await _projectPath(anchor, path);
+    if (target.type != FileSystemEntityType.notFound) {
+      throw BusyMarkException(
+        'writerside.project.generated-file-exists',
+        args: {'path': target.path},
+      );
+    }
+    await Directory(target.path).create();
+    final created = await _projectPath(anchor, target.path);
+    if (created.type != FileSystemEntityType.directory) {
+      throw BusyMarkException(
+        'writerside.project.target-path-not-directory',
+        args: {'path': created.path},
+      );
+    }
   }
 
   _ValidatedCreateRequest _validate(WritersideProjectCreateRequest request) {
@@ -244,9 +331,27 @@ class WritersideProjectCreator {
     return true;
   }
 
-  Future<void> _writeNewFile(File file, String content) async {
-    final created = await file.create(exclusive: true);
-    await created.writeAsString(content);
+  Future<void> _writeNewFile(
+    CanonicalPathAnchor anchor,
+    String path,
+    String content,
+  ) async {
+    final target = await _projectPath(anchor, path);
+    if (target.type != FileSystemEntityType.notFound) {
+      throw BusyMarkException(
+        'writerside.project.generated-file-exists',
+        args: {'path': target.path},
+      );
+    }
+    await File(target.path).create(exclusive: true);
+    final created = await _projectPath(anchor, target.path);
+    if (created.type != FileSystemEntityType.file) {
+      throw BusyMarkException(
+        'writerside.project.target-path-not-directory',
+        args: {'path': created.path},
+      );
+    }
+    await File(created.path).writeAsString(content);
   }
 
   String _writersideConfig({

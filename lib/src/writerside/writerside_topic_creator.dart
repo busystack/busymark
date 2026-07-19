@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
+import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import 'writerside_model.dart';
@@ -59,22 +60,39 @@ class WritersideTopicCreator {
     WritersideTopicCreateRequest request,
   ) async {
     final rootPath = normalizePath(target.rootPath);
-    if (!Directory(rootPath).existsSync()) {
+    final CanonicalPathAnchor rootAnchor;
+    try {
+      rootAnchor = await captureCanonicalDirectoryAnchor(rootPath);
+      if (!p.equals(rootAnchor.requestedRootPath, rootAnchor.rootPath)) {
+        throw AnchoredPathViolation(
+          reason: AnchoredPathViolationReason.rootReplacement,
+          path: rootAnchor.requestedRootPath,
+        );
+      }
+    } on AnchoredPathViolation catch (error) {
       throw BusyMarkException(
         'writerside.topic.module-root-missing',
-        args: {'path': rootPath},
+        args: {'path': error.path},
       );
     }
-    final treePath = normalizePath(target.treePath);
-    final treeFile = File(treePath);
-    if (!treeFile.existsSync()) {
+    final treeResolution = await _treePath(rootAnchor, target.treePath);
+    if (treeResolution.type != FileSystemEntityType.file) {
       throw BusyMarkException(
         'writerside.topic.tree-file-missing',
-        args: {'path': treePath},
+        args: {'path': treeResolution.path},
       );
     }
+    final treePath = treeResolution.path;
     final topicsRootDir = _safeRelativeDirectory(target.topicsRootDir);
-    final topicsRootPath = normalizePath(p.join(rootPath, topicsRootDir));
+    final topicsRootResolution = await _topicsRootPath(
+      rootAnchor,
+      p.join(rootAnchor.rootPath, topicsRootDir),
+    );
+    if (topicsRootResolution.type != FileSystemEntityType.directory &&
+        topicsRootResolution.type != FileSystemEntityType.notFound) {
+      throw const BusyMarkException('writerside.topic.topics-root-unsafe');
+    }
+    final topicsRootPath = topicsRootResolution.path;
     final topicFileName = _topicFileName(request.fileName, request.format);
     final topicId = p.basenameWithoutExtension(topicFileName);
     if (target.existingTopicIds.contains(topicId)) {
@@ -88,16 +106,20 @@ class WritersideTopicCreator {
       throw const BusyMarkException('writerside.topic.title-required');
     }
 
-    final topicPath = normalizePath(p.join(topicsRootPath, topicFileName));
-    final topicFile = File(topicPath);
-    if (topicFile.existsSync()) {
+    final topicResolution = await _topicTargetPath(
+      rootAnchor,
+      p.join(topicsRootPath, topicFileName),
+      allowMissingAncestors: true,
+    );
+    final topicPath = topicResolution.path;
+    if (topicResolution.type != FileSystemEntityType.notFound) {
       throw BusyMarkException(
         'writerside.topic.file-exists',
         args: {'path': topicPath},
       );
     }
 
-    final treeSource = await treeFile.readAsString();
+    final treeSource = await File(treePath).readAsString();
     final updatedTree = _updatedTree(
       treePath: treePath,
       source: treeSource,
@@ -105,18 +127,89 @@ class WritersideTopicCreator {
       request: request,
     );
 
-    await Directory(topicsRootPath).create(recursive: true);
+    final checkedTopicsRoot = await _topicsRootPath(rootAnchor, topicsRootPath);
+    if (checkedTopicsRoot.type == FileSystemEntityType.notFound) {
+      await Directory(checkedTopicsRoot.path).create(recursive: true);
+    } else if (checkedTopicsRoot.type != FileSystemEntityType.directory) {
+      throw const BusyMarkException('writerside.topic.topics-root-unsafe');
+    }
+    final createdTopicsRoot = await _topicsRootPath(rootAnchor, topicsRootPath);
+    if (createdTopicsRoot.type != FileSystemEntityType.directory) {
+      throw const BusyMarkException('writerside.topic.topics-root-unsafe');
+    }
     await _writeNewFile(
-      topicFile,
+      rootAnchor,
+      topicPath,
       _topicSource(request.format, topicId, title),
     );
-    await treeFile.writeAsString(updatedTree);
+    final checkedTree = await _treePath(rootAnchor, treePath);
+    if (checkedTree.type != FileSystemEntityType.file) {
+      throw BusyMarkException(
+        'writerside.topic.tree-file-missing',
+        args: {'path': checkedTree.path},
+      );
+    }
+    await File(checkedTree.path).writeAsString(updatedTree);
 
     return WritersideTopicCreateResult(
       topicPath: topicPath,
       treePath: treePath,
       topicFileName: topicFileName,
     );
+  }
+
+  Future<AnchoredPathResolution> _treePath(
+    CanonicalPathAnchor anchor,
+    String path,
+  ) async {
+    try {
+      return await resolveAnchoredPath(
+        anchor,
+        normalizePath(path),
+        allowRoot: false,
+      );
+    } on AnchoredPathViolation catch (error) {
+      throw BusyMarkException(
+        'writerside.topic.tree-file-missing',
+        args: {'path': error.path},
+      );
+    }
+  }
+
+  Future<AnchoredPathResolution> _topicsRootPath(
+    CanonicalPathAnchor anchor,
+    String path,
+  ) async {
+    try {
+      return await resolveAnchoredPath(
+        anchor,
+        path,
+        allowRoot: false,
+        allowMissingAncestors: true,
+      );
+    } on AnchoredPathViolation {
+      throw const BusyMarkException('writerside.topic.topics-root-unsafe');
+    }
+  }
+
+  Future<AnchoredPathResolution> _topicTargetPath(
+    CanonicalPathAnchor anchor,
+    String path, {
+    bool allowMissingAncestors = false,
+  }) async {
+    try {
+      return await resolveAnchoredPath(
+        anchor,
+        path,
+        allowRoot: false,
+        allowMissingAncestors: allowMissingAncestors,
+      );
+    } on AnchoredPathViolation catch (error) {
+      throw BusyMarkException(
+        'writerside.topic.file-exists',
+        args: {'path': error.path},
+      );
+    }
   }
 
   String _updatedTree({
@@ -205,9 +298,27 @@ class WritersideTopicCreator {
     return '${document.toXmlString(pretty: true, indent: '  ')}\n';
   }
 
-  Future<void> _writeNewFile(File file, String content) async {
-    final created = await file.create(exclusive: true);
-    await created.writeAsString(content);
+  Future<void> _writeNewFile(
+    CanonicalPathAnchor anchor,
+    String path,
+    String content,
+  ) async {
+    final target = await _topicTargetPath(anchor, path);
+    if (target.type != FileSystemEntityType.notFound) {
+      throw BusyMarkException(
+        'writerside.topic.file-exists',
+        args: {'path': target.path},
+      );
+    }
+    await File(target.path).create(exclusive: true);
+    final created = await _topicTargetPath(anchor, target.path);
+    if (created.type != FileSystemEntityType.file) {
+      throw BusyMarkException(
+        'writerside.topic.file-exists',
+        args: {'path': created.path},
+      );
+    }
+    await File(created.path).writeAsString(content);
   }
 
   String _safeRelativeDirectory(String value) {
