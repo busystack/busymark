@@ -27,6 +27,10 @@ const _supportedRawHtmlInlineTags =
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
 final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
+final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
+  for (final shortcut in BusyMarkAppShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+};
 
 Color busyMarkModalBarrierColor(BuildContext context) {
   return Theme.of(
@@ -57,12 +61,15 @@ Future<T?> showBusyMarkModalDialog<T>(
           viewInsets.right + BusyMarkSizes.modalHorizontalInset,
           viewInsets.bottom + BusyMarkSizes.modalVerticalInset,
         );
-        return AnimatedPadding(
-          padding: padding,
-          duration: BusyMarkMotion.modalPadding,
-          curve: BusyMarkMotion.modalPaddingCurve,
-          child: Center(
-            child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
+        return Shortcuts(
+          shortcuts: _busyMarkModalShortcuts,
+          child: AnimatedPadding(
+            padding: padding,
+            duration: BusyMarkMotion.modalPadding,
+            curve: BusyMarkMotion.modalPaddingCurve,
+            child: Center(
+              child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
+            ),
           ),
         );
       },

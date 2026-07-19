@@ -33,6 +33,36 @@ final workspaceSearchCloseRequestProvider =
       WorkspaceSearchRequestController.new,
     );
 
+/// Identifies the exact editor revision that an asynchronous save-related
+/// operation was started for.
+///
+/// The constructor is private so callers can only obtain a target from the
+/// controller that owns the revision counters. Passing the same target through
+/// disk checks and confirmation UI prevents a later active tab from inheriting
+/// an earlier tab's save or discard approval.
+class ActiveDocumentSaveTarget {
+  const ActiveDocumentSaveTarget._({
+    required this.workspaceId,
+    required this.path,
+    required this.documentRevision,
+    required this.editRevision,
+    required this.snapshot,
+    required this.text,
+    required this.workspaceKind,
+  });
+
+  final String workspaceId;
+  final String? path;
+  final int documentRevision;
+  final int editRevision;
+  final WorkspaceFileSnapshot? snapshot;
+  final String text;
+  final WorkspaceKind workspaceKind;
+
+  bool get needsSaveLocation =>
+      workspaceKind == WorkspaceKind.untitledMarkdown || path == null;
+}
+
 class WorkspaceSearchRequestController extends Notifier<int> {
   @override
   int build() => 0;
@@ -50,6 +80,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Timer? _parseDebounce;
   Timer? _autoSaveDebounce;
   Future<bool>? _activeSave;
+  ActiveDocumentSaveTarget? _activeSaveTarget;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
 
@@ -78,6 +109,35 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return workspace != null &&
         (workspace.kind == WorkspaceKind.untitledMarkdown ||
             workspace.activeFilePath == null);
+  }
+
+  ActiveDocumentSaveTarget? captureActiveDocumentSaveTarget() {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return null;
+    }
+    return ActiveDocumentSaveTarget._(
+      workspaceId: workspace.id,
+      path: workspace.activeFilePath,
+      documentRevision: _activeDocumentRevision,
+      editRevision: _editRevision,
+      snapshot: workspace.activeFileSnapshot,
+      text: state.activeText,
+      workspaceKind: workspace.kind,
+    );
+  }
+
+  bool isActiveDocumentSaveTargetCurrent(ActiveDocumentSaveTarget target) {
+    final workspace = state.workspace;
+    return _isCurrentActiveDocument(
+          target.documentRevision,
+          workspaceId: target.workspaceId,
+          activeFilePath: target.path,
+        ) &&
+        workspace != null &&
+        _editRevision == target.editRevision &&
+        state.activeText == target.text &&
+        _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
   }
 
   Future<void> createMarkdownFile() async {
@@ -520,98 +580,113 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return saveActive();
   }
 
-  Future<bool> saveActive({bool overwriteExternalChanges = false}) async {
+  Future<bool> saveActive({
+    bool overwriteExternalChanges = false,
+    ActiveDocumentSaveTarget? target,
+  }) async {
+    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    if (operationTarget == null ||
+        !isActiveDocumentSaveTargetCurrent(operationTarget)) {
+      return false;
+    }
     _autoSaveDebounce?.cancel();
     _parseDebounce?.cancel();
     final inFlight = _activeSave;
     if (inFlight != null) {
+      if (_sameSaveTarget(_activeSaveTarget, operationTarget)) {
+        return inFlight;
+      }
       final completed = await inFlight;
-      if (!state.isDirty) {
+      if (!isActiveDocumentSaveTargetCurrent(operationTarget)) {
+        return false;
+      }
+      if (!state.isDirty && completed) {
         return completed;
       }
-      return saveActive(overwriteExternalChanges: overwriteExternalChanges);
+      return saveActive(
+        overwriteExternalChanges: overwriteExternalChanges,
+        target: operationTarget,
+      );
     }
     late final Future<bool> operation;
     operation = _saveActiveNow(
+      operationTarget,
       overwriteExternalChanges: overwriteExternalChanges,
     );
     _activeSave = operation;
+    _activeSaveTarget = operationTarget;
     unawaited(
       operation.whenComplete(() {
         if (identical(_activeSave, operation)) {
           _activeSave = null;
+          _activeSaveTarget = null;
         }
       }),
     );
     return operation;
   }
 
-  Future<bool> _saveActiveNow({required bool overwriteExternalChanges}) async {
-    final workspace = state.workspace;
-    final active = workspace?.activeFilePath;
-    final workspaceId = workspace?.id;
-    final operationRevision = _activeDocumentRevision;
+  Future<bool> _saveActiveNow(
+    ActiveDocumentSaveTarget target, {
+    required bool overwriteExternalChanges,
+  }) async {
+    final active = target.path;
     if (active == null) {
-      state = state.copyWith(
-        message: const WorkspaceMessage(
-          WorkspaceMessageCode.chooseWhereToSaveMarkdown,
-        ),
-      );
-      return false;
-    }
-    if (!overwriteExternalChanges &&
-        await _service.fileChangedSince(
-          active,
-          workspace?.activeFileSnapshot,
-        )) {
-      if (!_isCurrentActiveDocument(
-        operationRevision,
-        workspaceId: workspaceId,
-        activeFilePath: active,
-      )) {
-        return true;
+      if (isActiveDocumentSaveTargetCurrent(target)) {
+        state = state.copyWith(
+          message: const WorkspaceMessage(
+            WorkspaceMessageCode.chooseWhereToSaveMarkdown,
+          ),
+        );
       }
-      state = state.copyWith(
-        message: const WorkspaceMessage(
-          WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
-        ),
-      );
       return false;
     }
-    if (!_isCurrentActiveDocument(
-      operationRevision,
-      workspaceId: workspaceId,
-      activeFilePath: active,
-    )) {
-      return true;
+    if (!overwriteExternalChanges) {
+      final changedOnDisk = await _service.fileChangedSince(
+        active,
+        target.snapshot,
+      );
+      if (!isActiveDocumentSaveTargetCurrent(target)) {
+        return false;
+      }
+      if (changedOnDisk) {
+        state = state.copyWith(
+          message: const WorkspaceMessage(
+            WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+          ),
+        );
+        return false;
+      }
     }
-    final revisionAtSaveStart = _editRevision;
-    final textAtSaveStart = state.activeText;
+    if (!isActiveDocumentSaveTargetCurrent(target)) {
+      return false;
+    }
     try {
-      final snapshot = await _service.saveText(active, textAtSaveStart);
+      final snapshot = await _service.saveText(active, target.text);
       final currentWorkspace = state.workspace;
       if (!_isCurrentActiveDocument(
-            operationRevision,
-            workspaceId: workspaceId,
+            target.documentRevision,
+            workspaceId: target.workspaceId,
             activeFilePath: active,
           ) ||
           currentWorkspace == null) {
-        return true;
+        return false;
       }
       final reparsed = await _service.reparseActive(
         currentWorkspace.copyWith(activeFileSnapshot: snapshot),
-        textAtSaveStart,
+        target.text,
       );
       final latestWorkspace = state.workspace;
       if (!_isCurrentActiveDocument(
-            operationRevision,
-            workspaceId: workspaceId,
+            target.documentRevision,
+            workspaceId: target.workspaceId,
             activeFilePath: active,
           ) ||
           latestWorkspace == null) {
-        return true;
+        return false;
       }
-      if (_editRevision == revisionAtSaveStart) {
+      if (_editRevision == target.editRevision &&
+          state.activeText == target.text) {
         final nextWorkspace = reparsed.copyWith(
           activeFileSnapshot: snapshot,
           openFilePaths: latestWorkspace.openFilePaths,
@@ -619,7 +694,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
         state = state.copyWith(
           workspace: nextWorkspace,
-          preview: _safePreview(nextWorkspace, textAtSaveStart),
+          preview: _safePreview(nextWorkspace, target.text),
           isDirty: false,
           clearMessage: true,
         );
@@ -634,8 +709,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return true;
     } on Object catch (error) {
       if (_isCurrentActiveDocument(
-        operationRevision,
-        workspaceId: workspaceId,
+        target.documentRevision,
+        workspaceId: target.workspaceId,
         activeFilePath: active,
       )) {
         state = state.copyWith(
@@ -649,25 +724,31 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<bool> saveActiveAs(String path) async {
-    _autoSaveDebounce?.cancel();
-    _parseDebounce?.cancel();
-    final workspace = state.workspace;
-    if (workspace == null) {
+  Future<bool> saveActiveAs(
+    String path, {
+    ActiveDocumentSaveTarget? target,
+  }) async {
+    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    if (operationTarget == null ||
+        !isActiveDocumentSaveTargetCurrent(operationTarget)) {
       return false;
     }
+    _autoSaveDebounce?.cancel();
+    _parseDebounce?.cancel();
     final operationRevision = _invalidateActiveDocumentOperations();
-    final text = state.activeText;
     try {
-      await _service.saveText(path, text);
+      await _service.saveText(path, operationTarget.text);
+      if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
+        return false;
+      }
       final savedWorkspace = await _service.openPath(path);
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         return false;
       }
       state = WorkspaceState(
         workspace: savedWorkspace,
-        activeText: text,
-        preview: _safePreview(savedWorkspace, text),
+        activeText: operationTarget.text,
+        preview: _safePreview(savedWorkspace, operationTarget.text),
       );
       _resetSaveTracking();
       await _settingsController.recordOpenedWorkspace(
@@ -676,7 +757,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return true;
     } on Object catch (error) {
-      if (_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         state = state.copyWith(
           message: WorkspaceMessage(
             WorkspaceMessageCode.saveFailed,
@@ -688,37 +769,60 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<bool> activeFileChangedOnDisk() async {
-    final workspace = state.workspace;
-    final active = workspace?.activeFilePath;
-    if (active == null) {
+  Future<bool> activeFileChangedOnDisk({
+    ActiveDocumentSaveTarget? target,
+  }) async {
+    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    final active = operationTarget?.path;
+    if (operationTarget == null ||
+        active == null ||
+        !isActiveDocumentSaveTargetCurrent(operationTarget)) {
       return false;
     }
-    return _service.fileChangedSince(active, workspace?.activeFileSnapshot);
+    final changed = await _service.fileChangedSince(
+      active,
+      operationTarget.snapshot,
+    );
+    if (!isActiveDocumentSaveTargetCurrent(operationTarget)) {
+      return false;
+    }
+    return changed;
   }
 
-  Future<bool> discardActiveChanges() async {
+  Future<bool> discardActiveChanges({ActiveDocumentSaveTarget? target}) async {
+    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    if (operationTarget == null) {
+      return state.workspace == null && !state.isDirty;
+    }
+    if (!isActiveDocumentSaveTargetCurrent(operationTarget)) {
+      return false;
+    }
+    if (!state.isDirty) {
+      return true;
+    }
     _autoSaveDebounce?.cancel();
     _parseDebounce?.cancel();
     final workspace = state.workspace;
-    if (workspace == null || !state.isDirty) {
-      return true;
+    if (workspace == null) {
+      return false;
     }
-    final active = workspace.activeFilePath;
+    final active = operationTarget.path;
     final operationRevision = _invalidateActiveDocumentOperations();
-    _resetSaveTracking();
     if (workspace.kind == WorkspaceKind.untitledMarkdown || active == null) {
       state = const WorkspaceState();
+      _resetSaveTracking();
       return true;
     }
-    state = state.copyWith(isDirty: false, clearMessage: true);
     try {
       final load = await _service.loadTextWithSnapshot(active);
+      if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
+        return false;
+      }
       final nextWorkspace = workspace.copyWith(
         activeFileSnapshot: load.snapshot,
       );
       final reparsed = await _service.reparseActive(nextWorkspace, load.text);
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         return false;
       }
       state = state.copyWith(
@@ -737,7 +841,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         stackTrace,
         context: {'active': busyMarkLogPath(active)},
       );
-      if (_isCurrentActiveDocumentOperation(operationRevision)) {
+      if (_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         state = state.copyWith(
           isDirty: true,
           message: WorkspaceMessage(
@@ -961,6 +1065,46 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspace.id == workspaceId &&
         workspace.activeFilePath == activeFilePath;
   }
+
+  bool _isPinnedOperationCurrent(
+    int operationRevision,
+    ActiveDocumentSaveTarget target,
+  ) {
+    final workspace = state.workspace;
+    return _isCurrentActiveDocument(
+          operationRevision,
+          workspaceId: target.workspaceId,
+          activeFilePath: target.path,
+        ) &&
+        workspace != null &&
+        _editRevision == target.editRevision &&
+        state.activeText == target.text &&
+        _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
+  }
+
+  bool _sameSaveTarget(
+    ActiveDocumentSaveTarget? first,
+    ActiveDocumentSaveTarget second,
+  ) {
+    return first != null &&
+        first.workspaceId == second.workspaceId &&
+        first.path == second.path &&
+        first.documentRevision == second.documentRevision &&
+        first.editRevision == second.editRevision &&
+        first.text == second.text &&
+        first.workspaceKind == second.workspaceKind &&
+        _sameFileSnapshot(first.snapshot, second.snapshot);
+  }
+}
+
+bool _sameFileSnapshot(
+  WorkspaceFileSnapshot? first,
+  WorkspaceFileSnapshot? second,
+) {
+  if (identical(first, second)) {
+    return true;
+  }
+  return first != null && second != null && !first.differsFrom(second);
 }
 
 List<String> _openFileTabPaths(Workspace workspace, String path) {
