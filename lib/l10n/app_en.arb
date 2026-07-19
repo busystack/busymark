@@ -349,6 +349,10 @@
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
   "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "Clear trusted Git workspaces",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "Ask before enabling Git features for previously trusted workspaces.",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "Window",
   "@settingsWindowSectionTitle": {"description":"Settings section title for native window behavior."},
@@ -1111,6 +1115,12 @@
     "description": "Git empty state message when Git cannot be used.",
     "placeholders": {"reason": {"type": "String"}}
   },
+  "gitTrustRequiredTitle": "Trust this workspace for Git?",
+  "@gitTrustRequiredTitle": {"description": "Git empty state title shown before repository-controlled commands may run."},
+  "gitTrustRequiredMessage": "Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.",
+  "@gitTrustRequiredMessage": {"description": "Security warning shown before Git repository access is enabled for a workspace."},
+  "gitTrustWorkspace": "Trust workspace",
+  "@gitTrustWorkspace": {"description": "Action label for trusting a workspace before enabling Git."},
   "gitNotRepositoryTitle": "Not a Git repository",
   "@gitNotRepositoryTitle": {"description": "Git empty state title for non-repository workspaces."},
   "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",

@@ -246,6 +246,37 @@ void main() {
     expect(find.text(l10n.gitUnavailableTitle), findsOneWidget);
   });
 
+  testWidgets('untrusted workspace shows repository trust prompt', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(
+              _state(files: const [], requiresWorkspaceTrust: true),
+            ),
+          ),
+        ],
+        child: _localized(
+          GitSidebarTab(
+            workspace: _workspace(),
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+            onAfterWorkspaceFilesChanged: () async {},
+            onConfirmSwitchBranch: (_) async => true,
+            onConfirmPushSetUpstream: () async => true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(l10n.gitTrustRequiredTitle), findsOneWidget);
+    expect(find.text(l10n.gitTrustRequiredMessage), findsOneWidget);
+    expect(find.text(l10n.gitTrustWorkspace), findsOneWidget);
+  });
+
   testWidgets('commit view shows no repository sync strip when clean', (
     tester,
   ) async {
@@ -932,6 +963,7 @@ GitState _state({
   String? selectedCommitFilePath,
   List<String> openDiffFilePaths = const [],
   GitDiff? selectedDiff,
+  bool requiresWorkspaceTrust = false,
 }) {
   return GitState(
     availability: const GitAvailability(
@@ -955,6 +987,7 @@ GitState _state({
     selectedCommitFilePath: selectedCommitFilePath,
     openDiffFilePaths: openDiffFilePaths,
     selectedDiff: selectedDiff,
+    requiresWorkspaceTrust: requiresWorkspaceTrust,
   );
 }
 

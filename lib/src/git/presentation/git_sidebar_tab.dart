@@ -43,6 +43,15 @@ class GitSidebarTab extends ConsumerWidget {
         ),
       );
     }
+    if (state.requiresWorkspaceTrust) {
+      return _GitEmptyState(
+        icon: BusyMarkGlyphs.warning,
+        title: context.l10n.gitTrustRequiredTitle,
+        message: context.l10n.gitTrustRequiredMessage,
+        actionLabel: context.l10n.gitTrustWorkspace,
+        onAction: () => controller.trustWorkspace(),
+      );
+    }
     if (state.repositoryInfo == null) {
       final canInitialize =
           workspace.kind == WorkspaceKind.markdownFolder ||

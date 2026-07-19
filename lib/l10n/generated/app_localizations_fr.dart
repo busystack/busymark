@@ -560,6 +560,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Forget workspaces that were allowed to load remote images.';
 
   @override
+  String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
+
+  @override
+  String get clearGitWorkspaceTrustDescription =>
+      'Ask before enabling Git features for previously trusted workspaces.';
+
+  @override
   String get settingsWindowSectionTitle => 'Fenêtre';
 
   @override
@@ -1586,6 +1593,16 @@ class AppLocalizationsFr extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
+
+  @override
+  String get gitTrustRequiredMessage =>
+      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+
+  @override
+  String get gitTrustWorkspace => 'Trust workspace';
 
   @override
   String get gitNotRepositoryTitle => 'Not a Git repository';

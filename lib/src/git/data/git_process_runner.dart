@@ -10,6 +10,7 @@ abstract class GitCommandRunner {
     List<String> arguments, {
     String? workingDirectory,
     Duration? timeout,
+    Map<String, String> environment = const {},
   });
 }
 
@@ -43,12 +44,14 @@ class DartGitCommandRunner implements GitCommandRunner {
     List<String> arguments, {
     String? workingDirectory,
     Duration? timeout,
+    Map<String, String> environment = const {},
   }) async {
     final process = await Process.start(
       executable,
       arguments,
       workingDirectory: workingDirectory,
-      environment: const {
+      environment: {
+        ...environment,
         'GIT_TERMINAL_PROMPT': '0',
         'GIT_PAGER': 'cat',
         'LC_ALL': 'C',

@@ -1140,6 +1140,18 @@ abstract class AppLocalizations {
   /// **'Forget workspaces that were allowed to load remote images.'**
   String get clearRemoteImagePermissionsDescription;
 
+  /// Settings action label for clearing trusted Git workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear trusted Git workspaces'**
+  String get clearGitWorkspaceTrust;
+
+  /// Settings action description for clearing trusted Git workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask before enabling Git features for previously trusted workspaces.'**
+  String get clearGitWorkspaceTrustDescription;
+
   /// Settings section title for native window behavior.
   ///
   /// In en, this message translates to:
@@ -2704,6 +2716,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}'**
   String gitUnavailableMessage(String reason);
+
+  /// Git empty state title shown before repository-controlled commands may run.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust this workspace for Git?'**
+  String get gitTrustRequiredTitle;
+
+  /// Security warning shown before Git repository access is enabled for a workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.'**
+  String get gitTrustRequiredMessage;
+
+  /// Action label for trusting a workspace before enabling Git.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust workspace'**
+  String get gitTrustWorkspace;
 
   /// Git empty state title for non-repository workspaces.
   ///

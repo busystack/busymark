@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -27,6 +28,161 @@ void main() {
     );
     expect(gateway.detectCalls, 2);
   });
+
+  test(
+    'trust-required gateway does not inspect workspace before trust',
+    () async {
+      final gateway = _TrustRequiredFakeGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+
+      controller.attachWorkspace(_workspace());
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+      );
+      expect(gateway.detectCalls, 0);
+      expect(gateway.statusCalls, 0);
+      await Future<void>.delayed(Duration.zero);
+      await controller.refresh();
+
+      var state = container.read(gitControllerProvider);
+      expect(state.requiresWorkspaceTrust, isTrue);
+      expect(state.repositoryInfo, isNull);
+      expect(state.statusSnapshot, isNull);
+      expect(gateway.detectCalls, 0);
+      expect(gateway.statusCalls, 0);
+
+      await controller.trustWorkspace();
+
+      state = container.read(gitControllerProvider);
+      expect(state.requiresWorkspaceTrust, isFalse);
+      expect(state.repositoryInfo, isNotNull);
+      expect(state.statusSnapshot, isNotNull);
+      expect(gateway.detectCalls, greaterThan(0));
+      expect(gateway.statusCalls, greaterThan(0));
+      expect(
+        container
+            .read(appSettingsControllerProvider)
+            .trustsGitWorkspace('/repo'),
+        isTrue,
+      );
+    },
+  );
+
+  test('clearing trust immediately revokes repository access', () async {
+    final gateway = _TrustRequiredFakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+
+    controller.attachWorkspace(_workspace());
+    await controller.trustWorkspace();
+    expect(container.read(gitControllerProvider).repositoryInfo, isNotNull);
+    final trustedDetectCalls = gateway.detectCalls;
+    final trustedStatusCalls = gateway.statusCalls;
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .clearTrustedGitWorkspaces();
+
+    final state = container.read(gitControllerProvider);
+    expect(state.requiresWorkspaceTrust, isTrue);
+    expect(state.repositoryInfo, isNull);
+    expect(state.statusSnapshot, isNull);
+    await controller.refresh();
+    expect(gateway.detectCalls, trustedDetectCalls);
+    expect(gateway.statusCalls, trustedStatusCalls);
+  });
+
+  test('status failure after trust retains the detected repository', () async {
+    final gateway = _TrustRequiredFakeGitGateway(failStatus: true);
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+
+    controller.attachWorkspace(_workspace());
+    await controller.trustWorkspace();
+
+    final state = container.read(gitControllerProvider);
+    expect(state.requiresWorkspaceTrust, isFalse);
+    expect(state.repositoryInfo, isNotNull);
+    expect(state.statusSnapshot, isNull);
+    expect(state.lastError?.code, GitFailureCode.commandFailed);
+  });
+
+  test('trust is scoped to the attached workspace', () async {
+    final gateway = _TrustRequiredFakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+
+    controller.attachWorkspace(_workspace());
+    await Future<void>.delayed(Duration.zero);
+    await controller.refresh();
+    await controller.trustWorkspace();
+    final trustedWorkspaceDetectCalls = gateway.detectCalls;
+    final trustedWorkspaceStatusCalls = gateway.statusCalls;
+
+    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
+    await Future<void>.delayed(Duration.zero);
+    await controller.refresh();
+
+    final state = container.read(gitControllerProvider);
+    expect(state.requiresWorkspaceTrust, isTrue);
+    expect(state.repositoryInfo, isNull);
+    expect(state.statusSnapshot, isNull);
+    expect(gateway.detectCalls, trustedWorkspaceDetectCalls);
+    expect(gateway.statusCalls, trustedWorkspaceStatusCalls);
+    expect(
+      container
+          .read(appSettingsControllerProvider)
+          .trustsGitWorkspace('/other'),
+      isFalse,
+    );
+  });
+
+  test(
+    'Git executes with the canonical path that was trusted',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-git-trust-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      final trusted = await Directory('${root.path}/trusted').create();
+      final replacement = await Directory('${root.path}/replacement').create();
+      final workspaceLink = Link('${root.path}/workspace');
+      await workspaceLink.create(trusted.path);
+      final gateway = _TrustRequiredFakeGitGateway();
+      final container = _container(gateway);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(workspaceLink.path);
+      final controller = container.read(gitControllerProvider.notifier);
+
+      controller.attachWorkspace(
+        _workspace(id: workspaceLink.path, rootPath: workspaceLink.path),
+      );
+      await controller.refresh();
+
+      expect(gateway.lastDetectedWorkspacePath, trusted.path);
+      await controller.initializeRepository();
+      expect(gateway.lastInitializeRootPath, trusted.path);
+      final trustedDetectCalls = gateway.detectCalls;
+      await workspaceLink.delete();
+      await workspaceLink.create(replacement.path);
+
+      await controller.refresh();
+
+      expect(gateway.detectCalls, trustedDetectCalls);
+      expect(
+        container.read(gitControllerProvider).requiresWorkspaceTrust,
+        isTrue,
+      );
+    },
+    skip: Platform.isWindows,
+  );
 
   test('stage and unstage update state', () async {
     final gateway = _FakeGitGateway();
@@ -404,14 +560,18 @@ class _FakeGitGateway implements GitRepositoryGateway {
     bool staged = false,
     this.conflicted = false,
     this.failStage = false,
+    this.failStatus = false,
   }) : _staged = staged;
 
   final bool conflicted;
   final bool failStage;
+  final bool failStatus;
   var _staged = false;
   var detectCalls = 0;
   var commitCalls = 0;
   var switchCalls = 0;
+  String? lastDetectedWorkspacePath;
+  String? lastInitializeRootPath;
   String? lastHistoryPath;
   String? lastCommitDetailsPath;
 
@@ -419,6 +579,9 @@ class _FakeGitGateway implements GitRepositoryGateway {
     rootPath: '/repo',
     gitDirPath: '/repo/.git',
   );
+
+  @override
+  bool get requiresWorkspaceTrust => false;
 
   @override
   Future<GitAvailability> availability() async {
@@ -432,11 +595,20 @@ class _FakeGitGateway implements GitRepositoryGateway {
   @override
   Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
     detectCalls++;
+    lastDetectedWorkspacePath = workspacePath;
     return repo;
   }
 
   @override
   Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
+    if (failStatus) {
+      throw const GitFailure(
+        code: GitFailureCode.commandFailed,
+        userMessageKey: 'gitErrorCommandFailed',
+        rawMessage: 'status failed',
+        commandName: 'status',
+      );
+    }
     final files = conflicted
         ? [
             _file(
@@ -619,8 +791,10 @@ class _FakeGitGateway implements GitRepositoryGateway {
   ) async => _result();
 
   @override
-  Future<GitOperationResult> initializeRepository(String rootPath) async =>
-      _result();
+  Future<GitOperationResult> initializeRepository(String rootPath) async {
+    lastInitializeRootPath = rootPath;
+    return _result();
+  }
 
   GitOperationResult _result() {
     return const GitOperationResult(
@@ -656,6 +830,21 @@ class _FakeGitGateway implements GitRepositoryGateway {
       conflicted: conflicted,
       ignored: false,
     );
+  }
+}
+
+class _TrustRequiredFakeGitGateway extends _FakeGitGateway {
+  _TrustRequiredFakeGitGateway({super.failStatus});
+
+  var statusCalls = 0;
+
+  @override
+  bool get requiresWorkspaceTrust => true;
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) {
+    statusCalls++;
+    return super.status(repository);
   }
 }
 

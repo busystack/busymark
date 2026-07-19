@@ -67,6 +67,7 @@ class AppSettings {
     required this.validateOnEdit,
     required this.allowRemoteImages,
     required this.remoteImageAllowedWorkspacePaths,
+    required this.trustedGitWorkspacePaths,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -86,6 +87,7 @@ class AppSettings {
       validateOnEdit: true,
       allowRemoteImages: false,
       remoteImageAllowedWorkspacePaths: [],
+      trustedGitWorkspacePaths: [],
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -130,6 +132,9 @@ class AppSettings {
       remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
         json['remoteImageAllowedWorkspacePaths'],
       ),
+      trustedGitWorkspacePaths: _gitWorkspacePathListFromJson(
+        json['trustedGitWorkspacePaths'],
+      ),
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
           defaults.confirmCloseWithUnsavedChanges,
@@ -157,6 +162,7 @@ class AppSettings {
   final bool validateOnEdit;
   final bool allowRemoteImages;
   final List<String> remoteImageAllowedWorkspacePaths;
+  final List<String> trustedGitWorkspacePaths;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -178,6 +184,7 @@ class AppSettings {
     'validateOnEdit': validateOnEdit,
     'allowRemoteImages': allowRemoteImages,
     'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
+    'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
@@ -189,6 +196,19 @@ class AppSettings {
     }
     final key = _normalizedWorkspacePath(workspacePath);
     return key != null && remoteImageAllowedWorkspacePaths.contains(key);
+  }
+
+  bool trustsGitWorkspace(String? workspacePath) {
+    return trustedGitWorkspacePath(workspacePath) != null;
+  }
+
+  /// Returns the canonical, trusted path that is safe to pass to Git.
+  ///
+  /// Callers should use this returned value for command execution instead of
+  /// resolving [workspacePath] again after the trust check.
+  String? trustedGitWorkspacePath(String? workspacePath) {
+    final key = _normalizedGitWorkspacePath(workspacePath);
+    return key != null && trustedGitWorkspacePaths.contains(key) ? key : null;
   }
 
   AppSettings copyWith({
@@ -204,6 +224,7 @@ class AppSettings {
     bool? validateOnEdit,
     bool? allowRemoteImages,
     List<String>? remoteImageAllowedWorkspacePaths,
+    List<String>? trustedGitWorkspacePaths,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -226,6 +247,8 @@ class AppSettings {
       remoteImageAllowedWorkspacePaths:
           remoteImageAllowedWorkspacePaths ??
           this.remoteImageAllowedWorkspacePaths,
+      trustedGitWorkspacePaths:
+          trustedGitWorkspacePaths ?? this.trustedGitWorkspacePaths,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -363,6 +386,24 @@ class AppSettingsController extends Notifier<AppSettings> {
     );
   }
 
+  Future<void> trustGitWorkspace(String workspacePath) {
+    final key = _normalizedGitWorkspacePath(workspacePath);
+    if (key == null) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final trusted = {key, ...settings.trustedGitWorkspacePaths}.toList()
+        ..sort();
+      return settings.copyWith(trustedGitWorkspacePaths: trusted);
+    });
+  }
+
+  Future<void> clearTrustedGitWorkspaces() {
+    return _mutate(
+      (settings) => settings.copyWith(trustedGitWorkspacePaths: []),
+    );
+  }
+
   Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
     return _mutate(
       (settings) => settings.copyWith(confirmCloseWithUnsavedChanges: enabled),
@@ -464,12 +505,52 @@ List<String> _workspacePathListFromJson(Object? value) {
   return paths;
 }
 
+List<String> _gitWorkspacePathListFromJson(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final paths = {
+    for (final item in value)
+      if (_normalizedStoredGitWorkspacePath(item?.toString()) case final path?)
+        path,
+  }.toList()..sort();
+  return paths;
+}
+
 String? _normalizedWorkspacePath(String? value) {
   final trimmed = value?.trim();
   if (trimmed == null || trimmed.isEmpty) {
     return null;
   }
   return p.normalize(trimmed);
+}
+
+String? _normalizedGitWorkspacePath(String? value) {
+  final absolute = _normalizedStoredGitWorkspacePath(value);
+  if (absolute == null) {
+    return null;
+  }
+  try {
+    final type = FileSystemEntity.typeSync(absolute, followLinks: false);
+    final entity = switch (type) {
+      FileSystemEntityType.directory => Directory(absolute),
+      FileSystemEntityType.link => Link(absolute),
+      FileSystemEntityType.file => File(absolute),
+      _ => null,
+    };
+    return entity == null
+        ? absolute
+        : p.normalize(entity.resolveSymbolicLinksSync());
+  } on FileSystemException {
+    return absolute;
+  }
+}
+
+String? _normalizedStoredGitWorkspacePath(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  return p.normalize(p.absolute(value));
 }
 
 String? _localeTagFromJson(Object? value) {

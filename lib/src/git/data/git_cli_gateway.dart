@@ -28,6 +28,9 @@ class GitCliGateway implements GitRepositoryGateway {
   final GitDiffParser diffParser;
 
   @override
+  bool get requiresWorkspaceTrust => true;
+
+  @override
   Future<GitAvailability> availability() => locator.locate();
 
   @override
@@ -131,6 +134,7 @@ class GitCliGateway implements GitRepositoryGateway {
       'diff',
       if (staged) '--cached',
       '--no-ext-diff',
+      '--no-textconv',
       '--no-color',
       '--find-renames',
       '--find-copies',
@@ -158,6 +162,7 @@ class GitCliGateway implements GitRepositoryGateway {
       'diff',
       if (staged) '--cached',
       '--no-ext-diff',
+      '--no-textconv',
       '--no-color',
       '--find-renames',
       '--find-copies',
@@ -224,6 +229,7 @@ class GitCliGateway implements GitRepositoryGateway {
     final result = await _runGit(await _executable(), repository.rootPath, [
       'show',
       '--no-ext-diff',
+      '--no-textconv',
       '--no-color',
       '--find-renames',
       '--find-copies',
@@ -453,9 +459,13 @@ class GitCliGateway implements GitRepositoryGateway {
   @override
   Future<GitOperationResult> initializeRepository(String rootPath) async {
     final executable = await _executable();
-    final result = await _runGit(executable, rootPath, const [
-      'init',
-    ], commandName: 'init');
+    final result = await _runGit(
+      executable,
+      rootPath,
+      const ['init'],
+      commandName: 'init',
+      passive: false,
+    );
     return GitOperationResult(
       success: true,
       message: _operationMessage(result, ''),
@@ -483,12 +493,14 @@ class GitCliGateway implements GitRepositoryGateway {
     String repoRoot,
     List<String> args, {
     required String commandName,
+    bool passive = true,
   }) async {
     final result = await _runGitMaybe(
       executable,
       repoRoot,
       args,
       commandName: commandName,
+      passive: passive,
     );
     if (result == null || result.success) {
       return result!;
@@ -501,14 +513,22 @@ class GitCliGateway implements GitRepositoryGateway {
     String repoRoot,
     List<String> args, {
     required String commandName,
+    bool passive = true,
   }) async {
     try {
-      return await runner.run(executable, [
-        '--no-pager',
-        '-C',
-        repoRoot,
-        ...args,
-      ]);
+      return await runner.run(
+        executable,
+        [
+          '--no-pager',
+          '--no-optional-locks',
+          '-c',
+          'core.fsmonitor=false',
+          '-C',
+          repoRoot,
+          ...args,
+        ],
+        environment: passive ? const {'GIT_NO_LAZY_FETCH': '1'} : const {},
+      );
     } on ProcessException catch (error) {
       throw GitFailure(
         code: GitFailureCode.unavailable,
@@ -529,6 +549,7 @@ class GitCliGateway implements GitRepositoryGateway {
       repository.rootPath,
       args,
       commandName: commandName,
+      passive: false,
     );
     return GitOperationResult(
       success: true,

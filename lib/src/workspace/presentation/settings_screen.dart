@@ -165,6 +165,13 @@ class SettingsScreen extends ConsumerWidget {
                     leading: const Icon(BusyMarkGlyphs.clearAll),
                     onTap: controller.clearRemoteImageWorkspacePermissions,
                   ),
+                if (settings.trustedGitWorkspacePaths.isNotEmpty)
+                  BusyMarkActionRow(
+                    title: context.l10n.clearGitWorkspaceTrust,
+                    subtitle: context.l10n.clearGitWorkspaceTrustDescription,
+                    leading: const Icon(BusyMarkGlyphs.clearAll),
+                    onTap: controller.clearTrustedGitWorkspaces,
+                  ),
               ],
             ),
             BusyMarkGroupedList(

@@ -6,6 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test('process-backed Git gateway requires workspace trust', () {
+    expect(const GitCliGateway().requiresWorkspaceTrust, isTrue);
+  });
+
   test('runs core workflow in a temporary Git repository', () async {
     if (!await _gitAvailable()) {
       markTestSkipped('Git executable is unavailable.');
@@ -154,6 +158,214 @@ void main() {
       GitFileStatusCategory.conflicted,
     );
   });
+
+  test(
+    'status does not run a repository-configured filesystem monitor',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final root = await _createRepository('busymark-git-fsmonitor-');
+      final gateway = const GitCliGateway();
+      final info = await gateway.detectRepository(root.path);
+      expect(info, isNotNull);
+
+      final probe = await _writeExecutableProbe(
+        root,
+        'fsmonitor-probe.sh',
+        output: "printf 'busymark-test-token\\n'",
+      );
+      final sentinel = File('${probe.path}.ran');
+      await _git(root.path, ['config', 'core.fsmonitor', probe.path]);
+
+      await _git(root.path, ['status', '--porcelain']);
+      expect(
+        await sentinel.exists(),
+        isTrue,
+        reason: 'The fsmonitor probe must execute without the mitigation.',
+      );
+      await sentinel.delete();
+
+      await gateway.status(info!);
+
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git status must override repository core.fsmonitor config.',
+      );
+    },
+    skip: Platform.isWindows,
+  );
+
+  test(
+    'diff APIs do not run a repository-configured textconv',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final fixture = await _createTextconvFixture();
+      final sentinel = File('${fixture.probe.path}.ran');
+
+      await _git(fixture.root.path, ['diff', '--textconv', '--', 'README.md']);
+      expect(
+        await sentinel.exists(),
+        isTrue,
+        reason: 'The textconv probe must execute without the mitigation.',
+      );
+      await sentinel.delete();
+
+      final fileDiff = await fixture.gateway.diffFile(
+        fixture.info,
+        'README.md',
+        staged: false,
+      );
+      expect(fileDiff.rawPatch, contains('Working tree change.'));
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git diffFile must disable repository textconv commands.',
+      );
+
+      final allDiff = await fixture.gateway.diffAll(
+        fixture.info,
+        staged: false,
+      );
+      expect(allDiff.rawPatch, contains('Working tree change.'));
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git diffAll must disable repository textconv commands.',
+      );
+    },
+    skip: Platform.isWindows,
+  );
+
+  test(
+    'commit details do not run a repository-configured textconv',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final fixture = await _createTextconvFixture();
+      final sentinel = File('${fixture.probe.path}.ran');
+
+      await _git(fixture.root.path, [
+        'show',
+        '--textconv',
+        '--format=',
+        '--patch',
+        fixture.commitHash,
+      ]);
+      expect(
+        await sentinel.exists(),
+        isTrue,
+        reason: 'The textconv probe must execute for raw Git show.',
+      );
+      await sentinel.delete();
+
+      final details = await fixture.gateway.commitDetails(
+        fixture.info,
+        fixture.commitHash,
+      );
+
+      expect(details.patch, contains('Committed change.'));
+      expect(
+        await sentinel.exists(),
+        isFalse,
+        reason: 'Git show must disable repository textconv commands.',
+      );
+    },
+    skip: Platform.isWindows,
+  );
+}
+
+Future<Directory> _createRepository(String prefix) async {
+  final root = await Directory.systemTemp.createTemp(prefix);
+  addTearDown(() async {
+    if (await root.exists()) {
+      await root.delete(recursive: true);
+    }
+  });
+  await _git(root.path, ['init']);
+  await _git(root.path, ['config', 'user.name', 'BusyMark Test']);
+  await _git(root.path, ['config', 'user.email', 'busymark@example.com']);
+  final readme = File(p.join(root.path, 'README.md'));
+  await readme.writeAsString('# Docs\n');
+  await _git(root.path, ['add', 'README.md']);
+  await _git(root.path, ['commit', '-m', 'Initial docs']);
+  return root;
+}
+
+Future<_TextconvFixture> _createTextconvFixture() async {
+  final root = await Directory.systemTemp.createTemp('busymark-git-textconv-');
+  addTearDown(() async {
+    if (await root.exists()) {
+      await root.delete(recursive: true);
+    }
+  });
+  await _git(root.path, ['init']);
+  await _git(root.path, ['config', 'user.name', 'BusyMark Test']);
+  await _git(root.path, ['config', 'user.email', 'busymark@example.com']);
+  await File(
+    p.join(root.path, '.gitattributes'),
+  ).writeAsString('*.md diff=busymarktest\n');
+  final readme = File(p.join(root.path, 'README.md'));
+  await readme.writeAsString('# Original\n');
+  await _git(root.path, ['add', '.gitattributes', 'README.md']);
+  await _git(root.path, ['commit', '-m', 'Initial docs']);
+  await readme.writeAsString('# Committed change.\n');
+  await _git(root.path, ['add', 'README.md']);
+  await _git(root.path, ['commit', '-m', 'Update docs']);
+
+  const gateway = GitCliGateway();
+  final info = await gateway.detectRepository(root.path);
+  expect(info, isNotNull);
+  final commitHash = (await gateway.history(info!, limit: 1)).single.fullHash;
+  final probe = await _writeExecutableProbe(
+    root,
+    'textconv-probe.sh',
+    output: 'exec cat "\$1"',
+  );
+  await _git(root.path, ['config', 'diff.busymarktest.textconv', probe.path]);
+  await readme.writeAsString('# Working tree change.\n');
+  return _TextconvFixture(
+    root: root,
+    gateway: gateway,
+    info: info,
+    commitHash: commitHash,
+    probe: probe,
+  );
+}
+
+Future<File> _writeExecutableProbe(
+  Directory root,
+  String name, {
+  required String output,
+}) async {
+  final probe = File(p.join(root.path, name));
+  await probe.writeAsString('#!/bin/sh\n: > "\$0.ran"\n$output\n');
+  final chmod = await Process.run('chmod', ['700', probe.path]);
+  expect(chmod.exitCode, 0, reason: '${chmod.stderr}');
+  return probe;
+}
+
+class _TextconvFixture {
+  const _TextconvFixture({
+    required this.root,
+    required this.gateway,
+    required this.info,
+    required this.commitHash,
+    required this.probe,
+  });
+
+  final Directory root;
+  final GitCliGateway gateway;
+  final GitRepositoryInfo info;
+  final String commitHash;
+  final File probe;
 }
 
 Future<bool> _gitAvailable() async {
