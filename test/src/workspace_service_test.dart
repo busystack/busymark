@@ -246,6 +246,53 @@ void main() {
     },
   );
 
+  test(
+    'rejects topic creation when the configured instance tree is outside the module',
+    () async {
+      final base = await Directory.systemTemp.createTemp(
+        'busymark-writerside-external-tree-',
+      );
+      addTearDown(() async {
+        if (await base.exists()) {
+          await base.delete(recursive: true);
+        }
+      });
+      final root = Directory(p.join(base.path, 'module'))..createSync();
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="../victim.tree"/>
+</ihp>
+''');
+      final victim = File(p.join(base.path, 'victim.tree'))
+        ..writeAsStringSync('''
+<instance-profile id="victim" name="Victim" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+      final originalVictimSource = victim.readAsStringSync();
+      final workspace = await service.openPath(root.path);
+
+      await expectLater(
+        service.createWritersideTopic(
+          workspace,
+          const WritersideTopicCreateRequest(
+            title: 'Escaped topic',
+            fileName: 'escaped',
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(victim.readAsStringSync(), originalVictimSource);
+      expect(
+        File(p.join(root.path, 'topics', 'escaped.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
   test('normalizes portal-style document paths as filesystem paths', () {
     const path = '/run/user/1000/doc/abcdef/smoke.md';
 
