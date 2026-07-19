@@ -189,6 +189,107 @@ void main() {}
     },
   );
 
+  test('WYSIWYG nested list text edit updates Markdown source', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n  - Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.single.children.single.id;
+
+    controller.updateBlockText(childId, 'Changed');
+
+    expect(controller.markdown, '- Parent\n  - Changed\n');
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(
+      reparsed.busyDocument.blocks.single.children.single.plainText,
+      'Changed',
+    );
+  });
+
+  test('WYSIWYG nested blockquote edit preserves surrounding source', () {
+    const source =
+        'Before   spacing\n\n'
+        '> Original\n\n'
+        'After   spacing\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final quote = controller.document.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.blockquote,
+    );
+
+    controller.updateBlockText(quote.children.single.id, 'Changed');
+
+    expect(
+      controller.markdown,
+      'Before   spacing\n\n> Changed\n\nAfter   spacing\n',
+    );
+  });
+
+  test('WYSIWYG nested inline edit updates Markdown source', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n  - Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.single.children.single.id;
+
+    controller.applyInlineCommand(
+      childId,
+      BusyWysiwygInlineCommand.bold,
+      0,
+      'Child'.length,
+    );
+
+    expect(controller.markdown, '- Parent\n  - **Child**\n');
+  });
+
+  test('WYSIWYG nested block removal updates Markdown source', () {
+    const tableSource =
+        '| Name | Value |\n'
+        '| --- | --- |\n'
+        '| A | B |';
+    final controller = BusyMarkWysiwygDocumentController(
+      document: BusyDocument(
+        filePath: 'topic.md',
+        mode: MarkdownMode.commonMark,
+        blocks: const [
+          BusyBlock(
+            id: 'parent',
+            kind: BusyBlockKind.unorderedListItem,
+            inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Parent')],
+            children: [
+              BusyBlock(
+                id: 'table',
+                kind: BusyBlockKind.table,
+                rawSource: tableSource,
+              ),
+            ],
+            rawSource:
+                '- Parent\n\n'
+                '  | Name | Value |\n'
+                '  | --- | --- |\n'
+                '  | A | B |',
+          ),
+        ],
+      ),
+    );
+
+    controller.deleteTable('table');
+
+    expect(controller.document.blocks.single.dirty, isTrue);
+    expect(controller.markdown, '- Parent\n');
+  });
+
   test('parser includes setext headings in heading metadata', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

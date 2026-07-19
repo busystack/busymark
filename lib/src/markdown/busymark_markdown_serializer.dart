@@ -30,7 +30,7 @@ class BusyMarkMarkdownSerializer {
   }
 
   String serializeBlock(BusyBlock block) {
-    if (!block.dirty && block.rawSource != null) {
+    if (!_hasDirtyContent(block) && block.rawSource != null) {
       return block.rawSource!;
     }
     return switch (block.kind) {
@@ -68,7 +68,8 @@ class BusyMarkMarkdownSerializer {
     }
     final dirtyBlocks = [
       for (final block in document.blocks)
-        if (block.kind != BusyBlockKind.frontMatter && block.dirty) block,
+        if (block.kind != BusyBlockKind.frontMatter && _hasDirtyContent(block))
+          block,
     ];
     if (dirtyBlocks.isEmpty) {
       return source;
@@ -185,6 +186,10 @@ class BusyMarkMarkdownSerializer {
         kind == BusyBlockKind.taskListItem;
   }
 
+  bool _hasDirtyContent(BusyBlock block) {
+    return block.dirty || block.children.any(_hasDirtyContent);
+  }
+
   String _blockquote(BusyBlock block) {
     final text = block.children.isEmpty
         ? _inlineMarkdown(block.inlines)
@@ -230,7 +235,7 @@ class BusyMarkMarkdownSerializer {
   }
 
   String _writersideAdmonition(BusyBlock block) {
-    if (!block.dirty && block.rawSource != null) {
+    if (!_hasDirtyContent(block) && block.rawSource != null) {
       return block.rawSource!;
     }
     final element = block.attributes['element'] ?? 'note';

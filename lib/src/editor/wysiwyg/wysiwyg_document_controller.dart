@@ -1172,22 +1172,31 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   List<BusyBlock> _removeBlockById(List<BusyBlock> blocks, String blockId) {
-    return [
-      for (final block in blocks)
-        if (block.id != blockId)
-          block.copyWith(children: _removeBlockById(block.children, blockId)),
-    ];
+    return _removeBlocksByIds(blocks, {blockId});
   }
 
   List<BusyBlock> _removeBlocksByIds(List<BusyBlock> blocks, Set<String> ids) {
     if (ids.isEmpty) {
       return blocks;
     }
-    return [
-      for (final block in blocks)
-        if (!ids.contains(block.id))
-          block.copyWith(children: _removeBlocksByIds(block.children, ids)),
-    ];
+    var changed = false;
+    final result = <BusyBlock>[];
+    for (final block in blocks) {
+      if (ids.contains(block.id)) {
+        changed = true;
+        continue;
+      }
+      final children = _removeBlocksByIds(block.children, ids);
+      if (identical(children, block.children)) {
+        result.add(block);
+        continue;
+      }
+      changed = true;
+      result.add(
+        block.copyWith(children: children, preserveRaw: false, dirty: true),
+      );
+    }
+    return changed ? result : blocks;
   }
 
   List<BusyBlock> _insertBlocksAfter(
