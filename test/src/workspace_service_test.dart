@@ -323,6 +323,160 @@ void main() {
     expect(leftovers, isEmpty);
   });
 
+  test('saveNewText writes a missing file and returns its snapshot', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-new-save-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+
+    final snapshot = await service.saveNewText(file.path, '# Created\n');
+
+    expect(await file.readAsString(), '# Created\n');
+    expect(snapshot.size, '# Created\n'.length);
+    expect(snapshot.contentHash, hasLength(64));
+  });
+
+  test('saveNewText refuses an existing file without changing it', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-new-save-collision-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('# Original\n');
+
+    await expectLater(
+      service.saveNewText(file.path, '# Replacement\n'),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'workspace.path-already-exists',
+        ),
+      ),
+    );
+
+    expect(await file.readAsString(), '# Original\n');
+  });
+
+  test(
+    'saveNewText does not replace a file arriving before publication',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-new-save-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final file = File(p.join(directory.path, 'note.md'));
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) async {
+          await File(targetPath).writeAsString('# Arrived\n', flush: true);
+        },
+      );
+
+      await expectLater(
+        racingService.saveNewText(file.path, '# Draft\n'),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'workspace.path-already-exists',
+          ),
+        ),
+      );
+
+      expect(await file.readAsString(), '# Arrived\n');
+      final leftovers = await directory
+          .list()
+          .where(
+            (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+          )
+          .toList();
+      expect(leftovers, isEmpty);
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'saveNewText does not write inside a directory arriving before publication',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-new-save-directory-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final targetDirectory = Directory(p.join(directory.path, 'note.md'));
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) => Directory(targetPath).create(),
+      );
+
+      await expectLater(
+        racingService.saveNewText(targetDirectory.path, '# Draft\n'),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'workspace.path-already-exists',
+          ),
+        ),
+      );
+
+      expect(await targetDirectory.exists(), isTrue);
+      expect(await targetDirectory.list().toList(), isEmpty);
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'saveTextReplacingPath replaces a final symlink without following it',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-symlink-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final target = File(p.join(directory.path, 'target.md'));
+      final link = Link(p.join(directory.path, 'note.md'));
+      await target.writeAsString('# Target\n');
+      await link.create(target.path);
+
+      final snapshot = await service.saveTextReplacingPath(
+        link.path,
+        '# Replacement\n',
+      );
+
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), '# Replacement\n');
+      expect(await target.readAsString(), '# Target\n');
+      expect(snapshot.size, '# Replacement\n'.length);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
   test(
     'saveText follows file symlinks and preserves target permissions',
     () async {

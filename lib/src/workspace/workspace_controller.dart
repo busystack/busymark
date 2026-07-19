@@ -727,6 +727,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> saveActiveAs(
     String path, {
     ActiveDocumentSaveTarget? target,
+    bool overwriteExisting = false,
   }) async {
     final operationTarget = target ?? captureActiveDocumentSaveTarget();
     if (operationTarget == null ||
@@ -737,7 +738,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _parseDebounce?.cancel();
     final operationRevision = _invalidateActiveDocumentOperations();
     try {
-      await _service.saveText(path, operationTarget.text);
+      if (overwriteExisting) {
+        await _service.saveTextReplacingPath(path, operationTarget.text);
+      } else {
+        await _service.saveNewText(path, operationTarget.text);
+      }
       if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
         return false;
       }
@@ -767,6 +772,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return false;
     }
+  }
+
+  Future<bool> savePathExists(
+    String path, {
+    ActiveDocumentSaveTarget? target,
+  }) async {
+    final operationTarget = target ?? captureActiveDocumentSaveTarget();
+    if (operationTarget == null ||
+        !isActiveDocumentSaveTargetCurrent(operationTarget)) {
+      return false;
+    }
+    final exists = await _service.pathExists(path);
+    if (!isActiveDocumentSaveTargetCurrent(operationTarget)) {
+      return false;
+    }
+    return exists;
   }
 
   Future<bool> activeFileChangedOnDisk({

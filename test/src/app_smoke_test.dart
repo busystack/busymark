@@ -3625,6 +3625,9 @@ class _StartupWorkspaceService extends WorkspaceService {
   }
 
   @override
+  Future<bool> pathExists(String path) async => false;
+
+  @override
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     saveCount++;
     savedPath = path;
@@ -3634,6 +3637,19 @@ class _StartupWorkspaceService extends WorkspaceService {
       size: 0,
       contentHash: '',
     );
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) {
+    return saveText(path, text);
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveTextReplacingPath(
+    String path,
+    String text,
+  ) {
+    return saveText(path, text);
   }
 }
 

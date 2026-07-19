@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
@@ -26,7 +28,8 @@ class WorkspaceService {
     this.writersideProjectCreator = const WritersideProjectCreator(),
     this.writersideTopicCreator = const WritersideTopicCreator(),
     this.scanOptions = const WorkspaceScanOptions(),
-  });
+    Future<void> Function(String targetPath)? beforeNewFilePublish,
+  }) : _beforeNewFilePublish = beforeNewFilePublish;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
@@ -34,6 +37,7 @@ class WorkspaceService {
   final WritersideProjectCreator writersideProjectCreator;
   final WritersideTopicCreator writersideTopicCreator;
   final WorkspaceScanOptions scanOptions;
+  final Future<void> Function(String targetPath)? _beforeNewFilePublish;
 
   Workspace createUntitledMarkdown({String source = ''}) {
     const fileName = '';
@@ -182,6 +186,53 @@ class WorkspaceService {
     }
   }
 
+  Future<bool> pathExists(String path) async {
+    return await FileSystemEntity.type(path, followLinks: false) !=
+        FileSystemEntityType.notFound;
+  }
+
+  /// Saves a newly named file without replacing any existing filesystem
+  /// entity at [path].
+  ///
+  /// The complete contents are staged in a private temporary directory, then
+  /// published with Linux's atomic no-replace rename operation (or an atomic
+  /// hard-link fallback). It fails if any filesystem entity already has the
+  /// final name.
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+    final bytes = utf8.encode(text);
+    final staged = await _stageNewSave(path, bytes);
+    try {
+      final stat = await staged.file.stat();
+      await _beforeNewFilePublish?.call(path);
+      await _publishNewFileWithoutReplace(staged.file, path);
+      return _snapshotFromBytes(stat, bytes);
+    } finally {
+      await _deleteStagedSaveBestEffort(staged);
+    }
+  }
+
+  /// Replaces the exact final directory entry at [path] without following a
+  /// final symlink. This is used only after the user confirms a Save As
+  /// overwrite for that displayed path.
+  Future<WorkspaceFileSnapshot> saveTextReplacingPath(
+    String path,
+    String text,
+  ) async {
+    final bytes = utf8.encode(text);
+    final staged = await _stageNewSave(path, bytes);
+    try {
+      final targetType = await FileSystemEntity.type(path, followLinks: false);
+      if (targetType == FileSystemEntityType.file) {
+        await _copyFileMode(await File(path).stat(), staged.file);
+      }
+      final target = File(p.absolute(path));
+      await staged.file.rename(target.path);
+      return _snapshotFromBytes(await target.stat(), bytes);
+    } finally {
+      await _deleteStagedSaveBestEffort(staged);
+    }
+  }
+
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     final savePath = await _saveTargetPath(path);
     final target = File(savePath);
@@ -200,13 +251,7 @@ class WorkspaceService {
       return _snapshotFromBytes(stat, bytes);
     } on Object {
       if (!renamed) {
-        try {
-          if (await temp.exists()) {
-            await temp.delete();
-          }
-        } on Object {
-          // Best-effort cleanup; preserve the original save error.
-        }
+        await _deleteSaveArtifactBestEffort(temp);
       }
       rethrow;
     }
@@ -513,11 +558,78 @@ class WorkspaceService {
     );
   }
 
+  Future<_StagedSave> _stageNewSave(String path, List<int> bytes) async {
+    final directory = await Directory(
+      p.dirname(p.absolute(path)),
+    ).createTemp('.busymark-save-');
+    final staged = _StagedSave(
+      directory: directory,
+      file: File(p.join(directory.path, 'contents')),
+    );
+    try {
+      await staged.file.writeAsBytes(bytes, flush: true);
+      return staged;
+    } on Object {
+      await _deleteStagedSaveBestEffort(staged);
+      rethrow;
+    }
+  }
+
+  Future<void> _publishNewFileWithoutReplace(
+    File stagedFile,
+    String targetPath,
+  ) async {
+    if (!Platform.isLinux) {
+      throw UnsupportedError(
+        'Atomic no-replace publication is currently supported on Linux only.',
+      );
+    }
+    final errorNumber = _LinuxNoReplaceApi.instance.publishNoReplace(
+      stagedFile.absolute.path,
+      File(targetPath).absolute.path,
+    );
+    if (errorNumber == null) {
+      return;
+    }
+    if (errorNumber == _LinuxNoReplaceApi.fileExistsError) {
+      throw BusyMarkException(
+        'workspace.path-already-exists',
+        args: {'path': targetPath},
+      );
+    }
+    throw FileSystemException(
+      'Failed to atomically publish the new file',
+      targetPath,
+      OSError('no-replace publication failed', errorNumber),
+    );
+  }
+
+  Future<void> _deleteStagedSaveBestEffort(_StagedSave staged) async {
+    await _deleteSaveArtifactBestEffort(staged.file);
+    try {
+      if (await staged.directory.exists()) {
+        await staged.directory.delete();
+      }
+    } on Object {
+      // Best-effort cleanup; preserve the original save result or error.
+    }
+  }
+
   File _temporarySaveFile(String path) {
     final directory = p.dirname(path);
     final basename = p.basename(path);
     final stamp = DateTime.now().microsecondsSinceEpoch;
     return File(p.join(directory, '.$basename.busymark-save-$pid-$stamp.tmp'));
+  }
+
+  Future<void> _deleteSaveArtifactBestEffort(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on Object {
+      // Best-effort cleanup; preserve the original save error.
+    }
   }
 
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
@@ -925,6 +1037,97 @@ class WorkspaceService {
             attributes: {'element': name},
           ),
     ];
+  }
+}
+
+class _StagedSave {
+  const _StagedSave({required this.directory, required this.file});
+
+  final Directory directory;
+  final File file;
+}
+
+typedef _RenameAt2Native =
+    Int32 Function(
+      Int32 oldDirectory,
+      Pointer<Utf8> oldPath,
+      Int32 newDirectory,
+      Pointer<Utf8> newPath,
+      Uint32 flags,
+    );
+typedef _RenameAt2Dart =
+    int Function(
+      int oldDirectory,
+      Pointer<Utf8> oldPath,
+      int newDirectory,
+      Pointer<Utf8> newPath,
+      int flags,
+    );
+typedef _ErrnoLocationNative = Pointer<Int32> Function();
+typedef _ErrnoLocationDart = Pointer<Int32> Function();
+typedef _LinkNative =
+    Int32 Function(Pointer<Utf8> oldPath, Pointer<Utf8> newPath);
+typedef _LinkDart = int Function(Pointer<Utf8> oldPath, Pointer<Utf8> newPath);
+
+final class _LinuxNoReplaceApi {
+  _LinuxNoReplaceApi() : _library = DynamicLibrary.open('libc.so.6') {
+    try {
+      _renameAt2 = _library.lookupFunction<_RenameAt2Native, _RenameAt2Dart>(
+        'renameat2',
+      );
+    } on ArgumentError {
+      _renameAt2 = null;
+    }
+    _link = _library.lookupFunction<_LinkNative, _LinkDart>('link');
+    _errnoLocation = _library
+        .lookupFunction<_ErrnoLocationNative, _ErrnoLocationDart>(
+          '__errno_location',
+        );
+  }
+
+  static const fileExistsError = 17;
+  static const _invalidArgumentError = 22;
+  static const _functionNotImplementedError = 38;
+  static const _operationNotSupportedError = 95;
+  static const _atCurrentWorkingDirectory = -100;
+  static const _renameNoReplace = 1;
+  static final instance = _LinuxNoReplaceApi();
+
+  final DynamicLibrary _library;
+  late final _RenameAt2Dart? _renameAt2;
+  late final _LinkDart _link;
+  late final _ErrnoLocationDart _errnoLocation;
+
+  int? publishNoReplace(String oldPath, String newPath) {
+    final nativeOldPath = oldPath.toNativeUtf8();
+    final nativeNewPath = newPath.toNativeUtf8();
+    try {
+      final renameAt2 = _renameAt2;
+      if (renameAt2 != null) {
+        final result = renameAt2(
+          _atCurrentWorkingDirectory,
+          nativeOldPath,
+          _atCurrentWorkingDirectory,
+          nativeNewPath,
+          _renameNoReplace,
+        );
+        if (result == 0) {
+          return null;
+        }
+        final errorNumber = _errnoLocation().value;
+        if (errorNumber != _invalidArgumentError &&
+            errorNumber != _functionNotImplementedError &&
+            errorNumber != _operationNotSupportedError) {
+          return errorNumber;
+        }
+      }
+
+      final linkResult = _link(nativeOldPath, nativeNewPath);
+      return linkResult == 0 ? null : _errnoLocation().value;
+    } finally {
+      malloc.free(nativeOldPath);
+      malloc.free(nativeNewPath);
+    }
   }
 }
 

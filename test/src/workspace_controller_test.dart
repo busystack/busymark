@@ -273,6 +273,74 @@ void main() {
   });
 
   test(
+    'save as refuses an existing file unless overwrite is explicit',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-existing-',
+      );
+      final file = File('${directory.path}/existing.md');
+      await file.writeAsString('# Existing\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Draft\n');
+
+      expect(await controller.saveActiveAs(file.path), isFalse);
+      expect(await file.readAsString(), '# Existing\n');
+      expect(controller.state.workspace?.kind, WorkspaceKind.untitledMarkdown);
+      expect(controller.state.isDirty, isTrue);
+      expect(controller.state.message?.code, WorkspaceMessageCode.saveFailed);
+
+      expect(
+        await controller.saveActiveAs(file.path, overwriteExisting: true),
+        isTrue,
+      );
+      expect(await file.readAsString(), '# Draft\n');
+
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+  );
+
+  test(
+    'save as explicit overwrite replaces the final symlink only',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-symlink-',
+      );
+      final target = File('${directory.path}/target.md');
+      final link = Link('${directory.path}/note.md');
+      await target.writeAsString('# Target\n');
+      await link.create(target.path);
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Draft\n');
+
+      expect(
+        await controller.saveActiveAs(link.path, overwriteExisting: true),
+        isTrue,
+      );
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), '# Draft\n');
+      expect(await target.readAsString(), '# Target\n');
+
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
     'save as preserves source edits for an untitled Markdown file',
     () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -777,7 +845,8 @@ class _WorkspaceControllerDriver {
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
       _notifier.saveActive(overwriteExternalChanges: overwriteExternalChanges);
 
-  Future<bool> saveActiveAs(String path) => _notifier.saveActiveAs(path);
+  Future<bool> saveActiveAs(String path, {bool overwriteExisting = false}) =>
+      _notifier.saveActiveAs(path, overwriteExisting: overwriteExisting);
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
 

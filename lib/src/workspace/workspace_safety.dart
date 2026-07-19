@@ -170,8 +170,55 @@ Future<bool> _saveActiveAs(
   if (location == null) {
     return false;
   }
-  final savePath = _withMarkdownExtension(location.path);
-  return controller.saveActiveAs(savePath, target: target);
+  final savePath = p.normalize(_withMarkdownExtension(location.path));
+  final exists = await controller.savePathExists(savePath, target: target);
+  if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
+    return false;
+  }
+  var overwriteExisting = false;
+  if (exists) {
+    if (!context.mounted) {
+      return false;
+    }
+    final action = await _confirmSaveAsOverwrite(context, ref, savePath);
+    if (action != _OverwriteAction.overwrite ||
+        !controller.isActiveDocumentSaveTargetCurrent(target)) {
+      return false;
+    }
+    overwriteExisting = true;
+  }
+  return controller.saveActiveAs(
+    savePath,
+    target: target,
+    overwriteExisting: overwriteExisting,
+  );
+}
+
+Future<_OverwriteAction?> _confirmSaveAsOverwrite(
+  BuildContext context,
+  WidgetRef ref,
+  String savePath,
+) {
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  return showBusyMarkModalDialog<_OverwriteAction>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.warning,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
+          child: Text(context.l10n.overwrite),
+        ),
+      ],
+      children: [Text(context.l10n.errorPathAlreadyExists(savePath))],
+    ),
+  );
 }
 
 String _withMarkdownExtension(String path) {
