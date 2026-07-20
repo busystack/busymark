@@ -657,6 +657,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get htmlBlock => 'HTML block';
 
   @override
+  String get htmlContentDefault => 'HTML content';
+
+  @override
   String get shortcutHtmlBlockDescription => 'Insert or edit an HTML block';
 
   @override
@@ -769,6 +772,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get altText => 'Alt text';
+
+  @override
+  String get editorPlaceholderText => 'text';
+
+  @override
+  String get editorPlaceholderCode => 'code';
+
+  @override
+  String get editorPlaceholderAltText => 'alt text';
 
   @override
   String get describeTheImage => 'Describe the image';
@@ -979,6 +991,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceSearchInvalidRegex => 'Invalid regular expression';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -1566,6 +1581,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gitDiff => 'Git diff';
+
+  @override
+  String get gitShowDiff => 'Show diff';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'old $oldRange → new $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'no lines';
 
   @override
   String get gitUnavailableTitle => 'Git is unavailable';

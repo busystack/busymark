@@ -519,7 +519,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Автоматично зберігати зміни у файлах після короткої паузи в редагуванні.';
 
   @override
-  String get wordWrap => 'Перенесення слів';
+  String get wordWrap => 'Перенесення рядків';
 
   @override
   String get editorFontSize => 'Розмір шрифту редактора';
@@ -539,28 +539,30 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Конфіденційність';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get allowRemoteImages => 'Завантажувати віддалені зображення';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'Дозволяти завантаження зображень у попередньому перегляді Markdown і редакторі з URL-адрес http та https.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions =>
+      'Очистити дозволи для віддалених зображень';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'Забути робочі області, яким було дозволено завантажувати віддалені зображення.';
 
   @override
-  String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
+  String get clearGitWorkspaceTrust =>
+      'Очистити список довірених робочих областей Git';
 
   @override
   String get clearGitWorkspaceTrustDescription =>
-      'Ask before enabling Git features for previously trusted workspaces.';
+      'Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.';
 
   @override
   String get settingsWindowSectionTitle => 'Вікно';
@@ -615,7 +617,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'У $fileName є незбережені зміни. Зберегти їх перед продовженням?';
+    return '$fileName містить незбережені зміни. Зберегти їх перед продовженням?';
   }
 
   @override
@@ -666,6 +668,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get htmlBlock => 'Блок HTML';
+
+  @override
+  String get htmlContentDefault => 'Вміст HTML';
 
   @override
   String get shortcutHtmlBlockDescription =>
@@ -783,6 +788,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get altText => 'Альтернативний текст';
 
   @override
+  String get editorPlaceholderText => 'текст';
+
+  @override
+  String get editorPlaceholderCode => 'код';
+
+  @override
+  String get editorPlaceholderAltText => 'альтернативний текст';
+
+  @override
   String get describeTheImage => 'Опишіть зображення';
 
   @override
@@ -803,24 +817,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noImageSource => 'Немає джерела зображення';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'Віддалене зображення заблоковано';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'Виберіть, чи може BusyMark завантажувати віддалені зображення.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'Віддалені зображення заблоковано';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'Цей документ посилається на зображення з інтернету. Їх завантаження може розкрити відомості про вашу мережу серверам, на яких розміщено зображення.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace =>
+      'Завантажити для цієї робочої області';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages =>
+      'Завжди завантажувати віддалені зображення';
 
   @override
   String get hideSidebar => 'Приховати бічну панель';
@@ -895,7 +911,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noWritersideToc => 'Немає змісту Writerside';
 
   @override
-  String get tocSection => 'розділ змісту';
+  String get tocSection => 'Розділ змісту';
 
   @override
   String get newTopic => 'Нова тема';
@@ -983,23 +999,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get foldKindTag => 'тег';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'Попередній збіг';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'Наступний збіг';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive => 'З урахуванням регістру';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'Ціле слово';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'Регулярний вираз';
+
+  @override
+  String get sourceSearchInvalidRegex => 'Некоректний регулярний вираз';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'Великий файл: підсвічування та згортання призупинено';
 
   @override
   String get noPreview => 'Немає попереднього перегляду';
@@ -1138,7 +1157,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'Цільовий каталог уже існує та не є порожнім: $path';
+    return 'Цільовий каталог уже існує та не порожній: $path';
   }
 
   @override
@@ -1183,11 +1202,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get errorFileOperationOutsideRoot =>
-      'Файлова операція має залишатися в межах workspace.';
+      'Файлова операція має виконуватися в межах робочої області.';
 
   @override
   String get errorFileOperationRoot =>
-      'Корінь workspace не можна змінити з дерева файлів.';
+      'Корінь робочої області не можна змінити з дерева файлів.';
 
   @override
   String get errorProjectNameRequired => 'Потрібно вказати назву проєкту.';
@@ -1230,7 +1249,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'Ідентифікатор теми «$topicId» уже існує в цьому модулі довідки.';
+    return 'Ідентифікатор теми «$topicId» вже існує в цьому модулі довідки.';
   }
 
   @override
@@ -1352,11 +1371,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingSnippetsSrc =>
-      'В оголошенні snippets відсутній src.';
+      'В оголошенні snippets відсутній атрибут src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstanceGroupsSrc =>
-      'В оголошенні instance-groups відсутній src.';
+      'В оголошенні instance-groups відсутній атрибут src.';
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
@@ -1365,7 +1384,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideConfigMissingInstanceSrc =>
-      'В оголошенні instance відсутній src.';
+      'В оголошенні instance відсутній атрибут src.';
 
   @override
   String get diagnosticWritersideConfigMissingInstance =>
@@ -1386,7 +1405,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTreeMissingStartPage =>
-      'Екземпляр, який не є бібліотекою, не має початкової сторінки.';
+      'В екземплярі, який не є бібліотекою, відсутній атрибут start-page.';
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
@@ -1427,11 +1446,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicMissingRootId =>
-      'У XML-темі відсутній кореневий id.';
+      'В XML-темі відсутній ідентифікатор кореневого елемента.';
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'Кореневий id XML-теми «$id» має відповідати назві файлу «$expectedId».';
+    return 'Ідентифікатор кореневого елемента XML-теми «$id» має відповідати назві файлу «$expectedId».';
   }
 
   @override
@@ -1441,7 +1460,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get diagnosticWritersideTopicAnchorMissingHref =>
-      'У <a> відсутній href.';
+      'В елементі <a> відсутній атрибут href.';
 
   @override
   String get diagnosticWritersideConfigMissing =>
@@ -1534,7 +1553,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'Посилання на тему «$destination» не вдається розв’язати.';
+    return 'Посилання на тему «$destination» не вказує на наявну тему.';
   }
 
   @override
@@ -1578,56 +1597,68 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'Закрити';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'Відмінності Git';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'Показати відмінності';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'старий діапазон $oldRange → новий $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'немає рядків';
+
+  @override
+  String get gitUnavailableTitle => 'Git недоступний';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Установіть Git або налаштуйте BusyMark на використання доступного виконуваного файлу Git. $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
+  String get gitTrustRequiredTitle =>
+      'Довіряти цій робочій області під час роботи з Git?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+      'Репозиторії Git можуть запускати програми за допомогою хуків, фільтрів та інших налаштувань. Позначте цю робочу область як довірену, перш ніж BusyMark прочитає дані репозиторію або ввімкне дії Git.';
 
   @override
-  String get gitTrustWorkspace => 'Trust workspace';
+  String get gitTrustWorkspace => 'Довіряти робочій області';
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitNotRepositoryTitle => 'Це не репозиторій Git';
 
   @override
   String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+      'Ця робоча область не належить до репозиторію Git.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'Ініціалізувати репозиторій';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitDetachedHead => 'Відокремлений HEAD';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'Відокремлений HEAD: $commit';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'Немає upstream-гілки';
 
   @override
   String gitAheadCount(int count) {
@@ -1647,17 +1678,19 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: 'Потрібно отримати $count коміта',
+      many: 'Потрібно отримати $count комітів',
+      few: 'Потрібно отримати $count коміти',
+      one: 'Потрібно отримати $count коміт',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'Без змін';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'Конфлікти';
 
   @override
   String get gitChanges => 'Зміни';
@@ -1678,78 +1711,80 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitCommit => 'Зафіксувати';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'Вибрати для коміту';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'Вилучити з коміту';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'Відкинути';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'Відкрити файл';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'Позначити як розв’язаний';
 
   @override
   String get gitUntracked => 'Невідстежувані файли';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'Повідомлення коміту';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'Вибрані файли';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'Перед створенням коміту виберіть принаймні один файл.';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'Введіть повідомлення коміту.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'Створити гілку';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ Нова гілка';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'Назва гілки';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'Перемкнутися';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'Немає змін';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'Немає історії';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'Немає гілок';
 
   @override
   String get gitNoDiff => 'Немає різниці для показу';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'Двійковий файл. BusyMark не відображає двійкові патчі.';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'Незбережені зміни в редакторі не буде враховано, доки ви їх не збережете.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'Відкинути зміни Git?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other: 'Вибрані відстежувані файли буде відновлено з Git.',
+      many: 'Вибрані відстежувані файли буде відновлено з Git.',
+      few: 'Вибрані відстежувані файли буде відновлено з Git.',
+      one: 'Вибраний відстежуваний файл буде відновлено з Git.',
     );
     return '$_temp0';
   }
@@ -1759,8 +1794,10 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'Вибрані невідстежувані файли буде видалено.',
+      many: 'Вибрані невідстежувані файли буде видалено.',
+      few: 'Вибрані невідстежувані файли буде видалено.',
+      one: 'Вибраний невідстежуваний файл буде видалено.',
     );
     return '$_temp0';
   }
@@ -1771,35 +1808,39 @@ class AppLocalizationsUk extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
+          'Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.',
+      many:
+          'Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.',
+      few:
+          'Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.',
       one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'Вибраний файл буде відновлено або видалено залежно від його стану Git.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return 'Перемкнутися на $branch?';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'BusyMark перезавантажить робочу область із диска після перемикання гілки в Git.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'Налаштувати upstream-гілку?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'Ця гілка не має upstream-гілки. BusyMark може надіслати гілку $branch і призначити її upstream-гілкою, якщо налаштовано рівно один віддалений репозиторій.';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'Проєкт';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'Поточний файл';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -1807,80 +1848,81 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'Дії з файлом';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'Додано';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'Видалено';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'Перейменовано';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'Скопійовано';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'Не відстежується';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'Конфлікт';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'Проігноровано';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'Тип змінено';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'Змінено';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'Невідомо';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git недоступний.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository =>
+      'Ця робоча область не є репозиторієм Git.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath => 'BusyMark заблокував небезпечний шлях Git.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName => 'Введіть припустиму назву гілки.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'Віддалений репозиторій Git не налаштовано.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'Upstream-гілку не налаштовано.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'Налаштовано кілька віддалених репозиторіїв. Ця версія BusyMark не дає змоги вибрати upstream-гілку; налаштуйте її поза програмою.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'Не вдалося автентифікуватися в Git. Для віддалених SSH-репозиторіїв у snap може знадобитися підключити інтерфейс ssh-keys.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'Не вдалося виконати мережеву операцію Git.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'Git повідомив про нерозв’язані конфлікти.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'Не вдалося виконати команду Git.';
 
   @override
   String get markdownAndHtml => 'Markdown і HTML';
@@ -1897,10 +1939,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get markdownHtmlInlineFormattingDescription =>
-      'Форматування всередині абзаців, елементів списків і клітинок таблиць.';
+      'Форматування всередині абзаців, елементів списків і комірок таблиць.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Блоки raw HTML';
+  String get markdownHtmlRawHtmlBlocks => 'Блоки необробленого HTML';
 
   @override
   String get markdownHtmlRawHtmlBlocksDescription =>
@@ -1918,7 +1960,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get markdownHtmlSafetyDescription =>
-      'Raw HTML аналізується й очищується перед попереднім переглядом.';
+      'Необроблений HTML аналізується й очищується перед попереднім переглядом.';
 
   @override
   String get markdownHtmlHeadings => 'Заголовки';
@@ -1961,21 +2003,21 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get markdownHtmlSanitizedPreviewDescription =>
-      'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не рендериться в браузері.';
+      'Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Джерело зберігається';
+  String get markdownHtmlSourcePreserved => 'Вихідний текст зберігається';
 
   @override
   String get markdownHtmlSourcePreservedDescription =>
-      'Незмінений raw HTML зберігається точно як вихідний текст.';
+      'Незмінений необроблений HTML зберігається точно як вихідний текст.';
 
   @override
   String get markdownHtmlMarkdownInsideHtml => 'Markdown всередині HTML';
 
   @override
   String get markdownHtmlMarkdownInsideHtmlDescription =>
-      'Markdown-розмітка всередині raw HTML відображається як звичайний текст.';
+      'Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.';
 
   @override
   String get markdownHtmlBlockedContent => 'Активний вміст заблоковано';

@@ -119,7 +119,7 @@ BusyMark has ARB localization files for:
 - German (de)
 - Hindi (hi)
 - Italian (it)
-- Norwegian (no)
+- Norwegian Bokmål (nb)
 - Persian (fa)
 - Polish (pl)
 - Portuguese (pt)

@@ -1830,7 +1830,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final target = _captureDialogTarget();
     final source = await _showHtmlDialog(
       context,
-      initialSource: '<div>\n  <p>HTML content</p>\n</div>',
+      initialSource:
+          '<div>\n  <p>${context.l10n.htmlContentDefault}</p>\n</div>',
       submitLabel: context.l10n.insert,
     );
     if (!_isDialogTargetCurrent(target) ||

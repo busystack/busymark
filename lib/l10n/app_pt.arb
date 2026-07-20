@@ -164,7 +164,7 @@
   "@pasteWithoutFormatting": {
     "description": "Plain text paste command label."
   },
-  "preview": "Visualização",
+  "preview": "Pré-visualização",
   "@preview": {
     "description": "Preview view label."
   },
@@ -652,16 +652,20 @@
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
-  "privacy": "Privacy",
+  "privacy": "Privacidade",
   "@privacy": {"description": "Settings section title for privacy options."},
-  "allowRemoteImages": "Load remote images",
+  "allowRemoteImages": "Carregar imagens remotas",
   "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
-  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "allowRemoteImagesDescription": "Permitir que a pré-visualização do Markdown e o editor carreguem imagens de URLs HTTP e HTTPS.",
   "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
-  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "clearRemoteImagePermissions": "Limpar permissões de imagens remotas",
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
-  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "clearRemoteImagePermissionsDescription": "Esquecer os espaços de trabalho autorizados a carregar imagens remotas.",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "Limpar espaços de trabalho confiáveis para o Git",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "Perguntar antes de ativar recursos do Git em espaços de trabalho considerados confiáveis anteriormente.",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "Janela",
   "@settingsWindowSectionTitle": {
@@ -797,10 +801,12 @@
   "@editHtml": {
     "description": "Dialog title and tooltip for editing raw HTML source."
   },
-  "htmlSource": "Fonte HTML",
+  "htmlSource": "Código-fonte HTML",
   "@htmlSource": {
     "description": "Text field label for raw HTML source."
   },
+  "htmlContentDefault": "Conteúdo HTML",
+  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
   "thematicBreak": "Separador temático",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -944,6 +950,12 @@
   "@altText": {
     "description": "Image alt text field label."
   },
+  "editorPlaceholderText": "texto",
+  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "editorPlaceholderCode": "código",
+  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "editorPlaceholderAltText": "texto alternativo",
+  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
   "describeTheImage": "Descreva a imagem",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -973,17 +985,17 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Remote image blocked",
+  "remoteImageBlocked": "Imagem remota bloqueada",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "Escolha se o BusyMark pode carregar imagens remotas.",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
-  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "remoteImagesBlockedTitle": "As imagens remotas estão bloqueadas",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
-  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "remoteImagesBlockedMessage": "Este documento faz referência a imagens da Internet. Carregá-las pode revelar informações de rede ao servidor que as hospeda.",
   "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
-  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "loadRemoteImagesForWorkspace": "Carregar neste espaço de trabalho",
   "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
-  "alwaysLoadRemoteImages": "Always load remote images",
+  "alwaysLoadRemoteImages": "Sempre carregar imagens remotas",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
   "hideSidebar": "Ocultar painel lateral",
@@ -994,11 +1006,11 @@
   "@showSidebar": {
     "description": "Tooltip for showing the workspace sidebar."
   },
-  "showPreview": "Mostrar visualização",
+  "showPreview": "Mostrar pré-visualização",
   "@showPreview": {
     "description": "Tooltip for showing the preview pane."
   },
-  "hidePreview": "Ocultar visualização",
+  "hidePreview": "Ocultar pré-visualização",
   "@hidePreview": {
     "description": "Tooltip for hiding the preview pane."
   },
@@ -1158,7 +1170,21 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
-  "noPreview": "Sem visualização",
+  "sourceSearchPreviousMatch": "Correspondência anterior",
+  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "sourceSearchNextMatch": "Próxima correspondência",
+  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "sourceSearchCaseSensitive": "Diferenciar maiúsculas de minúsculas",
+  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "sourceSearchWholeWord": "Palavra inteira",
+  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "sourceSearchRegex": "Expressão regular",
+  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "sourceSearchInvalidRegex": "Expressão regular inválida",
+  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "sourceLargeFileFeaturesPaused": "Arquivo grande: o realce e o recolhimento estão pausados",
+  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
+  "noPreview": "Sem pré-visualização",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
   },
@@ -1629,11 +1655,11 @@
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "A declaração de snippets está sem src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "A declaração de snippets está sem o atributo src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "A declaração de grupos de instâncias está sem src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "A declaração de instance-groups está sem o atributo src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
@@ -1646,7 +1672,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "A declaração de instância está sem src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "A declaração de instância está sem o atributo src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
@@ -1658,7 +1684,7 @@
   "@diagnosticWritersideTreeInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid tree root element."
   },
-  "diagnosticWritersideTreeMissingId": "O perfil da instância está sem ID.",
+  "diagnosticWritersideTreeMissingId": "O perfil da instância está sem o atributo id.",
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
@@ -1706,7 +1732,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryMissingId": "A categoria está sem ID.",
+  "diagnosticWritersideCategoryMissingId": "A categoria está sem o atributo id.",
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
@@ -1732,7 +1758,7 @@
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "O tópico XML não possui o ID raiz.",
+  "diagnosticWritersideTopicMissingRootId": "A raiz do tópico XML está sem o atributo id.",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
@@ -1757,7 +1783,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "<a> está sem href.",
+  "diagnosticWritersideTopicAnchorMissingHref": "<a> está sem o atributo href.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
@@ -1765,7 +1791,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "O diretório de configuração de build configurado está ausente: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "O diretório configurado para a compilação está ausente: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1921,7 +1947,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeMissingFrom": "<include> está sem from.",
+  "diagnosticWritersideIncludeMissingFrom": "<include> está sem o atributo from.",
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
@@ -1973,82 +1999,88 @@
       }
     }
   },
-  "close": "Close",
+  "close": "Fechar",
   "git": "Git",
-  "gitDiff": "Git diff",
-  "gitUnavailableTitle": "Git is unavailable",
-  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
-  "gitNotRepositoryTitle": "Not a Git repository",
-  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
-  "gitInitializeRepository": "Initialize repository",
-  "gitDetachedHead": "Detached HEAD",
-  "gitDetachedHeadAt": "Detached at {commit}",
-  "gitNoUpstream": "No upstream",
+  "gitDiff": "Diff do Git",
+  "gitShowDiff": "Mostrar diff",
+  "gitDiffHunkRange": "anterior {oldRange} → novo {newRange}",
+  "gitDiffNoLines": "sem linhas",
+  "gitUnavailableTitle": "Git não está disponível",
+  "gitUnavailableMessage": "{reason, select, other{Instale o Git ou configure o BusyMark para usar um executável do Git disponível. {reason}}}",
+  "gitTrustRequiredTitle": "Confiar neste espaço de trabalho para o Git?",
+  "gitTrustRequiredMessage": "Os repositórios Git podem executar programas por meio de hooks, filtros e outras configurações. Confie neste espaço de trabalho antes que o BusyMark leia os dados do repositório ou ative ações do Git.",
+  "gitTrustWorkspace": "Confiar no espaço de trabalho",
+  "gitNotRepositoryTitle": "Não é um repositório Git",
+  "gitNotRepositoryMessage": "Este espaço de trabalho não está em um repositório Git.",
+  "gitInitializeRepository": "Inicializar repositório",
+  "gitDetachedHead": "HEAD desanexado",
+  "gitDetachedHeadAt": "Desanexado em {commit}",
+  "gitNoUpstream": "Sem upstream",
   "gitAheadCount": "{count, plural, =1{1 commit não enviado} other{{count} commits não enviados}}",
-  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
-  "gitClean": "Clean",
-  "gitConflicts": "Conflicts",
+  "gitBehindCount": "{count, plural, =1{1 commit para obter} other{{count} commits para obter}}",
+  "gitClean": "Limpo",
+  "gitConflicts": "Conflitos",
   "gitChanges": "Alterações",
   "gitHistory": "Histórico",
-  "gitBranches": "Ramos",
+  "gitBranches": "Branches",
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Confirmar",
-  "gitSelectForCommit": "Select for commit",
-  "gitRemoveFromCommit": "Leave out of commit",
-  "gitDiscard": "Discard",
-  "gitOpenFile": "Open file",
-  "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Arquivos não versionados",
-  "gitCommitMessage": "Commit message",
-  "gitCommitSelectedFiles": "Selected files",
-  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
-  "gitCommitMessageRequired": "Enter a commit message.",
-  "gitCreateBranch": "Create branch",
-  "gitNewBranch": "+ New Branch",
-  "gitBranchName": "Branch name",
-  "gitSwitchBranch": "Switch",
-  "gitNoChanges": "No changes",
-  "gitNoHistory": "No history",
-  "gitNoBranches": "No branches",
-  "gitNoDiff": "Nenhuma diferença para mostrar",
-  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
-  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
-  "gitConfirmDiscardTitle": "Discard Git changes?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
-  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
-  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
-  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
-  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
-  "gitProjectHistory": "Project",
-  "gitFileHistory": "Current file",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Selecionar para o commit",
+  "gitRemoveFromCommit": "Excluir do commit",
+  "gitDiscard": "Descartar",
+  "gitOpenFile": "Abrir arquivo",
+  "gitMarkResolved": "Marcar como resolvido",
+  "gitUntracked": "Arquivos não rastreados",
+  "gitCommitMessage": "Mensagem de commit",
+  "gitCommitSelectedFiles": "Arquivos selecionados",
+  "gitCommitNoSelectedFiles": "Selecione pelo menos um arquivo antes de criar o commit.",
+  "gitCommitMessageRequired": "Digite uma mensagem de commit.",
+  "gitCreateBranch": "Criar branch",
+  "gitNewBranch": "+ Nova branch",
+  "gitBranchName": "Nome da branch",
+  "gitSwitchBranch": "Trocar",
+  "gitNoChanges": "Nenhuma alteração",
+  "gitNoHistory": "Nenhum histórico",
+  "gitNoBranches": "Nenhuma branch",
+  "gitNoDiff": "Nenhum diff para exibir",
+  "gitBinaryFile": "Arquivo binário. O BusyMark não exibe patches binários.",
+  "gitUnsavedChangesBanner": "As alterações não salvas do editor não são incluídas até serem salvas.",
+  "gitConfirmDiscardTitle": "Descartar alterações do Git?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{O arquivo rastreado selecionado será restaurado pelo Git.} other{Os arquivos rastreados selecionados serão restaurados pelo Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{O arquivo não rastreado selecionado será excluído.} other{Os arquivos não rastreados selecionados serão excluídos.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{O arquivo selecionado será restaurado ou excluído de acordo com o status do Git.} other{Os arquivos selecionados serão restaurados ou excluídos de acordo com o status do Git.}}",
+  "gitConfirmSwitchBranchTitle": "Trocar para {branch}?",
+  "gitConfirmSwitchBranchMessage": "O BusyMark recarregará o espaço de trabalho do disco depois que o Git trocar de branch.",
+  "gitConfirmPushSetUpstreamTitle": "Definir branch upstream?",
+  "gitConfirmPushSetUpstreamMessage": "Esta branch não tem upstream. O BusyMark pode enviar {branch} e definir seu upstream quando houver exatamente um remoto configurado.",
+  "gitProjectHistory": "Projeto",
+  "gitFileHistory": "Arquivo atual",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "File actions",
-  "gitStatusAdded": "Added",
-  "gitStatusDeleted": "Deleted",
-  "gitStatusRenamed": "Renamed",
-  "gitStatusCopied": "Copied",
-  "gitStatusUntracked": "Untracked",
-  "gitStatusConflicted": "Conflicted",
-  "gitStatusIgnored": "Ignored",
-  "gitStatusTypeChanged": "Type changed",
-  "gitStatusModified": "Modified",
-  "gitStatusUnknown": "Unknown",
-  "gitErrorUnavailable": "Git is unavailable.",
-  "gitErrorNotRepository": "This workspace is not a Git repository.",
-  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
-  "gitErrorInvalidBranchName": "Enter a valid branch name.",
-  "gitErrorNoRemote": "No Git remote is configured.",
-  "gitErrorNoUpstream": "No upstream branch is configured.",
-  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
-  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
-  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
-  "gitErrorNetwork": "Git network operation failed.",
-  "gitErrorConflict": "Git reported unresolved conflicts.",
-  "gitErrorCommandFailed": "Git command failed.",
+  "gitFileActions": "Ações do arquivo",
+  "gitStatusAdded": "Adicionado",
+  "gitStatusDeleted": "Excluído",
+  "gitStatusRenamed": "Renomeado",
+  "gitStatusCopied": "Copiado",
+  "gitStatusUntracked": "Não rastreado",
+  "gitStatusConflicted": "Em conflito",
+  "gitStatusIgnored": "Ignorado",
+  "gitStatusTypeChanged": "Tipo alterado",
+  "gitStatusModified": "Modificado",
+  "gitStatusUnknown": "Desconhecido",
+  "gitErrorUnavailable": "Git não está disponível.",
+  "gitErrorNotRepository": "Este espaço de trabalho não é um repositório Git.",
+  "gitErrorUnsafePath": "O BusyMark bloqueou um caminho Git inseguro.",
+  "gitErrorInvalidBranchName": "Digite um nome de branch válido.",
+  "gitErrorNoRemote": "Nenhum remoto Git está configurado.",
+  "gitErrorNoUpstream": "Nenhuma branch upstream está configurada.",
+  "gitErrorMultipleRemotes": "Há vários remotos configurados. Escolha um upstream fora desta versão do BusyMark.",
+  "gitErrorDirtyWorkspace": "Salve ou descarte as alterações do editor do BusyMark antes de trocar de branch.",
+  "gitErrorDiverged": "A branch divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.",
+  "gitErrorAuthentication": "A autenticação do Git falhou. No snap, os remotos SSH podem exigir a conexão da interface ssh-keys.",
+  "gitErrorNetwork": "A operação de rede do Git falhou.",
+  "gitErrorConflict": "O Git relatou conflitos não resolvidos.",
+  "gitErrorCommandFailed": "O comando Git falhou.",
 
   "markdownAndHtml": "Markdown e HTML",
   "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
@@ -2060,11 +2092,11 @@
   "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
   "markdownHtmlInlineFormattingDescription": "Formatação dentro de parágrafos, itens de lista e células de tabela.",
   "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "Blocos HTML bruto",
+  "markdownHtmlRawHtmlBlocks": "Blocos de HTML bruto",
   "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
   "markdownHtmlRawHtmlBlocksDescription": "Tags HTML de bloco seguras renderizadas pelos widgets de pré-visualização do BusyMark.",
   "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlInline": "Tags HTML em linha",
+  "markdownHtmlRawHtmlInline": "Tags de HTML bruto em linha",
   "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
   "markdownHtmlRawHtmlInlineDescription": "Tags HTML em linha seguras renderizadas sem mostrar as tags literais.",
   "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
@@ -2098,9 +2130,9 @@
   "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
   "markdownHtmlSanitizedPreview": "Pré-visualização higienizada",
   "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "O HTML permitido é convertido em blocos de pré-visualização do BusyMark, não renderizado em um navegador.",
+  "markdownHtmlSanitizedPreviewDescription": "O HTML permitido é convertido em blocos de pré-visualização do BusyMark e não é renderizado em um navegador.",
   "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "Fonte preservada",
+  "markdownHtmlSourcePreserved": "Código-fonte preservado",
   "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
   "markdownHtmlSourcePreservedDescription": "HTML bruto não editado é salvo exatamente como texto fonte.",
   "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
@@ -2130,7 +2162,7 @@
   "errorFileNameRequired": "O nome do arquivo é obrigatório.",
   "errorFileNameUnsafe": "O nome do arquivo deve ser um único segmento de caminho seguro.",
   "errorFileOperationInvalidTarget": "Não é possível mover uma pasta para dentro dela mesma.",
-  "errorFileOperationOutsideRoot": "A operação de arquivo deve permanecer dentro do workspace.",
-  "errorFileOperationRoot": "A raiz do workspace não pode ser alterada pela árvore de arquivos."
+  "errorFileOperationOutsideRoot": "A operação de arquivo deve permanecer dentro do espaço de trabalho.",
+  "errorFileOperationRoot": "A raiz do espaço de trabalho não pode ser alterada pela árvore de arquivos."
 
 }

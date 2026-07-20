@@ -575,20 +575,37 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         break;
       case BusyMarkEditorShortcutAction.image:
         _applyFullEditingValue(
-          SourceCommands.insertImage(_fullEditingValue(), block: true),
+          SourceCommands.insertImage(
+            _fullEditingValue(),
+            block: true,
+            altPlaceholder: context.l10n.editorPlaceholderAltText,
+          ),
         );
         break;
       case BusyMarkEditorShortcutAction.inlineImage:
         _applyFullEditingValue(
-          SourceCommands.insertImage(_fullEditingValue(), block: false),
+          SourceCommands.insertImage(
+            _fullEditingValue(),
+            block: false,
+            altPlaceholder: context.l10n.editorPlaceholderAltText,
+          ),
         );
         break;
       case BusyMarkEditorShortcutAction.table:
-        _applyFullEditingValue(SourceCommands.insertTable(_fullEditingValue()));
+        _applyFullEditingValue(
+          SourceCommands.insertTable(
+            _fullEditingValue(),
+            headerTextForColumn: context.l10n.tableHeaderNumber,
+            cellText: context.l10n.tableCellDefault,
+          ),
+        );
         break;
       case BusyMarkEditorShortcutAction.htmlBlock:
         _applyFullEditingValue(
-          SourceCommands.insertHtmlBlock(_fullEditingValue()),
+          SourceCommands.insertHtmlBlock(
+            _fullEditingValue(),
+            defaultContent: context.l10n.htmlContentDefault,
+          ),
         );
         break;
       case BusyMarkEditorShortcutAction.thematicBreak:
@@ -609,7 +626,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _applyInlineCommand(SourceInlineCommand command) {
     _applyFullEditingValue(
-      SourceCommands.applyInlineCommand(_fullEditingValue(), command),
+      SourceCommands.applyInlineCommand(
+        _fullEditingValue(),
+        command,
+        placeholder: command == SourceInlineCommand.code
+            ? context.l10n.editorPlaceholderCode
+            : context.l10n.editorPlaceholderText,
+      ),
     );
   }
 
@@ -631,7 +654,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _insertCodeBlock({String language = ''}) {
     _applyFullEditingValue(
-      SourceCommands.insertCodeFence(_fullEditingValue(), language: language),
+      SourceCommands.insertCodeFence(
+        _fullEditingValue(),
+        language: language,
+        contentPlaceholder: context.l10n.editorPlaceholderCode,
+      ),
     );
   }
 
@@ -1074,7 +1101,7 @@ class _SourceSearchPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final status = result.invalidRegex
-        ? 'Invalid regex'
+        ? context.l10n.sourceSearchInvalidRegex
         : result.totalMatchCount == 0
         ? '0 / 0'
         : '${(result.currentMatchIndex ?? 0) + 1} / ${result.totalMatchCount}';

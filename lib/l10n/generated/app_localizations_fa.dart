@@ -12,7 +12,8 @@ class AppLocalizationsFa extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'ویرایشگر مستندات Markdown و سازگار با Writerside.';
+  String get appSubtitle =>
+      'ویرایشگر مستندات Markdown و پروژه‌های سازگار با Writerside.';
 
   @override
   String get aboutBusyMark => 'دربارهٔ BusyMark';
@@ -528,28 +529,28 @@ class AppLocalizationsFa extends AppLocalizations {
       'محل نمایش دکمه‌های شناور ویرایش WYSIWYG را انتخاب کنید.';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'حریم خصوصی';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get allowRemoteImages => 'بارگیری تصاویر راه دور';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'اجازه دهید تصاویر پیش‌نمایش و ویرایشگر Markdown از نشانی‌های http و https بارگیری شوند.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions => 'پاک کردن مجوزهای تصاویر راه دور';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'فضاهای کاری‌ای را که اجازهٔ بارگیری تصاویر راه دور داشتند، فراموش کنید.';
 
   @override
-  String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
+  String get clearGitWorkspaceTrust => 'پاک کردن فضاهای کاری مورد اعتماد Git';
 
   @override
   String get clearGitWorkspaceTrustDescription =>
-      'Ask before enabling Git features for previously trusted workspaces.';
+      'پیش از فعال‌کردن ویژگی‌های Git برای فضاهای کاری که قبلاً مورد اعتماد بوده‌اند، پرسیده شود.';
 
   @override
   String get settingsWindowSectionTitle => 'پنجره';
@@ -651,6 +652,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get htmlBlock => 'بلوک HTML';
+
+  @override
+  String get htmlContentDefault => 'محتوای HTML';
 
   @override
   String get shortcutHtmlBlockDescription => 'درج یا ویرایش بلوک HTML';
@@ -767,6 +771,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String get altText => 'متن جایگزین';
 
   @override
+  String get editorPlaceholderText => 'متن';
+
+  @override
+  String get editorPlaceholderCode => 'کد';
+
+  @override
+  String get editorPlaceholderAltText => 'متن جایگزین';
+
+  @override
   String get describeTheImage => 'تصویر را توصیف کنید';
 
   @override
@@ -787,24 +800,24 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noImageSource => 'منبع تصویر وجود ندارد';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'تصویر راه دور مسدود است';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'انتخاب کنید BusyMark اجازهٔ بارگیری تصاویر راه دور داشته باشد یا نه.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'تصاویر راه دور مسدود شده‌اند';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'این سند به تصاویری در اینترنت ارجاع می‌دهد. بارگیری آن‌ها ممکن است اطلاعات شبکه را برای میزبان تصویر آشکار کند.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace => 'بارگیری برای این فضای کاری';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'همیشه تصاویر راه دور بارگیری شوند';
 
   @override
   String get hideSidebar => 'پنهان کردن پنل کناری';
@@ -963,23 +976,26 @@ class AppLocalizationsFa extends AppLocalizations {
   String get foldKindTag => 'برچسب';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'تطابق قبلی';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'تطابق بعدی';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive => 'حساس به بزرگی و کوچکی حروف';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'تمام کلمه';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'عبارت منظم';
+
+  @override
+  String get sourceSearchInvalidRegex => 'عبارت منظم نامعتبر است';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'فایل بزرگ: برجسته‌سازی و جمع‌کردن موقتاً متوقف شده‌اند';
 
   @override
   String get noPreview => 'پیش‌نمایشی وجود ندارد';
@@ -1557,56 +1573,67 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'بستن';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'تفاوت‌های Git';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'نمایش تفاوت‌ها';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'قدیمی $oldRange ← جدید $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'بدون خط';
+
+  @override
+  String get gitUnavailableTitle => 'Git در دسترس نیست';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Git را نصب کنید یا BusyMark را برای استفاده از یک برنامهٔ اجرایی Git در دسترس پیکربندی کنید. $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
+  String get gitTrustRequiredTitle =>
+      'برای استفاده از Git به این فضای کاری اعتماد می‌کنید؟';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+      'مخزن‌های Git می‌توانند از طریق هوک‌ها، فیلترها و پیکربندی‌های دیگر برنامه اجرا کنند. پیش از اینکه BusyMark داده‌های مخزن را بخواند یا عملیات Git را فعال کند، به این فضای کاری اعتماد کنید.';
 
   @override
-  String get gitTrustWorkspace => 'Trust workspace';
+  String get gitTrustWorkspace => 'اعتماد به فضای کاری';
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitNotRepositoryTitle => 'مخزن Git نیست';
 
   @override
-  String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+  String get gitNotRepositoryMessage => 'این فضای کاری درون یک مخزن Git نیست.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'راه‌اندازی مخزن';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitDetachedHead => 'HEAD جداشده';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'HEAD در $commit جدا شده است';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'شاخهٔ بالادست وجود ندارد';
 
   @override
   String gitAheadCount(int count) {
@@ -1624,17 +1651,17 @@ class AppLocalizationsFa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count کامیت برای دریافت',
+      one: 'یک کامیت برای دریافت',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'بدون تغییر';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'تداخل‌ها';
 
   @override
   String get gitChanges => 'تغییرات';
@@ -1646,87 +1673,87 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitBranches => 'شاخه‌ها';
 
   @override
-  String get gitPull => 'Pull';
+  String get gitPull => 'دریافت';
 
   @override
-  String get gitPush => 'Push';
+  String get gitPush => 'ارسال';
 
   @override
-  String get gitCommit => 'ثبت';
+  String get gitCommit => 'کامیت';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'انتخاب برای کامیت';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'حذف از کامیت';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'دور انداختن';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'باز کردن فایل';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'علامت‌گذاری به‌عنوان حل‌شده';
 
   @override
-  String get gitUntracked => 'فایل‌های نسخه‌بندی‌نشده';
+  String get gitUntracked => 'فایل‌های رهگیری‌نشده';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'پیام کامیت';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'فایل‌های انتخاب‌شده';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'پیش از کامیت، دست‌کم یک فایل را انتخاب کنید.';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'پیام کامیت را وارد کنید.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'ایجاد شاخه';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ شاخهٔ جدید';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'نام شاخه';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'تغییر';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'تغییری وجود ندارد';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'تاریخچه‌ای وجود ندارد';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'شاخه‌ای وجود ندارد';
 
   @override
   String get gitNoDiff => 'تفاوتی برای نمایش نیست';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'فایل دودویی است. BusyMark وصله‌های دودویی را نمایش نمی‌دهد.';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'تغییرات ذخیره‌نشدهٔ ویرایشگر تا زمان ذخیره‌شدن در نظر گرفته نمی‌شوند.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'تغییرات Git دور انداخته شوند؟';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other: 'فایل‌های رهگیری‌شدهٔ انتخابی از Git بازیابی خواهند شد.',
+      one: 'فایل رهگیری‌شدهٔ انتخابی از Git بازیابی خواهد شد.',
     );
     return '$_temp0';
   }
@@ -1736,8 +1763,8 @@ class AppLocalizationsFa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'فایل‌های رهگیری‌نشدهٔ انتخابی حذف خواهند شد.',
+      one: 'فایل رهگیری‌نشدهٔ انتخابی حذف خواهد شد.',
     );
     return '$_temp0';
   }
@@ -1748,35 +1775,34 @@ class AppLocalizationsFa extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
-      one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'فایل‌های انتخابی بر اساس وضعیت Git آن‌ها بازیابی یا حذف خواهند شد.',
+      one: 'فایل انتخابی بر اساس وضعیت Git آن بازیابی یا حذف خواهد شد.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return 'به $branch بروید؟';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'پس از تغییر شاخه توسط Git، BusyMark فضای کاری را دوباره از دیسک بارگیری می‌کند.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'شاخهٔ بالادست تنظیم شود؟';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'این شاخه بالادست ندارد. اگر دقیقاً یک مخزن راه دور پیکربندی شده باشد، BusyMark می‌تواند $branch را ارسال و آن را به‌عنوان بالادست تنظیم کند.';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'پروژه';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'فایل فعلی';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -1784,80 +1810,80 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'عملیات فایل';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'افزوده‌شده';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'حذف‌شده';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'تغییرنام‌یافته';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'کپی‌شده';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'رهگیری‌نشده';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'دارای تداخل';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'نادیده‌گرفته‌شده';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'نوع تغییر کرده';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'تغییریافته';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'ناشناخته';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git در دسترس نیست.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository => 'این فضای کاری یک مخزن Git نیست.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath => 'BusyMark یک مسیر ناامن Git را مسدود کرد.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName => 'یک نام معتبر برای شاخه وارد کنید.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'هیچ مخزن راه دور Git پیکربندی نشده است.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'هیچ شاخهٔ بالادستی پیکربندی نشده است.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'چند مخزن راه دور پیکربندی شده است. یک بالادست را خارج از این نسخهٔ BusyMark انتخاب کنید.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'پیش از تغییر شاخه، تغییرات ویرایشگر BusyMark را ذخیره کنید یا دور بیندازید.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'شاخه واگرا شده است. مشکل را با ادغام یا بازپایه‌گذاری در خارج از این نسخهٔ BusyMark حل کنید.';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'احراز هویت Git ناموفق بود. در بستهٔ snap، مخزن‌های راه دور SSH ممکن است به اتصال رابط ssh-keys نیاز داشته باشند.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'عملیات شبکهٔ Git ناموفق بود.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'Git تداخل‌های حل‌نشده گزارش کرد.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'فرمان Git ناموفق بود.';
 
   @override
   String get markdownAndHtml => 'Markdown و HTML';

@@ -1,4 +1,5 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
@@ -30,8 +31,12 @@ void main() {
       lines: [],
     );
 
-    final text = gitDiffHunkRangeText(hunk);
-    expect(text, 'old 1-5 -> new 1-6');
+    final text = gitDiffHunkRangeText(
+      hunk,
+      format: l10n.gitDiffHunkRange,
+      noLinesText: l10n.gitDiffNoLines,
+    );
+    expect(text, 'old 1-5 → new 1-6');
     expect(text, isNot(contains('@@')));
     expect(text, isNot(contains('git checkout abcdef0')));
   });
@@ -417,6 +422,7 @@ void main() {
   testWidgets('project history file rows show selected file diff', (
     tester,
   ) async {
+    final de = AppLocalizationsDe();
     final commit = GitCommitSummary(
       fullHash: '1234567890abcdef',
       shortHash: '1234567',
@@ -481,6 +487,7 @@ void main() {
             );
           },
         ),
+        locale: const Locale('de'),
       ),
     );
 
@@ -514,9 +521,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Show diff'), findsOneWidget);
+    expect(find.text(de.gitShowDiff), findsOneWidget);
 
-    await tester.tap(find.text('Show diff'));
+    await tester.tap(find.text(de.gitShowDiff));
     await tester.pump();
 
     expect(state.openDiffFilePaths, ['README.md', 'guide.md']);
@@ -616,7 +623,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('old no lines -> new 1', findRichText: true),
+      find.textContaining(
+        l10n.gitDiffHunkRange(l10n.gitDiffNoLines, '1'),
+        findRichText: true,
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('@@', findRichText: true), findsNothing);
@@ -644,7 +654,10 @@ void main() {
     );
 
     expect(
-      find.textContaining('old no lines -> new 1', findRichText: true),
+      find.textContaining(
+        l10n.gitDiffHunkRange(l10n.gitDiffNoLines, '1'),
+        findRichText: true,
+      ),
       findsNothing,
     );
     expect(find.textContaining('@@', findRichText: true), findsNothing);
@@ -925,8 +938,9 @@ void main() {
   });
 }
 
-Widget _localized(Widget child) {
+Widget _localized(Widget child, {Locale? locale}) {
   return MaterialApp(
+    locale: locale,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     theme: buildBusyMarkTheme(

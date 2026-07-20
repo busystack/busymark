@@ -652,16 +652,20 @@
   "@editingButtonsDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
-  "privacy": "Privacy",
+  "privacy": "Personvern",
   "@privacy": {"description": "Settings section title for privacy options."},
-  "allowRemoteImages": "Load remote images",
+  "allowRemoteImages": "Last inn eksterne bilder",
   "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
-  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "allowRemoteImagesDescription": "Tillat at bilder i Markdown-forhåndsvisningen og redigereren lastes inn fra HTTP- og HTTPS-adresser.",
   "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
-  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "clearRemoteImagePermissions": "Tøm tillatelser for eksterne bilder",
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
-  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "clearRemoteImagePermissionsDescription": "Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "Tøm klarerte Git-arbeidsområder",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "Vindu",
   "@settingsWindowSectionTitle": {
@@ -801,6 +805,8 @@
   "@htmlSource": {
     "description": "Text field label for raw HTML source."
   },
+  "htmlContentDefault": "HTML-innhold",
+  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
   "thematicBreak": "Tematisk skille",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -944,6 +950,12 @@
   "@altText": {
     "description": "Image alt text field label."
   },
+  "editorPlaceholderText": "tekst",
+  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "editorPlaceholderCode": "kode",
+  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "editorPlaceholderAltText": "alternativ tekst",
+  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
   "describeTheImage": "Beskriv bildet",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -973,17 +985,17 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Remote image blocked",
+  "remoteImageBlocked": "Eksternt bilde blokkert",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "Velg om BusyMark kan laste inn eksterne bilder.",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
-  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "remoteImagesBlockedTitle": "Eksterne bilder er blokkert",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
-  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "remoteImagesBlockedMessage": "Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.",
   "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
-  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "loadRemoteImagesForWorkspace": "Last inn for dette arbeidsområdet",
   "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
-  "alwaysLoadRemoteImages": "Always load remote images",
+  "alwaysLoadRemoteImages": "Last alltid inn eksterne bilder",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
   "hideSidebar": "Skjul sidepanel",
@@ -1133,7 +1145,7 @@
       }
     }
   },
-  "collapseKind": "Skjul {kind}",
+  "collapseKind": "Fold sammen {kind}",
   "@collapseKind": {
     "description": "Tooltip for collapsing a foldable source section.",
     "placeholders": {
@@ -1158,6 +1170,20 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
+  "sourceSearchPreviousMatch": "Forrige treff",
+  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "sourceSearchNextMatch": "Neste treff",
+  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "sourceSearchCaseSensitive": "Skill mellom store og små bokstaver",
+  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "sourceSearchWholeWord": "Hele ord",
+  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "sourceSearchRegex": "Regulært uttrykk",
+  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "sourceSearchInvalidRegex": "Ugyldig regulært uttrykk",
+  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "sourceLargeFileFeaturesPaused": "Stor fil: utheving og folding er satt på pause",
+  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "noPreview": "Ingen forhåndsvisning",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
@@ -1347,7 +1373,7 @@
       }
     }
   },
-  "errorPathDoesNotExist": "Banen finnes ikke: {path}",
+  "errorPathDoesNotExist": "Stien finnes ikke: {path}",
   "@errorPathDoesNotExist": {
     "description": "Detail for a missing path error.",
     "placeholders": {
@@ -1365,7 +1391,7 @@
       }
     }
   },
-  "errorTargetPathNotDirectory": "Målbanen finnes allerede og er ikke en mappe: {path}",
+  "errorTargetPathNotDirectory": "Målstien finnes allerede og er ikke en mappe: {path}",
   "@errorTargetPathNotDirectory": {
     "description": "Detail for a target path that is not a directory.",
     "placeholders": {
@@ -1404,7 +1430,7 @@
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "Mappenavnet må være ett enkelt, trygt banesegment.",
+  "errorDirectoryNameUnsafe": "Mappenavnet må være ett enkelt, trygt stisegment.",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
@@ -1412,7 +1438,7 @@
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
-  "errorTopicFileInvalid": "Emnefilnavnet må være et Markdown-filnavn uten baneskilletegn.",
+  "errorTopicFileInvalid": "Emnefilnavnet må være et Markdown-filnavn uten stiskilletegn.",
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
@@ -1477,7 +1503,7 @@
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "Emnefilnavnet må være ett enkelt, trygt banesegment.",
+  "errorTopicFileNameUnsafe": "Emnefilnavnet må være ett enkelt, trygt stisegment.",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
@@ -1525,7 +1551,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for automatisk parsing.",
+  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for automatisk analyse.",
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
@@ -1973,82 +1999,88 @@
       }
     }
   },
-  "close": "Close",
+  "close": "Lukk",
   "git": "Git",
-  "gitDiff": "Git diff",
-  "gitUnavailableTitle": "Git is unavailable",
-  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
-  "gitNotRepositoryTitle": "Not a Git repository",
-  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
-  "gitInitializeRepository": "Initialize repository",
-  "gitDetachedHead": "Detached HEAD",
-  "gitDetachedHeadAt": "Detached at {commit}",
-  "gitNoUpstream": "No upstream",
-  "gitAheadCount": "{count, plural, =1{1 commit ikke pushet} other{{count} commits ikke pushet}}",
-  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
-  "gitClean": "Clean",
-  "gitConflicts": "Conflicts",
+  "gitDiff": "Git-diff",
+  "gitShowDiff": "Vis diff",
+  "gitDiffHunkRange": "gammel {oldRange} → ny {newRange}",
+  "gitDiffNoLines": "ingen linjer",
+  "gitUnavailableTitle": "Git er ikke tilgjengelig",
+  "gitUnavailableMessage": "{reason, select, other{Installer Git, eller konfigurer BusyMark til å bruke en tilgjengelig Git-programfil. {reason}}}",
+  "gitTrustRequiredTitle": "Vil du stole på dette arbeidsområdet for Git?",
+  "gitTrustRequiredMessage": "Git-repositorier kan kjøre programmer via hooks, filtre og annen konfigurasjon. Stol på dette arbeidsområdet før BusyMark leser repositoriedata eller aktiverer Git-handlinger.",
+  "gitTrustWorkspace": "Stol på arbeidsområdet",
+  "gitNotRepositoryTitle": "Ikke et Git-repositorium",
+  "gitNotRepositoryMessage": "Dette arbeidsområdet er ikke i et Git-repositorium.",
+  "gitInitializeRepository": "Initialiser repositorium",
+  "gitDetachedHead": "Frakoblet HEAD",
+  "gitDetachedHeadAt": "Frakoblet ved {commit}",
+  "gitNoUpstream": "Ingen upstream",
+  "gitAheadCount": "{count, plural, =1{1 commit som ikke er pushet} other{{count} commits som ikke er pushet}}",
+  "gitBehindCount": "{count, plural, =1{1 commit å hente} other{{count} commits å hente}}",
+  "gitClean": "Ren",
+  "gitConflicts": "Konflikter",
   "gitChanges": "Endringer",
   "gitHistory": "Historikk",
   "gitBranches": "Grener",
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Innsjekk",
-  "gitSelectForCommit": "Select for commit",
-  "gitRemoveFromCommit": "Leave out of commit",
-  "gitDiscard": "Discard",
-  "gitOpenFile": "Open file",
-  "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Uversjonerte filer",
-  "gitCommitMessage": "Commit message",
-  "gitCommitSelectedFiles": "Selected files",
-  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
-  "gitCommitMessageRequired": "Enter a commit message.",
-  "gitCreateBranch": "Create branch",
-  "gitNewBranch": "+ New Branch",
-  "gitBranchName": "Branch name",
-  "gitSwitchBranch": "Switch",
-  "gitNoChanges": "No changes",
-  "gitNoHistory": "No history",
-  "gitNoBranches": "No branches",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Velg for commit",
+  "gitRemoveFromCommit": "Utelat fra commit",
+  "gitDiscard": "Forkast",
+  "gitOpenFile": "Åpne fil",
+  "gitMarkResolved": "Merk som løst",
+  "gitUntracked": "Usporede filer",
+  "gitCommitMessage": "Commit-melding",
+  "gitCommitSelectedFiles": "Valgte filer",
+  "gitCommitNoSelectedFiles": "Velg minst én fil før du oppretter en commit.",
+  "gitCommitMessageRequired": "Skriv inn en commit-melding.",
+  "gitCreateBranch": "Opprett gren",
+  "gitNewBranch": "+ Ny gren",
+  "gitBranchName": "Grennavn",
+  "gitSwitchBranch": "Bytt",
+  "gitNoChanges": "Ingen endringer",
+  "gitNoHistory": "Ingen historikk",
+  "gitNoBranches": "Ingen grener",
   "gitNoDiff": "Ingen diff å vise",
-  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
-  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
-  "gitConfirmDiscardTitle": "Discard Git changes?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
-  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
-  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
-  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
-  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
-  "gitProjectHistory": "Project",
-  "gitFileHistory": "Current file",
+  "gitBinaryFile": "Binærfil. BusyMark viser ikke binære patcher.",
+  "gitUnsavedChangesBanner": "Ulagrede endringer i redigereren tas ikke med før de er lagret.",
+  "gitConfirmDiscardTitle": "Forkaste Git-endringer?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Den valgte sporede filen gjenopprettes fra Git.} other{De valgte sporede filene gjenopprettes fra Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{Den valgte usporede filen slettes.} other{De valgte usporede filene slettes.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.} other{De valgte filene gjenopprettes eller slettes ut fra Git-statusen.}}",
+  "gitConfirmSwitchBranchTitle": "Bytt til {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark laster arbeidsområdet på nytt fra disken etter at Git har byttet gren.",
+  "gitConfirmPushSetUpstreamTitle": "Angi upstream-gren?",
+  "gitConfirmPushSetUpstreamMessage": "Denne grenen har ingen upstream. BusyMark kan pushe {branch} og angi upstream når nøyaktig én remote er konfigurert.",
+  "gitProjectHistory": "Prosjekt",
+  "gitFileHistory": "Gjeldende fil",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "File actions",
-  "gitStatusAdded": "Added",
-  "gitStatusDeleted": "Deleted",
-  "gitStatusRenamed": "Renamed",
-  "gitStatusCopied": "Copied",
-  "gitStatusUntracked": "Untracked",
-  "gitStatusConflicted": "Conflicted",
-  "gitStatusIgnored": "Ignored",
-  "gitStatusTypeChanged": "Type changed",
-  "gitStatusModified": "Modified",
-  "gitStatusUnknown": "Unknown",
-  "gitErrorUnavailable": "Git is unavailable.",
-  "gitErrorNotRepository": "This workspace is not a Git repository.",
-  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
-  "gitErrorInvalidBranchName": "Enter a valid branch name.",
-  "gitErrorNoRemote": "No Git remote is configured.",
-  "gitErrorNoUpstream": "No upstream branch is configured.",
-  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
-  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
-  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
-  "gitErrorNetwork": "Git network operation failed.",
-  "gitErrorConflict": "Git reported unresolved conflicts.",
-  "gitErrorCommandFailed": "Git command failed.",
+  "gitFileActions": "Filhandlinger",
+  "gitStatusAdded": "Lagt til",
+  "gitStatusDeleted": "Slettet",
+  "gitStatusRenamed": "Gitt nytt navn",
+  "gitStatusCopied": "Kopiert",
+  "gitStatusUntracked": "Usporet",
+  "gitStatusConflicted": "I konflikt",
+  "gitStatusIgnored": "Ignorert",
+  "gitStatusTypeChanged": "Type endret",
+  "gitStatusModified": "Endret",
+  "gitStatusUnknown": "Ukjent",
+  "gitErrorUnavailable": "Git er ikke tilgjengelig.",
+  "gitErrorNotRepository": "Dette arbeidsområdet er ikke et Git-repositorium.",
+  "gitErrorUnsafePath": "BusyMark blokkerte en usikker Git-sti.",
+  "gitErrorInvalidBranchName": "Skriv inn et gyldig grennavn.",
+  "gitErrorNoRemote": "Ingen Git-remote er konfigurert.",
+  "gitErrorNoUpstream": "Ingen upstream-gren er konfigurert.",
+  "gitErrorMultipleRemotes": "Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.",
+  "gitErrorDirtyWorkspace": "Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.",
+  "gitErrorDiverged": "Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.",
+  "gitErrorAuthentication": "Git-autentisering mislyktes. I snap-pakken kan SSH-remoter kreve at grensesnittet ssh-keys kobles til.",
+  "gitErrorNetwork": "Git-nettverksoperasjonen mislyktes.",
+  "gitErrorConflict": "Git rapporterte uløste konflikter.",
+  "gitErrorCommandFailed": "Git-kommandoen mislyktes.",
 
   "markdownAndHtml": "Markdown og HTML",
   "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
@@ -2098,7 +2130,7 @@
   "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
   "markdownHtmlSanitizedPreview": "Renset forhåndsvisning",
   "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker, ikke rendret i en nettleser.",
+  "markdownHtmlSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
   "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
   "markdownHtmlSourcePreserved": "Kilden bevares",
   "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
@@ -2108,13 +2140,13 @@
   "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
   "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
   "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
-  "markdownHtmlBlockedContent": "Aktivt innhold blokkert",
+  "markdownHtmlBlockedContent": "Blokkert aktivt innhold",
   "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
   "markdownHtmlBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
   "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
   "markdownHtmlSafeUrls": "Bare trygge URL-er",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre skjemaer blokkeres.",
+  "markdownHtmlSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
   "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
   "addToGit": "Legg til i Git",
   "delete": "Slett",
@@ -2130,7 +2162,7 @@
   "errorFileNameRequired": "Filnavn kreves.",
   "errorFileNameUnsafe": "Filnavnet må være ett trygt stisegment.",
   "errorFileOperationInvalidTarget": "Kan ikke flytte en mappe inn i seg selv.",
-  "errorFileOperationOutsideRoot": "Filoperasjonen må holde seg i workspace.",
-  "errorFileOperationRoot": "Workspace-roten kan ikke endres fra filtreet."
+  "errorFileOperationOutsideRoot": "Filoperasjonen må holde seg i arbeidsområdet.",
+  "errorFileOperationRoot": "Roten til arbeidsområdet kan ikke endres fra filtreet."
 
 }

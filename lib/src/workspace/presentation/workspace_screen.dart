@@ -4825,7 +4825,11 @@ class _DiffChangeNavigator extends StatelessWidget {
               const SizedBox(width: BusyMarkSpacing.md),
               Expanded(
                 child: Text(
-                  gitDiffHunkRangeText(target!.hunk),
+                  gitDiffHunkRangeText(
+                    target!.hunk,
+                    format: context.l10n.gitDiffHunkRange,
+                    noLinesText: context.l10n.gitDiffNoLines,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

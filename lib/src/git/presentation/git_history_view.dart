@@ -59,8 +59,6 @@ class GitHistoryView extends StatelessWidget {
 
 enum _CommitFileAction { showDiff }
 
-const _showDiffLabel = 'Show diff';
-
 Future<_CommitFileAction?> _showCommitFileMenu(
   BuildContext context,
   Offset position,
@@ -82,10 +80,10 @@ Future<_CommitFileAction?> _showCommitFileMenu(
       overlay.size.width - position.dx,
       overlay.size.height - position.dy,
     ),
-    items: const [
+    items: [
       BusyMarkPopupMenuItem(
         value: _CommitFileAction.showDiff,
-        label: _showDiffLabel,
+        label: context.l10n.gitShowDiff,
         icon: BusyMarkGlyphs.preview,
       ),
     ],

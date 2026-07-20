@@ -426,6 +426,8 @@ class _DiffFileSection extends StatelessWidget {
               snapshot,
               changeIndexOffset,
               showHunkHeaders: showHunkHeaders,
+              formatHunkRange: context.l10n.gitDiffHunkRange,
+              noLinesText: context.l10n.gitDiffNoLines,
             ),
             changeKeys: changeKeys,
           );
@@ -510,6 +512,8 @@ List<BusyMarkReadOnlySourceLine> _diffSourceLines(
   String? snapshot,
   int changeIndexOffset, {
   required bool showHunkHeaders,
+  required String Function(String oldRange, String newRange) formatHunkRange,
+  required String noLinesText,
 }) {
   if (snapshot == null) {
     return [
@@ -518,6 +522,8 @@ List<BusyMarkReadOnlySourceLine> _diffSourceLines(
           hunk,
           changeIndexOffset + index,
           showHeader: showHunkHeaders,
+          formatHunkRange: formatHunkRange,
+          noLinesText: noLinesText,
         ),
     ];
   }
@@ -676,6 +682,8 @@ List<BusyMarkReadOnlySourceLine> _diffHunkLines(
   GitDiffHunk hunk,
   int changeTargetIndex, {
   required bool showHeader,
+  required String Function(String oldRange, String newRange) formatHunkRange,
+  required String noLinesText,
 }) {
   var targetAssigned = false;
   int? lineTarget() {
@@ -689,7 +697,11 @@ List<BusyMarkReadOnlySourceLine> _diffHunkLines(
   return [
     if (showHeader)
       BusyMarkReadOnlySourceLine(
-        text: gitDiffHunkRangeText(hunk),
+        text: gitDiffHunkRangeText(
+          hunk,
+          format: formatHunkRange,
+          noLinesText: noLinesText,
+        ),
         tone: BusyMarkReadOnlySourceLineTone.header,
         language: SourceSyntaxLanguage.plain,
         changeTargetIndex: changeTargetIndex,
@@ -705,14 +717,27 @@ List<BusyMarkReadOnlySourceLine> _diffHunkLines(
   ];
 }
 
-String gitDiffHunkRangeText(GitDiffHunk hunk) {
-  return 'old ${_gitDiffLineRangeText(hunk.oldStart, hunk.oldCount)} -> '
-      'new ${_gitDiffLineRangeText(hunk.newStart, hunk.newCount)}';
+String gitDiffHunkRangeText(
+  GitDiffHunk hunk, {
+  required String Function(String oldRange, String newRange) format,
+  required String noLinesText,
+}) {
+  final oldRange = _gitDiffLineRangeText(
+    hunk.oldStart,
+    hunk.oldCount,
+    noLinesText,
+  );
+  final newRange = _gitDiffLineRangeText(
+    hunk.newStart,
+    hunk.newCount,
+    noLinesText,
+  );
+  return format(oldRange, newRange);
 }
 
-String _gitDiffLineRangeText(int start, int count) {
+String _gitDiffLineRangeText(int start, int count, String noLinesText) {
   if (count <= 0) {
-    return 'no lines';
+    return noLinesText;
   }
   if (count == 1) {
     return '$start';

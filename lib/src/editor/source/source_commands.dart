@@ -134,15 +134,44 @@ abstract final class SourceCommands {
 
   static TextEditingValue applyInlineCommand(
     TextEditingValue value,
-    SourceInlineCommand command,
-  ) {
+    SourceInlineCommand command, {
+    required String placeholder,
+  }) {
     return switch (command) {
-      SourceInlineCommand.bold => _toggleWrap(value, '**', '**'),
-      SourceInlineCommand.italic => _toggleWrap(value, '*', '*'),
-      SourceInlineCommand.underline => _toggleWrap(value, '<u>', '</u>'),
-      SourceInlineCommand.strikethrough => _toggleWrap(value, '~~', '~~'),
-      SourceInlineCommand.code => _toggleWrap(value, '`', '`'),
-      SourceInlineCommand.link => insertLink(value),
+      SourceInlineCommand.bold => _toggleWrap(
+        value,
+        '**',
+        '**',
+        placeholder: placeholder,
+      ),
+      SourceInlineCommand.italic => _toggleWrap(
+        value,
+        '*',
+        '*',
+        placeholder: placeholder,
+      ),
+      SourceInlineCommand.underline => _toggleWrap(
+        value,
+        '<u>',
+        '</u>',
+        placeholder: placeholder,
+      ),
+      SourceInlineCommand.strikethrough => _toggleWrap(
+        value,
+        '~~',
+        '~~',
+        placeholder: placeholder,
+      ),
+      SourceInlineCommand.code => _toggleWrap(
+        value,
+        '`',
+        '`',
+        placeholder: placeholder,
+      ),
+      SourceInlineCommand.link => insertLink(
+        value,
+        labelPlaceholder: placeholder,
+      ),
     };
   }
 
@@ -210,10 +239,11 @@ abstract final class SourceCommands {
   static TextEditingValue insertCodeFence(
     TextEditingValue value, {
     String language = '',
+    required String contentPlaceholder,
   }) {
     final selection = _normalizedSelection(value);
     final selected = selection.textInside(value.text);
-    final content = selected.isEmpty ? 'code' : selected;
+    final content = selected.isEmpty ? contentPlaceholder : selected;
     final replacement = '```$language\n$content\n```';
     final contentStart = selection.start + 3 + language.length + 1;
     return _replaceSelection(
@@ -226,10 +256,13 @@ abstract final class SourceCommands {
     );
   }
 
-  static TextEditingValue insertLink(TextEditingValue value) {
+  static TextEditingValue insertLink(
+    TextEditingValue value, {
+    required String labelPlaceholder,
+  }) {
     final selection = _normalizedSelection(value);
     final selected = selection.textInside(value.text);
-    final label = selected.isEmpty ? 'text' : selected;
+    final label = selected.isEmpty ? labelPlaceholder : selected;
     final replacement = '[$label](url)';
     final urlStart = selection.start + label.length + 3;
     return _replaceSelection(
@@ -245,10 +278,11 @@ abstract final class SourceCommands {
   static TextEditingValue insertImage(
     TextEditingValue value, {
     required bool block,
+    required String altPlaceholder,
   }) {
     final selection = _normalizedSelection(value);
     final selected = selection.textInside(value.text).trim();
-    final alt = selected.isEmpty ? 'alt' : selected;
+    final alt = selected.isEmpty ? altPlaceholder : selected;
     final replacement = '![${alt.replaceAll('\n', ' ')}](url)';
     final inserted = block ? '\n$replacement\n' : replacement;
     final altStart = selection.start + (block ? 3 : 2);
@@ -262,17 +296,25 @@ abstract final class SourceCommands {
     );
   }
 
-  static TextEditingValue insertTable(TextEditingValue value) {
+  static TextEditingValue insertTable(
+    TextEditingValue value, {
+    required String Function(int columnNumber) headerTextForColumn,
+    required String cellText,
+  }) {
     return _replaceSelection(
       value,
-      '\n| Header 1 | Header 2 |\n| --- | --- |\n| Cell | Cell |\n',
+      '\n| ${headerTextForColumn(1)} | ${headerTextForColumn(2)} |\n'
+      '| --- | --- |\n| $cellText | $cellText |\n',
     );
   }
 
-  static TextEditingValue insertHtmlBlock(TextEditingValue value) {
+  static TextEditingValue insertHtmlBlock(
+    TextEditingValue value, {
+    required String defaultContent,
+  }) {
     final selection = _normalizedSelection(value);
     final selected = selection.textInside(value.text).trim();
-    final content = selected.isEmpty ? 'HTML content' : selected;
+    final content = selected.isEmpty ? defaultContent : selected;
     final replacement = '\n<div>\n  <p>$content</p>\n</div>\n';
     final contentStart = selection.start + replacement.indexOf(content);
     return _replaceSelection(
@@ -365,7 +407,7 @@ TextEditingValue _toggleWrap(
   TextEditingValue value,
   String prefix,
   String suffix, {
-  String placeholder = 'text',
+  required String placeholder,
 }) {
   final selection = _normalizedSelection(value);
   final text = value.text;

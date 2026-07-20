@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
@@ -2096,12 +2097,13 @@ void main() {}
   });
 
   testWidgets('WYSIWYG toolbar inserts an HTML block', (tester) async {
-    final l10n = AppLocalizationsEn();
+    final l10n = AppLocalizationsDe();
     final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
     var markdown = '';
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('de'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
@@ -2127,10 +2129,18 @@ void main() {}
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byKey(const ValueKey('wysiwyg-html-source-field')),
-      '<p>Inserted</p>',
+    final htmlSourceField = find.byKey(
+      const ValueKey('wysiwyg-html-source-field'),
     );
+    final htmlSourceInput = find.descendant(
+      of: htmlSourceField,
+      matching: find.byType(EditableText),
+    );
+    expect(
+      tester.widget<EditableText>(htmlSourceInput).controller.text,
+      contains(l10n.htmlContentDefault),
+    );
+    await tester.enterText(htmlSourceField, '<p>Inserted</p>');
     await tester.tap(find.text(l10n.insert));
     await tester.pumpAndSettle();
 

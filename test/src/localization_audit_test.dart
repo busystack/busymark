@@ -88,18 +88,59 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
-  test('Git sidebar labels are translated in supplied locales', () {
-    const keys = <String>{'gitUntracked', 'gitHistory', 'gitCommit'};
-    final english = _arbMessages(File('lib/l10n/app_en.arb'));
+  test('target ARBs match the English messages and placeholders', () {
+    final templateFile = File('lib/l10n/app_en.arb');
+    final templateArb = _arbMessages(templateFile);
+    final template = _arbMessageStrings(templateFile);
     final failures = <String>[];
     for (final file in _arbFiles()) {
       if (file.path.endsWith('app_en.arb')) {
         continue;
       }
-      final messages = _arbMessages(file);
-      for (final key in keys) {
-        if (messages[key] == english[key]) {
-          failures.add('${file.path}: $key still matches English');
+      final messages = _arbMessageStrings(file);
+      final missing = template.keys.toSet().difference(messages.keys.toSet());
+      final extra = messages.keys.toSet().difference(template.keys.toSet());
+      for (final key in missing.toList()..sort()) {
+        failures.add('${file.path}: missing message $key');
+      }
+      for (final key in extra.toList()..sort()) {
+        failures.add('${file.path}: unexpected message $key');
+      }
+      for (final key in template.keys.toSet().intersection(
+        messages.keys.toSet(),
+      )) {
+        for (final placeholder in _declaredPlaceholders(templateArb, key)) {
+          if (_usesPlaceholder(messages[key]!, placeholder)) {
+            continue;
+          }
+          failures.add(
+            '${file.path}: $key is missing placeholder {$placeholder}',
+          );
+        }
+      }
+    }
+
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('English-identical target messages are explicitly reviewed', () {
+    final english = _arbMessageStrings(File('lib/l10n/app_en.arb'));
+    final failures = <String>[];
+    for (final file in _arbFiles()) {
+      if (file.path.endsWith('app_en.arb')) {
+        continue;
+      }
+      final arb = _arbMessages(file);
+      final locale = arb['@@locale'] as String;
+      final allowed = {
+        ..._sharedEnglishMatches,
+        ...?_localeSpecificEnglishMatches[locale],
+      };
+      for (final entry in _arbMessageStrings(file).entries) {
+        if (entry.value == english[entry.key] && !allowed.contains(entry.key)) {
+          failures.add(
+            '${file.path}: ${entry.key} unexpectedly still matches English',
+          );
         }
       }
     }
@@ -171,6 +212,30 @@ Iterable<File> _arbFiles() sync* {
 Map<String, Object?> _arbMessages(File file) {
   return jsonDecode(file.readAsStringSync()) as Map<String, Object?>;
 }
+
+Map<String, String> _arbMessageStrings(File file) {
+  final arb = _arbMessages(file);
+  return {
+    for (final entry in arb.entries)
+      if (!entry.key.startsWith('@') && entry.value is String)
+        entry.key: entry.value! as String,
+  };
+}
+
+Set<String> _declaredPlaceholders(Map<String, Object?> arb, String key) {
+  final metadata = arb['@$key'];
+  if (metadata is! Map<String, Object?>) {
+    return const {};
+  }
+  final placeholders = metadata['placeholders'];
+  if (placeholders is! Map<String, Object?>) {
+    return const {};
+  }
+  return placeholders.keys.toSet();
+}
+
+bool _usesPlaceholder(String message, String placeholder) =>
+    RegExp('\\{${RegExp.escape(placeholder)}(?:\\}|\\s*,)').hasMatch(message);
 
 Iterable<File> _nativeLinuxSourceFiles() sync* {
   for (final entity in Directory('linux/runner').listSync(recursive: true)) {
@@ -331,3 +396,70 @@ const _nativeGtkUserFacingPatterns = <_LiteralPattern>[
     dotAll: true,
   ),
 ];
+
+const _sharedEnglishMatches = <String>{
+  'appTitle',
+  'aboutLicenseName',
+  'markdown',
+  'languageEnglish',
+  'languageGerman',
+  'languageItalian',
+  'languageNorwegian',
+  'languageFrench',
+  'languageRussian',
+  'languageUkrainian',
+  'languagePolish',
+  'languageSpanish',
+  'languagePortuguese',
+  'languageArabic',
+  'languagePersian',
+  'languageHindi',
+  'writerside',
+  'xml',
+  'fileTypeMarkdown',
+  'headingLevelAbbreviation',
+  'git',
+  'gitPull',
+  'gitPush',
+  'gitAdditionsDeletions',
+};
+
+const _localeSpecificEnglishMatches = <String, Set<String>>{
+  'de': {
+    'aboutWebsite',
+    'editor',
+    'link',
+    'tabs',
+    'tab',
+    'gitDetachedHead',
+    'gitBranches',
+    'gitCommit',
+  },
+  'es': {'editor', 'gitCommit'},
+  'fr': {
+    'source',
+    'validation',
+    'fileTypeImages',
+    'defaultProjectName',
+    'image',
+    'foldKindSection',
+    'note',
+    'gitBranches',
+    'gitCommit',
+    'editorPlaceholderCode',
+  },
+  'it': {
+    'editor',
+    'file',
+    'shortcutGroupFile',
+    'checklist',
+    'privacy',
+    'toc',
+    'foldKindTag',
+    'gitCommit',
+  },
+  'nb': {'systemTheme', 'systemLanguage', 'gitCommit'},
+  'pl': {'folder', 'foldKindTag'},
+  'pt': {'editor', 'link', 'toc', 'foldKindTag', 'gitBranches', 'gitCommit'},
+  'hi': {'toc'},
+};

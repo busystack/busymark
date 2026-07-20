@@ -541,28 +541,30 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wählen Sie aus, wo die schwebenden WYSIWYG-Bearbeitungsschaltflächen angezeigt werden.';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Datenschutz';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get allowRemoteImages => 'Externe Bilder laden';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'Das Laden von Bildern in der Markdown-Vorschau und im Editor über HTTP- und HTTPS-URLs zulassen.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions =>
+      'Berechtigungen für externe Bilder löschen';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'Arbeitsbereiche vergessen, denen das Laden externer Bilder erlaubt wurde.';
 
   @override
-  String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
+  String get clearGitWorkspaceTrust =>
+      'Vertrauenswürdige Git-Arbeitsbereiche löschen';
 
   @override
   String get clearGitWorkspaceTrustDescription =>
-      'Ask before enabling Git features for previously trusted workspaces.';
+      'Vor dem Aktivieren von Git-Funktionen für zuvor vertrauenswürdige Arbeitsbereiche nachfragen.';
 
   @override
   String get settingsWindowSectionTitle => 'Fenster';
@@ -666,6 +668,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get htmlBlock => 'HTML-Block';
 
   @override
+  String get htmlContentDefault => 'HTML-Inhalt';
+
+  @override
   String get shortcutHtmlBlockDescription =>
       'HTML-Block einfügen oder bearbeiten';
 
@@ -676,7 +681,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editHtml => 'HTML bearbeiten';
 
   @override
-  String get htmlSource => 'HTML-Quelle';
+  String get htmlSource => 'HTML-Quelltext';
 
   @override
   String get thematicBreak => 'Trennlinie';
@@ -781,6 +786,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get altText => 'Alternativtext';
 
   @override
+  String get editorPlaceholderText => 'Text';
+
+  @override
+  String get editorPlaceholderCode => 'Code';
+
+  @override
+  String get editorPlaceholderAltText => 'Alternativtext';
+
+  @override
   String get describeTheImage => 'Bild beschreiben';
 
   @override
@@ -801,24 +815,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noImageSource => 'Keine Bildquelle';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'Externes Bild blockiert';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'Festlegen, ob BusyMark externe Bilder laden darf.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'Externe Bilder sind blockiert';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'Dieses Dokument verweist auf Bilder aus dem Internet. Beim Laden können Netzwerkinformationen an den Bildhost übermittelt werden.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace => 'Für diesen Arbeitsbereich laden';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'Externe Bilder immer laden';
 
   @override
   String get hideSidebar => 'Seitenbereich ausblenden';
@@ -961,7 +975,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String collapseKind(String kind) {
-    return '$kind reduzieren';
+    return '$kind zuklappen';
   }
 
   @override
@@ -977,23 +991,26 @@ class AppLocalizationsDe extends AppLocalizations {
   String get foldKindTag => 'Tag';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'Vorheriger Treffer';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'Nächster Treffer';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive => 'Groß-/Kleinschreibung beachten';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'Nur ganze Wörter';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'Regulärer Ausdruck';
+
+  @override
+  String get sourceSearchInvalidRegex => 'Ungültiger regulärer Ausdruck';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'Große Datei: Hervorhebung und Faltung sind pausiert';
 
   @override
   String get noPreview => 'Keine Vorschau';
@@ -1177,11 +1194,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get errorFileOperationOutsideRoot =>
-      'Dateivorgang muss im Workspace bleiben.';
+      'Der Dateivorgang muss im Arbeitsbereich bleiben.';
 
   @override
   String get errorFileOperationRoot =>
-      'Der Workspace-Stamm kann nicht über den Dateibaum geändert werden.';
+      'Das Stammverzeichnis des Arbeitsbereichs kann nicht über den Dateibaum geändert werden.';
 
   @override
   String get errorProjectNameRequired => 'Projektname ist erforderlich.';
@@ -1572,56 +1589,68 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'Schließen';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'Git-Diff';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'Diff anzeigen';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'alt $oldRange → neu $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'keine Zeilen';
+
+  @override
+  String get gitUnavailableTitle => 'Git ist nicht verfügbar';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Installieren Sie Git oder konfigurieren Sie BusyMark so, dass ein verfügbares Git-Programm verwendet wird. $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
+  String get gitTrustRequiredTitle =>
+      'Diesem Arbeitsbereich für Git vertrauen?';
 
   @override
   String get gitTrustRequiredMessage =>
-      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+      'Git-Repositorys können über Hooks, Filter und andere Konfigurationen Programme ausführen. Vertrauen Sie diesem Arbeitsbereich, bevor BusyMark Repository-Daten liest oder Git-Aktionen aktiviert.';
 
   @override
-  String get gitTrustWorkspace => 'Trust workspace';
+  String get gitTrustWorkspace => 'Diesem Arbeitsbereich vertrauen';
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitNotRepositoryTitle => 'Kein Git-Repository';
 
   @override
   String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+      'Dieser Arbeitsbereich befindet sich nicht in einem Git-Repository.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'Repository initialisieren';
 
   @override
   String get gitDetachedHead => 'Detached HEAD';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'Detached HEAD bei $commit';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'Kein Upstream';
 
   @override
   String gitAheadCount(int count) {
@@ -1639,17 +1668,17 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count Commits zum Pullen',
+      one: '1 Commit zum Pullen',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'Sauber';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'Konflikte';
 
   @override
   String get gitChanges => 'Änderungen';
@@ -1658,7 +1687,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitHistory => 'Verlauf';
 
   @override
-  String get gitBranches => 'Zweige';
+  String get gitBranches => 'Branches';
 
   @override
   String get gitPull => 'Pull';
@@ -1667,81 +1696,83 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Einchecken';
+  String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'Für Commit auswählen';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'Aus Commit entfernen';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'Verwerfen';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'Datei öffnen';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'Als gelöst markieren';
 
   @override
   String get gitUntracked => 'Nicht versionierte Dateien';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'Commit-Nachricht';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'Ausgewählte Dateien';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'Wählen Sie vor dem Commit mindestens eine Datei aus.';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'Geben Sie eine Commit-Nachricht ein.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'Branch erstellen';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ Neuer Branch';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'Branchname';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'Wechseln';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'Keine Änderungen';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'Kein Verlauf';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'Keine Branches';
 
   @override
   String get gitNoDiff => 'Kein Diff anzuzeigen';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'Binärdatei. BusyMark zeigt keine Binär-Patches an.';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'Ungespeicherte Editoränderungen werden erst nach dem Speichern berücksichtigt.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'Git-Änderungen verwerfen?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other:
+          'Die ausgewählten versionierten Dateien werden auf den Stand in Git zurückgesetzt.',
+      one:
+          'Die ausgewählte versionierte Datei wird auf den Stand in Git zurückgesetzt.',
     );
     return '$_temp0';
   }
@@ -1751,8 +1782,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'Die ausgewählten nicht versionierten Dateien werden gelöscht.',
+      one: 'Die ausgewählte nicht versionierte Datei wird gelöscht.',
     );
     return '$_temp0';
   }
@@ -1763,35 +1794,35 @@ class AppLocalizationsDe extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
+          'Die ausgewählten Dateien werden abhängig von ihrem Git-Status zurückgesetzt oder gelöscht.',
       one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'Die ausgewählte Datei wird abhängig von ihrem Git-Status zurückgesetzt oder gelöscht.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return 'Zu $branch wechseln?';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'BusyMark lädt den Arbeitsbereich vom Datenträger neu, nachdem Git den Branch gewechselt hat.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'Upstream-Branch festlegen?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'Dieser Branch hat keinen Upstream. BusyMark kann $branch pushen und den Upstream festlegen, wenn genau ein Remote konfiguriert ist.';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'Projekt';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'Aktuelle Datei';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -1799,80 +1830,83 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'Dateiaktionen';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'Hinzugefügt';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'Gelöscht';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'Umbenannt';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'Kopiert';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'Nicht versioniert';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'Konflikt';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'Ignoriert';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'Typ geändert';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'Geändert';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'Unbekannt';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git ist nicht verfügbar.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository =>
+      'Dieser Arbeitsbereich ist kein Git-Repository.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath =>
+      'BusyMark hat einen unsicheren Git-Pfad blockiert.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName =>
+      'Geben Sie einen gültigen Branchnamen ein.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'Es ist kein Git-Remote konfiguriert.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'Es ist kein Upstream-Branch konfiguriert.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'Mehrere Remotes sind konfiguriert. Wählen Sie außerhalb dieser BusyMark-Version einen Upstream aus.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'Speichern oder verwerfen Sie die Editoränderungen in BusyMark, bevor Sie den Branch wechseln.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'Der Branch ist auseinandergelaufen. Führen Sie Merge oder Rebase außerhalb dieser BusyMark-Version aus.';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'Git-Authentifizierung fehlgeschlagen. Im Snap muss für SSH-Remotes möglicherweise die Schnittstelle ssh-keys verbunden werden.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'Git-Netzwerkvorgang fehlgeschlagen.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'Git hat ungelöste Konflikte gemeldet.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'Git-Befehl fehlgeschlagen.';
 
   @override
   String get markdownAndHtml => 'Markdown und HTML';
@@ -1892,14 +1926,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Formatierung innerhalb von Absätzen, Listeneinträgen und Tabellenzellen.';
 
   @override
-  String get markdownHtmlRawHtmlBlocks => 'Raw-HTML-Blöcke';
+  String get markdownHtmlRawHtmlBlocks => 'Roh-HTML-Blöcke';
 
   @override
   String get markdownHtmlRawHtmlBlocksDescription =>
       'Sichere HTML-Blocktags, die über BusyMark-Vorschauwidgets gerendert werden.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Raw-HTML-Inline-Tags';
+  String get markdownHtmlRawHtmlInline => 'Roh-HTML-Inline-Tags';
 
   @override
   String get markdownHtmlRawHtmlInlineDescription =>
@@ -1910,7 +1944,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get markdownHtmlSafetyDescription =>
-      'Raw HTML wird vor der Vorschau geparst und bereinigt.';
+      'Roh-HTML wird vor der Vorschau geparst und bereinigt.';
 
   @override
   String get markdownHtmlHeadings => 'Überschriften';
@@ -1956,21 +1990,21 @@ class AppLocalizationsDe extends AppLocalizations {
       'Erlaubtes HTML wird in BusyMark-Vorschaublöcke umgewandelt, nicht im Browser gerendert.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'Quelle bleibt erhalten';
+  String get markdownHtmlSourcePreserved => 'Quelltext bleibt erhalten';
 
   @override
   String get markdownHtmlSourcePreservedDescription =>
-      'Unverändertes Raw HTML wird exakt als Quelltext gespeichert.';
+      'Unverändertes Roh-HTML wird exakt als Quelltext gespeichert.';
 
   @override
   String get markdownHtmlMarkdownInsideHtml => 'Markdown in HTML';
 
   @override
   String get markdownHtmlMarkdownInsideHtmlDescription =>
-      'Markdown-Zeichen innerhalb von Raw HTML werden als normaler Text angezeigt.';
+      'Markdown-Zeichen innerhalb von Roh-HTML werden als normaler Text angezeigt.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Aktive Inhalte blockiert';
+  String get markdownHtmlBlockedContent => 'Blockierte aktive Inhalte';
 
   @override
   String get markdownHtmlBlockedContentDescription =>
@@ -1981,5 +2015,5 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get markdownHtmlSafeUrlsDescription =>
-      'Links erlauben http, https, mailto, tel, relative URLs und Fragmente; unsichere Schemes werden blockiert.';
+      'Links erlauben http, https, mailto, tel, relative URLs und Fragmente; unsichere URL-Schemata werden blockiert.';
 }

@@ -962,7 +962,8 @@ void main() {
       workspace,
       contains('target: _diffChangeTarget(diff, _currentChangeIndex)'),
     );
-    expect(workspace, contains('gitDiffHunkRangeText(target!.hunk)'));
+    expect(workspace, contains('format: context.l10n.gitDiffHunkRange'));
+    expect(workspace, contains('noLinesText: context.l10n.gitDiffNoLines'));
     expect(workspace, contains('showFileActions: !splitVisible'));
     expect(workspace, contains('showHunkHeaders: !splitVisible'));
     expect(settingsScreen, isNot(contains('Show preview pane')));

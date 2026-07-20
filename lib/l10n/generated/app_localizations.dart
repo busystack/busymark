@@ -1320,6 +1320,12 @@ abstract class AppLocalizations {
   /// **'HTML block'**
   String get htmlBlock;
 
+  /// Default editable text inserted into a new HTML block.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML content'**
+  String get htmlContentDefault;
+
   /// Keyboard shortcut description for inserting or editing an HTML block.
   ///
   /// In en, this message translates to:
@@ -1535,6 +1541,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alt text'**
   String get altText;
+
+  /// Default selected text inserted by a source-editor formatting command.
+  ///
+  /// In en, this message translates to:
+  /// **'text'**
+  String get editorPlaceholderText;
+
+  /// Default selected code inserted by a source-editor code command.
+  ///
+  /// In en, this message translates to:
+  /// **'code'**
+  String get editorPlaceholderCode;
+
+  /// Default selected image description inserted by a source-editor image command.
+  ///
+  /// In en, this message translates to:
+  /// **'alt text'**
+  String get editorPlaceholderAltText;
 
   /// Image alt text hint.
   ///
@@ -1889,6 +1913,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Regex'**
   String get sourceSearchRegex;
+
+  /// Source search status shown when the regular expression is invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid regular expression'**
+  String get sourceSearchInvalidRegex;
 
   /// Status banner shown when source highlighting and folding are disabled for a large file.
   ///
@@ -2704,6 +2734,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Git diff'**
   String get gitDiff;
+
+  /// Menu action that opens the diff for a file in Git history.
+  ///
+  /// In en, this message translates to:
+  /// **'Show diff'**
+  String get gitShowDiff;
+
+  /// Readable old-to-new line range shown for a Git diff hunk.
+  ///
+  /// In en, this message translates to:
+  /// **'old {oldRange} → new {newRange}'**
+  String gitDiffHunkRange(String oldRange, String newRange);
+
+  /// Line range text for an empty side of a Git diff hunk.
+  ///
+  /// In en, this message translates to:
+  /// **'no lines'**
+  String get gitDiffNoLines;
 
   /// Git empty state title when Git cannot be used.
   ///

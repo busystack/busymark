@@ -1225,7 +1225,7 @@ void main() {
       findsNothing,
     );
     expect(
-      find.textContaining('old 1 -> new 1', findRichText: true),
+      find.textContaining(l10n.gitDiffHunkRange('1', '1'), findRichText: true),
       findsOneWidget,
     );
     expect(
@@ -1812,6 +1812,7 @@ void main() {
   testWidgets('source view supports editor formatting shortcuts', (
     tester,
   ) async {
+    final de = AppLocalizationsDe();
     final temp = Directory.systemTemp.createTempSync('busymark_source_keys_');
     addTearDown(() {
       temp.deleteSync(recursive: true);
@@ -1823,7 +1824,10 @@ void main() {
     );
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.source)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.source,
+            localeTag: 'de',
+          )
           .toJson();
     final container = ProviderContainer(
       overrides: [
@@ -1914,7 +1918,16 @@ void main() {
     await pressShortcut(LogicalKeyboardKey.keyT, control: true, shift: true);
     expect(
       container.read(workspaceControllerProvider).activeText,
-      contains('| Header 1 | Header 2 |'),
+      contains('| ${de.tableHeaderNumber(1)} | ${de.tableHeaderNumber(2)} |'),
+    );
+
+    await tester.enterText(sourceField, '');
+    await tester.pump();
+
+    await pressShortcut(LogicalKeyboardKey.keyH, control: true, alt: true);
+    expect(
+      container.read(workspaceControllerProvider).activeText,
+      contains('<p>${de.htmlContentDefault}</p>'),
     );
 
     await tester.enterText(sourceField, 'line');
