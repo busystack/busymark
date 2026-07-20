@@ -109,6 +109,59 @@ void main() {
     expect(await draft.exists(), isFalse);
   });
 
+  test('switch treats an option-like branch name as an operand', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-switch-option-');
+    await _git(root.path, ['update-ref', 'refs/heads/--detach', 'HEAD']);
+    const gateway = GitCliGateway();
+    final info = await gateway.detectRepository(root.path);
+    expect(info, isNotNull);
+
+    await gateway.switchBranch(info!, '--detach');
+
+    final switched = await gateway.detectRepository(root.path);
+    expect(switched?.currentBranch, '--detach');
+    expect(switched?.detachedHeadCommit, isNull);
+  });
+
+  test(
+    'pushSetUpstream does not broaden an option-like branch to --all',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final root = await _createRepository('busymark-git-push-option-');
+      final remote = await Directory.systemTemp.createTemp(
+        'busymark-git-push-option-remote-',
+      );
+      addTearDown(() async {
+        if (await remote.exists()) {
+          await remote.delete(recursive: true);
+        }
+      });
+      await _git(remote.path, ['init', '--bare']);
+      await _git(root.path, ['remote', 'add', 'origin', remote.path]);
+      await _git(root.path, ['update-ref', 'refs/heads/--all', 'HEAD']);
+      await _git(root.path, ['update-ref', 'refs/heads/unrelated', 'HEAD']);
+      const gateway = GitCliGateway();
+      final info = await gateway.detectRepository(root.path);
+      expect(info, isNotNull);
+
+      await gateway.pushSetUpstream(info!, 'origin', '--all');
+
+      expect(await _gitRefExists(remote.path, 'refs/heads/--all'), isTrue);
+      expect(
+        await _gitRefExists(remote.path, 'refs/heads/unrelated'),
+        isFalse,
+        reason: 'The branch operand must not be interpreted as git push --all.',
+      );
+    },
+  );
+
   test('detects conflicted files in a temporary Git repository', () async {
     if (!await _gitAvailable()) {
       markTestSkipped('Git executable is unavailable.');
@@ -391,4 +444,16 @@ Future<void> _git(String root, List<String> args) async {
       result.exitCode,
     );
   }
+}
+
+Future<bool> _gitRefExists(String root, String refName) async {
+  final result = await Process.run('git', [
+    '-C',
+    root,
+    'show-ref',
+    '--verify',
+    '--quiet',
+    refName,
+  ], runInShell: false);
+  return result.exitCode == 0;
 }

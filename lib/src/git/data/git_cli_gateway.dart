@@ -428,10 +428,11 @@ class GitCliGateway implements GitRepositoryGateway {
   ) {
     return _operation(repository, [
       'push',
+      '--porcelain',
       '--set-upstream',
+      '--',
       remote,
       branch,
-      '--porcelain',
     ], 'push');
   }
 
@@ -453,7 +454,7 @@ class GitCliGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String branchName,
   ) {
-    return _operation(repository, ['switch', branchName], 'switch');
+    return _operation(repository, ['switch', '--', branchName], 'switch');
   }
 
   @override
