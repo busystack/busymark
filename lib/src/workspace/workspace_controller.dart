@@ -743,26 +743,42 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       } else {
         await _service.saveNewText(path, operationTarget.text);
       }
-      if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
+      if (!_isSaveAsSourceDocumentCurrent(operationRevision, operationTarget)) {
         return false;
       }
       final savedWorkspace = await _service.openPath(path);
-      if (!_isPinnedOperationCurrent(operationRevision, operationTarget)) {
+      if (!_isSaveAsSourceDocumentCurrent(operationRevision, operationTarget)) {
         return false;
       }
+      final latestText = state.activeText;
+      final hasNewerEdits =
+          _editRevision != operationTarget.editRevision ||
+          latestText != operationTarget.text;
+      _parseDebounce?.cancel();
       state = WorkspaceState(
         workspace: savedWorkspace,
-        activeText: operationTarget.text,
-        preview: _safePreview(savedWorkspace, operationTarget.text),
+        activeText: hasNewerEdits ? latestText : operationTarget.text,
+        preview: _safePreview(
+          savedWorkspace,
+          hasNewerEdits ? latestText : operationTarget.text,
+        ),
+        isDirty: hasNewerEdits,
       );
-      _resetSaveTracking();
+      if (hasNewerEdits) {
+        if (_settingsController.state.validateOnEdit) {
+          unawaited(validateActive());
+        }
+        _scheduleAutoSave();
+      } else {
+        _resetSaveTracking();
+      }
       await _settingsController.recordOpenedWorkspace(
         path: path,
         kind: savedWorkspace.kind.name,
       );
       return true;
     } on Object catch (error) {
-      if (_isPinnedOperationCurrent(operationRevision, operationTarget)) {
+      if (_isSaveAsSourceDocumentCurrent(operationRevision, operationTarget)) {
         state = state.copyWith(
           message: WorkspaceMessage(
             WorkspaceMessageCode.saveFailed,
@@ -1100,6 +1116,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspace != null &&
         _editRevision == target.editRevision &&
         state.activeText == target.text &&
+        _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
+  }
+
+  bool _isSaveAsSourceDocumentCurrent(
+    int operationRevision,
+    ActiveDocumentSaveTarget target,
+  ) {
+    final workspace = state.workspace;
+    return _isCurrentActiveDocument(
+          operationRevision,
+          workspaceId: target.workspaceId,
+          activeFilePath: target.path,
+        ) &&
+        workspace != null &&
         _sameFileSnapshot(workspace.activeFileSnapshot, target.snapshot);
   }
 

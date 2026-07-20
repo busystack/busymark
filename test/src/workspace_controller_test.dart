@@ -368,6 +368,72 @@ void main() {
     },
   );
 
+  test('save as preserves edits made while writing the file', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-as-edit-during-write-',
+    );
+    final file = File(p.join(directory.path, 'created.md'));
+    final service = _DelayedSaveAsWorkspaceService(pauseWrite: true);
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText('# First draft\n');
+
+    final save = controller.saveActiveAs(file.path);
+    await service.writeStarted.future;
+    controller.updateActiveText('# Newer draft\n');
+    service.releaseWrite();
+
+    expect(await save, isTrue);
+    expect(await file.readAsString(), '# First draft\n');
+    expect(controller.state.workspace?.activeFilePath, file.path);
+    expect(controller.state.activeText, '# Newer draft\n');
+    expect(controller.state.isDirty, isTrue);
+
+    expect(await controller.saveActive(), isTrue);
+    expect(await file.readAsString(), '# Newer draft\n');
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
+
+  test('save as preserves edits made while reopening the file', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-as-edit-during-open-',
+    );
+    final file = File(p.join(directory.path, 'created.md'));
+    final service = _DelayedSaveAsWorkspaceService(pauseOpen: true);
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText('# First draft\n');
+
+    final save = controller.saveActiveAs(file.path);
+    await service.openStarted.future;
+    controller.updateActiveText('# Newer draft\n');
+    service.releaseOpen();
+
+    expect(await save, isTrue);
+    expect(await file.readAsString(), '# First draft\n');
+    expect(controller.state.workspace?.activeFilePath, file.path);
+    expect(controller.state.activeText, '# Newer draft\n');
+    expect(controller.state.isDirty, isTrue);
+
+    expect(await controller.saveActive(), isTrue);
+    expect(await file.readAsString(), '# Newer draft\n');
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
+
   test('switching active files reparses outline for the new file', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -882,6 +948,50 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _DelayedSaveAsWorkspaceService extends WorkspaceService {
+  _DelayedSaveAsWorkspaceService({
+    this.pauseWrite = false,
+    this.pauseOpen = false,
+  });
+
+  final bool pauseWrite;
+  final bool pauseOpen;
+  final writeStarted = Completer<void>();
+  final openStarted = Completer<void>();
+  final _releaseWrite = Completer<void>();
+  final _releaseOpen = Completer<void>();
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+    writeStarted.complete();
+    if (pauseWrite) {
+      await _releaseWrite.future;
+    }
+    return super.saveNewText(path, text);
+  }
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    openStarted.complete();
+    if (pauseOpen) {
+      await _releaseOpen.future;
+    }
+    return super.openPath(path);
+  }
+
+  void releaseWrite() {
+    if (!_releaseWrite.isCompleted) {
+      _releaseWrite.complete();
+    }
+  }
+
+  void releaseOpen() {
+    if (!_releaseOpen.isCompleted) {
+      _releaseOpen.complete();
+    }
   }
 }
 
