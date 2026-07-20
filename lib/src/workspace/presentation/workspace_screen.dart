@@ -5539,6 +5539,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     });
     final colors = BusyMarkSurfaceColors.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
+    final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
       _remoteImageWorkspacePath(widget.state.workspace),
     );
@@ -5566,6 +5567,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             Expanded(
               child: BusyMarkWysiwygEditor(
                 document: wysiwygDocument,
+                headerBarService: headerBar,
                 workspaceRoot: _imageWorkspaceRoot(widget.state.workspace),
                 writersideRoot:
                     widget.state.workspace?.writersideModule?.rootPath,

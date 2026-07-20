@@ -16,6 +16,7 @@ import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -1626,6 +1627,263 @@ void main() {}
     expect(find.text('Inserted'), findsOneWidget);
   });
 
+  testWidgets(
+    'WYSIWYG dialog submission is discarded after the active file changes',
+    (tester) async {
+      final l10n = AppLocalizationsEn();
+      final first = parser.parse(filePath: 'first.md', source: 'First\n');
+      final second = parser.parse(filePath: 'second.md', source: 'Second\n');
+      expect(first.busyDocument.blocks.single.id, 'b0');
+      expect(second.busyDocument.blocks.single.id, 'b0');
+      var activeDocument = first.busyDocument;
+      final emittedSources = <String>[];
+      late StateSetter updateHost;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return Scaffold(
+                body: SizedBox(
+                  width: 900,
+                  height: 640,
+                  child: BusyMarkWysiwygEditor(
+                    document: activeDocument,
+                    onSourceChanged: (filePath, source) {
+                      emittedSources.add('$filePath\n$source');
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(TextField).first);
+      await tester.tap(
+        find.byTooltip(
+          '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('wysiwyg-html-source-field')),
+        findsOneWidget,
+      );
+
+      updateHost(() => activeDocument = second.busyDocument);
+      await tester.pump();
+      if (find
+          .byKey(const ValueKey('wysiwyg-html-source-field'))
+          .evaluate()
+          .isNotEmpty) {
+        await tester.enterText(
+          find.byKey(const ValueKey('wysiwyg-html-source-field')),
+          '<p>Stale insertion</p>',
+        );
+        await tester.tap(find.text(l10n.insert));
+      }
+      await tester.pumpAndSettle();
+
+      expect(emittedSources, isEmpty);
+      expect(find.text('Second'), findsOneWidget);
+      expect(find.text('Stale insertion'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'WYSIWYG dialog submission is discarded after document generation changes',
+    (tester) async {
+      final l10n = AppLocalizationsEn();
+      final original = parser.parse(filePath: 'topic.md', source: 'Original\n');
+      final replacement = parser.parse(
+        filePath: 'topic.md',
+        source: 'Externally replaced\n',
+      );
+      expect(original.busyDocument.blocks.single.id, 'b0');
+      expect(replacement.busyDocument.blocks.single.id, 'b0');
+      var activeDocument = original.busyDocument;
+      final emittedSources = <String>[];
+      late StateSetter updateHost;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return Scaffold(
+                body: SizedBox(
+                  width: 900,
+                  height: 640,
+                  child: BusyMarkWysiwygEditor(
+                    document: activeDocument,
+                    onSourceChanged: (filePath, source) {
+                      emittedSources.add('$filePath\n$source');
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(TextField).first);
+      await tester.tap(
+        find.byTooltip(
+          '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      updateHost(() => activeDocument = replacement.busyDocument);
+      await tester.pump();
+      if (find
+          .byKey(const ValueKey('wysiwyg-html-source-field'))
+          .evaluate()
+          .isNotEmpty) {
+        await tester.enterText(
+          find.byKey(const ValueKey('wysiwyg-html-source-field')),
+          '<p>Stale insertion</p>',
+        );
+        await tester.tap(find.text(l10n.insert));
+      }
+      await tester.pumpAndSettle();
+
+      expect(emittedSources, isEmpty);
+      expect(find.text('Externally replaced'), findsOneWidget);
+      expect(find.text('Stale insertion'), findsNothing);
+    },
+  );
+
+  testWidgets('WYSIWYG dialogs stop app-level tab navigation shortcuts', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
+    var tabNavigationCount = 0;
+
+    await tester.pumpWidget(
+      Shortcuts(
+        shortcuts: <ShortcutActivator, Intent>{
+          BusyMarkAppShortcutActivators.nextTab: const _TestTabIntent(),
+          BusyMarkAppShortcutActivators.previousTab: const _TestTabIntent(),
+        },
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            _TestTabIntent: CallbackAction<_TestTabIntent>(
+              onInvoke: (_) {
+                tabNavigationCount += 1;
+                return null;
+              },
+            ),
+          },
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  onSourceChanged: (_, _) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.tap(
+      find.byTooltip(
+        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.editHtml), findsOneWidget);
+
+    await _pressControlShortcut(tester, LogicalKeyboardKey.tab);
+    await _pressControlShortcut(tester, LogicalKeyboardKey.tab, shift: true);
+
+    expect(tabNavigationCount, 0);
+    expect(find.text(l10n.editHtml), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG dialogs activate the native headerbar barrier', (
+    tester,
+  ) async {
+    if (!Platform.isLinux) {
+      return;
+    }
+    const channel = MethodChannel('com.busymark.test/wysiwyg-modal-barrier');
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          return call.method == 'initialize' ? true : null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+    final headerBarService = LinuxHeaderBarService(channel: channel);
+    await headerBarService.initialize();
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              headerBarService: headerBarService,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.tap(
+      find.byTooltip(
+        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      calls.where((call) => call.method == 'setModalBarrierVisible').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', true),
+    );
+
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+
+    expect(
+      calls.where((call) => call.method == 'setModalBarrierVisible').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', false),
+    );
+  });
+
   testWidgets('WYSIWYG typing preserves existing inline formatting', (
     tester,
   ) async {
@@ -2755,6 +3013,28 @@ RenderEditable? _findRenderEditable(RenderObject root) {
     result ??= _findRenderEditable(child);
   });
   return result;
+}
+
+Future<void> _pressControlShortcut(
+  WidgetTester tester,
+  LogicalKeyboardKey key, {
+  bool shift = false,
+}) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  if (shift) {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+  }
+  await tester.sendKeyDownEvent(key);
+  await tester.sendKeyUpEvent(key);
+  if (shift) {
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+  }
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pump();
+}
+
+class _TestTabIntent extends Intent {
+  const _TestTabIntent();
 }
 
 class _FakeImageHttpClient implements HttpClient {

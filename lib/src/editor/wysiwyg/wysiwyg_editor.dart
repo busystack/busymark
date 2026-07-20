@@ -7,11 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/app_settings.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
+import '../../platform/linux_header_bar_service.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_document_controller.dart';
@@ -46,6 +48,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.scrollRequest = 0,
     this.onOpenSearch,
     this.onCloseSearch,
+    this.headerBarService,
   });
 
   final BusyDocument document;
@@ -62,6 +65,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final int scrollRequest;
   final VoidCallback? onOpenSearch;
   final VoidCallback? onCloseSearch;
+  final LinuxHeaderBarService? headerBarService;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -93,13 +97,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _internalChange = false;
   bool _initialFocusScheduled = false;
   var _toolbarVisible = true;
+  var _documentGeneration = 0;
 
   @override
   void initState() {
     super.initState();
     _documentController = BusyMarkWysiwygDocumentController(
       document: widget.document,
-    )..addListener(_syncBlockControllers);
+    )..addListener(_handleDocumentControllerChanged);
     _syncBlockControllers();
     _scheduleInitialFocus();
     _scheduleHeadingScroll();
@@ -130,7 +135,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
-    _documentController.removeListener(_syncBlockControllers);
+    _documentController.removeListener(_handleDocumentControllerChanged);
     _documentController.dispose();
     for (final controller in _textControllers.values) {
       controller.dispose();
@@ -497,6 +502,24 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
+  void _handleDocumentControllerChanged() {
+    _documentGeneration++;
+    _syncBlockControllers();
+  }
+
+  _WysiwygDialogTarget _captureDialogTarget() {
+    return _WysiwygDialogTarget(
+      filePath: _documentController.document.filePath,
+      generation: _documentGeneration,
+    );
+  }
+
+  bool _isDialogTargetCurrent(_WysiwygDialogTarget target) {
+    return mounted &&
+        target.filePath == _documentController.document.filePath &&
+        target.generation == _documentGeneration;
+  }
+
   BusyMarkWysiwygTextController _textControllerFor(BusyBlock block) {
     final controller = _textControllers.putIfAbsent(
       block.id,
@@ -771,6 +794,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (block == null || block.kind != BusyBlockKind.image) {
       return;
     }
+    final target = _captureDialogTarget();
     final result = await _showImageDialog(
       context,
       title: context.l10n.image,
@@ -778,7 +802,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       initialAlt: block.plainText,
       submitLabel: context.l10n.apply,
     );
-    if (result == null || result.source.trim().isEmpty) {
+    if (!_isDialogTargetCurrent(target) ||
+        result == null ||
+        result.source.trim().isEmpty) {
       return;
     }
     _recordUndoSnapshot();
@@ -797,12 +823,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (block == null || block.kind != BusyBlockKind.htmlBlock) {
       return;
     }
+    final target = _captureDialogTarget();
     final source = await _showHtmlDialog(
       context,
       initialSource: block.rawSource ?? '',
       submitLabel: context.l10n.apply,
     );
-    if (source == null) {
+    if (!_isDialogTargetCurrent(target) || source == null) {
       return;
     }
     _recordUndoSnapshot();
@@ -1475,8 +1502,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<void> _applyLinkCommand() async {
     final selectedRanges = _selectedTextRanges();
     if (selectedRanges.isNotEmpty) {
+      final target = _captureDialogTarget();
       final destination = await _showLinkDialog(context);
-      if (destination == null || destination.trim().isEmpty) {
+      if (!_isDialogTargetCurrent(target) ||
+          destination == null ||
+          destination.trim().isEmpty) {
         return;
       }
       _recordUndoSnapshot();
@@ -1502,8 +1532,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (controller == null || selection == null || selection.isCollapsed) {
       return;
     }
+    final target = _captureDialogTarget();
     final destination = await _showLinkDialog(context);
-    if (destination == null || destination.trim().isEmpty) {
+    if (!_isDialogTargetCurrent(target) ||
+        destination == null ||
+        destination.trim().isEmpty) {
       return;
     }
     _recordUndoSnapshot();
@@ -1522,12 +1555,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (blockId == null) {
       return;
     }
+    final target = _captureDialogTarget();
     final result = await _showImageDialog(
       context,
       title: context.l10n.image,
       submitLabel: context.l10n.insert,
     );
-    if (result == null || result.source.trim().isEmpty) {
+    if (!_isDialogTargetCurrent(target) ||
+        result == null ||
+        result.source.trim().isEmpty) {
       return;
     }
     _recordUndoSnapshot();
@@ -1687,13 +1723,16 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final dialogTitle = context.l10n.inlineImage;
     final insertLabel = context.l10n.insert;
     final fallbackAltText = context.l10n.image;
+    final target = _captureDialogTarget();
     final result = await _showImageDialog(
       context,
       title: dialogTitle,
       initialAlt: initialAlt,
       submitLabel: insertLabel,
     );
-    if (result == null || result.source.trim().isEmpty) {
+    if (!_isDialogTargetCurrent(target) ||
+        result == null ||
+        result.source.trim().isEmpty) {
       return;
     }
     if (selectedRanges.isNotEmpty) {
@@ -1737,12 +1776,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
 
     final cellText = l10n.tableCellDefault;
+    final target = _captureDialogTarget();
     final result = await _showTableDialog(
       context,
       initialColumns: block == null ? 2 : _tableColumnCount(block),
       initialRows: block == null ? 2 : _tableBodyRowCount(block),
     );
-    if (result == null) {
+    if (!_isDialogTargetCurrent(target) || result == null) {
       return;
     }
     if (block?.kind == BusyBlockKind.table) {
@@ -1781,12 +1821,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       await _handleHtmlBlockEditRequested(blockId);
       return;
     }
+    final target = _captureDialogTarget();
     final source = await _showHtmlDialog(
       context,
       initialSource: '<div>\n  <p>HTML content</p>\n</div>',
       submitLabel: context.l10n.insert,
     );
-    if (source == null || source.trim().isEmpty) {
+    if (!_isDialogTargetCurrent(target) ||
+        source == null ||
+        source.trim().isEmpty) {
       return;
     }
     _recordUndoSnapshot();
@@ -1876,11 +1919,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     final firstBlock = _documentController.blockById(blockIds.first);
+    final target = _captureDialogTarget();
     final language = await _showCodeLanguageDialog(
       context,
       initialLanguage: firstBlock?.attributes['language'] ?? '',
     );
-    if (language == null) {
+    if (!_isDialogTargetCurrent(target) || language == null) {
       return;
     }
     _recordUndoSnapshot();
@@ -1904,17 +1948,31 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return blockId == null ? const [] : [blockId];
   }
 
+  Future<T?> _showEditorDialog<T>(
+    BuildContext context, {
+    required WidgetBuilder builder,
+  }) {
+    final headerBar = widget.headerBarService;
+    return showBusyMarkModalDialog<T>(
+      context,
+      headerBarService: headerBar != null && headerBar.isAvailable
+          ? headerBar
+          : null,
+      builder: builder,
+    );
+  }
+
   Future<String?> _showLinkDialog(BuildContext context) {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
+    var destination = '';
+    return _showEditorDialog<String>(
+      context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.link),
-        content: TextField(
-          controller: controller,
+        content: TextFormField(
           autofocus: true,
+          onChanged: (value) => destination = value,
           decoration: const InputDecoration(hintText: 'https://example.com'),
-          onSubmitted: (value) => Navigator.pop(context, value),
+          onFieldSubmitted: (value) => Navigator.pop(context, value),
         ),
         actions: [
           TextButton(
@@ -1922,7 +1980,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             child: Text(context.l10n.cancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(context, destination),
             child: Text(context.l10n.apply),
           ),
         ],
@@ -1937,8 +1995,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     String initialAlt = '',
     required String submitLabel,
   }) {
-    return showDialog<_ImageDialogResult>(
-      context: context,
+    return _showEditorDialog<_ImageDialogResult>(
+      context,
       builder: (context) => _ImageDialog(
         title: title,
         initialSource: initialSource,
@@ -1953,8 +2011,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     required int initialColumns,
     required int initialRows,
   }) {
-    return showDialog<_TableDialogResult>(
-      context: context,
+    return _showEditorDialog<_TableDialogResult>(
+      context,
       builder: (context) => _TableDialog(
         initialColumns: initialColumns,
         initialRows: initialRows,
@@ -1967,16 +2025,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     required String initialSource,
     required String submitLabel,
   }) {
-    final controller = TextEditingController(text: initialSource);
-    return showDialog<String>(
-      context: context,
+    var source = initialSource;
+    return _showEditorDialog<String>(
+      context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.editHtml),
         content: SizedBox(
           width: BusyMarkSizes.dialogNarrow,
-          child: TextField(
+          child: TextFormField(
             key: const ValueKey('wysiwyg-html-source-field'),
-            controller: controller,
+            initialValue: initialSource,
+            onChanged: (value) => source = value,
             autofocus: true,
             minLines: 8,
             maxLines: 16,
@@ -1993,7 +2052,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             child: Text(context.l10n.cancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(context, source),
             child: Text(submitLabel),
           ),
         ],
@@ -2005,21 +2064,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     BuildContext context, {
     required String initialLanguage,
   }) {
-    final controller = TextEditingController(text: initialLanguage);
-    return showDialog<String>(
-      context: context,
+    var language = initialLanguage;
+    return _showEditorDialog<String>(
+      context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.codeBlockLanguage),
         content: SizedBox(
           width: BusyMarkSizes.tableDialogWidth,
-          child: TextField(
-            controller: controller,
+          child: TextFormField(
+            initialValue: initialLanguage,
+            onChanged: (value) => language = value,
             autofocus: true,
             decoration: InputDecoration(
               labelText: context.l10n.language,
               hintText: 'dart',
             ),
-            onSubmitted: (value) => Navigator.pop(context, value),
+            onFieldSubmitted: (value) => Navigator.pop(context, value),
           ),
         ),
         actions: [
@@ -2028,12 +2088,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             child: Text(context.l10n.cancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(context, language),
             child: Text(context.l10n.apply),
           ),
         ],
       ),
-    ).whenComplete(controller.dispose);
+    );
   }
 
   void _emitMarkdown() {
@@ -2744,6 +2804,16 @@ class _SelectedTextRange {
   bool get coversWholeBlock => start <= 0 && end >= block.plainText.length;
 }
 
+class _WysiwygDialogTarget {
+  const _WysiwygDialogTarget({
+    required this.filePath,
+    required this.generation,
+  });
+
+  final String filePath;
+  final int generation;
+}
+
 class _SelectionAnchor {
   const _SelectionAnchor({required this.blockId, required this.offset});
 
@@ -3042,7 +3112,7 @@ class _ImageDialogState extends State<_ImageDialog> {
         ),
       ],
     );
-    if (file == null) {
+    if (file == null || !mounted) {
       return;
     }
     setState(() {
