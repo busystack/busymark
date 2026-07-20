@@ -556,7 +556,7 @@ class RawHtmlAdapter {
       'code' || 'kbd' || 'samp' => [
         BusyInline(
           kind: BusyInlineKind.code,
-          text: text,
+          text: element.text,
           attributes: attributes,
         ),
       ],

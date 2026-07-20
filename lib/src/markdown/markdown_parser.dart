@@ -9,6 +9,7 @@ import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
+import 'markdown_fence.dart';
 import 'markdown_model.dart';
 import 'raw_html_policy.dart';
 
@@ -142,7 +143,7 @@ class MarkdownParser {
       }
     }
 
-    var inFence = false;
+    MarkdownFence? openFence;
     var fenceStart = 0;
     String? fenceLanguage;
     final fenceContent = StringBuffer();
@@ -166,21 +167,11 @@ class MarkdownParser {
           ? rawLine.substring(0, rawLine.length - 1)
           : rawLine;
       final trimmed = line.trimRight();
-      final fence = RegExp(
-        r'^\s*(```|~~~)\s*([A-Za-z0-9_+\-#.]*)',
-      ).firstMatch(line);
-      if (fence != null) {
+      final activeFence = openFence;
+      if (activeFence != null) {
         previousSetextCandidateLine = null;
         previousSetextCandidateOffset = null;
-        if (!inFence) {
-          inFence = true;
-          fenceStart = offset;
-          fenceLanguage = fence.group(2)?.trim();
-          if (fenceLanguage != null && fenceLanguage.isEmpty) {
-            fenceLanguage = null;
-          }
-        } else {
-          inFence = false;
+        if (activeFence.closes(line)) {
           codeBlocks.add(
             MarkdownCodeBlock(
               language: fenceLanguage,
@@ -195,13 +186,21 @@ class MarkdownParser {
           );
           fenceContent.clear();
           fenceLanguage = null;
+          openFence = null;
+        } else {
+          fenceContent.write(rawLine);
         }
         offset += rawLine.length;
         lineIndex += 1;
         continue;
       }
-      if (inFence) {
-        fenceContent.write(rawLine);
+      final openingFence = MarkdownFence.parse(line);
+      if (openingFence != null) {
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
+        openFence = openingFence;
+        fenceStart = offset;
+        fenceLanguage = openingFence.language;
         offset += rawLine.length;
         lineIndex += 1;
         continue;
@@ -547,11 +546,11 @@ class MarkdownParser {
       }
 
       final startIndex = index;
-      final fence = _fenceMarker(indexedLines[index].line);
+      final fence = MarkdownFence.parse(indexedLines[index].line);
       if (fence != null) {
         index += 1;
         while (index < indexedLines.length) {
-          if (_isClosingFence(indexedLines[index].line, fence)) {
+          if (fence.closes(indexedLines[index].line)) {
             index += 1;
             break;
           }
@@ -597,7 +596,7 @@ class MarkdownParser {
       while (index < indexedLines.length) {
         final line = indexedLines[index];
         if (line.trimmed.isEmpty ||
-            _fenceMarker(line.line) != null ||
+            MarkdownFence.parse(line.line) != null ||
             _isAtxHeading(line.line) ||
             _listItemIndent(line.line) != null) {
           break;
@@ -623,19 +622,6 @@ class MarkdownParser {
 
   bool _isThematicBreak(String trimmedLine) {
     return RegExp(r'^([*\-_])(\s*\1){2,}\s*$').hasMatch(trimmedLine);
-  }
-
-  String? _fenceMarker(String line) {
-    final match = RegExp(r'^\s*(`{3,}|~{3,})').firstMatch(line);
-    return match?.group(1);
-  }
-
-  bool _isClosingFence(String line, String opener) {
-    final marker = _fenceMarker(line);
-    if (marker == null || marker.codeUnitAt(0) != opener.codeUnitAt(0)) {
-      return false;
-    }
-    return marker.length >= opener.length;
   }
 
   int? _listItemIndent(String line) {

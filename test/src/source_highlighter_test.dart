@@ -120,6 +120,34 @@ void main() {
     expect(_spanColor(spans, 'true'), isNot(foreground));
   });
 
+  testWidgets('markdown highlighter tracks dynamic fence delimiters', (
+    tester,
+  ) async {
+    const source =
+        '````dart\n'
+        'final value = 1;\n'
+        '```\n'
+        '# Still code\n'
+        '`````\n'
+        '# Heading\n';
+    final spans = await _highlightMarkdown(tester, source);
+
+    expect(_spanStyle(spans, 'final')?.color, isNotNull);
+    expect(_spanStyle(spans, 'Still')?.fontSize, 14);
+    expect(_spanStyle(spans, 'Heading')?.fontSize, greaterThan(14));
+  });
+
+  testWidgets('markdown highlighter does not open on indented code', (
+    tester,
+  ) async {
+    final spans = await _highlightMarkdown(
+      tester,
+      '    ```\n# Heading\n    ```\n',
+    );
+
+    expect(_spanStyle(spans, 'Heading')?.fontSize, greaterThan(14));
+  });
+
   testWidgets('xml source highlighter colors tags attributes and strings', (
     tester,
   ) async {
@@ -428,6 +456,50 @@ void main() {
       expect(_spanStyle(spans, 'link')?.decoration, TextDecoration.underline);
     },
   );
+
+  testWidgets('visual markdown tracks dynamic fence delimiters', (
+    tester,
+  ) async {
+    const source =
+        '````dart\n'
+        'final value = 1;\n'
+        '```\n'
+        '# Still code\n'
+        '`````\n'
+        '# Heading\n';
+    late List<TextSpan> spans;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            final controller = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            )..visualMarkdown = true;
+            spans = _flattenTextSpans(
+              controller.buildTextSpan(
+                context: context,
+                style: const TextStyle(fontSize: 14),
+                withComposing: false,
+              ),
+            );
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(_spanStyle(spans, '```')?.fontFamily, 'Ubuntu Mono');
+    expect(_spanStyle(spans, '# Still code')?.fontFamily, 'Ubuntu Mono');
+    expect(_spanStyle(spans, 'Heading')?.fontSize, greaterThan(14));
+  });
 
   testWidgets('markdown highlighter merges nested emphasis inside links', (
     tester,

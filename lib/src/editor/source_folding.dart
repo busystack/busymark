@@ -1,3 +1,4 @@
+import '../markdown/markdown_fence.dart';
 import 'source_language.dart';
 import 'source/source_line_index.dart';
 
@@ -225,15 +226,14 @@ void _addMarkdownFenceRegions(
 ) {
   var index = 0;
   while (index < lines.length) {
-    final fence = RegExp(r'^\s*(```|~~~)').firstMatch(lines[index].text);
+    final fence = MarkdownFence.parse(lines[index].text);
     if (fence == null) {
       index++;
       continue;
     }
-    final marker = fence.group(1)!;
     var endIndex = index;
     for (var next = index + 1; next < lines.length; next++) {
-      if (RegExp('^\\s*${RegExp.escape(marker)}').hasMatch(lines[next].text)) {
+      if (fence.closes(lines[next].text)) {
         endIndex = next;
         break;
       }

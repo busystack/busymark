@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
+import '../markdown/markdown_fence.dart';
 import 'source/source_document.dart';
 import 'source/source_hidden_ranges.dart';
 import 'source/source_search.dart';
@@ -383,7 +384,7 @@ List<TextSpan> _highlightMarkdown(
   final inlineMarkerStyle = baseStyle.copyWith(color: palette.punctuation);
   final linkDestinationStyle = baseStyle.copyWith(color: palette.string);
   var offset = 0;
-  var inFence = false;
+  MarkdownFence? openFence;
   var fenceLanguage = '';
   var inFrontMatter = source.startsWith('---\n') || source == '---';
 
@@ -391,9 +392,6 @@ List<TextSpan> _highlightMarkdown(
     final lineStart = offset;
     final lineEnd = lineStart + line.length;
     final trimmed = line.trimLeft();
-    final fence = RegExp(
-      r'^\s*(```|~~~)\s*([A-Za-z0-9_+.#-]*)?',
-    ).firstMatch(line);
 
     if (inFrontMatter) {
       _addRange(
@@ -409,8 +407,9 @@ List<TextSpan> _highlightMarkdown(
       continue;
     }
 
-    if (inFence) {
-      if (fence == null) {
+    final activeFence = openFence;
+    if (activeFence != null) {
+      if (!activeFence.closes(line)) {
         final highlighted = _addFencedCodeLineRanges(
           ranges,
           lineStart,
@@ -434,22 +433,23 @@ List<TextSpan> _highlightMarkdown(
           lineEnd,
           baseStyle.copyWith(color: palette.keyword),
         );
-        inFence = false;
+        openFence = null;
         fenceLanguage = '';
       }
       offset = lineEnd + 1;
       continue;
     }
 
-    if (fence != null) {
+    final openingFence = MarkdownFence.parse(line);
+    if (openingFence != null) {
       _addRange(
         ranges,
         lineStart,
         lineEnd,
         baseStyle.copyWith(color: palette.keyword),
       );
-      inFence = true;
-      fenceLanguage = _normalizedFenceLanguage(fence.group(2) ?? '');
+      openFence = openingFence;
+      fenceLanguage = _normalizedFenceLanguage(openingFence.language ?? '');
       offset = lineEnd + 1;
       continue;
     }
@@ -1304,13 +1304,15 @@ TextSpan _visualMarkdownTextSpan(
 ) {
   final spans = <TextSpan>[];
   final lines = source.split('\n');
-  var inFence = false;
+  MarkdownFence? openFence;
 
   for (var index = 0; index < lines.length; index++) {
     final line = lines[index];
-    final fence = RegExp(r'^\s*(```|~~~)').firstMatch(line);
-    if (fence != null) {
-      inFence = !inFence;
+    final activeFence = openFence;
+    final closesFence = activeFence?.closes(line) ?? false;
+    final openingFence = activeFence == null ? MarkdownFence.parse(line) : null;
+    if (closesFence || openingFence != null) {
+      openFence = closesFence ? null : openingFence;
       spans.add(
         TextSpan(
           text: line,
@@ -1320,7 +1322,7 @@ TextSpan _visualMarkdownTextSpan(
           ),
         ),
       );
-    } else if (inFence) {
+    } else if (activeFence != null) {
       spans.add(
         TextSpan(
           text: line,

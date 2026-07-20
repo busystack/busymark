@@ -62,6 +62,35 @@ Done.
     );
   });
 
+  test('markdown folding keeps shorter fence runs inside dynamic fences', () {
+    const source =
+        '````dart\n'
+        'final value = 1;\n'
+        '```\n'
+        '# Still code\n'
+        '`````\n'
+        '# Heading\n';
+
+    final codeRegion = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).singleWhere((region) => region.kind == SourceFoldKind.code);
+
+    expect(codeRegion.startLine, 1);
+    expect(codeRegion.endLine, 5);
+  });
+
+  test('markdown folding does not join separate indented code blocks', () {
+    const source = '    ```\n# Heading\n    ```\n';
+
+    final regions = sourceFoldRegions(source, SourceSyntaxLanguage.markdown);
+
+    expect(
+      regions.where((region) => region.kind == SourceFoldKind.code),
+      isEmpty,
+    );
+  });
+
   test('collapsed gutter entries preserve source line numbers', () {
     const source = '# Title\nIntro.\nMore.\n# Next\nDone.\n';
     final section = sourceFoldRegions(

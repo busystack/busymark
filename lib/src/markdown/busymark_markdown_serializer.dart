@@ -44,7 +44,10 @@ class BusyMarkMarkdownSerializer {
       ),
       BusyBlockKind.taskListItem => _listItem(
         block,
-        '- [${block.attributes['task'] == 'true' ? 'x' : ' '}]',
+        block.attributes['ordered'] == 'true'
+            ? block.attributes['marker'] ?? '1.'
+            : '-',
+        contentPrefix: '[${block.attributes['task'] == 'true' ? 'x' : ' '}]',
       ),
       BusyBlockKind.blockquote => _blockquote(block),
       BusyBlockKind.thematicBreak => '---',
@@ -155,28 +158,37 @@ class BusyMarkMarkdownSerializer {
 
   String _codeBlock(BusyBlock block) {
     final language = block.attributes['language'] ?? '';
-    final text = block.plainText.trimRight();
-    return '```$language\n$text\n```';
+    final text = block.plainText;
+    final delimiter = language.contains('`') ? '~' : '`';
+    final fence = delimiter * _delimiterLength(text, delimiter, minimum: 3);
+    final infoSeparator = language.startsWith(delimiter) ? ' ' : '';
+    return '$fence$infoSeparator$language\n$text\n$fence';
   }
 
-  String _listItem(BusyBlock block, String marker) {
+  String _listItem(BusyBlock block, String marker, {String? contentPrefix}) {
     final text = _inlineMarkdown(block.inlines);
-    final line = text.isEmpty ? marker : '$marker $text';
+    final content = [
+      if (contentPrefix != null) contentPrefix,
+      if (text.isNotEmpty) text,
+    ].join(' ');
+    final line = content.isEmpty ? marker : '$marker $content';
     if (block.children.isEmpty) {
       return line;
     }
+    final indentation = marker.length + 1;
     final nested = block.children
         .map(serializeBlock)
         .where((source) => source.trim().isNotEmpty)
-        .map(_indentBlock)
+        .map((source) => _indentBlock(source, indentation))
         .join('\n');
     return nested.isEmpty ? line : '$line\n$nested';
   }
 
-  String _indentBlock(String source) {
+  String _indentBlock(String source, int width) {
+    final indentation = ' ' * width;
     return source
         .split('\n')
-        .map((line) => line.isEmpty ? line : '  $line')
+        .map((line) => line.isEmpty ? line : '$indentation$line')
         .join('\n');
   }
 
@@ -219,19 +231,22 @@ class BusyMarkMarkdownSerializer {
       return block.rawSource ?? '';
     }
     final rows = block.children;
-    final header = rows.first.children
-        .map((cell) => _inlineMarkdown(cell.inlines))
-        .toList();
+    final header = rows.first.children.map(_tableCellMarkdown).toList();
     final body = rows.skip(1);
     final buffer = StringBuffer()
       ..writeln('| ${header.join(' | ')} |')
       ..writeln('| ${header.map((_) => '---').join(' | ')} |');
     for (final row in body) {
-      buffer.writeln(
-        '| ${row.children.map((cell) => _inlineMarkdown(cell.inlines)).join(' | ')} |',
-      );
+      buffer.writeln('| ${row.children.map(_tableCellMarkdown).join(' | ')} |');
     }
     return buffer.toString().trimRight();
+  }
+
+  String _tableCellMarkdown(BusyBlock cell) {
+    return _inlineMarkdown(
+      cell.inlines,
+      tableCell: true,
+    ).replaceAll('|', r'\|');
   }
 
   String _writersideAdmonition(BusyBlock block) {
@@ -242,21 +257,26 @@ class BusyMarkMarkdownSerializer {
     return '<$element>${_inlineMarkdown(block.inlines)}</$element>';
   }
 
-  String _inlineMarkdown(List<BusyInline> inlines) {
-    return inlines.map(_inline).join();
+  String _inlineMarkdown(List<BusyInline> inlines, {bool tableCell = false}) {
+    return inlines
+        .map((inline) => _inline(inline, tableCell: tableCell))
+        .join();
   }
 
-  String _inline(BusyInline inline) {
+  String _inline(BusyInline inline, {bool tableCell = false}) {
     final children = inline.children.isEmpty
         ? _escapeInlineText(inline.text)
-        : _inlineMarkdown(inline.children);
+        : _inlineMarkdown(inline.children, tableCell: tableCell);
     return switch (inline.kind) {
       BusyInlineKind.text => _escapeInlineText(inline.text),
       BusyInlineKind.strong => '**$children**',
       BusyInlineKind.emphasis => '*$children*',
       BusyInlineKind.underline => '<u>$children</u>',
       BusyInlineKind.strikethrough => '~~$children~~',
-      BusyInlineKind.code => '`${inline.text.replaceAll('`', r'\`')}`',
+      BusyInlineKind.code =>
+        tableCell && _tableCodeNeedsHtml(inline.text)
+            ? _htmlCodeSpan(inline.text)
+            : _codeSpan(inline.text),
       BusyInlineKind.link =>
         '[${children.isEmpty ? inline.text : children}](${inline.destination ?? ''})',
       BusyInlineKind.image =>
@@ -266,6 +286,54 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
+  }
+
+  String _codeSpan(String text) {
+    final delimiter = '`' * _delimiterLength(text, '`');
+    final touchesDelimiter = text.startsWith('`') || text.endsWith('`');
+    final hasOuterSpaces =
+        text.startsWith(' ') &&
+        text.endsWith(' ') &&
+        text.codeUnits.any((unit) => unit != 0x20);
+    final content = touchesDelimiter || hasOuterSpaces ? ' $text ' : text;
+    return '$delimiter$content$delimiter';
+  }
+
+  bool _tableCodeNeedsHtml(String text) {
+    var backslashes = 0;
+    for (final unit in text.codeUnits) {
+      if (unit == 0x5c) {
+        backslashes += 1;
+        continue;
+      }
+      if (unit == 0x7c && backslashes.isOdd) {
+        return true;
+      }
+      backslashes = 0;
+    }
+    return false;
+  }
+
+  String _htmlCodeSpan(String text) {
+    final encoded = text.runes.map((rune) => '&#$rune;').join();
+    return '<code>$encoded</code>';
+  }
+
+  int _delimiterLength(String text, String delimiter, {int minimum = 1}) {
+    var longest = 0;
+    var current = 0;
+    for (final unit in text.codeUnits) {
+      if (unit == delimiter.codeUnitAt(0)) {
+        current += 1;
+        if (current > longest) {
+          longest = current;
+        }
+      } else {
+        current = 0;
+      }
+    }
+    final required = longest + 1;
+    return required < minimum ? minimum : required;
   }
 
   String _escapeInlineText(String value) {

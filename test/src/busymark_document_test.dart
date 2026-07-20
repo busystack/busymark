@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:markdown/markdown.dart' as md;
 
 void main() {
   const parser = MarkdownParser();
@@ -211,6 +212,56 @@ void main() {}
       reparsed.busyDocument.blocks.single.children.single.plainText,
       'Changed',
     );
+  });
+
+  test('WYSIWYG ordered list edits preserve nested children', () {
+    for (final (source, expected) in const [
+      ('1. Parent\n   - Child\n', '1. Parent\n   - Changed\n'),
+      ('100. Parent\n     - Child\n', '100. Parent\n     - Changed\n'),
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final childId = controller.document.blocks.single.children.single.id;
+
+      controller.updateBlockText(childId, 'Changed');
+
+      expect(controller.markdown, expected, reason: 'input: $source');
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: controller.markdown,
+      );
+      expect(reparsed.busyDocument.blocks, hasLength(1));
+      expect(reparsed.busyDocument.blocks.single.children, hasLength(1));
+      expect(
+        reparsed.busyDocument.blocks.single.children.single.plainText,
+        'Changed',
+      );
+    }
+  });
+
+  test('WYSIWYG ordered task edits preserve marker and nested children', () {
+    const source = '100. [ ] Parent\n     - Child\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final parent = controller.document.blocks.single;
+    final childId = parent.children.single.id;
+
+    controller.updateBlockText(childId, 'Changed');
+
+    expect(controller.markdown, '100. [ ] Parent\n     - Changed\n');
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    final reparsedParent = reparsed.busyDocument.blocks.single;
+    expect(reparsedParent.kind, BusyBlockKind.taskListItem);
+    expect(reparsedParent.attributes['ordered'], 'true');
+    expect(reparsedParent.attributes['marker'], '100.');
+    expect(reparsedParent.children.single.plainText, 'Changed');
   });
 
   test('WYSIWYG nested blockquote edit preserves surrounding source', () {
@@ -2118,6 +2169,135 @@ void main() {}
     expect(controller.markdown, 'Alpha `Beta`\n');
   });
 
+  test('serializer chooses inline code delimiters that preserve backticks', () {
+    for (final (payload, expected) in const [
+      ('left ` right', '``left ` right``\n'),
+      ('`edge`', '`` `edge` ``\n'),
+      (' padded ', '`  padded  `\n'),
+      ('   ', '`   `\n'),
+      ('a `` b', '```a `` b```\n'),
+    ]) {
+      final document = BusyDocument(
+        filePath: 'topic.md',
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyBlock(
+            id: 'paragraph',
+            kind: BusyBlockKind.paragraph,
+            inlines: [BusyInline(kind: BusyInlineKind.code, text: payload)],
+            dirty: true,
+          ),
+        ],
+      );
+
+      final markdown = const BusyMarkMarkdownSerializer().serialize(document);
+
+      expect(markdown, expected, reason: 'payload: "$payload"');
+      final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+      final code = reparsed.busyDocument.blocks.single.inlines.singleWhere(
+        (inline) => inline.kind == BusyInlineKind.code,
+      );
+      expect(code.text, payload);
+    }
+  });
+
+  test(
+    'serializer preserves fenced code delimiters and trailing whitespace',
+    () {
+      const payload = 'before\n```\nafter  ';
+      const document = BusyDocument(
+        filePath: 'topic.md',
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyBlock(
+            id: 'code',
+            kind: BusyBlockKind.codeBlock,
+            inlines: [BusyInline(kind: BusyInlineKind.text, text: payload)],
+            attributes: {'language': 'text'},
+            dirty: true,
+          ),
+        ],
+      );
+
+      final markdown = const BusyMarkMarkdownSerializer().serialize(document);
+
+      expect(markdown, '````text\nbefore\n```\nafter  \n````\n');
+      final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+      expect(reparsed.busyDocument.blocks, hasLength(1));
+      expect(reparsed.busyDocument.blocks.single.kind, BusyBlockKind.codeBlock);
+      expect(reparsed.busyDocument.blocks.single.plainText, payload);
+      expect(reparsed.codeBlocks, hasLength(1));
+      expect(reparsed.codeBlocks.single.language, 'text');
+      expect(reparsed.codeBlocks.single.content, '$payload\n');
+    },
+  );
+
+  test('parser preserves meaningful trailing fenced-code whitespace', () {
+    const source = '```\nline  \n\n```\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final block = parsed.busyDocument.blocks.single;
+
+    expect(block.plainText, 'line  \n');
+
+    final serialized = const BusyMarkMarkdownSerializer().serialize(
+      parsed.busyDocument.copyWith(blocks: [block.copyWith(dirty: true)]),
+    );
+    expect(serialized, source);
+    expect(
+      parser
+          .parse(filePath: 'topic.md', source: serialized)
+          .busyDocument
+          .blocks
+          .single
+          .plainText,
+      'line  \n',
+    );
+  });
+
+  test('parser closes dynamic code fences only with a matching delimiter', () {
+    const source =
+        '````dart\n'
+        '~~~\n'
+        '```\n'
+        '# Hidden\n'
+        '%secret%\n'
+        '<script>alert(1)</script>\n'
+        'after\n'
+        '`````\n'
+        '# Visible\n';
+
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(parsed.busyDocument.blocks, hasLength(2));
+    expect(parsed.busyDocument.blocks.first.kind, BusyBlockKind.codeBlock);
+    expect(
+      parsed.busyDocument.blocks.first.plainText,
+      '~~~\n```\n# Hidden\n%secret%\n<script>alert(1)</script>\nafter',
+    );
+    expect(parsed.codeBlocks, hasLength(1));
+    expect(parsed.codeBlocks.single.language, 'dart');
+    expect(
+      parsed.codeBlocks.single.content,
+      '~~~\n```\n# Hidden\n%secret%\n<script>alert(1)</script>\nafter\n',
+    );
+    expect(parsed.headings.map((heading) => heading.text), ['Visible']);
+    expect(parsed.variables, isEmpty);
+    expect(parsed.xmlBlocks, isEmpty);
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('markdown.raw-html.unsafe')),
+    );
+  });
+
+  test('parser does not treat indented code as a fenced block', () {
+    const source = '    ```\n# Visible\n    ```\n';
+
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(parsed.codeBlocks, isEmpty);
+    expect(parsed.headings.map((heading) => heading.text), ['Visible']);
+  });
+
   test('WYSIWYG inline commands preserve existing sibling formatting', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -2827,6 +3007,154 @@ void main() {}
 
     codeController.applyCodeBlockLanguage(codeBlockId, 'dart');
     expect(codeController.markdown, '```dart\nprint(1);\n```\n');
+  });
+
+  test('WYSIWYG table cell pipes round-trip without shifting columns', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| First | Final |\n'
+          '| --- | --- |\n'
+          '| left | keep |\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final table = controller.document.blocks.single;
+    final firstBodyCell = table.children[1].children.first;
+
+    controller.updateTableCellText(table.id, firstBodyCell.id, 'left | right');
+
+    expect(
+      controller.markdown,
+      '| First | Final |\n'
+      '| --- | --- |\n'
+      r'| left \| right | keep |'
+      '\n',
+    );
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    final reparsedRow = reparsed.busyDocument.blocks.single.children[1];
+    expect(reparsedRow.children, hasLength(2));
+    expect(reparsedRow.children.map((cell) => cell.plainText), [
+      'left | right',
+      'keep',
+    ]);
+  });
+
+  test('table escaping protects pipes inside formatted cell content', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| First | Final |\n'
+          '| --- | --- |\n'
+          r'| `a\|b` and **x\|y** | keep |'
+          '\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final table = controller.document.blocks.single;
+
+    controller.updateTableCellText(
+      table.id,
+      table.children.first.children.first.id,
+      'Changed',
+    );
+
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    final cells = reparsed.busyDocument.blocks.single.children[1].children;
+    expect(cells, hasLength(2));
+    expect(cells.first.plainText, 'a|b and x|y');
+    expect(cells.last.plainText, 'keep');
+    expect(
+      cells.first.inlines.where((inline) => inline.kind == BusyInlineKind.code),
+      hasLength(1),
+    );
+    expect(
+      cells.first.inlines.where(
+        (inline) => inline.kind == BusyInlineKind.strong,
+      ),
+      hasLength(1),
+    );
+  });
+
+  test('table code preserves a backslash immediately before a pipe', () {
+    const payload = r'a\|b';
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.gfm,
+      blocks: [
+        BusyBlock(
+          id: 'table',
+          kind: BusyBlockKind.table,
+          dirty: true,
+          children: [
+            BusyBlock(
+              id: 'header',
+              kind: BusyBlockKind.table,
+              children: [
+                BusyBlock(
+                  id: 'header-first',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.text, text: 'First'),
+                  ],
+                ),
+                BusyBlock(
+                  id: 'header-final',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.text, text: 'Final'),
+                  ],
+                ),
+              ],
+            ),
+            BusyBlock(
+              id: 'body',
+              kind: BusyBlockKind.table,
+              children: [
+                BusyBlock(
+                  id: 'body-first',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.code, text: payload),
+                  ],
+                ),
+                BusyBlock(
+                  id: 'body-final',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.text, text: 'keep'),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final markdown = const BusyMarkMarkdownSerializer().serialize(document);
+    final rendered = md.markdownToHtml(
+      markdown,
+      extensionSet: md.ExtensionSet.gitHubWeb,
+    );
+    final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+    final cells = reparsed.busyDocument.blocks.single.children[1].children;
+
+    expect(markdown, contains('<code>&#97;&#92;&#124;&#98;</code>'));
+    expect(markdown, isNot(contains('&amp;#')));
+    expect(rendered, contains(r'<code>a\|b</code>'));
+    expect(cells, hasLength(2));
+    expect(cells.first.inlines.single.kind, BusyInlineKind.code);
+    expect(cells.first.inlines.single.text, payload);
+    expect(cells.last.plainText, 'keep');
   });
 
   test('WYSIWYG table row and column commands serialize Markdown', () {
