@@ -267,6 +267,19 @@ class MarkdownAstAdapter {
       ];
     }
 
+    if (tag == 'section' && node.attributes['class'] == 'footnotes') {
+      return [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.unknown,
+          inlines: _inlinesFromNodes(children),
+          rawSource: node.textContent,
+          preserveRaw: true,
+          isGenerated: true,
+        ),
+      ];
+    }
+
     if (_writersideBlockTag(tag)) {
       return [
         BusyBlock(

@@ -116,7 +116,8 @@ class BusyMarkPreviewBuilder {
   List<PreviewBlock> buildBlocks(BusyDocument document) {
     return [
       for (final block in document.blocks)
-        if (block.kind != BusyBlockKind.frontMatter) _block(block),
+        if (block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly)
+          _block(block),
     ];
   }
 

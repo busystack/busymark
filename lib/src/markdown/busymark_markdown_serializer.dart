@@ -15,7 +15,7 @@ class BusyMarkMarkdownSerializer {
       chunks.add(document.rawFrontMatter!.trimRight());
     }
     for (final block in document.blocks) {
-      if (block.kind == BusyBlockKind.frontMatter) {
+      if (!_isSourceBackedBlock(block)) {
         continue;
       }
       final source = serializeBlock(block);
@@ -30,7 +30,8 @@ class BusyMarkMarkdownSerializer {
   }
 
   String serializeBlock(BusyBlock block) {
-    if (!_hasDirtyContent(block) && block.rawSource != null) {
+    if ((block.isSourceProtected || !_hasDirtyContent(block)) &&
+        block.rawSource != null) {
       return block.rawSource!;
     }
     return switch (block.kind) {
@@ -71,7 +72,9 @@ class BusyMarkMarkdownSerializer {
     }
     final dirtyBlocks = [
       for (final block in document.blocks)
-        if (block.kind != BusyBlockKind.frontMatter && _hasDirtyContent(block))
+        if (_isSourceBackedBlock(block) &&
+            !block.isSourceProtected &&
+            _hasDirtyContent(block))
           block,
     ];
     if (dirtyBlocks.isEmpty) {
@@ -85,13 +88,10 @@ class BusyMarkMarkdownSerializer {
     }
     final spannedBlocks = [
       for (final block in document.blocks)
-        if (block.kind != BusyBlockKind.frontMatter && block.sourceSpan != null)
-          block,
+        if (_isSourceBackedBlock(block) && block.sourceSpan != null) block,
     ];
     if (spannedBlocks.length !=
-        document.blocks
-            .where((block) => block.kind != BusyBlockKind.frontMatter)
-            .length) {
+        document.blocks.where(_isSourceBackedBlock).length) {
       return null;
     }
     if (_sourceOutsideSpansHasContent(
@@ -196,6 +196,10 @@ class BusyMarkMarkdownSerializer {
     return kind == BusyBlockKind.unorderedListItem ||
         kind == BusyBlockKind.orderedListItem ||
         kind == BusyBlockKind.taskListItem;
+  }
+
+  bool _isSourceBackedBlock(BusyBlock block) {
+    return block.kind != BusyBlockKind.frontMatter && !block.isGenerated;
   }
 
   bool _hasDirtyContent(BusyBlock block) {

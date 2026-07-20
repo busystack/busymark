@@ -74,6 +74,9 @@ class BusyBlock {
     this.rawSource,
     this.sourceSpan,
     this.preserveRaw = false,
+    this.isSourceOnly = false,
+    this.isGenerated = false,
+    this.isSourceProtected = false,
     this.dirty = false,
   });
 
@@ -85,6 +88,9 @@ class BusyBlock {
   final String? rawSource;
   final SourceSpan? sourceSpan;
   final bool preserveRaw;
+  final bool isSourceOnly;
+  final bool isGenerated;
+  final bool isSourceProtected;
   final bool dirty;
 
   String get plainText => inlines.map((inline) => inline.plainText).join();
@@ -98,6 +104,9 @@ class BusyBlock {
     String? rawSource,
     SourceSpan? sourceSpan,
     bool? preserveRaw,
+    bool? isSourceOnly,
+    bool? isGenerated,
+    bool? isSourceProtected,
     bool? dirty,
   }) {
     return BusyBlock(
@@ -109,6 +118,9 @@ class BusyBlock {
       rawSource: rawSource ?? this.rawSource,
       sourceSpan: sourceSpan ?? this.sourceSpan,
       preserveRaw: preserveRaw ?? this.preserveRaw,
+      isSourceOnly: isSourceOnly ?? this.isSourceOnly,
+      isGenerated: isGenerated ?? this.isGenerated,
+      isSourceProtected: isSourceProtected ?? this.isSourceProtected,
       dirty: dirty ?? this.dirty,
     );
   }

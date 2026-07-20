@@ -191,6 +191,428 @@ void main() {}
     },
   );
 
+  test('unrelated edits preserve source-only reference definitions', () {
+    for (final source in const [
+      '[guide]: docs.md "Title"\nOriginal\n',
+      'Before\n\n[guide]: docs.md "Title"\n\nOriginal\n',
+      'Original\n\n[guide]: docs.md "Title"\n',
+      '[one]: one.md\n[two]: two.md "Two"\nOriginal\n',
+      '[guide]:\n  docs.md\n  "Title"\nOriginal\n',
+      '[label]:\n[dest]:thing\nOriginal\n',
+      '[label]: docs.md "\n[x]: inside title\n"\nOriginal\n',
+      '[guide]: docs.md "Title"\r\nOriginal\r\n',
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final target = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.plainText == 'Original',
+      );
+      final sourceOnlyBlocks = parsed.busyDocument.blocks.where(
+        (block) => block.isSourceOnly,
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      expect(sourceOnlyBlocks, isNotEmpty, reason: 'input: $source');
+      expect(target.sourceSpan, isNotNull, reason: 'input: $source');
+      expect(target.rawSource, 'Original', reason: 'input: $source');
+
+      controller.updateBlockText(target.id, 'Changed');
+
+      expect(
+        controller.markdown,
+        source.replaceFirst('Original', 'Changed'),
+        reason: 'input: $source',
+      );
+    }
+  });
+
+  test('source-only definitions survive scanner and AST count mismatches', () {
+    const blockquoteSource =
+        '[guide]: docs.md\n\n'
+        'Original\n'
+        '> Quote\n';
+    final blockquoteParsed = parser.parse(
+      filePath: 'topic.md',
+      source: blockquoteSource,
+    );
+    final blockquoteTarget = blockquoteParsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+    final blockquoteController = BusyMarkWysiwygDocumentController(
+      document: blockquoteParsed.busyDocument,
+    );
+
+    blockquoteController.updateBlockText(blockquoteTarget.id, 'Changed');
+
+    expect(
+      blockquoteController.markdown,
+      blockquoteSource.replaceFirst('Original', 'Changed'),
+    );
+
+    const looseListSource =
+        '[guide]: docs.md\n\n'
+        '- item\n\n'
+        '  continuation\n\n'
+        'Original\n';
+    final looseListParsed = parser.parse(
+      filePath: 'topic.md',
+      source: looseListSource,
+    );
+    final looseListTarget = looseListParsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+    final looseListController = BusyMarkWysiwygDocumentController(
+      document: looseListParsed.busyDocument,
+    );
+
+    expect(looseListTarget.sourceSpan, isNull);
+    expect(
+      looseListParsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+      isTrue,
+    );
+
+    looseListController.updateBlockText(looseListTarget.id, 'Changed');
+
+    expect(looseListController.markdown, contains('[guide]: docs.md'));
+    expect(
+      RegExp(
+        r'^\[guide\]:',
+        multiLine: true,
+      ).allMatches(looseListController.markdown),
+      hasLength(1),
+    );
+    expect(looseListController.markdown, contains('Changed'));
+  });
+
+  test('preserved reference definitions still resolve after an edit', () {
+    const source =
+        '[Guide][guide]\n\n'
+        '[guide]: docs.md "Title"\n\n'
+        'Original\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final target = controller.document.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+
+    controller.updateBlockText(target.id, 'Changed');
+
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(controller.markdown, source.replaceFirst('Original', 'Changed'));
+    expect(reparsed.links.map((link) => link.destination), contains('docs.md'));
+    expect(
+      const BusyMarkPreviewBuilder()
+          .build(reparsed.busyDocument)
+          .blocks
+          .map((block) => block.text),
+      isNot(contains('[guide]: docs.md "Title"')),
+    );
+  });
+
+  test('unrelated edits preserve GFM footnote definitions', () {
+    for (final source in const [
+      '[^note]: Footnote text\n\nOriginal\n',
+      '[^note]: First\n    continued\n\nOriginal\n',
+      'Use[^note].\n\n[^note]: Footnote text\n\nOriginal\n',
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final target = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.plainText == 'Original',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      expect(
+        parsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+        isTrue,
+        reason: 'input: $source',
+      );
+      expect(target.rawSource, 'Original', reason: 'input: $source');
+      if (source.startsWith('Use')) {
+        expect(
+          parsed.busyDocument.blocks.any((block) => block.isGenerated),
+          isTrue,
+        );
+      }
+
+      controller.updateBlockText(target.id, 'Changed');
+
+      expect(
+        controller.markdown,
+        source.replaceFirst('Original', 'Changed'),
+        reason: 'input: $source',
+      );
+    }
+  });
+
+  test('containers with nested definitions are source-protected', () {
+    Iterable<BusyBlock> flatten(BusyBlock block) sync* {
+      yield block;
+      for (final child in block.children) {
+        yield* flatten(child);
+      }
+    }
+
+    for (final source in const [
+      '> [guide]: docs.md\n>\n> Original\n\nOutside\n',
+      '- [guide]: docs.md\n  Original\n\nOutside\n',
+      '> [^note]: Note\n>\n> Original\n\nOutside\n',
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final protected = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.isSourceProtected,
+      );
+      final nestedTarget = flatten(
+        protected,
+      ).firstWhere((block) => block.plainText == 'Original');
+      final outside = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.plainText == 'Outside',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      expect(protected.preserveRaw, isTrue, reason: 'input: $source');
+      expect(protected.rawSource, contains(']:'), reason: 'input: $source');
+      expect(
+        flatten(protected).every((block) => block.isSourceProtected),
+        isTrue,
+        reason: 'input: $source',
+      );
+
+      controller.updateBlockText(nestedTarget.id, 'Changed');
+      expect(controller.markdown, source, reason: 'input: $source');
+
+      controller.updateBlockText(outside.id, 'Changed outside');
+      expect(
+        controller.markdown,
+        source.replaceFirst('Outside', 'Changed outside'),
+        reason: 'input: $source',
+      );
+    }
+  });
+
+  test('scanner mismatches conservatively protect nested definitions', () {
+    const source =
+        '> [guide]: docs.md\n'
+        '>\n'
+        '> Original\n\n'
+        '- item\n\n'
+        '  continuation\n\n'
+        'Outside\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final protectedBlocks = parsed.busyDocument.blocks.where(
+      (block) => block.isSourceProtected && !block.isSourceOnly,
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final appended = controller.document.blocks.firstWhere(
+      (block) =>
+          !block.isSourceOnly && !block.isGenerated && !block.isSourceProtected,
+    );
+
+    expect(protectedBlocks, isNotEmpty);
+    expect(protectedBlocks.every((block) => block.isGenerated), isTrue);
+    expect(
+      parsed.busyDocument.blocks.any(
+        (block) => block.isSourceOnly && block.rawSource!.contains('[guide]:'),
+      ),
+      isTrue,
+    );
+
+    controller.updateBlockText(appended.id, 'Appended');
+
+    expect(controller.markdown, contains('[guide]: docs.md'));
+    expect(controller.markdown, contains('Original'));
+    expect(controller.markdown, contains('Outside'));
+    expect(controller.markdown, contains('Appended'));
+    expect(
+      RegExp(r'\[guide\]: docs\.md').allMatches(controller.markdown),
+      hasLength(1),
+    );
+  });
+
+  test('opaque source IDs cannot collide with semantic heading IDs', () {
+    const source =
+        '# Source only 0\n\n'
+        '> [guide]: docs.md\n'
+        '>\n'
+        '> Original\n\n'
+        '- item\n\n'
+        '  continuation\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final opaque = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.isSourceOnly,
+    );
+    final heading = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.heading,
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    expect(heading.id, 'source-only-0');
+    expect(opaque.id, isNot(heading.id));
+
+    controller.applyBlockCommand(heading.id, BusyWysiwygBlockCommand.paragraph);
+    controller.updateBlockText(opaque.id, 'Erased');
+
+    expect(controller.markdown, source);
+  });
+
+  test('full list serialization preserves reference definitions', () {
+    const source = '[guide]: docs.md "Title"\n\n- Original\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final item = controller.document.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.unorderedListItem,
+    );
+
+    controller.updateBlockText(item.id, 'Changed');
+
+    expect(controller.markdown, '[guide]: docs.md "Title"\n\n- Changed\n');
+  });
+
+  test('full serialization omits generated footnote output', () {
+    const source =
+        'Use[^note].\n\n'
+        '[^note]: Footnote text\n\n'
+        '- Original\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final item = controller.document.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.unorderedListItem,
+    );
+
+    controller.updateBlockText(item.id, 'Changed');
+
+    expect(controller.markdown, contains('[^note]: Footnote text'));
+    expect(
+      RegExp(r'\[\^note\]: Footnote text').allMatches(controller.markdown),
+      hasLength(1),
+    );
+    expect(controller.markdown, contains('- Changed'));
+    expect(controller.markdown, isNot(contains('\u21a9')));
+  });
+
+  test('invalid reference-like prose remains a modeled block', () {
+    const source = '[guide] is ordinary prose\n\nOriginal\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(
+      parsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+      isFalse,
+    );
+    expect(
+      parsed.busyDocument.blocks.first.plainText,
+      '[guide] is ordinary prose',
+    );
+  });
+
+  test('large inline-link documents do not create source-only blocks', () {
+    final source = [
+      for (var index = 0; index < 2000; index++) '[Link $index](docs.md)\n',
+    ].join('\n');
+
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(
+      parsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+      isFalse,
+    );
+    expect(parsed.links, hasLength(2000));
+  });
+
+  test('large adjacent definition sets stay distinct and preserved', () {
+    final definitions = [
+      for (var index = 0; index < 500; index++)
+        '[reference-$index]: docs/$index.md',
+    ].join('\n');
+    final source = '$definitions\nOriginal\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final target = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    expect(
+      parsed.busyDocument.blocks.where((block) => block.isSourceOnly),
+      hasLength(500),
+    );
+
+    controller.updateBlockText(target.id, 'Changed');
+
+    expect(controller.markdown, source.replaceFirst('Original', 'Changed'));
+  });
+
+  test('destructive selections reject read-only source endpoints', () {
+    const source =
+        '> [guide]: docs.md\n'
+        '>\n'
+        '> Original\n\n'
+        'After text\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final protected = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.isSourceProtected,
+    );
+    final after = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'After text',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    final result = controller.deleteTextSelection(
+      firstBlockId: protected.id,
+      firstStartOffset: 0,
+      lastBlockId: after.id,
+      lastEndOffset: 2,
+      removedBlockIds: [protected.id, after.id],
+    );
+
+    expect(result, isNull);
+    expect(controller.markdown, source);
+  });
+
+  test('list indentation cannot attach content to a protected item', () {
+    const source =
+        '- [guide]: docs.md\n'
+        '  Original\n'
+        '- Keep me\n'
+        '- Edit me\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final keep = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Keep me',
+    );
+    final edit = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Edit me',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    controller.indentListItems([keep.id]);
+    controller.updateBlockText(edit.id, 'Edited');
+
+    expect(controller.markdown, contains('[guide]: docs.md'));
+    expect(controller.markdown, contains('Keep me'));
+    expect(controller.markdown, contains('Edited'));
+  });
+
   test('WYSIWYG nested list text edit updates Markdown source', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -438,6 +860,45 @@ void main() {}
     expect(markdown, 'Editable text\n');
     expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG hides a definition-only source and preserves it', (
+    tester,
+  ) async {
+    const source = '[guide]: docs.md "Title"\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    var markdown = source;
+
+    expect(
+      const BusyMarkPreviewBuilder().build(parsed.busyDocument).blocks,
+      isEmpty,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.textContaining('[guide]:'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'First line');
+    await tester.pump();
+
+    expect(markdown, '[guide]: docs.md "Title"\n\nFirst line\n');
   });
 
   testWidgets('WYSIWYG editor undo and redo restore document edits', (
@@ -2069,6 +2530,61 @@ void main() {}
     expect(find.byType(TextField), findsOneWidget);
     expect(fieldAt(0).controller!.text, isEmpty);
   });
+
+  testWidgets(
+    'WYSIWYG select-all deletion preserves source-protected definitions',
+    (tester) async {
+      const protectedSource =
+          '> [guide]: docs.md\n'
+          '>\n'
+          '> Original\n';
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'Before\n\n$protectedSource\nAfter\n',
+      );
+      var markdown = '';
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (filePath, value) => markdown = value,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(TextField), findsNWidgets(2));
+      final firstField = tester.widget<TextField>(find.byType(TextField).first);
+      firstField.focusNode!.requestFocus();
+      await tester.pump();
+
+      for (var attempt = 0; attempt < 2; attempt++) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+      }
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pump();
+
+      expect(markdown, contains(protectedSource));
+      expect(
+        RegExp(r'^> \[guide\]:', multiLine: true).allMatches(markdown),
+        hasLength(1),
+      );
+    },
+  );
 
   test('WYSIWYG inline ranges do not duplicate formatted text', () {
     final parsed = parser.parse(filePath: 'topic.md', source: '**source**\n');

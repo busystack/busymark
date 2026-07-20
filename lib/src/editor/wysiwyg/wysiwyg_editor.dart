@@ -562,7 +562,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   ]) {
     return [
       for (final block in blocks)
-        if (block.kind != BusyBlockKind.frontMatter) ...[
+        if (block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly) ...[
           _EditableBlockEntry(block: block, depth: depth),
           if (_showsNestedEditorBlocks(block))
             ..._editableBlockEntries(block.children, depth + 1),
@@ -571,6 +571,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _showsNestedEditorBlocks(BusyBlock block) {
+    if (block.isSourceProtected) {
+      return false;
+    }
     return switch (block.kind) {
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
@@ -606,6 +609,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       attributes: block.attributes,
       rawSource: block.rawSource,
       preserveRaw: block.preserveRaw,
+      isSourceOnly: block.isSourceOnly,
+      isGenerated: block.isGenerated,
+      isSourceProtected: block.isSourceProtected,
       dirty: block.dirty,
     );
   }
