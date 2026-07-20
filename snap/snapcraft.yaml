@@ -63,6 +63,7 @@ parts:
       - libxcb1
       - git
       - openssh-client
+      - util-linux
       - yaru-theme-gtk
       - yaru-theme-icon
     override-build: |

@@ -11,7 +11,12 @@ class GitExecutableLocator {
   Future<GitAvailability> locate() async {
     for (final candidate in _candidates()) {
       try {
-        final result = await runner.run(candidate, const ['--version']);
+        final result = await runner.run(
+          candidate,
+          const ['--version'],
+          timeout: gitExecutableProbeTimeout,
+          commandName: 'git',
+        );
         if (!result.success) {
           continue;
         }

@@ -528,6 +528,8 @@ class GitCliGateway implements GitRepositoryGateway {
           repoRoot,
           ...args,
         ],
+        timeout: gitCommandTimeout,
+        commandName: commandName,
         environment: passive ? const {'GIT_NO_LAZY_FETCH': '1'} : const {},
       );
     } on ProcessException catch (error) {
