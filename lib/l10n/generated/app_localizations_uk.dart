@@ -217,6 +217,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageEstonian => 'Eesti';
+
+  @override
   String get toggleSidebar => 'Бічна панель';
 
   @override

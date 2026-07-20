@@ -9,6 +9,7 @@ import 'app_localizations_ar.dart';
 import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_et.dart';
 import 'app_localizations_fa.dart';
 import 'app_localizations_fr.dart';
 import 'app_localizations_hi.dart';
@@ -109,6 +110,7 @@ abstract class AppLocalizations {
     Locale('de'),
     Locale('en'),
     Locale('es'),
+    Locale('et'),
     Locale('fa'),
     Locale('fr'),
     Locale('hi'),
@@ -533,6 +535,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'हिन्दी'**
   String get languageHindi;
+
+  /// Language selector option for Estonian.
+  ///
+  /// In en, this message translates to:
+  /// **'Eesti'**
+  String get languageEstonian;
 
   /// Keyboard shortcuts label for the sidebar panel toggle.
   ///
@@ -3423,6 +3431,7 @@ class _AppLocalizationsDelegate
     'de',
     'en',
     'es',
+    'et',
     'fa',
     'fr',
     'hi',
@@ -3449,6 +3458,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'et':
+      return AppLocalizationsEt();
     case 'fa':
       return AppLocalizationsFa();
     case 'fr':

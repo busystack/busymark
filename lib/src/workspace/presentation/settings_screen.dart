@@ -409,6 +409,7 @@ class _LanguageControl extends StatelessWidget {
   List<_LanguageOption> _languageOptions() {
     return const [
       _LanguageOption('en', 'English'),
+      _LanguageOption('et', 'Eesti'),
       _LanguageOption('de', 'Deutsch'),
       _LanguageOption('it', 'Italiano'),
       _LanguageOption('nb', 'Norsk'),

@@ -59,6 +59,7 @@ void main() {
     expect(app.localizationsDelegates, contains(AppLocalizations.delegate));
     expect(app.supportedLocales, AppLocalizations.supportedLocales);
     expect(app.supportedLocales, contains(const Locale('de')));
+    expect(app.supportedLocales, contains(const Locale('et')));
     expect(app.supportedLocales, contains(const Locale('it')));
     expect(app.supportedLocales, contains(const Locale('nb')));
     expect(app.supportedLocales, isNot(contains(const Locale('no'))));
@@ -266,12 +267,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Deutsch'), findsOneWidget);
+    expect(find.text('Eesti'), findsOneWidget);
     expect(find.text('العربية'), findsOneWidget);
     expect(find.text('हिन्दी'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
     expect(find.text('Deutsch'), findsNothing);
+    expect(find.text('Eesti'), findsNothing);
     expect(find.text('العربية'), findsNothing);
     expect(find.text('हिन्दी'), findsNothing);
 

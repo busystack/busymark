@@ -414,6 +414,7 @@ const _sharedEnglishMatches = <String>{
   'languageArabic',
   'languagePersian',
   'languageHindi',
+  'languageEstonian',
   'writerside',
   'xml',
   'fileTypeMarkdown',
@@ -435,6 +436,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitBranches',
     'gitCommit',
   },
+  'et': {'link', 'gitCommit'},
   'es': {'editor', 'gitCommit'},
   'fr': {
     'source',
