@@ -2178,8 +2178,8 @@ void main() {
         matching: find.text(ar.untitledMarkdownFileName),
       );
       final outlineTitle = find.descendant(
-        of: find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
-        matching: find.text(busyMarkBidiIsolate('عنوان')),
+        of: find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
+        matching: find.text('عنوان'),
       );
       expect(projectName, findsOneWidget);
       expect(outlineTitle, findsOneWidget);
@@ -2937,11 +2937,6 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
-      findsNothing,
-    );
-
     final editorField = find.byType(TextField).first;
     await tester.tap(editorField);
     final controller = tester.widget<TextField>(editorField).controller!;
@@ -3072,17 +3067,20 @@ void main() {
       matching: find.byType(Text),
     );
     expect(primarySidebarLabel, findsOneWidget);
-    expect(tester.widget<Text>(primarySidebarLabel).data, 'basic.md');
     expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
-        matching: find.text('Basic Markdown'),
-      ),
-      findsOneWidget,
+      tester
+          .getSize(find.byKey(const ValueKey('workspace-sidebar-primary-row')))
+          .height,
+      greaterThanOrEqualTo(BusyMarkSizes.iconButton),
     );
+    expect(tester.widget<Text>(primarySidebarLabel).data, 'basic.md');
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    expect(outlineTree, findsOneWidget);
     expect(
-      find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
-      findsNothing,
+      find.descendant(of: outlineTree, matching: find.text('Basic Markdown')),
+      findsOneWidget,
     );
     expect(find.text(l10n.noOutline), findsNothing);
   });
@@ -3137,19 +3135,12 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
-        matching: find.text('Title'),
-      ),
-      findsOneWidget,
-    );
     final outlineTree = find.byKey(
       const ValueKey('workspace-sidebar-outline-tree'),
     );
     expect(
       find.descendant(of: outlineTree, matching: find.text('Title')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.descendant(of: outlineTree, matching: find.text('First')),

@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('sidebar header and list compose the shared vertical gap', () {
+    final header = BusyMarkInsets.sidebarHeader.resolve(TextDirection.ltr);
+
+    expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
+  });
+
   testWidgets('elevated header controls use the shared surface shadow', (
     tester,
   ) async {

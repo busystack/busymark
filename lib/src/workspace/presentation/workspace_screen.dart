@@ -1593,12 +1593,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
           _SidebarHeader(
             workspace: widget.workspace,
             tabs: tabs,
-            selectedTab: selectedTab,
+            selectedTab: widget.searchState.active ? null : selectedTab,
             repositoryInfo: repositoryInfo,
             showTabMenu: !widget.searchState.active && tabs.length > 1,
             onSelectTab: (tab) => _selectTab(tab, tabs),
-            onSelectOutlineHeading: (heading) =>
-                _selectOutlineHeading(ref, widget.workspace, heading),
             onShowBranchMenu: (menuContext, repository) =>
                 _showWorkspaceBranchMenu(menuContext, ref, repository),
           ),
@@ -1979,7 +1977,6 @@ class _SidebarHeader extends StatelessWidget {
     required this.repositoryInfo,
     required this.showTabMenu,
     required this.onSelectTab,
-    required this.onSelectOutlineHeading,
     required this.onShowBranchMenu,
   });
 
@@ -1989,7 +1986,6 @@ class _SidebarHeader extends StatelessWidget {
   final GitRepositoryInfo? repositoryInfo;
   final bool showTabMenu;
   final ValueChanged<_SidebarTab> onSelectTab;
-  final ValueChanged<MarkdownHeading> onSelectOutlineHeading;
   final Future<void> Function(
     BuildContext context,
     GitRepositoryInfo repository,
@@ -2002,9 +1998,6 @@ class _SidebarHeader extends StatelessWidget {
     final path = _workspacePath(workspace);
     final repository = repositoryInfo;
     final branchLabel = _gitBranchLabel(context, repositoryInfo);
-    final outlineHeading = selectedTab == _SidebarTab.outline
-        ? _outlineHeaderHeading(workspace)
-        : null;
     final detailsStyle = Theme.of(
       context,
     ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
@@ -2018,55 +2011,53 @@ class _SidebarHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _SidebarHeaderLine(
-                  key: const ValueKey('workspace-sidebar-primary-label'),
-                  icon: WorkspaceGlyphs.forKind(workspace.kind),
-                  text: _workspaceDisplayName(context, workspace),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
-                ),
-              ),
-              if (showTabMenu && selectedTab != null) ...[
-                const SizedBox(width: BusyMarkSpacing.sm),
-                BusyMarkHeaderPopupMenuButton<_SidebarTab>(
-                  tooltip: context.l10n.sidebarViewMenu,
-                  icon: _sidebarTabIcon(
-                    selectedTab!,
-                    Directionality.of(context),
-                  ),
-                  transparent: true,
-                  borderRadius: BusyMarkRadius.nativeHeaderButton,
-                  itemBuilder: (context) => [
-                    for (final tab in tabs)
-                      BusyMarkPopupMenuItem(
-                        value: tab,
-                        label: _sidebarTabLabel(context, tab),
-                        icon: _sidebarTabIcon(tab, Directionality.of(context)),
-                        shortcut: _sidebarTabShortcut(tab),
-                        checked: tab == selectedTab,
-                        trailingCheck: true,
-                      ),
-                  ],
-                  onSelected: onSelectTab,
-                ),
-              ],
-            ],
-          ),
-          if (outlineHeading != null) ...[
-            const SizedBox(height: BusyMarkSpacing.sm),
-            _SidebarHeaderLine(
-              key: const ValueKey('workspace-sidebar-outline-heading'),
-              icon: BusyMarkGlyphs.heading,
-              text: busyMarkBidiIsolateFor(context, outlineHeading.text),
-              style: detailsStyle,
-              tooltip: busyMarkBidiIsolateFor(context, outlineHeading.text),
-              onTap: (_) async => onSelectOutlineHeading(outlineHeading),
+          ConstrainedBox(
+            key: const ValueKey('workspace-sidebar-primary-row'),
+            constraints: const BoxConstraints(
+              minHeight: BusyMarkSizes.iconButton,
             ),
-          ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: _SidebarHeaderLine(
+                    key: const ValueKey('workspace-sidebar-primary-label'),
+                    icon: WorkspaceGlyphs.forKind(workspace.kind),
+                    text: _workspaceDisplayName(context, workspace),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+                  ),
+                ),
+                if (showTabMenu && selectedTab != null) ...[
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                  BusyMarkHeaderPopupMenuButton<_SidebarTab>(
+                    tooltip: context.l10n.sidebarViewMenu,
+                    icon: _sidebarTabIcon(
+                      selectedTab!,
+                      Directionality.of(context),
+                    ),
+                    transparent: true,
+                    borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    itemBuilder: (context) => [
+                      for (final tab in tabs)
+                        BusyMarkPopupMenuItem(
+                          value: tab,
+                          label: _sidebarTabLabel(context, tab),
+                          icon: _sidebarTabIcon(
+                            tab,
+                            Directionality.of(context),
+                          ),
+                          shortcut: _sidebarTabShortcut(tab),
+                          checked: tab == selectedTab,
+                          trailingCheck: true,
+                        ),
+                    ],
+                    onSelected: onSelectTab,
+                  ),
+                ],
+              ],
+            ),
+          ),
           if (selectedTab == _SidebarTab.files && path.isNotEmpty) ...[
             const SizedBox(height: BusyMarkSpacing.sm),
             _SidebarHeaderLine(
@@ -5751,48 +5742,6 @@ Set<String> _activeTocAncestorKeys(Workspace workspace, {String? treePath}) {
   return ancestors;
 }
 
-MarkdownHeading? _outlineHeaderHeading(Workspace workspace) {
-  for (final heading in workspace.markdown?.headings ?? const []) {
-    if (heading.level == 1 && heading.text.trim().isNotEmpty) {
-      return heading;
-    }
-  }
-  return null;
-}
-
-List<MarkdownHeading> _outlineTreeHeadings(Workspace workspace) {
-  final headings = workspace.markdown?.headings ?? const <MarkdownHeading>[];
-  final headerHeading = _outlineHeaderHeading(workspace);
-  if (headerHeading == null) {
-    return headings;
-  }
-  return [
-    for (final heading in headings)
-      if (!identical(heading, headerHeading)) heading,
-  ];
-}
-
-void _selectOutlineHeading(
-  WidgetRef ref,
-  Workspace workspace,
-  MarkdownHeading heading,
-) {
-  final activeFilePath =
-      workspace.activeFilePath ?? workspace.markdown?.filePath;
-  if (activeFilePath == null) {
-    return;
-  }
-  ref
-      .read(_outlineNavigationTargetProvider.notifier)
-      .set(
-        _OutlineNavigationTarget(
-          filePath: activeFilePath,
-          headingId: heading.id,
-          line: heading.span.startLine,
-        ),
-      );
-}
-
 class _OutlineTab extends ConsumerStatefulWidget {
   const _OutlineTab({required this.workspace});
 
@@ -5825,17 +5774,13 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
 
   @override
   Widget build(BuildContext context) {
-    final documentHeadings =
+    final headings =
         widget.workspace.markdown?.headings ?? const <MarkdownHeading>[];
-    if (documentHeadings.isEmpty) {
+    if (headings.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.font,
         title: context.l10n.noOutline,
       );
-    }
-    final headings = _outlineTreeHeadings(widget.workspace);
-    if (headings.isEmpty) {
-      return const SizedBox.shrink();
     }
     final activeFilePath =
         widget.workspace.activeFilePath ?? widget.workspace.markdown?.filePath;
@@ -5872,7 +5817,17 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
           onToggle: hasChildren ? toggle : null,
           onTap: activeFilePath == null
               ? null
-              : () => _selectOutlineHeading(ref, widget.workspace, heading),
+              : () {
+                  ref
+                      .read(_outlineNavigationTargetProvider.notifier)
+                      .set(
+                        _OutlineNavigationTarget(
+                          filePath: activeFilePath,
+                          headingId: heading.id,
+                          line: heading.span.startLine,
+                        ),
+                      );
+                },
         );
       },
     );
@@ -5954,7 +5909,7 @@ List<_OutlineTreeEntry> _visibleOutlineTreeEntries(
 }
 
 Set<String> _initialExpandedOutlineNodeKeys(Workspace workspace) {
-  final headings = _outlineTreeHeadings(workspace);
+  final headings = workspace.markdown?.headings ?? const <MarkdownHeading>[];
   return {
     for (final node in _flattenOutlineTree(_buildOutlineTree(headings)))
       if (node.children.isNotEmpty) _outlineNodeKey(node.heading),

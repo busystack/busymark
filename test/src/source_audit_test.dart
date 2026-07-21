@@ -564,7 +564,11 @@ void main() {
     );
     expect(
       workspace,
-      contains('icon: _sidebarTabIcon(tab, Directionality.of(context))'),
+      matches(
+        RegExp(
+          r'icon: _sidebarTabIcon\(\s*tab,\s*Directionality\.of\(context\),?\s*\)',
+        ),
+      ),
     );
     expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
     expect(workspace, contains('BusyMarkSidebarShortcutActivators.history'));
@@ -650,17 +654,19 @@ void main() {
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
     expect(workspace, contains('tooltip: context.l10n.gitBranches'));
-    expect(workspace, contains('MarkdownHeading? _outlineHeaderHeading'));
-    expect(workspace, contains('List<MarkdownHeading> _outlineTreeHeadings'));
-    expect(workspace, contains('heading.level == 1'));
-    expect(
-      workspace,
-      contains("ValueKey('workspace-sidebar-outline-heading')"),
-    );
+    expect(workspace, contains("ValueKey('workspace-sidebar-primary-row')"));
+    expect(workspace, contains('minHeight: BusyMarkSizes.iconButton'));
+    expect(workspace, contains('text: _workspaceDisplayName(context'));
     expect(workspace, contains("ValueKey('workspace-sidebar-outline-tree')"));
     expect(
       workspace,
-      contains('busyMarkBidiIsolateFor(context, outlineHeading.text)'),
+      isNot(contains("ValueKey('workspace-sidebar-outline-heading')")),
+    );
+    expect(workspace, isNot(contains('_outlineHeaderHeading')));
+    expect(workspace, isNot(contains('_outlineTreeHeadings')));
+    expect(
+      workspace,
+      contains('widget.searchState.active ? null : selectedTab'),
     );
     expect(workspace, contains('selectedTab == _SidebarTab.git'));
     expect(workspace, contains('selectedTab == _SidebarTab.gitHistory'));

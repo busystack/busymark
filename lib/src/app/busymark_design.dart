@@ -254,7 +254,7 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.mdPlus,
     BusyMarkSpacing.mdPlus,
     BusyMarkSpacing.sm,
-    BusyMarkSpacing.md,
+    BusyMarkSpacing.sm - BusyMarkSpacing.xxs,
   );
   static const sidebarList = EdgeInsets.fromLTRB(
     BusyMarkSpacing.sm,
