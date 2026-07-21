@@ -493,7 +493,13 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
   },
   'et': {'link', 'gitCommit'},
-  'es': {'editor', 'gitCommit', 'horizontal', 'vertical'},
+  'es': {
+    'editor',
+    'gitCommit',
+    'horizontal',
+    'vertical',
+    'shortcutGroupGeneral',
+  },
   'fr': {
     'source',
     'validation',
@@ -509,7 +515,6 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   'it': {
     'editor',
     'file',
-    'shortcutGroupFile',
     'checklist',
     'privacy',
     'toc',

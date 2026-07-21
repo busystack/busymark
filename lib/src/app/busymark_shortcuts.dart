@@ -15,7 +15,7 @@ enum BusyMarkAppShortcutAction {
   newDocument,
   open,
   save,
-  find,
+  search,
   keyboardShortcuts,
   markdownAndHtml,
   settings,
@@ -32,7 +32,7 @@ abstract final class BusyMarkAppShortcuts {
   static const newDocumentLabel = 'Ctrl+N';
   static const openLabel = 'Ctrl+O';
   static const saveLabel = 'Ctrl+S';
-  static const findLabel = 'Ctrl+F';
+  static const searchLabel = 'Ctrl+F';
   static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
   static const markdownAndHtmlLabel = 'Ctrl+Alt+M';
   static const settingsLabel = 'Ctrl+Alt+S';
@@ -54,8 +54,8 @@ abstract final class BusyMarkAppShortcuts {
     label: saveLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyS, control: true),
   );
-  static const find = BusyMarkShortcutDefinition(
-    label: findLabel,
+  static const search = BusyMarkShortcutDefinition(
+    label: searchLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyF, control: true),
   );
   static const keyboardShortcuts = BusyMarkShortcutDefinition(
@@ -116,7 +116,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.newDocument: newDocument,
         BusyMarkAppShortcutAction.open: open,
         BusyMarkAppShortcutAction.save: save,
-        BusyMarkAppShortcutAction.find: find,
+        BusyMarkAppShortcutAction.search: search,
         BusyMarkAppShortcutAction.keyboardShortcuts: keyboardShortcuts,
         BusyMarkAppShortcutAction.markdownAndHtml: markdownAndHtml,
         BusyMarkAppShortcutAction.settings: settings,
@@ -134,7 +134,7 @@ abstract final class BusyMarkAppShortcutLabels {
   static const newDocument = BusyMarkAppShortcuts.newDocumentLabel;
   static const open = BusyMarkAppShortcuts.openLabel;
   static const save = BusyMarkAppShortcuts.saveLabel;
-  static const find = BusyMarkAppShortcuts.findLabel;
+  static const search = BusyMarkAppShortcuts.searchLabel;
   static const keyboardShortcuts = BusyMarkAppShortcuts.keyboardShortcutsLabel;
   static const markdownAndHtml = BusyMarkAppShortcuts.markdownAndHtmlLabel;
   static const settings = BusyMarkAppShortcuts.settingsLabel;
@@ -151,7 +151,7 @@ abstract final class BusyMarkAppShortcutActivators {
       BusyMarkAppShortcuts.newDocument.activator;
   static ShortcutActivator get open => BusyMarkAppShortcuts.open.activator;
   static ShortcutActivator get save => BusyMarkAppShortcuts.save.activator;
-  static ShortcutActivator get find => BusyMarkAppShortcuts.find.activator;
+  static ShortcutActivator get search => BusyMarkAppShortcuts.search.activator;
   static ShortcutActivator get keyboardShortcuts =>
       BusyMarkAppShortcuts.keyboardShortcuts.activator;
   static ShortcutActivator get markdownAndHtml =>
@@ -252,7 +252,9 @@ enum BusyMarkTextEditingShortcutAction {
   pastePlainText,
   undo,
   redo,
-  clearSelection,
+  insertIndentation,
+  outdentSource,
+  escape,
 }
 
 abstract final class BusyMarkTextEditingShortcuts {
@@ -265,7 +267,9 @@ abstract final class BusyMarkTextEditingShortcuts {
   static const pastePlainTextLabel = 'Ctrl+Shift+V';
   static const undoLabel = 'Ctrl+Z';
   static const redoLabel = 'Ctrl+Shift+Z';
-  static const clearSelectionLabel = 'Esc';
+  static const insertIndentationLabel = 'Tab';
+  static const outdentSourceLabel = 'Shift+Tab';
+  static const escapeLabel = 'Esc';
 
   static const selectAll = BusyMarkShortcutDefinition(
     label: selectAllLabel,
@@ -303,8 +307,16 @@ abstract final class BusyMarkTextEditingShortcuts {
       shift: true,
     ),
   );
-  static const clearSelection = BusyMarkShortcutDefinition(
-    label: clearSelectionLabel,
+  static const insertIndentation = BusyMarkShortcutDefinition(
+    label: insertIndentationLabel,
+    activator: SingleActivator(LogicalKeyboardKey.tab),
+  );
+  static const outdentSource = BusyMarkShortcutDefinition(
+    label: outdentSourceLabel,
+    activator: SingleActivator(LogicalKeyboardKey.tab, shift: true),
+  );
+  static const escape = BusyMarkShortcutDefinition(
+    label: escapeLabel,
     activator: SingleActivator(LogicalKeyboardKey.escape),
   );
 
@@ -317,7 +329,9 @@ abstract final class BusyMarkTextEditingShortcuts {
         BusyMarkTextEditingShortcutAction.pastePlainText: pastePlainText,
         BusyMarkTextEditingShortcutAction.undo: undo,
         BusyMarkTextEditingShortcutAction.redo: redo,
-        BusyMarkTextEditingShortcutAction.clearSelection: clearSelection,
+        BusyMarkTextEditingShortcutAction.insertIndentation: insertIndentation,
+        BusyMarkTextEditingShortcutAction.outdentSource: outdentSource,
+        BusyMarkTextEditingShortcutAction.escape: escape,
       };
 }
 
@@ -332,8 +346,10 @@ abstract final class BusyMarkTextEditingShortcutLabels {
       BusyMarkTextEditingShortcuts.pastePlainTextLabel;
   static const undo = BusyMarkTextEditingShortcuts.undoLabel;
   static const redo = BusyMarkTextEditingShortcuts.redoLabel;
-  static const clearSelection =
-      BusyMarkTextEditingShortcuts.clearSelectionLabel;
+  static const insertIndentation =
+      BusyMarkTextEditingShortcuts.insertIndentationLabel;
+  static const outdentSource = BusyMarkTextEditingShortcuts.outdentSourceLabel;
+  static const escape = BusyMarkTextEditingShortcuts.escapeLabel;
 }
 
 abstract final class BusyMarkTextEditingShortcutActivators {
@@ -353,8 +369,12 @@ abstract final class BusyMarkTextEditingShortcutActivators {
       BusyMarkTextEditingShortcuts.undo.activator;
   static ShortcutActivator get redo =>
       BusyMarkTextEditingShortcuts.redo.activator;
-  static ShortcutActivator get clearSelection =>
-      BusyMarkTextEditingShortcuts.clearSelection.activator;
+  static ShortcutActivator get insertIndentation =>
+      BusyMarkTextEditingShortcuts.insertIndentation.activator;
+  static ShortcutActivator get outdentSource =>
+      BusyMarkTextEditingShortcuts.outdentSource.activator;
+  static ShortcutActivator get escape =>
+      BusyMarkTextEditingShortcuts.escape.activator;
 }
 
 enum BusyMarkEditorShortcutAction {
@@ -866,4 +886,35 @@ abstract final class BusyMarkSidebarShortcutActivators {
       _ => null,
     };
   }
+}
+
+enum BusyMarkTreeShortcutAction { deleteSelection }
+
+abstract final class BusyMarkTreeShortcuts {
+  const BusyMarkTreeShortcuts._();
+
+  static const deleteSelectionLabel = 'Delete';
+
+  static const deleteSelection = BusyMarkShortcutDefinition(
+    label: deleteSelectionLabel,
+    activator: SingleActivator(LogicalKeyboardKey.delete),
+  );
+
+  static const definitions =
+      <BusyMarkTreeShortcutAction, BusyMarkShortcutDefinition>{
+        BusyMarkTreeShortcutAction.deleteSelection: deleteSelection,
+      };
+}
+
+abstract final class BusyMarkTreeShortcutLabels {
+  const BusyMarkTreeShortcutLabels._();
+
+  static const deleteSelection = BusyMarkTreeShortcuts.deleteSelectionLabel;
+}
+
+abstract final class BusyMarkTreeShortcutActivators {
+  const BusyMarkTreeShortcutActivators._();
+
+  static ShortcutActivator get deleteSelection =>
+      BusyMarkTreeShortcuts.deleteSelection.activator;
 }

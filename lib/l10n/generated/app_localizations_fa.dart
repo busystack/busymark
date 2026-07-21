@@ -186,9 +186,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get fileHistory => 'تاریخچهٔ فایل';
 
   @override
-  String get find => 'یافتن';
-
-  @override
   String get folder => 'پوشه';
 
   @override
@@ -359,7 +356,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get noOpenFile => 'فایلی باز نیست';
 
   @override
-  String get shortcutGroupFile => 'فایل';
+  String get shortcutDeleteTreeItemDescription =>
+      'حذف مورد انتخاب‌شده در فایل‌ها یا برداشتن موضوع انتخاب‌شده از فهرست مطالب';
+
+  @override
+  String get shortcutGroupGeneral => 'عمومی';
 
   @override
   String get shortcutNewDocument => 'سند جدید';
@@ -373,10 +374,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'باز کردن فایل Markdown، پوشه یا پروژهٔ Writerside';
 
   @override
-  String get shortcutSaveDescription => 'ذخیرهٔ فایل Markdown فعلی';
+  String get shortcutSaveDescription => 'ذخیرهٔ سند فعلی';
 
   @override
-  String get shortcutFindDescription => 'جستجو در سند فعلی';
+  String get shortcutSearchDescription => 'جستجو در فضای کاری فعلی';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -393,31 +394,32 @@ class AppLocalizationsFa extends AppLocalizations {
   String get shortcutNextTab => 'تب بعدی';
 
   @override
-  String get shortcutNextTabDescription => 'رفتن به تب باز بعدی ویرایشگر';
+  String get shortcutNextTabDescription => 'رفتن به تب باز بعدی';
 
   @override
   String get shortcutPreviousTab => 'تب قبلی';
 
   @override
-  String get shortcutPreviousTabDescription => 'رفتن به تب باز قبلی ویرایشگر';
+  String get shortcutPreviousTabDescription => 'رفتن به تب باز قبلی';
 
   @override
   String get shortcutCloseTab => 'بستن تب';
 
   @override
-  String get shortcutCloseTabDescription => 'بستن تب فعال ویرایشگر';
+  String get shortcutCloseTabDescription => 'بستن تب فعال';
 
   @override
   String get shortcutCloseAllTabs => 'بستن همهٔ تب‌ها';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'بستن همهٔ تب‌های باز ویرایشگر';
+  String get shortcutCloseAllTabsDescription => 'بستن همهٔ تب‌های باز';
 
   @override
   String get shortcutGroupTextEditing => 'ویرایش متن';
 
   @override
-  String get shortcutSelectAllDescription => 'انتخاب همهٔ متن ویرایشگر';
+  String get shortcutSelectAllDescription =>
+      'در حالت منبع، همهٔ متن را انتخاب کنید؛ در حالت ویرایشگر، برای انتخاب همهٔ بلوک‌ها دو بار فشار دهید';
 
   @override
   String get shortcutCutDescription => 'برش متن انتخاب‌شده';
@@ -440,11 +442,24 @@ class AppLocalizationsFa extends AppLocalizations {
       'آخرین ویرایش واگردشده را دوباره انجام دهید';
 
   @override
-  String get clearEditorSelection => 'پاک کردن انتخاب ویرایشگر';
+  String get shortcutInsertIndentation => 'درج تورفتگی';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'خروج از انتخاب فعلی ویرایشگر یا فوکوس جستجو';
+  String get shortcutInsertIndentationDescription => 'درج تورفتگی در مکان‌نما';
+
+  @override
+  String get shortcutOutdentSource => 'کاهش تورفتگی در حالت منبع';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'حذف یک سطح تورفتگی در حالت منبع';
+
+  @override
+  String get shortcutEscape => 'بستن جستجو یا پاک کردن انتخاب بلوک‌ها';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'بستن جستجوی فضای کاری یا لغو انتخاب بلوک‌ها در حالت ویرایشگر';
 
   @override
   String get shortcutGroupFormatting => 'قالب‌بندی';

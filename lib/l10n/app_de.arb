@@ -137,10 +137,6 @@
   "@fileHistory": {
     "description": "Menu action and sidebar title for showing Git history for a single file."
   },
-  "find": "Suchen",
-  "@find": {
-    "description": "Find command label."
-  },
   "folder": "Ordner",
   "@folder": {
     "description": "Folder kind label."
@@ -365,9 +361,11 @@
   "@noOpenFile": {
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
-  "shortcutGroupFile": "Datei",
-  "@shortcutGroupFile": {
-    "description": "Keyboard shortcut group for file commands."
+  "shortcutDeleteTreeItemDescription": "Ausgewähltes Element in „Dateien“ löschen oder ausgewähltes Thema aus dem Inhaltsverzeichnis entfernen",
+  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "shortcutGroupGeneral": "Allgemein",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
   },
   "shortcutNewDocument": "Neues Dokument",
   "@shortcutNewDocument": {
@@ -381,12 +379,12 @@
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "Aktuelle Markdown-Datei speichern",
+  "shortcutSaveDescription": "Aktuelles Dokument speichern",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "Aktuelles Dokument durchsuchen",
-  "@shortcutFindDescription": {
+  "shortcutSearchDescription": "Aktuellen Arbeitsbereich durchsuchen",
+  "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
   "shortcutKeyboardShortcutsDescription": "Diese Tastaturkürzelübersicht anzeigen",
@@ -403,43 +401,43 @@
   },
   "shortcutNextTab": "Nächster Tab",
   "@shortcutNextTab": {
-    "description": "Keyboard shortcut label for moving to the next editor tab."
+    "description": "Keyboard shortcut label for moving to the next tab."
   },
-  "shortcutNextTabDescription": "Zum nächsten geöffneten Editor-Tab wechseln",
+  "shortcutNextTabDescription": "Zum nächsten geöffneten Tab wechseln",
   "@shortcutNextTabDescription": {
-    "description": "Keyboard shortcut description for moving to the next editor tab."
+    "description": "Keyboard shortcut description for moving to the next tab."
   },
   "shortcutPreviousTab": "Vorheriger Tab",
   "@shortcutPreviousTab": {
-    "description": "Keyboard shortcut label for moving to the previous editor tab."
+    "description": "Keyboard shortcut label for moving to the previous tab."
   },
-  "shortcutPreviousTabDescription": "Zum vorherigen geöffneten Editor-Tab wechseln",
+  "shortcutPreviousTabDescription": "Zum vorherigen geöffneten Tab wechseln",
   "@shortcutPreviousTabDescription": {
-    "description": "Keyboard shortcut description for moving to the previous editor tab."
+    "description": "Keyboard shortcut description for moving to the previous tab."
   },
   "shortcutCloseTab": "Tab schließen",
   "@shortcutCloseTab": {
-    "description": "Keyboard shortcut label for closing the active editor tab."
+    "description": "Keyboard shortcut label for closing the active tab."
   },
-  "shortcutCloseTabDescription": "Aktiven Editor-Tab schließen",
+  "shortcutCloseTabDescription": "Aktiven Tab schließen",
   "@shortcutCloseTabDescription": {
-    "description": "Keyboard shortcut description for closing the active editor tab."
+    "description": "Keyboard shortcut description for closing the active tab."
   },
   "shortcutCloseAllTabs": "Alle Tabs schließen",
   "@shortcutCloseAllTabs": {
-    "description": "Keyboard shortcut label for closing all editor tabs."
+    "description": "Keyboard shortcut label for closing all tabs."
   },
-  "shortcutCloseAllTabsDescription": "Alle geöffneten Editor-Tabs schließen",
+  "shortcutCloseAllTabsDescription": "Alle geöffneten Tabs schließen",
   "@shortcutCloseAllTabsDescription": {
-    "description": "Keyboard shortcut description for closing all editor tabs."
+    "description": "Keyboard shortcut description for closing all tabs."
   },
   "shortcutGroupTextEditing": "Textbearbeitung",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Gesamten Editortext auswählen",
+  "shortcutSelectAllDescription": "Im Quelltextmodus gesamten Text auswählen; im Editormodus zweimal drücken, um alle Blöcke auszuwählen",
   "@shortcutSelectAllDescription": {
-    "description": "Keyboard shortcut description for selecting all text."
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
   },
   "shortcutCutDescription": "Ausgewählten Text ausschneiden",
   "@shortcutCutDescription": {
@@ -465,13 +463,21 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "Auswahl im Editor aufheben",
-  "@clearEditorSelection": {
-    "description": "Keyboard shortcut label for clearing selection."
+  "shortcutInsertIndentation": "Einrückung einfügen",
+  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "shortcutInsertIndentationDescription": "An der Cursorposition eine Einrückung einfügen",
+  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "shortcutOutdentSource": "Quelltext ausrücken",
+  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "shortcutOutdentSourceDescription": "Im Quelltextmodus eine Einrückungsebene entfernen",
+  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "shortcutEscape": "Suche schließen oder Blockauswahl aufheben",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
   },
-  "shortcutClearEditorSelectionDescription": "Aktuelle Auswahl im Editor oder Suchfokus verlassen",
-  "@shortcutClearEditorSelectionDescription": {
-    "description": "Keyboard shortcut description for clearing selection."
+  "shortcutEscapeDescription": "Arbeitsbereichssuche schließen oder im Editormodus eine Blockauswahl aufheben",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
   },
   "shortcutGroupFormatting": "Formatierung",
   "@shortcutGroupFormatting": {

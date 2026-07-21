@@ -866,9 +866,25 @@ void main() {
     expect(workspace, contains('onSecondaryTapDown'));
     expect(
       RegExp(
-        r'SingleActivator\(LogicalKeyboardKey\.delete\)',
+        r'BusyMarkTreeShortcutActivators\.deleteSelection',
       ).allMatches(workspace).length,
       greaterThanOrEqualTo(2),
+    );
+    expect(
+      RegExp(
+        r'shortcut: BusyMarkTreeShortcutLabels\.deleteSelection',
+      ).allMatches(workspace).length,
+      greaterThanOrEqualTo(2),
+    );
+    expect(
+      RegExp(
+        r'SingleActivator\s*\(\s*LogicalKeyboardKey\.delete',
+      ).hasMatch(workspace),
+      isFalse,
+    );
+    expect(
+      RegExp(r'''shortcut:\s*['"]Delete['"]''').hasMatch(workspace),
+      isFalse,
     );
     expect(workspace, contains('class _WritersideTopicRemovalDialog'));
     expect(workspace, contains('class _WritersideTopicUsagesSidebar'));

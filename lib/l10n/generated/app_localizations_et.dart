@@ -186,9 +186,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get fileHistory => 'Faili ajalugu';
 
   @override
-  String get find => 'Otsi';
-
-  @override
   String get folder => 'Kaust';
 
   @override
@@ -359,7 +356,11 @@ class AppLocalizationsEt extends AppLocalizations {
   String get noOpenFile => 'Ühtegi faili pole avatud';
 
   @override
-  String get shortcutGroupFile => 'Fail';
+  String get shortcutDeleteTreeItemDescription =>
+      'Kustuta failivaates valitud üksus või eemalda valitud teema sisukorrast';
+
+  @override
+  String get shortcutGroupGeneral => 'Üldine';
 
   @override
   String get shortcutNewDocument => 'Uus dokument';
@@ -373,10 +374,10 @@ class AppLocalizationsEt extends AppLocalizations {
       'Ava Markdowni fail, kaust või Writerside’i projekt';
 
   @override
-  String get shortcutSaveDescription => 'Salvesta praegune Markdowni fail';
+  String get shortcutSaveDescription => 'Salvesta praegune dokument';
 
   @override
-  String get shortcutFindDescription => 'Otsi praegusest dokumendist';
+  String get shortcutSearchDescription => 'Otsi praegusest tööruumist';
 
   @override
   String get shortcutKeyboardShortcutsDescription => 'Kuva kiirklahvide loend';
@@ -393,34 +394,33 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get shortcutNextTabDescription =>
-      'Liigu järgmisele avatud redaktori vahekaardile';
+      'Liigu järgmisele avatud vahekaardile';
 
   @override
   String get shortcutPreviousTab => 'Eelmine vahekaart';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Liigu eelmisele avatud redaktori vahekaardile';
+      'Liigu eelmisele avatud vahekaardile';
 
   @override
   String get shortcutCloseTab => 'Sulge vahekaart';
 
   @override
-  String get shortcutCloseTabDescription =>
-      'Sulge aktiivne redaktori vahekaart';
+  String get shortcutCloseTabDescription => 'Sulge aktiivne vahekaart';
 
   @override
   String get shortcutCloseAllTabs => 'Sulge kõik vahekaardid';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'Sulge kõik avatud redaktori vahekaardid';
+  String get shortcutCloseAllTabsDescription => 'Sulge kõik avatud vahekaardid';
 
   @override
   String get shortcutGroupTextEditing => 'Teksti redigeerimine';
 
   @override
-  String get shortcutSelectAllDescription => 'Vali kogu redaktori tekst';
+  String get shortcutSelectAllDescription =>
+      'Vali lähtekoodirežiimis kogu tekst; redaktorirežiimis vajuta kaks korda, et valida kõik plokid';
 
   @override
   String get shortcutCutDescription => 'Lõika valitud tekst';
@@ -442,11 +442,25 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutRedoDescription => 'Taasta viimati tagasivõetud muudatus';
 
   @override
-  String get clearEditorSelection => 'Tühista redaktori valik';
+  String get shortcutInsertIndentation => 'Sisesta taane';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Tühista praegune tekstivalik või eemalda fookus otsinguväljalt';
+  String get shortcutInsertIndentationDescription =>
+      'Sisesta kursori asukohta taane';
+
+  @override
+  String get shortcutOutdentSource => 'Vähenda lähtekoodi taanet';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Eemalda lähtekoodirežiimis üks taandetase';
+
+  @override
+  String get shortcutEscape => 'Sulge otsing või tühista plokkide valik';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Sulge tööruumi otsing või tühista plokkide valik redaktorirežiimis';
 
   @override
   String get shortcutGroupFormatting => 'Vormindamine';

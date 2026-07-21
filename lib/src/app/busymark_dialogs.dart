@@ -30,6 +30,10 @@ final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
   for (final shortcut in BusyMarkAppShortcuts.definitions.values)
     shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  for (final shortcut in BusyMarkDocumentViewShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  for (final shortcut in BusyMarkSidebarShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
 };
 
 Color busyMarkModalBarrierColor(BuildContext context) {
@@ -154,7 +158,7 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
         maxWidth: BusyMarkSizes.dialogNarrow,
         children: [
           BusyMarkGroupedList(
-            title: context.l10n.shortcutGroupFile,
+            title: context.l10n.shortcutGroupGeneral,
             filled: true,
             children: [
               BusyMarkActionRow(
@@ -182,11 +186,11 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.find,
-                subtitle: context.l10n.shortcutFindDescription,
+                title: context.l10n.search,
+                subtitle: context.l10n.shortcutSearchDescription,
                 leading: const Icon(BusyMarkGlyphs.search),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkAppShortcutLabels.find,
+                  BusyMarkAppShortcutLabels.search,
                 ),
               ),
               BusyMarkActionRow(
@@ -352,11 +356,31 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.clearEditorSelection,
-                subtitle: context.l10n.shortcutClearEditorSelectionDescription,
+                title: context.l10n.shortcutInsertIndentation,
+                subtitle: context.l10n.shortcutInsertIndentationDescription,
+                leading: Icon(
+                  BusyMarkGlyphs.indentFor(Directionality.of(context)),
+                ),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.insertIndentation,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutOutdentSource,
+                subtitle: context.l10n.shortcutOutdentSourceDescription,
+                leading: Icon(
+                  BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+                ),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.outdentSource,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutEscape,
+                subtitle: context.l10n.shortcutEscapeDescription,
                 leading: const Icon(BusyMarkGlyphs.clear),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkTextEditingShortcutLabels.clearSelection,
+                  BusyMarkTextEditingShortcutLabels.escape,
                 ),
               ),
             ],
@@ -648,6 +672,14 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.history),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.history,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.delete,
+                subtitle: context.l10n.shortcutDeleteTreeItemDescription,
+                leading: const Icon(BusyMarkGlyphs.delete),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTreeShortcutLabels.deleteSelection,
                 ),
               ),
             ],

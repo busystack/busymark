@@ -23,14 +23,6 @@ import 'wysiwyg_toolbar.dart';
 typedef BusyMarkWysiwygSourceChanged =
     void Function(String filePath, String source);
 
-bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      !keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
-}
-
 class BusyMarkWysiwygEditor extends StatefulWidget {
   const BusyMarkWysiwygEditor({
     super.key,
@@ -225,7 +217,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           const SingleActivator(LogicalKeyboardKey.delete):
               const _DeleteBlockSelectionIntent(),
         if (blockSelectionActive)
-          BusyMarkTextEditingShortcutActivators.clearSelection:
+          BusyMarkTextEditingShortcutActivators.escape:
               const _ClearBlockSelectionIntent(),
       },
       child: Actions(
@@ -1032,7 +1024,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
     if ((event is KeyDownEvent || event is KeyRepeatEvent) &&
-        _isPlainTabKey(keyboard, key)) {
+        BusyMarkTextEditingShortcutActivators.insertIndentation.accepts(
+          event,
+          keyboard,
+        )) {
       _activeBlockId = blockId;
       return _insertTabIntoBlock(blockId)
           ? KeyEventResult.handled
@@ -1072,11 +1067,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _undoEditorChange();
       return KeyEventResult.handled;
     }
-    if (keyboard.isControlPressed && key == LogicalKeyboardKey.keyF) {
+    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
       widget.onOpenSearch?.call();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.escape) {
+    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
       widget.onCloseSearch?.call();
       return KeyEventResult.handled;
     }

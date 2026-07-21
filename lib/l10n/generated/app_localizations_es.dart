@@ -189,9 +189,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fileHistory => 'Historial del archivo';
 
   @override
-  String get find => 'Buscar';
-
-  @override
   String get folder => 'Carpeta';
 
   @override
@@ -362,7 +359,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noOpenFile => 'No hay ningún archivo abierto';
 
   @override
-  String get shortcutGroupFile => 'Archivo';
+  String get shortcutDeleteTreeItemDescription =>
+      'Eliminar el elemento seleccionado en Archivos o quitar el tema seleccionado del índice';
+
+  @override
+  String get shortcutGroupGeneral => 'General';
 
   @override
   String get shortcutNewDocument => 'Nuevo documento';
@@ -376,10 +377,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Abrir un archivo Markdown, una carpeta o un proyecto de Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Guardar el archivo Markdown actual';
+  String get shortcutSaveDescription => 'Guardar el documento actual';
 
   @override
-  String get shortcutFindDescription => 'Buscar en el documento actual';
+  String get shortcutSearchDescription =>
+      'Buscar en el espacio de trabajo actual';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -397,36 +399,34 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutNextTab => 'Siguiente pestaña';
 
   @override
-  String get shortcutNextTabDescription =>
-      'Ir a la siguiente pestaña abierta del editor';
+  String get shortcutNextTabDescription => 'Ir a la siguiente pestaña abierta';
 
   @override
   String get shortcutPreviousTab => 'Pestaña anterior';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Ir a la pestaña abierta anterior del editor';
+      'Ir a la pestaña abierta anterior';
 
   @override
   String get shortcutCloseTab => 'Cerrar pestaña';
 
   @override
-  String get shortcutCloseTabDescription =>
-      'Cerrar la pestaña activa del editor';
+  String get shortcutCloseTabDescription => 'Cerrar la pestaña activa';
 
   @override
   String get shortcutCloseAllTabs => 'Cerrar todas las pestañas';
 
   @override
   String get shortcutCloseAllTabsDescription =>
-      'Cerrar todas las pestañas abiertas del editor';
+      'Cerrar todas las pestañas abiertas';
 
   @override
   String get shortcutGroupTextEditing => 'Edición de texto';
 
   @override
   String get shortcutSelectAllDescription =>
-      'Seleccionar todo el texto del editor';
+      'En el modo Código fuente, seleccionar todo el texto; en el modo Editor, pulsar dos veces para seleccionar todos los bloques';
 
   @override
   String get shortcutCutDescription => 'Cortar el texto seleccionado';
@@ -448,11 +448,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutRedoDescription => 'Rehacer la última edición deshecha';
 
   @override
-  String get clearEditorSelection => 'Quitar selección del editor';
+  String get shortcutInsertIndentation => 'Insertar sangría';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Quitar la selección actual del editor o el foco de búsqueda';
+  String get shortcutInsertIndentationDescription =>
+      'Insertar sangría en el cursor';
+
+  @override
+  String get shortcutOutdentSource => 'Reducir sangría del código fuente';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Quitar un nivel de sangría en el modo Código fuente';
+
+  @override
+  String get shortcutEscape =>
+      'Cerrar la búsqueda o quitar la selección de bloques';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Cerrar la búsqueda del espacio de trabajo o quitar una selección de bloques en el modo Editor';
 
   @override
   String get shortcutGroupFormatting => 'Formato';

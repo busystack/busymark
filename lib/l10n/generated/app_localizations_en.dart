@@ -187,9 +187,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileHistory => 'File History';
 
   @override
-  String get find => 'Find';
-
-  @override
   String get folder => 'Folder';
 
   @override
@@ -360,7 +357,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noOpenFile => 'No open file';
 
   @override
-  String get shortcutGroupFile => 'File';
+  String get shortcutDeleteTreeItemDescription =>
+      'Delete the selected Files item, or remove the selected topic from the table of contents';
+
+  @override
+  String get shortcutGroupGeneral => 'General';
 
   @override
   String get shortcutNewDocument => 'New document';
@@ -374,10 +375,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Open a Markdown file, folder, or Writerside project';
 
   @override
-  String get shortcutSaveDescription => 'Save the current Markdown file';
+  String get shortcutSaveDescription => 'Save the current document';
 
   @override
-  String get shortcutFindDescription => 'Search the current document';
+  String get shortcutSearchDescription => 'Search the current workspace';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -394,32 +395,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutNextTab => 'Next tab';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription => 'Move to the next open tab';
 
   @override
   String get shortcutPreviousTab => 'Previous tab';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+  String get shortcutPreviousTabDescription => 'Move to the previous open tab';
 
   @override
   String get shortcutCloseTab => 'Close tab';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription => 'Close the active tab';
 
   @override
   String get shortcutCloseAllTabs => 'Close all tabs';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription => 'Close all open tabs';
 
   @override
   String get shortcutGroupTextEditing => 'Text Editing';
 
   @override
-  String get shortcutSelectAllDescription => 'Select all editor text';
+  String get shortcutSelectAllDescription =>
+      'In Source mode, select all text; in Editor mode, press twice to select every block';
 
   @override
   String get shortcutCutDescription => 'Cut the selected text';
@@ -441,11 +442,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutRedoDescription => 'Redo the last undone edit';
 
   @override
-  String get clearEditorSelection => 'Clear editor selection';
+  String get shortcutInsertIndentation => 'Insert indentation';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Leave the current editor selection or search focus';
+  String get shortcutInsertIndentationDescription =>
+      'Insert indentation at the cursor';
+
+  @override
+  String get shortcutOutdentSource => 'Outdent source';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Remove one indentation level in Source mode';
+
+  @override
+  String get shortcutEscape => 'Close search or clear block selection';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Close workspace search or clear a block selection in Editor mode';
 
   @override
   String get shortcutGroupFormatting => 'Formatting';

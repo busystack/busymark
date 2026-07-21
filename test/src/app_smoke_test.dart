@@ -12,6 +12,7 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -560,7 +561,8 @@ void main() {
     expect(find.text(l10n.shortcutNewDocumentDescription), findsOneWidget);
     expect(find.text(l10n.shortcutOpenDescription), findsOneWidget);
     expect(find.text(l10n.shortcutSaveDescription), findsOneWidget);
-    expect(find.text(l10n.shortcutFindDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutGroupGeneral), findsOneWidget);
+    expect(find.text(l10n.shortcutSearchDescription), findsOneWidget);
     expect(
       find.text(l10n.shortcutKeyboardShortcutsDescription),
       findsOneWidget,
@@ -574,6 +576,12 @@ void main() {
     expect(find.text('Show shortcuts over toolbar buttons'), findsNothing);
     expect(find.text(l10n.shortcutUndoDescription), findsOneWidget);
     expect(find.text(l10n.shortcutRedoDescription), findsOneWidget);
+    expect(
+      find.text(l10n.shortcutInsertIndentationDescription),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.shortcutOutdentSourceDescription), findsOneWidget);
+    expect(find.text(l10n.shortcutEscapeDescription), findsOneWidget);
     expect(find.text(l10n.shortcutBoldDescription), findsOneWidget);
     expect(find.text(l10n.shortcutUnderlineDescription), findsOneWidget);
     expect(find.text(l10n.shortcutStrikethroughDescription), findsOneWidget);
@@ -584,100 +592,63 @@ void main() {
     expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
     expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
-    expect(find.text('Ctrl+N'), findsOneWidget);
-    expect(find.text('Ctrl+O'), findsOneWidget);
-    expect(find.text('Ctrl+S'), findsOneWidget);
-    expect(find.text('Ctrl+F'), findsOneWidget);
-    expect(
-      find.text(BusyMarkAppShortcutLabels.keyboardShortcuts),
-      findsOneWidget,
-    );
-    expect(
-      find.text(BusyMarkAppShortcutLabels.markdownAndHtml),
-      findsOneWidget,
-    );
-    expect(find.text(BusyMarkAppShortcutLabels.settings), findsOneWidget);
-    expect(find.text('Ctrl+Tab'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+Tab'), findsOneWidget);
-    expect(find.text('Ctrl+W'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+W'), findsOneWidget);
+    expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
     expect(find.text(l10n.viewMode), findsOneWidget);
     expect(find.text(l10n.editor), findsOneWidget);
     expect(find.text(l10n.source), findsOneWidget);
     expect(find.text(l10n.preview), findsOneWidget);
     expect(find.text(l10n.split), findsOneWidget);
-    expect(
-      find.text(BusyMarkDocumentViewShortcutLabels.editor),
-      findsOneWidget,
+
+    final expectedShortcutLabels = <String>{
+      ...BusyMarkAppShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      ...BusyMarkDocumentViewShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      ...BusyMarkTextEditingShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      ...BusyMarkEditorShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      ...BusyMarkSidebarShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+      ...BusyMarkTreeShortcuts.definitions.values.map(
+        (definition) => definition.label,
+      ),
+    };
+    final shortcutRowFinder = find.descendant(
+      of: find.byType(BusyMarkModalEditorSurface),
+      matching: find.byType(BusyMarkActionRow),
     );
+    final shortcutRows = tester
+        .widgetList<BusyMarkActionRow>(shortcutRowFinder)
+        .toList();
+    final displayedShortcutLabels = <String>[];
+    for (final row in shortcutRows) {
+      final trailing = row.trailing;
+      expect(trailing, isNotNull, reason: 'Shortcut rows need a badge.');
+      final badgeLabels = tester
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byWidget(trailing!),
+              matching: find.byType(Text),
+            ),
+          )
+          .map((text) => text.data)
+          .whereType<String>()
+          .toList();
+      expect(badgeLabels, hasLength(1));
+      displayedShortcutLabels.add(badgeLabels.single);
+    }
+    expect(shortcutRows, hasLength(expectedShortcutLabels.length));
     expect(
-      find.text(BusyMarkDocumentViewShortcutLabels.source),
-      findsOneWidget,
+      displayedShortcutLabels.toSet(),
+      expectedShortcutLabels,
+      reason: 'The popup must stay synchronized with every shortcut registry.',
     );
-    expect(
-      find.text(BusyMarkDocumentViewShortcutLabels.preview),
-      findsOneWidget,
-    );
-    expect(find.text(BusyMarkDocumentViewShortcutLabels.split), findsOneWidget);
-    expect(find.text('Ctrl+A'), findsOneWidget);
-    expect(find.text('Ctrl+X'), findsAtLeastNWidgets(1));
-    expect(find.text('Ctrl+C'), findsOneWidget);
-    expect(find.text('Ctrl+V'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+V'), findsOneWidget);
-    expect(find.text('Ctrl+Z'), findsOneWidget);
-    expect(find.text('Ctrl+Shift+Z'), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.bold), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.italic), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.underline), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.link), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.inlineCode), findsOneWidget);
-    expect(
-      find.text(BusyMarkEditorShortcutLabels.strikethrough),
-      findsOneWidget,
-    );
-    expect(find.text(BusyMarkEditorShortcutLabels.paragraph), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.heading1), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.heading2), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.heading3), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.heading4), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.heading5), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.heading6), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.orderedList), findsOneWidget);
-    expect(
-      find.text(BusyMarkEditorShortcutLabels.unorderedList),
-      findsOneWidget,
-    );
-    expect(find.text(BusyMarkEditorShortcutLabels.taskList), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.toggleTask), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.indent), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.outdent), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.blockquote), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.codeBlock), findsOneWidget);
-    expect(
-      find.text(BusyMarkEditorShortcutLabels.codeBlockLanguage),
-      findsOneWidget,
-    );
-    expect(find.text(BusyMarkEditorShortcutLabels.image), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.inlineImage), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.table), findsOneWidget);
-    expect(find.text(BusyMarkEditorShortcutLabels.htmlBlock), findsOneWidget);
-    expect(
-      find.text(BusyMarkEditorShortcutLabels.thematicBreak),
-      findsOneWidget,
-    );
-    expect(
-      find.text(BusyMarkEditorShortcutLabels.hardLineBreak),
-      findsOneWidget,
-    );
-    expect(
-      find.text(BusyMarkSidebarShortcutLabels.toggleSidebar),
-      findsOneWidget,
-    );
-    expect(find.text(BusyMarkSidebarShortcutLabels.files), findsOneWidget);
-    expect(find.text(BusyMarkSidebarShortcutLabels.toc), findsOneWidget);
-    expect(find.text(BusyMarkSidebarShortcutLabels.outline), findsOneWidget);
-    expect(find.text(BusyMarkSidebarShortcutLabels.git), findsOneWidget);
-    expect(find.text(BusyMarkSidebarShortcutLabels.history), findsOneWidget);
     expect(find.text('Alt'), findsNothing);
     expect(find.text('Esc'), findsOneWidget);
     expect(find.text('Close'), findsNothing);

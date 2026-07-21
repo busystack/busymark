@@ -453,12 +453,6 @@ abstract class AppLocalizations {
   /// **'File History'**
   String get fileHistory;
 
-  /// Find command label.
-  ///
-  /// In en, this message translates to:
-  /// **'Find'**
-  String get find;
-
   /// Folder kind label.
   ///
   /// In en, this message translates to:
@@ -795,11 +789,17 @@ abstract class AppLocalizations {
   /// **'No open file'**
   String get noOpenFile;
 
-  /// Keyboard shortcut group for file commands.
+  /// Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents.
   ///
   /// In en, this message translates to:
-  /// **'File'**
-  String get shortcutGroupFile;
+  /// **'Delete the selected Files item, or remove the selected topic from the table of contents'**
+  String get shortcutDeleteTreeItemDescription;
+
+  /// Keyboard shortcut group for general application commands.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get shortcutGroupGeneral;
 
   /// Keyboard shortcut label for creating a document.
   ///
@@ -822,14 +822,14 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for saving content.
   ///
   /// In en, this message translates to:
-  /// **'Save the current Markdown file'**
+  /// **'Save the current document'**
   String get shortcutSaveDescription;
 
   /// Keyboard shortcut description for search.
   ///
   /// In en, this message translates to:
-  /// **'Search the current document'**
-  String get shortcutFindDescription;
+  /// **'Search the current workspace'**
+  String get shortcutSearchDescription;
 
   /// Keyboard shortcut description for opening shortcuts.
   ///
@@ -849,52 +849,52 @@ abstract class AppLocalizations {
   /// **'Open BusyMark settings'**
   String get shortcutSettingsDescription;
 
-  /// Keyboard shortcut label for moving to the next editor tab.
+  /// Keyboard shortcut label for moving to the next tab.
   ///
   /// In en, this message translates to:
   /// **'Next tab'**
   String get shortcutNextTab;
 
-  /// Keyboard shortcut description for moving to the next editor tab.
+  /// Keyboard shortcut description for moving to the next tab.
   ///
   /// In en, this message translates to:
-  /// **'Move to the next open editor tab'**
+  /// **'Move to the next open tab'**
   String get shortcutNextTabDescription;
 
-  /// Keyboard shortcut label for moving to the previous editor tab.
+  /// Keyboard shortcut label for moving to the previous tab.
   ///
   /// In en, this message translates to:
   /// **'Previous tab'**
   String get shortcutPreviousTab;
 
-  /// Keyboard shortcut description for moving to the previous editor tab.
+  /// Keyboard shortcut description for moving to the previous tab.
   ///
   /// In en, this message translates to:
-  /// **'Move to the previous open editor tab'**
+  /// **'Move to the previous open tab'**
   String get shortcutPreviousTabDescription;
 
-  /// Keyboard shortcut label for closing the active editor tab.
+  /// Keyboard shortcut label for closing the active tab.
   ///
   /// In en, this message translates to:
   /// **'Close tab'**
   String get shortcutCloseTab;
 
-  /// Keyboard shortcut description for closing the active editor tab.
+  /// Keyboard shortcut description for closing the active tab.
   ///
   /// In en, this message translates to:
-  /// **'Close the active editor tab'**
+  /// **'Close the active tab'**
   String get shortcutCloseTabDescription;
 
-  /// Keyboard shortcut label for closing all editor tabs.
+  /// Keyboard shortcut label for closing all tabs.
   ///
   /// In en, this message translates to:
   /// **'Close all tabs'**
   String get shortcutCloseAllTabs;
 
-  /// Keyboard shortcut description for closing all editor tabs.
+  /// Keyboard shortcut description for closing all tabs.
   ///
   /// In en, this message translates to:
-  /// **'Close all open editor tabs'**
+  /// **'Close all open tabs'**
   String get shortcutCloseAllTabsDescription;
 
   /// Keyboard shortcut group for text editing commands.
@@ -903,10 +903,10 @@ abstract class AppLocalizations {
   /// **'Text Editing'**
   String get shortcutGroupTextEditing;
 
-  /// Keyboard shortcut description for selecting all text.
+  /// Keyboard shortcut description for selecting source text or visual-editor blocks.
   ///
   /// In en, this message translates to:
-  /// **'Select all editor text'**
+  /// **'In Source mode, select all text; in Editor mode, press twice to select every block'**
   String get shortcutSelectAllDescription;
 
   /// Keyboard shortcut description for cut.
@@ -945,17 +945,41 @@ abstract class AppLocalizations {
   /// **'Redo the last undone edit'**
   String get shortcutRedoDescription;
 
-  /// Keyboard shortcut label for clearing selection.
+  /// Keyboard shortcut label for inserting indentation.
   ///
   /// In en, this message translates to:
-  /// **'Clear editor selection'**
-  String get clearEditorSelection;
+  /// **'Insert indentation'**
+  String get shortcutInsertIndentation;
 
-  /// Keyboard shortcut description for clearing selection.
+  /// Keyboard shortcut description for inserting indentation.
   ///
   /// In en, this message translates to:
-  /// **'Leave the current editor selection or search focus'**
-  String get shortcutClearEditorSelectionDescription;
+  /// **'Insert indentation at the cursor'**
+  String get shortcutInsertIndentationDescription;
+
+  /// Keyboard shortcut label for outdenting in Source mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent source'**
+  String get shortcutOutdentSource;
+
+  /// Keyboard shortcut description for outdenting in Source mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove one indentation level in Source mode'**
+  String get shortcutOutdentSourceDescription;
+
+  /// Keyboard shortcut label for closing search or clearing a block selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Close search or clear block selection'**
+  String get shortcutEscape;
+
+  /// Keyboard shortcut description for closing search or clearing a block selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Close workspace search or clear a block selection in Editor mode'**
+  String get shortcutEscapeDescription;
 
   /// Keyboard shortcut group for inline formatting.
   ///

@@ -352,7 +352,7 @@ class WorkspaceScreen extends ConsumerWidget {
 
     return Shortcuts(
       shortcuts: {
-        BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+        BusyMarkAppShortcutActivators.search: const _OpenSearchIntent(),
         BusyMarkSidebarShortcutActivators.files: const _SelectSidebarTabIntent(
           _SidebarTab.files,
         ),
@@ -474,7 +474,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         tooltip: context.l10n.search,
                         icon: BusyMarkGlyphs.search,
                         selected: searchState.active,
-                        shortcut: BusyMarkAppShortcutLabels.find,
+                        shortcut: BusyMarkAppShortcutLabels.search,
                         onPressed: () => _toggleSearch(ref),
                       ),
                       BusyMarkHeaderPopupMenuButton<DocumentViewModePreference>(
@@ -3148,9 +3148,9 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
       );
     }
     return Shortcuts(
-      shortcuts: const {
-        SingleActivator(LogicalKeyboardKey.delete):
-            _DeleteSelectedFileTreeEntryIntent(),
+      shortcuts: {
+        BusyMarkTreeShortcutActivators.deleteSelection:
+            const _DeleteSelectedFileTreeEntryIntent(),
       },
       child: Actions(
         actions: {
@@ -3552,7 +3552,7 @@ Future<_FileTreeAction?> _showFileTreeMenu(
             ? context.l10n.safeDeleteTopicFile
             : context.l10n.delete,
         icon: BusyMarkGlyphs.delete,
-        shortcut: 'Delete',
+        shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
       ),
       const PopupMenuDivider(height: BusyMarkSpacing.sm),
       BusyMarkPopupMenuItem(
@@ -4324,9 +4324,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
       }
     }
     return Shortcuts(
-      shortcuts: const {
-        SingleActivator(LogicalKeyboardKey.delete):
-            _RemoveSelectedTocEntryIntent(),
+      shortcuts: {
+        BusyMarkTreeShortcutActivators.deleteSelection:
+            const _RemoveSelectedTocEntryIntent(),
       },
       child: Actions(
         actions: {
@@ -4838,7 +4838,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         value: _TocTreeAction.removeFromToc,
         label: context.l10n.removeTocElement,
         icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
-        shortcut: 'Delete',
+        shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.delete,

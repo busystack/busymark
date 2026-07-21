@@ -187,9 +187,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get fileHistory => 'फ़ाइल इतिहास';
 
   @override
-  String get find => 'ढूँढें';
-
-  @override
   String get folder => 'फ़ोल्डर';
 
   @override
@@ -360,7 +357,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get noOpenFile => 'कोई फ़ाइल खुली नहीं है';
 
   @override
-  String get shortcutGroupFile => 'फ़ाइल';
+  String get shortcutDeleteTreeItemDescription =>
+      'फ़ाइलों में चुना गया आइटम मिटाएँ या विषय-सूची से चुना गया विषय हटाएँ';
+
+  @override
+  String get shortcutGroupGeneral => 'सामान्य';
 
   @override
   String get shortcutNewDocument => 'नया दस्तावेज़';
@@ -374,10 +375,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें';
 
   @override
-  String get shortcutSaveDescription => 'मौजूदा Markdown फ़ाइल सहेजें';
+  String get shortcutSaveDescription => 'मौजूदा दस्तावेज़ सहेजें';
 
   @override
-  String get shortcutFindDescription => 'मौजूदा दस्तावेज़ में खोजें';
+  String get shortcutSearchDescription => 'मौजूदा कार्यस्थान में खोजें';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -394,31 +395,32 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutNextTab => 'अगला टैब';
 
   @override
-  String get shortcutNextTabDescription => 'अगले खुले संपादक टैब पर जाएँ';
+  String get shortcutNextTabDescription => 'अगले खुले टैब पर जाएँ';
 
   @override
   String get shortcutPreviousTab => 'पिछला टैब';
 
   @override
-  String get shortcutPreviousTabDescription => 'पिछले खुले संपादक टैब पर जाएँ';
+  String get shortcutPreviousTabDescription => 'पिछले खुले टैब पर जाएँ';
 
   @override
   String get shortcutCloseTab => 'टैब बंद करें';
 
   @override
-  String get shortcutCloseTabDescription => 'सक्रिय संपादक टैब बंद करें';
+  String get shortcutCloseTabDescription => 'सक्रिय टैब बंद करें';
 
   @override
   String get shortcutCloseAllTabs => 'सभी टैब बंद करें';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'सभी खुले संपादक टैब बंद करें';
+  String get shortcutCloseAllTabsDescription => 'सभी खुले टैब बंद करें';
 
   @override
   String get shortcutGroupTextEditing => 'टेक्स्ट संपादन';
 
   @override
-  String get shortcutSelectAllDescription => 'संपादक का पूरा टेक्स्ट चुनें';
+  String get shortcutSelectAllDescription =>
+      'स्रोत मोड में पूरा पाठ चुनें; संपादक मोड में सभी ब्लॉक चुनने के लिए दो बार दबाएँ';
 
   @override
   String get shortcutCutDescription => 'चयनित टेक्स्ट कट करें';
@@ -440,11 +442,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutRedoDescription => 'अंतिम पूर्ववत संपादन फिर से करें';
 
   @override
-  String get clearEditorSelection => 'संपादक का चयन साफ़ करें';
+  String get shortcutInsertIndentation => 'इंडेंट डालें';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'मौजूदा संपादक चयन या खोज फ़ोकस से बाहर निकलें';
+  String get shortcutInsertIndentationDescription => 'कर्सर पर इंडेंट डालें';
+
+  @override
+  String get shortcutOutdentSource => 'स्रोत का इंडेंट घटाएँ';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'स्रोत मोड में इंडेंट का एक स्तर हटाएँ';
+
+  @override
+  String get shortcutEscape => 'खोज बंद करें या ब्लॉक चयन हटाएँ';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'कार्यस्थान खोज बंद करें या संपादक मोड में ब्लॉक चयन हटाएँ';
 
   @override
   String get shortcutGroupFormatting => 'फ़ॉर्मेटिंग';

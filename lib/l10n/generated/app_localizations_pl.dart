@@ -187,9 +187,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get fileHistory => 'Historia pliku';
 
   @override
-  String get find => 'Znajdź';
-
-  @override
   String get folder => 'Folder';
 
   @override
@@ -360,7 +357,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get noOpenFile => 'Brak otwartego pliku';
 
   @override
-  String get shortcutGroupFile => 'Plik';
+  String get shortcutDeleteTreeItemDescription =>
+      'Usuń wybrany element w widoku Pliki lub usuń wybrany temat ze spisu treści';
+
+  @override
+  String get shortcutGroupGeneral => 'Ogólne';
 
   @override
   String get shortcutNewDocument => 'Nowy dokument';
@@ -374,10 +375,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Otwórz plik Markdown, folder lub projekt Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Zapisz bieżący plik Markdown';
+  String get shortcutSaveDescription => 'Zapisz bieżący dokument';
 
   @override
-  String get shortcutFindDescription => 'Przeszukaj bieżący dokument';
+  String get shortcutSearchDescription => 'Przeszukaj bieżący obszar roboczy';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -395,33 +396,34 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get shortcutNextTabDescription =>
-      'Przejdź do następnej otwartej karty edytora';
+      'Przejdź do następnej otwartej karty';
 
   @override
   String get shortcutPreviousTab => 'Poprzednia karta';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Przejdź do poprzedniej otwartej karty edytora';
+      'Przejdź do poprzedniej otwartej karty';
 
   @override
   String get shortcutCloseTab => 'Zamknij kartę';
 
   @override
-  String get shortcutCloseTabDescription => 'Zamknij aktywną kartę edytora';
+  String get shortcutCloseTabDescription => 'Zamknij aktywną kartę';
 
   @override
   String get shortcutCloseAllTabs => 'Zamknij wszystkie karty';
 
   @override
   String get shortcutCloseAllTabsDescription =>
-      'Zamknij wszystkie otwarte karty edytora';
+      'Zamknij wszystkie otwarte karty';
 
   @override
   String get shortcutGroupTextEditing => 'Edycja tekstu';
 
   @override
-  String get shortcutSelectAllDescription => 'Zaznacz cały tekst edytora';
+  String get shortcutSelectAllDescription =>
+      'W trybie Źródło zaznacz cały tekst; w trybie edytora naciśnij dwa razy, aby zaznaczyć wszystkie bloki';
 
   @override
   String get shortcutCutDescription => 'Wytnij zaznaczony tekst';
@@ -443,11 +445,26 @@ class AppLocalizationsPl extends AppLocalizations {
   String get shortcutRedoDescription => 'Ponów ostatnią cofniętą edycję';
 
   @override
-  String get clearEditorSelection => 'Wyczyść zaznaczenie w edytorze';
+  String get shortcutInsertIndentation => 'Wstaw wcięcie';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Usuń bieżące zaznaczenie w edytorze albo opuść pole wyszukiwania';
+  String get shortcutInsertIndentationDescription =>
+      'Wstaw wcięcie w miejscu kursora';
+
+  @override
+  String get shortcutOutdentSource => 'Zmniejsz wcięcie źródła';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Usuń jeden poziom wcięcia w trybie Źródło';
+
+  @override
+  String get shortcutEscape =>
+      'Zamknij wyszukiwanie lub wyczyść zaznaczenie bloków';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Zamknij wyszukiwanie w obszarze roboczym lub wyczyść zaznaczenie bloków w trybie edytora';
 
   @override
   String get shortcutGroupFormatting => 'Formatowanie';

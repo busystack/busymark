@@ -167,15 +167,21 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
-    if (BusyMarkAppShortcutActivators.find.accepts(event, keyboard)) {
+    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
       widget.onOpenSearch();
       return KeyEventResult.handled;
     }
-    if (_isPlainTabKey(keyboard, key)) {
+    if (BusyMarkTextEditingShortcutActivators.insertIndentation.accepts(
+      event,
+      keyboard,
+    )) {
       _insertTab();
       return KeyEventResult.handled;
     }
-    if (_isPlainShiftTabKey(keyboard, key)) {
+    if (BusyMarkTextEditingShortcutActivators.outdentSource.accepts(
+      event,
+      keyboard,
+    )) {
       _outdentSelection();
       return KeyEventResult.handled;
     }
@@ -183,7 +189,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _applyFullEditingValue(SourceCommands.smartEnter(_fullEditingValue()));
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.escape) {
+    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
       widget.onCloseSearch();
       return KeyEventResult.handled;
     }
@@ -1314,22 +1320,6 @@ class _SourceEditorShortcutIntent extends Intent {
   const _SourceEditorShortcutIntent(this.action);
 
   final BusyMarkEditorShortcutAction action;
-}
-
-bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      !keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
-}
-
-bool _isPlainShiftTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
 }
 
 int _textOffsetForLine(String source, int lineNumber) {

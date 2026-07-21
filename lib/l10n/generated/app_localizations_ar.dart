@@ -185,9 +185,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fileHistory => 'سجل الملف';
 
   @override
-  String get find => 'بحث';
-
-  @override
   String get folder => 'مجلد';
 
   @override
@@ -357,7 +354,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noOpenFile => 'لا يوجد ملف مفتوح';
 
   @override
-  String get shortcutGroupFile => 'ملف';
+  String get shortcutDeleteTreeItemDescription =>
+      'حذف العنصر المحدد في الملفات أو إزالة الموضوع المحدد من جدول المحتويات';
+
+  @override
+  String get shortcutGroupGeneral => 'عام';
 
   @override
   String get shortcutNewDocument => 'مستند جديد';
@@ -371,10 +372,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'فتح ملف Markdown أو مجلد أو مشروع Writerside';
 
   @override
-  String get shortcutSaveDescription => 'حفظ ملف Markdown الحالي';
+  String get shortcutSaveDescription => 'حفظ المستند الحالي';
 
   @override
-  String get shortcutFindDescription => 'البحث في المستند الحالي';
+  String get shortcutSearchDescription => 'البحث في مساحة العمل الحالية';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -391,33 +392,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutNextTabDescription =>
-      'الانتقال إلى علامة تبويب المحرر التالية المفتوحة';
+      'الانتقال إلى علامة التبويب المفتوحة التالية';
 
   @override
   String get shortcutPreviousTab => 'علامة التبويب السابقة';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'الانتقال إلى علامة تبويب المحرر السابقة المفتوحة';
+      'الانتقال إلى علامة التبويب المفتوحة السابقة';
 
   @override
   String get shortcutCloseTab => 'إغلاق علامة التبويب';
 
   @override
-  String get shortcutCloseTabDescription => 'إغلاق علامة تبويب المحرر النشطة';
+  String get shortcutCloseTabDescription => 'إغلاق علامة التبويب النشطة';
 
   @override
   String get shortcutCloseAllTabs => 'إغلاق كل علامات التبويب';
 
   @override
   String get shortcutCloseAllTabsDescription =>
-      'إغلاق كل علامات تبويب المحرر المفتوحة';
+      'إغلاق كل علامات التبويب المفتوحة';
 
   @override
   String get shortcutGroupTextEditing => 'تحرير النص';
 
   @override
-  String get shortcutSelectAllDescription => 'تحديد النص كله في المحرر';
+  String get shortcutSelectAllDescription =>
+      'في وضع المصدر، حدد النص بالكامل؛ في وضع المحرر، اضغط مرتين لتحديد كل الكتل';
 
   @override
   String get shortcutCutDescription => 'قص النص المحدد';
@@ -438,11 +440,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutRedoDescription => 'إعادة آخر تعديل تم التراجع عنه';
 
   @override
-  String get clearEditorSelection => 'مسح تحديد النص في المحرر';
+  String get shortcutInsertIndentation => 'إدراج مسافة بادئة';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'الخروج من تحديد المحرر الحالي أو تركيز البحث';
+  String get shortcutInsertIndentationDescription =>
+      'إدراج مسافة بادئة عند المؤشر';
+
+  @override
+  String get shortcutOutdentSource => 'تقليل المسافة البادئة في المصدر';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'إزالة مستوى واحد من المسافة البادئة في وضع المصدر';
+
+  @override
+  String get shortcutEscape => 'إغلاق البحث أو مسح تحديد الكتل';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'إغلاق البحث في مساحة العمل أو إلغاء تحديد الكتل في وضع المحرر';
 
   @override
   String get shortcutGroupFormatting => 'التنسيق';

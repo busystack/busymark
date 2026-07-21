@@ -189,9 +189,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get fileHistory => 'Filhistorikk';
 
   @override
-  String get find => 'Finn';
-
-  @override
   String get folder => 'Mappe';
 
   @override
@@ -362,7 +359,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get noOpenFile => 'Ingen åpen fil';
 
   @override
-  String get shortcutGroupFile => 'Fil';
+  String get shortcutDeleteTreeItemDescription =>
+      'Slett det valgte elementet i Filer, eller fjern det valgte emnet fra innholdsfortegnelsen';
+
+  @override
+  String get shortcutGroupGeneral => 'Generelt';
 
   @override
   String get shortcutNewDocument => 'Nytt dokument';
@@ -376,10 +377,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt';
 
   @override
-  String get shortcutSaveDescription => 'Lagre gjeldende Markdown-fil';
+  String get shortcutSaveDescription => 'Lagre gjeldende dokument';
 
   @override
-  String get shortcutFindDescription => 'Søk i gjeldende dokument';
+  String get shortcutSearchDescription => 'Søk i gjeldende arbeidsområde';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -396,33 +397,32 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutNextTab => 'Neste fane';
 
   @override
-  String get shortcutNextTabDescription => 'Gå til neste åpne redigeringsfane';
+  String get shortcutNextTabDescription => 'Gå til neste åpne fane';
 
   @override
   String get shortcutPreviousTab => 'Forrige fane';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Gå til forrige åpne redigeringsfane';
+  String get shortcutPreviousTabDescription => 'Gå til forrige åpne fane';
 
   @override
   String get shortcutCloseTab => 'Lukk fane';
 
   @override
-  String get shortcutCloseTabDescription => 'Lukk den aktive redigeringsfanen';
+  String get shortcutCloseTabDescription => 'Lukk den aktive fanen';
 
   @override
   String get shortcutCloseAllTabs => 'Lukk alle faner';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'Lukk alle åpne redigeringsfaner';
+  String get shortcutCloseAllTabsDescription => 'Lukk alle åpne faner';
 
   @override
   String get shortcutGroupTextEditing => 'Tekstredigering';
 
   @override
-  String get shortcutSelectAllDescription => 'Velg all tekst i redigereren';
+  String get shortcutSelectAllDescription =>
+      'Velg all tekst i kildemodus; trykk to ganger i redigeringsmodus for å velge alle blokker';
 
   @override
   String get shortcutCutDescription => 'Klipp ut den valgte teksten';
@@ -445,11 +445,25 @@ class AppLocalizationsNb extends AppLocalizations {
       'Gjør om den siste angrede redigeringen';
 
   @override
-  String get clearEditorSelection => 'Fjern markering i redigereren';
+  String get shortcutInsertIndentation => 'Sett inn innrykk';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Avslutt gjeldende markering i redigereren eller søkefokus';
+  String get shortcutInsertIndentationDescription =>
+      'Sett inn innrykk ved markøren';
+
+  @override
+  String get shortcutOutdentSource => 'Reduser innrykk i kilden';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Fjern ett innrykksnivå i kildemodus';
+
+  @override
+  String get shortcutEscape => 'Lukk søk eller fjern blokkmarkering';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Lukk arbeidsområdesøket eller fjern en blokkmarkering i redigeringsmodus';
 
   @override
   String get shortcutGroupFormatting => 'Formatering';

@@ -188,9 +188,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get fileHistory => 'Історія файлу';
 
   @override
-  String get find => 'Знайти';
-
-  @override
   String get folder => 'Папка';
 
   @override
@@ -361,7 +358,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noOpenFile => 'Немає відкритого файлу';
 
   @override
-  String get shortcutGroupFile => 'Файл';
+  String get shortcutDeleteTreeItemDescription =>
+      'Видалити вибраний елемент у розділі «Файли» або вилучити вибрану тему зі змісту';
+
+  @override
+  String get shortcutGroupGeneral => 'Загальні';
 
   @override
   String get shortcutNewDocument => 'Новий документ';
@@ -375,10 +376,11 @@ class AppLocalizationsUk extends AppLocalizations {
       'Відкрити файл Markdown, папку або проєкт Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Зберегти поточний файл Markdown';
+  String get shortcutSaveDescription => 'Зберегти поточний документ';
 
   @override
-  String get shortcutFindDescription => 'Шукати в поточному документі';
+  String get shortcutSearchDescription =>
+      'Шукати в поточному робочому просторі';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -396,33 +398,33 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutNextTabDescription =>
-      'Перейти до наступної відкритої вкладки редактора';
+      'Перейти до наступної відкритої вкладки';
 
   @override
   String get shortcutPreviousTab => 'Попередня вкладка';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Перейти до попередньої відкритої вкладки редактора';
+      'Перейти до попередньої відкритої вкладки';
 
   @override
   String get shortcutCloseTab => 'Закрити вкладку';
 
   @override
-  String get shortcutCloseTabDescription => 'Закрити активну вкладку редактора';
+  String get shortcutCloseTabDescription => 'Закрити активну вкладку';
 
   @override
   String get shortcutCloseAllTabs => 'Закрити всі вкладки';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'Закрити всі відкриті вкладки редактора';
+  String get shortcutCloseAllTabsDescription => 'Закрити всі відкриті вкладки';
 
   @override
   String get shortcutGroupTextEditing => 'Редагування тексту';
 
   @override
-  String get shortcutSelectAllDescription => 'Виділити весь текст у редакторі';
+  String get shortcutSelectAllDescription =>
+      'У режимі вихідного тексту виділити весь текст; у режимі редактора натиснути двічі, щоб виділити всі блоки';
 
   @override
   String get shortcutCutDescription => 'Вирізати виділений текст';
@@ -444,11 +446,25 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutRedoDescription => 'Повторити останню скасовану зміну';
 
   @override
-  String get clearEditorSelection => 'Зняти виділення в редакторі';
+  String get shortcutInsertIndentation => 'Вставити відступ';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Зняти поточне виділення в редакторі або фокус із пошуку';
+  String get shortcutInsertIndentationDescription =>
+      'Вставити відступ у позицію курсора';
+
+  @override
+  String get shortcutOutdentSource => 'Зменшити відступ у вихідному тексті';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Прибрати один рівень відступу в режимі вихідного тексту';
+
+  @override
+  String get shortcutEscape => 'Закрити пошук або зняти виділення блоків';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Закрити пошук у робочому просторі або зняти виділення блоків у режимі редактора';
 
   @override
   String get shortcutGroupFormatting => 'Форматування';

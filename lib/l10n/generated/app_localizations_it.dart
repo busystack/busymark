@@ -188,9 +188,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get fileHistory => 'Cronologia file';
 
   @override
-  String get find => 'Trova';
-
-  @override
   String get folder => 'Cartella';
 
   @override
@@ -361,7 +358,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get noOpenFile => 'Nessun file aperto';
 
   @override
-  String get shortcutGroupFile => 'File';
+  String get shortcutDeleteTreeItemDescription =>
+      'Elimina l\'elemento selezionato in File oppure rimuovi l\'argomento selezionato dal sommario';
+
+  @override
+  String get shortcutGroupGeneral => 'Generale';
 
   @override
   String get shortcutNewDocument => 'Nuovo documento';
@@ -375,10 +376,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Apri un file Markdown, una cartella o un progetto Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Salva il file Markdown corrente';
+  String get shortcutSaveDescription => 'Salva il documento corrente';
 
   @override
-  String get shortcutFindDescription => 'Cerca nel documento corrente';
+  String get shortcutSearchDescription => 'Cerca nell\'area di lavoro corrente';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -396,35 +397,33 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get shortcutNextTabDescription =>
-      'Passa alla scheda successiva dell\'editor';
+      'Passa alla scheda aperta successiva';
 
   @override
   String get shortcutPreviousTab => 'Scheda precedente';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Passa alla scheda precedente dell\'editor';
+      'Passa alla scheda aperta precedente';
 
   @override
   String get shortcutCloseTab => 'Chiudi scheda';
 
   @override
-  String get shortcutCloseTabDescription =>
-      'Chiudi la scheda attiva dell\'editor';
+  String get shortcutCloseTabDescription => 'Chiudi la scheda attiva';
 
   @override
   String get shortcutCloseAllTabs => 'Chiudi tutte le schede';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'Chiudi tutte le schede aperte dell\'editor';
+  String get shortcutCloseAllTabsDescription => 'Chiudi tutte le schede aperte';
 
   @override
   String get shortcutGroupTextEditing => 'Modifica del testo';
 
   @override
   String get shortcutSelectAllDescription =>
-      'Seleziona tutto il testo dell\'editor';
+      'In modalità Sorgente, seleziona tutto il testo; in modalità Editor, premi due volte per selezionare tutti i blocchi';
 
   @override
   String get shortcutCutDescription => 'Taglia il testo selezionato';
@@ -446,11 +445,26 @@ class AppLocalizationsIt extends AppLocalizations {
   String get shortcutRedoDescription => 'Ripeti l\'ultima modifica annullata';
 
   @override
-  String get clearEditorSelection => 'Annulla la selezione nell\'editor';
+  String get shortcutInsertIndentation => 'Inserisci rientro';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Esci dalla selezione corrente nell\'editor o dal focus della ricerca';
+  String get shortcutInsertIndentationDescription =>
+      'Inserisci un rientro in corrispondenza del cursore';
+
+  @override
+  String get shortcutOutdentSource => 'Riduci rientro del sorgente';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Rimuovi un livello di rientro in modalità Sorgente';
+
+  @override
+  String get shortcutEscape =>
+      'Chiudi la ricerca o annulla la selezione dei blocchi';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Chiudi la ricerca nell\'area di lavoro o annulla una selezione di blocchi in modalità Editor';
 
   @override
   String get shortcutGroupFormatting => 'Formattazione';

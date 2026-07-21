@@ -5,17 +5,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('modal dialogs stop app-level tab shortcuts', (tester) async {
+  testWidgets('modal dialogs stop app and document-view shortcuts', (
+    tester,
+  ) async {
     var appShortcutInvocations = 0;
+    var documentViewShortcutInvocations = 0;
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Shortcuts(
+        builder: (context, child) => Shortcuts(
           shortcuts: <ShortcutActivator, Intent>{
             BusyMarkAppShortcutActivators.nextTab: const _AppShortcutIntent(),
             BusyMarkAppShortcutActivators.previousTab:
                 const _AppShortcutIntent(),
             BusyMarkAppShortcutActivators.closeTab: const _AppShortcutIntent(),
+            BusyMarkDocumentViewShortcutActivators.editor:
+                const _DocumentViewShortcutIntent(),
           },
           child: Actions(
             actions: <Type, Action<Intent>>{
@@ -25,23 +30,32 @@ void main() {
                   return null;
                 },
               ),
-            },
-            child: Builder(
-              builder: (context) => Scaffold(
-                body: Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      showBusyMarkModalDialog<void>(
-                        context,
-                        builder: (dialogContext) => TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text('Dismiss'),
-                        ),
-                      );
+              _DocumentViewShortcutIntent:
+                  CallbackAction<_DocumentViewShortcutIntent>(
+                    onInvoke: (_) {
+                      documentViewShortcutInvocations += 1;
+                      return null;
                     },
-                    child: const Text('Open dialog'),
                   ),
-                ),
+            },
+            child: child!,
+          ),
+        ),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  showBusyMarkModalDialog<void>(
+                    context,
+                    builder: (dialogContext) => TextButton(
+                      autofocus: true,
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Dismiss'),
+                    ),
+                  );
+                },
+                child: const Text('Open dialog'),
               ),
             ),
           ),
@@ -56,8 +70,10 @@ void main() {
     await _pressControlShortcut(tester, LogicalKeyboardKey.tab);
     await _pressControlShortcut(tester, LogicalKeyboardKey.tab, shift: true);
     await _pressControlShortcut(tester, LogicalKeyboardKey.keyW);
+    await _pressControlShortcut(tester, LogicalKeyboardKey.digit1, alt: true);
 
     expect(appShortcutInvocations, 0);
+    expect(documentViewShortcutInvocations, 0);
     expect(find.text('Dismiss'), findsOneWidget);
   });
 }
@@ -66,13 +82,20 @@ Future<void> _pressControlShortcut(
   WidgetTester tester,
   LogicalKeyboardKey key, {
   bool shift = false,
+  bool alt = false,
 }) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
   if (shift) {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
   }
+  if (alt) {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+  }
   await tester.sendKeyDownEvent(key);
   await tester.sendKeyUpEvent(key);
+  if (alt) {
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+  }
   if (shift) {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
   }
@@ -82,4 +105,8 @@ Future<void> _pressControlShortcut(
 
 class _AppShortcutIntent extends Intent {
   const _AppShortcutIntent();
+}
+
+class _DocumentViewShortcutIntent extends Intent {
+  const _DocumentViewShortcutIntent();
 }

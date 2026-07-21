@@ -189,9 +189,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get fileHistory => 'Historique du fichier';
 
   @override
-  String get find => 'Rechercher';
-
-  @override
   String get folder => 'Dossier';
 
   @override
@@ -362,7 +359,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noOpenFile => 'Aucun fichier ouvert';
 
   @override
-  String get shortcutGroupFile => 'Fichier';
+  String get shortcutDeleteTreeItemDescription =>
+      'Supprimer l’élément sélectionné dans « Fichiers » ou retirer la rubrique sélectionnée de la table des matières';
+
+  @override
+  String get shortcutGroupGeneral => 'Général';
 
   @override
   String get shortcutNewDocument => 'Nouveau document';
@@ -376,11 +377,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ouvrir un fichier Markdown, un dossier ou un projet Writerside';
 
   @override
-  String get shortcutSaveDescription =>
-      'Enregistrer le fichier Markdown actuel';
+  String get shortcutSaveDescription => 'Enregistrer le document actuel';
 
   @override
-  String get shortcutFindDescription => 'Rechercher dans le document actuel';
+  String get shortcutSearchDescription =>
+      'Rechercher dans l’espace de travail actuel';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -397,36 +398,34 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shortcutNextTab => 'Onglet suivant';
 
   @override
-  String get shortcutNextTabDescription =>
-      'Passer à l’onglet suivant ouvert dans l’éditeur';
+  String get shortcutNextTabDescription => 'Passer à l’onglet ouvert suivant';
 
   @override
   String get shortcutPreviousTab => 'Onglet précédent';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Passer à l’onglet précédent ouvert dans l’éditeur';
+      'Passer à l’onglet ouvert précédent';
 
   @override
   String get shortcutCloseTab => 'Fermer l’onglet';
 
   @override
-  String get shortcutCloseTabDescription =>
-      'Fermer l’onglet actif de l’éditeur';
+  String get shortcutCloseTabDescription => 'Fermer l’onglet actif';
 
   @override
   String get shortcutCloseAllTabs => 'Fermer tous les onglets';
 
   @override
   String get shortcutCloseAllTabsDescription =>
-      'Fermer tous les onglets ouverts dans l’éditeur';
+      'Fermer tous les onglets ouverts';
 
   @override
   String get shortcutGroupTextEditing => 'Édition de texte';
 
   @override
   String get shortcutSelectAllDescription =>
-      'Sélectionner tout le texte de l’éditeur';
+      'En mode Source, sélectionner tout le texte ; en mode Éditeur, appuyer deux fois pour sélectionner tous les blocs';
 
   @override
   String get shortcutCutDescription => 'Couper le texte sélectionné';
@@ -449,11 +448,26 @@ class AppLocalizationsFr extends AppLocalizations {
       'Refaire la dernière modification annulée';
 
   @override
-  String get clearEditorSelection => 'Désélectionner dans l’éditeur';
+  String get shortcutInsertIndentation => 'Insérer un retrait';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Quitter la sélection actuelle de l’éditeur ou le champ de recherche';
+  String get shortcutInsertIndentationDescription =>
+      'Insérer un retrait à l’emplacement du curseur';
+
+  @override
+  String get shortcutOutdentSource => 'Diminuer le retrait du code source';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Supprimer un niveau de retrait en mode Source';
+
+  @override
+  String get shortcutEscape =>
+      'Fermer la recherche ou désélectionner les blocs';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Fermer la recherche dans l’espace de travail ou désélectionner des blocs en mode Éditeur';
 
   @override
   String get shortcutGroupFormatting => 'Mise en forme';

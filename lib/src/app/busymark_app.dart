@@ -89,7 +89,7 @@ class BusyMarkApp extends ConsumerWidget {
               BusyMarkAppShortcutActivators.closeTab: const _CloseTabIntent(),
               BusyMarkAppShortcutActivators.closeAllTabs:
                   const _CloseAllTabsIntent(),
-              BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+              BusyMarkAppShortcutActivators.search: const _OpenSearchIntent(),
               BusyMarkAppShortcutActivators.toggleSidebar:
                   const _ToggleSidebarIntent(),
               BusyMarkDocumentViewShortcutActivators.editor:
@@ -746,12 +746,14 @@ class _BusyMarkSearchShortcutHandlerState
       return false;
     }
     final keyboard = HardwareKeyboard.instance;
-    if (keyboard.isControlPressed &&
-        event.logicalKey == LogicalKeyboardKey.keyF) {
+    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
+      if (rootNavigatorKey.currentState?.canPop() ?? false) {
+        return false;
+      }
       ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return true;
     }
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
+    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
       if (rootNavigatorKey.currentState?.canPop() ?? false) {
         return false;
       }

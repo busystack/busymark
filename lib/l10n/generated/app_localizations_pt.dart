@@ -189,9 +189,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fileHistory => 'Histórico do arquivo';
 
   @override
-  String get find => 'Localizar';
-
-  @override
   String get folder => 'Pasta';
 
   @override
@@ -362,7 +359,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noOpenFile => 'Nenhum arquivo aberto';
 
   @override
-  String get shortcutGroupFile => 'Arquivo';
+  String get shortcutDeleteTreeItemDescription =>
+      'Excluir o item selecionado em Arquivos ou remover o tópico selecionado do sumário';
+
+  @override
+  String get shortcutGroupGeneral => 'Geral';
 
   @override
   String get shortcutNewDocument => 'Novo documento';
@@ -376,10 +377,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Abrir um arquivo Markdown, uma pasta ou um projeto Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Salvar o arquivo Markdown atual';
+  String get shortcutSaveDescription => 'Salvar o documento atual';
 
   @override
-  String get shortcutFindDescription => 'Pesquisar no documento atual';
+  String get shortcutSearchDescription =>
+      'Pesquisar no espaço de trabalho atual';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -397,35 +399,32 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shortcutNextTab => 'Próxima guia';
 
   @override
-  String get shortcutNextTabDescription =>
-      'Ir para a próxima guia aberta do editor';
+  String get shortcutNextTabDescription => 'Ir para a próxima guia aberta';
 
   @override
   String get shortcutPreviousTab => 'Guia anterior';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Ir para a guia anterior aberta do editor';
+  String get shortcutPreviousTabDescription => 'Ir para a guia aberta anterior';
 
   @override
   String get shortcutCloseTab => 'Fechar guia';
 
   @override
-  String get shortcutCloseTabDescription => 'Fechar a guia ativa do editor';
+  String get shortcutCloseTabDescription => 'Fechar a guia ativa';
 
   @override
   String get shortcutCloseAllTabs => 'Fechar todas as guias';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'Fechar todas as guias abertas do editor';
+  String get shortcutCloseAllTabsDescription => 'Fechar todas as guias abertas';
 
   @override
   String get shortcutGroupTextEditing => 'Edição de texto';
 
   @override
   String get shortcutSelectAllDescription =>
-      'Selecionar todo o texto do editor';
+      'No modo Código-fonte, selecionar todo o texto; no modo Editor, pressionar duas vezes para selecionar todos os blocos';
 
   @override
   String get shortcutCutDescription => 'Recortar o texto selecionado';
@@ -447,11 +446,26 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shortcutRedoDescription => 'Refazer a última edição desfeita';
 
   @override
-  String get clearEditorSelection => 'Limpar seleção do editor';
+  String get shortcutInsertIndentation => 'Inserir recuo';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Sair da seleção atual do editor ou do foco da pesquisa';
+  String get shortcutInsertIndentationDescription =>
+      'Inserir recuo na posição do cursor';
+
+  @override
+  String get shortcutOutdentSource => 'Diminuir recuo do código-fonte';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Remover um nível de recuo no modo Código-fonte';
+
+  @override
+  String get shortcutEscape =>
+      'Fechar a pesquisa ou limpar a seleção de blocos';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Fechar a pesquisa do espaço de trabalho ou limpar uma seleção de blocos no modo Editor';
 
   @override
   String get shortcutGroupFormatting => 'Formatação';
