@@ -170,6 +170,174 @@ abstract class AppLocalizations {
   /// **'Report an Issue'**
   String get aboutReportIssue;
 
+  /// Settings section title for support actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get feedbackSupportSection;
+
+  /// Settings action that opens the native feedback form.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback / Report a concern'**
+  String get feedbackActionTitle;
+
+  /// Description of the native feedback action.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a bug report, request, or privacy or usability concern.'**
+  String get feedbackActionDescription;
+
+  /// Title of the native feedback dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get feedbackDialogTitle;
+
+  /// Feedback category field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get feedbackCategory;
+
+  /// Placeholder for the feedback category selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category'**
+  String get feedbackChooseCategory;
+
+  /// Feedback category for a problem or bug.
+  ///
+  /// In en, this message translates to:
+  /// **'Problem or bug'**
+  String get feedbackCategoryProblem;
+
+  /// Feedback category for a feature request.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature request'**
+  String get feedbackCategoryFeature;
+
+  /// Feedback category for a privacy or security concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy or security concern'**
+  String get feedbackCategoryPrivacySecurity;
+
+  /// Feedback category for a usability concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Usability concern'**
+  String get feedbackCategoryUsability;
+
+  /// Feedback category for other concerns.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get feedbackCategoryOther;
+
+  /// Feedback subject field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get feedbackSubject;
+
+  /// Detailed feedback message field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed message'**
+  String get feedbackMessage;
+
+  /// Optional reply email field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply email (optional)'**
+  String get feedbackReplyEmail;
+
+  /// Checkbox label for optional technical details.
+  ///
+  /// In en, this message translates to:
+  /// **'Include technical details'**
+  String get feedbackIncludeTechnicalDetails;
+
+  /// Disclosure explaining exactly which optional technical details are submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, this adds only your Linux operating-system version and BusyMark application locale. No logs, files, account data, or other diagnostics are attached.'**
+  String get feedbackTechnicalDetailsDisclosure;
+
+  /// Button that submits feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get feedbackSubmit;
+
+  /// Button label while feedback is being submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting…'**
+  String get feedbackSubmitting;
+
+  /// Validation error for a missing feedback category.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category.'**
+  String get feedbackCategoryRequired;
+
+  /// Validation error for feedback subject length.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject must be between 3 and 120 characters.'**
+  String get feedbackSubjectLength;
+
+  /// Validation error for feedback message length.
+  ///
+  /// In en, this message translates to:
+  /// **'Message must be between 10 and 5,000 characters.'**
+  String get feedbackMessageLength;
+
+  /// Validation error for an invalid optional reply email.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address or leave this field empty.'**
+  String get feedbackReplyEmailInvalid;
+
+  /// Feedback submission error for a connection failure.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not connect. Check your internet connection and try again.'**
+  String get feedbackConnectionFailure;
+
+  /// Feedback submission error for a timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The request timed out. Try again.'**
+  String get feedbackTimeoutFailure;
+
+  /// Feedback submission error when the server rate limit is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many reports were sent from this connection. Wait and try again.'**
+  String get feedbackRateLimitedFailure;
+
+  /// Feedback submission error when the server rejects invalid request data.
+  ///
+  /// In en, this message translates to:
+  /// **'The server rejected this report. Check the form fields and try again.'**
+  String get feedbackRejectedFailure;
+
+  /// Generic feedback submission server error.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not accept the report. Try again later.'**
+  String get feedbackServerFailure;
+
+  /// Success message containing the server reference ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback sent. Reference ID: {id}'**
+  String feedbackSuccess(String id);
+
   /// Settings section title for advanced actions.
   ///
   /// In en, this message translates to:

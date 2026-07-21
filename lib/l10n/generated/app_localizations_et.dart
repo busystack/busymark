@@ -34,6 +34,100 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aboutReportIssue => 'Teata probleemist';
 
   @override
+  String get feedbackSupportSection => 'Tugi';
+
+  @override
+  String get feedbackActionTitle => 'Saada tagasisidet / teata murest';
+
+  @override
+  String get feedbackActionDescription =>
+      'Teata veast, esita soov või anna teada privaatsuse või kasutatavusega seotud murest.';
+
+  @override
+  String get feedbackDialogTitle => 'Saada tagasisidet';
+
+  @override
+  String get feedbackCategory => 'Kategooria';
+
+  @override
+  String get feedbackChooseCategory => 'Vali kategooria';
+
+  @override
+  String get feedbackCategoryProblem => 'Probleem või viga';
+
+  @override
+  String get feedbackCategoryFeature => 'Funktsioonisoov';
+
+  @override
+  String get feedbackCategoryPrivacySecurity => 'Privaatsus- või turvamure';
+
+  @override
+  String get feedbackCategoryUsability => 'Kasutatavusmure';
+
+  @override
+  String get feedbackCategoryOther => 'Muu';
+
+  @override
+  String get feedbackSubject => 'Teema';
+
+  @override
+  String get feedbackMessage => 'Üksikasjalik sõnum';
+
+  @override
+  String get feedbackReplyEmail =>
+      'E-posti aadress vastuse saamiseks (valikuline)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Lisa tehnilised andmed';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Kui see on lubatud, lisatakse ainult Linuxi operatsioonisüsteemi versioon ja BusyMarki rakenduse lokaat. Logisid, faile, kontoandmeid ega muid diagnostikaandmeid ei lisata.';
+
+  @override
+  String get feedbackSubmit => 'Saada';
+
+  @override
+  String get feedbackSubmitting => 'Saatmine…';
+
+  @override
+  String get feedbackCategoryRequired => 'Vali kategooria.';
+
+  @override
+  String get feedbackSubjectLength => 'Teema peab olema 3–120 märki pikk.';
+
+  @override
+  String get feedbackMessageLength => 'Sõnum peab olema 10–5000 märki pikk.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Sisesta kehtiv e-posti aadress või jäta see väli tühjaks.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark ei saanud ühendust luua. Kontrolli internetiühendust ja proovi uuesti.';
+
+  @override
+  String get feedbackTimeoutFailure => 'Päring aegus. Proovi uuesti.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Selle ühenduse kaudu saadeti liiga palju teateid. Oota ja proovi uuesti.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'Server lükkas teate tagasi. Kontrolli vormivälju ja proovi uuesti.';
+
+  @override
+  String get feedbackServerFailure =>
+      'Server ei saanud teadet vastu võtta. Proovi hiljem uuesti.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Tagasiside saadetud. Viite ID: $id';
+  }
+
+  @override
   String get advanced => 'Täpsemad sätted';
 
   @override

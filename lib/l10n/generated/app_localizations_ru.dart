@@ -34,6 +34,103 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aboutReportIssue => 'Сообщить о проблеме';
 
   @override
+  String get feedbackSupportSection => 'Поддержка';
+
+  @override
+  String get feedbackActionTitle => 'Отправить отзыв / Сообщить о проблеме';
+
+  @override
+  String get feedbackActionDescription =>
+      'Отправьте отчёт об ошибке, предложение или сообщение о проблеме конфиденциальности либо удобства использования.';
+
+  @override
+  String get feedbackDialogTitle => 'Отправить отзыв';
+
+  @override
+  String get feedbackCategory => 'Категория';
+
+  @override
+  String get feedbackChooseCategory => 'Выберите категорию';
+
+  @override
+  String get feedbackCategoryProblem => 'Проблема или ошибка';
+
+  @override
+  String get feedbackCategoryFeature => 'Запрос функции';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'Проблема конфиденциальности или безопасности';
+
+  @override
+  String get feedbackCategoryUsability => 'Проблема удобства использования';
+
+  @override
+  String get feedbackCategoryOther => 'Другое';
+
+  @override
+  String get feedbackSubject => 'Тема';
+
+  @override
+  String get feedbackMessage => 'Подробное сообщение';
+
+  @override
+  String get feedbackReplyEmail => 'Эл. почта для ответа (необязательно)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Включить технические сведения';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Если этот параметр включён, добавляются только версия операционной системы Linux и язык и регион приложения BusyMark. Журналы, файлы, данные учётной записи и другие диагностические сведения не прикрепляются.';
+
+  @override
+  String get feedbackSubmit => 'Отправить';
+
+  @override
+  String get feedbackSubmitting => 'Отправка…';
+
+  @override
+  String get feedbackCategoryRequired => 'Выберите категорию.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'Тема должна содержать от 3 до 120 символов.';
+
+  @override
+  String get feedbackMessageLength =>
+      'Сообщение должно содержать от 10 до 5000 символов.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Введите действительный адрес электронной почты или оставьте поле пустым.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark не удалось подключиться. Проверьте интернет-соединение и повторите попытку.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'Время ожидания запроса истекло. Повторите попытку.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Из этого соединения отправлено слишком много отчётов. Подождите и повторите попытку.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'Сервер отклонил сообщение. Проверьте поля формы и повторите попытку.';
+
+  @override
+  String get feedbackServerFailure =>
+      'Сервер не смог принять отчёт. Повторите попытку позже.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Отзыв отправлен. Идентификатор обращения: $id';
+  }
+
+  @override
   String get advanced => 'Дополнительно';
 
   @override

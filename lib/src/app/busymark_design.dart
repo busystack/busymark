@@ -1735,12 +1735,14 @@ class BusyMarkDialogShell extends StatelessWidget {
     required this.children,
     this.maxWidth = BusyMarkSizes.dialog,
     this.actions = const [],
+    this.closable = true,
   });
 
   final String title;
   final List<Widget> children;
   final double maxWidth;
   final List<Widget> actions;
+  final bool closable;
 
   @override
   Widget build(BuildContext context) {
@@ -1753,6 +1755,7 @@ class BusyMarkDialogShell extends StatelessWidget {
         children: [
           YaruDialogTitleBar(
             title: Text(title),
+            isClosable: closable,
             centerTitle: true,
             backgroundColor: colors.dialog,
             border: BorderSide.none,

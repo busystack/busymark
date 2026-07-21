@@ -34,6 +34,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutReportIssue => 'Report an Issue';
 
   @override
+  String get feedbackSupportSection => 'Support';
+
+  @override
+  String get feedbackActionTitle => 'Send feedback / Report a concern';
+
+  @override
+  String get feedbackActionDescription =>
+      'Send a bug report, request, or privacy or usability concern.';
+
+  @override
+  String get feedbackDialogTitle => 'Send feedback';
+
+  @override
+  String get feedbackCategory => 'Category';
+
+  @override
+  String get feedbackChooseCategory => 'Choose a category';
+
+  @override
+  String get feedbackCategoryProblem => 'Problem or bug';
+
+  @override
+  String get feedbackCategoryFeature => 'Feature request';
+
+  @override
+  String get feedbackCategoryPrivacySecurity => 'Privacy or security concern';
+
+  @override
+  String get feedbackCategoryUsability => 'Usability concern';
+
+  @override
+  String get feedbackCategoryOther => 'Other';
+
+  @override
+  String get feedbackSubject => 'Subject';
+
+  @override
+  String get feedbackMessage => 'Detailed message';
+
+  @override
+  String get feedbackReplyEmail => 'Reply email (optional)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Include technical details';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'When enabled, this adds only your Linux operating-system version and BusyMark application locale. No logs, files, account data, or other diagnostics are attached.';
+
+  @override
+  String get feedbackSubmit => 'Submit';
+
+  @override
+  String get feedbackSubmitting => 'Submitting…';
+
+  @override
+  String get feedbackCategoryRequired => 'Choose a category.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'Subject must be between 3 and 120 characters.';
+
+  @override
+  String get feedbackMessageLength =>
+      'Message must be between 10 and 5,000 characters.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Enter a valid email address or leave this field empty.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark could not connect. Check your internet connection and try again.';
+
+  @override
+  String get feedbackTimeoutFailure => 'The request timed out. Try again.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Too many reports were sent from this connection. Wait and try again.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'The server rejected this report. Check the form fields and try again.';
+
+  @override
+  String get feedbackServerFailure =>
+      'The server could not accept the report. Try again later.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Feedback sent. Reference ID: $id';
+  }
+
+  @override
   String get advanced => 'Advanced';
 
   @override

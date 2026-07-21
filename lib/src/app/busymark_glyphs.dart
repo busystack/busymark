@@ -29,6 +29,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData editorView = YaruIcons.text_editor;
   static const IconData error = YaruIcons.error;
   static const IconData externalLink = YaruIcons.external_link;
+  static const IconData feedback = YaruIcons.chat_text;
   static const IconData folder = YaruIcons.folder;
   static const IconData folderOpen = YaruIcons.folder_open;
   static const IconData font = YaruIcons.font;

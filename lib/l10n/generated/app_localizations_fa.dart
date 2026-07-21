@@ -34,6 +34,100 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutReportIssue => 'گزارش اشکال';
 
   @override
+  String get feedbackSupportSection => 'پشتیبانی';
+
+  @override
+  String get feedbackActionTitle => 'ارسال بازخورد / گزارش یک نگرانی';
+
+  @override
+  String get feedbackActionDescription =>
+      'یک گزارش خطا، درخواست قابلیت یا نگرانی مربوط به حریم خصوصی یا کاربردپذیری ارسال کنید.';
+
+  @override
+  String get feedbackDialogTitle => 'ارسال بازخورد';
+
+  @override
+  String get feedbackCategory => 'دسته‌بندی';
+
+  @override
+  String get feedbackChooseCategory => 'یک دسته‌بندی انتخاب کنید';
+
+  @override
+  String get feedbackCategoryProblem => 'مشکل یا خطا';
+
+  @override
+  String get feedbackCategoryFeature => 'درخواست قابلیت';
+
+  @override
+  String get feedbackCategoryPrivacySecurity => 'نگرانی حریم خصوصی یا امنیتی';
+
+  @override
+  String get feedbackCategoryUsability => 'نگرانی کاربردپذیری';
+
+  @override
+  String get feedbackCategoryOther => 'سایر';
+
+  @override
+  String get feedbackSubject => 'موضوع';
+
+  @override
+  String get feedbackMessage => 'پیام کامل';
+
+  @override
+  String get feedbackReplyEmail => 'ایمیل پاسخ (اختیاری)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'شامل کردن جزئیات فنی';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'در صورت فعال‌سازی، فقط نسخهٔ سیستم‌عامل Linux و تنظیمات محلی برنامهٔ BusyMark افزوده می‌شود. هیچ گزارش رویداد، فایل، دادهٔ حساب یا اطلاعات عیب‌یابی دیگری پیوست نمی‌شود.';
+
+  @override
+  String get feedbackSubmit => 'ارسال';
+
+  @override
+  String get feedbackSubmitting => 'در حال ارسال…';
+
+  @override
+  String get feedbackCategoryRequired => 'یک دسته‌بندی انتخاب کنید.';
+
+  @override
+  String get feedbackSubjectLength => 'موضوع باید بین ۳ تا ۱۲۰ نویسه باشد.';
+
+  @override
+  String get feedbackMessageLength => 'پیام باید بین ۱۰ تا ۵۰۰۰ نویسه باشد.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'یک نشانی ایمیل معتبر وارد کنید یا این فیلد را خالی بگذارید.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark نتوانست متصل شود. اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'مهلت درخواست به پایان رسید. دوباره تلاش کنید.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'گزارش‌های زیادی از این اتصال ارسال شده است. کمی صبر کنید و دوباره تلاش کنید.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'سرور گزارش را رد کرد. فیلدهای فرم را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get feedbackServerFailure =>
+      'سرور نتوانست گزارش را بپذیرد. بعداً دوباره تلاش کنید.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'بازخورد ارسال شد. شناسهٔ مرجع: $id';
+  }
+
+  @override
   String get advanced => 'پیشرفته';
 
   @override

@@ -42,6 +42,7 @@ Future<T?> showBusyMarkModalDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   LinuxHeaderBarService? headerBarService,
+  bool barrierDismissible = true,
 }) async {
   final barrierColor = busyMarkModalBarrierColor(context);
   await headerBarService?.setModalBarrierVisible(true);
@@ -53,6 +54,7 @@ Future<T?> showBusyMarkModalDialog<T>(
     return await showDialog<T>(
       context: context,
       barrierColor: barrierColor,
+      barrierDismissible: barrierDismissible,
       builder: (dialogContext) {
         final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
         final padding = EdgeInsets.fromLTRB(

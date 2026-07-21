@@ -11,6 +11,7 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../workspace_controller.dart';
 
@@ -172,6 +173,22 @@ class SettingsScreen extends ConsumerWidget {
                     leading: const Icon(BusyMarkGlyphs.clearAll),
                     onTap: controller.clearTrustedGitWorkspaces,
                   ),
+              ],
+            ),
+            BusyMarkGroupedList(
+              title: context.l10n.feedbackSupportSection,
+              filled: true,
+              children: [
+                BusyMarkActionRow(
+                  title: context.l10n.feedbackActionTitle,
+                  subtitle: context.l10n.feedbackActionDescription,
+                  leading: const Icon(BusyMarkGlyphs.feedback),
+                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  onTap: () => showBusyMarkFeedbackDialog(
+                    context,
+                    headerBarService: headerBar.isAvailable ? headerBar : null,
+                  ),
+                ),
               ],
             ),
             BusyMarkGroupedList(

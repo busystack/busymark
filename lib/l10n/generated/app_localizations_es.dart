@@ -34,6 +34,104 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aboutReportIssue => 'Informar de un problema';
 
   @override
+  String get feedbackSupportSection => 'Ayuda';
+
+  @override
+  String get feedbackActionTitle =>
+      'Enviar comentarios / Informar de un problema';
+
+  @override
+  String get feedbackActionDescription =>
+      'Envía un informe de error, una solicitud o una inquietud de privacidad o usabilidad.';
+
+  @override
+  String get feedbackDialogTitle => 'Enviar comentarios';
+
+  @override
+  String get feedbackCategory => 'Categoría';
+
+  @override
+  String get feedbackChooseCategory => 'Elige una categoría';
+
+  @override
+  String get feedbackCategoryProblem => 'Problema o error';
+
+  @override
+  String get feedbackCategoryFeature => 'Solicitud de función';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'Problema de privacidad o seguridad';
+
+  @override
+  String get feedbackCategoryUsability => 'Problema de usabilidad';
+
+  @override
+  String get feedbackCategoryOther => 'Otro';
+
+  @override
+  String get feedbackSubject => 'Asunto';
+
+  @override
+  String get feedbackMessage => 'Mensaje detallado';
+
+  @override
+  String get feedbackReplyEmail => 'Correo electrónico de respuesta (opcional)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Incluir detalles técnicos';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Al activarlo, solo se añaden la versión del sistema operativo Linux y la configuración regional de la aplicación BusyMark. No se adjuntan registros, archivos, datos de cuentas ni otros diagnósticos.';
+
+  @override
+  String get feedbackSubmit => 'Enviar';
+
+  @override
+  String get feedbackSubmitting => 'Enviando…';
+
+  @override
+  String get feedbackCategoryRequired => 'Elige una categoría.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'El asunto debe tener entre 3 y 120 caracteres.';
+
+  @override
+  String get feedbackMessageLength =>
+      'El mensaje debe tener entre 10 y 5.000 caracteres.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Introduce una dirección de correo válida o deja este campo vacío.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark no pudo conectarse. Comprueba tu conexión a Internet e inténtalo de nuevo.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'La solicitud agotó el tiempo de espera. Inténtalo de nuevo.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Se enviaron demasiados informes desde esta conexión. Espera e inténtalo de nuevo.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'El servidor rechazó el informe. Revisa los campos del formulario e inténtalo de nuevo.';
+
+  @override
+  String get feedbackServerFailure =>
+      'El servidor no pudo aceptar el informe. Inténtalo más tarde.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Comentarios enviados. ID de referencia: $id';
+  }
+
+  @override
   String get advanced => 'Avanzado';
 
   @override

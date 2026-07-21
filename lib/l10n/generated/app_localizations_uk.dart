@@ -34,6 +34,103 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aboutReportIssue => 'Повідомити про проблему';
 
   @override
+  String get feedbackSupportSection => 'Підтримка';
+
+  @override
+  String get feedbackActionTitle =>
+      'Надіслати відгук / Повідомити про проблему';
+
+  @override
+  String get feedbackActionDescription =>
+      'Надішліть звіт про помилку, пропозицію або повідомлення про проблему конфіденційності чи зручності використання.';
+
+  @override
+  String get feedbackDialogTitle => 'Надіслати відгук';
+
+  @override
+  String get feedbackCategory => 'Категорія';
+
+  @override
+  String get feedbackChooseCategory => 'Виберіть категорію';
+
+  @override
+  String get feedbackCategoryProblem => 'Проблема або помилка';
+
+  @override
+  String get feedbackCategoryFeature => 'Запит на функцію';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'Проблема конфіденційності або безпеки';
+
+  @override
+  String get feedbackCategoryUsability => 'Проблема зручності використання';
+
+  @override
+  String get feedbackCategoryOther => 'Інше';
+
+  @override
+  String get feedbackSubject => 'Тема';
+
+  @override
+  String get feedbackMessage => 'Докладне повідомлення';
+
+  @override
+  String get feedbackReplyEmail => 'Ел. пошта для відповіді (необов’язково)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Додати технічні відомості';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Якщо цей параметр увімкнено, додаються лише версія операційної системи Linux і мова та регіон програми BusyMark. Журнали, файли, дані облікового запису й інші діагностичні відомості не додаються.';
+
+  @override
+  String get feedbackSubmit => 'Надіслати';
+
+  @override
+  String get feedbackSubmitting => 'Надсилання…';
+
+  @override
+  String get feedbackCategoryRequired => 'Виберіть категорію.';
+
+  @override
+  String get feedbackSubjectLength => 'Тема має містити від 3 до 120 символів.';
+
+  @override
+  String get feedbackMessageLength =>
+      'Повідомлення має містити від 10 до 5000 символів.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Введіть дійсну адресу електронної пошти або залиште поле порожнім.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark не вдалося підключитися. Перевірте інтернет-з’єднання та повторіть спробу.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'Час очікування запиту минув. Повторіть спробу.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Із цього з’єднання надіслано забагато звітів. Зачекайте та повторіть спробу.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'Сервер відхилив повідомлення. Перевірте поля форми та повторіть спробу.';
+
+  @override
+  String get feedbackServerFailure =>
+      'Сервер не зміг прийняти звіт. Повторіть спробу пізніше.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Відгук надіслано. Ідентифікатор звернення: $id';
+  }
+
+  @override
   String get advanced => 'Додатково';
 
   @override

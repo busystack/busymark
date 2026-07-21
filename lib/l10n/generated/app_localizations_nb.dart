@@ -34,6 +34,104 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aboutReportIssue => 'Rapporter et problem';
 
   @override
+  String get feedbackSupportSection => 'Brukerstøtte';
+
+  @override
+  String get feedbackActionTitle =>
+      'Send tilbakemelding / Rapporter et problem';
+
+  @override
+  String get feedbackActionDescription =>
+      'Send en feilrapport, et ønske eller en bekymring om personvern eller brukervennlighet.';
+
+  @override
+  String get feedbackDialogTitle => 'Send tilbakemelding';
+
+  @override
+  String get feedbackCategory => 'Kategori';
+
+  @override
+  String get feedbackChooseCategory => 'Velg en kategori';
+
+  @override
+  String get feedbackCategoryProblem => 'Problem eller feil';
+
+  @override
+  String get feedbackCategoryFeature => 'Funksjonsønske';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'Bekymring om personvern eller sikkerhet';
+
+  @override
+  String get feedbackCategoryUsability => 'Bekymring om brukervennlighet';
+
+  @override
+  String get feedbackCategoryOther => 'Annet';
+
+  @override
+  String get feedbackSubject => 'Emne';
+
+  @override
+  String get feedbackMessage => 'Detaljert melding';
+
+  @override
+  String get feedbackReplyEmail => 'E-post for svar (valgfritt)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Ta med tekniske detaljer';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Når dette er aktivert, legges bare Linux-operativsystemversjonen og BusyMark-programmets lokalinnstilling til. Ingen logger, filer, kontodata eller annen diagnostikk legges ved.';
+
+  @override
+  String get feedbackSubmit => 'Send';
+
+  @override
+  String get feedbackSubmitting => 'Sender…';
+
+  @override
+  String get feedbackCategoryRequired => 'Velg en kategori.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'Emnet må inneholde mellom 3 og 120 tegn.';
+
+  @override
+  String get feedbackMessageLength =>
+      'Meldingen må inneholde mellom 10 og 5000 tegn.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark kunne ikke koble til. Kontroller internettforbindelsen og prøv igjen.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'Forespørselen ble tidsavbrutt. Prøv igjen.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Det ble sendt for mange rapporter fra denne forbindelsen. Vent og prøv igjen.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'Serveren avviste rapporten. Kontroller skjemafeltene og prøv igjen.';
+
+  @override
+  String get feedbackServerFailure =>
+      'Serveren kunne ikke ta imot rapporten. Prøv igjen senere.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Tilbakemeldingen er sendt. Referanse-ID: $id';
+  }
+
+  @override
   String get advanced => 'Avansert';
 
   @override

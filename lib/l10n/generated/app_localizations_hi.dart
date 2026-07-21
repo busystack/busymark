@@ -33,6 +33,102 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutReportIssue => 'समस्या रिपोर्ट करें';
 
   @override
+  String get feedbackSupportSection => 'सहायता';
+
+  @override
+  String get feedbackActionTitle => 'प्रतिक्रिया भेजें / चिंता की रिपोर्ट करें';
+
+  @override
+  String get feedbackActionDescription =>
+      'बग रिपोर्ट, सुविधा अनुरोध या गोपनीयता अथवा उपयोगिता संबंधी चिंता भेजें।';
+
+  @override
+  String get feedbackDialogTitle => 'प्रतिक्रिया भेजें';
+
+  @override
+  String get feedbackCategory => 'श्रेणी';
+
+  @override
+  String get feedbackChooseCategory => 'श्रेणी चुनें';
+
+  @override
+  String get feedbackCategoryProblem => 'समस्या या बग';
+
+  @override
+  String get feedbackCategoryFeature => 'सुविधा अनुरोध';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'गोपनीयता या सुरक्षा संबंधी चिंता';
+
+  @override
+  String get feedbackCategoryUsability => 'उपयोगिता संबंधी चिंता';
+
+  @override
+  String get feedbackCategoryOther => 'अन्य';
+
+  @override
+  String get feedbackSubject => 'विषय';
+
+  @override
+  String get feedbackMessage => 'विस्तृत संदेश';
+
+  @override
+  String get feedbackReplyEmail => 'उत्तर ईमेल (वैकल्पिक)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'तकनीकी विवरण शामिल करें';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'सक्षम होने पर केवल Linux ऑपरेटिंग सिस्टम का संस्करण और BusyMark ऐप की भाषा व क्षेत्र सेटिंग जोड़ी जाती है। कोई लॉग, फ़ाइल, खाता डेटा या अन्य निदान जानकारी संलग्न नहीं की जाती।';
+
+  @override
+  String get feedbackSubmit => 'भेजें';
+
+  @override
+  String get feedbackSubmitting => 'भेजा जा रहा है…';
+
+  @override
+  String get feedbackCategoryRequired => 'श्रेणी चुनें।';
+
+  @override
+  String get feedbackSubjectLength => 'विषय 3 से 120 वर्णों के बीच होना चाहिए।';
+
+  @override
+  String get feedbackMessageLength =>
+      'संदेश 10 से 5000 वर्णों के बीच होना चाहिए।';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'मान्य ईमेल पता दर्ज करें या यह फ़ील्ड खाली छोड़ें।';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark कनेक्ट नहीं हो सका। अपना इंटरनेट कनेक्शन जाँचें और फिर प्रयास करें।';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'अनुरोध का समय समाप्त हो गया। फिर प्रयास करें।';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'इस कनेक्शन से बहुत अधिक रिपोर्ट भेजी गई हैं। प्रतीक्षा करें और फिर प्रयास करें।';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'सर्वर ने रिपोर्ट अस्वीकार कर दी। फ़ॉर्म फ़ील्ड जाँचें और फिर प्रयास करें।';
+
+  @override
+  String get feedbackServerFailure =>
+      'सर्वर रिपोर्ट स्वीकार नहीं कर सका। बाद में फिर प्रयास करें।';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'प्रतिक्रिया भेजी गई। संदर्भ आईडी: $id';
+  }
+
+  @override
   String get advanced => 'उन्नत';
 
   @override

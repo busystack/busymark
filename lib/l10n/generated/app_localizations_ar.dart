@@ -33,6 +33,100 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutReportIssue => 'الإبلاغ عن مشكلة';
 
   @override
+  String get feedbackSupportSection => 'الدعم';
+
+  @override
+  String get feedbackActionTitle => 'إرسال ملاحظات / الإبلاغ عن مصدر قلق';
+
+  @override
+  String get feedbackActionDescription =>
+      'أرسل بلاغًا عن خطأ أو طلب ميزة أو مخاوف تتعلق بالخصوصية أو سهولة الاستخدام.';
+
+  @override
+  String get feedbackDialogTitle => 'إرسال ملاحظات';
+
+  @override
+  String get feedbackCategory => 'الفئة';
+
+  @override
+  String get feedbackChooseCategory => 'اختر فئة';
+
+  @override
+  String get feedbackCategoryProblem => 'مشكلة أو خطأ';
+
+  @override
+  String get feedbackCategoryFeature => 'طلب ميزة';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'مخاوف تتعلق بالخصوصية أو الأمان';
+
+  @override
+  String get feedbackCategoryUsability => 'مخاوف تتعلق بسهولة الاستخدام';
+
+  @override
+  String get feedbackCategoryOther => 'أخرى';
+
+  @override
+  String get feedbackSubject => 'الموضوع';
+
+  @override
+  String get feedbackMessage => 'رسالة مفصلة';
+
+  @override
+  String get feedbackReplyEmail => 'بريد إلكتروني للرد (اختياري)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'تضمين التفاصيل التقنية';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'عند التفعيل، لا يُضاف سوى إصدار نظام التشغيل Linux والإعدادات المحلية لتطبيق BusyMark. لا يتم إرفاق أي سجلات أو ملفات أو بيانات حساب أو معلومات تشخيصية أخرى.';
+
+  @override
+  String get feedbackSubmit => 'إرسال';
+
+  @override
+  String get feedbackSubmitting => 'جارٍ الإرسال…';
+
+  @override
+  String get feedbackCategoryRequired => 'اختر فئة.';
+
+  @override
+  String get feedbackSubjectLength => 'يجب أن يتراوح الموضوع بين 3 و120 حرفًا.';
+
+  @override
+  String get feedbackMessageLength => 'يجب أن تتراوح الرسالة بين 10 و5000 حرف.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'أدخل عنوان بريد إلكتروني صالحًا أو اترك هذا الحقل فارغًا.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'تعذر على BusyMark الاتصال. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
+
+  @override
+  String get feedbackTimeoutFailure => 'انتهت مهلة الطلب. حاول مرة أخرى.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'تم إرسال عدد كبير جدًا من البلاغات عبر هذا الاتصال. انتظر ثم حاول مرة أخرى.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'رفض الخادم البلاغ. تحقّق من حقول النموذج وحاول مرة أخرى.';
+
+  @override
+  String get feedbackServerFailure =>
+      'تعذر على الخادم قبول البلاغ. حاول مرة أخرى لاحقًا.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'تم إرسال الملاحظات. معرّف المرجع: $id';
+  }
+
+  @override
   String get advanced => 'خيارات متقدمة';
 
   @override
