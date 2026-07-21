@@ -4,6 +4,84 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('elevated header controls use the shared surface shadow', (
+    tester,
+  ) async {
+    late BuildContext themedContext;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            themedContext = context;
+            return Scaffold(
+              body: Row(
+                children: [
+                  BusyMarkHeaderIconButton(
+                    key: const ValueKey('elevated-icon-button'),
+                    tooltip: 'Elevated action',
+                    icon: BusyMarkGlyphs.edit,
+                    elevated: true,
+                    borderRadius: BusyMarkRadius.lg,
+                    onPressed: () {},
+                  ),
+                  BusyMarkHeaderIconButton(
+                    key: const ValueKey('flat-icon-button'),
+                    tooltip: 'Flat action',
+                    icon: BusyMarkGlyphs.edit,
+                    onPressed: () {},
+                  ),
+                  BusyMarkHeaderPopupMenuButton<String>(
+                    key: const ValueKey('elevated-popup-button'),
+                    tooltip: 'Elevated menu',
+                    icon: BusyMarkGlyphs.menuVertical,
+                    elevated: true,
+                    itemBuilder: (_) => const [
+                      BusyMarkPopupMenuItem(value: 'action', label: 'Action'),
+                    ],
+                    onSelected: (_) {},
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    List<BoxDecoration> shadowDecorations(Finder control) {
+      return tester
+          .widgetList<DecoratedBox>(
+            find.descendant(of: control, matching: find.byType(DecoratedBox)),
+          )
+          .map((widget) => widget.decoration)
+          .whereType<BoxDecoration>()
+          .where((decoration) => decoration.boxShadow?.isNotEmpty ?? false)
+          .toList();
+    }
+
+    final expectedShadows = BusyMarkShadow.surfaceShadowsFor(themedContext);
+    final iconDecorations = shadowDecorations(
+      find.byKey(const ValueKey('elevated-icon-button')),
+    );
+    final popupDecorations = shadowDecorations(
+      find.byKey(const ValueKey('elevated-popup-button')),
+    );
+
+    expect(iconDecorations, hasLength(1));
+    expect(iconDecorations.single.boxShadow, expectedShadows);
+    expect(
+      iconDecorations.single.borderRadius,
+      BorderRadius.circular(BusyMarkRadius.lg),
+    );
+    expect(popupDecorations, hasLength(1));
+    expect(popupDecorations.single.boxShadow, expectedShadows);
+    expect(
+      shadowDecorations(find.byKey(const ValueKey('flat-icon-button'))),
+      isEmpty,
+    );
+  });
+
   testWidgets(
     'popup menu rows show shortcuts without redundant hover tooltips',
     (tester) async {

@@ -46,15 +46,8 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: axis,
       reverse: alignEnd,
-      padding: axis == Axis.horizontal
-          ? const EdgeInsets.symmetric(
-              horizontal: BusyMarkSpacing.sm,
-              vertical: BusyMarkSpacing.xs,
-            )
-          : const EdgeInsets.symmetric(
-              horizontal: BusyMarkSpacing.xs,
-              vertical: BusyMarkSpacing.sm,
-            ),
+      hitTestBehavior: HitTestBehavior.deferToChild,
+      padding: const EdgeInsets.all(BusyMarkSpacing.sm),
       child: Flex(
         direction: axis,
         mainAxisSize: MainAxisSize.min,
@@ -242,14 +235,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   Widget _blockStyleMenu(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
       foregroundColor: colorScheme.onPrimary,
       backgroundColor: _toolbarButtonBackground(context),
-      boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      elevated: true,
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
@@ -299,7 +291,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     String? shortcut,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderIconButton(
       tooltip: tooltip,
       icon: icon,
@@ -307,7 +298,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       shortcut: shortcut,
       foregroundColor: colorScheme.onPrimary,
       backgroundColor: _toolbarButtonBackground(context),
-      boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      elevated: true,
     );
   }
 

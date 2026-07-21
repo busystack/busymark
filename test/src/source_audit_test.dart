@@ -1085,6 +1085,9 @@ void main() {
     final toolbar = File(
       'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
     ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
     final commands = File(
       'lib/src/editor/wysiwyg/wysiwyg_commands.dart',
     ).readAsStringSync();
@@ -1145,6 +1148,20 @@ void main() {
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
+    expect(toolbar, contains('elevated: true'));
+    expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
+    expect(
+      toolbar,
+      contains('padding: const EdgeInsets.all(BusyMarkSpacing.sm)'),
+    );
+    expect(toolbar, isNot(contains('boxShadow:')));
+    expect(toolbar, isNot(contains('BusyMarkShadow.')));
+    final floatingToolbar = RegExp(
+      r'class _FloatingWysiwygToolbar[\s\S]*?class _EditorToolbarMenuAction',
+    ).firstMatch(editor)!.group(0)!;
+    expect(floatingToolbar, contains('elevated: true'));
+    expect(floatingToolbar, isNot(contains('boxShadow:')));
+    expect(floatingToolbar, isNot(contains('BusyMarkShadow.')));
     final blockWidgets = File(
       'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
     ).readAsStringSync();

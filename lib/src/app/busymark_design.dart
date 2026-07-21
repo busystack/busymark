@@ -95,7 +95,7 @@ abstract final class BusyMarkSizes {
   static const double wysiwygEditorTopPadding = 20;
   static const double wysiwygEditorBottomPadding = 38;
   static const double wysiwygToolbarReserve =
-      iconButton + BusyMarkSpacing.xs * 2;
+      iconButton + BusyMarkSpacing.sm * 2;
   static const double wysiwygEditorTopPaddingWithToolbar =
       BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.lg;
   static const double wysiwygPrefixWidth = 30;
@@ -961,10 +961,10 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     this.selected = false,
     this.accented = false,
     this.transparent = false,
+    this.elevated = false,
     this.shortcut,
     this.foregroundColor,
     this.backgroundColor,
-    this.boxShadow,
     this.borderRadius = BusyMarkRadius.headerButton,
   });
 
@@ -974,10 +974,12 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final bool selected;
   final bool accented;
   final bool transparent;
+
+  /// Paints the shared theme-aware surface shadow behind this control.
+  final bool elevated;
   final String? shortcut;
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
-  final List<BoxShadow>? boxShadow;
   final double borderRadius;
 
   @override
@@ -1002,18 +1004,19 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
                 : transparent
                 ? busyMarkTransparentHeaderButtonBackground(context)
                 : busyMarkHeaderButtonBackground(context)),
+        borderRadius: borderRadius,
       ),
       tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
       icon: Icon(icon, size: BusyMarkSizes.iconSm),
       onPressed: onPressed,
     );
-    final shadows = boxShadow;
+    final shadows = elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null;
     if (shadows == null || shadows.isEmpty) {
       return button;
     }
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: shadows,
       ),
       child: button,
@@ -1029,10 +1032,10 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
     required this.itemBuilder,
     required this.onSelected,
     this.transparent = false,
+    this.elevated = false,
     this.shortcut,
     this.foregroundColor,
     this.backgroundColor,
-    this.boxShadow,
     this.borderRadius = BusyMarkRadius.headerButton,
   });
 
@@ -1042,10 +1045,12 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
   itemBuilder;
   final ValueChanged<T> onSelected;
   final bool transparent;
+
+  /// Paints the shared theme-aware surface shadow behind this control.
+  final bool elevated;
   final String? shortcut;
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
-  final List<BoxShadow>? boxShadow;
   final double borderRadius;
 
   @override
@@ -1079,7 +1084,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatelessWidget {
         ),
       ),
     );
-    final shadows = boxShadow;
+    final shadows = elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null;
     if (shadows == null || shadows.isEmpty) {
       return button;
     }

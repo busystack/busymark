@@ -3063,7 +3063,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         onPressed: onToggle,
         foregroundColor: colors.mutedForeground,
         backgroundColor: _editorToolbarButtonBackground(context),
-        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+        elevated: true,
       ),
     );
     final gap = visible
