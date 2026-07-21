@@ -1217,6 +1217,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         continue;
       }
       changed = true;
+      if (block.kind == BusyBlockKind.blockquote &&
+          block.children.isNotEmpty &&
+          children.isEmpty &&
+          block.inlines.isEmpty) {
+        continue;
+      }
       result.add(
         block.copyWith(children: children, preserveRaw: false, dirty: true),
       );

@@ -10,6 +10,7 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -712,6 +713,43 @@ void main() {}
     );
   });
 
+  test('WYSIWYG cross-block deletion prunes an emptied blockquote', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Before\n\n> Quote\n\nAfter\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final before = controller.document.blocks.first;
+    final quote = controller.document.blocks[1];
+    final quoteParagraph = quote.children.single;
+    final after = controller.document.blocks.last;
+
+    final result = controller.deleteTextSelection(
+      firstBlockId: before.id,
+      firstStartOffset: 0,
+      lastBlockId: after.id,
+      lastEndOffset: after.plainText.length,
+      removedBlockIds: [before.id, quoteParagraph.id, after.id],
+    );
+
+    expect(result, isNotNull);
+    expect(
+      controller.document.blocks,
+      isNot(
+        contains(
+          isA<BusyBlock>().having(
+            (block) => block.kind,
+            'kind',
+            BusyBlockKind.blockquote,
+          ),
+        ),
+      ),
+    );
+    expect(controller.markdown, isNot(contains('>')));
+  });
+
   test('WYSIWYG nested inline edit updates Markdown source', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -865,6 +903,259 @@ void main() {}
     expect(markdown, 'Editable text\n');
     expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG renders a blockquote around its editable text', (
+    tester,
+  ) async {
+    var markdown = '';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '> „Code sollte wie gute Prosa lesbar sein.“\n'
+          '> — *Martin Fowler*\n',
+    );
+    final quote = parsed.busyDocument.blocks.single;
+    final paragraph = quote.children.single;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final frame = find.byType(BusyMarkWysiwygBlockquoteFrame);
+    final childField = find.byKey(
+      ValueKey('wysiwyg-field-topic.md-${paragraph.id}'),
+    );
+    final structuralField = find.byKey(
+      ValueKey('wysiwyg-field-topic.md-${quote.id}'),
+    );
+    final quoteIcon = find.descendant(
+      of: frame,
+      matching: find.byIcon(BusyMarkGlyphs.blockquote),
+    );
+
+    expect(frame, findsOneWidget);
+    expect(childField, findsOneWidget);
+    expect(structuralField, findsNothing);
+    expect(
+      find.descendant(of: frame, matching: find.byType(TextField)),
+      findsOneWidget,
+    );
+    expect(quoteIcon, findsOneWidget);
+    final iconRect = tester.getRect(quoteIcon);
+    final fieldRect = tester.getRect(childField);
+    expect(
+      iconRect.center.dy,
+      inInclusiveRange(fieldRect.top, fieldRect.bottom),
+    );
+    final field = tester.widget<TextField>(childField);
+    expect(field.controller!.text, contains('Code sollte wie gute Prosa'));
+    expect(field.controller!.text, contains('Martin Fowler'));
+
+    await tester.enterText(childField, 'Changed');
+    await tester.pump();
+
+    expect(markdown, startsWith('> '));
+    expect(markdown, contains('Changed'));
+  });
+
+  testWidgets('WYSIWYG uses one quote frame for multiple quote paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '> First\n>\n> Second\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final frame = find.byType(BusyMarkWysiwygBlockquoteFrame);
+    expect(frame, findsOneWidget);
+    expect(
+      find.descendant(of: frame, matching: find.byType(TextField)),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(
+        of: frame,
+        matching: find.byIcon(BusyMarkGlyphs.blockquote),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('WYSIWYG quote frame focuses its first editable child', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Before\n\n> Quote\n',
+    );
+    final before = parsed.busyDocument.blocks.first;
+    final quote = parsed.busyDocument.blocks.last;
+    final quoteParagraph = quote.children.single;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldFor(String blockId) => tester.widget<TextField>(
+      find.byKey(ValueKey('wysiwyg-field-topic.md-$blockId')),
+    );
+    expect(fieldFor(before.id).focusNode!.hasFocus, isTrue);
+
+    final frame = find.byType(BusyMarkWysiwygBlockquoteFrame);
+    await tester.tap(
+      find.descendant(
+        of: frame,
+        matching: find.byIcon(BusyMarkGlyphs.blockquote),
+      ),
+    );
+    await tester.pump();
+
+    expect(fieldFor(quoteParagraph.id).focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('WYSIWYG inherits RTL indentation inside a blockquote', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '> - مرحبا\n>   - 123\n',
+    );
+    final quote = parsed.busyDocument.blocks.single;
+    final parentItem = quote.children.single;
+    final nestedItem = parentItem.children.single;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Finder fieldFor(String blockId) =>
+        find.byKey(ValueKey('wysiwyg-field-topic.md-$blockId'));
+    final parentField = fieldFor(parentItem.id);
+    final nestedField = fieldFor(nestedItem.id);
+    final parentRect = tester.getRect(parentField);
+    final nestedRect = tester.getRect(nestedField);
+
+    expect(
+      tester.widget<TextField>(nestedField).textDirection,
+      TextDirection.rtl,
+    );
+    expect(nestedRect.left, closeTo(parentRect.left, 0.1));
+    expect(
+      nestedRect.right,
+      closeTo(parentRect.right - BusyMarkSizes.wysiwygBlockIndent, 0.1),
+    );
+  });
+
+  testWidgets('WYSIWYG keeps a generated leaf blockquote editable', (
+    tester,
+  ) async {
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyBlock(
+          id: 'quote',
+          kind: BusyBlockKind.blockquote,
+          inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Leaf quote')],
+          dirty: true,
+        ),
+      ],
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: document,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = find.byKey(const ValueKey('wysiwyg-field-topic.md-quote'));
+    expect(field, findsOneWidget);
+    expect(tester.widget<TextField>(field).controller!.text, 'Leaf quote');
+
+    await tester.enterText(field, 'Changed');
+    await tester.pump();
+
+    expect(markdown, '> Changed\n');
   });
 
   testWidgets('WYSIWYG hides a definition-only source and preserves it', (
@@ -1160,6 +1451,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1230,6 +1522,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1296,6 +1589,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1360,6 +1654,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1436,6 +1731,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1522,6 +1818,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1586,6 +1883,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1698,6 +1996,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -1907,6 +2206,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1954,6 +2254,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -2010,6 +2311,58 @@ void main() {}
       expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
     },
   );
+
+  testWidgets('editing toolbar never changes editor content padding', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+    const expectedPadding = EdgeInsets.fromLTRB(
+      BusyMarkSizes.wysiwygEditorHorizontalPadding,
+      BusyMarkSizes.wysiwygEditorTopPadding,
+      BusyMarkSizes.wysiwygEditorHorizontalPadding,
+      BusyMarkSizes.wysiwygEditorBottomPadding,
+    );
+
+    Finder editorList() => find.descendant(
+      of: find.byType(BusyMarkWysiwygEditor),
+      matching: find.byType(ListView),
+    );
+
+    for (final direction in EditorToolbarDirection.values) {
+      for (final placement in EditorToolbarPlacement.values) {
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  key: ValueKey('$direction-$placement'),
+                  document: parsed.busyDocument,
+                  toolbarPlacement: placement,
+                  toolbarDirection: direction,
+                  onSourceChanged: (_, _) {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(editorList(), findsOneWidget);
+        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        final shownFieldRect = tester.getRect(find.byType(TextField).first);
+
+        await tester.tap(find.byTooltip('Hide editing buttons'));
+        await tester.pump();
+
+        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        expect(tester.getRect(find.byType(TextField).first), shownFieldRect);
+      }
+    }
+  });
 
   testWidgets('vertical WYSIWYG toolbar is bounded and extends from its edge', (
     tester,
@@ -2258,6 +2611,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -2344,6 +2698,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -2406,6 +2761,7 @@ void main() {}
                   height: 640,
                   child: BusyMarkWysiwygEditor(
                     document: activeDocument,
+                    toolbarPlacement: EditorToolbarPlacement.bottomLeft,
                     onSourceChanged: (filePath, source) {
                       emittedSources.add('$filePath\n$source');
                     },
@@ -2478,6 +2834,7 @@ void main() {}
                   height: 640,
                   child: BusyMarkWysiwygEditor(
                     document: activeDocument,
+                    toolbarPlacement: EditorToolbarPlacement.bottomLeft,
                     onSourceChanged: (filePath, source) {
                       emittedSources.add('$filePath\n$source');
                     },
@@ -2549,6 +2906,7 @@ void main() {}
                 height: 640,
                 child: BusyMarkWysiwygEditor(
                   document: parsed.busyDocument,
+                  toolbarPlacement: EditorToolbarPlacement.bottomLeft,
                   onSourceChanged: (_, _) {},
                 ),
               ),
@@ -2607,6 +2965,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               headerBarService: headerBarService,
               onSourceChanged: (_, _) {},
             ),
@@ -3172,6 +3531,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: document,
+                toolbarPlacement: EditorToolbarPlacement.bottomLeft,
                 workspaceRoot: topicsDir.path,
                 writersideRoot: temp.path,
                 imagesDir: 'images',

@@ -2793,7 +2793,10 @@ void main() {
     );
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            editorToolbarPlacement: EditorToolbarPlacement.bottomLeft,
+          )
           .toJson();
     final container = ProviderContainer(
       overrides: [
@@ -2880,7 +2883,10 @@ void main() {
   testWidgets('Tab inserts a tab character in editor view', (tester) async {
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            editorToolbarPlacement: EditorToolbarPlacement.bottomLeft,
+          )
           .toJson();
     final service = _SearchWorkspaceService('- Item\n');
     final container = ProviderContainer(

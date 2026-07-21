@@ -54,6 +54,65 @@ bool _isTechnicalWysiwygBlock(BusyBlock block) {
   };
 }
 
+class BusyMarkWysiwygBlockquoteFrame extends StatelessWidget {
+  const BusyMarkWysiwygBlockquoteFrame({
+    super.key,
+    required this.child,
+    this.margin = EdgeInsets.zero,
+    this.padding = BusyMarkInsets.wysiwygContainerContent,
+    this.backgroundColor,
+    this.borderRadius = BusyMarkRadius.md,
+    this.iconWidth,
+    this.onTap,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+  final Color? backgroundColor;
+  final double borderRadius;
+  final double? iconWidth;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final icon = Icon(
+      BusyMarkGlyphs.blockquote,
+      size: BusyMarkSizes.iconSm,
+      color: colors.mutedForeground,
+    );
+    final frame = Container(
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? colors.panel,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: colors.subtleBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (iconWidth case final width?)
+            SizedBox(width: width, child: icon)
+          else
+            icon,
+          const SizedBox(width: BusyMarkSpacing.sm),
+          Expanded(child: child),
+        ],
+      ),
+    );
+    final tapHandler = onTap;
+    return tapHandler == null
+        ? frame
+        : GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: tapHandler,
+            child: frame,
+          );
+  }
+}
+
 class BusyMarkWysiwygBlockField extends StatelessWidget {
   const BusyMarkWysiwygBlockField({
     super.key,
@@ -727,41 +786,25 @@ class _RenderedHtmlBlock extends StatelessWidget {
           ),
         ),
       ),
-      BusyBlockKind.blockquote => Container(
+      BusyBlockKind.blockquote => BusyMarkWysiwygBlockquoteFrame(
         margin: EdgeInsets.only(
           top: first ? 0 : BusyMarkSpacing.xs,
           bottom: BusyMarkSpacing.xs,
         ),
         padding: BusyMarkInsets.previewCallout,
-        decoration: BoxDecoration(
-          color: colors.view,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-          border: Border.all(color: colors.subtleBorder),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              BusyMarkGlyphs.blockquote,
-              size: BusyMarkSizes.iconSm,
-              color: colors.mutedForeground,
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(
-              child: block.children.isEmpty
-                  ? _RenderedHtmlInlineText(block: block)
-                  : _RenderedHtmlBlocks(
-                      blocks: block.children,
-                      documentFilePath: documentFilePath,
-                      workspaceRoot: workspaceRoot,
-                      writersideRoot: writersideRoot,
-                      imagesDir: imagesDir,
-                      allowRemoteImages: allowRemoteImages,
-                      onRemoteImageBlocked: onRemoteImageBlocked,
-                    ),
-            ),
-          ],
-        ),
+        backgroundColor: colors.view,
+        borderRadius: BusyMarkRadius.sm,
+        child: block.children.isEmpty
+            ? _RenderedHtmlInlineText(block: block)
+            : _RenderedHtmlBlocks(
+                blocks: block.children,
+                documentFilePath: documentFilePath,
+                workspaceRoot: workspaceRoot,
+                writersideRoot: writersideRoot,
+                imagesDir: imagesDir,
+                allowRemoteImages: allowRemoteImages,
+                onRemoteImageBlocked: onRemoteImageBlocked,
+              ),
       ),
       BusyBlockKind.table => _RenderedHtmlTable(block: block, first: first),
       BusyBlockKind.unorderedListItem ||
