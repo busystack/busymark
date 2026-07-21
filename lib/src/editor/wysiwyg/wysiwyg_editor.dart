@@ -43,6 +43,9 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.allowRemoteImages = false,
     this.onRemoteImageBlocked,
     this.toolbarPlacement = EditorToolbarPlacement.topLeft,
+    this.toolbarDirection = EditorToolbarDirection.horizontal,
+    this.onToolbarPlacementChanged,
+    this.onToolbarDirectionChanged,
     this.scrollToHeadingId,
     this.scrollToSearchQuery,
     this.scrollRequest = 0,
@@ -60,6 +63,9 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
   final EditorToolbarPlacement toolbarPlacement;
+  final EditorToolbarDirection toolbarDirection;
+  final ValueChanged<EditorToolbarPlacement>? onToolbarPlacementChanged;
+  final ValueChanged<EditorToolbarDirection>? onToolbarDirectionChanged;
   final String? scrollToHeadingId;
   final String? scrollToSearchQuery;
   final int scrollRequest;
@@ -407,15 +413,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                   ),
                   _FloatingWysiwygToolbar(
                     placement: widget.toolbarPlacement,
+                    direction: widget.toolbarDirection,
                     visible: _toolbarVisible,
                     maxWidth: math.max(
                       0,
                       constraints.maxWidth - BusyMarkSpacing.lg,
                     ),
+                    maxHeight: math.max(
+                      0,
+                      constraints.maxHeight - BusyMarkSpacing.lg,
+                    ),
                     onToggle: () =>
                         setState(() => _toolbarVisible = !_toolbarVisible),
+                    onPlacementChanged: widget.onToolbarPlacementChanged,
+                    onDirectionChanged: widget.onToolbarDirectionChanged,
                     child: BusyMarkWysiwygToolbar(
-                      alignEnd: _toolbarAlignedEnd(widget.toolbarPlacement),
+                      axis: widget.toolbarDirection._axis,
+                      alignEnd: _toolbarAlignedEnd(
+                        widget.toolbarPlacement,
+                        widget.toolbarDirection,
+                      ),
                       onBlockCommand: _applyBlockCommand,
                       onInlineCommand: _applyInlineCommand,
                       onLinkCommand: () => unawaited(_applyLinkCommand()),
@@ -442,23 +459,33 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   EdgeInsets _editorContentPadding() {
-    final top = widget.toolbarPlacement._isTop && _toolbarVisible
+    final horizontalToolbar =
+        widget.toolbarDirection == EditorToolbarDirection.horizontal;
+    final top =
+        horizontalToolbar && widget.toolbarPlacement._isTop && _toolbarVisible
         ? BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar
         : BusyMarkSizes.wysiwygEditorTopPadding;
-    final bottom = widget.toolbarPlacement._isTop || !_toolbarVisible
+    final bottom =
+        !horizontalToolbar || widget.toolbarPlacement._isTop || !_toolbarVisible
         ? BusyMarkSizes.wysiwygEditorBottomPadding
         : BusyMarkSizes.wysiwygEditorBottomPaddingWithToolbar;
-    return EdgeInsets.fromLTRB(
-      BusyMarkSizes.wysiwygEditorHorizontalPadding,
-      top,
-      BusyMarkSizes.wysiwygEditorHorizontalPadding,
-      bottom,
-    );
+    final verticalToolbarVisible = !horizontalToolbar && _toolbarVisible;
+    final left = verticalToolbarVisible && !widget.toolbarPlacement._isRight
+        ? BusyMarkSizes.wysiwygEditorHorizontalPaddingWithToolbar
+        : BusyMarkSizes.wysiwygEditorHorizontalPadding;
+    final right = verticalToolbarVisible && widget.toolbarPlacement._isRight
+        ? BusyMarkSizes.wysiwygEditorHorizontalPaddingWithToolbar
+        : BusyMarkSizes.wysiwygEditorHorizontalPadding;
+    return EdgeInsets.fromLTRB(left, top, right, bottom);
   }
 
-  bool _toolbarAlignedEnd(EditorToolbarPlacement placement) {
-    return placement == EditorToolbarPlacement.topRight ||
-        placement == EditorToolbarPlacement.bottomRight;
+  bool _toolbarAlignedEnd(
+    EditorToolbarPlacement placement,
+    EditorToolbarDirection direction,
+  ) {
+    return direction == EditorToolbarDirection.horizontal
+        ? placement._isRight
+        : !placement._isTop;
   }
 
   void _syncBlockControllers() {
@@ -2882,59 +2909,178 @@ class _EditableBlockEntry {
 class _FloatingWysiwygToolbar extends StatelessWidget {
   const _FloatingWysiwygToolbar({
     required this.placement,
+    required this.direction,
     required this.visible,
     required this.maxWidth,
+    required this.maxHeight,
     required this.onToggle,
+    this.onPlacementChanged,
+    this.onDirectionChanged,
     required this.child,
   });
 
   final EditorToolbarPlacement placement;
+  final EditorToolbarDirection direction;
   final bool visible;
   final double maxWidth;
+  final double maxHeight;
   final VoidCallback onToggle;
+  final ValueChanged<EditorToolbarPlacement>? onPlacementChanged;
+  final ValueChanged<EditorToolbarDirection>? onDirectionChanged;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final alignedEnd = placement._isRight;
+    final axis = direction._axis;
+    final alignedEnd = axis == Axis.horizontal
+        ? placement._isRight
+        : !placement._isTop;
     final toolbar = visible
+        ? axis == Axis.horizontal
+              ? SizedBox(
+                  width: math.max(
+                    0,
+                    maxWidth - BusyMarkSizes.wysiwygToolbarReserve,
+                  ),
+                  child: child,
+                )
+              : SizedBox(
+                  height: math.max(
+                    0,
+                    maxHeight - BusyMarkSizes.wysiwygToolbarReserve,
+                  ),
+                  child: child,
+                )
+        : const SizedBox.shrink();
+    final configurable =
+        onPlacementChanged != null || onDirectionChanged != null;
+    final toggle = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onSecondaryTapDown: configurable
+          ? (details) =>
+                unawaited(_showSettingsMenu(context, details.globalPosition))
+          : null,
+      child: BusyMarkHeaderIconButton(
+        tooltip: visible
+            ? context.l10n.hideEditingButtons
+            : context.l10n.showEditingButtons,
+        icon: visible ? BusyMarkGlyphs.hide : BusyMarkGlyphs.edit,
+        onPressed: onToggle,
+        foregroundColor: colors.mutedForeground,
+        backgroundColor: _editorToolbarButtonBackground(context),
+        boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      ),
+    );
+    final gap = visible
         ? SizedBox(
-            width: math.max(0, maxWidth - BusyMarkSizes.wysiwygToolbarReserve),
-            child: child,
+            width: axis == Axis.horizontal ? BusyMarkSpacing.xs : null,
+            height: axis == Axis.vertical ? BusyMarkSpacing.xs : null,
           )
         : const SizedBox.shrink();
-    final toggle = BusyMarkHeaderIconButton(
-      tooltip: visible
-          ? context.l10n.hideEditingButtons
-          : context.l10n.showEditingButtons,
-      icon: visible ? BusyMarkGlyphs.hide : BusyMarkGlyphs.edit,
-      onPressed: onToggle,
-      foregroundColor: colors.mutedForeground,
-      backgroundColor: _editorToolbarButtonBackground(context),
-      boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
-    );
-    final rowChildren = alignedEnd
-        ? [toolbar, const SizedBox(width: BusyMarkSpacing.xs), toggle]
-        : [toggle, const SizedBox(width: BusyMarkSpacing.xs), toolbar];
+    final toolbarChildren = alignedEnd
+        ? [toolbar, gap, toggle]
+        : [toggle, gap, toolbar];
     return Positioned(
       top: placement._isTop ? BusyMarkSpacing.sm : null,
       bottom: placement._isTop ? null : BusyMarkSpacing.sm,
-      left: alignedEnd ? null : BusyMarkSpacing.sm,
-      right: alignedEnd ? BusyMarkSpacing.sm : null,
+      left: placement._isRight ? null : BusyMarkSpacing.sm,
+      right: placement._isRight ? BusyMarkSpacing.sm : null,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth),
+        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
         child: SizedBox(
-          height: _floatingWysiwygToolbarHeight,
-          child: Row(mainAxisSize: MainAxisSize.min, children: rowChildren),
+          width: axis == Axis.vertical ? _floatingWysiwygToolbarExtent : null,
+          height: axis == Axis.horizontal
+              ? _floatingWysiwygToolbarExtent
+              : null,
+          child: Flex(
+            direction: axis,
+            textDirection: TextDirection.ltr,
+            mainAxisSize: MainAxisSize.min,
+            children: toolbarChildren,
+          ),
         ),
       ),
     );
   }
+
+  Future<void> _showSettingsMenu(BuildContext context, Offset position) async {
+    final placementCallback = onPlacementChanged;
+    final directionCallback = onDirectionChanged;
+    final action = await showBusyMarkContextMenu<_EditorToolbarMenuAction>(
+      context,
+      position,
+      items: [
+        if (placementCallback != null)
+          for (final value in EditorToolbarPlacement.values)
+            BusyMarkPopupMenuItem(
+              value: _EditorToolbarMenuAction.forPlacement(value),
+              label: _editorToolbarPlacementLabel(context, value),
+              checked: placement == value,
+              trailingCheck: true,
+            ),
+        if (placementCallback != null && directionCallback != null)
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+        if (directionCallback != null)
+          for (final value in EditorToolbarDirection.values)
+            BusyMarkPopupMenuItem(
+              value: _EditorToolbarMenuAction.forDirection(value),
+              label: _editorToolbarDirectionLabel(context, value),
+              checked: direction == value,
+              trailingCheck: true,
+            ),
+      ],
+    );
+    if (action == null) {
+      return;
+    }
+    final selectedPlacement = action.placement;
+    if (selectedPlacement != null) {
+      placementCallback?.call(selectedPlacement);
+      return;
+    }
+    final selectedDirection = action.direction;
+    if (selectedDirection != null) {
+      directionCallback?.call(selectedDirection);
+    }
+  }
 }
 
-const double _floatingWysiwygToolbarHeight =
+const double _floatingWysiwygToolbarExtent =
     BusyMarkSizes.iconButton + BusyMarkSpacing.xs * 2;
+
+class _EditorToolbarMenuAction {
+  const _EditorToolbarMenuAction.forPlacement(this.placement)
+    : direction = null;
+
+  const _EditorToolbarMenuAction.forDirection(this.direction)
+    : placement = null;
+
+  final EditorToolbarPlacement? placement;
+  final EditorToolbarDirection? direction;
+}
+
+String _editorToolbarPlacementLabel(
+  BuildContext context,
+  EditorToolbarPlacement placement,
+) {
+  return switch (placement) {
+    EditorToolbarPlacement.topLeft => context.l10n.topLeft,
+    EditorToolbarPlacement.topRight => context.l10n.topRight,
+    EditorToolbarPlacement.bottomLeft => context.l10n.bottomLeft,
+    EditorToolbarPlacement.bottomRight => context.l10n.bottomRight,
+  };
+}
+
+String _editorToolbarDirectionLabel(
+  BuildContext context,
+  EditorToolbarDirection direction,
+) {
+  return switch (direction) {
+    EditorToolbarDirection.horizontal => context.l10n.horizontal,
+    EditorToolbarDirection.vertical => context.l10n.vertical,
+  };
+}
 
 WidgetStateProperty<Color?> _editorToolbarButtonBackground(
   BuildContext context,
@@ -2970,6 +3116,15 @@ extension _EditorToolbarPlacementX on EditorToolbarPlacement {
   bool get _isRight {
     return this == EditorToolbarPlacement.topRight ||
         this == EditorToolbarPlacement.bottomRight;
+  }
+}
+
+extension _EditorToolbarDirectionX on EditorToolbarDirection {
+  Axis get _axis {
+    return switch (this) {
+      EditorToolbarDirection.horizontal => Axis.horizontal,
+      EditorToolbarDirection.vertical => Axis.vertical,
+    };
   }
 }
 

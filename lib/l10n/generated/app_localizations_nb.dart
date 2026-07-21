@@ -629,11 +629,24 @@ class AppLocalizationsNb extends AppLocalizations {
   String get clearRecentWorkspaces => 'Tøm nylige arbeidsområder';
 
   @override
-  String get editingButtons => 'Redigeringsknapper';
+  String get editingButtonsPosition => 'Plassering av redigeringsknapper';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.';
+
+  @override
+  String get editingButtonsDirection => 'Retning for redigeringsknapper';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Velg om de flytende WYSIWYG-redigeringsknappene skal ordnes vannrett eller loddrett.';
+
+  @override
+  String get horizontal => 'Vannrett';
+
+  @override
+  String get vertical => 'Loddrett';
 
   @override
   String get privacy => 'Personvern';

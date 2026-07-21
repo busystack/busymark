@@ -91,6 +91,7 @@ abstract final class BusyMarkSizes {
   static const double wysiwygContentWidth = 820;
   static const double wysiwygBlockIndent = 28;
   static const double wysiwygEditorHorizontalPadding = 28;
+  static const double wysiwygEditorHorizontalPaddingWithToolbar = 66;
   static const double wysiwygEditorTopPadding = 20;
   static const double wysiwygEditorTopPaddingWithToolbar = 66;
   static const double wysiwygEditorBottomPadding = 38;
@@ -1200,6 +1201,63 @@ class BusyMarkPopupEscapeDismissBinding {
     }
     return true;
   }
+}
+
+/// Shows a BusyMark-styled context menu at a global pointer position.
+///
+/// The menu opens away from the pointer's reading-direction edge and stays
+/// inside the root overlay. Use [BusyMarkPopupMenuItem] entries to keep menu
+/// rows consistent with the rest of the application.
+Future<T?> showBusyMarkContextMenu<T>(
+  BuildContext context,
+  Offset globalPosition, {
+  required List<PopupMenuEntry<T>> items,
+  double width = BusyMarkSizes.popupMenuMinWidth,
+}) {
+  if (items.isEmpty) {
+    return Future<T?>.value();
+  }
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (overlay is! RenderBox) {
+    return Future<T?>.value();
+  }
+  final theme = Theme.of(context);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final popupTheme = theme.popupMenuTheme;
+  final localPosition = overlay.globalToLocal(globalPosition);
+  final minLeft = BusyMarkSpacing.sm;
+  final maxLeft = overlay.size.width - width - BusyMarkSpacing.sm;
+  final preferredLeft = Directionality.of(context) == TextDirection.rtl
+      ? localPosition.dx - width
+      : localPosition.dx;
+  final left = maxLeft <= minLeft
+      ? minLeft
+      : preferredLeft.clamp(minLeft, maxLeft).toDouble();
+  final maxTop = math.max(
+    BusyMarkSpacing.sm,
+    overlay.size.height - BusyMarkSpacing.sm,
+  );
+  final top = localPosition.dy.clamp(BusyMarkSpacing.sm, maxTop).toDouble();
+  return showMenu<T>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromLTRB(
+      left,
+      top,
+      math.max(minLeft, overlay.size.width - left - width),
+      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
+    ),
+    items: items,
+    color: popupTheme.color ?? colors.popover,
+    surfaceTintColor: BusyMarkLinuxPalette.transparent,
+    elevation: BusyMarkElevation.popover,
+    shadowColor: colors.shade,
+    constraints: BoxConstraints.tightFor(width: width),
+    clipBehavior: Clip.antiAlias,
+    popUpAnimationStyle: AnimationStyle.noAnimation,
+    requestFocus: true,
+  );
 }
 
 const double _busyMarkHeaderPopoverArrowWidth = 16;

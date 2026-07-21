@@ -22,6 +22,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onHardBreakCommand,
     required this.onCodeLanguageCommand,
     this.alignEnd = false,
+    this.axis = Axis.horizontal,
   });
 
   final ValueChanged<BusyWysiwygBlockCommand> onBlockCommand;
@@ -37,20 +38,28 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onHardBreakCommand;
   final VoidCallback onCodeLanguageCommand;
   final bool alignEnd;
+  final Axis axis;
 
   @override
   Widget build(BuildContext context) {
     final direction = Directionality.of(context);
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+      scrollDirection: axis,
       reverse: alignEnd,
-      padding: const EdgeInsets.symmetric(
-        horizontal: BusyMarkSpacing.sm,
-        vertical: BusyMarkSpacing.xs,
-      ),
-      child: Row(
+      padding: axis == Axis.horizontal
+          ? const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.sm,
+              vertical: BusyMarkSpacing.xs,
+            )
+          : const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.xs,
+              vertical: BusyMarkSpacing.sm,
+            ),
+      child: Flex(
+        direction: axis,
+        mainAxisSize: MainAxisSize.min,
         spacing: BusyMarkSpacing.xs,
-        children: _groups([
+        children: _groups(axis, [
           [_blockStyleMenu(context)],
           [
             _button(
@@ -215,11 +224,16 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     );
   }
 
-  List<Widget> _groups(List<List<Widget>> groups) {
+  List<Widget> _groups(Axis axis, List<List<Widget>> groups) {
     final widgets = <Widget>[];
     for (final group in groups.where((items) => items.isNotEmpty)) {
       if (widgets.isNotEmpty) {
-        widgets.add(const SizedBox(width: BusyMarkSpacing.sm));
+        widgets.add(
+          SizedBox(
+            width: axis == Axis.horizontal ? BusyMarkSpacing.sm : null,
+            height: axis == Axis.vertical ? BusyMarkSpacing.sm : null,
+          ),
+        );
       }
       widgets.addAll(group);
     }

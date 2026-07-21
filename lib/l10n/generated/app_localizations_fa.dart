@@ -621,11 +621,24 @@ class AppLocalizationsFa extends AppLocalizations {
   String get clearRecentWorkspaces => 'پاک کردن فضاهای کاری اخیر';
 
   @override
-  String get editingButtons => 'دکمه‌های ویرایش';
+  String get editingButtonsPosition => 'موقعیت دکمه‌های ویرایش';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'محل نمایش دکمه‌های شناور ویرایش WYSIWYG را انتخاب کنید.';
+
+  @override
+  String get editingButtonsDirection => 'جهت چیدمان دکمه‌های ویرایش';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'انتخاب کنید که دکمه‌های شناور ویرایش WYSIWYG به‌صورت افقی یا عمودی چیده شوند.';
+
+  @override
+  String get horizontal => 'افقی';
+
+  @override
+  String get vertical => 'عمودی';
 
   @override
   String get privacy => 'حریم خصوصی';

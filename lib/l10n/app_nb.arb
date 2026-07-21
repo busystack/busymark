@@ -676,13 +676,29 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "Redigeringsknapper",
-  "@editingButtons": {
+  "editingButtonsPosition": "Plassering av redigeringsknapper",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "Retning for redigeringsknapper",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Velg om de flytende WYSIWYG-redigeringsknappene skal ordnes vannrett eller loddrett.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Vannrett",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Loddrett",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "Personvern",
   "@privacy": {"description": "Settings section title for privacy options."},

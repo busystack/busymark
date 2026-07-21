@@ -620,11 +620,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clearRecentWorkspaces => 'हालिया कार्यस्थान साफ़ करें';
 
   @override
-  String get editingButtons => 'संपादन बटन';
+  String get editingButtonsPosition => 'संपादन बटनों की स्थिति';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।';
+
+  @override
+  String get editingButtonsDirection => 'संपादन बटनों की दिशा';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन क्षैतिज रूप से व्यवस्थित हों या लंबवत रूप से।';
+
+  @override
+  String get horizontal => 'क्षैतिज';
+
+  @override
+  String get vertical => 'लंबवत';
 
   @override
   String get privacy => 'गोपनीयता';

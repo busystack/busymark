@@ -1278,14 +1278,38 @@ abstract class AppLocalizations {
   /// Settings label for WYSIWYG editing button position.
   ///
   /// In en, this message translates to:
-  /// **'Editing buttons'**
-  String get editingButtons;
+  /// **'Editing buttons position'**
+  String get editingButtonsPosition;
 
   /// Description for WYSIWYG editing button position setting.
   ///
   /// In en, this message translates to:
   /// **'Choose where the floating WYSIWYG editing buttons appear.'**
-  String get editingButtonsDescription;
+  String get editingButtonsPositionDescription;
+
+  /// Settings label for WYSIWYG editing button direction.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing buttons direction'**
+  String get editingButtonsDirection;
+
+  /// Description for WYSIWYG editing button direction setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether the floating WYSIWYG editing buttons are arranged horizontally or vertically.'**
+  String get editingButtonsDirectionDescription;
+
+  /// Editing button direction option.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal'**
+  String get horizontal;
+
+  /// Editing button direction option.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical'**
+  String get vertical;
 
   /// Settings section title for privacy options.
   ///

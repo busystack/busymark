@@ -676,13 +676,29 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "دکمه‌های ویرایش",
-  "@editingButtons": {
+  "editingButtonsPosition": "موقعیت دکمه‌های ویرایش",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "محل نمایش دکمه‌های شناور ویرایش WYSIWYG را انتخاب کنید.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "محل نمایش دکمه‌های شناور ویرایش WYSIWYG را انتخاب کنید.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "جهت چیدمان دکمه‌های ویرایش",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "انتخاب کنید که دکمه‌های شناور ویرایش WYSIWYG به‌صورت افقی یا عمودی چیده شوند.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "افقی",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "عمودی",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "حریم خصوصی",
   "@privacy": {"description": "Settings section title for privacy options."},

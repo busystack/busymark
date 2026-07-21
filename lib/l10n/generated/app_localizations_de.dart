@@ -637,11 +637,25 @@ class AppLocalizationsDe extends AppLocalizations {
       'Zuletzt verwendete Arbeitsbereiche löschen';
 
   @override
-  String get editingButtons => 'Bearbeitungsschaltflächen';
+  String get editingButtonsPosition => 'Position der Bearbeitungsschaltflächen';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Wählen Sie aus, wo die schwebenden WYSIWYG-Bearbeitungsschaltflächen angezeigt werden.';
+
+  @override
+  String get editingButtonsDirection =>
+      'Ausrichtung der Bearbeitungsschaltflächen';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Wählen Sie, ob die schwebenden WYSIWYG-Bearbeitungsschaltflächen horizontal oder vertikal angeordnet werden.';
+
+  @override
+  String get horizontal => 'Horizontal';
+
+  @override
+  String get vertical => 'Vertikal';
 
   @override
   String get privacy => 'Datenschutz';

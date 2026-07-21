@@ -639,11 +639,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clearRecentWorkspaces => 'Effacer les espaces de travail récents';
 
   @override
-  String get editingButtons => 'Boutons d’édition';
+  String get editingButtonsPosition => 'Position des boutons d’édition';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Choisissez l’emplacement des boutons d’édition WYSIWYG flottants.';
+
+  @override
+  String get editingButtonsDirection => 'Orientation des boutons d’édition';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Choisissez si les boutons d’édition WYSIWYG flottants sont disposés horizontalement ou verticalement.';
+
+  @override
+  String get horizontal => 'Horizontale';
+
+  @override
+  String get vertical => 'Verticale';
 
   @override
   String get privacy => 'Confidentialité';

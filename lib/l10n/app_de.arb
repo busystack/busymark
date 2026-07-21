@@ -676,13 +676,29 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "Bearbeitungsschaltflächen",
-  "@editingButtons": {
+  "editingButtonsPosition": "Position der Bearbeitungsschaltflächen",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "Wählen Sie aus, wo die schwebenden WYSIWYG-Bearbeitungsschaltflächen angezeigt werden.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "Wählen Sie aus, wo die schwebenden WYSIWYG-Bearbeitungsschaltflächen angezeigt werden.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "Ausrichtung der Bearbeitungsschaltflächen",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Wählen Sie, ob die schwebenden WYSIWYG-Bearbeitungsschaltflächen horizontal oder vertikal angeordnet werden.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Horizontal",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Vertikal",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "Datenschutz",
   "@privacy": {"description": "Settings section title for privacy options."},

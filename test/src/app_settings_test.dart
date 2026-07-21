@@ -27,6 +27,29 @@ void main() {
     expect(settings.toJson()['autoSave'], isTrue);
   });
 
+  test('editing button direction defaults to horizontal', () {
+    final defaults = AppSettings.defaults();
+    final missing = AppSettings.fromJson(const <String, Object?>{});
+    final unknown = AppSettings.fromJson(const <String, Object?>{
+      'editorToolbarDirection': 'diagonal',
+    });
+
+    expect(defaults.editorToolbarDirection, EditorToolbarDirection.horizontal);
+    expect(missing.editorToolbarDirection, EditorToolbarDirection.horizontal);
+    expect(unknown.editorToolbarDirection, EditorToolbarDirection.horizontal);
+    expect(defaults.toJson()['editorToolbarDirection'], 'horizontal');
+  });
+
+  test('editing button direction round-trips through settings JSON', () {
+    final stored = AppSettings.defaults()
+        .copyWith(editorToolbarDirection: EditorToolbarDirection.vertical)
+        .toJson();
+    final reloaded = AppSettings.fromJson(stored);
+
+    expect(reloaded.editorToolbarDirection, EditorToolbarDirection.vertical);
+    expect(reloaded.toJson()['editorToolbarDirection'], 'vertical');
+  });
+
   test('remote images default to blocked', () {
     final settings = AppSettings.defaults();
 
@@ -135,6 +158,24 @@ void main() {
 
     expect(store.value['autoSave'], isFalse);
     expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
+  });
+
+  test('editing button direction setting persists', () async {
+    final store = _MemorySettingsStore();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.setEditorToolbarDirection(EditorToolbarDirection.vertical);
+
+    expect(store.value['editorToolbarDirection'], 'vertical');
+    expect(
+      container.read(appSettingsControllerProvider).editorToolbarDirection,
+      EditorToolbarDirection.vertical,
+    );
   });
 
   test(

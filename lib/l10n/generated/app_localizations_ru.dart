@@ -629,11 +629,24 @@ class AppLocalizationsRu extends AppLocalizations {
       'Очистить список недавних рабочих областей';
 
   @override
-  String get editingButtons => 'Кнопки редактирования';
+  String get editingButtonsPosition => 'Положение кнопок редактирования';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Выберите, где будут отображаться плавающие кнопки редактирования WYSIWYG.';
+
+  @override
+  String get editingButtonsDirection => 'Ориентация кнопок редактирования';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Выберите, как расположить плавающие кнопки редактирования WYSIWYG: горизонтально или вертикально.';
+
+  @override
+  String get horizontal => 'Горизонтально';
+
+  @override
+  String get vertical => 'Вертикально';
 
   @override
   String get privacy => 'Конфиденциальность';

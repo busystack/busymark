@@ -614,11 +614,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clearRecentWorkspaces => 'مسح مساحات العمل الأخيرة';
 
   @override
-  String get editingButtons => 'أزرار التحرير';
+  String get editingButtonsPosition => 'موضع أزرار التحرير';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.';
+
+  @override
+  String get editingButtonsDirection => 'اتجاه أزرار التحرير';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'اختر ترتيب أزرار تحرير WYSIWYG العائمة أفقيًا أو عموديًا.';
+
+  @override
+  String get horizontal => 'أفقي';
+
+  @override
+  String get vertical => 'عمودي';
 
   @override
   String get privacy => 'الخصوصية';

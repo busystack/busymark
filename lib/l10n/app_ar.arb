@@ -676,13 +676,29 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "أزرار التحرير",
-  "@editingButtons": {
+  "editingButtonsPosition": "موضع أزرار التحرير",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "اتجاه أزرار التحرير",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "اختر ترتيب أزرار تحرير WYSIWYG العائمة أفقيًا أو عموديًا.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "أفقي",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "عمودي",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "الخصوصية",
   "@privacy": {"description": "Settings section title for privacy options."},

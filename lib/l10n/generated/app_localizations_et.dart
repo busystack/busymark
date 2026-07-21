@@ -628,11 +628,24 @@ class AppLocalizationsEt extends AppLocalizations {
   String get clearRecentWorkspaces => 'Tühjenda hiljutiste tööruumide loend';
 
   @override
-  String get editingButtons => 'Redigeerimisnupud';
+  String get editingButtonsPosition => 'Redigeerimisnuppude asukoht';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Vali, kus kuvatakse hõljuvad WYSIWYG-redigeerimisnupud.';
+
+  @override
+  String get editingButtonsDirection => 'Redigeerimisnuppude paigutussuund';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Vali, kas hõljuvad WYSIWYG-redigeerimisnupud paigutatakse horisontaalselt või vertikaalselt.';
+
+  @override
+  String get horizontal => 'Horisontaalne';
+
+  @override
+  String get vertical => 'Vertikaalne';
 
   @override
   String get privacy => 'Privaatsus';

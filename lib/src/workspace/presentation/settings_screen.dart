@@ -121,6 +121,10 @@ class SettingsScreen extends ConsumerWidget {
                   selected: settings.editorToolbarPlacement,
                   onChanged: controller.setEditorToolbarPlacement,
                 ),
+                _EditorToolbarDirectionRow(
+                  selected: settings.editorToolbarDirection,
+                  onChanged: controller.setEditorToolbarDirection,
+                ),
               ],
             ),
             BusyMarkGroupedList(
@@ -675,13 +679,67 @@ class _EditorToolbarPlacementRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final control = _EditorToolbarPlacementControl(
-      selected: selected,
-      onChanged: onChanged,
+    return _EditorToolbarSettingRow(
+      title: context.l10n.editingButtonsPosition,
+      subtitle: context.l10n.editingButtonsPositionDescription,
+      icon: BusyMarkGlyphs.toolbarPlacement,
+      controlWidth: BusyMarkSizes.toolbarPlacementRowWidth,
+      breakpoint: BusyMarkSizes.toolbarPlacementBreakpoint,
+      control: _EditorToolbarPlacementControl(
+        selected: selected,
+        onChanged: onChanged,
+      ),
     );
+  }
+}
+
+class _EditorToolbarDirectionRow extends StatelessWidget {
+  const _EditorToolbarDirectionRow({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarDirection selected;
+  final ValueChanged<EditorToolbarDirection> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorToolbarSettingRow(
+      title: context.l10n.editingButtonsDirection,
+      subtitle: context.l10n.editingButtonsDirectionDescription,
+      icon: BusyMarkGlyphs.menuHorizontal,
+      controlWidth: BusyMarkSizes.controlRowWidth,
+      breakpoint: BusyMarkSizes.settingsControlBreakpoint,
+      control: _EditorToolbarDirectionControl(
+        selected: selected,
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _EditorToolbarSettingRow extends StatelessWidget {
+  const _EditorToolbarSettingRow({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.control,
+    required this.controlWidth,
+    required this.breakpoint,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget control;
+  final double controlWidth;
+  final double breakpoint;
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < BusyMarkSizes.toolbarPlacementBreakpoint) {
+        if (constraints.maxWidth < breakpoint) {
           return Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.md),
             child: Column(
@@ -689,9 +747,9 @@ class _EditorToolbarPlacementRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(BusyMarkGlyphs.toolbarPlacement),
+                    Icon(icon),
                     const SizedBox(width: BusyMarkSpacing.md),
-                    Text(context.l10n.editingButtons),
+                    Expanded(child: Text(title)),
                   ],
                 ),
                 const SizedBox(height: BusyMarkSpacing.sm),
@@ -701,13 +759,10 @@ class _EditorToolbarPlacementRow extends StatelessWidget {
           );
         }
         return BusyMarkActionRow(
-          title: context.l10n.editingButtons,
-          subtitle: context.l10n.editingButtonsDescription,
-          leading: const Icon(BusyMarkGlyphs.toolbarPlacement),
-          trailing: SizedBox(
-            width: BusyMarkSizes.toolbarPlacementRowWidth,
-            child: control,
-          ),
+          title: title,
+          subtitle: subtitle,
+          leading: Icon(icon),
+          trailing: SizedBox(width: controlWidth, child: control),
         );
       },
     );
@@ -743,6 +798,35 @@ class _EditorToolbarPlacementControl extends StatelessWidget {
         ButtonSegment(
           value: EditorToolbarPlacement.bottomRight,
           label: _SegmentLabel(context.l10n.bottomRight),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (value) => onChanged(value.first),
+    );
+  }
+}
+
+class _EditorToolbarDirectionControl extends StatelessWidget {
+  const _EditorToolbarDirectionControl({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final EditorToolbarDirection selected;
+  final ValueChanged<EditorToolbarDirection> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<EditorToolbarDirection>(
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment(
+          value: EditorToolbarDirection.horizontal,
+          label: _SegmentLabel(context.l10n.horizontal),
+        ),
+        ButtonSegment(
+          value: EditorToolbarDirection.vertical,
+          label: _SegmentLabel(context.l10n.vertical),
         ),
       ],
       selected: {selected},

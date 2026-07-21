@@ -635,11 +635,24 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clearRecentWorkspaces => 'Cancella le aree di lavoro recenti';
 
   @override
-  String get editingButtons => 'Pulsanti di modifica';
+  String get editingButtonsPosition => 'Posizione dei pulsanti di modifica';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Scegli dove visualizzare i pulsanti mobili di modifica WYSIWYG.';
+
+  @override
+  String get editingButtonsDirection => 'Orientamento dei pulsanti di modifica';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Scegli se disporre i pulsanti mobili di modifica WYSIWYG in orizzontale o in verticale.';
+
+  @override
+  String get horizontal => 'Orizzontale';
+
+  @override
+  String get vertical => 'Verticale';
 
   @override
   String get privacy => 'Privacy';

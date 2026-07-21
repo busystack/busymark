@@ -275,6 +275,7 @@ class WorkspaceScreen extends ConsumerWidget {
                     viewMode: settings.documentViewMode,
                     editorFontSize: settings.editorFontSize,
                     editorToolbarPlacement: settings.editorToolbarPlacement,
+                    editorToolbarDirection: settings.editorToolbarDirection,
                     wordWrap: settings.wordWrap,
                   )
                 : _GitDiffDocumentView(
@@ -3576,50 +3577,7 @@ Future<T?> _showSidebarTreeMenu<T>(
   Offset position, {
   required List<PopupMenuEntry<T>> items,
 }) {
-  final navigator = Navigator.of(context, rootNavigator: true);
-  final overlay = navigator.overlay?.context.findRenderObject();
-  if (overlay is! RenderBox) {
-    return Future.value(null);
-  }
-  final theme = Theme.of(context);
-  final colors = BusyMarkSurfaceColors.of(context);
-  final popupTheme = theme.popupMenuTheme;
-  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
-  final minLeft = BusyMarkSpacing.sm;
-  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
-  final localPosition = overlay.globalToLocal(position);
-  final left = _sidebarMenuLeft(
-    direction: Directionality.of(context),
-    anchorLeft: localPosition.dx,
-    anchorRight: localPosition.dx,
-    menuWidth: menuWidth,
-    minLeft: minLeft,
-    maxLeft: maxLeft,
-  );
-  final maxTop = math.max(
-    BusyMarkSpacing.sm,
-    overlay.size.height - BusyMarkSpacing.sm,
-  );
-  final top = localPosition.dy.clamp(BusyMarkSpacing.sm, maxTop).toDouble();
-  return showMenu<T>(
-    context: context,
-    useRootNavigator: true,
-    position: RelativeRect.fromLTRB(
-      left,
-      top,
-      math.max(minLeft, overlay.size.width - left - menuWidth),
-      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
-    ),
-    items: items,
-    color: popupTheme.color ?? colors.popover,
-    surfaceTintColor: BusyMarkLinuxPalette.transparent,
-    elevation: BusyMarkElevation.popover,
-    shadowColor: colors.shade,
-    constraints: const BoxConstraints.tightFor(width: menuWidth),
-    clipBehavior: Clip.antiAlias,
-    popUpAnimationStyle: AnimationStyle.noAnimation,
-    requestFocus: true,
-  );
+  return showBusyMarkContextMenu<T>(context, position, items: items);
 }
 
 double _sidebarMenuLeft({
@@ -7240,6 +7198,7 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
     required this.viewMode,
     required this.editorFontSize,
     required this.editorToolbarPlacement,
+    required this.editorToolbarDirection,
     required this.wordWrap,
   });
 
@@ -7247,6 +7206,7 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
   final DocumentViewModePreference viewMode;
   final double editorFontSize;
   final EditorToolbarPlacement editorToolbarPlacement;
+  final EditorToolbarDirection editorToolbarDirection;
   final bool wordWrap;
 
   @override
@@ -7394,6 +7354,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 onDocumentChanged: _cacheWysiwygDocument,
                 onSourceChanged: _handleWysiwygSourceChanged,
                 toolbarPlacement: widget.editorToolbarPlacement,
+                toolbarDirection: widget.editorToolbarDirection,
+                onToolbarPlacementChanged: ref
+                    .read(appSettingsControllerProvider.notifier)
+                    .setEditorToolbarPlacement,
+                onToolbarDirectionChanged: ref
+                    .read(appSettingsControllerProvider.notifier)
+                    .setEditorToolbarDirection,
                 scrollToHeadingId: _wysiwygScrollHeadingId,
                 scrollToSearchQuery: _wysiwygSearchQuery,
                 scrollRequest: _wysiwygScrollRequest,

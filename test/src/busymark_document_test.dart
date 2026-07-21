@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
@@ -12,12 +14,14 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -2004,6 +2008,234 @@ void main() {}
       final showRect = tester.getRect(find.byTooltip('Show editing buttons'));
 
       expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
+    },
+  );
+
+  testWidgets('vertical WYSIWYG toolbar is bounded and extends from its edge', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+
+    Future<void> pumpPlacement(EditorToolbarPlacement placement) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 500,
+              height: 240,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                toolbarPlacement: placement,
+                toolbarDirection: EditorToolbarDirection.vertical,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    Finder toolbarScrollView() => find.descendant(
+      of: find.byType(BusyMarkWysiwygToolbar),
+      matching: find.byType(SingleChildScrollView),
+    );
+
+    await pumpPlacement(EditorToolbarPlacement.topLeft);
+
+    var scrollView = tester.widget<SingleChildScrollView>(toolbarScrollView());
+    var scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(BusyMarkWysiwygToolbar),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    var toggleRect = tester.getRect(find.byTooltip('Hide editing buttons'));
+    var toolbarRect = tester.getRect(toolbarScrollView());
+    expect(scrollView.scrollDirection, Axis.vertical);
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    expect(toolbarRect.height, lessThan(240));
+    expect(toolbarRect.top, greaterThanOrEqualTo(toggleRect.bottom));
+
+    await pumpPlacement(EditorToolbarPlacement.bottomLeft);
+
+    scrollView = tester.widget<SingleChildScrollView>(toolbarScrollView());
+    scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(BusyMarkWysiwygToolbar),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    toggleRect = tester.getRect(find.byTooltip('Hide editing buttons'));
+    toolbarRect = tester.getRect(toolbarScrollView());
+    expect(scrollView.scrollDirection, Axis.vertical);
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    expect(toolbarRect.bottom, lessThanOrEqualTo(toggleRect.top));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editing toolbar corners remain physical in LTR and RTL', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+    const editorWidth = 520.0;
+    const editorHeight = 320.0;
+
+    Future<Offset> toggleCenter({
+      required EditorToolbarPlacement placement,
+      required EditorToolbarDirection toolbarDirection,
+      required TextDirection textDirection,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Directionality(
+            textDirection: textDirection,
+            child: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: editorWidth,
+                  height: editorHeight,
+                  child: BusyMarkWysiwygEditor(
+                    document: parsed.busyDocument,
+                    toolbarPlacement: placement,
+                    toolbarDirection: toolbarDirection,
+                    onSourceChanged: (_, _) {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      return tester.getCenter(find.byTooltip('Hide editing buttons'));
+    }
+
+    for (final toolbarDirection in EditorToolbarDirection.values) {
+      for (final placement in EditorToolbarPlacement.values) {
+        final ltr = await toggleCenter(
+          placement: placement,
+          toolbarDirection: toolbarDirection,
+          textDirection: TextDirection.ltr,
+        );
+        final rtl = await toggleCenter(
+          placement: placement,
+          toolbarDirection: toolbarDirection,
+          textDirection: TextDirection.rtl,
+        );
+
+        expect(rtl.dx, closeTo(ltr.dx, 0.1));
+        expect(rtl.dy, closeTo(ltr.dy, 0.1));
+        final onRight =
+            placement == EditorToolbarPlacement.topRight ||
+            placement == EditorToolbarPlacement.bottomRight;
+        final onBottom =
+            placement == EditorToolbarPlacement.bottomLeft ||
+            placement == EditorToolbarPlacement.bottomRight;
+        expect(ltr.dx, onRight ? greaterThan(260) : lessThan(260));
+        expect(ltr.dy, onBottom ? greaterThan(160) : lessThan(160));
+      }
+    }
+  });
+
+  testWidgets(
+    'editing toolbar context menu changes placement and direction when shown or hidden',
+    (tester) async {
+      final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+      var placement = EditorToolbarPlacement.topLeft;
+      var toolbarDirection = EditorToolbarDirection.horizontal;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StatefulBuilder(
+            builder: (context, setState) => Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 360,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  toolbarPlacement: placement,
+                  toolbarDirection: toolbarDirection,
+                  onToolbarPlacementChanged: (value) {
+                    setState(() => placement = value);
+                  },
+                  onToolbarDirectionChanged: (value) {
+                    setState(() => toolbarDirection = value);
+                  },
+                  onSourceChanged: (_, _) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(
+        find.byTooltip('Hide editing buttons'),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+
+      final menuItems = find.byWidgetPredicate(
+        (widget) => widget is BusyMarkPopupMenuItem,
+      );
+      BusyMarkPopupMenuItem<dynamic> menuItem(String label) {
+        return tester.widget<BusyMarkPopupMenuItem<dynamic>>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkPopupMenuItem && widget.label == label,
+          ),
+        );
+      }
+
+      expect(menuItems, findsNWidgets(6));
+      expect(menuItem('Top left').checked, isTrue);
+      expect(menuItem('Horizontal').checked, isTrue);
+      expect(menuItem('Top right').checked, isFalse);
+      expect(menuItem('Vertical').checked, isFalse);
+      expect(find.byTooltip('Hide editing buttons'), findsOneWidget);
+      expect(find.byTooltip('Show editing buttons'), findsNothing);
+
+      await tester.tap(find.text('Bottom right'));
+      await tester.pumpAndSettle();
+      expect(placement, EditorToolbarPlacement.bottomRight);
+
+      await tester.tap(find.byTooltip('Hide editing buttons'));
+      await tester.pump();
+      expect(find.byTooltip('Show editing buttons'), findsOneWidget);
+
+      await tester.tap(
+        find.byTooltip('Show editing buttons'),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Show editing buttons'), findsOneWidget);
+      expect(find.byTooltip('Hide editing buttons'), findsNothing);
+      expect(menuItem('Bottom right').checked, isTrue);
+      expect(menuItem('Horizontal').checked, isTrue);
+
+      await tester.tap(find.text('Vertical'));
+      await tester.pumpAndSettle();
+      expect(toolbarDirection, EditorToolbarDirection.vertical);
+      expect(find.byTooltip('Show editing buttons'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Show editing buttons'));
+      await tester.pump();
+      final toolbarScrollView = tester.widget<SingleChildScrollView>(
+        find.descendant(
+          of: find.byType(BusyMarkWysiwygToolbar),
+          matching: find.byType(SingleChildScrollView),
+        ),
+      );
+      expect(toolbarScrollView.scrollDirection, Axis.vertical);
     },
   );
 

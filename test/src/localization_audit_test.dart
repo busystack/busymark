@@ -484,6 +484,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
     'aboutWebsite',
     'editor',
+    'horizontal',
     'link',
     'tabs',
     'tab',
@@ -492,7 +493,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
   },
   'et': {'link', 'gitCommit'},
-  'es': {'editor', 'gitCommit'},
+  'es': {'editor', 'gitCommit', 'horizontal', 'vertical'},
   'fr': {
     'source',
     'validation',
@@ -517,6 +518,15 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   },
   'nb': {'systemTheme', 'systemLanguage', 'gitCommit'},
   'pl': {'folder', 'foldKindTag'},
-  'pt': {'editor', 'link', 'toc', 'foldKindTag', 'gitBranches', 'gitCommit'},
+  'pt': {
+    'editor',
+    'link',
+    'toc',
+    'foldKindTag',
+    'gitBranches',
+    'gitCommit',
+    'horizontal',
+    'vertical',
+  },
   'hi': {'toc'},
 };

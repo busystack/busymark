@@ -632,11 +632,24 @@ class AppLocalizationsPl extends AppLocalizations {
       'Wyczyść listę ostatnich obszarów roboczych';
 
   @override
-  String get editingButtons => 'Przyciski edycji';
+  String get editingButtonsPosition => 'Położenie przycisków edycji';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Wybierz miejsce wyświetlania pływających przycisków edycji WYSIWYG.';
+
+  @override
+  String get editingButtonsDirection => 'Kierunek układu przycisków edycji';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Wybierz, czy pływające przyciski edycji WYSIWYG mają być ułożone poziomo, czy pionowo.';
+
+  @override
+  String get horizontal => 'Poziomo';
+
+  @override
+  String get vertical => 'Pionowo';
 
   @override
   String get privacy => 'Prywatność';

@@ -13,6 +13,8 @@ enum DocumentViewModePreference { editor, source, preview, split }
 
 enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
 
+enum EditorToolbarDirection { horizontal, vertical }
+
 const Object _unset = Object();
 
 extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
@@ -63,6 +65,7 @@ class AppSettings {
     required this.editorFontSize,
     required this.wordWrap,
     required this.editorToolbarPlacement,
+    required this.editorToolbarDirection,
     required this.autoSave,
     required this.validateOnEdit,
     required this.allowRemoteImages,
@@ -83,6 +86,7 @@ class AppSettings {
       editorFontSize: 14,
       wordWrap: true,
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,
+      editorToolbarDirection: EditorToolbarDirection.horizontal,
       autoSave: true,
       validateOnEdit: true,
       allowRemoteImages: false,
@@ -124,6 +128,11 @@ class AppSettings {
         json['editorToolbarPlacement'],
         defaults.editorToolbarPlacement,
       ),
+      editorToolbarDirection: _enumFromName(
+        EditorToolbarDirection.values,
+        json['editorToolbarDirection'],
+        defaults.editorToolbarDirection,
+      ),
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
@@ -158,6 +167,7 @@ class AppSettings {
   final double editorFontSize;
   final bool wordWrap;
   final EditorToolbarPlacement editorToolbarPlacement;
+  final EditorToolbarDirection editorToolbarDirection;
   final bool autoSave;
   final bool validateOnEdit;
   final bool allowRemoteImages;
@@ -180,6 +190,7 @@ class AppSettings {
     'editorFontSize': editorFontSize,
     'wordWrap': wordWrap,
     'editorToolbarPlacement': editorToolbarPlacement.name,
+    'editorToolbarDirection': editorToolbarDirection.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
     'allowRemoteImages': allowRemoteImages,
@@ -220,6 +231,7 @@ class AppSettings {
     double? editorFontSize,
     bool? wordWrap,
     EditorToolbarPlacement? editorToolbarPlacement,
+    EditorToolbarDirection? editorToolbarDirection,
     bool? autoSave,
     bool? validateOnEdit,
     bool? allowRemoteImages,
@@ -241,6 +253,8 @@ class AppSettings {
       wordWrap: wordWrap ?? this.wordWrap,
       editorToolbarPlacement:
           editorToolbarPlacement ?? this.editorToolbarPlacement,
+      editorToolbarDirection:
+          editorToolbarDirection ?? this.editorToolbarDirection,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
       allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
@@ -330,6 +344,12 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> setEditorToolbarPlacement(EditorToolbarPlacement placement) {
     return _mutate(
       (settings) => settings.copyWith(editorToolbarPlacement: placement),
+    );
+  }
+
+  Future<void> setEditorToolbarDirection(EditorToolbarDirection direction) {
+    return _mutate(
+      (settings) => settings.copyWith(editorToolbarDirection: direction),
     );
   }
 

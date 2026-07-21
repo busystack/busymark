@@ -676,13 +676,29 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "संपादन बटन",
-  "@editingButtons": {
+  "editingButtonsPosition": "संपादन बटनों की स्थिति",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "संपादन बटनों की दिशा",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन क्षैतिज रूप से व्यवस्थित हों या लंबवत रूप से।",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "क्षैतिज",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "लंबवत",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "गोपनीयता",
   "@privacy": {"description": "Settings section title for privacy options."},

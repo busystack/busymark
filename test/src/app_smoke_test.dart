@@ -2565,6 +2565,194 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets(
+    'editing toolbar context menu changes persisted layout without toggling',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.editor)
+            .toJson();
+      const service = _SearchWorkspaceService('# Editing toolbar\n');
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue('/tmp/editing-toolbar-menu.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var i = 0; i < 30; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byTooltip(l10n.hideEditingButtons).evaluate().isNotEmpty) {
+          break;
+        }
+      }
+      await tester.pump();
+
+      Finder menuItem(String label) => find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+      );
+
+      BusyMarkPopupMenuItem<Object?> popupItem(String label) {
+        return tester.widget<BusyMarkPopupMenuItem<Object?>>(menuItem(label));
+      }
+
+      void expectChecked(String label, {required bool checked}) {
+        final item = popupItem(label);
+        expect(item.trailingCheck, isTrue);
+        expect(item.checked, checked);
+      }
+
+      final hideButton = find.byTooltip(l10n.hideEditingButtons);
+      final showButton = find.byTooltip(l10n.showEditingButtons);
+      expect(hideButton, findsOneWidget);
+      expect(showButton, findsNothing);
+      expect(
+        container.read(appSettingsControllerProvider).editorToolbarPlacement,
+        EditorToolbarPlacement.topLeft,
+      );
+      expect(
+        container.read(appSettingsControllerProvider).editorToolbarDirection,
+        EditorToolbarDirection.horizontal,
+      );
+
+      final initialToggleRect = tester.getRect(hideButton);
+      final unorderedTooltip =
+          '${l10n.unorderedList} '
+          '(${BusyMarkEditorShortcutLabels.unorderedList})';
+      final orderedTooltip =
+          '${l10n.orderedList} '
+          '(${BusyMarkEditorShortcutLabels.orderedList})';
+      final horizontalUnorderedRect = tester.getRect(
+        find.byTooltip(unorderedTooltip),
+      );
+      final horizontalOrderedRect = tester.getRect(
+        find.byTooltip(orderedTooltip),
+      );
+      expect(
+        horizontalUnorderedRect.center.dy,
+        closeTo(horizontalOrderedRect.center.dy, 0.1),
+      );
+      expect(
+        (horizontalUnorderedRect.center.dx - horizontalOrderedRect.center.dx)
+            .abs(),
+        greaterThan(1),
+      );
+
+      await tester.tap(hideButton, buttons: kSecondaryMouseButton);
+      await tester.pumpAndSettle();
+
+      expect(hideButton, findsOneWidget);
+      expect(showButton, findsNothing);
+      for (final label in [
+        l10n.topLeft,
+        l10n.topRight,
+        l10n.bottomLeft,
+        l10n.bottomRight,
+        l10n.horizontal,
+        l10n.vertical,
+      ]) {
+        expect(menuItem(label), findsOneWidget);
+      }
+      expectChecked(l10n.topLeft, checked: true);
+      expectChecked(l10n.bottomRight, checked: false);
+      expectChecked(l10n.horizontal, checked: true);
+      expectChecked(l10n.vertical, checked: false);
+
+      await tester.tap(find.text(l10n.bottomRight));
+      await tester.pumpAndSettle();
+
+      expect(hideButton, findsOneWidget);
+      expect(showButton, findsNothing);
+      expect(
+        container.read(appSettingsControllerProvider).editorToolbarPlacement,
+        EditorToolbarPlacement.bottomRight,
+      );
+      expect(settingsStore.value['editorToolbarPlacement'], 'bottomRight');
+      final bottomRightToggleRect = tester.getRect(hideButton);
+      expect(
+        bottomRightToggleRect.center.dx,
+        greaterThan(initialToggleRect.center.dx),
+      );
+      expect(
+        bottomRightToggleRect.center.dy,
+        greaterThan(initialToggleRect.center.dy),
+      );
+
+      await tester.tap(hideButton);
+      await tester.pump();
+
+      expect(hideButton, findsNothing);
+      expect(showButton, findsOneWidget);
+      await tester.tap(showButton, buttons: kSecondaryMouseButton);
+      await tester.pumpAndSettle();
+
+      expect(hideButton, findsNothing);
+      expect(showButton, findsOneWidget);
+      expectChecked(l10n.topLeft, checked: false);
+      expectChecked(l10n.bottomRight, checked: true);
+      expectChecked(l10n.horizontal, checked: true);
+      expectChecked(l10n.vertical, checked: false);
+
+      await tester.tap(find.text(l10n.vertical));
+      await tester.pumpAndSettle();
+
+      expect(hideButton, findsNothing);
+      expect(showButton, findsOneWidget);
+      expect(
+        container.read(appSettingsControllerProvider).editorToolbarDirection,
+        EditorToolbarDirection.vertical,
+      );
+      expect(settingsStore.value['editorToolbarDirection'], 'vertical');
+
+      await tester.tap(showButton);
+      await tester.pump();
+
+      expect(hideButton, findsOneWidget);
+      expect(showButton, findsNothing);
+      final verticalToggleRect = tester.getRect(hideButton);
+      final verticalUnorderedRect = tester.getRect(
+        find.byTooltip(unorderedTooltip),
+      );
+      final verticalOrderedRect = tester.getRect(
+        find.byTooltip(orderedTooltip),
+      );
+      expect(
+        verticalUnorderedRect.center.dx,
+        closeTo(verticalOrderedRect.center.dx, 0.1),
+      );
+      expect(
+        (verticalUnorderedRect.center.dy - verticalOrderedRect.center.dy).abs(),
+        greaterThan(1),
+      );
+      expect(
+        verticalToggleRect.center.dx,
+        closeTo(verticalUnorderedRect.center.dx, BusyMarkSpacing.sm),
+      );
+      expect(
+        verticalToggleRect.center.dy,
+        greaterThan(verticalUnorderedRect.center.dy),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('editor undo cannot restore saved text from previous tab', (
     tester,
   ) async {

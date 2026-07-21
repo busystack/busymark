@@ -676,13 +676,29 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "Кнопки редагування",
-  "@editingButtons": {
+  "editingButtonsPosition": "Розташування кнопок редагування",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "Орієнтація кнопок редагування",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Виберіть, як розташувати плаваючі кнопки редагування WYSIWYG: горизонтально чи вертикально.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Горизонтально",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Вертикально",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "Конфіденційність",
   "@privacy": {"description": "Settings section title for privacy options."},
