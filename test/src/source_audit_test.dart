@@ -655,7 +655,11 @@ void main() {
       workspace,
       contains('Future<_PathMenuAction?> _showSidebarPathMenu'),
     );
-    expect(workspace, contains('tooltip: context.l10n.openInFiles'));
+    expect(
+      workspace,
+      contains('tooltip: busyMarkLtrIsolateFor(context, path)'),
+    );
+    expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
     expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
     expect(workspace, contains('repository.behindCount > 0'));
@@ -1149,17 +1153,20 @@ void main() {
     expect(toolbar, isNot(contains('transparent: true')));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
     expect(toolbar, contains('elevated: true'));
+    expect(toolbar, contains('clipBehavior: Clip.none'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
-    expect(
-      toolbar,
-      contains('padding: const EdgeInsets.all(BusyMarkSpacing.sm)'),
-    );
+    expect(toolbar, contains('horizontal: BusyMarkSpacing.sm'));
+    expect(toolbar, contains('vertical: BusyMarkSpacing.xs'));
+    expect(toolbar, contains('horizontal: BusyMarkSpacing.xs'));
+    expect(toolbar, contains('vertical: BusyMarkSpacing.sm'));
     expect(toolbar, isNot(contains('boxShadow:')));
     expect(toolbar, isNot(contains('BusyMarkShadow.')));
     final floatingToolbar = RegExp(
       r'class _FloatingWysiwygToolbar[\s\S]*?class _EditorToolbarMenuAction',
     ).firstMatch(editor)!.group(0)!;
     expect(floatingToolbar, contains('elevated: true'));
+    expect(floatingToolbar, contains('accented: true'));
+    expect(floatingToolbar, isNot(contains('_editorToolbarButtonBackground')));
     expect(floatingToolbar, isNot(contains('boxShadow:')));
     expect(floatingToolbar, isNot(contains('BusyMarkShadow.')));
     final blockWidgets = File(

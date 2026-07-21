@@ -3025,7 +3025,6 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final axis = direction._axis;
     final alignedEnd = axis == Axis.horizontal
         ? placement._isRight
@@ -3061,8 +3060,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
             : context.l10n.showEditingButtons,
         icon: visible ? BusyMarkGlyphs.hide : BusyMarkGlyphs.edit,
         onPressed: onToggle,
-        foregroundColor: colors.mutedForeground,
-        backgroundColor: _editorToolbarButtonBackground(context),
+        accented: true,
         elevated: true,
       ),
     );
@@ -3174,31 +3172,6 @@ String _editorToolbarDirectionLabel(
     EditorToolbarDirection.horizontal => context.l10n.horizontal,
     EditorToolbarDirection.vertical => context.l10n.vertical,
   };
-}
-
-WidgetStateProperty<Color?> _editorToolbarButtonBackground(
-  BuildContext context,
-) {
-  final colors = BusyMarkSurfaceColors.of(context);
-  return WidgetStateProperty.resolveWith((states) {
-    if (states.contains(WidgetState.disabled)) {
-      return colors.disabledControl;
-    }
-    if (states.contains(WidgetState.pressed)) {
-      return Color.alphaBlend(
-        colors.foreground.withValues(alpha: BusyMarkAlpha.editorToolbarPressed),
-        colors.sidebar,
-      );
-    }
-    if (states.contains(WidgetState.hovered) ||
-        states.contains(WidgetState.focused)) {
-      return Color.alphaBlend(
-        colors.foreground.withValues(alpha: BusyMarkAlpha.editorToolbarHover),
-        colors.sidebar,
-      );
-    }
-    return colors.sidebar;
-  });
 }
 
 extension _EditorToolbarPlacementX on EditorToolbarPlacement {

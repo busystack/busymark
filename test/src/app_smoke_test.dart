@@ -1666,8 +1666,9 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip(l10n.openInFiles), findsOneWidget);
-    await tester.tap(find.byTooltip(l10n.openInFiles));
+    expect(find.byTooltip(l10n.openInFiles), findsNothing);
+    expect(find.byTooltip(temp.path), findsOneWidget);
+    await tester.tap(find.byTooltip(temp.path));
     await tester.pumpAndSettle();
     expect(find.text(l10n.openInFiles), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -3010,15 +3011,14 @@ void main() {
   });
 
   testWidgets('startup path opens a Markdown file workspace', (tester) async {
+    const startupPath = 'test/fixtures/markdown/basic.md';
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
-        startupPathProvider.overrideWithValue(
-          'test/fixtures/markdown/basic.md',
-        ),
+        startupPathProvider.overrideWithValue(startupPath),
       ],
     );
     addTearDown(container.dispose);
@@ -3034,9 +3034,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(service.openedPath, 'test/fixtures/markdown/basic.md');
+    expect(service.openedPath, startupPath);
     expect(find.text(l10n.openMarkdownFile), findsNothing);
     expect(find.textContaining('Basic Markdown'), findsWidgets);
+    expect(find.byTooltip(startupPath), findsOneWidget);
   });
 
   testWidgets('preview tolerates duplicate heading anchors', (tester) async {

@@ -2088,7 +2088,7 @@ class _SidebarHeader extends StatelessWidget {
               text: path,
               style: detailsStyle,
               leadingEllipsis: true,
-              tooltip: context.l10n.openInFiles,
+              tooltip: busyMarkLtrIsolateFor(context, path),
               onTap: (lineContext) => _showWorkspacePathMenu(
                 lineContext,
                 name: _workspaceName(context, workspace),

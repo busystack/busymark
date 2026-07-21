@@ -6,6 +6,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
@@ -2285,6 +2286,10 @@ void main() {}
 
       await tester.pumpWidget(
         MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -2301,14 +2306,43 @@ void main() {}
       );
       await tester.pump();
 
+      IconButton editingToggle(String tooltip) {
+        return tester.widget<IconButton>(
+          find.byWidgetPredicate(
+            (widget) => widget is IconButton && widget.tooltip == tooltip,
+          ),
+        );
+      }
+
+      final colorScheme = Theme.of(
+        tester.element(find.byType(BusyMarkWysiwygEditor)),
+      ).colorScheme;
+      final hideButton = editingToggle('Hide editing buttons');
+      expect(
+        hideButton.style?.backgroundColor?.resolve(const {}),
+        colorScheme.primary,
+      );
+      expect(
+        hideButton.style?.foregroundColor?.resolve(const {}),
+        colorScheme.onPrimary,
+      );
       final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
 
       await tester.tap(find.byTooltip('Hide editing buttons'));
       await tester.pump();
 
       final showRect = tester.getRect(find.byTooltip('Show editing buttons'));
+      final showButton = editingToggle('Show editing buttons');
 
       expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
+      expect(
+        showButton.style?.backgroundColor?.resolve(const {}),
+        colorScheme.primary,
+      );
+      expect(
+        showButton.style?.foregroundColor?.resolve(const {}),
+        colorScheme.onPrimary,
+      );
     },
   );
 
@@ -2316,6 +2350,12 @@ void main() {}
     tester,
   ) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+    expect(
+      BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar,
+      BusyMarkSpacing.sm +
+          BusyMarkSizes.wysiwygToolbarReserve +
+          BusyMarkSpacing.sm,
+    );
 
     Finder editorList() => find.descendant(
       of: find.byType(BusyMarkWysiwygEditor),
@@ -2358,6 +2398,26 @@ void main() {}
         );
         expect(editorList(), findsOneWidget);
         expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        final toolbarScrollView = tester.widget<SingleChildScrollView>(
+          find.descendant(
+            of: find.byType(BusyMarkWysiwygToolbar),
+            matching: find.byType(SingleChildScrollView),
+          ),
+        );
+        expect(
+          toolbarScrollView.padding,
+          direction == EditorToolbarDirection.horizontal
+              ? const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.sm,
+                  vertical: BusyMarkSpacing.xs,
+                )
+              : const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.xs,
+                  vertical: BusyMarkSpacing.sm,
+                ),
+        );
+        expect(toolbarScrollView.clipBehavior, Clip.none);
+        expect(toolbarScrollView.hitTestBehavior, HitTestBehavior.deferToChild);
         final shownFieldRect = tester.getRect(find.byType(TextField).first);
         if (topPlacement) {
           final hideButtonRect = tester.getRect(

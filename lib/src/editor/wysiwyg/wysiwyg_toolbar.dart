@@ -46,8 +46,17 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: axis,
       reverse: alignEnd,
+      clipBehavior: Clip.none,
       hitTestBehavior: HitTestBehavior.deferToChild,
-      padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+      padding: axis == Axis.horizontal
+          ? const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.sm,
+              vertical: BusyMarkSpacing.xs,
+            )
+          : const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.xs,
+              vertical: BusyMarkSpacing.sm,
+            ),
       child: Flex(
         direction: axis,
         mainAxisSize: MainAxisSize.min,

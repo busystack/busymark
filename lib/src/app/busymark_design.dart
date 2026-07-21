@@ -95,9 +95,9 @@ abstract final class BusyMarkSizes {
   static const double wysiwygEditorTopPadding = 20;
   static const double wysiwygEditorBottomPadding = 38;
   static const double wysiwygToolbarReserve =
-      iconButton + BusyMarkSpacing.sm * 2;
+      iconButton + BusyMarkSpacing.xs * 2;
   static const double wysiwygEditorTopPaddingWithToolbar =
-      BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.lg;
+      BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.sm;
   static const double wysiwygPrefixWidth = 30;
   static const double imageDialogWidth = 420;
   static const double tableDialogWidth = 360;
@@ -155,8 +155,6 @@ abstract final class BusyMarkAlpha {
   static const double floatingEntryIcon = 0.72;
   static const double toolbarPressed = 0.18;
   static const double toolbarHover = 0.10;
-  static const double editorToolbarPressed = 0.08;
-  static const double editorToolbarHover = 0.04;
   static const double windowShadowHigh = 0.75;
   static const double windowShadowMedium = 0.45;
   static const double windowShadowLow = 0.25;
