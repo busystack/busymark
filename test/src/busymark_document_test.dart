@@ -2312,16 +2312,10 @@ void main() {}
     },
   );
 
-  testWidgets('editing toolbar never changes editor content padding', (
+  testWidgets('top editing toolbar reserves only editor top clearance', (
     tester,
   ) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
-    const expectedPadding = EdgeInsets.fromLTRB(
-      BusyMarkSizes.wysiwygEditorHorizontalPadding,
-      BusyMarkSizes.wysiwygEditorTopPadding,
-      BusyMarkSizes.wysiwygEditorHorizontalPadding,
-      BusyMarkSizes.wysiwygEditorBottomPadding,
-    );
 
     Finder editorList() => find.descendant(
       of: find.byType(BusyMarkWysiwygEditor),
@@ -2351,9 +2345,26 @@ void main() {}
         );
         await tester.pump();
 
+        final topPlacement =
+            placement == EditorToolbarPlacement.topLeft ||
+            placement == EditorToolbarPlacement.topRight;
+        final expectedPadding = EdgeInsets.fromLTRB(
+          BusyMarkSizes.wysiwygEditorHorizontalPadding,
+          topPlacement
+              ? BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar
+              : BusyMarkSizes.wysiwygEditorTopPadding,
+          BusyMarkSizes.wysiwygEditorHorizontalPadding,
+          BusyMarkSizes.wysiwygEditorBottomPadding,
+        );
         expect(editorList(), findsOneWidget);
         expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
         final shownFieldRect = tester.getRect(find.byType(TextField).first);
+        if (topPlacement) {
+          final hideButtonRect = tester.getRect(
+            find.byTooltip('Hide editing buttons'),
+          );
+          expect(shownFieldRect.top, greaterThan(hideButtonRect.bottom));
+        }
 
         await tester.tap(find.byTooltip('Hide editing buttons'));
         await tester.pump();

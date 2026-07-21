@@ -358,12 +358,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  EdgeInsets _editorContentPadding() => const EdgeInsets.fromLTRB(
-    BusyMarkSizes.wysiwygEditorHorizontalPadding,
-    BusyMarkSizes.wysiwygEditorTopPadding,
-    BusyMarkSizes.wysiwygEditorHorizontalPadding,
-    BusyMarkSizes.wysiwygEditorBottomPadding,
-  );
+  EdgeInsets _editorContentPadding() {
+    final top = widget.toolbarPlacement._isTop
+        ? BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar
+        : BusyMarkSizes.wysiwygEditorTopPadding;
+    return EdgeInsets.fromLTRB(
+      BusyMarkSizes.wysiwygEditorHorizontalPadding,
+      top,
+      BusyMarkSizes.wysiwygEditorHorizontalPadding,
+      BusyMarkSizes.wysiwygEditorBottomPadding,
+    );
+  }
 
   Widget _buildRenderEntry(
     BuildContext context,
@@ -3136,7 +3141,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
 }
 
 const double _floatingWysiwygToolbarExtent =
-    BusyMarkSizes.iconButton + BusyMarkSpacing.xs * 2;
+    BusyMarkSizes.wysiwygToolbarReserve;
 
 class _EditorToolbarMenuAction {
   const _EditorToolbarMenuAction.forPlacement(this.placement)

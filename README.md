@@ -122,7 +122,7 @@ never added.
 {
   "submissionId": "b3f44f5f-dae4-4c6e-bf56-657f35f3450a",
   "app": "busymark",
-  "appVersion": "0.2.1",
+  "appVersion": "0.2.2",
   "buildNumber": "0",
   "platform": "linux",
   "category": "problem",

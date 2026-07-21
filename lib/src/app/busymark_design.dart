@@ -94,8 +94,11 @@ abstract final class BusyMarkSizes {
   static const double wysiwygEditorHorizontalPadding = 28;
   static const double wysiwygEditorTopPadding = 20;
   static const double wysiwygEditorBottomPadding = 38;
+  static const double wysiwygToolbarReserve =
+      iconButton + BusyMarkSpacing.xs * 2;
+  static const double wysiwygEditorTopPaddingWithToolbar =
+      BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.lg;
   static const double wysiwygPrefixWidth = 30;
-  static const double wysiwygToolbarReserve = 42;
   static const double imageDialogWidth = 420;
   static const double tableDialogWidth = 360;
   static const double tableColumnBaseWidth = 164;

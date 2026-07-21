@@ -43,6 +43,9 @@ void main() {
       'linux/io.busystack.busymark.desktop',
     ).readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final localSnapBuilder = File(
+      'tools/build_install_snap_local.sh',
+    ).readAsStringSync();
 
     expect(native, contains('g_set_prgname(APPLICATION_ID)'));
     expect(native, contains('g_set_application_name(kApplicationDisplayName)'));
@@ -73,6 +76,32 @@ void main() {
     expect(
       snapcraft,
       contains(r'> "$CRAFT_PRIME/meta/gui/io.busystack.busymark.desktop"'),
+    );
+    expect(
+      snapcraft,
+      contains(
+        RegExp(
+          r'^plugs:\n'
+          r'  desktop:\n'
+          r'    interface: desktop\n'
+          r'    desktop-file-ids:\n'
+          r'      - io\.busystack\.busymark$',
+          multiLine: true,
+        ),
+      ),
+    );
+    expect(
+      localSnapBuilder,
+      contains('text = ensure_desktop_file_id(text, desktop_file_id)'),
+    );
+    expect(localSnapBuilder, contains('desktop_file_id = sys.argv[5]'));
+    expect(localSnapBuilder, contains(r'"$APP_ID" <<'));
+    expect(
+      localSnapBuilder,
+      contains(
+        'unsquashfs -cat "\$OUT" meta/snap.yaml | grep -A4 '
+        "'^  desktop:' | grep -F -- \"- \$APP_ID\"",
+      ),
     );
   });
 
@@ -408,8 +437,8 @@ void main() {
     expect(headerbarBlock, contains('"box-shadow: none;"'));
     expect(headerbarBlock, contains('"border-top-left-radius: %dpx;"'));
     expect(headerbarBlock, contains('"border-top-right-radius: %dpx;"'));
-    expect(headerbarBlock, contains('"padding-left: 0;"'));
-    expect(headerbarBlock, contains('"padding-right: 0;"'));
+    expect(headerbarBlock, isNot(contains('"padding-left: 0;"')));
+    expect(headerbarBlock, isNot(contains('"padding-right: 0;"')));
     expect(
       native,
       contains(
@@ -419,6 +448,25 @@ void main() {
     );
     expect(native, isNot(contains('border-right: 1px solid')));
     expect(workspace, isNot(contains('Border(right:')));
+  });
+
+  test('native headerbar preserves the themed outer window inset', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final ltrPaddingBlock = RegExp(
+      r'"headerbar\.busymark-headerbar:dir\(ltr\) \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)?.group(1);
+    final rtlPaddingBlock = RegExp(
+      r'"headerbar\.busymark-headerbar:dir\(rtl\) \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)?.group(1);
+
+    expect(ltrPaddingBlock, isNotNull);
+    expect(ltrPaddingBlock, contains('"padding-left: 0;"'));
+    expect(ltrPaddingBlock, isNot(contains('"padding-right: 0;"')));
+    expect(rtlPaddingBlock, isNotNull);
+    expect(rtlPaddingBlock, contains('"padding-right: 0;"'));
+    expect(rtlPaddingBlock, isNot(contains('"padding-left: 0;"')));
   });
 
   test('native headerbar mirrors sidebar surface for text direction', () {
