@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../feedback_metadata.dart';
@@ -68,7 +69,6 @@ class _BusyMarkFeedbackDialogState
   var _submissionAttempted = false;
   var _submitting = false;
   var _suppressFieldChanges = false;
-  var _formRevision = 0;
 
   @override
   void initState() {
@@ -98,6 +98,18 @@ class _BusyMarkFeedbackDialogState
       message: _messageController.text,
       replyEmail: _replyEmailController.text,
     );
+    final categoryError = _showValidationErrors
+        ? _validationMessage(context, validation[FeedbackField.category])
+        : null;
+    final subjectError = _showValidationErrors
+        ? _validationMessage(context, validation[FeedbackField.subject])
+        : null;
+    final messageError = _showValidationErrors
+        ? _validationMessage(context, validation[FeedbackField.message])
+        : null;
+    final replyEmailError = _showValidationErrors
+        ? _validationMessage(context, validation[FeedbackField.replyEmail])
+        : null;
     return BusyMarkDialogShell(
       title: context.l10n.reportIssue,
       closable: !_submitting,
@@ -118,151 +130,106 @@ class _BusyMarkFeedbackDialogState
         ),
       ],
       children: [
-        KeyedSubtree(
-          key: BusyMarkFeedbackKeys.category,
-          child: DropdownButtonFormField<FeedbackCategory>(
-            key: ValueKey('feedback.category.$_formRevision'),
-            initialValue: _category,
-            isExpanded: true,
-            decoration: InputDecoration(
-              labelText: context.l10n.feedbackCategory,
-              errorText: _showValidationErrors
-                  ? _validationMessage(
-                      context,
-                      validation[FeedbackField.category],
-                    )
-                  : null,
-            ),
-            hint: Text(context.l10n.feedbackChooseCategory),
-            items: [
-              for (final category in FeedbackCategory.values)
-                DropdownMenuItem(
-                  value: category,
-                  child: Text(_categoryLabel(context, category)),
-                ),
-            ],
-            onChanged: _submitting
-                ? null
-                : (category) {
-                    setState(() {
-                      if (category != _category) {
-                        _rotateSubmissionIdAfterAttempt();
-                      }
-                      _category = category;
-                      _failure = null;
-                      _receiptId = null;
-                    });
-                  },
-          ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          key: BusyMarkFeedbackKeys.subject,
-          controller: _subjectController,
-          enabled: !_submitting,
-          autofocus: true,
-          textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: context.l10n.feedbackSubject,
-            errorText: _showValidationErrors
-                ? _validationMessage(context, validation[FeedbackField.subject])
-                : null,
-          ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          key: BusyMarkFeedbackKeys.message,
-          controller: _messageController,
-          enabled: !_submitting,
-          minLines: 5,
-          maxLines: 8,
-          keyboardType: TextInputType.multiline,
-          textInputAction: TextInputAction.newline,
-          decoration: InputDecoration(
-            labelText: context.l10n.feedbackMessage,
-            alignLabelWithHint: true,
-            errorText: _showValidationErrors
-                ? _validationMessage(context, validation[FeedbackField.message])
-                : null,
-          ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        TextField(
-          key: BusyMarkFeedbackKeys.replyEmail,
-          controller: _replyEmailController,
-          enabled: !_submitting,
-          textDirection: TextDirection.ltr,
-          keyboardType: TextInputType.emailAddress,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (!_submitting) {
-              _submit();
-            }
-          },
-          decoration: InputDecoration(
-            labelText: context.l10n.feedbackReplyEmail,
-            errorText: _showValidationErrors
-                ? _validationMessage(
-                    context,
-                    validation[FeedbackField.replyEmail],
-                  )
-                : null,
-          ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        InkWell(
-          onTap: _submitting
-              ? null
-              : () => _setIncludeTechnicalDetails(!_includeTechnicalDetails),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                BusyMarkCheckbox(
-                  key: BusyMarkFeedbackKeys.technicalDetails,
-                  value: _includeTechnicalDetails,
-                  onChanged: _submitting
-                      ? null
-                      : (value) => _setIncludeTechnicalDetails(value == true),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(context.l10n.feedbackIncludeTechnicalDetails),
-                      const SizedBox(height: BusyMarkSpacing.xs),
-                      Text(
-                        context.l10n.feedbackTechnicalDetailsDisclosure,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: BusyMarkSurfaceColors.of(
-                            context,
-                          ).mutedForeground,
-                        ),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkActionRow(
+              title: context.l10n.feedbackCategory,
+              subtitle: categoryError,
+              leading: const Icon(BusyMarkGlyphs.category),
+              destructive: categoryError != null,
+              trailing: SizedBox(
+                width: BusyMarkSizes.controlRowWidth,
+                child: BusyMarkPopupSelector<FeedbackCategory>(
+                  key: BusyMarkFeedbackKeys.category,
+                  value: _category,
+                  label: _category == null
+                      ? context.l10n.feedbackChooseCategory
+                      : _categoryLabel(context, _category!),
+                  tooltip: context.l10n.feedbackCategory,
+                  enabled: !_submitting,
+                  options: [
+                    for (final category in FeedbackCategory.values)
+                      BusyMarkPopupSelectorOption(
+                        value: category,
+                        label: _categoryLabel(context, category),
                       ),
-                    ],
-                  ),
+                  ],
+                  onSelected: _setCategory,
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
+        ),
+        const SizedBox(height: BusyMarkSpacing.md),
+        BusyMarkFloatingTextEntryGroup(
+          children: [
+            BusyMarkFloatingTextEntry(
+              key: BusyMarkFeedbackKeys.subject,
+              label: context.l10n.feedbackSubject,
+              controller: _subjectController,
+              enabled: !_submitting,
+              autofocus: true,
+              textInputAction: TextInputAction.next,
+              errorText: subjectError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.first,
+            ),
+            BusyMarkFloatingTextEntry(
+              key: BusyMarkFeedbackKeys.message,
+              label: context.l10n.feedbackMessage,
+              controller: _messageController,
+              enabled: !_submitting,
+              minLines: 5,
+              maxLines: 8,
+              keyboardType: TextInputType.multiline,
+              textInputAction: TextInputAction.newline,
+              errorText: messageError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.middle,
+            ),
+            BusyMarkFloatingTextEntry(
+              key: BusyMarkFeedbackKeys.replyEmail,
+              label: context.l10n.feedbackReplyEmail,
+              controller: _replyEmailController,
+              enabled: !_submitting,
+              textDirection: TextDirection.ltr,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (!_submitting) {
+                  _submit();
+                }
+              },
+              errorText: replyEmailError,
+              groupPosition: BusyMarkFloatingTextEntryPosition.last,
+            ),
+          ],
+        ),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkSwitchRow(
+              key: BusyMarkFeedbackKeys.technicalDetails,
+              title: context.l10n.feedbackIncludeTechnicalDetails,
+              subtitle: context.l10n.feedbackTechnicalDetailsDisclosure,
+              leading: const Icon(BusyMarkGlyphs.diagnostics),
+              value: _includeTechnicalDetails,
+              enabled: !_submitting,
+              onChanged: _setIncludeTechnicalDetails,
+            ),
+          ],
         ),
         if (_receiptId != null || _failure != null) ...[
           const SizedBox(height: BusyMarkSpacing.lg),
           Semantics(
             key: BusyMarkFeedbackKeys.status,
             liveRegion: true,
-            child: Text(
-              _receiptId != null
+            child: BusyMarkStatusBox(
+              message: _receiptId != null
                   ? context.l10n.feedbackSuccess(_receiptId!)
                   : _failureMessage(context, _failure!),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: _receiptId != null
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.error,
-                fontWeight: FontWeight.w600,
-              ),
+              kind: _receiptId != null
+                  ? BusyMarkStatusKind.success
+                  : BusyMarkStatusKind.error,
             ),
           ),
         ],
@@ -288,6 +255,17 @@ class _BusyMarkFeedbackDialogState
     setState(() {
       _rotateSubmissionIdAfterAttempt();
       _includeTechnicalDetails = value;
+      _failure = null;
+      _receiptId = null;
+    });
+  }
+
+  void _setCategory(FeedbackCategory category) {
+    setState(() {
+      if (category != _category) {
+        _rotateSubmissionIdAfterAttempt();
+      }
+      _category = category;
       _failure = null;
       _receiptId = null;
     });
@@ -357,7 +335,6 @@ class _BusyMarkFeedbackDialogState
         _submissionAttempted = false;
         _receiptId = receipt.id;
         _submissionId = ref.read(feedbackSubmissionIdGeneratorProvider)();
-        _formRevision++;
       });
     } on FeedbackSubmissionException catch (error) {
       if (!mounted) {

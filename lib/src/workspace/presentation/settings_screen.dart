@@ -329,96 +329,26 @@ class _LanguageControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final theme = Theme.of(context);
-    final popupTheme = theme.popupMenuTheme;
     final selectedValue = selectedLocaleTag ?? _systemLocaleTag;
     final selectedLabel = _selectedLabel(context, selectedValue);
-    final escapeDismiss = BusyMarkPopupEscapeDismissBinding(
-      Navigator.of(context, rootNavigator: true),
-    );
-    return Align(
-      alignment: AlignmentDirectional.centerEnd,
-      child: PopupMenuButton<String>(
-        tooltip: context.l10n.appLanguage,
-        padding: EdgeInsets.zero,
-        position: PopupMenuPosition.under,
-        offset: const Offset(0, BusyMarkSpacing.xs + BusyMarkSpacing.xxs),
-        color: popupTheme.color ?? colors.popover,
-        surfaceTintColor: BusyMarkLinuxPalette.transparent,
-        elevation: BusyMarkElevation.window,
-        shadowColor: colors.shade.withValues(
-          alpha: BusyMarkAlpha.languageMenuShadow,
+    return BusyMarkPopupSelector<String>(
+      value: selectedValue,
+      label: selectedLabel,
+      tooltip: context.l10n.appLanguage,
+      options: [
+        BusyMarkPopupSelectorOption(
+          value: _systemLocaleTag,
+          label: context.l10n.systemLanguage,
         ),
-        shape:
-            popupTheme.shape ??
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            ),
-        constraints: const BoxConstraints(
-          minWidth: BusyMarkSizes.languagePopupMinWidth,
-          maxWidth: BusyMarkSizes.languagePopupMaxWidth,
-        ),
-        useRootNavigator: true,
-        requestFocus: true,
-        onOpened: escapeDismiss.attach,
-        onCanceled: escapeDismiss.detach,
-        onSelected: (value) {
-          escapeDismiss.detach();
-          onChanged(value == _systemLocaleTag ? null : value);
-        },
-        itemBuilder: (context) => [
-          _languageMenuItem(
-            context,
-            value: _systemLocaleTag,
-            label: context.l10n.systemLanguage,
-            selected: selectedValue == _systemLocaleTag,
+        for (final option in _languageOptions())
+          BusyMarkPopupSelectorOption(
+            value: option.localeTag,
+            label: option.label,
           ),
-          for (final option in _languageOptions())
-            _languageMenuItem(
-              context,
-              value: option.localeTag,
-              label: option.label,
-              selected: selectedValue == option.localeTag,
-            ),
-        ],
-        child: _LanguageSelectorButton(label: selectedLabel),
-      ),
-    );
-  }
-
-  PopupMenuItem<String> _languageMenuItem(
-    BuildContext context, {
-    required String value,
-    required String label,
-    required bool selected,
-  }) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return PopupMenuItem<String>(
-      value: value,
-      height: BusyMarkSizes.popupMenuItemHeight,
-      padding: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
-        child: Row(
-          children: [
-            SizedBox(
-              width: BusyMarkSizes.iconSm,
-              child: selected
-                  ? Icon(
-                      BusyMarkGlyphs.check,
-                      size: BusyMarkSizes.iconSm,
-                      color: colors.mutedForeground,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(
-              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-          ],
-        ),
-      ),
+      ],
+      onSelected: (value) {
+        onChanged(value == _systemLocaleTag ? null : value);
+      },
     );
   }
 
@@ -451,84 +381,6 @@ class _LanguageControl extends StatelessWidget {
       _LanguageOption('fa', 'فارسی'),
       _LanguageOption('hi', 'हिन्दी'),
     ];
-  }
-}
-
-class _LanguageSelectorButton extends StatefulWidget {
-  const _LanguageSelectorButton({required this.label});
-
-  final String label;
-
-  @override
-  State<_LanguageSelectorButton> createState() =>
-      _LanguageSelectorButtonState();
-}
-
-class _LanguageSelectorButtonState extends State<_LanguageSelectorButton> {
-  var _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final theme = Theme.of(context);
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) {
-        if (!_hovered) {
-          setState(() => _hovered = true);
-        }
-      },
-      onExit: (_) {
-        if (_hovered) {
-          setState(() => _hovered = false);
-        }
-      },
-      child: Container(
-        constraints: const BoxConstraints(
-          minHeight: BusyMarkSizes.iconButton,
-          maxWidth: BusyMarkSizes.languageButtonMaxWidth,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: BusyMarkSpacing.sm,
-          vertical: BusyMarkSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: _hovered
-              ? colors.controlHover
-              : BusyMarkLinuxPalette.transparent,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-          border: Border.all(
-            color: _hovered
-                ? colors.subtleBorder
-                : BusyMarkLinuxPalette.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                widget.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                textAlign: TextAlign.end,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.foreground,
-                ),
-              ),
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Icon(
-              BusyMarkGlyphs.downArrow,
-              size: BusyMarkSizes.iconSm,
-              color: colors.mutedForeground,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

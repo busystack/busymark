@@ -724,17 +724,46 @@ void main() {
   });
 
   test('settings language selector uses native hover and popover styling', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
     expect(settings, isNot(contains('DropdownButton<String>')));
-    expect(settings, contains('class _LanguageSelectorButton'));
-    expect(settings, contains('MouseRegion('));
-    expect(settings, contains('colors.controlHover'));
-    expect(settings, contains('elevation: BusyMarkElevation.window'));
-    expect(settings, contains('BusyMarkAlpha.languageMenuShadow'));
-    expect(settings, contains('softWrap: false'));
+    expect(settings, contains('BusyMarkPopupSelector<String>('));
+    expect(settings, isNot(contains('class _LanguageSelectorButton')));
+    expect(design, contains('class BusyMarkPopupSelector<T>'));
+    expect(design, contains('MouseRegion('));
+    expect(design, contains('colors.controlHover'));
+    expect(design, contains('elevation: BusyMarkElevation.window'));
+    expect(design, contains('BusyMarkAlpha.languageMenuShadow'));
+    expect(design, contains('softWrap: false'));
+  });
+
+  test('report issue form uses shared BusyMark desktop controls', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+    final feedback = File(
+      'lib/src/feedback/presentation/feedback_dialog.dart',
+    ).readAsStringSync();
+
+    expect(design, contains('class BusyMarkPopupSelector<T>'));
+    expect(design, contains('class BusyMarkStatusBox'));
+    expect(settings, contains('BusyMarkPopupSelector<String>('));
+    expect(feedback, contains('BusyMarkPopupSelector<FeedbackCategory>('));
+    expect(
+      RegExp(r'BusyMarkFloatingTextEntry\(').allMatches(feedback).length,
+      3,
+    );
+    expect(feedback, contains('BusyMarkGroupedList('));
+    expect(feedback, contains('BusyMarkSwitchRow('));
+    expect(feedback, contains('BusyMarkStatusBox('));
+    expect(feedback, isNot(contains('DropdownButtonFormField')));
+    expect(feedback, isNot(contains('TextField(')));
+    expect(feedback, isNot(contains('InputDecoration(')));
+    expect(feedback, isNot(contains('InkWell(')));
   });
 
   test('Writerside project dialog uses floating Adwaita-style entries', () {
@@ -755,12 +784,19 @@ void main() {
     expect(design, contains('EditableText('));
     expect(design, contains('BusyMarkGlyphs.edit'));
     expect(design, contains('end: BusyMarkSizes.iconButton'));
-    expect(design, contains('opacity: focused ? 0 : 1'));
-    expect(design, contains('final labelColor = colors.mutedForeground;'));
+    expect(design, contains('opacity: focused || !widget.enabled ? 0 : 1'));
+    expect(design, contains('final labelColor = widget.enabled'));
+    expect(design, contains(': colors.disabledForeground;'));
     expect(design, isNot(contains('final labelColor = focused')));
     expect(design, contains('hint: widget.errorText'));
-    expect(design, isNot(contains('widget.errorText!')));
-    expect(design, isNot(contains('if (hasError) ...[')));
+    expect(design, contains('if (hasError)'));
+    expect(design, contains('widget.errorText!'));
+    expect(design, contains('final bool enabled;'));
+    expect(design, contains('final TextInputType? keyboardType;'));
+    expect(design, contains('final int minLines;'));
+    expect(design, contains('final int maxLines;'));
+    expect(design, contains('BusyMarkSizes.floatingTextAreaHeight'));
+    expect(design, contains('readOnly: !widget.enabled'));
     expect(design, isNot(contains('class BusyMarkDialogTextEntry')));
     expect(design, isNot(contains('InputDecoration(')));
     expect(welcome, contains('BusyMarkFloatingTextEntryGroup('));

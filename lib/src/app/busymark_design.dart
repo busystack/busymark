@@ -60,6 +60,7 @@ abstract final class BusyMarkSizes {
   static const double dialogButtonMinWidth = 72;
   static const double dialogButtonMaxWidth = 220;
   static const double floatingEntryHeight = 58;
+  static const double floatingTextAreaHeight = 154;
   static const double floatingEntryInset = 12;
   static const double floatingEntryLabelTop = 7;
   static const double floatingEntryLabelRestTop = 16;
@@ -1479,6 +1480,195 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
   }
 }
 
+class BusyMarkPopupSelectorOption<T> {
+  const BusyMarkPopupSelectorOption({
+    required this.value,
+    required this.label,
+    this.icon,
+  });
+
+  final T value;
+  final String label;
+  final IconData? icon;
+}
+
+/// The shared desktop selector used by Settings-style control rows.
+class BusyMarkPopupSelector<T> extends StatelessWidget {
+  const BusyMarkPopupSelector({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.tooltip,
+    required this.options,
+    required this.onSelected,
+    this.enabled = true,
+    this.popupMinWidth = BusyMarkSizes.languagePopupMinWidth,
+    this.popupMaxWidth = BusyMarkSizes.languagePopupMaxWidth,
+    this.buttonMaxWidth = BusyMarkSizes.languageButtonMaxWidth,
+  });
+
+  final T? value;
+  final String label;
+  final String tooltip;
+  final List<BusyMarkPopupSelectorOption<T>> options;
+  final ValueChanged<T> onSelected;
+  final bool enabled;
+  final double popupMinWidth;
+  final double popupMaxWidth;
+  final double buttonMaxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final popupTheme = Theme.of(context).popupMenuTheme;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final escapeDismiss = BusyMarkPopupEscapeDismissBinding(navigator);
+    final selectorEnabled = enabled && options.isNotEmpty;
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: PopupMenuButton<T>(
+        enabled: selectorEnabled,
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        offset: const Offset(0, BusyMarkSpacing.xs + BusyMarkSpacing.xxs),
+        color: popupTheme.color ?? colors.popover,
+        surfaceTintColor: BusyMarkLinuxPalette.transparent,
+        elevation: BusyMarkElevation.window,
+        shadowColor: colors.shade.withValues(
+          alpha: BusyMarkAlpha.languageMenuShadow,
+        ),
+        shape:
+            popupTheme.shape ??
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+            ),
+        constraints: BoxConstraints(
+          minWidth: popupMinWidth,
+          maxWidth: popupMaxWidth,
+        ),
+        useRootNavigator: true,
+        requestFocus: true,
+        onOpened: escapeDismiss.attach,
+        onCanceled: escapeDismiss.detach,
+        onSelected: (selection) {
+          escapeDismiss.detach();
+          onSelected(selection);
+        },
+        itemBuilder: (context) => [
+          for (final option in options)
+            BusyMarkPopupMenuItem<T>(
+              value: option.value,
+              label: option.label,
+              icon: option.icon,
+              checked: option.value == value,
+              trailingCheck: true,
+            ),
+        ],
+        child: _BusyMarkPopupSelectorButton(
+          label: label,
+          enabled: selectorEnabled,
+          maxWidth: buttonMaxWidth,
+        ),
+      ),
+    );
+  }
+}
+
+class _BusyMarkPopupSelectorButton extends StatefulWidget {
+  const _BusyMarkPopupSelectorButton({
+    required this.label,
+    required this.enabled,
+    required this.maxWidth,
+  });
+
+  final String label;
+  final bool enabled;
+  final double maxWidth;
+
+  @override
+  State<_BusyMarkPopupSelectorButton> createState() =>
+      _BusyMarkPopupSelectorButtonState();
+}
+
+class _BusyMarkPopupSelectorButtonState
+    extends State<_BusyMarkPopupSelectorButton> {
+  var _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
+    final foreground = widget.enabled
+        ? colors.foreground
+        : colors.disabledForeground;
+    return MouseRegion(
+      cursor: widget.enabled
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      onEnter: widget.enabled
+          ? (_) {
+              if (!_hovered) {
+                setState(() => _hovered = true);
+              }
+            }
+          : null,
+      onExit: widget.enabled
+          ? (_) {
+              if (_hovered) {
+                setState(() => _hovered = false);
+              }
+            }
+          : null,
+      child: Container(
+        constraints: BoxConstraints(
+          minHeight: BusyMarkSizes.iconButton,
+          maxWidth: widget.maxWidth,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BusyMarkSpacing.sm,
+          vertical: BusyMarkSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: _hovered
+              ? colors.controlHover
+              : BusyMarkLinuxPalette.transparent,
+          borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
+          border: Border.all(
+            color: _hovered
+                ? colors.subtleBorder
+                : BusyMarkLinuxPalette.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
+              ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Icon(
+              BusyMarkGlyphs.downArrow,
+              size: BusyMarkSizes.iconSm,
+              color: widget.enabled
+                  ? colors.mutedForeground
+                  : colors.disabledForeground,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class BusyMarkClamp extends StatelessWidget {
   const BusyMarkClamp({
     super.key,
@@ -1817,6 +2007,32 @@ class BusyMarkCheckbox extends StatelessWidget {
   }
 }
 
+enum BusyMarkStatusKind { information, success, warning, error }
+
+class BusyMarkStatusBox extends StatelessWidget {
+  const BusyMarkStatusBox({
+    super.key,
+    required this.message,
+    this.kind = BusyMarkStatusKind.information,
+  });
+
+  final String message;
+  final BusyMarkStatusKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    return YaruInfoBox(
+      yaruInfoType: switch (kind) {
+        BusyMarkStatusKind.information => YaruInfoType.information,
+        BusyMarkStatusKind.success => YaruInfoType.success,
+        BusyMarkStatusKind.warning => YaruInfoType.warning,
+        BusyMarkStatusKind.error => YaruInfoType.danger,
+      },
+      subtitle: Text(message),
+    );
+  }
+}
+
 class BusyMarkDialogShell extends StatelessWidget {
   const BusyMarkDialogShell({
     super.key,
@@ -2105,17 +2321,26 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
     required this.label,
     required this.controller,
     this.errorText,
+    this.enabled = true,
     this.autofocus = false,
+    this.keyboardType,
+    this.minLines = 1,
+    this.maxLines = 1,
     this.textInputAction,
     this.textDirection,
     this.onSubmitted,
     this.groupPosition = BusyMarkFloatingTextEntryPosition.single,
-  });
+  }) : assert(minLines > 0),
+       assert(maxLines >= minLines);
 
   final String label;
   final TextEditingController controller;
   final String? errorText;
+  final bool enabled;
   final bool autofocus;
+  final TextInputType? keyboardType;
+  final int minLines;
+  final int maxLines;
   final TextInputAction? textInputAction;
   final TextDirection? textDirection;
   final ValueChanged<String>? onSubmitted;
@@ -2134,7 +2359,7 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
+    _focusNode = FocusNode(canRequestFocus: widget.enabled);
     _scrollController = ScrollController();
     widget.controller.addListener(_handleTextChanged);
     _focusNode.addListener(_handleFocusChanged);
@@ -2146,6 +2371,13 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_handleTextChanged);
       widget.controller.addListener(_handleTextChanged);
+    }
+    if (oldWidget.enabled != widget.enabled) {
+      _focusNode.canRequestFocus = widget.enabled;
+      if (!widget.enabled) {
+        _focusNode.unfocus();
+        _hovered = false;
+      }
     }
   }
 
@@ -2175,8 +2407,17 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
         : hasError
         ? colorScheme.error
         : colors.border;
-    final labelColor = colors.mutedForeground;
+    final labelColor = widget.enabled
+        ? colors.mutedForeground
+        : colors.disabledForeground;
+    final entryHeight = widget.maxLines == 1
+        ? BusyMarkSizes.floatingEntryHeight
+        : BusyMarkSizes.floatingTextAreaHeight;
+    final foreground = widget.enabled
+        ? colors.foreground
+        : colors.disabledForeground;
     return Semantics(
+      enabled: widget.enabled,
       textField: true,
       label: widget.label,
       hint: widget.errorText,
@@ -2184,17 +2425,25 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           MouseRegion(
-            cursor: SystemMouseCursors.text,
-            onEnter: (_) => setState(() => _hovered = true),
-            onExit: (_) => setState(() => _hovered = false),
+            cursor: widget.enabled
+                ? SystemMouseCursors.text
+                : SystemMouseCursors.basic,
+            onEnter: widget.enabled
+                ? (_) => setState(() => _hovered = true)
+                : null,
+            onExit: widget.enabled
+                ? (_) => setState(() => _hovered = false)
+                : null,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: _focusNode.requestFocus,
+              onTap: widget.enabled ? _focusNode.requestFocus : null,
               child: Container(
-                height: BusyMarkSizes.floatingEntryHeight,
+                height: entryHeight,
                 decoration: busyMarkSurfaceDecoration(
                   context,
-                  color: _hovered || focused
+                  color: !widget.enabled
+                      ? colors.disabledControl
+                      : _hovered || focused
                       ? colors.controlHover
                       : colors.control,
                   borderRadius: radius,
@@ -2254,17 +2503,24 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
                           controller: widget.controller,
                           focusNode: _focusNode,
                           scrollController: _scrollController,
-                          autofocus: widget.autofocus,
+                          autofocus: widget.enabled && widget.autofocus,
+                          keyboardType: widget.keyboardType,
                           textInputAction: widget.textInputAction,
                           textDirection: widget.textDirection,
-                          onSubmitted: widget.onSubmitted,
-                          maxLines: 1,
+                          onSubmitted: widget.enabled
+                              ? widget.onSubmitted
+                              : null,
+                          readOnly: !widget.enabled,
+                          showCursor: widget.enabled,
+                          enableInteractiveSelection: widget.enabled,
+                          minLines: widget.minLines,
+                          maxLines: widget.maxLines,
                           forceLine: true,
                           style:
                               theme.textTheme.bodyMedium?.copyWith(
-                                color: colors.foreground,
+                                color: foreground,
                               ) ??
-                              TextStyle(color: colors.foreground),
+                              TextStyle(color: foreground),
                           cursorColor: colorScheme.primary,
                           backgroundCursorColor: colors.controlActive,
                           selectionColor: colorScheme.primary.withValues(
@@ -2281,7 +2537,7 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
                         child: AnimatedOpacity(
                           duration: BusyMarkMotion.floatingEntry,
                           curve: BusyMarkMotion.floatingEntryCurve,
-                          opacity: focused ? 0 : 1,
+                          opacity: focused || !widget.enabled ? 0 : 1,
                           child: Center(
                             child: Icon(
                               BusyMarkGlyphs.edit,
@@ -2299,6 +2555,21 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
               ),
             ),
           ),
+          if (hasError)
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                BusyMarkSpacing.md,
+                BusyMarkSpacing.xs,
+                BusyMarkSpacing.md,
+                BusyMarkSpacing.sm,
+              ),
+              child: Text(
+                widget.errorText!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.error,
+                ),
+              ),
+            ),
         ],
       ),
     );
