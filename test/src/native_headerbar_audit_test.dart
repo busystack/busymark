@@ -432,6 +432,103 @@ void main() {
     expect(native, contains('sidebar_right_radius'));
   });
 
+  test('native headerbar reapplies logical insets after direction changes', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final marginHelper = RegExp(
+      r'static void set_widget_horizontal_margins[\s\S]*?^}',
+      multiLine: true,
+    ).firstMatch(native)?.group(0);
+    final titleAlignment = RegExp(
+      r'static void update_title_stack_alignment[\s\S]*?(?=^static void set_toggle_button_active)',
+      multiLine: true,
+    ).firstMatch(native)?.group(0);
+    final directionUpdate = RegExp(
+      r'static void update_titlebar_direction[\s\S]*?(?=^static void refresh_header_bar_css)',
+      multiLine: true,
+    ).firstMatch(native)?.group(0);
+
+    expect(marginHelper, isNotNull);
+    expect(marginHelper, contains('gtk_widget_set_margin_start'));
+    expect(marginHelper, contains('gtk_widget_set_margin_end'));
+    expect(titleAlignment, isNotNull);
+    expect(
+      titleAlignment,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->title_stack,\s*'
+          r'self->search_active \? 0 : kHeaderWindowControlsBalanceWidth,\s*0\);',
+        ),
+      ),
+    );
+    expect(directionUpdate, isNotNull);
+    expect(
+      directionUpdate,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->sidebar_search_button,\s*'
+          r'kHeaderSidebarInset,\s*0\);',
+        ),
+      ),
+    );
+    expect(
+      directionUpdate,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->sidebar_menu_button,\s*'
+          r'0,\s*kHeaderSidebarInset\);',
+        ),
+      ),
+    );
+    expect(
+      directionUpdate,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->header_start_box,\s*'
+          r'kHeaderSidebarInset,\s*0\);',
+        ),
+      ),
+    );
+
+    final titleDirectionOffset = directionUpdate!.indexOf(
+      'set_widget_direction(self->title_stack, direction)',
+    );
+    final titleAlignmentOffset = directionUpdate.indexOf(
+      'update_title_stack_alignment(self);',
+    );
+    expect(titleDirectionOffset, isNonNegative);
+    expect(titleAlignmentOffset, greaterThan(titleDirectionOffset));
+
+    for (final widget in <String>[
+      'sidebar_search_button',
+      'sidebar_menu_button',
+      'header_start_box',
+    ]) {
+      final directionOffset = directionUpdate.indexOf(
+        'set_widget_direction(self->$widget, direction)',
+      );
+      final marginOffset = directionUpdate.indexOf(
+        'set_widget_horizontal_margins(self->$widget,',
+      );
+      expect(directionOffset, isNonNegative, reason: widget);
+      expect(marginOffset, greaterThan(directionOffset), reason: widget);
+    }
+
+    expect(
+      native,
+      isNot(
+        contains('gtk_widget_set_margin_start(self->sidebar_search_button'),
+      ),
+    );
+    expect(
+      native,
+      isNot(contains('gtk_widget_set_margin_end(self->sidebar_menu_button')),
+    );
+    expect(
+      native,
+      isNot(contains('gtk_widget_set_margin_start(self->header_start_box')),
+    );
+  });
+
   test('native headerbar restores outer corners without sidebar', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 

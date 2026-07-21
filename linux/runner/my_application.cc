@@ -344,6 +344,15 @@ static void set_widget_direction(GtkWidget* widget, GtkTextDirection direction) 
   }
 }
 
+static void set_widget_horizontal_margins(GtkWidget* widget,
+                                          gint margin_start,
+                                          gint margin_end) {
+  if (widget != nullptr && GTK_IS_WIDGET(widget)) {
+    gtk_widget_set_margin_start(widget, margin_start);
+    gtk_widget_set_margin_end(widget, margin_end);
+  }
+}
+
 static void update_header_menu_item_direction(GtkWidget* item,
                                               GtkTextDirection direction) {
   if (item == nullptr || !GTK_IS_WIDGET(item)) {
@@ -370,9 +379,9 @@ static void update_title_stack_alignment(MyApplication* self) {
   if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
     return;
   }
-  gtk_widget_set_margin_start(
+  set_widget_horizontal_margins(
       self->title_stack,
-      self->search_active ? 0 : kHeaderWindowControlsBalanceWidth);
+      self->search_active ? 0 : kHeaderWindowControlsBalanceWidth, 0);
 }
 
 static void set_toggle_button_active(MyApplication* self,
@@ -440,6 +449,16 @@ static void update_titlebar_direction(MyApplication* self) {
   update_header_menu_item_direction(self->view_mode_source_item, direction);
   update_header_menu_item_direction(self->view_mode_preview_item, direction);
   update_header_menu_item_direction(self->view_mode_split_item, direction);
+
+  // GTK 3 resolves logical margins against the widget direction at setter
+  // time, so reapply both sides after a live LTR/RTL direction change.
+  update_title_stack_alignment(self);
+  set_widget_horizontal_margins(self->sidebar_search_button,
+                                kHeaderSidebarInset, 0);
+  set_widget_horizontal_margins(self->sidebar_menu_button, 0,
+                                kHeaderSidebarInset);
+  set_widget_horizontal_margins(self->header_start_box, kHeaderSidebarInset,
+                                0);
 }
 
 static void refresh_header_bar_css(MyApplication* self) {
@@ -1267,7 +1286,6 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
 static void set_text_direction(MyApplication* self, const gchar* value) {
   self->text_direction_rtl = g_strcmp0(value, "rtl") == 0;
   update_titlebar_direction(self);
-  update_title_stack_alignment(self);
   refresh_header_bar_css(self);
 }
 
@@ -1333,7 +1351,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
                               "busymark-sidebar-action-button");
-  gtk_widget_set_margin_start(self->sidebar_search_button, kHeaderSidebarInset);
   connect_header_action(self, self->sidebar_search_button, "search");
   gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
                      self->sidebar_search_button, FALSE, FALSE, 0);
@@ -1372,7 +1389,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
       create_menu_button(self->sidebar_menu, "open-menu-symbolic");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
                               "busymark-sidebar-action-button");
-  gtk_widget_set_margin_end(self->sidebar_menu_button, kHeaderSidebarInset);
   gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
                    self->sidebar_menu_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), self->sidebar_header_box,
@@ -1386,7 +1402,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->header_start_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  gtk_widget_set_margin_start(self->header_start_box, kHeaderSidebarInset);
   self->back_button = create_header_icon_button("go-previous-symbolic");
   self->sidebar_toggle_button =
       create_header_toggle_button("sidebar-show-symbolic");
