@@ -209,6 +209,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get openInFiles => 'فتح في الملفات';
 
   @override
+  String get pathActions => 'إجراءات المسار';
+
+  @override
   String get outline => 'المخطط التفصيلي';
 
   @override

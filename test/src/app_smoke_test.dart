@@ -988,6 +988,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Nested entry'), findsOneWidget);
+    expect(find.byTooltip(l10n.newTopic), findsOneWidget);
+    expect(find.byTooltip(l10n.newChildTopic), findsNothing);
     await tester.tap(find.byTooltip(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1671,11 +1673,23 @@ void main() {
 
     expect(find.byTooltip(l10n.openInFiles), findsNothing);
     expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(find.byTooltip(l10n.pathActions), findsOneWidget);
     await tester.tap(find.byTooltip(temp.path));
     await tester.pumpAndSettle();
     expect(find.text(l10n.openInFiles), findsNothing);
+
+    await tester.tap(find.byTooltip(l10n.pathActions));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.copyName), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byTooltip(temp.path), buttons: kSecondaryMouseButton);
     await tester.pumpAndSettle();
+    expect(find.text(l10n.copyName), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -1904,6 +1918,86 @@ void main() {
       expect(find.text(label), findsOneWidget);
       expect(find.text(shortcut), findsOneWidget);
       expect(find.byTooltip('$label ($shortcut)'), findsNothing);
+    }
+  });
+
+  testWidgets('Writerside sidebar keeps one gap below the project row', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final root = Directory('test/fixtures/writerside/basic_project').absolute;
+    final workspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace,
+        activeText: workspace.markdown?.source ?? '',
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceControllerProvider.overrideWith(() => controller),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(
+            _gitSidebarShortcutState(workspace.rootPath),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> selectView(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+    }
+
+    final primaryRow = find.byKey(
+      const ValueKey('workspace-sidebar-primary-row'),
+    );
+    const firstContentKey = ValueKey('workspace-sidebar-first-content');
+    for (final (key, label, contextRow) in <(LogicalKeyboardKey, String, bool)>[
+      (LogicalKeyboardKey.digit1, 'Files', true),
+      (LogicalKeyboardKey.digit2, 'Topics', true),
+      (LogicalKeyboardKey.digit3, 'Outline', false),
+      (LogicalKeyboardKey.digit4, 'Commit', true),
+      (LogicalKeyboardKey.digit5, 'History', true),
+    ]) {
+      await selectView(key);
+      final firstContent = find.byKey(firstContentKey);
+      expect(firstContent, findsOneWidget, reason: label);
+      final gap =
+          tester.getTopLeft(firstContent).dy -
+          tester.getBottomLeft(primaryRow).dy;
+      expect(
+        gap,
+        closeTo(BusyMarkSpacing.sm, 0.01),
+        reason: '$label sidebar gap',
+      );
+      if (contextRow) {
+        expect(
+          tester.getSize(firstContent).height,
+          greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+          reason: '$label sidebar context row height',
+        );
+      }
     }
   });
 

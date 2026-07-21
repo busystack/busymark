@@ -210,6 +210,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get openInFiles => 'Ava failihalduris';
 
   @override
+  String get pathActions => 'Failitee toimingud';
+
+  @override
   String get outline => 'Liigendus';
 
   @override

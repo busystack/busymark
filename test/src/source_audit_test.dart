@@ -655,7 +655,14 @@ void main() {
     expect(workspace, contains('enabled: repository.hasRemote'));
     expect(workspace, contains('tooltip: context.l10n.gitBranches'));
     expect(workspace, contains("ValueKey('workspace-sidebar-primary-row')"));
+    expect(workspace, contains('class _SidebarHeaderRow'));
     expect(workspace, contains('minHeight: BusyMarkSizes.iconButton'));
+    expect(
+      RegExp(
+        r"ValueKey\('workspace-sidebar-first-content'\)",
+      ).allMatches(workspace).length,
+      greaterThanOrEqualTo(4),
+    );
     expect(workspace, contains('text: _workspaceDisplayName(context'));
     expect(workspace, contains("ValueKey('workspace-sidebar-outline-tree')"));
     expect(
@@ -676,6 +683,16 @@ void main() {
       contains('Future<_PathMenuAction?> _showSidebarPathMenu'),
     );
     expect(workspace, contains('showBusyMarkContextMenu<_PathMenuAction>'));
+    expect(
+      workspace,
+      contains('BusyMarkHeaderPopupMenuButton<_PathMenuAction>'),
+    );
+    expect(workspace, contains('_sidebarPathMenuItems'));
+    expect(workspace, contains('_performWorkspacePathAction'));
+    expect(workspace, contains("ValueKey('workspace-sidebar-path-menu')"));
+    expect(workspace, contains('tooltip: context.l10n.pathActions'));
+    expect(workspace, contains('icon: BusyMarkGlyphs.menuVertical'));
+    expect(workspace, isNot(contains('SystemMouseCursors.contextMenu')));
     expect(workspace, contains('onSecondaryTapDown: (lineContext, details)'));
     expect(workspace, contains('position: details.globalPosition'));
     expect(
@@ -944,6 +961,14 @@ void main() {
     expect(workspace, contains('label: context.l10n.fileHistory'));
     expect(workspace, contains('loadFileHistory('));
     expect(workspace, contains('file.absolutePath'));
+    final tocHeader = RegExp(
+      r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',
+    ).firstMatch(workspace)!.group(0)!;
+    expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
+    expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
+    expect(tocHeader, isNot(contains('onCreateChildTopic')));
+    expect(workspace, contains('_TocTreeAction.newChildTopic'));
+    expect(workspace, contains('label: context.l10n.newChildTopic'));
     expect(
       workspace,
       isNot(contains('_selectTab(_SidebarTab.gitHistory, tabs)')),

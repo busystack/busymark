@@ -169,6 +169,10 @@
   "@openInFiles": {
     "description": "Menu action that opens the selected file or folder location in the system file manager."
   },
+  "pathActions": "Działania na ścieżce",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
+  },
   "outline": "Konspekt",
   "@outline": {
     "description": "Outline sidebar tab label."

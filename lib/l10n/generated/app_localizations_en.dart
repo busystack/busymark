@@ -211,6 +211,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openInFiles => 'Open in Files';
 
   @override
+  String get pathActions => 'Path actions';
+
+  @override
   String get outline => 'Outline';
 
   @override

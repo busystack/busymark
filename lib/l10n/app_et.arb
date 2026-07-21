@@ -129,6 +129,8 @@
   "@open": {"description": "Open action label."},
   "openInFiles": "Ava failihalduris",
   "@openInFiles": {"description": "Menu action that opens the selected file or folder location in the system file manager."},
+  "pathActions": "Failitee toimingud",
+  "@pathActions": {"description": "Tooltip for the workspace path action menu button."},
   "outline": "Liigendus",
   "@outline": {"description": "Outline sidebar tab label."},
   "overwrite": "Kirjuta üle",

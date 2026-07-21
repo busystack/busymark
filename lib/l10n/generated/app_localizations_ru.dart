@@ -213,6 +213,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get openInFiles => 'Открыть в Файлах';
 
   @override
+  String get pathActions => 'Действия с путём';
+
+  @override
   String get outline => 'Структура';
 
   @override

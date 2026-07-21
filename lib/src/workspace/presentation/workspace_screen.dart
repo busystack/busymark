@@ -1063,6 +1063,20 @@ Future<void> _showWorkspacePathMenu(
   if (action == null || !context.mounted) {
     return;
   }
+  await _performWorkspacePathAction(
+    context,
+    name: name,
+    path: path,
+    action: action,
+  );
+}
+
+Future<void> _performWorkspacePathAction(
+  BuildContext context, {
+  required String name,
+  required String path,
+  required _PathMenuAction action,
+}) async {
   switch (action) {
     case _PathMenuAction.copyName:
       await _copyToClipboard(name);
@@ -1075,6 +1089,29 @@ Future<void> _showWorkspacePathMenu(
 
 enum _PathMenuAction { copyName, copyPath, openInFiles }
 
+List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
+  BuildContext context,
+) {
+  return [
+    BusyMarkPopupMenuItem(
+      value: _PathMenuAction.copyName,
+      label: context.l10n.copyName,
+      icon: BusyMarkGlyphs.copy,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _PathMenuAction.copyPath,
+      label: context.l10n.copyPath,
+      icon: BusyMarkGlyphs.copy,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _PathMenuAction.openInFiles,
+      label: context.l10n.openInFiles,
+      icon: BusyMarkGlyphs.folderOpen,
+    ),
+  ];
+}
+
 Future<_PathMenuAction?> _showSidebarPathMenu(
   BuildContext context,
   Offset position,
@@ -1082,24 +1119,7 @@ Future<_PathMenuAction?> _showSidebarPathMenu(
   return showBusyMarkContextMenu<_PathMenuAction>(
     context,
     position,
-    items: [
-      BusyMarkPopupMenuItem(
-        value: _PathMenuAction.copyName,
-        label: context.l10n.copyName,
-        icon: BusyMarkGlyphs.copy,
-      ),
-      BusyMarkPopupMenuItem(
-        value: _PathMenuAction.copyPath,
-        label: context.l10n.copyPath,
-        icon: BusyMarkGlyphs.copy,
-      ),
-      const PopupMenuDivider(height: BusyMarkSpacing.sm),
-      BusyMarkPopupMenuItem(
-        value: _PathMenuAction.openInFiles,
-        label: context.l10n.openInFiles,
-        icon: BusyMarkGlyphs.folderOpen,
-      ),
-    ],
+    items: _sidebarPathMenuItems(context),
   );
 }
 
@@ -2011,11 +2031,8 @@ class _SidebarHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ConstrainedBox(
+          _SidebarHeaderRow(
             key: const ValueKey('workspace-sidebar-primary-row'),
-            constraints: const BoxConstraints(
-              minHeight: BusyMarkSizes.iconButton,
-            ),
             child: Row(
               children: [
                 Expanded(
@@ -2060,19 +2077,45 @@ class _SidebarHeader extends StatelessWidget {
           ),
           if (selectedTab == _SidebarTab.files && path.isNotEmpty) ...[
             const SizedBox(height: BusyMarkSpacing.sm),
-            _SidebarHeaderLine(
-              icon: WorkspaceGlyphs.pathForKind(workspace.kind),
-              text: path,
-              style: detailsStyle,
-              leadingEllipsis: true,
-              tooltip: busyMarkLtrIsolateFor(context, path),
-              onSecondaryTapDown: (lineContext, details) =>
-                  _showWorkspacePathMenu(
-                    lineContext,
-                    name: _workspaceName(context, workspace),
-                    path: path,
-                    position: details.globalPosition,
+            _SidebarHeaderRow(
+              key: const ValueKey('workspace-sidebar-first-content'),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _SidebarHeaderLine(
+                      icon: WorkspaceGlyphs.pathForKind(workspace.kind),
+                      text: path,
+                      style: detailsStyle,
+                      leadingEllipsis: true,
+                      tooltip: busyMarkLtrIsolateFor(context, path),
+                      onSecondaryTapDown: (lineContext, details) =>
+                          _showWorkspacePathMenu(
+                            lineContext,
+                            name: _workspaceName(context, workspace),
+                            path: path,
+                            position: details.globalPosition,
+                          ),
+                    ),
                   ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>(
+                    key: const ValueKey('workspace-sidebar-path-menu'),
+                    tooltip: context.l10n.pathActions,
+                    icon: BusyMarkGlyphs.menuVertical,
+                    transparent: true,
+                    borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    itemBuilder: _sidebarPathMenuItems,
+                    onSelected: (action) => unawaited(
+                      _performWorkspacePathAction(
+                        context,
+                        name: _workspaceName(context, workspace),
+                        path: path,
+                        action: action,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
           if ((selectedTab == _SidebarTab.git ||
@@ -2081,21 +2124,25 @@ class _SidebarHeader extends StatelessWidget {
               branchLabel != null &&
               branchLabel.trim().isNotEmpty) ...[
             const SizedBox(height: BusyMarkSpacing.sm),
-            _SidebarHeaderLine(
-              icon: WorkspaceGlyphs.branch,
-              text: branchLabel,
-              style: branchStyle,
-              boldLeadingIcon: true,
-              inlineTrailing: _branchSyncIndicators(
-                context,
-                repository,
-                branchStyle,
+            _SidebarHeaderRow(
+              key: const ValueKey('workspace-sidebar-first-content'),
+              child: _SidebarHeaderLine(
+                icon: WorkspaceGlyphs.branch,
+                text: branchLabel,
+                style: branchStyle,
+                boldLeadingIcon: true,
+                inlineTrailing: _branchSyncIndicators(
+                  context,
+                  repository,
+                  branchStyle,
+                ),
+                trailingIcon: BusyMarkGlyphs.downArrow,
+                trailingIconColor: accentColor,
+                boldTrailingIcon: true,
+                tooltip: context.l10n.gitBranches,
+                onTap: (lineContext) =>
+                    onShowBranchMenu(lineContext, repository),
               ),
-              trailingIcon: BusyMarkGlyphs.downArrow,
-              trailingIconColor: accentColor,
-              boldTrailingIcon: true,
-              tooltip: context.l10n.gitBranches,
-              onTap: (lineContext) => onShowBranchMenu(lineContext, repository),
             ),
           ],
         ],
@@ -2159,6 +2206,20 @@ List<Widget> _branchSyncIndicators(
 
 typedef _SidebarHeaderSecondaryTapHandler =
     Future<void> Function(BuildContext context, TapDownDetails details);
+
+class _SidebarHeaderRow extends StatelessWidget {
+  const _SidebarHeaderRow({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: BusyMarkSizes.iconButton),
+      child: child,
+    );
+  }
+}
 
 class _SidebarHeaderLine extends StatelessWidget {
   const _SidebarHeaderLine({
@@ -2255,7 +2316,7 @@ class _SidebarHeaderLine extends StatelessWidget {
     }
     final clickable = MouseRegion(
       cursor: tapHandler == null
-          ? SystemMouseCursors.contextMenu
+          ? SystemMouseCursors.basic
           : SystemMouseCursors.click,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -3777,6 +3838,7 @@ Future<bool> _confirmDeleteFileTreeEntry(
 
 class _SidebarTreeRow extends StatelessWidget {
   const _SidebarTreeRow({
+    super.key,
     required this.title,
     required this.depth,
     required this.icon,
@@ -4367,21 +4429,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       _cutEntry = null;
                     });
                   },
-                  canCreateChild: selectedEntry != null,
                   onCreateTopic: () => _showCreateTopicDialog(
                     context,
                     instanceTreePath: instance.sourceTreePath,
                     placement: WritersideTopicCreatePlacement.root,
                     referenceEntry: selectedEntry,
                   ),
-                  onCreateChildTopic: selectedEntry == null
-                      ? null
-                      : () => _showCreateTopicDialog(
-                          context,
-                          instanceTreePath: instance.sourceTreePath,
-                          placement: WritersideTopicCreatePlacement.child,
-                          referenceEntry: selectedEntry,
-                        ),
                 );
               }
               final entry = entries[index - 1];
@@ -5091,68 +5144,60 @@ class _TocHeader extends StatelessWidget {
     required this.instances,
     required this.selectedInstance,
     required this.onSelectInstance,
-    required this.canCreateChild,
     required this.onCreateTopic,
-    required this.onCreateChildTopic,
   });
 
   final List<WritersideInstance> instances;
   final WritersideInstance selectedInstance;
   final ValueChanged<String> onSelectInstance;
-  final bool canCreateChild;
   final VoidCallback onCreateTopic;
-  final VoidCallback? onCreateChildTopic;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: BusyMarkInsets.tocHeader,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              selectedInstance.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: busyMarkSectionHeaderStyle(context),
+      child: _SidebarHeaderRow(
+        key: const ValueKey('workspace-sidebar-first-content'),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                selectedInstance.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: busyMarkSectionHeaderStyle(context),
+              ),
             ),
-          ),
-          if (instances.length > 1) ...[
-            const SizedBox(width: BusyMarkSpacing.xs),
-            BusyMarkHeaderPopupMenuButton<String>(
-              tooltip: context.l10n.instanceName,
-              icon: BusyMarkGlyphs.tree,
-              transparent: true,
-              itemBuilder: (context) => [
-                for (final instance in instances)
-                  BusyMarkPopupMenuItem(
-                    value: instance.sourceTreePath,
-                    label: instance.name,
-                    icon: BusyMarkGlyphs.tree,
-                    checked: p.equals(
-                      instance.sourceTreePath,
-                      selectedInstance.sourceTreePath,
+            if (instances.length > 1) ...[
+              const SizedBox(width: BusyMarkSpacing.xs),
+              BusyMarkHeaderPopupMenuButton<String>(
+                tooltip: context.l10n.instanceName,
+                icon: BusyMarkGlyphs.tree,
+                transparent: true,
+                itemBuilder: (context) => [
+                  for (final instance in instances)
+                    BusyMarkPopupMenuItem(
+                      value: instance.sourceTreePath,
+                      label: instance.name,
+                      icon: BusyMarkGlyphs.tree,
+                      checked: p.equals(
+                        instance.sourceTreePath,
+                        selectedInstance.sourceTreePath,
+                      ),
+                      trailingCheck: true,
                     ),
-                    trailingCheck: true,
-                  ),
-              ],
-              onSelected: onSelectInstance,
+                ],
+                onSelected: onSelectInstance,
+              ),
+            ],
+            BusyMarkHeaderIconButton(
+              tooltip: context.l10n.newTopic,
+              icon: BusyMarkGlyphs.newDocument,
+              transparent: true,
+              onPressed: onCreateTopic,
             ),
           ],
-          BusyMarkHeaderIconButton(
-            tooltip: context.l10n.newTopic,
-            icon: BusyMarkGlyphs.newDocument,
-            transparent: true,
-            onPressed: onCreateTopic,
-          ),
-          const SizedBox(width: BusyMarkSpacing.xs),
-          BusyMarkHeaderIconButton(
-            tooltip: context.l10n.newChildTopic,
-            icon: BusyMarkGlyphs.tree,
-            transparent: true,
-            onPressed: canCreateChild ? onCreateChildTopic : null,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -5808,6 +5853,9 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         }
 
         return _SidebarTreeRow(
+          key: index == 0
+              ? const ValueKey('workspace-sidebar-first-content')
+              : null,
           title: heading.text,
           depth: entry.depth,
           icon: BusyMarkGlyphs.tag,

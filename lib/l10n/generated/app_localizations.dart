@@ -501,6 +501,12 @@ abstract class AppLocalizations {
   /// **'Open in Files'**
   String get openInFiles;
 
+  /// Tooltip for the workspace path action menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'Path actions'**
+  String get pathActions;
+
   /// Outline sidebar tab label.
   ///
   /// In en, this message translates to:

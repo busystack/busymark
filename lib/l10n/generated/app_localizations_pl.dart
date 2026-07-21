@@ -211,6 +211,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get openInFiles => 'Otwórz w Plikach';
 
   @override
+  String get pathActions => 'Działania na ścieżce';
+
+  @override
   String get outline => 'Konspekt';
 
   @override

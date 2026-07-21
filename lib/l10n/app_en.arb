@@ -129,6 +129,8 @@
   "@open": {"description": "Open action label."},
   "openInFiles": "Open in Files",
   "@openInFiles": {"description": "Menu action that opens the selected file or folder location in the system file manager."},
+  "pathActions": "Path actions",
+  "@pathActions": {"description": "Tooltip for the workspace path action menu button."},
   "outline": "Outline",
   "@outline": {"description": "Outline sidebar tab label."},
   "overwrite": "Overwrite",

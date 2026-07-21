@@ -8,6 +8,7 @@ void main() {
     final header = BusyMarkInsets.sidebarHeader.resolve(TextDirection.ltr);
 
     expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
+    expect(BusyMarkInsets.tocHeader.top, 0);
   });
 
   testWidgets('elevated header controls use the shared surface shadow', (

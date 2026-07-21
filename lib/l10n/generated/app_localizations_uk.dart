@@ -212,6 +212,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get openInFiles => 'Відкрити у Файлах';
 
   @override
+  String get pathActions => 'Дії зі шляхом';
+
+  @override
   String get outline => 'Структура';
 
   @override

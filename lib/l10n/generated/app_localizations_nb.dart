@@ -213,6 +213,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get openInFiles => 'Åpne i Filer';
 
   @override
+  String get pathActions => 'Stihandlinger';
+
+  @override
   String get outline => 'Disposisjon';
 
   @override

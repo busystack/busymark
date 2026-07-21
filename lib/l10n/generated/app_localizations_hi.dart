@@ -211,6 +211,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get openInFiles => 'Files में खोलें';
 
   @override
+  String get pathActions => 'पथ संबंधी कार्रवाइयाँ';
+
+  @override
   String get outline => 'रूपरेखा';
 
   @override

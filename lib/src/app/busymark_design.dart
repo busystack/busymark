@@ -264,7 +264,7 @@ abstract final class BusyMarkInsets {
   );
   static const tocHeader = EdgeInsets.fromLTRB(
     BusyMarkSpacing.sm,
-    6,
+    0,
     BusyMarkSpacing.sm,
     BusyMarkSpacing.sm,
   );
