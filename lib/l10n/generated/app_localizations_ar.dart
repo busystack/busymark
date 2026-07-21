@@ -1000,6 +1000,185 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newChildTopic => 'موضوع فرعي جديد';
 
   @override
+  String get newSiblingTopic => 'موضوع جديد على المستوى نفسه';
+
+  @override
+  String get renameTopicFile => 'إعادة تسمية ملف الموضوع';
+
+  @override
+  String get topicPlacement => 'الموضع في جدول المحتويات';
+
+  @override
+  String get tocRoot => 'في جذر جدول المحتويات';
+
+  @override
+  String get afterSelectedTopic => 'بعد الموضوع المحدد';
+
+  @override
+  String get insideSelectedTopic => 'داخل الموضوع المحدد';
+
+  @override
+  String get pasteAfterTopic => 'لصق بعده';
+
+  @override
+  String get pasteAsChildTopic => 'لصق كموضوع فرعي';
+
+  @override
+  String get removeFromToc => 'إزالة من جدول المحتويات';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'هل تريد الإزالة من جدول المحتويات؟';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'هل تريد إزالة $name من جدول المحتويات هذا؟ سيُحتفظ بملف الموضوع.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'هل تريد حذف ملف الموضوع؟';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'هل تريد حذف $name وإزالته من جميع جداول المحتويات؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'حذف ملف الموضوع بأمان…';
+
+  @override
+  String get removeTocElement => 'إزالة عنصر جدول المحتويات';
+
+  @override
+  String get reviewUsages => 'مراجعة الاستخدامات';
+
+  @override
+  String get deleteTopicFile => 'حذف ملف الموضوع';
+
+  @override
+  String get removeAction => 'إزالة';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'أزِل «$topic» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'احذف «$topic» وحدّث المراجع إليه بأمان في مشروع Writerside هذا بأكمله.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'سينتقل $count موضوع فرعي مستوى واحدًا إلى الأعلى.',
+      many: 'سينتقل $count موضوعًا فرعيًا مستوى واحدًا إلى الأعلى.',
+      few: 'ستنتقل $count موضوعات فرعية مستوى واحدًا إلى الأعلى.',
+      two: 'سينتقل موضوعان فرعيان مستوى واحدًا إلى الأعلى.',
+      one: 'سينتقل موضوع فرعي واحد مستوى واحدًا إلى الأعلى.',
+      zero: 'لن يُنقل أي موضوع فرعي.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'يُستخدم هذا الموضوع كصفحة بدء لمثيل. راجع استخداماته وعيّن صفحة بدء أخرى قبل المتابعة.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'الاستخدامات ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages => 'لم يُعثر على مراجع قد تتعطل.';
+
+  @override
+  String get topicUsagesFound =>
+      'عثر BusyMark على المراجع التالية لهذا الموضوع.';
+
+  @override
+  String get topicUsageTocElements => 'عناصر جدول المحتويات';
+
+  @override
+  String get topicUsageStartPages => 'صفحات البدء';
+
+  @override
+  String get topicUsageTopicLinks => 'روابط الموضوعات';
+
+  @override
+  String get topicUsageIncludes => 'التضمينات';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count استخدام',
+      many: '$count استخدامًا',
+      few: '$count استخدامات',
+      two: 'استخدامان',
+      one: 'استخدام واحد',
+      zero: 'لا استخدامات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'خيارات إعادة الهيكلة';
+
+  @override
+  String get updateUsagesAutomatically => 'تحديث الاستخدامات تلقائيًا';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'إزالة مراجع جدول المحتويات والتضمينات مع الاحتفاظ بنص الروابط.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'تتطلب بعض الاستخدامات تغييرات يدوية قبل إعادة الهيكلة هذه.';
+
+  @override
+  String get setRedirectTo => 'تعيين إعادة التوجيه إلى';
+
+  @override
+  String get noRedirectDescription =>
+      'عدم إعادة توجيه الصفحة القديمة المنشورة.';
+
+  @override
+  String get redirectTarget => 'وجهة إعادة التوجيه';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'راجع الاستخدامات المتبقية وحدّثها قبل المتابعة، أو فعّل التحديثات التلقائية عند توفرها.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'استخدامات $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'لم يُعثر على استخدامات';
+
+  @override
+  String get outsideSelectedInstance => 'خارج المثيل المحدد';
+
+  @override
+  String get doRefactor => 'تنفيذ إعادة الهيكلة';
+
+  @override
+  String get orphanTopicTitle => 'لم يعد ملف الموضوع مستخدمًا';
+
+  @override
+  String get keepTopicFile => 'الاحتفاظ بملف الموضوع';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return 'لم يعد «$topic» مستخدمًا في أي مكان ضمن مشروع Writerside هذا. احذف الملف أو احتفظ به لاستخدامه في مثيل آخر.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'موضوع جديد';
 
   @override
@@ -1337,6 +1516,40 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'الموضوع المرجعي غير موجود في الشجرة المحددة: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'لم يعد عنصر جدول المحتويات المحدد موجودًا.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'لا يمكن نقل عنصر في جدول المحتويات إلى نفسه أو إلى أحد العناصر الفرعية التابعة له.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'لا يمكن حذف موضوع البدء $topic. اختر صفحة بدء أخرى أولًا.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'استخدم الحذف الآمن لملفات موضوعات Writerside.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'تعذّر إكمال فحص استخدامات الموضوع. لم تُغيَّر أي ملفات.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'لا تزال بعض استخدامات الموضوع تتطلب المعالجة. راجعها قبل المتابعة.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'لم يعد هدف إعادة التوجيه المحدد صالحًا. حدده مرة أخرى.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'تعذّر التراجع بالكامل عن إزالة الموضوع. راجع هذه المسارات قبل المتابعة: $paths';
   }
 
   @override

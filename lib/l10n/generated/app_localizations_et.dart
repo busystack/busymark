@@ -784,7 +784,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get italic => 'Kursiiv';
 
   @override
-  String get underline => 'Allajoonitud';
+  String get underline => 'Allajoonimine';
 
   @override
   String get strikethrough => 'Läbikriipsutus';
@@ -850,10 +850,10 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get insertRowAbove => 'Lisa rida üles';
+  String get insertRowAbove => 'Lisa rida ülespoole';
 
   @override
-  String get insertRowBelow => 'Lisa rida alla';
+  String get insertRowBelow => 'Lisa rida allapoole';
 
   @override
   String get deleteRow => 'Kustuta rida';
@@ -1001,6 +1001,177 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get newChildTopic => 'Uus alamteema';
+
+  @override
+  String get newSiblingTopic => 'Uus samatasemeline teema';
+
+  @override
+  String get renameTopicFile => 'Nimeta teemafail ümber';
+
+  @override
+  String get topicPlacement => 'Paigutus sisukorras';
+
+  @override
+  String get tocRoot => 'Sisukorra juurtasemel';
+
+  @override
+  String get afterSelectedTopic => 'Valitud teema järel';
+
+  @override
+  String get insideSelectedTopic => 'Valitud teema all';
+
+  @override
+  String get pasteAfterTopic => 'Aseta järele';
+
+  @override
+  String get pasteAsChildTopic => 'Aseta alamteemaks';
+
+  @override
+  String get removeFromToc => 'Eemalda sisukorrast';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Kas eemaldada sisukorrast?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Kas eemaldada „$name” sellest sisukorrast? Teemafail säilitatakse.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Kas kustutada teemafail?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Kas kustutada „$name” ja eemaldada see kõigist sisukordadest? Seda toimingut ei saa tagasi võtta.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Kustuta teemafail turvaliselt…';
+
+  @override
+  String get removeTocElement => 'Eemalda sisukorraelement';
+
+  @override
+  String get reviewUsages => 'Vaata kasutuskohad üle';
+
+  @override
+  String get deleteTopicFile => 'Kustuta teemafail';
+
+  @override
+  String get removeAction => 'Eemalda';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Eemalda „$topic” valitud eksemplarist. Teemafail säilitatakse.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Kustuta „$topic” ja uuenda kogu Writerside’i projektis turvaliselt sellele viitavad kohad.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count alamteemat liigub ühe taseme võrra üles.',
+      one: '1 alamteema liigub ühe taseme võrra üles.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Seda teemat kasutatakse eksemplari avalehena. Enne jätkamist vaata kasutuskohad üle ja määra teine avaleht.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Kasutuskohad ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'Ei leitud viiteid, mis selle toimingu tõttu katkeksid.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark leidis järgmised viited sellele teemale.';
+
+  @override
+  String get topicUsageTocElements => 'Sisukorraelemendid';
+
+  @override
+  String get topicUsageStartPages => 'Avalehed';
+
+  @override
+  String get topicUsageTopicLinks => 'Teemalingid';
+
+  @override
+  String get topicUsageIncludes => 'Kaasamiselemendid';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count kasutuskohta',
+      one: '1 kasutuskoht',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Refaktoreerimise valikud';
+
+  @override
+  String get updateUsagesAutomatically => 'Uuenda kasutuskohad automaatselt';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Eemalda sisukorraviited ja kaasamiselemendid ning säilita linkide tekst.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Mõnda kasutuskohta tuleb enne refaktoreerimist käsitsi muuta.';
+
+  @override
+  String get setRedirectTo => 'Määra ümbersuunamine';
+
+  @override
+  String get noRedirectDescription => 'Ära suuna vana avaldatud lehte ümber.';
+
+  @override
+  String get redirectTarget => 'Ümbersuunamise sihtkoht';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Enne jätkamist vaata üle ja uuenda ülejäänud kasutuskohad või luba automaatne uuendamine, kui see on saadaval.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Teema „$topic” kasutuskohad';
+  }
+
+  @override
+  String get noUsagesFound => 'Kasutuskohti ei leitud';
+
+  @override
+  String get outsideSelectedInstance => 'väljaspool valitud eksemplari';
+
+  @override
+  String get doRefactor => 'Refaktoreeri';
+
+  @override
+  String get orphanTopicTitle => 'Teemafaili ei kasutata enam';
+
+  @override
+  String get keepTopicFile => 'Säilita teemafail';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '„$topic” pole selles Writerside’i projektis enam kusagil kasutusel. Kustuta fail või säilita see mõnes teises eksemplaris kasutamiseks.';
+  }
 
   @override
   String get defaultNewTopicTitle => 'Uus teema';
@@ -1341,6 +1512,40 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Viidatud teemat pole valitud puus: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'Valitud sisukorra kirjet pole enam olemas.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'Sisukorra kirjet ei saa teisaldada iseenda ega ühegi oma alamkirje alla.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'Avaleheks määratud teemat „$topic” ei saa kustutada. Vali esmalt teine avaleht.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Writerside’i teemafaili kustutamiseks kasuta turvalist kustutamist.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Teema kasutuskohtade kontrolli ei saanud lõpule viia. Ühtegi faili ei muudetud.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Mõned teema kasutuskohad vajavad veel tähelepanu. Vaata need enne jätkamist üle.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'Valitud ümbersuunamise sihtkoht ei ole enam kehtiv. Vali see uuesti.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Teema eemaldamist ei saanud täielikult tagasi pöörata. Enne jätkamist vaata üle järgmised asukohad: $paths';
   }
 
   @override

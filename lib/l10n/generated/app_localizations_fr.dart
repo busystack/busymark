@@ -1015,6 +1015,180 @@ class AppLocalizationsFr extends AppLocalizations {
   String get newChildTopic => 'Nouveau sous-sujet';
 
   @override
+  String get newSiblingTopic => 'Nouveau sujet de même niveau';
+
+  @override
+  String get renameTopicFile => 'Renommer le fichier du sujet';
+
+  @override
+  String get topicPlacement => 'Emplacement dans la table des matières';
+
+  @override
+  String get tocRoot => 'À la racine de la table des matières';
+
+  @override
+  String get afterSelectedTopic => 'Après le sujet sélectionné';
+
+  @override
+  String get insideSelectedTopic => 'Dans le sujet sélectionné';
+
+  @override
+  String get pasteAfterTopic => 'Coller après';
+
+  @override
+  String get pasteAsChildTopic => 'Coller comme sous-sujet';
+
+  @override
+  String get removeFromToc => 'Retirer de la table des matières';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Retirer de la table des matières ?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Retirer $name de cette table des matières ? Le fichier du sujet sera conservé.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Supprimer le fichier du sujet ?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Supprimer $name et le retirer de toutes les tables des matières ? Cette action est irréversible.';
+  }
+
+  @override
+  String get safeDeleteTopicFile =>
+      'Supprimer le fichier du sujet en toute sécurité…';
+
+  @override
+  String get removeTocElement => 'Retirer l’élément de la table des matières';
+
+  @override
+  String get reviewUsages => 'Examiner les utilisations';
+
+  @override
+  String get deleteTopicFile => 'Supprimer le fichier du sujet';
+
+  @override
+  String get removeAction => 'Retirer';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Retirez « $topic » de l’instance d’aide sélectionnée. Le fichier du sujet sera conservé.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Supprimez « $topic » et mettez à jour ses références en toute sécurité dans l’ensemble de ce projet Writerside.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sujets enfants remonteront d’un niveau.',
+      one: '1 sujet enfant remontera d’un niveau.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Ce sujet sert de page de démarrage à une instance. Examinez ses utilisations et attribuez une autre page de démarrage avant de continuer.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Utilisations ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'Aucune référence susceptible de ne plus fonctionner n’a été trouvée.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark a trouvé les références suivantes à ce sujet.';
+
+  @override
+  String get topicUsageTocElements => 'Éléments de la table des matières';
+
+  @override
+  String get topicUsageStartPages => 'Pages de démarrage';
+
+  @override
+  String get topicUsageTopicLinks => 'Liens vers le sujet';
+
+  @override
+  String get topicUsageIncludes => 'Inclusions';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count utilisations',
+      one: '1 utilisation',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Options de refactorisation';
+
+  @override
+  String get updateUsagesAutomatically =>
+      'Mettre à jour les utilisations automatiquement';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Retirer les références des tables des matières et les inclusions, et conserver le texte des liens.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Certaines utilisations nécessitent des modifications manuelles avant cette refactorisation.';
+
+  @override
+  String get setRedirectTo => 'Rediriger vers';
+
+  @override
+  String get noRedirectDescription =>
+      'Ne pas rediriger l’ancienne page publiée.';
+
+  @override
+  String get redirectTarget => 'Cible de la redirection';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Examinez et mettez à jour les utilisations restantes avant de continuer, ou activez les mises à jour automatiques lorsqu’elles sont disponibles.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Utilisations de $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'Aucune utilisation trouvée.';
+
+  @override
+  String get outsideSelectedInstance => 'En dehors de l’instance sélectionnée';
+
+  @override
+  String get doRefactor => 'Refactoriser';
+
+  @override
+  String get orphanTopicTitle => 'Le fichier du sujet n’est plus utilisé';
+
+  @override
+  String get keepTopicFile => 'Conserver le fichier du sujet';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '« $topic » n’est plus utilisé nulle part dans ce projet Writerside. Supprimez le fichier ou conservez-le pour l’utiliser dans une autre instance.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'Nouveau sujet';
 
   @override
@@ -1356,6 +1530,40 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Le sujet de référence n’est pas présent dans l’arborescence sélectionnée : $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'L’entrée sélectionnée de la table des matières n’existe plus.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'Une entrée de la table des matières ne peut pas être déplacée dans elle-même ni dans l’un de ses descendants.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'Le sujet de démarrage $topic ne peut pas être supprimé. Choisissez d’abord une autre page de démarrage.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Utilisez la suppression sécurisée pour les fichiers de sujet Writerside.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'L’analyse des utilisations du sujet n’a pas pu aboutir. Aucun fichier n’a été modifié.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Certaines utilisations du sujet nécessitent encore votre intervention. Examinez-les avant de continuer.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'La cible de redirection sélectionnée n’est plus valide. Sélectionnez-la de nouveau.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'La suppression du sujet n’a pas pu être entièrement annulée. Vérifiez ces chemins avant de continuer : $paths';
   }
 
   @override

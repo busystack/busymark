@@ -10,6 +10,66 @@ import 'writerside_model.dart';
 
 enum WritersideTopicCreatePlacement { root, sibling, child }
 
+/// Semantic identity of a TOC subtree captured when the user selects it.
+///
+/// Structural index paths can become stale when another writer inserts or
+/// removes an entry. Mutations compare this snapshot with the element found at
+/// the requested path before changing the tree.
+class WritersideTocNodeIdentity {
+  const WritersideTocNodeIdentity({
+    required this.hidden,
+    this.topicFileName,
+    this.href,
+    this.tocTitle,
+    this.id,
+    this.children = const [],
+  });
+
+  factory WritersideTocNodeIdentity.fromNode(TocNode node) {
+    return WritersideTocNodeIdentity(
+      topicFileName: node.topicFileName,
+      href: node.href,
+      tocTitle: node.tocTitle,
+      id: node.id,
+      hidden: node.hidden,
+      children: [
+        for (final child in node.children)
+          WritersideTocNodeIdentity.fromNode(child),
+      ],
+    );
+  }
+
+  final String? topicFileName;
+  final String? href;
+  final String? tocTitle;
+  final String? id;
+  final bool hidden;
+  final List<WritersideTocNodeIdentity> children;
+
+  bool matches(XmlElement element) {
+    if (element.name.local != 'toc-element' ||
+        element.getAttribute('topic') != topicFileName ||
+        element.getAttribute('href') != href ||
+        element.getAttribute('toc-title') != tocTitle ||
+        element.getAttribute('id') != id ||
+        (element.getAttribute('hidden') == 'true') != hidden) {
+      return false;
+    }
+    final elementChildren = element.childElements
+        .where((child) => child.name.local == 'toc-element')
+        .toList();
+    if (elementChildren.length != children.length) {
+      return false;
+    }
+    for (var index = 0; index < children.length; index += 1) {
+      if (!children[index].matches(elementChildren[index])) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
+
 class WritersideTopicCreateRequest {
   const WritersideTopicCreateRequest({
     required this.title,
@@ -17,6 +77,8 @@ class WritersideTopicCreateRequest {
     this.format = WritersideTopicFormat.markdown,
     this.placement = WritersideTopicCreatePlacement.root,
     this.referenceTopic,
+    this.referenceTocPath,
+    this.referenceTocIdentity,
   });
 
   final String title;
@@ -24,6 +86,16 @@ class WritersideTopicCreateRequest {
   final WritersideTopicFormat format;
   final WritersideTopicCreatePlacement placement;
   final String? referenceTopic;
+
+  /// Zero-based indexes among the `toc-element` children at each level.
+  ///
+  /// When provided, this identifies the exact reference node for a sibling or
+  /// child insertion. It takes precedence over [referenceTopic], which remains
+  /// available for compatibility with callers that only know a topic filename.
+  final List<int>? referenceTocPath;
+
+  /// Expected node at [referenceTocPath], used to reject stale UI paths.
+  final WritersideTocNodeIdentity? referenceTocIdentity;
 }
 
 class WritersideTopicCreateTarget {
@@ -53,7 +125,17 @@ class WritersideTopicCreateResult {
 }
 
 class WritersideTopicCreator {
-  const WritersideTopicCreator();
+  const WritersideTopicCreator({
+    Future<void> Function(String treePath)? beforeTreePublish,
+  }) : _beforeTreePublish = beforeTreePublish;
+
+  /// Test seam invoked after the replacement tree is staged but immediately
+  /// before its final compare-and-publish check.
+  ///
+  /// Production callers should leave this unset. The source comparison still
+  /// runs after the callback, so using the seam cannot bypass the disk-change
+  /// guard.
+  final Future<void> Function(String treePath)? _beforeTreePublish;
 
   Future<WritersideTopicCreateResult> create(
     WritersideTopicCreateTarget target,
@@ -137,19 +219,23 @@ class WritersideTopicCreator {
     if (createdTopicsRoot.type != FileSystemEntityType.directory) {
       throw const BusyMarkException('writerside.topic.topics-root-unsafe');
     }
-    await _writeNewFile(
-      rootAnchor,
-      topicPath,
-      _topicSource(request.format, topicId, title),
-    );
-    final checkedTree = await _treePath(rootAnchor, treePath);
-    if (checkedTree.type != FileSystemEntityType.file) {
-      throw BusyMarkException(
-        'writerside.topic.tree-file-missing',
-        args: {'path': checkedTree.path},
+    final topicSource = _topicSource(request.format, topicId, title);
+    var topicCreated = false;
+    try {
+      await _writeNewFile(rootAnchor, topicPath, topicSource);
+      topicCreated = true;
+      await _replaceTreeAtomically(
+        rootAnchor,
+        treePath,
+        updatedTree,
+        expectedCurrentSource: treeSource,
       );
+    } on Object {
+      if (topicCreated) {
+        await _deleteCreatedFileBestEffort(rootAnchor, topicPath, topicSource);
+      }
+      rethrow;
     }
-    await File(checkedTree.path).writeAsString(updatedTree);
 
     return WritersideTopicCreateResult(
       topicPath: topicPath,
@@ -226,12 +312,38 @@ class WritersideTopicCreator {
     final element = XmlElement(XmlName.parts('toc-element'), [
       XmlAttribute(XmlName.parts('topic'), topicFileName),
     ]);
-    final referenceTopic = request.referenceTopic?.trim();
-    if (request.placement == WritersideTopicCreatePlacement.root ||
-        referenceTopic == null ||
-        referenceTopic.isEmpty) {
+    if (request.placement == WritersideTopicCreatePlacement.root) {
       root.children.add(element);
       return _treeXml(document);
+    }
+
+    final referencePath = request.referenceTocPath;
+    if (referencePath != null) {
+      final referenceElement = _tocElementAtPath(root, referencePath);
+      if (referenceElement == null ||
+          !(request.referenceTocIdentity?.matches(referenceElement) ?? true)) {
+        throw BusyMarkException(
+          'writerside.topic.reference-missing',
+          args: {'topic': _tocPathLabel(referencePath)},
+        );
+      }
+      switch (request.placement) {
+        case WritersideTopicCreatePlacement.child:
+          referenceElement.children.add(element);
+        case WritersideTopicCreatePlacement.sibling:
+          _insertAfterElement(referenceElement, element);
+        case WritersideTopicCreatePlacement.root:
+          break;
+      }
+      return _treeXml(document);
+    }
+
+    final referenceTopic = request.referenceTopic?.trim();
+    if (referenceTopic == null || referenceTopic.isEmpty) {
+      throw const BusyMarkException(
+        'writerside.topic.reference-missing',
+        args: {'topic': ''},
+      );
     }
     final inserted = switch (request.placement) {
       WritersideTopicCreatePlacement.child => _appendToTopic(
@@ -254,6 +366,44 @@ class WritersideTopicCreator {
     }
     return _treeXml(document);
   }
+
+  XmlElement? _tocElementAtPath(XmlElement root, List<int> path) {
+    if (path.isEmpty || path.any((index) => index < 0)) {
+      return null;
+    }
+    var parent = root;
+    for (var depth = 0; depth < path.length; depth += 1) {
+      final children = parent.childElements
+          .where((element) => element.name.local == 'toc-element')
+          .toList();
+      final index = path[depth];
+      if (index >= children.length) {
+        return null;
+      }
+      parent = children[index];
+    }
+    return parent;
+  }
+
+  void _insertAfterElement(XmlElement reference, XmlElement element) {
+    final parent = reference.parent;
+    if (parent is! XmlElement) {
+      throw const BusyMarkException(
+        'writerside.topic.reference-missing',
+        args: {'topic': ''},
+      );
+    }
+    final index = parent.children.indexOf(reference);
+    if (index < 0) {
+      throw const BusyMarkException(
+        'writerside.topic.reference-missing',
+        args: {'topic': ''},
+      );
+    }
+    parent.children.insert(index + 1, element);
+  }
+
+  String _tocPathLabel(List<int> path) => path.join('/');
 
   bool _appendToTopic(
     XmlElement current,
@@ -310,15 +460,119 @@ class WritersideTopicCreator {
         args: {'path': target.path},
       );
     }
-    await File(target.path).create(exclusive: true);
-    final created = await _topicTargetPath(anchor, target.path);
-    if (created.type != FileSystemEntityType.file) {
+    final file = File(target.path);
+    var createdByThisOperation = false;
+    try {
+      await file.create(exclusive: true);
+      createdByThisOperation = true;
+      final created = await _topicTargetPath(anchor, target.path);
+      if (created.type != FileSystemEntityType.file) {
+        throw BusyMarkException(
+          'writerside.topic.file-exists',
+          args: {'path': created.path},
+        );
+      }
+      await File(created.path).writeAsString(content, flush: true);
+    } on Object {
+      if (createdByThisOperation) {
+        await _deleteCreatedFileBestEffort(anchor, target.path, content);
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _replaceTreeAtomically(
+    CanonicalPathAnchor anchor,
+    String path,
+    String source, {
+    required String expectedCurrentSource,
+  }) async {
+    final tree = await _treePath(anchor, path);
+    await _ensureTreeUnchanged(tree, expectedCurrentSource);
+    final targetStat = await File(tree.path).stat();
+    final temporary = await _newTreeTemporaryFile(anchor, tree.path);
+    try {
+      await temporary.writeAsString(source, flush: true);
+      await _copyFileMode(targetStat, temporary);
+      await _beforeTreePublish?.call(tree.path);
+
+      final publishTarget = await _treePath(anchor, path);
+      await _ensureTreeUnchanged(publishTarget, expectedCurrentSource);
+      await temporary.rename(publishTarget.path);
+    } finally {
+      if (await temporary.exists()) {
+        await temporary.delete();
+      }
+    }
+  }
+
+  Future<void> _ensureTreeUnchanged(
+    AnchoredPathResolution tree,
+    String expectedSource,
+  ) async {
+    if (tree.type != FileSystemEntityType.file ||
+        await File(tree.path).readAsString() != expectedSource) {
       throw BusyMarkException(
-        'writerside.topic.file-exists',
-        args: {'path': created.path},
+        'writerside.topic.tree-changed',
+        args: {'path': tree.path},
       );
     }
-    await File(created.path).writeAsString(content);
+  }
+
+  Future<File> _newTreeTemporaryFile(
+    CanonicalPathAnchor anchor,
+    String targetPath,
+  ) async {
+    for (var attempt = 0; attempt < 100; attempt += 1) {
+      final name =
+          '.${p.basename(targetPath)}.busymark-topic-create-'
+          '$pid-${DateTime.now().microsecondsSinceEpoch}-$attempt';
+      final candidatePath = p.join(p.dirname(targetPath), name);
+      final resolution = await _treePath(anchor, candidatePath);
+      if (resolution.type != FileSystemEntityType.notFound) {
+        continue;
+      }
+      try {
+        return await File(resolution.path).create(exclusive: true);
+      } on FileSystemException {
+        continue;
+      }
+    }
+    throw BusyMarkException(
+      'writerside.topic.temporary-file-failed',
+      args: {'path': targetPath},
+    );
+  }
+
+  Future<void> _copyFileMode(FileStat sourceStat, File target) async {
+    if (Platform.isWindows) {
+      return;
+    }
+    final mode = (sourceStat.mode & 0xfff).toRadixString(8);
+    final result = await Process.run('chmod', [mode, target.path]);
+    if (result.exitCode != 0) {
+      throw FileSystemException(
+        'Failed to apply file mode $mode: ${result.stderr}',
+        target.path,
+      );
+    }
+  }
+
+  Future<void> _deleteCreatedFileBestEffort(
+    CanonicalPathAnchor anchor,
+    String path,
+    String expectedContent,
+  ) async {
+    try {
+      final resolution = await _topicTargetPath(anchor, path);
+      if (resolution.type == FileSystemEntityType.file &&
+          await File(resolution.path).readAsString() == expectedContent) {
+        await File(resolution.path).delete();
+      }
+    } on Object {
+      // Best effort cleanup after a failed multi-file publication. Never
+      // delete a path whose anchored identity and contents were not verified.
+    }
   }
 
   String _safeRelativeDirectory(String value) {

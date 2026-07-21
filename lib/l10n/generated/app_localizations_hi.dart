@@ -993,6 +993,177 @@ class AppLocalizationsHi extends AppLocalizations {
   String get newChildTopic => 'नया उप-विषय';
 
   @override
+  String get newSiblingTopic => 'समान स्तर पर नया विषय';
+
+  @override
+  String get renameTopicFile => 'विषय फ़ाइल का नाम बदलें';
+
+  @override
+  String get topicPlacement => 'TOC में स्थान';
+
+  @override
+  String get tocRoot => 'TOC के शीर्ष स्तर पर';
+
+  @override
+  String get afterSelectedTopic => 'चयनित विषय के बाद';
+
+  @override
+  String get insideSelectedTopic => 'चयनित विषय के अंदर';
+
+  @override
+  String get pasteAfterTopic => 'इसके बाद पेस्ट करें';
+
+  @override
+  String get pasteAsChildTopic => 'उप-विषय के रूप में पेस्ट करें';
+
+  @override
+  String get removeFromToc => 'TOC से हटाएँ';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'TOC से हटाएँ?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'इस TOC से $name को हटाएँ? विषय फ़ाइल बनी रहेगी।';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'विषय फ़ाइल हटाएँ?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return '$name को हटाकर सभी TOC से निकाल दें? इसे वापस नहीं किया जा सकता।';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'विषय फ़ाइल को सुरक्षित रूप से हटाएँ…';
+
+  @override
+  String get removeTocElement => 'TOC तत्व हटाएँ';
+
+  @override
+  String get reviewUsages => 'उपयोगों की समीक्षा करें';
+
+  @override
+  String get deleteTopicFile => 'विषय फ़ाइल हटाएँ';
+
+  @override
+  String get removeAction => 'हटाएँ';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return '“$topic” को चुने गए सहायता इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return '“$topic” को हटाएँ और इस पूरे Writerside प्रोजेक्ट में उसके संदर्भों को सुरक्षित रूप से अपडेट करें।';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count उप-विषय एक स्तर ऊपर चले जाएँगे।',
+      one: '1 उप-विषय एक स्तर ऊपर चला जाएगा।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'यह विषय किसी इंस्टेंस के प्रारंभ पृष्ठ के रूप में उपयोग हो रहा है। इसके उपयोगों की समीक्षा करें और आगे बढ़ने से पहले कोई दूसरा प्रारंभ पृष्ठ निर्धारित करें।';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'उपयोग ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'कोई ऐसा संदर्भ नहीं मिला जो टूट सकता है।';
+
+  @override
+  String get topicUsagesFound => 'BusyMark को इस विषय के निम्न संदर्भ मिले।';
+
+  @override
+  String get topicUsageTocElements => 'TOC तत्व';
+
+  @override
+  String get topicUsageStartPages => 'प्रारंभ पृष्ठ';
+
+  @override
+  String get topicUsageTopicLinks => 'विषय लिंक';
+
+  @override
+  String get topicUsageIncludes => 'शामिल अंश';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count उपयोग',
+      one: '1 उपयोग',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'रीफ़ैक्टरिंग विकल्प';
+
+  @override
+  String get updateUsagesAutomatically => 'उपयोगों को अपने आप अपडेट करें';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'TOC संदर्भ और शामिल अंश हटाएँ, और लिंक का टेक्स्ट बनाए रखें।';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'इस रीफ़ैक्टरिंग से पहले कुछ उपयोगों को मैन्युअल रूप से बदलना होगा।';
+
+  @override
+  String get setRedirectTo => 'इस पर रीडायरेक्ट करें';
+
+  @override
+  String get noRedirectDescription =>
+      'पुराने प्रकाशित पृष्ठ को रीडायरेक्ट न करें।';
+
+  @override
+  String get redirectTarget => 'रीडायरेक्ट गंतव्य';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'आगे बढ़ने से पहले शेष उपयोगों की समीक्षा करके उन्हें अपडेट करें, या उपलब्ध होने पर अपने आप अपडेट करने का विकल्प चालू करें।';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return '$topic के उपयोग';
+  }
+
+  @override
+  String get noUsagesFound => 'कोई उपयोग नहीं मिला';
+
+  @override
+  String get outsideSelectedInstance => 'चुने गए इंस्टेंस के बाहर';
+
+  @override
+  String get doRefactor => 'रीफ़ैक्टर करें';
+
+  @override
+  String get orphanTopicTitle => 'विषय फ़ाइल अब उपयोग में नहीं है';
+
+  @override
+  String get keepTopicFile => 'विषय फ़ाइल रखें';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '“$topic” अब इस Writerside प्रोजेक्ट में कहीं भी उपयोग नहीं होता। फ़ाइल हटाएँ या किसी दूसरे इंस्टेंस में उपयोग के लिए इसे रखें।';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'नया विषय';
 
   @override
@@ -1331,6 +1502,40 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'संदर्भित विषय चयनित ट्री में मौजूद नहीं है: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'चयनित TOC प्रविष्टि अब मौजूद नहीं है।';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'TOC प्रविष्टि को उसी के अंदर या उसकी किसी उप-प्रविष्टि के अंदर नहीं ले जाया जा सकता।';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'आरंभिक विषय $topic को हटाया नहीं जा सकता। पहले कोई दूसरा आरंभ पेज चुनें।';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Writerside विषय फ़ाइलों के लिए सुरक्षित रूप से हटाएँ सुविधा का उपयोग करें।';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'विषय के उपयोगों की जाँच पूरी नहीं हो सकी। कोई फ़ाइल नहीं बदली गई।';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'विषय के कुछ उपयोगों पर अभी ध्यान देना आवश्यक है। आगे बढ़ने से पहले उनकी समीक्षा करें।';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'चुना गया रीडायरेक्ट लक्ष्य अब मान्य नहीं है। उसे फिर से चुनें।';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'विषय हटाने की कार्रवाई पूरी तरह वापस नहीं की जा सकी। आगे बढ़ने से पहले इन पथों की समीक्षा करें: $paths';
   }
 
   @override

@@ -1005,6 +1005,178 @@ class AppLocalizationsNb extends AppLocalizations {
   String get newChildTopic => 'Nytt underemne';
 
   @override
+  String get newSiblingTopic => 'Nytt emne på samme nivå';
+
+  @override
+  String get renameTopicFile => 'Gi emnefilen nytt navn';
+
+  @override
+  String get topicPlacement => 'Plassering i innholdsfortegnelsen';
+
+  @override
+  String get tocRoot => 'På toppnivå i innholdsfortegnelsen';
+
+  @override
+  String get afterSelectedTopic => 'Etter valgt emne';
+
+  @override
+  String get insideSelectedTopic => 'Under valgt emne';
+
+  @override
+  String get pasteAfterTopic => 'Lim inn etter';
+
+  @override
+  String get pasteAsChildTopic => 'Lim inn som underemne';
+
+  @override
+  String get removeFromToc => 'Fjern fra innholdsfortegnelsen';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Fjerne fra innholdsfortegnelsen?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Fjerne $name fra denne innholdsfortegnelsen? Emnefilen beholdes.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Slette emnefilen?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Slette $name og fjerne den fra alle innholdsfortegnelser? Dette kan ikke angres.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Slett emnefilen trygt …';
+
+  @override
+  String get removeTocElement => 'Fjern element fra innholdsfortegnelsen';
+
+  @override
+  String get reviewUsages => 'Se gjennom bruk';
+
+  @override
+  String get deleteTopicFile => 'Slett emnefil';
+
+  @override
+  String get removeAction => 'Fjern';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Fjern «$topic» fra den valgte hjelpeinstansen. Emnefilen beholdes.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Slett «$topic», og oppdater referansene til emnet trygt i hele dette Writerside-prosjektet.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count underemner flyttes ett nivå opp.',
+      one: '1 underemne flyttes ett nivå opp.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Dette emnet brukes som startside for en instans. Se gjennom bruken, og angi en annen startside før du fortsetter.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Bruk ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'Fant ingen referanser som ville slutte å fungere.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark fant følgende referanser til dette emnet.';
+
+  @override
+  String get topicUsageTocElements => 'Elementer i innholdsfortegnelsen';
+
+  @override
+  String get topicUsageStartPages => 'Startsider';
+
+  @override
+  String get topicUsageTopicLinks => 'Emnelenker';
+
+  @override
+  String get topicUsageIncludes => 'Inkluderinger';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bruk',
+      one: '1 bruk',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Refaktoreringsalternativer';
+
+  @override
+  String get updateUsagesAutomatically => 'Oppdater bruk automatisk';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Fjern referanser i innholdsfortegnelsen og inkluderinger, og behold lenketeksten.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Noe bruk må endres manuelt før denne refaktoreringen.';
+
+  @override
+  String get setRedirectTo => 'Omdiriger til';
+
+  @override
+  String get noRedirectDescription =>
+      'Ikke omdiriger den gamle publiserte siden.';
+
+  @override
+  String get redirectTarget => 'Mål for omdirigering';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Se gjennom og oppdater gjenværende bruk før du fortsetter, eller slå på automatiske oppdateringer når de er tilgjengelige.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Bruk av «$topic»';
+  }
+
+  @override
+  String get noUsagesFound => 'Fant ingen bruk.';
+
+  @override
+  String get outsideSelectedInstance => 'utenfor den valgte instansen';
+
+  @override
+  String get doRefactor => 'Utfør refaktorering';
+
+  @override
+  String get orphanTopicTitle => 'Emnefilen brukes ikke lenger';
+
+  @override
+  String get keepTopicFile => 'Behold emnefilen';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '«$topic» brukes ikke lenger noe sted i dette Writerside-prosjektet. Slett filen, eller behold den for bruk i en annen instans.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'Nytt emne';
 
   @override
@@ -1342,6 +1514,40 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Referanseemnet finnes ikke i det valgte treet: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'Den valgte oppføringen i innholdsfortegnelsen finnes ikke lenger.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'En oppføring i innholdsfortegnelsen kan ikke flyttes under seg selv eller en av sine underoppføringer.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'Startemnet $topic kan ikke slettes. Velg en annen startside først.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Bruk trygg sletting for Writerside-emnefiler.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Kunne ikke fullføre søket etter emnebruk. Ingen filer ble endret.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Noen forekomster av emnet krever fortsatt oppfølging. Se gjennom dem før du fortsetter.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'Det valgte målet for videresending er ikke lenger gyldig. Velg det på nytt.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Fjerningen av emnet kunne ikke angres fullstendig. Se gjennom disse banene før du fortsetter: $paths';
   }
 
   @override

@@ -11,6 +11,7 @@ import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 void main() {
   test(
@@ -241,6 +242,93 @@ void main() {
       expect(controller.state.activeText, contains('# API Reference'));
       expect(controller.state.preview, isNotNull);
       expect(settingsController.state.recentWorkspaces, hasLength(recentCount));
+
+      controller.dispose();
+      settingsController.dispose();
+      await parent.delete(recursive: true);
+    },
+  );
+
+  test(
+    'topic TOC actions refresh the workspace and preserve file state',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-actions-',
+      );
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+      await controller.createWritersideProject(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: parent.path,
+          projectName: 'Docs',
+          directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
+        ),
+      );
+      await controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Secondary',
+          fileName: 'secondary.md',
+        ),
+      );
+      final rootPath = p.join(parent.path, 'docs');
+      final treePath = p.join(rootPath, 'user-guide.tree');
+      final startPath = p.join(rootPath, 'topics', 'getting-started.md');
+      final secondaryPath = p.join(rootPath, 'topics', 'secondary.md');
+      expect(await controller.openActiveFile(startPath), isTrue);
+      expect(
+        controller.state.workspace?.openFilePaths,
+        contains(secondaryPath),
+      );
+
+      expect(
+        await controller.moveWritersideTocEntry(
+          treePath: treePath,
+          sourcePath: const [1],
+          placement: WritersideTopicCreatePlacement.child,
+          referencePath: const [0],
+        ),
+        isTrue,
+      );
+      var tree = XmlDocument.parse(File(treePath).readAsStringSync());
+      var first = tree.rootElement.childElements
+          .where((element) => element.name.local == 'toc-element')
+          .first;
+      expect(first.childElements.single.getAttribute('topic'), 'secondary.md');
+      expect(controller.state.workspace?.activeFilePath, startPath);
+
+      expect(
+        await controller.renameWritersideTopicFile(secondaryPath, 'renamed.md'),
+        isTrue,
+      );
+      final renamedPath = p.join(rootPath, 'topics', 'renamed.md');
+      tree = XmlDocument.parse(File(treePath).readAsStringSync());
+      first = tree.rootElement.childElements
+          .where((element) => element.name.local == 'toc-element')
+          .first;
+      expect(first.childElements.single.getAttribute('topic'), 'renamed.md');
+      expect(controller.state.workspace?.activeFilePath, startPath);
+      expect(controller.state.workspace?.openFilePaths, contains(renamedPath));
+      expect(
+        controller.state.workspace?.openFilePaths,
+        isNot(contains(secondaryPath)),
+      );
+      expect(File(renamedPath).existsSync(), isTrue);
+
+      expect(
+        await controller.removeWritersideTocEntry(
+          treePath: treePath,
+          nodePath: const [0, 0],
+        ),
+        isTrue,
+      );
+      expect(File(renamedPath).existsSync(), isTrue);
+      expect(File(treePath).readAsStringSync(), isNot(contains('renamed.md')));
+
+      expect(await controller.deleteWritersideTopicFile(renamedPath), isTrue);
+      expect(File(renamedPath).existsSync(), isFalse);
 
       controller.dispose();
       settingsController.dispose();
@@ -883,6 +971,34 @@ class _WorkspaceControllerDriver {
 
   Future<bool> createWritersideTopic(WritersideTopicCreateRequest request) =>
       _notifier.createWritersideTopic(request);
+
+  Future<bool> moveWritersideTocEntry({
+    required String treePath,
+    required List<int> sourcePath,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+  }) => _notifier.moveWritersideTocEntry(
+    treePath: treePath,
+    sourcePath: sourcePath,
+    placement: placement,
+    referencePath: referencePath,
+  );
+
+  Future<bool> removeWritersideTocEntry({
+    required String treePath,
+    required List<int> nodePath,
+  }) => _notifier.removeWritersideTocEntry(
+    treePath: treePath,
+    nodePath: nodePath,
+  );
+
+  Future<bool> renameWritersideTopicFile(
+    String topicPath,
+    String newFileName,
+  ) => _notifier.renameWritersideTopicFile(topicPath, newFileName);
+
+  Future<bool> deleteWritersideTopicFile(String topicPath) =>
+      _notifier.deleteWritersideTopicFile(topicPath);
 
   Future<bool> openActiveFile(String path) => _notifier.openActiveFile(path);
 

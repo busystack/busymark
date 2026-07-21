@@ -994,6 +994,177 @@ class AppLocalizationsFa extends AppLocalizations {
   String get newChildTopic => 'موضوع فرزند جدید';
 
   @override
+  String get newSiblingTopic => 'موضوع هم‌سطح جدید';
+
+  @override
+  String get renameTopicFile => 'تغییر نام فایل موضوع';
+
+  @override
+  String get topicPlacement => 'جایگاه در فهرست مطالب';
+
+  @override
+  String get tocRoot => 'در ریشهٔ فهرست مطالب';
+
+  @override
+  String get afterSelectedTopic => 'پس از موضوع انتخاب‌شده';
+
+  @override
+  String get insideSelectedTopic => 'داخل موضوع انتخاب‌شده';
+
+  @override
+  String get pasteAfterTopic => 'جای‌گذاری پس از آن';
+
+  @override
+  String get pasteAsChildTopic => 'جای‌گذاری به‌عنوان موضوع فرزند';
+
+  @override
+  String get removeFromToc => 'حذف از فهرست مطالب';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'از فهرست مطالب حذف شود؟';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return '$name از این فهرست مطالب حذف شود؟ فایل موضوع حفظ خواهد شد.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'فایل موضوع حذف شود؟';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return '$name حذف و از همهٔ فهرست‌های مطالب برداشته شود؟ این کار قابل بازگشت نیست.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'حذف ایمن فایل موضوع…';
+
+  @override
+  String get removeTocElement => 'حذف عنصر فهرست مطالب';
+
+  @override
+  String get reviewUsages => 'مرور موارد استفاده';
+
+  @override
+  String get deleteTopicFile => 'حذف فایل موضوع';
+
+  @override
+  String get removeAction => 'حذف';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return '«$topic» را از نمونهٔ راهنمای انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return '«$topic» را حذف کنید و ارجاع‌های آن را در سراسر این پروژهٔ Writerside به‌طور ایمن به‌روزرسانی کنید.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count موضوع فرزند یک سطح بالاتر می‌روند.',
+      one: '۱ موضوع فرزند یک سطح بالاتر می‌رود.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'این موضوع به‌عنوان صفحهٔ آغاز یک نمونه استفاده می‌شود. موارد استفاده را مرور و پیش از ادامه صفحهٔ آغاز دیگری تعیین کنید.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'موارد استفاده ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages => 'هیچ ارجاعی که دچار مشکل شود پیدا نشد.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark ارجاع‌های زیر را به این موضوع پیدا کرد.';
+
+  @override
+  String get topicUsageTocElements => 'عناصر فهرست مطالب';
+
+  @override
+  String get topicUsageStartPages => 'صفحه‌های آغاز';
+
+  @override
+  String get topicUsageTopicLinks => 'پیوندهای موضوع';
+
+  @override
+  String get topicUsageIncludes => 'درج‌ها';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مورد استفاده',
+      one: '۱ مورد استفاده',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'گزینه‌های بازآرایی';
+
+  @override
+  String get updateUsagesAutomatically => 'به‌روزرسانی خودکار موارد استفاده';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'ارجاع‌های فهرست مطالب و درج‌ها حذف و متن پیوندها حفظ می‌شود.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'برخی موارد استفاده پیش از این بازآرایی به تغییر دستی نیاز دارند.';
+
+  @override
+  String get setRedirectTo => 'تنظیم تغییر مسیر به';
+
+  @override
+  String get noRedirectDescription =>
+      'صفحهٔ منتشرشدهٔ قدیمی تغییر مسیر داده نشود.';
+
+  @override
+  String get redirectTarget => 'مقصد تغییر مسیر';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'پیش از ادامه موارد استفادهٔ باقی‌مانده را مرور و به‌روزرسانی کنید، یا در صورت امکان به‌روزرسانی خودکار را فعال کنید.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'موارد استفادهٔ $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'هیچ مورد استفاده‌ای پیدا نشد';
+
+  @override
+  String get outsideSelectedInstance => 'بیرون از نمونهٔ انتخاب‌شده';
+
+  @override
+  String get doRefactor => 'انجام بازآرایی';
+
+  @override
+  String get orphanTopicTitle => 'فایل موضوع دیگر استفاده نمی‌شود';
+
+  @override
+  String get keepTopicFile => 'نگه داشتن فایل موضوع';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '«$topic» دیگر در هیچ جای این پروژهٔ Writerside استفاده نمی‌شود. فایل را حذف کنید یا برای استفاده در نمونه‌ای دیگر نگه دارید.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'موضوع جدید';
 
   @override
@@ -1333,6 +1504,40 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'موضوع مرجع در درخت انتخاب‌شده وجود ندارد: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'مدخل انتخاب‌شدهٔ فهرست مطالب دیگر وجود ندارد.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'مدخل فهرست مطالب را نمی‌توان به داخل خودش یا یکی از فرزندانش منتقل کرد.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'موضوع شروع $topic را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'برای فایل‌های موضوع Writerside از حذف ایمن استفاده کنید.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'بررسی موارد استفاده از موضوع کامل نشد. هیچ فایلی تغییر نکرد.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'برخی موارد استفاده از موضوع هنوز نیاز به رسیدگی دارند. پیش از ادامه آن‌ها را بازبینی کنید.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'مقصد تغییرمسیر انتخاب‌شده دیگر معتبر نیست. دوباره آن را انتخاب کنید.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'حذف موضوع به‌طور کامل بازگردانده نشد. پیش از ادامه این مسیرها را بررسی کنید: $paths';
   }
 
   @override

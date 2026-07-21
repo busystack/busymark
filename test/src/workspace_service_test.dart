@@ -10,6 +10,7 @@ import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 void main() {
   const service = WorkspaceService();
@@ -242,6 +243,80 @@ void main() {
       expect(
         updated.diagnostics.where((item) => item.severity.name == 'error'),
         isEmpty,
+      );
+    },
+  );
+
+  test(
+    'creates a topic in the explicitly selected instance and TOC node',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-workspace-selected-instance-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="first.tree"/>
+  <instance src="second.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'first.tree')).writeAsStringSync('''
+<instance-profile id="first" name="First" start-page="first.md">
+  <toc-element topic="first.md"/>
+</instance-profile>
+''');
+      final secondTree = File(p.join(root.path, 'second.tree'))
+        ..writeAsStringSync('''
+<instance-profile id="second" name="Second" start-page="second.md">
+  <toc-element topic="second.md"/>
+</instance-profile>
+''');
+      File(
+        p.join(root.path, 'topics', 'first.md'),
+      ).writeAsStringSync('# First\n');
+      File(
+        p.join(root.path, 'topics', 'second.md'),
+      ).writeAsStringSync('# Second\n');
+      final workspace = await service.openPath(root.path);
+      final firstTreeBefore = File(
+        p.join(root.path, 'first.tree'),
+      ).readAsStringSync();
+
+      final updated = await service.createWritersideTopic(
+        workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Second child',
+          fileName: 'second-child.md',
+          placement: WritersideTopicCreatePlacement.child,
+          referenceTopic: 'second.md',
+          referenceTocPath: [0],
+        ),
+        instanceTreePath: secondTree.path,
+      );
+
+      final secondDocument = XmlDocument.parse(secondTree.readAsStringSync());
+      final second = secondDocument
+          .findAllElements('toc-element')
+          .firstWhere(
+            (element) => element.getAttribute('topic') == 'second.md',
+          );
+      expect(
+        second.childElements.map((element) => element.getAttribute('topic')),
+        contains('second-child.md'),
+      );
+      expect(
+        File(p.join(root.path, 'first.tree')).readAsStringSync(),
+        firstTreeBefore,
+      );
+      expect(
+        updated.activeFilePath,
+        p.join(root.path, 'topics', 'second-child.md'),
       );
     },
   );

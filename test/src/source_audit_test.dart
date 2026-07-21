@@ -781,6 +781,18 @@ void main() {
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
     expect(workspace, contains('onSecondaryTapDown'));
+    expect(
+      RegExp(
+        r'SingleActivator\(LogicalKeyboardKey\.delete\)',
+      ).allMatches(workspace).length,
+      greaterThanOrEqualTo(2),
+    );
+    expect(workspace, contains('class _WritersideTopicRemovalDialog'));
+    expect(workspace, contains('class _WritersideTopicUsagesSidebar'));
+    expect(workspace, contains('analyzeWritersideTopicRemoval('));
+    expect(workspace, contains('applyWritersideTopicRemoval('));
+    expect(workspace, contains('context.l10n.safeDeleteTopicFile'));
+    expect(workspace, contains('context.l10n.removeTocElement'));
     expect(workspace, contains('label: context.l10n.newFile'));
     expect(workspace, contains('label: context.l10n.rename'));
     expect(workspace, contains('label: context.l10n.cut'));

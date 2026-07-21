@@ -95,6 +95,59 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
       'writerside.topic.file-extension-mismatch' =>
         l10n.errorTopicFileExtensionMismatch(value('extension')),
       'writerside.topic.file-name-invalid' => l10n.errorTopicFileNameInvalid,
+      'writerside.topic.tree-changed' =>
+        l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.toc.destination-required' =>
+        l10n.errorWritersideTocNodeMissing,
+      'writerside.toc.path-invalid' => l10n.errorWritersideTocNodeMissing,
+      'writerside.toc.move-invalid-target' =>
+        l10n.errorWritersideTocInvalidMove,
+      'writerside.toc.tree-changed' =>
+        l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.topic-file.is-start-page' =>
+        l10n.errorWritersideStartTopicDelete(value('topic')),
+      'writerside.topic-file.not-found' => l10n.errorPathDoesNotExist(
+        value('path'),
+      ),
+      'writerside.topic-file.source-missing' => l10n.errorPathDoesNotExist(
+        value('path'),
+      ),
+      'writerside.topic-file.tree-missing' => l10n.errorPathDoesNotExist(
+        value('path'),
+      ),
+      'writerside.topic-file.target-exists' => l10n.errorTopicFileAlreadyExists(
+        value('path'),
+      ),
+      'writerside.topic-file.duplicate-target' =>
+        l10n.errorTopicIdAlreadyExists(value('topicId')),
+      'writerside.topic-file.file-name-unsafe' => l10n.errorTopicFileNameUnsafe,
+      'writerside.topic-file.file-extension-mismatch' =>
+        l10n.errorTopicFileExtensionMismatch(value('extension')),
+      'writerside.topic-file.file-name-invalid' =>
+        l10n.errorTopicFileNameInvalid,
+      'writerside.topic-file.path-unsafe' => l10n.errorFileOperationOutsideRoot,
+      'writerside.topic-file.source-unsafe' =>
+        l10n.errorFileOperationOutsideRoot,
+      'writerside.topic-file.target-unsafe' =>
+        l10n.errorFileOperationOutsideRoot,
+      'writerside.topic-file.module-root-unsafe' =>
+        l10n.errorFileOperationOutsideRoot,
+      'writerside.topic-file.tree-changed' =>
+        l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.topic-file.source-changed' =>
+        l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.topic-file.topic-inventory-changed' =>
+        l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.topic-removal.safe-delete-required' =>
+        l10n.errorWritersideSafeDeleteRequired,
+      'writerside.topic-removal.scan-failed' =>
+        l10n.errorWritersideTopicUsageScanFailed,
+      'writerside.topic-removal.usages-remain' =>
+        l10n.errorWritersideTopicUsagesRemain,
+      'writerside.topic-removal.redirect-invalid' =>
+        l10n.errorWritersideRedirectInvalid,
+      'writerside.topic-removal.rollback-failed' =>
+        l10n.errorWritersideRollbackFailed(value('paths')),
       'workspace.directory-missing' => l10n.errorDirectoryMissing(
         value('path'),
       ),

@@ -1928,6 +1928,276 @@ abstract class AppLocalizations {
   /// **'New Child Topic'**
   String get newChildTopic;
 
+  /// Create new sibling Writerside topic action label.
+  ///
+  /// In en, this message translates to:
+  /// **'New Sibling Topic'**
+  String get newSiblingTopic;
+
+  /// Context-menu action that renames a Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Topic File'**
+  String get renameTopicFile;
+
+  /// Create topic dialog label for selecting TOC placement.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC placement'**
+  String get topicPlacement;
+
+  /// TOC placement option for the root level.
+  ///
+  /// In en, this message translates to:
+  /// **'At TOC root'**
+  String get tocRoot;
+
+  /// TOC placement option after the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'After selected topic'**
+  String get afterSelectedTopic;
+
+  /// TOC placement option inside the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Inside selected topic'**
+  String get insideSelectedTopic;
+
+  /// Action that moves a cut TOC entry after the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste After'**
+  String get pasteAfterTopic;
+
+  /// Action that moves a cut TOC entry inside the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste as Child'**
+  String get pasteAsChildTopic;
+
+  /// Action that removes an entry from a Writerside table of contents without deleting its topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from TOC'**
+  String get removeFromToc;
+
+  /// Confirmation title before removing a Writerside TOC entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from TOC?'**
+  String get confirmRemoveFromTocTitle;
+
+  /// Confirmation message before removing a Writerside TOC entry without deleting its topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this table of contents? The topic file will be kept.'**
+  String confirmRemoveFromTocMessage(String name);
+
+  /// Confirmation title before deleting a Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete topic file?'**
+  String get confirmDeleteTopicTitle;
+
+  /// Confirmation message before deleting a Writerside topic file and removing its TOC entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} and remove it from every table of contents? This cannot be undone.'**
+  String confirmDeleteTopicMessage(String name);
+
+  /// Writerside action that safely deletes a topic after checking usages.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe Delete Topic File…'**
+  String get safeDeleteTopicFile;
+
+  /// Writerside action and dialog title for removing a topic from one table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove TOC Element'**
+  String get removeTocElement;
+
+  /// Action that opens the Writerside topic usages review.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Usages'**
+  String get reviewUsages;
+
+  /// Action that deletes a Writerside topic source file.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Topic File'**
+  String get deleteTopicFile;
+
+  /// Short action label for removing an item without deleting its source file.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeAction;
+
+  /// Summary in the dialog for removing a topic from one Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove “{topic}” from the selected help instance. The topic file will be kept.'**
+  String topicRemovalSummary(String topic);
+
+  /// Summary in the Writerside safe-delete dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{topic}” and safely update its references throughout this Writerside project.'**
+  String safeDeleteTopicSummary(String topic);
+
+  /// Disclosure that children of a removed TOC element are promoted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 child topic will move up one level.} other{{count} child topics will move up one level.}}'**
+  String childTopicsPromoted(int count);
+
+  /// Warning that blocks deletion of a Writerside start-page topic.
+  ///
+  /// In en, this message translates to:
+  /// **'This topic is used as an instance start page. Review its usages and assign another start page before continuing.'**
+  String get topicIsStartPageRemovalWarning;
+
+  /// Heading with the number of Writerside topic usages.
+  ///
+  /// In en, this message translates to:
+  /// **'Usages ({count})'**
+  String topicUsagesCount(int count);
+
+  /// Safe-delete message when no breaking references were found.
+  ///
+  /// In en, this message translates to:
+  /// **'No references that would be broken were found.'**
+  String get noBreakingTopicUsages;
+
+  /// Description above Writerside topic usage groups.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark found the following references to this topic.'**
+  String get topicUsagesFound;
+
+  /// Usage group label for Writerside TOC elements.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC elements'**
+  String get topicUsageTocElements;
+
+  /// Usage group label for Writerside instance start pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Start pages'**
+  String get topicUsageStartPages;
+
+  /// Usage group label for links to a Writerside topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic links'**
+  String get topicUsageTopicLinks;
+
+  /// Usage group label for Writerside include elements.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes'**
+  String get topicUsageIncludes;
+
+  /// Number of references that use a Writerside topic.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 usage} other{{count} usages}}'**
+  String usageCount(int count);
+
+  /// Heading for Writerside topic removal options.
+  ///
+  /// In en, this message translates to:
+  /// **'Refactoring options'**
+  String get refactoringOptions;
+
+  /// Option to rewrite Writerside topic usages during removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Update usages automatically'**
+  String get updateUsagesAutomatically;
+
+  /// Description of automatic Writerside usage updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove TOC references and includes, and preserve link text.'**
+  String get updateUsagesAutomaticallyDescription;
+
+  /// Message when some Writerside usages cannot be updated automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Some usages require manual changes before this refactoring.'**
+  String get manualUsageUpdatesRequired;
+
+  /// Option to redirect an old Writerside page to another topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Set redirect to'**
+  String get setRedirectTo;
+
+  /// Description when no Writerside page redirect is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not redirect the old published page.'**
+  String get noRedirectDescription;
+
+  /// Field label for a Writerside redirect destination.
+  ///
+  /// In en, this message translates to:
+  /// **'Redirect target'**
+  String get redirectTarget;
+
+  /// Instruction shown when unresolved usages block topic removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and update the remaining usages before continuing, or enable automatic updates when available.'**
+  String get remainingUsagesBlockRemoval;
+
+  /// Writerside usages sidebar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Usages of {topic}'**
+  String usagesOfTopic(String topic);
+
+  /// Empty state in the Writerside usages review.
+  ///
+  /// In en, this message translates to:
+  /// **'No usages found'**
+  String get noUsagesFound;
+
+  /// Marker for a usage outside the selected Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'outside selected instance'**
+  String get outsideSelectedInstance;
+
+  /// Action to return from usage review and continue the topic refactoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Do Refactor'**
+  String get doRefactor;
+
+  /// Dialog title after a topic is removed from its last table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic file is no longer used'**
+  String get orphanTopicTitle;
+
+  /// Action that keeps an orphaned Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Topic File'**
+  String get keepTopicFile;
+
+  /// Prompt to delete or keep an orphaned Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'“{topic}” is no longer used anywhere in this Writerside project. Delete the file, or keep it for use in another instance.'**
+  String orphanTopicMessage(String topic);
+
   /// Default topic title in the create topic dialog.
   ///
   /// In en, this message translates to:
@@ -2467,6 +2737,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reference topic is not present in the selected tree: {topic}'**
   String errorReferenceTopicMissing(String topic);
+
+  /// Detail shown when a selected Writerside TOC entry no longer exists.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected TOC entry no longer exists.'**
+  String get errorWritersideTocNodeMissing;
+
+  /// Detail shown when a Writerside TOC move would create a cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'A TOC entry cannot be moved into itself or one of its children.'**
+  String get errorWritersideTocInvalidMove;
+
+  /// Detail shown when attempting to delete the start topic of a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'The start topic {topic} cannot be deleted. Choose another start page first.'**
+  String errorWritersideStartTopicDelete(String topic);
+
+  /// Error shown when generic file deletion is attempted for a Writerside topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Safe Delete for Writerside topic files.'**
+  String get errorWritersideSafeDeleteRequired;
+
+  /// Error shown when safe-delete usage analysis cannot complete reliably.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the topic usage scan. No files were changed.'**
+  String get errorWritersideTopicUsageScanFailed;
+
+  /// Error shown when unresolved topic usages block removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Some topic usages still require attention. Review them before continuing.'**
+  String get errorWritersideTopicUsagesRemain;
+
+  /// Error shown when a safe-delete redirect target is stale or conflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected redirect target is no longer valid. Choose it again.'**
+  String get errorWritersideRedirectInvalid;
+
+  /// Error shown when safe-delete recovery leaves files requiring manual review.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic removal could not be fully rolled back. Review these paths before continuing: {paths}'**
+  String errorWritersideRollbackFailed(String paths);
 
   /// Detail for an unsafe topics root directory.
   ///

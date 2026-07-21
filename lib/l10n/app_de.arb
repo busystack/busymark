@@ -1119,6 +1119,68 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
+  "newSiblingTopic": "Neues Thema auf gleicher Ebene",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "Themendatei umbenennen",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "Position im Inhaltsverzeichnis",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "Auf oberster Ebene des Inhaltsverzeichnisses",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "Nach dem ausgewählten Thema",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "Im ausgewählten Thema",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "Danach einfügen",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "Als untergeordnetes Thema einfügen",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "Aus dem Inhaltsverzeichnis entfernen",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "Aus dem Inhaltsverzeichnis entfernen?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "{name} aus diesem Inhaltsverzeichnis entfernen? Die Themendatei bleibt erhalten.",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "Themendatei löschen?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "{name} löschen und aus allen Inhaltsverzeichnissen entfernen? Dies kann nicht rückgängig gemacht werden.",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "defaultNewTopicTitle": "Neues Thema",
   "@defaultNewTopicTitle": {
     "description": "Default topic title in the create topic dialog."
@@ -1525,6 +1587,23 @@
   "errorReferenceTopicMissing": "Das Referenzthema ist im ausgewählten Baum nicht vorhanden: {topic}",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "Der ausgewählte Inhaltsverzeichniseintrag ist nicht mehr vorhanden.",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "Ein Inhaltsverzeichniseintrag kann nicht in sich selbst oder in eines seiner untergeordneten Elemente verschoben werden.",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "Das Startthema {topic} kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite aus.",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2195,6 +2274,80 @@
   "errorFileNameUnsafe": "Dateiname muss ein einzelnes sicheres Pfadsegment sein.",
   "errorFileOperationInvalidTarget": "Ein Ordner kann nicht in sich selbst verschoben werden.",
   "errorFileOperationOutsideRoot": "Der Dateivorgang muss im Arbeitsbereich bleiben.",
-  "errorFileOperationRoot": "Das Stammverzeichnis des Arbeitsbereichs kann nicht über den Dateibaum geändert werden."
+  "errorFileOperationRoot": "Das Stammverzeichnis des Arbeitsbereichs kann nicht über den Dateibaum geändert werden.",
+  "safeDeleteTopicFile": "Themendatei sicher löschen…",
+  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "removeTocElement": "Inhaltsverzeichniselement entfernen",
+  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "reviewUsages": "Verwendungen prüfen",
+  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "deleteTopicFile": "Themendatei löschen",
+  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "removeAction": "Entfernen",
+  "@removeAction": {"description": "Generic remove action label."},
+  "topicRemovalSummary": "„{topic}“ aus der ausgewählten Hilfeinstanz entfernen. Die Themendatei bleibt erhalten.",
+  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "safeDeleteTopicSummary": "„{topic}“ löschen und die Verweise darauf im gesamten Writerside-Projekt sicher aktualisieren.",
+  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "childTopicsPromoted": "{count, plural, =1{1 untergeordnetes Thema wird um eine Ebene nach oben verschoben.} other{{count} untergeordnete Themen werden um eine Ebene nach oben verschoben.}}",
+  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "topicIsStartPageRemovalWarning": "Dieses Thema wird als Startseite einer Instanz verwendet. Prüfen Sie seine Verwendungen und weisen Sie eine andere Startseite zu, bevor Sie fortfahren.",
+  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "topicUsagesCount": "Verwendungen ({count})",
+  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "noBreakingTopicUsages": "Es wurden keine Verweise gefunden, die ungültig würden.",
+  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "topicUsagesFound": "BusyMark hat die folgenden Verweise auf dieses Thema gefunden.",
+  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "topicUsageTocElements": "Inhaltsverzeichniselemente",
+  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "topicUsageStartPages": "Startseiten",
+  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "topicUsageTopicLinks": "Themenlinks",
+  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "topicUsageIncludes": "Einbindungen",
+  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "usageCount": "{count, plural, =1{1 Verwendung} other{{count} Verwendungen}}",
+  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "refactoringOptions": "Refactoring-Optionen",
+  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "updateUsagesAutomatically": "Verwendungen automatisch aktualisieren",
+  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "updateUsagesAutomaticallyDescription": "Inhaltsverzeichnisverweise und Einbindungen entfernen und den Linktext beibehalten.",
+  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "manualUsageUpdatesRequired": "Einige Verwendungen müssen vor diesem Refactoring manuell geändert werden.",
+  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "setRedirectTo": "Weiterleiten an",
+  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "noRedirectDescription": "Die alte veröffentlichte Seite nicht weiterleiten.",
+  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "redirectTarget": "Umleitungsziel",
+  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "remainingUsagesBlockRemoval": "Prüfen und aktualisieren Sie die verbleibenden Verwendungen, bevor Sie fortfahren, oder aktivieren Sie automatische Aktualisierungen, wenn diese verfügbar sind.",
+  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "usagesOfTopic": "Verwendungen von {topic}",
+  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "noUsagesFound": "Keine Verwendungen gefunden.",
+  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "outsideSelectedInstance": "Außerhalb der ausgewählten Instanz",
+  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "doRefactor": "Refactoring ausführen",
+  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "orphanTopicTitle": "Themendatei wird nicht mehr verwendet",
+  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "keepTopicFile": "Themendatei behalten",
+  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "orphanTopicMessage": "„{topic}“ wird an keiner Stelle dieses Writerside-Projekts mehr verwendet. Löschen Sie die Datei oder behalten Sie sie für die Verwendung in einer anderen Instanz.",
+  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "errorWritersideSafeDeleteRequired": "Verwenden Sie „Sicher löschen“ für Writerside-Themendateien.",
+  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "errorWritersideTopicUsageScanFailed": "Die Suche nach Verwendungen des Themas konnte nicht abgeschlossen werden. Es wurden keine Dateien geändert.",
+  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "errorWritersideTopicUsagesRemain": "Einige Verwendungen des Themas müssen noch bearbeitet werden. Prüfen Sie sie, bevor Sie fortfahren.",
+  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "errorWritersideRedirectInvalid": "Das ausgewählte Weiterleitungsziel ist nicht mehr gültig. Wählen Sie es erneut aus.",
+  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "errorWritersideRollbackFailed": "Das Entfernen des Themas konnte nicht vollständig rückgängig gemacht werden. Prüfen Sie vor dem Fortfahren diese Pfade: {paths}",
+  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}}
 
 }

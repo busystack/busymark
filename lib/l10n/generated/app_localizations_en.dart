@@ -998,6 +998,177 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newChildTopic => 'New Child Topic';
 
   @override
+  String get newSiblingTopic => 'New Sibling Topic';
+
+  @override
+  String get renameTopicFile => 'Rename Topic File';
+
+  @override
+  String get topicPlacement => 'TOC placement';
+
+  @override
+  String get tocRoot => 'At TOC root';
+
+  @override
+  String get afterSelectedTopic => 'After selected topic';
+
+  @override
+  String get insideSelectedTopic => 'Inside selected topic';
+
+  @override
+  String get pasteAfterTopic => 'Paste After';
+
+  @override
+  String get pasteAsChildTopic => 'Paste as Child';
+
+  @override
+  String get removeFromToc => 'Remove from TOC';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Remove from TOC?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Remove $name from this table of contents? The topic file will be kept.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Delete topic file?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Delete $name and remove it from every table of contents? This cannot be undone.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Safe Delete Topic File…';
+
+  @override
+  String get removeTocElement => 'Remove TOC Element';
+
+  @override
+  String get reviewUsages => 'Review Usages';
+
+  @override
+  String get deleteTopicFile => 'Delete Topic File';
+
+  @override
+  String get removeAction => 'Remove';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Remove “$topic” from the selected help instance. The topic file will be kept.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Delete “$topic” and safely update its references throughout this Writerside project.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count child topics will move up one level.',
+      one: '1 child topic will move up one level.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'This topic is used as an instance start page. Review its usages and assign another start page before continuing.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Usages ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'No references that would be broken were found.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark found the following references to this topic.';
+
+  @override
+  String get topicUsageTocElements => 'TOC elements';
+
+  @override
+  String get topicUsageStartPages => 'Start pages';
+
+  @override
+  String get topicUsageTopicLinks => 'Topic links';
+
+  @override
+  String get topicUsageIncludes => 'Includes';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count usages',
+      one: '1 usage',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Refactoring options';
+
+  @override
+  String get updateUsagesAutomatically => 'Update usages automatically';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Remove TOC references and includes, and preserve link text.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Some usages require manual changes before this refactoring.';
+
+  @override
+  String get setRedirectTo => 'Set redirect to';
+
+  @override
+  String get noRedirectDescription => 'Do not redirect the old published page.';
+
+  @override
+  String get redirectTarget => 'Redirect target';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Review and update the remaining usages before continuing, or enable automatic updates when available.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Usages of $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'No usages found';
+
+  @override
+  String get outsideSelectedInstance => 'outside selected instance';
+
+  @override
+  String get doRefactor => 'Do Refactor';
+
+  @override
+  String get orphanTopicTitle => 'Topic file is no longer used';
+
+  @override
+  String get keepTopicFile => 'Keep Topic File';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '“$topic” is no longer used anywhere in this Writerside project. Delete the file, or keep it for use in another instance.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'New topic';
 
   @override
@@ -1336,6 +1507,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Reference topic is not present in the selected tree: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'The selected TOC entry no longer exists.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'A TOC entry cannot be moved into itself or one of its children.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'The start topic $topic cannot be deleted. Choose another start page first.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Use Safe Delete for Writerside topic files.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Could not complete the topic usage scan. No files were changed.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Some topic usages still require attention. Review them before continuing.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'The selected redirect target is no longer valid. Choose it again.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Topic removal could not be fully rolled back. Review these paths before continuing: $paths';
   }
 
   @override

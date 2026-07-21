@@ -1013,6 +1013,181 @@ class AppLocalizationsDe extends AppLocalizations {
   String get newChildTopic => 'Neues untergeordnetes Thema';
 
   @override
+  String get newSiblingTopic => 'Neues Thema auf gleicher Ebene';
+
+  @override
+  String get renameTopicFile => 'Themendatei umbenennen';
+
+  @override
+  String get topicPlacement => 'Position im Inhaltsverzeichnis';
+
+  @override
+  String get tocRoot => 'Auf oberster Ebene des Inhaltsverzeichnisses';
+
+  @override
+  String get afterSelectedTopic => 'Nach dem ausgewählten Thema';
+
+  @override
+  String get insideSelectedTopic => 'Im ausgewählten Thema';
+
+  @override
+  String get pasteAfterTopic => 'Danach einfügen';
+
+  @override
+  String get pasteAsChildTopic => 'Als untergeordnetes Thema einfügen';
+
+  @override
+  String get removeFromToc => 'Aus dem Inhaltsverzeichnis entfernen';
+
+  @override
+  String get confirmRemoveFromTocTitle =>
+      'Aus dem Inhaltsverzeichnis entfernen?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return '$name aus diesem Inhaltsverzeichnis entfernen? Die Themendatei bleibt erhalten.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Themendatei löschen?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return '$name löschen und aus allen Inhaltsverzeichnissen entfernen? Dies kann nicht rückgängig gemacht werden.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Themendatei sicher löschen…';
+
+  @override
+  String get removeTocElement => 'Inhaltsverzeichniselement entfernen';
+
+  @override
+  String get reviewUsages => 'Verwendungen prüfen';
+
+  @override
+  String get deleteTopicFile => 'Themendatei löschen';
+
+  @override
+  String get removeAction => 'Entfernen';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return '„$topic“ aus der ausgewählten Hilfeinstanz entfernen. Die Themendatei bleibt erhalten.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return '„$topic“ löschen und die Verweise darauf im gesamten Writerside-Projekt sicher aktualisieren.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count untergeordnete Themen werden um eine Ebene nach oben verschoben.',
+      one: '1 untergeordnetes Thema wird um eine Ebene nach oben verschoben.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Dieses Thema wird als Startseite einer Instanz verwendet. Prüfen Sie seine Verwendungen und weisen Sie eine andere Startseite zu, bevor Sie fortfahren.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Verwendungen ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'Es wurden keine Verweise gefunden, die ungültig würden.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark hat die folgenden Verweise auf dieses Thema gefunden.';
+
+  @override
+  String get topicUsageTocElements => 'Inhaltsverzeichniselemente';
+
+  @override
+  String get topicUsageStartPages => 'Startseiten';
+
+  @override
+  String get topicUsageTopicLinks => 'Themenlinks';
+
+  @override
+  String get topicUsageIncludes => 'Einbindungen';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Verwendungen',
+      one: '1 Verwendung',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Refactoring-Optionen';
+
+  @override
+  String get updateUsagesAutomatically =>
+      'Verwendungen automatisch aktualisieren';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Inhaltsverzeichnisverweise und Einbindungen entfernen und den Linktext beibehalten.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Einige Verwendungen müssen vor diesem Refactoring manuell geändert werden.';
+
+  @override
+  String get setRedirectTo => 'Weiterleiten an';
+
+  @override
+  String get noRedirectDescription =>
+      'Die alte veröffentlichte Seite nicht weiterleiten.';
+
+  @override
+  String get redirectTarget => 'Umleitungsziel';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Prüfen und aktualisieren Sie die verbleibenden Verwendungen, bevor Sie fortfahren, oder aktivieren Sie automatische Aktualisierungen, wenn diese verfügbar sind.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Verwendungen von $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'Keine Verwendungen gefunden.';
+
+  @override
+  String get outsideSelectedInstance => 'Außerhalb der ausgewählten Instanz';
+
+  @override
+  String get doRefactor => 'Refactoring ausführen';
+
+  @override
+  String get orphanTopicTitle => 'Themendatei wird nicht mehr verwendet';
+
+  @override
+  String get keepTopicFile => 'Themendatei behalten';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '„$topic“ wird an keiner Stelle dieses Writerside-Projekts mehr verwendet. Löschen Sie die Datei oder behalten Sie sie für die Verwendung in einer anderen Instanz.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'Neues Thema';
 
   @override
@@ -1353,6 +1528,40 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Das Referenzthema ist im ausgewählten Baum nicht vorhanden: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'Der ausgewählte Inhaltsverzeichniseintrag ist nicht mehr vorhanden.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'Ein Inhaltsverzeichniseintrag kann nicht in sich selbst oder in eines seiner untergeordneten Elemente verschoben werden.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'Das Startthema $topic kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite aus.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Verwenden Sie „Sicher löschen“ für Writerside-Themendateien.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Die Suche nach Verwendungen des Themas konnte nicht abgeschlossen werden. Es wurden keine Dateien geändert.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Einige Verwendungen des Themas müssen noch bearbeitet werden. Prüfen Sie sie, bevor Sie fortfahren.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'Das ausgewählte Weiterleitungsziel ist nicht mehr gültig. Wählen Sie es erneut aus.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Das Entfernen des Themas konnte nicht vollständig rückgängig gemacht werden. Prüfen Sie vor dem Fortfahren diese Pfade: $paths';
   }
 
   @override

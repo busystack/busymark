@@ -1013,6 +1013,182 @@ class AppLocalizationsRu extends AppLocalizations {
   String get newChildTopic => 'Новая дочерняя тема';
 
   @override
+  String get newSiblingTopic => 'Новая тема на том же уровне';
+
+  @override
+  String get renameTopicFile => 'Переименовать файл темы';
+
+  @override
+  String get topicPlacement => 'Расположение в оглавлении';
+
+  @override
+  String get tocRoot => 'В корне оглавления';
+
+  @override
+  String get afterSelectedTopic => 'После выбранной темы';
+
+  @override
+  String get insideSelectedTopic => 'Внутри выбранной темы';
+
+  @override
+  String get pasteAfterTopic => 'Вставить после';
+
+  @override
+  String get pasteAsChildTopic => 'Вставить как дочернюю тему';
+
+  @override
+  String get removeFromToc => 'Удалить из оглавления';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Удалить из оглавления?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Удалить $name из этого оглавления? Файл темы будет сохранён.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Удалить файл темы?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Удалить файл темы $name и убрать тему из всех оглавлений? Это действие нельзя отменить.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Безопасно удалить файл темы…';
+
+  @override
+  String get removeTocElement => 'Удалить элемент оглавления';
+
+  @override
+  String get reviewUsages => 'Просмотреть использования';
+
+  @override
+  String get deleteTopicFile => 'Удалить файл темы';
+
+  @override
+  String get removeAction => 'Удалить';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Удалить «$topic» из выбранного экземпляра справки. Файл темы будет сохранён.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Удалить «$topic» и безопасно обновить ссылки на неё во всём этом проекте Writerside.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дочерней темы будут перемещены на уровень выше.',
+      many: '$count дочерних тем будут перемещены на уровень выше.',
+      few: '$count дочерние темы будут перемещены на уровень выше.',
+      one: '1 дочерняя тема будет перемещена на уровень выше.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Эта тема используется как стартовая страница экземпляра. Просмотрите её использования и назначьте другую стартовую страницу, прежде чем продолжить.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Использования ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'Ссылок, которые перестали бы работать, не найдено.';
+
+  @override
+  String get topicUsagesFound => 'BusyMark нашёл следующие ссылки на эту тему.';
+
+  @override
+  String get topicUsageTocElements => 'Элементы оглавления';
+
+  @override
+  String get topicUsageStartPages => 'Стартовые страницы';
+
+  @override
+  String get topicUsageTopicLinks => 'Ссылки на темы';
+
+  @override
+  String get topicUsageIncludes => 'Включения';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count использования',
+      many: '$count использований',
+      few: '$count использования',
+      one: '1 использование',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Параметры рефакторинга';
+
+  @override
+  String get updateUsagesAutomatically =>
+      'Обновить использования автоматически';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Удалить ссылки из оглавлений и включения, сохранив текст ссылок.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Некоторые использования необходимо изменить вручную перед этим рефакторингом.';
+
+  @override
+  String get setRedirectTo => 'Перенаправить на';
+
+  @override
+  String get noRedirectDescription =>
+      'Не перенаправлять старую опубликованную страницу.';
+
+  @override
+  String get redirectTarget => 'Цель перенаправления';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Просмотрите и обновите оставшиеся использования, прежде чем продолжить, или включите автоматическое обновление, если оно доступно.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Использования темы $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'Использований не найдено';
+
+  @override
+  String get outsideSelectedInstance => 'вне выбранного экземпляра';
+
+  @override
+  String get doRefactor => 'Выполнить рефакторинг';
+
+  @override
+  String get orphanTopicTitle => 'Файл темы больше не используется';
+
+  @override
+  String get keepTopicFile => 'Сохранить файл темы';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '«$topic» больше нигде не используется в этом проекте Writerside. Удалите файл или сохраните его для использования в другом экземпляре.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'Новая тема';
 
   @override
@@ -1351,6 +1527,40 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Опорная тема отсутствует в выбранном дереве: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'Выбранной записи оглавления больше не существует.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'Запись оглавления нельзя переместить внутрь самой себя или одного из её дочерних элементов.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'Стартовую тему $topic нельзя удалить. Сначала выберите другую стартовую страницу.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Используйте безопасное удаление для файлов тем Writerside.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Не удалось завершить поиск использований темы. Файлы не были изменены.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Некоторые использования темы всё ещё требуют внимания. Просмотрите их перед продолжением.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'Выбранная цель перенаправления больше недействительна. Выберите её снова.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Не удалось полностью откатить удаление темы. Перед продолжением проверьте следующие пути: $paths';
   }
 
   @override

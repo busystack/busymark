@@ -21,6 +21,9 @@ import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
+import 'package:busymark/src/writerside/writerside_topic_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -30,6 +33,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
 
 void main() {
@@ -825,6 +829,308 @@ void main() {
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
   });
 
+  testWidgets('Topics defaults creation to root and exposes file-style menu', (
+    tester,
+  ) async {
+    const yaruWindowChannel = MethodChannel('yaru_window');
+    const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(yaruWindowChannel, (call) async {
+          if (call.method == 'state') {
+            return <String, Object?>{};
+          }
+          return null;
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(yaruWindowEventsChannel, (_) async => null);
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        ..setMockMethodCallHandler(yaruWindowChannel, null)
+        ..setMockMethodCallHandler(yaruWindowEventsChannel, null);
+    });
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-topics-sidebar-',
+    );
+    addTearDown(() {
+      if (root.existsSync()) {
+        root.deleteSync(recursive: true);
+      }
+    });
+    Directory(p.join(root.path, 'topics')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="guide.tree"/>
+  <instance src="api.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" name="Guide" start-page="nested.md">
+  <toc-element topic="parent.md">
+    <toc-element topic="nested.md" toc-title="Nested entry"/>
+  </toc-element>
+  <toc-element topic="loose.md"/>
+  <toc-element topic="target.md"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'api.tree')).writeAsStringSync('''
+<instance-profile id="api" name="API Reference" start-page="api.md">
+  <toc-element topic="api.md"/>
+</instance-profile>
+''');
+    File(
+      p.join(root.path, 'topics', 'parent.md'),
+    ).writeAsStringSync('# Parent\n');
+    File(
+      p.join(root.path, 'topics', 'nested.md'),
+    ).writeAsStringSync('# Nested\n');
+    File(
+      p.join(root.path, 'topics', 'loose.md'),
+    ).writeAsStringSync('# Loose\n');
+    File(
+      p.join(root.path, 'topics', 'target.md'),
+    ).writeAsStringSync('# Target\n');
+    File(p.join(root.path, 'topics', 'api.md')).writeAsStringSync('# API\n');
+    final workspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    final workspaceState = WorkspaceState(
+      workspace: workspace,
+      activeText: '# Nested\n',
+    );
+    final controller = _MutableWorkspaceController(workspaceState);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pump();
+    for (var index = 0; index < 10; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.text(l10n.files));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('target.md'));
+    await tester.pump(const Duration(milliseconds: 200));
+    final filesDeleteHandled = await tester.sendKeyDownEvent(
+      LogicalKeyboardKey.delete,
+    );
+    expect(filesDeleteHandled, isTrue);
+    await tester.pumpAndSettle();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.delete);
+    expect(
+      controller.analyzedRemovalMode,
+      WritersideTopicRemovalMode.safeDeleteFile,
+    );
+    expect(find.text(l10n.safeDeleteTopicFile), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.text(l10n.toc));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Nested entry'), findsOneWidget);
+    await tester.tap(find.byTooltip(l10n.newTopic));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(l10n.topicPlacement), findsOneWidget);
+    expect(find.text(l10n.tocRoot), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.createdTopicRequest, isNotNull);
+    expect(
+      controller.createdTopicRequest!.placement,
+      WritersideTopicCreatePlacement.root,
+    );
+    expect(controller.createdTopicRequest!.referenceTocPath, isNull);
+    expect(controller.createdTopicRequest!.referenceTopic, isNull);
+    expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
+
+    await tester.tap(find.byTooltip(l10n.instanceName));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('API Reference'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('api.md'), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.newTopic));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
+
+    await tester.tap(find.byTooltip(l10n.instanceName));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Guide').last);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Nested entry'));
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.delete);
+    await tester.pumpAndSettle();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.delete);
+    expect(
+      controller.analyzedRemovalMode,
+      WritersideTopicRemovalMode.removeFromInstance,
+    );
+    expect(find.text(l10n.removeTocElement), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    for (final label in [
+      l10n.newSiblingTopic,
+      l10n.newChildTopic,
+      l10n.renameTopicFile,
+      l10n.cut,
+      l10n.pasteAfterTopic,
+      l10n.pasteAsChildTopic,
+      l10n.removeTocElement,
+      l10n.safeDeleteTopicFile,
+      l10n.copyName,
+      l10n.copyPath,
+      l10n.openInFiles,
+      l10n.addToGit,
+      l10n.fileHistory,
+    ]) {
+      expect(find.text(label), findsOneWidget);
+    }
+
+    await tester.tap(find.text(l10n.newChildTopic));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(l10n.insideSelectedTopic), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      controller.createdTopicRequest!.placement,
+      WritersideTopicCreatePlacement.child,
+    );
+    expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
+    expect(controller.createdTopicRequest!.referenceTopic, 'nested.md');
+    expect(controller.createdTopicRequest!.referenceTocIdentity, isNotNull);
+
+    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text(l10n.newSiblingTopic));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(l10n.afterSelectedTopic), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      controller.createdTopicRequest!.placement,
+      WritersideTopicCreatePlacement.sibling,
+    );
+    expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
+
+    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text(l10n.cut));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('parent.md'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkPopupMenuItem<Object?> &&
+            widget.label == l10n.pasteAfterTopic &&
+            widget.enabled,
+      ),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump(const Duration(milliseconds: 300));
+    File(
+      p.join(root.path, 'topics', 'inserted.md'),
+    ).writeAsStringSync('# Inserted\n');
+    File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" name="Guide" start-page="nested.md">
+  <toc-element topic="parent.md">
+    <toc-element topic="inserted.md"/>
+    <toc-element topic="nested.md" toc-title="Nested entry"/>
+  </toc-element>
+  <toc-element topic="loose.md"/>
+  <toc-element topic="target.md"/>
+</instance-profile>
+''');
+    final refreshedWorkspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    controller.replaceWorkspace(refreshedWorkspace);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('parent.md'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkPopupMenuItem<Object?> &&
+            widget.label == l10n.pasteAfterTopic &&
+            !widget.enabled,
+      ),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('loose.md'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text(l10n.cut));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('target.md'), buttons: kSecondaryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkPopupMenuItem<Object?> &&
+            widget.label == l10n.pasteAsChildTopic &&
+            widget.enabled,
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(l10n.pasteAsChildTopic));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      controller.movedTopicPlacement,
+      WritersideTopicCreatePlacement.child,
+    );
+    expect(controller.movedTopicSourcePath, [1]);
+    expect(controller.movedTopicReferencePath, [2]);
+    expect(find.text('loose.md'), findsOneWidget);
+    final movedRoots =
+        controller.state.workspace!.writersideModule!.instances.first.tocRoots;
+    final targetNode = movedRoots.singleWhere(
+      (node) => node.topicFileName == 'target.md',
+    );
+    expect(targetNode.children.single.topicFileName, 'loose.md');
+  });
+
   testWidgets('tab keyboard shortcuts move and close editor tabs', (
     tester,
   ) async {
@@ -1339,7 +1645,7 @@ void main() {
     expect(find.text(l10n.rename), findsOneWidget);
     expect(find.text(l10n.cut), findsOneWidget);
     expect(find.text(l10n.paste), findsOneWidget);
-    expect(find.text(l10n.delete), findsOneWidget);
+    expect(find.text(l10n.delete), findsWidgets);
     expect(find.text(l10n.addToGit), findsOneWidget);
     expect(find.text(l10n.copyName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
@@ -3577,6 +3883,131 @@ class _FallbackHeaderBarService extends LinuxHeaderBarService {
 
   @override
   Stream<HeaderBarAction> get actions => const Stream.empty();
+}
+
+class _MutableWorkspaceController extends WorkspaceController {
+  _MutableWorkspaceController(this.initialState);
+
+  final WorkspaceState initialState;
+  WritersideTopicCreateRequest? createdTopicRequest;
+  String? createdTopicTreePath;
+  WritersideTopicCreatePlacement? movedTopicPlacement;
+  List<int>? movedTopicSourcePath;
+  List<int>? movedTopicReferencePath;
+  WritersideTopicRemovalMode? analyzedRemovalMode;
+
+  @override
+  WorkspaceState build() => initialState;
+
+  @override
+  Future<bool> createWritersideTopic(
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+  }) async {
+    createdTopicRequest = request;
+    createdTopicTreePath = instanceTreePath;
+    return true;
+  }
+
+  @override
+  Future<bool> moveWritersideTocEntry({
+    required String treePath,
+    required List<int> sourcePath,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? sourceIdentity,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) async {
+    movedTopicPlacement = placement;
+    movedTopicSourcePath = sourcePath;
+    movedTopicReferencePath = referencePath;
+    final workspace = state.workspace!;
+    final module = workspace.writersideModule!;
+    final instances = <WritersideInstance>[];
+    for (final instance in module.instances) {
+      if (!p.equals(instance.sourceTreePath, treePath)) {
+        instances.add(instance);
+        continue;
+      }
+      final roots = [...instance.tocRoots];
+      final sourceIndex = sourcePath.single;
+      final source = roots.removeAt(sourceIndex);
+      var referenceIndex = referencePath!.single;
+      if (sourceIndex < referenceIndex) {
+        referenceIndex -= 1;
+      }
+      final reference = roots[referenceIndex];
+      roots[referenceIndex] = TocNode(
+        topicFileName: reference.topicFileName,
+        href: reference.href,
+        tocTitle: reference.tocTitle,
+        id: reference.id,
+        hidden: reference.hidden,
+        children: [...reference.children, source],
+        span: reference.span,
+      );
+      instances.add(
+        WritersideInstance(
+          id: instance.id,
+          name: instance.name,
+          sourceTreePath: instance.sourceTreePath,
+          startPage: instance.startPage,
+          status: instance.status,
+          isLibrary: instance.isLibrary,
+          tocRoots: roots,
+          diagnostics: instance.diagnostics,
+        ),
+      );
+    }
+    final updatedModule = WritersideModule(
+      rootPath: module.rootPath,
+      config: module.config,
+      instances: instances,
+      topics: module.topics,
+      variables: module.variables,
+      categories: module.categories,
+      diagnostics: module.diagnostics,
+    );
+    state = state.copyWith(
+      workspace: workspace.copyWith(writersideModule: updatedModule),
+    );
+    return true;
+  }
+
+  @override
+  Future<WritersideTopicRemovalAnalysis?> analyzeWritersideTopicRemoval({
+    required String topicPath,
+    required WritersideTopicRemovalMode mode,
+    String? treePath,
+    List<int>? nodePath,
+  }) async {
+    analyzedRemovalMode = mode;
+    final topic = state.workspace!.writersideModule!.topics.singleWhere(
+      (candidate) => p.equals(candidate.filePath, topicPath),
+    );
+    return WritersideTopicRemovalAnalysis(
+      mode: mode,
+      moduleRoot: state.workspace!.rootPath,
+      topicPath: topicPath,
+      topicFileName: topic.fileName,
+      topicTitle: topic.title,
+      oldWebFileName: '${p.basenameWithoutExtension(topic.fileName)}.html',
+      selectedTreePath: treePath,
+      selectedNodePath: nodePath,
+      childCount: 0,
+      isStartPage: false,
+      usages: const [],
+      redirectTargets: const [],
+      fingerprint: 'widget-test',
+    );
+  }
+
+  @override
+  Future<bool> openActiveFile(String path) async => true;
+
+  void replaceWorkspace(Workspace workspace) {
+    state = state.copyWith(workspace: workspace);
+  }
 }
 
 class _StartupWorkspaceService extends WorkspaceService {

@@ -1,15 +1,14 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
-import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
+import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
@@ -17,7 +16,10 @@ import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_toc_editor.dart';
 import '../writerside/writerside_topic_creator.dart';
+import '../writerside/writerside_topic_file_editor.dart';
+import '../writerside/writerside_topic_removal_service.dart';
 import 'workspace_model.dart';
 
 class WorkspaceService {
@@ -27,6 +29,9 @@ class WorkspaceService {
     this.writersideService = const WritersideModuleService(),
     this.writersideProjectCreator = const WritersideProjectCreator(),
     this.writersideTopicCreator = const WritersideTopicCreator(),
+    this.writersideTocEditor = const WritersideTocEditor(),
+    this.writersideTopicFileEditor = const WritersideTopicFileEditor(),
+    this.writersideTopicRemovalService = const WritersideTopicRemovalService(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
   }) : _beforeNewFilePublish = beforeNewFilePublish;
@@ -36,6 +41,9 @@ class WorkspaceService {
   final WritersideModuleService writersideService;
   final WritersideProjectCreator writersideProjectCreator;
   final WritersideTopicCreator writersideTopicCreator;
+  final WritersideTocEditor writersideTocEditor;
+  final WritersideTopicFileEditor writersideTopicFileEditor;
+  final WritersideTopicRemovalService writersideTopicRemovalService;
   final WorkspaceScanOptions scanOptions;
   final Future<void> Function(String targetPath)? _beforeNewFilePublish;
 
@@ -92,26 +100,194 @@ class WorkspaceService {
 
   Future<Workspace> createWritersideTopic(
     Workspace workspace,
-    WritersideTopicCreateRequest request,
-  ) async {
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+  }) async {
     if (workspace.kind != WorkspaceKind.writersideModule ||
         workspace.writersideModule == null) {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
-    final module = workspace.writersideModule!;
+    final module = await _currentWritersideModule(workspace);
     if (module.instances.isEmpty) {
       throw const BusyMarkException('writerside.topic.instance-tree-missing');
+    }
+    final instance = _writersideInstanceForTree(module, instanceTreePath);
+    var topicsRootDir = module.config.topicsDir;
+    if (request.placement != WritersideTopicCreatePlacement.root) {
+      final referenceTopic = request.referenceTopic;
+      final topic = referenceTopic == null
+          ? null
+          : module.topicByReference(referenceTopic);
+      if (topic != null) {
+        final relativeRoot = p.relative(topic.topicRoot, from: module.rootPath);
+        if (relativeRoot != '.' && !relativeRoot.startsWith('../')) {
+          topicsRootDir = relativeRoot;
+        }
+      }
     }
     final result = await writersideTopicCreator.create(
       WritersideTopicCreateTarget(
         rootPath: module.rootPath,
-        treePath: module.instances.first.sourceTreePath,
-        topicsRootDir: module.config.topicsDir,
+        treePath: instance.sourceTreePath,
+        topicsRootDir: topicsRootDir,
         existingTopicIds: {for (final topic in module.topics) topic.id},
       ),
       request,
     );
     return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
+  }
+
+  Future<void> moveWritersideTocEntry(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> sourcePath,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? sourceIdentity,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.moveSubtree(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      WritersideTocMoveRequest(
+        sourcePath: sourcePath,
+        placement: placement,
+        referencePath: referencePath,
+        sourceIdentity: sourceIdentity,
+        referenceIdentity: referenceIdentity,
+      ),
+    );
+  }
+
+  Future<void> removeWritersideTocEntry(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> nodePath,
+    WritersideTocNodeIdentity? expectedIdentity,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.removeEntry(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      nodePath,
+      expectedIdentity: expectedIdentity,
+    );
+  }
+
+  Future<String> renameWritersideTopicFile(
+    Workspace workspace,
+    String topicPath,
+    String newFileName,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    final topic = _writersideTopicForPath(module, topicPath);
+    final result = await writersideTopicFileEditor.rename(
+      module: module,
+      topic: topic,
+      newFileName: newFileName,
+    );
+    return result.newTopicPath;
+  }
+
+  Future<void> deleteWritersideTopicFile(
+    Workspace workspace,
+    String topicPath,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    final topic = _writersideTopicForPath(module, topicPath);
+    final analysis = await writersideTopicRemovalService.analyze(
+      module: module,
+      topicPath: topic.filePath,
+      mode: WritersideTopicRemovalMode.safeDeleteFile,
+    );
+    await writersideTopicRemovalService.apply(
+      WritersideTopicRemovalRequest(
+        analysis: analysis,
+        updateUsagesAutomatically: analysis.canUpdateUsagesAutomatically,
+      ),
+    );
+  }
+
+  Future<WritersideTopicRemovalAnalysis> analyzeWritersideTopicRemoval(
+    Workspace workspace, {
+    required String topicPath,
+    required WritersideTopicRemovalMode mode,
+    String? treePath,
+    List<int>? nodePath,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final topic = _writersideTopicForPath(module, topicPath);
+    return writersideTopicRemovalService.analyze(
+      module: module,
+      topicPath: topic.filePath,
+      mode: mode,
+      selectedTreePath: treePath,
+      selectedNodePath: nodePath,
+    );
+  }
+
+  Future<WritersideTopicRemovalResult> applyWritersideTopicRemoval(
+    Workspace workspace,
+    WritersideTopicRemovalRequest request,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    if (!p.equals(module.rootPath, request.analysis.moduleRoot)) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    return writersideTopicRemovalService.apply(request);
+  }
+
+  WritersideModule _writersideModule(Workspace workspace) {
+    if (workspace.kind != WorkspaceKind.writersideModule ||
+        workspace.writersideModule == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    return workspace.writersideModule!;
+  }
+
+  Future<WritersideModule> _currentWritersideModule(Workspace workspace) async {
+    final openedModule = _writersideModule(workspace);
+    return writersideService.load(openedModule.rootPath);
+  }
+
+  WritersideInstance _writersideInstanceForTree(
+    WritersideModule module,
+    String? treePath,
+  ) {
+    if (module.instances.isEmpty) {
+      throw const BusyMarkException('writerside.topic.instance-tree-missing');
+    }
+    if (treePath == null) {
+      return module.instances.first;
+    }
+    for (final instance in module.instances) {
+      if (p.equals(instance.sourceTreePath, treePath)) {
+        return instance;
+      }
+    }
+    throw const BusyMarkException('writerside.topic.instance-tree-missing');
+  }
+
+  WritersideTopic _writersideTopicForPath(
+    WritersideModule module,
+    String topicPath,
+  ) {
+    for (final topic in module.topics) {
+      if (p.equals(topic.filePath, topicPath)) {
+        return topic;
+      }
+    }
+    throw BusyMarkException(
+      'writerside.topic-file.topic-not-resolved',
+      args: {'path': topicPath},
+    );
   }
 
   void _logOpenPathDiagnostics(
@@ -352,6 +528,12 @@ class WorkspaceService {
       allowMissingAncestors: true,
     );
     final type = resolution.type;
+    if (workspace.kind == WorkspaceKind.writersideModule &&
+        await _containsWritersideTopic(workspace, source, type)) {
+      throw const BusyMarkException(
+        'writerside.topic-removal.safe-delete-required',
+      );
+    }
     if (type == FileSystemEntityType.directory) {
       await Directory(source).delete(recursive: true);
       return;
@@ -368,6 +550,42 @@ class WorkspaceService {
       'workspace.path-does-not-exist',
       args: {'path': source},
     );
+  }
+
+  Future<bool> _containsWritersideTopic(
+    Workspace workspace,
+    String sourcePath,
+    FileSystemEntityType type,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    for (final configuredRoot in module.config.topicRoots) {
+      final topicRoot = p.normalize(
+        p.join(module.rootPath, configuredRoot.dir),
+      );
+      if (type == FileSystemEntityType.directory &&
+          (p.equals(sourcePath, topicRoot) ||
+              p.isWithin(topicRoot, sourcePath) ||
+              p.isWithin(sourcePath, topicRoot))) {
+        return true;
+      }
+      final extension = p.extension(sourcePath).toLowerCase();
+      if (type == FileSystemEntityType.file &&
+          p.isWithin(topicRoot, sourcePath) &&
+          (extension == '.md' ||
+              extension == '.markdown' ||
+              extension == '.topic')) {
+        return true;
+      }
+    }
+    for (final topic in module.topics) {
+      final topicPath = p.normalize(topic.filePath);
+      if (p.equals(topicPath, sourcePath) ||
+          (type == FileSystemEntityType.directory &&
+              p.isWithin(sourcePath, topicPath))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<CanonicalPathAnchor> _workspacePathAnchor(Workspace workspace) async {
@@ -584,14 +802,14 @@ class WorkspaceService {
         'Atomic no-replace publication is currently supported on Linux only.',
       );
     }
-    final errorNumber = _LinuxNoReplaceApi.instance.publishNoReplace(
+    final errorNumber = LinuxAtomicFileApi.instance.publishNoReplace(
       stagedFile.absolute.path,
       File(targetPath).absolute.path,
     );
     if (errorNumber == null) {
       return;
     }
-    if (errorNumber == _LinuxNoReplaceApi.fileExistsError) {
+    if (errorNumber == LinuxAtomicFileApi.fileExistsError) {
       throw BusyMarkException(
         'workspace.path-already-exists',
         args: {'path': targetPath},
@@ -1045,90 +1263,6 @@ class _StagedSave {
 
   final Directory directory;
   final File file;
-}
-
-typedef _RenameAt2Native =
-    Int32 Function(
-      Int32 oldDirectory,
-      Pointer<Utf8> oldPath,
-      Int32 newDirectory,
-      Pointer<Utf8> newPath,
-      Uint32 flags,
-    );
-typedef _RenameAt2Dart =
-    int Function(
-      int oldDirectory,
-      Pointer<Utf8> oldPath,
-      int newDirectory,
-      Pointer<Utf8> newPath,
-      int flags,
-    );
-typedef _ErrnoLocationNative = Pointer<Int32> Function();
-typedef _ErrnoLocationDart = Pointer<Int32> Function();
-typedef _LinkNative =
-    Int32 Function(Pointer<Utf8> oldPath, Pointer<Utf8> newPath);
-typedef _LinkDart = int Function(Pointer<Utf8> oldPath, Pointer<Utf8> newPath);
-
-final class _LinuxNoReplaceApi {
-  _LinuxNoReplaceApi() : _library = DynamicLibrary.open('libc.so.6') {
-    try {
-      _renameAt2 = _library.lookupFunction<_RenameAt2Native, _RenameAt2Dart>(
-        'renameat2',
-      );
-    } on ArgumentError {
-      _renameAt2 = null;
-    }
-    _link = _library.lookupFunction<_LinkNative, _LinkDart>('link');
-    _errnoLocation = _library
-        .lookupFunction<_ErrnoLocationNative, _ErrnoLocationDart>(
-          '__errno_location',
-        );
-  }
-
-  static const fileExistsError = 17;
-  static const _invalidArgumentError = 22;
-  static const _functionNotImplementedError = 38;
-  static const _operationNotSupportedError = 95;
-  static const _atCurrentWorkingDirectory = -100;
-  static const _renameNoReplace = 1;
-  static final instance = _LinuxNoReplaceApi();
-
-  final DynamicLibrary _library;
-  late final _RenameAt2Dart? _renameAt2;
-  late final _LinkDart _link;
-  late final _ErrnoLocationDart _errnoLocation;
-
-  int? publishNoReplace(String oldPath, String newPath) {
-    final nativeOldPath = oldPath.toNativeUtf8();
-    final nativeNewPath = newPath.toNativeUtf8();
-    try {
-      final renameAt2 = _renameAt2;
-      if (renameAt2 != null) {
-        final result = renameAt2(
-          _atCurrentWorkingDirectory,
-          nativeOldPath,
-          _atCurrentWorkingDirectory,
-          nativeNewPath,
-          _renameNoReplace,
-        );
-        if (result == 0) {
-          return null;
-        }
-        final errorNumber = _errnoLocation().value;
-        if (errorNumber != _invalidArgumentError &&
-            errorNumber != _functionNotImplementedError &&
-            errorNumber != _operationNotSupportedError) {
-          return errorNumber;
-        }
-      }
-
-      final linkResult = _link(nativeOldPath, nativeNewPath);
-      return linkResult == 0 ? null : _errnoLocation().value;
-    } finally {
-      malloc.free(nativeOldPath);
-      malloc.free(nativeNewPath);
-    }
-  }
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

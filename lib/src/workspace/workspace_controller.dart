@@ -9,6 +9,7 @@ import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_topic_removal_service.dart';
 import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
 import 'workspace_message.dart';
@@ -263,8 +264,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> createWritersideTopic(
-    WritersideTopicCreateRequest request,
-  ) async {
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+  }) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
@@ -278,6 +280,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final nextWorkspace = await _service.createWritersideTopic(
         workspace,
         request,
+        instanceTreePath: instanceTreePath,
       );
       final active = nextWorkspace.activeFilePath;
       final load = active == null
@@ -374,6 +377,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
       final target = await _service.renameEntity(workspace, path, newName);
+      _remapOpenWorkspacePaths(workspace, path, target);
       return _remapMovedPath(activeFilePath, path, target);
     });
   }
@@ -389,6 +393,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         sourcePath,
         targetDirectoryPath,
       );
+      _remapOpenWorkspacePaths(workspace, sourcePath, target);
       return _remapMovedPath(activeFilePath, sourcePath, target);
     });
   }
@@ -398,6 +403,134 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await _service.deleteEntity(workspace, path);
       return null;
     });
+  }
+
+  Future<bool> moveWritersideTocEntry({
+    required String treePath,
+    required List<int> sourcePath,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? sourceIdentity,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.moveWritersideTocEntry(
+        workspace,
+        treePath: treePath,
+        sourcePath: sourcePath,
+        placement: placement,
+        referencePath: referencePath,
+        sourceIdentity: sourceIdentity,
+        referenceIdentity: referenceIdentity,
+      );
+      return null;
+    });
+  }
+
+  Future<bool> removeWritersideTocEntry({
+    required String treePath,
+    required List<int> nodePath,
+    WritersideTocNodeIdentity? expectedIdentity,
+  }) {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.removeWritersideTocEntry(
+        workspace,
+        treePath: treePath,
+        nodePath: nodePath,
+        expectedIdentity: expectedIdentity,
+      );
+      return null;
+    });
+  }
+
+  Future<bool> renameWritersideTopicFile(String topicPath, String newFileName) {
+    final activeFilePath = state.workspace?.activeFilePath;
+    return _runWorkspaceFileOperation((workspace) async {
+      final target = await _service.renameWritersideTopicFile(
+        workspace,
+        topicPath,
+        newFileName,
+      );
+      _remapOpenWorkspacePaths(workspace, topicPath, target);
+      return _remapMovedPath(activeFilePath, topicPath, target);
+    });
+  }
+
+  Future<bool> deleteWritersideTopicFile(String topicPath) {
+    return _runWorkspaceFileOperation((workspace) async {
+      await _service.deleteWritersideTopicFile(workspace, topicPath);
+      return null;
+    });
+  }
+
+  Future<WritersideTopicRemovalAnalysis?> analyzeWritersideTopicRemoval({
+    required String topicPath,
+    required WritersideTopicRemovalMode mode,
+    String? treePath,
+    List<int>? nodePath,
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return null;
+    }
+    try {
+      return await _service.analyzeWritersideTopicRemoval(
+        workspace,
+        topicPath: topicPath,
+        mode: mode,
+        treePath: treePath,
+        nodePath: nodePath,
+      );
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Writerside topic removal analysis failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<WritersideTopicRemovalResult?> applyWritersideTopicRemoval(
+    WritersideTopicRemovalRequest request,
+  ) async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return null;
+    }
+    try {
+      final result = await _service.applyWritersideTopicRemoval(
+        workspace,
+        request,
+      );
+      if (!await refreshWorkspaceFromDiskPreservingOpenTabs()) {
+        return null;
+      }
+      return result;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Writerside topic removal failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
   }
 
   Future<bool> closeOpenFileTab(String path) async {
@@ -1004,6 +1137,37 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  void _remapOpenWorkspacePaths(
+    Workspace operationWorkspace,
+    String sourcePath,
+    String targetPath,
+  ) {
+    final current = state.workspace;
+    if (current == null || current.id != operationWorkspace.id) {
+      return;
+    }
+    final activeFilePath = current.activeFilePath;
+    final remappedActive = _remapMovedPath(
+      activeFilePath,
+      sourcePath,
+      targetPath,
+    );
+    final remappedTabs = [
+      for (final path in current.openFilePaths)
+        _remapMovedPath(path, sourcePath, targetPath) ?? path,
+    ];
+    if (remappedActive == null &&
+        _samePathLists(remappedTabs, current.openFilePaths)) {
+      return;
+    }
+    state = state.copyWith(
+      workspace: current.copyWith(
+        activeFilePath: remappedActive ?? activeFilePath,
+        openFilePaths: remappedTabs,
+      ),
+    );
+  }
+
   Future<void> validateActive() async {
     final workspace = state.workspace;
     if (workspace == null) {
@@ -1209,4 +1373,16 @@ String? _remapMovedPath(String? path, String source, String target) {
       p.relative(normalizedPath, from: normalizedSource),
     ),
   );
+}
+
+bool _samePathLists(List<String> first, List<String> second) {
+  if (first.length != second.length) {
+    return false;
+  }
+  for (var index = 0; index < first.length; index += 1) {
+    if (!p.equals(first[index], second[index])) {
+      return false;
+    }
+  }
+  return true;
 }
