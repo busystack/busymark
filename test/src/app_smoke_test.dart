@@ -1673,6 +1673,9 @@ void main() {
     expect(find.byTooltip(temp.path), findsOneWidget);
     await tester.tap(find.byTooltip(temp.path));
     await tester.pumpAndSettle();
+    expect(find.text(l10n.openInFiles), findsNothing);
+    await tester.tap(find.byTooltip(temp.path), buttons: kSecondaryMouseButton);
+    await tester.pumpAndSettle();
     expect(find.text(l10n.openInFiles), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -2170,14 +2173,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final sidebarHeader = find.byWidgetPredicate(
-        (widget) => widget.runtimeType.toString() == '_SidebarHeaderLine',
+      final projectName = find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+        matching: find.text(ar.untitledMarkdownFileName),
       );
       final outlineTitle = find.descendant(
-        of: sidebarHeader.first,
+        of: find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
         matching: find.text(busyMarkBidiIsolate('عنوان')),
       );
+      expect(projectName, findsOneWidget);
       expect(outlineTitle, findsOneWidget);
+      expect(Directionality.of(tester.element(projectName)), TextDirection.rtl);
       expect(
         Directionality.of(tester.element(outlineTitle)),
         TextDirection.rtl,
@@ -2931,6 +2937,10 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
+      findsNothing,
+    );
 
     final editorField = find.byType(TextField).first;
     await tester.tap(editorField);
@@ -3062,7 +3072,19 @@ void main() {
       matching: find.byType(Text),
     );
     expect(primarySidebarLabel, findsOneWidget);
-    expect(tester.widget<Text>(primarySidebarLabel).data, 'Basic Markdown');
+    expect(tester.widget<Text>(primarySidebarLabel).data, 'basic.md');
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
+        matching: find.text('Basic Markdown'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('workspace-sidebar-outline-tree')),
+      findsNothing,
+    );
+    expect(find.text(l10n.noOutline), findsNothing);
   });
 
   testWidgets('preview tolerates duplicate heading anchors', (tester) async {
@@ -3108,6 +3130,35 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.textContaining('First', findRichText: true), findsWidgets);
     expect(find.textContaining('Second', findRichText: true), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+        matching: find.text('duplicate-headings.md'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-outline-heading')),
+        matching: find.text('Title'),
+      ),
+      findsOneWidget,
+    );
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    expect(
+      find.descendant(of: outlineTree, matching: find.text('Title')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: outlineTree, matching: find.text('First')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: outlineTree, matching: find.text('Second')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('blocked remote image prompt allows the current workspace', (
@@ -4724,6 +4775,7 @@ class _SearchWorkspaceService extends WorkspaceService {
 
   @override
   Future<Workspace> openPath(String path) async {
+    final markdown = markdownParser.parse(filePath: path, source: source);
     return Workspace(
       id: path,
       rootPath: path,
@@ -4740,7 +4792,8 @@ class _SearchWorkspaceService extends WorkspaceService {
           lastModified: DateTime(2026),
         ),
       ],
-      diagnostics: const [],
+      diagnostics: markdown.diagnostics,
+      markdown: markdown,
     );
   }
 

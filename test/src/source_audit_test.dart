@@ -650,11 +650,17 @@ void main() {
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
     expect(workspace, contains('tooltip: context.l10n.gitBranches'));
-    expect(workspace, contains('String _primaryDisplayName'));
+    expect(workspace, contains('MarkdownHeading? _outlineHeaderHeading'));
+    expect(workspace, contains('List<MarkdownHeading> _outlineTreeHeadings'));
     expect(workspace, contains('heading.level == 1'));
     expect(
       workspace,
-      contains('busyMarkBidiIsolateFor(context, heading.text)'),
+      contains("ValueKey('workspace-sidebar-outline-heading')"),
+    );
+    expect(workspace, contains("ValueKey('workspace-sidebar-outline-tree')"));
+    expect(
+      workspace,
+      contains('busyMarkBidiIsolateFor(context, outlineHeading.text)'),
     );
     expect(workspace, contains('selectedTab == _SidebarTab.git'));
     expect(workspace, contains('selectedTab == _SidebarTab.gitHistory'));
@@ -663,6 +669,9 @@ void main() {
       workspace,
       contains('Future<_PathMenuAction?> _showSidebarPathMenu'),
     );
+    expect(workspace, contains('showBusyMarkContextMenu<_PathMenuAction>'));
+    expect(workspace, contains('onSecondaryTapDown: (lineContext, details)'));
+    expect(workspace, contains('position: details.globalPosition'));
     expect(
       workspace,
       contains('tooltip: busyMarkLtrIsolateFor(context, path)'),

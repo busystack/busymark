@@ -1057,8 +1057,9 @@ Future<void> _showWorkspacePathMenu(
   BuildContext context, {
   required String name,
   required String path,
+  required Offset position,
 }) async {
-  final action = await _showSidebarPathMenu(context);
+  final action = await _showSidebarPathMenu(context, position);
   if (action == null || !context.mounted) {
     return;
   }
@@ -1074,39 +1075,13 @@ Future<void> _showWorkspacePathMenu(
 
 enum _PathMenuAction { copyName, copyPath, openInFiles }
 
-Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
-  final anchor = context.findRenderObject();
-  final navigator = Navigator.of(context, rootNavigator: true);
-  final overlay = navigator.overlay?.context.findRenderObject();
-  if (anchor is! RenderBox || overlay is! RenderBox) {
-    return Future.value(null);
-  }
-  final theme = Theme.of(context);
-  final colors = BusyMarkSurfaceColors.of(context);
-  final popupTheme = theme.popupMenuTheme;
-  final anchorRect =
-      anchor.localToGlobal(Offset.zero, ancestor: overlay) & anchor.size;
-  const menuWidth = BusyMarkSizes.popupMenuMinWidth;
-  final minLeft = BusyMarkSpacing.sm;
-  final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
-  final left = _sidebarMenuLeft(
-    direction: Directionality.of(context),
-    anchorLeft: anchorRect.left,
-    anchorRight: anchorRect.right,
-    menuWidth: menuWidth,
-    minLeft: minLeft,
-    maxLeft: maxLeft,
-  );
-  final top = anchorRect.bottom + BusyMarkSpacing.xs;
-  return showMenu<_PathMenuAction>(
-    context: context,
-    useRootNavigator: true,
-    position: RelativeRect.fromLTRB(
-      left,
-      top,
-      math.max(minLeft, overlay.size.width - left - menuWidth),
-      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
-    ),
+Future<_PathMenuAction?> _showSidebarPathMenu(
+  BuildContext context,
+  Offset position,
+) {
+  return showBusyMarkContextMenu<_PathMenuAction>(
+    context,
+    position,
     items: [
       BusyMarkPopupMenuItem(
         value: _PathMenuAction.copyName,
@@ -1125,14 +1100,6 @@ Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
         icon: BusyMarkGlyphs.folderOpen,
       ),
     ],
-    color: popupTheme.color ?? colors.popover,
-    surfaceTintColor: BusyMarkLinuxPalette.transparent,
-    elevation: BusyMarkElevation.popover,
-    shadowColor: colors.shade,
-    constraints: const BoxConstraints.tightFor(width: menuWidth),
-    clipBehavior: Clip.antiAlias,
-    popUpAnimationStyle: AnimationStyle.noAnimation,
-    requestFocus: true,
   );
 }
 
@@ -1630,6 +1597,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
             repositoryInfo: repositoryInfo,
             showTabMenu: !widget.searchState.active && tabs.length > 1,
             onSelectTab: (tab) => _selectTab(tab, tabs),
+            onSelectOutlineHeading: (heading) =>
+                _selectOutlineHeading(ref, widget.workspace, heading),
             onShowBranchMenu: (menuContext, repository) =>
                 _showWorkspaceBranchMenu(menuContext, ref, repository),
           ),
@@ -2010,6 +1979,7 @@ class _SidebarHeader extends StatelessWidget {
     required this.repositoryInfo,
     required this.showTabMenu,
     required this.onSelectTab,
+    required this.onSelectOutlineHeading,
     required this.onShowBranchMenu,
   });
 
@@ -2019,6 +1989,7 @@ class _SidebarHeader extends StatelessWidget {
   final GitRepositoryInfo? repositoryInfo;
   final bool showTabMenu;
   final ValueChanged<_SidebarTab> onSelectTab;
+  final ValueChanged<MarkdownHeading> onSelectOutlineHeading;
   final Future<void> Function(
     BuildContext context,
     GitRepositoryInfo repository,
@@ -2031,6 +2002,9 @@ class _SidebarHeader extends StatelessWidget {
     final path = _workspacePath(workspace);
     final repository = repositoryInfo;
     final branchLabel = _gitBranchLabel(context, repositoryInfo);
+    final outlineHeading = selectedTab == _SidebarTab.outline
+        ? _outlineHeaderHeading(workspace)
+        : null;
     final detailsStyle = Theme.of(
       context,
     ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground);
@@ -2050,7 +2024,7 @@ class _SidebarHeader extends StatelessWidget {
                 child: _SidebarHeaderLine(
                   key: const ValueKey('workspace-sidebar-primary-label'),
                   icon: WorkspaceGlyphs.forKind(workspace.kind),
-                  text: _primaryDisplayName(context),
+                  text: _workspaceDisplayName(context, workspace),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
@@ -2082,6 +2056,17 @@ class _SidebarHeader extends StatelessWidget {
               ],
             ],
           ),
+          if (outlineHeading != null) ...[
+            const SizedBox(height: BusyMarkSpacing.sm),
+            _SidebarHeaderLine(
+              key: const ValueKey('workspace-sidebar-outline-heading'),
+              icon: BusyMarkGlyphs.heading,
+              text: busyMarkBidiIsolateFor(context, outlineHeading.text),
+              style: detailsStyle,
+              tooltip: busyMarkBidiIsolateFor(context, outlineHeading.text),
+              onTap: (_) async => onSelectOutlineHeading(outlineHeading),
+            ),
+          ],
           if (selectedTab == _SidebarTab.files && path.isNotEmpty) ...[
             const SizedBox(height: BusyMarkSpacing.sm),
             _SidebarHeaderLine(
@@ -2090,11 +2075,13 @@ class _SidebarHeader extends StatelessWidget {
               style: detailsStyle,
               leadingEllipsis: true,
               tooltip: busyMarkLtrIsolateFor(context, path),
-              onTap: (lineContext) => _showWorkspacePathMenu(
-                lineContext,
-                name: _workspaceName(context, workspace),
-                path: path,
-              ),
+              onSecondaryTapDown: (lineContext, details) =>
+                  _showWorkspacePathMenu(
+                    lineContext,
+                    name: _workspaceName(context, workspace),
+                    path: path,
+                    position: details.globalPosition,
+                  ),
             ),
           ],
           if ((selectedTab == _SidebarTab.git ||
@@ -2146,17 +2133,6 @@ class _SidebarHeader extends StatelessWidget {
     return localizedUntitled ? name : busyMarkLtrIsolateFor(context, name);
   }
 
-  String _primaryDisplayName(BuildContext context) {
-    if (selectedTab == _SidebarTab.outline) {
-      for (final heading in workspace.markdown?.headings ?? const []) {
-        if (heading.level == 1 && heading.text.trim().isNotEmpty) {
-          return busyMarkBidiIsolateFor(context, heading.text);
-        }
-      }
-    }
-    return _workspaceDisplayName(context, workspace);
-  }
-
   String _workspacePath(Workspace workspace) {
     if (workspace.kind == WorkspaceKind.singleMarkdown) {
       return workspace.activeFilePath ??
@@ -2190,6 +2166,9 @@ List<Widget> _branchSyncIndicators(
   ];
 }
 
+typedef _SidebarHeaderSecondaryTapHandler =
+    Future<void> Function(BuildContext context, TapDownDetails details);
+
 class _SidebarHeaderLine extends StatelessWidget {
   const _SidebarHeaderLine({
     super.key,
@@ -2204,6 +2183,7 @@ class _SidebarHeaderLine extends StatelessWidget {
     this.boldTrailingIcon = false,
     this.tooltip,
     this.onTap,
+    this.onSecondaryTapDown,
   });
 
   final IconData icon;
@@ -2217,6 +2197,7 @@ class _SidebarHeaderLine extends StatelessWidget {
   final bool boldTrailingIcon;
   final String? tooltip;
   final Future<void> Function(BuildContext context)? onTap;
+  final _SidebarHeaderSecondaryTapHandler? onSecondaryTapDown;
 
   @override
   Widget build(BuildContext context) {
@@ -2277,14 +2258,20 @@ class _SidebarHeaderLine extends StatelessWidget {
       ],
     );
     final tapHandler = onTap;
-    if (tapHandler == null) {
+    final secondaryTapHandler = onSecondaryTapDown;
+    if (tapHandler == null && secondaryTapHandler == null) {
       return line;
     }
     final clickable = MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor: tapHandler == null
+          ? SystemMouseCursors.contextMenu
+          : SystemMouseCursors.click,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => unawaited(tapHandler(context)),
+        onTap: tapHandler == null ? null : () => unawaited(tapHandler(context)),
+        onSecondaryTapDown: secondaryTapHandler == null
+            ? null
+            : (details) => unawaited(secondaryTapHandler(context, details)),
         child: line,
       ),
     );
@@ -5764,6 +5751,48 @@ Set<String> _activeTocAncestorKeys(Workspace workspace, {String? treePath}) {
   return ancestors;
 }
 
+MarkdownHeading? _outlineHeaderHeading(Workspace workspace) {
+  for (final heading in workspace.markdown?.headings ?? const []) {
+    if (heading.level == 1 && heading.text.trim().isNotEmpty) {
+      return heading;
+    }
+  }
+  return null;
+}
+
+List<MarkdownHeading> _outlineTreeHeadings(Workspace workspace) {
+  final headings = workspace.markdown?.headings ?? const <MarkdownHeading>[];
+  final headerHeading = _outlineHeaderHeading(workspace);
+  if (headerHeading == null) {
+    return headings;
+  }
+  return [
+    for (final heading in headings)
+      if (!identical(heading, headerHeading)) heading,
+  ];
+}
+
+void _selectOutlineHeading(
+  WidgetRef ref,
+  Workspace workspace,
+  MarkdownHeading heading,
+) {
+  final activeFilePath =
+      workspace.activeFilePath ?? workspace.markdown?.filePath;
+  if (activeFilePath == null) {
+    return;
+  }
+  ref
+      .read(_outlineNavigationTargetProvider.notifier)
+      .set(
+        _OutlineNavigationTarget(
+          filePath: activeFilePath,
+          headingId: heading.id,
+          line: heading.span.startLine,
+        ),
+      );
+}
+
 class _OutlineTab extends ConsumerStatefulWidget {
   const _OutlineTab({required this.workspace});
 
@@ -5796,18 +5825,24 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
 
   @override
   Widget build(BuildContext context) {
-    final headings = widget.workspace.markdown?.headings ?? const [];
-    if (headings.isEmpty) {
+    final documentHeadings =
+        widget.workspace.markdown?.headings ?? const <MarkdownHeading>[];
+    if (documentHeadings.isEmpty) {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.font,
         title: context.l10n.noOutline,
       );
+    }
+    final headings = _outlineTreeHeadings(widget.workspace);
+    if (headings.isEmpty) {
+      return const SizedBox.shrink();
     }
     final activeFilePath =
         widget.workspace.activeFilePath ?? widget.workspace.markdown?.filePath;
     final tree = _buildOutlineTree(headings);
     final entries = _visibleOutlineTreeEntries(tree, _expandedNodeKeys);
     return ListView.builder(
+      key: const ValueKey('workspace-sidebar-outline-tree'),
       padding: BusyMarkInsets.sidebarList,
       itemCount: entries.length,
       itemBuilder: (context, index) {
@@ -5837,17 +5872,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
           onToggle: hasChildren ? toggle : null,
           onTap: activeFilePath == null
               ? null
-              : () {
-                  ref
-                      .read(_outlineNavigationTargetProvider.notifier)
-                      .set(
-                        _OutlineNavigationTarget(
-                          filePath: activeFilePath,
-                          headingId: heading.id,
-                          line: heading.span.startLine,
-                        ),
-                      );
-                },
+              : () => _selectOutlineHeading(ref, widget.workspace, heading),
         );
       },
     );
@@ -5929,7 +5954,7 @@ List<_OutlineTreeEntry> _visibleOutlineTreeEntries(
 }
 
 Set<String> _initialExpandedOutlineNodeKeys(Workspace workspace) {
-  final headings = workspace.markdown?.headings ?? const <MarkdownHeading>[];
+  final headings = _outlineTreeHeadings(workspace);
   return {
     for (final node in _flattenOutlineTree(_buildOutlineTree(headings)))
       if (node.children.isNotEmpty) _outlineNodeKey(node.heading),
