@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:yaru/yaru.dart';
 
@@ -8,7 +9,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData appearance = YaruIcons.desktop_appearance;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData bold = YaruIcons.bold;
-  static const IconData branch = YaruIcons.network_wired;
+  static const IconData branch = Icons.fork_right;
   static const IconData category = YaruIcons.tag;
   static const IconData check = YaruIcons.checkmark;
   static const IconData checkedBox = YaruIcons.checkbox_checked;

@@ -41,6 +41,10 @@ void main() {
     );
   });
 
+  test('Git branch glyph does not mirror with reading direction', () {
+    expect(BusyMarkGlyphs.branch.matchTextDirection, isFalse);
+  });
+
   test('Arabic and Persian font fallbacks are available in the snap', () {
     expect(BusyMarkTypography.fontFamilyFallback, contains('Noto Sans Arabic'));
     expect(

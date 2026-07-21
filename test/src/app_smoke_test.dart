@@ -1901,6 +1901,24 @@ void main() {
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
+    final branchRow = find.byKey(
+      const ValueKey('workspace-sidebar-first-content'),
+    );
+    final branchGlyph = find.descendant(
+      of: branchRow,
+      matching: find.byIcon(BusyMarkGlyphs.branch),
+    );
+    expect(branchGlyph, findsOneWidget);
+    final branchGlyphContext = tester.element(branchGlyph);
+    final branchIcon = tester.widget<Icon>(branchGlyph);
+    expect(branchIcon.color, Theme.of(branchGlyphContext).colorScheme.primary);
+    expect(
+      branchIcon.size,
+      MediaQuery.textScalerOf(branchGlyphContext).scale(
+        Theme.of(branchGlyphContext).textTheme.bodySmall?.fontSize ??
+            BusyMarkSizes.iconSm,
+      ),
+    );
     final branchMenu = find.byKey(
       const ValueKey('workspace-sidebar-branch-menu'),
     );

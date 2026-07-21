@@ -98,8 +98,9 @@ void main() {
     expect(router, isNot(contains('CustomTransitionPage')));
   });
 
-  test('Flutter UI uses Yaru glyphs instead of Material icon constants', () {
+  test('Flutter UI resolves icons through the BusyMark glyph catalog', () {
     final materialIconUse = RegExp(r'(^|[^A-Za-z])Icons\.', multiLine: true);
+    final glyphCatalog = File('lib/src/app/busymark_glyphs.dart');
     final files = <File>[
       for (final path in ['lib', 'test'])
         ...Directory(path)
@@ -109,6 +110,9 @@ void main() {
     ];
 
     for (final file in files) {
+      if (file.path == glyphCatalog.path) {
+        continue;
+      }
       expect(
         materialIconUse.hasMatch(file.readAsStringSync()),
         isFalse,
@@ -116,9 +120,18 @@ void main() {
       );
     }
 
-    final glyphs = File('lib/src/app/busymark_glyphs.dart').readAsStringSync();
+    final glyphs = glyphCatalog.readAsStringSync();
     expect(glyphs, contains("import 'package:yaru/yaru.dart';"));
     expect(glyphs, contains('YaruIcons.'));
+    expect(
+      RegExp(
+        r'\bIcons\.[A-Za-z0-9_]+',
+      ).allMatches(glyphs).map((match) => match.group(0)),
+      orderedEquals(<String>[
+        'Icons'
+            '.fork_right',
+      ]),
+    );
   });
 
   test('preview output actions are not present', () {
@@ -712,6 +725,9 @@ void main() {
     );
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
+    expect(workspace, isNot(contains('boldLeadingIcon')));
+    expect(workspace, isNot(contains('_BoldBranchIcon')));
+    expect(workspace, isNot(contains('_BoldBranchIconPainter')));
     expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
     expect(workspace, contains('repository.behindCount > 0'));
     expect(workspace, contains('context.l10n.gitBehindCount'));
@@ -732,7 +748,10 @@ void main() {
     expect(gitSidebar, isNot(contains('color: colors.secondarySidebar')));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
-      contains('branch = YaruIcons.network_wired'),
+      contains(
+        'branch = Icons'
+        '.fork_right',
+      ),
     );
     expect(gitSidebar, isNot(contains('OutlinedButton(')));
     expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));

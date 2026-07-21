@@ -2101,7 +2101,6 @@ class _SidebarHeader extends StatelessWidget {
                       icon: WorkspaceGlyphs.branch,
                       text: branchLabel,
                       style: branchStyle,
-                      boldLeadingIcon: true,
                       inlineTrailing: _branchSyncIndicators(
                         context,
                         repository,
@@ -2207,7 +2206,6 @@ class _SidebarHeaderLine extends StatelessWidget {
     required this.icon,
     required this.text,
     required this.style,
-    this.boldLeadingIcon = false,
     this.leadingEllipsis = false,
     this.inlineTrailing = const [],
     this.tooltip,
@@ -2217,7 +2215,6 @@ class _SidebarHeaderLine extends StatelessWidget {
   final IconData icon;
   final String text;
   final TextStyle? style;
-  final bool boldLeadingIcon;
   final bool leadingEllipsis;
   final List<Widget> inlineTrailing;
   final String? tooltip;
@@ -2241,16 +2238,13 @@ class _SidebarHeaderLine extends StatelessWidget {
           );
     final line = Row(
       children: [
-        if (boldLeadingIcon)
-          _BoldBranchIcon(size: iconSize, color: iconColor)
-        else
-          Icon(
-            icon,
-            size: iconSize,
-            color: iconColor,
-            weight: iconWeight,
-            fontWeight: iconFontWeight,
-          ),
+        Icon(
+          icon,
+          size: iconSize,
+          color: iconColor,
+          weight: iconWeight,
+          fontWeight: iconFontWeight,
+        ),
         const SizedBox(width: BusyMarkSpacing.sm),
         Expanded(
           child: Row(
@@ -2401,70 +2395,6 @@ class _BoldVerticalArrowIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(_BoldVerticalArrowIconPainter oldDelegate) {
     return direction != oldDelegate.direction || color != oldDelegate.color;
-  }
-}
-
-class _BoldBranchIcon extends StatelessWidget {
-  const _BoldBranchIcon({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: size,
-      child: CustomPaint(painter: _BoldBranchIconPainter(color)),
-    );
-  }
-}
-
-class _BoldBranchIconPainter extends CustomPainter {
-  const _BoldBranchIconPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final scale = size.shortestSide / BusyMarkSizes.iconSm;
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.15 * scale
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final fill = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final leftX = size.width * 0.32;
-    final topY = size.height * 0.25;
-    final bottomY = size.height * 0.75;
-    final rightX = size.width * 0.72;
-    final midY = size.height * 0.5;
-    final radius = 2.25 * scale;
-
-    canvas.drawLine(Offset(leftX, topY), Offset(leftX, bottomY), paint);
-    canvas.drawCircle(Offset(leftX, topY), radius, fill);
-    canvas.drawCircle(Offset(leftX, bottomY), radius, fill);
-    canvas.drawPath(
-      Path()
-        ..moveTo(leftX, midY)
-        ..cubicTo(
-          size.width * 0.48,
-          midY,
-          size.width * 0.54,
-          midY,
-          rightX,
-          midY,
-        ),
-      paint,
-    );
-    canvas.drawCircle(Offset(rightX, midY), radius, fill);
-  }
-
-  @override
-  bool shouldRepaint(_BoldBranchIconPainter oldDelegate) {
-    return color != oldDelegate.color;
   }
 }
 
