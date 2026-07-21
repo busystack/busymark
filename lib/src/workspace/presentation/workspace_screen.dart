@@ -2048,8 +2048,9 @@ class _SidebarHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: _SidebarHeaderLine(
+                  key: const ValueKey('workspace-sidebar-primary-label'),
                   icon: WorkspaceGlyphs.forKind(workspace.kind),
-                  text: _workspaceDisplayName(context, workspace),
+                  text: _primaryDisplayName(context),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
@@ -2081,7 +2082,7 @@ class _SidebarHeader extends StatelessWidget {
               ],
             ],
           ),
-          if (path.isNotEmpty) ...[
+          if (selectedTab == _SidebarTab.files && path.isNotEmpty) ...[
             const SizedBox(height: BusyMarkSpacing.sm),
             _SidebarHeaderLine(
               icon: WorkspaceGlyphs.pathForKind(workspace.kind),
@@ -2096,7 +2097,9 @@ class _SidebarHeader extends StatelessWidget {
               ),
             ),
           ],
-          if (repository != null &&
+          if ((selectedTab == _SidebarTab.git ||
+                  selectedTab == _SidebarTab.gitHistory) &&
+              repository != null &&
               branchLabel != null &&
               branchLabel.trim().isNotEmpty) ...[
             const SizedBox(height: BusyMarkSpacing.sm),
@@ -2143,6 +2146,17 @@ class _SidebarHeader extends StatelessWidget {
     return localizedUntitled ? name : busyMarkLtrIsolateFor(context, name);
   }
 
+  String _primaryDisplayName(BuildContext context) {
+    if (selectedTab == _SidebarTab.outline) {
+      for (final heading in workspace.markdown?.headings ?? const []) {
+        if (heading.level == 1 && heading.text.trim().isNotEmpty) {
+          return busyMarkBidiIsolateFor(context, heading.text);
+        }
+      }
+    }
+    return _workspaceDisplayName(context, workspace);
+  }
+
   String _workspacePath(Workspace workspace) {
     if (workspace.kind == WorkspaceKind.singleMarkdown) {
       return workspace.activeFilePath ??
@@ -2178,6 +2192,7 @@ List<Widget> _branchSyncIndicators(
 
 class _SidebarHeaderLine extends StatelessWidget {
   const _SidebarHeaderLine({
+    super.key,
     required this.icon,
     required this.text,
     required this.style,

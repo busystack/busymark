@@ -650,6 +650,14 @@ void main() {
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
     expect(workspace, contains('tooltip: context.l10n.gitBranches'));
+    expect(workspace, contains('String _primaryDisplayName'));
+    expect(workspace, contains('heading.level == 1'));
+    expect(
+      workspace,
+      contains('busyMarkBidiIsolateFor(context, heading.text)'),
+    );
+    expect(workspace, contains('selectedTab == _SidebarTab.git'));
+    expect(workspace, contains('selectedTab == _SidebarTab.gitHistory'));
     expect(workspace, contains('Future<void> _showWorkspacePathMenu'));
     expect(
       workspace,
@@ -658,6 +666,10 @@ void main() {
     expect(
       workspace,
       contains('tooltip: busyMarkLtrIsolateFor(context, path)'),
+    );
+    expect(
+      workspace,
+      contains('selectedTab == _SidebarTab.files && path.isNotEmpty'),
     );
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));

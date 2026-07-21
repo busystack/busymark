@@ -1379,8 +1379,8 @@ void main() {
 
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
     expect(find.text('current.md'), findsWidgets);
-    expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
-    expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
+    expect(find.byTooltip(l10n.gitBehindCount(3)), findsNothing);
+    expect(find.byTooltip(l10n.gitAheadCount(2)), findsNothing);
     expect(find.text('README.md'), findsWidgets);
     expect(find.text('guide.md'), findsOneWidget);
     expect(find.text(l10n.gitDiff), findsNothing);
@@ -1458,6 +1458,8 @@ void main() {
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
+    expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
+    expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -1663,6 +1665,7 @@ void main() {
     expect(gitState.openDiffFilePaths, ['README.md']);
     expect(gitState.selectedCommitFilePath, isNull);
 
+    expect(find.byTooltip(temp.path), findsNothing);
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     await tester.pumpAndSettle();
 
@@ -1866,17 +1869,25 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsOneWidget);
+    expect(find.byTooltip(l10n.gitBranches), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsNothing);
+    expect(find.byTooltip(l10n.gitBranches), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit5);
     expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
+    expect(find.byTooltip(temp.path), findsNothing);
+    expect(find.byTooltip(l10n.gitBranches), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
     expect(find.text('Intro.md'), findsWidgets);
+    expect(find.byTooltip(temp.path), findsNothing);
+    expect(find.byTooltip(l10n.gitBranches), findsNothing);
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
@@ -2162,13 +2173,13 @@ void main() {
       final sidebarHeader = find.byWidgetPredicate(
         (widget) => widget.runtimeType.toString() == '_SidebarHeaderLine',
       );
-      final localizedUntitled = find.descendant(
+      final outlineTitle = find.descendant(
         of: sidebarHeader.first,
-        matching: find.text(ar.untitledMarkdownFileName),
+        matching: find.text(busyMarkBidiIsolate('عنوان')),
       );
-      expect(localizedUntitled, findsOneWidget);
+      expect(outlineTitle, findsOneWidget);
       expect(
-        Directionality.of(tester.element(localizedUntitled)),
+        Directionality.of(tester.element(outlineTitle)),
         TextDirection.rtl,
       );
 
@@ -2913,6 +2924,14 @@ void main() {
       }
     }
 
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+        matching: find.text('editor-tab.md'),
+      ),
+      findsOneWidget,
+    );
+
     final editorField = find.byType(TextField).first;
     await tester.tap(editorField);
     final controller = tester.widget<TextField>(editorField).controller!;
@@ -3037,7 +3056,13 @@ void main() {
     expect(service.openedPath, startupPath);
     expect(find.text(l10n.openMarkdownFile), findsNothing);
     expect(find.textContaining('Basic Markdown'), findsWidgets);
-    expect(find.byTooltip(startupPath), findsOneWidget);
+    expect(find.byTooltip(startupPath), findsNothing);
+    final primarySidebarLabel = find.descendant(
+      of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+      matching: find.byType(Text),
+    );
+    expect(primarySidebarLabel, findsOneWidget);
+    expect(tester.widget<Text>(primarySidebarLabel).data, 'Basic Markdown');
   });
 
   testWidgets('preview tolerates duplicate heading anchors', (tester) async {
@@ -4485,7 +4510,9 @@ class _StartupWorkspaceService extends WorkspaceService {
 
   @override
   Future<Workspace> openPath(String path) async {
+    const source = '# Basic Markdown\n';
     openedPath = path;
+    final markdown = markdownParser.parse(filePath: path, source: source);
     return Workspace(
       id: path,
       rootPath: path,
@@ -4502,7 +4529,8 @@ class _StartupWorkspaceService extends WorkspaceService {
           lastModified: DateTime(2026),
         ),
       ],
-      diagnostics: const [],
+      diagnostics: markdown.diagnostics,
+      markdown: markdown,
     );
   }
 
