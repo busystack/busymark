@@ -33,20 +33,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aboutWebsite => 'Veebisait';
 
   @override
-  String get aboutReportIssue => 'Teata probleemist';
+  String get aboutSourceCode => 'Lähtekood';
 
   @override
-  String get feedbackSupportSection => 'Tugi';
-
-  @override
-  String get feedbackActionTitle => 'Saada tagasisidet / teata murest';
-
-  @override
-  String get feedbackActionDescription =>
-      'Teata veast, esita soov või anna teada privaatsuse või kasutatavusega seotud murest.';
-
-  @override
-  String get feedbackDialogTitle => 'Saada tagasisidet';
+  String get reportIssue => 'Teata probleemist';
 
   @override
   String get feedbackCategory => 'Kategooria';

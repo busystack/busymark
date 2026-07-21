@@ -17,6 +17,7 @@ enum HeaderBarAction {
   settings,
   keyboardShortcuts,
   markdownAndHtml,
+  reportIssue,
   aboutBusyMark,
   viewModeEditor,
   viewModeSource,
@@ -67,6 +68,7 @@ class HeaderBarLabels {
     required this.keyboardShortcutsShortcut,
     required this.markdownAndHtml,
     required this.markdownAndHtmlShortcut,
+    required this.reportIssue,
     required this.aboutBusyMark,
   });
 
@@ -92,6 +94,7 @@ class HeaderBarLabels {
   final String keyboardShortcutsShortcut;
   final String markdownAndHtml;
   final String markdownAndHtmlShortcut;
+  final String reportIssue;
   final String aboutBusyMark;
 
   Map<String, String> toMap() => {
@@ -117,6 +120,7 @@ class HeaderBarLabels {
     'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
     'markdownAndHtml': markdownAndHtml,
     'markdownAndHtmlShortcut': markdownAndHtmlShortcut,
+    'reportIssue': reportIssue,
     'aboutBusyMark': aboutBusyMark,
   };
 }
@@ -363,6 +367,7 @@ class LinuxHeaderBarService {
       'settings' => HeaderBarAction.settings,
       'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
       'markdownAndHtml' => HeaderBarAction.markdownAndHtml,
+      'reportIssue' => HeaderBarAction.reportIssue,
       'aboutBusyMark' => HeaderBarAction.aboutBusyMark,
       'viewModeEditor' => HeaderBarAction.viewModeEditor,
       'viewModeSource' => HeaderBarAction.viewModeSource,

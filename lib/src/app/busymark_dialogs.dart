@@ -12,7 +12,7 @@ import 'busymark_glyphs.dart';
 import 'localization.dart';
 
 const _busyMarkWebsiteUrl = 'https://busystack.org';
-const _busyMarkIssueUrl = 'https://github.com/busystack/busymark/issues';
+const _busyMarkRepositoryUrl = 'https://github.com/busystack/busymark/';
 const _apacheLicenseUrl = 'https://www.apache.org/licenses/LICENSE-2.0';
 const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
 const _supportedRawHtmlBlockTags =
@@ -25,7 +25,7 @@ const _supportedRawHtmlInlineTags =
     'var, abbr, cite, q, dfn, time, data, bdi, bdo, wbr, ins, del, ruby, '
     'rt, rp, a, img, br';
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
-final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
+final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
   for (final shortcut in BusyMarkAppShortcuts.definitions.values)
@@ -131,12 +131,12 @@ void showBusyMarkAboutDialog(BuildContext context) {
   );
 }
 
-Future<void> _openBusyMarkRepository() async {
+Future<void> _openBusyMarkWebsite() async {
   await launchUrl(_busyMarkWebsiteUri, mode: LaunchMode.externalApplication);
 }
 
-Future<void> _openBusyMarkIssues() async {
-  await launchUrl(_busyMarkIssueUri, mode: LaunchMode.externalApplication);
+Future<void> _openBusyMarkRepository() async {
+  await launchUrl(_busyMarkRepositoryUri, mode: LaunchMode.externalApplication);
 }
 
 Future<void> _openApacheLicense() async {
@@ -976,14 +976,14 @@ class _BusyMarkAboutDialog extends StatelessWidget {
               subtitle: _busyMarkWebsiteUrl,
               leading: const Icon(BusyMarkGlyphs.home),
               trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openBusyMarkRepository()),
+              onTap: () => unawaited(_openBusyMarkWebsite()),
             ),
             BusyMarkActionRow(
-              title: context.l10n.aboutReportIssue,
-              subtitle: _busyMarkIssueUrl,
-              leading: const Icon(BusyMarkGlyphs.warning),
+              title: context.l10n.aboutSourceCode,
+              subtitle: _busyMarkRepositoryUrl,
+              leading: const Icon(BusyMarkGlyphs.code),
               trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openBusyMarkIssues()),
+              onTap: () => unawaited(_openBusyMarkRepository()),
             ),
           ],
         ),

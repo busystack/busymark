@@ -12,6 +12,7 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
@@ -20,6 +21,7 @@ import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
+import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
@@ -146,10 +148,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settings), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcutLabels.settings), findsOneWidget);
     expect(
       find.byTooltip(
         '${l10n.settings} (${BusyMarkAppShortcutLabels.settings})',
       ),
+      findsNothing,
+    );
+    expect(find.text(l10n.keyboardShortcuts), findsOneWidget);
+    expect(
+      find.text(BusyMarkAppShortcutLabels.keyboardShortcuts),
       findsOneWidget,
     );
     expect(
@@ -157,6 +165,11 @@ void main() {
         '${l10n.keyboardShortcuts} '
         '(${BusyMarkAppShortcutLabels.keyboardShortcuts})',
       ),
+      findsNothing,
+    );
+    expect(find.text(l10n.markdownAndHtml), findsOneWidget);
+    expect(
+      find.text(BusyMarkAppShortcutLabels.markdownAndHtml),
       findsOneWidget,
     );
     expect(
@@ -164,12 +177,54 @@ void main() {
         '${l10n.markdownAndHtml} '
         '(${BusyMarkAppShortcutLabels.markdownAndHtml})',
       ),
-      findsOneWidget,
+      findsNothing,
+    );
+    expect(find.text(l10n.reportIssue), findsOneWidget);
+    expect(find.text(l10n.aboutBusyMark), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(l10n.reportIssue)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.aboutBusyMark)).dy),
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settings), findsNothing);
+  });
+
+  testWidgets('report issue is in the shared main menu, not Settings content', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(find.text(l10n.reportIssue), findsNothing);
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.reportIssue), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(l10n.reportIssue)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.aboutBusyMark)).dy),
+    );
+    await tester.tap(find.text(l10n.reportIssue));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.reportIssue), findsOneWidget);
+    expect(find.text(l10n.feedbackCategory), findsOneWidget);
+    expect(find.byKey(BusyMarkFeedbackKeys.cancel), findsOneWidget);
   });
 
   testWidgets('global reference and settings shortcuts open targets', (
@@ -734,9 +789,18 @@ void main() {
     expect(find.text(l10n.aboutLicenseName), findsOneWidget);
     expect(find.text(l10n.aboutWebsite), findsOneWidget);
     expect(find.text('https://busystack.org'), findsOneWidget);
-    expect(find.text(l10n.aboutReportIssue), findsOneWidget);
+    expect(find.text(l10n.aboutSourceCode), findsOneWidget);
+    expect(find.text('https://github.com/busystack/busymark/'), findsOneWidget);
+    final sourceCodeRow = find.ancestor(
+      of: find.text(l10n.aboutSourceCode),
+      matching: find.byType(BusyMarkActionRow),
+    );
+    expect(sourceCodeRow, findsOneWidget);
     expect(
-      find.text('https://github.com/busystack/busymark/issues'),
+      find.descendant(
+        of: sourceCodeRow,
+        matching: find.byIcon(BusyMarkGlyphs.code),
+      ),
       findsOneWidget,
     );
     final logo = find.byType(SvgPicture);
@@ -1845,28 +1909,16 @@ void main() {
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byTooltip('${l10n.files} (${BusyMarkSidebarShortcutLabels.files})'),
-      findsOneWidget,
-    );
-    expect(
-      find.byTooltip(
-        '${l10n.outline} (${BusyMarkSidebarShortcutLabels.outline})',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.byTooltip(
-        '${l10n.gitCommit} (${BusyMarkSidebarShortcutLabels.git})',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.byTooltip(
-        '${l10n.gitHistory} (${BusyMarkSidebarShortcutLabels.history})',
-      ),
-      findsOneWidget,
-    );
+    for (final (label, shortcut) in <(String, String)>[
+      (l10n.files, BusyMarkSidebarShortcutLabels.files),
+      (l10n.outline, BusyMarkSidebarShortcutLabels.outline),
+      (l10n.gitCommit, BusyMarkSidebarShortcutLabels.git),
+      (l10n.gitHistory, BusyMarkSidebarShortcutLabels.history),
+    ]) {
+      expect(find.text(label), findsOneWidget);
+      expect(find.text(shortcut), findsOneWidget);
+      expect(find.byTooltip('$label ($shortcut)'), findsNothing);
+    }
   });
 
   testWidgets('Files view colors entries by Git status', (tester) async {

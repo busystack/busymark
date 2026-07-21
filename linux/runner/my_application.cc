@@ -51,6 +51,7 @@ struct _MyApplication {
   GtkWidget* settings_item;
   GtkWidget* keyboard_shortcuts_item;
   GtkWidget* markdown_html_item;
+  GtkWidget* report_issue_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
   GtkWidget* back_button;
@@ -443,6 +444,7 @@ static void update_titlebar_direction(MyApplication* self) {
   update_header_menu_item_direction(self->settings_item, direction);
   update_header_menu_item_direction(self->keyboard_shortcuts_item, direction);
   update_header_menu_item_direction(self->markdown_html_item, direction);
+  update_header_menu_item_direction(self->report_issue_item, direction);
   update_header_menu_item_direction(self->about_item, direction);
   set_widget_direction(self->view_mode_menu, direction);
   update_header_menu_item_direction(self->view_mode_editor_item, direction);
@@ -944,6 +946,9 @@ static const gchar* main_menu_icon_name(const gchar* action) {
   if (g_strcmp0(action, "markdownAndHtml") == 0) {
     return "text-x-generic-symbolic";
   }
+  if (g_strcmp0(action, "reportIssue") == 0) {
+    return "dialog-warning-symbolic";
+  }
   if (g_strcmp0(action, "aboutBusyMark") == 0) {
     return "help-about-symbolic";
   }
@@ -1179,17 +1184,6 @@ static void set_menu_item_label_with_shortcut(GtkWidget* item,
                                               const gchar* shortcut) {
   set_menu_item_label(item, text);
   set_menu_item_shortcut(item, shortcut);
-  if (item == nullptr || text == nullptr || !GTK_IS_WIDGET(item)) {
-    return;
-  }
-  if (shortcut == nullptr || shortcut[0] == '\0') {
-    gtk_widget_set_tooltip_text(item, text);
-    return;
-  }
-  gchar* tooltip = g_strdup_printf("%s (%s%s%s)", text, kLtrIsolateStart,
-                                   shortcut, kBidiIsolateEnd);
-  gtk_widget_set_tooltip_text(item, tooltip);
-  g_free(tooltip);
 }
 
 static void set_localized_labels(MyApplication* self, FlValue* args) {
@@ -1219,6 +1213,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* markdown_html = fl_lookup_string_arg(args, "markdownAndHtml");
   const gchar* markdown_html_shortcut =
       fl_lookup_string_arg(args, "markdownAndHtmlShortcut");
+  const gchar* report_issue = fl_lookup_string_arg(args, "reportIssue");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
@@ -1247,6 +1242,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
                                     keyboard_shortcuts_shortcut);
   set_menu_item_label_with_shortcut(self->markdown_html_item,
                                     markdown_html, markdown_html_shortcut);
+  set_menu_item_label(self->report_issue_item, report_issue);
   set_menu_item_label(self->about_item, about);
   update_view_mode_icon(self);
 }
@@ -1375,6 +1371,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
   self->markdown_html_item = create_menu_item(self, "markdownAndHtml");
+  self->report_issue_item = create_menu_item(self, "reportIssue");
   self->about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
@@ -1382,6 +1379,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      self->keyboard_shortcuts_item, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->markdown_html_item,
                      FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->report_issue_item, FALSE,
+                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(sidebar_menu_box);
@@ -1839,6 +1838,7 @@ static void my_application_init(MyApplication* self) {
   self->settings_item = nullptr;
   self->keyboard_shortcuts_item = nullptr;
   self->markdown_html_item = nullptr;
+  self->report_issue_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
   self->back_button = nullptr;

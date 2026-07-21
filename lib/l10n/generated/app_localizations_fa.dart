@@ -33,20 +33,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get aboutWebsite => 'وب‌سایت';
 
   @override
-  String get aboutReportIssue => 'گزارش اشکال';
+  String get aboutSourceCode => 'کد منبع';
 
   @override
-  String get feedbackSupportSection => 'پشتیبانی';
-
-  @override
-  String get feedbackActionTitle => 'ارسال بازخورد / گزارش یک نگرانی';
-
-  @override
-  String get feedbackActionDescription =>
-      'یک گزارش خطا، درخواست قابلیت یا نگرانی مربوط به حریم خصوصی یا کاربردپذیری ارسال کنید.';
-
-  @override
-  String get feedbackDialogTitle => 'ارسال بازخورد';
+  String get reportIssue => 'گزارش مشکل';
 
   @override
   String get feedbackCategory => 'دسته‌بندی';

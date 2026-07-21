@@ -32,20 +32,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aboutWebsite => 'Strona internetowa';
 
   @override
-  String get aboutReportIssue => 'Zgłoś problem';
+  String get aboutSourceCode => 'Kod źródłowy';
 
   @override
-  String get feedbackSupportSection => 'Pomoc';
-
-  @override
-  String get feedbackActionTitle => 'Wyślij opinię / Zgłoś problem';
-
-  @override
-  String get feedbackActionDescription =>
-      'Wyślij zgłoszenie błędu, prośbę lub obawę dotyczącą prywatności albo użyteczności.';
-
-  @override
-  String get feedbackDialogTitle => 'Wyślij opinię';
+  String get reportIssue => 'Zgłoś problem';
 
   @override
   String get feedbackCategory => 'Kategoria';

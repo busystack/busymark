@@ -1,9 +1,6 @@
 {
   "@@locale": "fa",
-  "feedbackSupportSection": "پشتیبانی",
-  "feedbackActionTitle": "ارسال بازخورد / گزارش یک نگرانی",
-  "feedbackActionDescription": "یک گزارش خطا، درخواست قابلیت یا نگرانی مربوط به حریم خصوصی یا کاربردپذیری ارسال کنید.",
-  "feedbackDialogTitle": "ارسال بازخورد",
+  "reportIssue": "گزارش مشکل",
   "feedbackCategory": "دسته‌بندی",
   "feedbackChooseCategory": "یک دسته‌بندی انتخاب کنید",
   "feedbackCategoryProblem": "مشکل یا خطا",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "گزارش اشکال",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "کد منبع",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "پیشرفته",
   "@advanced": {

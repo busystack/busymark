@@ -1,9 +1,6 @@
 {
   "@@locale": "it",
-  "feedbackSupportSection": "Assistenza",
-  "feedbackActionTitle": "Invia feedback / Segnala un problema",
-  "feedbackActionDescription": "Invia una segnalazione di errore, una richiesta o un problema di privacy o usabilità.",
-  "feedbackDialogTitle": "Invia feedback",
+  "reportIssue": "Segnala un problema",
   "feedbackCategory": "Categoria",
   "feedbackChooseCategory": "Scegli una categoria",
   "feedbackCategoryProblem": "Problema o errore",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Segnala un problema",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Codice sorgente",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Avanzate",
   "@advanced": {

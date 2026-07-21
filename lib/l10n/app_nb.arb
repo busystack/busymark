@@ -1,9 +1,6 @@
 {
   "@@locale": "nb",
-  "feedbackSupportSection": "Brukerstøtte",
-  "feedbackActionTitle": "Send tilbakemelding / Rapporter et problem",
-  "feedbackActionDescription": "Send en feilrapport, et ønske eller en bekymring om personvern eller brukervennlighet.",
-  "feedbackDialogTitle": "Send tilbakemelding",
+  "reportIssue": "Rapporter et problem",
   "feedbackCategory": "Kategori",
   "feedbackChooseCategory": "Velg en kategori",
   "feedbackCategoryProblem": "Problem eller feil",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Rapporter et problem",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Kildekode",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Avansert",
   "@advanced": {

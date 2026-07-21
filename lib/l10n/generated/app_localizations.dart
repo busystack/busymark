@@ -165,35 +165,17 @@ abstract class AppLocalizations {
   /// **'Website'**
   String get aboutWebsite;
 
-  /// Label for the issue tracker row in the About dialog.
+  /// Label for the source-code repository row in the About dialog.
   ///
   /// In en, this message translates to:
-  /// **'Report an Issue'**
-  String get aboutReportIssue;
+  /// **'Source code'**
+  String get aboutSourceCode;
 
-  /// Settings section title for support actions.
+  /// Menu action and dialog title for reporting an issue.
   ///
   /// In en, this message translates to:
-  /// **'Support'**
-  String get feedbackSupportSection;
-
-  /// Settings action that opens the native feedback form.
-  ///
-  /// In en, this message translates to:
-  /// **'Send feedback / Report a concern'**
-  String get feedbackActionTitle;
-
-  /// Description of the native feedback action.
-  ///
-  /// In en, this message translates to:
-  /// **'Send a bug report, request, or privacy or usability concern.'**
-  String get feedbackActionDescription;
-
-  /// Title of the native feedback dialog.
-  ///
-  /// In en, this message translates to:
-  /// **'Send feedback'**
-  String get feedbackDialogTitle;
+  /// **'Report an issue'**
+  String get reportIssue;
 
   /// Feedback category field label.
   ///

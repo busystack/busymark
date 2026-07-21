@@ -8,15 +8,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/debug_log.dart';
 import '../../core/path_utils.dart';
+import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
@@ -24,13 +25,6 @@ import '../workspace_glyphs.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import 'workspace_identity_row.dart';
-
-enum _WelcomeMenuAction {
-  settings,
-  keyboardShortcuts,
-  markdownAndHtml,
-  aboutBusyMark,
-}
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -49,7 +43,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final state = ref.watch(workspaceControllerProvider);
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -187,36 +180,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
                   onPressed: _toggleSidebar,
                 ),
-                BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>(
-                  tooltip: l10n.mainMenu,
-                  icon: BusyMarkGlyphs.menuVertical,
-                  itemBuilder: (context) => [
-                    BusyMarkPopupMenuItem(
-                      value: _WelcomeMenuAction.settings,
-                      label: l10n.settings,
-                      icon: BusyMarkGlyphs.settings,
-                      shortcut: BusyMarkAppShortcutLabels.settings,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _WelcomeMenuAction.keyboardShortcuts,
-                      label: l10n.keyboardShortcuts,
-                      icon: BusyMarkGlyphs.keyboard,
-                      shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _WelcomeMenuAction.markdownAndHtml,
-                      label: l10n.markdownAndHtml,
-                      icon: BusyMarkGlyphs.markdownFile,
-                      shortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
-                    ),
-                    BusyMarkPopupMenuItem(
-                      value: _WelcomeMenuAction.aboutBusyMark,
-                      label: l10n.aboutBusyMark,
-                      icon: BusyMarkGlyphs.info,
-                    ),
-                  ],
+                BusyMarkMainMenuButton(
                   onSelected: (action) =>
-                      _handleWelcomeMenuAction(context, action),
+                      _handleMainMenuAction(context, headerBar, action),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
@@ -258,6 +224,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
+      case HeaderBarAction.reportIssue:
+        showBusyMarkFeedbackDialog(
+          context,
+          headerBarService: ref.read(linuxHeaderBarServiceProvider),
+        );
       case HeaderBarAction.sidebarToggle:
         _toggleSidebar();
       case HeaderBarAction.back:
@@ -282,18 +253,24 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     );
   }
 
-  void _handleWelcomeMenuAction(
+  void _handleMainMenuAction(
     BuildContext context,
-    _WelcomeMenuAction action,
+    LinuxHeaderBarService headerBar,
+    BusyMarkMainMenuAction action,
   ) {
     switch (action) {
-      case _WelcomeMenuAction.settings:
+      case BusyMarkMainMenuAction.settings:
         context.go('/settings');
-      case _WelcomeMenuAction.keyboardShortcuts:
+      case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
-      case _WelcomeMenuAction.markdownAndHtml:
+      case BusyMarkMainMenuAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
-      case _WelcomeMenuAction.aboutBusyMark:
+      case BusyMarkMainMenuAction.reportIssue:
+        showBusyMarkFeedbackDialog(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+        );
+      case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }
   }

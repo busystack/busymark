@@ -9,7 +9,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
-import '../../app/busymark_shortcuts.dart';
+import '../../app/busymark_main_menu.dart';
 import '../../app/localization.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
@@ -30,7 +30,7 @@ class SettingsScreen extends ConsumerWidget {
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
-        _handleHeaderBarAction(context, workspaceOpen, event.action);
+        _handleHeaderBarAction(context, workspaceOpen, headerBar, event.action);
       });
     });
     if (headerBar.isAvailable) {
@@ -59,16 +59,9 @@ class SettingsScreen extends ConsumerWidget {
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               actions: [
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.keyboardShortcuts,
-                  icon: BusyMarkGlyphs.keyboard,
-                  shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
-                  onPressed: () => showBusyMarkKeyboardShortcutsDialog(context),
-                ),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.aboutBusyMark,
-                  icon: BusyMarkGlyphs.info,
-                  onPressed: () => showBusyMarkAboutDialog(context),
+                BusyMarkMainMenuButton(
+                  onSelected: (action) =>
+                      _handleMainMenuAction(context, headerBar, action),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
               ],
@@ -182,24 +175,6 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             BusyMarkGroupedList(
-              title: context.l10n.feedbackSupportSection,
-              filled: true,
-              children: [
-                BusyMarkActionRow(
-                  title: context.l10n.feedbackActionTitle,
-                  subtitle: context.l10n.feedbackActionDescription,
-                  leading: const Icon(BusyMarkGlyphs.feedback),
-                  trailing: Icon(
-                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                  ),
-                  onTap: () => showBusyMarkFeedbackDialog(
-                    context,
-                    headerBarService: headerBar.isAvailable ? headerBar : null,
-                  ),
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
               title: context.l10n.advanced,
               filled: true,
               children: [
@@ -238,6 +213,7 @@ class SettingsScreen extends ConsumerWidget {
   void _handleHeaderBarAction(
     BuildContext context,
     bool workspaceOpen,
+    LinuxHeaderBarService headerBar,
     HeaderBarAction action,
   ) {
     switch (action) {
@@ -249,6 +225,11 @@ class SettingsScreen extends ConsumerWidget {
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
+      case HeaderBarAction.reportIssue:
+        showBusyMarkFeedbackDialog(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+        );
       case HeaderBarAction.settings:
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
@@ -260,6 +241,28 @@ class SettingsScreen extends ConsumerWidget {
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:
         break;
+    }
+  }
+
+  void _handleMainMenuAction(
+    BuildContext context,
+    LinuxHeaderBarService headerBar,
+    BusyMarkMainMenuAction action,
+  ) {
+    switch (action) {
+      case BusyMarkMainMenuAction.settings:
+        break;
+      case BusyMarkMainMenuAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
+      case BusyMarkMainMenuAction.reportIssue:
+        showBusyMarkFeedbackDialog(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+        );
+      case BusyMarkMainMenuAction.aboutBusyMark:
+        showBusyMarkAboutDialog(context);
     }
   }
 }

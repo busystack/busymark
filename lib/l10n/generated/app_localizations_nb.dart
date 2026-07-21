@@ -33,21 +33,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aboutWebsite => 'Nettsted';
 
   @override
-  String get aboutReportIssue => 'Rapporter et problem';
+  String get aboutSourceCode => 'Kildekode';
 
   @override
-  String get feedbackSupportSection => 'Brukerstøtte';
-
-  @override
-  String get feedbackActionTitle =>
-      'Send tilbakemelding / Rapporter et problem';
-
-  @override
-  String get feedbackActionDescription =>
-      'Send en feilrapport, et ønske eller en bekymring om personvern eller brukervennlighet.';
-
-  @override
-  String get feedbackDialogTitle => 'Send tilbakemelding';
+  String get reportIssue => 'Rapporter et problem';
 
   @override
   String get feedbackCategory => 'Kategori';

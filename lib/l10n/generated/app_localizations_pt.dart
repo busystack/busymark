@@ -33,21 +33,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aboutWebsite => 'Site';
 
   @override
-  String get aboutReportIssue => 'Relatar um problema';
+  String get aboutSourceCode => 'Código-fonte';
 
   @override
-  String get feedbackSupportSection => 'Suporte';
-
-  @override
-  String get feedbackActionTitle =>
-      'Enviar comentários / Comunicar uma preocupação';
-
-  @override
-  String get feedbackActionDescription =>
-      'Envie um relatório de erro, pedido ou preocupação de privacidade ou usabilidade.';
-
-  @override
-  String get feedbackDialogTitle => 'Enviar comentários';
+  String get reportIssue => 'Comunicar um problema';
 
   @override
   String get feedbackCategory => 'Categoria';

@@ -1475,13 +1475,7 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
         ),
       ),
     );
-    if (shortcut == null || shortcut.isEmpty) {
-      return item;
-    }
-    return Tooltip(
-      message: '${widget.label} (${busyMarkLtrIsolateFor(context, shortcut)})',
-      child: item,
-    );
+    return item;
   }
 }
 

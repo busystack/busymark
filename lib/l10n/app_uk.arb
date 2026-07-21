@@ -1,9 +1,6 @@
 {
   "@@locale": "uk",
-  "feedbackSupportSection": "Підтримка",
-  "feedbackActionTitle": "Надіслати відгук / Повідомити про проблему",
-  "feedbackActionDescription": "Надішліть звіт про помилку, пропозицію або повідомлення про проблему конфіденційності чи зручності використання.",
-  "feedbackDialogTitle": "Надіслати відгук",
+  "reportIssue": "Повідомити про проблему",
   "feedbackCategory": "Категорія",
   "feedbackChooseCategory": "Виберіть категорію",
   "feedbackCategoryProblem": "Проблема або помилка",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Повідомити про проблему",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Вихідний код",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Додатково",
   "@advanced": {

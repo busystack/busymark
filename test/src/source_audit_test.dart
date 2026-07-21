@@ -615,7 +615,9 @@ void main() {
     );
     expect(design, contains('BorderRadius.circular(borderRadius)'));
     expect(design, contains('final String? shortcut;'));
-    expect(design, contains('busyMarkLtrIsolateFor(context, shortcut)'));
+    expect(design, contains('final shortcutText = shortcut == null'));
+    expect(design, contains('textDirection: TextDirection.ltr'));
+    expect(design, isNot(contains("message: '\${widget.label}")));
     expect(design, contains('this.enabled = true'));
     expect(design, contains('enabled: widget.enabled'));
     expect(design, contains('colors.disabledForeground'));

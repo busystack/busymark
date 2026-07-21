@@ -32,20 +32,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutWebsite => 'الموقع الإلكتروني';
 
   @override
-  String get aboutReportIssue => 'الإبلاغ عن مشكلة';
+  String get aboutSourceCode => 'الشيفرة المصدرية';
 
   @override
-  String get feedbackSupportSection => 'الدعم';
-
-  @override
-  String get feedbackActionTitle => 'إرسال ملاحظات / الإبلاغ عن مصدر قلق';
-
-  @override
-  String get feedbackActionDescription =>
-      'أرسل بلاغًا عن خطأ أو طلب ميزة أو مخاوف تتعلق بالخصوصية أو سهولة الاستخدام.';
-
-  @override
-  String get feedbackDialogTitle => 'إرسال ملاحظات';
+  String get reportIssue => 'الإبلاغ عن مشكلة';
 
   @override
   String get feedbackCategory => 'الفئة';

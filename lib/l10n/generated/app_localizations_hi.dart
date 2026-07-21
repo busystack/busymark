@@ -32,20 +32,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutWebsite => 'वेबसाइट';
 
   @override
-  String get aboutReportIssue => 'समस्या रिपोर्ट करें';
+  String get aboutSourceCode => 'स्रोत कोड';
 
   @override
-  String get feedbackSupportSection => 'सहायता';
-
-  @override
-  String get feedbackActionTitle => 'प्रतिक्रिया भेजें / चिंता की रिपोर्ट करें';
-
-  @override
-  String get feedbackActionDescription =>
-      'बग रिपोर्ट, सुविधा अनुरोध या गोपनीयता अथवा उपयोगिता संबंधी चिंता भेजें।';
-
-  @override
-  String get feedbackDialogTitle => 'प्रतिक्रिया भेजें';
+  String get reportIssue => 'समस्या की रिपोर्ट करें';
 
   @override
   String get feedbackCategory => 'श्रेणी';

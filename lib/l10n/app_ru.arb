@@ -1,9 +1,6 @@
 {
   "@@locale": "ru",
-  "feedbackSupportSection": "Поддержка",
-  "feedbackActionTitle": "Отправить отзыв / Сообщить о проблеме",
-  "feedbackActionDescription": "Отправьте отчёт об ошибке, предложение или сообщение о проблеме конфиденциальности либо удобства использования.",
-  "feedbackDialogTitle": "Отправить отзыв",
+  "reportIssue": "Сообщить о проблеме",
   "feedbackCategory": "Категория",
   "feedbackChooseCategory": "Выберите категорию",
   "feedbackCategoryProblem": "Проблема или ошибка",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Сообщить о проблеме",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Исходный код",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Дополнительно",
   "@advanced": {

@@ -99,7 +99,7 @@ class _BusyMarkFeedbackDialogState
       replyEmail: _replyEmailController.text,
     );
     return BusyMarkDialogShell(
-      title: context.l10n.feedbackDialogTitle,
+      title: context.l10n.reportIssue,
       closable: !_submitting,
       maxWidth: BusyMarkSizes.dialogWide,
       actions: [

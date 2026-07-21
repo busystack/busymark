@@ -33,20 +33,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aboutWebsite => 'Website';
 
   @override
-  String get aboutReportIssue => 'Problem melden';
+  String get aboutSourceCode => 'Quellcode';
 
   @override
-  String get feedbackSupportSection => 'Unterstützung';
-
-  @override
-  String get feedbackActionTitle => 'Feedback senden / Anliegen melden';
-
-  @override
-  String get feedbackActionDescription =>
-      'Senden Sie einen Fehlerbericht, einen Wunsch oder ein Datenschutz- bzw. Bedienbarkeitsanliegen.';
-
-  @override
-  String get feedbackDialogTitle => 'Feedback senden';
+  String get reportIssue => 'Problem melden';
 
   @override
   String get feedbackCategory => 'Kategorie';

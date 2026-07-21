@@ -104,7 +104,7 @@ flutter run -d linux -- /path/to/docs
 
 ## Feedback API
 
-The native **Settings → Support → Send feedback / Report a concern** form
+The **Main menu → Report an issue** form
 submits JSON to `https://busystack.org/api/feedback`. BusyMark sends no private
 credentials or other API secrets; storage is handled by BusyStack.org.
 

@@ -1,9 +1,6 @@
 {
   "@@locale": "de",
-  "feedbackSupportSection": "Unterstützung",
-  "feedbackActionTitle": "Feedback senden / Anliegen melden",
-  "feedbackActionDescription": "Senden Sie einen Fehlerbericht, einen Wunsch oder ein Datenschutz- bzw. Bedienbarkeitsanliegen.",
-  "feedbackDialogTitle": "Feedback senden",
+  "reportIssue": "Problem melden",
   "feedbackCategory": "Kategorie",
   "feedbackChooseCategory": "Kategorie auswählen",
   "feedbackCategoryProblem": "Problem oder Fehler",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Problem melden",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Quellcode",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Erweitert",
   "@advanced": {

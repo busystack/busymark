@@ -1,9 +1,6 @@
 {
   "@@locale": "ar",
-  "feedbackSupportSection": "الدعم",
-  "feedbackActionTitle": "إرسال ملاحظات / الإبلاغ عن مصدر قلق",
-  "feedbackActionDescription": "أرسل بلاغًا عن خطأ أو طلب ميزة أو مخاوف تتعلق بالخصوصية أو سهولة الاستخدام.",
-  "feedbackDialogTitle": "إرسال ملاحظات",
+  "reportIssue": "الإبلاغ عن مشكلة",
   "feedbackCategory": "الفئة",
   "feedbackChooseCategory": "اختر فئة",
   "feedbackCategoryProblem": "مشكلة أو خطأ",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "الإبلاغ عن مشكلة",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "الشيفرة المصدرية",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "خيارات متقدمة",
   "@advanced": {

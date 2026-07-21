@@ -94,7 +94,7 @@ void main() {
     expect(source, isNot(contains('"About BusyMark"')));
   });
 
-  test('native main menu exposes keyboard shortcuts action', () {
+  test('native main menu exposes shared application actions', () {
     final service = File(
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
@@ -114,14 +114,19 @@ void main() {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
+    final mainMenu = File(
+      'lib/src/app/busymark_main_menu.dart',
+    ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
     expect(service, contains('markdownAndHtml'));
+    expect(service, contains('reportIssue'));
     expect(app, contains('menu: l10n.mainMenu'));
     expect(app, contains('settings: l10n.settings'));
     expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
     expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
+    expect(app, contains('reportIssue: l10n.reportIssue'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
@@ -135,27 +140,42 @@ void main() {
     expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(workspace, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(workspace, contains('case HeaderBarAction.reportIssue:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(settings, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(settings, contains('case HeaderBarAction.reportIssue:'));
     expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(welcome, contains('case HeaderBarAction.markdownAndHtml:'));
-    expect(
-      welcome,
-      contains('BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>'),
-    );
-    expect(welcome, contains('tooltip: l10n.mainMenu'));
+    expect(welcome, contains('case HeaderBarAction.reportIssue:'));
+    expect(welcome, contains('BusyMarkMainMenuButton('));
+    expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(mainMenu, contains('tooltip: l10n.mainMenu'));
+    expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(native, contains('GtkWidget* sidebar_menu_button;'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
     expect(native, contains('GtkWidget* markdown_html_item;'));
+    expect(native, contains('GtkWidget* report_issue_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
     expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
+    expect(native, contains('fl_lookup_string_arg(args, "reportIssue")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
     expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
+    expect(native, contains('create_menu_item(self, "reportIssue")'));
     expect(native, contains('main_menu_icon_name(action)'));
     expect(native, contains('"preferences-system-symbolic"'));
     expect(native, contains('"input-keyboard-symbolic"'));
     expect(native, contains('"text-x-generic-symbolic"'));
+    expect(native, contains('"dialog-warning-symbolic"'));
     expect(native, contains('"help-about-symbolic"'));
+    final reportIssuePack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->report_issue_item',
+    );
+    final aboutPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item',
+    );
+    expect(reportIssuePack, isNonNegative);
+    expect(aboutPack, isNonNegative);
+    expect(reportIssuePack, lessThan(aboutPack));
     final mainMenuItemOffset = native.indexOf(
       'static GtkWidget* create_menu_item',
     );
@@ -891,6 +911,19 @@ void main() {
     expect(native, isNot(contains('viewModeWeek')));
     expect(native, isNot(contains('viewModeMonth')));
     expect(native, isNot(contains('viewModeAgenda')));
+  });
+
+  test('native popover rows do not open redundant hover tooltips', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final helper = RegExp(
+      r'static void set_menu_item_label_with_shortcut\([\s\S]*?\n\}',
+    ).firstMatch(native)?.group(0);
+
+    expect(helper, isNotNull);
+    expect(helper, contains('set_menu_item_label(item, text);'));
+    expect(helper, contains('set_menu_item_shortcut(item, shortcut);'));
+    expect(helper, isNot(contains('gtk_widget_set_tooltip_text')));
+    expect(native, contains('set_widget_tooltip(self->view_mode_button'));
   });
 
   test('welcome page has a sidebar but no document controls', () {

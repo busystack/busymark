@@ -33,20 +33,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aboutWebsite => 'Веб-сайт';
 
   @override
-  String get aboutReportIssue => 'Сообщить о проблеме';
+  String get aboutSourceCode => 'Исходный код';
 
   @override
-  String get feedbackSupportSection => 'Поддержка';
-
-  @override
-  String get feedbackActionTitle => 'Отправить отзыв / Сообщить о проблеме';
-
-  @override
-  String get feedbackActionDescription =>
-      'Отправьте отчёт об ошибке, предложение или сообщение о проблеме конфиденциальности либо удобства использования.';
-
-  @override
-  String get feedbackDialogTitle => 'Отправить отзыв';
+  String get reportIssue => 'Сообщить о проблеме';
 
   @override
   String get feedbackCategory => 'Категория';

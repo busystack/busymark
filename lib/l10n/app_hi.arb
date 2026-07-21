@@ -1,9 +1,6 @@
 {
   "@@locale": "hi",
-  "feedbackSupportSection": "सहायता",
-  "feedbackActionTitle": "प्रतिक्रिया भेजें / चिंता की रिपोर्ट करें",
-  "feedbackActionDescription": "बग रिपोर्ट, सुविधा अनुरोध या गोपनीयता अथवा उपयोगिता संबंधी चिंता भेजें।",
-  "feedbackDialogTitle": "प्रतिक्रिया भेजें",
+  "reportIssue": "समस्या की रिपोर्ट करें",
   "feedbackCategory": "श्रेणी",
   "feedbackChooseCategory": "श्रेणी चुनें",
   "feedbackCategoryProblem": "समस्या या बग",
@@ -56,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "समस्या रिपोर्ट करें",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "स्रोत कोड",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "उन्नत",
   "@advanced": {

@@ -33,21 +33,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aboutWebsite => 'Вебсайт';
 
   @override
-  String get aboutReportIssue => 'Повідомити про проблему';
+  String get aboutSourceCode => 'Вихідний код';
 
   @override
-  String get feedbackSupportSection => 'Підтримка';
-
-  @override
-  String get feedbackActionTitle =>
-      'Надіслати відгук / Повідомити про проблему';
-
-  @override
-  String get feedbackActionDescription =>
-      'Надішліть звіт про помилку, пропозицію або повідомлення про проблему конфіденційності чи зручності використання.';
-
-  @override
-  String get feedbackDialogTitle => 'Надіслати відгук';
+  String get reportIssue => 'Повідомити про проблему';
 
   @override
   String get feedbackCategory => 'Категорія';

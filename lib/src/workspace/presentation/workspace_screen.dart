@@ -16,6 +16,7 @@ import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
+import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
@@ -28,6 +29,7 @@ import '../../editor/source/source_document.dart';
 import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../feedback/presentation/feedback_dialog.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
@@ -495,23 +497,9 @@ class WorkspaceScreen extends ConsumerWidget {
                         onSelected: (mode) =>
                             settingsController.setDocumentViewMode(mode),
                       ),
-                      BusyMarkHeaderIconButton(
-                        tooltip: context.l10n.settings,
-                        icon: BusyMarkGlyphs.settings,
-                        shortcut: BusyMarkAppShortcutLabels.settings,
-                        onPressed: () => context.go('/settings'),
-                      ),
-                      BusyMarkHeaderIconButton(
-                        tooltip: context.l10n.keyboardShortcuts,
-                        icon: BusyMarkGlyphs.keyboard,
-                        shortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
-                        onPressed: () =>
-                            showBusyMarkKeyboardShortcutsDialog(context),
-                      ),
-                      BusyMarkHeaderIconButton(
-                        tooltip: context.l10n.aboutBusyMark,
-                        icon: BusyMarkGlyphs.info,
-                        onPressed: () => showBusyMarkAboutDialog(context),
+                      BusyMarkMainMenuButton(
+                        onSelected: (action) =>
+                            _handleMainMenuAction(context, ref, action),
                       ),
                       const SizedBox(width: BusyMarkSpacing.sm),
                     ],
@@ -650,6 +638,12 @@ class WorkspaceScreen extends ConsumerWidget {
         showBusyMarkKeyboardShortcutsDialog(context);
       case HeaderBarAction.markdownAndHtml:
         showBusyMarkMarkdownHtmlDialog(context);
+      case HeaderBarAction.reportIssue:
+        final headerBar = ref.read(linuxHeaderBarServiceProvider);
+        showBusyMarkFeedbackDialog(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+        );
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.viewModeEditor:
@@ -680,6 +674,29 @@ class WorkspaceScreen extends ConsumerWidget {
         _toggleSearch(ref);
       case HeaderBarAction.menu:
         break;
+    }
+  }
+
+  void _handleMainMenuAction(
+    BuildContext context,
+    WidgetRef ref,
+    BusyMarkMainMenuAction action,
+  ) {
+    switch (action) {
+      case BusyMarkMainMenuAction.settings:
+        context.go('/settings');
+      case BusyMarkMainMenuAction.keyboardShortcuts:
+        showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.markdownAndHtml:
+        showBusyMarkMarkdownHtmlDialog(context);
+      case BusyMarkMainMenuAction.reportIssue:
+        final headerBar = ref.read(linuxHeaderBarServiceProvider);
+        showBusyMarkFeedbackDialog(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+        );
+      case BusyMarkMainMenuAction.aboutBusyMark:
+        showBusyMarkAboutDialog(context);
     }
   }
 
