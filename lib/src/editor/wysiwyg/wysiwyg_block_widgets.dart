@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show Bidi;
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -9,6 +10,49 @@ import 'wysiwyg_inline_controller.dart';
 
 const double _wysiwygTextFieldCursorWidth = 2.0;
 const double _wysiwygTextFieldLayoutInset = 1.0 + _wysiwygTextFieldCursorWidth;
+
+TextDirection busyMarkWysiwygBlockTextDirection(
+  BusyBlock block, {
+  required TextDirection fallback,
+}) {
+  final directionalText = _directionalText(block);
+  switch (block.attributes['dir']?.trim().toLowerCase()) {
+    case 'ltr':
+      return TextDirection.ltr;
+    case 'rtl':
+      return TextDirection.rtl;
+    case 'auto':
+      return _firstStrongTextDirection(directionalText) ?? fallback;
+  }
+  if (_isTechnicalWysiwygBlock(block)) {
+    return TextDirection.ltr;
+  }
+  return _firstStrongTextDirection(directionalText) ?? fallback;
+}
+
+TextDirection? _firstStrongTextDirection(String text) {
+  if (Bidi.startsWithRtl(text)) {
+    return TextDirection.rtl;
+  }
+  if (Bidi.startsWithLtr(text)) {
+    return TextDirection.ltr;
+  }
+  return null;
+}
+
+bool _isTechnicalWysiwygBlock(BusyBlock block) {
+  return switch (block.kind) {
+    BusyBlockKind.codeBlock ||
+    BusyBlockKind.frontMatter ||
+    BusyBlockKind.writersideTabs ||
+    BusyBlockKind.writersideProcedure ||
+    BusyBlockKind.writersideRawXml ||
+    BusyBlockKind.unknown => true,
+    BusyBlockKind.htmlBlock =>
+      block.attributes['sourceFormat'] != 'html' || block.children.isEmpty,
+    _ => false,
+  };
+}
 
 class BusyMarkWysiwygBlockField extends StatelessWidget {
   const BusyMarkWysiwygBlockField({
@@ -119,19 +163,26 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     bool readOnly,
   ) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final textDirection = busyMarkWysiwygBlockTextDirection(
+      block,
+      fallback: Directionality.of(context),
+    );
     if (block.kind == BusyBlockKind.thematicBreak) {
       return _ThematicBreakBlockView(selected: selected);
     }
     if (block.kind == BusyBlockKind.table) {
-      return _TableBlockEditor(
-        block: block,
-        onFocused: onFocused,
-        onCellChanged: onTableCellChanged,
-        onRowInserted: onTableRowInserted,
-        onRowDeleted: onTableRowDeleted,
-        onColumnInserted: onTableColumnInserted,
-        onColumnDeleted: onTableColumnDeleted,
-        onTableDeleted: onTableDeleted,
+      return Directionality(
+        textDirection: textDirection,
+        child: _TableBlockEditor(
+          block: block,
+          onFocused: onFocused,
+          onCellChanged: onTableCellChanged,
+          onRowInserted: onTableRowInserted,
+          onRowDeleted: onTableRowDeleted,
+          onColumnInserted: onTableColumnInserted,
+          onColumnDeleted: onTableColumnDeleted,
+          onTableDeleted: onTableDeleted,
+        ),
       );
     }
     if (_isRenderedHtmlBlock) {
@@ -146,87 +197,95 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         onEdit: _editHtmlBlock,
       );
     }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (prefix != null) ...[
-          SizedBox(width: BusyMarkSizes.wysiwygPrefixWidth, child: prefix),
-          const SizedBox(width: BusyMarkSpacing.sm),
-        ],
-        Expanded(
-          child: block.kind == BusyBlockKind.image
-              ? _ImageBlockEditor(
-                  block: block,
-                  documentFilePath: documentFilePath,
-                  workspaceRoot: workspaceRoot,
-                  writersideRoot: writersideRoot,
-                  imagesDir: imagesDir,
-                  allowRemoteImages: allowRemoteImages,
-                  onRemoteImageBlocked: onRemoteImageBlocked,
-                )
-              : readOnly
-              ? SelectableText(
-                  _readOnlyText,
-                  style: style.copyWith(
-                    color: colors.mutedForeground,
-                    fontFamily: BusyMarkTypography.monoFontFamily,
-                  ),
-                )
-              : Stack(
-                  children: [
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: CustomPaint(
-                          painter: _WysiwygSelectionPainter(
-                            text: controller.text,
-                            style: style,
-                            selectionRange: selectionRange,
-                            color: Theme.of(context).colorScheme.primary
-                                .withValues(
-                                  alpha: BusyMarkAlpha.previewHighlight,
-                                ),
-                            textDirection: Directionality.of(context),
-                            textScaler: MediaQuery.textScalerOf(context),
-                            locale: Localizations.maybeLocaleOf(context),
-                            layoutWidthInset: _wysiwygTextFieldLayoutInset,
+    return Directionality(
+      textDirection: textDirection,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (prefix != null) ...[
+            SizedBox(width: BusyMarkSizes.wysiwygPrefixWidth, child: prefix),
+            const SizedBox(width: BusyMarkSpacing.sm),
+          ],
+          Expanded(
+            child: block.kind == BusyBlockKind.image
+                ? _ImageBlockEditor(
+                    block: block,
+                    documentFilePath: documentFilePath,
+                    workspaceRoot: workspaceRoot,
+                    writersideRoot: writersideRoot,
+                    imagesDir: imagesDir,
+                    allowRemoteImages: allowRemoteImages,
+                    onRemoteImageBlocked: onRemoteImageBlocked,
+                  )
+                : readOnly
+                ? SelectableText(
+                    _readOnlyText,
+                    textDirection: textDirection,
+                    style: style.copyWith(
+                      color: colors.mutedForeground,
+                      fontFamily: BusyMarkTypography.monoFontFamily,
+                      fontFamilyFallback:
+                          BusyMarkTypography.monoFontFamilyFallback,
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            painter: _WysiwygSelectionPainter(
+                              text: controller.text,
+                              style: style,
+                              selectionRange: selectionRange,
+                              color: Theme.of(context).colorScheme.primary
+                                  .withValues(
+                                    alpha: BusyMarkAlpha.previewHighlight,
+                                  ),
+                              textDirection: textDirection,
+                              textScaler: MediaQuery.textScalerOf(context),
+                              locale: Localizations.maybeLocaleOf(context),
+                              layoutWidthInset: _wysiwygTextFieldLayoutInset,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    TextSelectionTheme(
-                      data: selectionRange == null
-                          ? Theme.of(context).textSelectionTheme
-                          : Theme.of(context).textSelectionTheme.copyWith(
-                              selectionColor: BusyMarkLinuxPalette.transparent,
-                            ),
-                      child: TextField(
-                        key: ValueKey(
-                          'wysiwyg-field-$documentFilePath-${block.id}',
+                      TextSelectionTheme(
+                        data: selectionRange == null
+                            ? Theme.of(context).textSelectionTheme
+                            : Theme.of(context).textSelectionTheme.copyWith(
+                                selectionColor:
+                                    BusyMarkLinuxPalette.transparent,
+                              ),
+                        child: TextField(
+                          key: ValueKey(
+                            'wysiwyg-field-$documentFilePath-${block.id}',
+                          ),
+                          controller: controller,
+                          undoController: undoController,
+                          focusNode: focusNode,
+                          maxLines: null,
+                          minLines: 1,
+                          textDirection: textDirection,
+                          style: style,
+                          cursorWidth: _wysiwygTextFieldCursorWidth,
+                          decoration: const InputDecoration(
+                            isCollapsed: true,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
+                            hoverColor: BusyMarkLinuxPalette.transparent,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onTap: onFocused,
+                          onChanged: onChanged,
                         ),
-                        controller: controller,
-                        undoController: undoController,
-                        focusNode: focusNode,
-                        maxLines: null,
-                        minLines: 1,
-                        style: style,
-                        cursorWidth: _wysiwygTextFieldCursorWidth,
-                        decoration: const InputDecoration(
-                          isCollapsed: true,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: false,
-                          hoverColor: BusyMarkLinuxPalette.transparent,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onTap: onFocused,
-                        onChanged: onChanged,
                       ),
-                    ),
-                  ],
-                ),
-        ),
-      ],
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -345,6 +404,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       ),
       BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
         fontFamily: BusyMarkTypography.monoFontFamily,
+        fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
         height: BusyMarkTypography.codeLineHeight,
       ),
       _ => theme.bodyMedium!.copyWith(
@@ -375,7 +435,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       ),
       BusyBlockKind.orderedListItem => Text(
         block.attributes['marker'] ?? '1.',
-        textAlign: TextAlign.right,
+        textAlign: TextAlign.end,
         style: markerStyle,
       ),
       BusyBlockKind.taskListItem => Icon(
@@ -605,7 +665,7 @@ class _RenderedHtmlBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final textTheme = Theme.of(context).textTheme;
-    return switch (block.kind) {
+    final content = switch (block.kind) {
       BusyBlockKind.heading => Padding(
         padding: EdgeInsets.only(
           top: first ? 0 : BusyMarkSpacing.smPlus,
@@ -634,7 +694,7 @@ class _RenderedHtmlBlock extends StatelessWidget {
           bottom: BusyMarkSpacing.xs,
         ),
         child: Align(
-          alignment: Alignment.centerLeft,
+          alignment: AlignmentDirectional.centerStart,
           child: MarkdownImageView(
             source: _imageSource(block),
             alt: block.plainText,
@@ -662,6 +722,7 @@ class _RenderedHtmlBlock extends StatelessWidget {
           block.plainText,
           style: textTheme.bodyMedium?.copyWith(
             fontFamily: BusyMarkTypography.monoFontFamily,
+            fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
             height: BusyMarkTypography.codeLineHeight,
           ),
         ),
@@ -750,6 +811,14 @@ class _RenderedHtmlBlock extends StatelessWidget {
         child: _RenderedHtmlInlineText(block: block),
       ),
     };
+    final inheritedDirection = Directionality.of(context);
+    final blockDirection = busyMarkWysiwygBlockTextDirection(
+      block,
+      fallback: inheritedDirection,
+    );
+    return blockDirection == inheritedDirection
+        ? content
+        : Directionality(textDirection: blockDirection, child: content);
   }
 
   TextStyle? _headingStyle(BuildContext context, BusyBlock block) {
@@ -879,7 +948,7 @@ class _RenderedHtmlListItem extends StatelessWidget {
                 width: BusyMarkSizes.previewListMarkerWidth,
                 child: Text(
                   marker,
-                  textAlign: TextAlign.right,
+                  textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.mutedForeground,
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -892,8 +961,9 @@ class _RenderedHtmlListItem extends StatelessWidget {
           ),
           if (block.children.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(
-                left: BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
+              padding: const EdgeInsetsDirectional.only(
+                start:
+                    BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
               ),
               child: _RenderedHtmlBlocks(
                 blocks: block.children,
@@ -1021,6 +1091,10 @@ class _RenderedHtmlInlineText extends StatelessWidget {
             _spanForInline(context, inline, effectiveStyle),
         ],
       ),
+      textDirection: busyMarkWysiwygBlockTextDirection(
+        block,
+        fallback: Directionality.of(context),
+      ),
     );
   }
 
@@ -1095,6 +1169,7 @@ class _RenderedHtmlInlineText extends StatelessWidget {
       ),
       BusyInlineKind.code => baseStyle?.copyWith(
         fontFamily: BusyMarkTypography.monoFontFamily,
+        fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
         backgroundColor: BusyMarkSurfaceColors.of(context).controlHover,
       ),
       BusyInlineKind.link => baseStyle?.copyWith(
@@ -1104,6 +1179,13 @@ class _RenderedHtmlInlineText extends StatelessWidget {
       _ => baseStyle,
     };
   }
+}
+
+String _directionalText(BusyBlock block) {
+  return [
+    block.plainText,
+    for (final child in block.children) _directionalText(child),
+  ].join(' ');
 }
 
 class _ThematicBreakBlockView extends StatelessWidget {
@@ -1184,7 +1266,7 @@ class _TableBlockEditor extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Align(
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerEnd,
           child: IconButton(
             tooltip: context.l10n.deleteTable,
             style: busyMarkHeaderIconButtonStyle(
@@ -1590,7 +1672,7 @@ class _ImageBlockEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final source = _imageSource(block);
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: MarkdownImageView(
         source: source,
         alt: block.plainText,

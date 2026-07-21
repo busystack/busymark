@@ -250,6 +250,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                         undoController: _undoController,
                         focusNode: _focusNode,
                         scrollController: _scrollController,
+                        textDirection: TextDirection.ltr,
                         keyboardType: widget.wordWrap
                             ? TextInputType.multiline
                             : TextInputType.text,
@@ -708,6 +709,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   TextStyle get _sourceTextStyle => TextStyle(
     fontFamily: BusyMarkTypography.monoFontFamily,
+    fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
     fontSize: widget.editorFontSize,
     height: BusyMarkTypography.codeLineHeight,
     leadingDistribution: TextLeadingDistribution.even,
@@ -842,6 +844,7 @@ class _SourceEditorFrame extends StatelessWidget {
         return DecoratedBox(
           decoration: BoxDecoration(color: colors.view),
           child: Row(
+            textDirection: TextDirection.ltr,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
@@ -930,6 +933,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                   left: _SourceEditorFrame.editorPaddingLeft,
                   width: textWidth,
                   child: RichText(
+                    textDirection: TextDirection.ltr,
                     text: controller.buildSourceTextSpan(
                       context: context,
                       style: textStyle,
@@ -1066,6 +1070,7 @@ class _CollapsedSourceLine extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 text,
+                textDirection: TextDirection.ltr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: textStyle.copyWith(color: colors.mutedForeground),
@@ -1124,6 +1129,9 @@ class _SourceSearchPanel extends StatelessWidget {
             children: [
               Text(
                 status,
+                textDirection: result.invalidRegex
+                    ? Directionality.of(context)
+                    : TextDirection.ltr,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: result.invalidRegex
                       ? Theme.of(context).colorScheme.error
@@ -1240,6 +1248,7 @@ class _SearchOptionButton extends StatelessWidget {
               child: Center(
                 child: Text(
                   label,
+                  textDirection: TextDirection.ltr,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: selected
                         ? colors.foreground

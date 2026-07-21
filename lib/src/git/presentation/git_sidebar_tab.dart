@@ -140,8 +140,10 @@ class _GitMessage extends StatelessWidget {
               const SizedBox(height: BusyMarkSpacing.xs),
               SelectableText(
                 failure.rawMessage.trim(),
+                textDirection: TextDirection.ltr,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
                 ),
               ),
             ],

@@ -311,7 +311,9 @@ class BusyMarkApp extends ConsumerWidget {
                 title: context.l10n.openMarkdownFile,
                 subtitle: context.l10n.markdownFileExtensions,
                 leading: const Icon(BusyMarkGlyphs.markdownFile),
-                trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                trailing: Icon(
+                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
+                ),
                 onTap: () =>
                     Navigator.pop(dialogContext, const _OpenMarkdownFile()),
               ),
@@ -319,7 +321,9 @@ class BusyMarkApp extends ConsumerWidget {
                 title: context.l10n.openFolderOrWritersideProject,
                 subtitle: context.l10n.markdownFolderOrWritersideProject,
                 leading: const Icon(BusyMarkGlyphs.folder),
-                trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                trailing: Icon(
+                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
+                ),
                 onTap: () =>
                     Navigator.pop(dialogContext, const _OpenWorkspaceFolder()),
               ),
@@ -332,10 +336,17 @@ class BusyMarkApp extends ConsumerWidget {
               children: [
                 for (final recent in recentWorkspaces)
                   BusyMarkActionRow(
-                    title: _displayPath(recent.path),
-                    subtitle: recent.path,
+                    title: busyMarkLtrIsolateFor(
+                      dialogContext,
+                      _displayPath(recent.path),
+                    ),
+                    subtitle: busyMarkLtrIsolateFor(dialogContext, recent.path),
                     leading: const Icon(BusyMarkGlyphs.history),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    trailing: Icon(
+                      BusyMarkGlyphs.forwardFor(
+                        Directionality.of(dialogContext),
+                      ),
+                    ),
                     onTap: () => Navigator.pop(
                       dialogContext,
                       _OpenRecentWorkspace(recent.path),

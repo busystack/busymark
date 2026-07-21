@@ -191,6 +191,7 @@ class _BusyMarkFeedbackDialogState
           key: BusyMarkFeedbackKeys.replyEmail,
           controller: _replyEmailController,
           enabled: !_submitting,
+          textDirection: TextDirection.ltr,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) {

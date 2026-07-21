@@ -11,6 +11,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('source editor remains LTR inside an Arabic interface', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: '# مقدمة\npath: docs/مقدمة-v2.md\n',
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      Directionality.of(tester.element(find.byType(Scaffold))),
+      TextDirection.rtl,
+    );
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).textDirection,
+      TextDirection.ltr,
+    );
+    expect(
+      tester
+          .widgetList<Row>(find.byType(Row))
+          .any((row) => row.textDirection == TextDirection.ltr),
+      isTrue,
+    );
+  });
+
   testWidgets('source editor shows large-file fallback status', (tester) async {
     final source = 'a' * 300001;
 

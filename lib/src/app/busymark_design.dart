@@ -163,6 +163,17 @@ abstract final class BusyMarkAlpha {
 abstract final class BusyMarkTypography {
   static const String fontFamily = 'Ubuntu';
   static const String monoFontFamily = 'Ubuntu Mono';
+  static const List<String> fontFamilyFallback = [
+    'Noto Sans Arabic',
+    'Noto Sans',
+    'DejaVu Sans',
+  ];
+  static const List<String> monoFontFamilyFallback = [
+    'Noto Sans Arabic',
+    'Noto Sans Mono',
+    'DejaVu Sans Mono',
+    'DejaVu Sans',
+  ];
   static const double codeLineHeight = 1.45;
   static const double bodyLineHeight = 1.5;
   static const double defaultFontSize = 14;
@@ -182,6 +193,26 @@ abstract final class BusyMarkTypography {
       _ => 0.98,
     };
   }
+}
+
+/// Keeps a known left-to-right value stable inside surrounding RTL text.
+String busyMarkLtrIsolate(Object value) => '\u2066$value\u2069';
+
+/// Isolates a machine value only when the surrounding interface is RTL.
+String busyMarkLtrIsolateFor(BuildContext context, Object value) {
+  return Directionality.maybeOf(context) == TextDirection.rtl
+      ? busyMarkLtrIsolate(value)
+      : value.toString();
+}
+
+/// Lets the first strong character choose direction without affecting neighbors.
+String busyMarkBidiIsolate(Object value) => '\u2068$value\u2069';
+
+/// Applies first-strong isolation only inside an RTL interface.
+String busyMarkBidiIsolateFor(BuildContext context, Object value) {
+  return Directionality.maybeOf(context) == TextDirection.rtl
+      ? busyMarkBidiIsolate(value)
+      : value.toString();
 }
 
 abstract final class BusyMarkMotion {
@@ -1310,11 +1341,14 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
     final shortcut = widget.shortcut;
     final shortcutText = shortcut == null || shortcut.isEmpty
         ? null
-        : Text(
-            shortcut,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textStyle.copyWith(color: colors.mutedForeground),
+        : Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              shortcut,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textStyle.copyWith(color: colors.mutedForeground),
+            ),
           );
     final item = Semantics(
       checked: widget.trailingCheck ? widget.checked : null,
@@ -1386,7 +1420,10 @@ class _BusyMarkPopupMenuItemState<T> extends State<BusyMarkPopupMenuItem<T>> {
     if (shortcut == null || shortcut.isEmpty) {
       return item;
     }
-    return Tooltip(message: '${widget.label} ($shortcut)', child: item);
+    return Tooltip(
+      message: '${widget.label} (${busyMarkLtrIsolateFor(context, shortcut)})',
+      child: item,
+    );
   }
 }
 
@@ -2018,6 +2055,7 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
     this.errorText,
     this.autofocus = false,
     this.textInputAction,
+    this.textDirection,
     this.onSubmitted,
     this.groupPosition = BusyMarkFloatingTextEntryPosition.single,
   });
@@ -2027,6 +2065,7 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
   final String? errorText;
   final bool autofocus;
   final TextInputAction? textInputAction;
+  final TextDirection? textDirection;
   final ValueChanged<String>? onSubmitted;
   final BusyMarkFloatingTextEntryPosition groupPosition;
 
@@ -2165,6 +2204,7 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
                           scrollController: _scrollController,
                           autofocus: widget.autofocus,
                           textInputAction: widget.textInputAction,
+                          textDirection: widget.textDirection,
                           onSubmitted: widget.onSubmitted,
                           maxLines: 1,
                           forceLine: true,

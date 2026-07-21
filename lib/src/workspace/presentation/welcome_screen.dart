@@ -102,14 +102,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     title: context.l10n.createMarkdownFile,
                     subtitle: context.l10n.createMarkdownFileDescription,
                     leading: const Icon(BusyMarkGlyphs.newDocument),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    trailing: Icon(
+                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                    ),
                     onTap: _createMarkdownFile,
                   ),
                   BusyMarkActionRow(
                     title: context.l10n.createWritersideProject,
                     subtitle: context.l10n.createWritersideProjectDescription,
                     leading: const Icon(BusyMarkGlyphs.writersideProject),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    trailing: Icon(
+                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                    ),
                     onTap: _createWritersideProject,
                   ),
                 ],
@@ -122,14 +126,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     title: context.l10n.openMarkdownFile,
                     subtitle: context.l10n.markdownFileExtensions,
                     leading: const Icon(BusyMarkGlyphs.markdownFile),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    trailing: Icon(
+                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                    ),
                     onTap: _chooseMarkdownFile,
                   ),
                   BusyMarkActionRow(
                     title: context.l10n.openFolderOrWritersideProject,
                     subtitle: context.l10n.markdownFolderOrWritersideProject,
                     leading: const Icon(BusyMarkGlyphs.folder),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    trailing: Icon(
+                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                    ),
                     onTap: () => _chooseDirectory(context.l10n.open),
                   ),
                 ],
@@ -517,8 +525,8 @@ class _WelcomeRecentRow extends StatelessWidget {
           child: WorkspaceIdentityRow(
             height: BusyMarkSizes.sidebarTreeRowHeight * 2,
             icon: WorkspaceGlyphs.forRecent(recent),
-            name: _displayPath(recent.path),
-            path: recent.path,
+            name: busyMarkLtrIsolateFor(context, _displayPath(recent.path)),
+            path: busyMarkLtrIsolateFor(context, recent.path),
           ),
         ),
       ),
@@ -649,6 +657,7 @@ class _CreateWritersideProjectDialogState
             BusyMarkFloatingTextEntry(
               label: context.l10n.directoryName,
               controller: _directoryNameController,
+              textDirection: TextDirection.ltr,
               textInputAction: TextInputAction.next,
               errorText: directoryError,
               groupPosition: BusyMarkFloatingTextEntryPosition.last,
@@ -667,6 +676,7 @@ class _CreateWritersideProjectDialogState
             BusyMarkFloatingTextEntry(
               label: context.l10n.instanceId,
               controller: _instanceIdController,
+              textDirection: TextDirection.ltr,
               textInputAction: TextInputAction.next,
               errorText: instanceIdError,
               groupPosition: BusyMarkFloatingTextEntryPosition.last,
@@ -705,9 +715,12 @@ class _CreateWritersideProjectDialogState
           ),
           child: Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.md),
-            child: SelectableText(
-              _targetPath,
-              style: Theme.of(context).textTheme.bodySmall,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: SelectableText(
+                _targetPath,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
           ),
         ),

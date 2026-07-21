@@ -303,6 +303,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                           itemBuilder: (context, index) {
                             final entry = entries[index];
                             final block = entry.block;
+                            final blockTextDirection =
+                                busyMarkWysiwygBlockTextDirection(
+                                  block,
+                                  fallback: Directionality.of(context),
+                                );
                             final documentFilePath =
                                 _documentController.document.filePath;
                             return Align(
@@ -312,11 +317,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                   maxWidth: BusyMarkSizes.wysiwygContentWidth,
                                 ),
                                 child: Padding(
-                                  padding: EdgeInsets.only(
-                                    left:
+                                  padding: EdgeInsetsDirectional.only(
+                                    start:
                                         entry.depth *
                                         BusyMarkSizes.wysiwygBlockIndent,
-                                  ),
+                                  ).resolve(blockTextDirection),
                                   child: BusyMarkWysiwygBlockField(
                                     key: _blockKeyFor(block.id),
                                     block: block,
@@ -1103,6 +1108,20 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final offset = controller.selection.extentOffset
         .clamp(0, controller.text.length)
         .toInt();
+    final block = _documentController.blockById(blockId);
+    if (block == null) {
+      return KeyEventResult.ignored;
+    }
+    final textDirection = busyMarkWysiwygBlockTextDirection(
+      block,
+      fallback: Directionality.of(context),
+    );
+    final previousBlockKey = textDirection == TextDirection.rtl
+        ? LogicalKeyboardKey.arrowRight
+        : LogicalKeyboardKey.arrowLeft;
+    final nextBlockKey = textDirection == TextDirection.rtl
+        ? LogicalKeyboardKey.arrowLeft
+        : LogicalKeyboardKey.arrowRight;
     if (shiftPressed) {
       if (key == LogicalKeyboardKey.arrowUp &&
           _isOffsetOnFirstTextLine(controller.text, offset)) {
@@ -1120,15 +1139,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           desiredOffset: offset,
         );
       }
-      if (key == LogicalKeyboardKey.arrowLeft && offset == 0) {
+      if (key == previousBlockKey && offset == 0) {
         return _extendSelectionToRelativeBlock(
           blockId,
           -1,
           desiredOffset: _MoveToBlockEnd(),
         );
       }
-      if (key == LogicalKeyboardKey.arrowRight &&
-          offset == controller.text.length) {
+      if (key == nextBlockKey && offset == controller.text.length) {
         return _extendSelectionToRelativeBlock(blockId, 1, desiredOffset: 0);
       }
       return KeyEventResult.ignored;
@@ -1165,11 +1183,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _isOffsetOnLastTextLine(controller.text, offset)) {
       return _focusRelativeBlock(blockId, 1, desiredOffset: offset);
     }
-    if (key == LogicalKeyboardKey.arrowLeft && offset == 0) {
+    if (key == previousBlockKey && offset == 0) {
       return _focusRelativeBlock(blockId, -1, desiredOffset: _MoveToBlockEnd());
     }
-    if (key == LogicalKeyboardKey.arrowRight &&
-        offset == controller.text.length) {
+    if (key == nextBlockKey && offset == controller.text.length) {
       return _focusRelativeBlock(blockId, 1, desiredOffset: 0);
     }
     return KeyEventResult.ignored;
@@ -1976,8 +1993,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       builder: (context) => AlertDialog(
         title: Text(context.l10n.link),
         content: TextFormField(
+          key: const ValueKey('wysiwyg-link-destination-field'),
           autofocus: true,
+          textDirection: TextDirection.ltr,
           onChanged: (value) => destination = value,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontFamily: BusyMarkTypography.monoFontFamily,
+            fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+          ),
           decoration: const InputDecoration(hintText: 'https://example.com'),
           onFieldSubmitted: (value) => Navigator.pop(context, value),
         ),
@@ -2047,8 +2070,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             minLines: 8,
             maxLines: 16,
             textInputAction: TextInputAction.newline,
+            textDirection: TextDirection.ltr,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontFamily: BusyMarkTypography.monoFontFamily,
+              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
             ),
             decoration: InputDecoration(labelText: context.l10n.htmlSource),
           ),
@@ -2079,9 +2104,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         content: SizedBox(
           width: BusyMarkSizes.tableDialogWidth,
           child: TextFormField(
+            key: const ValueKey('wysiwyg-code-language-field'),
             initialValue: initialLanguage,
             onChanged: (value) => language = value,
             autofocus: true,
+            textDirection: TextDirection.ltr,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+            ),
             decoration: InputDecoration(
               labelText: context.l10n.language,
               hintText: 'dart',
@@ -2690,13 +2721,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final local = renderObject.globalToLocal(globalPosition);
     final outerPadding = _outerPaddingForBlock(block);
     final contentPadding = _contentPaddingForBlock(block);
-    final prefixWidth = _hasPrefix(block) ? 30.0 + BusyMarkSpacing.sm : 0.0;
-    final textX = (local.dx - prefixWidth - contentPadding.left)
-        .clamp(0.0, renderObject.size.width)
-        .toDouble();
-    final textY = (local.dy - outerPadding.top - contentPadding.top)
-        .clamp(0.0, renderObject.size.height)
-        .toDouble();
+    final prefixWidth = _hasPrefix(block)
+        ? BusyMarkSizes.wysiwygPrefixWidth + BusyMarkSpacing.sm
+        : 0.0;
+    final textDirection = busyMarkWysiwygBlockTextDirection(
+      block,
+      fallback: Directionality.of(context),
+    );
     final maxWidth =
         (renderObject.size.width -
                 prefixWidth -
@@ -2704,9 +2735,19 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                 outerPadding.horizontal)
             .clamp(1.0, double.infinity)
             .toDouble();
+    final physicalLeftInset =
+        outerPadding.left +
+        contentPadding.left +
+        (textDirection == TextDirection.ltr ? prefixWidth : 0.0);
+    final textX = (local.dx - physicalLeftInset)
+        .clamp(0.0, maxWidth)
+        .toDouble();
+    final textY = (local.dy - outerPadding.top - contentPadding.top)
+        .clamp(0.0, renderObject.size.height)
+        .toDouble();
     final textPainter = TextPainter(
       text: TextSpan(text: controller.text, style: _textStyleForBlock(block)),
-      textDirection: Directionality.of(context),
+      textDirection: textDirection,
     )..layout(maxWidth: maxWidth);
     return textPainter
         .getPositionForOffset(Offset(textX, textY))
@@ -2739,6 +2780,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       ),
       BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
         fontFamily: BusyMarkTypography.monoFontFamily,
+        fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
         height: BusyMarkTypography.codeLineHeight,
       ),
       _ => theme.bodyMedium!.copyWith(
@@ -2783,15 +2825,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
       BusyBlockKind.taskListItem ||
-      BusyBlockKind.image ||
       BusyBlockKind.blockquote ||
       BusyBlockKind.codeBlock ||
       BusyBlockKind.writersideAdmonition ||
-      BusyBlockKind.writersideTabs ||
-      BusyBlockKind.writersideProcedure ||
-      BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => true,
+      BusyBlockKind.htmlBlock => true,
       _ => false,
     };
   }
@@ -3070,8 +3107,15 @@ class _ImageDialogState extends State<_ImageDialog> {
               children: [
                 Expanded(
                   child: TextField(
+                    key: const ValueKey('wysiwyg-image-source-field'),
                     controller: _sourceController,
                     autofocus: true,
+                    textDirection: TextDirection.ltr,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontFamily: BusyMarkTypography.monoFontFamily,
+                      fontFamilyFallback:
+                          BusyMarkTypography.monoFontFamilyFallback,
+                    ),
                     decoration: InputDecoration(
                       labelText: context.l10n.source,
                       hintText: 'images/example.png',

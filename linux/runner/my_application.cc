@@ -30,6 +30,8 @@ constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
 constexpr char kDefaultSidebarBackground[] = "#303030";
+constexpr char kLtrIsolateStart[] = "\xE2\x81\xA6";
+constexpr char kBidiIsolateEnd[] = "\xE2\x81\xA9";
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -342,6 +344,28 @@ static void set_widget_direction(GtkWidget* widget, GtkTextDirection direction) 
   }
 }
 
+static void update_header_menu_item_direction(GtkWidget* item,
+                                              GtkTextDirection direction) {
+  if (item == nullptr || !GTK_IS_WIDGET(item)) {
+    return;
+  }
+  set_widget_direction(item, direction);
+  GtkWidget* label = static_cast<GtkWidget*>(
+      g_object_get_data(G_OBJECT(item), "busymark-label-widget"));
+  if (label != nullptr && GTK_IS_LABEL(label)) {
+    set_widget_direction(label, direction);
+    gtk_label_set_xalign(GTK_LABEL(label),
+                         direction == GTK_TEXT_DIR_RTL ? 1.0 : 0.0);
+  }
+  GtkWidget* shortcut = static_cast<GtkWidget*>(
+      g_object_get_data(G_OBJECT(item), "busymark-shortcut-widget"));
+  if (shortcut != nullptr && GTK_IS_LABEL(shortcut)) {
+    set_widget_direction(shortcut, GTK_TEXT_DIR_LTR);
+    gtk_label_set_xalign(GTK_LABEL(shortcut),
+                         direction == GTK_TEXT_DIR_RTL ? 0.0 : 1.0);
+  }
+}
+
 static void update_title_stack_alignment(MyApplication* self) {
   if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
     return;
@@ -406,6 +430,16 @@ static void update_titlebar_direction(MyApplication* self) {
   set_widget_direction(self->refresh_button, direction);
   set_widget_direction(self->sidebar_search_button, direction);
   set_widget_direction(self->sidebar_menu_button, direction);
+  set_widget_direction(self->sidebar_menu, direction);
+  update_header_menu_item_direction(self->settings_item, direction);
+  update_header_menu_item_direction(self->keyboard_shortcuts_item, direction);
+  update_header_menu_item_direction(self->markdown_html_item, direction);
+  update_header_menu_item_direction(self->about_item, direction);
+  set_widget_direction(self->view_mode_menu, direction);
+  update_header_menu_item_direction(self->view_mode_editor_item, direction);
+  update_header_menu_item_direction(self->view_mode_source_item, direction);
+  update_header_menu_item_direction(self->view_mode_preview_item, direction);
+  update_header_menu_item_direction(self->view_mode_split_item, direction);
 }
 
 static void refresh_header_bar_css(MyApplication* self) {
@@ -1115,7 +1149,8 @@ static void set_widget_tooltip_with_shortcut(GtkWidget* widget,
     gtk_widget_set_tooltip_text(widget, tooltip);
     return;
   }
-  gchar* value = g_strdup_printf("%s (%s)", tooltip, shortcut);
+  gchar* value = g_strdup_printf("%s (%s%s%s)", tooltip, kLtrIsolateStart,
+                                 shortcut, kBidiIsolateEnd);
   gtk_widget_set_tooltip_text(widget, value);
   g_free(value);
 }
@@ -1132,7 +1167,8 @@ static void set_menu_item_label_with_shortcut(GtkWidget* item,
     gtk_widget_set_tooltip_text(item, text);
     return;
   }
-  gchar* tooltip = g_strdup_printf("%s (%s)", text, shortcut);
+  gchar* tooltip = g_strdup_printf("%s (%s%s%s)", text, kLtrIsolateStart,
+                                   shortcut, kBidiIsolateEnd);
   gtk_widget_set_tooltip_text(item, tooltip);
   g_free(tooltip);
 }

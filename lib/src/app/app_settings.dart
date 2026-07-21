@@ -587,6 +587,12 @@ Locale? _localeFromTag(String? tag) {
     return Locale(parts.first);
   }
   if (parts.length == 2) {
+    if (parts.last.length == 4) {
+      return Locale.fromSubtags(
+        languageCode: parts.first,
+        scriptCode: parts.last,
+      );
+    }
     return Locale(parts.first, parts.last);
   }
   return Locale.fromSubtags(

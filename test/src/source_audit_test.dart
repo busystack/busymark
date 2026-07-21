@@ -401,6 +401,48 @@ void main() {
     expect(imageSpan, contains('fontStyle: FontStyle.normal'));
   });
 
+  test('preview resolves HTML direction and keeps code LTR by default', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final preview = File(
+      'lib/src/markdown/preview_model.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('_previewBlockTextDirection'));
+    expect(
+      workspace,
+      contains("final explicitDirection = block.attributes['dir']"),
+    );
+    expect(workspace, contains('Bidi.startsWithRtl(text)'));
+    expect(
+      workspace,
+      contains(
+        'PreviewBlockKind.code || PreviewBlockKind.raw => TextDirection.ltr',
+      ),
+    );
+    expect(preview, contains('attributes: block.attributes'));
+  });
+
+  test('workspace isolates technical labels only at rendering boundaries', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final compact = workspace.replaceAll(RegExp(r'\s+'), ' ');
+
+    expect(workspace, contains('String _tocNodeDisplayLabel('));
+    expect(
+      workspace,
+      contains(
+        'await _copyToClipboard(topic == null ? rawLabel : topic.baseName)',
+      ),
+    );
+    expect(
+      compact,
+      isNot(matches(RegExp(r'l10n\.\w+\([^)]*busyMark(?:Ltr|Bidi)Isolate'))),
+    );
+  });
+
   test('workspace sidebar tabs match the opened workspace kind', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -514,13 +556,16 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: _sidebarTabIcon(selectedTab!)'));
+    expect(workspace, contains('icon: _sidebarTabIcon('));
     expect(workspace, contains('transparent: true'));
     expect(
       workspace,
       contains('borderRadius: BusyMarkRadius.nativeHeaderButton'),
     );
-    expect(workspace, contains('icon: _sidebarTabIcon(tab)'));
+    expect(
+      workspace,
+      contains('icon: _sidebarTabIcon(tab, Directionality.of(context))'),
+    );
     expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
     expect(workspace, contains('BusyMarkSidebarShortcutActivators.history'));
     expect(workspace, contains('LogicalKeyboardKey.numpad5'));
@@ -570,10 +615,7 @@ void main() {
     );
     expect(design, contains('BorderRadius.circular(borderRadius)'));
     expect(design, contains('final String? shortcut;'));
-    expect(
-      design,
-      contains("Tooltip(message: '\${widget.label} (\$shortcut)'"),
-    );
+    expect(design, contains('busyMarkLtrIsolateFor(context, shortcut)'));
     expect(design, contains('this.enabled = true'));
     expect(design, contains('enabled: widget.enabled'));
     expect(design, contains('colors.disabledForeground'));
@@ -765,7 +807,10 @@ void main() {
     expect(workspace, contains('_visibleOutlineTreeEntries'));
     expect(workspace, contains('onToggle: hasChildren ? toggle : null'));
     expect(workspace, contains('AnimatedRotation'));
-    expect(workspace, contains('YaruIcons.pan_end'));
+    expect(
+      workspace,
+      contains('BusyMarkGlyphs.collapsedTreeArrowFor(direction)'),
+    );
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));

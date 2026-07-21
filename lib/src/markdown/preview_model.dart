@@ -143,6 +143,7 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.code,
         text: block.plainText,
         language: block.attributes['language'],
+        attributes: block.attributes,
       ),
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
@@ -166,6 +167,7 @@ class BusyMarkPreviewBuilder {
             ? _inlines(block.inlines)
             : const [],
         children: block.children.map(_block).toList(),
+        attributes: block.attributes,
       ),
       BusyBlockKind.thematicBreak => const PreviewBlock(
         kind: PreviewBlockKind.thematicBreak,

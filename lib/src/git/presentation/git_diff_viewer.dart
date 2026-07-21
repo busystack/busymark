@@ -414,6 +414,7 @@ class _DiffFileSection extends StatelessWidget {
             language: language,
             textStyle: TextStyle(
               fontFamily: BusyMarkTypography.monoFontFamily,
+              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
               fontSize: editorFontSize,
               height: BusyMarkTypography.codeLineHeight,
               leadingDistribution: TextLeadingDistribution.even,
@@ -451,11 +452,14 @@ class _DiffFileSection extends StatelessWidget {
                       Expanded(
                         child: Text(
                           path,
+                          textDirection: TextDirection.ltr,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
                                 fontFamily: BusyMarkTypography.monoFontFamily,
+                                fontFamilyFallback:
+                                    BusyMarkTypography.monoFontFamilyFallback,
                               ),
                         ),
                       ),

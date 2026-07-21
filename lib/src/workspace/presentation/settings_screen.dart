@@ -47,7 +47,7 @@ class SettingsScreen extends ConsumerWidget {
               leading: Center(
                 child: BusyMarkHeaderIconButton(
                   tooltip: context.l10n.back,
-                  icon: BusyMarkGlyphs.back,
+                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
                   onPressed: () =>
                       context.go(workspaceOpen ? '/workspace' : '/'),
                 ),
@@ -109,7 +109,9 @@ class SettingsScreen extends ConsumerWidget {
                   title: context.l10n.wordWrap,
                   value: settings.wordWrap,
                   onChanged: controller.setWordWrap,
-                  leading: const Icon(BusyMarkGlyphs.wordWrap),
+                  leading: Icon(
+                    BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
+                  ),
                 ),
                 _EditorFontSizeRow(
                   value: settings.editorFontSize,
@@ -183,7 +185,9 @@ class SettingsScreen extends ConsumerWidget {
                   title: context.l10n.feedbackActionTitle,
                   subtitle: context.l10n.feedbackActionDescription,
                   leading: const Icon(BusyMarkGlyphs.feedback),
-                  trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                  trailing: Icon(
+                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                  ),
                   onTap: () => showBusyMarkFeedbackDialog(
                     context,
                     headerBarService: headerBar.isAvailable ? headerBar : null,

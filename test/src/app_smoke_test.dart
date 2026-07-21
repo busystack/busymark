@@ -6,6 +6,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/l10n/generated/app_localizations_fr.dart';
 import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -14,7 +15,9 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/window_control_service.dart';
+import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
+import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -2017,6 +2020,242 @@ void main() {
     expect(resolvedHeaderPadding.left, BusyMarkSpacing.sm);
   });
 
+  testWidgets('workspace sidebar is on the right in Persian', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final temp = Directory.systemTemp.createTempSync('busymark_sidebar_fa_');
+    addTearDown(() {
+      temp.deleteSync(recursive: true);
+    });
+    final fa = AppLocalizationsFa();
+    final file = File('${temp.path}/Intro.md')..writeAsStringSync('# Intro\n');
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: [file.path],
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            localeTag: 'fa',
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace != null &&
+          find.byType(TextField).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
+
+    final sidebarRect = tester.getRect(find.byTooltip(fa.sidebarViewMenu));
+    final sourceField = tester.widget<TextField>(find.byType(TextField).last);
+    final sourceRect = tester.getRect(find.byType(TextField).last);
+    final scaffold = find.byType(Scaffold).last;
+
+    expect(Directionality.of(tester.element(scaffold)), TextDirection.rtl);
+    expect(sidebarRect.left, greaterThan(sourceRect.right));
+    expect(sourceField.textDirection, TextDirection.ltr);
+  });
+
+  testWidgets(
+    'Arabic untitled workspace stays RTL and diagnostic metadata stays LTR',
+    (tester) async {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+      addTearDown(() {
+        binding.platformDispatcher.defaultRouteNameTestValue = '/';
+      });
+      final ar = AppLocalizationsAr();
+      const diagnosticPath = '/tmp/topic-مقدمة.md';
+      const diagnostic = Diagnostic(
+        code: 'markdown.front-matter.malformed',
+        severity: DiagnosticSeverity.warning,
+        filePath: diagnosticPath,
+        sourceSpan: SourceSpan(
+          filePath: diagnosticPath,
+          startOffset: 0,
+          endOffset: 1,
+          startLine: 12,
+          startColumn: 4,
+          endLine: 12,
+          endColumn: 5,
+        ),
+      );
+      final workspace = const WorkspaceService()
+          .createUntitledMarkdown(source: '# عنوان\n')
+          .copyWith(diagnostics: const [diagnostic]);
+      final controller = _MutableWorkspaceController(
+        WorkspaceState(workspace: workspace, activeText: '# عنوان\n'),
+      );
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              localeTag: 'ar',
+              documentViewMode: DocumentViewModePreference.source,
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceControllerProvider.overrideWith(() => controller),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final sidebarHeader = find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_SidebarHeaderLine',
+      );
+      final localizedUntitled = find.descendant(
+        of: sidebarHeader.first,
+        matching: find.text(ar.untitledMarkdownFileName),
+      );
+      expect(localizedUntitled, findsOneWidget);
+      expect(
+        Directionality.of(tester.element(localizedUntitled)),
+        TextDirection.rtl,
+      );
+
+      await tester.tap(find.byTooltip(ar.validate));
+      await tester.pumpAndSettle();
+
+      const metadata = 'markdown.front-matter.malformed - topic-مقدمة.md 12:4';
+      final metadataFinder = find.text(metadata);
+      expect(metadataFinder, findsOneWidget);
+      expect(
+        tester.widget<Text>(metadataFinder).textDirection,
+        TextDirection.ltr,
+      );
+    },
+  );
+
+  testWidgets('RTL topic copy keeps bidi controls out of clipboard data', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+    final root = Directory.systemTemp.createTempSync(
+      'busymark-rtl-topic-copy-',
+    );
+    addTearDown(() {
+      if (root.existsSync()) {
+        root.deleteSync(recursive: true);
+      }
+    });
+    Directory(p.join(root.path, 'topics')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+    File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" name="Guide" start-page="start.md">
+  <toc-element topic="start.md"/>
+  <toc-element href="https://example.com/docs"/>
+</instance-profile>
+''');
+    File(
+      p.join(root.path, 'topics', 'start.md'),
+    ).writeAsStringSync('# Start\n');
+    final workspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(workspace: workspace, activeText: '# Start\n'),
+    );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults().copyWith(localeTag: 'ar').toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceControllerProvider.overrideWith(() => controller),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final ar = AppLocalizationsAr();
+    await tester.tap(find.byTooltip(ar.sidebarViewMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(ar.toc));
+    await tester.pumpAndSettle();
+
+    const href = 'https://example.com/docs';
+    final hrefRow = find.textContaining(href);
+    expect(hrefRow, findsOneWidget);
+    final rendered = tester.widget<Text>(hrefRow).data!;
+    expect('\u2066'.allMatches(rendered), hasLength(1));
+    expect('\u2069'.allMatches(rendered), hasLength(1));
+
+    await tester.tap(hrefRow, buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(ar.copyName));
+    await tester.pumpAndSettle();
+
+    expect(clipboardText, href);
+    expect(clipboardText, isNot(contains(RegExp('[\u2066-\u2069]'))));
+  });
+
   testWidgets('source undo cannot restore saved text from previous tab', (
     tester,
   ) async {
@@ -3898,6 +4137,9 @@ class _MutableWorkspaceController extends WorkspaceController {
 
   @override
   WorkspaceState build() => initialState;
+
+  @override
+  Future<void> validateActive() async {}
 
   @override
   Future<bool> createWritersideTopic(

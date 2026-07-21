@@ -6,7 +6,6 @@ abstract final class BusyMarkGlyphs {
 
   static const IconData about = YaruIcons.information;
   static const IconData appearance = YaruIcons.desktop_appearance;
-  static const IconData back = YaruIcons.arrow_left;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData bold = YaruIcons.bold;
   static const IconData branch = YaruIcons.network_wired;
@@ -61,7 +60,6 @@ abstract final class BusyMarkGlyphs {
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
-  static const IconData rightArrow = YaruIcons.go_next;
   static const IconData save = YaruIcons.save;
   static const IconData search = YaruIcons.search;
   static const IconData searchUnavailable = YaruIcons.find_replace;
@@ -86,6 +84,53 @@ abstract final class BusyMarkGlyphs {
   static const IconData undo = YaruIcons.undo;
   static const IconData unorderedList = YaruIcons.unordered_list;
   static const IconData warning = YaruIcons.warning;
-  static const IconData wordWrap = YaruIcons.text_direction_ltr;
   static const IconData writersideProject = YaruIcons.book;
+
+  /// Resolves a navigation glyph against the surrounding reading direction.
+  ///
+  /// Yaru's directional glyphs do not opt in to Flutter's automatic icon
+  /// mirroring, so callers must select the matching physical glyph instead.
+  static IconData backFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.arrow_right
+        : YaruIcons.arrow_left;
+  }
+
+  static IconData forwardFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.go_previous
+        : YaruIcons.go_next;
+  }
+
+  static IconData collapsedTreeArrowFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.pan_start
+        : YaruIcons.pan_end;
+  }
+
+  static IconData indentFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.indent_less
+        : YaruIcons.indent_more;
+  }
+
+  static IconData outdentFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.indent_more
+        : YaruIcons.indent_less;
+  }
+
+  static IconData undoFor(TextDirection direction) {
+    return direction == TextDirection.rtl ? YaruIcons.redo : YaruIcons.undo;
+  }
+
+  static IconData redoFor(TextDirection direction) {
+    return direction == TextDirection.rtl ? YaruIcons.undo : YaruIcons.redo;
+  }
+
+  static IconData wordWrapFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.text_direction_rtl
+        : YaruIcons.text_direction_ltr;
+  }
 }

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' show Bidi;
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
@@ -599,7 +600,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
-        await headerBar.setTitleRange(title);
+        await headerBar.setTitleRange(busyMarkBidiIsolateFor(context, title));
         await headerBar.setSidebarWidth(BusyMarkSizes.sidebarWidth);
         await headerBar.setSidebarVisible(
           settings.sidebarVisible && hasSidebar,
@@ -1070,9 +1071,14 @@ Future<_PathMenuAction?> _showSidebarPathMenu(BuildContext context) {
   const menuWidth = BusyMarkSizes.popupMenuMinWidth;
   final minLeft = BusyMarkSpacing.sm;
   final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
-  final left = maxLeft <= minLeft
-      ? minLeft
-      : anchorRect.left.clamp(minLeft, maxLeft).toDouble();
+  final left = _sidebarMenuLeft(
+    direction: Directionality.of(context),
+    anchorLeft: anchorRect.left,
+    anchorRight: anchorRect.right,
+    menuWidth: menuWidth,
+    minLeft: minLeft,
+    maxLeft: maxLeft,
+  );
   final top = anchorRect.bottom + BusyMarkSpacing.xs;
   return showMenu<_PathMenuAction>(
     context: context,
@@ -1131,9 +1137,14 @@ Future<_BranchMenuAction?> _showSidebarBranchMenu(
   const menuWidth = BusyMarkSizes.popupMenuMinWidth;
   final minLeft = BusyMarkSpacing.sm;
   final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
-  final left = maxLeft <= minLeft
-      ? minLeft
-      : anchorRect.left.clamp(minLeft, maxLeft).toDouble();
+  final left = _sidebarMenuLeft(
+    direction: Directionality.of(context),
+    anchorLeft: anchorRect.left,
+    anchorRight: anchorRect.right,
+    menuWidth: menuWidth,
+    minLeft: minLeft,
+    maxLeft: maxLeft,
+  );
   final top = anchorRect.bottom + BusyMarkSpacing.xs;
   return showMenu<_BranchMenuAction>(
     context: context,
@@ -1166,7 +1177,7 @@ Future<_BranchMenuAction?> _showSidebarBranchMenu(
       for (final branch in branches)
         BusyMarkPopupMenuItem(
           value: _SwitchBranchMenuAction(branch.name),
-          label: branch.name,
+          label: busyMarkLtrIsolateFor(context, branch.name),
           icon: BusyMarkGlyphs.branch,
           checked: branch.current,
           trailingCheck: true,
@@ -1258,6 +1269,7 @@ class _CreateBranchDialogState extends State<_CreateBranchDialog> {
         BusyMarkFloatingTextEntry(
           label: context.l10n.gitBranchName,
           controller: _controller,
+          textDirection: TextDirection.ltr,
           autofocus: true,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
@@ -1938,11 +1950,11 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
   };
 }
 
-IconData _sidebarTabIcon(_SidebarTab tab) {
+IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
   return switch (tab) {
     _SidebarTab.files => BusyMarkGlyphs.documentOpen,
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
-    _SidebarTab.outline => BusyMarkGlyphs.indent,
+    _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
     _SidebarTab.git => BusyMarkGlyphs.checklist,
     _SidebarTab.gitHistory => BusyMarkGlyphs.history,
   };
@@ -1962,10 +1974,14 @@ String? _gitBranchLabel(BuildContext context, GitRepositoryInfo? repository) {
   if (repository == null) {
     return null;
   }
-  return repository.currentBranch ??
-      (repository.detachedHeadCommit == null
-          ? context.l10n.gitDetachedHead
-          : context.l10n.gitDetachedHeadAt(repository.detachedHeadCommit!));
+  final branch = repository.currentBranch;
+  if (branch != null) {
+    return busyMarkLtrIsolateFor(context, branch);
+  }
+  final commit = repository.detachedHeadCommit;
+  return commit == null
+      ? context.l10n.gitDetachedHead
+      : context.l10n.gitDetachedHeadAt(commit);
 }
 
 class _SidebarHeader extends StatelessWidget {
@@ -2015,7 +2031,7 @@ class _SidebarHeader extends StatelessWidget {
               Expanded(
                 child: _SidebarHeaderLine(
                   icon: WorkspaceGlyphs.forKind(workspace.kind),
-                  text: _workspaceName(context, workspace),
+                  text: _workspaceDisplayName(context, workspace),
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
@@ -2025,7 +2041,10 @@ class _SidebarHeader extends StatelessWidget {
                 const SizedBox(width: BusyMarkSpacing.sm),
                 BusyMarkHeaderPopupMenuButton<_SidebarTab>(
                   tooltip: context.l10n.sidebarViewMenu,
-                  icon: _sidebarTabIcon(selectedTab!),
+                  icon: _sidebarTabIcon(
+                    selectedTab!,
+                    Directionality.of(context),
+                  ),
                   transparent: true,
                   borderRadius: BusyMarkRadius.nativeHeaderButton,
                   itemBuilder: (context) => [
@@ -2033,7 +2052,7 @@ class _SidebarHeader extends StatelessWidget {
                       BusyMarkPopupMenuItem(
                         value: tab,
                         label: _sidebarTabLabel(context, tab),
-                        icon: _sidebarTabIcon(tab),
+                        icon: _sidebarTabIcon(tab, Directionality.of(context)),
                         shortcut: _sidebarTabShortcut(tab),
                         checked: tab == selectedTab,
                         trailingCheck: true,
@@ -2095,6 +2114,15 @@ class _SidebarHeader extends StatelessWidget {
     final path = _workspacePath(workspace);
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
     return segments.isEmpty ? path : segments.last;
+  }
+
+  String _workspaceDisplayName(BuildContext context, Workspace workspace) {
+    final name = _workspaceName(context, workspace);
+    final filePath = workspace.markdown?.filePath;
+    final localizedUntitled =
+        workspace.kind == WorkspaceKind.untitledMarkdown &&
+        (filePath == null || filePath.isEmpty);
+    return localizedUntitled ? name : busyMarkLtrIsolateFor(context, name);
   }
 
   String _workspacePath(Workspace workspace) {
@@ -2481,6 +2509,10 @@ class _LeadingEllipsisText extends StatelessWidget {
           overflow: TextOverflow.clip,
           softWrap: false,
           style: style,
+          textAlign: Directionality.of(context) == TextDirection.rtl
+              ? TextAlign.right
+              : TextAlign.left,
+          textDirection: TextDirection.ltr,
         );
       },
     );
@@ -2659,7 +2691,7 @@ class _WritersideTopicRemovalDialogState
               ? context.l10n.removeAction
               : context.l10n.deleteTopicFile,
           icon: removeFromInstance
-              ? BusyMarkGlyphs.outdent
+              ? BusyMarkGlyphs.outdentFor(Directionality.of(context))
               : BusyMarkGlyphs.delete,
           destructive: true,
           onPressed: _canApply
@@ -2809,7 +2841,7 @@ class _WritersideTopicUsagesSidebar extends StatelessWidget {
                 const SizedBox(width: BusyMarkSpacing.xs),
                 BusyMarkHeaderIconButton(
                   tooltip: context.l10n.back,
-                  icon: BusyMarkGlyphs.back,
+                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
                   transparent: true,
                   onPressed: onBack,
                 ),
@@ -2869,7 +2901,7 @@ class _WritersideTopicUsagesSidebar extends StatelessWidget {
                           _SidebarNavigationResultRow(
                             title: usage.reference,
                             subtitle:
-                                '${p.basename(usage.filePath)}:${usage.line}:${usage.column}'
+                                '${busyMarkLtrIsolateFor(context, '${p.basename(usage.filePath)}:${usage.line}:${usage.column}')}'
                                 '${usage.relevant ? '' : ' · ${context.l10n.outsideSelectedInstance}'}',
                             icon: _writersideTopicUsageKindIcon(kind),
                             onOpen: () => onOpenUsage(usage),
@@ -2984,7 +3016,7 @@ class _FileHistorySidebar extends ConsumerWidget {
                 const SizedBox(width: BusyMarkSpacing.xs),
                 BusyMarkHeaderIconButton(
                   tooltip: context.l10n.back,
-                  icon: BusyMarkGlyphs.back,
+                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
                   transparent: true,
                   onPressed: onBack,
                 ),
@@ -3000,6 +3032,10 @@ class _FileHistorySidebar extends ConsumerWidget {
                     fileName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: Directionality.of(context) == TextDirection.rtl
+                        ? TextAlign.right
+                        : TextAlign.left,
+                    textDirection: TextDirection.ltr,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: colors.foreground,
                       fontWeight: FontWeight.w700,
@@ -3146,7 +3182,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
               }
 
               return _SidebarTreeRow(
-                title: node.name,
+                title: busyMarkLtrIsolateFor(context, node.name),
                 depth: entry.depth,
                 icon: _fileTreeIcon(node, expanded: expanded),
                 vcsColor: vcsStatusColors.colorForNode(node),
@@ -3552,9 +3588,14 @@ Future<T?> _showSidebarTreeMenu<T>(
   final minLeft = BusyMarkSpacing.sm;
   final maxLeft = overlay.size.width - menuWidth - BusyMarkSpacing.sm;
   final localPosition = overlay.globalToLocal(position);
-  final left = maxLeft <= minLeft
-      ? minLeft
-      : localPosition.dx.clamp(minLeft, maxLeft).toDouble();
+  final left = _sidebarMenuLeft(
+    direction: Directionality.of(context),
+    anchorLeft: localPosition.dx,
+    anchorRight: localPosition.dx,
+    menuWidth: menuWidth,
+    minLeft: minLeft,
+    maxLeft: maxLeft,
+  );
   final maxTop = math.max(
     BusyMarkSpacing.sm,
     overlay.size.height - BusyMarkSpacing.sm,
@@ -3579,6 +3620,23 @@ Future<T?> _showSidebarTreeMenu<T>(
     popUpAnimationStyle: AnimationStyle.noAnimation,
     requestFocus: true,
   );
+}
+
+double _sidebarMenuLeft({
+  required TextDirection direction,
+  required double anchorLeft,
+  required double anchorRight,
+  required double menuWidth,
+  required double minLeft,
+  required double maxLeft,
+}) {
+  if (maxLeft <= minLeft) {
+    return minLeft;
+  }
+  final preferredLeft = direction == TextDirection.rtl
+      ? anchorRight - menuWidth
+      : anchorLeft;
+  return preferredLeft.clamp(minLeft, maxLeft).toDouble();
 }
 
 bool _canPasteFileTreeEntry(
@@ -3688,6 +3746,7 @@ class _FileNameDialogState extends State<_FileNameDialog> {
         BusyMarkFloatingTextEntry(
           label: context.l10n.fileName,
           controller: _controller,
+          textDirection: TextDirection.ltr,
           autofocus: true,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
@@ -3782,6 +3841,7 @@ class _SidebarTreeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final direction = Directionality.of(context);
     final clickable = enabled && (onTap != null || onSecondaryTapDown != null);
     final vcsForeground = vcsColor == null
         ? null
@@ -3826,10 +3886,14 @@ class _SidebarTreeRow extends StatelessWidget {
                           behavior: HitTestBehavior.opaque,
                           onTap: enabled ? onToggle ?? onTap : null,
                           child: AnimatedRotation(
-                            turns: expanded ? 0.25 : 0,
+                            turns: expanded
+                                ? direction == TextDirection.rtl
+                                      ? -0.25
+                                      : 0.25
+                                : 0,
                             duration: BusyMarkMotion.sidebarExpand,
                             child: Icon(
-                              YaruIcons.pan_end,
+                              BusyMarkGlyphs.collapsedTreeArrowFor(direction),
                               size: BusyMarkSizes.sidebarTreeArrow,
                               color: foreground,
                             ),
@@ -4361,11 +4425,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
                   ? null
                   : module.topicByReference(node.topicFileName!);
               final topicPath = writersideTopic?.filePath;
-              final label =
-                  node.tocTitle ??
-                  node.topicFileName ??
-                  node.href ??
-                  context.l10n.tocSection;
+              final rawLabel = _tocNodeLabel(context, node);
+              final label = _tocNodeDisplayLabel(context, node);
               void selectEntry() {
                 _treeFocusNode.requestFocus();
                 if (_selectedNodePathKey != entry.pathKey) {
@@ -4431,7 +4492,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       instanceTreePath: instance.sourceTreePath,
                       entry: entry,
                       topic: writersideTopic,
-                      label: label,
+                      rawLabel: rawLabel,
                       position: details.globalPosition,
                     ),
                   );
@@ -4510,7 +4571,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     required String instanceTreePath,
     required _TocTreeEntry entry,
     required WritersideTopic? topic,
-    required String label,
+    required String rawLabel,
     required Offset position,
   }) async {
     final topicPath = topic?.filePath;
@@ -4668,7 +4729,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           ]);
         }
       case _TocTreeAction.copyName:
-        await _copyToClipboard(topic == null ? label : topic.baseName);
+        await _copyToClipboard(topic == null ? rawLabel : topic.baseName);
       case _TocTreeAction.copyPath:
         final path = topicPath;
         if (path != null) {
@@ -4712,7 +4773,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
             : WritersideTocNodeIdentity.fromNode(referenceEntry.node),
         referenceLabel: referenceEntry == null
             ? null
-            : _tocNodeLabel(dialogContext, referenceEntry.node),
+            : _tocNodeDisplayLabel(dialogContext, referenceEntry.node),
       ),
     );
   }
@@ -4801,7 +4862,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.removeFromToc,
         label: context.l10n.removeTocElement,
-        icon: BusyMarkGlyphs.outdent,
+        icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
         shortcut: 'Delete',
       ),
       BusyMarkPopupMenuItem(
@@ -4958,6 +5019,14 @@ String _tocNodeLabel(BuildContext context, TocNode node) {
       context.l10n.tocSection;
 }
 
+String _tocNodeDisplayLabel(BuildContext context, TocNode node) {
+  final label = _tocNodeLabel(context, node);
+  return node.tocTitle == null &&
+          (node.topicFileName != null || node.href != null)
+      ? busyMarkLtrIsolateFor(context, label)
+      : label;
+}
+
 String _tocStructureSignature(Workspace workspace) {
   final buffer = StringBuffer();
   void addField(String? value) {
@@ -5038,7 +5107,7 @@ Future<bool> _confirmRemoveTocEntry(
         ),
         BusyMarkDialogButton(
           label: context.l10n.removeFromToc,
-          icon: BusyMarkGlyphs.outdent,
+          icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
           destructive: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -5215,6 +5284,7 @@ class _CreateWritersideTopicDialogState
         const SizedBox(height: BusyMarkSpacing.md),
         TextField(
           controller: _fileNameController,
+          textDirection: TextDirection.ltr,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) {
             if (canCreate) {
@@ -5305,9 +5375,12 @@ class _CreateWritersideTopicDialogState
           ),
           child: Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.md),
-            child: SelectableText(
-              _targetPath,
-              style: Theme.of(context).textTheme.bodySmall,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: SelectableText(
+                _targetPath,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
           ),
         ),
@@ -7820,7 +7893,12 @@ class _PreviewBlockView extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final displayBlock = _localizedPreviewBlock(context, block);
-    return switch (displayBlock.kind) {
+    final inheritedDirection = Directionality.of(context);
+    final blockDirection = _previewBlockTextDirection(
+      displayBlock,
+      inheritedDirection,
+    );
+    final child = switch (displayBlock.kind) {
       PreviewBlockKind.heading => Padding(
         padding: EdgeInsets.only(
           top: first ? 0 : BusyMarkSizes.previewHeadingTop,
@@ -7853,6 +7931,7 @@ class _PreviewBlockView extends StatelessWidget {
               height: BusyMarkTypography.codeLineHeight,
             ),
           ),
+          textDirection: blockDirection,
         ),
       ),
       PreviewBlockKind.image => _PreviewImageBlock(
@@ -7912,8 +7991,8 @@ class _PreviewBlockView extends StatelessWidget {
             ),
             if (displayBlock.children.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(
-                  left:
+                padding: const EdgeInsetsDirectional.only(
+                  start:
                       BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
                 ),
                 child: Column(
@@ -7975,6 +8054,7 @@ class _PreviewBlockView extends StatelessWidget {
         ),
         child: Text(
           displayBlock.text,
+          textDirection: blockDirection,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontFamily: BusyMarkTypography.monoFontFamily,
             color: colors.mutedForeground,
@@ -7992,6 +8072,9 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
     };
+    return blockDirection == inheritedDirection
+        ? child
+        : Directionality(textDirection: blockDirection, child: child);
   }
 
   Color _diffPreviewCodeBackground(BuildContext context, PreviewBlock block) {
@@ -8145,6 +8228,38 @@ class _PreviewBlockView extends StatelessWidget {
       _ => BusyMarkGlyphs.info,
     };
   }
+}
+
+TextDirection _previewBlockTextDirection(
+  PreviewBlock block,
+  TextDirection inheritedDirection,
+) {
+  final explicitDirection = block.attributes['dir']?.trim().toLowerCase();
+  switch (explicitDirection) {
+    case 'ltr':
+      return TextDirection.ltr;
+    case 'rtl':
+      return TextDirection.rtl;
+    case 'auto':
+      final text = _previewDirectionalText(block);
+      if (Bidi.startsWithRtl(text)) {
+        return TextDirection.rtl;
+      }
+      if (Bidi.startsWithLtr(text)) {
+        return TextDirection.ltr;
+      }
+  }
+  return switch (block.kind) {
+    PreviewBlockKind.code || PreviewBlockKind.raw => TextDirection.ltr,
+    _ => inheritedDirection,
+  };
+}
+
+String _previewDirectionalText(PreviewBlock block) {
+  return [
+    block.text,
+    for (final child in block.children) _previewDirectionalText(child),
+  ].join(' ');
 }
 
 class _PreviewTable extends StatelessWidget {
@@ -8484,7 +8599,7 @@ class _ListMarker extends StatelessWidget {
     if (block.attributes['ordered'] == 'true') {
       return Text(
         block.attributes['marker'] ?? '1.',
-        textAlign: TextAlign.right,
+        textAlign: TextAlign.end,
         style: Theme.of(
           context,
         ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
@@ -8641,7 +8756,7 @@ class _PreviewImageBlock extends ConsumerWidget {
     return Padding(
       padding: padding,
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: MarkdownImageView(
           source: source,
           alt: block.text,
@@ -9365,7 +9480,7 @@ class _SearchSidebar extends StatelessWidget {
               BusyMarkSpacing.xxs,
             ),
             child: Text(
-              group.relativePath,
+              busyMarkLtrIsolateFor(context, group.relativePath),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -9459,7 +9574,7 @@ class _SidebarNavigationResultRow extends StatelessWidget {
               ),
               const SizedBox(width: BusyMarkSpacing.md),
               Icon(
-                BusyMarkGlyphs.rightArrow,
+                BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                 size: BusyMarkSizes.iconSm,
                 color: colors.mutedForeground,
               ),
@@ -9588,7 +9703,7 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
         startOffset: 0,
         endOffset: 0,
         query: trimmedQuery,
-        title: displayPath,
+        title: busyMarkLtrIsolateFor(context, displayPath),
         subtitle: kindLabel,
         icon: _documentKindIcon(file.kind),
       ),
@@ -9817,6 +9932,7 @@ class _DiagnosticRow extends ConsumerWidget {
                       '${diagnostic.line == null ? '' : ' ${diagnostic.line}:${diagnostic.column}'}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      textDirection: TextDirection.ltr,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: colors.mutedForeground,
                       ),

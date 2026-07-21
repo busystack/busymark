@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/diagnostic_localizations.dart';
 import 'package:flutter/material.dart';
@@ -146,6 +148,59 @@ void main() {
     }
 
     expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('RTL translations isolate technical interpolations', () {
+    const fsi = '\u2068';
+    const pdi = '\u2069';
+    final localizations = <AppLocalizations>[
+      AppLocalizationsAr(),
+      AppLocalizationsFa(),
+    ];
+
+    for (final l10n in localizations) {
+      expect(
+        l10n.errorPathDoesNotExist('docs/intro-v2.md'),
+        contains('${fsi}docs/intro-v2.md$pdi'),
+      );
+      expect(
+        l10n.confirmDeleteFileMessage('topic-v2.md'),
+        contains('${fsi}topic-v2.md$pdi'),
+      );
+      expect(l10n.feedbackSuccess('BM-12345'), contains('${fsi}BM-12345$pdi'));
+      expect(
+        l10n.workspaceErrorOpenFailed('ENOENT: docs/topic.md'),
+        contains('${fsi}ENOENT: docs/topic.md$pdi'),
+      );
+      final branchTitle = l10n.gitConfirmSwitchBranchTitle('feature/rtl-v2');
+      expect(branchTitle, contains('${fsi}feature/rtl-v2$pdi'));
+      expect(branchTitle.split(fsi).length - 1, 1);
+      expect(branchTitle.split(pdi).length - 1, 1);
+      expect(l10n.gitDetachedHeadAt('a1b2c3d'), contains('${fsi}a1b2c3d$pdi'));
+      expect(
+        l10n.gitDiffHunkRange('-12,4', '+12,6'),
+        allOf(contains('$fsi-12,4$pdi'), contains('$fsi+12,6$pdi')),
+      );
+      expect(
+        l10n.diagnosticWritersideVariableUnresolved('api-version'),
+        contains('$fsi%api-version%$pdi'),
+      );
+    }
+  });
+
+  test('Persian dynamic numbers use Persian digits', () {
+    const fsi = '\u2068';
+    const pdi = '\u2069';
+    final fa = AppLocalizationsFa();
+
+    expect(fa.diagnosticCount(12), contains('۱۲'));
+    expect(fa.headingLevelAbbreviation(6), '${fsi}H۶$pdi');
+    expect(fa.searchResultLine('docs/topic.md', 42), contains('$fsi۴۲$pdi'));
+    expect(fa.gitAdditionsDeletions(12, 3), '$fsi+۱۲ -۳$pdi');
+
+    // The generic `ar` locale in package:intl intentionally uses Latin digits.
+    // Regional Arabic locales can choose different numbering systems.
+    expect(AppLocalizationsAr().diagnosticCount(12), contains('12'));
   });
 
   testWidgets('diagnostics localize at render time from codes and args', (

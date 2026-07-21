@@ -371,6 +371,7 @@ class _ChangedFileRow extends StatelessWidget {
                     children: [
                       Text(
                         _fileName(file.repoRelativePath),
+                        textDirection: TextDirection.ltr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(
@@ -380,6 +381,7 @@ class _ChangedFileRow extends StatelessWidget {
                       if (directory.isNotEmpty)
                         Text(
                           directory,
+                          textDirection: TextDirection.ltr,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelSmall

@@ -27,7 +27,7 @@
   "feedbackRateLimitedFailure": "تم إرسال عدد كبير جدًا من البلاغات عبر هذا الاتصال. انتظر ثم حاول مرة أخرى.",
   "feedbackRejectedFailure": "رفض الخادم البلاغ. تحقّق من حقول النموذج وحاول مرة أخرى.",
   "feedbackServerFailure": "تعذر على الخادم قبول البلاغ. حاول مرة أخرى لاحقًا.",
-  "feedbackSuccess": "تم إرسال الملاحظات. معرّف المرجع: {id}",
+  "feedbackSuccess": "تم إرسال الملاحظات. معرّف المرجع: \u2068{id}\u2069",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -748,7 +748,7 @@
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "لديك تغييرات غير محفوظة في {fileName}. هل تريد حفظها قبل المتابعة؟",
+  "unsavedChangesMessage": "لديك تغييرات غير محفوظة في \u2068{fileName}\u2069. هل تريد حفظها قبل المتابعة؟",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -905,7 +905,7 @@
   "@heading6": {
     "description": "Heading 6 style label."
   },
-  "headingLevelAbbreviation": "H{level}",
+  "headingLevelAbbreviation": "\u2068H{level}\u2069",
   "@headingLevelAbbreviation": {
     "description": "Compact outline badge for a heading level.",
     "placeholders": {
@@ -1161,7 +1161,7 @@
   "@confirmRemoveFromTocTitle": {
     "description": "Confirmation title before removing a Writerside TOC entry."
   },
-  "confirmRemoveFromTocMessage": "هل تريد إزالة {name} من جدول المحتويات هذا؟ سيُحتفظ بملف الموضوع.",
+  "confirmRemoveFromTocMessage": "هل تريد إزالة \u2068{name}\u2069 من جدول المحتويات هذا؟ سيُحتفظ بملف الموضوع.",
   "@confirmRemoveFromTocMessage": {
     "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
     "placeholders": {
@@ -1174,7 +1174,7 @@
   "@confirmDeleteTopicTitle": {
     "description": "Confirmation title before deleting a Writerside topic file."
   },
-  "confirmDeleteTopicMessage": "هل تريد حذف {name} وإزالته من جميع جداول المحتويات؟ لا يمكن التراجع عن هذا الإجراء.",
+  "confirmDeleteTopicMessage": "هل تريد حذف \u2068{name}\u2069 وإزالته من جميع جداول المحتويات؟ لا يمكن التراجع عن هذا الإجراء.",
   "@confirmDeleteTopicMessage": {
     "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
     "placeholders": {
@@ -1207,7 +1207,7 @@
   "@useSingleSafeFileName": {
     "description": "Validation message for unsafe file names."
   },
-  "useExpectedExtension": "استخدم الامتداد {extension} للتنسيق المحدد.",
+  "useExpectedExtension": "استخدم الامتداد \u2068{extension}\u2069 للتنسيق المحدد.",
   "@useExpectedExtension": {
     "description": "Validation message for an unexpected file extension.",
     "placeholders": {
@@ -1320,7 +1320,7 @@
   "@chapter": {
     "description": "Preview label for a chapter element."
   },
-  "couldNotOpenTarget": "تعذر فتح {target}",
+  "couldNotOpenTarget": "تعذر فتح \u2068{target}\u2069",
   "@couldNotOpenTarget": {
     "description": "Snackbar shown when a link target cannot be opened.",
     "placeholders": {
@@ -1329,7 +1329,7 @@
       }
     }
   },
-  "linkTargetNotFound": "لم يتم العثور على هدف الرابط: {targetPath}",
+  "linkTargetNotFound": "لم يتم العثور على هدف الرابط: \u2068{targetPath}\u2069",
   "@linkTargetNotFound": {
     "description": "Snackbar shown when a link target path is missing.",
     "placeholders": {
@@ -1342,7 +1342,7 @@
   "@cannotOpenFileTypeInEditor": {
     "description": "Snackbar shown when a file type cannot be opened in the editor."
   },
-  "anchorNotFound": "لم يتم العثور على المُرسى: {anchor}",
+  "anchorNotFound": "لم يتم العثور على المُرسى: \u2068{anchor}\u2069",
   "@anchorNotFound": {
     "description": "Snackbar shown when a link anchor is missing.",
     "placeholders": {
@@ -1359,7 +1359,7 @@
   "@noResults": {
     "description": "Search empty state."
   },
-  "searchResultLine": "{relativePath} - السطر {lineNumber}",
+  "searchResultLine": "\u2068{relativePath}\u2069 - السطر \u2068{lineNumber}\u2069",
   "@searchResultLine": {
     "description": "Search result subtitle with file path and line number.",
     "placeholders": {
@@ -1407,7 +1407,7 @@
   "@documentKindResourceFile": {
     "description": "Search result document kind label."
   },
-  "workspaceErrorOpenFailed": "فشل الفتح: {error}",
+  "workspaceErrorOpenFailed": "فشل الفتح: \u2068{error}\u2069",
   "@workspaceErrorOpenFailed": {
     "description": "Workspace error message shown when opening a path fails.",
     "placeholders": {
@@ -1416,7 +1416,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideProjectFailed": "تعذر إنشاء مشروع Writerside: {error}",
+  "workspaceErrorCreateWritersideProjectFailed": "تعذر إنشاء مشروع Writerside: \u2068{error}\u2069",
   "@workspaceErrorCreateWritersideProjectFailed": {
     "description": "Workspace error message shown when Writerside project creation fails.",
     "placeholders": {
@@ -1425,7 +1425,7 @@
       }
     }
   },
-  "workspaceErrorCreateWritersideTopicFailed": "تعذر إنشاء موضوع Writerside: {error}",
+  "workspaceErrorCreateWritersideTopicFailed": "تعذر إنشاء موضوع Writerside: \u2068{error}\u2069",
   "@workspaceErrorCreateWritersideTopicFailed": {
     "description": "Workspace error message shown when Writerside topic creation fails.",
     "placeholders": {
@@ -1434,7 +1434,7 @@
       }
     }
   },
-  "workspaceErrorCouldNotOpenFile": "تعذر فتح الملف: {error}",
+  "workspaceErrorCouldNotOpenFile": "تعذر فتح الملف: \u2068{error}\u2069",
   "@workspaceErrorCouldNotOpenFile": {
     "description": "Workspace error message shown when opening a file fails.",
     "placeholders": {
@@ -1451,7 +1451,7 @@
   "@workspaceErrorSaveBlockedFileChangedOnDisk": {
     "description": "Workspace error message shown when a save is blocked by external changes."
   },
-  "workspaceErrorSaveFailed": "فشل الحفظ: {error}",
+  "workspaceErrorSaveFailed": "فشل الحفظ: \u2068{error}\u2069",
   "@workspaceErrorSaveFailed": {
     "description": "Workspace error message shown when saving fails.",
     "placeholders": {
@@ -1460,7 +1460,7 @@
       }
     }
   },
-  "workspaceErrorValidationFailed": "فشل التحقق: {error}",
+  "workspaceErrorValidationFailed": "فشل التحقق: \u2068{error}\u2069",
   "@workspaceErrorValidationFailed": {
     "description": "Workspace error message shown when validation fails.",
     "placeholders": {
@@ -1469,7 +1469,7 @@
       }
     }
   },
-  "errorPathDoesNotExist": "المسار غير موجود: {path}",
+  "errorPathDoesNotExist": "المسار غير موجود: \u2068{path}\u2069",
   "@errorPathDoesNotExist": {
     "description": "Detail for a missing path error.",
     "placeholders": {
@@ -1478,7 +1478,7 @@
       }
     }
   },
-  "errorTargetDirectoryNotEmpty": "الدليل الهدف موجود بالفعل وليس فارغًا: {path}",
+  "errorTargetDirectoryNotEmpty": "الدليل الهدف موجود بالفعل وليس فارغًا: \u2068{path}\u2069",
   "@errorTargetDirectoryNotEmpty": {
     "description": "Detail for a non-empty target directory error.",
     "placeholders": {
@@ -1487,7 +1487,7 @@
       }
     }
   },
-  "errorTargetPathNotDirectory": "المسار الهدف موجود بالفعل وليس دليلاً: {path}",
+  "errorTargetPathNotDirectory": "المسار الهدف موجود بالفعل وليس دليلاً: \u2068{path}\u2069",
   "@errorTargetPathNotDirectory": {
     "description": "Detail for a target path that is not a directory.",
     "placeholders": {
@@ -1496,7 +1496,7 @@
       }
     }
   },
-  "errorGeneratedFileAlreadyExists": "الملف المُنشأ موجود بالفعل: {path}",
+  "errorGeneratedFileAlreadyExists": "الملف المُنشأ موجود بالفعل: \u2068{path}\u2069",
   "@errorGeneratedFileAlreadyExists": {
     "description": "Detail for a generated file conflict.",
     "placeholders": {
@@ -1509,7 +1509,7 @@
   "@errorParentDirectoryRequired": {
     "description": "Detail for missing parent directory input."
   },
-  "errorParentDirectoryMissing": "الدليل الأصل غير موجود: {path}",
+  "errorParentDirectoryMissing": "الدليل الأصل غير موجود: \u2068{path}\u2069",
   "@errorParentDirectoryMissing": {
     "description": "Detail for a missing parent directory.",
     "placeholders": {
@@ -1542,7 +1542,7 @@
   "@errorTopicTitleRequired": {
     "description": "Detail for a missing topic title."
   },
-  "errorWritersideModuleRootMissing": "جذر وحدة Writerside غير موجود: {path}",
+  "errorWritersideModuleRootMissing": "جذر وحدة Writerside غير موجود: \u2068{path}\u2069",
   "@errorWritersideModuleRootMissing": {
     "description": "Detail for a missing Writerside module root.",
     "placeholders": {
@@ -1559,7 +1559,7 @@
   "@errorWritersideInstanceTreeMissing": {
     "description": "Detail shown when creating a topic without a Writerside instance tree."
   },
-  "errorWritersideTreeFileMissing": "ملف شجرة Writerside غير موجود: {path}",
+  "errorWritersideTreeFileMissing": "ملف شجرة Writerside غير موجود: \u2068{path}\u2069",
   "@errorWritersideTreeFileMissing": {
     "description": "Detail for a missing Writerside tree file.",
     "placeholders": {
@@ -1568,7 +1568,7 @@
       }
     }
   },
-  "errorTopicIdAlreadyExists": "معرّف الموضوع \"{topicId}\" موجود بالفعل في وحدة المساعدة هذه.",
+  "errorTopicIdAlreadyExists": "معرّف الموضوع \"\u2068{topicId}\u2069\" موجود بالفعل في وحدة المساعدة هذه.",
   "@errorTopicIdAlreadyExists": {
     "description": "Detail for a duplicate topic ID.",
     "placeholders": {
@@ -1577,7 +1577,7 @@
       }
     }
   },
-  "errorTopicFileAlreadyExists": "ملف الموضوع موجود بالفعل: {path}",
+  "errorTopicFileAlreadyExists": "ملف الموضوع موجود بالفعل: \u2068{path}\u2069",
   "@errorTopicFileAlreadyExists": {
     "description": "Detail for an existing topic file.",
     "placeholders": {
@@ -1586,7 +1586,7 @@
       }
     }
   },
-  "errorReferenceTopicMissing": "الموضوع المرجعي غير موجود في الشجرة المحددة: {topic}",
+  "errorReferenceTopicMissing": "الموضوع المرجعي غير موجود في الشجرة المحددة: \u2068{topic}\u2069",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
     "placeholders": {
@@ -1603,7 +1603,7 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "لا يمكن حذف موضوع البدء {topic}. اختر صفحة بدء أخرى أولًا.",
+  "errorWritersideStartTopicDelete": "لا يمكن حذف موضوع البدء \u2068{topic}\u2069. اختر صفحة بدء أخرى أولًا.",
   "@errorWritersideStartTopicDelete": {
     "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
     "placeholders": {
@@ -1620,7 +1620,7 @@
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
-  "errorTopicFileExtensionMismatch": "يجب أن يتطابق امتداد ملف الموضوع مع التنسيق المحدد ({extension}).",
+  "errorTopicFileExtensionMismatch": "يجب أن يتطابق امتداد ملف الموضوع مع التنسيق المحدد (\u2068{extension}\u2069).",
   "@errorTopicFileExtensionMismatch": {
     "description": "Detail for a topic file extension mismatch.",
     "placeholders": {
@@ -1633,7 +1633,7 @@
   "@errorTopicFileNameInvalid": {
     "description": "Detail for a topic file name with invalid characters."
   },
-  "errorUnknown": "خطأ غير معروف: {code}",
+  "errorUnknown": "خطأ غير معروف: \u2068{code}\u2069",
   "@errorUnknown": {
     "description": "Fallback detail for an unknown coded application error.",
     "placeholders": {
@@ -1642,7 +1642,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileStatFailed": "تعذرت قراءة بيانات تعريف الملف: {error}",
+  "diagnosticWorkspaceFileStatFailed": "تعذرت قراءة بيانات تعريف الملف: \u2068{error}\u2069",
   "@diagnosticWorkspaceFileStatFailed": {
     "description": "Diagnostic shown when file metadata cannot be read.",
     "placeholders": {
@@ -1655,7 +1655,7 @@
   "@diagnosticWorkspaceScanSkipped": {
     "description": "Diagnostic shown when workspace scanning skips files."
   },
-  "diagnosticWorkspaceScanInspectFailed": "تعذر فحص عنصر مساحة العمل: {error}",
+  "diagnosticWorkspaceScanInspectFailed": "تعذر فحص عنصر مساحة العمل: \u2068{error}\u2069",
   "@diagnosticWorkspaceScanInspectFailed": {
     "description": "Diagnostic shown when a workspace entry cannot be inspected.",
     "placeholders": {
@@ -1668,7 +1668,7 @@
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
-  "diagnosticWorkspaceFileReadFailed": "تعذرت قراءة ملف Markdown: {error}",
+  "diagnosticWorkspaceFileReadFailed": "تعذرت قراءة ملف Markdown: \u2068{error}\u2069",
   "@diagnosticWorkspaceFileReadFailed": {
     "description": "Diagnostic shown when a Markdown file cannot be read.",
     "placeholders": {
@@ -1681,7 +1681,7 @@
   "@diagnosticMarkdownAttributeMalformed": {
     "description": "Markdown parser diagnostic for malformed Writerside heading attributes."
   },
-  "diagnosticMarkdownHeadingDuplicateId": "معرّف عنوان مكرر \"{id}\".",
+  "diagnosticMarkdownHeadingDuplicateId": "معرّف عنوان مكرر \"\u2068{id}\u2069\".",
   "@diagnosticMarkdownHeadingDuplicateId": {
     "description": "Markdown parser diagnostic for duplicate heading IDs.",
     "placeholders": {
@@ -1702,7 +1702,7 @@
   "@diagnosticWritersideXmlTopicMissingTitle": {
     "description": "Diagnostic for a Writerside XML topic without a title."
   },
-  "diagnosticWritersideTopicFileMissingTitle": "الموضوع \"{fileName}\" يفتقد عنوانًا.",
+  "diagnosticWritersideTopicFileMissingTitle": "الموضوع \"\u2068{fileName}\u2069\" يفتقد عنوانًا.",
   "@diagnosticWritersideTopicFileMissingTitle": {
     "description": "Diagnostic for a Writerside topic file without a title.",
     "placeholders": {
@@ -1719,7 +1719,7 @@
   "@diagnosticMarkdownRawHtmlUnsafe": {
     "description": "Markdown parser diagnostic for unsafe raw HTML."
   },
-  "diagnosticMarkdownLinkUnresolvedTarget": "هدف الرابط غير موجود: {targetPath}",
+  "diagnosticMarkdownLinkUnresolvedTarget": "هدف الرابط غير موجود: \u2068{targetPath}\u2069",
   "@diagnosticMarkdownLinkUnresolvedTarget": {
     "description": "Markdown parser diagnostic for a missing link target.",
     "placeholders": {
@@ -1728,7 +1728,7 @@
       }
     }
   },
-  "diagnosticMarkdownLinkUnresolvedAnchor": "المُرسى \"{anchor}\" غير موجود.",
+  "diagnosticMarkdownLinkUnresolvedAnchor": "المُرسى \"\u2068{anchor}\u2069\" غير موجود.",
   "@diagnosticMarkdownLinkUnresolvedAnchor": {
     "description": "Markdown parser diagnostic for a missing local anchor.",
     "placeholders": {
@@ -1737,7 +1737,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingAlt": "الصورة \"{destination}\" تفتقد النص البديل.",
+  "diagnosticMarkdownImageMissingAlt": "الصورة \"\u2068{destination}\u2069\" تفتقد النص البديل.",
   "@diagnosticMarkdownImageMissingAlt": {
     "description": "Markdown parser diagnostic for a missing image alt text.",
     "placeholders": {
@@ -1746,7 +1746,7 @@
       }
     }
   },
-  "diagnosticMarkdownImageMissingFile": "الصورة غير موجودة: {destination}",
+  "diagnosticMarkdownImageMissingFile": "الصورة غير موجودة: \u2068{destination}\u2069",
   "@diagnosticMarkdownImageMissingFile": {
     "description": "Markdown parser diagnostic for a missing image file.",
     "placeholders": {
@@ -1755,7 +1755,7 @@
       }
     }
   },
-  "diagnosticInvalidXml": "XML غير صالح: {message}",
+  "diagnosticInvalidXml": "XML غير صالح: \u2068{message}\u2069",
   "@diagnosticInvalidXml": {
     "description": "XML parser diagnostic for invalid XML.",
     "placeholders": {
@@ -1776,7 +1776,7 @@
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
-  "diagnosticWritersideConfigInvalidKeymapsMode": "وضع keymaps غير مدعوم: {mode}",
+  "diagnosticWritersideConfigInvalidKeymapsMode": "وضع keymaps غير مدعوم: \u2068{mode}\u2069",
   "@diagnosticWritersideConfigInvalidKeymapsMode": {
     "description": "Writerside parser diagnostic for an unsupported keymaps mode.",
     "placeholders": {
@@ -1801,7 +1801,7 @@
   "@diagnosticWritersideTreeMissingId": {
     "description": "Writerside parser diagnostic for an instance profile without id."
   },
-  "diagnosticWritersideTreeIdMismatch": "لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"{id}\".",
+  "diagnosticWritersideTreeIdMismatch": "لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"\u2068{id}\u2069\".",
   "@diagnosticWritersideTreeIdMismatch": {
     "description": "Writerside parser diagnostic for a tree filename and ID mismatch.",
     "placeholders": {
@@ -1814,7 +1814,7 @@
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
-  "diagnosticWritersideStartPageMissing": "صفحة البدء \"{startPage}\" غير موجودة.",
+  "diagnosticWritersideStartPageMissing": "صفحة البدء \"\u2068{startPage}\u2069\" غير موجودة.",
   "@diagnosticWritersideStartPageMissing": {
     "description": "Writerside diagnostic for a missing start page.",
     "placeholders": {
@@ -1823,7 +1823,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeDuplicateTopic": "يظهر الموضوع \"{topic}\" أكثر من مرة في جدول محتويات هذا المثيل.",
+  "diagnosticWritersideTreeDuplicateTopic": "يظهر الموضوع \"\u2068{topic}\u2069\" أكثر من مرة في جدول محتويات هذا المثيل.",
   "@diagnosticWritersideTreeDuplicateTopic": {
     "description": "Writerside parser diagnostic for a duplicate topic in a TOC.",
     "placeholders": {
@@ -1836,7 +1836,7 @@
   "@diagnosticWritersideVariableMalformedDeclaration": {
     "description": "Writerside parser diagnostic for a malformed variable declaration."
   },
-  "diagnosticWritersideVariableDuplicateName": "تم الإعلان عن المتغير \"{name}\" أكثر من مرة.",
+  "diagnosticWritersideVariableDuplicateName": "تم الإعلان عن المتغير \"\u2068{name}\u2069\" أكثر من مرة.",
   "@diagnosticWritersideVariableDuplicateName": {
     "description": "Writerside parser diagnostic for a duplicate variable name.",
     "placeholders": {
@@ -1849,7 +1849,7 @@
   "@diagnosticWritersideCategoryMissingId": {
     "description": "Writerside parser diagnostic for a category without id."
   },
-  "diagnosticWritersideCategoryDuplicateId": "تم الإعلان عن الفئة \"{id}\" أكثر من مرة.",
+  "diagnosticWritersideCategoryDuplicateId": "تم الإعلان عن الفئة \"\u2068{id}\u2069\" أكثر من مرة.",
   "@diagnosticWritersideCategoryDuplicateId": {
     "description": "Writerside parser diagnostic for a duplicate category ID.",
     "placeholders": {
@@ -1858,7 +1858,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryDuplicateOrder": "تم الإعلان عن ترتيب الفئة \"{order}\" أكثر من مرة.",
+  "diagnosticWritersideCategoryDuplicateOrder": "تم الإعلان عن ترتيب الفئة \"\u2068{order}\u2069\" أكثر من مرة.",
   "@diagnosticWritersideCategoryDuplicateOrder": {
     "description": "Writerside parser diagnostic for a duplicate category order.",
     "placeholders": {
@@ -1875,7 +1875,7 @@
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "يجب أن يتطابق معرّف جذر موضوع XML \"{id}\" مع اسم الملف \"{expectedId}\".",
+  "diagnosticWritersideTopicRootIdMismatch": "يجب أن يتطابق معرّف جذر موضوع XML \"\u2068{id}\u2069\" مع اسم الملف \"\u2068{expectedId}\u2069\".",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1887,7 +1887,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateElementId": "يظهر معرّف العنصر \"{elementId}\" أكثر من مرة.",
+  "diagnosticWritersideTopicDuplicateElementId": "يظهر معرّف العنصر \"\u2068{elementId}\u2069\" أكثر من مرة.",
   "@diagnosticWritersideTopicDuplicateElementId": {
     "description": "Writerside parser diagnostic for a duplicate XML element ID.",
     "placeholders": {
@@ -1904,7 +1904,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "دليل تكوين البناء المحدد مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "دليل تكوين البناء المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1913,7 +1913,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "دليل مواصفات API المحدد مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingApiSpecificationsDirectory": "دليل مواصفات API المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideConfigMissingApiSpecificationsDirectory": {
     "description": "Writerside module diagnostic for a missing API specifications directory.",
     "placeholders": {
@@ -1922,7 +1922,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingSnippetsDirectory": "دليل المقتطفات المحدد مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingSnippetsDirectory": "دليل المقتطفات المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideConfigMissingSnippetsDirectory": {
     "description": "Writerside module diagnostic for a missing snippets directory.",
     "placeholders": {
@@ -1931,7 +1931,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingVarsFile": "ملف المتغيرات المحدد مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingVarsFile": "ملف المتغيرات المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideConfigMissingVarsFile": {
     "description": "Writerside module diagnostic for a missing variables file.",
     "placeholders": {
@@ -1940,7 +1940,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingCategoriesFile": "ملف الفئات المحدد مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingCategoriesFile": "ملف الفئات المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideConfigMissingCategoriesFile": {
     "description": "Writerside module diagnostic for a missing categories file.",
     "placeholders": {
@@ -1949,7 +1949,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsFile": "ملف مجموعات المثيلات المحدد مفقود: {relativePath}",
+  "diagnosticWritersideConfigMissingInstanceGroupsFile": "ملف مجموعات المثيلات المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideConfigMissingInstanceGroupsFile": {
     "description": "Writerside module diagnostic for a missing instance groups file.",
     "placeholders": {
@@ -1958,7 +1958,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceTree": "شجرة المثيل المسجلة \"{source}\" غير موجودة.",
+  "diagnosticWritersideConfigMissingInstanceTree": "شجرة المثيل المسجلة \"\u2068{source}\u2069\" غير موجودة.",
   "@diagnosticWritersideConfigMissingInstanceTree": {
     "description": "Writerside module diagnostic for a missing registered instance tree.",
     "placeholders": {
@@ -1967,7 +1967,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicReadFailed": "تعذرت قراءة ملف الموضوع: {error}",
+  "diagnosticWritersideTopicReadFailed": "تعذرت قراءة ملف الموضوع: \u2068{error}\u2069",
   "@diagnosticWritersideTopicReadFailed": {
     "description": "Writerside module diagnostic for a topic file read failure.",
     "placeholders": {
@@ -1976,7 +1976,7 @@
       }
     }
   },
-  "diagnosticWritersideDefaultTopicsDirectoryMissing": "دليل المواضيع الافتراضي مفقود: {relativePath}",
+  "diagnosticWritersideDefaultTopicsDirectoryMissing": "دليل المواضيع الافتراضي مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideDefaultTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing default topics directory.",
     "placeholders": {
@@ -1985,7 +1985,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicsDirectoryMissing": "دليل المواضيع المحدد مفقود: {relativePath}",
+  "diagnosticWritersideTopicsDirectoryMissing": "دليل المواضيع المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideTopicsDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing topics directory.",
     "placeholders": {
@@ -1994,7 +1994,7 @@
       }
     }
   },
-  "diagnosticWritersideImagesDirectoryMissing": "دليل الصور المحدد مفقود: {relativePath}",
+  "diagnosticWritersideImagesDirectoryMissing": "دليل الصور المحدد مفقود: \u2068{relativePath}\u2069",
   "@diagnosticWritersideImagesDirectoryMissing": {
     "description": "Writerside module diagnostic for a missing images directory.",
     "placeholders": {
@@ -2003,7 +2003,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicDuplicateId": "يظهر معرّف العنصر \"{id}\" أكثر من مرة.",
+  "diagnosticWritersideTopicDuplicateId": "يظهر معرّف العنصر \"\u2068{id}\u2069\" أكثر من مرة.",
   "@diagnosticWritersideTopicDuplicateId": {
     "description": "Writerside module diagnostic for a duplicate topic element ID.",
     "placeholders": {
@@ -2012,7 +2012,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingTopic": "يشير جدول المحتويات إلى موضوع مفقود \"{topic}\".",
+  "diagnosticWritersideTreeMissingTopic": "يشير جدول المحتويات إلى موضوع مفقود \"\u2068{topic}\u2069\".",
   "@diagnosticWritersideTreeMissingTopic": {
     "description": "Writerside module diagnostic for a TOC reference to a missing topic.",
     "placeholders": {
@@ -2021,7 +2021,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeInvalidHref": "قيمة href الخارجية \"{href}\" غير صالحة.",
+  "diagnosticWritersideTreeInvalidHref": "قيمة href الخارجية \"\u2068{href}\u2069\" غير صالحة.",
   "@diagnosticWritersideTreeInvalidHref": {
     "description": "Writerside module diagnostic for an invalid external href.",
     "placeholders": {
@@ -2030,7 +2030,7 @@
       }
     }
   },
-  "diagnosticWritersideVariableUnresolved": "لم يتم الإعلان عن المتغير \"%{name}%\".",
+  "diagnosticWritersideVariableUnresolved": "لم يتم الإعلان عن المتغير \"\u2068%{name}%\u2069\".",
   "@diagnosticWritersideVariableUnresolved": {
     "description": "Writerside module diagnostic for an undeclared variable.",
     "placeholders": {
@@ -2039,7 +2039,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "لا يمكن حل رابط الموضوع \"{destination}\".",
+  "diagnosticWritersideTopicLinkUnresolved": "لا يمكن حل رابط الموضوع \"\u2068{destination}\u2069\".",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -2048,7 +2048,7 @@
       }
     }
   },
-  "diagnosticWritersideAnchorUnresolved": "المُرسى \"{anchor}\" غير موجود في \"{targetName}\".",
+  "diagnosticWritersideAnchorUnresolved": "المُرسى \"\u2068{anchor}\u2069\" غير موجود في \"\u2068{targetName}\u2069\".",
   "@diagnosticWritersideAnchorUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic anchor.",
     "placeholders": {
@@ -2064,7 +2064,7 @@
   "@diagnosticWritersideIncludeMissingFrom": {
     "description": "Writerside module diagnostic for an include without a from attribute."
   },
-  "diagnosticWritersideIncludeSourceMissing": "مصدر التضمين \"{from}\" غير موجود.",
+  "diagnosticWritersideIncludeSourceMissing": "مصدر التضمين \"\u2068{from}\u2069\" غير موجود.",
   "@diagnosticWritersideIncludeSourceMissing": {
     "description": "Writerside module diagnostic for a missing include source.",
     "placeholders": {
@@ -2073,7 +2073,7 @@
       }
     }
   },
-  "diagnosticWritersideIncludeElementMissing": "عنصر التضمين \"{elementId}\" غير موجود في \"{from}\".",
+  "diagnosticWritersideIncludeElementMissing": "عنصر التضمين \"\u2068{elementId}\u2069\" غير موجود في \"\u2068{from}\u2069\".",
   "@diagnosticWritersideIncludeElementMissing": {
     "description": "Writerside module diagnostic for a missing include element.",
     "placeholders": {
@@ -2085,7 +2085,7 @@
       }
     }
   },
-  "diagnosticWritersideCategoryUnresolved": "فئة seealso \"{ref}\" غير معلنة.",
+  "diagnosticWritersideCategoryUnresolved": "فئة seealso \"\u2068{ref}\u2069\" غير معلنة.",
   "@diagnosticWritersideCategoryUnresolved": {
     "description": "Writerside module diagnostic for an unresolved seealso category.",
     "placeholders": {
@@ -2094,7 +2094,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAmbiguousReference": "مرجع الموضوع \"{reference}\" غامض.",
+  "diagnosticWritersideTopicAmbiguousReference": "مرجع الموضوع \"\u2068{reference}\u2069\" غامض.",
   "@diagnosticWritersideTopicAmbiguousReference": {
     "description": "Writerside module diagnostic for an ambiguous topic reference.",
     "placeholders": {
@@ -2103,7 +2103,7 @@
       }
     }
   },
-  "diagnosticUnknown": "تشخيص غير معروف: {code}",
+  "diagnosticUnknown": "تشخيص غير معروف: \u2068{code}\u2069",
   "@diagnosticUnknown": {
     "description": "Fallback text for an unknown diagnostic code.",
     "placeholders": {
@@ -2116,10 +2116,10 @@
   "git": "Git",
   "gitDiff": "فروقات Git",
   "gitShowDiff": "إظهار الفروقات",
-  "gitDiffHunkRange": "القديم {oldRange} ← الجديد {newRange}",
+  "gitDiffHunkRange": "القديم \u2068{oldRange}\u2069 ← الجديد \u2068{newRange}\u2069",
   "gitDiffNoLines": "لا أسطر",
   "gitUnavailableTitle": "Git غير متاح",
-  "gitUnavailableMessage": "{reason, select, other{ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. {reason}}}",
+  "gitUnavailableMessage": "{reason, select, other{ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. \u2068{reason}\u2069}}",
   "gitTrustRequiredTitle": "الوثوق بمساحة العمل هذه لاستخدام Git؟",
   "gitTrustRequiredMessage": "يمكن لمستودعات Git تشغيل برامج من خلال الخطافات والمرشحات وإعدادات أخرى. ثق بمساحة العمل هذه قبل أن يقرأ BusyMark بيانات المستودع أو يمكّن إجراءات Git.",
   "gitTrustWorkspace": "الوثوق بمساحة العمل",
@@ -2127,7 +2127,7 @@
   "gitNotRepositoryMessage": "مساحة العمل هذه ليست داخل مستودع Git.",
   "gitInitializeRepository": "تهيئة المستودع",
   "gitDetachedHead": "HEAD منفصل",
-  "gitDetachedHeadAt": "HEAD منفصل عند {commit}",
+  "gitDetachedHeadAt": "HEAD منفصل عند \u2068{commit}\u2069",
   "gitNoUpstream": "لا يوجد فرع منبع",
   "gitAheadCount": "{count, plural, zero{لا توجد التزامات غير مرفوعة} one{التزام واحد غير مرفوع} two{التزامان غير مرفوعين} few{{count} التزامات غير مرفوعة} many{{count} التزامًا غير مرفوع} other{{count} التزام غير مرفوع}}",
   "gitBehindCount": "{count, plural, zero{لا توجد التزامات لسحبها} one{التزام واحد لسحبه} two{التزامان لسحبهما} few{{count} التزامات لسحبها} many{{count} التزامًا لسحبها} other{{count} التزام لسحبه}}",
@@ -2163,13 +2163,13 @@
   "gitConfirmDiscardTracked": "{count, plural, zero{لا توجد ملفات متعقبة محددة لاستعادتها من Git.} one{ستتم استعادة الملف المتعقب المحدد من Git.} two{ستتم استعادة الملفين المتعقبين المحددين من Git.} few{ستتم استعادة الملفات المتعقبة المحددة من Git.} many{ستتم استعادة الملفات المتعقبة المحددة من Git.} other{ستتم استعادة الملفات المتعقبة المحددة من Git.}}",
   "gitConfirmDiscardUntracked": "{count, plural, zero{لا توجد ملفات غير متعقبة محددة لحذفها.} one{سيُحذف الملف غير المتعقب المحدد.} two{سيُحذف الملفان غير المتعقبين المحددان.} few{ستُحذف الملفات غير المتعقبة المحددة.} many{ستُحذف الملفات غير المتعقبة المحددة.} other{ستُحذف الملفات غير المتعقبة المحددة.}}",
   "gitConfirmDiscardMixed": "{count, plural, zero{لا توجد ملفات محددة لاستعادتها أو حذفها.} one{ستتم استعادة الملف المحدد أو حذفه حسب حالته في Git.} two{ستتم استعادة الملفين المحددين أو حذفهما حسب حالتهما في Git.} few{ستتم استعادة الملفات المحددة أو حذفها حسب حالتها في Git.} many{ستتم استعادة الملفات المحددة أو حذفها حسب حالتها في Git.} other{ستتم استعادة الملفات المحددة أو حذفها حسب حالتها في Git.}}",
-  "gitConfirmSwitchBranchTitle": "التبديل إلى {branch}؟",
+  "gitConfirmSwitchBranchTitle": "التبديل إلى \u2068{branch}\u2069؟",
   "gitConfirmSwitchBranchMessage": "سيعيد BusyMark تحميل مساحة العمل من القرص بعد أن يبدّل Git الفروع.",
   "gitConfirmPushSetUpstreamTitle": "تعيين فرع منبع؟",
-  "gitConfirmPushSetUpstreamMessage": "ليس لهذا الفرع فرع منبع. يمكن لـ BusyMark دفع {branch} وتعيينه فرعًا منبعًا عندما يكون هناك مستودع بعيد واحد فقط مُعدّ.",
+  "gitConfirmPushSetUpstreamMessage": "ليس لهذا الفرع فرع منبع. يمكن لـ BusyMark دفع \u2068{branch}\u2069 وتعيينه فرعًا منبعًا عندما يكون هناك مستودع بعيد واحد فقط مُعدّ.",
   "gitProjectHistory": "المشروع",
   "gitFileHistory": "الملف الحالي",
-  "gitAdditionsDeletions": "+{additions} -{deletions}",
+  "gitAdditionsDeletions": "\u2068+{additions} -{deletions}\u2069",
   "gitFileActions": "إجراءات الملف",
   "gitStatusAdded": "مضاف",
   "gitStatusDeleted": "محذوف",
@@ -2267,11 +2267,11 @@
   "rename": "إعادة تسمية",
   "confirmDeleteFileTitle": "حذف الملف؟",
   "confirmDeleteFolderTitle": "حذف المجلد؟",
-  "confirmDeleteFileMessage": "حذف {name}؟ لا يمكن التراجع عن هذا.",
-  "confirmDeleteFolderMessage": "حذف {name} وكل الملفات داخله؟ لا يمكن التراجع عن هذا.",
-  "workspaceErrorFileOperationFailed": "فشلت عملية الملف: {error}",
-  "errorDirectoryMissing": "المجلد غير موجود: {path}",
-  "errorPathAlreadyExists": "المسار موجود بالفعل: {path}",
+  "confirmDeleteFileMessage": "حذف \u2068{name}\u2069؟ لا يمكن التراجع عن هذا.",
+  "confirmDeleteFolderMessage": "حذف \u2068{name}\u2069 وكل الملفات داخله؟ لا يمكن التراجع عن هذا.",
+  "workspaceErrorFileOperationFailed": "فشلت عملية الملف: \u2068{error}\u2069",
+  "errorDirectoryMissing": "المجلد غير موجود: \u2068{path}\u2069",
+  "errorPathAlreadyExists": "المسار موجود بالفعل: \u2068{path}\u2069",
   "errorFileNameRequired": "اسم الملف مطلوب.",
   "errorFileNameUnsafe": "يجب أن يكون اسم الملف مقطع مسار آمنًا واحدًا.",
   "errorFileOperationInvalidTarget": "لا يمكن نقل مجلد إلى داخل نفسه.",
@@ -2287,9 +2287,9 @@
   "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
   "removeAction": "إزالة",
   "@removeAction": {"description": "Generic remove action label."},
-  "topicRemovalSummary": "أزِل «{topic}» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.",
+  "topicRemovalSummary": "أزِل «\u2068{topic}\u2069» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.",
   "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
-  "safeDeleteTopicSummary": "احذف «{topic}» وحدّث المراجع إليه بأمان في مشروع Writerside هذا بأكمله.",
+  "safeDeleteTopicSummary": "احذف «\u2068{topic}\u2069» وحدّث المراجع إليه بأمان في مشروع Writerside هذا بأكمله.",
   "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
   "childTopicsPromoted": "{count, plural, zero{لن يُنقل أي موضوع فرعي.} one{سينتقل موضوع فرعي واحد مستوى واحدًا إلى الأعلى.} two{سينتقل موضوعان فرعيان مستوى واحدًا إلى الأعلى.} few{ستنتقل {count} موضوعات فرعية مستوى واحدًا إلى الأعلى.} many{سينتقل {count} موضوعًا فرعيًا مستوى واحدًا إلى الأعلى.} other{سينتقل {count} موضوع فرعي مستوى واحدًا إلى الأعلى.}}",
   "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
@@ -2327,7 +2327,7 @@
   "@redirectTarget": {"description": "Field label for selecting a redirect target."},
   "remainingUsagesBlockRemoval": "راجع الاستخدامات المتبقية وحدّثها قبل المتابعة، أو فعّل التحديثات التلقائية عند توفرها.",
   "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
-  "usagesOfTopic": "استخدامات {topic}",
+  "usagesOfTopic": "استخدامات \u2068{topic}\u2069",
   "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
   "noUsagesFound": "لم يُعثر على استخدامات",
   "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
@@ -2339,7 +2339,7 @@
   "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
   "keepTopicFile": "الاحتفاظ بملف الموضوع",
   "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
-  "orphanTopicMessage": "لم يعد «{topic}» مستخدمًا في أي مكان ضمن مشروع Writerside هذا. احذف الملف أو احتفظ به لاستخدامه في مثيل آخر.",
+  "orphanTopicMessage": "لم يعد «\u2068{topic}\u2069» مستخدمًا في أي مكان ضمن مشروع Writerside هذا. احذف الملف أو احتفظ به لاستخدامه في مثيل آخر.",
   "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
   "errorWritersideSafeDeleteRequired": "استخدم الحذف الآمن لملفات موضوعات Writerside.",
   "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
@@ -2349,7 +2349,7 @@
   "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
   "errorWritersideRedirectInvalid": "لم يعد هدف إعادة التوجيه المحدد صالحًا. حدده مرة أخرى.",
   "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
-  "errorWritersideRollbackFailed": "تعذّر التراجع بالكامل عن إزالة الموضوع. راجع هذه المسارات قبل المتابعة: {paths}",
+  "errorWritersideRollbackFailed": "تعذّر التراجع بالكامل عن إزالة الموضوع. راجع هذه المسارات قبل المتابعة: \u2068{paths}\u2069",
   "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}}
 
 }

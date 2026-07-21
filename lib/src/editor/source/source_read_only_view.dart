@@ -46,11 +46,13 @@ class BusyMarkReadOnlySourceLines extends StatelessWidget {
         textStyle ??
         Theme.of(context).textTheme.bodySmall?.copyWith(
           fontFamily: BusyMarkTypography.monoFontFamily,
+          fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
           height: BusyMarkTypography.codeLineHeight,
           leadingDistribution: TextLeadingDistribution.even,
         ) ??
         const TextStyle(
           fontFamily: BusyMarkTypography.monoFontFamily,
+          fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
           fontSize: BusyMarkTypography.defaultFontSize,
           height: BusyMarkTypography.codeLineHeight,
           leadingDistribution: TextLeadingDistribution.even,
@@ -121,6 +123,7 @@ class BusyMarkReadOnlySourceLineRow extends StatelessWidget {
               : 0,
         ),
         child: Row(
+          textDirection: TextDirection.ltr,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
@@ -150,6 +153,7 @@ class BusyMarkReadOnlySourceLineRow extends StatelessWidget {
                   style: textStyle,
                   foreground: foreground,
                 ),
+                textDirection: TextDirection.ltr,
                 textHeightBehavior: sourceTextHeightBehavior,
                 textScaler: MediaQuery.textScalerOf(context),
               ),
@@ -214,6 +218,7 @@ class _ReadOnlySourceLineNumber extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
       child: Text(
         lineNumber?.toString() ?? '',
+        textDirection: TextDirection.ltr,
         textAlign: TextAlign.right,
         style: style,
         overflow: TextOverflow.clip,

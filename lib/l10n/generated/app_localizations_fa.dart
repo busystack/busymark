@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -81,7 +83,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get feedbackTechnicalDetailsDisclosure =>
-      'در صورت فعال‌سازی، فقط نسخهٔ سیستم‌عامل Linux و تنظیمات محلی برنامهٔ BusyMark افزوده می‌شود. هیچ گزارش رویداد، فایل، دادهٔ حساب یا اطلاعات عیب‌یابی دیگری پیوست نمی‌شود.';
+      'در صورت فعال‌سازی، فقط نسخهٔ سیستم‌عامل لینوکس و تنظیمات محلی برنامهٔ BusyMark افزوده می‌شود. هیچ گزارش رویداد، فایل، دادهٔ حساب یا اطلاعات عیب‌یابی دیگری پیوست نمی‌شود.';
 
   @override
   String get feedbackSubmit => 'ارسال';
@@ -124,7 +126,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String feedbackSuccess(String id) {
-    return 'بازخورد ارسال شد. شناسهٔ مرجع: $id';
+    return 'بازخورد ارسال شد. شناسهٔ مرجع: ⁨$id⁩';
   }
 
   @override
@@ -218,7 +220,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get open => 'باز کردن';
 
   @override
-  String get openInFiles => 'باز کردن در Files';
+  String get openInFiles => 'باز کردن در فایل‌ها';
 
   @override
   String get outline => 'ساختار سند';
@@ -669,11 +671,15 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String closeUnsavedChangesMultipleMessage(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
       other:
-          '$count سند تغییرات ذخیره‌نشده دارند. پیش از بستن BusyMark تغییرات ذخیره شوند؟',
+          '$countString سند تغییرات ذخیره‌نشده دارند. پیش از بستن BusyMark تغییرات ذخیره شوند؟',
       one:
           '۱ سند تغییرات ذخیره‌نشده دارد. پیش از بستن BusyMark تغییرات ذخیره شوند؟',
       zero: 'پیش از بستن BusyMark تغییرات ذخیره شوند؟',
@@ -698,7 +704,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'در $fileName تغییرات ذخیره‌نشده دارید. قبل از ادامه ذخیره شوند؟';
+    return 'در ⁨$fileName⁩ تغییرات ذخیره‌نشده دارید. قبل از ادامه ذخیره شوند؟';
   }
 
   @override
@@ -815,7 +821,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String headingLevelAbbreviation(int level) {
-    return 'H$level';
+    final intl.NumberFormat levelNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String levelString = levelNumberFormat.format(level);
+
+    return '⁨H$levelString⁩';
   }
 
   @override
@@ -823,7 +833,13 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String tableColumnNumber(int columnNumber) {
-    return 'ستون $columnNumber';
+    final intl.NumberFormat columnNumberNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String columnNumberString = columnNumberNumberFormat.format(
+      columnNumber,
+    );
+
+    return 'ستون $columnNumberString';
   }
 
   @override
@@ -837,7 +853,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String tableRowNumber(int rowNumber) {
-    return 'ردیف $rowNumber';
+    final intl.NumberFormat rowNumberNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String rowNumberString = rowNumberNumberFormat.format(rowNumber);
+
+    return 'ردیف $rowNumberString';
   }
 
   @override
@@ -887,7 +907,13 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String tableHeaderNumber(int columnNumber) {
-    return 'سرستون $columnNumber';
+    final intl.NumberFormat columnNumberNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String columnNumberString = columnNumberNumberFormat.format(
+      columnNumber,
+    );
+
+    return 'سرستون $columnNumberString';
   }
 
   @override
@@ -945,10 +971,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count پیام تشخیصی',
+      other: '$countString پیام تشخیصی',
       one: '۱ پیام تشخیصی',
       zero: 'هیچ پیام تشخیصی وجود ندارد',
     );
@@ -966,10 +996,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String workspaceDetail(String kind, int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count فایل',
+      other: '$countString فایل',
       one: '۱ فایل',
     );
     return '$kind — $_temp0';
@@ -1025,7 +1059,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String confirmRemoveFromTocMessage(String name) {
-    return '$name از این فهرست مطالب حذف شود؟ فایل موضوع حفظ خواهد شد.';
+    return '⁨$name⁩ از این فهرست مطالب حذف شود؟ فایل موضوع حفظ خواهد شد.';
   }
 
   @override
@@ -1033,7 +1067,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String confirmDeleteTopicMessage(String name) {
-    return '$name حذف و از همهٔ فهرست‌های مطالب برداشته شود؟ این کار قابل بازگشت نیست.';
+    return '⁨$name⁩ حذف و از همهٔ فهرست‌های مطالب برداشته شود؟ این کار قابل بازگشت نیست.';
   }
 
   @override
@@ -1053,20 +1087,24 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '«$topic» را از نمونهٔ راهنمای انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
+    return '«⁨$topic⁩» را از نمونهٔ راهنمای انتخاب‌شده حذف کنید. فایل موضوع نگه داشته می‌شود.';
   }
 
   @override
   String safeDeleteTopicSummary(String topic) {
-    return '«$topic» را حذف کنید و ارجاع‌های آن را در سراسر این پروژهٔ Writerside به‌طور ایمن به‌روزرسانی کنید.';
+    return '«⁨$topic⁩» را حذف کنید و ارجاع‌های آن را در سراسر این پروژهٔ Writerside به‌طور ایمن به‌روزرسانی کنید.';
   }
 
   @override
   String childTopicsPromoted(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count موضوع فرزند یک سطح بالاتر می‌روند.',
+      other: '$countString موضوع فرزند یک سطح بالاتر می‌روند.',
       one: '۱ موضوع فرزند یک سطح بالاتر می‌رود.',
     );
     return '$_temp0';
@@ -1078,7 +1116,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'موارد استفاده ($count)';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'موارد استفاده ($countString)';
   }
 
   @override
@@ -1102,10 +1144,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String usageCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count مورد استفاده',
+      other: '$countString مورد استفاده',
       one: '۱ مورد استفاده',
     );
     return '$_temp0';
@@ -1141,7 +1187,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String usagesOfTopic(String topic) {
-    return 'موارد استفادهٔ $topic';
+    return 'موارد استفادهٔ ⁨$topic⁩';
   }
 
   @override
@@ -1161,7 +1207,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String orphanTopicMessage(String topic) {
-    return '«$topic» دیگر در هیچ جای این پروژهٔ Writerside استفاده نمی‌شود. فایل را حذف کنید یا برای استفاده در نمونه‌ای دیگر نگه دارید.';
+    return '«⁨$topic⁩» دیگر در هیچ جای این پروژهٔ Writerside استفاده نمی‌شود. فایل را حذف کنید یا برای استفاده در نمونه‌ای دیگر نگه دارید.';
   }
 
   @override
@@ -1190,12 +1236,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String confirmDeleteFileMessage(String name) {
-    return '$name حذف شود؟ این کار قابل بازگشت نیست.';
+    return '⁨$name⁩ حذف شود؟ این کار قابل بازگشت نیست.';
   }
 
   @override
   String confirmDeleteFolderMessage(String name) {
-    return '$name و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.';
+    return '⁨$name⁩ و همهٔ فایل‌های داخل آن حذف شوند؟ این کار قابل بازگشت نیست.';
   }
 
   @override
@@ -1204,7 +1250,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String useExpectedExtension(String extension) {
-    return 'از پسوند $extension برای قالب انتخاب‌شده استفاده کنید.';
+    return 'از پسوند ⁨$extension⁩ برای قالب انتخاب‌شده استفاده کنید.';
   }
 
   @override
@@ -1297,12 +1343,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String couldNotOpenTarget(String target) {
-    return 'باز کردن $target ممکن نشد';
+    return 'باز کردن ⁨$target⁩ ممکن نشد';
   }
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'مقصد پیوند یافت نشد: $targetPath';
+    return 'مقصد پیوند یافت نشد: ⁨$targetPath⁩';
   }
 
   @override
@@ -1311,7 +1357,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String anchorNotFound(String anchor) {
-    return 'لنگر یافت نشد: $anchor';
+    return 'لنگر یافت نشد: ⁨$anchor⁩';
   }
 
   @override
@@ -1322,7 +1368,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath — خط $lineNumber';
+    final intl.NumberFormat lineNumberNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String lineNumberString = lineNumberNumberFormat.format(lineNumber);
+
+    return '⁨$relativePath⁩ — خط ⁨$lineNumberString⁩';
   }
 
   @override
@@ -1355,22 +1405,22 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String workspaceErrorOpenFailed(String error) {
-    return 'باز کردن ناموفق بود: $error';
+    return 'باز کردن ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCreateWritersideProjectFailed(String error) {
-    return 'ایجاد پروژه Writerside ناموفق بود: $error';
+    return 'ایجاد پروژه Writerside ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCreateWritersideTopicFailed(String error) {
-    return 'ایجاد موضوع Writerside ناموفق بود: $error';
+    return 'ایجاد موضوع Writerside ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCouldNotOpenFile(String error) {
-    return 'باز کردن فایل ممکن نشد: $error';
+    return 'باز کردن فایل ممکن نشد: ⁨$error⁩';
   }
 
   @override
@@ -1383,37 +1433,37 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String workspaceErrorSaveFailed(String error) {
-    return 'ذخیره ناموفق بود: $error';
+    return 'ذخیره ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorFileOperationFailed(String error) {
-    return 'عملیات فایل ناموفق بود: $error';
+    return 'عملیات فایل ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorValidationFailed(String error) {
-    return 'اعتبارسنجی ناموفق بود: $error';
+    return 'اعتبارسنجی ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String errorPathDoesNotExist(String path) {
-    return 'مسیر وجود ندارد: $path';
+    return 'مسیر وجود ندارد: ⁨$path⁩';
   }
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'پوشه مقصد از قبل وجود دارد و خالی نیست: $path';
+    return 'پوشه مقصد از قبل وجود دارد و خالی نیست: ⁨$path⁩';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'مسیر مقصد از قبل وجود دارد، اما پوشه نیست: $path';
+    return 'مسیر مقصد از قبل وجود دارد، اما پوشه نیست: ⁨$path⁩';
   }
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'فایل تولیدشده از قبل وجود دارد: $path';
+    return 'فایل تولیدشده از قبل وجود دارد: ⁨$path⁩';
   }
 
   @override
@@ -1421,17 +1471,17 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'پوشه والد وجود ندارد: $path';
+    return 'پوشه والد وجود ندارد: ⁨$path⁩';
   }
 
   @override
   String errorDirectoryMissing(String path) {
-    return 'پوشه وجود ندارد: $path';
+    return 'پوشه وجود ندارد: ⁨$path⁩';
   }
 
   @override
   String errorPathAlreadyExists(String path) {
-    return 'مسیر از قبل وجود دارد: $path';
+    return 'مسیر از قبل وجود دارد: ⁨$path⁩';
   }
 
   @override
@@ -1475,7 +1525,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorWritersideModuleRootMissing(String path) {
-    return 'ریشه ماژول Writerside وجود ندارد: $path';
+    return 'ریشه ماژول Writerside وجود ندارد: ⁨$path⁩';
   }
 
   @override
@@ -1488,22 +1538,22 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'فایل درخت Writerside وجود ندارد: $path';
+    return 'فایل درخت Writerside وجود ندارد: ⁨$path⁩';
   }
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'شناسه موضوع «$topicId» از قبل در این ماژول راهنما وجود دارد.';
+    return 'شناسه موضوع «⁨$topicId⁩» از قبل در این ماژول راهنما وجود دارد.';
   }
 
   @override
   String errorTopicFileAlreadyExists(String path) {
-    return 'فایل موضوع از قبل وجود دارد: $path';
+    return 'فایل موضوع از قبل وجود دارد: ⁨$path⁩';
   }
 
   @override
   String errorReferenceTopicMissing(String topic) {
-    return 'موضوع مرجع در درخت انتخاب‌شده وجود ندارد: $topic';
+    return 'موضوع مرجع در درخت انتخاب‌شده وجود ندارد: ⁨$topic⁩';
   }
 
   @override
@@ -1516,7 +1566,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'موضوع شروع $topic را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.';
+    return 'موضوع شروع ⁨$topic⁩ را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.';
   }
 
   @override
@@ -1533,11 +1583,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get errorWritersideRedirectInvalid =>
-      'مقصد تغییرمسیر انتخاب‌شده دیگر معتبر نیست. دوباره آن را انتخاب کنید.';
+      'مقصد تغییر مسیر انتخاب‌شده دیگر معتبر نیست. دوباره آن را انتخاب کنید.';
 
   @override
   String errorWritersideRollbackFailed(String paths) {
-    return 'حذف موضوع به‌طور کامل بازگردانده نشد. پیش از ادامه این مسیرها را بررسی کنید: $paths';
+    return 'حذف موضوع به‌طور کامل بازگردانده نشد. پیش از ادامه این مسیرها را بررسی کنید: ⁨$paths⁩';
   }
 
   @override
@@ -1550,7 +1600,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
-    return 'پسوند فایل موضوع باید با قالب انتخاب‌شده ($extension) مطابقت داشته باشد.';
+    return 'پسوند فایل موضوع باید با قالب انتخاب‌شده (⁨$extension⁩) مطابقت داشته باشد.';
   }
 
   @override
@@ -1559,12 +1609,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorUnknown(String code) {
-    return 'خطای ناشناخته: $code';
+    return 'خطای ناشناخته: ⁨$code⁩';
   }
 
   @override
   String diagnosticWorkspaceFileStatFailed(String error) {
-    return 'خواندن فرادادهٔ فایل ممکن نشد: $error';
+    return 'خواندن فرادادهٔ فایل ممکن نشد: ⁨$error⁩';
   }
 
   @override
@@ -1573,7 +1623,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
-    return 'بررسی ورودی فضای کاری ممکن نشد: $error';
+    return 'بررسی ورودی فضای کاری ممکن نشد: ⁨$error⁩';
   }
 
   @override
@@ -1582,7 +1632,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
-    return 'خواندن فایل Markdown ممکن نشد: $error';
+    return 'خواندن فایل Markdown ممکن نشد: ⁨$error⁩';
   }
 
   @override
@@ -1591,7 +1641,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'شناسهٔ عنوان «$id» تکراری است.';
+    return 'شناسهٔ عنوان «⁨$id⁩» تکراری است.';
   }
 
   @override
@@ -1608,7 +1658,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'موضوع «$fileName» عنوان ندارد.';
+    return 'موضوع «⁨$fileName⁩» عنوان ندارد.';
   }
 
   @override
@@ -1620,27 +1670,27 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
-    return 'هدف پیوند وجود ندارد: $targetPath';
+    return 'هدف پیوند وجود ندارد: ⁨$targetPath⁩';
   }
 
   @override
   String diagnosticMarkdownLinkUnresolvedAnchor(String anchor) {
-    return 'لنگر «$anchor» وجود ندارد.';
+    return 'لنگر «⁨$anchor⁩» وجود ندارد.';
   }
 
   @override
   String diagnosticMarkdownImageMissingAlt(String destination) {
-    return 'تصویر «$destination» متن جایگزین ندارد.';
+    return 'تصویر «⁨$destination⁩» متن جایگزین ندارد.';
   }
 
   @override
   String diagnosticMarkdownImageMissingFile(String destination) {
-    return 'تصویر وجود ندارد: $destination';
+    return 'تصویر وجود ندارد: ⁨$destination⁩';
   }
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'XML نامعتبر است: $message';
+    return 'XML نامعتبر است: ⁨$message⁩';
   }
 
   @override
@@ -1657,7 +1707,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'حالت keymaps پشتیبانی نمی‌شود: $mode';
+    return 'حالت keymaps پشتیبانی نمی‌شود: ⁨$mode⁩';
   }
 
   @override
@@ -1678,7 +1728,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'نام بدون پسوند فایل درخت با شناسهٔ نمونه «$id» مطابقت ندارد.';
+    return 'نام بدون پسوند فایل درخت با شناسهٔ نمونه «⁨$id⁩» مطابقت ندارد.';
   }
 
   @override
@@ -1687,12 +1737,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'صفحه شروع «$startPage» وجود ندارد.';
+    return 'صفحه شروع «⁨$startPage⁩» وجود ندارد.';
   }
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'موضوع «$topic» بیش از یک بار در فهرست مطالب این نمونه ظاهر شده است.';
+    return 'موضوع «⁨$topic⁩» بیش از یک بار در فهرست مطالب این نمونه ظاهر شده است.';
   }
 
   @override
@@ -1701,7 +1751,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'متغیر «$name» بیش از یک بار تعریف شده است.';
+    return 'متغیر «⁨$name⁩» بیش از یک بار تعریف شده است.';
   }
 
   @override
@@ -1710,12 +1760,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'دسته‌بندی «$id» بیش از یک بار تعریف شده است.';
+    return 'دسته‌بندی «⁨$id⁩» بیش از یک بار تعریف شده است.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'ترتیب دسته‌بندی «$order» بیش از یک بار تعریف شده است.';
+    return 'ترتیب دسته‌بندی «⁨$order⁩» بیش از یک بار تعریف شده است.';
   }
 
   @override
@@ -1728,12 +1778,12 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'شناسه ریشه موضوع XML «$id» باید با نام فایل «$expectedId» مطابقت داشته باشد.';
+    return 'شناسه ریشه موضوع XML «⁨$id⁩» باید با نام فایل «⁨$expectedId⁩» مطابقت داشته باشد.';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'شناسهٔ عنصر «$elementId» بیش از یک بار ظاهر شده است.';
+    return 'شناسهٔ عنصر «⁨$elementId⁩» بیش از یک بار ظاهر شده است.';
   }
 
   @override
@@ -1748,90 +1798,90 @@ class AppLocalizationsFa extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'پوشهٔ پیکربندی ساختِ تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشهٔ پیکربندی ساختِ تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'پوشهٔ مشخصات API تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشهٔ مشخصات API تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'پوشهٔ snippets تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشهٔ snippets تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'فایل متغیرهای تنظیم‌شده وجود ندارد: $relativePath';
+    return 'فایل متغیرهای تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'فایل دسته‌بندی‌های تنظیم‌شده وجود ندارد: $relativePath';
+    return 'فایل دسته‌بندی‌های تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'فایل گروه‌های نمونهٔ تنظیم‌شده وجود ندارد: $relativePath';
+    return 'فایل گروه‌های نمونهٔ تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'درخت نمونهٔ ثبت‌شده «$source» وجود ندارد.';
+    return 'درخت نمونهٔ ثبت‌شده «⁨$source⁩» وجود ندارد.';
   }
 
   @override
   String diagnosticWritersideTopicReadFailed(String error) {
-    return 'خواندن فایل موضوع ناموفق بود: $error';
+    return 'خواندن فایل موضوع ناموفق بود: ⁨$error⁩';
   }
 
   @override
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'پوشه پیش‌فرض موضوع‌ها وجود ندارد: $relativePath';
+    return 'پوشه پیش‌فرض موضوع‌ها وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'پوشه موضوع‌های تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشه موضوع‌های تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'پوشه تصاویر تنظیم‌شده وجود ندارد: $relativePath';
+    return 'پوشه تصاویر تنظیم‌شده وجود ندارد: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'شناسه عنصر «$id» بیش از یک بار ظاهر شده است.';
+    return 'شناسه عنصر «⁨$id⁩» بیش از یک بار ظاهر شده است.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'فهرست مطالب به موضوع ناموجود «$topic» ارجاع می‌دهد.';
+    return 'فهرست مطالب به موضوع ناموجود «⁨$topic⁩» ارجاع می‌دهد.';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'href خارجی «$href» نامعتبر است.';
+    return 'href خارجی «⁨$href⁩» نامعتبر است.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'متغیر \"%$name%\" تعریف نشده است.';
+    return 'متغیر \"⁨%$name%⁩\" تعریف نشده است.';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'پیوند موضوع «$destination» قابل حل نیست.';
+    return 'پیوند موضوع «⁨$destination⁩» قابل حل نیست.';
   }
 
   @override
@@ -1839,7 +1889,7 @@ class AppLocalizationsFa extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'لنگر «$anchor» در «$targetName» وجود ندارد.';
+    return 'لنگر «⁨$anchor⁩» در «⁨$targetName⁩» وجود ندارد.';
   }
 
   @override
@@ -1848,7 +1898,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'منبع include «$from» وجود ندارد.';
+    return 'منبع include «⁨$from⁩» وجود ندارد.';
   }
 
   @override
@@ -1856,22 +1906,22 @@ class AppLocalizationsFa extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'عنصر include «$elementId» در «$from» وجود ندارد.';
+    return 'عنصر include «⁨$elementId⁩» در «⁨$from⁩» وجود ندارد.';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'دسته‌بندی seealso «$ref» تعریف نشده است.';
+    return 'دسته‌بندی seealso «⁨$ref⁩» تعریف نشده است.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'ارجاع موضوع «$reference» مبهم است.';
+    return 'ارجاع موضوع «⁨$reference⁩» مبهم است.';
   }
 
   @override
   String diagnosticUnknown(String code) {
-    return 'پیام تشخیصی ناشناخته: $code';
+    return 'پیام تشخیصی ناشناخته: ⁨$code⁩';
   }
 
   @override
@@ -1888,7 +1938,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitDiffHunkRange(String oldRange, String newRange) {
-    return 'قدیمی $oldRange ← جدید $newRange';
+    return 'قدیمی ⁨$oldRange⁩ ← جدید ⁨$newRange⁩';
   }
 
   @override
@@ -1901,7 +1951,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Git را نصب کنید یا BusyMark را برای استفاده از یک برنامهٔ اجرایی Git در دسترس پیکربندی کنید. $reason',
+          'Git را نصب کنید یا BusyMark را برای استفاده از یک برنامهٔ اجرایی Git در دسترس پیکربندی کنید. ⁨$reason⁩',
     });
     return '$_temp0';
   }
@@ -1931,7 +1981,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'HEAD در $commit جدا شده است';
+    return 'HEAD در ⁨$commit⁩ جدا شده است';
   }
 
   @override
@@ -1939,10 +1989,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitAheadCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count کامیت ارسال‌نشده',
+      other: '$countString کامیت ارسال‌نشده',
       one: 'یک کامیت ارسال‌نشده',
     );
     return '$_temp0';
@@ -1950,10 +2004,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitBehindCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count کامیت برای دریافت',
+      other: '$countString کامیت برای دریافت',
       one: 'یک کامیت برای دریافت',
     );
     return '$_temp0';
@@ -2085,7 +2143,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'به $branch بروید؟';
+    return 'به ⁨$branch⁩ بروید؟';
   }
 
   @override
@@ -2097,7 +2155,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'این شاخه بالادست ندارد. اگر دقیقاً یک مخزن راه دور پیکربندی شده باشد، BusyMark می‌تواند $branch را ارسال و آن را به‌عنوان بالادست تنظیم کند.';
+    return 'این شاخه بالادست ندارد. اگر دقیقاً یک مخزن راه دور پیکربندی شده باشد، BusyMark می‌تواند ⁨$branch⁩ را ارسال و آن را به‌عنوان بالادست تنظیم کند.';
   }
 
   @override
@@ -2108,7 +2166,14 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
-    return '+$additions -$deletions';
+    final intl.NumberFormat additionsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String additionsString = additionsNumberFormat.format(additions);
+    final intl.NumberFormat deletionsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String deletionsString = deletionsNumberFormat.format(deletions);
+
+    return '⁨+$additionsString -$deletionsString⁩';
   }
 
   @override

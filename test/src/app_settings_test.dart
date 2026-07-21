@@ -78,6 +78,17 @@ void main() {
     expect(settings.toJson()['localeTag'], 'nb');
   });
 
+  test('script-only locale tag is not treated as a country code', () {
+    final settings = AppSettings.fromJson(<String, Object?>{
+      'localeTag': 'fa-Arab',
+    });
+
+    expect(
+      settings.locale,
+      const Locale.fromSubtags(languageCode: 'fa', scriptCode: 'Arab'),
+    );
+  });
+
   test('unused product settings are not persisted', () {
     final json = AppSettings.defaults().toJson();
 

@@ -62,6 +62,7 @@ parts:
       - libxcb-shm0
       - libxcb1
       - git
+      - fonts-noto-core
       - openssh-client
       - util-linux
       - yaru-theme-gtk

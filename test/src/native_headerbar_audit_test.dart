@@ -414,6 +414,16 @@ void main() {
     expect(app, contains('service.setTextDirection(textDirection)'));
     expect(native, contains('gboolean text_direction_rtl;'));
     expect(native, contains('static void update_titlebar_direction'));
+    expect(native, contains('update_header_menu_item_direction'));
+    expect(native, contains('set_widget_direction(self->sidebar_menu'));
+    expect(native, contains('set_widget_direction(self->view_mode_menu'));
+    expect(native, contains('direction == GTK_TEXT_DIR_RTL ? 1.0 : 0.0'));
+    expect(
+      native,
+      contains('set_widget_direction(shortcut, GTK_TEXT_DIR_LTR)'),
+    );
+    expect(native, contains('kLtrIsolateStart'));
+    expect(native, contains('kBidiIsolateEnd'));
     expect(native, contains('gtk_box_reorder_child'));
     expect(native, contains('static void set_text_direction'));
     expect(native, contains('strcmp(method, "setTextDirection")'));
@@ -873,7 +883,10 @@ void main() {
 
       expect(welcome, contains('setTitleRange(context.l10n.appTitle)'));
       expect(settings, contains('setTitleRange(context.l10n.settings)'));
-      expect(workspace, contains('setTitleRange(title)'));
+      expect(
+        workspace,
+        contains('setTitleRange(busyMarkBidiIsolateFor(context, title))'),
+      );
       expect(settings, isNot(contains("setTitleRange('BusyMark Settings')")));
       expect(
         native,

@@ -40,6 +40,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final direction = Directionality.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       reverse: alignEnd,
@@ -85,14 +86,14 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             _button(
               context,
               tooltip: context.l10n.indentListItem,
-              icon: BusyMarkGlyphs.indent,
+              icon: BusyMarkGlyphs.indentFor(direction),
               shortcut: BusyMarkEditorShortcutLabels.indent,
               onPressed: onIndentCommand,
             ),
             _button(
               context,
               tooltip: context.l10n.outdentListItem,
-              icon: BusyMarkGlyphs.outdent,
+              icon: BusyMarkGlyphs.outdentFor(direction),
               shortcut: BusyMarkEditorShortcutLabels.outdent,
               onPressed: onOutdentCommand,
             ),

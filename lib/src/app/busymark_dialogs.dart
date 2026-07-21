@@ -334,7 +334,9 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               BusyMarkActionRow(
                 title: context.l10n.undo,
                 subtitle: context.l10n.shortcutUndoDescription,
-                leading: const Icon(BusyMarkGlyphs.undo),
+                leading: Icon(
+                  BusyMarkGlyphs.undoFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.undo,
                 ),
@@ -342,7 +344,9 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               BusyMarkActionRow(
                 title: context.l10n.redo,
                 subtitle: context.l10n.shortcutRedoDescription,
-                leading: const Icon(BusyMarkGlyphs.redo),
+                leading: Icon(
+                  BusyMarkGlyphs.redoFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.redo,
                 ),
@@ -531,14 +535,18 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               ),
               BusyMarkActionRow(
                 title: context.l10n.indentListItem,
-                leading: const Icon(BusyMarkGlyphs.indent),
+                leading: Icon(
+                  BusyMarkGlyphs.indentFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkEditorShortcutLabels.indent,
                 ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.outdentListItem,
-                leading: const Icon(BusyMarkGlyphs.outdent),
+                leading: Icon(
+                  BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkEditorShortcutLabels.outdent,
                 ),
@@ -621,7 +629,9 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               ),
               BusyMarkActionRow(
                 title: context.l10n.outline,
-                leading: const Icon(BusyMarkGlyphs.indent),
+                leading: Icon(
+                  BusyMarkGlyphs.indentFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.outline,
                 ),
@@ -1024,12 +1034,15 @@ class _AboutVersionTag extends StatelessWidget {
             horizontal: BusyMarkSpacing.md,
             vertical: BusyMarkSpacing.xs,
           ),
-          child: Text(
-            version,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w600,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              version,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -1057,11 +1070,15 @@ class _KeyboardShortcutBadge extends StatelessWidget {
           horizontal: BusyMarkSpacing.sm,
           vertical: BusyMarkSpacing.xxs,
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
-            color: colors.foreground,
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+              color: colors.foreground,
+            ),
           ),
         ),
       ),

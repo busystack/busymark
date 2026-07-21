@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -123,7 +125,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String feedbackSuccess(String id) {
-    return 'تم إرسال الملاحظات. معرّف المرجع: $id';
+    return 'تم إرسال الملاحظات. معرّف المرجع: ⁨$id⁩';
   }
 
   @override
@@ -697,7 +699,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'لديك تغييرات غير محفوظة في $fileName. هل تريد حفظها قبل المتابعة؟';
+    return 'لديك تغييرات غير محفوظة في ⁨$fileName⁩. هل تريد حفظها قبل المتابعة؟';
   }
 
   @override
@@ -814,7 +816,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String headingLevelAbbreviation(int level) {
-    return 'H$level';
+    return '⁨H$level⁩';
   }
 
   @override
@@ -1031,7 +1033,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String confirmRemoveFromTocMessage(String name) {
-    return 'هل تريد إزالة $name من جدول المحتويات هذا؟ سيُحتفظ بملف الموضوع.';
+    return 'هل تريد إزالة ⁨$name⁩ من جدول المحتويات هذا؟ سيُحتفظ بملف الموضوع.';
   }
 
   @override
@@ -1039,7 +1041,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String confirmDeleteTopicMessage(String name) {
-    return 'هل تريد حذف $name وإزالته من جميع جداول المحتويات؟ لا يمكن التراجع عن هذا الإجراء.';
+    return 'هل تريد حذف ⁨$name⁩ وإزالته من جميع جداول المحتويات؟ لا يمكن التراجع عن هذا الإجراء.';
   }
 
   @override
@@ -1059,12 +1061,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'أزِل «$topic» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.';
+    return 'أزِل «⁨$topic⁩» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.';
   }
 
   @override
   String safeDeleteTopicSummary(String topic) {
-    return 'احذف «$topic» وحدّث المراجع إليه بأمان في مشروع Writerside هذا بأكمله.';
+    return 'احذف «⁨$topic⁩» وحدّث المراجع إليه بأمان في مشروع Writerside هذا بأكمله.';
   }
 
   @override
@@ -1155,7 +1157,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String usagesOfTopic(String topic) {
-    return 'استخدامات $topic';
+    return 'استخدامات ⁨$topic⁩';
   }
 
   @override
@@ -1175,7 +1177,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String orphanTopicMessage(String topic) {
-    return 'لم يعد «$topic» مستخدمًا في أي مكان ضمن مشروع Writerside هذا. احذف الملف أو احتفظ به لاستخدامه في مثيل آخر.';
+    return 'لم يعد «⁨$topic⁩» مستخدمًا في أي مكان ضمن مشروع Writerside هذا. احذف الملف أو احتفظ به لاستخدامه في مثيل آخر.';
   }
 
   @override
@@ -1204,12 +1206,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String confirmDeleteFileMessage(String name) {
-    return 'حذف $name؟ لا يمكن التراجع عن هذا.';
+    return 'حذف ⁨$name⁩؟ لا يمكن التراجع عن هذا.';
   }
 
   @override
   String confirmDeleteFolderMessage(String name) {
-    return 'حذف $name وكل الملفات داخله؟ لا يمكن التراجع عن هذا.';
+    return 'حذف ⁨$name⁩ وكل الملفات داخله؟ لا يمكن التراجع عن هذا.';
   }
 
   @override
@@ -1217,7 +1219,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String useExpectedExtension(String extension) {
-    return 'استخدم الامتداد $extension للتنسيق المحدد.';
+    return 'استخدم الامتداد ⁨$extension⁩ للتنسيق المحدد.';
   }
 
   @override
@@ -1309,12 +1311,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String couldNotOpenTarget(String target) {
-    return 'تعذر فتح $target';
+    return 'تعذر فتح ⁨$target⁩';
   }
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'لم يتم العثور على هدف الرابط: $targetPath';
+    return 'لم يتم العثور على هدف الرابط: ⁨$targetPath⁩';
   }
 
   @override
@@ -1323,7 +1325,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String anchorNotFound(String anchor) {
-    return 'لم يتم العثور على المُرسى: $anchor';
+    return 'لم يتم العثور على المُرسى: ⁨$anchor⁩';
   }
 
   @override
@@ -1334,7 +1336,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath - السطر $lineNumber';
+    return '⁨$relativePath⁩ - السطر ⁨$lineNumber⁩';
   }
 
   @override
@@ -1366,22 +1368,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceErrorOpenFailed(String error) {
-    return 'فشل الفتح: $error';
+    return 'فشل الفتح: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCreateWritersideProjectFailed(String error) {
-    return 'تعذر إنشاء مشروع Writerside: $error';
+    return 'تعذر إنشاء مشروع Writerside: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCreateWritersideTopicFailed(String error) {
-    return 'تعذر إنشاء موضوع Writerside: $error';
+    return 'تعذر إنشاء موضوع Writerside: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCouldNotOpenFile(String error) {
-    return 'تعذر فتح الملف: $error';
+    return 'تعذر فتح الملف: ⁨$error⁩';
   }
 
   @override
@@ -1394,37 +1396,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceErrorSaveFailed(String error) {
-    return 'فشل الحفظ: $error';
+    return 'فشل الحفظ: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorFileOperationFailed(String error) {
-    return 'فشلت عملية الملف: $error';
+    return 'فشلت عملية الملف: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorValidationFailed(String error) {
-    return 'فشل التحقق: $error';
+    return 'فشل التحقق: ⁨$error⁩';
   }
 
   @override
   String errorPathDoesNotExist(String path) {
-    return 'المسار غير موجود: $path';
+    return 'المسار غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'الدليل الهدف موجود بالفعل وليس فارغًا: $path';
+    return 'الدليل الهدف موجود بالفعل وليس فارغًا: ⁨$path⁩';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'المسار الهدف موجود بالفعل وليس دليلاً: $path';
+    return 'المسار الهدف موجود بالفعل وليس دليلاً: ⁨$path⁩';
   }
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'الملف المُنشأ موجود بالفعل: $path';
+    return 'الملف المُنشأ موجود بالفعل: ⁨$path⁩';
   }
 
   @override
@@ -1432,17 +1434,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'الدليل الأصل غير موجود: $path';
+    return 'الدليل الأصل غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorDirectoryMissing(String path) {
-    return 'المجلد غير موجود: $path';
+    return 'المجلد غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorPathAlreadyExists(String path) {
-    return 'المسار موجود بالفعل: $path';
+    return 'المسار موجود بالفعل: ⁨$path⁩';
   }
 
   @override
@@ -1487,7 +1489,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideModuleRootMissing(String path) {
-    return 'جذر وحدة Writerside غير موجود: $path';
+    return 'جذر وحدة Writerside غير موجود: ⁨$path⁩';
   }
 
   @override
@@ -1500,22 +1502,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'ملف شجرة Writerside غير موجود: $path';
+    return 'ملف شجرة Writerside غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'معرّف الموضوع \"$topicId\" موجود بالفعل في وحدة المساعدة هذه.';
+    return 'معرّف الموضوع \"⁨$topicId⁩\" موجود بالفعل في وحدة المساعدة هذه.';
   }
 
   @override
   String errorTopicFileAlreadyExists(String path) {
-    return 'ملف الموضوع موجود بالفعل: $path';
+    return 'ملف الموضوع موجود بالفعل: ⁨$path⁩';
   }
 
   @override
   String errorReferenceTopicMissing(String topic) {
-    return 'الموضوع المرجعي غير موجود في الشجرة المحددة: $topic';
+    return 'الموضوع المرجعي غير موجود في الشجرة المحددة: ⁨$topic⁩';
   }
 
   @override
@@ -1528,7 +1530,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'لا يمكن حذف موضوع البدء $topic. اختر صفحة بدء أخرى أولًا.';
+    return 'لا يمكن حذف موضوع البدء ⁨$topic⁩. اختر صفحة بدء أخرى أولًا.';
   }
 
   @override
@@ -1549,7 +1551,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideRollbackFailed(String paths) {
-    return 'تعذّر التراجع بالكامل عن إزالة الموضوع. راجع هذه المسارات قبل المتابعة: $paths';
+    return 'تعذّر التراجع بالكامل عن إزالة الموضوع. راجع هذه المسارات قبل المتابعة: ⁨$paths⁩';
   }
 
   @override
@@ -1562,7 +1564,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
-    return 'يجب أن يتطابق امتداد ملف الموضوع مع التنسيق المحدد ($extension).';
+    return 'يجب أن يتطابق امتداد ملف الموضوع مع التنسيق المحدد (⁨$extension⁩).';
   }
 
   @override
@@ -1571,12 +1573,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorUnknown(String code) {
-    return 'خطأ غير معروف: $code';
+    return 'خطأ غير معروف: ⁨$code⁩';
   }
 
   @override
   String diagnosticWorkspaceFileStatFailed(String error) {
-    return 'تعذرت قراءة بيانات تعريف الملف: $error';
+    return 'تعذرت قراءة بيانات تعريف الملف: ⁨$error⁩';
   }
 
   @override
@@ -1585,7 +1587,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
-    return 'تعذر فحص عنصر مساحة العمل: $error';
+    return 'تعذر فحص عنصر مساحة العمل: ⁨$error⁩';
   }
 
   @override
@@ -1594,7 +1596,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
-    return 'تعذرت قراءة ملف Markdown: $error';
+    return 'تعذرت قراءة ملف Markdown: ⁨$error⁩';
   }
 
   @override
@@ -1603,7 +1605,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'معرّف عنوان مكرر \"$id\".';
+    return 'معرّف عنوان مكرر \"⁨$id⁩\".';
   }
 
   @override
@@ -1620,7 +1622,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'الموضوع \"$fileName\" يفتقد عنوانًا.';
+    return 'الموضوع \"⁨$fileName⁩\" يفتقد عنوانًا.';
   }
 
   @override
@@ -1632,27 +1634,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
-    return 'هدف الرابط غير موجود: $targetPath';
+    return 'هدف الرابط غير موجود: ⁨$targetPath⁩';
   }
 
   @override
   String diagnosticMarkdownLinkUnresolvedAnchor(String anchor) {
-    return 'المُرسى \"$anchor\" غير موجود.';
+    return 'المُرسى \"⁨$anchor⁩\" غير موجود.';
   }
 
   @override
   String diagnosticMarkdownImageMissingAlt(String destination) {
-    return 'الصورة \"$destination\" تفتقد النص البديل.';
+    return 'الصورة \"⁨$destination⁩\" تفتقد النص البديل.';
   }
 
   @override
   String diagnosticMarkdownImageMissingFile(String destination) {
-    return 'الصورة غير موجودة: $destination';
+    return 'الصورة غير موجودة: ⁨$destination⁩';
   }
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'XML غير صالح: $message';
+    return 'XML غير صالح: ⁨$message⁩';
   }
 
   @override
@@ -1669,7 +1671,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'وضع keymaps غير مدعوم: $mode';
+    return 'وضع keymaps غير مدعوم: ⁨$mode⁩';
   }
 
   @override
@@ -1690,7 +1692,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"$id\".';
+    return 'لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"⁨$id⁩\".';
   }
 
   @override
@@ -1699,12 +1701,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'صفحة البدء \"$startPage\" غير موجودة.';
+    return 'صفحة البدء \"⁨$startPage⁩\" غير موجودة.';
   }
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'يظهر الموضوع \"$topic\" أكثر من مرة في جدول محتويات هذا المثيل.';
+    return 'يظهر الموضوع \"⁨$topic⁩\" أكثر من مرة في جدول محتويات هذا المثيل.';
   }
 
   @override
@@ -1713,7 +1715,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'تم الإعلان عن المتغير \"$name\" أكثر من مرة.';
+    return 'تم الإعلان عن المتغير \"⁨$name⁩\" أكثر من مرة.';
   }
 
   @override
@@ -1721,12 +1723,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'تم الإعلان عن الفئة \"$id\" أكثر من مرة.';
+    return 'تم الإعلان عن الفئة \"⁨$id⁩\" أكثر من مرة.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'تم الإعلان عن ترتيب الفئة \"$order\" أكثر من مرة.';
+    return 'تم الإعلان عن ترتيب الفئة \"⁨$order⁩\" أكثر من مرة.';
   }
 
   @override
@@ -1739,12 +1741,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'يجب أن يتطابق معرّف جذر موضوع XML \"$id\" مع اسم الملف \"$expectedId\".';
+    return 'يجب أن يتطابق معرّف جذر موضوع XML \"⁨$id⁩\" مع اسم الملف \"⁨$expectedId⁩\".';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'يظهر معرّف العنصر \"$elementId\" أكثر من مرة.';
+    return 'يظهر معرّف العنصر \"⁨$elementId⁩\" أكثر من مرة.';
   }
 
   @override
@@ -1759,90 +1761,90 @@ class AppLocalizationsAr extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'دليل تكوين البناء المحدد مفقود: $relativePath';
+    return 'دليل تكوين البناء المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'دليل مواصفات API المحدد مفقود: $relativePath';
+    return 'دليل مواصفات API المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'دليل المقتطفات المحدد مفقود: $relativePath';
+    return 'دليل المقتطفات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'ملف المتغيرات المحدد مفقود: $relativePath';
+    return 'ملف المتغيرات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'ملف الفئات المحدد مفقود: $relativePath';
+    return 'ملف الفئات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'ملف مجموعات المثيلات المحدد مفقود: $relativePath';
+    return 'ملف مجموعات المثيلات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'شجرة المثيل المسجلة \"$source\" غير موجودة.';
+    return 'شجرة المثيل المسجلة \"⁨$source⁩\" غير موجودة.';
   }
 
   @override
   String diagnosticWritersideTopicReadFailed(String error) {
-    return 'تعذرت قراءة ملف الموضوع: $error';
+    return 'تعذرت قراءة ملف الموضوع: ⁨$error⁩';
   }
 
   @override
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'دليل المواضيع الافتراضي مفقود: $relativePath';
+    return 'دليل المواضيع الافتراضي مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'دليل المواضيع المحدد مفقود: $relativePath';
+    return 'دليل المواضيع المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'دليل الصور المحدد مفقود: $relativePath';
+    return 'دليل الصور المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'يظهر معرّف العنصر \"$id\" أكثر من مرة.';
+    return 'يظهر معرّف العنصر \"⁨$id⁩\" أكثر من مرة.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'يشير جدول المحتويات إلى موضوع مفقود \"$topic\".';
+    return 'يشير جدول المحتويات إلى موضوع مفقود \"⁨$topic⁩\".';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'قيمة href الخارجية \"$href\" غير صالحة.';
+    return 'قيمة href الخارجية \"⁨$href⁩\" غير صالحة.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'لم يتم الإعلان عن المتغير \"%$name%\".';
+    return 'لم يتم الإعلان عن المتغير \"⁨%$name%⁩\".';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'لا يمكن حل رابط الموضوع \"$destination\".';
+    return 'لا يمكن حل رابط الموضوع \"⁨$destination⁩\".';
   }
 
   @override
@@ -1850,7 +1852,7 @@ class AppLocalizationsAr extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'المُرسى \"$anchor\" غير موجود في \"$targetName\".';
+    return 'المُرسى \"⁨$anchor⁩\" غير موجود في \"⁨$targetName⁩\".';
   }
 
   @override
@@ -1859,7 +1861,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'مصدر التضمين \"$from\" غير موجود.';
+    return 'مصدر التضمين \"⁨$from⁩\" غير موجود.';
   }
 
   @override
@@ -1867,22 +1869,22 @@ class AppLocalizationsAr extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'عنصر التضمين \"$elementId\" غير موجود في \"$from\".';
+    return 'عنصر التضمين \"⁨$elementId⁩\" غير موجود في \"⁨$from⁩\".';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'فئة seealso \"$ref\" غير معلنة.';
+    return 'فئة seealso \"⁨$ref⁩\" غير معلنة.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'مرجع الموضوع \"$reference\" غامض.';
+    return 'مرجع الموضوع \"⁨$reference⁩\" غامض.';
   }
 
   @override
   String diagnosticUnknown(String code) {
-    return 'تشخيص غير معروف: $code';
+    return 'تشخيص غير معروف: ⁨$code⁩';
   }
 
   @override
@@ -1899,7 +1901,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitDiffHunkRange(String oldRange, String newRange) {
-    return 'القديم $oldRange ← الجديد $newRange';
+    return 'القديم ⁨$oldRange⁩ ← الجديد ⁨$newRange⁩';
   }
 
   @override
@@ -1912,7 +1914,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. $reason',
+          'ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. ⁨$reason⁩',
     });
     return '$_temp0';
   }
@@ -1941,7 +1943,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'HEAD منفصل عند $commit';
+    return 'HEAD منفصل عند ⁨$commit⁩';
   }
 
   @override
@@ -2114,7 +2116,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'التبديل إلى $branch؟';
+    return 'التبديل إلى ⁨$branch⁩؟';
   }
 
   @override
@@ -2126,7 +2128,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'ليس لهذا الفرع فرع منبع. يمكن لـ BusyMark دفع $branch وتعيينه فرعًا منبعًا عندما يكون هناك مستودع بعيد واحد فقط مُعدّ.';
+    return 'ليس لهذا الفرع فرع منبع. يمكن لـ BusyMark دفع ⁨$branch⁩ وتعيينه فرعًا منبعًا عندما يكون هناك مستودع بعيد واحد فقط مُعدّ.';
   }
 
   @override
@@ -2137,7 +2139,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
-    return '+$additions -$deletions';
+    return '⁨+$additions -$deletions⁩';
   }
 
   @override

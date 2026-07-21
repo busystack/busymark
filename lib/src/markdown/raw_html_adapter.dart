@@ -175,7 +175,7 @@ class RawHtmlAdapter {
 
     if (_headingLevel(tag) case final level?) {
       final id = attributes['id'] ?? slugForHeading(text);
-      return [
+      return _applyHtmlDirection([
         BusyBlock(
           id: id.isEmpty ? nextId() : id,
           kind: BusyBlockKind.heading,
@@ -187,10 +187,10 @@ class RawHtmlAdapter {
             'generatedId': '${attributes['id'] == null}',
           },
         ),
-      ];
+      ], attributes['dir']);
     }
 
-    return switch (tag) {
+    final List<BusyBlock> blocks = switch (tag) {
       'article' ||
       'aside' ||
       'div' ||
@@ -262,6 +262,37 @@ class RawHtmlAdapter {
                 ),
               ]
             : const [],
+    };
+    return _applyHtmlDirection(blocks, attributes['dir']);
+  }
+
+  List<BusyBlock> _applyHtmlDirection(
+    List<BusyBlock> blocks,
+    String? inheritedDirection,
+  ) {
+    final normalizedDirection = _normalizedHtmlDirection(inheritedDirection);
+    if (normalizedDirection == null) {
+      return blocks;
+    }
+    BusyBlock visit(BusyBlock block, String direction) {
+      final blockDirection =
+          _normalizedHtmlDirection(block.attributes['dir']) ?? direction;
+      return block.copyWith(
+        attributes: {...block.attributes, 'dir': blockDirection},
+        children: [
+          for (final child in block.children) visit(child, blockDirection),
+        ],
+      );
+    }
+
+    return [for (final block in blocks) visit(block, normalizedDirection)];
+  }
+
+  String? _normalizedHtmlDirection(String? value) {
+    final normalized = value?.trim().toLowerCase();
+    return switch (normalized) {
+      'ltr' || 'rtl' || 'auto' => normalized,
+      _ => null,
     };
   }
 
@@ -402,12 +433,14 @@ class RawHtmlAdapter {
     for (final caption in table.children.where(
       (child) => child.localName?.toLowerCase() == 'caption',
     )) {
+      final captionAttributes =
+          sanitizeHtmlAttributes('caption', caption.attributes) ?? const {};
       blocks.add(
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.paragraph,
           inlines: _trimInlineEdges(_inlinesFromNodes(caption.nodes)),
-          attributes: {'htmlTag': 'caption'},
+          attributes: {'htmlTag': 'caption', ...captionAttributes},
         ),
       );
     }
@@ -424,7 +457,11 @@ class RawHtmlAdapter {
 
   List<BusyBlock> _tableRows(html.Element table, String Function() nextId) {
     final rows = <BusyBlock>[];
-    void addRow(html.Element row, {required bool sectionHeader}) {
+    void addRow(
+      html.Element row, {
+      required bool sectionHeader,
+      String? inheritedDirection,
+    }) {
       final cells = row.children.where((child) {
         final tag = child.localName?.toLowerCase();
         return tag == 'th' || tag == 'td';
@@ -435,21 +472,31 @@ class RawHtmlAdapter {
       final allHeaderCells = cells.every(
         (cell) => cell.localName?.toLowerCase() == 'th',
       );
+      final rowAttributes =
+          sanitizeHtmlAttributes('tr', row.attributes) ?? const {};
+      final rowDirection =
+          _normalizedHtmlDirection(rowAttributes['dir']) ?? inheritedDirection;
+      final rowBlock = BusyBlock(
+        id: nextId(),
+        kind: BusyBlockKind.table,
+        attributes: {
+          'header': '${sectionHeader || allHeaderCells}',
+          if (rowDirection != null) 'dir': rowDirection,
+        },
+        children: [
+          for (final cell in cells)
+            BusyBlock(
+              id: nextId(),
+              kind: BusyBlockKind.paragraph,
+              inlines: _trimInlineEdges(_inlinesFromNodes(cell.nodes)),
+              attributes: _tableCellAttributes(cell),
+            ),
+        ],
+      );
       rows.add(
-        BusyBlock(
-          id: nextId(),
-          kind: BusyBlockKind.table,
-          attributes: {'header': '${sectionHeader || allHeaderCells}'},
-          children: [
-            for (final cell in cells)
-              BusyBlock(
-                id: nextId(),
-                kind: BusyBlockKind.paragraph,
-                inlines: _trimInlineEdges(_inlinesFromNodes(cell.nodes)),
-                attributes: _tableCellAttributes(cell),
-              ),
-          ],
-        ),
+        rowDirection == null
+            ? rowBlock
+            : _applyHtmlDirection([rowBlock], rowDirection).single,
       );
     }
 
@@ -458,10 +505,19 @@ class RawHtmlAdapter {
       if (tag == 'tr') {
         addRow(child, sectionHeader: false);
       } else if (tag == 'thead' || tag == 'tbody' || tag == 'tfoot') {
+        final sectionAttributes =
+            sanitizeHtmlAttributes(tag ?? '', child.attributes) ?? const {};
+        final sectionDirection = _normalizedHtmlDirection(
+          sectionAttributes['dir'],
+        );
         for (final row in child.children.where(
           (candidate) => candidate.localName?.toLowerCase() == 'tr',
         )) {
-          addRow(row, sectionHeader: tag == 'thead');
+          addRow(
+            row,
+            sectionHeader: tag == 'thead',
+            inheritedDirection: sectionDirection,
+          );
         }
       }
     }
@@ -473,7 +529,7 @@ class RawHtmlAdapter {
     final sanitized = sanitizeHtmlAttributes(tag, cell.attributes) ?? {};
     return {
       'cell': tag,
-      for (final name in ['align', 'colspan', 'rowspan', 'scope'])
+      for (final name in ['align', 'colspan', 'rowspan', 'scope', 'dir'])
         if (sanitized[name] case final value?) name: value,
     };
   }

@@ -298,6 +298,7 @@ TextTheme _busyMarkTextTheme(TextTheme base, BusyMarkSurfaceColors colors) {
     return style?.copyWith(
       color: color,
       fontFamily: BusyMarkTypography.fontFamily,
+      fontFamilyFallback: BusyMarkTypography.fontFamilyFallback,
       letterSpacing: 0,
     );
   }

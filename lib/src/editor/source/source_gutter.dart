@@ -209,7 +209,11 @@ class _SourceGutterRow extends StatelessWidget {
             Positioned.fill(
               child: Align(
                 alignment: Alignment.center,
-                child: Text('${line.fullLine}', style: numberStyle),
+                child: Text(
+                  '${line.fullLine}',
+                  textDirection: TextDirection.ltr,
+                  style: numberStyle,
+                ),
               ),
             ),
             if (line.diagnostics.isNotEmpty)
@@ -424,7 +428,7 @@ TextPainter sourceTextPainter(
       hideCollapsedStartLines: hideCollapsedStartLines,
     ),
     strutStyle: strutStyle,
-    textDirection: Directionality.of(context),
+    textDirection: TextDirection.ltr,
     textHeightBehavior: sourceTextHeightBehavior,
     textScaler: MediaQuery.textScalerOf(context),
   )..layout(minWidth: math.max(1, textWidth), maxWidth: math.max(1, textWidth));

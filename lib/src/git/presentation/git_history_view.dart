@@ -200,10 +200,13 @@ class _CommitFileRow extends StatelessWidget {
                 Expanded(
                   child: Text(
                     path,
+                    textDirection: TextDirection.ltr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontFamily: BusyMarkTypography.monoFontFamily,
+                      fontFamilyFallback:
+                          BusyMarkTypography.monoFontFamilyFallback,
                     ),
                   ),
                 ),
@@ -270,12 +273,16 @@ class _CommitRow extends StatelessWidget {
                 ),
                 const SizedBox(height: BusyMarkSpacing.xs),
                 Text(
-                  '$shortHash - $authorName - ${MaterialLocalizations.of(context).formatShortDate(date.toLocal())}',
+                  '${busyMarkLtrIsolateFor(context, shortHash)} - '
+                  '${busyMarkBidiIsolateFor(context, authorName)} - '
+                  '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colors.mutedForeground,
                     fontFamily: BusyMarkTypography.monoFontFamily,
+                    fontFamilyFallback:
+                        BusyMarkTypography.monoFontFamilyFallback,
                   ),
                 ),
               ],
