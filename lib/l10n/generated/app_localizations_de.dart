@@ -1007,6 +1007,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get toc => 'Inhaltsverzeichnis';
 
   @override
+  String get tocActions => 'Inhaltsverzeichnisaktionen';
+
+  @override
   String get markdownUnsaved => 'Markdown – nicht gespeichert';
 
   @override
@@ -2024,6 +2027,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gitBranches => 'Branches';
+
+  @override
+  String get gitBranchActions => 'Branch-Aktionen';
 
   @override
   String get gitPull => 'Pull';

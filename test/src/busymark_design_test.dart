@@ -6,9 +6,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('sidebar header and list compose the shared vertical gap', () {
     final header = BusyMarkInsets.sidebarHeader.resolve(TextDirection.ltr);
+    final tocLtr = BusyMarkInsets.tocHeader.resolve(TextDirection.ltr);
+    final tocRtl = BusyMarkInsets.tocHeader.resolve(TextDirection.rtl);
 
     expect(header.bottom + BusyMarkInsets.sidebarList.top, BusyMarkSpacing.sm);
-    expect(BusyMarkInsets.tocHeader.top, 0);
+    expect(tocLtr.top, 0);
+    expect(tocLtr.left, BusyMarkSpacing.sm);
+    expect(tocLtr.right, 0);
+    expect(tocRtl.left, 0);
+    expect(tocRtl.right, BusyMarkSpacing.sm);
   });
 
   testWidgets('elevated header controls use the shared surface shadow', (

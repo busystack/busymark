@@ -1108,6 +1108,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "إجراءات جدول المحتويات",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown - غير محفوظ",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -2159,6 +2163,10 @@
   "gitChanges": "التغييرات",
   "gitHistory": "السجل",
   "gitBranches": "الفروع",
+  "gitBranchActions": "إجراءات الفروع",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "سحب",
   "gitPush": "دفع",
   "gitCommit": "إنشاء التزام",

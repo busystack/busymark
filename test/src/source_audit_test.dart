@@ -631,7 +631,7 @@ void main() {
     );
   });
 
-  test('Git branch menu lives in workspace header outside Commit panel', () {
+  test('Git branch actions use the shared workspace-header popup', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
@@ -640,11 +640,13 @@ void main() {
     ).readAsStringSync();
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
-    expect(workspace, contains('Future<void> _showWorkspaceBranchMenu'));
     expect(
       workspace,
-      contains('Future<_BranchMenuAction?> _showSidebarBranchMenu'),
+      contains('BusyMarkHeaderPopupMenuButton<_BranchMenuAction>'),
     );
+    expect(workspace, contains('_loadWorkspaceBranchMenuItems'));
+    expect(workspace, contains('_sidebarBranchMenuItems'));
+    expect(workspace, contains('_performWorkspaceBranchAction'));
     expect(workspace, contains('controller.loadBranches()'));
     expect(workspace, contains('label: context.l10n.gitNewBranch'));
     expect(workspace, contains('label: context.l10n.gitPull'));
@@ -653,7 +655,12 @@ void main() {
     expect(workspace, contains('value: const _PushBranchMenuAction()'));
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
-    expect(workspace, contains('tooltip: context.l10n.gitBranches'));
+    expect(workspace, contains('tooltip: context.l10n.gitBranchActions'));
+    expect(workspace, contains("ValueKey('workspace-sidebar-branch-menu')"));
+    expect(workspace, isNot(contains('_showWorkspaceBranchMenu')));
+    expect(workspace, isNot(contains('_showSidebarBranchMenu')));
+    expect(workspace, isNot(contains('_sidebarMenuLeft')));
+    expect(workspace, isNot(contains('_BoldDownArrowIcon')));
     expect(workspace, contains("ValueKey('workspace-sidebar-primary-row')"));
     expect(workspace, contains('class _SidebarHeaderRow'));
     expect(workspace, contains('minHeight: BusyMarkSizes.iconButton'));
@@ -964,7 +971,15 @@ void main() {
     final tocHeader = RegExp(
       r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',
     ).firstMatch(workspace)!.group(0)!;
-    expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
+    expect(
+      tocHeader,
+      contains('BusyMarkHeaderPopupMenuButton<_TocHeaderAction>'),
+    );
+    expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
+    expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
+    expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
+    expect(tocHeader, contains('label: context.l10n.newTopic'));
+    expect(tocHeader, isNot(contains('BusyMarkHeaderIconButton')));
     expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));

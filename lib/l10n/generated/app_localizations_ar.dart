@@ -988,6 +988,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get toc => 'جدول المحتويات';
 
   @override
+  String get tocActions => 'إجراءات جدول المحتويات';
+
+  @override
   String get markdownUnsaved => 'Markdown - غير محفوظ';
 
   @override
@@ -2015,6 +2018,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitBranches => 'الفروع';
+
+  @override
+  String get gitBranchActions => 'إجراءات الفروع';
 
   @override
   String get gitPull => 'سحب';

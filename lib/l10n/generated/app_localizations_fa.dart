@@ -1013,6 +1013,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get toc => 'فهرست مطالب';
 
   @override
+  String get tocActions => 'عملیات فهرست مطالب';
+
+  @override
   String get markdownUnsaved => 'Markdown — ذخیره‌نشده';
 
   @override
@@ -2052,6 +2055,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitBranches => 'شاخه‌ها';
+
+  @override
+  String get gitBranchActions => 'عملیات شاخه‌ها';
 
   @override
   String get gitPull => 'دریافت';

@@ -1112,6 +1112,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "Działania dotyczące spisu treści",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown – niezapisany",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -2175,6 +2179,10 @@
   "gitChanges": "Zmiany",
   "gitHistory": "Historia",
   "gitBranches": "Gałęzie",
+  "gitBranchActions": "Działania na gałęziach",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "Pull",
   "gitPush": "Push",
   "gitCommit": "Zatwierdź",

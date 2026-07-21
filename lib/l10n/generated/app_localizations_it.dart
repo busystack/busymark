@@ -1001,6 +1001,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get toc => 'TOC';
 
   @override
+  String get tocActions => 'Azioni dell\'indice';
+
+  @override
   String get markdownUnsaved => 'Markdown - non salvato';
 
   @override
@@ -2020,6 +2023,9 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gitBranches => 'Rami';
+
+  @override
+  String get gitBranchActions => 'Azioni sui rami';
 
   @override
   String get gitPull => 'Pull';

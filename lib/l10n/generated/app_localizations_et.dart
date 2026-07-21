@@ -993,6 +993,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get toc => 'Sisukord';
 
   @override
+  String get tocActions => 'Sisukorra toimingud';
+
+  @override
   String get markdownUnsaved => 'Markdown – salvestamata';
 
   @override
@@ -2002,6 +2005,9 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitBranches => 'Harud';
+
+  @override
+  String get gitBranchActions => 'Harutoimingud';
 
   @override
   String get gitPull => 'Pull';

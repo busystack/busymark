@@ -1009,6 +1009,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get toc => 'Зміст';
 
   @override
+  String get tocActions => 'Дії зі змістом';
+
+  @override
   String get markdownUnsaved => 'Markdown — незбережено';
 
   @override
@@ -2033,6 +2036,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get gitBranches => 'Гілки';
+
+  @override
+  String get gitBranchActions => 'Дії з гілками';
 
   @override
   String get gitPull => 'Pull';

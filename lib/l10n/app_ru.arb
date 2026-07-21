@@ -1112,6 +1112,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "Действия с оглавлением",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown — не сохранён",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -2175,6 +2179,10 @@
   "gitChanges": "Изменения",
   "gitHistory": "История",
   "gitBranches": "Ветки",
+  "gitBranchActions": "Действия с ветками",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "Pull",
   "gitPush": "Push",
   "gitCommit": "Зафиксировать",

@@ -1106,6 +1106,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "Handlinger for innholdsfortegnelsen",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown – ikke lagret",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -2157,6 +2161,10 @@
   "gitChanges": "Endringer",
   "gitHistory": "Historikk",
   "gitBranches": "Grener",
+  "gitBranchActions": "Grenhandlinger",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "Pull",
   "gitPush": "Push",
   "gitCommit": "Commit",

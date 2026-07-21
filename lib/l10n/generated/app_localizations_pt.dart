@@ -1001,6 +1001,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get toc => 'TOC';
 
   @override
+  String get tocActions => 'Ações do sumário';
+
+  @override
   String get markdownUnsaved => 'Markdown - não salvo';
 
   @override
@@ -2016,6 +2019,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitBranches => 'Branches';
+
+  @override
+  String get gitBranchActions => 'Ações de branches';
 
   @override
   String get gitPull => 'Pull';

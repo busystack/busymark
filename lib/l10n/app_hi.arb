@@ -1108,6 +1108,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "विषय-सूची संबंधी कार्रवाइयाँ",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown - सहेजा नहीं गया",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -2159,6 +2163,10 @@
   "gitChanges": "बदलाव",
   "gitHistory": "इतिहास",
   "gitBranches": "शाखाएँ",
+  "gitBranchActions": "शाखा संबंधी कार्रवाइयाँ",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "पुल",
   "gitPush": "पुश",
   "gitCommit": "कमिट करें",

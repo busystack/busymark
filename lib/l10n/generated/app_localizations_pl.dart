@@ -1005,6 +1005,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get toc => 'Spis treści';
 
   @override
+  String get tocActions => 'Działania dotyczące spisu treści';
+
+  @override
   String get markdownUnsaved => 'Markdown – niezapisany';
 
   @override
@@ -2030,6 +2033,9 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get gitBranches => 'Gałęzie';
+
+  @override
+  String get gitBranchActions => 'Działania na gałęziach';
 
   @override
   String get gitPull => 'Pull';

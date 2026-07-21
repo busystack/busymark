@@ -984,6 +984,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get toc => 'TOC';
 
   @override
+  String get tocActions => 'विषय-सूची संबंधी कार्रवाइयाँ';
+
+  @override
   String get markdownUnsaved => 'Markdown - सहेजा नहीं गया';
 
   @override
@@ -1994,6 +1997,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitBranches => 'शाखाएँ';
+
+  @override
+  String get gitBranchActions => 'शाखा संबंधी कार्रवाइयाँ';
 
   @override
   String get gitPull => 'पुल';

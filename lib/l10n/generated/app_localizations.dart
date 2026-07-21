@@ -1917,6 +1917,12 @@ abstract class AppLocalizations {
   /// **'TOC'**
   String get toc;
 
+  /// Tooltip for the Writerside TOC action menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC actions'**
+  String get tocActions;
+
   /// Workspace detail label for an unsaved Markdown file.
   ///
   /// In en, this message translates to:
@@ -3391,6 +3397,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Branches'**
   String get gitBranches;
+
+  /// Tooltip for the Git branch action menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch actions'**
+  String get gitBranchActions;
 
   /// Git pull action label.
   ///

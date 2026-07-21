@@ -1004,6 +1004,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get toc => 'Table des matières';
 
   @override
+  String get tocActions => 'Actions sur la table des matières';
+
+  @override
   String get markdownUnsaved => 'Markdown – non enregistré';
 
   @override
@@ -2021,6 +2024,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gitBranches => 'Branches';
+
+  @override
+  String get gitBranchActions => 'Actions sur les branches';
 
   @override
   String get gitPull => 'Pull';

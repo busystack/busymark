@@ -994,6 +994,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get toc => 'Innholdsfortegnelse';
 
   @override
+  String get tocActions => 'Handlinger for innholdsfortegnelsen';
+
+  @override
   String get markdownUnsaved => 'Markdown – ikke lagret';
 
   @override
@@ -2003,6 +2006,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitBranches => 'Grener';
+
+  @override
+  String get gitBranchActions => 'Grenhandlinger';
 
   @override
   String get gitPull => 'Pull';

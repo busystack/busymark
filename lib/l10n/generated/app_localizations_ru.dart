@@ -1002,6 +1002,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get toc => 'Оглавление';
 
   @override
+  String get tocActions => 'Действия с оглавлением';
+
+  @override
   String get markdownUnsaved => 'Markdown — не сохранён';
 
   @override
@@ -2024,6 +2027,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitBranches => 'Ветки';
+
+  @override
+  String get gitBranchActions => 'Действия с ветками';
 
   @override
   String get gitPull => 'Pull';

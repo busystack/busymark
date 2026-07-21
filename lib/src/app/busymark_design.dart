@@ -262,10 +262,10 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.sm,
     BusyMarkSpacing.smPlus,
   );
-  static const tocHeader = EdgeInsets.fromLTRB(
+  static const tocHeader = EdgeInsetsDirectional.fromSTEB(
     BusyMarkSpacing.sm,
     0,
-    BusyMarkSpacing.sm,
+    0,
     BusyMarkSpacing.sm,
   );
   static const previewPane = EdgeInsets.fromLTRB(

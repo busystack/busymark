@@ -988,9 +988,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Nested entry'), findsOneWidget);
-    expect(find.byTooltip(l10n.newTopic), findsOneWidget);
+    expect(find.byTooltip(l10n.tocActions), findsOneWidget);
+    expect(find.byTooltip(l10n.newTopic), findsNothing);
     expect(find.byTooltip(l10n.newChildTopic), findsNothing);
-    await tester.tap(find.byTooltip(l10n.newTopic));
+    await tester.tap(find.byTooltip(l10n.tocActions));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text(l10n.newTopic), findsOneWidget);
+    await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text(l10n.topicPlacement), findsOneWidget);
@@ -1014,7 +1018,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('api.md'), findsOneWidget);
 
-    await tester.tap(find.byTooltip(l10n.newTopic));
+    await tester.tap(find.byTooltip(l10n.tocActions));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text(l10n.newTopic), findsOneWidget);
+    await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.widgetWithText(FilledButton, l10n.create));
     await tester.pump(const Duration(milliseconds: 300));
@@ -1824,15 +1831,16 @@ void main() {
       rootPath: temp.path,
       paths: [first.path, second.path],
     );
+    final gitController = _PresetGitController(
+      _gitSidebarShortcutState(temp.path),
+    );
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
-        gitControllerProvider.overrideWith(
-          () => _PresetGitController(_gitSidebarShortcutState(temp.path)),
-        ),
+        gitControllerProvider.overrideWith(() => gitController),
       ],
     );
     addTearDown(container.dispose);
@@ -1887,24 +1895,45 @@ void main() {
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
-    expect(find.byTooltip(l10n.gitBranches), findsNothing);
+    expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitBranches), findsOneWidget);
+    expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
+    final branchMenu = find.byKey(
+      const ValueKey('workspace-sidebar-branch-menu'),
+    );
+    expect(branchMenu, findsOneWidget);
+    expect(
+      find.descendant(
+        of: branchMenu,
+        matching: find.byIcon(BusyMarkGlyphs.menuVertical),
+      ),
+      findsOneWidget,
+    );
+    expect(gitController.branchLoadCount, 0);
+    await tester.tap(branchMenu);
+    await tester.pumpAndSettle();
+    expect(gitController.branchLoadCount, 1);
+    expect(find.text(l10n.gitPull), findsOneWidget);
+    expect(find.text(l10n.gitPush), findsOneWidget);
+    expect(find.text(l10n.gitNewBranch), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
 
     await pressControlShortcut(LogicalKeyboardKey.digit5);
     expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitBranches), findsOneWidget);
+    expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
+    expect(branchMenu, findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitBranches), findsNothing);
+    expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
@@ -1973,6 +2002,39 @@ void main() {
       const ValueKey('workspace-sidebar-primary-row'),
     );
     const firstContentKey = ValueKey('workspace-sidebar-first-content');
+    Finder viewMarker(LogicalKeyboardKey key) {
+      return switch (key) {
+        LogicalKeyboardKey.digit1 => find.byKey(
+          const ValueKey('workspace-sidebar-path-menu'),
+        ),
+        LogicalKeyboardKey.digit2 => find.byTooltip(l10n.tocActions),
+        LogicalKeyboardKey.digit3 => find.byKey(
+          const ValueKey('workspace-sidebar-outline-tree'),
+        ),
+        LogicalKeyboardKey.digit4 => find.text(l10n.gitNoChanges),
+        LogicalKeyboardKey.digit5 => find.text(
+          'Sidebar history shortcut commit',
+        ),
+        _ => throw ArgumentError.value(key, 'key'),
+      };
+    }
+
+    Finder? actionMenuMarker(LogicalKeyboardKey key) {
+      if (key == LogicalKeyboardKey.digit1) {
+        return find.byKey(const ValueKey('workspace-sidebar-path-menu'));
+      }
+      if (key == LogicalKeyboardKey.digit2) {
+        return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
+      }
+      if (key == LogicalKeyboardKey.digit4 ||
+          key == LogicalKeyboardKey.digit5) {
+        return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
+      }
+      return null;
+    }
+
+    final actionMenuGuideRight = tester.getRect(primaryRow).right;
+    double? actionMenuRight;
     for (final (key, label, contextRow) in <(LogicalKeyboardKey, String, bool)>[
       (LogicalKeyboardKey.digit1, 'Files', true),
       (LogicalKeyboardKey.digit2, 'Topics', true),
@@ -1981,6 +2043,7 @@ void main() {
       (LogicalKeyboardKey.digit5, 'History', true),
     ]) {
       await selectView(key);
+      expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
       final firstContent = find.byKey(firstContentKey);
       expect(firstContent, findsOneWidget, reason: label);
       final gap =
@@ -1991,6 +2054,21 @@ void main() {
         closeTo(BusyMarkSpacing.sm, 0.01),
         reason: '$label sidebar gap',
       );
+      final actionMenu = actionMenuMarker(key);
+      if (actionMenu != null) {
+        final right = tester.getRect(actionMenu).right;
+        actionMenuRight ??= right;
+        expect(
+          right,
+          closeTo(actionMenuRight, 0.01),
+          reason: '$label action menu trailing edge',
+        );
+        expect(
+          right,
+          closeTo(actionMenuGuideRight, 0.01),
+          reason: '$label action menu header alignment',
+        );
+      }
       if (contextRow) {
         expect(
           tester.getSize(firstContent).height,
@@ -4904,6 +4982,7 @@ class _PresetGitController extends GitController {
   final GitState initialState;
   String? loadedFileHistoryPath;
   List<String> stagedPaths = const [];
+  int branchLoadCount = 0;
 
   @override
   GitState build() => initialState;
@@ -4911,6 +4990,17 @@ class _PresetGitController extends GitController {
   @override
   void attachWorkspace(Workspace workspace) {
     state = state.copyWith(attachedWorkspace: workspace);
+  }
+
+  @override
+  Future<List<GitBranch>> loadBranches() async {
+    branchLoadCount += 1;
+    return state.branches.isEmpty
+        ? const [
+            GitBranch(name: 'main', current: true),
+            GitBranch(name: 'docs', current: false),
+          ]
+        : state.branches;
   }
 
   @override
