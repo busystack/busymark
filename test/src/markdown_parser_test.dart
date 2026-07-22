@@ -144,9 +144,15 @@ void main() {
       final downloads = Directory(p.join(fakeHome.path, 'Downloads'))
         ..createSync();
       File(p.join(downloads.path, 'example.jpg')).writeAsBytesSync([0]);
+      final competingHome = Directory(p.join(fakeHome.path, 'snap-real-home'))
+        ..createSync();
       debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      debugLocalImageEnvironmentOverride = {
+        'SNAP_REAL_HOME': competingHome.path,
+      };
       addTearDown(() {
         debugLocalImageHomeDirectoryOverride = null;
+        debugLocalImageEnvironmentOverride = null;
       });
 
       final parsed = parser.parse(
@@ -161,6 +167,7 @@ void main() {
       );
     } finally {
       debugLocalImageHomeDirectoryOverride = null;
+      debugLocalImageEnvironmentOverride = null;
       fakeHome.deleteSync(recursive: true);
     }
   });

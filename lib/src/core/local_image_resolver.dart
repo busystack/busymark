@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'path_utils.dart';
 
 String? debugLocalImageHomeDirectoryOverride;
+Map<String, String>? debugLocalImageEnvironmentOverride;
 
 String? resolveLocalImagePath({
   required String activeFilePath,
@@ -243,10 +244,15 @@ String _expandHomeDirectory(String value) {
   if (value != '~' && !value.startsWith('~/') && !value.startsWith(r'~\')) {
     return value;
   }
+  final environment =
+      debugLocalImageEnvironmentOverride ?? Platform.environment;
   final home =
       debugLocalImageHomeDirectoryOverride ??
-      Platform.environment['HOME'] ??
-      Platform.environment['USERPROFILE'];
+      _firstNonEmpty([
+        environment['SNAP_REAL_HOME'],
+        environment['HOME'],
+        environment['USERPROFILE'],
+      ]);
   if (home == null || home.trim().isEmpty) {
     return value;
   }
@@ -254,4 +260,13 @@ String _expandHomeDirectory(String value) {
     return p.normalize(home);
   }
   return p.normalize(p.join(home, value.substring(2)));
+}
+
+String? _firstNonEmpty(Iterable<String?> values) {
+  for (final value in values) {
+    if (value != null && value.trim().isNotEmpty) {
+      return value;
+    }
+  }
+  return null;
 }

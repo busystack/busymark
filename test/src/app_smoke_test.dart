@@ -4061,22 +4061,28 @@ void main() {
     },
   );
 
-  testWidgets('shared Markdown image renderer resolves home-relative paths', (
+  testWidgets('shared Markdown image renderer resolves Snap real-home paths', (
     tester,
   ) async {
-    final fakeHome = Directory.systemTemp.createTempSync(
-      'busymark_preview_image_home_',
+    final root = Directory.systemTemp.createTempSync(
+      'busymark_preview_image_snap_home_',
     );
     try {
-      final downloads = Directory('${fakeHome.path}/Downloads')..createSync();
-      File('${downloads.path}/example.jpg').writeAsBytesSync(
+      final realHome = Directory(p.join(root.path, 'real-home'))..createSync();
+      final snapHome = Directory(p.join(root.path, 'snap-home'))..createSync();
+      final downloads = Directory(p.join(realHome.path, 'Downloads'))
+        ..createSync();
+      File(p.join(downloads.path, 'example.jpg')).writeAsBytesSync(
         base64Decode(
           'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
         ),
       );
-      debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      debugLocalImageEnvironmentOverride = {
+        'SNAP_REAL_HOME': realHome.path,
+        'HOME': snapHome.path,
+      };
       addTearDown(() {
-        debugLocalImageHomeDirectoryOverride = null;
+        debugLocalImageEnvironmentOverride = null;
       });
 
       await tester.pumpWidget(
@@ -4101,8 +4107,8 @@ void main() {
       expect(find.byType(Image), findsOneWidget);
       expect(find.textContaining('~/Downloads/example.jpg'), findsNothing);
     } finally {
-      debugLocalImageHomeDirectoryOverride = null;
-      fakeHome.deleteSync(recursive: true);
+      debugLocalImageEnvironmentOverride = null;
+      root.deleteSync(recursive: true);
     }
   });
 
