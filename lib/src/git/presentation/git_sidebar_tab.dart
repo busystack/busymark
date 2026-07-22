@@ -39,7 +39,7 @@ class GitSidebarTab extends ConsumerWidget {
         icon: BusyMarkGlyphs.warning,
         title: context.l10n.gitUnavailableTitle,
         message: context.l10n.gitUnavailableMessage(
-          state.availability.unsupportedReason ?? '',
+          state.availability.unavailableReason ?? '',
         ),
       );
     }

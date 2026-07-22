@@ -103,10 +103,19 @@ stage_bundled_git_tools() {
   git_bin="$(command -v git || true)"
   [[ -n "$git_bin" && -x "$git_bin" ]] || fail "git is required to stage bundled Git tools"
 
+  local setsid_bin
+  setsid_bin="$(command -v setsid || true)"
+  [[ -n "$setsid_bin" && -x "$setsid_bin" ]] || \
+    fail "setsid from util-linux is required to run bundled Git commands"
+
   echo "== Stage bundled Git tools =="
   echo "Git:      $git_bin"
   copy_into_snap_root "$git_bin"
   stage_ldd_dependencies "$git_bin"
+
+  echo "setsid:   $setsid_bin"
+  install -Dm755 "$setsid_bin" "$SNAP_ROOT/usr/bin/setsid"
+  stage_ldd_dependencies "$setsid_bin"
 
   local git_exec_path
   git_exec_path="$(git --exec-path)"
@@ -134,6 +143,8 @@ stage_bundled_git_tools() {
   done
 
   test -x "$SNAP_ROOT/usr/bin/git" || fail "failed to stage $SNAP_ROOT/usr/bin/git"
+  test -x "$SNAP_ROOT/usr/bin/setsid" || \
+    fail "failed to stage $SNAP_ROOT/usr/bin/setsid"
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -589,6 +600,7 @@ unsquashfs -cat "$OUT" meta/snap.yaml | grep -A4 '^  desktop:' | grep -F -- "- $
 unsquashfs -ll "$OUT" | grep -F "$BINARY_NAME"
 if [[ "$BUNDLE_GIT" == "1" ]]; then
   unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/git"
+  unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/setsid"
 fi
 if [[ -d "$BUNDLE_DIR/lib" ]]; then
   while IFS= read -r plugin; do

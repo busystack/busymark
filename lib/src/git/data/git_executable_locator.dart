@@ -4,12 +4,17 @@ import '../domain/git_models.dart';
 import 'git_process_runner.dart';
 
 class GitExecutableLocator {
-  const GitExecutableLocator({this.runner = const DartGitCommandRunner()});
+  const GitExecutableLocator({
+    this.runner = const DartGitCommandRunner(),
+    this.candidatePaths,
+  });
 
   final GitCommandRunner runner;
+  final List<String>? candidatePaths;
 
   Future<GitAvailability> locate() async {
-    for (final candidate in _candidates()) {
+    String? probeFailure;
+    for (final candidate in candidatePaths ?? _candidates()) {
       try {
         final result = await runner.run(
           candidate,
@@ -18,14 +23,20 @@ class GitExecutableLocator {
           commandName: 'git',
         );
         if (!result.success) {
+          probeFailure ??= _probeResultFailure(candidate, result);
           continue;
         }
         final version = _parseVersion(result.stdoutText);
         if (version == null) {
+          final detail = result.stdoutText.trim().isNotEmpty
+              ? result.stdoutText.trim()
+              : result.stderrText.trim();
           return GitAvailability(
             available: false,
             executablePath: candidate,
-            unsupportedReason: result.stdoutText.trim(),
+            unavailableReason:
+                'Git at "$candidate" returned an unrecognized version'
+                '${detail.isEmpty ? '.' : ': $detail'}',
           );
         }
         if (!_supportsSwitchAndRestore(version)) {
@@ -33,7 +44,7 @@ class GitExecutableLocator {
             available: false,
             executablePath: candidate,
             version: version.raw,
-            unsupportedReason: 'Git 2.23 or newer is required.',
+            unavailableReason: 'Git 2.23 or newer is required.',
           );
         }
         return GitAvailability(
@@ -41,11 +52,38 @@ class GitExecutableLocator {
           executablePath: candidate,
           version: version.raw,
         );
-      } on Object {
+      } on Object catch (error) {
+        probeFailure ??= _probeExceptionFailure(candidate, error);
         continue;
       }
     }
-    return const GitAvailability.unavailable('Git executable was not found.');
+    return GitAvailability.unavailable(
+      probeFailure ?? 'Git executable was not found.',
+    );
+  }
+
+  String _probeResultFailure(String candidate, GitProcessResult result) {
+    final detail = result.stderrText.trim().isNotEmpty
+        ? result.stderrText.trim()
+        : result.stdoutText.trim();
+    return 'Git at "$candidate" exited with code ${result.exitCode} while '
+        'checking its version${detail.isEmpty ? '.' : ': $detail'}';
+  }
+
+  String? _probeExceptionFailure(String candidate, Object error) {
+    if (error is ProcessException) {
+      if (error.errorCode == 2 && !File(candidate).existsSync()) {
+        return null;
+      }
+      final launcher = error.executable.isEmpty ? candidate : error.executable;
+      final errorCode = error.errorCode == 0 ? '' : ' (${error.errorCode})';
+      return 'Git was found at "$candidate", but "$launcher" could not be '
+          'started: ${error.message}$errorCode.';
+    }
+    if (error is GitFailure) {
+      return 'Git probe for "$candidate" failed: ${error.rawMessage}';
+    }
+    return 'Git probe for "$candidate" failed: $error';
   }
 
   Iterable<String> _candidates() sync* {

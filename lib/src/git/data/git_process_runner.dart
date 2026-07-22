@@ -43,7 +43,11 @@ class GitProcessResult {
 }
 
 class DartGitCommandRunner implements GitCommandRunner {
-  const DartGitCommandRunner();
+  const DartGitCommandRunner({
+    this.processGroupLauncher = const GitProcessGroupLauncher(),
+  });
+
+  final GitProcessGroupLauncher processGroupLauncher;
 
   @override
   Future<GitProcessResult> run(
@@ -58,7 +62,7 @@ class DartGitCommandRunner implements GitCommandRunner {
       throw ArgumentError.value(timeout, 'timeout', 'must be positive');
     }
     final stopwatch = Stopwatch()..start();
-    final launch = _processGroupLaunch(executable, arguments);
+    final launch = processGroupLauncher.resolve(executable, arguments);
     final process = await Process.start(
       launch.executable,
       launch.arguments,
@@ -163,34 +167,52 @@ class DartGitCommandRunner implements GitCommandRunner {
       commandName: commandName,
     );
   }
+}
 
-  _ProcessGroupLaunch _processGroupLaunch(
-    String executable,
-    List<String> arguments,
-  ) {
+class GitProcessGroupLauncher {
+  const GitProcessGroupLauncher({this.snapRootOverride});
+
+  final String? snapRootOverride;
+
+  GitProcessLaunch resolve(String executable, List<String> arguments) {
     if (!Platform.isLinux) {
-      return _ProcessGroupLaunch(
+      return GitProcessLaunch(
         executable: executable,
         arguments: arguments,
         processGroup: false,
       );
     }
-    final snapRoot = Platform.environment['SNAP'];
-    final bundledSetsid = snapRoot == null || snapRoot.isEmpty
-        ? null
-        : '$snapRoot/usr/bin/setsid';
-    return _ProcessGroupLaunch(
-      executable: bundledSetsid != null && File(bundledSetsid).existsSync()
-          ? bundledSetsid
-          : 'setsid',
+
+    final snapRoot = snapRootOverride ?? Platform.environment['SNAP'];
+    if (snapRoot != null && snapRoot.isNotEmpty) {
+      final bundledSetsid = '$snapRoot/usr/bin/setsid';
+      if (File(bundledSetsid).existsSync()) {
+        return GitProcessLaunch(
+          executable: bundledSetsid,
+          arguments: ['--wait', '--', executable, ...arguments],
+          processGroup: true,
+        );
+      }
+      // Strict snap confinement cannot execute the host's /usr/bin/setsid.
+      // A malformed or older snap should retain Git support while sacrificing
+      // process-group cleanup until its packaging is corrected.
+      return GitProcessLaunch(
+        executable: executable,
+        arguments: arguments,
+        processGroup: false,
+      );
+    }
+
+    return GitProcessLaunch(
+      executable: 'setsid',
       arguments: ['--wait', '--', executable, ...arguments],
       processGroup: true,
     );
   }
 }
 
-class _ProcessGroupLaunch {
-  const _ProcessGroupLaunch({
+class GitProcessLaunch {
+  const GitProcessLaunch({
     required this.executable,
     required this.arguments,
     required this.processGroup,

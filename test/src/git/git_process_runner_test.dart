@@ -49,6 +49,80 @@ void main() {
   });
 
   test(
+    'snap launcher never falls back to the confined host setsid',
+    () async {
+      final snapRoot = await Directory.systemTemp.createTemp(
+        'busymark-snap-launcher-',
+      );
+      addTearDown(() => snapRoot.delete(recursive: true));
+      final launcher = GitProcessGroupLauncher(snapRootOverride: snapRoot.path);
+
+      final direct = launcher.resolve('/snap/busymark/usr/bin/git', const [
+        '--version',
+      ]);
+      expect(direct.executable, '/snap/busymark/usr/bin/git');
+      expect(direct.arguments, const ['--version']);
+      expect(direct.processGroup, isFalse);
+
+      final bundledSetsid = File('${snapRoot.path}/usr/bin/setsid');
+      await bundledSetsid.create(recursive: true);
+      final wrapped = launcher.resolve('/snap/busymark/usr/bin/git', const [
+        '--version',
+      ]);
+      expect(wrapped.executable, bundledSetsid.path);
+      expect(wrapped.arguments, const [
+        '--wait',
+        '--',
+        '/snap/busymark/usr/bin/git',
+        '--version',
+      ]);
+      expect(wrapped.processGroup, isTrue);
+    },
+    skip: !Platform.isLinux,
+  );
+
+  test('Git locator preserves process launcher failures', () async {
+    final availability = await const GitExecutableLocator(
+      runner: _PermissionDeniedGitRunner(),
+      candidatePaths: ['/snap/busymark/current/usr/bin/git'],
+    ).locate();
+
+    expect(availability.available, isFalse);
+    expect(
+      availability.unavailableReason,
+      allOf(
+        contains('/snap/busymark/current/usr/bin/git'),
+        contains('setsid'),
+        contains('Permission denied'),
+      ),
+    );
+  });
+
+  test('Git locator preserves a failed version probe result', () async {
+    final availability = await const GitExecutableLocator(
+      runner: _FailedVersionGitRunner(),
+      candidatePaths: ['/snap/busymark/current/usr/bin/git'],
+    ).locate();
+
+    expect(availability.available, isFalse);
+    expect(availability.unavailableReason, contains('exited with code 126'));
+    expect(availability.unavailableReason, contains('loader failure'));
+  });
+
+  test(
+    'Git locator reports not found for a genuinely missing command',
+    () async {
+      final availability = await const GitExecutableLocator(
+        runner: _MissingGitRunner(),
+        candidatePaths: ['git'],
+      ).locate();
+
+      expect(availability.available, isFalse);
+      expect(availability.unavailableReason, 'Git executable was not found.');
+    },
+  );
+
+  test(
     'runner terminates descendant processes when a command times out',
     () async {
       final temp = await Directory.systemTemp.createTemp(
@@ -173,5 +247,59 @@ class _RecordingGitRunner implements GitCommandRunner {
       stdoutBytes: stdout,
       stderrBytes: const [],
     );
+  }
+}
+
+class _PermissionDeniedGitRunner implements GitCommandRunner {
+  const _PermissionDeniedGitRunner();
+
+  @override
+  Future<GitProcessResult> run(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    required Duration timeout,
+    required String commandName,
+    Map<String, String> environment = const {},
+  }) async {
+    throw ProcessException('setsid', const [], 'Permission denied', 13);
+  }
+}
+
+class _FailedVersionGitRunner implements GitCommandRunner {
+  const _FailedVersionGitRunner();
+
+  @override
+  Future<GitProcessResult> run(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    required Duration timeout,
+    required String commandName,
+    Map<String, String> environment = const {},
+  }) async {
+    return GitProcessResult(
+      executable: executable,
+      arguments: arguments,
+      exitCode: 126,
+      stdoutBytes: const [],
+      stderrBytes: 'loader failure'.codeUnits,
+    );
+  }
+}
+
+class _MissingGitRunner implements GitCommandRunner {
+  const _MissingGitRunner();
+
+  @override
+  Future<GitProcessResult> run(
+    String executable,
+    List<String> arguments, {
+    String? workingDirectory,
+    required Duration timeout,
+    required String commandName,
+    Map<String, String> environment = const {},
+  }) async {
+    throw ProcessException('git', const [], 'No such file or directory', 2);
   }
 }

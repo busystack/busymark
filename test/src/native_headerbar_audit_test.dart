@@ -387,7 +387,21 @@ void main() {
     expect(script, contains('copy_tree_into_snap_root /usr/share/git-core'));
     expect(script, contains('for tool in ssh scp sftp ssh-keyscan'));
     expect(script, contains(r'stage_ldd_dependencies "$git_bin"'));
+    expect(script, contains(r'setsid_bin="$(command -v setsid || true)"'));
+    expect(
+      script,
+      contains(
+        'setsid from util-linux is required to run bundled Git commands',
+      ),
+    );
+    expect(
+      script,
+      contains(r'install -Dm755 "$setsid_bin" "$SNAP_ROOT/usr/bin/setsid"'),
+    );
+    expect(script, contains(r'stage_ldd_dependencies "$setsid_bin"'));
+    expect(script, contains(r'test -x "$SNAP_ROOT/usr/bin/setsid"'));
     expect(script, contains('squashfs-root/usr/bin/git'));
+    expect(script, contains('squashfs-root/usr/bin/setsid'));
     expect(script, contains('--skip-bundled-git'));
   });
 

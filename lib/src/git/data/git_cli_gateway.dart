@@ -482,7 +482,7 @@ class GitCliGateway implements GitRepositoryGateway {
         code: GitFailureCode.unavailable,
         userMessageKey: 'gitErrorUnavailable',
         rawMessage:
-            availability.unsupportedReason ?? 'Git executable was not found.',
+            availability.unavailableReason ?? 'Git executable was not found.',
         commandName: 'git',
       );
     }
