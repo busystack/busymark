@@ -103,10 +103,19 @@ stage_bundled_git_tools() {
   git_bin="$(command -v git || true)"
   [[ -n "$git_bin" && -x "$git_bin" ]] || fail "git is required to stage bundled Git tools"
 
+  local setsid_bin
+  setsid_bin="$(command -v setsid || true)"
+  [[ -n "$setsid_bin" && -x "$setsid_bin" ]] || \
+    fail "setsid from util-linux is required to run bundled Git commands"
+
   echo "== Stage bundled Git tools =="
   echo "Git:      $git_bin"
   copy_into_snap_root "$git_bin"
   stage_ldd_dependencies "$git_bin"
+
+  echo "setsid:   $setsid_bin"
+  install -Dm755 "$setsid_bin" "$SNAP_ROOT/usr/bin/setsid"
+  stage_ldd_dependencies "$setsid_bin"
 
   local git_exec_path
   git_exec_path="$(git --exec-path)"
@@ -134,6 +143,8 @@ stage_bundled_git_tools() {
   done
 
   test -x "$SNAP_ROOT/usr/bin/git" || fail "failed to stage $SNAP_ROOT/usr/bin/git"
+  test -x "$SNAP_ROOT/usr/bin/setsid" || \
+    fail "failed to stage $SNAP_ROOT/usr/bin/setsid"
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -234,6 +245,7 @@ BINARY_NAME="${BINARY_NAME:-$(cmake_value BINARY_NAME)}"
 BINARY_NAME="${BINARY_NAME:-$PROJECT_NAME}"
 APP_ID="${APP_ID:-$(cmake_value APPLICATION_ID)}"
 APP_ID="${APP_ID:-$SNAP_NAME}"
+DESKTOP_FILE_ID="${APP_ID}.desktop"
 ICON_SOURCE="${ICON_SOURCE:-$(snapcraft_value icon)}"
 
 SNAP_SCAFFOLD="${SNAP_SCAFFOLD:-/snap/${SNAP_NAME}/current}"
@@ -324,7 +336,7 @@ else
 fi
 
 echo "== Patch staged snap metadata =="
-python3 - "$SNAP_ROOT/meta/snap.yaml" "snap/snapcraft.yaml" "$VERSION" "$SNAP_NAME" <<'PY'
+python3 - "$SNAP_ROOT/meta/snap.yaml" "snap/snapcraft.yaml" "$VERSION" "$SNAP_NAME" "$DESKTOP_FILE_ID" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -333,6 +345,7 @@ meta_path = Path(sys.argv[1])
 source_path = Path(sys.argv[2])
 version = sys.argv[3]
 app_name = sys.argv[4]
+desktop_file_id = sys.argv[5]
 
 text = meta_path.read_text()
 text, count = re.subn(r"(?m)^version:\s*.*$", f"version: {version}", text, count=1)
@@ -342,7 +355,7 @@ if count != 1:
 # snap pack consumes installed-style metadata. Source snapcraft-only keys are
 # removed from the temporary root only; source files are left untouched.
 text = re.sub(r"(?m)^icon:\s*.*\n", "", text)
-text = re.sub(r"(?m)^[ \t]+desktop:\s*.*\n", "", text)
+text = re.sub(r"(?m)^    desktop:[^\r\n]*(?:\r?\n|$)", "", text)
 
 
 def extract_app_list(source: str, app: str, key: str) -> list[str]:
@@ -388,6 +401,60 @@ def extract_app_list(source: str, app: str, key: str) -> list[str]:
         if match:
             items.append(match.group(1))
     return items
+
+
+def top_level_section_bounds(
+    lines: list[str], section: str
+) -> tuple[int, int] | None:
+    start = next(
+        (i for i, line in enumerate(lines) if line.rstrip() == f"{section}:"),
+        None,
+    )
+    if start is None:
+        return None
+
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        stripped = lines[i].strip()
+        if (
+            stripped
+            and not stripped.startswith("#")
+            and not lines[i].startswith(" ")
+        ):
+            end = i
+            break
+    return start, end
+
+
+def top_level_plug_bounds(
+    lines: list[str], plug: str
+) -> tuple[int, int] | None:
+    section = top_level_section_bounds(lines, "plugs")
+    if section is None:
+        return None
+    section_start, section_end = section
+    start = next(
+        (
+            i
+            for i in range(section_start + 1, section_end)
+            if lines[i].rstrip() == f"  {plug}:"
+        ),
+        None,
+    )
+    if start is None:
+        return None
+
+    end = section_end
+    for i in range(start + 1, section_end):
+        stripped = lines[i].strip()
+        if (
+            stripped
+            and not stripped.startswith("#")
+            and not lines[i].startswith("    ")
+        ):
+            end = i
+            break
+    return start, end
 
 
 def ensure_app_list_items(target: str, app: str, key: str, items: list[str]) -> str:
@@ -438,6 +505,74 @@ def ensure_app_list_items(target: str, app: str, key: str, items: list[str]) -> 
     return "".join(lines)
 
 
+def ensure_desktop_file_id(target: str, desktop_id: str) -> str:
+    lines = target.splitlines(keepends=True)
+    desktop_plug = [
+        "  desktop:\n",
+        "    interface: desktop\n",
+        "    desktop-file-ids:\n",
+        f"      - {desktop_id}\n",
+    ]
+    section = top_level_section_bounds(lines, "plugs")
+    if section is None:
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] += "\n"
+        if lines and lines[-1].strip():
+            lines.append("\n")
+        lines.extend(["plugs:\n", *desktop_plug])
+        return "".join(lines)
+
+    plug_bounds = top_level_plug_bounds(lines, "desktop")
+    if plug_bounds is None:
+        _, section_end = section
+        lines[section_end:section_end] = desktop_plug
+        return "".join(lines)
+
+    plug_start, plug_end = plug_bounds
+    interface_index = next(
+        (
+            i
+            for i in range(plug_start + 1, plug_end)
+            if lines[i].lstrip().startswith("interface:")
+        ),
+        None,
+    )
+    if interface_index is None:
+        lines.insert(plug_start + 1, "    interface: desktop\n")
+        plug_end += 1
+    elif lines[interface_index].partition(":")[2].strip() != "desktop":
+        raise SystemExit("top-level desktop plug uses a different interface")
+
+    ids_start = next(
+        (
+            i
+            for i in range(plug_start + 1, plug_end)
+            if lines[i].rstrip() == "    desktop-file-ids:"
+        ),
+        None,
+    )
+    desktop_ids = [
+        "    desktop-file-ids:\n",
+        f"      - {desktop_id}\n",
+    ]
+    if ids_start is None:
+        lines[plug_end:plug_end] = desktop_ids
+        return "".join(lines)
+
+    ids_end = plug_end
+    for i in range(ids_start + 1, plug_end):
+        stripped = lines[i].strip()
+        if (
+            stripped
+            and not stripped.startswith("#")
+            and not lines[i].startswith("      ")
+        ):
+            ids_end = i
+            break
+    lines[ids_start:ids_end] = desktop_ids
+    return "".join(lines)
+
+
 if source_path.exists():
     source = source_path.read_text()
     text = ensure_app_list_items(
@@ -447,20 +582,25 @@ if source_path.exists():
         extract_app_list(source, app_name, "plugs"),
     )
 
+text = ensure_desktop_file_id(text, desktop_file_id)
+
 meta_path.write_text(text)
 PY
 
 grep '^version:' "$SNAP_ROOT/meta/snap.yaml"
 grep -A80 "^  ${SNAP_NAME}:" "$SNAP_ROOT/meta/snap.yaml" | sed -n '/plugs:/,/^[[:space:]]*[[:alpha:]_-].*:/p'
+grep -A4 '^  desktop:' "$SNAP_ROOT/meta/snap.yaml" | grep -F -- "- $DESKTOP_FILE_ID"
 
 echo "== Pack snap =="
 snap pack "$SNAP_ROOT" --filename="$OUT"
 
 echo "== Verify packed snap =="
 unsquashfs -cat "$OUT" meta/snap.yaml | grep '^version:'
+unsquashfs -cat "$OUT" meta/snap.yaml | grep -A4 '^  desktop:' | grep -F -- "- $DESKTOP_FILE_ID"
 unsquashfs -ll "$OUT" | grep -F "$BINARY_NAME"
 if [[ "$BUNDLE_GIT" == "1" ]]; then
   unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/git"
+  unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/setsid"
 fi
 if [[ -d "$BUNDLE_DIR/lib" ]]; then
   while IFS= read -r plugin; do

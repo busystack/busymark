@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -31,7 +33,92 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutWebsite => 'Website';
 
   @override
-  String get aboutReportIssue => 'Report an Issue';
+  String get aboutSourceCode => 'Source code';
+
+  @override
+  String get reportIssue => 'Report an issue';
+
+  @override
+  String get feedbackCategory => 'Category';
+
+  @override
+  String get feedbackChooseCategory => 'Choose a category';
+
+  @override
+  String get feedbackCategoryProblem => 'Problem or bug';
+
+  @override
+  String get feedbackCategoryFeature => 'Feature request';
+
+  @override
+  String get feedbackCategoryPrivacySecurity => 'Privacy or security concern';
+
+  @override
+  String get feedbackCategoryUsability => 'Usability concern';
+
+  @override
+  String get feedbackCategoryOther => 'Other';
+
+  @override
+  String get feedbackSubject => 'Subject';
+
+  @override
+  String get feedbackMessage => 'Detailed message';
+
+  @override
+  String get feedbackReplyEmail => 'Reply email (optional)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Include technical details';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'When enabled, this adds only your Linux operating-system version and BusyMark application locale. No logs, files, account data, or other diagnostics are attached.';
+
+  @override
+  String get feedbackSubmit => 'Submit';
+
+  @override
+  String get feedbackSubmitting => 'Submitting…';
+
+  @override
+  String get feedbackCategoryRequired => 'Choose a category.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'Subject must be between 3 and 120 characters.';
+
+  @override
+  String get feedbackMessageLength =>
+      'Message must be between 10 and 5,000 characters.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Enter a valid email address or leave this field empty.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark could not connect. Check your internet connection and try again.';
+
+  @override
+  String get feedbackTimeoutFailure => 'The request timed out. Try again.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Too many reports were sent from this connection. Wait and try again.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'The server rejected this report. Check the form fields and try again.';
+
+  @override
+  String get feedbackServerFailure =>
+      'The server could not accept the report. Try again later.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Feedback sent. Reference ID: $id';
+  }
 
   @override
   String get advanced => 'Advanced';
@@ -100,9 +187,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileHistory => 'File History';
 
   @override
-  String get find => 'Find';
-
-  @override
   String get folder => 'Folder';
 
   @override
@@ -125,6 +209,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openInFiles => 'Open in Files';
+
+  @override
+  String get pathActions => 'Path actions';
 
   @override
   String get outline => 'Outline';
@@ -217,6 +304,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageEstonian => 'Eesti';
+
+  @override
   String get toggleSidebar => 'Sidebar panel';
 
   @override
@@ -270,7 +360,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noOpenFile => 'No open file';
 
   @override
-  String get shortcutGroupFile => 'File';
+  String get shortcutDeleteTreeItemDescription =>
+      'Delete the selected Files item, or remove the selected topic from the table of contents';
+
+  @override
+  String get shortcutGroupGeneral => 'General';
 
   @override
   String get shortcutNewDocument => 'New document';
@@ -284,10 +378,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Open a Markdown file, folder, or Writerside project';
 
   @override
-  String get shortcutSaveDescription => 'Save the current Markdown file';
+  String get shortcutSaveDescription => 'Save the current document';
 
   @override
-  String get shortcutFindDescription => 'Search the current document';
+  String get shortcutSearchDescription => 'Search the current workspace';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -304,32 +398,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutNextTab => 'Next tab';
 
   @override
-  String get shortcutNextTabDescription => 'Move to the next open editor tab';
+  String get shortcutNextTabDescription => 'Move to the next open tab';
 
   @override
   String get shortcutPreviousTab => 'Previous tab';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Move to the previous open editor tab';
+  String get shortcutPreviousTabDescription => 'Move to the previous open tab';
 
   @override
   String get shortcutCloseTab => 'Close tab';
 
   @override
-  String get shortcutCloseTabDescription => 'Close the active editor tab';
+  String get shortcutCloseTabDescription => 'Close the active tab';
 
   @override
   String get shortcutCloseAllTabs => 'Close all tabs';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'Close all open editor tabs';
+  String get shortcutCloseAllTabsDescription => 'Close all open tabs';
 
   @override
   String get shortcutGroupTextEditing => 'Text Editing';
 
   @override
-  String get shortcutSelectAllDescription => 'Select all editor text';
+  String get shortcutSelectAllDescription =>
+      'In Source mode, select all text; in Editor mode, press twice to select every block';
 
   @override
   String get shortcutCutDescription => 'Cut the selected text';
@@ -351,11 +445,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutRedoDescription => 'Redo the last undone edit';
 
   @override
-  String get clearEditorSelection => 'Clear editor selection';
+  String get shortcutInsertIndentation => 'Insert indentation';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Leave the current editor selection or search focus';
+  String get shortcutInsertIndentationDescription =>
+      'Insert indentation at the cursor';
+
+  @override
+  String get shortcutOutdentSource => 'Outdent source';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Remove one indentation level in Source mode';
+
+  @override
+  String get shortcutEscape => 'Close search or clear block selection';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Close workspace search or clear a block selection in Editor mode';
 
   @override
   String get shortcutGroupFormatting => 'Formatting';
@@ -525,11 +633,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearRecentWorkspaces => 'Clear recent workspaces';
 
   @override
-  String get editingButtons => 'Editing buttons';
+  String get editingButtonsPosition => 'Editing buttons position';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Choose where the floating WYSIWYG editing buttons appear.';
+
+  @override
+  String get editingButtonsDirection => 'Editing buttons direction';
+
+  @override
+  String get editingButtonsDirectionDescription =>
+      'Choose whether the floating WYSIWYG editing buttons are arranged horizontally or vertically.';
+
+  @override
+  String get horizontal => 'Horizontal';
+
+  @override
+  String get vertical => 'Vertical';
 
   @override
   String get privacy => 'Privacy';
@@ -547,6 +668,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearRemoteImagePermissionsDescription =>
       'Forget workspaces that were allowed to load remote images.';
+
+  @override
+  String get clearGitWorkspaceTrust => 'Clear trusted Git workspaces';
+
+  @override
+  String get clearGitWorkspaceTrustDescription =>
+      'Ask before enabling Git features for previously trusted workspaces.';
 
   @override
   String get settingsWindowSectionTitle => 'Window';
@@ -648,6 +776,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get htmlBlock => 'HTML block';
+
+  @override
+  String get htmlContentDefault => 'HTML content';
 
   @override
   String get shortcutHtmlBlockDescription => 'Insert or edit an HTML block';
@@ -764,6 +895,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get altText => 'Alt text';
 
   @override
+  String get editorPlaceholderText => 'text';
+
+  @override
+  String get editorPlaceholderCode => 'code';
+
+  @override
+  String get editorPlaceholderAltText => 'alt text';
+
+  @override
   String get describeTheImage => 'Describe the image';
 
   @override
@@ -849,6 +989,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toc => 'TOC';
 
   @override
+  String get tocActions => 'TOC actions';
+
+  @override
   String get markdownUnsaved => 'Markdown - unsaved';
 
   @override
@@ -879,6 +1022,177 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newChildTopic => 'New Child Topic';
+
+  @override
+  String get newSiblingTopic => 'New Sibling Topic';
+
+  @override
+  String get renameTopicFile => 'Rename Topic File';
+
+  @override
+  String get topicPlacement => 'TOC placement';
+
+  @override
+  String get tocRoot => 'At TOC root';
+
+  @override
+  String get afterSelectedTopic => 'After selected topic';
+
+  @override
+  String get insideSelectedTopic => 'Inside selected topic';
+
+  @override
+  String get pasteAfterTopic => 'Paste After';
+
+  @override
+  String get pasteAsChildTopic => 'Paste as Child';
+
+  @override
+  String get removeFromToc => 'Remove from TOC';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Remove from TOC?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Remove $name from this table of contents? The topic file will be kept.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Delete topic file?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Delete $name and remove it from every table of contents? This cannot be undone.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Safe Delete Topic File…';
+
+  @override
+  String get removeTocElement => 'Remove TOC Element';
+
+  @override
+  String get reviewUsages => 'Review Usages';
+
+  @override
+  String get deleteTopicFile => 'Delete Topic File';
+
+  @override
+  String get removeAction => 'Remove';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Remove “$topic” from the selected help instance. The topic file will be kept.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Delete “$topic” and safely update its references throughout this Writerside project.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count child topics will move up one level.',
+      one: '1 child topic will move up one level.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'This topic is used as an instance start page. Review its usages and assign another start page before continuing.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Usages ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'No references that would be broken were found.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark found the following references to this topic.';
+
+  @override
+  String get topicUsageTocElements => 'TOC elements';
+
+  @override
+  String get topicUsageStartPages => 'Start pages';
+
+  @override
+  String get topicUsageTopicLinks => 'Topic links';
+
+  @override
+  String get topicUsageIncludes => 'Includes';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count usages',
+      one: '1 usage',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Refactoring options';
+
+  @override
+  String get updateUsagesAutomatically => 'Update usages automatically';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Remove TOC references and includes, and preserve link text.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Some usages require manual changes before this refactoring.';
+
+  @override
+  String get setRedirectTo => 'Set redirect to';
+
+  @override
+  String get noRedirectDescription => 'Do not redirect the old published page.';
+
+  @override
+  String get redirectTarget => 'Redirect target';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Review and update the remaining usages before continuing, or enable automatic updates when available.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Usages of $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'No usages found';
+
+  @override
+  String get outsideSelectedInstance => 'outside selected instance';
+
+  @override
+  String get doRefactor => 'Do Refactor';
+
+  @override
+  String get orphanTopicTitle => 'Topic file is no longer used';
+
+  @override
+  String get keepTopicFile => 'Keep Topic File';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '“$topic” is no longer used anywhere in this Writerside project. Delete the file, or keep it for use in another instance.';
+  }
 
   @override
   String get defaultNewTopicTitle => 'New topic';
@@ -972,6 +1286,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sourceSearchRegex => 'Regex';
+
+  @override
+  String get sourceSearchInvalidRegex => 'Invalid regular expression';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
@@ -1216,6 +1533,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'Reference topic is not present in the selected tree: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'The selected TOC entry no longer exists.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'A TOC entry cannot be moved into itself or one of its children.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'The start topic $topic cannot be deleted. Choose another start page first.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Use Safe Delete for Writerside topic files.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Could not complete the topic usage scan. No files were changed.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Some topic usages still require attention. Review them before continuing.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'The selected redirect target is no longer valid. Choose it again.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Topic removal could not be fully rolled back. Review these paths before continuing: $paths';
   }
 
   @override
@@ -1561,6 +1912,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitDiff => 'Git diff';
 
   @override
+  String get gitShowDiff => 'Show diff';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'old $oldRange → new $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'no lines';
+
+  @override
   String get gitUnavailableTitle => 'Git is unavailable';
 
   @override
@@ -1571,6 +1933,16 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get gitTrustRequiredTitle => 'Trust this workspace for Git?';
+
+  @override
+  String get gitTrustRequiredMessage =>
+      'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.';
+
+  @override
+  String get gitTrustWorkspace => 'Trust workspace';
 
   @override
   String get gitNotRepositoryTitle => 'Not a Git repository';
@@ -1629,6 +2001,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gitBranches => 'Branches';
+
+  @override
+  String get gitBranchActions => 'Branch actions';
 
   @override
   String get gitPull => 'Pull';

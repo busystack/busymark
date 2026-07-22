@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -9,6 +10,7 @@ import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 void main() {
   const service = WorkspaceService();
@@ -39,6 +41,64 @@ void main() {
       isNotEmpty,
     );
   });
+
+  test(
+    'canonicalizes a workspace opened through a directory symlink',
+    () async {
+      final base = await Directory.systemTemp.createTemp(
+        'busymark-workspace-root-symlink-',
+      );
+      addTearDown(() async {
+        if (await base.exists()) {
+          await base.delete(recursive: true);
+        }
+      });
+      final root = Directory(p.join(base.path, 'workspace'))..createSync();
+      final rootLink = Link(p.join(base.path, 'workspace-link'))
+        ..createSync(root.path);
+      final canonicalRoot = await root.resolveSymbolicLinks();
+
+      final workspace = await service.openPath(rootLink.path);
+      final createdPath = await service.createFile(
+        workspace,
+        workspace.rootPath,
+        'created.md',
+      );
+
+      expect(workspace.rootPath, canonicalRoot);
+      expect(createdPath, p.join(canonicalRoot, 'created.md'));
+      expect(File(p.join(canonicalRoot, 'created.md')).existsSync(), isTrue);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'rejects a workspace root replaced by a symlink after opening',
+    () async {
+      final base = await Directory.systemTemp.createTemp(
+        'busymark-workspace-root-replaced-',
+      );
+      addTearDown(() async {
+        if (await base.exists()) {
+          await base.delete(recursive: true);
+        }
+      });
+      final root = Directory(p.join(base.path, 'workspace'))..createSync();
+      final outside = Directory(p.join(base.path, 'outside'))..createSync();
+      final workspace = await service.openPath(root.path);
+      final displacedRoot = p.join(base.path, 'workspace-original');
+      await root.rename(displacedRoot);
+      await Link(workspace.rootPath).create(outside.path);
+
+      await expectLater(
+        service.createFile(workspace, workspace.rootPath, 'escaped.md'),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(File(p.join(outside.path, 'escaped.md')).existsSync(), isFalse);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test('opens a Writerside module workspace', () async {
     final workspace = await service.openPath(
@@ -187,6 +247,127 @@ void main() {
     },
   );
 
+  test(
+    'creates a topic in the explicitly selected instance and TOC node',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-workspace-selected-instance-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="first.tree"/>
+  <instance src="second.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'first.tree')).writeAsStringSync('''
+<instance-profile id="first" name="First" start-page="first.md">
+  <toc-element topic="first.md"/>
+</instance-profile>
+''');
+      final secondTree = File(p.join(root.path, 'second.tree'))
+        ..writeAsStringSync('''
+<instance-profile id="second" name="Second" start-page="second.md">
+  <toc-element topic="second.md"/>
+</instance-profile>
+''');
+      File(
+        p.join(root.path, 'topics', 'first.md'),
+      ).writeAsStringSync('# First\n');
+      File(
+        p.join(root.path, 'topics', 'second.md'),
+      ).writeAsStringSync('# Second\n');
+      final workspace = await service.openPath(root.path);
+      final firstTreeBefore = File(
+        p.join(root.path, 'first.tree'),
+      ).readAsStringSync();
+
+      final updated = await service.createWritersideTopic(
+        workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Second child',
+          fileName: 'second-child.md',
+          placement: WritersideTopicCreatePlacement.child,
+          referenceTopic: 'second.md',
+          referenceTocPath: [0],
+        ),
+        instanceTreePath: secondTree.path,
+      );
+
+      final secondDocument = XmlDocument.parse(secondTree.readAsStringSync());
+      final second = secondDocument
+          .findAllElements('toc-element')
+          .firstWhere(
+            (element) => element.getAttribute('topic') == 'second.md',
+          );
+      expect(
+        second.childElements.map((element) => element.getAttribute('topic')),
+        contains('second-child.md'),
+      );
+      expect(
+        File(p.join(root.path, 'first.tree')).readAsStringSync(),
+        firstTreeBefore,
+      );
+      expect(
+        updated.activeFilePath,
+        p.join(root.path, 'topics', 'second-child.md'),
+      );
+    },
+  );
+
+  test(
+    'rejects topic creation when the configured instance tree is outside the module',
+    () async {
+      final base = await Directory.systemTemp.createTemp(
+        'busymark-writerside-external-tree-',
+      );
+      addTearDown(() async {
+        if (await base.exists()) {
+          await base.delete(recursive: true);
+        }
+      });
+      final root = Directory(p.join(base.path, 'module'))..createSync();
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="../victim.tree"/>
+</ihp>
+''');
+      final victim = File(p.join(base.path, 'victim.tree'))
+        ..writeAsStringSync('''
+<instance-profile id="victim" name="Victim" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+      final originalVictimSource = victim.readAsStringSync();
+      final workspace = await service.openPath(root.path);
+
+      await expectLater(
+        service.createWritersideTopic(
+          workspace,
+          const WritersideTopicCreateRequest(
+            title: 'Escaped topic',
+            fileName: 'escaped',
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(victim.readAsStringSync(), originalVictimSource);
+      expect(
+        File(p.join(root.path, 'topics', 'escaped.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
   test('normalizes portal-style document paths as filesystem paths', () {
     const path = '/run/user/1000/doc/abcdef/smoke.md';
 
@@ -216,6 +397,160 @@ void main() {
         .toList();
     expect(leftovers, isEmpty);
   });
+
+  test('saveNewText writes a missing file and returns its snapshot', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-new-save-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+
+    final snapshot = await service.saveNewText(file.path, '# Created\n');
+
+    expect(await file.readAsString(), '# Created\n');
+    expect(snapshot.size, '# Created\n'.length);
+    expect(snapshot.contentHash, hasLength(64));
+  });
+
+  test('saveNewText refuses an existing file without changing it', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-new-save-collision-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('# Original\n');
+
+    await expectLater(
+      service.saveNewText(file.path, '# Replacement\n'),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'workspace.path-already-exists',
+        ),
+      ),
+    );
+
+    expect(await file.readAsString(), '# Original\n');
+  });
+
+  test(
+    'saveNewText does not replace a file arriving before publication',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-new-save-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final file = File(p.join(directory.path, 'note.md'));
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) async {
+          await File(targetPath).writeAsString('# Arrived\n', flush: true);
+        },
+      );
+
+      await expectLater(
+        racingService.saveNewText(file.path, '# Draft\n'),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'workspace.path-already-exists',
+          ),
+        ),
+      );
+
+      expect(await file.readAsString(), '# Arrived\n');
+      final leftovers = await directory
+          .list()
+          .where(
+            (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+          )
+          .toList();
+      expect(leftovers, isEmpty);
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'saveNewText does not write inside a directory arriving before publication',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-new-save-directory-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final targetDirectory = Directory(p.join(directory.path, 'note.md'));
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) => Directory(targetPath).create(),
+      );
+
+      await expectLater(
+        racingService.saveNewText(targetDirectory.path, '# Draft\n'),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'workspace.path-already-exists',
+          ),
+        ),
+      );
+
+      expect(await targetDirectory.exists(), isTrue);
+      expect(await targetDirectory.list().toList(), isEmpty);
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'saveTextReplacingPath replaces a final symlink without following it',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-symlink-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final target = File(p.join(directory.path, 'target.md'));
+      final link = Link(p.join(directory.path, 'note.md'));
+      await target.writeAsString('# Target\n');
+      await link.create(target.path);
+
+      final snapshot = await service.saveTextReplacingPath(
+        link.path,
+        '# Replacement\n',
+      );
+
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), '# Replacement\n');
+      expect(await target.readAsString(), '# Target\n');
+      expect(snapshot.size, '# Replacement\n'.length);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test(
     'saveText follows file symlinks and preserves target permissions',
@@ -250,6 +585,153 @@ void main() {
         ? 'POSIX symlink and permission behavior only.'
         : false,
   );
+
+  test(
+    'createFile rejects a directory reached through an intermediate symlink',
+    () async {
+      final fixture = await _createWorkspaceSymlinkFixture();
+      final outsideDirectory = Directory(p.join(fixture.outside.path, 'nested'))
+        ..createSync();
+      final escapedFile = File(p.join(outsideDirectory.path, 'escaped.md'));
+
+      await expectLater(
+        service.createFile(
+          fixture.workspace,
+          p.join(fixture.link.path, 'nested'),
+          'escaped.md',
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(escapedFile.existsSync(), isFalse);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'renameEntity rejects a source reached through an intermediate symlink',
+    () async {
+      final fixture = await _createWorkspaceSymlinkFixture();
+      final outsideDirectory = Directory(p.join(fixture.outside.path, 'nested'))
+        ..createSync();
+      final source = File(p.join(outsideDirectory.path, 'source.md'))
+        ..writeAsStringSync('# Outside\n');
+      final renamed = File(p.join(outsideDirectory.path, 'renamed.md'));
+
+      await expectLater(
+        service.renameEntity(
+          fixture.workspace,
+          p.join(fixture.link.path, 'nested', 'source.md'),
+          'renamed.md',
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(source.readAsStringSync(), '# Outside\n');
+      expect(renamed.existsSync(), isFalse);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'moveEntity rejects a target reached through an intermediate symlink',
+    () async {
+      final fixture = await _createWorkspaceSymlinkFixture();
+      final source = File(p.join(fixture.root.path, 'source.md'))
+        ..writeAsStringSync('# Inside\n');
+      final outsideDirectory = Directory(
+        p.join(fixture.outside.path, 'destination'),
+      )..createSync();
+      final escapedFile = File(p.join(outsideDirectory.path, 'source.md'));
+
+      await expectLater(
+        service.moveEntity(
+          fixture.workspace,
+          source.path,
+          p.join(fixture.link.path, 'destination'),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(source.readAsStringSync(), '# Inside\n');
+      expect(escapedFile.existsSync(), isFalse);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'deleteEntity rejects a directory reached through an intermediate symlink',
+    () async {
+      final fixture = await _createWorkspaceSymlinkFixture();
+      final victim = Directory(p.join(fixture.outside.path, 'nested', 'victim'))
+        ..createSync(recursive: true);
+      final sentinel = File(p.join(victim.path, 'keep.md'))
+        ..writeAsStringSync('# Keep\n');
+
+      await expectLater(
+        service.deleteEntity(
+          fixture.workspace,
+          p.join(fixture.link.path, 'nested', 'victim'),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(sentinel.readAsStringSync(), '# Keep\n');
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'deleteEntity removes a final symlink without deleting its target',
+    () async {
+      final fixture = await _createWorkspaceSymlinkFixture();
+      final sentinel = File(p.join(fixture.outside.path, 'keep.md'))
+        ..writeAsStringSync('# Keep\n');
+
+      await service.deleteEntity(fixture.workspace, fixture.link.path);
+
+      expect(
+        FileSystemEntity.typeSync(fixture.link.path, followLinks: false),
+        FileSystemEntityType.notFound,
+      );
+      expect(sentinel.readAsStringSync(), '# Keep\n');
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test('missing nested mutation paths keep domain-specific errors', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-workspace-missing-path-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final workspace = await service.openPath(root.path);
+    final missingDirectory = p.join(workspace.rootPath, 'missing', 'nested');
+
+    await expectLater(
+      service.createFile(workspace, missingDirectory, 'new.md'),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'workspace.directory-missing',
+        ),
+      ),
+    );
+    await expectLater(
+      service.deleteEntity(workspace, p.join(missingDirectory, 'old.md')),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'workspace.path-does-not-exist',
+        ),
+      ),
+    );
+  });
 
   test('fileChangedSince treats deleted files as changed', () async {
     final directory = await Directory.systemTemp.createTemp(
@@ -369,7 +851,7 @@ void main() {
 
         expect(relativePaths, containsAll(['a/guide.md', 'b/guide.md']));
         expect(relativePaths, isNot(contains('z/deep/0.md')));
-        expect(workspace.rootPath, directory.path);
+        expect(workspace.rootPath, await directory.resolveSymbolicLinks());
         expect(workspace.kind, WorkspaceKind.markdownFolder);
         expect(
           workspace.diagnostics.map((diagnostic) => diagnostic.code),
@@ -430,6 +912,49 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+}
+
+Future<_WorkspaceSymlinkFixture> _createWorkspaceSymlinkFixture() async {
+  final base = await Directory.systemTemp.createTemp(
+    'busymark-workspace-symlink-escape-',
+  );
+  addTearDown(() async {
+    if (await base.exists()) {
+      await base.delete(recursive: true);
+    }
+  });
+  final requestedRoot = Directory(p.join(base.path, 'workspace'))..createSync();
+  final root = Directory(await requestedRoot.resolveSymbolicLinks());
+  final outside = Directory(p.join(base.path, 'outside'))..createSync();
+  final link = Link(p.join(root.path, 'bridge'))..createSync(outside.path);
+  final workspace = Workspace(
+    id: 'symlink-test',
+    rootPath: root.path,
+    kind: WorkspaceKind.markdownFolder,
+    openedAt: DateTime.now(),
+    files: const [],
+    diagnostics: const [],
+  );
+  return _WorkspaceSymlinkFixture(
+    root: root,
+    outside: outside,
+    link: link,
+    workspace: workspace,
+  );
+}
+
+class _WorkspaceSymlinkFixture {
+  const _WorkspaceSymlinkFixture({
+    required this.root,
+    required this.outside,
+    required this.link,
+    required this.workspace,
+  });
+
+  final Directory root;
+  final Directory outside;
+  final Link link;
+  final Workspace workspace;
 }
 
 class _RecordingMarkdownParser extends MarkdownParser {

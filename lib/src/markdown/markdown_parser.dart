@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:markdown/markdown.dart' as md;
 import 'package:path/path.dart' as p;
 
 import '../core/diagnostic.dart';
@@ -9,6 +10,7 @@ import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'busymark_document.dart';
 import 'markdown_ast_adapter.dart';
+import 'markdown_fence.dart';
 import 'markdown_model.dart';
 import 'raw_html_policy.dart';
 
@@ -142,7 +144,7 @@ class MarkdownParser {
       }
     }
 
-    var inFence = false;
+    MarkdownFence? openFence;
     var fenceStart = 0;
     String? fenceLanguage;
     final fenceContent = StringBuffer();
@@ -166,21 +168,11 @@ class MarkdownParser {
           ? rawLine.substring(0, rawLine.length - 1)
           : rawLine;
       final trimmed = line.trimRight();
-      final fence = RegExp(
-        r'^\s*(```|~~~)\s*([A-Za-z0-9_+\-#.]*)',
-      ).firstMatch(line);
-      if (fence != null) {
+      final activeFence = openFence;
+      if (activeFence != null) {
         previousSetextCandidateLine = null;
         previousSetextCandidateOffset = null;
-        if (!inFence) {
-          inFence = true;
-          fenceStart = offset;
-          fenceLanguage = fence.group(2)?.trim();
-          if (fenceLanguage != null && fenceLanguage.isEmpty) {
-            fenceLanguage = null;
-          }
-        } else {
-          inFence = false;
+        if (activeFence.closes(line)) {
           codeBlocks.add(
             MarkdownCodeBlock(
               language: fenceLanguage,
@@ -195,13 +187,21 @@ class MarkdownParser {
           );
           fenceContent.clear();
           fenceLanguage = null;
+          openFence = null;
+        } else {
+          fenceContent.write(rawLine);
         }
         offset += rawLine.length;
         lineIndex += 1;
         continue;
       }
-      if (inFence) {
-        fenceContent.write(rawLine);
+      final openingFence = MarkdownFence.parse(line);
+      if (openingFence != null) {
+        previousSetextCandidateLine = null;
+        previousSetextCandidateOffset = null;
+        openFence = openingFence;
+        fenceStart = offset;
+        fenceLanguage = openingFence.language;
         offset += rawLine.length;
         lineIndex += 1;
         continue;
@@ -361,22 +361,87 @@ class MarkdownParser {
     final sourceChunks = document.source == null
         ? const <_ScannedBlockSource>[]
         : _scannedBlockSources(document.filePath, document.source!);
-    final nonFrontMatterBlockCount = document.blocks
-        .where((block) => block.kind != BusyBlockKind.frontMatter)
-        .length;
-    final canAssignSource = sourceChunks.length == nonFrontMatterBlockCount;
-    var sourceIndex = 0;
+    final contentBlocks = document.blocks
+        .where(
+          (block) =>
+              block.kind != BusyBlockKind.frontMatter && !block.isGenerated,
+        )
+        .toList(growable: false);
+    final generatedBlocks = document.blocks
+        .where((block) => block.isGenerated)
+        .toList(growable: false);
+    final modeledSourceChunks = sourceChunks
+        .where((chunk) => !chunk.sourceOnly)
+        .toList(growable: false);
+    final canAssignSource = modeledSourceChunks.length == contentBlocks.length;
+    if (!canAssignSource) {
+      final contentWithMetadata = [
+        for (final block in contentBlocks)
+          _blockWithScannedMetadata(
+            block,
+            headings,
+            null,
+            headingIndexRef: () => headingIndex++,
+          ),
+      ];
+      if (sourceChunks.any((chunk) => chunk.protectEdits)) {
+        final source = document.source!;
+        final sourceStart = _frontMatterEndOffset(source);
+        final opaqueSource = _sourceOnlyBlock(
+          _ScannedBlockSource.fromOffsets(
+            filePath: document.filePath,
+            source: source,
+            startOffset: sourceStart,
+            endOffset: source.length,
+            sourceOnly: true,
+          ),
+        );
+        return document.copyWith(
+          diagnostics: diagnostics,
+          blocks: [
+            for (final block in document.blocks)
+              if (block.kind == BusyBlockKind.frontMatter) block,
+            opaqueSource,
+            for (final block in contentWithMetadata)
+              _sourceProtectedTree(block).copyWith(isGenerated: true),
+            for (final block in generatedBlocks) _sourceProtectedTree(block),
+          ],
+        );
+      }
+      return document.copyWith(
+        diagnostics: diagnostics,
+        blocks: [
+          for (final block in document.blocks)
+            if (block.kind == BusyBlockKind.frontMatter) block,
+          // A scanner mismatch must never discard source that the AST does
+          // not model. Keep opaque chunks in source order ahead of modeled
+          // content; the serializer can then retain them during its safe
+          // full-serialization fallback.
+          for (final chunk in sourceChunks)
+            if (chunk.sourceOnly) _sourceOnlyBlock(chunk),
+          ...contentWithMetadata,
+          ...generatedBlocks,
+        ],
+      );
+    }
+
+    var blockIndex = 0;
     return document.copyWith(
       diagnostics: diagnostics,
       blocks: [
         for (final block in document.blocks)
-          _blockWithScannedMetadata(
-            block,
-            headings,
-            canAssignSource ? sourceChunks : const <_ScannedBlockSource>[],
-            headingIndexRef: () => headingIndex++,
-            sourceIndexRef: () => sourceIndex++,
-          ),
+          if (block.kind == BusyBlockKind.frontMatter) block,
+        for (final chunk in sourceChunks)
+          if (chunk.sourceOnly)
+            _sourceOnlyBlock(chunk)
+          else
+            _blockWithScannedMetadata(
+              contentBlocks[blockIndex++],
+              headings,
+              chunk,
+              headingIndexRef: () => headingIndex++,
+            ),
+        ...generatedBlocks,
       ],
     );
   }
@@ -470,9 +535,8 @@ class MarkdownParser {
   BusyBlock _blockWithScannedMetadata(
     BusyBlock block,
     List<MarkdownHeading> headings,
-    List<_ScannedBlockSource> sourceChunks, {
+    _ScannedBlockSource? sourceChunk, {
     required int Function() headingIndexRef,
-    required int Function() sourceIndexRef,
   }) {
     var updated = block;
     if (updated.kind == BusyBlockKind.heading) {
@@ -481,17 +545,38 @@ class MarkdownParser {
         updated = _headingWithScannedMetadata(updated, headings[headingIndex]);
       }
     }
-    if (updated.kind != BusyBlockKind.frontMatter && sourceChunks.isNotEmpty) {
-      final sourceIndex = sourceIndexRef();
-      if (sourceIndex < sourceChunks.length) {
-        final chunk = sourceChunks[sourceIndex];
-        updated = updated.copyWith(
-          rawSource: chunk.rawSource,
-          sourceSpan: chunk.span,
-        );
+    if (updated.kind != BusyBlockKind.frontMatter && sourceChunk != null) {
+      updated = updated.copyWith(
+        rawSource: sourceChunk.rawSource,
+        sourceSpan: sourceChunk.span,
+      );
+      if (sourceChunk.protectEdits) {
+        updated = _sourceProtectedTree(updated);
       }
     }
     return updated;
+  }
+
+  BusyBlock _sourceProtectedTree(BusyBlock block) {
+    return block.copyWith(
+      children: [
+        for (final child in block.children) _sourceProtectedTree(child),
+      ],
+      preserveRaw: true,
+      isSourceProtected: true,
+    );
+  }
+
+  BusyBlock _sourceOnlyBlock(_ScannedBlockSource chunk) {
+    return BusyBlock(
+      id: '\u0000source-only:${chunk.span.startOffset}',
+      kind: BusyBlockKind.unknown,
+      rawSource: chunk.rawSource,
+      sourceSpan: chunk.span,
+      preserveRaw: true,
+      isSourceOnly: true,
+      isSourceProtected: true,
+    );
   }
 
   BusyBlock _headingWithScannedMetadata(
@@ -515,6 +600,7 @@ class MarkdownParser {
     String source,
   ) {
     var scanOffset = _frontMatterEndOffset(source);
+    final sourceLocationMapper = SourceLocationMapper(source);
     final chunks = <_ScannedBlockSource>[];
     final lines = source.substring(scanOffset).split(RegExp('(?<=\n)'));
     final indexedLines = <_ScannedSourceLine>[];
@@ -525,16 +611,25 @@ class MarkdownParser {
       scanOffset += rawLine.length;
     }
 
-    void addChunk(int startIndex, int endIndex) {
+    void addChunk(int startIndex, int endIndex, {bool sourceOnly = false}) {
       if (startIndex >= indexedLines.length || endIndex <= startIndex) {
         return;
       }
+      final startOffset = indexedLines[startIndex].offset;
+      final endOffset = indexedLines[endIndex - 1].endOffset;
       chunks.add(
         _ScannedBlockSource.fromOffsets(
           filePath: filePath,
           source: source,
-          startOffset: indexedLines[startIndex].offset,
-          endOffset: indexedLines[endIndex - 1].endOffset,
+          startOffset: startOffset,
+          endOffset: endOffset,
+          sourceOnly: sourceOnly,
+          sourceLocationMapper: sourceLocationMapper,
+          protectEdits:
+              !sourceOnly &&
+              _containsNestedDefinitions(
+                source.substring(startOffset, endOffset),
+              ),
         ),
       );
     }
@@ -547,11 +642,30 @@ class MarkdownParser {
       }
 
       final startIndex = index;
-      final fence = _fenceMarker(indexedLines[index].line);
+      final footnoteDefinitionEnd = _footnoteDefinitionEndIndex(
+        indexedLines,
+        index,
+      );
+      if (footnoteDefinitionEnd != null) {
+        addChunk(startIndex, footnoteDefinitionEnd, sourceOnly: true);
+        index = footnoteDefinitionEnd;
+        continue;
+      }
+      final referenceDefinitionEnd = _linkReferenceDefinitionEndIndex(
+        indexedLines,
+        index,
+      );
+      if (referenceDefinitionEnd != null) {
+        addChunk(startIndex, referenceDefinitionEnd, sourceOnly: true);
+        index = referenceDefinitionEnd;
+        continue;
+      }
+
+      final fence = MarkdownFence.parse(indexedLines[index].line);
       if (fence != null) {
         index += 1;
         while (index < indexedLines.length) {
-          if (_isClosingFence(indexedLines[index].line, fence)) {
+          if (fence.closes(indexedLines[index].line)) {
             index += 1;
             break;
           }
@@ -593,12 +707,16 @@ class MarkdownParser {
         continue;
       }
 
+      final startsWithBlockquote = _isBlockquoteStart(
+        indexedLines[startIndex].line,
+      );
       index += 1;
       while (index < indexedLines.length) {
         final line = indexedLines[index];
         if (line.trimmed.isEmpty ||
-            _fenceMarker(line.line) != null ||
+            MarkdownFence.parse(line.line) != null ||
             _isAtxHeading(line.line) ||
+            (!startsWithBlockquote && _isBlockquoteStart(line.line)) ||
             _listItemIndent(line.line) != null) {
           break;
         }
@@ -617,25 +735,217 @@ class MarkdownParser {
     return chunks;
   }
 
+  bool _containsNestedDefinitions(String source) {
+    if (!source.contains(']:')) {
+      return false;
+    }
+    final document = _markdownDocument();
+    document.parse(source);
+    return document.linkReferences.isNotEmpty ||
+        document.footnoteReferences.isNotEmpty;
+  }
+
+  int? _footnoteDefinitionEndIndex(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    const syntax = md.FootnoteDefSyntax();
+    final firstLine = _withoutCarriageReturn(lines[startIndex].line);
+    if (!syntax.pattern.hasMatch(firstLine)) {
+      return null;
+    }
+    final markdownLines = _footnoteCandidateLines(lines, startIndex);
+    if (markdownLines.isEmpty) {
+      return null;
+    }
+    final document = _markdownDocument();
+    final parser = md.BlockParser(markdownLines, document);
+    if (!syntax.canParse(parser)) {
+      return null;
+    }
+    syntax.parse(parser);
+    if (document.footnoteReferences.isEmpty) {
+      return null;
+    }
+    final consumedLines = _consumedLineCount(parser, markdownLines);
+    if (consumedLines <= 0) {
+      return null;
+    }
+    final verificationDocument = _markdownDocument();
+    verificationDocument.parseLines([
+      for (final line in markdownLines.take(consumedLines)) line.content,
+    ]);
+    if (verificationDocument.footnoteReferences.isEmpty) {
+      return null;
+    }
+    return startIndex + consumedLines;
+  }
+
+  int? _linkReferenceDefinitionEndIndex(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    const syntax = md.LinkReferenceDefinitionSyntax();
+    final firstLine = _withoutCarriageReturn(lines[startIndex].line);
+    if (!syntax.pattern.hasMatch(firstLine) ||
+        !_hasPotentialLinkReferenceLabel(lines, startIndex)) {
+      return null;
+    }
+    var endIndex = _nextLinkDefinitionBoundary(lines, startIndex + 1);
+    var extendedToBlockEnd = false;
+    while (true) {
+      final markdownLines = [
+        for (var index = startIndex; index < endIndex; index++)
+          md.Line(_withoutCarriageReturn(lines[index].line)),
+      ];
+      if (markdownLines.isEmpty) {
+        return null;
+      }
+      final document = _markdownDocument();
+      final parser = md.BlockParser(markdownLines, document);
+      if (!syntax.canParse(parser)) {
+        return null;
+      }
+      syntax.parse(parser);
+      if (document.linkReferences.isNotEmpty) {
+        final consumedLines = _consumedLineCount(parser, markdownLines);
+        if (consumedLines <= 0) {
+          return null;
+        }
+
+        // Confirm the definition wins normal block-syntax precedence. Calling
+        // the definition syntax directly is only used to learn its exact line
+        // count.
+        final verificationDocument = _markdownDocument();
+        final nodes = verificationDocument.parseLines([
+          for (final line in markdownLines.take(consumedLines)) line.content,
+        ]);
+        if (nodes.isNotEmpty || verificationDocument.linkReferences.isEmpty) {
+          return null;
+        }
+        return startIndex + consumedLines;
+      }
+      if (endIndex >= lines.length || lines[endIndex].trimmed.isEmpty) {
+        return null;
+      }
+      if (extendedToBlockEnd) {
+        return null;
+      }
+      endIndex = _nextBlankLineBoundary(lines, endIndex + 1);
+      extendedToBlockEnd = true;
+    }
+  }
+
+  int _nextLinkDefinitionBoundary(
+    List<_ScannedSourceLine> lines,
+    int searchStart,
+  ) {
+    for (var index = searchStart; index < lines.length; index++) {
+      final content = _withoutCarriageReturn(lines[index].line);
+      if (content.trim().isEmpty || _startsDefinitionCandidate(content)) {
+        return index;
+      }
+    }
+    return lines.length;
+  }
+
+  int _nextBlankLineBoundary(List<_ScannedSourceLine> lines, int searchStart) {
+    for (var index = searchStart; index < lines.length; index++) {
+      if (lines[index].trimmed.isEmpty) {
+        return index;
+      }
+    }
+    return lines.length;
+  }
+
+  List<md.Line> _footnoteCandidateLines(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    final result = <md.Line>[];
+    for (var index = startIndex; index < lines.length; index++) {
+      final content = _withoutCarriageReturn(lines[index].line);
+      if (index > startIndex && _startsDefinitionCandidate(content)) {
+        break;
+      }
+      result.add(md.Line(content));
+    }
+    return result;
+  }
+
+  bool _startsDefinitionCandidate(String line) {
+    if (const md.FootnoteDefSyntax().pattern.hasMatch(line)) {
+      return true;
+    }
+    return const md.LinkReferenceDefinitionSyntax().pattern.hasMatch(line) &&
+        line.contains(']:');
+  }
+
+  bool _hasPotentialLinkReferenceLabel(
+    List<_ScannedSourceLine> lines,
+    int startIndex,
+  ) {
+    const maximumLabelLength = 999;
+    var labelLength = 0;
+    for (var lineIndex = startIndex; lineIndex < lines.length; lineIndex++) {
+      final line = _withoutCarriageReturn(lines[lineIndex].line);
+      if (lineIndex > startIndex && line.trim().isEmpty) {
+        return false;
+      }
+      var characterIndex = lineIndex == startIndex ? line.indexOf('[') + 1 : 0;
+      while (characterIndex < line.length) {
+        final character = line.codeUnitAt(characterIndex);
+        if (character == 0x5c) {
+          characterIndex += 2;
+          labelLength += 1;
+        } else if (character == 0x5b) {
+          return false;
+        } else if (character == 0x5d) {
+          return characterIndex + 1 < line.length &&
+              line.codeUnitAt(characterIndex + 1) == 0x3a;
+        } else {
+          characterIndex += 1;
+          labelLength += 1;
+        }
+        if (labelLength > maximumLabelLength) {
+          return false;
+        }
+      }
+      labelLength += 1;
+      if (labelLength > maximumLabelLength) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  md.Document _markdownDocument() {
+    return md.Document(
+      extensionSet: md.ExtensionSet.gitHubWeb,
+      encodeHtml: false,
+    );
+  }
+
+  int _consumedLineCount(md.BlockParser parser, List<md.Line> lines) {
+    return parser.isDone
+        ? lines.length
+        : lines.indexWhere((line) => identical(line, parser.current));
+  }
+
+  String _withoutCarriageReturn(String line) {
+    return line.endsWith('\r') ? line.substring(0, line.length - 1) : line;
+  }
+
   bool _isAtxHeading(String line) {
     return RegExp(r'^\s{0,3}#{1,6}\s+').hasMatch(line);
   }
 
+  bool _isBlockquoteStart(String line) {
+    return RegExp(r'^[ ]{0,3}>').hasMatch(line);
+  }
+
   bool _isThematicBreak(String trimmedLine) {
     return RegExp(r'^([*\-_])(\s*\1){2,}\s*$').hasMatch(trimmedLine);
-  }
-
-  String? _fenceMarker(String line) {
-    final match = RegExp(r'^\s*(`{3,}|~{3,})').firstMatch(line);
-    return match?.group(1);
-  }
-
-  bool _isClosingFence(String line, String opener) {
-    final marker = _fenceMarker(line);
-    if (marker == null || marker.codeUnitAt(0) != opener.codeUnitAt(0)) {
-      return false;
-    }
-    return marker.length >= opener.length;
   }
 
   int? _listItemIndent(String line) {
@@ -1335,28 +1645,47 @@ class _LocalLinkTarget {
 }
 
 class _ScannedBlockSource {
-  const _ScannedBlockSource({required this.rawSource, required this.span});
+  const _ScannedBlockSource({
+    required this.rawSource,
+    required this.span,
+    required this.sourceOnly,
+    required this.protectEdits,
+  });
 
   factory _ScannedBlockSource.fromOffsets({
     required String filePath,
     required String source,
     required int startOffset,
     required int endOffset,
+    bool sourceOnly = false,
+    bool protectEdits = false,
+    SourceLocationMapper? sourceLocationMapper,
   }) {
     final rawSource = source.substring(startOffset, endOffset).trimRight();
+    final mapper = sourceLocationMapper ?? SourceLocationMapper(source);
+    final rawEndOffset = startOffset + rawSource.length;
+    final start = mapper.locationForOffset(startOffset);
+    final end = mapper.locationForOffset(rawEndOffset);
     return _ScannedBlockSource(
       rawSource: rawSource,
-      span: SourceSpan.fromOffsets(
+      span: SourceSpan(
         filePath: filePath,
-        source: source,
         startOffset: startOffset,
-        endOffset: startOffset + rawSource.length,
+        endOffset: rawEndOffset,
+        startLine: start.line,
+        startColumn: start.column,
+        endLine: end.line,
+        endColumn: end.column,
       ),
+      sourceOnly: sourceOnly,
+      protectEdits: protectEdits,
     );
   }
 
   final String rawSource;
   final SourceSpan span;
+  final bool sourceOnly;
+  final bool protectEdits;
 }
 
 class _ScannedSourceLine {

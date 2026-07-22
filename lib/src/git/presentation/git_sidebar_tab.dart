@@ -39,8 +39,17 @@ class GitSidebarTab extends ConsumerWidget {
         icon: BusyMarkGlyphs.warning,
         title: context.l10n.gitUnavailableTitle,
         message: context.l10n.gitUnavailableMessage(
-          state.availability.unsupportedReason ?? '',
+          state.availability.unavailableReason ?? '',
         ),
+      );
+    }
+    if (state.requiresWorkspaceTrust) {
+      return _GitEmptyState(
+        icon: BusyMarkGlyphs.warning,
+        title: context.l10n.gitTrustRequiredTitle,
+        message: context.l10n.gitTrustRequiredMessage,
+        actionLabel: context.l10n.gitTrustWorkspace,
+        onAction: () => controller.trustWorkspace(),
       );
     }
     if (state.repositoryInfo == null) {
@@ -131,8 +140,10 @@ class _GitMessage extends StatelessWidget {
               const SizedBox(height: BusyMarkSpacing.xs),
               SelectableText(
                 failure.rawMessage.trim(),
+                textDirection: TextDirection.ltr,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
                 ),
               ),
             ],

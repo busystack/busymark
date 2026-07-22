@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -30,7 +32,93 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aboutWebsite => 'वेबसाइट';
 
   @override
-  String get aboutReportIssue => 'समस्या रिपोर्ट करें';
+  String get aboutSourceCode => 'स्रोत कोड';
+
+  @override
+  String get reportIssue => 'समस्या की रिपोर्ट करें';
+
+  @override
+  String get feedbackCategory => 'श्रेणी';
+
+  @override
+  String get feedbackChooseCategory => 'श्रेणी चुनें';
+
+  @override
+  String get feedbackCategoryProblem => 'समस्या या बग';
+
+  @override
+  String get feedbackCategoryFeature => 'सुविधा अनुरोध';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'गोपनीयता या सुरक्षा संबंधी चिंता';
+
+  @override
+  String get feedbackCategoryUsability => 'उपयोगिता संबंधी चिंता';
+
+  @override
+  String get feedbackCategoryOther => 'अन्य';
+
+  @override
+  String get feedbackSubject => 'विषय';
+
+  @override
+  String get feedbackMessage => 'विस्तृत संदेश';
+
+  @override
+  String get feedbackReplyEmail => 'उत्तर ईमेल (वैकल्पिक)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'तकनीकी विवरण शामिल करें';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'सक्षम होने पर केवल Linux ऑपरेटिंग सिस्टम का संस्करण और BusyMark ऐप की भाषा व क्षेत्र सेटिंग जोड़ी जाती है। कोई लॉग, फ़ाइल, खाता डेटा या अन्य निदान जानकारी संलग्न नहीं की जाती।';
+
+  @override
+  String get feedbackSubmit => 'भेजें';
+
+  @override
+  String get feedbackSubmitting => 'भेजा जा रहा है…';
+
+  @override
+  String get feedbackCategoryRequired => 'श्रेणी चुनें।';
+
+  @override
+  String get feedbackSubjectLength => 'विषय 3 से 120 वर्णों के बीच होना चाहिए।';
+
+  @override
+  String get feedbackMessageLength =>
+      'संदेश 10 से 5000 वर्णों के बीच होना चाहिए।';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'मान्य ईमेल पता दर्ज करें या यह फ़ील्ड खाली छोड़ें।';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark कनेक्ट नहीं हो सका। अपना इंटरनेट कनेक्शन जाँचें और फिर प्रयास करें।';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'अनुरोध का समय समाप्त हो गया। फिर प्रयास करें।';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'इस कनेक्शन से बहुत अधिक रिपोर्ट भेजी गई हैं। प्रतीक्षा करें और फिर प्रयास करें।';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'सर्वर ने रिपोर्ट अस्वीकार कर दी। फ़ॉर्म फ़ील्ड जाँचें और फिर प्रयास करें।';
+
+  @override
+  String get feedbackServerFailure =>
+      'सर्वर रिपोर्ट स्वीकार नहीं कर सका। बाद में फिर प्रयास करें।';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'प्रतिक्रिया भेजी गई। संदर्भ आईडी: $id';
+  }
 
   @override
   String get advanced => 'उन्नत';
@@ -99,9 +187,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get fileHistory => 'फ़ाइल इतिहास';
 
   @override
-  String get find => 'ढूँढें';
-
-  @override
   String get folder => 'फ़ोल्डर';
 
   @override
@@ -124,6 +209,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get openInFiles => 'Files में खोलें';
+
+  @override
+  String get pathActions => 'पथ संबंधी कार्रवाइयाँ';
 
   @override
   String get outline => 'रूपरेखा';
@@ -216,6 +304,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageEstonian => 'Eesti';
+
+  @override
   String get toggleSidebar => 'साइडबार पैनल';
 
   @override
@@ -269,7 +360,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get noOpenFile => 'कोई फ़ाइल खुली नहीं है';
 
   @override
-  String get shortcutGroupFile => 'फ़ाइल';
+  String get shortcutDeleteTreeItemDescription =>
+      'फ़ाइलों में चुना गया आइटम मिटाएँ या विषय-सूची से चुना गया विषय हटाएँ';
+
+  @override
+  String get shortcutGroupGeneral => 'सामान्य';
 
   @override
   String get shortcutNewDocument => 'नया दस्तावेज़';
@@ -283,10 +378,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'Markdown फ़ाइल, फ़ोल्डर या Writerside प्रोजेक्ट खोलें';
 
   @override
-  String get shortcutSaveDescription => 'मौजूदा Markdown फ़ाइल सहेजें';
+  String get shortcutSaveDescription => 'मौजूदा दस्तावेज़ सहेजें';
 
   @override
-  String get shortcutFindDescription => 'मौजूदा दस्तावेज़ में खोजें';
+  String get shortcutSearchDescription => 'मौजूदा कार्यस्थान में खोजें';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -303,31 +398,32 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutNextTab => 'अगला टैब';
 
   @override
-  String get shortcutNextTabDescription => 'अगले खुले संपादक टैब पर जाएँ';
+  String get shortcutNextTabDescription => 'अगले खुले टैब पर जाएँ';
 
   @override
   String get shortcutPreviousTab => 'पिछला टैब';
 
   @override
-  String get shortcutPreviousTabDescription => 'पिछले खुले संपादक टैब पर जाएँ';
+  String get shortcutPreviousTabDescription => 'पिछले खुले टैब पर जाएँ';
 
   @override
   String get shortcutCloseTab => 'टैब बंद करें';
 
   @override
-  String get shortcutCloseTabDescription => 'सक्रिय संपादक टैब बंद करें';
+  String get shortcutCloseTabDescription => 'सक्रिय टैब बंद करें';
 
   @override
   String get shortcutCloseAllTabs => 'सभी टैब बंद करें';
 
   @override
-  String get shortcutCloseAllTabsDescription => 'सभी खुले संपादक टैब बंद करें';
+  String get shortcutCloseAllTabsDescription => 'सभी खुले टैब बंद करें';
 
   @override
   String get shortcutGroupTextEditing => 'टेक्स्ट संपादन';
 
   @override
-  String get shortcutSelectAllDescription => 'संपादक का पूरा टेक्स्ट चुनें';
+  String get shortcutSelectAllDescription =>
+      'स्रोत मोड में पूरा पाठ चुनें; संपादक मोड में सभी ब्लॉक चुनने के लिए दो बार दबाएँ';
 
   @override
   String get shortcutCutDescription => 'चयनित टेक्स्ट कट करें';
@@ -349,11 +445,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutRedoDescription => 'अंतिम पूर्ववत संपादन फिर से करें';
 
   @override
-  String get clearEditorSelection => 'संपादक का चयन साफ़ करें';
+  String get shortcutInsertIndentation => 'इंडेंट डालें';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'मौजूदा संपादक चयन या खोज फ़ोकस से बाहर निकलें';
+  String get shortcutInsertIndentationDescription => 'कर्सर पर इंडेंट डालें';
+
+  @override
+  String get shortcutOutdentSource => 'स्रोत का इंडेंट घटाएँ';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'स्रोत मोड में इंडेंट का एक स्तर हटाएँ';
+
+  @override
+  String get shortcutEscape => 'खोज बंद करें या ब्लॉक चयन हटाएँ';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'कार्यस्थान खोज बंद करें या संपादक मोड में ब्लॉक चयन हटाएँ';
 
   @override
   String get shortcutGroupFormatting => 'फ़ॉर्मेटिंग';
@@ -519,28 +628,48 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clearRecentWorkspaces => 'हालिया कार्यस्थान साफ़ करें';
 
   @override
-  String get editingButtons => 'संपादन बटन';
+  String get editingButtonsPosition => 'संपादन बटनों की स्थिति';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।';
 
   @override
-  String get privacy => 'Privacy';
+  String get editingButtonsDirection => 'संपादन बटनों की दिशा';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get editingButtonsDirectionDescription =>
+      'चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन क्षैतिज रूप से व्यवस्थित हों या लंबवत रूप से।';
+
+  @override
+  String get horizontal => 'क्षैतिज';
+
+  @override
+  String get vertical => 'लंबवत';
+
+  @override
+  String get privacy => 'गोपनीयता';
+
+  @override
+  String get allowRemoteImages => 'दूरस्थ छवियाँ लोड करें';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'Markdown पूर्वावलोकन और संपादक की छवियों को http और https URL से लोड होने दें।';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions => 'दूरस्थ छवि अनुमतियाँ साफ़ करें';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।';
+
+  @override
+  String get clearGitWorkspaceTrust => 'विश्वसनीय Git कार्यस्थान साफ़ करें';
+
+  @override
+  String get clearGitWorkspaceTrustDescription =>
+      'पहले से विश्वसनीय कार्यस्थानों के लिए Git सुविधाएँ चालू करने से पहले पूछें।';
 
   @override
   String get settingsWindowSectionTitle => 'विंडो';
@@ -642,6 +771,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get htmlBlock => 'HTML ब्लॉक';
+
+  @override
+  String get htmlContentDefault => 'HTML सामग्री';
 
   @override
   String get shortcutHtmlBlockDescription => 'HTML ब्लॉक डालें या संपादित करें';
@@ -758,6 +890,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get altText => 'Alt टेक्स्ट';
 
   @override
+  String get editorPlaceholderText => 'टेक्स्ट';
+
+  @override
+  String get editorPlaceholderCode => 'कोड';
+
+  @override
+  String get editorPlaceholderAltText => 'वैकल्पिक टेक्स्ट';
+
+  @override
   String get describeTheImage => 'छवि का वर्णन करें';
 
   @override
@@ -778,24 +919,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get noImageSource => 'कोई छवि स्रोत नहीं';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'दूरस्थ छवि अवरुद्ध';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'चुनें कि BusyMark दूरस्थ छवियाँ लोड कर सकता है या नहीं।';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'दूरस्थ छवियाँ अवरुद्ध हैं';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'यह दस्तावेज़ इंटरनेट की छवियों का संदर्भ देता है। उन्हें लोड करने पर छवि होस्ट को नेटवर्क की जानकारी मिल सकती है।';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace => 'इस कार्यस्थान के लिए लोड करें';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'दूरस्थ छवियाँ हमेशा लोड करें';
 
   @override
   String get hideSidebar => 'साइडबार पैनल छिपाएँ';
@@ -843,6 +984,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get toc => 'TOC';
 
   @override
+  String get tocActions => 'विषय-सूची संबंधी कार्रवाइयाँ';
+
+  @override
   String get markdownUnsaved => 'Markdown - सहेजा नहीं गया';
 
   @override
@@ -875,6 +1019,177 @@ class AppLocalizationsHi extends AppLocalizations {
   String get newChildTopic => 'नया उप-विषय';
 
   @override
+  String get newSiblingTopic => 'समान स्तर पर नया विषय';
+
+  @override
+  String get renameTopicFile => 'विषय फ़ाइल का नाम बदलें';
+
+  @override
+  String get topicPlacement => 'TOC में स्थान';
+
+  @override
+  String get tocRoot => 'TOC के शीर्ष स्तर पर';
+
+  @override
+  String get afterSelectedTopic => 'चयनित विषय के बाद';
+
+  @override
+  String get insideSelectedTopic => 'चयनित विषय के अंदर';
+
+  @override
+  String get pasteAfterTopic => 'इसके बाद पेस्ट करें';
+
+  @override
+  String get pasteAsChildTopic => 'उप-विषय के रूप में पेस्ट करें';
+
+  @override
+  String get removeFromToc => 'TOC से हटाएँ';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'TOC से हटाएँ?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'इस TOC से $name को हटाएँ? विषय फ़ाइल बनी रहेगी।';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'विषय फ़ाइल हटाएँ?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return '$name को हटाकर सभी TOC से निकाल दें? इसे वापस नहीं किया जा सकता।';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'विषय फ़ाइल को सुरक्षित रूप से हटाएँ…';
+
+  @override
+  String get removeTocElement => 'TOC तत्व हटाएँ';
+
+  @override
+  String get reviewUsages => 'उपयोगों की समीक्षा करें';
+
+  @override
+  String get deleteTopicFile => 'विषय फ़ाइल हटाएँ';
+
+  @override
+  String get removeAction => 'हटाएँ';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return '“$topic” को चुने गए सहायता इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return '“$topic” को हटाएँ और इस पूरे Writerside प्रोजेक्ट में उसके संदर्भों को सुरक्षित रूप से अपडेट करें।';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count उप-विषय एक स्तर ऊपर चले जाएँगे।',
+      one: '1 उप-विषय एक स्तर ऊपर चला जाएगा।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'यह विषय किसी इंस्टेंस के प्रारंभ पृष्ठ के रूप में उपयोग हो रहा है। इसके उपयोगों की समीक्षा करें और आगे बढ़ने से पहले कोई दूसरा प्रारंभ पृष्ठ निर्धारित करें।';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'उपयोग ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'कोई ऐसा संदर्भ नहीं मिला जो टूट सकता है।';
+
+  @override
+  String get topicUsagesFound => 'BusyMark को इस विषय के निम्न संदर्भ मिले।';
+
+  @override
+  String get topicUsageTocElements => 'TOC तत्व';
+
+  @override
+  String get topicUsageStartPages => 'प्रारंभ पृष्ठ';
+
+  @override
+  String get topicUsageTopicLinks => 'विषय लिंक';
+
+  @override
+  String get topicUsageIncludes => 'शामिल अंश';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count उपयोग',
+      one: '1 उपयोग',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'रीफ़ैक्टरिंग विकल्प';
+
+  @override
+  String get updateUsagesAutomatically => 'उपयोगों को अपने आप अपडेट करें';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'TOC संदर्भ और शामिल अंश हटाएँ, और लिंक का टेक्स्ट बनाए रखें।';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'इस रीफ़ैक्टरिंग से पहले कुछ उपयोगों को मैन्युअल रूप से बदलना होगा।';
+
+  @override
+  String get setRedirectTo => 'इस पर रीडायरेक्ट करें';
+
+  @override
+  String get noRedirectDescription =>
+      'पुराने प्रकाशित पृष्ठ को रीडायरेक्ट न करें।';
+
+  @override
+  String get redirectTarget => 'रीडायरेक्ट गंतव्य';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'आगे बढ़ने से पहले शेष उपयोगों की समीक्षा करके उन्हें अपडेट करें, या उपलब्ध होने पर अपने आप अपडेट करने का विकल्प चालू करें।';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return '$topic के उपयोग';
+  }
+
+  @override
+  String get noUsagesFound => 'कोई उपयोग नहीं मिला';
+
+  @override
+  String get outsideSelectedInstance => 'चुने गए इंस्टेंस के बाहर';
+
+  @override
+  String get doRefactor => 'रीफ़ैक्टर करें';
+
+  @override
+  String get orphanTopicTitle => 'विषय फ़ाइल अब उपयोग में नहीं है';
+
+  @override
+  String get keepTopicFile => 'विषय फ़ाइल रखें';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '“$topic” अब इस Writerside प्रोजेक्ट में कहीं भी उपयोग नहीं होता। फ़ाइल हटाएँ या किसी दूसरे इंस्टेंस में उपयोग के लिए इसे रखें।';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'नया विषय';
 
   @override
@@ -900,12 +1215,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String confirmDeleteFileMessage(String name) {
-    return '$name हटाएँ? इसे वापस नहीं किया जा सकता.';
+    return '$name हटाएँ? इसे वापस नहीं किया जा सकता।';
   }
 
   @override
   String confirmDeleteFolderMessage(String name) {
-    return '$name और उसके अंदर की सभी फ़ाइलें हटाएँ? इसे वापस नहीं किया जा सकता.';
+    return '$name और उसके अंदर की सभी फ़ाइलें हटाएँ? इसे वापस नहीं किया जा सकता।';
   }
 
   @override
@@ -953,23 +1268,27 @@ class AppLocalizationsHi extends AppLocalizations {
   String get foldKindTag => 'टैग';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'पिछला मिलान';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'अगला मिलान';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive =>
+      'बड़े-छोटे अक्षरों के प्रति संवेदनशील';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'पूरा शब्द';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'रेगुलर एक्सप्रेशन';
+
+  @override
+  String get sourceSearchInvalidRegex => 'अमान्य रेगुलर एक्सप्रेशन';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं';
 
   @override
   String get noPreview => 'कोई पूर्वावलोकन नहीं';
@@ -1140,22 +1459,22 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get errorFileNameRequired => 'फ़ाइल नाम आवश्यक है.';
+  String get errorFileNameRequired => 'फ़ाइल नाम आवश्यक है।';
 
   @override
-  String get errorFileNameUnsafe => 'फ़ाइल नाम एक सुरक्षित पथ खंड होना चाहिए.';
+  String get errorFileNameUnsafe => 'फ़ाइल नाम एक सुरक्षित पथ खंड होना चाहिए।';
 
   @override
   String get errorFileOperationInvalidTarget =>
-      'किसी फ़ोल्डर को उसी के अंदर नहीं ले जाया जा सकता.';
+      'किसी फ़ोल्डर को उसी के अंदर नहीं ले जाया जा सकता।';
 
   @override
   String get errorFileOperationOutsideRoot =>
-      'फ़ाइल ऑपरेशन workspace के अंदर ही रहना चाहिए.';
+      'फ़ाइल कार्रवाई कार्यस्थान के अंदर ही रहनी चाहिए।';
 
   @override
   String get errorFileOperationRoot =>
-      'workspace root को फ़ाइल tree से नहीं बदला जा सकता.';
+      'फ़ाइल ट्री से कार्यस्थान का रूट नहीं बदला जा सकता।';
 
   @override
   String get errorProjectNameRequired => 'प्रोजेक्ट का नाम आवश्यक है।';
@@ -1209,6 +1528,40 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'संदर्भित विषय चयनित ट्री में मौजूद नहीं है: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'चयनित TOC प्रविष्टि अब मौजूद नहीं है।';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'TOC प्रविष्टि को उसी के अंदर या उसकी किसी उप-प्रविष्टि के अंदर नहीं ले जाया जा सकता।';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'आरंभिक विषय $topic को हटाया नहीं जा सकता। पहले कोई दूसरा आरंभ पेज चुनें।';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Writerside विषय फ़ाइलों के लिए सुरक्षित रूप से हटाएँ सुविधा का उपयोग करें।';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'विषय के उपयोगों की जाँच पूरी नहीं हो सकी। कोई फ़ाइल नहीं बदली गई।';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'विषय के कुछ उपयोगों पर अभी ध्यान देना आवश्यक है। आगे बढ़ने से पहले उनकी समीक्षा करें।';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'चुना गया रीडायरेक्ट लक्ष्य अब मान्य नहीं है। उसे फिर से चुनें।';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'विषय हटाने की कार्रवाई पूरी तरह वापस नहीं की जा सकी। आगे बढ़ने से पहले इन पथों की समीक्षा करें: $paths';
   }
 
   @override
@@ -1546,54 +1899,75 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'बंद करें';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'Git डिफ़';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'डिफ़ दिखाएँ';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'पुराना $oldRange → नया $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'कोई पंक्ति नहीं';
+
+  @override
+  String get gitUnavailableTitle => 'Git उपलब्ध नहीं है';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Git इंस्टॉल करें या BusyMark को उपलब्ध Git एक्ज़ीक्यूटेबल इस्तेमाल करने के लिए कॉन्फ़िगर करें। $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitTrustRequiredTitle => 'Git के लिए इस कार्यस्थान पर भरोसा करें?';
+
+  @override
+  String get gitTrustRequiredMessage =>
+      'Git रिपॉज़िटरी हुक, फ़िल्टर और अन्य कॉन्फ़िगरेशन के ज़रिए प्रोग्राम चला सकती हैं। BusyMark के रिपॉज़िटरी डेटा पढ़ने या Git कार्रवाइयाँ चालू करने से पहले इस कार्यस्थान पर भरोसा करें।';
+
+  @override
+  String get gitTrustWorkspace => 'कार्यस्थान पर भरोसा करें';
+
+  @override
+  String get gitNotRepositoryTitle => 'Git रिपॉज़िटरी नहीं है';
 
   @override
   String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+      'यह कार्यस्थान किसी Git रिपॉज़िटरी के अंदर नहीं है।';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'रिपॉज़िटरी आरंभ करें';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitDetachedHead => 'डिटैच्ड HEAD';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return '$commit पर डिटैच्ड HEAD';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'कोई अपस्ट्रीम नहीं';
 
   @override
   String gitAheadCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count नहीं भेजे गए कमिट',
-      one: '1 नहीं भेजा गया कमिट',
+      other: '$count कमिट पुश नहीं किए गए',
+      one: '1 कमिट पुश नहीं किया गया',
     );
     return '$_temp0';
   }
@@ -1603,17 +1977,17 @@ class AppLocalizationsHi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count कमिट पुल करना बाकी',
+      one: '1 कमिट पुल करना बाकी',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'क्लीन';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'टकराव';
 
   @override
   String get gitChanges => 'बदलाव';
@@ -1622,90 +1996,93 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitHistory => 'इतिहास';
 
   @override
-  String get gitBranches => 'शाखाएं';
+  String get gitBranches => 'शाखाएँ';
 
   @override
-  String get gitPull => 'Pull';
+  String get gitBranchActions => 'शाखा संबंधी कार्रवाइयाँ';
 
   @override
-  String get gitPush => 'Push';
+  String get gitPull => 'पुल';
+
+  @override
+  String get gitPush => 'पुश';
 
   @override
   String get gitCommit => 'कमिट करें';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'कमिट के लिए चुनें';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'कमिट से बाहर रखें';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'त्यागें';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'फ़ाइल खोलें';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'सुलझा हुआ चिह्नित करें';
 
   @override
-  String get gitUntracked => 'असंस्करणित फ़ाइलें';
+  String get gitUntracked => 'अनट्रैक की गई फ़ाइलें';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'कमिट संदेश';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'चयनित फ़ाइलें';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'कमिट करने से पहले कम से कम एक फ़ाइल चुनें।';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'कमिट संदेश दर्ज करें।';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'शाखा बनाएँ';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ नई शाखा';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'शाखा का नाम';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'बदलें';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'कोई बदलाव नहीं';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'कोई इतिहास नहीं';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'कोई शाखा नहीं';
 
   @override
   String get gitNoDiff => 'दिखाने के लिए कोई अंतर नहीं';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'बाइनरी फ़ाइल। BusyMark बाइनरी पैच रेंडर नहीं करता है।';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'संपादक के न सहेजे गए बदलाव सहेजे जाने तक शामिल नहीं किए जाते।';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'Git बदलाव त्यागें?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other: 'चयनित ट्रैक की गई फ़ाइलें Git से पुनर्स्थापित की जाएँगी।',
+      one: 'चयनित ट्रैक की गई फ़ाइल Git से पुनर्स्थापित की जाएगी।',
     );
     return '$_temp0';
   }
@@ -1715,8 +2092,8 @@ class AppLocalizationsHi extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'चयनित अनट्रैक की गई फ़ाइलें हटा दी जाएँगी।',
+      one: 'चयनित अनट्रैक की गई फ़ाइल हटा दी जाएगी।',
     );
     return '$_temp0';
   }
@@ -1727,35 +2104,35 @@ class AppLocalizationsHi extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
+          'चयनित फ़ाइलों को उनकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।',
       one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'चयनित फ़ाइल को उसकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return '$branch पर स्विच करें?';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'Git के शाखा बदलने के बाद BusyMark कार्यस्थान को डिस्क से फिर लोड करेगा।';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'अपस्ट्रीम शाखा सेट करें?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'इस शाखा का कोई अपस्ट्रीम नहीं है। ठीक एक रिमोट कॉन्फ़िगर होने पर BusyMark $branch को पुश करके उसका अपस्ट्रीम सेट कर सकता है।';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'प्रोजेक्ट';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'मौजूदा फ़ाइल';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -1763,80 +2140,81 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'फ़ाइल कार्रवाइयाँ';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'जोड़ा गया';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'हटाया गया';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'नाम बदला गया';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'कॉपी किया गया';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'अनट्रैक किया गया';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'टकराव वाला';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'अनदेखा किया गया';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'प्रकार बदला गया';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'बदला गया';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'अज्ञात';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git उपलब्ध नहीं है।';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository => 'यह कार्यस्थान Git रिपॉज़िटरी नहीं है।';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath =>
+      'BusyMark ने असुरक्षित Git पथ को अवरुद्ध किया।';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName => 'मान्य शाखा नाम दर्ज करें।';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'कोई Git रिमोट कॉन्फ़िगर नहीं है।';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'कोई अपस्ट्रीम शाखा कॉन्फ़िगर नहीं है।';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'कई रिमोट कॉन्फ़िगर हैं। इस BusyMark संस्करण के बाहर कोई अपस्ट्रीम चुनें।';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'शाखा बदलने से पहले BusyMark संपादक के बदलाव सहेजें या त्यागें।';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'शाखा अलग हो गई है। इस BusyMark संस्करण के बाहर मर्ज या रीबेस करके इसे सुलझाएँ।';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'Git प्रमाणीकरण विफल रहा। snap में SSH रिमोट के लिए ssh-keys इंटरफ़ेस कनेक्ट करना पड़ सकता है।';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'Git नेटवर्क कार्रवाई विफल रही।';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'Git ने अनसुलझे टकराव रिपोर्ट किए।';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'Git कमांड विफल रहा।';
 
   @override
   String get markdownAndHtml => 'Markdown और HTML';
@@ -1853,7 +2231,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get markdownHtmlInlineFormattingDescription =>
-      'पैराग्राफ, सूची आइटम और तालिका सेल के अंदर इस्तेमाल होने वाला फ़ॉर्मैटिंग।';
+      'ऐसी फ़ॉर्मैटिंग जिसे पैराग्राफ़, सूची आइटम और तालिका सेल के अंदर इस्तेमाल किया जा सकता है।';
 
   @override
   String get markdownHtmlRawHtmlBlocks => 'कच्चे HTML ब्लॉक';
@@ -1874,7 +2252,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get markdownHtmlSafetyDescription =>
-      'कच्चे HTML को प्रीव्यू से पहले पार्स और साफ किया जाता है।';
+      'कच्चे HTML को प्रीव्यू से पहले पार्स और साफ़ किया जाता है।';
 
   @override
   String get markdownHtmlHeadings => 'शीर्षक';
@@ -1913,7 +2291,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get markdownHtmlHtmlNeutralInlineTags => 'अर्थपूर्ण टेक्स्ट टैग';
 
   @override
-  String get markdownHtmlSanitizedPreview => 'साफ किया गया प्रीव्यू';
+  String get markdownHtmlSanitizedPreview => 'साफ़ किया गया प्रीव्यू';
 
   @override
   String get markdownHtmlSanitizedPreviewDescription =>
@@ -1924,7 +2302,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get markdownHtmlSourcePreservedDescription =>
-      'बिना संपादित कच्चा HTML ठीक उसी स्रोत टेक्स्ट के रूप में सहेजा जाता है।';
+      'असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।';
 
   @override
   String get markdownHtmlMarkdownInsideHtml => 'HTML के अंदर Markdown';
@@ -1945,5 +2323,5 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get markdownHtmlSafeUrlsDescription =>
-      'लिंक http, https, mailto, tel, relative URL और fragment स्वीकार करते हैं; असुरक्षित scheme अवरुद्ध होती हैं।';
+      'लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।';
 }

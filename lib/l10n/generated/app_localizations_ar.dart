@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -30,7 +32,91 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutWebsite => 'الموقع الإلكتروني';
 
   @override
-  String get aboutReportIssue => 'الإبلاغ عن مشكلة';
+  String get aboutSourceCode => 'الشيفرة المصدرية';
+
+  @override
+  String get reportIssue => 'الإبلاغ عن مشكلة';
+
+  @override
+  String get feedbackCategory => 'الفئة';
+
+  @override
+  String get feedbackChooseCategory => 'اختر فئة';
+
+  @override
+  String get feedbackCategoryProblem => 'مشكلة أو خطأ';
+
+  @override
+  String get feedbackCategoryFeature => 'طلب ميزة';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'مخاوف تتعلق بالخصوصية أو الأمان';
+
+  @override
+  String get feedbackCategoryUsability => 'مخاوف تتعلق بسهولة الاستخدام';
+
+  @override
+  String get feedbackCategoryOther => 'أخرى';
+
+  @override
+  String get feedbackSubject => 'الموضوع';
+
+  @override
+  String get feedbackMessage => 'رسالة مفصلة';
+
+  @override
+  String get feedbackReplyEmail => 'بريد إلكتروني للرد (اختياري)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'تضمين التفاصيل التقنية';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'عند التفعيل، لا يُضاف سوى إصدار نظام التشغيل Linux والإعدادات المحلية لتطبيق BusyMark. لا يتم إرفاق أي سجلات أو ملفات أو بيانات حساب أو معلومات تشخيصية أخرى.';
+
+  @override
+  String get feedbackSubmit => 'إرسال';
+
+  @override
+  String get feedbackSubmitting => 'جارٍ الإرسال…';
+
+  @override
+  String get feedbackCategoryRequired => 'اختر فئة.';
+
+  @override
+  String get feedbackSubjectLength => 'يجب أن يتراوح الموضوع بين 3 و120 حرفًا.';
+
+  @override
+  String get feedbackMessageLength => 'يجب أن تتراوح الرسالة بين 10 و5000 حرف.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'أدخل عنوان بريد إلكتروني صالحًا أو اترك هذا الحقل فارغًا.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'تعذر على BusyMark الاتصال. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
+
+  @override
+  String get feedbackTimeoutFailure => 'انتهت مهلة الطلب. حاول مرة أخرى.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'تم إرسال عدد كبير جدًا من البلاغات عبر هذا الاتصال. انتظر ثم حاول مرة أخرى.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'رفض الخادم البلاغ. تحقّق من حقول النموذج وحاول مرة أخرى.';
+
+  @override
+  String get feedbackServerFailure =>
+      'تعذر على الخادم قبول البلاغ. حاول مرة أخرى لاحقًا.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'تم إرسال الملاحظات. معرّف المرجع: ⁨$id⁩';
+  }
 
   @override
   String get advanced => 'خيارات متقدمة';
@@ -99,9 +185,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fileHistory => 'سجل الملف';
 
   @override
-  String get find => 'بحث';
-
-  @override
   String get folder => 'مجلد';
 
   @override
@@ -124,6 +207,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get openInFiles => 'فتح في الملفات';
+
+  @override
+  String get pathActions => 'إجراءات المسار';
 
   @override
   String get outline => 'المخطط التفصيلي';
@@ -216,6 +302,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageEstonian => 'Eesti';
+
+  @override
   String get toggleSidebar => 'اللوحة الجانبية';
 
   @override
@@ -268,7 +357,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noOpenFile => 'لا يوجد ملف مفتوح';
 
   @override
-  String get shortcutGroupFile => 'ملف';
+  String get shortcutDeleteTreeItemDescription =>
+      'حذف العنصر المحدد في الملفات أو إزالة الموضوع المحدد من جدول المحتويات';
+
+  @override
+  String get shortcutGroupGeneral => 'عام';
 
   @override
   String get shortcutNewDocument => 'مستند جديد';
@@ -282,10 +375,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'فتح ملف Markdown أو مجلد أو مشروع Writerside';
 
   @override
-  String get shortcutSaveDescription => 'حفظ ملف Markdown الحالي';
+  String get shortcutSaveDescription => 'حفظ المستند الحالي';
 
   @override
-  String get shortcutFindDescription => 'البحث في المستند الحالي';
+  String get shortcutSearchDescription => 'البحث في مساحة العمل الحالية';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -302,33 +395,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shortcutNextTabDescription =>
-      'الانتقال إلى علامة تبويب المحرر التالية المفتوحة';
+      'الانتقال إلى علامة التبويب المفتوحة التالية';
 
   @override
   String get shortcutPreviousTab => 'علامة التبويب السابقة';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'الانتقال إلى علامة تبويب المحرر السابقة المفتوحة';
+      'الانتقال إلى علامة التبويب المفتوحة السابقة';
 
   @override
   String get shortcutCloseTab => 'إغلاق علامة التبويب';
 
   @override
-  String get shortcutCloseTabDescription => 'إغلاق علامة تبويب المحرر النشطة';
+  String get shortcutCloseTabDescription => 'إغلاق علامة التبويب النشطة';
 
   @override
   String get shortcutCloseAllTabs => 'إغلاق كل علامات التبويب';
 
   @override
   String get shortcutCloseAllTabsDescription =>
-      'إغلاق كل علامات تبويب المحرر المفتوحة';
+      'إغلاق كل علامات التبويب المفتوحة';
 
   @override
   String get shortcutGroupTextEditing => 'تحرير النص';
 
   @override
-  String get shortcutSelectAllDescription => 'تحديد النص كله في المحرر';
+  String get shortcutSelectAllDescription =>
+      'في وضع المصدر، حدد النص بالكامل؛ في وضع المحرر، اضغط مرتين لتحديد كل الكتل';
 
   @override
   String get shortcutCutDescription => 'قص النص المحدد';
@@ -349,11 +443,25 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutRedoDescription => 'إعادة آخر تعديل تم التراجع عنه';
 
   @override
-  String get clearEditorSelection => 'مسح تحديد النص في المحرر';
+  String get shortcutInsertIndentation => 'إدراج مسافة بادئة';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'الخروج من تحديد المحرر الحالي أو تركيز البحث';
+  String get shortcutInsertIndentationDescription =>
+      'إدراج مسافة بادئة عند المؤشر';
+
+  @override
+  String get shortcutOutdentSource => 'تقليل المسافة البادئة في المصدر';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'إزالة مستوى واحد من المسافة البادئة في وضع المصدر';
+
+  @override
+  String get shortcutEscape => 'إغلاق البحث أو مسح تحديد الكتل';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'إغلاق البحث في مساحة العمل أو إلغاء تحديد الكتل في وضع المحرر';
 
   @override
   String get shortcutGroupFormatting => 'التنسيق';
@@ -515,28 +623,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clearRecentWorkspaces => 'مسح مساحات العمل الأخيرة';
 
   @override
-  String get editingButtons => 'أزرار التحرير';
+  String get editingButtonsPosition => 'موضع أزرار التحرير';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'اختر مكان ظهور أزرار تحرير WYSIWYG العائمة.';
 
   @override
-  String get privacy => 'Privacy';
+  String get editingButtonsDirection => 'اتجاه أزرار التحرير';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get editingButtonsDirectionDescription =>
+      'اختر ترتيب أزرار تحرير WYSIWYG العائمة أفقيًا أو عموديًا.';
+
+  @override
+  String get horizontal => 'أفقي';
+
+  @override
+  String get vertical => 'عمودي';
+
+  @override
+  String get privacy => 'الخصوصية';
+
+  @override
+  String get allowRemoteImages => 'تحميل الصور البعيدة';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'السماح بتحميل صور معاينة Markdown والمحرر من عناوين URL التي تستخدم http وhttps.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions => 'مسح أذونات الصور البعيدة';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'نسيان مساحات العمل التي سُمح لها بتحميل الصور البعيدة.';
+
+  @override
+  String get clearGitWorkspaceTrust => 'مسح مساحات عمل Git الموثوقة';
+
+  @override
+  String get clearGitWorkspaceTrustDescription =>
+      'طلب التأكيد قبل تمكين ميزات Git لمساحات العمل التي سبق الوثوق بها.';
 
   @override
   String get settingsWindowSectionTitle => 'النافذة';
@@ -593,7 +721,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String unsavedChangesMessage(String fileName) {
-    return 'لديك تغييرات غير محفوظة في $fileName. هل تريد حفظها قبل المتابعة؟';
+    return 'لديك تغييرات غير محفوظة في ⁨$fileName⁩. هل تريد حفظها قبل المتابعة؟';
   }
 
   @override
@@ -644,6 +772,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get htmlBlock => 'كتلة HTML';
+
+  @override
+  String get htmlContentDefault => 'محتوى HTML';
 
   @override
   String get shortcutHtmlBlockDescription => 'إدراج كتلة HTML أو تحريرها';
@@ -707,7 +838,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String headingLevelAbbreviation(int level) {
-    return 'H$level';
+    return '⁨H$level⁩';
   }
 
   @override
@@ -760,6 +891,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get altText => 'النص البديل';
 
   @override
+  String get editorPlaceholderText => 'نص';
+
+  @override
+  String get editorPlaceholderCode => 'كود';
+
+  @override
+  String get editorPlaceholderAltText => 'نص بديل';
+
+  @override
   String get describeTheImage => 'صِف الصورة';
 
   @override
@@ -780,24 +920,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noImageSource => 'لا يوجد مصدر للصورة';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'الصورة البعيدة محظورة';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'اختر ما إذا كان بإمكان BusyMark تحميل الصور البعيدة.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'الصور البعيدة محظورة';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'يشير هذا المستند إلى صور من الإنترنت. قد يكشف تحميلها معلومات عن الشبكة لمضيف الصورة.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace => 'تحميل لمساحة العمل هذه';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'تحميل الصور البعيدة دائمًا';
 
   @override
   String get hideSidebar => 'إخفاء اللوحة الجانبية';
@@ -848,6 +988,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get toc => 'جدول المحتويات';
 
   @override
+  String get tocActions => 'إجراءات جدول المحتويات';
+
+  @override
   String get markdownUnsaved => 'Markdown - غير محفوظ';
 
   @override
@@ -884,6 +1027,185 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newChildTopic => 'موضوع فرعي جديد';
 
   @override
+  String get newSiblingTopic => 'موضوع جديد على المستوى نفسه';
+
+  @override
+  String get renameTopicFile => 'إعادة تسمية ملف الموضوع';
+
+  @override
+  String get topicPlacement => 'الموضع في جدول المحتويات';
+
+  @override
+  String get tocRoot => 'في جذر جدول المحتويات';
+
+  @override
+  String get afterSelectedTopic => 'بعد الموضوع المحدد';
+
+  @override
+  String get insideSelectedTopic => 'داخل الموضوع المحدد';
+
+  @override
+  String get pasteAfterTopic => 'لصق بعده';
+
+  @override
+  String get pasteAsChildTopic => 'لصق كموضوع فرعي';
+
+  @override
+  String get removeFromToc => 'إزالة من جدول المحتويات';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'هل تريد الإزالة من جدول المحتويات؟';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'هل تريد إزالة ⁨$name⁩ من جدول المحتويات هذا؟ سيُحتفظ بملف الموضوع.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'هل تريد حذف ملف الموضوع؟';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'هل تريد حذف ⁨$name⁩ وإزالته من جميع جداول المحتويات؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'حذف ملف الموضوع بأمان…';
+
+  @override
+  String get removeTocElement => 'إزالة عنصر جدول المحتويات';
+
+  @override
+  String get reviewUsages => 'مراجعة الاستخدامات';
+
+  @override
+  String get deleteTopicFile => 'حذف ملف الموضوع';
+
+  @override
+  String get removeAction => 'إزالة';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'أزِل «⁨$topic⁩» من مثيل المساعدة المحدد. سيُحتفظ بملف الموضوع.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'احذف «⁨$topic⁩» وحدّث المراجع إليه بأمان في مشروع Writerside هذا بأكمله.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'سينتقل $count موضوع فرعي مستوى واحدًا إلى الأعلى.',
+      many: 'سينتقل $count موضوعًا فرعيًا مستوى واحدًا إلى الأعلى.',
+      few: 'ستنتقل $count موضوعات فرعية مستوى واحدًا إلى الأعلى.',
+      two: 'سينتقل موضوعان فرعيان مستوى واحدًا إلى الأعلى.',
+      one: 'سينتقل موضوع فرعي واحد مستوى واحدًا إلى الأعلى.',
+      zero: 'لن يُنقل أي موضوع فرعي.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'يُستخدم هذا الموضوع كصفحة بدء لمثيل. راجع استخداماته وعيّن صفحة بدء أخرى قبل المتابعة.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'الاستخدامات ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages => 'لم يُعثر على مراجع قد تتعطل.';
+
+  @override
+  String get topicUsagesFound =>
+      'عثر BusyMark على المراجع التالية لهذا الموضوع.';
+
+  @override
+  String get topicUsageTocElements => 'عناصر جدول المحتويات';
+
+  @override
+  String get topicUsageStartPages => 'صفحات البدء';
+
+  @override
+  String get topicUsageTopicLinks => 'روابط الموضوعات';
+
+  @override
+  String get topicUsageIncludes => 'التضمينات';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count استخدام',
+      many: '$count استخدامًا',
+      few: '$count استخدامات',
+      two: 'استخدامان',
+      one: 'استخدام واحد',
+      zero: 'لا استخدامات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'خيارات إعادة الهيكلة';
+
+  @override
+  String get updateUsagesAutomatically => 'تحديث الاستخدامات تلقائيًا';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'إزالة مراجع جدول المحتويات والتضمينات مع الاحتفاظ بنص الروابط.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'تتطلب بعض الاستخدامات تغييرات يدوية قبل إعادة الهيكلة هذه.';
+
+  @override
+  String get setRedirectTo => 'تعيين إعادة التوجيه إلى';
+
+  @override
+  String get noRedirectDescription =>
+      'عدم إعادة توجيه الصفحة القديمة المنشورة.';
+
+  @override
+  String get redirectTarget => 'وجهة إعادة التوجيه';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'راجع الاستخدامات المتبقية وحدّثها قبل المتابعة، أو فعّل التحديثات التلقائية عند توفرها.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'استخدامات ⁨$topic⁩';
+  }
+
+  @override
+  String get noUsagesFound => 'لم يُعثر على استخدامات';
+
+  @override
+  String get outsideSelectedInstance => 'خارج المثيل المحدد';
+
+  @override
+  String get doRefactor => 'تنفيذ إعادة الهيكلة';
+
+  @override
+  String get orphanTopicTitle => 'لم يعد ملف الموضوع مستخدمًا';
+
+  @override
+  String get keepTopicFile => 'الاحتفاظ بملف الموضوع';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return 'لم يعد «⁨$topic⁩» مستخدمًا في أي مكان ضمن مشروع Writerside هذا. احذف الملف أو احتفظ به لاستخدامه في مثيل آخر.';
+  }
+
+  @override
   String get defaultNewTopicTitle => 'موضوع جديد';
 
   @override
@@ -909,12 +1231,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String confirmDeleteFileMessage(String name) {
-    return 'حذف $name؟ لا يمكن التراجع عن هذا.';
+    return 'حذف ⁨$name⁩؟ لا يمكن التراجع عن هذا.';
   }
 
   @override
   String confirmDeleteFolderMessage(String name) {
-    return 'حذف $name وكل الملفات داخله؟ لا يمكن التراجع عن هذا.';
+    return 'حذف ⁨$name⁩ وكل الملفات داخله؟ لا يمكن التراجع عن هذا.';
   }
 
   @override
@@ -922,7 +1244,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String useExpectedExtension(String extension) {
-    return 'استخدم الامتداد $extension للتنسيق المحدد.';
+    return 'استخدم الامتداد ⁨$extension⁩ للتنسيق المحدد.';
   }
 
   @override
@@ -961,23 +1283,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get foldKindTag => 'وسم';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'التطابق السابق';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'التطابق التالي';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive => 'حساس لحالة الأحرف';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'الكلمة بالكامل';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'تعبير نمطي';
+
+  @override
+  String get sourceSearchInvalidRegex => 'تعبير نمطي غير صالح';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'ملف كبير: تم إيقاف التمييز والطي مؤقتًا';
 
   @override
   String get noPreview => 'لا توجد معاينة';
@@ -1011,12 +1336,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String couldNotOpenTarget(String target) {
-    return 'تعذر فتح $target';
+    return 'تعذر فتح ⁨$target⁩';
   }
 
   @override
   String linkTargetNotFound(String targetPath) {
-    return 'لم يتم العثور على هدف الرابط: $targetPath';
+    return 'لم يتم العثور على هدف الرابط: ⁨$targetPath⁩';
   }
 
   @override
@@ -1025,7 +1350,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String anchorNotFound(String anchor) {
-    return 'لم يتم العثور على المُرسى: $anchor';
+    return 'لم يتم العثور على المُرسى: ⁨$anchor⁩';
   }
 
   @override
@@ -1036,7 +1361,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String searchResultLine(String relativePath, int lineNumber) {
-    return '$relativePath - السطر $lineNumber';
+    return '⁨$relativePath⁩ - السطر ⁨$lineNumber⁩';
   }
 
   @override
@@ -1068,22 +1393,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceErrorOpenFailed(String error) {
-    return 'فشل الفتح: $error';
+    return 'فشل الفتح: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCreateWritersideProjectFailed(String error) {
-    return 'تعذر إنشاء مشروع Writerside: $error';
+    return 'تعذر إنشاء مشروع Writerside: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCreateWritersideTopicFailed(String error) {
-    return 'تعذر إنشاء موضوع Writerside: $error';
+    return 'تعذر إنشاء موضوع Writerside: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorCouldNotOpenFile(String error) {
-    return 'تعذر فتح الملف: $error';
+    return 'تعذر فتح الملف: ⁨$error⁩';
   }
 
   @override
@@ -1096,37 +1421,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workspaceErrorSaveFailed(String error) {
-    return 'فشل الحفظ: $error';
+    return 'فشل الحفظ: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorFileOperationFailed(String error) {
-    return 'فشلت عملية الملف: $error';
+    return 'فشلت عملية الملف: ⁨$error⁩';
   }
 
   @override
   String workspaceErrorValidationFailed(String error) {
-    return 'فشل التحقق: $error';
+    return 'فشل التحقق: ⁨$error⁩';
   }
 
   @override
   String errorPathDoesNotExist(String path) {
-    return 'المسار غير موجود: $path';
+    return 'المسار غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorTargetDirectoryNotEmpty(String path) {
-    return 'الدليل الهدف موجود بالفعل وليس فارغًا: $path';
+    return 'الدليل الهدف موجود بالفعل وليس فارغًا: ⁨$path⁩';
   }
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'المسار الهدف موجود بالفعل وليس دليلاً: $path';
+    return 'المسار الهدف موجود بالفعل وليس دليلاً: ⁨$path⁩';
   }
 
   @override
   String errorGeneratedFileAlreadyExists(String path) {
-    return 'الملف المُنشأ موجود بالفعل: $path';
+    return 'الملف المُنشأ موجود بالفعل: ⁨$path⁩';
   }
 
   @override
@@ -1134,17 +1459,17 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorParentDirectoryMissing(String path) {
-    return 'الدليل الأصل غير موجود: $path';
+    return 'الدليل الأصل غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorDirectoryMissing(String path) {
-    return 'المجلد غير موجود: $path';
+    return 'المجلد غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorPathAlreadyExists(String path) {
-    return 'المسار موجود بالفعل: $path';
+    return 'المسار موجود بالفعل: ⁨$path⁩';
   }
 
   @override
@@ -1189,7 +1514,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideModuleRootMissing(String path) {
-    return 'جذر وحدة Writerside غير موجود: $path';
+    return 'جذر وحدة Writerside غير موجود: ⁨$path⁩';
   }
 
   @override
@@ -1202,22 +1527,56 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideTreeFileMissing(String path) {
-    return 'ملف شجرة Writerside غير موجود: $path';
+    return 'ملف شجرة Writerside غير موجود: ⁨$path⁩';
   }
 
   @override
   String errorTopicIdAlreadyExists(String topicId) {
-    return 'معرّف الموضوع \"$topicId\" موجود بالفعل في وحدة المساعدة هذه.';
+    return 'معرّف الموضوع \"⁨$topicId⁩\" موجود بالفعل في وحدة المساعدة هذه.';
   }
 
   @override
   String errorTopicFileAlreadyExists(String path) {
-    return 'ملف الموضوع موجود بالفعل: $path';
+    return 'ملف الموضوع موجود بالفعل: ⁨$path⁩';
   }
 
   @override
   String errorReferenceTopicMissing(String topic) {
-    return 'الموضوع المرجعي غير موجود في الشجرة المحددة: $topic';
+    return 'الموضوع المرجعي غير موجود في الشجرة المحددة: ⁨$topic⁩';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'لم يعد عنصر جدول المحتويات المحدد موجودًا.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'لا يمكن نقل عنصر في جدول المحتويات إلى نفسه أو إلى أحد العناصر الفرعية التابعة له.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'لا يمكن حذف موضوع البدء ⁨$topic⁩. اختر صفحة بدء أخرى أولًا.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'استخدم الحذف الآمن لملفات موضوعات Writerside.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'تعذّر إكمال فحص استخدامات الموضوع. لم تُغيَّر أي ملفات.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'لا تزال بعض استخدامات الموضوع تتطلب المعالجة. راجعها قبل المتابعة.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'لم يعد هدف إعادة التوجيه المحدد صالحًا. حدده مرة أخرى.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'تعذّر التراجع بالكامل عن إزالة الموضوع. راجع هذه المسارات قبل المتابعة: ⁨$paths⁩';
   }
 
   @override
@@ -1230,7 +1589,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
-    return 'يجب أن يتطابق امتداد ملف الموضوع مع التنسيق المحدد ($extension).';
+    return 'يجب أن يتطابق امتداد ملف الموضوع مع التنسيق المحدد (⁨$extension⁩).';
   }
 
   @override
@@ -1239,12 +1598,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorUnknown(String code) {
-    return 'خطأ غير معروف: $code';
+    return 'خطأ غير معروف: ⁨$code⁩';
   }
 
   @override
   String diagnosticWorkspaceFileStatFailed(String error) {
-    return 'تعذرت قراءة بيانات تعريف الملف: $error';
+    return 'تعذرت قراءة بيانات تعريف الملف: ⁨$error⁩';
   }
 
   @override
@@ -1253,7 +1612,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceScanInspectFailed(String error) {
-    return 'تعذر فحص عنصر مساحة العمل: $error';
+    return 'تعذر فحص عنصر مساحة العمل: ⁨$error⁩';
   }
 
   @override
@@ -1262,7 +1621,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
-    return 'تعذرت قراءة ملف Markdown: $error';
+    return 'تعذرت قراءة ملف Markdown: ⁨$error⁩';
   }
 
   @override
@@ -1271,7 +1630,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticMarkdownHeadingDuplicateId(String id) {
-    return 'معرّف عنوان مكرر \"$id\".';
+    return 'معرّف عنوان مكرر \"⁨$id⁩\".';
   }
 
   @override
@@ -1288,7 +1647,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicFileMissingTitle(String fileName) {
-    return 'الموضوع \"$fileName\" يفتقد عنوانًا.';
+    return 'الموضوع \"⁨$fileName⁩\" يفتقد عنوانًا.';
   }
 
   @override
@@ -1300,27 +1659,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticMarkdownLinkUnresolvedTarget(String targetPath) {
-    return 'هدف الرابط غير موجود: $targetPath';
+    return 'هدف الرابط غير موجود: ⁨$targetPath⁩';
   }
 
   @override
   String diagnosticMarkdownLinkUnresolvedAnchor(String anchor) {
-    return 'المُرسى \"$anchor\" غير موجود.';
+    return 'المُرسى \"⁨$anchor⁩\" غير موجود.';
   }
 
   @override
   String diagnosticMarkdownImageMissingAlt(String destination) {
-    return 'الصورة \"$destination\" تفتقد النص البديل.';
+    return 'الصورة \"⁨$destination⁩\" تفتقد النص البديل.';
   }
 
   @override
   String diagnosticMarkdownImageMissingFile(String destination) {
-    return 'الصورة غير موجودة: $destination';
+    return 'الصورة غير موجودة: ⁨$destination⁩';
   }
 
   @override
   String diagnosticInvalidXml(String message) {
-    return 'XML غير صالح: $message';
+    return 'XML غير صالح: ⁨$message⁩';
   }
 
   @override
@@ -1337,7 +1696,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideConfigInvalidKeymapsMode(String mode) {
-    return 'وضع keymaps غير مدعوم: $mode';
+    return 'وضع keymaps غير مدعوم: ⁨$mode⁩';
   }
 
   @override
@@ -1358,7 +1717,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTreeIdMismatch(String id) {
-    return 'لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"$id\".';
+    return 'لا يتطابق اسم ملف الشجرة بدون الامتداد مع معرّف المثيل \"⁨$id⁩\".';
   }
 
   @override
@@ -1367,12 +1726,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideStartPageMissing(String startPage) {
-    return 'صفحة البدء \"$startPage\" غير موجودة.';
+    return 'صفحة البدء \"⁨$startPage⁩\" غير موجودة.';
   }
 
   @override
   String diagnosticWritersideTreeDuplicateTopic(String topic) {
-    return 'يظهر الموضوع \"$topic\" أكثر من مرة في جدول محتويات هذا المثيل.';
+    return 'يظهر الموضوع \"⁨$topic⁩\" أكثر من مرة في جدول محتويات هذا المثيل.';
   }
 
   @override
@@ -1381,7 +1740,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideVariableDuplicateName(String name) {
-    return 'تم الإعلان عن المتغير \"$name\" أكثر من مرة.';
+    return 'تم الإعلان عن المتغير \"⁨$name⁩\" أكثر من مرة.';
   }
 
   @override
@@ -1389,12 +1748,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideCategoryDuplicateId(String id) {
-    return 'تم الإعلان عن الفئة \"$id\" أكثر من مرة.';
+    return 'تم الإعلان عن الفئة \"⁨$id⁩\" أكثر من مرة.';
   }
 
   @override
   String diagnosticWritersideCategoryDuplicateOrder(String order) {
-    return 'تم الإعلان عن ترتيب الفئة \"$order\" أكثر من مرة.';
+    return 'تم الإعلان عن ترتيب الفئة \"⁨$order⁩\" أكثر من مرة.';
   }
 
   @override
@@ -1407,12 +1766,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideTopicRootIdMismatch(String id, String expectedId) {
-    return 'يجب أن يتطابق معرّف جذر موضوع XML \"$id\" مع اسم الملف \"$expectedId\".';
+    return 'يجب أن يتطابق معرّف جذر موضوع XML \"⁨$id⁩\" مع اسم الملف \"⁨$expectedId⁩\".';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateElementId(String elementId) {
-    return 'يظهر معرّف العنصر \"$elementId\" أكثر من مرة.';
+    return 'يظهر معرّف العنصر \"⁨$elementId⁩\" أكثر من مرة.';
   }
 
   @override
@@ -1427,90 +1786,90 @@ class AppLocalizationsAr extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'دليل تكوين البناء المحدد مفقود: $relativePath';
+    return 'دليل تكوين البناء المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingApiSpecificationsDirectory(
     String relativePath,
   ) {
-    return 'دليل مواصفات API المحدد مفقود: $relativePath';
+    return 'دليل مواصفات API المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingSnippetsDirectory(
     String relativePath,
   ) {
-    return 'دليل المقتطفات المحدد مفقود: $relativePath';
+    return 'دليل المقتطفات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingVarsFile(String relativePath) {
-    return 'ملف المتغيرات المحدد مفقود: $relativePath';
+    return 'ملف المتغيرات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingCategoriesFile(String relativePath) {
-    return 'ملف الفئات المحدد مفقود: $relativePath';
+    return 'ملف الفئات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceGroupsFile(
     String relativePath,
   ) {
-    return 'ملف مجموعات المثيلات المحدد مفقود: $relativePath';
+    return 'ملف مجموعات المثيلات المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideConfigMissingInstanceTree(String source) {
-    return 'شجرة المثيل المسجلة \"$source\" غير موجودة.';
+    return 'شجرة المثيل المسجلة \"⁨$source⁩\" غير موجودة.';
   }
 
   @override
   String diagnosticWritersideTopicReadFailed(String error) {
-    return 'تعذرت قراءة ملف الموضوع: $error';
+    return 'تعذرت قراءة ملف الموضوع: ⁨$error⁩';
   }
 
   @override
   String diagnosticWritersideDefaultTopicsDirectoryMissing(
     String relativePath,
   ) {
-    return 'دليل المواضيع الافتراضي مفقود: $relativePath';
+    return 'دليل المواضيع الافتراضي مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideTopicsDirectoryMissing(String relativePath) {
-    return 'دليل المواضيع المحدد مفقود: $relativePath';
+    return 'دليل المواضيع المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideImagesDirectoryMissing(String relativePath) {
-    return 'دليل الصور المحدد مفقود: $relativePath';
+    return 'دليل الصور المحدد مفقود: ⁨$relativePath⁩';
   }
 
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
-    return 'يظهر معرّف العنصر \"$id\" أكثر من مرة.';
+    return 'يظهر معرّف العنصر \"⁨$id⁩\" أكثر من مرة.';
   }
 
   @override
   String diagnosticWritersideTreeMissingTopic(String topic) {
-    return 'يشير جدول المحتويات إلى موضوع مفقود \"$topic\".';
+    return 'يشير جدول المحتويات إلى موضوع مفقود \"⁨$topic⁩\".';
   }
 
   @override
   String diagnosticWritersideTreeInvalidHref(String href) {
-    return 'قيمة href الخارجية \"$href\" غير صالحة.';
+    return 'قيمة href الخارجية \"⁨$href⁩\" غير صالحة.';
   }
 
   @override
   String diagnosticWritersideVariableUnresolved(String name) {
-    return 'لم يتم الإعلان عن المتغير \"%$name%\".';
+    return 'لم يتم الإعلان عن المتغير \"⁨%$name%⁩\".';
   }
 
   @override
   String diagnosticWritersideTopicLinkUnresolved(String destination) {
-    return 'لا يمكن حل رابط الموضوع \"$destination\".';
+    return 'لا يمكن حل رابط الموضوع \"⁨$destination⁩\".';
   }
 
   @override
@@ -1518,7 +1877,7 @@ class AppLocalizationsAr extends AppLocalizations {
     String anchor,
     String targetName,
   ) {
-    return 'المُرسى \"$anchor\" غير موجود في \"$targetName\".';
+    return 'المُرسى \"⁨$anchor⁩\" غير موجود في \"⁨$targetName⁩\".';
   }
 
   @override
@@ -1527,7 +1886,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String diagnosticWritersideIncludeSourceMissing(String from) {
-    return 'مصدر التضمين \"$from\" غير موجود.';
+    return 'مصدر التضمين \"⁨$from⁩\" غير موجود.';
   }
 
   @override
@@ -1535,73 +1894,97 @@ class AppLocalizationsAr extends AppLocalizations {
     String elementId,
     String from,
   ) {
-    return 'عنصر التضمين \"$elementId\" غير موجود في \"$from\".';
+    return 'عنصر التضمين \"⁨$elementId⁩\" غير موجود في \"⁨$from⁩\".';
   }
 
   @override
   String diagnosticWritersideCategoryUnresolved(String ref) {
-    return 'فئة seealso \"$ref\" غير معلنة.';
+    return 'فئة seealso \"⁨$ref⁩\" غير معلنة.';
   }
 
   @override
   String diagnosticWritersideTopicAmbiguousReference(String reference) {
-    return 'مرجع الموضوع \"$reference\" غامض.';
+    return 'مرجع الموضوع \"⁨$reference⁩\" غامض.';
   }
 
   @override
   String diagnosticUnknown(String code) {
-    return 'تشخيص غير معروف: $code';
+    return 'تشخيص غير معروف: ⁨$code⁩';
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'إغلاق';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'فروقات Git';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'إظهار الفروقات';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'القديم ⁨$oldRange⁩ ← الجديد ⁨$newRange⁩';
+  }
+
+  @override
+  String get gitDiffNoLines => 'لا أسطر';
+
+  @override
+  String get gitUnavailableTitle => 'Git غير متاح';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'ثبّت Git أو اضبط BusyMark لاستخدام ملف Git تنفيذي متاح. ⁨$reason⁩',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitTrustRequiredTitle => 'الوثوق بمساحة العمل هذه لاستخدام Git؟';
 
   @override
-  String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+  String get gitTrustRequiredMessage =>
+      'يمكن لمستودعات Git تشغيل برامج من خلال الخطافات والمرشحات وإعدادات أخرى. ثق بمساحة العمل هذه قبل أن يقرأ BusyMark بيانات المستودع أو يمكّن إجراءات Git.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitTrustWorkspace => 'الوثوق بمساحة العمل';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitNotRepositoryTitle => 'ليس مستودع Git';
+
+  @override
+  String get gitNotRepositoryMessage => 'مساحة العمل هذه ليست داخل مستودع Git.';
+
+  @override
+  String get gitInitializeRepository => 'تهيئة المستودع';
+
+  @override
+  String get gitDetachedHead => 'HEAD منفصل';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'HEAD منفصل عند ⁨$commit⁩';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'لا يوجد فرع منبع';
 
   @override
   String gitAheadCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count التزامات غير مدفوعة',
-      one: 'التزام واحد غير مدفوع',
+      other: '$count التزام غير مرفوع',
+      many: '$count التزامًا غير مرفوع',
+      few: '$count التزامات غير مرفوعة',
+      two: 'التزامان غير مرفوعين',
+      one: 'التزام واحد غير مرفوع',
+      zero: 'لا توجد التزامات غير مرفوعة',
     );
     return '$_temp0';
   }
@@ -1611,17 +1994,21 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count التزام لسحبه',
+      many: '$count التزامًا لسحبها',
+      few: '$count التزامات لسحبها',
+      two: 'التزامان لسحبهما',
+      one: 'التزام واحد لسحبه',
+      zero: 'لا توجد التزامات لسحبها',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'نظيف';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'تعارضات';
 
   @override
   String get gitChanges => 'التغييرات';
@@ -1633,87 +2020,94 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitBranches => 'الفروع';
 
   @override
-  String get gitPull => 'Pull';
+  String get gitBranchActions => 'إجراءات الفروع';
 
   @override
-  String get gitPush => 'Push';
+  String get gitPull => 'سحب';
 
   @override
-  String get gitCommit => 'تثبيت';
+  String get gitPush => 'دفع';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitCommit => 'إنشاء التزام';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitSelectForCommit => 'تحديد للالتزام';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitRemoveFromCommit => 'استبعاد من الالتزام';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitDiscard => 'تجاهل';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitOpenFile => 'فتح الملف';
+
+  @override
+  String get gitMarkResolved => 'وضع علامة بأنه محلول';
 
   @override
   String get gitUntracked => 'الملفات غير المتتبعة';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'رسالة الالتزام';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'الملفات المحددة';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'حدد ملفًا واحدًا على الأقل قبل إنشاء الالتزام.';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'أدخل رسالة الالتزام.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'إنشاء فرع';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ فرع جديد';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'اسم الفرع';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'تبديل';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'لا توجد تغييرات';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'لا يوجد سجل';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'لا توجد فروع';
 
   @override
   String get gitNoDiff => 'لا يوجد فرق لعرضه';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'ملف ثنائي. لا يعرض BusyMark رقع الملفات الثنائية.';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'لا تُضمّن تغييرات المحرر غير المحفوظة حتى يتم حفظها.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'تجاهل تغييرات Git؟';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
+      many: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
+      few: 'ستتم استعادة الملفات المتعقبة المحددة من Git.',
+      two: 'ستتم استعادة الملفين المتعقبين المحددين من Git.',
+      one: 'ستتم استعادة الملف المتعقب المحدد من Git.',
+      zero: 'لا توجد ملفات متعقبة محددة لاستعادتها من Git.',
     );
     return '$_temp0';
   }
@@ -1723,8 +2117,12 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'ستُحذف الملفات غير المتعقبة المحددة.',
+      many: 'ستُحذف الملفات غير المتعقبة المحددة.',
+      few: 'ستُحذف الملفات غير المتعقبة المحددة.',
+      two: 'سيُحذف الملفان غير المتعقبين المحددان.',
+      one: 'سيُحذف الملف غير المتعقب المحدد.',
+      zero: 'لا توجد ملفات غير متعقبة محددة لحذفها.',
     );
     return '$_temp0';
   }
@@ -1734,117 +2132,119 @@ class AppLocalizationsAr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other:
-          'The selected files will be restored or deleted based on their Git status.',
-      one:
-          'The selected file will be restored or deleted based on its Git status.',
+      other: 'ستتم استعادة الملفات المحددة أو حذفها حسب حالتها في Git.',
+      many: 'ستتم استعادة الملفات المحددة أو حذفها حسب حالتها في Git.',
+      few: 'ستتم استعادة الملفات المحددة أو حذفها حسب حالتها في Git.',
+      two: 'ستتم استعادة الملفين المحددين أو حذفهما حسب حالتهما في Git.',
+      one: 'ستتم استعادة الملف المحدد أو حذفه حسب حالته في Git.',
+      zero: 'لا توجد ملفات محددة لاستعادتها أو حذفها.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return 'التبديل إلى ⁨$branch⁩؟';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'سيعيد BusyMark تحميل مساحة العمل من القرص بعد أن يبدّل Git الفروع.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'تعيين فرع منبع؟';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'ليس لهذا الفرع فرع منبع. يمكن لـ BusyMark دفع ⁨$branch⁩ وتعيينه فرعًا منبعًا عندما يكون هناك مستودع بعيد واحد فقط مُعدّ.';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'المشروع';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'الملف الحالي';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
-    return '+$additions -$deletions';
+    return '⁨+$additions -$deletions⁩';
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'إجراءات الملف';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'مضاف';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'محذوف';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'أُعيدت تسميته';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'منسوخ';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'غير متعقب';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'متعارض';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'تم تجاهله';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'تغير النوع';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'معدّل';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'غير معروف';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git غير متاح.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository => 'مساحة العمل هذه ليست مستودع Git.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath => 'حظر BusyMark مسار Git غير آمن.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName => 'أدخل اسم فرع صالحًا.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'لم يتم إعداد مستودع Git بعيد.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'لم يتم إعداد فرع منبع.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'تم إعداد عدة مستودعات بعيدة. اختر فرع منبع خارج هذا الإصدار من BusyMark.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'فشلت مصادقة Git. في حزمة snap، قد تتطلب مستودعات SSH البعيدة توصيل واجهة ssh-keys.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'فشلت عملية Git عبر الشبكة.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'أبلغ Git عن تعارضات لم تُحل.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'فشل أمر Git.';
 
   @override
   String get markdownAndHtml => 'Markdown و HTML';

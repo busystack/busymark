@@ -6,6 +6,12 @@ abstract class GitRepositoryDetector {
 }
 
 abstract class GitRepositoryGateway implements GitRepositoryDetector {
+  /// Whether this gateway can execute repository-controlled configuration.
+  ///
+  /// The controller will not call [detectRepository] or any repository method
+  /// until the user explicitly trusts the attached workspace.
+  bool get requiresWorkspaceTrust;
+
   Future<GitStatusSnapshot> status(GitRepositoryInfo repository);
   Future<GitDiff> diffFile(
     GitRepositoryInfo repository,

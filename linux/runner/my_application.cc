@@ -30,6 +30,8 @@ constexpr gint kHeaderTooltipVerticalPadding = 5;
 constexpr gint kHeaderTooltipHorizontalPadding = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#242424";
 constexpr char kDefaultSidebarBackground[] = "#303030";
+constexpr char kLtrIsolateStart[] = "\xE2\x81\xA6";
+constexpr char kBidiIsolateEnd[] = "\xE2\x81\xA9";
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -49,6 +51,7 @@ struct _MyApplication {
   GtkWidget* settings_item;
   GtkWidget* keyboard_shortcuts_item;
   GtkWidget* markdown_html_item;
+  GtkWidget* report_issue_item;
   GtkWidget* about_item;
   GtkWidget* header_start_box;
   GtkWidget* back_button;
@@ -342,13 +345,44 @@ static void set_widget_direction(GtkWidget* widget, GtkTextDirection direction) 
   }
 }
 
+static void set_widget_horizontal_margins(GtkWidget* widget,
+                                          gint margin_start,
+                                          gint margin_end) {
+  if (widget != nullptr && GTK_IS_WIDGET(widget)) {
+    gtk_widget_set_margin_start(widget, margin_start);
+    gtk_widget_set_margin_end(widget, margin_end);
+  }
+}
+
+static void update_header_menu_item_direction(GtkWidget* item,
+                                              GtkTextDirection direction) {
+  if (item == nullptr || !GTK_IS_WIDGET(item)) {
+    return;
+  }
+  set_widget_direction(item, direction);
+  GtkWidget* label = static_cast<GtkWidget*>(
+      g_object_get_data(G_OBJECT(item), "busymark-label-widget"));
+  if (label != nullptr && GTK_IS_LABEL(label)) {
+    set_widget_direction(label, direction);
+    gtk_label_set_xalign(GTK_LABEL(label),
+                         direction == GTK_TEXT_DIR_RTL ? 1.0 : 0.0);
+  }
+  GtkWidget* shortcut = static_cast<GtkWidget*>(
+      g_object_get_data(G_OBJECT(item), "busymark-shortcut-widget"));
+  if (shortcut != nullptr && GTK_IS_LABEL(shortcut)) {
+    set_widget_direction(shortcut, GTK_TEXT_DIR_LTR);
+    gtk_label_set_xalign(GTK_LABEL(shortcut),
+                         direction == GTK_TEXT_DIR_RTL ? 0.0 : 1.0);
+  }
+}
+
 static void update_title_stack_alignment(MyApplication* self) {
   if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
     return;
   }
-  gtk_widget_set_margin_start(
+  set_widget_horizontal_margins(
       self->title_stack,
-      self->search_active ? 0 : kHeaderWindowControlsBalanceWidth);
+      self->search_active ? 0 : kHeaderWindowControlsBalanceWidth, 0);
 }
 
 static void set_toggle_button_active(MyApplication* self,
@@ -406,6 +440,27 @@ static void update_titlebar_direction(MyApplication* self) {
   set_widget_direction(self->refresh_button, direction);
   set_widget_direction(self->sidebar_search_button, direction);
   set_widget_direction(self->sidebar_menu_button, direction);
+  set_widget_direction(self->sidebar_menu, direction);
+  update_header_menu_item_direction(self->settings_item, direction);
+  update_header_menu_item_direction(self->keyboard_shortcuts_item, direction);
+  update_header_menu_item_direction(self->markdown_html_item, direction);
+  update_header_menu_item_direction(self->report_issue_item, direction);
+  update_header_menu_item_direction(self->about_item, direction);
+  set_widget_direction(self->view_mode_menu, direction);
+  update_header_menu_item_direction(self->view_mode_editor_item, direction);
+  update_header_menu_item_direction(self->view_mode_source_item, direction);
+  update_header_menu_item_direction(self->view_mode_preview_item, direction);
+  update_header_menu_item_direction(self->view_mode_split_item, direction);
+
+  // GTK 3 resolves logical margins against the widget direction at setter
+  // time, so reapply both sides after a live LTR/RTL direction change.
+  update_title_stack_alignment(self);
+  set_widget_horizontal_margins(self->sidebar_search_button,
+                                kHeaderSidebarInset, 0);
+  set_widget_horizontal_margins(self->sidebar_menu_button, 0,
+                                kHeaderSidebarInset);
+  set_widget_horizontal_margins(self->header_start_box, kHeaderSidebarInset,
+                                0);
 }
 
 static void refresh_header_bar_css(MyApplication* self) {
@@ -483,7 +538,11 @@ static void refresh_header_bar_css(MyApplication* self) {
       "box-shadow: none;"
       "border-top-left-radius: %dpx;"
       "border-top-right-radius: %dpx;"
+      "}"
+      "headerbar.busymark-headerbar:dir(ltr) {"
       "padding-left: 0;"
+      "}"
+      "headerbar.busymark-headerbar:dir(rtl) {"
       "padding-right: 0;"
       "}"
       ".busymark-sidebar-header {"
@@ -891,6 +950,9 @@ static const gchar* main_menu_icon_name(const gchar* action) {
   if (g_strcmp0(action, "markdownAndHtml") == 0) {
     return "text-x-generic-symbolic";
   }
+  if (g_strcmp0(action, "reportIssue") == 0) {
+    return "dialog-warning-symbolic";
+  }
   if (g_strcmp0(action, "aboutBusyMark") == 0) {
     return "help-about-symbolic";
   }
@@ -1115,7 +1177,8 @@ static void set_widget_tooltip_with_shortcut(GtkWidget* widget,
     gtk_widget_set_tooltip_text(widget, tooltip);
     return;
   }
-  gchar* value = g_strdup_printf("%s (%s)", tooltip, shortcut);
+  gchar* value = g_strdup_printf("%s (%s%s%s)", tooltip, kLtrIsolateStart,
+                                 shortcut, kBidiIsolateEnd);
   gtk_widget_set_tooltip_text(widget, value);
   g_free(value);
 }
@@ -1125,16 +1188,6 @@ static void set_menu_item_label_with_shortcut(GtkWidget* item,
                                               const gchar* shortcut) {
   set_menu_item_label(item, text);
   set_menu_item_shortcut(item, shortcut);
-  if (item == nullptr || text == nullptr || !GTK_IS_WIDGET(item)) {
-    return;
-  }
-  if (shortcut == nullptr || shortcut[0] == '\0') {
-    gtk_widget_set_tooltip_text(item, text);
-    return;
-  }
-  gchar* tooltip = g_strdup_printf("%s (%s)", text, shortcut);
-  gtk_widget_set_tooltip_text(item, tooltip);
-  g_free(tooltip);
 }
 
 static void set_localized_labels(MyApplication* self, FlValue* args) {
@@ -1164,6 +1217,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* markdown_html = fl_lookup_string_arg(args, "markdownAndHtml");
   const gchar* markdown_html_shortcut =
       fl_lookup_string_arg(args, "markdownAndHtmlShortcut");
+  const gchar* report_issue = fl_lookup_string_arg(args, "reportIssue");
   const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
@@ -1192,6 +1246,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
                                     keyboard_shortcuts_shortcut);
   set_menu_item_label_with_shortcut(self->markdown_html_item,
                                     markdown_html, markdown_html_shortcut);
+  set_menu_item_label(self->report_issue_item, report_issue);
   set_menu_item_label(self->about_item, about);
   update_view_mode_icon(self);
 }
@@ -1231,7 +1286,6 @@ static void set_sidebar_width(MyApplication* self, gdouble width) {
 static void set_text_direction(MyApplication* self, const gchar* value) {
   self->text_direction_rtl = g_strcmp0(value, "rtl") == 0;
   update_titlebar_direction(self);
-  update_title_stack_alignment(self);
   refresh_header_bar_css(self);
 }
 
@@ -1297,7 +1351,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
                               "busymark-sidebar-action-button");
-  gtk_widget_set_margin_start(self->sidebar_search_button, kHeaderSidebarInset);
   connect_header_action(self, self->sidebar_search_button, "search");
   gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
                      self->sidebar_search_button, FALSE, FALSE, 0);
@@ -1322,6 +1375,7 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->keyboard_shortcuts_item =
       create_menu_item(self, "keyboardShortcuts");
   self->markdown_html_item = create_menu_item(self, "markdownAndHtml");
+  self->report_issue_item = create_menu_item(self, "reportIssue");
   self->about_item = create_menu_item(self, "aboutBusyMark");
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
                      FALSE, 0);
@@ -1329,6 +1383,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                      self->keyboard_shortcuts_item, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->markdown_html_item,
                      FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->report_issue_item, FALSE,
+                     FALSE, 0);
   gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
                      FALSE, 0);
   gtk_widget_show_all(sidebar_menu_box);
@@ -1336,7 +1392,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
       create_menu_button(self->sidebar_menu, "open-menu-symbolic");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
                               "busymark-sidebar-action-button");
-  gtk_widget_set_margin_end(self->sidebar_menu_button, kHeaderSidebarInset);
   gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
                    self->sidebar_menu_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), self->sidebar_header_box,
@@ -1350,7 +1405,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->header_start_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  gtk_widget_set_margin_start(self->header_start_box, kHeaderSidebarInset);
   self->back_button = create_header_icon_button("go-previous-symbolic");
   self->sidebar_toggle_button =
       create_header_toggle_button("sidebar-show-symbolic");
@@ -1788,6 +1842,7 @@ static void my_application_init(MyApplication* self) {
   self->settings_item = nullptr;
   self->keyboard_shortcuts_item = nullptr;
   self->markdown_html_item = nullptr;
+  self->report_issue_item = nullptr;
   self->about_item = nullptr;
   self->header_start_box = nullptr;
   self->back_button = nullptr;

@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_ar.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/diagnostic_localizations.dart';
 import 'package:flutter/material.dart';
@@ -88,23 +90,117 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
-  test('Git sidebar labels are translated in supplied locales', () {
-    const keys = <String>{'gitUntracked', 'gitHistory', 'gitCommit'};
-    final english = _arbMessages(File('lib/l10n/app_en.arb'));
+  test('target ARBs match the English messages and placeholders', () {
+    final templateFile = File('lib/l10n/app_en.arb');
+    final templateArb = _arbMessages(templateFile);
+    final template = _arbMessageStrings(templateFile);
     final failures = <String>[];
     for (final file in _arbFiles()) {
       if (file.path.endsWith('app_en.arb')) {
         continue;
       }
-      final messages = _arbMessages(file);
-      for (final key in keys) {
-        if (messages[key] == english[key]) {
-          failures.add('${file.path}: $key still matches English');
+      final messages = _arbMessageStrings(file);
+      final missing = template.keys.toSet().difference(messages.keys.toSet());
+      final extra = messages.keys.toSet().difference(template.keys.toSet());
+      for (final key in missing.toList()..sort()) {
+        failures.add('${file.path}: missing message $key');
+      }
+      for (final key in extra.toList()..sort()) {
+        failures.add('${file.path}: unexpected message $key');
+      }
+      for (final key in template.keys.toSet().intersection(
+        messages.keys.toSet(),
+      )) {
+        for (final placeholder in _declaredPlaceholders(templateArb, key)) {
+          if (_usesPlaceholder(messages[key]!, placeholder)) {
+            continue;
+          }
+          failures.add(
+            '${file.path}: $key is missing placeholder {$placeholder}',
+          );
         }
       }
     }
 
     expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('English-identical target messages are explicitly reviewed', () {
+    final english = _arbMessageStrings(File('lib/l10n/app_en.arb'));
+    final failures = <String>[];
+    for (final file in _arbFiles()) {
+      if (file.path.endsWith('app_en.arb')) {
+        continue;
+      }
+      final arb = _arbMessages(file);
+      final locale = arb['@@locale'] as String;
+      final allowed = {
+        ..._sharedEnglishMatches,
+        ...?_localeSpecificEnglishMatches[locale],
+      };
+      for (final entry in _arbMessageStrings(file).entries) {
+        if (entry.value == english[entry.key] && !allowed.contains(entry.key)) {
+          failures.add(
+            '${file.path}: ${entry.key} unexpectedly still matches English',
+          );
+        }
+      }
+    }
+
+    expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('RTL translations isolate technical interpolations', () {
+    const fsi = '\u2068';
+    const pdi = '\u2069';
+    final localizations = <AppLocalizations>[
+      AppLocalizationsAr(),
+      AppLocalizationsFa(),
+    ];
+
+    for (final l10n in localizations) {
+      expect(
+        l10n.errorPathDoesNotExist('docs/intro-v2.md'),
+        contains('${fsi}docs/intro-v2.md$pdi'),
+      );
+      expect(
+        l10n.confirmDeleteFileMessage('topic-v2.md'),
+        contains('${fsi}topic-v2.md$pdi'),
+      );
+      expect(l10n.feedbackSuccess('BM-12345'), contains('${fsi}BM-12345$pdi'));
+      expect(
+        l10n.workspaceErrorOpenFailed('ENOENT: docs/topic.md'),
+        contains('${fsi}ENOENT: docs/topic.md$pdi'),
+      );
+      final branchTitle = l10n.gitConfirmSwitchBranchTitle('feature/rtl-v2');
+      expect(branchTitle, contains('${fsi}feature/rtl-v2$pdi'));
+      expect(branchTitle.split(fsi).length - 1, 1);
+      expect(branchTitle.split(pdi).length - 1, 1);
+      expect(l10n.gitDetachedHeadAt('a1b2c3d'), contains('${fsi}a1b2c3d$pdi'));
+      expect(
+        l10n.gitDiffHunkRange('-12,4', '+12,6'),
+        allOf(contains('$fsi-12,4$pdi'), contains('$fsi+12,6$pdi')),
+      );
+      expect(
+        l10n.diagnosticWritersideVariableUnresolved('api-version'),
+        contains('$fsi%api-version%$pdi'),
+      );
+    }
+  });
+
+  test('Persian dynamic numbers use Persian digits', () {
+    const fsi = '\u2068';
+    const pdi = '\u2069';
+    final fa = AppLocalizationsFa();
+
+    expect(fa.diagnosticCount(12), contains('۱۲'));
+    expect(fa.headingLevelAbbreviation(6), '${fsi}H۶$pdi');
+    expect(fa.searchResultLine('docs/topic.md', 42), contains('$fsi۴۲$pdi'));
+    expect(fa.gitAdditionsDeletions(12, 3), '$fsi+۱۲ -۳$pdi');
+
+    // The generic `ar` locale in package:intl intentionally uses Latin digits.
+    // Regional Arabic locales can choose different numbering systems.
+    expect(AppLocalizationsAr().diagnosticCount(12), contains('12'));
   });
 
   testWidgets('diagnostics localize at render time from codes and args', (
@@ -171,6 +267,30 @@ Iterable<File> _arbFiles() sync* {
 Map<String, Object?> _arbMessages(File file) {
   return jsonDecode(file.readAsStringSync()) as Map<String, Object?>;
 }
+
+Map<String, String> _arbMessageStrings(File file) {
+  final arb = _arbMessages(file);
+  return {
+    for (final entry in arb.entries)
+      if (!entry.key.startsWith('@') && entry.value is String)
+        entry.key: entry.value! as String,
+  };
+}
+
+Set<String> _declaredPlaceholders(Map<String, Object?> arb, String key) {
+  final metadata = arb['@$key'];
+  if (metadata is! Map<String, Object?>) {
+    return const {};
+  }
+  final placeholders = metadata['placeholders'];
+  if (placeholders is! Map<String, Object?>) {
+    return const {};
+  }
+  return placeholders.keys.toSet();
+}
+
+bool _usesPlaceholder(String message, String placeholder) =>
+    RegExp('\\{${RegExp.escape(placeholder)}(?:\\}|\\s*,)').hasMatch(message);
 
 Iterable<File> _nativeLinuxSourceFiles() sync* {
   for (final entity in Directory('linux/runner').listSync(recursive: true)) {
@@ -331,3 +451,87 @@ const _nativeGtkUserFacingPatterns = <_LiteralPattern>[
     dotAll: true,
   ),
 ];
+
+const _sharedEnglishMatches = <String>{
+  'appTitle',
+  'aboutLicenseName',
+  'markdown',
+  'languageEnglish',
+  'languageGerman',
+  'languageItalian',
+  'languageNorwegian',
+  'languageFrench',
+  'languageRussian',
+  'languageUkrainian',
+  'languagePolish',
+  'languageSpanish',
+  'languagePortuguese',
+  'languageArabic',
+  'languagePersian',
+  'languageHindi',
+  'languageEstonian',
+  'writerside',
+  'xml',
+  'fileTypeMarkdown',
+  'headingLevelAbbreviation',
+  'git',
+  'gitPull',
+  'gitPush',
+  'gitAdditionsDeletions',
+};
+
+const _localeSpecificEnglishMatches = <String, Set<String>>{
+  'de': {
+    'aboutWebsite',
+    'editor',
+    'horizontal',
+    'link',
+    'tabs',
+    'tab',
+    'gitDetachedHead',
+    'gitBranches',
+    'gitCommit',
+  },
+  'et': {'link', 'gitCommit'},
+  'es': {
+    'editor',
+    'gitCommit',
+    'horizontal',
+    'vertical',
+    'shortcutGroupGeneral',
+  },
+  'fr': {
+    'source',
+    'validation',
+    'fileTypeImages',
+    'defaultProjectName',
+    'image',
+    'foldKindSection',
+    'note',
+    'gitBranches',
+    'gitCommit',
+    'editorPlaceholderCode',
+  },
+  'it': {
+    'editor',
+    'file',
+    'checklist',
+    'privacy',
+    'toc',
+    'foldKindTag',
+    'gitCommit',
+  },
+  'nb': {'systemTheme', 'systemLanguage', 'gitCommit'},
+  'pl': {'folder', 'foldKindTag'},
+  'pt': {
+    'editor',
+    'link',
+    'toc',
+    'foldKindTag',
+    'gitBranches',
+    'gitCommit',
+    'horizontal',
+    'vertical',
+  },
+  'hi': {'toc'},
+};

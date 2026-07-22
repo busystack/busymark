@@ -102,6 +102,55 @@ flutter run -d linux -- /path/to/README.md
 flutter run -d linux -- /path/to/docs
 ```
 
+## Feedback API
+
+The **Main menu → Report an issue** form
+submits JSON to `https://busystack.org/api/feedback`. BusyMark sends no private
+credentials or other API secrets; storage is handled by BusyStack.org.
+
+Every request contains a newly generated submission UUID, `app: "busymark"`,
+the application version and build number read from the current package's
+generated build metadata (including Flutter build overrides),
+`platform: "linux"`, the selected category, subject, detailed message, and the
+optional reply email. The optional `technicalDetails` object is included after
+user explicitly selects the checkbox. It contains exactly the Linux
+operating-system version and the BusyMark application locale; logs, files,
+document content, paths, account data, tokens, screenshots, and attachments are
+never added.
+
+```json
+{
+  "submissionId": "b3f44f5f-dae4-4c6e-bf56-657f35f3450a",
+  "app": "busymark",
+  "appVersion": "0.2.2",
+  "buildNumber": "0",
+  "platform": "linux",
+  "category": "problem",
+  "subject": "Example subject",
+  "message": "Detailed feedback message",
+  "replyEmail": null,
+  "technicalDetails": {
+    "osVersion": "Linux version string",
+    "locale": "en"
+  }
+}
+```
+
+The endpoint returns HTTP 201 and `{"id":"<server reference ID>"}` after it
+accepts a report. Validation failures, connection failures, timeouts, rate
+limits, and server failures are shown without clearing the entered form.
+
+For local development, override only the endpoint at build time. For example,
+when the BusyStack.org backend is listening on port 8090:
+
+```bash
+flutter run -d linux \
+  --dart-define=BUSYSTACK_FEEDBACK_ENDPOINT=http://127.0.0.1:8090/api/feedback
+```
+
+Production builds use the HTTPS endpoint by default. No credential belongs in
+the Dart define or in the desktop application.
+
 ## Test
 
 ```bash
@@ -115,11 +164,12 @@ BusyMark has ARB localization files for:
 
 - Arabic (ar)
 - English (en)
+- Estonian (et)
 - French (fr)
 - German (de)
 - Hindi (hi)
 - Italian (it)
-- Norwegian (no)
+- Norwegian Bokmål (nb)
 - Persian (fa)
 - Polish (pl)
 - Portuguese (pt)
@@ -129,7 +179,8 @@ BusyMark has ARB localization files for:
 
 English in `lib/l10n/app_en.arb` is the source of truth for app strings.
 
-Target ARB files were initially translated with Google Translate and audited. 
+Target ARB files are audited for catalog parity, placeholders, plurals, and
+terminology.
 
 When changing user-facing text, update `app_en.arb`, keep every target ARB in
 sync, then run:

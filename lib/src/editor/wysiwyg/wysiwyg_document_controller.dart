@@ -700,11 +700,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     List<BusyBlock> visit(List<BusyBlock> blocks) {
       final result = <BusyBlock>[];
       for (final block in blocks) {
+        if (block.isSourceProtected) {
+          result.add(block);
+          continue;
+        }
         final updated = block.copyWith(children: visit(block.children));
         if (ids.contains(updated.id) &&
             _isListItemKind(updated.kind) &&
             result.isNotEmpty &&
-            _isListItemKind(result.last.kind)) {
+            _isListItemKind(result.last.kind) &&
+            !result.last.isSourceProtected) {
           final parent = result.removeLast();
           result.add(
             parent.copyWith(
@@ -739,6 +744,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       final kept = <BusyBlock>[];
       final outdented = <BusyBlock>[];
       for (final block in blocks) {
+        if (block.isSourceProtected) {
+          kept.add(block);
+          continue;
+        }
         final childResult = visitChildren(block.children);
         final updated = block.copyWith(children: childResult.kept);
         if (ids.contains(updated.id) && _isListItemKind(updated.kind)) {
@@ -755,6 +764,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
     final result = <BusyBlock>[];
     for (final block in _document.blocks) {
+      if (block.isSourceProtected) {
+        result.add(block);
+        continue;
+      }
       final childResult = visitChildren(block.children);
       result.add(
         block.copyWith(
@@ -895,6 +908,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final firstBlock = blockById(firstBlockId);
     final lastBlock = blockById(lastBlockId);
     if (firstBlock == null || lastBlock == null) {
+      return null;
+    }
+    if (_isReadOnlySelectionEndpoint(firstBlock) ||
+        _isReadOnlySelectionEndpoint(lastBlock)) {
       return null;
     }
     final firstText = firstBlock.plainText;
@@ -1142,7 +1159,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   ) {
     return [
       for (final block in blocks)
-        if (block.id == blockId)
+        if (block.isSourceProtected)
+          block
+        else if (block.id == blockId)
           replace(block)
         else
           block.copyWith(
@@ -1158,7 +1177,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   ) {
     return [
       for (final block in blocks)
-        if (block.id == blockId)
+        if (block.isSourceProtected)
+          block
+        else if (block.id == blockId)
           ...replacements
         else
           block.copyWith(
@@ -1172,22 +1193,41 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   List<BusyBlock> _removeBlockById(List<BusyBlock> blocks, String blockId) {
-    return [
-      for (final block in blocks)
-        if (block.id != blockId)
-          block.copyWith(children: _removeBlockById(block.children, blockId)),
-    ];
+    return _removeBlocksByIds(blocks, {blockId});
   }
 
   List<BusyBlock> _removeBlocksByIds(List<BusyBlock> blocks, Set<String> ids) {
     if (ids.isEmpty) {
       return blocks;
     }
-    return [
-      for (final block in blocks)
-        if (!ids.contains(block.id))
-          block.copyWith(children: _removeBlocksByIds(block.children, ids)),
-    ];
+    var changed = false;
+    final result = <BusyBlock>[];
+    for (final block in blocks) {
+      if (block.isSourceProtected) {
+        result.add(block);
+        continue;
+      }
+      if (ids.contains(block.id)) {
+        changed = true;
+        continue;
+      }
+      final children = _removeBlocksByIds(block.children, ids);
+      if (identical(children, block.children)) {
+        result.add(block);
+        continue;
+      }
+      changed = true;
+      if (block.kind == BusyBlockKind.blockquote &&
+          block.children.isNotEmpty &&
+          children.isEmpty &&
+          block.inlines.isEmpty) {
+        continue;
+      }
+      result.add(
+        block.copyWith(children: children, preserveRaw: false, dirty: true),
+      );
+    }
+    return changed ? result : blocks;
   }
 
   List<BusyBlock> _insertBlocksAfter(
@@ -1197,10 +1237,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   ) {
     return [
       for (final block in blocks) ...[
-        block.copyWith(
-          children: _insertBlocksAfter(block.children, blockId, insertedBlocks),
-        ),
-        if (block.id == blockId) ...insertedBlocks,
+        if (block.isSourceProtected)
+          block
+        else ...[
+          block.copyWith(
+            children: _insertBlocksAfter(
+              block.children,
+              blockId,
+              insertedBlocks,
+            ),
+          ),
+          if (block.id == blockId) ...insertedBlocks,
+        ],
       ],
     ];
   }
@@ -1212,7 +1260,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   ) {
     return [
       for (final block in blocks)
-        if (blockIds.contains(block.id))
+        if (block.isSourceProtected)
+          block
+        else if (blockIds.contains(block.id))
           replace(block)
         else
           block.copyWith(
@@ -1226,6 +1276,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       yield block;
       yield* _flatten(block.children);
     }
+  }
+
+  bool _isReadOnlySelectionEndpoint(BusyBlock block) {
+    return block.preserveRaw ||
+        block.isSourceOnly ||
+        block.isGenerated ||
+        block.isSourceProtected ||
+        block.kind == BusyBlockKind.table ||
+        block.kind == BusyBlockKind.thematicBreak;
   }
 
   String _nextGeneratedBlockId(String prefix) {
@@ -1706,7 +1765,10 @@ String _incrementOrderedMarker(String? marker, int offset) {
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
   final hasEditableBlock = document.blocks.any(
-    (block) => block.kind != BusyBlockKind.frontMatter,
+    (block) =>
+        block.kind != BusyBlockKind.frontMatter &&
+        !block.isSourceOnly &&
+        !block.isSourceProtected,
   );
   if (hasEditableBlock) {
     return document;

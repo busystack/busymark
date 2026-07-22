@@ -100,12 +100,14 @@ void main() {
 
     await sendNativeAction('save');
     await sendNativeAction('save');
+    await sendNativeAction('reportIssue');
 
     expect(events.map((event) => event.action), [
       HeaderBarAction.save,
       HeaderBarAction.save,
+      HeaderBarAction.reportIssue,
     ]);
-    expect(events.map((event) => event.sequence), [1, 2]);
+    expect(events.map((event) => event.sequence), [1, 2, 3]);
     expect(events.first, isNot(events.last));
   });
 }

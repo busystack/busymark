@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../app/app_settings.dart';
 import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_model.dart';
 import '../domain/git_models.dart';
@@ -31,6 +32,7 @@ class GitState {
     this.history = const [],
     this.historyFilePath,
     this.branches = const [],
+    this.requiresWorkspaceTrust = false,
     this.isRefreshing = false,
     this.isRunningOperation = false,
     this.lastError,
@@ -51,6 +53,7 @@ class GitState {
   final List<GitCommitSummary> history;
   final String? historyFilePath;
   final List<GitBranch> branches;
+  final bool requiresWorkspaceTrust;
   final bool isRefreshing;
   final bool isRunningOperation;
   final GitFailure? lastError;
@@ -105,6 +108,7 @@ class GitState {
     List<GitCommitSummary>? history,
     Object? historyFilePath = _unset,
     List<GitBranch>? branches,
+    bool? requiresWorkspaceTrust,
     bool? isRefreshing,
     bool? isRunningOperation,
     Object? lastError = _unset,
@@ -139,6 +143,8 @@ class GitState {
           ? this.historyFilePath
           : historyFilePath as String?,
       branches: branches ?? this.branches,
+      requiresWorkspaceTrust:
+          requiresWorkspaceTrust ?? this.requiresWorkspaceTrust,
       isRefreshing: isRefreshing ?? this.isRefreshing,
       isRunningOperation: isRunningOperation ?? this.isRunningOperation,
       lastError: identical(lastError, _unset)
@@ -164,10 +170,30 @@ class GitController extends Notifier<GitState> {
   final _validation = const GitValidation();
   Timer? _debounce;
   var _knownHashes = <String>{};
+  var _refreshEpoch = 0;
+  var _isUpdatingWorkspaceTrust = false;
 
   @override
   GitState build() {
     _gateway = ref.read(gitRepositoryGatewayProvider);
+    ref.listen(appSettingsControllerProvider, (previous, next) {
+      if (!_gateway.requiresWorkspaceTrust || _isUpdatingWorkspaceTrust) {
+        return;
+      }
+      final workspace = state.attachedWorkspace;
+      if (workspace == null) {
+        return;
+      }
+      final wasTrusted =
+          previous?.trustsGitWorkspace(workspace.rootPath) ?? false;
+      final isTrusted = next.trustsGitWorkspace(workspace.rootPath);
+      if (wasTrusted != isTrusted) {
+        if (!isTrusted) {
+          _setWorkspaceTrustRequiredState();
+        }
+        _scheduleRefresh(immediate: true);
+      }
+    });
     ref.onDispose(() => _debounce?.cancel());
     return const GitState();
   }
@@ -208,16 +234,18 @@ class GitController extends Notifier<GitState> {
       return;
     }
     final workspaceId = workspace.id;
+    final refreshEpoch = ++_refreshEpoch;
     _debounce?.cancel();
     state = state.copyWith(isRefreshing: true, lastError: null);
     final availability = await _gateway.availability();
-    if (!_isCurrentWorkspace(workspaceId)) {
+    if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
       return;
     }
     state = state.copyWith(availability: availability);
     if (!availability.available) {
       state = state.copyWith(
         isRefreshing: false,
+        requiresWorkspaceTrust: false,
         repositoryInfo: null,
         statusSnapshot: null,
         selectedFilePath: null,
@@ -233,16 +261,25 @@ class GitController extends Notifier<GitState> {
       );
       return;
     }
+    final trustedWorkspacePath = _trustedWorkspaceGitPath(workspace);
+    if (trustedWorkspacePath == null) {
+      _setWorkspaceTrustRequiredState();
+      return;
+    }
+    state = state.copyWith(requiresWorkspaceTrust: false);
     try {
-      final repository = await _gateway.detectRepository(
-        _workspaceGitPath(workspace),
-      );
-      if (!_isCurrentWorkspace(workspaceId)) {
+      final repository = await _gateway.detectRepository(trustedWorkspacePath);
+      if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
+        return;
+      }
+      if (_trustedWorkspaceGitPath(workspace) != trustedWorkspacePath) {
+        _setWorkspaceTrustRequiredState();
         return;
       }
       if (repository == null) {
         state = state.copyWith(
           isRefreshing: false,
+          requiresWorkspaceTrust: false,
           repositoryInfo: null,
           statusSnapshot: null,
           selectedFilePath: null,
@@ -258,13 +295,15 @@ class GitController extends Notifier<GitState> {
         );
         return;
       }
+      state = state.copyWith(repositoryInfo: repository);
       final status = await _gateway.status(repository);
-      if (!_isCurrentWorkspace(workspaceId)) {
+      if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
       }
       final scoped = _workspaceScopedRepoPath(workspace, status.repositoryInfo);
       state = state.copyWith(
         isRefreshing: false,
+        requiresWorkspaceTrust: false,
         repositoryInfo: status.repositoryInfo,
         statusSnapshot: status,
         scopedFilePath: scoped,
@@ -272,11 +311,32 @@ class GitController extends Notifier<GitState> {
         lastError: null,
       );
     } on Object catch (error) {
-      if (!_isCurrentWorkspace(workspaceId)) {
+      if (!_isCurrentRefresh(workspaceId, refreshEpoch)) {
         return;
       }
       _setFailure(error, commandName: 'status');
       state = state.copyWith(isRefreshing: false);
+    }
+  }
+
+  Future<void> trustWorkspace() async {
+    final workspace = state.attachedWorkspace;
+    if (workspace == null ||
+        !state.requiresWorkspaceTrust ||
+        !_gateway.requiresWorkspaceTrust) {
+      return;
+    }
+    final workspaceId = workspace.id;
+    _isUpdatingWorkspaceTrust = true;
+    try {
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .trustGitWorkspace(workspace.rootPath);
+    } finally {
+      _isUpdatingWorkspaceTrust = false;
+    }
+    if (_isCurrentWorkspace(workspaceId)) {
+      await refresh();
     }
   }
 
@@ -329,7 +389,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> loadFileHistory(String absolutePath) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -343,7 +403,7 @@ class GitController extends Notifier<GitState> {
   Future<void> loadProjectHistory() => _loadHistory();
 
   Future<void> loadCommitDetails(String hash) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null || !_knownHashes.contains(hash)) {
       state = state.copyWith(
         lastError: GitFailure(
@@ -441,7 +501,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> discardFiles(List<String> repoRelativePaths) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     final snapshot = state.statusSnapshot;
     if (repository == null || snapshot == null) {
       return;
@@ -492,7 +552,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> commit(String message) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -516,7 +576,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> push({bool allowSetUpstream = false}) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -601,16 +661,23 @@ class GitController extends Notifier<GitState> {
 
   Future<void> initializeRepository() async {
     final workspace = state.attachedWorkspace;
+    final trustedWorkspacePath = workspace == null
+        ? null
+        : _trustedWorkspaceGitPath(workspace);
     if (workspace == null ||
+        trustedWorkspacePath == null ||
         workspace.kind == WorkspaceKind.untitledMarkdown ||
         workspace.kind == WorkspaceKind.singleMarkdown) {
       return;
     }
-    await _runRootOperation(workspace.rootPath, _gateway.initializeRepository);
+    await _runRootOperation(
+      trustedWorkspacePath,
+      _gateway.initializeRepository,
+    );
   }
 
   Future<List<GitBranch>> loadBranches() async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return state.branches;
     }
@@ -627,7 +694,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> _loadHistory({String? repoRelativePath}) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -657,7 +724,7 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> _loadChangedFileDiff(String repoRelativePath) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -697,7 +764,7 @@ class GitController extends Notifier<GitState> {
     )
     operation,
   ) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -714,7 +781,7 @@ class GitController extends Notifier<GitState> {
   Future<void> _runOperation(
     Future<GitOperationResult> Function(GitRepositoryInfo repository) operation,
   ) async {
-    final repository = state.repositoryInfo;
+    final repository = _trustedRepositoryInfo;
     if (repository == null) {
       return;
     }
@@ -763,6 +830,29 @@ class GitController extends Notifier<GitState> {
     _debounce = Timer(_refreshDebounce, () => unawaited(refresh()));
   }
 
+  void _setWorkspaceTrustRequiredState() {
+    _debounce?.cancel();
+    _knownHashes = {};
+    state = state.copyWith(
+      isRefreshing: false,
+      isRunningOperation: false,
+      requiresWorkspaceTrust: true,
+      repositoryInfo: null,
+      statusSnapshot: null,
+      selectedFilePath: null,
+      selectedCommitHash: null,
+      selectedCommitFilePath: null,
+      openDiffFilePaths: const [],
+      selectedDiff: null,
+      history: const [],
+      historyFilePath: null,
+      branches: const [],
+      lastError: null,
+      lastOperationMessage: null,
+      scopedFilePath: null,
+    );
+  }
+
   void _setFailure(Object error, {required String commandName}) {
     final failure = error is GitFailure
         ? error
@@ -783,6 +873,7 @@ class GitController extends Notifier<GitState> {
       availability: availability ?? state.availability,
       selectedView: GitView.changes,
       attachedWorkspace: workspace,
+      requiresWorkspaceTrust: !_workspaceHasGitTrust(workspace),
     );
   }
 
@@ -790,8 +881,29 @@ class GitController extends Notifier<GitState> {
     return ref.mounted && state.attachedWorkspace?.id == workspaceId;
   }
 
-  String _workspaceGitPath(Workspace workspace) {
-    return workspace.rootPath;
+  bool _isCurrentRefresh(String workspaceId, int refreshEpoch) {
+    return _refreshEpoch == refreshEpoch && _isCurrentWorkspace(workspaceId);
+  }
+
+  bool _workspaceHasGitTrust(Workspace workspace) {
+    return _trustedWorkspaceGitPath(workspace) != null;
+  }
+
+  String? _trustedWorkspaceGitPath(Workspace workspace) {
+    if (!_gateway.requiresWorkspaceTrust) {
+      return workspace.rootPath;
+    }
+    return ref
+        .read(appSettingsControllerProvider)
+        .trustedGitWorkspacePath(workspace.rootPath);
+  }
+
+  GitRepositoryInfo? get _trustedRepositoryInfo {
+    final workspace = state.attachedWorkspace;
+    if (workspace == null || !_workspaceHasGitTrust(workspace)) {
+      return null;
+    }
+    return state.repositoryInfo;
   }
 
   String? _workspaceScopedRepoPath(
@@ -848,6 +960,9 @@ class GitController extends Notifier<GitState> {
 
 class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
   const UnavailableGitRepositoryGateway();
+
+  @override
+  bool get requiresWorkspaceTrust => false;
 
   @override
   Future<GitAvailability> availability() async {

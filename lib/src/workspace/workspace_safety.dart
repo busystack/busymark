@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,9 +26,12 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   if (!state.hasUnsavedChanges) {
     return true;
   }
-  final fileName =
-      state.workspace?.activeFilePath?.split('/').last ??
-      context.l10n.currentFile;
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final target = controller.captureActiveDocumentSaveTarget();
+  if (target == null) {
+    return false;
+  }
+  final fileName = target.path?.split('/').last ?? context.l10n.currentFile;
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final action = await showBusyMarkModalDialog<_UnsavedChangesAction>(
     context,
@@ -63,16 +64,13 @@ Future<bool> confirmSafeToContinue(BuildContext context, WidgetRef ref) async {
   );
 
   if (action == _UnsavedChangesAction.discard) {
-    unawaited(
-      ref.read(workspaceControllerProvider.notifier).discardActiveChanges(),
-    );
-    return true;
+    return controller.discardActiveChanges(target: target);
   }
   if (action == _UnsavedChangesAction.save) {
     if (!context.mounted) {
       return false;
     }
-    return saveActiveWithOverwriteConfirmation(context, ref);
+    return saveActiveWithOverwriteConfirmation(context, ref, target: target);
   }
   return false;
 }
@@ -95,14 +93,27 @@ Future<bool> saveOrConfirmSafeToChangeActiveFile(
 
 Future<bool> saveActiveWithOverwriteConfirmation(
   BuildContext context,
-  WidgetRef ref,
-) async {
+  WidgetRef ref, {
+  ActiveDocumentSaveTarget? target,
+}) async {
   final controller = ref.read(workspaceControllerProvider.notifier);
-  if (controller.activeDocumentNeedsSaveLocation) {
-    return _saveActiveAs(context, ref);
+  final operationTarget =
+      target ?? controller.captureActiveDocumentSaveTarget();
+  if (operationTarget == null ||
+      !controller.isActiveDocumentSaveTargetCurrent(operationTarget)) {
+    return false;
   }
-  if (!await controller.activeFileChangedOnDisk()) {
-    return controller.saveActive();
+  if (operationTarget.needsSaveLocation) {
+    return _saveActiveAs(context, ref, operationTarget);
+  }
+  final changedOnDisk = await controller.activeFileChangedOnDisk(
+    target: operationTarget,
+  );
+  if (!controller.isActiveDocumentSaveTargetCurrent(operationTarget)) {
+    return false;
+  }
+  if (!changedOnDisk) {
+    return controller.saveActive(target: operationTarget);
   }
   if (!context.mounted) {
     return false;
@@ -130,12 +141,22 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   if (action != _OverwriteAction.overwrite) {
     return false;
   }
-  return controller.saveActive(overwriteExternalChanges: true);
+  return controller.saveActive(
+    overwriteExternalChanges: true,
+    target: operationTarget,
+  );
 }
 
-Future<bool> _saveActiveAs(BuildContext context, WidgetRef ref) async {
-  final state = ref.read(workspaceControllerProvider);
-  final activePath = state.workspace?.activeFilePath;
+Future<bool> _saveActiveAs(
+  BuildContext context,
+  WidgetRef ref,
+  ActiveDocumentSaveTarget target,
+) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
+    return false;
+  }
+  final activePath = target.path;
   final location = await getSaveLocation(
     acceptedTypeGroups: [_markdownSaveType(context)],
     suggestedName: activePath == null || activePath.isEmpty
@@ -149,8 +170,55 @@ Future<bool> _saveActiveAs(BuildContext context, WidgetRef ref) async {
   if (location == null) {
     return false;
   }
-  final savePath = _withMarkdownExtension(location.path);
-  return ref.read(workspaceControllerProvider.notifier).saveActiveAs(savePath);
+  final savePath = p.normalize(_withMarkdownExtension(location.path));
+  final exists = await controller.savePathExists(savePath, target: target);
+  if (!controller.isActiveDocumentSaveTargetCurrent(target)) {
+    return false;
+  }
+  var overwriteExisting = false;
+  if (exists) {
+    if (!context.mounted) {
+      return false;
+    }
+    final action = await _confirmSaveAsOverwrite(context, ref, savePath);
+    if (action != _OverwriteAction.overwrite ||
+        !controller.isActiveDocumentSaveTargetCurrent(target)) {
+      return false;
+    }
+    overwriteExisting = true;
+  }
+  return controller.saveActiveAs(
+    savePath,
+    target: target,
+    overwriteExisting: overwriteExisting,
+  );
+}
+
+Future<_OverwriteAction?> _confirmSaveAsOverwrite(
+  BuildContext context,
+  WidgetRef ref,
+  String savePath,
+) {
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  return showBusyMarkModalDialog<_OverwriteAction>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.warning,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
+          child: Text(context.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
+          child: Text(context.l10n.overwrite),
+        ),
+      ],
+      children: [Text(context.l10n.errorPathAlreadyExists(savePath))],
+    ),
+  );
 }
 
 String _withMarkdownExtension(String path) {

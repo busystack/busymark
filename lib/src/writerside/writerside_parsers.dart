@@ -547,9 +547,11 @@ class WritersideTopicParser {
         .allMatches(source)
         .map(
           (match) => WritersideInclude(
-            from: match.namedGroup('from'),
-            elementId: match.namedGroup('id'),
-            nullable: match.group(0)!.contains('nullable="true"'),
+            from: _writersideAttributeValue(match.group(0)!, 'from'),
+            elementId: _writersideAttributeValue(match.group(0)!, 'element-id'),
+            nullable:
+                _writersideAttributeValue(match.group(0)!, 'nullable') ==
+                'true',
             span: SourceSpan.fromOffsets(
               filePath: filePath,
               source: source,
@@ -776,8 +778,19 @@ class WritersideTopicParser {
 }
 
 final _includeRegex = RegExp(
-  r'<include\b(?=[^>]*\bfrom="(?<from>[^"]+)")(?=[^>]*\belement-id="(?<id>[^"]+)")[^>]*/?>',
+  r'<include\b[^>]*>',
+  caseSensitive: false,
+  dotAll: true,
 );
+
+String? _writersideAttributeValue(String element, String attribute) {
+  final match = RegExp(
+    '${RegExp.escape(attribute)}\\s*=\\s*(["\\\'])(.*?)\\1',
+    caseSensitive: false,
+    dotAll: true,
+  ).firstMatch(element);
+  return match?.group(2);
+}
 
 List<Diagnostic> _writersideMarkdownDiagnostics(List<Diagnostic> diagnostics) {
   return [

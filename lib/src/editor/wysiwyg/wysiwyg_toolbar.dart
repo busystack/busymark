@@ -22,6 +22,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onHardBreakCommand,
     required this.onCodeLanguageCommand,
     this.alignEnd = false,
+    this.axis = Axis.horizontal,
   });
 
   final ValueChanged<BusyWysiwygBlockCommand> onBlockCommand;
@@ -37,19 +38,30 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onHardBreakCommand;
   final VoidCallback onCodeLanguageCommand;
   final bool alignEnd;
+  final Axis axis;
 
   @override
   Widget build(BuildContext context) {
+    final direction = Directionality.of(context);
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+      scrollDirection: axis,
       reverse: alignEnd,
-      padding: const EdgeInsets.symmetric(
-        horizontal: BusyMarkSpacing.sm,
-        vertical: BusyMarkSpacing.xs,
-      ),
-      child: Row(
+      clipBehavior: Clip.none,
+      hitTestBehavior: HitTestBehavior.deferToChild,
+      padding: axis == Axis.horizontal
+          ? const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.sm,
+              vertical: BusyMarkSpacing.xs,
+            )
+          : const EdgeInsets.symmetric(
+              horizontal: BusyMarkSpacing.xs,
+              vertical: BusyMarkSpacing.sm,
+            ),
+      child: Flex(
+        direction: axis,
+        mainAxisSize: MainAxisSize.min,
         spacing: BusyMarkSpacing.xs,
-        children: _groups([
+        children: _groups(axis, [
           [_blockStyleMenu(context)],
           [
             _button(
@@ -85,14 +97,14 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
             _button(
               context,
               tooltip: context.l10n.indentListItem,
-              icon: BusyMarkGlyphs.indent,
+              icon: BusyMarkGlyphs.indentFor(direction),
               shortcut: BusyMarkEditorShortcutLabels.indent,
               onPressed: onIndentCommand,
             ),
             _button(
               context,
               tooltip: context.l10n.outdentListItem,
-              icon: BusyMarkGlyphs.outdent,
+              icon: BusyMarkGlyphs.outdentFor(direction),
               shortcut: BusyMarkEditorShortcutLabels.outdent,
               onPressed: onOutdentCommand,
             ),
@@ -214,11 +226,16 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     );
   }
 
-  List<Widget> _groups(List<List<Widget>> groups) {
+  List<Widget> _groups(Axis axis, List<List<Widget>> groups) {
     final widgets = <Widget>[];
     for (final group in groups.where((items) => items.isNotEmpty)) {
       if (widgets.isNotEmpty) {
-        widgets.add(const SizedBox(width: BusyMarkSpacing.sm));
+        widgets.add(
+          SizedBox(
+            width: axis == Axis.horizontal ? BusyMarkSpacing.sm : null,
+            height: axis == Axis.vertical ? BusyMarkSpacing.sm : null,
+          ),
+        );
       }
       widgets.addAll(group);
     }
@@ -227,14 +244,13 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   Widget _blockStyleMenu(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
       foregroundColor: colorScheme.onPrimary,
       backgroundColor: _toolbarButtonBackground(context),
-      boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      elevated: true,
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
@@ -284,7 +300,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     String? shortcut,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderIconButton(
       tooltip: tooltip,
       icon: icon,
@@ -292,7 +307,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       shortcut: shortcut,
       foregroundColor: colorScheme.onPrimary,
       backgroundColor: _toolbarButtonBackground(context),
-      boxShadow: BusyMarkShadow.surfaceShadows(colors.shade),
+      elevated: true,
     );
   }
 

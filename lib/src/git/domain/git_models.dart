@@ -63,19 +63,19 @@ class GitAvailability {
     required this.available,
     this.executablePath,
     this.version,
-    this.unsupportedReason,
+    this.unavailableReason,
   });
 
   const GitAvailability.unavailable([String? reason])
     : available = false,
       executablePath = null,
       version = null,
-      unsupportedReason = reason;
+      unavailableReason = reason;
 
   final bool available;
   final String? executablePath;
   final String? version;
-  final String? unsupportedReason;
+  final String? unavailableReason;
 }
 
 class GitRepositoryInfo {

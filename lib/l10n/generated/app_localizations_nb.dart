@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -31,7 +33,94 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aboutWebsite => 'Nettsted';
 
   @override
-  String get aboutReportIssue => 'Rapporter et problem';
+  String get aboutSourceCode => 'Kildekode';
+
+  @override
+  String get reportIssue => 'Rapporter et problem';
+
+  @override
+  String get feedbackCategory => 'Kategori';
+
+  @override
+  String get feedbackChooseCategory => 'Velg en kategori';
+
+  @override
+  String get feedbackCategoryProblem => 'Problem eller feil';
+
+  @override
+  String get feedbackCategoryFeature => 'Funksjonsønske';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'Bekymring om personvern eller sikkerhet';
+
+  @override
+  String get feedbackCategoryUsability => 'Bekymring om brukervennlighet';
+
+  @override
+  String get feedbackCategoryOther => 'Annet';
+
+  @override
+  String get feedbackSubject => 'Emne';
+
+  @override
+  String get feedbackMessage => 'Detaljert melding';
+
+  @override
+  String get feedbackReplyEmail => 'E-post for svar (valgfritt)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Ta med tekniske detaljer';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Når dette er aktivert, legges bare Linux-operativsystemversjonen og BusyMark-programmets lokalinnstilling til. Ingen logger, filer, kontodata eller annen diagnostikk legges ved.';
+
+  @override
+  String get feedbackSubmit => 'Send';
+
+  @override
+  String get feedbackSubmitting => 'Sender…';
+
+  @override
+  String get feedbackCategoryRequired => 'Velg en kategori.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'Emnet må inneholde mellom 3 og 120 tegn.';
+
+  @override
+  String get feedbackMessageLength =>
+      'Meldingen må inneholde mellom 10 og 5000 tegn.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark kunne ikke koble til. Kontroller internettforbindelsen og prøv igjen.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'Forespørselen ble tidsavbrutt. Prøv igjen.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Det ble sendt for mange rapporter fra denne forbindelsen. Vent og prøv igjen.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'Serveren avviste rapporten. Kontroller skjemafeltene og prøv igjen.';
+
+  @override
+  String get feedbackServerFailure =>
+      'Serveren kunne ikke ta imot rapporten. Prøv igjen senere.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Tilbakemeldingen er sendt. Referanse-ID: $id';
+  }
 
   @override
   String get advanced => 'Avansert';
@@ -100,9 +189,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get fileHistory => 'Filhistorikk';
 
   @override
-  String get find => 'Finn';
-
-  @override
   String get folder => 'Mappe';
 
   @override
@@ -125,6 +211,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get openInFiles => 'Åpne i Filer';
+
+  @override
+  String get pathActions => 'Stihandlinger';
 
   @override
   String get outline => 'Disposisjon';
@@ -217,6 +306,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get languageHindi => 'हिन्दी';
 
   @override
+  String get languageEstonian => 'Eesti';
+
+  @override
   String get toggleSidebar => 'Sidepanel';
 
   @override
@@ -270,7 +362,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get noOpenFile => 'Ingen åpen fil';
 
   @override
-  String get shortcutGroupFile => 'Fil';
+  String get shortcutDeleteTreeItemDescription =>
+      'Slett det valgte elementet i Filer, eller fjern det valgte emnet fra innholdsfortegnelsen';
+
+  @override
+  String get shortcutGroupGeneral => 'Generelt';
 
   @override
   String get shortcutNewDocument => 'Nytt dokument';
@@ -284,10 +380,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Åpne en Markdown-fil, en mappe eller et Writerside-prosjekt';
 
   @override
-  String get shortcutSaveDescription => 'Lagre gjeldende Markdown-fil';
+  String get shortcutSaveDescription => 'Lagre gjeldende dokument';
 
   @override
-  String get shortcutFindDescription => 'Søk i gjeldende dokument';
+  String get shortcutSearchDescription => 'Søk i gjeldende arbeidsområde';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -304,33 +400,32 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutNextTab => 'Neste fane';
 
   @override
-  String get shortcutNextTabDescription => 'Gå til neste åpne redigeringsfane';
+  String get shortcutNextTabDescription => 'Gå til neste åpne fane';
 
   @override
   String get shortcutPreviousTab => 'Forrige fane';
 
   @override
-  String get shortcutPreviousTabDescription =>
-      'Gå til forrige åpne redigeringsfane';
+  String get shortcutPreviousTabDescription => 'Gå til forrige åpne fane';
 
   @override
   String get shortcutCloseTab => 'Lukk fane';
 
   @override
-  String get shortcutCloseTabDescription => 'Lukk den aktive redigeringsfanen';
+  String get shortcutCloseTabDescription => 'Lukk den aktive fanen';
 
   @override
   String get shortcutCloseAllTabs => 'Lukk alle faner';
 
   @override
-  String get shortcutCloseAllTabsDescription =>
-      'Lukk alle åpne redigeringsfaner';
+  String get shortcutCloseAllTabsDescription => 'Lukk alle åpne faner';
 
   @override
   String get shortcutGroupTextEditing => 'Tekstredigering';
 
   @override
-  String get shortcutSelectAllDescription => 'Velg all tekst i redigereren';
+  String get shortcutSelectAllDescription =>
+      'Velg all tekst i kildemodus; trykk to ganger i redigeringsmodus for å velge alle blokker';
 
   @override
   String get shortcutCutDescription => 'Klipp ut den valgte teksten';
@@ -353,11 +448,25 @@ class AppLocalizationsNb extends AppLocalizations {
       'Gjør om den siste angrede redigeringen';
 
   @override
-  String get clearEditorSelection => 'Fjern markering i redigereren';
+  String get shortcutInsertIndentation => 'Sett inn innrykk';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Avslutt gjeldende markering i redigereren eller søkefokus';
+  String get shortcutInsertIndentationDescription =>
+      'Sett inn innrykk ved markøren';
+
+  @override
+  String get shortcutOutdentSource => 'Reduser innrykk i kilden';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Fjern ett innrykksnivå i kildemodus';
+
+  @override
+  String get shortcutEscape => 'Lukk søk eller fjern blokkmarkering';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Lukk arbeidsområdesøket eller fjern en blokkmarkering i redigeringsmodus';
 
   @override
   String get shortcutGroupFormatting => 'Formatering';
@@ -526,28 +635,49 @@ class AppLocalizationsNb extends AppLocalizations {
   String get clearRecentWorkspaces => 'Tøm nylige arbeidsområder';
 
   @override
-  String get editingButtons => 'Redigeringsknapper';
+  String get editingButtonsPosition => 'Plassering av redigeringsknapper';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.';
 
   @override
-  String get privacy => 'Privacy';
+  String get editingButtonsDirection => 'Retning for redigeringsknapper';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get editingButtonsDirectionDescription =>
+      'Velg om de flytende WYSIWYG-redigeringsknappene skal ordnes vannrett eller loddrett.';
+
+  @override
+  String get horizontal => 'Vannrett';
+
+  @override
+  String get vertical => 'Loddrett';
+
+  @override
+  String get privacy => 'Personvern';
+
+  @override
+  String get allowRemoteImages => 'Last inn eksterne bilder';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'Tillat at bilder i Markdown-forhåndsvisningen og redigereren lastes inn fra HTTP- og HTTPS-adresser.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions =>
+      'Tøm tillatelser for eksterne bilder';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.';
+
+  @override
+  String get clearGitWorkspaceTrust => 'Tøm klarerte Git-arbeidsområder';
+
+  @override
+  String get clearGitWorkspaceTrustDescription =>
+      'Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.';
 
   @override
   String get settingsWindowSectionTitle => 'Vindu';
@@ -649,6 +779,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get htmlBlock => 'HTML-blokk';
+
+  @override
+  String get htmlContentDefault => 'HTML-innhold';
 
   @override
   String get shortcutHtmlBlockDescription =>
@@ -766,6 +899,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get altText => 'Alternativ tekst';
 
   @override
+  String get editorPlaceholderText => 'tekst';
+
+  @override
+  String get editorPlaceholderCode => 'kode';
+
+  @override
+  String get editorPlaceholderAltText => 'alternativ tekst';
+
+  @override
   String get describeTheImage => 'Beskriv bildet';
 
   @override
@@ -786,24 +928,25 @@ class AppLocalizationsNb extends AppLocalizations {
   String get noImageSource => 'Ingen bildekilde';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'Eksternt bilde blokkert';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'Velg om BusyMark kan laste inn eksterne bilder.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle => 'Eksterne bilder er blokkert';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace =>
+      'Last inn for dette arbeidsområdet';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'Last alltid inn eksterne bilder';
 
   @override
   String get hideSidebar => 'Skjul sidepanel';
@@ -851,6 +994,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get toc => 'Innholdsfortegnelse';
 
   @override
+  String get tocActions => 'Handlinger for innholdsfortegnelsen';
+
+  @override
   String get markdownUnsaved => 'Markdown – ikke lagret';
 
   @override
@@ -881,6 +1027,178 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get newChildTopic => 'Nytt underemne';
+
+  @override
+  String get newSiblingTopic => 'Nytt emne på samme nivå';
+
+  @override
+  String get renameTopicFile => 'Gi emnefilen nytt navn';
+
+  @override
+  String get topicPlacement => 'Plassering i innholdsfortegnelsen';
+
+  @override
+  String get tocRoot => 'På toppnivå i innholdsfortegnelsen';
+
+  @override
+  String get afterSelectedTopic => 'Etter valgt emne';
+
+  @override
+  String get insideSelectedTopic => 'Under valgt emne';
+
+  @override
+  String get pasteAfterTopic => 'Lim inn etter';
+
+  @override
+  String get pasteAsChildTopic => 'Lim inn som underemne';
+
+  @override
+  String get removeFromToc => 'Fjern fra innholdsfortegnelsen';
+
+  @override
+  String get confirmRemoveFromTocTitle => 'Fjerne fra innholdsfortegnelsen?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return 'Fjerne $name fra denne innholdsfortegnelsen? Emnefilen beholdes.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => 'Slette emnefilen?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return 'Slette $name og fjerne den fra alle innholdsfortegnelser? Dette kan ikke angres.';
+  }
+
+  @override
+  String get safeDeleteTopicFile => 'Slett emnefilen trygt …';
+
+  @override
+  String get removeTocElement => 'Fjern element fra innholdsfortegnelsen';
+
+  @override
+  String get reviewUsages => 'Se gjennom bruk';
+
+  @override
+  String get deleteTopicFile => 'Slett emnefil';
+
+  @override
+  String get removeAction => 'Fjern';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Fjern «$topic» fra den valgte hjelpeinstansen. Emnefilen beholdes.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Slett «$topic», og oppdater referansene til emnet trygt i hele dette Writerside-prosjektet.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count underemner flyttes ett nivå opp.',
+      one: '1 underemne flyttes ett nivå opp.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Dette emnet brukes som startside for en instans. Se gjennom bruken, og angi en annen startside før du fortsetter.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Bruk ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'Fant ingen referanser som ville slutte å fungere.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark fant følgende referanser til dette emnet.';
+
+  @override
+  String get topicUsageTocElements => 'Elementer i innholdsfortegnelsen';
+
+  @override
+  String get topicUsageStartPages => 'Startsider';
+
+  @override
+  String get topicUsageTopicLinks => 'Emnelenker';
+
+  @override
+  String get topicUsageIncludes => 'Inkluderinger';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bruk',
+      one: '1 bruk',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Refaktoreringsalternativer';
+
+  @override
+  String get updateUsagesAutomatically => 'Oppdater bruk automatisk';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Fjern referanser i innholdsfortegnelsen og inkluderinger, og behold lenketeksten.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Noe bruk må endres manuelt før denne refaktoreringen.';
+
+  @override
+  String get setRedirectTo => 'Omdiriger til';
+
+  @override
+  String get noRedirectDescription =>
+      'Ikke omdiriger den gamle publiserte siden.';
+
+  @override
+  String get redirectTarget => 'Mål for omdirigering';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Se gjennom og oppdater gjenværende bruk før du fortsetter, eller slå på automatiske oppdateringer når de er tilgjengelige.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Bruk av «$topic»';
+  }
+
+  @override
+  String get noUsagesFound => 'Fant ingen bruk.';
+
+  @override
+  String get outsideSelectedInstance => 'utenfor den valgte instansen';
+
+  @override
+  String get doRefactor => 'Utfør refaktorering';
+
+  @override
+  String get orphanTopicTitle => 'Emnefilen brukes ikke lenger';
+
+  @override
+  String get keepTopicFile => 'Behold emnefilen';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '«$topic» brukes ikke lenger noe sted i dette Writerside-prosjektet. Slett filen, eller behold den for bruk i en annen instans.';
+  }
 
   @override
   String get defaultNewTopicTitle => 'Nytt emne';
@@ -945,7 +1263,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String collapseKind(String kind) {
-    return 'Skjul $kind';
+    return 'Fold sammen $kind';
   }
 
   @override
@@ -961,23 +1279,26 @@ class AppLocalizationsNb extends AppLocalizations {
   String get foldKindTag => 'tagg';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'Forrige treff';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'Neste treff';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive => 'Skill mellom store og små bokstaver';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'Hele ord';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'Regulært uttrykk';
+
+  @override
+  String get sourceSearchInvalidRegex => 'Ugyldig regulært uttrykk';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'Stor fil: utheving og folding er satt på pause';
 
   @override
   String get noPreview => 'Ingen forhåndsvisning';
@@ -1111,7 +1432,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String errorPathDoesNotExist(String path) {
-    return 'Banen finnes ikke: $path';
+    return 'Stien finnes ikke: $path';
   }
 
   @override
@@ -1121,7 +1442,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String errorTargetPathNotDirectory(String path) {
-    return 'Målbanen finnes allerede og er ikke en mappe: $path';
+    return 'Målstien finnes allerede og er ikke en mappe: $path';
   }
 
   @override
@@ -1159,11 +1480,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get errorFileOperationOutsideRoot =>
-      'Filoperasjonen må holde seg i workspace.';
+      'Filoperasjonen må holde seg i arbeidsområdet.';
 
   @override
   String get errorFileOperationRoot =>
-      'Workspace-roten kan ikke endres fra filtreet.';
+      'Roten til arbeidsområdet kan ikke endres fra filtreet.';
 
   @override
   String get errorProjectNameRequired => 'Prosjektnavn er påkrevd.';
@@ -1173,7 +1494,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get errorDirectoryNameUnsafe =>
-      'Mappenavnet må være ett enkelt, trygt banesegment.';
+      'Mappenavnet må være ett enkelt, trygt stisegment.';
 
   @override
   String get errorInstanceIdInvalid =>
@@ -1181,7 +1502,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get errorTopicFileInvalid =>
-      'Emnefilnavnet må være et Markdown-filnavn uten baneskilletegn.';
+      'Emnefilnavnet må være et Markdown-filnavn uten stiskilletegn.';
 
   @override
   String get errorTopicTitleRequired => 'Emnetittel er påkrevd.';
@@ -1220,12 +1541,46 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get errorWritersideTocNodeMissing =>
+      'Den valgte oppføringen i innholdsfortegnelsen finnes ikke lenger.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'En oppføring i innholdsfortegnelsen kan ikke flyttes under seg selv eller en av sine underoppføringer.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'Startemnet $topic kan ikke slettes. Velg en annen startside først.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Bruk trygg sletting for Writerside-emnefiler.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'Kunne ikke fullføre søket etter emnebruk. Ingen filer ble endret.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Noen forekomster av emnet krever fortsatt oppfølging. Se gjennom dem før du fortsetter.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'Det valgte målet for videresending er ikke lenger gyldig. Velg det på nytt.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'Fjerningen av emnet kunne ikke angres fullstendig. Se gjennom disse banene før du fortsetter: $paths';
+  }
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Emneroten må være en sikker relativ mappe.';
 
   @override
   String get errorTopicFileNameUnsafe =>
-      'Emnefilnavnet må være ett enkelt, trygt banesegment.';
+      'Emnefilnavnet må være ett enkelt, trygt stisegment.';
 
   @override
   String errorTopicFileExtensionMismatch(String extension) {
@@ -1257,7 +1612,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get diagnosticWorkspaceFileTooLarge =>
-      'Filen er større enn betagrensen for automatisk parsing.';
+      'Filen er større enn betagrensen for automatisk analyse.';
 
   @override
   String diagnosticWorkspaceFileReadFailed(String error) {
@@ -1552,54 +1907,76 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'Lukk';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'Git-diff';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'Vis diff';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'gammel $oldRange → ny $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'ingen linjer';
+
+  @override
+  String get gitUnavailableTitle => 'Git er ikke tilgjengelig';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Installer Git, eller konfigurer BusyMark til å bruke en tilgjengelig Git-programfil. $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitTrustRequiredTitle =>
+      'Vil du stole på dette arbeidsområdet for Git?';
+
+  @override
+  String get gitTrustRequiredMessage =>
+      'Git-repositorier kan kjøre programmer via hooks, filtre og annen konfigurasjon. Stol på dette arbeidsområdet før BusyMark leser repositoriedata eller aktiverer Git-handlinger.';
+
+  @override
+  String get gitTrustWorkspace => 'Stol på arbeidsområdet';
+
+  @override
+  String get gitNotRepositoryTitle => 'Ikke et Git-repositorium';
 
   @override
   String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+      'Dette arbeidsområdet er ikke i et Git-repositorium.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'Initialiser repositorium';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitDetachedHead => 'Frakoblet HEAD';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'Frakoblet ved $commit';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'Ingen upstream';
 
   @override
   String gitAheadCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits ikke pushet',
-      one: '1 commit ikke pushet',
+      other: '$count commits som ikke er pushet',
+      one: '1 commit som ikke er pushet',
     );
     return '$_temp0';
   }
@@ -1609,17 +1986,17 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count commits å hente',
+      one: '1 commit å hente',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'Ren';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'Konflikter';
 
   @override
   String get gitChanges => 'Endringer';
@@ -1631,87 +2008,89 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitBranches => 'Grener';
 
   @override
+  String get gitBranchActions => 'Grenhandlinger';
+
+  @override
   String get gitPull => 'Pull';
 
   @override
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Innsjekk';
+  String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'Velg for commit';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'Utelat fra commit';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'Forkast';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'Åpne fil';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'Merk som løst';
 
   @override
-  String get gitUntracked => 'Uversjonerte filer';
+  String get gitUntracked => 'Usporede filer';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'Commit-melding';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'Valgte filer';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'Velg minst én fil før du oppretter en commit.';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired => 'Skriv inn en commit-melding.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'Opprett gren';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ Ny gren';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'Grennavn';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'Bytt';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'Ingen endringer';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'Ingen historikk';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'Ingen grener';
 
   @override
   String get gitNoDiff => 'Ingen diff å vise';
 
   @override
-  String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+  String get gitBinaryFile => 'Binærfil. BusyMark viser ikke binære patcher.';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'Ulagrede endringer i redigereren tas ikke med før de er lagret.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => 'Forkaste Git-endringer?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other: 'De valgte sporede filene gjenopprettes fra Git.',
+      one: 'Den valgte sporede filen gjenopprettes fra Git.',
     );
     return '$_temp0';
   }
@@ -1721,8 +2100,8 @@ class AppLocalizationsNb extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'De valgte usporede filene slettes.',
+      one: 'Den valgte usporede filen slettes.',
     );
     return '$_temp0';
   }
@@ -1733,35 +2112,34 @@ class AppLocalizationsNb extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
-      one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'De valgte filene gjenopprettes eller slettes ut fra Git-statusen.',
+      one: 'Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return 'Bytt til $branch?';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'BusyMark laster arbeidsområdet på nytt fra disken etter at Git har byttet gren.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => 'Angi upstream-gren?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'Denne grenen har ingen upstream. BusyMark kan pushe $branch og angi upstream når nøyaktig én remote er konfigurert.';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'Prosjekt';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'Gjeldende fil';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -1769,80 +2147,81 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'Filhandlinger';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'Lagt til';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'Slettet';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'Gitt nytt navn';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'Kopiert';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'Usporet';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'I konflikt';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'Ignorert';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'Type endret';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'Endret';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'Ukjent';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git er ikke tilgjengelig.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository =>
+      'Dette arbeidsområdet er ikke et Git-repositorium.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath => 'BusyMark blokkerte en usikker Git-sti.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName => 'Skriv inn et gyldig grennavn.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'Ingen Git-remote er konfigurert.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'Ingen upstream-gren er konfigurert.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'Git-autentisering mislyktes. I snap-pakken kan SSH-remoter kreve at grensesnittet ssh-keys kobles til.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'Git-nettverksoperasjonen mislyktes.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'Git rapporterte uløste konflikter.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'Git-kommandoen mislyktes.';
 
   @override
   String get markdownAndHtml => 'Markdown og HTML';
@@ -1923,7 +2302,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get markdownHtmlSanitizedPreviewDescription =>
-      'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker, ikke rendret i en nettleser.';
+      'Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.';
 
   @override
   String get markdownHtmlSourcePreserved => 'Kilden bevares';
@@ -1940,7 +2319,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Markdown-markører inni rå HTML vises som bokstavelig tekst.';
 
   @override
-  String get markdownHtmlBlockedContent => 'Aktivt innhold blokkert';
+  String get markdownHtmlBlockedContent => 'Blokkert aktivt innhold';
 
   @override
   String get markdownHtmlBlockedContentDescription =>
@@ -1951,5 +2330,5 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get markdownHtmlSafeUrlsDescription =>
-      'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre skjemaer blokkeres.';
+      'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
 }

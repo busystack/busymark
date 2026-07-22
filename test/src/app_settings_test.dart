@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,29 @@ void main() {
     expect(settings.toJson()['autoSave'], isTrue);
   });
 
+  test('editing button direction defaults to horizontal', () {
+    final defaults = AppSettings.defaults();
+    final missing = AppSettings.fromJson(const <String, Object?>{});
+    final unknown = AppSettings.fromJson(const <String, Object?>{
+      'editorToolbarDirection': 'diagonal',
+    });
+
+    expect(defaults.editorToolbarDirection, EditorToolbarDirection.horizontal);
+    expect(missing.editorToolbarDirection, EditorToolbarDirection.horizontal);
+    expect(unknown.editorToolbarDirection, EditorToolbarDirection.horizontal);
+    expect(defaults.toJson()['editorToolbarDirection'], 'horizontal');
+  });
+
+  test('editing button direction round-trips through settings JSON', () {
+    final stored = AppSettings.defaults()
+        .copyWith(editorToolbarDirection: EditorToolbarDirection.vertical)
+        .toJson();
+    final reloaded = AppSettings.fromJson(stored);
+
+    expect(reloaded.editorToolbarDirection, EditorToolbarDirection.vertical);
+    expect(reloaded.toJson()['editorToolbarDirection'], 'vertical');
+  });
+
   test('remote images default to blocked', () {
     final settings = AppSettings.defaults();
 
@@ -33,6 +57,14 @@ void main() {
     expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
     expect(settings.allowsRemoteImagesForWorkspace('/tmp/docs'), isFalse);
     expect(settings.toJson()['allowRemoteImages'], isFalse);
+  });
+
+  test('Git workspaces default to untrusted', () {
+    final settings = AppSettings.defaults();
+
+    expect(settings.trustedGitWorkspacePaths, isEmpty);
+    expect(settings.trustsGitWorkspace('/tmp/docs'), isFalse);
+    expect(settings.toJson()['trustedGitWorkspacePaths'], isEmpty);
   });
 
   test('legacy preview visibility migrates to source mode when hidden', () {
@@ -67,6 +99,17 @@ void main() {
     expect(settings.localeTag, 'nb');
     expect(settings.locale, const Locale('nb'));
     expect(settings.toJson()['localeTag'], 'nb');
+  });
+
+  test('script-only locale tag is not treated as a country code', () {
+    final settings = AppSettings.fromJson(<String, Object?>{
+      'localeTag': 'fa-Arab',
+    });
+
+    expect(
+      settings.locale,
+      const Locale.fromSubtags(languageCode: 'fa', scriptCode: 'Arab'),
+    );
   });
 
   test('unused product settings are not persisted', () {
@@ -115,6 +158,24 @@ void main() {
 
     expect(store.value['autoSave'], isFalse);
     expect(container.read(appSettingsControllerProvider).autoSave, isFalse);
+  });
+
+  test('editing button direction setting persists', () async {
+    final store = _MemorySettingsStore();
+    final container = ProviderContainer(
+      overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(appSettingsControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.setEditorToolbarDirection(EditorToolbarDirection.vertical);
+
+    expect(store.value['editorToolbarDirection'], 'vertical');
+    expect(
+      container.read(appSettingsControllerProvider).editorToolbarDirection,
+      EditorToolbarDirection.vertical,
+    );
   });
 
   test(
@@ -205,6 +266,111 @@ void main() {
     settings = container.read(appSettingsControllerProvider);
     expect(settings.remoteImageAllowedWorkspacePaths, isEmpty);
     expect(store.value['remoteImageAllowedWorkspacePaths'], isEmpty);
+  });
+
+  test(
+    'Git workspace trust persists, normalizes, and can be cleared',
+    () async {
+      final store = _MemorySettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+
+      await controller.trustGitWorkspace('/tmp/docs/../docs');
+
+      var settings = container.read(appSettingsControllerProvider);
+      expect(settings.trustsGitWorkspace('/tmp/docs'), isTrue);
+      expect(settings.trustsGitWorkspace('/tmp/other'), isFalse);
+      expect(store.value['trustedGitWorkspacePaths'], ['/tmp/docs']);
+
+      await controller.clearTrustedGitWorkspaces();
+
+      settings = container.read(appSettingsControllerProvider);
+      expect(settings.trustedGitWorkspacePaths, isEmpty);
+      expect(store.value['trustedGitWorkspacePaths'], isEmpty);
+    },
+  );
+
+  test(
+    'Git workspace trust follows the canonical workspace identity',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-git-trust-');
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      final first = await Directory('${root.path}/first').create();
+      final second = await Directory('${root.path}/second').create();
+      final workspaceLink = Link('${root.path}/workspace');
+      await workspaceLink.create(first.path);
+
+      final settings = AppSettings.defaults().copyWith(
+        trustedGitWorkspacePaths: [first.path],
+      );
+      expect(settings.trustsGitWorkspace(workspaceLink.path), isTrue);
+
+      await workspaceLink.delete();
+      await workspaceLink.create(second.path);
+
+      expect(settings.trustsGitWorkspace(workspaceLink.path), isFalse);
+    },
+    skip: Platform.isWindows,
+  );
+
+  test(
+    'stored Git trust does not follow a replaced canonical path',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-stored-git-trust-',
+      );
+      addTearDown(() async {
+        if (await root.exists()) {
+          await root.delete(recursive: true);
+        }
+      });
+      final trustedPath = await Directory('${root.path}/trusted').create();
+      final replacement = await Directory('${root.path}/replacement').create();
+      final stored = AppSettings.defaults()
+          .copyWith(trustedGitWorkspacePaths: [trustedPath.path])
+          .toJson();
+
+      await trustedPath.delete();
+      await Link(trustedPath.path).create(replacement.path);
+      final reloaded = AppSettings.fromJson(stored);
+
+      expect(reloaded.trustsGitWorkspace(trustedPath.path), isFalse);
+      expect(reloaded.trustedGitWorkspacePaths, [trustedPath.path]);
+    },
+    skip: Platform.isWindows,
+  );
+
+  test('Git trust preserves leading and trailing path whitespace', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-git-trust-whitespace-',
+    );
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final plain = await Directory('${root.path}/repo').create();
+    final spaced = await Directory('${root.path}/repo ').create();
+
+    final plainTrusted = AppSettings.fromJson(<String, Object?>{
+      'trustedGitWorkspacePaths': [plain.path],
+    });
+    expect(plainTrusted.trustsGitWorkspace(plain.path), isTrue);
+    expect(plainTrusted.trustsGitWorkspace(spaced.path), isFalse);
+
+    final spacedTrusted = AppSettings.fromJson(<String, Object?>{
+      'trustedGitWorkspacePaths': [spaced.path],
+    });
+    expect(spacedTrusted.trustsGitWorkspace(spaced.path), isTrue);
+    expect(spacedTrusted.trustsGitWorkspace(plain.path), isFalse);
   });
 }
 

@@ -43,6 +43,9 @@ void main() {
       'linux/io.busystack.busymark.desktop',
     ).readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final localSnapBuilder = File(
+      'tools/build_install_snap_local.sh',
+    ).readAsStringSync();
 
     expect(native, contains('g_set_prgname(APPLICATION_ID)'));
     expect(native, contains('g_set_application_name(kApplicationDisplayName)'));
@@ -74,6 +77,33 @@ void main() {
       snapcraft,
       contains(r'> "$CRAFT_PRIME/meta/gui/io.busystack.busymark.desktop"'),
     );
+    expect(
+      snapcraft,
+      contains(
+        RegExp(
+          r'^plugs:\n'
+          r'  desktop:\n'
+          r'    interface: desktop\n'
+          r'    desktop-file-ids:\n'
+          r'      - io\.busystack\.busymark\.desktop$',
+          multiLine: true,
+        ),
+      ),
+    );
+    expect(
+      localSnapBuilder,
+      contains('text = ensure_desktop_file_id(text, desktop_file_id)'),
+    );
+    expect(localSnapBuilder, contains('desktop_file_id = sys.argv[5]'));
+    expect(localSnapBuilder, contains(r'DESKTOP_FILE_ID="${APP_ID}.desktop"'));
+    expect(localSnapBuilder, contains(r'"$DESKTOP_FILE_ID" <<'));
+    expect(
+      localSnapBuilder,
+      contains(
+        'unsquashfs -cat "\$OUT" meta/snap.yaml | grep -A4 '
+        "'^  desktop:' | grep -F -- \"- \$DESKTOP_FILE_ID\"",
+      ),
+    );
   });
 
   test('native labels are supplied by Dart rather than hardcoded in C++', () {
@@ -94,7 +124,7 @@ void main() {
     expect(source, isNot(contains('"About BusyMark"')));
   });
 
-  test('native main menu exposes keyboard shortcuts action', () {
+  test('native main menu exposes shared application actions', () {
     final service = File(
       'lib/src/platform/linux_header_bar_service.dart',
     ).readAsStringSync();
@@ -114,14 +144,19 @@ void main() {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
     ).readAsStringSync();
+    final mainMenu = File(
+      'lib/src/app/busymark_main_menu.dart',
+    ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(service, contains('keyboardShortcuts'));
     expect(service, contains('markdownAndHtml'));
+    expect(service, contains('reportIssue'));
     expect(app, contains('menu: l10n.mainMenu'));
     expect(app, contains('settings: l10n.settings'));
     expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
     expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
+    expect(app, contains('reportIssue: l10n.reportIssue'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
@@ -135,27 +170,42 @@ void main() {
     expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(workspace, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(workspace, contains('case HeaderBarAction.reportIssue:'));
     expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(settings, contains('case HeaderBarAction.markdownAndHtml:'));
+    expect(settings, contains('case HeaderBarAction.reportIssue:'));
     expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
     expect(welcome, contains('case HeaderBarAction.markdownAndHtml:'));
-    expect(
-      welcome,
-      contains('BusyMarkHeaderPopupMenuButton<_WelcomeMenuAction>'),
-    );
-    expect(welcome, contains('tooltip: l10n.mainMenu'));
+    expect(welcome, contains('case HeaderBarAction.reportIssue:'));
+    expect(welcome, contains('BusyMarkMainMenuButton('));
+    expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
+    expect(mainMenu, contains('tooltip: l10n.mainMenu'));
+    expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(native, contains('GtkWidget* sidebar_menu_button;'));
     expect(native, contains('GtkWidget* keyboard_shortcuts_item;'));
     expect(native, contains('GtkWidget* markdown_html_item;'));
+    expect(native, contains('GtkWidget* report_issue_item;'));
     expect(native, contains('fl_lookup_string_arg(args, "keyboardShortcuts")'));
     expect(native, contains('fl_lookup_string_arg(args, "markdownAndHtml")'));
+    expect(native, contains('fl_lookup_string_arg(args, "reportIssue")'));
     expect(native, contains('create_menu_item(self, "keyboardShortcuts")'));
     expect(native, contains('create_menu_item(self, "markdownAndHtml")'));
+    expect(native, contains('create_menu_item(self, "reportIssue")'));
     expect(native, contains('main_menu_icon_name(action)'));
     expect(native, contains('"preferences-system-symbolic"'));
     expect(native, contains('"input-keyboard-symbolic"'));
     expect(native, contains('"text-x-generic-symbolic"'));
+    expect(native, contains('"dialog-warning-symbolic"'));
     expect(native, contains('"help-about-symbolic"'));
+    final reportIssuePack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->report_issue_item',
+    );
+    final aboutPack = native.indexOf(
+      'gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item',
+    );
+    expect(reportIssuePack, isNonNegative);
+    expect(aboutPack, isNonNegative);
+    expect(reportIssuePack, lessThan(aboutPack));
     final mainMenuItemOffset = native.indexOf(
       'static GtkWidget* create_menu_item',
     );
@@ -337,7 +387,21 @@ void main() {
     expect(script, contains('copy_tree_into_snap_root /usr/share/git-core'));
     expect(script, contains('for tool in ssh scp sftp ssh-keyscan'));
     expect(script, contains(r'stage_ldd_dependencies "$git_bin"'));
+    expect(script, contains(r'setsid_bin="$(command -v setsid || true)"'));
+    expect(
+      script,
+      contains(
+        'setsid from util-linux is required to run bundled Git commands',
+      ),
+    );
+    expect(
+      script,
+      contains(r'install -Dm755 "$setsid_bin" "$SNAP_ROOT/usr/bin/setsid"'),
+    );
+    expect(script, contains(r'stage_ldd_dependencies "$setsid_bin"'));
+    expect(script, contains(r'test -x "$SNAP_ROOT/usr/bin/setsid"'));
     expect(script, contains('squashfs-root/usr/bin/git'));
+    expect(script, contains('squashfs-root/usr/bin/setsid'));
     expect(script, contains('--skip-bundled-git'));
   });
 
@@ -388,8 +452,8 @@ void main() {
     expect(headerbarBlock, contains('"box-shadow: none;"'));
     expect(headerbarBlock, contains('"border-top-left-radius: %dpx;"'));
     expect(headerbarBlock, contains('"border-top-right-radius: %dpx;"'));
-    expect(headerbarBlock, contains('"padding-left: 0;"'));
-    expect(headerbarBlock, contains('"padding-right: 0;"'));
+    expect(headerbarBlock, isNot(contains('"padding-left: 0;"')));
+    expect(headerbarBlock, isNot(contains('"padding-right: 0;"')));
     expect(
       native,
       contains(
@@ -399,6 +463,25 @@ void main() {
     );
     expect(native, isNot(contains('border-right: 1px solid')));
     expect(workspace, isNot(contains('Border(right:')));
+  });
+
+  test('native headerbar preserves the themed outer window inset', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final ltrPaddingBlock = RegExp(
+      r'"headerbar\.busymark-headerbar:dir\(ltr\) \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)?.group(1);
+    final rtlPaddingBlock = RegExp(
+      r'"headerbar\.busymark-headerbar:dir\(rtl\) \{"(.*?)"\}',
+      dotAll: true,
+    ).firstMatch(native)?.group(1);
+
+    expect(ltrPaddingBlock, isNotNull);
+    expect(ltrPaddingBlock, contains('"padding-left: 0;"'));
+    expect(ltrPaddingBlock, isNot(contains('"padding-right: 0;"')));
+    expect(rtlPaddingBlock, isNotNull);
+    expect(rtlPaddingBlock, contains('"padding-right: 0;"'));
+    expect(rtlPaddingBlock, isNot(contains('"padding-left: 0;"')));
   });
 
   test('native headerbar mirrors sidebar surface for text direction', () {
@@ -414,12 +497,119 @@ void main() {
     expect(app, contains('service.setTextDirection(textDirection)'));
     expect(native, contains('gboolean text_direction_rtl;'));
     expect(native, contains('static void update_titlebar_direction'));
+    expect(native, contains('update_header_menu_item_direction'));
+    expect(native, contains('set_widget_direction(self->sidebar_menu'));
+    expect(native, contains('set_widget_direction(self->view_mode_menu'));
+    expect(native, contains('direction == GTK_TEXT_DIR_RTL ? 1.0 : 0.0'));
+    expect(
+      native,
+      contains('set_widget_direction(shortcut, GTK_TEXT_DIR_LTR)'),
+    );
+    expect(native, contains('kLtrIsolateStart'));
+    expect(native, contains('kBidiIsolateEnd'));
     expect(native, contains('gtk_box_reorder_child'));
     expect(native, contains('static void set_text_direction'));
     expect(native, contains('strcmp(method, "setTextDirection")'));
     expect(native, contains('g_strcmp0(value, "rtl") == 0'));
     expect(native, contains('headerbar_right_radius'));
     expect(native, contains('sidebar_right_radius'));
+  });
+
+  test('native headerbar reapplies logical insets after direction changes', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final marginHelper = RegExp(
+      r'static void set_widget_horizontal_margins[\s\S]*?^}',
+      multiLine: true,
+    ).firstMatch(native)?.group(0);
+    final titleAlignment = RegExp(
+      r'static void update_title_stack_alignment[\s\S]*?(?=^static void set_toggle_button_active)',
+      multiLine: true,
+    ).firstMatch(native)?.group(0);
+    final directionUpdate = RegExp(
+      r'static void update_titlebar_direction[\s\S]*?(?=^static void refresh_header_bar_css)',
+      multiLine: true,
+    ).firstMatch(native)?.group(0);
+
+    expect(marginHelper, isNotNull);
+    expect(marginHelper, contains('gtk_widget_set_margin_start'));
+    expect(marginHelper, contains('gtk_widget_set_margin_end'));
+    expect(titleAlignment, isNotNull);
+    expect(
+      titleAlignment,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->title_stack,\s*'
+          r'self->search_active \? 0 : kHeaderWindowControlsBalanceWidth,\s*0\);',
+        ),
+      ),
+    );
+    expect(directionUpdate, isNotNull);
+    expect(
+      directionUpdate,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->sidebar_search_button,\s*'
+          r'kHeaderSidebarInset,\s*0\);',
+        ),
+      ),
+    );
+    expect(
+      directionUpdate,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->sidebar_menu_button,\s*'
+          r'0,\s*kHeaderSidebarInset\);',
+        ),
+      ),
+    );
+    expect(
+      directionUpdate,
+      matches(
+        RegExp(
+          r'set_widget_horizontal_margins\(\s*self->header_start_box,\s*'
+          r'kHeaderSidebarInset,\s*0\);',
+        ),
+      ),
+    );
+
+    final titleDirectionOffset = directionUpdate!.indexOf(
+      'set_widget_direction(self->title_stack, direction)',
+    );
+    final titleAlignmentOffset = directionUpdate.indexOf(
+      'update_title_stack_alignment(self);',
+    );
+    expect(titleDirectionOffset, isNonNegative);
+    expect(titleAlignmentOffset, greaterThan(titleDirectionOffset));
+
+    for (final widget in <String>[
+      'sidebar_search_button',
+      'sidebar_menu_button',
+      'header_start_box',
+    ]) {
+      final directionOffset = directionUpdate.indexOf(
+        'set_widget_direction(self->$widget, direction)',
+      );
+      final marginOffset = directionUpdate.indexOf(
+        'set_widget_horizontal_margins(self->$widget,',
+      );
+      expect(directionOffset, isNonNegative, reason: widget);
+      expect(marginOffset, greaterThan(directionOffset), reason: widget);
+    }
+
+    expect(
+      native,
+      isNot(
+        contains('gtk_widget_set_margin_start(self->sidebar_search_button'),
+      ),
+    );
+    expect(
+      native,
+      isNot(contains('gtk_widget_set_margin_end(self->sidebar_menu_button')),
+    );
+    expect(
+      native,
+      isNot(contains('gtk_widget_set_margin_start(self->header_start_box')),
+    );
   });
 
   test('native headerbar restores outer corners without sidebar', () {
@@ -786,6 +976,19 @@ void main() {
     expect(native, isNot(contains('viewModeAgenda')));
   });
 
+  test('native popover rows do not open redundant hover tooltips', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final helper = RegExp(
+      r'static void set_menu_item_label_with_shortcut\([\s\S]*?\n\}',
+    ).firstMatch(native)?.group(0);
+
+    expect(helper, isNotNull);
+    expect(helper, contains('set_menu_item_label(item, text);'));
+    expect(helper, contains('set_menu_item_shortcut(item, shortcut);'));
+    expect(helper, isNot(contains('gtk_widget_set_tooltip_text')));
+    expect(native, contains('set_widget_tooltip(self->view_mode_button'));
+  });
+
   test('welcome page has a sidebar but no document controls', () {
     final welcome = File(
       'lib/src/workspace/presentation/welcome_screen.dart',
@@ -873,7 +1076,10 @@ void main() {
 
       expect(welcome, contains('setTitleRange(context.l10n.appTitle)'));
       expect(settings, contains('setTitleRange(context.l10n.settings)'));
-      expect(workspace, contains('setTitleRange(title)'));
+      expect(
+        workspace,
+        contains('setTitleRange(busyMarkBidiIsolateFor(context, title))'),
+      );
       expect(settings, isNot(contains("setTitleRange('BusyMark Settings')")));
       expect(
         native,

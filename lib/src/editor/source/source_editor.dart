@@ -167,15 +167,21 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     final keyboard = HardwareKeyboard.instance;
     final key = event.logicalKey;
-    if (BusyMarkAppShortcutActivators.find.accepts(event, keyboard)) {
+    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
       widget.onOpenSearch();
       return KeyEventResult.handled;
     }
-    if (_isPlainTabKey(keyboard, key)) {
+    if (BusyMarkTextEditingShortcutActivators.insertIndentation.accepts(
+      event,
+      keyboard,
+    )) {
       _insertTab();
       return KeyEventResult.handled;
     }
-    if (_isPlainShiftTabKey(keyboard, key)) {
+    if (BusyMarkTextEditingShortcutActivators.outdentSource.accepts(
+      event,
+      keyboard,
+    )) {
       _outdentSelection();
       return KeyEventResult.handled;
     }
@@ -183,7 +189,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       _applyFullEditingValue(SourceCommands.smartEnter(_fullEditingValue()));
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.escape) {
+    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
       widget.onCloseSearch();
       return KeyEventResult.handled;
     }
@@ -250,6 +256,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                         undoController: _undoController,
                         focusNode: _focusNode,
                         scrollController: _scrollController,
+                        textDirection: TextDirection.ltr,
                         keyboardType: widget.wordWrap
                             ? TextInputType.multiline
                             : TextInputType.text,
@@ -575,20 +582,37 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         break;
       case BusyMarkEditorShortcutAction.image:
         _applyFullEditingValue(
-          SourceCommands.insertImage(_fullEditingValue(), block: true),
+          SourceCommands.insertImage(
+            _fullEditingValue(),
+            block: true,
+            altPlaceholder: context.l10n.editorPlaceholderAltText,
+          ),
         );
         break;
       case BusyMarkEditorShortcutAction.inlineImage:
         _applyFullEditingValue(
-          SourceCommands.insertImage(_fullEditingValue(), block: false),
+          SourceCommands.insertImage(
+            _fullEditingValue(),
+            block: false,
+            altPlaceholder: context.l10n.editorPlaceholderAltText,
+          ),
         );
         break;
       case BusyMarkEditorShortcutAction.table:
-        _applyFullEditingValue(SourceCommands.insertTable(_fullEditingValue()));
+        _applyFullEditingValue(
+          SourceCommands.insertTable(
+            _fullEditingValue(),
+            headerTextForColumn: context.l10n.tableHeaderNumber,
+            cellText: context.l10n.tableCellDefault,
+          ),
+        );
         break;
       case BusyMarkEditorShortcutAction.htmlBlock:
         _applyFullEditingValue(
-          SourceCommands.insertHtmlBlock(_fullEditingValue()),
+          SourceCommands.insertHtmlBlock(
+            _fullEditingValue(),
+            defaultContent: context.l10n.htmlContentDefault,
+          ),
         );
         break;
       case BusyMarkEditorShortcutAction.thematicBreak:
@@ -609,7 +633,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _applyInlineCommand(SourceInlineCommand command) {
     _applyFullEditingValue(
-      SourceCommands.applyInlineCommand(_fullEditingValue(), command),
+      SourceCommands.applyInlineCommand(
+        _fullEditingValue(),
+        command,
+        placeholder: command == SourceInlineCommand.code
+            ? context.l10n.editorPlaceholderCode
+            : context.l10n.editorPlaceholderText,
+      ),
     );
   }
 
@@ -631,7 +661,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   void _insertCodeBlock({String language = ''}) {
     _applyFullEditingValue(
-      SourceCommands.insertCodeFence(_fullEditingValue(), language: language),
+      SourceCommands.insertCodeFence(
+        _fullEditingValue(),
+        language: language,
+        contentPlaceholder: context.l10n.editorPlaceholderCode,
+      ),
     );
   }
 
@@ -681,6 +715,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   TextStyle get _sourceTextStyle => TextStyle(
     fontFamily: BusyMarkTypography.monoFontFamily,
+    fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
     fontSize: widget.editorFontSize,
     height: BusyMarkTypography.codeLineHeight,
     leadingDistribution: TextLeadingDistribution.even,
@@ -815,6 +850,7 @@ class _SourceEditorFrame extends StatelessWidget {
         return DecoratedBox(
           decoration: BoxDecoration(color: colors.view),
           child: Row(
+            textDirection: TextDirection.ltr,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
@@ -903,6 +939,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                   left: _SourceEditorFrame.editorPaddingLeft,
                   width: textWidth,
                   child: RichText(
+                    textDirection: TextDirection.ltr,
                     text: controller.buildSourceTextSpan(
                       context: context,
                       style: textStyle,
@@ -1039,6 +1076,7 @@ class _CollapsedSourceLine extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 text,
+                textDirection: TextDirection.ltr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: textStyle.copyWith(color: colors.mutedForeground),
@@ -1074,7 +1112,7 @@ class _SourceSearchPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final status = result.invalidRegex
-        ? 'Invalid regex'
+        ? context.l10n.sourceSearchInvalidRegex
         : result.totalMatchCount == 0
         ? '0 / 0'
         : '${(result.currentMatchIndex ?? 0) + 1} / ${result.totalMatchCount}';
@@ -1097,6 +1135,9 @@ class _SourceSearchPanel extends StatelessWidget {
             children: [
               Text(
                 status,
+                textDirection: result.invalidRegex
+                    ? Directionality.of(context)
+                    : TextDirection.ltr,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: result.invalidRegex
                       ? Theme.of(context).colorScheme.error
@@ -1213,6 +1254,7 @@ class _SearchOptionButton extends StatelessWidget {
               child: Center(
                 child: Text(
                   label,
+                  textDirection: TextDirection.ltr,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: selected
                         ? colors.foreground
@@ -1278,22 +1320,6 @@ class _SourceEditorShortcutIntent extends Intent {
   const _SourceEditorShortcutIntent(this.action);
 
   final BusyMarkEditorShortcutAction action;
-}
-
-bool _isPlainTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      !keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
-}
-
-bool _isPlainShiftTabKey(HardwareKeyboard keyboard, LogicalKeyboardKey key) {
-  return key == LogicalKeyboardKey.tab &&
-      !keyboard.isControlPressed &&
-      keyboard.isShiftPressed &&
-      !keyboard.isAltPressed &&
-      !keyboard.isMetaPressed;
 }
 
 int _textOffsetForLine(String source, int lineNumber) {

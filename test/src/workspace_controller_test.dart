@@ -11,6 +11,7 @@ import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 void main() {
   test(
@@ -248,6 +249,93 @@ void main() {
     },
   );
 
+  test(
+    'topic TOC actions refresh the workspace and preserve file state',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-actions-',
+      );
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+      await controller.createWritersideProject(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: parent.path,
+          projectName: 'Docs',
+          directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
+        ),
+      );
+      await controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Secondary',
+          fileName: 'secondary.md',
+        ),
+      );
+      final rootPath = p.join(parent.path, 'docs');
+      final treePath = p.join(rootPath, 'user-guide.tree');
+      final startPath = p.join(rootPath, 'topics', 'getting-started.md');
+      final secondaryPath = p.join(rootPath, 'topics', 'secondary.md');
+      expect(await controller.openActiveFile(startPath), isTrue);
+      expect(
+        controller.state.workspace?.openFilePaths,
+        contains(secondaryPath),
+      );
+
+      expect(
+        await controller.moveWritersideTocEntry(
+          treePath: treePath,
+          sourcePath: const [1],
+          placement: WritersideTopicCreatePlacement.child,
+          referencePath: const [0],
+        ),
+        isTrue,
+      );
+      var tree = XmlDocument.parse(File(treePath).readAsStringSync());
+      var first = tree.rootElement.childElements
+          .where((element) => element.name.local == 'toc-element')
+          .first;
+      expect(first.childElements.single.getAttribute('topic'), 'secondary.md');
+      expect(controller.state.workspace?.activeFilePath, startPath);
+
+      expect(
+        await controller.renameWritersideTopicFile(secondaryPath, 'renamed.md'),
+        isTrue,
+      );
+      final renamedPath = p.join(rootPath, 'topics', 'renamed.md');
+      tree = XmlDocument.parse(File(treePath).readAsStringSync());
+      first = tree.rootElement.childElements
+          .where((element) => element.name.local == 'toc-element')
+          .first;
+      expect(first.childElements.single.getAttribute('topic'), 'renamed.md');
+      expect(controller.state.workspace?.activeFilePath, startPath);
+      expect(controller.state.workspace?.openFilePaths, contains(renamedPath));
+      expect(
+        controller.state.workspace?.openFilePaths,
+        isNot(contains(secondaryPath)),
+      );
+      expect(File(renamedPath).existsSync(), isTrue);
+
+      expect(
+        await controller.removeWritersideTocEntry(
+          treePath: treePath,
+          nodePath: const [0, 0],
+        ),
+        isTrue,
+      );
+      expect(File(renamedPath).existsSync(), isTrue);
+      expect(File(treePath).readAsStringSync(), isNot(contains('renamed.md')));
+
+      expect(await controller.deleteWritersideTopicFile(renamedPath), isTrue);
+      expect(File(renamedPath).existsSync(), isFalse);
+
+      controller.dispose();
+      settingsController.dispose();
+      await parent.delete(recursive: true);
+    },
+  );
+
   test('save as writes a new Markdown file and records it as recent', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-save-as-',
@@ -271,6 +359,74 @@ void main() {
     settingsController.dispose();
     await directory.delete(recursive: true);
   });
+
+  test(
+    'save as refuses an existing file unless overwrite is explicit',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-existing-',
+      );
+      final file = File('${directory.path}/existing.md');
+      await file.writeAsString('# Existing\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Draft\n');
+
+      expect(await controller.saveActiveAs(file.path), isFalse);
+      expect(await file.readAsString(), '# Existing\n');
+      expect(controller.state.workspace?.kind, WorkspaceKind.untitledMarkdown);
+      expect(controller.state.isDirty, isTrue);
+      expect(controller.state.message?.code, WorkspaceMessageCode.saveFailed);
+
+      expect(
+        await controller.saveActiveAs(file.path, overwriteExisting: true),
+        isTrue,
+      );
+      expect(await file.readAsString(), '# Draft\n');
+
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+  );
+
+  test(
+    'save as explicit overwrite replaces the final symlink only',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-symlink-',
+      );
+      final target = File('${directory.path}/target.md');
+      final link = Link('${directory.path}/note.md');
+      await target.writeAsString('# Target\n');
+      await link.create(target.path);
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Draft\n');
+
+      expect(
+        await controller.saveActiveAs(link.path, overwriteExisting: true),
+        isTrue,
+      );
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), '# Draft\n');
+      expect(await target.readAsString(), '# Target\n');
+
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test(
     'save as preserves source edits for an untitled Markdown file',
@@ -299,6 +455,72 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+
+  test('save as preserves edits made while writing the file', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-as-edit-during-write-',
+    );
+    final file = File(p.join(directory.path, 'created.md'));
+    final service = _DelayedSaveAsWorkspaceService(pauseWrite: true);
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText('# First draft\n');
+
+    final save = controller.saveActiveAs(file.path);
+    await service.writeStarted.future;
+    controller.updateActiveText('# Newer draft\n');
+    service.releaseWrite();
+
+    expect(await save, isTrue);
+    expect(await file.readAsString(), '# First draft\n');
+    expect(controller.state.workspace?.activeFilePath, file.path);
+    expect(controller.state.activeText, '# Newer draft\n');
+    expect(controller.state.isDirty, isTrue);
+
+    expect(await controller.saveActive(), isTrue);
+    expect(await file.readAsString(), '# Newer draft\n');
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
+
+  test('save as preserves edits made while reopening the file', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-save-as-edit-during-open-',
+    );
+    final file = File(p.join(directory.path, 'created.md'));
+    final service = _DelayedSaveAsWorkspaceService(pauseOpen: true);
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText('# First draft\n');
+
+    final save = controller.saveActiveAs(file.path);
+    await service.openStarted.future;
+    controller.updateActiveText('# Newer draft\n');
+    service.releaseOpen();
+
+    expect(await save, isTrue);
+    expect(await file.readAsString(), '# First draft\n');
+    expect(controller.state.workspace?.activeFilePath, file.path);
+    expect(controller.state.activeText, '# Newer draft\n');
+    expect(controller.state.isDirty, isTrue);
+
+    expect(await controller.saveActive(), isTrue);
+    expect(await file.readAsString(), '# Newer draft\n');
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+    await directory.delete(recursive: true);
+  });
 
   test('switching active files reparses outline for the new file', () async {
     final harness = await _createControllerHarness();
@@ -750,6 +972,34 @@ class _WorkspaceControllerDriver {
   Future<bool> createWritersideTopic(WritersideTopicCreateRequest request) =>
       _notifier.createWritersideTopic(request);
 
+  Future<bool> moveWritersideTocEntry({
+    required String treePath,
+    required List<int> sourcePath,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+  }) => _notifier.moveWritersideTocEntry(
+    treePath: treePath,
+    sourcePath: sourcePath,
+    placement: placement,
+    referencePath: referencePath,
+  );
+
+  Future<bool> removeWritersideTocEntry({
+    required String treePath,
+    required List<int> nodePath,
+  }) => _notifier.removeWritersideTocEntry(
+    treePath: treePath,
+    nodePath: nodePath,
+  );
+
+  Future<bool> renameWritersideTopicFile(
+    String topicPath,
+    String newFileName,
+  ) => _notifier.renameWritersideTopicFile(topicPath, newFileName);
+
+  Future<bool> deleteWritersideTopicFile(String topicPath) =>
+      _notifier.deleteWritersideTopicFile(topicPath);
+
   Future<bool> openActiveFile(String path) => _notifier.openActiveFile(path);
 
   Future<bool> activateNextOpenFileTab() => _notifier.activateNextOpenFileTab();
@@ -777,7 +1027,8 @@ class _WorkspaceControllerDriver {
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
       _notifier.saveActive(overwriteExternalChanges: overwriteExternalChanges);
 
-  Future<bool> saveActiveAs(String path) => _notifier.saveActiveAs(path);
+  Future<bool> saveActiveAs(String path, {bool overwriteExisting = false}) =>
+      _notifier.saveActiveAs(path, overwriteExisting: overwriteExisting);
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
 
@@ -813,6 +1064,50 @@ class _MemorySettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     value = json;
+  }
+}
+
+class _DelayedSaveAsWorkspaceService extends WorkspaceService {
+  _DelayedSaveAsWorkspaceService({
+    this.pauseWrite = false,
+    this.pauseOpen = false,
+  });
+
+  final bool pauseWrite;
+  final bool pauseOpen;
+  final writeStarted = Completer<void>();
+  final openStarted = Completer<void>();
+  final _releaseWrite = Completer<void>();
+  final _releaseOpen = Completer<void>();
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+    writeStarted.complete();
+    if (pauseWrite) {
+      await _releaseWrite.future;
+    }
+    return super.saveNewText(path, text);
+  }
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    openStarted.complete();
+    if (pauseOpen) {
+      await _releaseOpen.future;
+    }
+    return super.openPath(path);
+  }
+
+  void releaseWrite() {
+    if (!_releaseWrite.isCompleted) {
+      _releaseWrite.complete();
+    }
+  }
+
+  void releaseOpen() {
+    if (!_releaseOpen.isCompleted) {
+      _releaseOpen.complete();
+    }
   }
 }
 

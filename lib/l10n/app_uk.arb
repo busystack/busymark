@@ -1,5 +1,30 @@
 {
   "@@locale": "uk",
+  "reportIssue": "Повідомити про проблему",
+  "feedbackCategory": "Категорія",
+  "feedbackChooseCategory": "Виберіть категорію",
+  "feedbackCategoryProblem": "Проблема або помилка",
+  "feedbackCategoryFeature": "Запит на функцію",
+  "feedbackCategoryPrivacySecurity": "Проблема конфіденційності або безпеки",
+  "feedbackCategoryUsability": "Проблема зручності використання",
+  "feedbackCategoryOther": "Інше",
+  "feedbackSubject": "Тема",
+  "feedbackMessage": "Докладне повідомлення",
+  "feedbackReplyEmail": "Ел. пошта для відповіді (необов’язково)",
+  "feedbackIncludeTechnicalDetails": "Додати технічні відомості",
+  "feedbackTechnicalDetailsDisclosure": "Якщо цей параметр увімкнено, додаються лише версія операційної системи Linux і мова та регіон програми BusyMark. Журнали, файли, дані облікового запису й інші діагностичні відомості не додаються.",
+  "feedbackSubmit": "Надіслати",
+  "feedbackSubmitting": "Надсилання…",
+  "feedbackCategoryRequired": "Виберіть категорію.",
+  "feedbackSubjectLength": "Тема має містити від 3 до 120 символів.",
+  "feedbackMessageLength": "Повідомлення має містити від 10 до 5000 символів.",
+  "feedbackReplyEmailInvalid": "Введіть дійсну адресу електронної пошти або залиште поле порожнім.",
+  "feedbackConnectionFailure": "BusyMark не вдалося підключитися. Перевірте інтернет-з’єднання та повторіть спробу.",
+  "feedbackTimeoutFailure": "Час очікування запиту минув. Повторіть спробу.",
+  "feedbackRateLimitedFailure": "Із цього з’єднання надіслано забагато звітів. Зачекайте та повторіть спробу.",
+  "feedbackRejectedFailure": "Сервер відхилив повідомлення. Перевірте поля форми та повторіть спробу.",
+  "feedbackServerFailure": "Сервер не зміг прийняти звіт. Повторіть спробу пізніше.",
+  "feedbackSuccess": "Відгук надіслано. Ідентифікатор звернення: {id}",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -28,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Повідомити про проблему",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Вихідний код",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Додатково",
   "@advanced": {
@@ -112,10 +137,6 @@
   "@fileHistory": {
     "description": "Menu action and sidebar title for showing Git history for a single file."
   },
-  "find": "Знайти",
-  "@find": {
-    "description": "Find command label."
-  },
   "folder": "Папка",
   "@folder": {
     "description": "Folder kind label."
@@ -147,6 +168,10 @@
   "openInFiles": "Відкрити у Файлах",
   "@openInFiles": {
     "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "Дії зі шляхом",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
   },
   "outline": "Структура",
   "@outline": {
@@ -268,6 +293,10 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
   "toggleSidebar": "Бічна панель",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
@@ -336,9 +365,11 @@
   "@noOpenFile": {
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
-  "shortcutGroupFile": "Файл",
-  "@shortcutGroupFile": {
-    "description": "Keyboard shortcut group for file commands."
+  "shortcutDeleteTreeItemDescription": "Видалити вибраний елемент у розділі «Файли» або вилучити вибрану тему зі змісту",
+  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "shortcutGroupGeneral": "Загальні",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
   },
   "shortcutNewDocument": "Новий документ",
   "@shortcutNewDocument": {
@@ -352,12 +383,12 @@
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "Зберегти поточний файл Markdown",
+  "shortcutSaveDescription": "Зберегти поточний документ",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "Шукати в поточному документі",
-  "@shortcutFindDescription": {
+  "shortcutSearchDescription": "Шукати в поточному робочому просторі",
+  "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
   "shortcutKeyboardShortcutsDescription": "Показати довідку з комбінацій клавіш",
@@ -374,43 +405,43 @@
   },
   "shortcutNextTab": "Наступна вкладка",
   "@shortcutNextTab": {
-    "description": "Keyboard shortcut label for moving to the next editor tab."
+    "description": "Keyboard shortcut label for moving to the next tab."
   },
-  "shortcutNextTabDescription": "Перейти до наступної відкритої вкладки редактора",
+  "shortcutNextTabDescription": "Перейти до наступної відкритої вкладки",
   "@shortcutNextTabDescription": {
-    "description": "Keyboard shortcut description for moving to the next editor tab."
+    "description": "Keyboard shortcut description for moving to the next tab."
   },
   "shortcutPreviousTab": "Попередня вкладка",
   "@shortcutPreviousTab": {
-    "description": "Keyboard shortcut label for moving to the previous editor tab."
+    "description": "Keyboard shortcut label for moving to the previous tab."
   },
-  "shortcutPreviousTabDescription": "Перейти до попередньої відкритої вкладки редактора",
+  "shortcutPreviousTabDescription": "Перейти до попередньої відкритої вкладки",
   "@shortcutPreviousTabDescription": {
-    "description": "Keyboard shortcut description for moving to the previous editor tab."
+    "description": "Keyboard shortcut description for moving to the previous tab."
   },
   "shortcutCloseTab": "Закрити вкладку",
   "@shortcutCloseTab": {
-    "description": "Keyboard shortcut label for closing the active editor tab."
+    "description": "Keyboard shortcut label for closing the active tab."
   },
-  "shortcutCloseTabDescription": "Закрити активну вкладку редактора",
+  "shortcutCloseTabDescription": "Закрити активну вкладку",
   "@shortcutCloseTabDescription": {
-    "description": "Keyboard shortcut description for closing the active editor tab."
+    "description": "Keyboard shortcut description for closing the active tab."
   },
   "shortcutCloseAllTabs": "Закрити всі вкладки",
   "@shortcutCloseAllTabs": {
-    "description": "Keyboard shortcut label for closing all editor tabs."
+    "description": "Keyboard shortcut label for closing all tabs."
   },
-  "shortcutCloseAllTabsDescription": "Закрити всі відкриті вкладки редактора",
+  "shortcutCloseAllTabsDescription": "Закрити всі відкриті вкладки",
   "@shortcutCloseAllTabsDescription": {
-    "description": "Keyboard shortcut description for closing all editor tabs."
+    "description": "Keyboard shortcut description for closing all tabs."
   },
   "shortcutGroupTextEditing": "Редагування тексту",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Виділити весь текст у редакторі",
+  "shortcutSelectAllDescription": "У режимі вихідного тексту виділити весь текст; у режимі редактора натиснути двічі, щоб виділити всі блоки",
   "@shortcutSelectAllDescription": {
-    "description": "Keyboard shortcut description for selecting all text."
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
   },
   "shortcutCutDescription": "Вирізати виділений текст",
   "@shortcutCutDescription": {
@@ -436,13 +467,21 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "Зняти виділення в редакторі",
-  "@clearEditorSelection": {
-    "description": "Keyboard shortcut label for clearing selection."
+  "shortcutInsertIndentation": "Вставити відступ",
+  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "shortcutInsertIndentationDescription": "Вставити відступ у позицію курсора",
+  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "shortcutOutdentSource": "Зменшити відступ у вихідному тексті",
+  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "shortcutOutdentSourceDescription": "Прибрати один рівень відступу в режимі вихідного тексту",
+  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "shortcutEscape": "Закрити пошук або зняти виділення блоків",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
   },
-  "shortcutClearEditorSelectionDescription": "Зняти поточне виділення в редакторі або фокус із пошуку",
-  "@shortcutClearEditorSelectionDescription": {
-    "description": "Keyboard shortcut description for clearing selection."
+  "shortcutEscapeDescription": "Закрити пошук у робочому просторі або зняти виділення блоків у режимі редактора",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
   },
   "shortcutGroupFormatting": "Форматування",
   "@shortcutGroupFormatting": {
@@ -628,7 +667,7 @@
   "@autoSaveDescription": {
     "description": "Editor setting description for saving files automatically."
   },
-  "wordWrap": "Перенесення слів",
+  "wordWrap": "Перенесення рядків",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -644,24 +683,44 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "Кнопки редагування",
-  "@editingButtons": {
+  "editingButtonsPosition": "Розташування кнопок редагування",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "Виберіть, де відображатимуться плаваючі кнопки редагування WYSIWYG.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
-  "privacy": "Privacy",
+  "editingButtonsDirection": "Орієнтація кнопок редагування",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Виберіть, як розташувати плаваючі кнопки редагування WYSIWYG: горизонтально чи вертикально.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Горизонтально",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Вертикально",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "Конфіденційність",
   "@privacy": {"description": "Settings section title for privacy options."},
-  "allowRemoteImages": "Load remote images",
+  "allowRemoteImages": "Завантажувати віддалені зображення",
   "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
-  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "allowRemoteImagesDescription": "Дозволяти завантаження зображень у попередньому перегляді Markdown і редакторі з URL-адрес http та https.",
   "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
-  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "clearRemoteImagePermissions": "Очистити дозволи для віддалених зображень",
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
-  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "clearRemoteImagePermissionsDescription": "Забути робочі області, яким було дозволено завантажувати віддалені зображення.",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "Очистити список довірених робочих областей Git",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "Вікно",
   "@settingsWindowSectionTitle": {
@@ -712,7 +771,7 @@
   "@unsavedChanges": {
     "description": "Unsaved changes dialog title."
   },
-  "unsavedChangesMessage": "У {fileName} є незбережені зміни. Зберегти їх перед продовженням?",
+  "unsavedChangesMessage": "{fileName} містить незбережені зміни. Зберегти їх перед продовженням?",
   "@unsavedChangesMessage": {
     "description": "Unsaved changes confirmation message.",
     "placeholders": {
@@ -785,6 +844,8 @@
   "@htmlBlock": {
     "description": "HTML block command label."
   },
+  "htmlContentDefault": "Вміст HTML",
+  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
   "shortcutHtmlBlockDescription": "Вставити або редагувати блок HTML",
   "@shortcutHtmlBlockDescription": {
     "description": "Keyboard shortcut description for inserting or editing an HTML block."
@@ -944,6 +1005,18 @@
   "@altText": {
     "description": "Image alt text field label."
   },
+  "editorPlaceholderText": "текст",
+  "@editorPlaceholderText": {
+    "description": "Default selected text inserted by a source-editor formatting command."
+  },
+  "editorPlaceholderCode": "код",
+  "@editorPlaceholderCode": {
+    "description": "Default selected code inserted by a source-editor code command."
+  },
+  "editorPlaceholderAltText": "альтернативний текст",
+  "@editorPlaceholderAltText": {
+    "description": "Default selected image description inserted by a source-editor image command."
+  },
   "describeTheImage": "Опишіть зображення",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -973,17 +1046,17 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Remote image blocked",
+  "remoteImageBlocked": "Віддалене зображення заблоковано",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "Виберіть, чи може BusyMark завантажувати віддалені зображення.",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
-  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "remoteImagesBlockedTitle": "Віддалені зображення заблоковано",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
-  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "remoteImagesBlockedMessage": "Цей документ посилається на зображення з інтернету. Їх завантаження може розкрити відомості про вашу мережу серверам, на яких розміщено зображення.",
   "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
-  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "loadRemoteImagesForWorkspace": "Завантажити для цієї робочої області",
   "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
-  "alwaysLoadRemoteImages": "Always load remote images",
+  "alwaysLoadRemoteImages": "Завжди завантажувати віддалені зображення",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
   "hideSidebar": "Приховати бічну панель",
@@ -1039,6 +1112,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "Дії зі змістом",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown — незбережено",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -1063,7 +1140,7 @@
   "@noWritersideToc": {
     "description": "Empty state shown when there is no Writerside TOC."
   },
-  "tocSection": "розділ змісту",
+  "tocSection": "Розділ змісту",
   "@tocSection": {
     "description": "Fallback label for a Writerside TOC section."
   },
@@ -1074,6 +1151,68 @@
   "newChildTopic": "Нова дочірня тема",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "Нова тема на тому самому рівні",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "Перейменувати файл теми",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "Розташування у змісті",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "У корені змісту",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "Після вибраної теми",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "Усередині вибраної теми",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "Вставити після",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "Вставити як дочірню тему",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "Вилучити зі змісту",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "Вилучити зі змісту?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "Вилучити {name} із цього змісту? Файл теми буде збережено.",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "Видалити файл теми?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "Видалити файл теми {name} і вилучити тему з усіх змістів? Цю дію не можна скасувати.",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "defaultNewTopicTitle": "Нова тема",
   "@defaultNewTopicTitle": {
@@ -1158,6 +1297,20 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
+  "sourceSearchPreviousMatch": "Попередній збіг",
+  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "sourceSearchNextMatch": "Наступний збіг",
+  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "sourceSearchCaseSensitive": "З урахуванням регістру",
+  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "sourceSearchWholeWord": "Ціле слово",
+  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "sourceSearchRegex": "Регулярний вираз",
+  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "sourceSearchInvalidRegex": "Некоректний регулярний вираз",
+  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "sourceLargeFileFeaturesPaused": "Великий файл: підсвічування та згортання призупинено",
+  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "noPreview": "Немає попереднього перегляду",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
@@ -1356,7 +1509,7 @@
       }
     }
   },
-  "errorTargetDirectoryNotEmpty": "Цільовий каталог уже існує та не є порожнім: {path}",
+  "errorTargetDirectoryNotEmpty": "Цільовий каталог уже існує та не порожній: {path}",
   "@errorTargetDirectoryNotEmpty": {
     "description": "Detail for a non-empty target directory error.",
     "placeholders": {
@@ -1446,7 +1599,7 @@
       }
     }
   },
-  "errorTopicIdAlreadyExists": "Ідентифікатор теми «{topicId}» уже існує в цьому модулі довідки.",
+  "errorTopicIdAlreadyExists": "Ідентифікатор теми «{topicId}» вже існує в цьому модулі довідки.",
   "@errorTopicIdAlreadyExists": {
     "description": "Detail for a duplicate topic ID.",
     "placeholders": {
@@ -1467,6 +1620,23 @@
   "errorReferenceTopicMissing": "Вказаної теми немає у вибраному дереві: {topic}",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "Вибраного запису змісту більше не існує.",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "Запис змісту не можна перемістити в нього самого чи в один із його дочірніх елементів.",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "Початкову тему {topic} не можна видалити. Спочатку виберіть іншу початкову сторінку.",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -1629,11 +1799,11 @@
   "@diagnosticWritersideConfigInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid writerside.cfg root element."
   },
-  "diagnosticWritersideConfigMissingSnippetsSrc": "В оголошенні snippets відсутній src.",
+  "diagnosticWritersideConfigMissingSnippetsSrc": "В оголошенні snippets відсутній атрибут src.",
   "@diagnosticWritersideConfigMissingSnippetsSrc": {
     "description": "Writerside parser diagnostic for a snippets declaration without src."
   },
-  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "В оголошенні instance-groups відсутній src.",
+  "diagnosticWritersideConfigMissingInstanceGroupsSrc": "В оголошенні instance-groups відсутній атрибут src.",
   "@diagnosticWritersideConfigMissingInstanceGroupsSrc": {
     "description": "Writerside parser diagnostic for an instance-groups declaration without src."
   },
@@ -1646,7 +1816,7 @@
       }
     }
   },
-  "diagnosticWritersideConfigMissingInstanceSrc": "В оголошенні instance відсутній src.",
+  "diagnosticWritersideConfigMissingInstanceSrc": "В оголошенні instance відсутній атрибут src.",
   "@diagnosticWritersideConfigMissingInstanceSrc": {
     "description": "Writerside parser diagnostic for an instance declaration without src."
   },
@@ -1671,7 +1841,7 @@
       }
     }
   },
-  "diagnosticWritersideTreeMissingStartPage": "Екземпляр, який не є бібліотекою, не має початкової сторінки.",
+  "diagnosticWritersideTreeMissingStartPage": "В екземплярі, який не є бібліотекою, відсутній атрибут start-page.",
   "@diagnosticWritersideTreeMissingStartPage": {
     "description": "Writerside parser diagnostic for a tree missing start-page."
   },
@@ -1732,11 +1902,11 @@
   "@diagnosticWritersideTopicInvalidRoot": {
     "description": "Writerside parser diagnostic for an invalid XML topic root."
   },
-  "diagnosticWritersideTopicMissingRootId": "У XML-темі відсутній кореневий id.",
+  "diagnosticWritersideTopicMissingRootId": "В XML-темі відсутній ідентифікатор кореневого елемента.",
   "@diagnosticWritersideTopicMissingRootId": {
     "description": "Writerside parser diagnostic for an XML topic missing root id."
   },
-  "diagnosticWritersideTopicRootIdMismatch": "Кореневий id XML-теми «{id}» має відповідати назві файлу «{expectedId}».",
+  "diagnosticWritersideTopicRootIdMismatch": "Ідентифікатор кореневого елемента XML-теми «{id}» має відповідати назві файлу «{expectedId}».",
   "@diagnosticWritersideTopicRootIdMismatch": {
     "description": "Writerside parser diagnostic for an XML topic root ID mismatch.",
     "placeholders": {
@@ -1757,7 +1927,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicAnchorMissingHref": "У <a> відсутній href.",
+  "diagnosticWritersideTopicAnchorMissingHref": "В елементі <a> відсутній атрибут href.",
   "@diagnosticWritersideTopicAnchorMissingHref": {
     "description": "Writerside parser diagnostic for an anchor without href."
   },
@@ -1900,7 +2070,7 @@
       }
     }
   },
-  "diagnosticWritersideTopicLinkUnresolved": "Посилання на тему «{destination}» не вдається розв’язати.",
+  "diagnosticWritersideTopicLinkUnresolved": "Посилання на тему «{destination}» не вказує на наявну тему.",
   "@diagnosticWritersideTopicLinkUnresolved": {
     "description": "Writerside module diagnostic for an unresolved topic link.",
     "placeholders": {
@@ -1973,82 +2143,104 @@
       }
     }
   },
-  "close": "Close",
+  "close": "Закрити",
   "git": "Git",
-  "gitDiff": "Git diff",
-  "gitUnavailableTitle": "Git is unavailable",
-  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
-  "gitNotRepositoryTitle": "Not a Git repository",
-  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
-  "gitInitializeRepository": "Initialize repository",
-  "gitDetachedHead": "Detached HEAD",
-  "gitDetachedHeadAt": "Detached at {commit}",
-  "gitNoUpstream": "No upstream",
+  "gitDiff": "Відмінності Git",
+  "gitShowDiff": "Показати відмінності",
+  "@gitShowDiff": {"description": "Menu action that opens the diff for a file in Git history."},
+  "gitDiffHunkRange": "старий діапазон {oldRange} → новий {newRange}",
+  "@gitDiffHunkRange": {
+    "description": "Readable old-to-new line range shown for a Git diff hunk.",
+    "placeholders": {
+      "oldRange": {"type": "String"},
+      "newRange": {"type": "String"}
+    }
+  },
+  "gitDiffNoLines": "немає рядків",
+  "@gitDiffNoLines": {"description": "Line range text for an empty side of a Git diff hunk."},
+  "gitUnavailableTitle": "Git недоступний",
+  "gitUnavailableMessage": "{reason, select, other{Установіть Git або налаштуйте BusyMark на використання доступного виконуваного файлу Git. {reason}}}",
+  "gitTrustRequiredTitle": "Довіряти цій робочій області під час роботи з Git?",
+  "@gitTrustRequiredTitle": {"description": "Git empty state title shown before repository-controlled commands may run."},
+  "gitTrustRequiredMessage": "Репозиторії Git можуть запускати програми за допомогою хуків, фільтрів та інших налаштувань. Позначте цю робочу область як довірену, перш ніж BusyMark прочитає дані репозиторію або ввімкне дії Git.",
+  "@gitTrustRequiredMessage": {"description": "Security warning shown before Git repository access is enabled for a workspace."},
+  "gitTrustWorkspace": "Довіряти робочій області",
+  "@gitTrustWorkspace": {"description": "Action label for trusting a workspace before enabling Git."},
+  "gitNotRepositoryTitle": "Це не репозиторій Git",
+  "gitNotRepositoryMessage": "Ця робоча область не належить до репозиторію Git.",
+  "gitInitializeRepository": "Ініціалізувати репозиторій",
+  "gitDetachedHead": "Відокремлений HEAD",
+  "gitDetachedHeadAt": "Відокремлений HEAD: {commit}",
+  "gitNoUpstream": "Немає upstream-гілки",
   "gitAheadCount": "{count, plural, one{{count} невідправлений коміт} few{{count} невідправлені коміти} many{{count} невідправлених комітів} other{{count} невідправленого коміта}}",
-  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
-  "gitClean": "Clean",
-  "gitConflicts": "Conflicts",
+  "gitBehindCount": "{count, plural, one{Потрібно отримати {count} коміт} few{Потрібно отримати {count} коміти} many{Потрібно отримати {count} комітів} other{Потрібно отримати {count} коміта}}",
+  "gitClean": "Без змін",
+  "gitConflicts": "Конфлікти",
   "gitChanges": "Зміни",
   "gitHistory": "Історія",
   "gitBranches": "Гілки",
+  "gitBranchActions": "Дії з гілками",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "Pull",
   "gitPush": "Push",
   "gitCommit": "Зафіксувати",
-  "gitSelectForCommit": "Select for commit",
-  "gitRemoveFromCommit": "Leave out of commit",
-  "gitDiscard": "Discard",
-  "gitOpenFile": "Open file",
-  "gitMarkResolved": "Mark resolved",
+  "gitSelectForCommit": "Вибрати для коміту",
+  "gitRemoveFromCommit": "Вилучити з коміту",
+  "gitDiscard": "Відкинути",
+  "gitOpenFile": "Відкрити файл",
+  "gitMarkResolved": "Позначити як розв’язаний",
   "gitUntracked": "Невідстежувані файли",
-  "gitCommitMessage": "Commit message",
-  "gitCommitSelectedFiles": "Selected files",
-  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
-  "gitCommitMessageRequired": "Enter a commit message.",
-  "gitCreateBranch": "Create branch",
-  "gitNewBranch": "+ New Branch",
-  "gitBranchName": "Branch name",
-  "gitSwitchBranch": "Switch",
-  "gitNoChanges": "No changes",
-  "gitNoHistory": "No history",
-  "gitNoBranches": "No branches",
+  "gitCommitMessage": "Повідомлення коміту",
+  "gitCommitSelectedFiles": "Вибрані файли",
+  "gitCommitNoSelectedFiles": "Перед створенням коміту виберіть принаймні один файл.",
+  "gitCommitMessageRequired": "Введіть повідомлення коміту.",
+  "gitCreateBranch": "Створити гілку",
+  "gitNewBranch": "+ Нова гілка",
+  "gitBranchName": "Назва гілки",
+  "gitSwitchBranch": "Перемкнутися",
+  "gitNoChanges": "Немає змін",
+  "gitNoHistory": "Немає історії",
+  "gitNoBranches": "Немає гілок",
   "gitNoDiff": "Немає різниці для показу",
-  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
-  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
-  "gitConfirmDiscardTitle": "Discard Git changes?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
-  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
-  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
-  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
-  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
-  "gitProjectHistory": "Project",
-  "gitFileHistory": "Current file",
+  "gitBinaryFile": "Двійковий файл. BusyMark не відображає двійкові патчі.",
+  "gitUnsavedChangesBanner": "Незбережені зміни в редакторі не буде враховано, доки ви їх не збережете.",
+  "gitConfirmDiscardTitle": "Відкинути зміни Git?",
+  "gitConfirmDiscardTracked": "{count, plural, one{Вибраний відстежуваний файл буде відновлено з Git.} few{Вибрані відстежувані файли буде відновлено з Git.} many{Вибрані відстежувані файли буде відновлено з Git.} other{Вибрані відстежувані файли буде відновлено з Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, one{Вибраний невідстежуваний файл буде видалено.} few{Вибрані невідстежувані файли буде видалено.} many{Вибрані невідстежувані файли буде видалено.} other{Вибрані невідстежувані файли буде видалено.}}",
+  "gitConfirmDiscardMixed": "{count, plural, one{Вибраний файл буде відновлено або видалено залежно від його стану Git.} few{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.} many{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.} other{Вибрані файли буде відновлено або видалено залежно від їхнього стану Git.}}",
+  "gitConfirmSwitchBranchTitle": "Перемкнутися на {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark перезавантажить робочу область із диска після перемикання гілки в Git.",
+  "gitConfirmPushSetUpstreamTitle": "Налаштувати upstream-гілку?",
+  "gitConfirmPushSetUpstreamMessage": "Ця гілка не має upstream-гілки. BusyMark може надіслати гілку {branch} і призначити її upstream-гілкою, якщо налаштовано рівно один віддалений репозиторій.",
+  "gitProjectHistory": "Проєкт",
+  "gitFileHistory": "Поточний файл",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "File actions",
-  "gitStatusAdded": "Added",
-  "gitStatusDeleted": "Deleted",
-  "gitStatusRenamed": "Renamed",
-  "gitStatusCopied": "Copied",
-  "gitStatusUntracked": "Untracked",
-  "gitStatusConflicted": "Conflicted",
-  "gitStatusIgnored": "Ignored",
-  "gitStatusTypeChanged": "Type changed",
-  "gitStatusModified": "Modified",
-  "gitStatusUnknown": "Unknown",
-  "gitErrorUnavailable": "Git is unavailable.",
-  "gitErrorNotRepository": "This workspace is not a Git repository.",
-  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
-  "gitErrorInvalidBranchName": "Enter a valid branch name.",
-  "gitErrorNoRemote": "No Git remote is configured.",
-  "gitErrorNoUpstream": "No upstream branch is configured.",
-  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
-  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
-  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
-  "gitErrorNetwork": "Git network operation failed.",
-  "gitErrorConflict": "Git reported unresolved conflicts.",
-  "gitErrorCommandFailed": "Git command failed.",
+  "gitFileActions": "Дії з файлом",
+  "gitStatusAdded": "Додано",
+  "gitStatusDeleted": "Видалено",
+  "gitStatusRenamed": "Перейменовано",
+  "gitStatusCopied": "Скопійовано",
+  "gitStatusUntracked": "Не відстежується",
+  "gitStatusConflicted": "Конфлікт",
+  "gitStatusIgnored": "Проігноровано",
+  "gitStatusTypeChanged": "Тип змінено",
+  "gitStatusModified": "Змінено",
+  "gitStatusUnknown": "Невідомо",
+  "gitErrorUnavailable": "Git недоступний.",
+  "gitErrorNotRepository": "Ця робоча область не є репозиторієм Git.",
+  "gitErrorUnsafePath": "BusyMark заблокував небезпечний шлях Git.",
+  "gitErrorInvalidBranchName": "Введіть припустиму назву гілки.",
+  "gitErrorNoRemote": "Віддалений репозиторій Git не налаштовано.",
+  "gitErrorNoUpstream": "Upstream-гілку не налаштовано.",
+  "gitErrorMultipleRemotes": "Налаштовано кілька віддалених репозиторіїв. Ця версія BusyMark не дає змоги вибрати upstream-гілку; налаштуйте її поза програмою.",
+  "gitErrorDirtyWorkspace": "Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.",
+  "gitErrorDiverged": "Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.",
+  "gitErrorAuthentication": "Не вдалося автентифікуватися в Git. Для віддалених SSH-репозиторіїв у snap може знадобитися підключити інтерфейс ssh-keys.",
+  "gitErrorNetwork": "Не вдалося виконати мережеву операцію Git.",
+  "gitErrorConflict": "Git повідомив про нерозв’язані конфлікти.",
+  "gitErrorCommandFailed": "Не вдалося виконати команду Git.",
 
   "markdownAndHtml": "Markdown і HTML",
   "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
@@ -2058,9 +2250,9 @@
   "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
   "markdownHtmlInlineFormatting": "Вбудований Markdown",
   "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
-  "markdownHtmlInlineFormattingDescription": "Форматування всередині абзаців, елементів списків і клітинок таблиць.",
+  "markdownHtmlInlineFormattingDescription": "Форматування всередині абзаців, елементів списків і комірок таблиць.",
   "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "Блоки raw HTML",
+  "markdownHtmlRawHtmlBlocks": "Блоки необробленого HTML",
   "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
   "markdownHtmlRawHtmlBlocksDescription": "Безпечні блокові HTML-теги, що відображаються через віджети перегляду BusyMark.",
   "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
@@ -2070,7 +2262,7 @@
   "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
   "markdownHtmlSafety": "Правила безпеки",
   "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
-  "markdownHtmlSafetyDescription": "Raw HTML аналізується й очищується перед попереднім переглядом.",
+  "markdownHtmlSafetyDescription": "Необроблений HTML аналізується й очищується перед попереднім переглядом.",
   "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
   "markdownHtmlHeadings": "Заголовки",
   "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
@@ -2098,15 +2290,15 @@
   "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
   "markdownHtmlSanitizedPreview": "Очищений перегляд",
   "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "Дозволений HTML перетворюється на блоки перегляду BusyMark, а не рендериться в браузері.",
+  "markdownHtmlSanitizedPreviewDescription": "Дозволений HTML перетворюється на блоки перегляду BusyMark, а не відтворюється в браузері.",
   "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "Джерело зберігається",
+  "markdownHtmlSourcePreserved": "Вихідний текст зберігається",
   "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
-  "markdownHtmlSourcePreservedDescription": "Незмінений raw HTML зберігається точно як вихідний текст.",
+  "markdownHtmlSourcePreservedDescription": "Незмінений необроблений HTML зберігається точно як вихідний текст.",
   "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
   "markdownHtmlMarkdownInsideHtml": "Markdown всередині HTML",
   "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
-  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-розмітка всередині raw HTML відображається як звичайний текст.",
+  "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-розмітка всередині необробленого HTML відображається як звичайний текст.",
   "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
   "markdownHtmlBlockedContent": "Активний вміст заблоковано",
   "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
@@ -2130,7 +2322,81 @@
   "errorFileNameRequired": "Потрібна назва файлу.",
   "errorFileNameUnsafe": "Назва файлу має бути одним безпечним сегментом шляху.",
   "errorFileOperationInvalidTarget": "Не можна перемістити папку всередину самої себе.",
-  "errorFileOperationOutsideRoot": "Файлова операція має залишатися в межах workspace.",
-  "errorFileOperationRoot": "Корінь workspace не можна змінити з дерева файлів."
+  "errorFileOperationOutsideRoot": "Файлова операція має виконуватися в межах робочої області.",
+  "errorFileOperationRoot": "Корінь робочої області не можна змінити з дерева файлів.",
+  "safeDeleteTopicFile": "Безпечно видалити файл теми…",
+  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "removeTocElement": "Вилучити елемент змісту",
+  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "reviewUsages": "Переглянути використання",
+  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "deleteTopicFile": "Видалити файл теми",
+  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "removeAction": "Вилучити",
+  "@removeAction": {"description": "Generic remove action label."},
+  "topicRemovalSummary": "Вилучити «{topic}» із вибраного екземпляра довідки. Файл теми буде збережено.",
+  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "safeDeleteTopicSummary": "Видалити «{topic}» і безпечно оновити посилання на неї в усьому цьому проєкті Writerside.",
+  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "childTopicsPromoted": "{count, plural, one{1 дочірню тему буде переміщено на рівень вище.} few{{count} дочірні теми буде переміщено на рівень вище.} many{{count} дочірніх тем буде переміщено на рівень вище.} other{{count} дочірньої теми буде переміщено на рівень вище.}}",
+  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "topicIsStartPageRemovalWarning": "Ця тема використовується як початкова сторінка екземпляра. Перегляньте її використання та призначте іншу початкову сторінку, перш ніж продовжити.",
+  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "topicUsagesCount": "Використання ({count})",
+  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "noBreakingTopicUsages": "Посилань, які перестали б працювати, не знайдено.",
+  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "topicUsagesFound": "BusyMark знайшов наведені нижче посилання на цю тему.",
+  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "topicUsageTocElements": "Елементи змісту",
+  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "topicUsageStartPages": "Початкові сторінки",
+  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "topicUsageTopicLinks": "Посилання на теми",
+  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "topicUsageIncludes": "Включення",
+  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "usageCount": "{count, plural, one{1 використання} few{{count} використання} many{{count} використань} other{{count} використання}}",
+  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "refactoringOptions": "Параметри рефакторингу",
+  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "updateUsagesAutomatically": "Оновити використання автоматично",
+  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "updateUsagesAutomaticallyDescription": "Вилучити посилання зі змісту й включення та зберегти текст посилань.",
+  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "manualUsageUpdatesRequired": "Деякі використання потрібно змінити вручну перед цим рефакторингом.",
+  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "setRedirectTo": "Переспрямувати на",
+  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "noRedirectDescription": "Не переспрямовувати стару опубліковану сторінку.",
+  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "redirectTarget": "Ціль переспрямування",
+  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "remainingUsagesBlockRemoval": "Перегляньте й оновіть решту використань, перш ніж продовжити, або ввімкніть автоматичне оновлення, якщо воно доступне.",
+  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "usagesOfTopic": "Використання теми {topic}",
+  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "noUsagesFound": "Використань не знайдено",
+  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "outsideSelectedInstance": "поза вибраним екземпляром",
+  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "doRefactor": "Виконати рефакторинг",
+  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "orphanTopicTitle": "Файл теми більше не використовується",
+  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "keepTopicFile": "Зберегти файл теми",
+  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "orphanTopicMessage": "«{topic}» більше ніде не використовується в цьому проєкті Writerside. Видаліть файл або збережіть його для використання в іншому екземплярі.",
+  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "errorWritersideSafeDeleteRequired": "Використовуйте безпечне видалення для файлів тем Writerside.",
+  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "errorWritersideTopicUsageScanFailed": "Не вдалося завершити пошук використань теми. Жоден файл не змінено.",
+  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "errorWritersideTopicUsagesRemain": "Деякі використання теми все ще потребують уваги. Перегляньте їх, перш ніж продовжити.",
+  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "errorWritersideRedirectInvalid": "Вибрана ціль переспрямування більше не дійсна. Виберіть її знову.",
+  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "errorWritersideRollbackFailed": "Не вдалося повністю відкотити видалення теми. Перш ніж продовжити, перевірте такі шляхи: {paths}",
+  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}}
 
 }

@@ -1,5 +1,30 @@
 {
   "@@locale": "hi",
+  "reportIssue": "समस्या की रिपोर्ट करें",
+  "feedbackCategory": "श्रेणी",
+  "feedbackChooseCategory": "श्रेणी चुनें",
+  "feedbackCategoryProblem": "समस्या या बग",
+  "feedbackCategoryFeature": "सुविधा अनुरोध",
+  "feedbackCategoryPrivacySecurity": "गोपनीयता या सुरक्षा संबंधी चिंता",
+  "feedbackCategoryUsability": "उपयोगिता संबंधी चिंता",
+  "feedbackCategoryOther": "अन्य",
+  "feedbackSubject": "विषय",
+  "feedbackMessage": "विस्तृत संदेश",
+  "feedbackReplyEmail": "उत्तर ईमेल (वैकल्पिक)",
+  "feedbackIncludeTechnicalDetails": "तकनीकी विवरण शामिल करें",
+  "feedbackTechnicalDetailsDisclosure": "सक्षम होने पर केवल Linux ऑपरेटिंग सिस्टम का संस्करण और BusyMark ऐप की भाषा व क्षेत्र सेटिंग जोड़ी जाती है। कोई लॉग, फ़ाइल, खाता डेटा या अन्य निदान जानकारी संलग्न नहीं की जाती।",
+  "feedbackSubmit": "भेजें",
+  "feedbackSubmitting": "भेजा जा रहा है…",
+  "feedbackCategoryRequired": "श्रेणी चुनें।",
+  "feedbackSubjectLength": "विषय 3 से 120 वर्णों के बीच होना चाहिए।",
+  "feedbackMessageLength": "संदेश 10 से 5000 वर्णों के बीच होना चाहिए।",
+  "feedbackReplyEmailInvalid": "मान्य ईमेल पता दर्ज करें या यह फ़ील्ड खाली छोड़ें।",
+  "feedbackConnectionFailure": "BusyMark कनेक्ट नहीं हो सका। अपना इंटरनेट कनेक्शन जाँचें और फिर प्रयास करें।",
+  "feedbackTimeoutFailure": "अनुरोध का समय समाप्त हो गया। फिर प्रयास करें।",
+  "feedbackRateLimitedFailure": "इस कनेक्शन से बहुत अधिक रिपोर्ट भेजी गई हैं। प्रतीक्षा करें और फिर प्रयास करें।",
+  "feedbackRejectedFailure": "सर्वर ने रिपोर्ट अस्वीकार कर दी। फ़ॉर्म फ़ील्ड जाँचें और फिर प्रयास करें।",
+  "feedbackServerFailure": "सर्वर रिपोर्ट स्वीकार नहीं कर सका। बाद में फिर प्रयास करें।",
+  "feedbackSuccess": "प्रतिक्रिया भेजी गई। संदर्भ आईडी: {id}",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -28,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "समस्या रिपोर्ट करें",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "स्रोत कोड",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "उन्नत",
   "@advanced": {
@@ -112,10 +137,6 @@
   "@fileHistory": {
     "description": "Menu action and sidebar title for showing Git history for a single file."
   },
-  "find": "ढूँढें",
-  "@find": {
-    "description": "Find command label."
-  },
   "folder": "फ़ोल्डर",
   "@folder": {
     "description": "Folder kind label."
@@ -147,6 +168,10 @@
   "openInFiles": "Files में खोलें",
   "@openInFiles": {
     "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "पथ संबंधी कार्रवाइयाँ",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
   },
   "outline": "रूपरेखा",
   "@outline": {
@@ -268,6 +293,10 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
   "toggleSidebar": "साइडबार पैनल",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
@@ -336,9 +365,11 @@
   "@noOpenFile": {
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
-  "shortcutGroupFile": "फ़ाइल",
-  "@shortcutGroupFile": {
-    "description": "Keyboard shortcut group for file commands."
+  "shortcutDeleteTreeItemDescription": "फ़ाइलों में चुना गया आइटम मिटाएँ या विषय-सूची से चुना गया विषय हटाएँ",
+  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "shortcutGroupGeneral": "सामान्य",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
   },
   "shortcutNewDocument": "नया दस्तावेज़",
   "@shortcutNewDocument": {
@@ -352,12 +383,12 @@
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "मौजूदा Markdown फ़ाइल सहेजें",
+  "shortcutSaveDescription": "मौजूदा दस्तावेज़ सहेजें",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "मौजूदा दस्तावेज़ में खोजें",
-  "@shortcutFindDescription": {
+  "shortcutSearchDescription": "मौजूदा कार्यस्थान में खोजें",
+  "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
   "shortcutKeyboardShortcutsDescription": "यह कीबोर्ड शॉर्टकट संदर्भ दिखाएँ",
@@ -374,43 +405,43 @@
   },
   "shortcutNextTab": "अगला टैब",
   "@shortcutNextTab": {
-    "description": "Keyboard shortcut label for moving to the next editor tab."
+    "description": "Keyboard shortcut label for moving to the next tab."
   },
-  "shortcutNextTabDescription": "अगले खुले संपादक टैब पर जाएँ",
+  "shortcutNextTabDescription": "अगले खुले टैब पर जाएँ",
   "@shortcutNextTabDescription": {
-    "description": "Keyboard shortcut description for moving to the next editor tab."
+    "description": "Keyboard shortcut description for moving to the next tab."
   },
   "shortcutPreviousTab": "पिछला टैब",
   "@shortcutPreviousTab": {
-    "description": "Keyboard shortcut label for moving to the previous editor tab."
+    "description": "Keyboard shortcut label for moving to the previous tab."
   },
-  "shortcutPreviousTabDescription": "पिछले खुले संपादक टैब पर जाएँ",
+  "shortcutPreviousTabDescription": "पिछले खुले टैब पर जाएँ",
   "@shortcutPreviousTabDescription": {
-    "description": "Keyboard shortcut description for moving to the previous editor tab."
+    "description": "Keyboard shortcut description for moving to the previous tab."
   },
   "shortcutCloseTab": "टैब बंद करें",
   "@shortcutCloseTab": {
-    "description": "Keyboard shortcut label for closing the active editor tab."
+    "description": "Keyboard shortcut label for closing the active tab."
   },
-  "shortcutCloseTabDescription": "सक्रिय संपादक टैब बंद करें",
+  "shortcutCloseTabDescription": "सक्रिय टैब बंद करें",
   "@shortcutCloseTabDescription": {
-    "description": "Keyboard shortcut description for closing the active editor tab."
+    "description": "Keyboard shortcut description for closing the active tab."
   },
   "shortcutCloseAllTabs": "सभी टैब बंद करें",
   "@shortcutCloseAllTabs": {
-    "description": "Keyboard shortcut label for closing all editor tabs."
+    "description": "Keyboard shortcut label for closing all tabs."
   },
-  "shortcutCloseAllTabsDescription": "सभी खुले संपादक टैब बंद करें",
+  "shortcutCloseAllTabsDescription": "सभी खुले टैब बंद करें",
   "@shortcutCloseAllTabsDescription": {
-    "description": "Keyboard shortcut description for closing all editor tabs."
+    "description": "Keyboard shortcut description for closing all tabs."
   },
   "shortcutGroupTextEditing": "टेक्स्ट संपादन",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "संपादक का पूरा टेक्स्ट चुनें",
+  "shortcutSelectAllDescription": "स्रोत मोड में पूरा पाठ चुनें; संपादक मोड में सभी ब्लॉक चुनने के लिए दो बार दबाएँ",
   "@shortcutSelectAllDescription": {
-    "description": "Keyboard shortcut description for selecting all text."
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
   },
   "shortcutCutDescription": "चयनित टेक्स्ट कट करें",
   "@shortcutCutDescription": {
@@ -436,13 +467,21 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "संपादक का चयन साफ़ करें",
-  "@clearEditorSelection": {
-    "description": "Keyboard shortcut label for clearing selection."
+  "shortcutInsertIndentation": "इंडेंट डालें",
+  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "shortcutInsertIndentationDescription": "कर्सर पर इंडेंट डालें",
+  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "shortcutOutdentSource": "स्रोत का इंडेंट घटाएँ",
+  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "shortcutOutdentSourceDescription": "स्रोत मोड में इंडेंट का एक स्तर हटाएँ",
+  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "shortcutEscape": "खोज बंद करें या ब्लॉक चयन हटाएँ",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
   },
-  "shortcutClearEditorSelectionDescription": "मौजूदा संपादक चयन या खोज फ़ोकस से बाहर निकलें",
-  "@shortcutClearEditorSelectionDescription": {
-    "description": "Keyboard shortcut description for clearing selection."
+  "shortcutEscapeDescription": "कार्यस्थान खोज बंद करें या संपादक मोड में ब्लॉक चयन हटाएँ",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
   },
   "shortcutGroupFormatting": "फ़ॉर्मेटिंग",
   "@shortcutGroupFormatting": {
@@ -644,24 +683,44 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "संपादन बटन",
-  "@editingButtons": {
+  "editingButtonsPosition": "संपादन बटनों की स्थिति",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन कहाँ दिखें।",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
-  "privacy": "Privacy",
+  "editingButtonsDirection": "संपादन बटनों की दिशा",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "चुनें कि फ़्लोटिंग WYSIWYG संपादन बटन क्षैतिज रूप से व्यवस्थित हों या लंबवत रूप से।",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "क्षैतिज",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "लंबवत",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "गोपनीयता",
   "@privacy": {"description": "Settings section title for privacy options."},
-  "allowRemoteImages": "Load remote images",
+  "allowRemoteImages": "दूरस्थ छवियाँ लोड करें",
   "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
-  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "allowRemoteImagesDescription": "Markdown पूर्वावलोकन और संपादक की छवियों को http और https URL से लोड होने दें।",
   "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
-  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "clearRemoteImagePermissions": "दूरस्थ छवि अनुमतियाँ साफ़ करें",
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
-  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "clearRemoteImagePermissionsDescription": "उन कार्यस्थानों को भूलें जिन्हें दूरस्थ छवियाँ लोड करने की अनुमति दी गई थी।",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "विश्वसनीय Git कार्यस्थान साफ़ करें",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "पहले से विश्वसनीय कार्यस्थानों के लिए Git सुविधाएँ चालू करने से पहले पूछें।",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "विंडो",
   "@settingsWindowSectionTitle": {
@@ -784,6 +843,10 @@
   "htmlBlock": "HTML ब्लॉक",
   "@htmlBlock": {
     "description": "HTML block command label."
+  },
+  "htmlContentDefault": "HTML सामग्री",
+  "@htmlContentDefault": {
+    "description": "Default editable text inserted into a new HTML block."
   },
   "shortcutHtmlBlockDescription": "HTML ब्लॉक डालें या संपादित करें",
   "@shortcutHtmlBlockDescription": {
@@ -944,6 +1007,12 @@
   "@altText": {
     "description": "Image alt text field label."
   },
+  "editorPlaceholderText": "टेक्स्ट",
+  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "editorPlaceholderCode": "कोड",
+  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "editorPlaceholderAltText": "वैकल्पिक टेक्स्ट",
+  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
   "describeTheImage": "छवि का वर्णन करें",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -973,17 +1042,17 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Remote image blocked",
+  "remoteImageBlocked": "दूरस्थ छवि अवरुद्ध",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "चुनें कि BusyMark दूरस्थ छवियाँ लोड कर सकता है या नहीं।",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
-  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "remoteImagesBlockedTitle": "दूरस्थ छवियाँ अवरुद्ध हैं",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
-  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "remoteImagesBlockedMessage": "यह दस्तावेज़ इंटरनेट की छवियों का संदर्भ देता है। उन्हें लोड करने पर छवि होस्ट को नेटवर्क की जानकारी मिल सकती है।",
   "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
-  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "loadRemoteImagesForWorkspace": "इस कार्यस्थान के लिए लोड करें",
   "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
-  "alwaysLoadRemoteImages": "Always load remote images",
+  "alwaysLoadRemoteImages": "दूरस्थ छवियाँ हमेशा लोड करें",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
   "hideSidebar": "साइडबार पैनल छिपाएँ",
@@ -1039,6 +1108,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "विषय-सूची संबंधी कार्रवाइयाँ",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown - सहेजा नहीं गया",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -1074,6 +1147,68 @@
   "newChildTopic": "नया उप-विषय",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "समान स्तर पर नया विषय",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "विषय फ़ाइल का नाम बदलें",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "TOC में स्थान",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "TOC के शीर्ष स्तर पर",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "चयनित विषय के बाद",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "चयनित विषय के अंदर",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "इसके बाद पेस्ट करें",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "उप-विषय के रूप में पेस्ट करें",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "TOC से हटाएँ",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "TOC से हटाएँ?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "इस TOC से {name} को हटाएँ? विषय फ़ाइल बनी रहेगी।",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "विषय फ़ाइल हटाएँ?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "{name} को हटाकर सभी TOC से निकाल दें? इसे वापस नहीं किया जा सकता।",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "defaultNewTopicTitle": "नया विषय",
   "@defaultNewTopicTitle": {
@@ -1158,6 +1293,20 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
+  "sourceSearchPreviousMatch": "पिछला मिलान",
+  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "sourceSearchNextMatch": "अगला मिलान",
+  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "sourceSearchCaseSensitive": "बड़े-छोटे अक्षरों के प्रति संवेदनशील",
+  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "sourceSearchWholeWord": "पूरा शब्द",
+  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "sourceSearchRegex": "रेगुलर एक्सप्रेशन",
+  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "sourceSearchInvalidRegex": "अमान्य रेगुलर एक्सप्रेशन",
+  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "sourceLargeFileFeaturesPaused": "बड़ी फ़ाइल: हाइलाइटिंग और फ़ोल्डिंग अस्थायी रूप से रुकी हुई हैं",
+  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "noPreview": "कोई पूर्वावलोकन नहीं",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
@@ -1467,6 +1616,23 @@
   "errorReferenceTopicMissing": "संदर्भित विषय चयनित ट्री में मौजूद नहीं है: {topic}",
   "@errorReferenceTopicMissing": {
     "description": "Detail for a missing reference topic in a tree.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWritersideTocNodeMissing": "चयनित TOC प्रविष्टि अब मौजूद नहीं है।",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "TOC प्रविष्टि को उसी के अंदर या उसकी किसी उप-प्रविष्टि के अंदर नहीं ले जाया जा सकता।",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "आरंभिक विषय {topic} को हटाया नहीं जा सकता। पहले कोई दूसरा आरंभ पेज चुनें।",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -1973,82 +2139,92 @@
       }
     }
   },
-  "close": "Close",
+  "close": "बंद करें",
   "git": "Git",
-  "gitDiff": "Git diff",
-  "gitUnavailableTitle": "Git is unavailable",
-  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
-  "gitNotRepositoryTitle": "Not a Git repository",
-  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
-  "gitInitializeRepository": "Initialize repository",
-  "gitDetachedHead": "Detached HEAD",
-  "gitDetachedHeadAt": "Detached at {commit}",
-  "gitNoUpstream": "No upstream",
-  "gitAheadCount": "{count, plural, =1{1 नहीं भेजा गया कमिट} other{{count} नहीं भेजे गए कमिट}}",
-  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
-  "gitClean": "Clean",
-  "gitConflicts": "Conflicts",
+  "gitDiff": "Git डिफ़",
+  "gitShowDiff": "डिफ़ दिखाएँ",
+  "gitDiffHunkRange": "पुराना {oldRange} → नया {newRange}",
+  "gitDiffNoLines": "कोई पंक्ति नहीं",
+  "gitUnavailableTitle": "Git उपलब्ध नहीं है",
+  "gitUnavailableMessage": "{reason, select, other{Git इंस्टॉल करें या BusyMark को उपलब्ध Git एक्ज़ीक्यूटेबल इस्तेमाल करने के लिए कॉन्फ़िगर करें। {reason}}}",
+  "gitTrustRequiredTitle": "Git के लिए इस कार्यस्थान पर भरोसा करें?",
+  "gitTrustRequiredMessage": "Git रिपॉज़िटरी हुक, फ़िल्टर और अन्य कॉन्फ़िगरेशन के ज़रिए प्रोग्राम चला सकती हैं। BusyMark के रिपॉज़िटरी डेटा पढ़ने या Git कार्रवाइयाँ चालू करने से पहले इस कार्यस्थान पर भरोसा करें।",
+  "gitTrustWorkspace": "कार्यस्थान पर भरोसा करें",
+  "gitNotRepositoryTitle": "Git रिपॉज़िटरी नहीं है",
+  "gitNotRepositoryMessage": "यह कार्यस्थान किसी Git रिपॉज़िटरी के अंदर नहीं है।",
+  "gitInitializeRepository": "रिपॉज़िटरी आरंभ करें",
+  "gitDetachedHead": "डिटैच्ड HEAD",
+  "gitDetachedHeadAt": "{commit} पर डिटैच्ड HEAD",
+  "gitNoUpstream": "कोई अपस्ट्रीम नहीं",
+  "gitAheadCount": "{count, plural, =1{1 कमिट पुश नहीं किया गया} other{{count} कमिट पुश नहीं किए गए}}",
+  "gitBehindCount": "{count, plural, =1{1 कमिट पुल करना बाकी} other{{count} कमिट पुल करना बाकी}}",
+  "gitClean": "क्लीन",
+  "gitConflicts": "टकराव",
   "gitChanges": "बदलाव",
   "gitHistory": "इतिहास",
-  "gitBranches": "शाखाएं",
-  "gitPull": "Pull",
-  "gitPush": "Push",
+  "gitBranches": "शाखाएँ",
+  "gitBranchActions": "शाखा संबंधी कार्रवाइयाँ",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
+  "gitPull": "पुल",
+  "gitPush": "पुश",
   "gitCommit": "कमिट करें",
-  "gitSelectForCommit": "Select for commit",
-  "gitRemoveFromCommit": "Leave out of commit",
-  "gitDiscard": "Discard",
-  "gitOpenFile": "Open file",
-  "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "असंस्करणित फ़ाइलें",
-  "gitCommitMessage": "Commit message",
-  "gitCommitSelectedFiles": "Selected files",
-  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
-  "gitCommitMessageRequired": "Enter a commit message.",
-  "gitCreateBranch": "Create branch",
-  "gitNewBranch": "+ New Branch",
-  "gitBranchName": "Branch name",
-  "gitSwitchBranch": "Switch",
-  "gitNoChanges": "No changes",
-  "gitNoHistory": "No history",
-  "gitNoBranches": "No branches",
+  "gitSelectForCommit": "कमिट के लिए चुनें",
+  "gitRemoveFromCommit": "कमिट से बाहर रखें",
+  "gitDiscard": "त्यागें",
+  "gitOpenFile": "फ़ाइल खोलें",
+  "gitMarkResolved": "सुलझा हुआ चिह्नित करें",
+  "gitUntracked": "अनट्रैक की गई फ़ाइलें",
+  "gitCommitMessage": "कमिट संदेश",
+  "gitCommitSelectedFiles": "चयनित फ़ाइलें",
+  "gitCommitNoSelectedFiles": "कमिट करने से पहले कम से कम एक फ़ाइल चुनें।",
+  "gitCommitMessageRequired": "कमिट संदेश दर्ज करें।",
+  "gitCreateBranch": "शाखा बनाएँ",
+  "gitNewBranch": "+ नई शाखा",
+  "gitBranchName": "शाखा का नाम",
+  "gitSwitchBranch": "बदलें",
+  "gitNoChanges": "कोई बदलाव नहीं",
+  "gitNoHistory": "कोई इतिहास नहीं",
+  "gitNoBranches": "कोई शाखा नहीं",
   "gitNoDiff": "दिखाने के लिए कोई अंतर नहीं",
-  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
-  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
-  "gitConfirmDiscardTitle": "Discard Git changes?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
-  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
-  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
-  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
-  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
-  "gitProjectHistory": "Project",
-  "gitFileHistory": "Current file",
+  "gitBinaryFile": "बाइनरी फ़ाइल। BusyMark बाइनरी पैच रेंडर नहीं करता है।",
+  "gitUnsavedChangesBanner": "संपादक के न सहेजे गए बदलाव सहेजे जाने तक शामिल नहीं किए जाते।",
+  "gitConfirmDiscardTitle": "Git बदलाव त्यागें?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{चयनित ट्रैक की गई फ़ाइल Git से पुनर्स्थापित की जाएगी।} other{चयनित ट्रैक की गई फ़ाइलें Git से पुनर्स्थापित की जाएँगी।}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{चयनित अनट्रैक की गई फ़ाइल हटा दी जाएगी।} other{चयनित अनट्रैक की गई फ़ाइलें हटा दी जाएँगी।}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{चयनित फ़ाइल को उसकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।} other{चयनित फ़ाइलों को उनकी Git स्थिति के आधार पर पुनर्स्थापित किया या हटाया जाएगा।}}",
+  "gitConfirmSwitchBranchTitle": "{branch} पर स्विच करें?",
+  "gitConfirmSwitchBranchMessage": "Git के शाखा बदलने के बाद BusyMark कार्यस्थान को डिस्क से फिर लोड करेगा।",
+  "gitConfirmPushSetUpstreamTitle": "अपस्ट्रीम शाखा सेट करें?",
+  "gitConfirmPushSetUpstreamMessage": "इस शाखा का कोई अपस्ट्रीम नहीं है। ठीक एक रिमोट कॉन्फ़िगर होने पर BusyMark {branch} को पुश करके उसका अपस्ट्रीम सेट कर सकता है।",
+  "gitProjectHistory": "प्रोजेक्ट",
+  "gitFileHistory": "मौजूदा फ़ाइल",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "File actions",
-  "gitStatusAdded": "Added",
-  "gitStatusDeleted": "Deleted",
-  "gitStatusRenamed": "Renamed",
-  "gitStatusCopied": "Copied",
-  "gitStatusUntracked": "Untracked",
-  "gitStatusConflicted": "Conflicted",
-  "gitStatusIgnored": "Ignored",
-  "gitStatusTypeChanged": "Type changed",
-  "gitStatusModified": "Modified",
-  "gitStatusUnknown": "Unknown",
-  "gitErrorUnavailable": "Git is unavailable.",
-  "gitErrorNotRepository": "This workspace is not a Git repository.",
-  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
-  "gitErrorInvalidBranchName": "Enter a valid branch name.",
-  "gitErrorNoRemote": "No Git remote is configured.",
-  "gitErrorNoUpstream": "No upstream branch is configured.",
-  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
-  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
-  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
-  "gitErrorNetwork": "Git network operation failed.",
-  "gitErrorConflict": "Git reported unresolved conflicts.",
-  "gitErrorCommandFailed": "Git command failed.",
+  "gitFileActions": "फ़ाइल कार्रवाइयाँ",
+  "gitStatusAdded": "जोड़ा गया",
+  "gitStatusDeleted": "हटाया गया",
+  "gitStatusRenamed": "नाम बदला गया",
+  "gitStatusCopied": "कॉपी किया गया",
+  "gitStatusUntracked": "अनट्रैक किया गया",
+  "gitStatusConflicted": "टकराव वाला",
+  "gitStatusIgnored": "अनदेखा किया गया",
+  "gitStatusTypeChanged": "प्रकार बदला गया",
+  "gitStatusModified": "बदला गया",
+  "gitStatusUnknown": "अज्ञात",
+  "gitErrorUnavailable": "Git उपलब्ध नहीं है।",
+  "gitErrorNotRepository": "यह कार्यस्थान Git रिपॉज़िटरी नहीं है।",
+  "gitErrorUnsafePath": "BusyMark ने असुरक्षित Git पथ को अवरुद्ध किया।",
+  "gitErrorInvalidBranchName": "मान्य शाखा नाम दर्ज करें।",
+  "gitErrorNoRemote": "कोई Git रिमोट कॉन्फ़िगर नहीं है।",
+  "gitErrorNoUpstream": "कोई अपस्ट्रीम शाखा कॉन्फ़िगर नहीं है।",
+  "gitErrorMultipleRemotes": "कई रिमोट कॉन्फ़िगर हैं। इस BusyMark संस्करण के बाहर कोई अपस्ट्रीम चुनें।",
+  "gitErrorDirtyWorkspace": "शाखा बदलने से पहले BusyMark संपादक के बदलाव सहेजें या त्यागें।",
+  "gitErrorDiverged": "शाखा अलग हो गई है। इस BusyMark संस्करण के बाहर मर्ज या रीबेस करके इसे सुलझाएँ।",
+  "gitErrorAuthentication": "Git प्रमाणीकरण विफल रहा। snap में SSH रिमोट के लिए ssh-keys इंटरफ़ेस कनेक्ट करना पड़ सकता है।",
+  "gitErrorNetwork": "Git नेटवर्क कार्रवाई विफल रही।",
+  "gitErrorConflict": "Git ने अनसुलझे टकराव रिपोर्ट किए।",
+  "gitErrorCommandFailed": "Git कमांड विफल रहा।",
 
   "markdownAndHtml": "Markdown और HTML",
   "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
@@ -2058,7 +2234,7 @@
   "@markdownHtmlMarkdownBlocksDescription": {"description": "Reference section description for Markdown block syntax."},
   "markdownHtmlInlineFormatting": "इनलाइन Markdown",
   "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
-  "markdownHtmlInlineFormattingDescription": "पैराग्राफ, सूची आइटम और तालिका सेल के अंदर इस्तेमाल होने वाला फ़ॉर्मैटिंग।",
+  "markdownHtmlInlineFormattingDescription": "ऐसी फ़ॉर्मैटिंग जिसे पैराग्राफ़, सूची आइटम और तालिका सेल के अंदर इस्तेमाल किया जा सकता है।",
   "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
   "markdownHtmlRawHtmlBlocks": "कच्चे HTML ब्लॉक",
   "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
@@ -2070,7 +2246,7 @@
   "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
   "markdownHtmlSafety": "सुरक्षा नियम",
   "@markdownHtmlSafety": {"description": "Reference section title for raw HTML safety rules."},
-  "markdownHtmlSafetyDescription": "कच्चे HTML को प्रीव्यू से पहले पार्स और साफ किया जाता है।",
+  "markdownHtmlSafetyDescription": "कच्चे HTML को प्रीव्यू से पहले पार्स और साफ़ किया जाता है।",
   "@markdownHtmlSafetyDescription": {"description": "Reference section description for raw HTML safety rules."},
   "markdownHtmlHeadings": "शीर्षक",
   "@markdownHtmlHeadings": {"description": "Reference row label for Markdown headings."},
@@ -2096,13 +2272,13 @@
   "@markdownHtmlHtmlInlineCodeTags": {"description": "Reference row label for HTML inline code-related tags."},
   "markdownHtmlHtmlNeutralInlineTags": "अर्थपूर्ण टेक्स्ट टैग",
   "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
-  "markdownHtmlSanitizedPreview": "साफ किया गया प्रीव्यू",
+  "markdownHtmlSanitizedPreview": "साफ़ किया गया प्रीव्यू",
   "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
   "markdownHtmlSanitizedPreviewDescription": "अनुमत HTML को BusyMark प्रीव्यू ब्लॉक में बदला जाता है, ब्राउज़र में रेंडर नहीं किया जाता।",
   "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
   "markdownHtmlSourcePreserved": "स्रोत सुरक्षित रहता है",
   "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
-  "markdownHtmlSourcePreservedDescription": "बिना संपादित कच्चा HTML ठीक उसी स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
+  "markdownHtmlSourcePreservedDescription": "असंपादित कच्चे HTML को ठीक उसी तरह स्रोत टेक्स्ट के रूप में सहेजा जाता है।",
   "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
   "markdownHtmlMarkdownInsideHtml": "HTML के अंदर Markdown",
   "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
@@ -2114,7 +2290,7 @@
   "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
   "markdownHtmlSafeUrls": "केवल सुरक्षित URL",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "लिंक http, https, mailto, tel, relative URL और fragment स्वीकार करते हैं; असुरक्षित scheme अवरुद्ध होती हैं।",
+  "markdownHtmlSafeUrlsDescription": "लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।",
   "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
   "addToGit": "Git में जोड़ें",
   "delete": "हटाएँ",
@@ -2122,15 +2298,89 @@
   "rename": "नाम बदलें",
   "confirmDeleteFileTitle": "फ़ाइल हटाएँ?",
   "confirmDeleteFolderTitle": "फ़ोल्डर हटाएँ?",
-  "confirmDeleteFileMessage": "{name} हटाएँ? इसे वापस नहीं किया जा सकता.",
-  "confirmDeleteFolderMessage": "{name} और उसके अंदर की सभी फ़ाइलें हटाएँ? इसे वापस नहीं किया जा सकता.",
+  "confirmDeleteFileMessage": "{name} हटाएँ? इसे वापस नहीं किया जा सकता।",
+  "confirmDeleteFolderMessage": "{name} और उसके अंदर की सभी फ़ाइलें हटाएँ? इसे वापस नहीं किया जा सकता।",
   "workspaceErrorFileOperationFailed": "फ़ाइल ऑपरेशन विफल रहा: {error}",
   "errorDirectoryMissing": "डायरेक्टरी मौजूद नहीं है: {path}",
   "errorPathAlreadyExists": "पथ पहले से मौजूद है: {path}",
-  "errorFileNameRequired": "फ़ाइल नाम आवश्यक है.",
-  "errorFileNameUnsafe": "फ़ाइल नाम एक सुरक्षित पथ खंड होना चाहिए.",
-  "errorFileOperationInvalidTarget": "किसी फ़ोल्डर को उसी के अंदर नहीं ले जाया जा सकता.",
-  "errorFileOperationOutsideRoot": "फ़ाइल ऑपरेशन workspace के अंदर ही रहना चाहिए.",
-  "errorFileOperationRoot": "workspace root को फ़ाइल tree से नहीं बदला जा सकता."
+  "errorFileNameRequired": "फ़ाइल नाम आवश्यक है।",
+  "errorFileNameUnsafe": "फ़ाइल नाम एक सुरक्षित पथ खंड होना चाहिए।",
+  "errorFileOperationInvalidTarget": "किसी फ़ोल्डर को उसी के अंदर नहीं ले जाया जा सकता।",
+  "errorFileOperationOutsideRoot": "फ़ाइल कार्रवाई कार्यस्थान के अंदर ही रहनी चाहिए।",
+  "errorFileOperationRoot": "फ़ाइल ट्री से कार्यस्थान का रूट नहीं बदला जा सकता।",
+  "safeDeleteTopicFile": "विषय फ़ाइल को सुरक्षित रूप से हटाएँ…",
+  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "removeTocElement": "TOC तत्व हटाएँ",
+  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "reviewUsages": "उपयोगों की समीक्षा करें",
+  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "deleteTopicFile": "विषय फ़ाइल हटाएँ",
+  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "removeAction": "हटाएँ",
+  "@removeAction": {"description": "Generic remove action label."},
+  "topicRemovalSummary": "“{topic}” को चुने गए सहायता इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।",
+  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "safeDeleteTopicSummary": "“{topic}” को हटाएँ और इस पूरे Writerside प्रोजेक्ट में उसके संदर्भों को सुरक्षित रूप से अपडेट करें।",
+  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "childTopicsPromoted": "{count, plural, =1{1 उप-विषय एक स्तर ऊपर चला जाएगा।} other{{count} उप-विषय एक स्तर ऊपर चले जाएँगे।}}",
+  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "topicIsStartPageRemovalWarning": "यह विषय किसी इंस्टेंस के प्रारंभ पृष्ठ के रूप में उपयोग हो रहा है। इसके उपयोगों की समीक्षा करें और आगे बढ़ने से पहले कोई दूसरा प्रारंभ पृष्ठ निर्धारित करें।",
+  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "topicUsagesCount": "उपयोग ({count})",
+  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "noBreakingTopicUsages": "कोई ऐसा संदर्भ नहीं मिला जो टूट सकता है।",
+  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "topicUsagesFound": "BusyMark को इस विषय के निम्न संदर्भ मिले।",
+  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "topicUsageTocElements": "TOC तत्व",
+  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "topicUsageStartPages": "प्रारंभ पृष्ठ",
+  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "topicUsageTopicLinks": "विषय लिंक",
+  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "topicUsageIncludes": "शामिल अंश",
+  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "usageCount": "{count, plural, =1{1 उपयोग} other{{count} उपयोग}}",
+  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "refactoringOptions": "रीफ़ैक्टरिंग विकल्प",
+  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "updateUsagesAutomatically": "उपयोगों को अपने आप अपडेट करें",
+  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "updateUsagesAutomaticallyDescription": "TOC संदर्भ और शामिल अंश हटाएँ, और लिंक का टेक्स्ट बनाए रखें।",
+  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "manualUsageUpdatesRequired": "इस रीफ़ैक्टरिंग से पहले कुछ उपयोगों को मैन्युअल रूप से बदलना होगा।",
+  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "setRedirectTo": "इस पर रीडायरेक्ट करें",
+  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "noRedirectDescription": "पुराने प्रकाशित पृष्ठ को रीडायरेक्ट न करें।",
+  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "redirectTarget": "रीडायरेक्ट गंतव्य",
+  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "remainingUsagesBlockRemoval": "आगे बढ़ने से पहले शेष उपयोगों की समीक्षा करके उन्हें अपडेट करें, या उपलब्ध होने पर अपने आप अपडेट करने का विकल्प चालू करें।",
+  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "usagesOfTopic": "{topic} के उपयोग",
+  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "noUsagesFound": "कोई उपयोग नहीं मिला",
+  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "outsideSelectedInstance": "चुने गए इंस्टेंस के बाहर",
+  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "doRefactor": "रीफ़ैक्टर करें",
+  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "orphanTopicTitle": "विषय फ़ाइल अब उपयोग में नहीं है",
+  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "keepTopicFile": "विषय फ़ाइल रखें",
+  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "orphanTopicMessage": "“{topic}” अब इस Writerside प्रोजेक्ट में कहीं भी उपयोग नहीं होता। फ़ाइल हटाएँ या किसी दूसरे इंस्टेंस में उपयोग के लिए इसे रखें।",
+  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "errorWritersideSafeDeleteRequired": "Writerside विषय फ़ाइलों के लिए सुरक्षित रूप से हटाएँ सुविधा का उपयोग करें।",
+  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "errorWritersideTopicUsageScanFailed": "विषय के उपयोगों की जाँच पूरी नहीं हो सकी। कोई फ़ाइल नहीं बदली गई।",
+  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "errorWritersideTopicUsagesRemain": "विषय के कुछ उपयोगों पर अभी ध्यान देना आवश्यक है। आगे बढ़ने से पहले उनकी समीक्षा करें।",
+  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "errorWritersideRedirectInvalid": "चुना गया रीडायरेक्ट लक्ष्य अब मान्य नहीं है। उसे फिर से चुनें।",
+  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "errorWritersideRollbackFailed": "विषय हटाने की कार्रवाई पूरी तरह वापस नहीं की जा सकी। आगे बढ़ने से पहले इन पथों की समीक्षा करें: {paths}",
+  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}}
 
 }

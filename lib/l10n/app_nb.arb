@@ -1,5 +1,30 @@
 {
   "@@locale": "nb",
+  "reportIssue": "Rapporter et problem",
+  "feedbackCategory": "Kategori",
+  "feedbackChooseCategory": "Velg en kategori",
+  "feedbackCategoryProblem": "Problem eller feil",
+  "feedbackCategoryFeature": "Funksjonsønske",
+  "feedbackCategoryPrivacySecurity": "Bekymring om personvern eller sikkerhet",
+  "feedbackCategoryUsability": "Bekymring om brukervennlighet",
+  "feedbackCategoryOther": "Annet",
+  "feedbackSubject": "Emne",
+  "feedbackMessage": "Detaljert melding",
+  "feedbackReplyEmail": "E-post for svar (valgfritt)",
+  "feedbackIncludeTechnicalDetails": "Ta med tekniske detaljer",
+  "feedbackTechnicalDetailsDisclosure": "Når dette er aktivert, legges bare Linux-operativsystemversjonen og BusyMark-programmets lokalinnstilling til. Ingen logger, filer, kontodata eller annen diagnostikk legges ved.",
+  "feedbackSubmit": "Send",
+  "feedbackSubmitting": "Sender…",
+  "feedbackCategoryRequired": "Velg en kategori.",
+  "feedbackSubjectLength": "Emnet må inneholde mellom 3 og 120 tegn.",
+  "feedbackMessageLength": "Meldingen må inneholde mellom 10 og 5000 tegn.",
+  "feedbackReplyEmailInvalid": "Skriv inn en gyldig e-postadresse, eller la feltet stå tomt.",
+  "feedbackConnectionFailure": "BusyMark kunne ikke koble til. Kontroller internettforbindelsen og prøv igjen.",
+  "feedbackTimeoutFailure": "Forespørselen ble tidsavbrutt. Prøv igjen.",
+  "feedbackRateLimitedFailure": "Det ble sendt for mange rapporter fra denne forbindelsen. Vent og prøv igjen.",
+  "feedbackRejectedFailure": "Serveren avviste rapporten. Kontroller skjemafeltene og prøv igjen.",
+  "feedbackServerFailure": "Serveren kunne ikke ta imot rapporten. Prøv igjen senere.",
+  "feedbackSuccess": "Tilbakemeldingen er sendt. Referanse-ID: {id}",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -28,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Rapporter et problem",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Kildekode",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Avansert",
   "@advanced": {
@@ -112,10 +137,6 @@
   "@fileHistory": {
     "description": "Menu action and sidebar title for showing Git history for a single file."
   },
-  "find": "Finn",
-  "@find": {
-    "description": "Find command label."
-  },
   "folder": "Mappe",
   "@folder": {
     "description": "Folder kind label."
@@ -147,6 +168,10 @@
   "openInFiles": "Åpne i Filer",
   "@openInFiles": {
     "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "Stihandlinger",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
   },
   "outline": "Disposisjon",
   "@outline": {
@@ -268,6 +293,10 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
   "toggleSidebar": "Sidepanel",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
@@ -336,9 +365,11 @@
   "@noOpenFile": {
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
-  "shortcutGroupFile": "Fil",
-  "@shortcutGroupFile": {
-    "description": "Keyboard shortcut group for file commands."
+  "shortcutDeleteTreeItemDescription": "Slett det valgte elementet i Filer, eller fjern det valgte emnet fra innholdsfortegnelsen",
+  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "shortcutGroupGeneral": "Generelt",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
   },
   "shortcutNewDocument": "Nytt dokument",
   "@shortcutNewDocument": {
@@ -352,12 +383,12 @@
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "Lagre gjeldende Markdown-fil",
+  "shortcutSaveDescription": "Lagre gjeldende dokument",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "Søk i gjeldende dokument",
-  "@shortcutFindDescription": {
+  "shortcutSearchDescription": "Søk i gjeldende arbeidsområde",
+  "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
   "shortcutKeyboardShortcutsDescription": "Vis denne oversikten over tastatursnarveier",
@@ -374,43 +405,43 @@
   },
   "shortcutNextTab": "Neste fane",
   "@shortcutNextTab": {
-    "description": "Keyboard shortcut label for moving to the next editor tab."
+    "description": "Keyboard shortcut label for moving to the next tab."
   },
-  "shortcutNextTabDescription": "Gå til neste åpne redigeringsfane",
+  "shortcutNextTabDescription": "Gå til neste åpne fane",
   "@shortcutNextTabDescription": {
-    "description": "Keyboard shortcut description for moving to the next editor tab."
+    "description": "Keyboard shortcut description for moving to the next tab."
   },
   "shortcutPreviousTab": "Forrige fane",
   "@shortcutPreviousTab": {
-    "description": "Keyboard shortcut label for moving to the previous editor tab."
+    "description": "Keyboard shortcut label for moving to the previous tab."
   },
-  "shortcutPreviousTabDescription": "Gå til forrige åpne redigeringsfane",
+  "shortcutPreviousTabDescription": "Gå til forrige åpne fane",
   "@shortcutPreviousTabDescription": {
-    "description": "Keyboard shortcut description for moving to the previous editor tab."
+    "description": "Keyboard shortcut description for moving to the previous tab."
   },
   "shortcutCloseTab": "Lukk fane",
   "@shortcutCloseTab": {
-    "description": "Keyboard shortcut label for closing the active editor tab."
+    "description": "Keyboard shortcut label for closing the active tab."
   },
-  "shortcutCloseTabDescription": "Lukk den aktive redigeringsfanen",
+  "shortcutCloseTabDescription": "Lukk den aktive fanen",
   "@shortcutCloseTabDescription": {
-    "description": "Keyboard shortcut description for closing the active editor tab."
+    "description": "Keyboard shortcut description for closing the active tab."
   },
   "shortcutCloseAllTabs": "Lukk alle faner",
   "@shortcutCloseAllTabs": {
-    "description": "Keyboard shortcut label for closing all editor tabs."
+    "description": "Keyboard shortcut label for closing all tabs."
   },
-  "shortcutCloseAllTabsDescription": "Lukk alle åpne redigeringsfaner",
+  "shortcutCloseAllTabsDescription": "Lukk alle åpne faner",
   "@shortcutCloseAllTabsDescription": {
-    "description": "Keyboard shortcut description for closing all editor tabs."
+    "description": "Keyboard shortcut description for closing all tabs."
   },
   "shortcutGroupTextEditing": "Tekstredigering",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Velg all tekst i redigereren",
+  "shortcutSelectAllDescription": "Velg all tekst i kildemodus; trykk to ganger i redigeringsmodus for å velge alle blokker",
   "@shortcutSelectAllDescription": {
-    "description": "Keyboard shortcut description for selecting all text."
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
   },
   "shortcutCutDescription": "Klipp ut den valgte teksten",
   "@shortcutCutDescription": {
@@ -436,13 +467,21 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "Fjern markering i redigereren",
-  "@clearEditorSelection": {
-    "description": "Keyboard shortcut label for clearing selection."
+  "shortcutInsertIndentation": "Sett inn innrykk",
+  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "shortcutInsertIndentationDescription": "Sett inn innrykk ved markøren",
+  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "shortcutOutdentSource": "Reduser innrykk i kilden",
+  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "shortcutOutdentSourceDescription": "Fjern ett innrykksnivå i kildemodus",
+  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "shortcutEscape": "Lukk søk eller fjern blokkmarkering",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
   },
-  "shortcutClearEditorSelectionDescription": "Avslutt gjeldende markering i redigereren eller søkefokus",
-  "@shortcutClearEditorSelectionDescription": {
-    "description": "Keyboard shortcut description for clearing selection."
+  "shortcutEscapeDescription": "Lukk arbeidsområdesøket eller fjern en blokkmarkering i redigeringsmodus",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
   },
   "shortcutGroupFormatting": "Formatering",
   "@shortcutGroupFormatting": {
@@ -644,24 +683,44 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "Redigeringsknapper",
-  "@editingButtons": {
+  "editingButtonsPosition": "Plassering av redigeringsknapper",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "Velg hvor de flytende WYSIWYG-redigeringsknappene skal vises.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
   },
-  "privacy": "Privacy",
+  "editingButtonsDirection": "Retning for redigeringsknapper",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Velg om de flytende WYSIWYG-redigeringsknappene skal ordnes vannrett eller loddrett.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Vannrett",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Loddrett",
+  "@vertical": {
+    "description": "Editing button direction option."
+  },
+  "privacy": "Personvern",
   "@privacy": {"description": "Settings section title for privacy options."},
-  "allowRemoteImages": "Load remote images",
+  "allowRemoteImages": "Last inn eksterne bilder",
   "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
-  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "allowRemoteImagesDescription": "Tillat at bilder i Markdown-forhåndsvisningen og redigereren lastes inn fra HTTP- og HTTPS-adresser.",
   "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
-  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "clearRemoteImagePermissions": "Tøm tillatelser for eksterne bilder",
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
-  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "clearRemoteImagePermissionsDescription": "Glem arbeidsområder som fikk tillatelse til å laste inn eksterne bilder.",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "Tøm klarerte Git-arbeidsområder",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "Vindu",
   "@settingsWindowSectionTitle": {
@@ -801,6 +860,8 @@
   "@htmlSource": {
     "description": "Text field label for raw HTML source."
   },
+  "htmlContentDefault": "HTML-innhold",
+  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
   "thematicBreak": "Tematisk skille",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -944,6 +1005,12 @@
   "@altText": {
     "description": "Image alt text field label."
   },
+  "editorPlaceholderText": "tekst",
+  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "editorPlaceholderCode": "kode",
+  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "editorPlaceholderAltText": "alternativ tekst",
+  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
   "describeTheImage": "Beskriv bildet",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -973,17 +1040,17 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Remote image blocked",
+  "remoteImageBlocked": "Eksternt bilde blokkert",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "Velg om BusyMark kan laste inn eksterne bilder.",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
-  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "remoteImagesBlockedTitle": "Eksterne bilder er blokkert",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
-  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "remoteImagesBlockedMessage": "Dette dokumentet refererer til bilder på Internett. Når de lastes inn, kan nettverksinformasjon bli avslørt for bildeverten.",
   "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
-  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "loadRemoteImagesForWorkspace": "Last inn for dette arbeidsområdet",
   "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
-  "alwaysLoadRemoteImages": "Always load remote images",
+  "alwaysLoadRemoteImages": "Last alltid inn eksterne bilder",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
   "hideSidebar": "Skjul sidepanel",
@@ -1039,6 +1106,10 @@
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
   },
+  "tocActions": "Handlinger for innholdsfortegnelsen",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
+  },
   "markdownUnsaved": "Markdown – ikke lagret",
   "@markdownUnsaved": {
     "description": "Workspace detail label for an unsaved Markdown file."
@@ -1074,6 +1145,68 @@
   "newChildTopic": "Nytt underemne",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "Nytt emne på samme nivå",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "Gi emnefilen nytt navn",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "Plassering i innholdsfortegnelsen",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "På toppnivå i innholdsfortegnelsen",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "Etter valgt emne",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "Under valgt emne",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "Lim inn etter",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "Lim inn som underemne",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "Fjern fra innholdsfortegnelsen",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "Fjerne fra innholdsfortegnelsen?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "Fjerne {name} fra denne innholdsfortegnelsen? Emnefilen beholdes.",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "Slette emnefilen?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "Slette {name} og fjerne den fra alle innholdsfortegnelser? Dette kan ikke angres.",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "defaultNewTopicTitle": "Nytt emne",
   "@defaultNewTopicTitle": {
@@ -1133,7 +1266,7 @@
       }
     }
   },
-  "collapseKind": "Skjul {kind}",
+  "collapseKind": "Fold sammen {kind}",
   "@collapseKind": {
     "description": "Tooltip for collapsing a foldable source section.",
     "placeholders": {
@@ -1158,6 +1291,20 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
+  "sourceSearchPreviousMatch": "Forrige treff",
+  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "sourceSearchNextMatch": "Neste treff",
+  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "sourceSearchCaseSensitive": "Skill mellom store og små bokstaver",
+  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "sourceSearchWholeWord": "Hele ord",
+  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "sourceSearchRegex": "Regulært uttrykk",
+  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "sourceSearchInvalidRegex": "Ugyldig regulært uttrykk",
+  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "sourceLargeFileFeaturesPaused": "Stor fil: utheving og folding er satt på pause",
+  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "noPreview": "Ingen forhåndsvisning",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
@@ -1347,7 +1494,7 @@
       }
     }
   },
-  "errorPathDoesNotExist": "Banen finnes ikke: {path}",
+  "errorPathDoesNotExist": "Stien finnes ikke: {path}",
   "@errorPathDoesNotExist": {
     "description": "Detail for a missing path error.",
     "placeholders": {
@@ -1365,7 +1512,7 @@
       }
     }
   },
-  "errorTargetPathNotDirectory": "Målbanen finnes allerede og er ikke en mappe: {path}",
+  "errorTargetPathNotDirectory": "Målstien finnes allerede og er ikke en mappe: {path}",
   "@errorTargetPathNotDirectory": {
     "description": "Detail for a target path that is not a directory.",
     "placeholders": {
@@ -1404,7 +1551,7 @@
   "@errorDirectoryNameRequired": {
     "description": "Detail for a missing directory name."
   },
-  "errorDirectoryNameUnsafe": "Mappenavnet må være ett enkelt, trygt banesegment.",
+  "errorDirectoryNameUnsafe": "Mappenavnet må være ett enkelt, trygt stisegment.",
   "@errorDirectoryNameUnsafe": {
     "description": "Detail for an unsafe directory name."
   },
@@ -1412,7 +1559,7 @@
   "@errorInstanceIdInvalid": {
     "description": "Detail for an invalid Writerside instance ID."
   },
-  "errorTopicFileInvalid": "Emnefilnavnet må være et Markdown-filnavn uten baneskilletegn.",
+  "errorTopicFileInvalid": "Emnefilnavnet må være et Markdown-filnavn uten stiskilletegn.",
   "@errorTopicFileInvalid": {
     "description": "Detail for an invalid topic file name."
   },
@@ -1473,11 +1620,28 @@
       }
     }
   },
+  "errorWritersideTocNodeMissing": "Den valgte oppføringen i innholdsfortegnelsen finnes ikke lenger.",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "En oppføring i innholdsfortegnelsen kan ikke flyttes under seg selv eller en av sine underoppføringer.",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "Startemnet {topic} kan ikke slettes. Velg en annen startside først.",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorTopicsRootUnsafe": "Emneroten må være en sikker relativ mappe.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
   },
-  "errorTopicFileNameUnsafe": "Emnefilnavnet må være ett enkelt, trygt banesegment.",
+  "errorTopicFileNameUnsafe": "Emnefilnavnet må være ett enkelt, trygt stisegment.",
   "@errorTopicFileNameUnsafe": {
     "description": "Detail for an unsafe topic file name."
   },
@@ -1525,7 +1689,7 @@
       }
     }
   },
-  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for automatisk parsing.",
+  "diagnosticWorkspaceFileTooLarge": "Filen er større enn betagrensen for automatisk analyse.",
   "@diagnosticWorkspaceFileTooLarge": {
     "description": "Diagnostic shown when a file is too large to parse automatically."
   },
@@ -1973,82 +2137,92 @@
       }
     }
   },
-  "close": "Close",
+  "close": "Lukk",
   "git": "Git",
-  "gitDiff": "Git diff",
-  "gitUnavailableTitle": "Git is unavailable",
-  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
-  "gitNotRepositoryTitle": "Not a Git repository",
-  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
-  "gitInitializeRepository": "Initialize repository",
-  "gitDetachedHead": "Detached HEAD",
-  "gitDetachedHeadAt": "Detached at {commit}",
-  "gitNoUpstream": "No upstream",
-  "gitAheadCount": "{count, plural, =1{1 commit ikke pushet} other{{count} commits ikke pushet}}",
-  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
-  "gitClean": "Clean",
-  "gitConflicts": "Conflicts",
+  "gitDiff": "Git-diff",
+  "gitShowDiff": "Vis diff",
+  "gitDiffHunkRange": "gammel {oldRange} → ny {newRange}",
+  "gitDiffNoLines": "ingen linjer",
+  "gitUnavailableTitle": "Git er ikke tilgjengelig",
+  "gitUnavailableMessage": "{reason, select, other{Installer Git, eller konfigurer BusyMark til å bruke en tilgjengelig Git-programfil. {reason}}}",
+  "gitTrustRequiredTitle": "Vil du stole på dette arbeidsområdet for Git?",
+  "gitTrustRequiredMessage": "Git-repositorier kan kjøre programmer via hooks, filtre og annen konfigurasjon. Stol på dette arbeidsområdet før BusyMark leser repositoriedata eller aktiverer Git-handlinger.",
+  "gitTrustWorkspace": "Stol på arbeidsområdet",
+  "gitNotRepositoryTitle": "Ikke et Git-repositorium",
+  "gitNotRepositoryMessage": "Dette arbeidsområdet er ikke i et Git-repositorium.",
+  "gitInitializeRepository": "Initialiser repositorium",
+  "gitDetachedHead": "Frakoblet HEAD",
+  "gitDetachedHeadAt": "Frakoblet ved {commit}",
+  "gitNoUpstream": "Ingen upstream",
+  "gitAheadCount": "{count, plural, =1{1 commit som ikke er pushet} other{{count} commits som ikke er pushet}}",
+  "gitBehindCount": "{count, plural, =1{1 commit å hente} other{{count} commits å hente}}",
+  "gitClean": "Ren",
+  "gitConflicts": "Konflikter",
   "gitChanges": "Endringer",
   "gitHistory": "Historikk",
   "gitBranches": "Grener",
+  "gitBranchActions": "Grenhandlinger",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Innsjekk",
-  "gitSelectForCommit": "Select for commit",
-  "gitRemoveFromCommit": "Leave out of commit",
-  "gitDiscard": "Discard",
-  "gitOpenFile": "Open file",
-  "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "Uversjonerte filer",
-  "gitCommitMessage": "Commit message",
-  "gitCommitSelectedFiles": "Selected files",
-  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
-  "gitCommitMessageRequired": "Enter a commit message.",
-  "gitCreateBranch": "Create branch",
-  "gitNewBranch": "+ New Branch",
-  "gitBranchName": "Branch name",
-  "gitSwitchBranch": "Switch",
-  "gitNoChanges": "No changes",
-  "gitNoHistory": "No history",
-  "gitNoBranches": "No branches",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Velg for commit",
+  "gitRemoveFromCommit": "Utelat fra commit",
+  "gitDiscard": "Forkast",
+  "gitOpenFile": "Åpne fil",
+  "gitMarkResolved": "Merk som løst",
+  "gitUntracked": "Usporede filer",
+  "gitCommitMessage": "Commit-melding",
+  "gitCommitSelectedFiles": "Valgte filer",
+  "gitCommitNoSelectedFiles": "Velg minst én fil før du oppretter en commit.",
+  "gitCommitMessageRequired": "Skriv inn en commit-melding.",
+  "gitCreateBranch": "Opprett gren",
+  "gitNewBranch": "+ Ny gren",
+  "gitBranchName": "Grennavn",
+  "gitSwitchBranch": "Bytt",
+  "gitNoChanges": "Ingen endringer",
+  "gitNoHistory": "Ingen historikk",
+  "gitNoBranches": "Ingen grener",
   "gitNoDiff": "Ingen diff å vise",
-  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
-  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
-  "gitConfirmDiscardTitle": "Discard Git changes?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
-  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
-  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
-  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
-  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
-  "gitProjectHistory": "Project",
-  "gitFileHistory": "Current file",
+  "gitBinaryFile": "Binærfil. BusyMark viser ikke binære patcher.",
+  "gitUnsavedChangesBanner": "Ulagrede endringer i redigereren tas ikke med før de er lagret.",
+  "gitConfirmDiscardTitle": "Forkaste Git-endringer?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Den valgte sporede filen gjenopprettes fra Git.} other{De valgte sporede filene gjenopprettes fra Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{Den valgte usporede filen slettes.} other{De valgte usporede filene slettes.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{Den valgte filen gjenopprettes eller slettes ut fra Git-statusen.} other{De valgte filene gjenopprettes eller slettes ut fra Git-statusen.}}",
+  "gitConfirmSwitchBranchTitle": "Bytt til {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark laster arbeidsområdet på nytt fra disken etter at Git har byttet gren.",
+  "gitConfirmPushSetUpstreamTitle": "Angi upstream-gren?",
+  "gitConfirmPushSetUpstreamMessage": "Denne grenen har ingen upstream. BusyMark kan pushe {branch} og angi upstream når nøyaktig én remote er konfigurert.",
+  "gitProjectHistory": "Prosjekt",
+  "gitFileHistory": "Gjeldende fil",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "File actions",
-  "gitStatusAdded": "Added",
-  "gitStatusDeleted": "Deleted",
-  "gitStatusRenamed": "Renamed",
-  "gitStatusCopied": "Copied",
-  "gitStatusUntracked": "Untracked",
-  "gitStatusConflicted": "Conflicted",
-  "gitStatusIgnored": "Ignored",
-  "gitStatusTypeChanged": "Type changed",
-  "gitStatusModified": "Modified",
-  "gitStatusUnknown": "Unknown",
-  "gitErrorUnavailable": "Git is unavailable.",
-  "gitErrorNotRepository": "This workspace is not a Git repository.",
-  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
-  "gitErrorInvalidBranchName": "Enter a valid branch name.",
-  "gitErrorNoRemote": "No Git remote is configured.",
-  "gitErrorNoUpstream": "No upstream branch is configured.",
-  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
-  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
-  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
-  "gitErrorNetwork": "Git network operation failed.",
-  "gitErrorConflict": "Git reported unresolved conflicts.",
-  "gitErrorCommandFailed": "Git command failed.",
+  "gitFileActions": "Filhandlinger",
+  "gitStatusAdded": "Lagt til",
+  "gitStatusDeleted": "Slettet",
+  "gitStatusRenamed": "Gitt nytt navn",
+  "gitStatusCopied": "Kopiert",
+  "gitStatusUntracked": "Usporet",
+  "gitStatusConflicted": "I konflikt",
+  "gitStatusIgnored": "Ignorert",
+  "gitStatusTypeChanged": "Type endret",
+  "gitStatusModified": "Endret",
+  "gitStatusUnknown": "Ukjent",
+  "gitErrorUnavailable": "Git er ikke tilgjengelig.",
+  "gitErrorNotRepository": "Dette arbeidsområdet er ikke et Git-repositorium.",
+  "gitErrorUnsafePath": "BusyMark blokkerte en usikker Git-sti.",
+  "gitErrorInvalidBranchName": "Skriv inn et gyldig grennavn.",
+  "gitErrorNoRemote": "Ingen Git-remote er konfigurert.",
+  "gitErrorNoUpstream": "Ingen upstream-gren er konfigurert.",
+  "gitErrorMultipleRemotes": "Flere remoter er konfigurert. Velg en upstream utenfor denne versjonen av BusyMark.",
+  "gitErrorDirtyWorkspace": "Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.",
+  "gitErrorDiverged": "Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.",
+  "gitErrorAuthentication": "Git-autentisering mislyktes. I snap-pakken kan SSH-remoter kreve at grensesnittet ssh-keys kobles til.",
+  "gitErrorNetwork": "Git-nettverksoperasjonen mislyktes.",
+  "gitErrorConflict": "Git rapporterte uløste konflikter.",
+  "gitErrorCommandFailed": "Git-kommandoen mislyktes.",
 
   "markdownAndHtml": "Markdown og HTML",
   "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
@@ -2098,7 +2272,7 @@
   "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
   "markdownHtmlSanitizedPreview": "Renset forhåndsvisning",
   "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker, ikke rendret i en nettleser.",
+  "markdownHtmlSanitizedPreviewDescription": "Tillatt HTML konverteres til BusyMark-forhåndsvisningsblokker og rendres ikke i en nettleser.",
   "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
   "markdownHtmlSourcePreserved": "Kilden bevares",
   "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
@@ -2108,13 +2282,13 @@
   "@markdownHtmlMarkdownInsideHtml": {"description": "Reference row label for Markdown inside raw HTML."},
   "markdownHtmlMarkdownInsideHtmlDescription": "Markdown-markører inni rå HTML vises som bokstavelig tekst.",
   "@markdownHtmlMarkdownInsideHtmlDescription": {"description": "Reference row description for Markdown inside raw HTML."},
-  "markdownHtmlBlockedContent": "Aktivt innhold blokkert",
+  "markdownHtmlBlockedContent": "Blokkert aktivt innhold",
   "@markdownHtmlBlockedContent": {"description": "Reference row label for blocked HTML content."},
   "markdownHtmlBlockedContentDescription": "Skript, stiler, rammer, skjemaer, SVG, MathML, hendelser og usikre attributter blokkeres.",
   "@markdownHtmlBlockedContentDescription": {"description": "Reference row description for blocked HTML content."},
   "markdownHtmlSafeUrls": "Bare trygge URL-er",
   "@markdownHtmlSafeUrls": {"description": "Reference row label for safe URL policy."},
-  "markdownHtmlSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre skjemaer blokkeres.",
+  "markdownHtmlSafeUrlsDescription": "Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.",
   "@markdownHtmlSafeUrlsDescription": {"description": "Reference row description for safe URL policy."},
   "addToGit": "Legg til i Git",
   "delete": "Slett",
@@ -2130,7 +2304,81 @@
   "errorFileNameRequired": "Filnavn kreves.",
   "errorFileNameUnsafe": "Filnavnet må være ett trygt stisegment.",
   "errorFileOperationInvalidTarget": "Kan ikke flytte en mappe inn i seg selv.",
-  "errorFileOperationOutsideRoot": "Filoperasjonen må holde seg i workspace.",
-  "errorFileOperationRoot": "Workspace-roten kan ikke endres fra filtreet."
+  "errorFileOperationOutsideRoot": "Filoperasjonen må holde seg i arbeidsområdet.",
+  "errorFileOperationRoot": "Roten til arbeidsområdet kan ikke endres fra filtreet.",
+  "safeDeleteTopicFile": "Slett emnefilen trygt …",
+  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "removeTocElement": "Fjern element fra innholdsfortegnelsen",
+  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "reviewUsages": "Se gjennom bruk",
+  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "deleteTopicFile": "Slett emnefil",
+  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "removeAction": "Fjern",
+  "@removeAction": {"description": "Generic remove action label."},
+  "topicRemovalSummary": "Fjern «{topic}» fra den valgte hjelpeinstansen. Emnefilen beholdes.",
+  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "safeDeleteTopicSummary": "Slett «{topic}», og oppdater referansene til emnet trygt i hele dette Writerside-prosjektet.",
+  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "childTopicsPromoted": "{count, plural, =1{1 underemne flyttes ett nivå opp.} other{{count} underemner flyttes ett nivå opp.}}",
+  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "topicIsStartPageRemovalWarning": "Dette emnet brukes som startside for en instans. Se gjennom bruken, og angi en annen startside før du fortsetter.",
+  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "topicUsagesCount": "Bruk ({count})",
+  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "noBreakingTopicUsages": "Fant ingen referanser som ville slutte å fungere.",
+  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "topicUsagesFound": "BusyMark fant følgende referanser til dette emnet.",
+  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "topicUsageTocElements": "Elementer i innholdsfortegnelsen",
+  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "topicUsageStartPages": "Startsider",
+  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "topicUsageTopicLinks": "Emnelenker",
+  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "topicUsageIncludes": "Inkluderinger",
+  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "usageCount": "{count, plural, =1{1 bruk} other{{count} bruk}}",
+  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "refactoringOptions": "Refaktoreringsalternativer",
+  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "updateUsagesAutomatically": "Oppdater bruk automatisk",
+  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "updateUsagesAutomaticallyDescription": "Fjern referanser i innholdsfortegnelsen og inkluderinger, og behold lenketeksten.",
+  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "manualUsageUpdatesRequired": "Noe bruk må endres manuelt før denne refaktoreringen.",
+  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "setRedirectTo": "Omdiriger til",
+  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "noRedirectDescription": "Ikke omdiriger den gamle publiserte siden.",
+  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "redirectTarget": "Mål for omdirigering",
+  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "remainingUsagesBlockRemoval": "Se gjennom og oppdater gjenværende bruk før du fortsetter, eller slå på automatiske oppdateringer når de er tilgjengelige.",
+  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "usagesOfTopic": "Bruk av «{topic}»",
+  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "noUsagesFound": "Fant ingen bruk.",
+  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "outsideSelectedInstance": "utenfor den valgte instansen",
+  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "doRefactor": "Utfør refaktorering",
+  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "orphanTopicTitle": "Emnefilen brukes ikke lenger",
+  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "keepTopicFile": "Behold emnefilen",
+  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "orphanTopicMessage": "«{topic}» brukes ikke lenger noe sted i dette Writerside-prosjektet. Slett filen, eller behold den for bruk i en annen instans.",
+  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "errorWritersideSafeDeleteRequired": "Bruk trygg sletting for Writerside-emnefiler.",
+  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "errorWritersideTopicUsageScanFailed": "Kunne ikke fullføre søket etter emnebruk. Ingen filer ble endret.",
+  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "errorWritersideTopicUsagesRemain": "Noen forekomster av emnet krever fortsatt oppfølging. Se gjennom dem før du fortsetter.",
+  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "errorWritersideRedirectInvalid": "Det valgte målet for videresending er ikke lenger gyldig. Velg det på nytt.",
+  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "errorWritersideRollbackFailed": "Fjerningen av emnet kunne ikke angres fullstendig. Se gjennom disse banene før du fortsetter: {paths}",
+  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}}
 
 }

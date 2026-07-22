@@ -1,3 +1,4 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,7 @@ import 'app_localizations_ar.dart';
 import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_et.dart';
 import 'app_localizations_fa.dart';
 import 'app_localizations_fr.dart';
 import 'app_localizations_hi.dart';
@@ -109,6 +111,7 @@ abstract class AppLocalizations {
     Locale('de'),
     Locale('en'),
     Locale('es'),
+    Locale('et'),
     Locale('fa'),
     Locale('fr'),
     Locale('hi'),
@@ -162,11 +165,161 @@ abstract class AppLocalizations {
   /// **'Website'**
   String get aboutWebsite;
 
-  /// Label for the issue tracker row in the About dialog.
+  /// Label for the source-code repository row in the About dialog.
   ///
   /// In en, this message translates to:
-  /// **'Report an Issue'**
-  String get aboutReportIssue;
+  /// **'Source code'**
+  String get aboutSourceCode;
+
+  /// Menu action and dialog title for reporting an issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an issue'**
+  String get reportIssue;
+
+  /// Feedback category field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get feedbackCategory;
+
+  /// Placeholder for the feedback category selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category'**
+  String get feedbackChooseCategory;
+
+  /// Feedback category for a problem or bug.
+  ///
+  /// In en, this message translates to:
+  /// **'Problem or bug'**
+  String get feedbackCategoryProblem;
+
+  /// Feedback category for a feature request.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature request'**
+  String get feedbackCategoryFeature;
+
+  /// Feedback category for a privacy or security concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy or security concern'**
+  String get feedbackCategoryPrivacySecurity;
+
+  /// Feedback category for a usability concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Usability concern'**
+  String get feedbackCategoryUsability;
+
+  /// Feedback category for other concerns.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get feedbackCategoryOther;
+
+  /// Feedback subject field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get feedbackSubject;
+
+  /// Detailed feedback message field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed message'**
+  String get feedbackMessage;
+
+  /// Optional reply email field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply email (optional)'**
+  String get feedbackReplyEmail;
+
+  /// Checkbox label for optional technical details.
+  ///
+  /// In en, this message translates to:
+  /// **'Include technical details'**
+  String get feedbackIncludeTechnicalDetails;
+
+  /// Disclosure explaining exactly which optional technical details are submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, this adds only your Linux operating-system version and BusyMark application locale. No logs, files, account data, or other diagnostics are attached.'**
+  String get feedbackTechnicalDetailsDisclosure;
+
+  /// Button that submits feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get feedbackSubmit;
+
+  /// Button label while feedback is being submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting…'**
+  String get feedbackSubmitting;
+
+  /// Validation error for a missing feedback category.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category.'**
+  String get feedbackCategoryRequired;
+
+  /// Validation error for feedback subject length.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject must be between 3 and 120 characters.'**
+  String get feedbackSubjectLength;
+
+  /// Validation error for feedback message length.
+  ///
+  /// In en, this message translates to:
+  /// **'Message must be between 10 and 5,000 characters.'**
+  String get feedbackMessageLength;
+
+  /// Validation error for an invalid optional reply email.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address or leave this field empty.'**
+  String get feedbackReplyEmailInvalid;
+
+  /// Feedback submission error for a connection failure.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not connect. Check your internet connection and try again.'**
+  String get feedbackConnectionFailure;
+
+  /// Feedback submission error for a timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The request timed out. Try again.'**
+  String get feedbackTimeoutFailure;
+
+  /// Feedback submission error when the server rate limit is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many reports were sent from this connection. Wait and try again.'**
+  String get feedbackRateLimitedFailure;
+
+  /// Feedback submission error when the server rejects invalid request data.
+  ///
+  /// In en, this message translates to:
+  /// **'The server rejected this report. Check the form fields and try again.'**
+  String get feedbackRejectedFailure;
+
+  /// Generic feedback submission server error.
+  ///
+  /// In en, this message translates to:
+  /// **'The server could not accept the report. Try again later.'**
+  String get feedbackServerFailure;
+
+  /// Success message containing the server reference ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback sent. Reference ID: {id}'**
+  String feedbackSuccess(String id);
 
   /// Settings section title for advanced actions.
   ///
@@ -300,12 +453,6 @@ abstract class AppLocalizations {
   /// **'File History'**
   String get fileHistory;
 
-  /// Find command label.
-  ///
-  /// In en, this message translates to:
-  /// **'Find'**
-  String get find;
-
   /// Folder kind label.
   ///
   /// In en, this message translates to:
@@ -353,6 +500,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open in Files'**
   String get openInFiles;
+
+  /// Tooltip for the workspace path action menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'Path actions'**
+  String get pathActions;
 
   /// Outline sidebar tab label.
   ///
@@ -534,6 +687,12 @@ abstract class AppLocalizations {
   /// **'हिन्दी'**
   String get languageHindi;
 
+  /// Language selector option for Estonian.
+  ///
+  /// In en, this message translates to:
+  /// **'Eesti'**
+  String get languageEstonian;
+
   /// Keyboard shortcuts label for the sidebar panel toggle.
   ///
   /// In en, this message translates to:
@@ -636,11 +795,17 @@ abstract class AppLocalizations {
   /// **'No open file'**
   String get noOpenFile;
 
-  /// Keyboard shortcut group for file commands.
+  /// Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents.
   ///
   /// In en, this message translates to:
-  /// **'File'**
-  String get shortcutGroupFile;
+  /// **'Delete the selected Files item, or remove the selected topic from the table of contents'**
+  String get shortcutDeleteTreeItemDescription;
+
+  /// Keyboard shortcut group for general application commands.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get shortcutGroupGeneral;
 
   /// Keyboard shortcut label for creating a document.
   ///
@@ -663,14 +828,14 @@ abstract class AppLocalizations {
   /// Keyboard shortcut description for saving content.
   ///
   /// In en, this message translates to:
-  /// **'Save the current Markdown file'**
+  /// **'Save the current document'**
   String get shortcutSaveDescription;
 
   /// Keyboard shortcut description for search.
   ///
   /// In en, this message translates to:
-  /// **'Search the current document'**
-  String get shortcutFindDescription;
+  /// **'Search the current workspace'**
+  String get shortcutSearchDescription;
 
   /// Keyboard shortcut description for opening shortcuts.
   ///
@@ -690,52 +855,52 @@ abstract class AppLocalizations {
   /// **'Open BusyMark settings'**
   String get shortcutSettingsDescription;
 
-  /// Keyboard shortcut label for moving to the next editor tab.
+  /// Keyboard shortcut label for moving to the next tab.
   ///
   /// In en, this message translates to:
   /// **'Next tab'**
   String get shortcutNextTab;
 
-  /// Keyboard shortcut description for moving to the next editor tab.
+  /// Keyboard shortcut description for moving to the next tab.
   ///
   /// In en, this message translates to:
-  /// **'Move to the next open editor tab'**
+  /// **'Move to the next open tab'**
   String get shortcutNextTabDescription;
 
-  /// Keyboard shortcut label for moving to the previous editor tab.
+  /// Keyboard shortcut label for moving to the previous tab.
   ///
   /// In en, this message translates to:
   /// **'Previous tab'**
   String get shortcutPreviousTab;
 
-  /// Keyboard shortcut description for moving to the previous editor tab.
+  /// Keyboard shortcut description for moving to the previous tab.
   ///
   /// In en, this message translates to:
-  /// **'Move to the previous open editor tab'**
+  /// **'Move to the previous open tab'**
   String get shortcutPreviousTabDescription;
 
-  /// Keyboard shortcut label for closing the active editor tab.
+  /// Keyboard shortcut label for closing the active tab.
   ///
   /// In en, this message translates to:
   /// **'Close tab'**
   String get shortcutCloseTab;
 
-  /// Keyboard shortcut description for closing the active editor tab.
+  /// Keyboard shortcut description for closing the active tab.
   ///
   /// In en, this message translates to:
-  /// **'Close the active editor tab'**
+  /// **'Close the active tab'**
   String get shortcutCloseTabDescription;
 
-  /// Keyboard shortcut label for closing all editor tabs.
+  /// Keyboard shortcut label for closing all tabs.
   ///
   /// In en, this message translates to:
   /// **'Close all tabs'**
   String get shortcutCloseAllTabs;
 
-  /// Keyboard shortcut description for closing all editor tabs.
+  /// Keyboard shortcut description for closing all tabs.
   ///
   /// In en, this message translates to:
-  /// **'Close all open editor tabs'**
+  /// **'Close all open tabs'**
   String get shortcutCloseAllTabsDescription;
 
   /// Keyboard shortcut group for text editing commands.
@@ -744,10 +909,10 @@ abstract class AppLocalizations {
   /// **'Text Editing'**
   String get shortcutGroupTextEditing;
 
-  /// Keyboard shortcut description for selecting all text.
+  /// Keyboard shortcut description for selecting source text or visual-editor blocks.
   ///
   /// In en, this message translates to:
-  /// **'Select all editor text'**
+  /// **'In Source mode, select all text; in Editor mode, press twice to select every block'**
   String get shortcutSelectAllDescription;
 
   /// Keyboard shortcut description for cut.
@@ -786,17 +951,41 @@ abstract class AppLocalizations {
   /// **'Redo the last undone edit'**
   String get shortcutRedoDescription;
 
-  /// Keyboard shortcut label for clearing selection.
+  /// Keyboard shortcut label for inserting indentation.
   ///
   /// In en, this message translates to:
-  /// **'Clear editor selection'**
-  String get clearEditorSelection;
+  /// **'Insert indentation'**
+  String get shortcutInsertIndentation;
 
-  /// Keyboard shortcut description for clearing selection.
+  /// Keyboard shortcut description for inserting indentation.
   ///
   /// In en, this message translates to:
-  /// **'Leave the current editor selection or search focus'**
-  String get shortcutClearEditorSelectionDescription;
+  /// **'Insert indentation at the cursor'**
+  String get shortcutInsertIndentationDescription;
+
+  /// Keyboard shortcut label for outdenting in Source mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Outdent source'**
+  String get shortcutOutdentSource;
+
+  /// Keyboard shortcut description for outdenting in Source mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove one indentation level in Source mode'**
+  String get shortcutOutdentSourceDescription;
+
+  /// Keyboard shortcut label for closing search or clearing a block selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Close search or clear block selection'**
+  String get shortcutEscape;
+
+  /// Keyboard shortcut description for closing search or clearing a block selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Close workspace search or clear a block selection in Editor mode'**
+  String get shortcutEscapeDescription;
 
   /// Keyboard shortcut group for inline formatting.
   ///
@@ -1101,14 +1290,38 @@ abstract class AppLocalizations {
   /// Settings label for WYSIWYG editing button position.
   ///
   /// In en, this message translates to:
-  /// **'Editing buttons'**
-  String get editingButtons;
+  /// **'Editing buttons position'**
+  String get editingButtonsPosition;
 
   /// Description for WYSIWYG editing button position setting.
   ///
   /// In en, this message translates to:
   /// **'Choose where the floating WYSIWYG editing buttons appear.'**
-  String get editingButtonsDescription;
+  String get editingButtonsPositionDescription;
+
+  /// Settings label for WYSIWYG editing button direction.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing buttons direction'**
+  String get editingButtonsDirection;
+
+  /// Description for WYSIWYG editing button direction setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether the floating WYSIWYG editing buttons are arranged horizontally or vertically.'**
+  String get editingButtonsDirectionDescription;
+
+  /// Editing button direction option.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal'**
+  String get horizontal;
+
+  /// Editing button direction option.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical'**
+  String get vertical;
 
   /// Settings section title for privacy options.
   ///
@@ -1139,6 +1352,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Forget workspaces that were allowed to load remote images.'**
   String get clearRemoteImagePermissionsDescription;
+
+  /// Settings action label for clearing trusted Git workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear trusted Git workspaces'**
+  String get clearGitWorkspaceTrust;
+
+  /// Settings action description for clearing trusted Git workspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask before enabling Git features for previously trusted workspaces.'**
+  String get clearGitWorkspaceTrustDescription;
 
   /// Settings section title for native window behavior.
   ///
@@ -1307,6 +1532,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'HTML block'**
   String get htmlBlock;
+
+  /// Default editable text inserted into a new HTML block.
+  ///
+  /// In en, this message translates to:
+  /// **'HTML content'**
+  String get htmlContentDefault;
 
   /// Keyboard shortcut description for inserting or editing an HTML block.
   ///
@@ -1524,6 +1755,24 @@ abstract class AppLocalizations {
   /// **'Alt text'**
   String get altText;
 
+  /// Default selected text inserted by a source-editor formatting command.
+  ///
+  /// In en, this message translates to:
+  /// **'text'**
+  String get editorPlaceholderText;
+
+  /// Default selected code inserted by a source-editor code command.
+  ///
+  /// In en, this message translates to:
+  /// **'code'**
+  String get editorPlaceholderCode;
+
+  /// Default selected image description inserted by a source-editor image command.
+  ///
+  /// In en, this message translates to:
+  /// **'alt text'**
+  String get editorPlaceholderAltText;
+
   /// Image alt text hint.
   ///
   /// In en, this message translates to:
@@ -1668,6 +1917,12 @@ abstract class AppLocalizations {
   /// **'TOC'**
   String get toc;
 
+  /// Tooltip for the Writerside TOC action menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC actions'**
+  String get tocActions;
+
   /// Workspace detail label for an unsaved Markdown file.
   ///
   /// In en, this message translates to:
@@ -1715,6 +1970,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New Child Topic'**
   String get newChildTopic;
+
+  /// Create new sibling Writerside topic action label.
+  ///
+  /// In en, this message translates to:
+  /// **'New Sibling Topic'**
+  String get newSiblingTopic;
+
+  /// Context-menu action that renames a Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Topic File'**
+  String get renameTopicFile;
+
+  /// Create topic dialog label for selecting TOC placement.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC placement'**
+  String get topicPlacement;
+
+  /// TOC placement option for the root level.
+  ///
+  /// In en, this message translates to:
+  /// **'At TOC root'**
+  String get tocRoot;
+
+  /// TOC placement option after the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'After selected topic'**
+  String get afterSelectedTopic;
+
+  /// TOC placement option inside the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Inside selected topic'**
+  String get insideSelectedTopic;
+
+  /// Action that moves a cut TOC entry after the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste After'**
+  String get pasteAfterTopic;
+
+  /// Action that moves a cut TOC entry inside the selected topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste as Child'**
+  String get pasteAsChildTopic;
+
+  /// Action that removes an entry from a Writerside table of contents without deleting its topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from TOC'**
+  String get removeFromToc;
+
+  /// Confirmation title before removing a Writerside TOC entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from TOC?'**
+  String get confirmRemoveFromTocTitle;
+
+  /// Confirmation message before removing a Writerside TOC entry without deleting its topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from this table of contents? The topic file will be kept.'**
+  String confirmRemoveFromTocMessage(String name);
+
+  /// Confirmation title before deleting a Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete topic file?'**
+  String get confirmDeleteTopicTitle;
+
+  /// Confirmation message before deleting a Writerside topic file and removing its TOC entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} and remove it from every table of contents? This cannot be undone.'**
+  String confirmDeleteTopicMessage(String name);
+
+  /// Writerside action that safely deletes a topic after checking usages.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe Delete Topic File…'**
+  String get safeDeleteTopicFile;
+
+  /// Writerside action and dialog title for removing a topic from one table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove TOC Element'**
+  String get removeTocElement;
+
+  /// Action that opens the Writerside topic usages review.
+  ///
+  /// In en, this message translates to:
+  /// **'Review Usages'**
+  String get reviewUsages;
+
+  /// Action that deletes a Writerside topic source file.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Topic File'**
+  String get deleteTopicFile;
+
+  /// Short action label for removing an item without deleting its source file.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeAction;
+
+  /// Summary in the dialog for removing a topic from one Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove “{topic}” from the selected help instance. The topic file will be kept.'**
+  String topicRemovalSummary(String topic);
+
+  /// Summary in the Writerside safe-delete dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{topic}” and safely update its references throughout this Writerside project.'**
+  String safeDeleteTopicSummary(String topic);
+
+  /// Disclosure that children of a removed TOC element are promoted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 child topic will move up one level.} other{{count} child topics will move up one level.}}'**
+  String childTopicsPromoted(int count);
+
+  /// Warning that blocks deletion of a Writerside start-page topic.
+  ///
+  /// In en, this message translates to:
+  /// **'This topic is used as an instance start page. Review its usages and assign another start page before continuing.'**
+  String get topicIsStartPageRemovalWarning;
+
+  /// Heading with the number of Writerside topic usages.
+  ///
+  /// In en, this message translates to:
+  /// **'Usages ({count})'**
+  String topicUsagesCount(int count);
+
+  /// Safe-delete message when no breaking references were found.
+  ///
+  /// In en, this message translates to:
+  /// **'No references that would be broken were found.'**
+  String get noBreakingTopicUsages;
+
+  /// Description above Writerside topic usage groups.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark found the following references to this topic.'**
+  String get topicUsagesFound;
+
+  /// Usage group label for Writerside TOC elements.
+  ///
+  /// In en, this message translates to:
+  /// **'TOC elements'**
+  String get topicUsageTocElements;
+
+  /// Usage group label for Writerside instance start pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Start pages'**
+  String get topicUsageStartPages;
+
+  /// Usage group label for links to a Writerside topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic links'**
+  String get topicUsageTopicLinks;
+
+  /// Usage group label for Writerside include elements.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes'**
+  String get topicUsageIncludes;
+
+  /// Number of references that use a Writerside topic.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 usage} other{{count} usages}}'**
+  String usageCount(int count);
+
+  /// Heading for Writerside topic removal options.
+  ///
+  /// In en, this message translates to:
+  /// **'Refactoring options'**
+  String get refactoringOptions;
+
+  /// Option to rewrite Writerside topic usages during removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Update usages automatically'**
+  String get updateUsagesAutomatically;
+
+  /// Description of automatic Writerside usage updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove TOC references and includes, and preserve link text.'**
+  String get updateUsagesAutomaticallyDescription;
+
+  /// Message when some Writerside usages cannot be updated automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Some usages require manual changes before this refactoring.'**
+  String get manualUsageUpdatesRequired;
+
+  /// Option to redirect an old Writerside page to another topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Set redirect to'**
+  String get setRedirectTo;
+
+  /// Description when no Writerside page redirect is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not redirect the old published page.'**
+  String get noRedirectDescription;
+
+  /// Field label for a Writerside redirect destination.
+  ///
+  /// In en, this message translates to:
+  /// **'Redirect target'**
+  String get redirectTarget;
+
+  /// Instruction shown when unresolved usages block topic removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and update the remaining usages before continuing, or enable automatic updates when available.'**
+  String get remainingUsagesBlockRemoval;
+
+  /// Writerside usages sidebar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Usages of {topic}'**
+  String usagesOfTopic(String topic);
+
+  /// Empty state in the Writerside usages review.
+  ///
+  /// In en, this message translates to:
+  /// **'No usages found'**
+  String get noUsagesFound;
+
+  /// Marker for a usage outside the selected Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'outside selected instance'**
+  String get outsideSelectedInstance;
+
+  /// Action to return from usage review and continue the topic refactoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Do Refactor'**
+  String get doRefactor;
+
+  /// Dialog title after a topic is removed from its last table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic file is no longer used'**
+  String get orphanTopicTitle;
+
+  /// Action that keeps an orphaned Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Topic File'**
+  String get keepTopicFile;
+
+  /// Prompt to delete or keep an orphaned Writerside topic file.
+  ///
+  /// In en, this message translates to:
+  /// **'“{topic}” is no longer used anywhere in this Writerside project. Delete the file, or keep it for use in another instance.'**
+  String orphanTopicMessage(String topic);
 
   /// Default topic title in the create topic dialog.
   ///
@@ -1877,6 +2402,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Regex'**
   String get sourceSearchRegex;
+
+  /// Source search status shown when the regular expression is invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid regular expression'**
+  String get sourceSearchInvalidRegex;
 
   /// Status banner shown when source highlighting and folding are disabled for a large file.
   ///
@@ -2249,6 +2780,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reference topic is not present in the selected tree: {topic}'**
   String errorReferenceTopicMissing(String topic);
+
+  /// Detail shown when a selected Writerside TOC entry no longer exists.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected TOC entry no longer exists.'**
+  String get errorWritersideTocNodeMissing;
+
+  /// Detail shown when a Writerside TOC move would create a cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'A TOC entry cannot be moved into itself or one of its children.'**
+  String get errorWritersideTocInvalidMove;
+
+  /// Detail shown when attempting to delete the start topic of a Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'The start topic {topic} cannot be deleted. Choose another start page first.'**
+  String errorWritersideStartTopicDelete(String topic);
+
+  /// Error shown when generic file deletion is attempted for a Writerside topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Safe Delete for Writerside topic files.'**
+  String get errorWritersideSafeDeleteRequired;
+
+  /// Error shown when safe-delete usage analysis cannot complete reliably.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the topic usage scan. No files were changed.'**
+  String get errorWritersideTopicUsageScanFailed;
+
+  /// Error shown when unresolved topic usages block removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Some topic usages still require attention. Review them before continuing.'**
+  String get errorWritersideTopicUsagesRemain;
+
+  /// Error shown when a safe-delete redirect target is stale or conflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected redirect target is no longer valid. Choose it again.'**
+  String get errorWritersideRedirectInvalid;
+
+  /// Error shown when safe-delete recovery leaves files requiring manual review.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic removal could not be fully rolled back. Review these paths before continuing: {paths}'**
+  String errorWritersideRollbackFailed(String paths);
 
   /// Detail for an unsafe topics root directory.
   ///
@@ -2693,6 +3272,24 @@ abstract class AppLocalizations {
   /// **'Git diff'**
   String get gitDiff;
 
+  /// Menu action that opens the diff for a file in Git history.
+  ///
+  /// In en, this message translates to:
+  /// **'Show diff'**
+  String get gitShowDiff;
+
+  /// Readable old-to-new line range shown for a Git diff hunk.
+  ///
+  /// In en, this message translates to:
+  /// **'old {oldRange} → new {newRange}'**
+  String gitDiffHunkRange(String oldRange, String newRange);
+
+  /// Line range text for an empty side of a Git diff hunk.
+  ///
+  /// In en, this message translates to:
+  /// **'no lines'**
+  String get gitDiffNoLines;
+
   /// Git empty state title when Git cannot be used.
   ///
   /// In en, this message translates to:
@@ -2704,6 +3301,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}'**
   String gitUnavailableMessage(String reason);
+
+  /// Git empty state title shown before repository-controlled commands may run.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust this workspace for Git?'**
+  String get gitTrustRequiredTitle;
+
+  /// Security warning shown before Git repository access is enabled for a workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Git repositories can run programs through hooks, filters, and other configuration. Trust this workspace before BusyMark reads repository data or enables Git actions.'**
+  String get gitTrustRequiredMessage;
+
+  /// Action label for trusting a workspace before enabling Git.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust workspace'**
+  String get gitTrustWorkspace;
 
   /// Git empty state title for non-repository workspaces.
   ///
@@ -2782,6 +3397,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Branches'**
   String get gitBranches;
+
+  /// Tooltip for the Git branch action menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch actions'**
+  String get gitBranchActions;
 
   /// Git pull action label.
   ///
@@ -3345,6 +3966,7 @@ class _AppLocalizationsDelegate
     'de',
     'en',
     'es',
+    'et',
     'fa',
     'fr',
     'hi',
@@ -3371,6 +3993,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'et':
+      return AppLocalizationsEt();
     case 'fa':
       return AppLocalizationsFa();
     case 'fr':

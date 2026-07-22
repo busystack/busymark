@@ -1,4 +1,5 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
@@ -10,6 +11,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('source editor remains LTR inside an Arabic interface', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ar'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: '# مقدمة\npath: docs/مقدمة-v2.md\n',
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      Directionality.of(tester.element(find.byType(Scaffold))),
+      TextDirection.rtl,
+    );
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).textDirection,
+      TextDirection.ltr,
+    );
+    expect(
+      tester
+          .widgetList<Row>(find.byType(Row))
+          .any((row) => row.textDirection == TextDirection.ltr),
+      isTrue,
+    );
+  });
+
   testWidgets('source editor shows large-file fallback status', (tester) async {
     final source = 'a' * 300001;
 
@@ -100,5 +152,40 @@ void main() {
     );
 
     expect(find.byTooltip('Duplicate heading ID "intro".'), findsOneWidget);
+  });
+
+  testWidgets('source search localizes an invalid regular expression', (
+    tester,
+  ) async {
+    final de = AppLocalizationsDe();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('de'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: 'Text',
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: true,
+              searchOptions: const SourceSearchOptions(query: '[', regex: true),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(de.sourceSearchInvalidRegex), findsOneWidget);
   });
 }

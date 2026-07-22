@@ -98,8 +98,9 @@ void main() {
     expect(router, isNot(contains('CustomTransitionPage')));
   });
 
-  test('Flutter UI uses Yaru glyphs instead of Material icon constants', () {
+  test('Flutter UI resolves icons through the BusyMark glyph catalog', () {
     final materialIconUse = RegExp(r'(^|[^A-Za-z])Icons\.', multiLine: true);
+    final glyphCatalog = File('lib/src/app/busymark_glyphs.dart');
     final files = <File>[
       for (final path in ['lib', 'test'])
         ...Directory(path)
@@ -109,6 +110,9 @@ void main() {
     ];
 
     for (final file in files) {
+      if (file.path == glyphCatalog.path) {
+        continue;
+      }
       expect(
         materialIconUse.hasMatch(file.readAsStringSync()),
         isFalse,
@@ -116,9 +120,18 @@ void main() {
       );
     }
 
-    final glyphs = File('lib/src/app/busymark_glyphs.dart').readAsStringSync();
+    final glyphs = glyphCatalog.readAsStringSync();
     expect(glyphs, contains("import 'package:yaru/yaru.dart';"));
     expect(glyphs, contains('YaruIcons.'));
+    expect(
+      RegExp(
+        r'\bIcons\.[A-Za-z0-9_]+',
+      ).allMatches(glyphs).map((match) => match.group(0)),
+      orderedEquals(<String>[
+        'Icons'
+            '.fork_right',
+      ]),
+    );
   });
 
   test('preview output actions are not present', () {
@@ -401,6 +414,104 @@ void main() {
     expect(imageSpan, contains('fontStyle: FontStyle.normal'));
   });
 
+  test('document views share direction resolution and keep code LTR', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final direction = File(
+      'lib/src/editor/document_text_direction.dart',
+    ).readAsStringSync();
+    final preview = File(
+      'lib/src/markdown/preview_model.dart',
+    ).readAsStringSync();
+
+    expect(workspace, contains('_previewBlockTextDirection'));
+    expect(workspace, contains("explicitDirection: block.attributes['dir']"));
+    expect(workspace, contains('busyMarkDocumentTextDirection('));
+    expect(direction, contains('Bidi.startsWithRtl(text)'));
+    expect(direction, contains('if (technical)'));
+    expect(direction, contains('return TextDirection.ltr'));
+    expect(preview, contains('attributes: block.attributes'));
+  });
+
+  test('Editor and Preview reuse the shared document callout surface', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    final blocks = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final callout = File(
+      'lib/src/editor/document_callout.dart',
+    ).readAsStringSync();
+
+    expect(callout, contains('class BusyMarkDocumentCallout'));
+    expect(workspace, contains('BusyMarkDocumentCallout('));
+    expect(editor, contains('BusyMarkDocumentCallout('));
+    expect(blocks, contains('BusyMarkDocumentCallout('));
+    expect(workspace, isNot(contains('class _PreviewCallout')));
+    expect(blocks, isNot(contains('BusyMarkWysiwygBlockquoteFrame')));
+  });
+
+  test('document views reuse one code-block surface and typography', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final blocks = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    final codeBlock = File(
+      'lib/src/editor/document_code_block.dart',
+    ).readAsStringSync();
+    final surface = File(
+      'lib/src/editor/document_surface.dart',
+    ).readAsStringSync();
+
+    expect(surface, contains('class BusyMarkDocumentSurface'));
+    expect(codeBlock, contains('class BusyMarkDocumentCodeBlock'));
+    expect(codeBlock, contains('busyMarkDocumentCodeTextStyle'));
+    expect(
+      workspace,
+      contains('PreviewBlockKind.code => BusyMarkDocumentCodeBlock('),
+    );
+    expect(workspace, contains('busyMarkDocumentCodeTextStyle(context)'));
+    expect(blocks, contains('child: BusyMarkDocumentCodeBlock('));
+    expect(blocks, contains('BusyMarkDocumentCodeBlockVariant.embedded'));
+    expect(blocks, contains('busyMarkDocumentCodeTextStyle(context)'));
+    expect(blocks, contains('busyMarkWysiwygTextLayoutInsets'));
+    expect(editor, contains('busyMarkWysiwygTextLayoutInsets(block)'));
+    expect(workspace, isNot(contains('PreviewBlockKind.code => Container(')));
+    expect(
+      workspace,
+      contains('PreviewBlockKind.raw => BusyMarkDocumentCodeBlock('),
+    );
+  });
+
+  test('workspace isolates technical labels only at rendering boundaries', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final compact = workspace.replaceAll(RegExp(r'\s+'), ' ');
+
+    expect(workspace, contains('String _tocNodeDisplayLabel('));
+    expect(
+      workspace,
+      contains(
+        'await _copyToClipboard(topic == null ? rawLabel : topic.baseName)',
+      ),
+    );
+    expect(
+      compact,
+      isNot(matches(RegExp(r'l10n\.\w+\([^)]*busyMark(?:Ltr|Bidi)Isolate'))),
+    );
+  });
+
   test('workspace sidebar tabs match the opened workspace kind', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -514,13 +625,20 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: _sidebarTabIcon(selectedTab!)'));
+    expect(workspace, contains('icon: _sidebarTabIcon('));
     expect(workspace, contains('transparent: true'));
     expect(
       workspace,
       contains('borderRadius: BusyMarkRadius.nativeHeaderButton'),
     );
-    expect(workspace, contains('icon: _sidebarTabIcon(tab)'));
+    expect(
+      workspace,
+      matches(
+        RegExp(
+          r'icon: _sidebarTabIcon\(\s*tab,\s*Directionality\.of\(context\),?\s*\)',
+        ),
+      ),
+    );
     expect(workspace, contains('shortcut: _sidebarTabShortcut(tab)'));
     expect(workspace, contains('BusyMarkSidebarShortcutActivators.history'));
     expect(workspace, contains('LogicalKeyboardKey.numpad5'));
@@ -570,10 +688,9 @@ void main() {
     );
     expect(design, contains('BorderRadius.circular(borderRadius)'));
     expect(design, contains('final String? shortcut;'));
-    expect(
-      design,
-      contains("Tooltip(message: '\${widget.label} (\$shortcut)'"),
-    );
+    expect(design, contains('final shortcutText = shortcut == null'));
+    expect(design, contains('textDirection: TextDirection.ltr'));
+    expect(design, isNot(contains("message: '\${widget.label}")));
     expect(design, contains('this.enabled = true'));
     expect(design, contains('enabled: widget.enabled'));
     expect(design, contains('colors.disabledForeground'));
@@ -583,7 +700,7 @@ void main() {
     );
   });
 
-  test('Git branch menu lives in workspace header outside Commit panel', () {
+  test('Git branch actions use the shared workspace-header popup', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
@@ -592,11 +709,13 @@ void main() {
     ).readAsStringSync();
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
-    expect(workspace, contains('Future<void> _showWorkspaceBranchMenu'));
     expect(
       workspace,
-      contains('Future<_BranchMenuAction?> _showSidebarBranchMenu'),
+      contains('BusyMarkHeaderPopupMenuButton<_BranchMenuAction>'),
     );
+    expect(workspace, contains('_loadWorkspaceBranchMenuItems'));
+    expect(workspace, contains('_sidebarBranchMenuItems'));
+    expect(workspace, contains('_performWorkspaceBranchAction'));
     expect(workspace, contains('controller.loadBranches()'));
     expect(workspace, contains('label: context.l10n.gitNewBranch'));
     expect(workspace, contains('label: context.l10n.gitPull'));
@@ -605,14 +724,66 @@ void main() {
     expect(workspace, contains('value: const _PushBranchMenuAction()'));
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
     expect(workspace, contains('enabled: repository.hasRemote'));
-    expect(workspace, contains('tooltip: context.l10n.gitBranches'));
+    expect(workspace, contains('tooltip: context.l10n.gitBranchActions'));
+    expect(workspace, contains("ValueKey('workspace-sidebar-branch-menu')"));
+    expect(workspace, isNot(contains('_showWorkspaceBranchMenu')));
+    expect(workspace, isNot(contains('_showSidebarBranchMenu')));
+    expect(workspace, isNot(contains('_sidebarMenuLeft')));
+    expect(workspace, isNot(contains('_BoldDownArrowIcon')));
+    expect(workspace, contains("ValueKey('workspace-sidebar-primary-row')"));
+    expect(workspace, contains('class _SidebarHeaderRow'));
+    expect(workspace, contains('minHeight: BusyMarkSizes.iconButton'));
+    expect(
+      RegExp(
+        r"ValueKey\('workspace-sidebar-first-content'\)",
+      ).allMatches(workspace).length,
+      greaterThanOrEqualTo(4),
+    );
+    expect(workspace, contains('text: _workspaceDisplayName(context'));
+    expect(workspace, contains("ValueKey('workspace-sidebar-outline-tree')"));
+    expect(
+      workspace,
+      isNot(contains("ValueKey('workspace-sidebar-outline-heading')")),
+    );
+    expect(workspace, isNot(contains('_outlineHeaderHeading')));
+    expect(workspace, isNot(contains('_outlineTreeHeadings')));
+    expect(
+      workspace,
+      contains('widget.searchState.active ? null : selectedTab'),
+    );
+    expect(workspace, contains('selectedTab == _SidebarTab.git'));
+    expect(workspace, contains('selectedTab == _SidebarTab.gitHistory'));
     expect(workspace, contains('Future<void> _showWorkspacePathMenu'));
     expect(
       workspace,
       contains('Future<_PathMenuAction?> _showSidebarPathMenu'),
     );
-    expect(workspace, contains('tooltip: context.l10n.openInFiles'));
+    expect(workspace, contains('showBusyMarkContextMenu<_PathMenuAction>'));
+    expect(
+      workspace,
+      contains('BusyMarkHeaderPopupMenuButton<_PathMenuAction>'),
+    );
+    expect(workspace, contains('_sidebarPathMenuItems'));
+    expect(workspace, contains('_performWorkspacePathAction'));
+    expect(workspace, contains("ValueKey('workspace-sidebar-path-menu')"));
+    expect(workspace, contains('tooltip: context.l10n.pathActions'));
+    expect(workspace, contains('icon: BusyMarkGlyphs.menuVertical'));
+    expect(workspace, isNot(contains('SystemMouseCursors.contextMenu')));
+    expect(workspace, contains('onSecondaryTapDown: (lineContext, details)'));
+    expect(workspace, contains('position: details.globalPosition'));
+    expect(
+      workspace,
+      contains('tooltip: busyMarkLtrIsolateFor(context, path)'),
+    );
+    expect(
+      workspace,
+      contains('selectedTab == _SidebarTab.files && path.isNotEmpty'),
+    );
+    expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
+    expect(workspace, isNot(contains('boldLeadingIcon')));
+    expect(workspace, isNot(contains('_BoldBranchIcon')));
+    expect(workspace, isNot(contains('_BoldBranchIconPainter')));
     expect(workspace, contains('inlineTrailing: _branchSyncIndicators'));
     expect(workspace, contains('repository.behindCount > 0'));
     expect(workspace, contains('context.l10n.gitBehindCount'));
@@ -633,7 +804,10 @@ void main() {
     expect(gitSidebar, isNot(contains('color: colors.secondarySidebar')));
     expect(
       File('lib/src/app/busymark_glyphs.dart').readAsStringSync(),
-      contains('branch = YaruIcons.network_wired'),
+      contains(
+        'branch = Icons'
+        '.fork_right',
+      ),
     );
     expect(gitSidebar, isNot(contains('OutlinedButton(')));
     expect(gitSidebar, isNot(contains('SegmentedButton<GitView>')));
@@ -680,17 +854,46 @@ void main() {
   });
 
   test('settings language selector uses native hover and popover styling', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
     ).readAsStringSync();
 
     expect(settings, isNot(contains('DropdownButton<String>')));
-    expect(settings, contains('class _LanguageSelectorButton'));
-    expect(settings, contains('MouseRegion('));
-    expect(settings, contains('colors.controlHover'));
-    expect(settings, contains('elevation: BusyMarkElevation.window'));
-    expect(settings, contains('BusyMarkAlpha.languageMenuShadow'));
-    expect(settings, contains('softWrap: false'));
+    expect(settings, contains('BusyMarkPopupSelector<String>('));
+    expect(settings, isNot(contains('class _LanguageSelectorButton')));
+    expect(design, contains('class BusyMarkPopupSelector<T>'));
+    expect(design, contains('MouseRegion('));
+    expect(design, contains('colors.controlHover'));
+    expect(design, contains('elevation: BusyMarkElevation.window'));
+    expect(design, contains('BusyMarkAlpha.languageMenuShadow'));
+    expect(design, contains('softWrap: false'));
+  });
+
+  test('report issue form uses shared BusyMark desktop controls', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final settings = File(
+      'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+    final feedback = File(
+      'lib/src/feedback/presentation/feedback_dialog.dart',
+    ).readAsStringSync();
+
+    expect(design, contains('class BusyMarkPopupSelector<T>'));
+    expect(design, contains('class BusyMarkStatusBox'));
+    expect(settings, contains('BusyMarkPopupSelector<String>('));
+    expect(feedback, contains('BusyMarkPopupSelector<FeedbackCategory>('));
+    expect(
+      RegExp(r'BusyMarkFloatingTextEntry\(').allMatches(feedback).length,
+      3,
+    );
+    expect(feedback, contains('BusyMarkGroupedList('));
+    expect(feedback, contains('BusyMarkSwitchRow('));
+    expect(feedback, contains('BusyMarkStatusBox('));
+    expect(feedback, isNot(contains('DropdownButtonFormField')));
+    expect(feedback, isNot(contains('TextField(')));
+    expect(feedback, isNot(contains('InputDecoration(')));
+    expect(feedback, isNot(contains('InkWell(')));
   });
 
   test('Writerside project dialog uses floating Adwaita-style entries', () {
@@ -711,12 +914,19 @@ void main() {
     expect(design, contains('EditableText('));
     expect(design, contains('BusyMarkGlyphs.edit'));
     expect(design, contains('end: BusyMarkSizes.iconButton'));
-    expect(design, contains('opacity: focused ? 0 : 1'));
-    expect(design, contains('final labelColor = colors.mutedForeground;'));
+    expect(design, contains('opacity: focused || !widget.enabled ? 0 : 1'));
+    expect(design, contains('final labelColor = widget.enabled'));
+    expect(design, contains(': colors.disabledForeground;'));
     expect(design, isNot(contains('final labelColor = focused')));
     expect(design, contains('hint: widget.errorText'));
-    expect(design, isNot(contains('widget.errorText!')));
-    expect(design, isNot(contains('if (hasError) ...[')));
+    expect(design, contains('if (hasError)'));
+    expect(design, contains('widget.errorText!'));
+    expect(design, contains('final bool enabled;'));
+    expect(design, contains('final TextInputType? keyboardType;'));
+    expect(design, contains('final int minLines;'));
+    expect(design, contains('final int maxLines;'));
+    expect(design, contains('BusyMarkSizes.floatingTextAreaHeight'));
+    expect(design, contains('readOnly: !widget.enabled'));
     expect(design, isNot(contains('class BusyMarkDialogTextEntry')));
     expect(design, isNot(contains('InputDecoration(')));
     expect(welcome, contains('BusyMarkFloatingTextEntryGroup('));
@@ -765,7 +975,10 @@ void main() {
     expect(workspace, contains('_visibleOutlineTreeEntries'));
     expect(workspace, contains('onToggle: hasChildren ? toggle : null'));
     expect(workspace, contains('AnimatedRotation'));
-    expect(workspace, contains('YaruIcons.pan_end'));
+    expect(
+      workspace,
+      contains('BusyMarkGlyphs.collapsedTreeArrowFor(direction)'),
+    );
     expect(workspace, contains('YaruIcons.folder_open'));
     expect(workspace, contains('YaruIcons.folder'));
     expect(workspace, contains('busyMarkRowHoverColor(context)'));
@@ -781,6 +994,34 @@ void main() {
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
     expect(workspace, contains('onSecondaryTapDown'));
+    expect(
+      RegExp(
+        r'BusyMarkTreeShortcutActivators\.deleteSelection',
+      ).allMatches(workspace).length,
+      greaterThanOrEqualTo(2),
+    );
+    expect(
+      RegExp(
+        r'shortcut: BusyMarkTreeShortcutLabels\.deleteSelection',
+      ).allMatches(workspace).length,
+      greaterThanOrEqualTo(2),
+    );
+    expect(
+      RegExp(
+        r'SingleActivator\s*\(\s*LogicalKeyboardKey\.delete',
+      ).hasMatch(workspace),
+      isFalse,
+    );
+    expect(
+      RegExp(r'''shortcut:\s*['"]Delete['"]''').hasMatch(workspace),
+      isFalse,
+    );
+    expect(workspace, contains('class _WritersideTopicRemovalDialog'));
+    expect(workspace, contains('class _WritersideTopicUsagesSidebar'));
+    expect(workspace, contains('analyzeWritersideTopicRemoval('));
+    expect(workspace, contains('applyWritersideTopicRemoval('));
+    expect(workspace, contains('context.l10n.safeDeleteTopicFile'));
+    expect(workspace, contains('context.l10n.removeTocElement'));
     expect(workspace, contains('label: context.l10n.newFile'));
     expect(workspace, contains('label: context.l10n.rename'));
     expect(workspace, contains('label: context.l10n.cut'));
@@ -802,6 +1043,22 @@ void main() {
     expect(workspace, contains('label: context.l10n.fileHistory'));
     expect(workspace, contains('loadFileHistory('));
     expect(workspace, contains('file.absolutePath'));
+    final tocHeader = RegExp(
+      r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',
+    ).firstMatch(workspace)!.group(0)!;
+    expect(
+      tocHeader,
+      contains('BusyMarkHeaderPopupMenuButton<_TocHeaderAction>'),
+    );
+    expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
+    expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
+    expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
+    expect(tocHeader, contains('label: context.l10n.newTopic'));
+    expect(tocHeader, isNot(contains('BusyMarkHeaderIconButton')));
+    expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
+    expect(tocHeader, isNot(contains('onCreateChildTopic')));
+    expect(workspace, contains('_TocTreeAction.newChildTopic'));
+    expect(workspace, contains('label: context.l10n.newChildTopic'));
     expect(
       workspace,
       isNot(contains('_selectTab(_SidebarTab.gitHistory, tabs)')),
@@ -962,7 +1219,8 @@ void main() {
       workspace,
       contains('target: _diffChangeTarget(diff, _currentChangeIndex)'),
     );
-    expect(workspace, contains('gitDiffHunkRangeText(target!.hunk)'));
+    expect(workspace, contains('format: context.l10n.gitDiffHunkRange'));
+    expect(workspace, contains('noLinesText: context.l10n.gitDiffNoLines'));
     expect(workspace, contains('showFileActions: !splitVisible'));
     expect(workspace, contains('showHunkHeaders: !splitVisible'));
     expect(settingsScreen, isNot(contains('Show preview pane')));
@@ -972,6 +1230,9 @@ void main() {
   test('WYSIWYG toolbar exposes fuller Markdown controls', () {
     final toolbar = File(
       'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
     ).readAsStringSync();
     final commands = File(
       'lib/src/editor/wysiwyg/wysiwyg_commands.dart',
@@ -1033,6 +1294,23 @@ void main() {
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
+    expect(toolbar, contains('elevated: true'));
+    expect(toolbar, contains('clipBehavior: Clip.none'));
+    expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
+    expect(toolbar, contains('horizontal: BusyMarkSpacing.sm'));
+    expect(toolbar, contains('vertical: BusyMarkSpacing.xs'));
+    expect(toolbar, contains('horizontal: BusyMarkSpacing.xs'));
+    expect(toolbar, contains('vertical: BusyMarkSpacing.sm'));
+    expect(toolbar, isNot(contains('boxShadow:')));
+    expect(toolbar, isNot(contains('BusyMarkShadow.')));
+    final floatingToolbar = RegExp(
+      r'class _FloatingWysiwygToolbar[\s\S]*?class _EditorToolbarMenuAction',
+    ).firstMatch(editor)!.group(0)!;
+    expect(floatingToolbar, contains('elevated: true'));
+    expect(floatingToolbar, contains('accented: true'));
+    expect(floatingToolbar, isNot(contains('_editorToolbarButtonBackground')));
+    expect(floatingToolbar, isNot(contains('boxShadow:')));
+    expect(floatingToolbar, isNot(contains('BusyMarkShadow.')));
     final blockWidgets = File(
       'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
     ).readAsStringSync();
@@ -1083,6 +1361,10 @@ void main() {
       r'class _ImageBlockEditor.*?String _imageSource',
       dotAll: true,
     ).firstMatch(blockWidgets)!.group(0)!;
+    final imageDialog = RegExp(
+      r'class _ImageDialog extends.*?class _TableDialogResult',
+      dotAll: true,
+    ).firstMatch(editor)!.group(0)!;
 
     expect(imageView, isNot(contains('color: colors.panel')));
     expect(
@@ -1101,6 +1383,17 @@ void main() {
     expect(editor, contains('_handleImageBlockEditRequested'));
     expect(editor, contains('initialSource: _imageSourceForBlock(block)'));
     expect(editor, contains('submitLabel: context.l10n.apply'));
+    expect(imageDialog, contains('BusyMarkDialogShell('));
+    expect(imageDialog, contains('BusyMarkFloatingTextEntry('));
+    expect(imageDialog, contains('BusyMarkDialogButton('));
+    expect(imageDialog, contains("hintText: 'images/example.png'"));
+    expect(imageDialog, contains('hintText: context.l10n.describeTheImage'));
+    expect(imageDialog, isNot(contains('AlertDialog(')));
+    expect(imageDialog, isNot(contains('TextField(')));
+    expect(imageDialog, isNot(contains('InputDecoration(')));
+    expect(imageDialog, isNot(contains('OutlinedButton(')));
+    expect(imageDialog, isNot(contains('TextButton(')));
+    expect(imageDialog, isNot(contains('FilledButton(')));
   });
 
   test('source view has compact gutter without pane status chrome', () {
@@ -1129,11 +1422,12 @@ void main() {
     expect(sourceGutter, contains('BusyMarkSizes.sourceFoldButtonRightInset'));
     expect(sourceEditor, contains('Positioned.fill('));
     expect(sourceGutter, contains('alignment: Alignment.center'));
-    expect(workspace, contains('padding: BusyMarkInsets.previewPane'));
+    expect(workspace, contains('BusyMarkDocumentLayoutSpec.splitPreview'));
+    expect(workspace, contains('BusyMarkDocumentContentFrame('));
     expect(workspace, contains('first: index == 0'));
     expect(
       workspace,
-      contains('top: first ? 0 : BusyMarkSizes.previewHeadingTop'),
+      contains('BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)'),
     );
     expect(workspace, isNot(contains('class _PaneHeader')));
     expect(workspace, isNot(contains('class _StatusPill')));

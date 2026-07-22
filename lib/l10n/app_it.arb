@@ -1,5 +1,30 @@
 {
   "@@locale": "it",
+  "reportIssue": "Segnala un problema",
+  "feedbackCategory": "Categoria",
+  "feedbackChooseCategory": "Scegli una categoria",
+  "feedbackCategoryProblem": "Problema o errore",
+  "feedbackCategoryFeature": "Richiesta di funzionalità",
+  "feedbackCategoryPrivacySecurity": "Problema di privacy o sicurezza",
+  "feedbackCategoryUsability": "Problema di usabilità",
+  "feedbackCategoryOther": "Altro",
+  "feedbackSubject": "Oggetto",
+  "feedbackMessage": "Messaggio dettagliato",
+  "feedbackReplyEmail": "E-mail per la risposta (facoltativa)",
+  "feedbackIncludeTechnicalDetails": "Includi dettagli tecnici",
+  "feedbackTechnicalDetailsDisclosure": "Quando questa opzione è attiva, vengono aggiunti solo la versione del sistema operativo Linux e le impostazioni locali dell’applicazione BusyMark. Non vengono allegati registri, file, dati dell’account o altri dati diagnostici.",
+  "feedbackSubmit": "Invia",
+  "feedbackSubmitting": "Invio in corso…",
+  "feedbackCategoryRequired": "Scegli una categoria.",
+  "feedbackSubjectLength": "L’oggetto deve contenere tra 3 e 120 caratteri.",
+  "feedbackMessageLength": "Il messaggio deve contenere tra 10 e 5.000 caratteri.",
+  "feedbackReplyEmailInvalid": "Inserisci un indirizzo e-mail valido o lascia vuoto questo campo.",
+  "feedbackConnectionFailure": "BusyMark non è riuscito a connettersi. Controlla la connessione Internet e riprova.",
+  "feedbackTimeoutFailure": "La richiesta è scaduta. Riprova.",
+  "feedbackRateLimitedFailure": "Sono state inviate troppe segnalazioni da questa connessione. Attendi e riprova.",
+  "feedbackRejectedFailure": "Il server ha rifiutato la segnalazione. Controlla i campi del modulo e riprova.",
+  "feedbackServerFailure": "Il server non ha potuto accettare la segnalazione. Riprova più tardi.",
+  "feedbackSuccess": "Feedback inviato. ID di riferimento: {id}",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -28,9 +53,9 @@
   "@aboutWebsite": {
     "description": "Label for the website row in the About dialog."
   },
-  "aboutReportIssue": "Segnala un problema",
-  "@aboutReportIssue": {
-    "description": "Label for the issue tracker row in the About dialog."
+  "aboutSourceCode": "Codice sorgente",
+  "@aboutSourceCode": {
+    "description": "Label for the source-code repository row in the About dialog."
   },
   "advanced": "Avanzate",
   "@advanced": {
@@ -112,10 +137,6 @@
   "@fileHistory": {
     "description": "Menu action and sidebar title for showing Git history for a single file."
   },
-  "find": "Trova",
-  "@find": {
-    "description": "Find command label."
-  },
   "folder": "Cartella",
   "@folder": {
     "description": "Folder kind label."
@@ -147,6 +168,10 @@
   "openInFiles": "Apri in File",
   "@openInFiles": {
     "description": "Menu action that opens the selected file or folder location in the system file manager."
+  },
+  "pathActions": "Azioni sul percorso",
+  "@pathActions": {
+    "description": "Tooltip for the workspace path action menu button."
   },
   "outline": "Struttura",
   "@outline": {
@@ -268,6 +293,10 @@
   "@languageHindi": {
     "description": "Language selector option for Hindi."
   },
+  "languageEstonian": "Eesti",
+  "@languageEstonian": {
+    "description": "Language selector option for Estonian."
+  },
   "toggleSidebar": "Pannello laterale",
   "@toggleSidebar": {
     "description": "Native header bar sidebar toggle tooltip."
@@ -336,9 +365,11 @@
   "@noOpenFile": {
     "description": "Header title when a folder or Writerside workspace has no open editor tab."
   },
-  "shortcutGroupFile": "File",
-  "@shortcutGroupFile": {
-    "description": "Keyboard shortcut group for file commands."
+  "shortcutDeleteTreeItemDescription": "Elimina l'elemento selezionato in File oppure rimuovi l'argomento selezionato dal sommario",
+  "@shortcutDeleteTreeItemDescription": {"description": "Keyboard shortcut description for deleting the selected Files item or removing the selected topic from the table of contents."},
+  "shortcutGroupGeneral": "Generale",
+  "@shortcutGroupGeneral": {
+    "description": "Keyboard shortcut group for general application commands."
   },
   "shortcutNewDocument": "Nuovo documento",
   "@shortcutNewDocument": {
@@ -352,12 +383,12 @@
   "@shortcutOpenDescription": {
     "description": "Keyboard shortcut description for opening content."
   },
-  "shortcutSaveDescription": "Salva il file Markdown corrente",
+  "shortcutSaveDescription": "Salva il documento corrente",
   "@shortcutSaveDescription": {
     "description": "Keyboard shortcut description for saving content."
   },
-  "shortcutFindDescription": "Cerca nel documento corrente",
-  "@shortcutFindDescription": {
+  "shortcutSearchDescription": "Cerca nell'area di lavoro corrente",
+  "@shortcutSearchDescription": {
     "description": "Keyboard shortcut description for search."
   },
   "shortcutKeyboardShortcutsDescription": "Mostra il riferimento alle scorciatoie da tastiera",
@@ -374,43 +405,43 @@
   },
   "shortcutNextTab": "Scheda successiva",
   "@shortcutNextTab": {
-    "description": "Keyboard shortcut label for moving to the next editor tab."
+    "description": "Keyboard shortcut label for moving to the next tab."
   },
-  "shortcutNextTabDescription": "Passa alla scheda successiva dell'editor",
+  "shortcutNextTabDescription": "Passa alla scheda aperta successiva",
   "@shortcutNextTabDescription": {
-    "description": "Keyboard shortcut description for moving to the next editor tab."
+    "description": "Keyboard shortcut description for moving to the next tab."
   },
   "shortcutPreviousTab": "Scheda precedente",
   "@shortcutPreviousTab": {
-    "description": "Keyboard shortcut label for moving to the previous editor tab."
+    "description": "Keyboard shortcut label for moving to the previous tab."
   },
-  "shortcutPreviousTabDescription": "Passa alla scheda precedente dell'editor",
+  "shortcutPreviousTabDescription": "Passa alla scheda aperta precedente",
   "@shortcutPreviousTabDescription": {
-    "description": "Keyboard shortcut description for moving to the previous editor tab."
+    "description": "Keyboard shortcut description for moving to the previous tab."
   },
   "shortcutCloseTab": "Chiudi scheda",
   "@shortcutCloseTab": {
-    "description": "Keyboard shortcut label for closing the active editor tab."
+    "description": "Keyboard shortcut label for closing the active tab."
   },
-  "shortcutCloseTabDescription": "Chiudi la scheda attiva dell'editor",
+  "shortcutCloseTabDescription": "Chiudi la scheda attiva",
   "@shortcutCloseTabDescription": {
-    "description": "Keyboard shortcut description for closing the active editor tab."
+    "description": "Keyboard shortcut description for closing the active tab."
   },
   "shortcutCloseAllTabs": "Chiudi tutte le schede",
   "@shortcutCloseAllTabs": {
-    "description": "Keyboard shortcut label for closing all editor tabs."
+    "description": "Keyboard shortcut label for closing all tabs."
   },
-  "shortcutCloseAllTabsDescription": "Chiudi tutte le schede aperte dell'editor",
+  "shortcutCloseAllTabsDescription": "Chiudi tutte le schede aperte",
   "@shortcutCloseAllTabsDescription": {
-    "description": "Keyboard shortcut description for closing all editor tabs."
+    "description": "Keyboard shortcut description for closing all tabs."
   },
   "shortcutGroupTextEditing": "Modifica del testo",
   "@shortcutGroupTextEditing": {
     "description": "Keyboard shortcut group for text editing commands."
   },
-  "shortcutSelectAllDescription": "Seleziona tutto il testo dell'editor",
+  "shortcutSelectAllDescription": "In modalità Sorgente, seleziona tutto il testo; in modalità Editor, premi due volte per selezionare tutti i blocchi",
   "@shortcutSelectAllDescription": {
-    "description": "Keyboard shortcut description for selecting all text."
+    "description": "Keyboard shortcut description for selecting source text or visual-editor blocks."
   },
   "shortcutCutDescription": "Taglia il testo selezionato",
   "@shortcutCutDescription": {
@@ -436,13 +467,21 @@
   "@shortcutRedoDescription": {
     "description": "Keyboard shortcut description for redo."
   },
-  "clearEditorSelection": "Annulla la selezione nell'editor",
-  "@clearEditorSelection": {
-    "description": "Keyboard shortcut label for clearing selection."
+  "shortcutInsertIndentation": "Inserisci rientro",
+  "@shortcutInsertIndentation": {"description": "Keyboard shortcut label for inserting indentation."},
+  "shortcutInsertIndentationDescription": "Inserisci un rientro in corrispondenza del cursore",
+  "@shortcutInsertIndentationDescription": {"description": "Keyboard shortcut description for inserting indentation."},
+  "shortcutOutdentSource": "Riduci rientro del sorgente",
+  "@shortcutOutdentSource": {"description": "Keyboard shortcut label for outdenting in Source mode."},
+  "shortcutOutdentSourceDescription": "Rimuovi un livello di rientro in modalità Sorgente",
+  "@shortcutOutdentSourceDescription": {"description": "Keyboard shortcut description for outdenting in Source mode."},
+  "shortcutEscape": "Chiudi la ricerca o annulla la selezione dei blocchi",
+  "@shortcutEscape": {
+    "description": "Keyboard shortcut label for closing search or clearing a block selection."
   },
-  "shortcutClearEditorSelectionDescription": "Esci dalla selezione corrente nell'editor o dal focus della ricerca",
-  "@shortcutClearEditorSelectionDescription": {
-    "description": "Keyboard shortcut description for clearing selection."
+  "shortcutEscapeDescription": "Chiudi la ricerca nell'area di lavoro o annulla una selezione di blocchi in modalità Editor",
+  "@shortcutEscapeDescription": {
+    "description": "Keyboard shortcut description for closing search or clearing a block selection."
   },
   "shortcutGroupFormatting": "Formattazione",
   "@shortcutGroupFormatting": {
@@ -644,24 +683,44 @@
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
-  "editingButtons": "Pulsanti di modifica",
-  "@editingButtons": {
+  "editingButtonsPosition": "Posizione dei pulsanti di modifica",
+  "@editingButtonsPosition": {
     "description": "Settings label for WYSIWYG editing button position."
   },
-  "editingButtonsDescription": "Scegli dove visualizzare i pulsanti mobili di modifica WYSIWYG.",
-  "@editingButtonsDescription": {
+  "editingButtonsPositionDescription": "Scegli dove visualizzare i pulsanti mobili di modifica WYSIWYG.",
+  "@editingButtonsPositionDescription": {
     "description": "Description for WYSIWYG editing button position setting."
+  },
+  "editingButtonsDirection": "Orientamento dei pulsanti di modifica",
+  "@editingButtonsDirection": {
+    "description": "Settings label for WYSIWYG editing button direction."
+  },
+  "editingButtonsDirectionDescription": "Scegli se disporre i pulsanti mobili di modifica WYSIWYG in orizzontale o in verticale.",
+  "@editingButtonsDirectionDescription": {
+    "description": "Description for WYSIWYG editing button direction setting."
+  },
+  "horizontal": "Orizzontale",
+  "@horizontal": {
+    "description": "Editing button direction option."
+  },
+  "vertical": "Verticale",
+  "@vertical": {
+    "description": "Editing button direction option."
   },
   "privacy": "Privacy",
   "@privacy": {"description": "Settings section title for privacy options."},
-  "allowRemoteImages": "Load remote images",
+  "allowRemoteImages": "Carica immagini remote",
   "@allowRemoteImages": {"description": "Settings switch title for loading remote images."},
-  "allowRemoteImagesDescription": "Allow Markdown preview and editor images to load from http and https URLs.",
+  "allowRemoteImagesDescription": "Consenti all’anteprima Markdown e all’editor di caricare immagini da URL HTTP e HTTPS.",
   "@allowRemoteImagesDescription": {"description": "Settings switch description for loading remote images."},
-  "clearRemoteImagePermissions": "Clear remote image permissions",
+  "clearRemoteImagePermissions": "Cancella autorizzazioni per immagini remote",
   "@clearRemoteImagePermissions": {"description": "Settings action label for clearing per-workspace remote image permissions."},
-  "clearRemoteImagePermissionsDescription": "Forget workspaces that were allowed to load remote images.",
+  "clearRemoteImagePermissionsDescription": "Dimentica le aree di lavoro autorizzate a caricare immagini remote.",
   "@clearRemoteImagePermissionsDescription": {"description": "Settings action description for clearing per-workspace remote image permissions."},
+  "clearGitWorkspaceTrust": "Cancella aree di lavoro Git attendibili",
+  "@clearGitWorkspaceTrust": {"description": "Settings action label for clearing trusted Git workspaces."},
+  "clearGitWorkspaceTrustDescription": "Chiedi conferma prima di attivare le funzionalità Git per le aree di lavoro considerate attendibili in precedenza.",
+  "@clearGitWorkspaceTrustDescription": {"description": "Settings action description for clearing trusted Git workspaces."},
 
   "settingsWindowSectionTitle": "Finestra",
   "@settingsWindowSectionTitle": {
@@ -797,10 +856,12 @@
   "@editHtml": {
     "description": "Dialog title and tooltip for editing raw HTML source."
   },
-  "htmlSource": "Sorgente HTML",
+  "htmlSource": "Codice sorgente HTML",
   "@htmlSource": {
     "description": "Text field label for raw HTML source."
   },
+  "htmlContentDefault": "Contenuto HTML",
+  "@htmlContentDefault": {"description": "Default editable text inserted into a new HTML block."},
   "thematicBreak": "Separatore tematico",
   "@thematicBreak": {
     "description": "Thematic break command label."
@@ -944,6 +1005,12 @@
   "@altText": {
     "description": "Image alt text field label."
   },
+  "editorPlaceholderText": "testo",
+  "@editorPlaceholderText": {"description": "Default selected text inserted by a source-editor formatting command."},
+  "editorPlaceholderCode": "codice",
+  "@editorPlaceholderCode": {"description": "Default selected code inserted by a source-editor code command."},
+  "editorPlaceholderAltText": "testo alternativo",
+  "@editorPlaceholderAltText": {"description": "Default selected image description inserted by a source-editor image command."},
   "describeTheImage": "Descrivi l'immagine",
   "@describeTheImage": {
     "description": "Image alt text hint."
@@ -973,17 +1040,17 @@
   "@noImageSource": {
     "description": "Placeholder shown when an image has no source."
   },
-  "remoteImageBlocked": "Remote image blocked",
+  "remoteImageBlocked": "Immagine remota bloccata",
   "@remoteImageBlocked": {"description": "Placeholder label shown when a remote image is blocked."},
-  "remoteImageBlockedTooltip": "Choose whether BusyMark can load remote images.",
+  "remoteImageBlockedTooltip": "Scegli se BusyMark può caricare immagini remote.",
   "@remoteImageBlockedTooltip": {"description": "Tooltip for a blocked remote image placeholder."},
-  "remoteImagesBlockedTitle": "Remote images are blocked",
+  "remoteImagesBlockedTitle": "Le immagini remote sono bloccate",
   "@remoteImagesBlockedTitle": {"description": "Dialog title for remote image loading permission."},
-  "remoteImagesBlockedMessage": "This document references images from the internet. Loading them can reveal network information to the image host.",
+  "remoteImagesBlockedMessage": "Questo documento fa riferimento a immagini su Internet. Il caricamento può rivelare informazioni di rete all’host delle immagini.",
   "@remoteImagesBlockedMessage": {"description": "Dialog message explaining the privacy risk of remote images."},
-  "loadRemoteImagesForWorkspace": "Load for this workspace",
+  "loadRemoteImagesForWorkspace": "Carica per quest’area di lavoro",
   "@loadRemoteImagesForWorkspace": {"description": "Dialog button that allows remote images for the current workspace."},
-  "alwaysLoadRemoteImages": "Always load remote images",
+  "alwaysLoadRemoteImages": "Carica sempre le immagini remote",
   "@alwaysLoadRemoteImages": {"description": "Dialog button that enables remote images globally."},
 
   "hideSidebar": "Nascondi il pannello laterale",
@@ -1022,7 +1089,7 @@
   "@problems": {
     "description": "Diagnostics dialog title."
   },
-  "diagnosticCount": "{count, plural, =0{Nessuna diagnostica} =1{1 diagnostica} other{{count} diagnostiche}}",
+  "diagnosticCount": "{count, plural, =0{Nessun messaggio diagnostico} =1{1 messaggio diagnostico} other{{count} messaggi diagnostici}}",
   "@diagnosticCount": {
     "description": "Count of diagnostics in the workspace.",
     "placeholders": {
@@ -1038,6 +1105,10 @@
   "toc": "TOC",
   "@toc": {
     "description": "Writerside table of contents sidebar tab label."
+  },
+  "tocActions": "Azioni dell'indice",
+  "@tocActions": {
+    "description": "Tooltip for the Writerside TOC action menu button."
   },
   "markdownUnsaved": "Markdown - non salvato",
   "@markdownUnsaved": {
@@ -1074,6 +1145,68 @@
   "newChildTopic": "Nuovo sottoargomento",
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
+  },
+  "newSiblingTopic": "Nuovo argomento allo stesso livello",
+  "@newSiblingTopic": {
+    "description": "Create new sibling Writerside topic action label."
+  },
+  "renameTopicFile": "Rinomina il file dell'argomento",
+  "@renameTopicFile": {
+    "description": "Context-menu action that renames a Writerside topic file."
+  },
+  "topicPlacement": "Posizione nel TOC",
+  "@topicPlacement": {
+    "description": "Create topic dialog label for selecting TOC placement."
+  },
+  "tocRoot": "Alla radice del TOC",
+  "@tocRoot": {
+    "description": "TOC placement option for the root level."
+  },
+  "afterSelectedTopic": "Dopo l'argomento selezionato",
+  "@afterSelectedTopic": {
+    "description": "TOC placement option after the selected topic."
+  },
+  "insideSelectedTopic": "All'interno dell'argomento selezionato",
+  "@insideSelectedTopic": {
+    "description": "TOC placement option inside the selected topic."
+  },
+  "pasteAfterTopic": "Incolla dopo",
+  "@pasteAfterTopic": {
+    "description": "Action that moves a cut TOC entry after the selected topic."
+  },
+  "pasteAsChildTopic": "Incolla come sottoargomento",
+  "@pasteAsChildTopic": {
+    "description": "Action that moves a cut TOC entry inside the selected topic."
+  },
+  "removeFromToc": "Rimuovi dal TOC",
+  "@removeFromToc": {
+    "description": "Action that removes an entry from a Writerside table of contents without deleting its topic file."
+  },
+  "confirmRemoveFromTocTitle": "Rimuovere dal TOC?",
+  "@confirmRemoveFromTocTitle": {
+    "description": "Confirmation title before removing a Writerside TOC entry."
+  },
+  "confirmRemoveFromTocMessage": "Rimuovere {name} da questo TOC? Il file dell'argomento verrà mantenuto.",
+  "@confirmRemoveFromTocMessage": {
+    "description": "Confirmation message before removing a Writerside TOC entry without deleting its topic file.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmDeleteTopicTitle": "Eliminare il file dell'argomento?",
+  "@confirmDeleteTopicTitle": {
+    "description": "Confirmation title before deleting a Writerside topic file."
+  },
+  "confirmDeleteTopicMessage": "Eliminare {name} e rimuoverlo da tutti i TOC? Questa operazione non può essere annullata.",
+  "@confirmDeleteTopicMessage": {
+    "description": "Confirmation message before deleting a Writerside topic file and removing its TOC entries.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "defaultNewTopicTitle": "Nuovo argomento",
   "@defaultNewTopicTitle": {
@@ -1158,6 +1291,20 @@
   "@foldKindTag": {
     "description": "Fold kind label for an XML tag."
   },
+  "sourceSearchPreviousMatch": "Corrispondenza precedente",
+  "@sourceSearchPreviousMatch": {"description": "Tooltip for moving to the previous source search match."},
+  "sourceSearchNextMatch": "Corrispondenza successiva",
+  "@sourceSearchNextMatch": {"description": "Tooltip for moving to the next source search match."},
+  "sourceSearchCaseSensitive": "Maiuscole/minuscole",
+  "@sourceSearchCaseSensitive": {"description": "Tooltip for toggling case-sensitive source search."},
+  "sourceSearchWholeWord": "Parola intera",
+  "@sourceSearchWholeWord": {"description": "Tooltip for toggling whole-word source search."},
+  "sourceSearchRegex": "Espressione regolare",
+  "@sourceSearchRegex": {"description": "Tooltip for toggling regular-expression source search."},
+  "sourceSearchInvalidRegex": "Espressione regolare non valida",
+  "@sourceSearchInvalidRegex": {"description": "Source search status shown when the regular expression is invalid."},
+  "sourceLargeFileFeaturesPaused": "File di grandi dimensioni: evidenziazione e ripiegamento sono sospesi",
+  "@sourceLargeFileFeaturesPaused": {"description": "Status banner shown when source highlighting and folding are disabled for a large file."},
   "noPreview": "Nessuna anteprima",
   "@noPreview": {
     "description": "Empty state shown when there is no preview."
@@ -1473,6 +1620,23 @@
       }
     }
   },
+  "errorWritersideTocNodeMissing": "La voce del TOC selezionata non esiste più.",
+  "@errorWritersideTocNodeMissing": {
+    "description": "Detail shown when a selected Writerside TOC entry no longer exists."
+  },
+  "errorWritersideTocInvalidMove": "Una voce del TOC non può essere spostata all'interno di sé stessa né di uno dei suoi discendenti.",
+  "@errorWritersideTocInvalidMove": {
+    "description": "Detail shown when a Writerside TOC move would create a cycle."
+  },
+  "errorWritersideStartTopicDelete": "L'argomento iniziale {topic} non può essere eliminato. Scegli prima un'altra pagina iniziale.",
+  "@errorWritersideStartTopicDelete": {
+    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      }
+    }
+  },
   "errorTopicsRootUnsafe": "La radice degli argomenti deve essere una directory relativa sicura.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."
@@ -1765,7 +1929,7 @@
   "@diagnosticWritersideConfigMissing": {
     "description": "Writerside module diagnostic for a missing writerside.cfg."
   },
-  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Manca la directory configurata per la configurazione di build: {relativePath}",
+  "diagnosticWritersideConfigMissingBuildConfigDirectory": "Manca la directory configurata per la build: {relativePath}",
   "@diagnosticWritersideConfigMissingBuildConfigDirectory": {
     "description": "Writerside module diagnostic for a missing build config directory.",
     "placeholders": {
@@ -1973,82 +2137,92 @@
       }
     }
   },
-  "close": "Close",
+  "close": "Chiudi",
   "git": "Git",
-  "gitDiff": "Git diff",
-  "gitUnavailableTitle": "Git is unavailable",
-  "gitUnavailableMessage": "{reason, select, other{Install Git or configure BusyMark to use an available Git executable. {reason}}}",
-  "gitNotRepositoryTitle": "Not a Git repository",
-  "gitNotRepositoryMessage": "This workspace is not inside a Git repository.",
-  "gitInitializeRepository": "Initialize repository",
-  "gitDetachedHead": "Detached HEAD",
-  "gitDetachedHeadAt": "Detached at {commit}",
-  "gitNoUpstream": "No upstream",
+  "gitDiff": "Diff Git",
+  "gitShowDiff": "Mostra diff",
+  "gitDiffHunkRange": "precedente {oldRange} → nuovo {newRange}",
+  "gitDiffNoLines": "nessuna riga",
+  "gitUnavailableTitle": "Git non è disponibile",
+  "gitUnavailableMessage": "{reason, select, other{Installa Git o configura BusyMark per utilizzare un eseguibile Git disponibile. {reason}}}",
+  "gitTrustRequiredTitle": "Considerare attendibile quest’area di lavoro per Git?",
+  "gitTrustRequiredMessage": "I repository Git possono eseguire programmi tramite hook, filtri e altre configurazioni. Considera attendibile quest’area di lavoro prima che BusyMark legga i dati del repository o attivi le azioni Git.",
+  "gitTrustWorkspace": "Considera attendibile l’area di lavoro",
+  "gitNotRepositoryTitle": "Non è un repository Git",
+  "gitNotRepositoryMessage": "Quest’area di lavoro non si trova in un repository Git.",
+  "gitInitializeRepository": "Inizializza repository",
+  "gitDetachedHead": "HEAD scollegato",
+  "gitDetachedHeadAt": "Scollegato su {commit}",
+  "gitNoUpstream": "Nessun upstream",
   "gitAheadCount": "{count, plural, =1{1 commit non inviato} other{{count} commit non inviati}}",
-  "gitBehindCount": "{count, plural, =1{1 commit to pull} other{{count} commits to pull}}",
-  "gitClean": "Clean",
-  "gitConflicts": "Conflicts",
+  "gitBehindCount": "{count, plural, =1{1 commit da recuperare} other{{count} commit da recuperare}}",
+  "gitClean": "Pulito",
+  "gitConflicts": "Conflitti",
   "gitChanges": "Modifiche",
   "gitHistory": "Cronologia",
   "gitBranches": "Rami",
+  "gitBranchActions": "Azioni sui rami",
+  "@gitBranchActions": {
+    "description": "Tooltip for the Git branch action menu button."
+  },
   "gitPull": "Pull",
   "gitPush": "Push",
-  "gitCommit": "Conferma",
-  "gitSelectForCommit": "Select for commit",
-  "gitRemoveFromCommit": "Leave out of commit",
-  "gitDiscard": "Discard",
-  "gitOpenFile": "Open file",
-  "gitMarkResolved": "Mark resolved",
-  "gitUntracked": "File non versionati",
-  "gitCommitMessage": "Commit message",
-  "gitCommitSelectedFiles": "Selected files",
-  "gitCommitNoSelectedFiles": "Select at least one file before committing.",
-  "gitCommitMessageRequired": "Enter a commit message.",
-  "gitCreateBranch": "Create branch",
-  "gitNewBranch": "+ New Branch",
-  "gitBranchName": "Branch name",
-  "gitSwitchBranch": "Switch",
-  "gitNoChanges": "No changes",
-  "gitNoHistory": "No history",
-  "gitNoBranches": "No branches",
-  "gitNoDiff": "Nessuna diff da mostrare",
-  "gitBinaryFile": "Binary file. BusyMark does not render binary patches.",
-  "gitUnsavedChangesBanner": "Unsaved editor changes are not included until saved.",
-  "gitConfirmDiscardTitle": "Discard Git changes?",
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
-  "gitConfirmDiscardUntracked": "{count, plural, =1{The selected untracked file will be deleted.} other{The selected untracked files will be deleted.}}",
-  "gitConfirmDiscardMixed": "{count, plural, =1{The selected file will be restored or deleted based on its Git status.} other{The selected files will be restored or deleted based on their Git status.}}",
-  "gitConfirmSwitchBranchTitle": "Switch to {branch}?",
-  "gitConfirmSwitchBranchMessage": "BusyMark will reload the workspace from disk after Git switches branches.",
-  "gitConfirmPushSetUpstreamTitle": "Set upstream branch?",
-  "gitConfirmPushSetUpstreamMessage": "This branch has no upstream. BusyMark can push {branch} and set its upstream when exactly one remote is configured.",
-  "gitProjectHistory": "Project",
-  "gitFileHistory": "Current file",
+  "gitCommit": "Commit",
+  "gitSelectForCommit": "Seleziona per il commit",
+  "gitRemoveFromCommit": "Escludi dal commit",
+  "gitDiscard": "Scarta",
+  "gitOpenFile": "Apri file",
+  "gitMarkResolved": "Segna come risolto",
+  "gitUntracked": "File non tracciati",
+  "gitCommitMessage": "Messaggio di commit",
+  "gitCommitSelectedFiles": "File selezionati",
+  "gitCommitNoSelectedFiles": "Seleziona almeno un file prima di creare il commit.",
+  "gitCommitMessageRequired": "Inserisci un messaggio di commit.",
+  "gitCreateBranch": "Crea ramo",
+  "gitNewBranch": "+ Nuovo ramo",
+  "gitBranchName": "Nome del ramo",
+  "gitSwitchBranch": "Passa",
+  "gitNoChanges": "Nessuna modifica",
+  "gitNoHistory": "Nessuna cronologia",
+  "gitNoBranches": "Nessun ramo",
+  "gitNoDiff": "Nessun diff da mostrare",
+  "gitBinaryFile": "File binario. BusyMark non visualizza le patch binarie.",
+  "gitUnsavedChangesBanner": "Le modifiche non salvate dell’editor non vengono incluse finché non vengono salvate.",
+  "gitConfirmDiscardTitle": "Scartare le modifiche Git?",
+  "gitConfirmDiscardTracked": "{count, plural, =1{Il file tracciato selezionato verrà ripristinato da Git.} other{I file tracciati selezionati verranno ripristinati da Git.}}",
+  "gitConfirmDiscardUntracked": "{count, plural, =1{Il file non tracciato selezionato verrà eliminato.} other{I file non tracciati selezionati verranno eliminati.}}",
+  "gitConfirmDiscardMixed": "{count, plural, =1{Il file selezionato verrà ripristinato o eliminato in base al suo stato Git.} other{I file selezionati verranno ripristinati o eliminati in base al loro stato Git.}}",
+  "gitConfirmSwitchBranchTitle": "Passare a {branch}?",
+  "gitConfirmSwitchBranchMessage": "BusyMark ricaricherà l’area di lavoro dal disco dopo il cambio di ramo da parte di Git.",
+  "gitConfirmPushSetUpstreamTitle": "Impostare il ramo upstream?",
+  "gitConfirmPushSetUpstreamMessage": "Questo ramo non ha un upstream. BusyMark può inviare {branch} e impostarne l’upstream quando è configurato esattamente un repository remoto.",
+  "gitProjectHistory": "Progetto",
+  "gitFileHistory": "File corrente",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "File actions",
-  "gitStatusAdded": "Added",
-  "gitStatusDeleted": "Deleted",
-  "gitStatusRenamed": "Renamed",
-  "gitStatusCopied": "Copied",
-  "gitStatusUntracked": "Untracked",
-  "gitStatusConflicted": "Conflicted",
-  "gitStatusIgnored": "Ignored",
-  "gitStatusTypeChanged": "Type changed",
-  "gitStatusModified": "Modified",
-  "gitStatusUnknown": "Unknown",
-  "gitErrorUnavailable": "Git is unavailable.",
-  "gitErrorNotRepository": "This workspace is not a Git repository.",
-  "gitErrorUnsafePath": "BusyMark blocked an unsafe Git path.",
-  "gitErrorInvalidBranchName": "Enter a valid branch name.",
-  "gitErrorNoRemote": "No Git remote is configured.",
-  "gitErrorNoUpstream": "No upstream branch is configured.",
-  "gitErrorMultipleRemotes": "Multiple remotes are configured. Choose an upstream outside this BusyMark version.",
-  "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
-  "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
-  "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",
-  "gitErrorNetwork": "Git network operation failed.",
-  "gitErrorConflict": "Git reported unresolved conflicts.",
-  "gitErrorCommandFailed": "Git command failed.",
+  "gitFileActions": "Azioni sul file",
+  "gitStatusAdded": "Aggiunto",
+  "gitStatusDeleted": "Eliminato",
+  "gitStatusRenamed": "Rinominato",
+  "gitStatusCopied": "Copiato",
+  "gitStatusUntracked": "Non tracciato",
+  "gitStatusConflicted": "In conflitto",
+  "gitStatusIgnored": "Ignorato",
+  "gitStatusTypeChanged": "Tipo modificato",
+  "gitStatusModified": "Modificato",
+  "gitStatusUnknown": "Sconosciuto",
+  "gitErrorUnavailable": "Git non è disponibile.",
+  "gitErrorNotRepository": "Quest’area di lavoro non è un repository Git.",
+  "gitErrorUnsafePath": "BusyMark ha bloccato un percorso Git non sicuro.",
+  "gitErrorInvalidBranchName": "Inserisci un nome di ramo valido.",
+  "gitErrorNoRemote": "Non è configurato alcun repository Git remoto.",
+  "gitErrorNoUpstream": "Non è configurato alcun ramo upstream.",
+  "gitErrorMultipleRemotes": "Sono configurati più repository remoti. Scegli un upstream al di fuori di questa versione di BusyMark.",
+  "gitErrorDirtyWorkspace": "Salva o scarta le modifiche dell’editor di BusyMark prima di cambiare ramo.",
+  "gitErrorDiverged": "Il ramo è divergente. Risolvi il merge o il rebase al di fuori di questa versione di BusyMark.",
+  "gitErrorAuthentication": "Autenticazione Git non riuscita. Nello snap, i repository SSH remoti potrebbero richiedere il collegamento dell’interfaccia ssh-keys.",
+  "gitErrorNetwork": "Operazione di rete Git non riuscita.",
+  "gitErrorConflict": "Git ha segnalato conflitti non risolti.",
+  "gitErrorCommandFailed": "Comando Git non riuscito.",
 
   "markdownAndHtml": "Markdown e HTML",
   "@markdownAndHtml": {"description": "Markdown and HTML reference dialog title and menu item."},
@@ -2060,11 +2234,11 @@
   "@markdownHtmlInlineFormatting": {"description": "Reference section title for Markdown inline syntax."},
   "markdownHtmlInlineFormattingDescription": "Formattazione dentro paragrafi, elementi di elenco e celle di tabella.",
   "@markdownHtmlInlineFormattingDescription": {"description": "Reference section description for Markdown inline syntax."},
-  "markdownHtmlRawHtmlBlocks": "Blocchi HTML grezzo",
+  "markdownHtmlRawHtmlBlocks": "Blocchi HTML grezzi",
   "@markdownHtmlRawHtmlBlocks": {"description": "Reference section title for supported raw HTML block tags."},
   "markdownHtmlRawHtmlBlocksDescription": "Tag HTML di blocco sicuri renderizzati dai widget di anteprima BusyMark.",
   "@markdownHtmlRawHtmlBlocksDescription": {"description": "Reference section description for supported raw HTML block tags."},
-  "markdownHtmlRawHtmlInline": "Tag HTML in linea",
+  "markdownHtmlRawHtmlInline": "Tag HTML grezzi in linea",
   "@markdownHtmlRawHtmlInline": {"description": "Reference section title for supported raw HTML inline tags."},
   "markdownHtmlRawHtmlInlineDescription": "Tag HTML in linea sicuri renderizzati senza mostrare i tag letterali.",
   "@markdownHtmlRawHtmlInlineDescription": {"description": "Reference section description for supported raw HTML inline tags."},
@@ -2098,9 +2272,9 @@
   "@markdownHtmlHtmlNeutralInlineTags": {"description": "Reference row label for HTML inline semantic tags that render as text."},
   "markdownHtmlSanitizedPreview": "Anteprima sanificata",
   "@markdownHtmlSanitizedPreview": {"description": "Reference row label for sanitized preview behavior."},
-  "markdownHtmlSanitizedPreviewDescription": "L’HTML consentito viene convertito in blocchi di anteprima BusyMark, non renderizzato in un browser.",
+  "markdownHtmlSanitizedPreviewDescription": "L’HTML consentito viene convertito in blocchi di anteprima BusyMark e non viene renderizzato in un browser.",
   "@markdownHtmlSanitizedPreviewDescription": {"description": "Reference row description for sanitized preview behavior."},
-  "markdownHtmlSourcePreserved": "Sorgente conservato",
+  "markdownHtmlSourcePreserved": "Codice sorgente conservato",
   "@markdownHtmlSourcePreserved": {"description": "Reference row label for raw source preservation."},
   "markdownHtmlSourcePreservedDescription": "L’HTML grezzo non modificato viene salvato esattamente come testo sorgente.",
   "@markdownHtmlSourcePreservedDescription": {"description": "Reference row description for raw source preservation."},
@@ -2130,7 +2304,81 @@
   "errorFileNameRequired": "Il nome file è obbligatorio.",
   "errorFileNameUnsafe": "Il nome file deve essere un singolo segmento di percorso sicuro.",
   "errorFileOperationInvalidTarget": "Non è possibile spostare una cartella dentro se stessa.",
-  "errorFileOperationOutsideRoot": "L’operazione sul file deve restare nel workspace.",
-  "errorFileOperationRoot": "La radice del workspace non può essere modificata dall’albero dei file."
+  "errorFileOperationOutsideRoot": "L’operazione sul file deve restare nell’area di lavoro.",
+  "errorFileOperationRoot": "La radice dell’area di lavoro non può essere modificata dall’albero dei file.",
+  "safeDeleteTopicFile": "Elimina in modo sicuro il file dell’argomento…",
+  "@safeDeleteTopicFile": {"description": "Action that safely deletes a Writerside topic file after finding usages."},
+  "removeTocElement": "Rimuovi elemento dal TOC",
+  "@removeTocElement": {"description": "Action that removes a topic element from the selected table of contents."},
+  "reviewUsages": "Esamina utilizzi",
+  "@reviewUsages": {"description": "Action that opens the topic usage review."},
+  "deleteTopicFile": "Elimina file dell’argomento",
+  "@deleteTopicFile": {"description": "Action that deletes a Writerside topic file."},
+  "removeAction": "Rimuovi",
+  "@removeAction": {"description": "Generic remove action label."},
+  "topicRemovalSummary": "Rimuovi «{topic}» dall’istanza della guida selezionata. Il file dell’argomento verrà conservato.",
+  "@topicRemovalSummary": {"description": "Summary of removing a topic from one TOC while keeping its file.", "placeholders": {"topic": {"type": "String"}}},
+  "safeDeleteTopicSummary": "Elimina «{topic}» e ne aggiorna in modo sicuro i riferimenti nell’intero progetto Writerside.",
+  "@safeDeleteTopicSummary": {"description": "Summary of safely deleting a topic file.", "placeholders": {"topic": {"type": "String"}}},
+  "childTopicsPromoted": "{count, plural, =1{1 argomento secondario verrà spostato un livello più in alto.} other{{count} argomenti secondari verranno spostati un livello più in alto.}}",
+  "@childTopicsPromoted": {"description": "Explains that direct child topics will be promoted when their parent TOC element is removed.", "placeholders": {"count": {"type": "int"}}},
+  "topicIsStartPageRemovalWarning": "Questo argomento è utilizzato come pagina iniziale di un’istanza. Esaminane gli utilizzi e assegna un’altra pagina iniziale prima di continuare.",
+  "@topicIsStartPageRemovalWarning": {"description": "Warning shown when the topic is used as an instance start page."},
+  "topicUsagesCount": "Utilizzi ({count})",
+  "@topicUsagesCount": {"description": "Number of discovered topic usages.", "placeholders": {"count": {"type": "int"}}},
+  "noBreakingTopicUsages": "Non sono stati trovati riferimenti che smetterebbero di funzionare.",
+  "@noBreakingTopicUsages": {"description": "Message shown when removal will not leave breaking topic usages."},
+  "topicUsagesFound": "BusyMark ha trovato i seguenti riferimenti a questo argomento.",
+  "@topicUsagesFound": {"description": "Heading for topic usages found by safe delete."},
+  "topicUsageTocElements": "Elementi del TOC",
+  "@topicUsageTocElements": {"description": "Usage group label for TOC elements."},
+  "topicUsageStartPages": "Pagine iniziali",
+  "@topicUsageStartPages": {"description": "Usage group label for instance start pages."},
+  "topicUsageTopicLinks": "Collegamenti agli argomenti",
+  "@topicUsageTopicLinks": {"description": "Usage group label for links to the topic."},
+  "topicUsageIncludes": "Inclusioni",
+  "@topicUsageIncludes": {"description": "Usage group label for topic includes."},
+  "usageCount": "{count, plural, =1{1 utilizzo} other{{count} utilizzi}}",
+  "@usageCount": {"description": "Compact topic usage count.", "placeholders": {"count": {"type": "int"}}},
+  "refactoringOptions": "Opzioni di refactoring",
+  "@refactoringOptions": {"description": "Heading for safe-delete refactoring options."},
+  "updateUsagesAutomatically": "Aggiorna automaticamente gli utilizzi",
+  "@updateUsagesAutomatically": {"description": "Option to update supported topic usages automatically."},
+  "updateUsagesAutomaticallyDescription": "Rimuove i riferimenti dai TOC e le inclusioni, mantenendo il testo dei collegamenti.",
+  "@updateUsagesAutomaticallyDescription": {"description": "Description of automatic topic usage updates."},
+  "manualUsageUpdatesRequired": "Alcuni utilizzi richiedono modifiche manuali prima di questo refactoring.",
+  "@manualUsageUpdatesRequired": {"description": "Message shown when usages require manual updates."},
+  "setRedirectTo": "Reindirizza a",
+  "@setRedirectTo": {"description": "Option to redirect the removed topic URL to another topic."},
+  "noRedirectDescription": "Non reindirizzare la vecchia pagina pubblicata.",
+  "@noRedirectDescription": {"description": "Description for choosing no redirect target."},
+  "redirectTarget": "Destinazione del reindirizzamento",
+  "@redirectTarget": {"description": "Field label for selecting a redirect target."},
+  "remainingUsagesBlockRemoval": "Esamina e aggiorna gli utilizzi rimanenti prima di continuare oppure abilita gli aggiornamenti automatici, se disponibili.",
+  "@remainingUsagesBlockRemoval": {"description": "Message explaining that unresolved usages block removal."},
+  "usagesOfTopic": "Utilizzi di {topic}",
+  "@usagesOfTopic": {"description": "Title for the usage review of a topic.", "placeholders": {"topic": {"type": "String"}}},
+  "noUsagesFound": "Nessun utilizzo trovato.",
+  "@noUsagesFound": {"description": "Empty state shown when no topic usages were found."},
+  "outsideSelectedInstance": "Fuori dall’istanza selezionata",
+  "@outsideSelectedInstance": {"description": "Label for a usage outside the selected Writerside instance."},
+  "doRefactor": "Esegui refactoring",
+  "@doRefactor": {"description": "Action that applies the selected safe-delete refactoring."},
+  "orphanTopicTitle": "Il file dell’argomento non è più utilizzato",
+  "@orphanTopicTitle": {"description": "Title shown when a removed topic file has become orphaned."},
+  "keepTopicFile": "Conserva il file dell’argomento",
+  "@keepTopicFile": {"description": "Action that keeps an orphaned topic file."},
+  "orphanTopicMessage": "«{topic}» non è più utilizzato in alcun punto di questo progetto Writerside. Elimina il file oppure conservalo per utilizzarlo in un’altra istanza.",
+  "@orphanTopicMessage": {"description": "Prompt to safely delete a topic after its final TOC element is removed.", "placeholders": {"topic": {"type": "String"}}},
+  "errorWritersideSafeDeleteRequired": "Usa l’eliminazione sicura per i file degli argomenti Writerside.",
+  "@errorWritersideSafeDeleteRequired": {"description": "Detail shown when a Writerside topic file must be deleted through Safe Delete."},
+  "errorWritersideTopicUsageScanFailed": "Non è stato possibile completare l’analisi degli utilizzi dell’argomento. Nessun file è stato modificato.",
+  "@errorWritersideTopicUsageScanFailed": {"description": "Error shown when safe-delete usage analysis cannot complete reliably."},
+  "errorWritersideTopicUsagesRemain": "Alcuni utilizzi dell’argomento richiedono ancora attenzione. Esaminali prima di continuare.",
+  "@errorWritersideTopicUsagesRemain": {"description": "Error shown when unresolved topic usages block removal."},
+  "errorWritersideRedirectInvalid": "La destinazione di reindirizzamento selezionata non è più valida. Selezionala di nuovo.",
+  "@errorWritersideRedirectInvalid": {"description": "Error shown when a safe-delete redirect target is stale or conflicts."},
+  "errorWritersideRollbackFailed": "Non è stato possibile annullare completamente la rimozione dell’argomento. Controlla questi percorsi prima di continuare: {paths}",
+  "@errorWritersideRollbackFailed": {"description": "Error shown when safe-delete recovery leaves files requiring manual review.", "placeholders": {"paths": {"type": "String"}}}
 
 }

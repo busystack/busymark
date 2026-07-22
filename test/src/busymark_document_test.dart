@@ -3,26 +3,50 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
+import 'package:busymark/src/editor/document_callout.dart';
+import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:markdown/markdown.dart' as md;
 
 void main() {
   const parser = MarkdownParser();
+
+  test('WYSIWYG hit testing includes shared document surface borders', () {
+    const codeBlock = BusyBlock(id: 'code', kind: BusyBlockKind.codeBlock);
+
+    expect(
+      busyMarkWysiwygContentPadding(codeBlock),
+      BusyMarkInsets.documentCodeContent,
+    );
+    expect(
+      busyMarkWysiwygTextLayoutInsets(codeBlock),
+      const EdgeInsets.all(BusyMarkSpacing.mdPlus + BusyMarkStroke.hairline),
+    );
+  });
 
   test('package markdown AST imports into BusyDocument core blocks', () {
     final parsed = parser.parse(
@@ -189,6 +213,616 @@ void main() {}
     },
   );
 
+  test('unrelated edits preserve source-only reference definitions', () {
+    for (final source in const [
+      '[guide]: docs.md "Title"\nOriginal\n',
+      'Before\n\n[guide]: docs.md "Title"\n\nOriginal\n',
+      'Original\n\n[guide]: docs.md "Title"\n',
+      '[one]: one.md\n[two]: two.md "Two"\nOriginal\n',
+      '[guide]:\n  docs.md\n  "Title"\nOriginal\n',
+      '[label]:\n[dest]:thing\nOriginal\n',
+      '[label]: docs.md "\n[x]: inside title\n"\nOriginal\n',
+      '[guide]: docs.md "Title"\r\nOriginal\r\n',
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final target = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.plainText == 'Original',
+      );
+      final sourceOnlyBlocks = parsed.busyDocument.blocks.where(
+        (block) => block.isSourceOnly,
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      expect(sourceOnlyBlocks, isNotEmpty, reason: 'input: $source');
+      expect(target.sourceSpan, isNotNull, reason: 'input: $source');
+      expect(target.rawSource, 'Original', reason: 'input: $source');
+
+      controller.updateBlockText(target.id, 'Changed');
+
+      expect(
+        controller.markdown,
+        source.replaceFirst('Original', 'Changed'),
+        reason: 'input: $source',
+      );
+    }
+  });
+
+  test('source-only definitions survive scanner and AST count mismatches', () {
+    const blockquoteSource =
+        '[guide]: docs.md\n\n'
+        'Original\n'
+        '> Quote\n';
+    final blockquoteParsed = parser.parse(
+      filePath: 'topic.md',
+      source: blockquoteSource,
+    );
+    final blockquoteTarget = blockquoteParsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+    final blockquoteController = BusyMarkWysiwygDocumentController(
+      document: blockquoteParsed.busyDocument,
+    );
+
+    blockquoteController.updateBlockText(blockquoteTarget.id, 'Changed');
+
+    expect(
+      blockquoteController.markdown,
+      blockquoteSource.replaceFirst('Original', 'Changed'),
+    );
+
+    const looseListSource =
+        '[guide]: docs.md\n\n'
+        '- item\n\n'
+        '  continuation\n\n'
+        'Original\n';
+    final looseListParsed = parser.parse(
+      filePath: 'topic.md',
+      source: looseListSource,
+    );
+    final looseListTarget = looseListParsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+    final looseListController = BusyMarkWysiwygDocumentController(
+      document: looseListParsed.busyDocument,
+    );
+
+    expect(looseListTarget.sourceSpan, isNull);
+    expect(
+      looseListParsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+      isTrue,
+    );
+
+    looseListController.updateBlockText(looseListTarget.id, 'Changed');
+
+    expect(looseListController.markdown, contains('[guide]: docs.md'));
+    expect(
+      RegExp(
+        r'^\[guide\]:',
+        multiLine: true,
+      ).allMatches(looseListController.markdown),
+      hasLength(1),
+    );
+    expect(looseListController.markdown, contains('Changed'));
+  });
+
+  test('preserved reference definitions still resolve after an edit', () {
+    const source =
+        '[Guide][guide]\n\n'
+        '[guide]: docs.md "Title"\n\n'
+        'Original\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final target = controller.document.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+
+    controller.updateBlockText(target.id, 'Changed');
+
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(controller.markdown, source.replaceFirst('Original', 'Changed'));
+    expect(reparsed.links.map((link) => link.destination), contains('docs.md'));
+    expect(
+      const BusyMarkPreviewBuilder()
+          .build(reparsed.busyDocument)
+          .blocks
+          .map((block) => block.text),
+      isNot(contains('[guide]: docs.md "Title"')),
+    );
+  });
+
+  test('unrelated edits preserve GFM footnote definitions', () {
+    for (final source in const [
+      '[^note]: Footnote text\n\nOriginal\n',
+      '[^note]: First\n    continued\n\nOriginal\n',
+      'Use[^note].\n\n[^note]: Footnote text\n\nOriginal\n',
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final target = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.plainText == 'Original',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      expect(
+        parsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+        isTrue,
+        reason: 'input: $source',
+      );
+      expect(target.rawSource, 'Original', reason: 'input: $source');
+      if (source.startsWith('Use')) {
+        expect(
+          parsed.busyDocument.blocks.any((block) => block.isGenerated),
+          isTrue,
+        );
+      }
+
+      controller.updateBlockText(target.id, 'Changed');
+
+      expect(
+        controller.markdown,
+        source.replaceFirst('Original', 'Changed'),
+        reason: 'input: $source',
+      );
+    }
+  });
+
+  test('containers with nested definitions are source-protected', () {
+    Iterable<BusyBlock> flatten(BusyBlock block) sync* {
+      yield block;
+      for (final child in block.children) {
+        yield* flatten(child);
+      }
+    }
+
+    for (final source in const [
+      '> [guide]: docs.md\n>\n> Original\n\nOutside\n',
+      '- [guide]: docs.md\n  Original\n\nOutside\n',
+      '> [^note]: Note\n>\n> Original\n\nOutside\n',
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final protected = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.isSourceProtected,
+      );
+      final nestedTarget = flatten(
+        protected,
+      ).firstWhere((block) => block.plainText == 'Original');
+      final outside = parsed.busyDocument.blocks.firstWhere(
+        (block) => block.plainText == 'Outside',
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+
+      expect(protected.preserveRaw, isTrue, reason: 'input: $source');
+      expect(protected.rawSource, contains(']:'), reason: 'input: $source');
+      expect(
+        flatten(protected).every((block) => block.isSourceProtected),
+        isTrue,
+        reason: 'input: $source',
+      );
+
+      controller.updateBlockText(nestedTarget.id, 'Changed');
+      expect(controller.markdown, source, reason: 'input: $source');
+
+      controller.updateBlockText(outside.id, 'Changed outside');
+      expect(
+        controller.markdown,
+        source.replaceFirst('Outside', 'Changed outside'),
+        reason: 'input: $source',
+      );
+    }
+  });
+
+  test('scanner mismatches conservatively protect nested definitions', () {
+    const source =
+        '> [guide]: docs.md\n'
+        '>\n'
+        '> Original\n\n'
+        '- item\n\n'
+        '  continuation\n\n'
+        'Outside\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final protectedBlocks = parsed.busyDocument.blocks.where(
+      (block) => block.isSourceProtected && !block.isSourceOnly,
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final appended = controller.document.blocks.firstWhere(
+      (block) =>
+          !block.isSourceOnly && !block.isGenerated && !block.isSourceProtected,
+    );
+
+    expect(protectedBlocks, isNotEmpty);
+    expect(protectedBlocks.every((block) => block.isGenerated), isTrue);
+    expect(
+      parsed.busyDocument.blocks.any(
+        (block) => block.isSourceOnly && block.rawSource!.contains('[guide]:'),
+      ),
+      isTrue,
+    );
+
+    controller.updateBlockText(appended.id, 'Appended');
+
+    expect(controller.markdown, contains('[guide]: docs.md'));
+    expect(controller.markdown, contains('Original'));
+    expect(controller.markdown, contains('Outside'));
+    expect(controller.markdown, contains('Appended'));
+    expect(
+      RegExp(r'\[guide\]: docs\.md').allMatches(controller.markdown),
+      hasLength(1),
+    );
+  });
+
+  test('opaque source IDs cannot collide with semantic heading IDs', () {
+    const source =
+        '# Source only 0\n\n'
+        '> [guide]: docs.md\n'
+        '>\n'
+        '> Original\n\n'
+        '- item\n\n'
+        '  continuation\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final opaque = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.isSourceOnly,
+    );
+    final heading = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.heading,
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    expect(heading.id, 'source-only-0');
+    expect(opaque.id, isNot(heading.id));
+
+    controller.applyBlockCommand(heading.id, BusyWysiwygBlockCommand.paragraph);
+    controller.updateBlockText(opaque.id, 'Erased');
+
+    expect(controller.markdown, source);
+  });
+
+  test('full list serialization preserves reference definitions', () {
+    const source = '[guide]: docs.md "Title"\n\n- Original\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final item = controller.document.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.unorderedListItem,
+    );
+
+    controller.updateBlockText(item.id, 'Changed');
+
+    expect(controller.markdown, '[guide]: docs.md "Title"\n\n- Changed\n');
+  });
+
+  test('full serialization omits generated footnote output', () {
+    const source =
+        'Use[^note].\n\n'
+        '[^note]: Footnote text\n\n'
+        '- Original\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final item = controller.document.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.unorderedListItem,
+    );
+
+    controller.updateBlockText(item.id, 'Changed');
+
+    expect(controller.markdown, contains('[^note]: Footnote text'));
+    expect(
+      RegExp(r'\[\^note\]: Footnote text').allMatches(controller.markdown),
+      hasLength(1),
+    );
+    expect(controller.markdown, contains('- Changed'));
+    expect(controller.markdown, isNot(contains('\u21a9')));
+  });
+
+  test('invalid reference-like prose remains a modeled block', () {
+    const source = '[guide] is ordinary prose\n\nOriginal\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(
+      parsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+      isFalse,
+    );
+    expect(
+      parsed.busyDocument.blocks.first.plainText,
+      '[guide] is ordinary prose',
+    );
+  });
+
+  test('large inline-link documents do not create source-only blocks', () {
+    final source = [
+      for (var index = 0; index < 2000; index++) '[Link $index](docs.md)\n',
+    ].join('\n');
+
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(
+      parsed.busyDocument.blocks.any((block) => block.isSourceOnly),
+      isFalse,
+    );
+    expect(parsed.links, hasLength(2000));
+  });
+
+  test('large adjacent definition sets stay distinct and preserved', () {
+    final definitions = [
+      for (var index = 0; index < 500; index++)
+        '[reference-$index]: docs/$index.md',
+    ].join('\n');
+    final source = '$definitions\nOriginal\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final target = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Original',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    expect(
+      parsed.busyDocument.blocks.where((block) => block.isSourceOnly),
+      hasLength(500),
+    );
+
+    controller.updateBlockText(target.id, 'Changed');
+
+    expect(controller.markdown, source.replaceFirst('Original', 'Changed'));
+  });
+
+  test('destructive selections reject read-only source endpoints', () {
+    const source =
+        '> [guide]: docs.md\n'
+        '>\n'
+        '> Original\n\n'
+        'After text\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final protected = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.isSourceProtected,
+    );
+    final after = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'After text',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    final result = controller.deleteTextSelection(
+      firstBlockId: protected.id,
+      firstStartOffset: 0,
+      lastBlockId: after.id,
+      lastEndOffset: 2,
+      removedBlockIds: [protected.id, after.id],
+    );
+
+    expect(result, isNull);
+    expect(controller.markdown, source);
+  });
+
+  test('list indentation cannot attach content to a protected item', () {
+    const source =
+        '- [guide]: docs.md\n'
+        '  Original\n'
+        '- Keep me\n'
+        '- Edit me\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final keep = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Keep me',
+    );
+    final edit = parsed.busyDocument.blocks.firstWhere(
+      (block) => block.plainText == 'Edit me',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    controller.indentListItems([keep.id]);
+    controller.updateBlockText(edit.id, 'Edited');
+
+    expect(controller.markdown, contains('[guide]: docs.md'));
+    expect(controller.markdown, contains('Keep me'));
+    expect(controller.markdown, contains('Edited'));
+  });
+
+  test('WYSIWYG nested list text edit updates Markdown source', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n  - Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.single.children.single.id;
+
+    controller.updateBlockText(childId, 'Changed');
+
+    expect(controller.markdown, '- Parent\n  - Changed\n');
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    expect(
+      reparsed.busyDocument.blocks.single.children.single.plainText,
+      'Changed',
+    );
+  });
+
+  test('WYSIWYG ordered list edits preserve nested children', () {
+    for (final (source, expected) in const [
+      ('1. Parent\n   - Child\n', '1. Parent\n   - Changed\n'),
+      ('100. Parent\n     - Child\n', '100. Parent\n     - Changed\n'),
+    ]) {
+      final parsed = parser.parse(filePath: 'topic.md', source: source);
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parsed.busyDocument,
+      );
+      final childId = controller.document.blocks.single.children.single.id;
+
+      controller.updateBlockText(childId, 'Changed');
+
+      expect(controller.markdown, expected, reason: 'input: $source');
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: controller.markdown,
+      );
+      expect(reparsed.busyDocument.blocks, hasLength(1));
+      expect(reparsed.busyDocument.blocks.single.children, hasLength(1));
+      expect(
+        reparsed.busyDocument.blocks.single.children.single.plainText,
+        'Changed',
+      );
+    }
+  });
+
+  test('WYSIWYG ordered task edits preserve marker and nested children', () {
+    const source = '100. [ ] Parent\n     - Child\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final parent = controller.document.blocks.single;
+    final childId = parent.children.single.id;
+
+    controller.updateBlockText(childId, 'Changed');
+
+    expect(controller.markdown, '100. [ ] Parent\n     - Changed\n');
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    final reparsedParent = reparsed.busyDocument.blocks.single;
+    expect(reparsedParent.kind, BusyBlockKind.taskListItem);
+    expect(reparsedParent.attributes['ordered'], 'true');
+    expect(reparsedParent.attributes['marker'], '100.');
+    expect(reparsedParent.children.single.plainText, 'Changed');
+  });
+
+  test('WYSIWYG nested blockquote edit preserves surrounding source', () {
+    const source =
+        'Before   spacing\n\n'
+        '> Original\n\n'
+        'After   spacing\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final quote = controller.document.blocks.firstWhere(
+      (block) => block.kind == BusyBlockKind.blockquote,
+    );
+
+    controller.updateBlockText(quote.children.single.id, 'Changed');
+
+    expect(
+      controller.markdown,
+      'Before   spacing\n\n> Changed\n\nAfter   spacing\n',
+    );
+  });
+
+  test('WYSIWYG cross-block deletion prunes an emptied blockquote', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Before\n\n> Quote\n\nAfter\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final before = controller.document.blocks.first;
+    final quote = controller.document.blocks[1];
+    final quoteParagraph = quote.children.single;
+    final after = controller.document.blocks.last;
+
+    final result = controller.deleteTextSelection(
+      firstBlockId: before.id,
+      firstStartOffset: 0,
+      lastBlockId: after.id,
+      lastEndOffset: after.plainText.length,
+      removedBlockIds: [before.id, quoteParagraph.id, after.id],
+    );
+
+    expect(result, isNotNull);
+    expect(
+      controller.document.blocks,
+      isNot(
+        contains(
+          isA<BusyBlock>().having(
+            (block) => block.kind,
+            'kind',
+            BusyBlockKind.blockquote,
+          ),
+        ),
+      ),
+    );
+    expect(controller.markdown, isNot(contains('>')));
+  });
+
+  test('WYSIWYG nested inline edit updates Markdown source', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n  - Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.single.children.single.id;
+
+    controller.applyInlineCommand(
+      childId,
+      BusyWysiwygInlineCommand.bold,
+      0,
+      'Child'.length,
+    );
+
+    expect(controller.markdown, '- Parent\n  - **Child**\n');
+  });
+
+  test('WYSIWYG nested block removal updates Markdown source', () {
+    const tableSource =
+        '| Name | Value |\n'
+        '| --- | --- |\n'
+        '| A | B |';
+    final controller = BusyMarkWysiwygDocumentController(
+      document: BusyDocument(
+        filePath: 'topic.md',
+        mode: MarkdownMode.commonMark,
+        blocks: const [
+          BusyBlock(
+            id: 'parent',
+            kind: BusyBlockKind.unorderedListItem,
+            inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Parent')],
+            children: [
+              BusyBlock(
+                id: 'table',
+                kind: BusyBlockKind.table,
+                rawSource: tableSource,
+              ),
+            ],
+            rawSource:
+                '- Parent\n\n'
+                '  | Name | Value |\n'
+                '  | --- | --- |\n'
+                '  | A | B |',
+          ),
+        ],
+      ),
+    );
+
+    controller.deleteTable('table');
+
+    expect(controller.document.blocks.single.dirty, isTrue);
+    expect(controller.markdown, '- Parent\n');
+  });
+
   test('parser includes setext headings in heading metadata', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -285,6 +919,299 @@ void main() {}
     expect(markdown, 'Editable text\n');
     expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG renders a blockquote around its editable text', (
+    tester,
+  ) async {
+    var markdown = '';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '> „Code sollte wie gute Prosa lesbar sein.“\n'
+          '> — *Martin Fowler*\n',
+    );
+    final quote = parsed.busyDocument.blocks.single;
+    final paragraph = quote.children.single;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final frame = find.byType(BusyMarkDocumentCallout);
+    final childField = find.byKey(
+      ValueKey('wysiwyg-field-topic.md-${paragraph.id}'),
+    );
+    final structuralField = find.byKey(
+      ValueKey('wysiwyg-field-topic.md-${quote.id}'),
+    );
+    final quoteIcon = find.descendant(
+      of: frame,
+      matching: find.byIcon(BusyMarkGlyphs.blockquote),
+    );
+
+    expect(frame, findsOneWidget);
+    expect(childField, findsOneWidget);
+    expect(structuralField, findsNothing);
+    expect(
+      find.descendant(of: frame, matching: find.byType(TextField)),
+      findsOneWidget,
+    );
+    expect(quoteIcon, findsOneWidget);
+    final iconRect = tester.getRect(quoteIcon);
+    final fieldRect = tester.getRect(childField);
+    expect(
+      iconRect.center.dy,
+      inInclusiveRange(fieldRect.top, fieldRect.bottom),
+    );
+    final field = tester.widget<TextField>(childField);
+    expect(field.controller!.text, contains('Code sollte wie gute Prosa'));
+    expect(field.controller!.text, contains('Martin Fowler'));
+
+    await tester.enterText(childField, 'Changed');
+    await tester.pump();
+
+    expect(markdown, startsWith('> '));
+    expect(markdown, contains('Changed'));
+  });
+
+  testWidgets('WYSIWYG uses one quote frame for multiple quote paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '> First\n>\n> Second\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final frame = find.byType(BusyMarkDocumentCallout);
+    expect(frame, findsOneWidget);
+    expect(
+      find.descendant(of: frame, matching: find.byType(TextField)),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(
+        of: frame,
+        matching: find.byIcon(BusyMarkGlyphs.blockquote),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('WYSIWYG quote frame focuses its first editable child', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'Before\n\n> Quote\n',
+    );
+    final before = parsed.busyDocument.blocks.first;
+    final quote = parsed.busyDocument.blocks.last;
+    final quoteParagraph = quote.children.single;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldFor(String blockId) => tester.widget<TextField>(
+      find.byKey(ValueKey('wysiwyg-field-topic.md-$blockId')),
+    );
+    expect(fieldFor(before.id).focusNode!.hasFocus, isTrue);
+
+    final frame = find.byType(BusyMarkDocumentCallout);
+    await tester.tap(
+      find.descendant(
+        of: frame,
+        matching: find.byIcon(BusyMarkGlyphs.blockquote),
+      ),
+    );
+    await tester.pump();
+
+    expect(fieldFor(quoteParagraph.id).focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('WYSIWYG inherits RTL indentation inside a blockquote', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '> - مرحبا\n>   - 123\n',
+    );
+    final quote = parsed.busyDocument.blocks.single;
+    final parentItem = quote.children.single;
+    final nestedItem = parentItem.children.single;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    Finder fieldFor(String blockId) =>
+        find.byKey(ValueKey('wysiwyg-field-topic.md-$blockId'));
+    final parentField = fieldFor(parentItem.id);
+    final nestedField = fieldFor(nestedItem.id);
+    final parentRect = tester.getRect(parentField);
+    final nestedRect = tester.getRect(nestedField);
+
+    expect(
+      tester.widget<TextField>(nestedField).textDirection,
+      TextDirection.rtl,
+    );
+    expect(nestedRect.left, closeTo(parentRect.left, 0.1));
+    expect(
+      nestedRect.right,
+      closeTo(parentRect.right - BusyMarkSizes.wysiwygBlockIndent, 0.1),
+    );
+  });
+
+  testWidgets('WYSIWYG keeps a generated leaf blockquote editable', (
+    tester,
+  ) async {
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyBlock(
+          id: 'quote',
+          kind: BusyBlockKind.blockquote,
+          inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Leaf quote')],
+          dirty: true,
+        ),
+      ],
+    );
+    var markdown = '';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: document,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = find.byKey(const ValueKey('wysiwyg-field-topic.md-quote'));
+    expect(find.byType(BusyMarkDocumentCallout), findsOneWidget);
+    expect(field, findsOneWidget);
+    expect(tester.widget<TextField>(field).controller!.text, 'Leaf quote');
+
+    await tester.enterText(field, 'Changed');
+    await tester.pump();
+
+    expect(markdown, '> Changed\n');
+  });
+
+  testWidgets('WYSIWYG hides a definition-only source and preserves it', (
+    tester,
+  ) async {
+    const source = '[guide]: docs.md "Title"\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    var markdown = source;
+
+    expect(
+      const BusyMarkPreviewBuilder().build(parsed.busyDocument).blocks,
+      isEmpty,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (filePath, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.textContaining('[guide]:'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'First line');
+    await tester.pump();
+
+    expect(markdown, '[guide]: docs.md "Title"\n\nFirst line\n');
   });
 
   testWidgets('WYSIWYG editor undo and redo restore document edits', (
@@ -541,6 +1468,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -611,6 +1539,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -677,6 +1606,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -741,6 +1671,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -817,6 +1748,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -903,6 +1835,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -967,6 +1900,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1079,6 +2013,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -1288,6 +2223,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (_, _) {},
             ),
           ),
@@ -1335,6 +2271,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -1365,6 +2302,10 @@ void main() {}
 
       await tester.pumpWidget(
         MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -1381,14 +2322,360 @@ void main() {}
       );
       await tester.pump();
 
+      IconButton editingToggle(String tooltip) {
+        return tester.widget<IconButton>(
+          find.byWidgetPredicate(
+            (widget) => widget is IconButton && widget.tooltip == tooltip,
+          ),
+        );
+      }
+
+      final colorScheme = Theme.of(
+        tester.element(find.byType(BusyMarkWysiwygEditor)),
+      ).colorScheme;
+      final hideButton = editingToggle('Hide editing buttons');
+      expect(
+        hideButton.style?.backgroundColor?.resolve(const {}),
+        colorScheme.primary,
+      );
+      expect(
+        hideButton.style?.foregroundColor?.resolve(const {}),
+        colorScheme.onPrimary,
+      );
       final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
 
       await tester.tap(find.byTooltip('Hide editing buttons'));
       await tester.pump();
 
       final showRect = tester.getRect(find.byTooltip('Show editing buttons'));
+      final showButton = editingToggle('Show editing buttons');
 
       expect(showRect.center.dy, closeTo(hideRect.center.dy, 0.1));
+      expect(
+        showButton.style?.backgroundColor?.resolve(const {}),
+        colorScheme.primary,
+      );
+      expect(
+        showButton.style?.foregroundColor?.resolve(const {}),
+        colorScheme.onPrimary,
+      );
+    },
+  );
+
+  testWidgets('editing toolbar reserves its document edge', (tester) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+    expect(
+      BusyMarkSizes.wysiwygToolbarClearance,
+      BusyMarkSpacing.sm +
+          BusyMarkSizes.wysiwygToolbarReserve +
+          BusyMarkSpacing.sm,
+    );
+
+    Finder editorList() => find.descendant(
+      of: find.byType(BusyMarkWysiwygEditor),
+      matching: find.byType(ListView),
+    );
+
+    for (final direction in EditorToolbarDirection.values) {
+      for (final placement in EditorToolbarPlacement.values) {
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  key: ValueKey('$direction-$placement'),
+                  document: parsed.busyDocument,
+                  toolbarPlacement: placement,
+                  toolbarDirection: direction,
+                  onSourceChanged: (_, _) {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final expectedLayout = BusyMarkDocumentLayoutSpec.standalone
+            .withEditingToolbar(placement: placement, direction: direction);
+        final topHorizontalToolbar =
+            direction == EditorToolbarDirection.horizontal &&
+            (placement == EditorToolbarPlacement.topLeft ||
+                placement == EditorToolbarPlacement.topRight);
+        final expectedPadding = expectedLayout.scrollPadding;
+        expect(
+          expectedLayout.minimumInsets.horizontal,
+          direction == EditorToolbarDirection.vertical
+              ? BusyMarkSizes.wysiwygToolbarClearance + BusyMarkSpacing.xl
+              : BusyMarkSpacing.xl * 2,
+        );
+        expect(editorList(), findsOneWidget);
+        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        final toolbarScrollView = tester.widget<SingleChildScrollView>(
+          find.descendant(
+            of: find.byType(BusyMarkWysiwygToolbar),
+            matching: find.byType(SingleChildScrollView),
+          ),
+        );
+        expect(
+          toolbarScrollView.padding,
+          direction == EditorToolbarDirection.horizontal
+              ? const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.sm,
+                  vertical: BusyMarkSpacing.xs,
+                )
+              : const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.xs,
+                  vertical: BusyMarkSpacing.sm,
+                ),
+        );
+        expect(toolbarScrollView.clipBehavior, Clip.none);
+        expect(toolbarScrollView.hitTestBehavior, HitTestBehavior.deferToChild);
+        final shownFieldRect = tester.getRect(find.byType(TextField).first);
+        if (topHorizontalToolbar) {
+          final hideButtonRect = tester.getRect(
+            find.byTooltip('Hide editing buttons'),
+          );
+          expect(shownFieldRect.top, greaterThan(hideButtonRect.bottom));
+        }
+
+        await tester.tap(find.byTooltip('Hide editing buttons'));
+        await tester.pump();
+
+        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        expect(tester.getRect(find.byType(TextField).first), shownFieldRect);
+      }
+    }
+  });
+
+  testWidgets('vertical WYSIWYG toolbar is bounded and extends from its edge', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+
+    Future<void> pumpPlacement(EditorToolbarPlacement placement) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 500,
+              height: 240,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                toolbarPlacement: placement,
+                toolbarDirection: EditorToolbarDirection.vertical,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    Finder toolbarScrollView() => find.descendant(
+      of: find.byType(BusyMarkWysiwygToolbar),
+      matching: find.byType(SingleChildScrollView),
+    );
+
+    await pumpPlacement(EditorToolbarPlacement.topLeft);
+
+    var scrollView = tester.widget<SingleChildScrollView>(toolbarScrollView());
+    var scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(BusyMarkWysiwygToolbar),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    var toggleRect = tester.getRect(find.byTooltip('Hide editing buttons'));
+    var toolbarRect = tester.getRect(toolbarScrollView());
+    expect(scrollView.scrollDirection, Axis.vertical);
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    expect(toolbarRect.height, lessThan(240));
+    expect(toolbarRect.top, greaterThanOrEqualTo(toggleRect.bottom));
+
+    await pumpPlacement(EditorToolbarPlacement.bottomLeft);
+
+    scrollView = tester.widget<SingleChildScrollView>(toolbarScrollView());
+    scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(BusyMarkWysiwygToolbar),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    toggleRect = tester.getRect(find.byTooltip('Hide editing buttons'));
+    toolbarRect = tester.getRect(toolbarScrollView());
+    expect(scrollView.scrollDirection, Axis.vertical);
+    expect(scrollable.position.maxScrollExtent, greaterThan(0));
+    expect(toolbarRect.bottom, lessThanOrEqualTo(toggleRect.top));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editing toolbar corners remain physical in LTR and RTL', (
+    tester,
+  ) async {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+    const editorWidth = 520.0;
+    const editorHeight = 320.0;
+
+    Future<Offset> toggleCenter({
+      required EditorToolbarPlacement placement,
+      required EditorToolbarDirection toolbarDirection,
+      required TextDirection textDirection,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Directionality(
+            textDirection: textDirection,
+            child: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: editorWidth,
+                  height: editorHeight,
+                  child: BusyMarkWysiwygEditor(
+                    document: parsed.busyDocument,
+                    toolbarPlacement: placement,
+                    toolbarDirection: toolbarDirection,
+                    onSourceChanged: (_, _) {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      return tester.getCenter(find.byTooltip('Hide editing buttons'));
+    }
+
+    for (final toolbarDirection in EditorToolbarDirection.values) {
+      for (final placement in EditorToolbarPlacement.values) {
+        final ltr = await toggleCenter(
+          placement: placement,
+          toolbarDirection: toolbarDirection,
+          textDirection: TextDirection.ltr,
+        );
+        final rtl = await toggleCenter(
+          placement: placement,
+          toolbarDirection: toolbarDirection,
+          textDirection: TextDirection.rtl,
+        );
+
+        expect(rtl.dx, closeTo(ltr.dx, 0.1));
+        expect(rtl.dy, closeTo(ltr.dy, 0.1));
+        final onRight =
+            placement == EditorToolbarPlacement.topRight ||
+            placement == EditorToolbarPlacement.bottomRight;
+        final onBottom =
+            placement == EditorToolbarPlacement.bottomLeft ||
+            placement == EditorToolbarPlacement.bottomRight;
+        expect(ltr.dx, onRight ? greaterThan(260) : lessThan(260));
+        expect(ltr.dy, onBottom ? greaterThan(160) : lessThan(160));
+      }
+    }
+  });
+
+  testWidgets(
+    'editing toolbar context menu changes placement and direction when shown or hidden',
+    (tester) async {
+      final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+      var placement = EditorToolbarPlacement.topLeft;
+      var toolbarDirection = EditorToolbarDirection.horizontal;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StatefulBuilder(
+            builder: (context, setState) => Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 360,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  toolbarPlacement: placement,
+                  toolbarDirection: toolbarDirection,
+                  onToolbarPlacementChanged: (value) {
+                    setState(() => placement = value);
+                  },
+                  onToolbarDirectionChanged: (value) {
+                    setState(() => toolbarDirection = value);
+                  },
+                  onSourceChanged: (_, _) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(
+        find.byTooltip('Hide editing buttons'),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+
+      final menuItems = find.byWidgetPredicate(
+        (widget) => widget is BusyMarkPopupMenuItem,
+      );
+      BusyMarkPopupMenuItem<dynamic> menuItem(String label) {
+        return tester.widget<BusyMarkPopupMenuItem<dynamic>>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkPopupMenuItem && widget.label == label,
+          ),
+        );
+      }
+
+      expect(menuItems, findsNWidgets(6));
+      expect(menuItem('Top left').checked, isTrue);
+      expect(menuItem('Horizontal').checked, isTrue);
+      expect(menuItem('Top right').checked, isFalse);
+      expect(menuItem('Vertical').checked, isFalse);
+      expect(find.byTooltip('Hide editing buttons'), findsOneWidget);
+      expect(find.byTooltip('Show editing buttons'), findsNothing);
+
+      await tester.tap(find.text('Bottom right'));
+      await tester.pumpAndSettle();
+      expect(placement, EditorToolbarPlacement.bottomRight);
+
+      await tester.tap(find.byTooltip('Hide editing buttons'));
+      await tester.pump();
+      expect(find.byTooltip('Show editing buttons'), findsOneWidget);
+
+      await tester.tap(
+        find.byTooltip('Show editing buttons'),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Show editing buttons'), findsOneWidget);
+      expect(find.byTooltip('Hide editing buttons'), findsNothing);
+      expect(menuItem('Bottom right').checked, isTrue);
+      expect(menuItem('Horizontal').checked, isTrue);
+
+      await tester.tap(find.text('Vertical'));
+      await tester.pumpAndSettle();
+      expect(toolbarDirection, EditorToolbarDirection.vertical);
+      expect(find.byTooltip('Show editing buttons'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Show editing buttons'));
+      await tester.pump();
+      final toolbarScrollView = tester.widget<SingleChildScrollView>(
+        find.descendant(
+          of: find.byType(BusyMarkWysiwygToolbar),
+          matching: find.byType(SingleChildScrollView),
+        ),
+      );
+      expect(toolbarScrollView.scrollDirection, Axis.vertical);
     },
   );
 
@@ -1411,6 +2698,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -1482,12 +2770,13 @@ void main() {}
   });
 
   testWidgets('WYSIWYG toolbar inserts an HTML block', (tester) async {
-    final l10n = AppLocalizationsEn();
+    final l10n = AppLocalizationsDe();
     final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
     var markdown = '';
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('de'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
@@ -1496,6 +2785,7 @@ void main() {}
             height: 640,
             child: BusyMarkWysiwygEditor(
               document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
               onSourceChanged: (filePath, value) => markdown = value,
             ),
           ),
@@ -1513,16 +2803,285 @@ void main() {}
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byKey(const ValueKey('wysiwyg-html-source-field')),
-      '<p>Inserted</p>',
+    final htmlSourceField = find.byKey(
+      const ValueKey('wysiwyg-html-source-field'),
     );
+    final htmlSourceInput = find.descendant(
+      of: htmlSourceField,
+      matching: find.byType(EditableText),
+    );
+    expect(
+      tester.widget<EditableText>(htmlSourceInput).controller.text,
+      contains(l10n.htmlContentDefault),
+    );
+    await tester.enterText(htmlSourceField, '<p>Inserted</p>');
     await tester.tap(find.text(l10n.insert));
     await tester.pumpAndSettle();
 
     expect(markdown, 'Start\n\n<p>Inserted</p>\n');
     expect(find.text(l10n.renderedHtml), findsOneWidget);
     expect(find.text('Inserted'), findsOneWidget);
+  });
+
+  testWidgets(
+    'WYSIWYG dialog submission is discarded after the active file changes',
+    (tester) async {
+      final l10n = AppLocalizationsEn();
+      final first = parser.parse(filePath: 'first.md', source: 'First\n');
+      final second = parser.parse(filePath: 'second.md', source: 'Second\n');
+      expect(first.busyDocument.blocks.single.id, 'b0');
+      expect(second.busyDocument.blocks.single.id, 'b0');
+      var activeDocument = first.busyDocument;
+      final emittedSources = <String>[];
+      late StateSetter updateHost;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return Scaffold(
+                body: SizedBox(
+                  width: 900,
+                  height: 640,
+                  child: BusyMarkWysiwygEditor(
+                    document: activeDocument,
+                    toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+                    onSourceChanged: (filePath, source) {
+                      emittedSources.add('$filePath\n$source');
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(TextField).first);
+      await tester.tap(
+        find.byTooltip(
+          '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('wysiwyg-html-source-field')),
+        findsOneWidget,
+      );
+
+      updateHost(() => activeDocument = second.busyDocument);
+      await tester.pump();
+      if (find
+          .byKey(const ValueKey('wysiwyg-html-source-field'))
+          .evaluate()
+          .isNotEmpty) {
+        await tester.enterText(
+          find.byKey(const ValueKey('wysiwyg-html-source-field')),
+          '<p>Stale insertion</p>',
+        );
+        await tester.tap(find.text(l10n.insert));
+      }
+      await tester.pumpAndSettle();
+
+      expect(emittedSources, isEmpty);
+      expect(find.text('Second'), findsOneWidget);
+      expect(find.text('Stale insertion'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'WYSIWYG dialog submission is discarded after document generation changes',
+    (tester) async {
+      final l10n = AppLocalizationsEn();
+      final original = parser.parse(filePath: 'topic.md', source: 'Original\n');
+      final replacement = parser.parse(
+        filePath: 'topic.md',
+        source: 'Externally replaced\n',
+      );
+      expect(original.busyDocument.blocks.single.id, 'b0');
+      expect(replacement.busyDocument.blocks.single.id, 'b0');
+      var activeDocument = original.busyDocument;
+      final emittedSources = <String>[];
+      late StateSetter updateHost;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return Scaffold(
+                body: SizedBox(
+                  width: 900,
+                  height: 640,
+                  child: BusyMarkWysiwygEditor(
+                    document: activeDocument,
+                    toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+                    onSourceChanged: (filePath, source) {
+                      emittedSources.add('$filePath\n$source');
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(TextField).first);
+      await tester.tap(
+        find.byTooltip(
+          '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      updateHost(() => activeDocument = replacement.busyDocument);
+      await tester.pump();
+      if (find
+          .byKey(const ValueKey('wysiwyg-html-source-field'))
+          .evaluate()
+          .isNotEmpty) {
+        await tester.enterText(
+          find.byKey(const ValueKey('wysiwyg-html-source-field')),
+          '<p>Stale insertion</p>',
+        );
+        await tester.tap(find.text(l10n.insert));
+      }
+      await tester.pumpAndSettle();
+
+      expect(emittedSources, isEmpty);
+      expect(find.text('Externally replaced'), findsOneWidget);
+      expect(find.text('Stale insertion'), findsNothing);
+    },
+  );
+
+  testWidgets('WYSIWYG dialogs stop app-level tab navigation shortcuts', (
+    tester,
+  ) async {
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
+    var tabNavigationCount = 0;
+
+    await tester.pumpWidget(
+      Shortcuts(
+        shortcuts: <ShortcutActivator, Intent>{
+          BusyMarkAppShortcutActivators.nextTab: const _TestTabIntent(),
+          BusyMarkAppShortcutActivators.previousTab: const _TestTabIntent(),
+        },
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            _TestTabIntent: CallbackAction<_TestTabIntent>(
+              onInvoke: (_) {
+                tabNavigationCount += 1;
+                return null;
+              },
+            ),
+          },
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 640,
+                child: BusyMarkWysiwygEditor(
+                  document: parsed.busyDocument,
+                  toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+                  onSourceChanged: (_, _) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.tap(
+      find.byTooltip(
+        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.editHtml), findsOneWidget);
+
+    await _pressControlShortcut(tester, LogicalKeyboardKey.tab);
+    await _pressControlShortcut(tester, LogicalKeyboardKey.tab, shift: true);
+
+    expect(tabNavigationCount, 0);
+    expect(find.text(l10n.editHtml), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG dialogs activate the native headerbar barrier', (
+    tester,
+  ) async {
+    if (!Platform.isLinux) {
+      return;
+    }
+    const channel = MethodChannel('com.busymark.test/wysiwyg-modal-barrier');
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call);
+          return call.method == 'initialize' ? true : null;
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+    final headerBarService = LinuxHeaderBarService(channel: channel);
+    await headerBarService.initialize();
+    final l10n = AppLocalizationsEn();
+    final parsed = parser.parse(filePath: 'topic.md', source: 'Start\n');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              toolbarPlacement: EditorToolbarPlacement.bottomLeft,
+              headerBarService: headerBarService,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.tap(
+      find.byTooltip(
+        '${l10n.htmlBlock} (${BusyMarkEditorShortcutLabels.htmlBlock})',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      calls.where((call) => call.method == 'setModalBarrierVisible').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', true),
+    );
+
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+
+    expect(
+      calls.where((call) => call.method == 'setModalBarrierVisible').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', false),
+    );
   });
 
   testWidgets('WYSIWYG typing preserves existing inline formatting', (
@@ -1660,6 +3219,61 @@ void main() {}
     expect(fieldAt(0).controller!.text, isEmpty);
   });
 
+  testWidgets(
+    'WYSIWYG select-all deletion preserves source-protected definitions',
+    (tester) async {
+      const protectedSource =
+          '> [guide]: docs.md\n'
+          '>\n'
+          '> Original\n';
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: 'Before\n\n$protectedSource\nAfter\n',
+      );
+      var markdown = '';
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (filePath, value) => markdown = value,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(TextField), findsNWidgets(2));
+      final firstField = tester.widget<TextField>(find.byType(TextField).first);
+      firstField.focusNode!.requestFocus();
+      await tester.pump();
+
+      for (var attempt = 0; attempt < 2; attempt++) {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.keyA);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.keyA);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+      }
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pump();
+
+      expect(markdown, contains(protectedSource));
+      expect(
+        RegExp(r'^> \[guide\]:', multiLine: true).allMatches(markdown),
+        hasLength(1),
+      );
+    },
+  );
+
   test('WYSIWYG inline ranges do not duplicate formatted text', () {
     final parsed = parser.parse(filePath: 'topic.md', source: '**source**\n');
     final block = parsed.busyDocument.blocks.single;
@@ -1757,6 +3371,135 @@ void main() {}
     );
 
     expect(controller.markdown, 'Alpha `Beta`\n');
+  });
+
+  test('serializer chooses inline code delimiters that preserve backticks', () {
+    for (final (payload, expected) in const [
+      ('left ` right', '``left ` right``\n'),
+      ('`edge`', '`` `edge` ``\n'),
+      (' padded ', '`  padded  `\n'),
+      ('   ', '`   `\n'),
+      ('a `` b', '```a `` b```\n'),
+    ]) {
+      final document = BusyDocument(
+        filePath: 'topic.md',
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyBlock(
+            id: 'paragraph',
+            kind: BusyBlockKind.paragraph,
+            inlines: [BusyInline(kind: BusyInlineKind.code, text: payload)],
+            dirty: true,
+          ),
+        ],
+      );
+
+      final markdown = const BusyMarkMarkdownSerializer().serialize(document);
+
+      expect(markdown, expected, reason: 'payload: "$payload"');
+      final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+      final code = reparsed.busyDocument.blocks.single.inlines.singleWhere(
+        (inline) => inline.kind == BusyInlineKind.code,
+      );
+      expect(code.text, payload);
+    }
+  });
+
+  test(
+    'serializer preserves fenced code delimiters and trailing whitespace',
+    () {
+      const payload = 'before\n```\nafter  ';
+      const document = BusyDocument(
+        filePath: 'topic.md',
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyBlock(
+            id: 'code',
+            kind: BusyBlockKind.codeBlock,
+            inlines: [BusyInline(kind: BusyInlineKind.text, text: payload)],
+            attributes: {'language': 'text'},
+            dirty: true,
+          ),
+        ],
+      );
+
+      final markdown = const BusyMarkMarkdownSerializer().serialize(document);
+
+      expect(markdown, '````text\nbefore\n```\nafter  \n````\n');
+      final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+      expect(reparsed.busyDocument.blocks, hasLength(1));
+      expect(reparsed.busyDocument.blocks.single.kind, BusyBlockKind.codeBlock);
+      expect(reparsed.busyDocument.blocks.single.plainText, payload);
+      expect(reparsed.codeBlocks, hasLength(1));
+      expect(reparsed.codeBlocks.single.language, 'text');
+      expect(reparsed.codeBlocks.single.content, '$payload\n');
+    },
+  );
+
+  test('parser preserves meaningful trailing fenced-code whitespace', () {
+    const source = '```\nline  \n\n```\n';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final block = parsed.busyDocument.blocks.single;
+
+    expect(block.plainText, 'line  \n');
+
+    final serialized = const BusyMarkMarkdownSerializer().serialize(
+      parsed.busyDocument.copyWith(blocks: [block.copyWith(dirty: true)]),
+    );
+    expect(serialized, source);
+    expect(
+      parser
+          .parse(filePath: 'topic.md', source: serialized)
+          .busyDocument
+          .blocks
+          .single
+          .plainText,
+      'line  \n',
+    );
+  });
+
+  test('parser closes dynamic code fences only with a matching delimiter', () {
+    const source =
+        '````dart\n'
+        '~~~\n'
+        '```\n'
+        '# Hidden\n'
+        '%secret%\n'
+        '<script>alert(1)</script>\n'
+        'after\n'
+        '`````\n'
+        '# Visible\n';
+
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(parsed.busyDocument.blocks, hasLength(2));
+    expect(parsed.busyDocument.blocks.first.kind, BusyBlockKind.codeBlock);
+    expect(
+      parsed.busyDocument.blocks.first.plainText,
+      '~~~\n```\n# Hidden\n%secret%\n<script>alert(1)</script>\nafter',
+    );
+    expect(parsed.codeBlocks, hasLength(1));
+    expect(parsed.codeBlocks.single.language, 'dart');
+    expect(
+      parsed.codeBlocks.single.content,
+      '~~~\n```\n# Hidden\n%secret%\n<script>alert(1)</script>\nafter\n',
+    );
+    expect(parsed.headings.map((heading) => heading.text), ['Visible']);
+    expect(parsed.variables, isEmpty);
+    expect(parsed.xmlBlocks, isEmpty);
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('markdown.raw-html.unsafe')),
+    );
+  });
+
+  test('parser does not treat indented code as a fenced block', () {
+    const source = '    ```\n# Visible\n    ```\n';
+
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+
+    expect(parsed.codeBlocks, isEmpty);
+    expect(parsed.headings.map((heading) => heading.text), ['Visible']);
   });
 
   test('WYSIWYG inline commands preserve existing sibling formatting', () {
@@ -1875,6 +3618,7 @@ void main() {}
               height: 640,
               child: BusyMarkWysiwygEditor(
                 document: document,
+                toolbarPlacement: EditorToolbarPlacement.bottomLeft,
                 workspaceRoot: topicsDir.path,
                 writersideRoot: temp.path,
                 imagesDir: 'images',
@@ -1895,21 +3639,54 @@ void main() {}
 
       expect(find.text('Image'), findsOneWidget);
       expect(find.text('Apply'), findsOneWidget);
+      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+      expect(find.byType(BusyMarkFloatingTextEntry), findsNWidgets(2));
+      expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+      final dialogRect = tester.getRect(find.byType(BusyMarkDialogShell));
+      final sourceEntryRect = tester.getRect(
+        find.byKey(BusyMarkImageDialogKeys.source),
+      );
+      final altEntryRect = tester.getRect(
+        find.byKey(BusyMarkImageDialogKeys.alt),
+      );
+      final chooseRect = tester.getRect(
+        find.byKey(BusyMarkImageDialogKeys.choose),
+      );
+      expect(dialogRect.width, lessThanOrEqualTo(BusyMarkSizes.dialogCompact));
       expect(
-        tester.widget<TextField>(find.byType(TextField).at(0)).controller?.text,
+        sourceEntryRect.left - dialogRect.left,
+        closeTo(BusyMarkSpacing.lg, 0.1),
+      );
+      expect(
+        altEntryRect.left - dialogRect.left,
+        closeTo(BusyMarkSpacing.lg, 0.1),
+      );
+      expect(
+        dialogRect.right - chooseRect.right,
+        closeTo(BusyMarkSpacing.lg, 0.1),
+      );
+      final sourceField = find.descendant(
+        of: find.byKey(BusyMarkImageDialogKeys.source),
+        matching: find.byType(EditableText),
+      );
+      final altField = find.descendant(
+        of: find.byKey(BusyMarkImageDialogKeys.alt),
+        matching: find.byType(EditableText),
+      );
+      expect(
+        tester.widget<EditableText>(sourceField).controller.text,
         'rpi_1.jpg',
       );
       expect(
-        tester.widget<TextField>(find.byType(TextField).at(1)).controller?.text,
+        tester.widget<EditableText>(altField).controller.text,
         'Raspberry Pi',
       );
 
-      await tester.enterText(
-        find.byType(TextField).at(0),
-        'images/updated.png',
-      );
-      await tester.enterText(find.byType(TextField).at(1), 'Updated alt');
-      await tester.tap(find.text('Apply'));
+      await tester.enterText(sourceField, 'images/updated.png');
+      await tester.enterText(altField, 'Updated alt');
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
       await tester.pumpAndSettle();
 
       expect(markdown, '![Updated alt](images/updated.png)\n');
@@ -2470,6 +4247,154 @@ void main() {}
     expect(codeController.markdown, '```dart\nprint(1);\n```\n');
   });
 
+  test('WYSIWYG table cell pipes round-trip without shifting columns', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| First | Final |\n'
+          '| --- | --- |\n'
+          '| left | keep |\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final table = controller.document.blocks.single;
+    final firstBodyCell = table.children[1].children.first;
+
+    controller.updateTableCellText(table.id, firstBodyCell.id, 'left | right');
+
+    expect(
+      controller.markdown,
+      '| First | Final |\n'
+      '| --- | --- |\n'
+      r'| left \| right | keep |'
+      '\n',
+    );
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    final reparsedRow = reparsed.busyDocument.blocks.single.children[1];
+    expect(reparsedRow.children, hasLength(2));
+    expect(reparsedRow.children.map((cell) => cell.plainText), [
+      'left | right',
+      'keep',
+    ]);
+  });
+
+  test('table escaping protects pipes inside formatted cell content', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '| First | Final |\n'
+          '| --- | --- |\n'
+          r'| `a\|b` and **x\|y** | keep |'
+          '\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final table = controller.document.blocks.single;
+
+    controller.updateTableCellText(
+      table.id,
+      table.children.first.children.first.id,
+      'Changed',
+    );
+
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: controller.markdown,
+    );
+    final cells = reparsed.busyDocument.blocks.single.children[1].children;
+    expect(cells, hasLength(2));
+    expect(cells.first.plainText, 'a|b and x|y');
+    expect(cells.last.plainText, 'keep');
+    expect(
+      cells.first.inlines.where((inline) => inline.kind == BusyInlineKind.code),
+      hasLength(1),
+    );
+    expect(
+      cells.first.inlines.where(
+        (inline) => inline.kind == BusyInlineKind.strong,
+      ),
+      hasLength(1),
+    );
+  });
+
+  test('table code preserves a backslash immediately before a pipe', () {
+    const payload = r'a\|b';
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.gfm,
+      blocks: [
+        BusyBlock(
+          id: 'table',
+          kind: BusyBlockKind.table,
+          dirty: true,
+          children: [
+            BusyBlock(
+              id: 'header',
+              kind: BusyBlockKind.table,
+              children: [
+                BusyBlock(
+                  id: 'header-first',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.text, text: 'First'),
+                  ],
+                ),
+                BusyBlock(
+                  id: 'header-final',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.text, text: 'Final'),
+                  ],
+                ),
+              ],
+            ),
+            BusyBlock(
+              id: 'body',
+              kind: BusyBlockKind.table,
+              children: [
+                BusyBlock(
+                  id: 'body-first',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.code, text: payload),
+                  ],
+                ),
+                BusyBlock(
+                  id: 'body-final',
+                  kind: BusyBlockKind.paragraph,
+                  inlines: [
+                    BusyInline(kind: BusyInlineKind.text, text: 'keep'),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final markdown = const BusyMarkMarkdownSerializer().serialize(document);
+    final rendered = md.markdownToHtml(
+      markdown,
+      extensionSet: md.ExtensionSet.gitHubWeb,
+    );
+    final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+    final cells = reparsed.busyDocument.blocks.single.children[1].children;
+
+    expect(markdown, contains('<code>&#97;&#92;&#124;&#98;</code>'));
+    expect(markdown, isNot(contains('&amp;#')));
+    expect(rendered, contains(r'<code>a\|b</code>'));
+    expect(cells, hasLength(2));
+    expect(cells.first.inlines.single.kind, BusyInlineKind.code);
+    expect(cells.first.inlines.single.text, payload);
+    expect(cells.last.plainText, 'keep');
+  });
+
   test('WYSIWYG table row and column commands serialize Markdown', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -2654,6 +4579,28 @@ RenderEditable? _findRenderEditable(RenderObject root) {
     result ??= _findRenderEditable(child);
   });
   return result;
+}
+
+Future<void> _pressControlShortcut(
+  WidgetTester tester,
+  LogicalKeyboardKey key, {
+  bool shift = false,
+}) async {
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  if (shift) {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+  }
+  await tester.sendKeyDownEvent(key);
+  await tester.sendKeyUpEvent(key);
+  if (shift) {
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+  }
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pump();
+}
+
+class _TestTabIntent extends Intent {
+  const _TestTabIntent();
 }
 
 class _FakeImageHttpClient implements HttpClient {

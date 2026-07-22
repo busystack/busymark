@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
+import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
+import '../core/linux_atomic_file_api.dart';
 import '../core/path_utils.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
@@ -14,7 +16,10 @@ import '../markdown/preview_model.dart';
 import '../writerside/writerside_module_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_toc_editor.dart';
 import '../writerside/writerside_topic_creator.dart';
+import '../writerside/writerside_topic_file_editor.dart';
+import '../writerside/writerside_topic_removal_service.dart';
 import 'workspace_model.dart';
 
 class WorkspaceService {
@@ -24,15 +29,23 @@ class WorkspaceService {
     this.writersideService = const WritersideModuleService(),
     this.writersideProjectCreator = const WritersideProjectCreator(),
     this.writersideTopicCreator = const WritersideTopicCreator(),
+    this.writersideTocEditor = const WritersideTocEditor(),
+    this.writersideTopicFileEditor = const WritersideTopicFileEditor(),
+    this.writersideTopicRemovalService = const WritersideTopicRemovalService(),
     this.scanOptions = const WorkspaceScanOptions(),
-  });
+    Future<void> Function(String targetPath)? beforeNewFilePublish,
+  }) : _beforeNewFilePublish = beforeNewFilePublish;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
   final WritersideModuleService writersideService;
   final WritersideProjectCreator writersideProjectCreator;
   final WritersideTopicCreator writersideTopicCreator;
+  final WritersideTocEditor writersideTocEditor;
+  final WritersideTopicFileEditor writersideTopicFileEditor;
+  final WritersideTopicRemovalService writersideTopicRemovalService;
   final WorkspaceScanOptions scanOptions;
+  final Future<void> Function(String targetPath)? _beforeNewFilePublish;
 
   Workspace createUntitledMarkdown({String source = ''}) {
     const fileName = '';
@@ -54,7 +67,10 @@ class WorkspaceService {
     final fileType = FileSystemEntity.typeSync(path);
     _logOpenPathDiagnostics(inputPath, path, fileType);
     if (fileType == FileSystemEntityType.file) {
-      return _openSingleMarkdown(path);
+      final canonicalPath = p.normalize(
+        await File(path).resolveSymbolicLinks(),
+      );
+      return _openSingleMarkdown(canonicalPath);
     }
     if (fileType != FileSystemEntityType.directory) {
       throw BusyMarkException(
@@ -62,11 +78,14 @@ class WorkspaceService {
         args: {'path': path},
       );
     }
-    if (File(p.join(path, 'writerside.cfg')).existsSync() ||
-        File(p.join(path, 'project.ihp')).existsSync()) {
-      return _openWriterside(path);
+    final canonicalPath = p.normalize(
+      await Directory(path).resolveSymbolicLinks(),
+    );
+    if (File(p.join(canonicalPath, 'writerside.cfg')).existsSync() ||
+        File(p.join(canonicalPath, 'project.ihp')).existsSync()) {
+      return _openWriterside(canonicalPath);
     }
-    return _openMarkdownFolder(path);
+    return _openMarkdownFolder(canonicalPath);
   }
 
   Future<Workspace> createWritersideProject(
@@ -81,26 +100,194 @@ class WorkspaceService {
 
   Future<Workspace> createWritersideTopic(
     Workspace workspace,
-    WritersideTopicCreateRequest request,
-  ) async {
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+  }) async {
     if (workspace.kind != WorkspaceKind.writersideModule ||
         workspace.writersideModule == null) {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
-    final module = workspace.writersideModule!;
+    final module = await _currentWritersideModule(workspace);
     if (module.instances.isEmpty) {
       throw const BusyMarkException('writerside.topic.instance-tree-missing');
+    }
+    final instance = _writersideInstanceForTree(module, instanceTreePath);
+    var topicsRootDir = module.config.topicsDir;
+    if (request.placement != WritersideTopicCreatePlacement.root) {
+      final referenceTopic = request.referenceTopic;
+      final topic = referenceTopic == null
+          ? null
+          : module.topicByReference(referenceTopic);
+      if (topic != null) {
+        final relativeRoot = p.relative(topic.topicRoot, from: module.rootPath);
+        if (relativeRoot != '.' && !relativeRoot.startsWith('../')) {
+          topicsRootDir = relativeRoot;
+        }
+      }
     }
     final result = await writersideTopicCreator.create(
       WritersideTopicCreateTarget(
         rootPath: module.rootPath,
-        treePath: module.instances.first.sourceTreePath,
-        topicsRootDir: module.config.topicsDir,
+        treePath: instance.sourceTreePath,
+        topicsRootDir: topicsRootDir,
         existingTopicIds: {for (final topic in module.topics) topic.id},
       ),
       request,
     );
     return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
+  }
+
+  Future<void> moveWritersideTocEntry(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> sourcePath,
+    required WritersideTopicCreatePlacement placement,
+    required List<int>? referencePath,
+    WritersideTocNodeIdentity? sourceIdentity,
+    WritersideTocNodeIdentity? referenceIdentity,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.moveSubtree(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      WritersideTocMoveRequest(
+        sourcePath: sourcePath,
+        placement: placement,
+        referencePath: referencePath,
+        sourceIdentity: sourceIdentity,
+        referenceIdentity: referenceIdentity,
+      ),
+    );
+  }
+
+  Future<void> removeWritersideTocEntry(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> nodePath,
+    WritersideTocNodeIdentity? expectedIdentity,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    await writersideTocEditor.removeEntry(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      nodePath,
+      expectedIdentity: expectedIdentity,
+    );
+  }
+
+  Future<String> renameWritersideTopicFile(
+    Workspace workspace,
+    String topicPath,
+    String newFileName,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    final topic = _writersideTopicForPath(module, topicPath);
+    final result = await writersideTopicFileEditor.rename(
+      module: module,
+      topic: topic,
+      newFileName: newFileName,
+    );
+    return result.newTopicPath;
+  }
+
+  Future<void> deleteWritersideTopicFile(
+    Workspace workspace,
+    String topicPath,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    final topic = _writersideTopicForPath(module, topicPath);
+    final analysis = await writersideTopicRemovalService.analyze(
+      module: module,
+      topicPath: topic.filePath,
+      mode: WritersideTopicRemovalMode.safeDeleteFile,
+    );
+    await writersideTopicRemovalService.apply(
+      WritersideTopicRemovalRequest(
+        analysis: analysis,
+        updateUsagesAutomatically: analysis.canUpdateUsagesAutomatically,
+      ),
+    );
+  }
+
+  Future<WritersideTopicRemovalAnalysis> analyzeWritersideTopicRemoval(
+    Workspace workspace, {
+    required String topicPath,
+    required WritersideTopicRemovalMode mode,
+    String? treePath,
+    List<int>? nodePath,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final topic = _writersideTopicForPath(module, topicPath);
+    return writersideTopicRemovalService.analyze(
+      module: module,
+      topicPath: topic.filePath,
+      mode: mode,
+      selectedTreePath: treePath,
+      selectedNodePath: nodePath,
+    );
+  }
+
+  Future<WritersideTopicRemovalResult> applyWritersideTopicRemoval(
+    Workspace workspace,
+    WritersideTopicRemovalRequest request,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    if (!p.equals(module.rootPath, request.analysis.moduleRoot)) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    return writersideTopicRemovalService.apply(request);
+  }
+
+  WritersideModule _writersideModule(Workspace workspace) {
+    if (workspace.kind != WorkspaceKind.writersideModule ||
+        workspace.writersideModule == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    return workspace.writersideModule!;
+  }
+
+  Future<WritersideModule> _currentWritersideModule(Workspace workspace) async {
+    final openedModule = _writersideModule(workspace);
+    return writersideService.load(openedModule.rootPath);
+  }
+
+  WritersideInstance _writersideInstanceForTree(
+    WritersideModule module,
+    String? treePath,
+  ) {
+    if (module.instances.isEmpty) {
+      throw const BusyMarkException('writerside.topic.instance-tree-missing');
+    }
+    if (treePath == null) {
+      return module.instances.first;
+    }
+    for (final instance in module.instances) {
+      if (p.equals(instance.sourceTreePath, treePath)) {
+        return instance;
+      }
+    }
+    throw const BusyMarkException('writerside.topic.instance-tree-missing');
+  }
+
+  WritersideTopic _writersideTopicForPath(
+    WritersideModule module,
+    String topicPath,
+  ) {
+    for (final topic in module.topics) {
+      if (p.equals(topic.filePath, topicPath)) {
+        return topic;
+      }
+    }
+    throw BusyMarkException(
+      'writerside.topic-file.topic-not-resolved',
+      args: {'path': topicPath},
+    );
   }
 
   void _logOpenPathDiagnostics(
@@ -175,6 +362,53 @@ class WorkspaceService {
     }
   }
 
+  Future<bool> pathExists(String path) async {
+    return await FileSystemEntity.type(path, followLinks: false) !=
+        FileSystemEntityType.notFound;
+  }
+
+  /// Saves a newly named file without replacing any existing filesystem
+  /// entity at [path].
+  ///
+  /// The complete contents are staged in a private temporary directory, then
+  /// published with Linux's atomic no-replace rename operation (or an atomic
+  /// hard-link fallback). It fails if any filesystem entity already has the
+  /// final name.
+  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+    final bytes = utf8.encode(text);
+    final staged = await _stageNewSave(path, bytes);
+    try {
+      final stat = await staged.file.stat();
+      await _beforeNewFilePublish?.call(path);
+      await _publishNewFileWithoutReplace(staged.file, path);
+      return _snapshotFromBytes(stat, bytes);
+    } finally {
+      await _deleteStagedSaveBestEffort(staged);
+    }
+  }
+
+  /// Replaces the exact final directory entry at [path] without following a
+  /// final symlink. This is used only after the user confirms a Save As
+  /// overwrite for that displayed path.
+  Future<WorkspaceFileSnapshot> saveTextReplacingPath(
+    String path,
+    String text,
+  ) async {
+    final bytes = utf8.encode(text);
+    final staged = await _stageNewSave(path, bytes);
+    try {
+      final targetType = await FileSystemEntity.type(path, followLinks: false);
+      if (targetType == FileSystemEntityType.file) {
+        await _copyFileMode(await File(path).stat(), staged.file);
+      }
+      final target = File(p.absolute(path));
+      await staged.file.rename(target.path);
+      return _snapshotFromBytes(await target.stat(), bytes);
+    } finally {
+      await _deleteStagedSaveBestEffort(staged);
+    }
+  }
+
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     final savePath = await _saveTargetPath(path);
     final target = File(savePath);
@@ -193,13 +427,7 @@ class WorkspaceService {
       return _snapshotFromBytes(stat, bytes);
     } on Object {
       if (!renamed) {
-        try {
-          if (await temp.exists()) {
-            await temp.delete();
-          }
-        } on Object {
-          // Best-effort cleanup; preserve the original save error.
-        }
+        await _deleteSaveArtifactBestEffort(temp);
       }
       rethrow;
     }
@@ -210,13 +438,14 @@ class WorkspaceService {
     String directoryPath,
     String fileName,
   ) async {
-    final directory = await _safeWorkspaceDirectory(workspace, directoryPath);
-    final target = _safeWorkspaceChildPath(
-      workspace,
+    final anchor = await _workspacePathAnchor(workspace);
+    final directory = await _safeWorkspaceDirectory(anchor, directoryPath);
+    final target = await _safeWorkspaceChildPath(
+      anchor,
       p.join(directory, _safeEntityName(fileName)),
       allowRoot: false,
     );
-    await _ensurePathAvailable(target);
+    await _ensurePathAvailable(anchor, target);
     await File(target).create(exclusive: true);
     return target;
   }
@@ -226,21 +455,24 @@ class WorkspaceService {
     String sourcePath,
     String newName,
   ) async {
-    final source = _safeWorkspaceChildPath(
-      workspace,
+    final anchor = await _workspacePathAnchor(workspace);
+    final source = await _safeWorkspaceChildPath(
+      anchor,
       sourcePath,
       allowRoot: false,
+      allowFinalSymlink: true,
+      allowMissingAncestors: true,
     );
-    final target = _safeWorkspaceChildPath(
-      workspace,
+    final target = await _safeWorkspaceChildPath(
+      anchor,
       p.join(p.dirname(source), _safeEntityName(newName)),
       allowRoot: false,
+      allowMissingAncestors: true,
     );
     if (p.equals(source, target)) {
       return source;
     }
-    await _ensurePathAvailable(target);
-    await _renameEntity(source, target);
+    await _renameEntity(anchor, source, target);
     return target;
   }
 
@@ -249,13 +481,16 @@ class WorkspaceService {
     String sourcePath,
     String targetDirectoryPath,
   ) async {
-    final source = _safeWorkspaceChildPath(
-      workspace,
+    final anchor = await _workspacePathAnchor(workspace);
+    final source = await _safeWorkspaceChildPath(
+      anchor,
       sourcePath,
       allowRoot: false,
+      allowFinalSymlink: true,
+      allowMissingAncestors: true,
     );
     final directory = await _safeWorkspaceDirectory(
-      workspace,
+      anchor,
       targetDirectoryPath,
     );
     if (p.equals(p.dirname(source), directory)) {
@@ -267,23 +502,38 @@ class WorkspaceService {
         args: {'path': directory},
       );
     }
-    final target = _safeWorkspaceChildPath(
-      workspace,
+    final target = await _safeWorkspaceChildPath(
+      anchor,
       p.join(directory, p.basename(source)),
       allowRoot: false,
     );
-    await _ensurePathAvailable(target);
-    await _renameEntity(source, target);
+    await _renameEntity(anchor, source, target);
     return target;
   }
 
   Future<void> deleteEntity(Workspace workspace, String sourcePath) async {
-    final source = _safeWorkspaceChildPath(
-      workspace,
+    final anchor = await _workspacePathAnchor(workspace);
+    final source = await _safeWorkspaceChildPath(
+      anchor,
       sourcePath,
       allowRoot: false,
+      allowFinalSymlink: true,
+      allowMissingAncestors: true,
     );
-    final type = await FileSystemEntity.type(source, followLinks: false);
+    final resolution = await _resolveWorkspacePath(
+      anchor,
+      source,
+      allowRoot: false,
+      allowFinalSymlink: true,
+      allowMissingAncestors: true,
+    );
+    final type = resolution.type;
+    if (workspace.kind == WorkspaceKind.writersideModule &&
+        await _containsWritersideTopic(workspace, source, type)) {
+      throw const BusyMarkException(
+        'writerside.topic-removal.safe-delete-required',
+      );
+    }
     if (type == FileSystemEntityType.directory) {
       await Directory(source).delete(recursive: true);
       return;
@@ -302,42 +552,126 @@ class WorkspaceService {
     );
   }
 
-  String _safeWorkspaceChildPath(
+  Future<bool> _containsWritersideTopic(
     Workspace workspace,
-    String path, {
-    required bool allowRoot,
-  }) {
-    final root = normalizePath(workspace.rootPath);
-    final normalized = normalizePath(path);
-    final inside = p.equals(root, normalized) || p.isWithin(root, normalized);
-    if (!inside) {
+    String sourcePath,
+    FileSystemEntityType type,
+  ) async {
+    final module = await _currentWritersideModule(workspace);
+    for (final configuredRoot in module.config.topicRoots) {
+      final topicRoot = p.normalize(
+        p.join(module.rootPath, configuredRoot.dir),
+      );
+      if (type == FileSystemEntityType.directory &&
+          (p.equals(sourcePath, topicRoot) ||
+              p.isWithin(topicRoot, sourcePath) ||
+              p.isWithin(sourcePath, topicRoot))) {
+        return true;
+      }
+      final extension = p.extension(sourcePath).toLowerCase();
+      if (type == FileSystemEntityType.file &&
+          p.isWithin(topicRoot, sourcePath) &&
+          (extension == '.md' ||
+              extension == '.markdown' ||
+              extension == '.topic')) {
+        return true;
+      }
+    }
+    for (final topic in module.topics) {
+      final topicPath = p.normalize(topic.filePath);
+      if (p.equals(topicPath, sourcePath) ||
+          (type == FileSystemEntityType.directory &&
+              p.isWithin(sourcePath, topicPath))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<CanonicalPathAnchor> _workspacePathAnchor(Workspace workspace) async {
+    try {
+      final anchor = await captureCanonicalDirectoryAnchor(workspace.rootPath);
+      if (!p.equals(anchor.requestedRootPath, anchor.rootPath)) {
+        throw AnchoredPathViolation(
+          reason: AnchoredPathViolationReason.rootReplacement,
+          path: anchor.requestedRootPath,
+        );
+      }
+      return anchor;
+    } on AnchoredPathViolation catch (error) {
       throw BusyMarkException(
         'workspace.file-operation-outside-root',
-        args: {'path': normalized},
+        args: {'path': error.path},
       );
     }
-    if (!allowRoot && p.equals(root, normalized)) {
+  }
+
+  Future<String> _safeWorkspaceChildPath(
+    CanonicalPathAnchor anchor,
+    String path, {
+    required bool allowRoot,
+    bool allowFinalSymlink = false,
+    bool allowMissingAncestors = false,
+  }) async {
+    return (await _resolveWorkspacePath(
+      anchor,
+      path,
+      allowRoot: allowRoot,
+      allowFinalSymlink: allowFinalSymlink,
+      allowMissingAncestors: allowMissingAncestors,
+    )).path;
+  }
+
+  Future<AnchoredPathResolution> _resolveWorkspacePath(
+    CanonicalPathAnchor anchor,
+    String path, {
+    required bool allowRoot,
+    bool allowFinalSymlink = false,
+    bool allowMissingAncestors = false,
+  }) async {
+    final normalized = normalizePath(path);
+    final isRoot =
+        p.equals(normalized, anchor.requestedRootPath) ||
+        p.equals(normalized, anchor.rootPath);
+    if (!allowRoot && isRoot) {
       throw BusyMarkException(
         'workspace.file-operation-root',
         args: {'path': normalized},
       );
     }
-    return normalized;
+    try {
+      return await resolveAnchoredPath(
+        anchor,
+        normalized,
+        allowRoot: allowRoot,
+        allowFinalSymlink: allowFinalSymlink,
+        allowMissingAncestors: allowMissingAncestors,
+      );
+    } on AnchoredPathViolation catch (error) {
+      throw BusyMarkException(
+        'workspace.file-operation-outside-root',
+        args: {'path': error.path},
+      );
+    }
   }
 
   Future<String> _safeWorkspaceDirectory(
-    Workspace workspace,
+    CanonicalPathAnchor anchor,
     String path,
   ) async {
-    final directory = _safeWorkspaceChildPath(workspace, path, allowRoot: true);
-    final type = await FileSystemEntity.type(directory, followLinks: false);
-    if (type != FileSystemEntityType.directory) {
+    final resolution = await _resolveWorkspacePath(
+      anchor,
+      path,
+      allowRoot: true,
+      allowMissingAncestors: true,
+    );
+    if (resolution.type != FileSystemEntityType.directory) {
       throw BusyMarkException(
         'workspace.directory-missing',
-        args: {'path': directory},
+        args: {'path': resolution.path},
       );
     }
-    return directory;
+    return resolution.path;
   }
 
   String _safeEntityName(String name) {
@@ -358,34 +692,58 @@ class WorkspaceService {
     return trimmed;
   }
 
-  Future<void> _ensurePathAvailable(String path) async {
-    final type = await FileSystemEntity.type(path, followLinks: false);
-    if (type != FileSystemEntityType.notFound) {
+  Future<void> _ensurePathAvailable(
+    CanonicalPathAnchor anchor,
+    String path,
+  ) async {
+    final resolution = await _resolveWorkspacePath(
+      anchor,
+      path,
+      allowRoot: false,
+    );
+    if (resolution.type != FileSystemEntityType.notFound) {
       throw BusyMarkException(
         'workspace.path-already-exists',
-        args: {'path': path},
+        args: {'path': resolution.path},
       );
     }
   }
 
-  Future<void> _renameEntity(String source, String target) async {
-    final type = await FileSystemEntity.type(source, followLinks: false);
+  Future<void> _renameEntity(
+    CanonicalPathAnchor anchor,
+    String source,
+    String target,
+  ) async {
+    final sourceResolution = await _resolveWorkspacePath(
+      anchor,
+      source,
+      allowRoot: false,
+      allowFinalSymlink: true,
+      allowMissingAncestors: true,
+    );
+    final type = sourceResolution.type;
+    if (type != FileSystemEntityType.directory &&
+        type != FileSystemEntityType.file &&
+        type != FileSystemEntityType.link) {
+      throw BusyMarkException(
+        'workspace.path-does-not-exist',
+        args: {'path': sourceResolution.path},
+      );
+    }
+    await _ensurePathAvailable(anchor, target);
     if (type == FileSystemEntityType.directory) {
-      await Directory(source).rename(target);
+      await Directory(sourceResolution.path).rename(target);
       return;
     }
     if (type == FileSystemEntityType.file) {
-      await File(source).rename(target);
+      await File(sourceResolution.path).rename(target);
       return;
     }
     if (type == FileSystemEntityType.link) {
-      await Link(source).rename(target);
+      await Link(sourceResolution.path).rename(target);
       return;
     }
-    throw BusyMarkException(
-      'workspace.path-does-not-exist',
-      args: {'path': source},
-    );
+    throw StateError('Unsupported workspace entity type: $type');
   }
 
   Future<String> _saveTargetPath(String path) async {
@@ -418,11 +776,78 @@ class WorkspaceService {
     );
   }
 
+  Future<_StagedSave> _stageNewSave(String path, List<int> bytes) async {
+    final directory = await Directory(
+      p.dirname(p.absolute(path)),
+    ).createTemp('.busymark-save-');
+    final staged = _StagedSave(
+      directory: directory,
+      file: File(p.join(directory.path, 'contents')),
+    );
+    try {
+      await staged.file.writeAsBytes(bytes, flush: true);
+      return staged;
+    } on Object {
+      await _deleteStagedSaveBestEffort(staged);
+      rethrow;
+    }
+  }
+
+  Future<void> _publishNewFileWithoutReplace(
+    File stagedFile,
+    String targetPath,
+  ) async {
+    if (!Platform.isLinux) {
+      throw UnsupportedError(
+        'Atomic no-replace publication is currently supported on Linux only.',
+      );
+    }
+    final errorNumber = LinuxAtomicFileApi.instance.publishNoReplace(
+      stagedFile.absolute.path,
+      File(targetPath).absolute.path,
+    );
+    if (errorNumber == null) {
+      return;
+    }
+    if (errorNumber == LinuxAtomicFileApi.fileExistsError) {
+      throw BusyMarkException(
+        'workspace.path-already-exists',
+        args: {'path': targetPath},
+      );
+    }
+    throw FileSystemException(
+      'Failed to atomically publish the new file',
+      targetPath,
+      OSError('no-replace publication failed', errorNumber),
+    );
+  }
+
+  Future<void> _deleteStagedSaveBestEffort(_StagedSave staged) async {
+    await _deleteSaveArtifactBestEffort(staged.file);
+    try {
+      if (await staged.directory.exists()) {
+        await staged.directory.delete();
+      }
+    } on Object {
+      // Best-effort cleanup; preserve the original save result or error.
+    }
+  }
+
   File _temporarySaveFile(String path) {
     final directory = p.dirname(path);
     final basename = p.basename(path);
     final stamp = DateTime.now().microsecondsSinceEpoch;
     return File(p.join(directory, '.$basename.busymark-save-$pid-$stamp.tmp'));
+  }
+
+  Future<void> _deleteSaveArtifactBestEffort(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on Object {
+      // Best-effort cleanup; preserve the original save error.
+    }
   }
 
   Future<Workspace> reparseActive(Workspace workspace, String source) async {
@@ -831,6 +1256,13 @@ class WorkspaceService {
           ),
     ];
   }
+}
+
+class _StagedSave {
+  const _StagedSave({required this.directory, required this.file});
+
+  final Directory directory;
+  final File file;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

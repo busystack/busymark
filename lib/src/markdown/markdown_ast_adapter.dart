@@ -2,6 +2,7 @@ import 'package:markdown/markdown.dart' as md;
 
 import '../core/path_utils.dart';
 import 'busymark_document.dart';
+import 'markdown_fence.dart';
 import 'markdown_model.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
@@ -221,7 +222,7 @@ class MarkdownAstAdapter {
           inlines: [
             BusyInline(
               kind: BusyInlineKind.text,
-              text: code.textContent.trimRight(),
+              text: _codeBlockText(code.textContent),
             ),
           ],
           attributes: {
@@ -263,6 +264,19 @@ class MarkdownAstAdapter {
       return [
         if (_tableCaption(node, nextId) case final caption?) caption,
         BusyBlock(id: nextId(), kind: BusyBlockKind.table, children: tableRows),
+      ];
+    }
+
+    if (tag == 'section' && node.attributes['class'] == 'footnotes') {
+      return [
+        BusyBlock(
+          id: nextId(),
+          kind: BusyBlockKind.unknown,
+          inlines: _inlinesFromNodes(children),
+          rawSource: node.textContent,
+          preserveRaw: true,
+          isGenerated: true,
+        ),
       ];
     }
 
@@ -889,19 +903,19 @@ class MarkdownAstAdapter {
     final segments = <_MarkdownSourceSegment>[];
     var segmentStart = 0;
     var index = 0;
-    String? fence;
+    MarkdownFence? fence;
 
     while (index < lines.length) {
       final line = lines[index].line;
       if (fence != null) {
-        if (_isClosingMarkdownFence(line, fence)) {
+        if (fence.closes(line)) {
           fence = null;
         }
         index += 1;
         continue;
       }
 
-      fence = _markdownFenceMarker(line);
+      fence = MarkdownFence.parse(line);
       if (fence != null) {
         index += 1;
         continue;
@@ -1018,17 +1032,9 @@ class MarkdownAstAdapter {
     return line.substring(start, end + 1).trimRight().endsWith('/>');
   }
 
-  String? _markdownFenceMarker(String line) {
-    final match = RegExp(r'^\s*(`{3,}|~{3,})').firstMatch(line);
-    return match?.group(1);
-  }
-
-  bool _isClosingMarkdownFence(String line, String opener) {
-    final marker = _markdownFenceMarker(line);
-    if (marker == null || marker.codeUnitAt(0) != opener.codeUnitAt(0)) {
-      return false;
-    }
-    return marker.length >= opener.length;
+  String _codeBlockText(String text) {
+    // package:markdown appends one structural LF to non-empty code blocks.
+    return text.endsWith('\n') ? text.substring(0, text.length - 1) : text;
   }
 }
 

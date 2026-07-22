@@ -89,7 +89,7 @@ class BusyMarkApp extends ConsumerWidget {
               BusyMarkAppShortcutActivators.closeTab: const _CloseTabIntent(),
               BusyMarkAppShortcutActivators.closeAllTabs:
                   const _CloseAllTabsIntent(),
-              BusyMarkAppShortcutActivators.find: const _OpenSearchIntent(),
+              BusyMarkAppShortcutActivators.search: const _OpenSearchIntent(),
               BusyMarkAppShortcutActivators.toggleSidebar:
                   const _ToggleSidebarIntent(),
               BusyMarkDocumentViewShortcutActivators.editor:
@@ -311,7 +311,9 @@ class BusyMarkApp extends ConsumerWidget {
                 title: context.l10n.openMarkdownFile,
                 subtitle: context.l10n.markdownFileExtensions,
                 leading: const Icon(BusyMarkGlyphs.markdownFile),
-                trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                trailing: Icon(
+                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
+                ),
                 onTap: () =>
                     Navigator.pop(dialogContext, const _OpenMarkdownFile()),
               ),
@@ -319,7 +321,9 @@ class BusyMarkApp extends ConsumerWidget {
                 title: context.l10n.openFolderOrWritersideProject,
                 subtitle: context.l10n.markdownFolderOrWritersideProject,
                 leading: const Icon(BusyMarkGlyphs.folder),
-                trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                trailing: Icon(
+                  BusyMarkGlyphs.forwardFor(Directionality.of(dialogContext)),
+                ),
                 onTap: () =>
                     Navigator.pop(dialogContext, const _OpenWorkspaceFolder()),
               ),
@@ -332,10 +336,17 @@ class BusyMarkApp extends ConsumerWidget {
               children: [
                 for (final recent in recentWorkspaces)
                   BusyMarkActionRow(
-                    title: _displayPath(recent.path),
-                    subtitle: recent.path,
+                    title: busyMarkLtrIsolateFor(
+                      dialogContext,
+                      _displayPath(recent.path),
+                    ),
+                    subtitle: busyMarkLtrIsolateFor(dialogContext, recent.path),
                     leading: const Icon(BusyMarkGlyphs.history),
-                    trailing: const Icon(BusyMarkGlyphs.rightArrow),
+                    trailing: Icon(
+                      BusyMarkGlyphs.forwardFor(
+                        Directionality.of(dialogContext),
+                      ),
+                    ),
                     onTap: () => Navigator.pop(
                       dialogContext,
                       _OpenRecentWorkspace(recent.path),
@@ -585,6 +596,7 @@ class BusyMarkApp extends ConsumerWidget {
       keyboardShortcutsShortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
       markdownAndHtml: l10n.markdownAndHtml,
       markdownAndHtmlShortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
+      reportIssue: l10n.reportIssue,
       aboutBusyMark: l10n.aboutBusyMark,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -734,12 +746,14 @@ class _BusyMarkSearchShortcutHandlerState
       return false;
     }
     final keyboard = HardwareKeyboard.instance;
-    if (keyboard.isControlPressed &&
-        event.logicalKey == LogicalKeyboardKey.keyF) {
+    if (BusyMarkAppShortcutActivators.search.accepts(event, keyboard)) {
+      if (rootNavigatorKey.currentState?.canPop() ?? false) {
+        return false;
+      }
       ref.read(workspaceSearchOpenRequestProvider.notifier).request();
       return true;
     }
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
+    if (BusyMarkTextEditingShortcutActivators.escape.accepts(event, keyboard)) {
       if (rootNavigatorKey.currentState?.canPop() ?? false) {
         return false;
       }

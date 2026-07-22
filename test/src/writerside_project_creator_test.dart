@@ -81,7 +81,8 @@ void main() {
         ),
       );
 
-      expect(result.rootPath, p.join(parent.path, 'документация-api'));
+      final canonicalParent = await parent.resolveSymbolicLinks();
+      expect(result.rootPath, p.join(canonicalParent, 'документация-api'));
       expect(
         result.treePath,
         p.join(result.rootPath, 'руководство-администратора.tree'),
@@ -190,6 +191,65 @@ void main() {
       expect(existingConfig.readAsStringSync(), 'existing config');
       expect(Directory(p.join(target.path, 'topics')).existsSync(), isFalse);
     },
+  );
+
+  test(
+    'rejects an existing project target symlink without writing through it',
+    () async {
+      final parent = await tempParent();
+      final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+      final target = Link(p.join(parent.path, 'docs'))
+        ..createSync(outside.path);
+
+      await expectLater(
+        creator.create(
+          WritersideProjectCreateRequest(
+            parentDirectoryPath: parent.path,
+            projectName: 'Docs',
+            directoryName: 'docs',
+            instanceName: 'User Guide',
+            topicTitle: 'Getting started',
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(
+        FileSystemEntity.typeSync(target.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+      expect(outside.listSync(), isEmpty);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'canonicalizes a project parent selected through a symlink',
+    () async {
+      final parent = await tempParent();
+      final container = Directory(p.join(parent.path, 'container'))
+        ..createSync();
+      final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+      final actualParent = Directory(p.join(outside.path, 'projects'))
+        ..createSync();
+      final link = Link(p.join(container.path, 'bridge'))
+        ..createSync(outside.path);
+
+      final result = await creator.create(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: p.join(link.path, 'projects'),
+          projectName: 'Docs',
+          directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
+        ),
+      );
+
+      final canonicalParent = await actualParent.resolveSymbolicLinks();
+      expect(result.rootPath, p.join(canonicalParent, 'docs'));
+      expect(Directory(p.join(actualParent.path, 'docs')).existsSync(), isTrue);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
   );
 
   test('rejects unsafe create request names before writing files', () async {

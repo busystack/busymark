@@ -12,7 +12,7 @@ import 'busymark_glyphs.dart';
 import 'localization.dart';
 
 const _busyMarkWebsiteUrl = 'https://busystack.org';
-const _busyMarkIssueUrl = 'https://github.com/busystack/busymark/issues';
+const _busyMarkRepositoryUrl = 'https://github.com/busystack/busymark/';
 const _apacheLicenseUrl = 'https://www.apache.org/licenses/LICENSE-2.0';
 const _busyMarkLogoAsset = 'assets/branding/busymark_logo.svg';
 const _supportedRawHtmlBlockTags =
@@ -25,8 +25,16 @@ const _supportedRawHtmlInlineTags =
     'var, abbr, cite, q, dfn, time, data, bdi, bdo, wbr, ins, del, ruby, '
     'rt, rp, a, img, br';
 final _busyMarkWebsiteUri = Uri.parse(_busyMarkWebsiteUrl);
-final _busyMarkIssueUri = Uri.parse(_busyMarkIssueUrl);
+final _busyMarkRepositoryUri = Uri.parse(_busyMarkRepositoryUrl);
 final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
+final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
+  for (final shortcut in BusyMarkAppShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  for (final shortcut in BusyMarkDocumentViewShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  for (final shortcut in BusyMarkSidebarShortcuts.definitions.values)
+    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+};
 
 Color busyMarkModalBarrierColor(BuildContext context) {
   return Theme.of(
@@ -38,6 +46,7 @@ Future<T?> showBusyMarkModalDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   LinuxHeaderBarService? headerBarService,
+  bool barrierDismissible = true,
 }) async {
   final barrierColor = busyMarkModalBarrierColor(context);
   await headerBarService?.setModalBarrierVisible(true);
@@ -49,6 +58,7 @@ Future<T?> showBusyMarkModalDialog<T>(
     return await showDialog<T>(
       context: context,
       barrierColor: barrierColor,
+      barrierDismissible: barrierDismissible,
       builder: (dialogContext) {
         final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
         final padding = EdgeInsets.fromLTRB(
@@ -57,12 +67,15 @@ Future<T?> showBusyMarkModalDialog<T>(
           viewInsets.right + BusyMarkSizes.modalHorizontalInset,
           viewInsets.bottom + BusyMarkSizes.modalVerticalInset,
         );
-        return AnimatedPadding(
-          padding: padding,
-          duration: BusyMarkMotion.modalPadding,
-          curve: BusyMarkMotion.modalPaddingCurve,
-          child: Center(
-            child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
+        return Shortcuts(
+          shortcuts: _busyMarkModalShortcuts,
+          child: AnimatedPadding(
+            padding: padding,
+            duration: BusyMarkMotion.modalPadding,
+            curve: BusyMarkMotion.modalPaddingCurve,
+            child: Center(
+              child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
+            ),
           ),
         );
       },
@@ -122,12 +135,12 @@ void showBusyMarkAboutDialog(BuildContext context) {
   );
 }
 
-Future<void> _openBusyMarkRepository() async {
+Future<void> _openBusyMarkWebsite() async {
   await launchUrl(_busyMarkWebsiteUri, mode: LaunchMode.externalApplication);
 }
 
-Future<void> _openBusyMarkIssues() async {
-  await launchUrl(_busyMarkIssueUri, mode: LaunchMode.externalApplication);
+Future<void> _openBusyMarkRepository() async {
+  await launchUrl(_busyMarkRepositoryUri, mode: LaunchMode.externalApplication);
 }
 
 Future<void> _openApacheLicense() async {
@@ -145,7 +158,7 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
         maxWidth: BusyMarkSizes.dialogNarrow,
         children: [
           BusyMarkGroupedList(
-            title: context.l10n.shortcutGroupFile,
+            title: context.l10n.shortcutGroupGeneral,
             filled: true,
             children: [
               BusyMarkActionRow(
@@ -173,11 +186,11 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.find,
-                subtitle: context.l10n.shortcutFindDescription,
+                title: context.l10n.search,
+                subtitle: context.l10n.shortcutSearchDescription,
                 leading: const Icon(BusyMarkGlyphs.search),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkAppShortcutLabels.find,
+                  BusyMarkAppShortcutLabels.search,
                 ),
               ),
               BusyMarkActionRow(
@@ -325,7 +338,9 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               BusyMarkActionRow(
                 title: context.l10n.undo,
                 subtitle: context.l10n.shortcutUndoDescription,
-                leading: const Icon(BusyMarkGlyphs.undo),
+                leading: Icon(
+                  BusyMarkGlyphs.undoFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.undo,
                 ),
@@ -333,17 +348,39 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               BusyMarkActionRow(
                 title: context.l10n.redo,
                 subtitle: context.l10n.shortcutRedoDescription,
-                leading: const Icon(BusyMarkGlyphs.redo),
+                leading: Icon(
+                  BusyMarkGlyphs.redoFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkTextEditingShortcutLabels.redo,
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.clearEditorSelection,
-                subtitle: context.l10n.shortcutClearEditorSelectionDescription,
+                title: context.l10n.shortcutInsertIndentation,
+                subtitle: context.l10n.shortcutInsertIndentationDescription,
+                leading: Icon(
+                  BusyMarkGlyphs.indentFor(Directionality.of(context)),
+                ),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.insertIndentation,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutOutdentSource,
+                subtitle: context.l10n.shortcutOutdentSourceDescription,
+                leading: Icon(
+                  BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+                ),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.outdentSource,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.shortcutEscape,
+                subtitle: context.l10n.shortcutEscapeDescription,
                 leading: const Icon(BusyMarkGlyphs.clear),
                 trailing: const _KeyboardShortcutBadge(
-                  BusyMarkTextEditingShortcutLabels.clearSelection,
+                  BusyMarkTextEditingShortcutLabels.escape,
                 ),
               ),
             ],
@@ -522,14 +559,18 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               ),
               BusyMarkActionRow(
                 title: context.l10n.indentListItem,
-                leading: const Icon(BusyMarkGlyphs.indent),
+                leading: Icon(
+                  BusyMarkGlyphs.indentFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkEditorShortcutLabels.indent,
                 ),
               ),
               BusyMarkActionRow(
                 title: context.l10n.outdentListItem,
-                leading: const Icon(BusyMarkGlyphs.outdent),
+                leading: Icon(
+                  BusyMarkGlyphs.outdentFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkEditorShortcutLabels.outdent,
                 ),
@@ -612,7 +653,9 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               ),
               BusyMarkActionRow(
                 title: context.l10n.outline,
-                leading: const Icon(BusyMarkGlyphs.indent),
+                leading: Icon(
+                  BusyMarkGlyphs.indentFor(Directionality.of(context)),
+                ),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.outline,
                 ),
@@ -629,6 +672,14 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.history),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.history,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.delete,
+                subtitle: context.l10n.shortcutDeleteTreeItemDescription,
+                leading: const Icon(BusyMarkGlyphs.delete),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTreeShortcutLabels.deleteSelection,
                 ),
               ),
             ],
@@ -957,14 +1008,14 @@ class _BusyMarkAboutDialog extends StatelessWidget {
               subtitle: _busyMarkWebsiteUrl,
               leading: const Icon(BusyMarkGlyphs.home),
               trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openBusyMarkRepository()),
+              onTap: () => unawaited(_openBusyMarkWebsite()),
             ),
             BusyMarkActionRow(
-              title: context.l10n.aboutReportIssue,
-              subtitle: _busyMarkIssueUrl,
-              leading: const Icon(BusyMarkGlyphs.warning),
+              title: context.l10n.aboutSourceCode,
+              subtitle: _busyMarkRepositoryUrl,
+              leading: const Icon(BusyMarkGlyphs.code),
               trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openBusyMarkIssues()),
+              onTap: () => unawaited(_openBusyMarkRepository()),
             ),
           ],
         ),
@@ -1015,12 +1066,15 @@ class _AboutVersionTag extends StatelessWidget {
             horizontal: BusyMarkSpacing.md,
             vertical: BusyMarkSpacing.xs,
           ),
-          child: Text(
-            version,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colors.foreground,
-              fontWeight: FontWeight.w600,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              version,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -1048,11 +1102,15 @@ class _KeyboardShortcutBadge extends StatelessWidget {
           horizontal: BusyMarkSpacing.sm,
           vertical: BusyMarkSpacing.xxs,
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
-            color: colors.foreground,
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+              color: colors.foreground,
+            ),
           ),
         ),
       ),

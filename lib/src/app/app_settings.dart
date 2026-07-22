@@ -13,6 +13,8 @@ enum DocumentViewModePreference { editor, source, preview, split }
 
 enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
 
+enum EditorToolbarDirection { horizontal, vertical }
+
 const Object _unset = Object();
 
 extension BusyMarkThemeModePreferenceX on BusyMarkThemeModePreference {
@@ -63,10 +65,12 @@ class AppSettings {
     required this.editorFontSize,
     required this.wordWrap,
     required this.editorToolbarPlacement,
+    required this.editorToolbarDirection,
     required this.autoSave,
     required this.validateOnEdit,
     required this.allowRemoteImages,
     required this.remoteImageAllowedWorkspacePaths,
+    required this.trustedGitWorkspacePaths,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -82,10 +86,12 @@ class AppSettings {
       editorFontSize: 14,
       wordWrap: true,
       editorToolbarPlacement: EditorToolbarPlacement.topLeft,
+      editorToolbarDirection: EditorToolbarDirection.horizontal,
       autoSave: true,
       validateOnEdit: true,
       allowRemoteImages: false,
       remoteImageAllowedWorkspacePaths: [],
+      trustedGitWorkspacePaths: [],
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -122,6 +128,11 @@ class AppSettings {
         json['editorToolbarPlacement'],
         defaults.editorToolbarPlacement,
       ),
+      editorToolbarDirection: _enumFromName(
+        EditorToolbarDirection.values,
+        json['editorToolbarDirection'],
+        defaults.editorToolbarDirection,
+      ),
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
@@ -129,6 +140,9 @@ class AppSettings {
           json['allowRemoteImages'] as bool? ?? defaults.allowRemoteImages,
       remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
         json['remoteImageAllowedWorkspacePaths'],
+      ),
+      trustedGitWorkspacePaths: _gitWorkspacePathListFromJson(
+        json['trustedGitWorkspacePaths'],
       ),
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
@@ -153,10 +167,12 @@ class AppSettings {
   final double editorFontSize;
   final bool wordWrap;
   final EditorToolbarPlacement editorToolbarPlacement;
+  final EditorToolbarDirection editorToolbarDirection;
   final bool autoSave;
   final bool validateOnEdit;
   final bool allowRemoteImages;
   final List<String> remoteImageAllowedWorkspacePaths;
+  final List<String> trustedGitWorkspacePaths;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -174,10 +190,12 @@ class AppSettings {
     'editorFontSize': editorFontSize,
     'wordWrap': wordWrap,
     'editorToolbarPlacement': editorToolbarPlacement.name,
+    'editorToolbarDirection': editorToolbarDirection.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
     'allowRemoteImages': allowRemoteImages,
     'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
+    'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
@@ -191,6 +209,19 @@ class AppSettings {
     return key != null && remoteImageAllowedWorkspacePaths.contains(key);
   }
 
+  bool trustsGitWorkspace(String? workspacePath) {
+    return trustedGitWorkspacePath(workspacePath) != null;
+  }
+
+  /// Returns the canonical, trusted path that is safe to pass to Git.
+  ///
+  /// Callers should use this returned value for command execution instead of
+  /// resolving [workspacePath] again after the trust check.
+  String? trustedGitWorkspacePath(String? workspacePath) {
+    final key = _normalizedGitWorkspacePath(workspacePath);
+    return key != null && trustedGitWorkspacePaths.contains(key) ? key : null;
+  }
+
   AppSettings copyWith({
     BusyMarkThemeModePreference? themeModePreference,
     Object? localeTag = _unset,
@@ -200,10 +231,12 @@ class AppSettings {
     double? editorFontSize,
     bool? wordWrap,
     EditorToolbarPlacement? editorToolbarPlacement,
+    EditorToolbarDirection? editorToolbarDirection,
     bool? autoSave,
     bool? validateOnEdit,
     bool? allowRemoteImages,
     List<String>? remoteImageAllowedWorkspacePaths,
+    List<String>? trustedGitWorkspacePaths,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -220,12 +253,16 @@ class AppSettings {
       wordWrap: wordWrap ?? this.wordWrap,
       editorToolbarPlacement:
           editorToolbarPlacement ?? this.editorToolbarPlacement,
+      editorToolbarDirection:
+          editorToolbarDirection ?? this.editorToolbarDirection,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
       allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
       remoteImageAllowedWorkspacePaths:
           remoteImageAllowedWorkspacePaths ??
           this.remoteImageAllowedWorkspacePaths,
+      trustedGitWorkspacePaths:
+          trustedGitWorkspacePaths ?? this.trustedGitWorkspacePaths,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -310,6 +347,12 @@ class AppSettingsController extends Notifier<AppSettings> {
     );
   }
 
+  Future<void> setEditorToolbarDirection(EditorToolbarDirection direction) {
+    return _mutate(
+      (settings) => settings.copyWith(editorToolbarDirection: direction),
+    );
+  }
+
   Future<void> setAutoSave(bool enabled) {
     return _mutate((settings) => settings.copyWith(autoSave: enabled));
   }
@@ -360,6 +403,24 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> clearRemoteImageWorkspacePermissions() {
     return _mutate(
       (settings) => settings.copyWith(remoteImageAllowedWorkspacePaths: []),
+    );
+  }
+
+  Future<void> trustGitWorkspace(String workspacePath) {
+    final key = _normalizedGitWorkspacePath(workspacePath);
+    if (key == null) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final trusted = {key, ...settings.trustedGitWorkspacePaths}.toList()
+        ..sort();
+      return settings.copyWith(trustedGitWorkspacePaths: trusted);
+    });
+  }
+
+  Future<void> clearTrustedGitWorkspaces() {
+    return _mutate(
+      (settings) => settings.copyWith(trustedGitWorkspacePaths: []),
     );
   }
 
@@ -464,12 +525,52 @@ List<String> _workspacePathListFromJson(Object? value) {
   return paths;
 }
 
+List<String> _gitWorkspacePathListFromJson(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final paths = {
+    for (final item in value)
+      if (_normalizedStoredGitWorkspacePath(item?.toString()) case final path?)
+        path,
+  }.toList()..sort();
+  return paths;
+}
+
 String? _normalizedWorkspacePath(String? value) {
   final trimmed = value?.trim();
   if (trimmed == null || trimmed.isEmpty) {
     return null;
   }
   return p.normalize(trimmed);
+}
+
+String? _normalizedGitWorkspacePath(String? value) {
+  final absolute = _normalizedStoredGitWorkspacePath(value);
+  if (absolute == null) {
+    return null;
+  }
+  try {
+    final type = FileSystemEntity.typeSync(absolute, followLinks: false);
+    final entity = switch (type) {
+      FileSystemEntityType.directory => Directory(absolute),
+      FileSystemEntityType.link => Link(absolute),
+      FileSystemEntityType.file => File(absolute),
+      _ => null,
+    };
+    return entity == null
+        ? absolute
+        : p.normalize(entity.resolveSymbolicLinksSync());
+  } on FileSystemException {
+    return absolute;
+  }
+}
+
+String? _normalizedStoredGitWorkspacePath(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  return p.normalize(p.absolute(value));
 }
 
 String? _localeTagFromJson(Object? value) {
@@ -506,6 +607,12 @@ Locale? _localeFromTag(String? tag) {
     return Locale(parts.first);
   }
   if (parts.length == 2) {
+    if (parts.last.length == 4) {
+      return Locale.fromSubtags(
+        languageCode: parts.first,
+        scriptCode: parts.last,
+      );
+    }
     return Locale(parts.first, parts.last);
   }
   return Locale.fromSubtags(

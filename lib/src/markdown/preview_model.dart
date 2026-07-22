@@ -116,7 +116,8 @@ class BusyMarkPreviewBuilder {
   List<PreviewBlock> buildBlocks(BusyDocument document) {
     return [
       for (final block in document.blocks)
-        if (block.kind != BusyBlockKind.frontMatter) _block(block),
+        if (block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly)
+          _block(block),
     ];
   }
 
@@ -142,6 +143,7 @@ class BusyMarkPreviewBuilder {
         kind: PreviewBlockKind.code,
         text: block.plainText,
         language: block.attributes['language'],
+        attributes: block.attributes,
       ),
       BusyBlockKind.unorderedListItem ||
       BusyBlockKind.orderedListItem ||
@@ -165,6 +167,7 @@ class BusyMarkPreviewBuilder {
             ? _inlines(block.inlines)
             : const [],
         children: block.children.map(_block).toList(),
+        attributes: block.attributes,
       ),
       BusyBlockKind.thematicBreak => const PreviewBlock(
         kind: PreviewBlockKind.thematicBreak,

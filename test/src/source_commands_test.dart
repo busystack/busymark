@@ -85,10 +85,15 @@ void main() {
         selection: TextSelection(baseOffset: 0, extentOffset: 4),
       ),
       SourceInlineCommand.bold,
+      placeholder: 'text',
     );
     expect(bold.text, '**word**');
     expect(
-      SourceCommands.applyInlineCommand(bold, SourceInlineCommand.bold).text,
+      SourceCommands.applyInlineCommand(
+        bold,
+        SourceInlineCommand.bold,
+        placeholder: 'text',
+      ).text,
       'word',
     );
 
@@ -99,6 +104,7 @@ void main() {
           selection: TextSelection(baseOffset: 0, extentOffset: 4),
         ),
         SourceInlineCommand.italic,
+        placeholder: 'text',
       ).text,
       '*word*',
     );
@@ -109,6 +115,7 @@ void main() {
           selection: TextSelection(baseOffset: 0, extentOffset: 4),
         ),
         SourceInlineCommand.code,
+        placeholder: 'code',
       ).text,
       '`word`',
     );
@@ -118,6 +125,7 @@ void main() {
           text: 'label',
           selection: TextSelection(baseOffset: 0, extentOffset: 5),
         ),
+        labelPlaceholder: 'text',
       ).text,
       '[label](url)',
     );
@@ -131,6 +139,7 @@ void main() {
           selection: TextSelection(baseOffset: 0, extentOffset: 9),
         ),
         language: 'dart',
+        contentPlaceholder: 'code',
       ).text,
       '```dart\nprint(1);\n```',
     );
@@ -141,8 +150,28 @@ void main() {
           selection: TextSelection(baseOffset: 0, extentOffset: 4),
         ),
         block: false,
+        altPlaceholder: 'alt text',
       ).text,
       '![Logo](url)',
+    );
+  });
+
+  test('block insertion accepts localized default content', () {
+    const value = TextEditingValue(
+      selection: TextSelection.collapsed(offset: 0),
+    );
+
+    expect(
+      SourceCommands.insertTable(
+        value,
+        headerTextForColumn: (column) => 'Spalte $column',
+        cellText: 'Zelle',
+      ).text,
+      '\n| Spalte 1 | Spalte 2 |\n| --- | --- |\n| Zelle | Zelle |\n',
+    );
+    expect(
+      SourceCommands.insertHtmlBlock(value, defaultContent: 'HTML-Inhalt').text,
+      '\n<div>\n  <p>HTML-Inhalt</p>\n</div>\n',
     );
   });
 }

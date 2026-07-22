@@ -1,3 +1,5 @@
+// ignore_for_file: text_direction_code_point_in_literal, text_direction_code_point_in_comment
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -31,7 +33,94 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aboutWebsite => 'Sitio web';
 
   @override
-  String get aboutReportIssue => 'Informar de un problema';
+  String get aboutSourceCode => 'Código fuente';
+
+  @override
+  String get reportIssue => 'Informar de un problema';
+
+  @override
+  String get feedbackCategory => 'Categoría';
+
+  @override
+  String get feedbackChooseCategory => 'Elige una categoría';
+
+  @override
+  String get feedbackCategoryProblem => 'Problema o error';
+
+  @override
+  String get feedbackCategoryFeature => 'Solicitud de función';
+
+  @override
+  String get feedbackCategoryPrivacySecurity =>
+      'Problema de privacidad o seguridad';
+
+  @override
+  String get feedbackCategoryUsability => 'Problema de usabilidad';
+
+  @override
+  String get feedbackCategoryOther => 'Otro';
+
+  @override
+  String get feedbackSubject => 'Asunto';
+
+  @override
+  String get feedbackMessage => 'Mensaje detallado';
+
+  @override
+  String get feedbackReplyEmail => 'Correo electrónico de respuesta (opcional)';
+
+  @override
+  String get feedbackIncludeTechnicalDetails => 'Incluir detalles técnicos';
+
+  @override
+  String get feedbackTechnicalDetailsDisclosure =>
+      'Al activarlo, solo se añaden la versión del sistema operativo Linux y la configuración regional de la aplicación BusyMark. No se adjuntan registros, archivos, datos de cuentas ni otros diagnósticos.';
+
+  @override
+  String get feedbackSubmit => 'Enviar';
+
+  @override
+  String get feedbackSubmitting => 'Enviando…';
+
+  @override
+  String get feedbackCategoryRequired => 'Elige una categoría.';
+
+  @override
+  String get feedbackSubjectLength =>
+      'El asunto debe tener entre 3 y 120 caracteres.';
+
+  @override
+  String get feedbackMessageLength =>
+      'El mensaje debe tener entre 10 y 5.000 caracteres.';
+
+  @override
+  String get feedbackReplyEmailInvalid =>
+      'Introduce una dirección de correo válida o deja este campo vacío.';
+
+  @override
+  String get feedbackConnectionFailure =>
+      'BusyMark no pudo conectarse. Comprueba tu conexión a Internet e inténtalo de nuevo.';
+
+  @override
+  String get feedbackTimeoutFailure =>
+      'La solicitud agotó el tiempo de espera. Inténtalo de nuevo.';
+
+  @override
+  String get feedbackRateLimitedFailure =>
+      'Se enviaron demasiados informes desde esta conexión. Espera e inténtalo de nuevo.';
+
+  @override
+  String get feedbackRejectedFailure =>
+      'El servidor rechazó el informe. Revisa los campos del formulario e inténtalo de nuevo.';
+
+  @override
+  String get feedbackServerFailure =>
+      'El servidor no pudo aceptar el informe. Inténtalo más tarde.';
+
+  @override
+  String feedbackSuccess(String id) {
+    return 'Comentarios enviados. ID de referencia: $id';
+  }
 
   @override
   String get advanced => 'Avanzado';
@@ -100,9 +189,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fileHistory => 'Historial del archivo';
 
   @override
-  String get find => 'Buscar';
-
-  @override
   String get folder => 'Carpeta';
 
   @override
@@ -125,6 +211,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get openInFiles => 'Abrir en Archivos';
+
+  @override
+  String get pathActions => 'Acciones de la ruta';
 
   @override
   String get outline => 'Esquema';
@@ -163,7 +252,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get source => 'Código fuente';
 
   @override
-  String get split => 'Dividir';
+  String get split => 'Vista dividida';
 
   @override
   String get systemTheme => 'Sistema';
@@ -215,6 +304,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get languageHindi => 'हिन्दी';
+
+  @override
+  String get languageEstonian => 'Eesti';
 
   @override
   String get toggleSidebar => 'Panel lateral';
@@ -270,7 +362,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noOpenFile => 'No hay ningún archivo abierto';
 
   @override
-  String get shortcutGroupFile => 'Archivo';
+  String get shortcutDeleteTreeItemDescription =>
+      'Eliminar el elemento seleccionado en Archivos o quitar el tema seleccionado del índice';
+
+  @override
+  String get shortcutGroupGeneral => 'General';
 
   @override
   String get shortcutNewDocument => 'Nuevo documento';
@@ -284,10 +380,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Abrir un archivo Markdown, una carpeta o un proyecto de Writerside';
 
   @override
-  String get shortcutSaveDescription => 'Guardar el archivo Markdown actual';
+  String get shortcutSaveDescription => 'Guardar el documento actual';
 
   @override
-  String get shortcutFindDescription => 'Buscar en el documento actual';
+  String get shortcutSearchDescription =>
+      'Buscar en el espacio de trabajo actual';
 
   @override
   String get shortcutKeyboardShortcutsDescription =>
@@ -305,36 +402,34 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutNextTab => 'Siguiente pestaña';
 
   @override
-  String get shortcutNextTabDescription =>
-      'Ir a la siguiente pestaña abierta del editor';
+  String get shortcutNextTabDescription => 'Ir a la siguiente pestaña abierta';
 
   @override
   String get shortcutPreviousTab => 'Pestaña anterior';
 
   @override
   String get shortcutPreviousTabDescription =>
-      'Ir a la pestaña abierta anterior del editor';
+      'Ir a la pestaña abierta anterior';
 
   @override
   String get shortcutCloseTab => 'Cerrar pestaña';
 
   @override
-  String get shortcutCloseTabDescription =>
-      'Cerrar la pestaña activa del editor';
+  String get shortcutCloseTabDescription => 'Cerrar la pestaña activa';
 
   @override
   String get shortcutCloseAllTabs => 'Cerrar todas las pestañas';
 
   @override
   String get shortcutCloseAllTabsDescription =>
-      'Cerrar todas las pestañas abiertas del editor';
+      'Cerrar todas las pestañas abiertas';
 
   @override
   String get shortcutGroupTextEditing => 'Edición de texto';
 
   @override
   String get shortcutSelectAllDescription =>
-      'Seleccionar todo el texto del editor';
+      'En el modo Código fuente, seleccionar todo el texto; en el modo Editor, pulsar dos veces para seleccionar todos los bloques';
 
   @override
   String get shortcutCutDescription => 'Cortar el texto seleccionado';
@@ -356,11 +451,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutRedoDescription => 'Rehacer la última edición deshecha';
 
   @override
-  String get clearEditorSelection => 'Quitar selección del editor';
+  String get shortcutInsertIndentation => 'Insertar sangría';
 
   @override
-  String get shortcutClearEditorSelectionDescription =>
-      'Quitar la selección actual del editor o el foco de búsqueda';
+  String get shortcutInsertIndentationDescription =>
+      'Insertar sangría en el cursor';
+
+  @override
+  String get shortcutOutdentSource => 'Reducir sangría del código fuente';
+
+  @override
+  String get shortcutOutdentSourceDescription =>
+      'Quitar un nivel de sangría en el modo Código fuente';
+
+  @override
+  String get shortcutEscape =>
+      'Cerrar la búsqueda o quitar la selección de bloques';
+
+  @override
+  String get shortcutEscapeDescription =>
+      'Cerrar la búsqueda del espacio de trabajo o quitar una selección de bloques en el modo Editor';
 
   @override
   String get shortcutGroupFormatting => 'Formato';
@@ -536,28 +646,50 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clearRecentWorkspaces => 'Borrar espacios de trabajo recientes';
 
   @override
-  String get editingButtons => 'Botones de edición';
+  String get editingButtonsPosition => 'Posición de los botones de edición';
 
   @override
-  String get editingButtonsDescription =>
+  String get editingButtonsPositionDescription =>
       'Elija dónde aparecen los botones flotantes de edición WYSIWYG.';
 
   @override
-  String get privacy => 'Privacy';
+  String get editingButtonsDirection => 'Orientación de los botones de edición';
 
   @override
-  String get allowRemoteImages => 'Load remote images';
+  String get editingButtonsDirectionDescription =>
+      'Elija si los botones flotantes de edición WYSIWYG se disponen horizontalmente o verticalmente.';
+
+  @override
+  String get horizontal => 'Horizontal';
+
+  @override
+  String get vertical => 'Vertical';
+
+  @override
+  String get privacy => 'Privacidad';
+
+  @override
+  String get allowRemoteImages => 'Cargar imágenes remotas';
 
   @override
   String get allowRemoteImagesDescription =>
-      'Allow Markdown preview and editor images to load from http and https URLs.';
+      'Permite cargar imágenes desde URL HTTP y HTTPS en la vista previa de Markdown y el editor.';
 
   @override
-  String get clearRemoteImagePermissions => 'Clear remote image permissions';
+  String get clearRemoteImagePermissions =>
+      'Borrar permisos de imágenes remotas';
 
   @override
   String get clearRemoteImagePermissionsDescription =>
-      'Forget workspaces that were allowed to load remote images.';
+      'Olvida los espacios de trabajo autorizados a cargar imágenes remotas.';
+
+  @override
+  String get clearGitWorkspaceTrust =>
+      'Borrar espacios de trabajo de Git de confianza';
+
+  @override
+  String get clearGitWorkspaceTrustDescription =>
+      'Preguntar antes de activar funciones de Git para espacios de trabajo que ya eran de confianza.';
 
   @override
   String get settingsWindowSectionTitle => 'Ventana';
@@ -659,6 +791,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get htmlBlock => 'Bloque HTML';
+
+  @override
+  String get htmlContentDefault => 'Contenido HTML';
 
   @override
   String get shortcutHtmlBlockDescription => 'Insertar o editar un bloque HTML';
@@ -775,6 +910,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get altText => 'Texto alternativo';
 
   @override
+  String get editorPlaceholderText => 'texto';
+
+  @override
+  String get editorPlaceholderCode => 'código';
+
+  @override
+  String get editorPlaceholderAltText => 'texto alternativo';
+
+  @override
   String get describeTheImage => 'Describa la imagen';
 
   @override
@@ -795,24 +939,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noImageSource => 'Sin origen de imagen';
 
   @override
-  String get remoteImageBlocked => 'Remote image blocked';
+  String get remoteImageBlocked => 'Imagen remota bloqueada';
 
   @override
   String get remoteImageBlockedTooltip =>
-      'Choose whether BusyMark can load remote images.';
+      'Elija si BusyMark puede cargar imágenes remotas.';
 
   @override
-  String get remoteImagesBlockedTitle => 'Remote images are blocked';
+  String get remoteImagesBlockedTitle =>
+      'Las imágenes remotas están bloqueadas';
 
   @override
   String get remoteImagesBlockedMessage =>
-      'This document references images from the internet. Loading them can reveal network information to the image host.';
+      'Este documento hace referencia a imágenes de Internet. Cargarlas puede revelar información de red al servidor que las aloja.';
 
   @override
-  String get loadRemoteImagesForWorkspace => 'Load for this workspace';
+  String get loadRemoteImagesForWorkspace =>
+      'Cargar en este espacio de trabajo';
 
   @override
-  String get alwaysLoadRemoteImages => 'Always load remote images';
+  String get alwaysLoadRemoteImages => 'Cargar siempre las imágenes remotas';
 
   @override
   String get hideSidebar => 'Ocultar panel lateral';
@@ -860,6 +1006,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get toc => 'Índice';
 
   @override
+  String get tocActions => 'Acciones del índice';
+
+  @override
   String get markdownUnsaved => 'Markdown — sin guardar';
 
   @override
@@ -890,6 +1039,179 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get newChildTopic => 'Nuevo subtema';
+
+  @override
+  String get newSiblingTopic => 'Nuevo tema del mismo nivel';
+
+  @override
+  String get renameTopicFile => 'Renombrar archivo del tema';
+
+  @override
+  String get topicPlacement => 'Ubicación en el índice';
+
+  @override
+  String get tocRoot => 'En la raíz del índice';
+
+  @override
+  String get afterSelectedTopic => 'Después del tema seleccionado';
+
+  @override
+  String get insideSelectedTopic => 'Dentro del tema seleccionado';
+
+  @override
+  String get pasteAfterTopic => 'Pegar después';
+
+  @override
+  String get pasteAsChildTopic => 'Pegar como subtema';
+
+  @override
+  String get removeFromToc => 'Quitar del índice';
+
+  @override
+  String get confirmRemoveFromTocTitle => '¿Quitar del índice?';
+
+  @override
+  String confirmRemoveFromTocMessage(String name) {
+    return '¿Quitar $name de este índice? El archivo del tema se conservará.';
+  }
+
+  @override
+  String get confirmDeleteTopicTitle => '¿Eliminar el archivo del tema?';
+
+  @override
+  String confirmDeleteTopicMessage(String name) {
+    return '¿Eliminar $name y quitarlo de todos los índices? Esta acción no se puede deshacer.';
+  }
+
+  @override
+  String get safeDeleteTopicFile =>
+      'Eliminar el archivo del tema de forma segura…';
+
+  @override
+  String get removeTocElement => 'Quitar elemento del índice';
+
+  @override
+  String get reviewUsages => 'Revisar usos';
+
+  @override
+  String get deleteTopicFile => 'Eliminar archivo del tema';
+
+  @override
+  String get removeAction => 'Quitar';
+
+  @override
+  String topicRemovalSummary(String topic) {
+    return 'Quita «$topic» de la instancia de ayuda seleccionada. Se conservará el archivo del tema.';
+  }
+
+  @override
+  String safeDeleteTopicSummary(String topic) {
+    return 'Elimina «$topic» y actualiza de forma segura sus referencias en todo este proyecto de Writerside.';
+  }
+
+  @override
+  String childTopicsPromoted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count temas hijos subirán un nivel.',
+      one: '1 tema hijo subirá un nivel.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get topicIsStartPageRemovalWarning =>
+      'Este tema se usa como página de inicio de una instancia. Revisa sus usos y asigna otra página de inicio antes de continuar.';
+
+  @override
+  String topicUsagesCount(int count) {
+    return 'Usos ($count)';
+  }
+
+  @override
+  String get noBreakingTopicUsages =>
+      'No se han encontrado referencias que pudieran dejar de funcionar.';
+
+  @override
+  String get topicUsagesFound =>
+      'BusyMark ha encontrado las siguientes referencias a este tema.';
+
+  @override
+  String get topicUsageTocElements => 'Elementos del índice';
+
+  @override
+  String get topicUsageStartPages => 'Páginas de inicio';
+
+  @override
+  String get topicUsageTopicLinks => 'Enlaces a temas';
+
+  @override
+  String get topicUsageIncludes => 'Inclusiones';
+
+  @override
+  String usageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count usos',
+      one: '1 uso',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refactoringOptions => 'Opciones de refactorización';
+
+  @override
+  String get updateUsagesAutomatically => 'Actualizar los usos automáticamente';
+
+  @override
+  String get updateUsagesAutomaticallyDescription =>
+      'Quita las referencias de los índices y las inclusiones, y conserva el texto de los enlaces.';
+
+  @override
+  String get manualUsageUpdatesRequired =>
+      'Algunos usos requieren cambios manuales antes de esta refactorización.';
+
+  @override
+  String get setRedirectTo => 'Redirigir a';
+
+  @override
+  String get noRedirectDescription =>
+      'No redirigir la página publicada anterior.';
+
+  @override
+  String get redirectTarget => 'Destino de la redirección';
+
+  @override
+  String get remainingUsagesBlockRemoval =>
+      'Revisa y actualiza los usos restantes antes de continuar, o activa las actualizaciones automáticas cuando estén disponibles.';
+
+  @override
+  String usagesOfTopic(String topic) {
+    return 'Usos de $topic';
+  }
+
+  @override
+  String get noUsagesFound => 'No se han encontrado usos.';
+
+  @override
+  String get outsideSelectedInstance => 'Fuera de la instancia seleccionada';
+
+  @override
+  String get doRefactor => 'Refactorizar';
+
+  @override
+  String get orphanTopicTitle => 'El archivo del tema ya no se usa';
+
+  @override
+  String get keepTopicFile => 'Conservar el archivo del tema';
+
+  @override
+  String orphanTopicMessage(String topic) {
+    return '«$topic» ya no se usa en ninguna parte de este proyecto de Writerside. Elimina el archivo o consérvalo para usarlo en otra instancia.';
+  }
 
   @override
   String get defaultNewTopicTitle => 'Nuevo tema';
@@ -971,23 +1293,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get foldKindTag => 'etiqueta';
 
   @override
-  String get sourceSearchPreviousMatch => 'Previous match';
+  String get sourceSearchPreviousMatch => 'Coincidencia anterior';
 
   @override
-  String get sourceSearchNextMatch => 'Next match';
+  String get sourceSearchNextMatch => 'Coincidencia siguiente';
 
   @override
-  String get sourceSearchCaseSensitive => 'Case sensitive';
+  String get sourceSearchCaseSensitive => 'Distinguir mayúsculas y minúsculas';
 
   @override
-  String get sourceSearchWholeWord => 'Whole word';
+  String get sourceSearchWholeWord => 'Palabra completa';
 
   @override
-  String get sourceSearchRegex => 'Regex';
+  String get sourceSearchRegex => 'Expresión regular';
+
+  @override
+  String get sourceSearchInvalidRegex => 'Expresión regular no válida';
 
   @override
   String get sourceLargeFileFeaturesPaused =>
-      'Large file: highlighting and folding are paused';
+      'Archivo grande: el resaltado y el plegado están en pausa';
 
   @override
   String get noPreview => 'Sin vista previa';
@@ -1172,11 +1497,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorFileOperationOutsideRoot =>
-      'La operación de archivo debe permanecer dentro del workspace.';
+      'La operación de archivo debe permanecer dentro del espacio de trabajo.';
 
   @override
   String get errorFileOperationRoot =>
-      'La raíz del workspace no se puede cambiar desde el árbol de archivos.';
+      'La raíz del espacio de trabajo no se puede cambiar desde el árbol de archivos.';
 
   @override
   String get errorProjectNameRequired =>
@@ -1232,6 +1557,40 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String errorReferenceTopicMissing(String topic) {
     return 'El tema de referencia no está presente en el árbol seleccionado: $topic';
+  }
+
+  @override
+  String get errorWritersideTocNodeMissing =>
+      'La entrada seleccionada del índice ya no existe.';
+
+  @override
+  String get errorWritersideTocInvalidMove =>
+      'Una entrada del índice no se puede mover dentro de sí misma ni de uno de sus elementos descendientes.';
+
+  @override
+  String errorWritersideStartTopicDelete(String topic) {
+    return 'El tema de inicio $topic no se puede eliminar. Elija primero otra página de inicio.';
+  }
+
+  @override
+  String get errorWritersideSafeDeleteRequired =>
+      'Usa la eliminación segura para los archivos de temas de Writerside.';
+
+  @override
+  String get errorWritersideTopicUsageScanFailed =>
+      'No se pudo completar el análisis de usos del tema. No se modificó ningún archivo.';
+
+  @override
+  String get errorWritersideTopicUsagesRemain =>
+      'Algunos usos del tema aún requieren atención. Revísalos antes de continuar.';
+
+  @override
+  String get errorWritersideRedirectInvalid =>
+      'El destino de redirección seleccionado ya no es válido. Vuelve a seleccionarlo.';
+
+  @override
+  String errorWritersideRollbackFailed(String paths) {
+    return 'No se pudo revertir por completo la eliminación del tema. Revisa estas rutas antes de continuar: $paths';
   }
 
   @override
@@ -1442,7 +1801,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String diagnosticWritersideConfigMissingBuildConfigDirectory(
     String relativePath,
   ) {
-    return 'Falta el directorio de configuración de compilación configurado: $relativePath';
+    return 'Falta el directorio configurado para la compilación: $relativePath';
   }
 
   @override
@@ -1569,46 +1928,68 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'Cerrar';
 
   @override
   String get git => 'Git';
 
   @override
-  String get gitDiff => 'Git diff';
+  String get gitDiff => 'Diff de Git';
 
   @override
-  String get gitUnavailableTitle => 'Git is unavailable';
+  String get gitShowDiff => 'Mostrar diff';
+
+  @override
+  String gitDiffHunkRange(String oldRange, String newRange) {
+    return 'anterior $oldRange → nuevo $newRange';
+  }
+
+  @override
+  String get gitDiffNoLines => 'sin líneas';
+
+  @override
+  String get gitUnavailableTitle => 'Git no está disponible';
 
   @override
   String gitUnavailableMessage(String reason) {
     String _temp0 = intl.Intl.selectLogic(reason, {
       'other':
-          'Install Git or configure BusyMark to use an available Git executable. $reason',
+          'Instale Git o configure BusyMark para usar un ejecutable de Git disponible. $reason',
     });
     return '$_temp0';
   }
 
   @override
-  String get gitNotRepositoryTitle => 'Not a Git repository';
+  String get gitTrustRequiredTitle =>
+      '¿Confiar en este espacio de trabajo para Git?';
+
+  @override
+  String get gitTrustRequiredMessage =>
+      'Los repositorios Git pueden ejecutar programas mediante hooks, filtros y otras opciones de configuración. Confíe en este espacio de trabajo antes de que BusyMark lea datos del repositorio o active acciones de Git.';
+
+  @override
+  String get gitTrustWorkspace => 'Confiar en el espacio de trabajo';
+
+  @override
+  String get gitNotRepositoryTitle => 'No es un repositorio Git';
 
   @override
   String get gitNotRepositoryMessage =>
-      'This workspace is not inside a Git repository.';
+      'Este espacio de trabajo no está dentro de un repositorio Git.';
 
   @override
-  String get gitInitializeRepository => 'Initialize repository';
+  String get gitInitializeRepository => 'Inicializar repositorio';
 
   @override
-  String get gitDetachedHead => 'Detached HEAD';
+  String get gitDetachedHead => 'HEAD desacoplado';
 
   @override
   String gitDetachedHeadAt(String commit) {
-    return 'Detached at $commit';
+    return 'Desacoplado en $commit';
   }
 
   @override
-  String get gitNoUpstream => 'No upstream';
+  String get gitNoUpstream => 'Sin upstream';
 
   @override
   String gitAheadCount(int count) {
@@ -1626,17 +2007,17 @@ class AppLocalizationsEs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count commits to pull',
-      one: '1 commit to pull',
+      other: '$count commits para incorporar',
+      one: '1 commit para incorporar',
     );
     return '$_temp0';
   }
 
   @override
-  String get gitClean => 'Clean';
+  String get gitClean => 'Limpio';
 
   @override
-  String get gitConflicts => 'Conflicts';
+  String get gitConflicts => 'Conflictos';
 
   @override
   String get gitChanges => 'Cambios';
@@ -1648,87 +2029,93 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitBranches => 'Ramas';
 
   @override
+  String get gitBranchActions => 'Acciones de ramas';
+
+  @override
   String get gitPull => 'Pull';
 
   @override
   String get gitPush => 'Push';
 
   @override
-  String get gitCommit => 'Confirmar';
+  String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'Seleccionar para el commit';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'Excluir del commit';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'Descartar';
 
   @override
-  String get gitOpenFile => 'Open file';
+  String get gitOpenFile => 'Abrir archivo';
 
   @override
-  String get gitMarkResolved => 'Mark resolved';
+  String get gitMarkResolved => 'Marcar como resuelto';
 
   @override
-  String get gitUntracked => 'Archivos sin versionar';
+  String get gitUntracked => 'Archivos sin seguimiento';
 
   @override
-  String get gitCommitMessage => 'Commit message';
+  String get gitCommitMessage => 'Mensaje del commit';
 
   @override
-  String get gitCommitSelectedFiles => 'Selected files';
+  String get gitCommitSelectedFiles => 'Archivos seleccionados';
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'Seleccione al menos un archivo antes de crear el commit.';
 
   @override
-  String get gitCommitMessageRequired => 'Enter a commit message.';
+  String get gitCommitMessageRequired =>
+      'Introduzca un mensaje para el commit.';
 
   @override
-  String get gitCreateBranch => 'Create branch';
+  String get gitCreateBranch => 'Crear rama';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => '+ Nueva rama';
 
   @override
-  String get gitBranchName => 'Branch name';
+  String get gitBranchName => 'Nombre de la rama';
 
   @override
-  String get gitSwitchBranch => 'Switch';
+  String get gitSwitchBranch => 'Cambiar';
 
   @override
-  String get gitNoChanges => 'No changes';
+  String get gitNoChanges => 'No hay cambios';
 
   @override
-  String get gitNoHistory => 'No history';
+  String get gitNoHistory => 'No hay historial';
 
   @override
-  String get gitNoBranches => 'No branches';
+  String get gitNoBranches => 'No hay ramas';
 
   @override
-  String get gitNoDiff => 'No hay diferencias para mostrar';
+  String get gitNoDiff => 'No hay ningún diff que mostrar';
 
   @override
   String get gitBinaryFile =>
-      'Binary file. BusyMark does not render binary patches.';
+      'Archivo binario. BusyMark no muestra parches binarios.';
 
   @override
   String get gitUnsavedChangesBanner =>
-      'Unsaved editor changes are not included until saved.';
+      'Los cambios sin guardar del editor no se incluyen hasta que se guarden.';
 
   @override
-  String get gitConfirmDiscardTitle => 'Discard Git changes?';
+  String get gitConfirmDiscardTitle => '¿Descartar los cambios de Git?';
 
   @override
   String gitConfirmDiscardTracked(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other:
+          'Los archivos seleccionados que están bajo seguimiento se restaurarán desde Git.',
+      one:
+          'El archivo seleccionado que está bajo seguimiento se restaurará desde Git.',
     );
     return '$_temp0';
   }
@@ -1738,8 +2125,8 @@ class AppLocalizationsEs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected untracked files will be deleted.',
-      one: 'The selected untracked file will be deleted.',
+      other: 'Los archivos seleccionados sin seguimiento se eliminarán.',
+      one: 'El archivo seleccionado sin seguimiento se eliminará.',
     );
     return '$_temp0';
   }
@@ -1750,35 +2137,35 @@ class AppLocalizationsEs extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          'The selected files will be restored or deleted based on their Git status.',
+          'Los archivos seleccionados se restaurarán o eliminarán según su estado de Git.',
       one:
-          'The selected file will be restored or deleted based on its Git status.',
+          'El archivo seleccionado se restaurará o eliminará según su estado de Git.',
     );
     return '$_temp0';
   }
 
   @override
   String gitConfirmSwitchBranchTitle(String branch) {
-    return 'Switch to $branch?';
+    return '¿Cambiar a $branch?';
   }
 
   @override
   String get gitConfirmSwitchBranchMessage =>
-      'BusyMark will reload the workspace from disk after Git switches branches.';
+      'BusyMark volverá a cargar el espacio de trabajo desde el disco después de que Git cambie de rama.';
 
   @override
-  String get gitConfirmPushSetUpstreamTitle => 'Set upstream branch?';
+  String get gitConfirmPushSetUpstreamTitle => '¿Configurar la rama upstream?';
 
   @override
   String gitConfirmPushSetUpstreamMessage(String branch) {
-    return 'This branch has no upstream. BusyMark can push $branch and set its upstream when exactly one remote is configured.';
+    return 'Esta rama no tiene upstream. BusyMark puede enviar $branch y configurar su upstream cuando haya exactamente un remoto configurado.';
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'Proyecto';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'Archivo actual';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
@@ -1786,80 +2173,83 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'File actions';
+  String get gitFileActions => 'Acciones de archivo';
 
   @override
-  String get gitStatusAdded => 'Added';
+  String get gitStatusAdded => 'Añadido';
 
   @override
-  String get gitStatusDeleted => 'Deleted';
+  String get gitStatusDeleted => 'Eliminado';
 
   @override
-  String get gitStatusRenamed => 'Renamed';
+  String get gitStatusRenamed => 'Renombrado';
 
   @override
-  String get gitStatusCopied => 'Copied';
+  String get gitStatusCopied => 'Copiado';
 
   @override
-  String get gitStatusUntracked => 'Untracked';
+  String get gitStatusUntracked => 'Sin seguimiento';
 
   @override
-  String get gitStatusConflicted => 'Conflicted';
+  String get gitStatusConflicted => 'En conflicto';
 
   @override
-  String get gitStatusIgnored => 'Ignored';
+  String get gitStatusIgnored => 'Ignorado';
 
   @override
-  String get gitStatusTypeChanged => 'Type changed';
+  String get gitStatusTypeChanged => 'Tipo cambiado';
 
   @override
-  String get gitStatusModified => 'Modified';
+  String get gitStatusModified => 'Modificado';
 
   @override
-  String get gitStatusUnknown => 'Unknown';
+  String get gitStatusUnknown => 'Desconocido';
 
   @override
-  String get gitErrorUnavailable => 'Git is unavailable.';
+  String get gitErrorUnavailable => 'Git no está disponible.';
 
   @override
-  String get gitErrorNotRepository => 'This workspace is not a Git repository.';
+  String get gitErrorNotRepository =>
+      'Este espacio de trabajo no es un repositorio Git.';
 
   @override
-  String get gitErrorUnsafePath => 'BusyMark blocked an unsafe Git path.';
+  String get gitErrorUnsafePath =>
+      'BusyMark ha bloqueado una ruta de Git insegura.';
 
   @override
-  String get gitErrorInvalidBranchName => 'Enter a valid branch name.';
+  String get gitErrorInvalidBranchName =>
+      'Introduzca un nombre de rama válido.';
 
   @override
-  String get gitErrorNoRemote => 'No Git remote is configured.';
+  String get gitErrorNoRemote => 'No hay ningún remoto de Git configurado.';
 
   @override
-  String get gitErrorNoUpstream => 'No upstream branch is configured.';
+  String get gitErrorNoUpstream => 'No hay ninguna rama upstream configurada.';
 
   @override
   String get gitErrorMultipleRemotes =>
-      'Multiple remotes are configured. Choose an upstream outside this BusyMark version.';
+      'Hay varios remotos configurados. Elija un upstream fuera de esta versión de BusyMark.';
 
   @override
   String get gitErrorDirtyWorkspace =>
-      'Save or discard BusyMark editor changes before switching branches.';
+      'Guarde o descarte los cambios del editor de BusyMark antes de cambiar de rama.';
 
   @override
   String get gitErrorDiverged =>
-      'Branch has diverged. Resolve merge or rebase outside this BusyMark version.';
+      'La rama ha divergido. Resuelva el merge o el rebase fuera de esta versión de BusyMark.';
 
   @override
   String get gitErrorAuthentication =>
-      'Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.';
+      'La autenticación de Git ha fallado. En el snap, los remotos SSH pueden requerir que se conecte la interfaz ssh-keys.';
 
   @override
-  String get gitErrorNetwork => 'Git network operation failed.';
+  String get gitErrorNetwork => 'La operación de red de Git ha fallado.';
 
   @override
-  String get gitErrorConflict => 'Git reported unresolved conflicts.';
+  String get gitErrorConflict => 'Git ha informado de conflictos sin resolver.';
 
   @override
-  String get gitErrorCommandFailed => 'Git command failed.';
+  String get gitErrorCommandFailed => 'El comando de Git ha fallado.';
 
   @override
   String get markdownAndHtml => 'Markdown y HTML';
@@ -1886,7 +2276,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Etiquetas HTML de bloque seguras renderizadas con widgets de vista previa de BusyMark.';
 
   @override
-  String get markdownHtmlRawHtmlInline => 'Etiquetas HTML en línea';
+  String get markdownHtmlRawHtmlInline =>
+      'Etiquetas HTML sin procesar en línea';
 
   @override
   String get markdownHtmlRawHtmlInlineDescription =>
@@ -1944,7 +2335,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'El HTML permitido se convierte en bloques de vista previa de BusyMark, no se renderiza en un navegador.';
 
   @override
-  String get markdownHtmlSourcePreserved => 'La fuente se conserva';
+  String get markdownHtmlSourcePreserved => 'Se conserva el código fuente';
 
   @override
   String get markdownHtmlSourcePreservedDescription =>

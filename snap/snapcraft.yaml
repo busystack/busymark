@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "0.2.1"
+version: "0.2.2"
 summary: Markdown and Writerside documentation editor
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
@@ -22,6 +22,12 @@ platforms:
   amd64:
     build-on: [amd64]
     build-for: [amd64]
+
+plugs:
+  desktop:
+    interface: desktop
+    desktop-file-ids:
+      - io.busystack.busymark.desktop
 
 apps:
   busymark:
@@ -62,7 +68,9 @@ parts:
       - libxcb-shm0
       - libxcb1
       - git
+      - fonts-noto-core
       - openssh-client
+      - util-linux
       - yaru-theme-gtk
       - yaru-theme-icon
     override-build: |
