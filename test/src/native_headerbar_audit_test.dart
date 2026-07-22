@@ -85,7 +85,7 @@ void main() {
           r'  desktop:\n'
           r'    interface: desktop\n'
           r'    desktop-file-ids:\n'
-          r'      - io\.busystack\.busymark$',
+          r'      - io\.busystack\.busymark\.desktop$',
           multiLine: true,
         ),
       ),
@@ -95,12 +95,13 @@ void main() {
       contains('text = ensure_desktop_file_id(text, desktop_file_id)'),
     );
     expect(localSnapBuilder, contains('desktop_file_id = sys.argv[5]'));
-    expect(localSnapBuilder, contains(r'"$APP_ID" <<'));
+    expect(localSnapBuilder, contains(r'DESKTOP_FILE_ID="${APP_ID}.desktop"'));
+    expect(localSnapBuilder, contains(r'"$DESKTOP_FILE_ID" <<'));
     expect(
       localSnapBuilder,
       contains(
         'unsquashfs -cat "\$OUT" meta/snap.yaml | grep -A4 '
-        "'^  desktop:' | grep -F -- \"- \$APP_ID\"",
+        "'^  desktop:' | grep -F -- \"- \$DESKTOP_FILE_ID\"",
       ),
     );
   });

@@ -27,7 +27,7 @@ plugs:
   desktop:
     interface: desktop
     desktop-file-ids:
-      - io.busystack.busymark
+      - io.busystack.busymark.desktop
 
 apps:
   busymark:

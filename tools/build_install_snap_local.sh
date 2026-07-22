@@ -234,6 +234,7 @@ BINARY_NAME="${BINARY_NAME:-$(cmake_value BINARY_NAME)}"
 BINARY_NAME="${BINARY_NAME:-$PROJECT_NAME}"
 APP_ID="${APP_ID:-$(cmake_value APPLICATION_ID)}"
 APP_ID="${APP_ID:-$SNAP_NAME}"
+DESKTOP_FILE_ID="${APP_ID}.desktop"
 ICON_SOURCE="${ICON_SOURCE:-$(snapcraft_value icon)}"
 
 SNAP_SCAFFOLD="${SNAP_SCAFFOLD:-/snap/${SNAP_NAME}/current}"
@@ -324,7 +325,7 @@ else
 fi
 
 echo "== Patch staged snap metadata =="
-python3 - "$SNAP_ROOT/meta/snap.yaml" "snap/snapcraft.yaml" "$VERSION" "$SNAP_NAME" "$APP_ID" <<'PY'
+python3 - "$SNAP_ROOT/meta/snap.yaml" "snap/snapcraft.yaml" "$VERSION" "$SNAP_NAME" "$DESKTOP_FILE_ID" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -577,14 +578,14 @@ PY
 
 grep '^version:' "$SNAP_ROOT/meta/snap.yaml"
 grep -A80 "^  ${SNAP_NAME}:" "$SNAP_ROOT/meta/snap.yaml" | sed -n '/plugs:/,/^[[:space:]]*[[:alpha:]_-].*:/p'
-grep -A4 '^  desktop:' "$SNAP_ROOT/meta/snap.yaml" | grep -F -- "- $APP_ID"
+grep -A4 '^  desktop:' "$SNAP_ROOT/meta/snap.yaml" | grep -F -- "- $DESKTOP_FILE_ID"
 
 echo "== Pack snap =="
 snap pack "$SNAP_ROOT" --filename="$OUT"
 
 echo "== Verify packed snap =="
 unsquashfs -cat "$OUT" meta/snap.yaml | grep '^version:'
-unsquashfs -cat "$OUT" meta/snap.yaml | grep -A4 '^  desktop:' | grep -F -- "- $APP_ID"
+unsquashfs -cat "$OUT" meta/snap.yaml | grep -A4 '^  desktop:' | grep -F -- "- $DESKTOP_FILE_ID"
 unsquashfs -ll "$OUT" | grep -F "$BINARY_NAME"
 if [[ "$BUNDLE_GIT" == "1" ]]; then
   unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/git"
