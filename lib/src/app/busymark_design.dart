@@ -35,6 +35,7 @@ abstract final class BusyMarkRadius {
 
 abstract final class BusyMarkSizes {
   static const double contentWidth = 760;
+  static const double documentContentWidth = contentWidth;
   static const double sidebarWidth = 300;
   static const double settingsWidth = 760;
   static const double toolbarHeight = 46;
@@ -86,17 +87,13 @@ abstract final class BusyMarkSizes {
   static const double previewListMarkerWidth = 18;
   static const double previewListMarkerTopInset = 2;
   static const double previewImageMinWidth = 80;
-  static const double previewImageMaxWidth = contentWidth;
+  static const double previewImageMaxWidth = documentContentWidth;
   static const double previewInlineImageMaxHeight = 180;
   static const double previewInlineImageHeight = 96;
-  static const double wysiwygContentWidth = 820;
   static const double wysiwygBlockIndent = 28;
-  static const double wysiwygEditorHorizontalPadding = 28;
-  static const double wysiwygEditorTopPadding = 20;
-  static const double wysiwygEditorBottomPadding = 38;
   static const double wysiwygToolbarReserve =
       iconButton + BusyMarkSpacing.xs * 2;
-  static const double wysiwygEditorTopPaddingWithToolbar =
+  static const double wysiwygToolbarClearance =
       BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.sm;
   static const double wysiwygPrefixWidth = 30;
   static const double imageDialogWidth = 420;
@@ -268,12 +265,6 @@ abstract final class BusyMarkInsets {
     0,
     BusyMarkSpacing.sm,
   );
-  static const previewPane = EdgeInsets.fromLTRB(
-    BusyMarkSpacing.xl,
-    BusyMarkSourceEditorMetrics.paddingTop,
-    BusyMarkSpacing.xl,
-    BusyMarkSizes.iconButton,
-  );
   static const previewCodeBlock = EdgeInsets.all(BusyMarkSpacing.mdPlus);
   static const previewCallout = EdgeInsets.all(BusyMarkSpacing.md);
   static const previewTableCell = EdgeInsets.symmetric(
@@ -290,9 +281,12 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.md,
     6,
   );
-  static const wysiwygHeadingBlock = EdgeInsets.only(
-    top: BusyMarkSpacing.lg,
-    bottom: 6,
+  static const documentHeadingBlock = EdgeInsets.only(
+    top: BusyMarkSizes.previewHeadingTop,
+    bottom: BusyMarkSizes.previewHeadingBottom,
+  );
+  static const documentParagraphBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSizes.previewHeadingBottom,
   );
   static const wysiwygContainerBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.sm,

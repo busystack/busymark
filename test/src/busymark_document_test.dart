@@ -10,6 +10,7 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
+import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
@@ -2346,12 +2347,10 @@ void main() {}
     },
   );
 
-  testWidgets('top editing toolbar reserves only editor top clearance', (
-    tester,
-  ) async {
+  testWidgets('editing toolbar reserves its document edge', (tester) async {
     final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
     expect(
-      BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar,
+      BusyMarkSizes.wysiwygToolbarClearance,
       BusyMarkSpacing.sm +
           BusyMarkSizes.wysiwygToolbarReserve +
           BusyMarkSpacing.sm,
@@ -2385,16 +2384,18 @@ void main() {}
         );
         await tester.pump();
 
-        final topPlacement =
-            placement == EditorToolbarPlacement.topLeft ||
-            placement == EditorToolbarPlacement.topRight;
-        final expectedPadding = EdgeInsets.fromLTRB(
-          BusyMarkSizes.wysiwygEditorHorizontalPadding,
-          topPlacement
-              ? BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar
-              : BusyMarkSizes.wysiwygEditorTopPadding,
-          BusyMarkSizes.wysiwygEditorHorizontalPadding,
-          BusyMarkSizes.wysiwygEditorBottomPadding,
+        final expectedLayout = BusyMarkDocumentLayoutSpec.standalone
+            .withEditingToolbar(placement: placement, direction: direction);
+        final topHorizontalToolbar =
+            direction == EditorToolbarDirection.horizontal &&
+            (placement == EditorToolbarPlacement.topLeft ||
+                placement == EditorToolbarPlacement.topRight);
+        final expectedPadding = expectedLayout.scrollPadding;
+        expect(
+          expectedLayout.minimumInsets.horizontal,
+          direction == EditorToolbarDirection.vertical
+              ? BusyMarkSizes.wysiwygToolbarClearance + BusyMarkSpacing.xl
+              : BusyMarkSpacing.xl * 2,
         );
         expect(editorList(), findsOneWidget);
         expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
@@ -2419,7 +2420,7 @@ void main() {}
         expect(toolbarScrollView.clipBehavior, Clip.none);
         expect(toolbarScrollView.hitTestBehavior, HitTestBehavior.deferToChild);
         final shownFieldRect = tester.getRect(find.byType(TextField).first);
-        if (topPlacement) {
+        if (topHorizontalToolbar) {
           final hideButtonRect = tester.getRect(
             find.byTooltip('Hide editing buttons'),
           );

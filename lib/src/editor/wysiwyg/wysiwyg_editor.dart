@@ -14,6 +14,7 @@ import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../document_layout.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_document_controller.dart';
@@ -44,6 +45,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onOpenSearch,
     this.onCloseSearch,
     this.headerBarService,
+    this.documentLayout,
   });
 
   final BusyDocument document;
@@ -64,6 +66,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final VoidCallback? onOpenSearch;
   final VoidCallback? onCloseSearch;
   final LinuxHeaderBarService? headerBarService;
+  final BusyMarkDocumentLayoutSpec? documentLayout;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -286,6 +289,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           decoration: BoxDecoration(color: colors.view),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final documentLayout = _documentLayout;
               return Stack(
                 children: [
                   Positioned.fill(
@@ -298,12 +302,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       child: Focus(
                         focusNode: _selectionFocusNode,
                         child: ListView.builder(
+                          key: const ValueKey('wysiwyg-document-scroll'),
                           controller: _scrollController,
-                          padding: _editorContentPadding(),
+                          padding: documentLayout.scrollPadding,
                           itemCount: renderEntries.length,
                           itemBuilder: (context, index) => _buildRenderEntry(
                             context,
                             renderEntries[index],
+                            documentLayout: documentLayout,
+                            first: index == 0,
                             selectedBlockIds: selectedBlockIds,
                             selectionRangesByBlockId: selectionRangesByBlockId,
                           ),
@@ -358,21 +365,19 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  EdgeInsets _editorContentPadding() {
-    final top = widget.toolbarPlacement._isTop
-        ? BusyMarkSizes.wysiwygEditorTopPaddingWithToolbar
-        : BusyMarkSizes.wysiwygEditorTopPadding;
-    return EdgeInsets.fromLTRB(
-      BusyMarkSizes.wysiwygEditorHorizontalPadding,
-      top,
-      BusyMarkSizes.wysiwygEditorHorizontalPadding,
-      BusyMarkSizes.wysiwygEditorBottomPadding,
-    );
-  }
+  BusyMarkDocumentLayoutSpec get _documentLayout =>
+      widget.documentLayout ??
+      BusyMarkDocumentLayoutSpec.standalone.withEditingToolbar(
+        placement: widget.toolbarPlacement,
+        direction: widget.toolbarDirection,
+      );
 
   Widget _buildRenderEntry(
     BuildContext context,
     _EditorRenderEntry entry, {
+    required BusyMarkDocumentLayoutSpec documentLayout,
+    bool applyDocumentFrame = true,
+    bool first = false,
     required Set<String> selectedBlockIds,
     required Map<String, BusyMarkWysiwygSelectionRange>
     selectionRangesByBlockId,
@@ -385,35 +390,38 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final content = entry.children == null
         ? _buildEditableBlockField(
             block,
+            first: first,
             selectedBlockIds: selectedBlockIds,
             selectionRangesByBlockId: selectionRangesByBlockId,
           )
         : _buildBlockquoteEntry(
             context,
             entry,
+            documentLayout: documentLayout,
             blockTextDirection: blockTextDirection,
             selectedBlockIds: selectedBlockIds,
             selectionRangesByBlockId: selectionRangesByBlockId,
           );
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: BusyMarkSizes.wysiwygContentWidth,
-        ),
-        child: Padding(
-          padding: EdgeInsetsDirectional.only(
-            start: entry.depth * BusyMarkSizes.wysiwygBlockIndent,
-          ).resolve(blockTextDirection),
-          child: content,
-        ),
-      ),
+    final indentedContent = Padding(
+      padding: EdgeInsetsDirectional.only(
+        start: entry.depth * BusyMarkSizes.wysiwygBlockIndent,
+      ).resolve(blockTextDirection),
+      child: content,
+    );
+    if (!applyDocumentFrame) {
+      return indentedContent;
+    }
+    return BusyMarkDocumentContentFrame(
+      layout: documentLayout,
+      contentKey: first ? const ValueKey('wysiwyg-document-content') : null,
+      child: indentedContent,
     );
   }
 
   Widget _buildBlockquoteEntry(
     BuildContext context,
     _EditorRenderEntry entry, {
+    required BusyMarkDocumentLayoutSpec documentLayout,
     required TextDirection blockTextDirection,
     required Set<String> selectedBlockIds,
     required Map<String, BusyMarkWysiwygSelectionRange>
@@ -442,6 +450,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                   _buildRenderEntry(
                     quoteContext,
                     child,
+                    documentLayout: documentLayout,
+                    applyDocumentFrame: false,
                     selectedBlockIds: selectedBlockIds,
                     selectionRangesByBlockId: selectionRangesByBlockId,
                   ),
@@ -469,6 +479,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   Widget _buildEditableBlockField(
     BusyBlock block, {
+    required bool first,
     required Set<String> selectedBlockIds,
     required Map<String, BusyMarkWysiwygSelectionRange>
     selectionRangesByBlockId,
@@ -477,6 +488,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return BusyMarkWysiwygBlockField(
       key: _blockKeyFor(block.id),
       block: block,
+      first: first,
       documentFilePath: documentFilePath,
       workspaceRoot: widget.workspaceRoot,
       writersideRoot: widget.writersideRoot,
@@ -2825,7 +2837,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return 0;
     }
     final local = renderObject.globalToLocal(globalPosition);
-    final outerPadding = _outerPaddingForBlock(block);
+    final outerPadding = busyMarkWysiwygOuterPadding(
+      block,
+      first: _isFirstRootBlock(block.id),
+    );
     final contentPadding = _contentPaddingForBlock(block);
     final prefixWidth = _hasPrefix(block)
         ? BusyMarkSizes.wysiwygPrefixWidth + BusyMarkSpacing.sm
@@ -2895,20 +2910,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     };
   }
 
-  EdgeInsets _outerPaddingForBlock(BusyBlock block) {
-    return switch (block.kind) {
-      BusyBlockKind.heading => BusyMarkInsets.wysiwygHeadingBlock,
-      BusyBlockKind.codeBlock ||
-      BusyBlockKind.blockquote ||
-      BusyBlockKind.writersideAdmonition ||
-      BusyBlockKind.writersideTabs ||
-      BusyBlockKind.writersideProcedure ||
-      BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
-      BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
-      _ => BusyMarkInsets.wysiwygDefaultBlock,
-    };
+  bool _isFirstRootBlock(String blockId) {
+    final entries = _editorRenderEntries(_documentController.document.blocks);
+    return entries.isNotEmpty &&
+        entries.first.children == null &&
+        entries.first.block.id == blockId;
   }
 
   EdgeInsets _contentPaddingForBlock(BusyBlock block) {

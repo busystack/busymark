@@ -1,9 +1,126 @@
+import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
+import 'package:busymark/src/editor/document_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('Split Preview stays fluid without copying Source-only chrome', () {
+    const layout = BusyMarkDocumentLayoutSpec.splitPreview;
+
+    expect(
+      layout.minimumInsets,
+      const EdgeInsets.fromLTRB(
+        BusyMarkSpacing.xl,
+        BusyMarkSourceEditorMetrics.paddingTop,
+        BusyMarkSpacing.xl,
+        BusyMarkSizes.iconButton,
+      ),
+    );
+    expect(
+      layout.minimumInsets.left,
+      lessThan(BusyMarkSizes.sourceGutterWidth),
+    );
+    expect(layout.maxContentWidth, isNull);
+  });
+
+  testWidgets(
+    'document frame centers wide content and honors physical safe edges',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      Future<Rect> contentRect({
+        required double width,
+        required TextDirection textDirection,
+        required BusyMarkDocumentLayoutSpec layout,
+      }) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Directionality(
+              textDirection: textDirection,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: width,
+                  height: 100,
+                  child: BusyMarkDocumentContentFrame(
+                    layout: layout,
+                    contentKey: const ValueKey('document-content'),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        return tester.getRect(find.byKey(const ValueKey('document-content')));
+      }
+
+      for (final textDirection in TextDirection.values) {
+        final wideRect = await contentRect(
+          width: 1000,
+          textDirection: textDirection,
+          layout: BusyMarkDocumentLayoutSpec.standalone,
+        );
+        expect(wideRect.left, 120);
+        expect(wideRect.width, BusyMarkSizes.documentContentWidth);
+        expect(wideRect.right, 880);
+
+        final leftToolbarLayout = BusyMarkDocumentLayoutSpec.standalone
+            .withEditingToolbar(
+              placement: EditorToolbarPlacement.topLeft,
+              direction: EditorToolbarDirection.vertical,
+            );
+        final narrowRect = await contentRect(
+          width: 840,
+          textDirection: textDirection,
+          layout: leftToolbarLayout,
+        );
+        expect(narrowRect.left, BusyMarkSizes.wysiwygToolbarClearance);
+        expect(narrowRect.right, 840 - BusyMarkSpacing.xl);
+
+        final splitPreviewRect = await contentRect(
+          width: 500,
+          textDirection: textDirection,
+          layout: BusyMarkDocumentLayoutSpec.splitPreview,
+        );
+        expect(splitPreviewRect.left, BusyMarkSpacing.xl);
+        expect(splitPreviewRect.right, 500 - BusyMarkSpacing.xl);
+      }
+    },
+  );
+
+  test('toolbar clearance is applied only to the toolbar edge', () {
+    const base = BusyMarkDocumentLayoutSpec.standalone;
+
+    final top = base.withEditingToolbar(
+      placement: EditorToolbarPlacement.topRight,
+      direction: EditorToolbarDirection.horizontal,
+    );
+    expect(top.minimumInsets.top, BusyMarkSizes.wysiwygToolbarClearance);
+    expect(top.minimumInsets.bottom, base.minimumInsets.bottom);
+
+    final bottom = base.withEditingToolbar(
+      placement: EditorToolbarPlacement.bottomLeft,
+      direction: EditorToolbarDirection.horizontal,
+    );
+    expect(bottom.minimumInsets.top, base.minimumInsets.top);
+    expect(bottom.minimumInsets.bottom, BusyMarkSizes.wysiwygToolbarClearance);
+
+    final right = base.withEditingToolbar(
+      placement: EditorToolbarPlacement.bottomRight,
+      direction: EditorToolbarDirection.vertical,
+    );
+    expect(right.minimumInsets.left, base.minimumInsets.left);
+    expect(right.minimumInsets.right, BusyMarkSizes.wysiwygToolbarClearance);
+  });
+
   test('sidebar header and list compose the shared vertical gap', () {
     final header = BusyMarkInsets.sidebarHeader.resolve(TextDirection.ltr);
     final tocLtr = BusyMarkInsets.tocHeader.resolve(TextDirection.ltr);

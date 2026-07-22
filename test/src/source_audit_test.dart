@@ -1351,11 +1351,12 @@ void main() {
     expect(sourceGutter, contains('BusyMarkSizes.sourceFoldButtonRightInset'));
     expect(sourceEditor, contains('Positioned.fill('));
     expect(sourceGutter, contains('alignment: Alignment.center'));
-    expect(workspace, contains('padding: BusyMarkInsets.previewPane'));
+    expect(workspace, contains('BusyMarkDocumentLayoutSpec.splitPreview'));
+    expect(workspace, contains('BusyMarkDocumentContentFrame('));
     expect(workspace, contains('first: index == 0'));
     expect(
       workspace,
-      contains('top: first ? 0 : BusyMarkSizes.previewHeadingTop'),
+      contains('BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)'),
     );
     expect(workspace, isNot(contains('class _PaneHeader')));
     expect(workspace, isNot(contains('class _StatusPill')));

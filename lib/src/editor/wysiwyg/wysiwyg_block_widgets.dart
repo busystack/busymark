@@ -54,6 +54,29 @@ bool _isTechnicalWysiwygBlock(BusyBlock block) {
   };
 }
 
+EdgeInsets busyMarkWysiwygOuterPadding(BusyBlock block, {bool first = false}) {
+  final padding = switch (block.kind) {
+    BusyBlockKind.heading => BusyMarkInsets.documentHeadingBlock,
+    BusyBlockKind.paragraph => BusyMarkInsets.documentParagraphBlock,
+    BusyBlockKind.codeBlock ||
+    BusyBlockKind.blockquote ||
+    BusyBlockKind.writersideAdmonition ||
+    BusyBlockKind.writersideTabs ||
+    BusyBlockKind.writersideProcedure ||
+    BusyBlockKind.writersideRawXml ||
+    BusyBlockKind.htmlBlock ||
+    BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
+    BusyBlockKind.table => BusyMarkInsets.wysiwygTableBlock,
+    BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakBlock,
+    _ => BusyMarkInsets.wysiwygDefaultBlock,
+  };
+  final trimFirstBlockSpacing =
+      first &&
+      (block.kind == BusyBlockKind.heading ||
+          block.kind == BusyBlockKind.paragraph);
+  return trimFirstBlockSpacing ? padding.copyWith(top: 0) : padding;
+}
+
 class BusyMarkWysiwygBlockquoteFrame extends StatelessWidget {
   const BusyMarkWysiwygBlockquoteFrame({
     super.key,
@@ -117,6 +140,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   const BusyMarkWysiwygBlockField({
     super.key,
     required this.block,
+    this.first = false,
     required this.documentFilePath,
     this.workspaceRoot,
     this.writersideRoot,
@@ -144,6 +168,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   });
 
   final BusyBlock block;
+  final bool first;
   final String documentFilePath;
   final String? workspaceRoot;
   final String? writersideRoot;
@@ -383,7 +408,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         Theme.of(context).textTheme.bodyMedium?.fontSize ??
         14;
     return switch (block.kind) {
-      BusyBlockKind.heading => fontSize * 1.8,
       BusyBlockKind.codeBlock ||
       BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
@@ -394,7 +418,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.unknown => fontSize * 2.4,
       BusyBlockKind.table => fontSize * 5.8,
       BusyBlockKind.thematicBreak => fontSize * 2.2,
-      _ => fontSize * 1.7,
+      BusyBlockKind.image => BusyMarkSizes.iconButton,
+      _ => 0,
     };
   }
 
@@ -406,22 +431,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     return block.rawSource ?? block.plainText;
   }
 
-  EdgeInsets get _padding {
-    return switch (block.kind) {
-      BusyBlockKind.heading => BusyMarkInsets.wysiwygHeadingBlock,
-      BusyBlockKind.codeBlock ||
-      BusyBlockKind.blockquote ||
-      BusyBlockKind.writersideAdmonition ||
-      BusyBlockKind.writersideTabs ||
-      BusyBlockKind.writersideProcedure ||
-      BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
-      BusyBlockKind.table => BusyMarkInsets.wysiwygTableBlock,
-      BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakBlock,
-      _ => BusyMarkInsets.wysiwygDefaultBlock,
-    };
-  }
+  EdgeInsets get _padding => busyMarkWysiwygOuterPadding(block, first: first);
 
   EdgeInsets get _contentPadding {
     return switch (block.kind) {

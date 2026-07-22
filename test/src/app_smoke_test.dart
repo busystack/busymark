@@ -20,6 +20,7 @@ import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
@@ -2983,6 +2984,129 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('Editor and Preview share a frame while Split stays fluid', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    const service = _SearchWorkspaceService(
+      '# Shared document frame\n\nParagraph\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/shared-frame.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byKey(const ValueKey('wysiwyg-document-content'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorContent = find.byKey(
+      const ValueKey('wysiwyg-document-content'),
+    );
+    final editorScroll = find.byKey(const ValueKey('wysiwyg-document-scroll'));
+    expect(editorContent, findsOneWidget);
+    expect(editorScroll, findsOneWidget);
+    final editorRect = tester.getRect(editorContent);
+    final editorHeadingRect = tester.getRect(
+      find.descendant(of: editorContent, matching: find.byType(TextField)),
+    );
+    final editorParagraphRect = tester.getRect(
+      find.descendant(of: editorScroll, matching: find.byType(TextField)).at(1),
+    );
+    final editorPadding = tester.widget<ListView>(editorScroll).padding;
+    final expectedStandalone = BusyMarkDocumentLayoutSpec.standalone
+        .withEditingToolbar(
+          placement: EditorToolbarPlacement.topLeft,
+          direction: EditorToolbarDirection.horizontal,
+        );
+    expect(editorPadding, expectedStandalone.scrollPadding);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewContent = find.byKey(
+      const ValueKey('preview-document-content'),
+    );
+    final previewScroll = find.byKey(const ValueKey('preview-document-scroll'));
+    expect(previewContent, findsOneWidget);
+    expect(previewScroll, findsOneWidget);
+    final previewRect = tester.getRect(previewContent);
+    final previewHeading = find.descendant(
+      of: previewContent,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('Shared document frame'),
+      ),
+    );
+    expect(previewHeading, findsOneWidget);
+    final previewHeadingRect = tester.getRect(previewHeading);
+    final previewParagraph = find.descendant(
+      of: previewContent,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText && widget.text.toPlainText() == 'Paragraph',
+      ),
+    );
+    expect(previewParagraph, findsOneWidget);
+    final previewParagraphRect = tester.getRect(previewParagraph);
+    expect(previewRect.left, closeTo(editorRect.left, 0.1));
+    expect(previewRect.right, closeTo(editorRect.right, 0.1));
+    expect(previewRect.top, closeTo(editorRect.top, 0.1));
+    expect(previewHeadingRect.left, closeTo(editorHeadingRect.left, 0.1));
+    expect(previewHeadingRect.top, closeTo(editorHeadingRect.top, 0.1));
+    expect(previewParagraphRect.left, closeTo(editorParagraphRect.left, 0.1));
+    expect(previewParagraphRect.top, closeTo(editorParagraphRect.top, 0.1));
+    expect(tester.widget<ListView>(previewScroll).padding, editorPadding);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.split);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final splitPaneRect = tester.getRect(previewScroll);
+    final splitContentRect = tester.getRect(previewContent);
+    expect(splitContentRect.left - splitPaneRect.left, BusyMarkSpacing.xl);
+    expect(splitPaneRect.right - splitContentRect.right, BusyMarkSpacing.xl);
+    expect(
+      splitContentRect.top - splitPaneRect.top,
+      BusyMarkSourceEditorMetrics.paddingTop,
+    );
+    expect(
+      tester.widget<ListView>(previewScroll).padding,
+      BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding,
+    );
+  });
 
   testWidgets('editor undo cannot restore saved text from previous tab', (
     tester,

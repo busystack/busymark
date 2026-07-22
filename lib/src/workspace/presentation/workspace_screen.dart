@@ -23,6 +23,7 @@ import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
+import '../../editor/document_layout.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_document.dart';
@@ -6343,6 +6344,8 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                             controller: _previewScrollController,
                             headingKeys: _previewHeadingKeys,
                             searchKeys: _previewSearchKeys,
+                            documentLayout:
+                                BusyMarkDocumentLayoutSpec.standalone,
                           ),
                         ),
                       ],
@@ -7221,6 +7224,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         !wysiwygVisible;
     final previewVisible =
         widget.viewMode != DocumentViewModePreference.source && !editorVisible;
+    final standaloneDocumentLayout = BusyMarkDocumentLayoutSpec.standalone
+        .withEditingToolbar(
+          placement: widget.editorToolbarPlacement,
+          direction: widget.editorToolbarDirection,
+        );
     final activeEditorPath = _activeEditorPath();
     final searchState = ref.watch(_workspaceSearchProvider);
     return DecoratedBox(
@@ -7259,6 +7267,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 scrollToHeadingId: _wysiwygScrollHeadingId,
                 scrollToSearchQuery: _wysiwygSearchQuery,
                 scrollRequest: _wysiwygScrollRequest,
+                documentLayout: standaloneDocumentLayout,
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
                     .request(),
@@ -7308,6 +7317,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 controller: _previewScrollController,
                 headingKeys: _previewHeadingKeys,
                 searchKeys: _previewSearchKeys,
+                documentLayout: sourceVisible
+                    ? BusyMarkDocumentLayoutSpec.splitPreview
+                    : standaloneDocumentLayout,
               ),
             ),
         ],
@@ -7641,6 +7653,7 @@ class _PreviewPane extends StatelessWidget {
     required this.controller,
     required this.headingKeys,
     required this.searchKeys,
+    required this.documentLayout,
   });
 
   final PreviewDocument? preview;
@@ -7648,6 +7661,7 @@ class _PreviewPane extends StatelessWidget {
   final ScrollController controller;
   final Map<String, GlobalKey> headingKeys;
   final Map<int, GlobalKey> searchKeys;
+  final BusyMarkDocumentLayoutSpec documentLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -7664,27 +7678,19 @@ class _PreviewPane extends StatelessWidget {
       decoration: BoxDecoration(color: colors.view),
       child: SelectionArea(
         child: ListView(
+          key: const ValueKey('preview-document-scroll'),
           controller: controller,
-          padding: BusyMarkInsets.previewPane,
+          padding: documentLayout.scrollPadding,
           children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: BusyMarkSizes.contentWidth,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final (index, block) in document.blocks.indexed)
-                      _keyedPreviewBlock(
-                        context,
-                        index,
-                        block,
-                        keyedHeadingIds,
-                      ),
-                  ],
-                ),
+            BusyMarkDocumentContentFrame(
+              layout: documentLayout,
+              contentKey: const ValueKey('preview-document-content'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (index, block) in document.blocks.indexed)
+                    _keyedPreviewBlock(context, index, block, keyedHeadingIds),
+                ],
               ),
             ),
           ],
@@ -7762,10 +7768,9 @@ class _PreviewBlockView extends StatelessWidget {
     );
     final child = switch (displayBlock.kind) {
       PreviewBlockKind.heading => Padding(
-        padding: EdgeInsets.only(
-          top: first ? 0 : BusyMarkSizes.previewHeadingTop,
-          bottom: BusyMarkSizes.previewHeadingBottom,
-        ),
+        padding: first
+            ? BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)
+            : BusyMarkInsets.documentHeadingBlock,
         child: _PreviewInlineText(
           key: headingKey,
           block: displayBlock,
@@ -7925,9 +7930,9 @@ class _PreviewBlockView extends StatelessWidget {
         ),
       ),
       _ => Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: BusyMarkSizes.previewHeadingBottom,
-        ),
+        padding: first
+            ? BusyMarkInsets.documentParagraphBlock.copyWith(top: 0)
+            : BusyMarkInsets.documentParagraphBlock,
         child: _PreviewInlineText(
           block: displayBlock,
           style: _diffPreviewTextStyle(context, displayBlock, null),
