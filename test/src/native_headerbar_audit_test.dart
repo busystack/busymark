@@ -36,7 +36,7 @@ void main() {
     expect(source, isNot(contains('window-maximize-symbolic')));
   });
 
-  test('Linux desktop identity resolves to BusyMark display name', () {
+  test('Linux desktop identity uses the standard Snap launcher mapping', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final cmake = File('linux/CMakeLists.txt').readAsStringSync();
     final desktop = File(
@@ -69,41 +69,28 @@ void main() {
     expect(desktop, contains('StartupWMClass=io.busystack.busymark'));
     expect(
       snapcraft,
-      isNot(
-        contains('desktop: share/applications/io.busystack.busymark.desktop'),
-      ),
+      contains('desktop: share/applications/io.busystack.busymark.desktop'),
     );
+    expect(snapcraft, isNot(contains('desktop-file-ids:')));
     expect(
-      snapcraft,
-      contains(r'> "$CRAFT_PRIME/meta/gui/io.busystack.busymark.desktop"'),
-    );
-    expect(
-      snapcraft,
+      localSnapBuilder,
       contains(
-        RegExp(
-          r'^plugs:\n'
-          r'  desktop:\n'
-          r'    interface: desktop\n'
-          r'    desktop-file-ids:\n'
-          r'      - io\.busystack\.busymark\.desktop$',
-          multiLine: true,
-        ),
+        r'"$DESKTOP_SOURCE" > "$SNAP_ROOT/meta/gui/${SNAP_NAME}.desktop"',
       ),
     );
     expect(
       localSnapBuilder,
-      contains('text = ensure_desktop_file_id(text, desktop_file_id)'),
+      contains('text = remove_top_level_plug(text, "desktop")'),
     );
-    expect(localSnapBuilder, contains('desktop_file_id = sys.argv[5]'));
-    expect(localSnapBuilder, contains(r'DESKTOP_FILE_ID="${APP_ID}.desktop"'));
-    expect(localSnapBuilder, contains(r'"$DESKTOP_FILE_ID" <<'));
     expect(
       localSnapBuilder,
-      contains(
-        'unsquashfs -cat "\$OUT" meta/snap.yaml | grep -A4 '
-        "'^  desktop:' | grep -F -- \"- \$DESKTOP_FILE_ID\"",
-      ),
+      contains(r'[[ "$STAGED_DESKTOP_MANIFEST" == "${SNAP_NAME}.desktop" ]]'),
     );
+    expect(
+      localSnapBuilder,
+      contains(r'[[ "$PACKED_DESKTOP_MANIFEST" == "${SNAP_NAME}.desktop" ]]'),
+    );
+    expect(localSnapBuilder, isNot(contains('ensure_desktop_file_id')));
   });
 
   test('native labels are supplied by Dart rather than hardcoded in C++', () {
