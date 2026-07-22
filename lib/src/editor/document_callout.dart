@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
+import 'document_surface.dart';
 
 /// Shared document surface for quotes, admonitions, and similar callouts.
 ///
@@ -24,15 +25,11 @@ class BusyMarkDocumentCallout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final frame = Container(
+    return BusyMarkDocumentSurface(
       margin: margin,
       padding: BusyMarkInsets.documentCalloutContent,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? colors.panel,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        border: Border.all(color: colors.subtleBorder),
-      ),
+      backgroundColor: backgroundColor,
+      onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,13 +39,5 @@ class BusyMarkDocumentCallout extends StatelessWidget {
         ],
       ),
     );
-    final tapHandler = onTap;
-    return tapHandler == null
-        ? frame
-        : GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: tapHandler,
-            child: frame,
-          );
   }
 }

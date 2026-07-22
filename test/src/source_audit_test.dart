@@ -456,6 +456,43 @@ void main() {
     expect(blocks, isNot(contains('BusyMarkWysiwygBlockquoteFrame')));
   });
 
+  test('document views reuse one code-block surface and typography', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final blocks = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    final codeBlock = File(
+      'lib/src/editor/document_code_block.dart',
+    ).readAsStringSync();
+    final surface = File(
+      'lib/src/editor/document_surface.dart',
+    ).readAsStringSync();
+
+    expect(surface, contains('class BusyMarkDocumentSurface'));
+    expect(codeBlock, contains('class BusyMarkDocumentCodeBlock'));
+    expect(codeBlock, contains('busyMarkDocumentCodeTextStyle'));
+    expect(
+      workspace,
+      contains('PreviewBlockKind.code => BusyMarkDocumentCodeBlock('),
+    );
+    expect(workspace, contains('busyMarkDocumentCodeTextStyle(context)'));
+    expect(blocks, contains('child: BusyMarkDocumentCodeBlock('));
+    expect(blocks, contains('BusyMarkDocumentCodeBlockVariant.embedded'));
+    expect(blocks, contains('busyMarkDocumentCodeTextStyle(context)'));
+    expect(blocks, contains('busyMarkWysiwygTextLayoutInsets'));
+    expect(editor, contains('busyMarkWysiwygTextLayoutInsets(block)'));
+    expect(workspace, isNot(contains('PreviewBlockKind.code => Container(')));
+    expect(
+      workspace,
+      contains('PreviewBlockKind.raw => BusyMarkDocumentCodeBlock('),
+    );
+  });
+
   test('workspace isolates technical labels only at rendering boundaries', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
@@ -1324,6 +1361,10 @@ void main() {
       r'class _ImageBlockEditor.*?String _imageSource',
       dotAll: true,
     ).firstMatch(blockWidgets)!.group(0)!;
+    final imageDialog = RegExp(
+      r'class _ImageDialog extends.*?class _TableDialogResult',
+      dotAll: true,
+    ).firstMatch(editor)!.group(0)!;
 
     expect(imageView, isNot(contains('color: colors.panel')));
     expect(
@@ -1342,6 +1383,17 @@ void main() {
     expect(editor, contains('_handleImageBlockEditRequested'));
     expect(editor, contains('initialSource: _imageSourceForBlock(block)'));
     expect(editor, contains('submitLabel: context.l10n.apply'));
+    expect(imageDialog, contains('BusyMarkDialogShell('));
+    expect(imageDialog, contains('BusyMarkFloatingTextEntry('));
+    expect(imageDialog, contains('BusyMarkDialogButton('));
+    expect(imageDialog, contains("hintText: 'images/example.png'"));
+    expect(imageDialog, contains('hintText: context.l10n.describeTheImage'));
+    expect(imageDialog, isNot(contains('AlertDialog(')));
+    expect(imageDialog, isNot(contains('TextField(')));
+    expect(imageDialog, isNot(contains('InputDecoration(')));
+    expect(imageDialog, isNot(contains('OutlinedButton(')));
+    expect(imageDialog, isNot(contains('TextButton(')));
+    expect(imageDialog, isNot(contains('FilledButton(')));
   });
 
   test('source view has compact gutter without pane status chrome', () {

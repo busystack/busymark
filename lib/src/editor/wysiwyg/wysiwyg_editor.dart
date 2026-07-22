@@ -15,6 +15,7 @@ import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
+import '../document_code_block.dart';
 import '../document_layout.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
@@ -2840,8 +2841,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       block,
       first: _isFirstRootBlock(block.id),
     );
-    final contentPadding = _contentPaddingForBlock(block);
-    final prefixWidth = _hasPrefix(block)
+    final contentPadding = busyMarkWysiwygTextLayoutInsets(block);
+    final prefixWidth = busyMarkWysiwygHasPrefix(block)
         ? BusyMarkSizes.wysiwygPrefixWidth + BusyMarkSpacing.sm
         : 0.0;
     final textDirection = busyMarkWysiwygBlockTextDirection(
@@ -2855,12 +2856,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                 outerPadding.horizontal)
             .clamp(1.0, double.infinity)
             .toDouble();
+    final textLayoutWidth = (maxWidth - busyMarkWysiwygTextFieldLayoutInset)
+        .clamp(1.0, double.infinity)
+        .toDouble();
     final physicalLeftInset =
         outerPadding.left +
         contentPadding.left +
         (textDirection == TextDirection.ltr ? prefixWidth : 0.0);
     final textX = (local.dx - physicalLeftInset)
-        .clamp(0.0, maxWidth)
+        .clamp(0.0, textLayoutWidth)
         .toDouble();
     final textY = (local.dy - outerPadding.top - contentPadding.top)
         .clamp(0.0, renderObject.size.height)
@@ -2868,7 +2872,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final textPainter = TextPainter(
       text: TextSpan(text: controller.text, style: _textStyleForBlock(block)),
       textDirection: textDirection,
-    )..layout(maxWidth: maxWidth);
+      textScaler: MediaQuery.textScalerOf(context),
+      locale: Localizations.maybeLocaleOf(context),
+    )..layout(maxWidth: textLayoutWidth);
     return textPainter
         .getPositionForOffset(Offset(textX, textY))
         .offset
@@ -2898,11 +2904,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       BusyBlockKind.heading => theme.bodyMedium!.copyWith(
         fontWeight: FontWeight.w700,
       ),
-      BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
-        fontFamily: BusyMarkTypography.monoFontFamily,
-        fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-        height: BusyMarkTypography.codeLineHeight,
-      ),
+      BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => theme.bodyMedium!.copyWith(
         height: BusyMarkTypography.bodyLineHeight,
       ),
@@ -2914,34 +2916,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return entries.isNotEmpty &&
         entries.first.children == null &&
         entries.first.block.id == blockId;
-  }
-
-  EdgeInsets _contentPaddingForBlock(BusyBlock block) {
-    return switch (block.kind) {
-      BusyBlockKind.codeBlock ||
-      BusyBlockKind.blockquote ||
-      BusyBlockKind.writersideAdmonition ||
-      BusyBlockKind.writersideTabs ||
-      BusyBlockKind.writersideProcedure ||
-      BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
-      BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
-      _ => EdgeInsets.zero,
-    };
-  }
-
-  bool _hasPrefix(BusyBlock block) {
-    return switch (block.kind) {
-      BusyBlockKind.unorderedListItem ||
-      BusyBlockKind.orderedListItem ||
-      BusyBlockKind.taskListItem ||
-      BusyBlockKind.blockquote ||
-      BusyBlockKind.codeBlock ||
-      BusyBlockKind.writersideAdmonition ||
-      BusyBlockKind.htmlBlock => true,
-      _ => false,
-    };
   }
 }
 
@@ -3285,6 +3259,14 @@ class _ImageDialogResult {
   final String alt;
 }
 
+abstract final class BusyMarkImageDialogKeys {
+  static const source = ValueKey<String>('wysiwyg-image-source-field');
+  static const alt = ValueKey<String>('wysiwyg-image-alt-field');
+  static const choose = ValueKey<String>('wysiwyg-image-choose');
+  static const cancel = ValueKey<String>('wysiwyg-image-cancel');
+  static const submit = ValueKey<String>('wysiwyg-image-submit');
+}
+
 class _ImageDialog extends StatefulWidget {
   const _ImageDialog({
     required this.title,
@@ -3311,10 +3293,12 @@ class _ImageDialogState extends State<_ImageDialog> {
     super.initState();
     _sourceController.text = widget.initialSource;
     _altController.text = widget.initialAlt;
+    _sourceController.addListener(_handleSourceChanged);
   }
 
   @override
   void dispose() {
+    _sourceController.removeListener(_handleSourceChanged);
     _sourceController.dispose();
     _altController.dispose();
     super.dispose();
@@ -3322,63 +3306,69 @@ class _ImageDialogState extends State<_ImageDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: SizedBox(
-        width: BusyMarkSizes.imageDialogWidth,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return BusyMarkDialogShell(
+      title: widget.title,
+      maxWidth: BusyMarkSizes.dialogCompact,
+      actions: [
+        BusyMarkDialogButton(
+          key: BusyMarkImageDialogKeys.cancel,
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          key: BusyMarkImageDialogKeys.submit,
+          label: widget.submitLabel,
+          onPressed: _canSubmit ? _submit : null,
+          suggested: true,
+        ),
+      ],
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('wysiwyg-image-source-field'),
-                    controller: _sourceController,
-                    autofocus: true,
-                    textDirection: TextDirection.ltr,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: BusyMarkTypography.monoFontFamily,
-                      fontFamilyFallback:
-                          BusyMarkTypography.monoFontFamilyFallback,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: context.l10n.source,
-                      hintText: 'images/example.png',
-                    ),
-                  ),
+            Expanded(
+              child: BusyMarkFloatingTextEntry(
+                key: BusyMarkImageDialogKeys.source,
+                label: context.l10n.source,
+                controller: _sourceController,
+                hintText: 'images/example.png',
+                autofocus: true,
+                textDirection: TextDirection.ltr,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
                 ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Padding(
-                  padding: const EdgeInsets.only(top: BusyMarkSpacing.sm),
-                  child: OutlinedButton(
-                    onPressed: _chooseImage,
-                    child: Text(context.l10n.choose),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: BusyMarkSpacing.md),
-            TextField(
-              controller: _altController,
-              decoration: InputDecoration(
-                labelText: context.l10n.altText,
-                hintText: context.l10n.describeTheImage,
+                textInputAction: TextInputAction.next,
               ),
-              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            BusyMarkDialogButton(
+              key: BusyMarkImageDialogKeys.choose,
+              label: context.l10n.choose,
+              icon: BusyMarkGlyphs.folderOpen,
+              onPressed: _chooseImage,
             ),
           ],
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.l10n.cancel),
+        const SizedBox(height: BusyMarkSpacing.md),
+        BusyMarkFloatingTextEntry(
+          key: BusyMarkImageDialogKeys.alt,
+          label: context.l10n.altText,
+          controller: _altController,
+          hintText: context.l10n.describeTheImage,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
         ),
-        FilledButton(onPressed: _submit, child: Text(widget.submitLabel)),
       ],
     );
+  }
+
+  bool get _canSubmit => _sourceController.text.trim().isNotEmpty;
+
+  void _handleSourceChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _chooseImage() async {
@@ -3393,12 +3383,10 @@ class _ImageDialogState extends State<_ImageDialog> {
     if (file == null || !mounted) {
       return;
     }
-    setState(() {
-      _sourceController.text = file.path;
-      if (_altController.text.trim().isEmpty) {
-        _altController.text = file.name;
-      }
-    });
+    _sourceController.text = file.path;
+    if (_altController.text.trim().isEmpty) {
+      _altController.text = file.name;
+    }
   }
 
   void _submit() {

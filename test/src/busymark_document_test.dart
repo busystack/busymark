@@ -13,6 +13,7 @@ import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -33,6 +34,19 @@ import 'package:markdown/markdown.dart' as md;
 
 void main() {
   const parser = MarkdownParser();
+
+  test('WYSIWYG hit testing includes shared document surface borders', () {
+    const codeBlock = BusyBlock(id: 'code', kind: BusyBlockKind.codeBlock);
+
+    expect(
+      busyMarkWysiwygContentPadding(codeBlock),
+      BusyMarkInsets.documentCodeContent,
+    );
+    expect(
+      busyMarkWysiwygTextLayoutInsets(codeBlock),
+      const EdgeInsets.all(BusyMarkSpacing.mdPlus + BusyMarkStroke.hairline),
+    );
+  });
 
   test('package markdown AST imports into BusyDocument core blocks', () {
     final parsed = parser.parse(
@@ -3625,21 +3639,54 @@ void main() {}
 
       expect(find.text('Image'), findsOneWidget);
       expect(find.text('Apply'), findsOneWidget);
+      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+      expect(find.byType(BusyMarkFloatingTextEntry), findsNWidgets(2));
+      expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+      final dialogRect = tester.getRect(find.byType(BusyMarkDialogShell));
+      final sourceEntryRect = tester.getRect(
+        find.byKey(BusyMarkImageDialogKeys.source),
+      );
+      final altEntryRect = tester.getRect(
+        find.byKey(BusyMarkImageDialogKeys.alt),
+      );
+      final chooseRect = tester.getRect(
+        find.byKey(BusyMarkImageDialogKeys.choose),
+      );
+      expect(dialogRect.width, lessThanOrEqualTo(BusyMarkSizes.dialogCompact));
       expect(
-        tester.widget<TextField>(find.byType(TextField).at(0)).controller?.text,
+        sourceEntryRect.left - dialogRect.left,
+        closeTo(BusyMarkSpacing.lg, 0.1),
+      );
+      expect(
+        altEntryRect.left - dialogRect.left,
+        closeTo(BusyMarkSpacing.lg, 0.1),
+      );
+      expect(
+        dialogRect.right - chooseRect.right,
+        closeTo(BusyMarkSpacing.lg, 0.1),
+      );
+      final sourceField = find.descendant(
+        of: find.byKey(BusyMarkImageDialogKeys.source),
+        matching: find.byType(EditableText),
+      );
+      final altField = find.descendant(
+        of: find.byKey(BusyMarkImageDialogKeys.alt),
+        matching: find.byType(EditableText),
+      );
+      expect(
+        tester.widget<EditableText>(sourceField).controller.text,
         'rpi_1.jpg',
       );
       expect(
-        tester.widget<TextField>(find.byType(TextField).at(1)).controller?.text,
+        tester.widget<EditableText>(altField).controller.text,
         'Raspberry Pi',
       );
 
-      await tester.enterText(
-        find.byType(TextField).at(0),
-        'images/updated.png',
-      );
-      await tester.enterText(find.byType(TextField).at(1), 'Updated alt');
-      await tester.tap(find.text('Apply'));
+      await tester.enterText(sourceField, 'images/updated.png');
+      await tester.enterText(altField, 'Updated alt');
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
       await tester.pumpAndSettle();
 
       expect(markdown, '![Updated alt](images/updated.png)\n');

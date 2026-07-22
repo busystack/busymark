@@ -21,6 +21,7 @@ import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/document_callout.dart';
+import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
@@ -3203,6 +3204,125 @@ void main() {
         previewIconRect.topLeft - previewShellRect.topLeft;
     expect(previewIconOffset.dx, closeTo(editorIconOffset.dx, 0.1));
     expect(previewIconOffset.dy, closeTo(editorIconOffset.dy, 0.1));
+  });
+
+  testWidgets('Editor and Preview reuse the same code block presentation', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const code =
+        'final values = <int>[40, 2];\nprint(values.first + values.last);';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            localeTag: 'ar',
+            documentViewMode: DocumentViewModePreference.editor,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService('```dart\n$code\n```\n\nمرحبا\n');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/shared-code-block.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkDocumentCodeBlock).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorShell = find.byType(BusyMarkDocumentCodeBlock);
+    final editorField = find.descendant(
+      of: editorShell,
+      matching: find.byType(TextField),
+    );
+    expect(editorShell, findsOneWidget);
+    expect(editorField, findsOneWidget);
+    expect(
+      find.descendant(
+        of: editorShell,
+        matching: find.byIcon(BusyMarkGlyphs.code),
+      ),
+      findsNothing,
+    );
+    final editorTextField = tester.widget<TextField>(editorField);
+    expect(editorTextField.controller?.text, code);
+    expect(editorTextField.textDirection, TextDirection.ltr);
+    final editorShellRect = tester.getRect(editorShell);
+    final editorTextRect = tester.getRect(editorField);
+    final editorStyle = editorTextField.style;
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewShell = find.byType(BusyMarkDocumentCodeBlock);
+    final previewText = find.descendant(
+      of: previewShell,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is Text && widget.textSpan?.toPlainText() == code,
+      ),
+    );
+    expect(previewShell, findsOneWidget);
+    expect(previewText, findsOneWidget);
+    expect(
+      find.descendant(
+        of: previewShell,
+        matching: find.byIcon(BusyMarkGlyphs.code),
+      ),
+      findsNothing,
+    );
+    final previewTextWidget = tester.widget<Text>(previewText);
+    expect(previewTextWidget.textSpan?.toPlainText(), code);
+    expect(Directionality.of(tester.element(previewText)), TextDirection.ltr);
+    final previewArabic = find.descendant(
+      of: find.byKey(const ValueKey('preview-document-content')),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is RichText && widget.text.toPlainText() == 'مرحبا',
+      ),
+    );
+    expect(previewArabic, findsOneWidget);
+    expect(Directionality.of(tester.element(previewArabic)), TextDirection.rtl);
+    final previewStyle = previewTextWidget.textSpan?.style;
+    final previewShellRect = tester.getRect(previewShell);
+    final previewTextRect = tester.getRect(previewText);
+
+    expect(previewShellRect.left, closeTo(editorShellRect.left, 0.1));
+    expect(previewShellRect.right, closeTo(editorShellRect.right, 0.1));
+    expect(previewShellRect.top, closeTo(editorShellRect.top, 0.1));
+    expect(previewShellRect.height, closeTo(editorShellRect.height, 0.1));
+    expect(
+      previewTextRect.left - previewShellRect.left,
+      closeTo(editorTextRect.left - editorShellRect.left, 0.1),
+    );
+    expect(
+      previewTextRect.top - previewShellRect.top,
+      closeTo(editorTextRect.top - editorShellRect.top, 0.1),
+    );
+    expect(editorStyle?.fontFamily, BusyMarkTypography.monoFontFamily);
+    expect(previewStyle?.fontFamily, editorStyle?.fontFamily);
+    expect(previewStyle?.fontFamilyFallback, editorStyle?.fontFamilyFallback);
+    expect(previewStyle?.fontSize, editorStyle?.fontSize);
+    expect(previewStyle?.height, editorStyle?.height);
   });
 
   testWidgets('Preview renders structured formatted and nested quotes', (

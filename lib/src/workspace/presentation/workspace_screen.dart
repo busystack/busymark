@@ -23,6 +23,7 @@ import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
+import '../../editor/document_code_block.dart';
 import '../../editor/document_layout.dart';
 import '../../editor/document_text_direction.dart';
 import '../../editor/markdown_image_view.dart';
@@ -7782,22 +7783,13 @@ class _PreviewBlockView extends StatelessWidget {
           ),
         ),
       ),
-      PreviewBlockKind.code => Container(
-        margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
-        padding: BusyMarkInsets.previewCodeBlock,
-        decoration: BoxDecoration(
-          color: _diffPreviewCodeBackground(context, displayBlock),
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          border: Border.all(color: colors.subtleBorder),
-        ),
+      PreviewBlockKind.code => BusyMarkDocumentCodeBlock(
+        backgroundColor: _diffPreviewCodeBackground(context, displayBlock),
         child: Text.rich(
           _diffPreviewCodeTextSpan(
             context,
             displayBlock,
-            Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-              height: BusyMarkTypography.codeLineHeight,
-            ),
+            busyMarkDocumentCodeTextStyle(context),
           ),
           textDirection: blockDirection,
         ),
@@ -7887,21 +7879,13 @@ class _PreviewBlockView extends StatelessWidget {
         displayBlock.children,
         first: first,
       ),
-      PreviewBlockKind.raw => Container(
-        margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
-        padding: BusyMarkInsets.previewCodeBlock,
-        decoration: BoxDecoration(
-          color: colors.panel,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-          border: Border.all(color: colors.subtleBorder),
-        ),
+      PreviewBlockKind.raw => BusyMarkDocumentCodeBlock(
         child: Text(
           displayBlock.text,
           textDirection: blockDirection,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
+          style: busyMarkDocumentCodeTextStyle(
+            context,
             color: colors.mutedForeground,
-            height: BusyMarkTypography.codeLineHeight,
           ),
         ),
       ),

@@ -105,6 +105,7 @@ void main() {
     await _pumpEditor(
       tester,
       parsed.busyDocument,
+      locale: const Locale('ar'),
       textDirection: TextDirection.rtl,
     );
 
@@ -226,6 +227,7 @@ void main() {
     await _pumpEditor(
       tester,
       parsed.busyDocument,
+      locale: const Locale('ar'),
       textDirection: TextDirection.rtl,
     );
 
@@ -257,16 +259,46 @@ void main() {
       control: true,
       alt: true,
     );
-    final imageField = tester.widget<TextField>(
-      find.byKey(const ValueKey('wysiwyg-image-source-field')),
+    final imageFieldFinder = find.descendant(
+      of: find.byKey(BusyMarkImageDialogKeys.source),
+      matching: find.byType(EditableText),
     );
+    final imageField = tester.widget<EditableText>(imageFieldFinder);
     expect(imageField.textDirection, TextDirection.ltr);
     expect(
-      imageField.style?.fontFamilyFallback,
+      imageField.style.fontFamilyFallback,
       BusyMarkTypography.monoFontFamilyFallback,
     );
+    expect(
+      tester
+          .widget<BusyMarkDialogButton>(
+            find.byKey(BusyMarkImageDialogKeys.submit),
+          )
+          .onPressed,
+      isNull,
+    );
+    await tester.enterText(imageFieldFinder, 'images/example.png');
+    await tester.pump();
+    expect(
+      tester
+          .widget<BusyMarkDialogButton>(
+            find.byKey(BusyMarkImageDialogKeys.submit),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    final altFieldFinder = find.descendant(
+      of: find.byKey(BusyMarkImageDialogKeys.alt),
+      matching: find.byType(EditableText),
+    );
+    final altField = tester.widget<EditableText>(altFieldFinder);
+    expect(altField.textDirection, isNull);
+    expect(
+      Directionality.of(tester.element(altFieldFinder)),
+      TextDirection.rtl,
+    );
     Navigator.of(
-      tester.element(find.byKey(const ValueKey('wysiwyg-image-source-field'))),
+      tester.element(find.byKey(BusyMarkImageDialogKeys.source)),
     ).pop();
     await tester.pumpAndSettle();
 

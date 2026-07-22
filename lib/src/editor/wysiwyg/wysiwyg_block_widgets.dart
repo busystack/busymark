@@ -4,13 +4,16 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../document_callout.dart';
+import '../document_code_block.dart';
+import '../document_surface.dart';
 import '../document_text_direction.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
 
 const double _wysiwygTextFieldCursorWidth = 2.0;
-const double _wysiwygTextFieldLayoutInset = 1.0 + _wysiwygTextFieldCursorWidth;
+const double busyMarkWysiwygTextFieldLayoutInset =
+    1.0 + _wysiwygTextFieldCursorWidth;
 
 TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
@@ -42,7 +45,7 @@ EdgeInsets busyMarkWysiwygOuterPadding(BusyBlock block, {bool first = false}) {
   final padding = switch (block.kind) {
     BusyBlockKind.heading => BusyMarkInsets.documentHeadingBlock,
     BusyBlockKind.paragraph => BusyMarkInsets.documentParagraphBlock,
-    BusyBlockKind.codeBlock ||
+    BusyBlockKind.codeBlock => BusyMarkInsets.documentCodeBlock,
     BusyBlockKind.blockquote ||
     BusyBlockKind.writersideAdmonition ||
     BusyBlockKind.writersideTabs ||
@@ -59,6 +62,43 @@ EdgeInsets busyMarkWysiwygOuterPadding(BusyBlock block, {bool first = false}) {
       (block.kind == BusyBlockKind.heading ||
           block.kind == BusyBlockKind.paragraph);
   return trimFirstBlockSpacing ? padding.copyWith(top: 0) : padding;
+}
+
+EdgeInsets busyMarkWysiwygContentPadding(BusyBlock block) {
+  return switch (block.kind) {
+    BusyBlockKind.codeBlock => BusyMarkInsets.documentCodeContent,
+    BusyBlockKind.blockquote ||
+    BusyBlockKind.writersideAdmonition ||
+    BusyBlockKind.writersideTabs ||
+    BusyBlockKind.writersideProcedure ||
+    BusyBlockKind.writersideRawXml ||
+    BusyBlockKind.htmlBlock ||
+    BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
+    BusyBlockKind.table => BusyMarkInsets.wysiwygTableContent,
+    BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakContent,
+    _ => EdgeInsets.zero,
+  };
+}
+
+EdgeInsets busyMarkWysiwygTextLayoutInsets(BusyBlock block) {
+  final contentPadding = busyMarkWysiwygContentPadding(block);
+  return switch (block.kind) {
+    BusyBlockKind.codeBlock || BusyBlockKind.blockquote =>
+      busyMarkDocumentSurfaceLayoutInsets(contentPadding),
+    _ => contentPadding,
+  };
+}
+
+bool busyMarkWysiwygHasPrefix(BusyBlock block) {
+  return switch (block.kind) {
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem ||
+    BusyBlockKind.blockquote ||
+    BusyBlockKind.writersideAdmonition ||
+    BusyBlockKind.htmlBlock => true,
+    _ => false,
+  };
 }
 
 class BusyMarkWysiwygBlockField extends StatelessWidget {
@@ -143,7 +183,18 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       onPointerDown: onPointerDown,
       onPointerMove: onPointerMove,
       onPointerUp: onPointerUp,
-      child: block.kind == BusyBlockKind.blockquote
+      child: block.kind == BusyBlockKind.codeBlock
+          ? Directionality(
+              textDirection: busyMarkWysiwygBlockTextDirection(
+                block,
+                fallback: Directionality.of(context),
+              ),
+              child: BusyMarkDocumentCodeBlock(
+                onTap: tapHandler,
+                child: content,
+              ),
+            )
+          : block.kind == BusyBlockKind.blockquote
           ? Directionality(
               textDirection: busyMarkWysiwygBlockTextDirection(
                 block,
@@ -265,7 +316,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                               textDirection: textDirection,
                               textScaler: MediaQuery.textScalerOf(context),
                               locale: Localizations.maybeLocaleOf(context),
-                              layoutWidthInset: _wysiwygTextFieldLayoutInset,
+                              layoutWidthInset:
+                                  busyMarkWysiwygTextFieldLayoutInset,
                             ),
                           ),
                         ),
@@ -345,7 +397,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         Theme.of(context).textTheme.bodyMedium?.fontSize ??
         14;
     return switch (block.kind) {
-      BusyBlockKind.codeBlock ||
       BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
@@ -370,20 +421,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   EdgeInsets get _padding => busyMarkWysiwygOuterPadding(block, first: first);
 
-  EdgeInsets get _contentPadding {
-    return switch (block.kind) {
-      BusyBlockKind.codeBlock ||
-      BusyBlockKind.writersideAdmonition ||
-      BusyBlockKind.writersideTabs ||
-      BusyBlockKind.writersideProcedure ||
-      BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.htmlBlock ||
-      BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
-      BusyBlockKind.table => BusyMarkInsets.wysiwygTableContent,
-      BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakContent,
-      _ => EdgeInsets.zero,
-    };
-  }
+  EdgeInsets get _contentPadding => busyMarkWysiwygContentPadding(block);
 
   TextStyle _textStyle(BuildContext context) {
     final theme = Theme.of(context).textTheme;
@@ -407,11 +445,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.heading => theme.bodyMedium!.copyWith(
         fontWeight: FontWeight.w700,
       ),
-      BusyBlockKind.codeBlock => theme.bodyMedium!.copyWith(
-        fontFamily: BusyMarkTypography.monoFontFamily,
-        fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-        height: BusyMarkTypography.codeLineHeight,
-      ),
+      BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => theme.bodyMedium!.copyWith(
         height: BusyMarkTypography.bodyLineHeight,
       ),
@@ -450,11 +484,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
-      BusyBlockKind.codeBlock => Icon(
-        BusyMarkGlyphs.code,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
-      ),
       BusyBlockKind.writersideAdmonition => Icon(
         BusyMarkGlyphs.info,
         size: BusyMarkSizes.iconSm,
@@ -472,7 +501,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   Color _background(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return switch (block.kind) {
-      BusyBlockKind.codeBlock ||
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -487,7 +515,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   BoxBorder? _border(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return switch (block.kind) {
-      BusyBlockKind.codeBlock ||
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -705,24 +732,16 @@ class _RenderedHtmlBlock extends StatelessWidget {
           ),
         ),
       ),
-      BusyBlockKind.codeBlock => Container(
+      BusyBlockKind.codeBlock => BusyMarkDocumentCodeBlock(
+        variant: BusyMarkDocumentCodeBlockVariant.embedded,
         margin: EdgeInsets.only(
           top: first ? 0 : BusyMarkSpacing.xs,
           bottom: BusyMarkSpacing.xs,
         ),
-        padding: BusyMarkInsets.previewCodeBlock,
-        decoration: BoxDecoration(
-          color: colors.view,
-          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-          border: Border.all(color: colors.subtleBorder),
-        ),
+        backgroundColor: colors.view,
         child: Text(
           block.plainText,
-          style: textTheme.bodyMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
-            fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-            height: BusyMarkTypography.codeLineHeight,
-          ),
+          style: busyMarkDocumentCodeTextStyle(context),
         ),
       ),
       BusyBlockKind.blockquote => BusyMarkDocumentCallout(

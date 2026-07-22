@@ -96,7 +96,6 @@ abstract final class BusyMarkSizes {
   static const double wysiwygToolbarClearance =
       BusyMarkSpacing.sm + wysiwygToolbarReserve + BusyMarkSpacing.sm;
   static const double wysiwygPrefixWidth = 30;
-  static const double imageDialogWidth = 420;
   static const double tableDialogWidth = 360;
   static const double tableColumnBaseWidth = 164;
   static const double tableMinWidth = 360;
@@ -265,7 +264,10 @@ abstract final class BusyMarkInsets {
     0,
     BusyMarkSpacing.sm,
   );
-  static const previewCodeBlock = EdgeInsets.all(BusyMarkSpacing.mdPlus);
+  static const documentCodeBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.sm,
+  );
+  static const documentCodeContent = EdgeInsets.all(BusyMarkSpacing.mdPlus);
   static const documentCalloutBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.sm,
   );
@@ -2319,6 +2321,7 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
     required this.label,
     required this.controller,
     this.errorText,
+    this.hintText,
     this.enabled = true,
     this.autofocus = false,
     this.keyboardType,
@@ -2326,6 +2329,7 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
     this.maxLines = 1,
     this.textInputAction,
     this.textDirection,
+    this.textStyle,
     this.onSubmitted,
     this.groupPosition = BusyMarkFloatingTextEntryPosition.single,
   }) : assert(minLines > 0),
@@ -2334,6 +2338,7 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String? errorText;
+  final String? hintText;
   final bool enabled;
   final bool autofocus;
   final TextInputType? keyboardType;
@@ -2341,6 +2346,7 @@ class BusyMarkFloatingTextEntry extends StatefulWidget {
   final int maxLines;
   final TextInputAction? textInputAction;
   final TextDirection? textDirection;
+  final TextStyle? textStyle;
   final ValueChanged<String>? onSubmitted;
   final BusyMarkFloatingTextEntryPosition groupPosition;
 
@@ -2414,11 +2420,14 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
     final foreground = widget.enabled
         ? colors.foreground
         : colors.disabledForeground;
+    final inputStyle =
+        (widget.textStyle ?? theme.textTheme.bodyMedium ?? const TextStyle())
+            .copyWith(color: foreground);
     return Semantics(
       enabled: widget.enabled,
       textField: true,
       label: widget.label,
-      hint: widget.errorText,
+      hint: widget.errorText ?? widget.hintText,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2497,33 +2506,50 @@ class _BusyMarkFloatingTextEntryState extends State<BusyMarkFloatingTextEntry> {
                         duration: BusyMarkMotion.floatingEntry,
                         curve: BusyMarkMotion.floatingEntryCurve,
                         opacity: floating ? 1 : 0,
-                        child: EditableText(
-                          controller: widget.controller,
-                          focusNode: _focusNode,
-                          scrollController: _scrollController,
-                          autofocus: widget.enabled && widget.autofocus,
-                          keyboardType: widget.keyboardType,
-                          textInputAction: widget.textInputAction,
-                          textDirection: widget.textDirection,
-                          onSubmitted: widget.enabled
-                              ? widget.onSubmitted
-                              : null,
-                          readOnly: !widget.enabled,
-                          showCursor: widget.enabled,
-                          enableInteractiveSelection: widget.enabled,
-                          minLines: widget.minLines,
-                          maxLines: widget.maxLines,
-                          forceLine: true,
-                          style:
-                              theme.textTheme.bodyMedium?.copyWith(
-                                color: foreground,
-                              ) ??
-                              TextStyle(color: foreground),
-                          cursorColor: colorScheme.primary,
-                          backgroundCursorColor: colors.controlActive,
-                          selectionColor: colorScheme.primary.withValues(
-                            alpha: BusyMarkAlpha.floatingTextSelection,
-                          ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            if (widget.hintText case final hint?
+                                when widget.controller.text.isEmpty)
+                              ExcludeSemantics(
+                                child: Align(
+                                  alignment: AlignmentDirectional.topStart,
+                                  child: Text(
+                                    hint,
+                                    maxLines: widget.maxLines,
+                                    overflow: TextOverflow.ellipsis,
+                                    textDirection: widget.textDirection,
+                                    style: inputStyle.copyWith(
+                                      color: labelColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            EditableText(
+                              controller: widget.controller,
+                              focusNode: _focusNode,
+                              scrollController: _scrollController,
+                              autofocus: widget.enabled && widget.autofocus,
+                              keyboardType: widget.keyboardType,
+                              textInputAction: widget.textInputAction,
+                              textDirection: widget.textDirection,
+                              onSubmitted: widget.enabled
+                                  ? widget.onSubmitted
+                                  : null,
+                              readOnly: !widget.enabled,
+                              showCursor: widget.enabled,
+                              enableInteractiveSelection: widget.enabled,
+                              minLines: widget.minLines,
+                              maxLines: widget.maxLines,
+                              forceLine: true,
+                              style: inputStyle,
+                              cursorColor: colorScheme.primary,
+                              backgroundCursorColor: colors.controlActive,
+                              selectionColor: colorScheme.primary.withValues(
+                                alpha: BusyMarkAlpha.floatingTextSelection,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
