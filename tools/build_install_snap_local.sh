@@ -245,7 +245,6 @@ BINARY_NAME="${BINARY_NAME:-$(cmake_value BINARY_NAME)}"
 BINARY_NAME="${BINARY_NAME:-$PROJECT_NAME}"
 APP_ID="${APP_ID:-$(cmake_value APPLICATION_ID)}"
 APP_ID="${APP_ID:-$SNAP_NAME}"
-DESKTOP_FILE_ID="${APP_ID}.desktop"
 ICON_SOURCE="${ICON_SOURCE:-$(snapcraft_value icon)}"
 
 SNAP_SCAFFOLD="${SNAP_SCAFFOLD:-/snap/${SNAP_NAME}/current}"
@@ -303,6 +302,9 @@ METAINFO_SOURCE="linux/${APP_ID}.metainfo.xml"
 if [[ -f "$DESKTOP_SOURCE" ]]; then
   install -Dm644 "$DESKTOP_SOURCE" \
     "$SNAP_ROOT/share/applications/${APP_ID}.desktop"
+  mkdir -p "$SNAP_ROOT/meta/gui"
+  find "$SNAP_ROOT/meta/gui" -mindepth 1 -maxdepth 1 \
+    \( -type f -o -type l \) -name '*.desktop' -exec rm -f -- {} +
 else
   echo "No desktop file found at $DESKTOP_SOURCE"
 fi
@@ -315,9 +317,8 @@ if [[ -n "$ICON_SOURCE" && -f "$ICON_SOURCE" ]]; then
     "$SNAP_ROOT/share/icons/hicolor/scalable/apps/${APP_ID}.${ICON_EXT}"
 
   if [[ -f "$DESKTOP_SOURCE" ]]; then
-    mkdir -p "$SNAP_ROOT/meta/gui"
-    sed "s#^Icon=.*#Icon=\${SNAP}/meta/gui/${APP_ID}.${ICON_EXT}#" \
-      "$DESKTOP_SOURCE" > "$SNAP_ROOT/meta/gui/${APP_ID}.desktop"
+    sed "s#^Icon=.*#Icon=\${SNAP}/meta/gui/icon.${ICON_EXT}#" \
+      "$DESKTOP_SOURCE" > "$SNAP_ROOT/meta/gui/${SNAP_NAME}.desktop"
   fi
 else
   echo "No icon file found from snapcraft icon: ${ICON_SOURCE:-<unset>}"
@@ -336,7 +337,7 @@ else
 fi
 
 echo "== Patch staged snap metadata =="
-python3 - "$SNAP_ROOT/meta/snap.yaml" "snap/snapcraft.yaml" "$VERSION" "$SNAP_NAME" "$DESKTOP_FILE_ID" <<'PY'
+python3 - "$SNAP_ROOT/meta/snap.yaml" "snap/snapcraft.yaml" "$VERSION" "$SNAP_NAME" <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -345,7 +346,6 @@ meta_path = Path(sys.argv[1])
 source_path = Path(sys.argv[2])
 version = sys.argv[3]
 app_name = sys.argv[4]
-desktop_file_id = sys.argv[5]
 
 text = meta_path.read_text()
 text, count = re.subn(r"(?m)^version:\s*.*$", f"version: {version}", text, count=1)
@@ -505,71 +505,13 @@ def ensure_app_list_items(target: str, app: str, key: str, items: list[str]) -> 
     return "".join(lines)
 
 
-def ensure_desktop_file_id(target: str, desktop_id: str) -> str:
+def remove_top_level_plug(target: str, plug: str) -> str:
     lines = target.splitlines(keepends=True)
-    desktop_plug = [
-        "  desktop:\n",
-        "    interface: desktop\n",
-        "    desktop-file-ids:\n",
-        f"      - {desktop_id}\n",
-    ]
-    section = top_level_section_bounds(lines, "plugs")
-    if section is None:
-        if lines and not lines[-1].endswith("\n"):
-            lines[-1] += "\n"
-        if lines and lines[-1].strip():
-            lines.append("\n")
-        lines.extend(["plugs:\n", *desktop_plug])
-        return "".join(lines)
-
-    plug_bounds = top_level_plug_bounds(lines, "desktop")
+    plug_bounds = top_level_plug_bounds(lines, plug)
     if plug_bounds is None:
-        _, section_end = section
-        lines[section_end:section_end] = desktop_plug
         return "".join(lines)
-
     plug_start, plug_end = plug_bounds
-    interface_index = next(
-        (
-            i
-            for i in range(plug_start + 1, plug_end)
-            if lines[i].lstrip().startswith("interface:")
-        ),
-        None,
-    )
-    if interface_index is None:
-        lines.insert(plug_start + 1, "    interface: desktop\n")
-        plug_end += 1
-    elif lines[interface_index].partition(":")[2].strip() != "desktop":
-        raise SystemExit("top-level desktop plug uses a different interface")
-
-    ids_start = next(
-        (
-            i
-            for i in range(plug_start + 1, plug_end)
-            if lines[i].rstrip() == "    desktop-file-ids:"
-        ),
-        None,
-    )
-    desktop_ids = [
-        "    desktop-file-ids:\n",
-        f"      - {desktop_id}\n",
-    ]
-    if ids_start is None:
-        lines[plug_end:plug_end] = desktop_ids
-        return "".join(lines)
-
-    ids_end = plug_end
-    for i in range(ids_start + 1, plug_end):
-        stripped = lines[i].strip()
-        if (
-            stripped
-            and not stripped.startswith("#")
-            and not lines[i].startswith("      ")
-        ):
-            ids_end = i
-            break
-    lines[ids_start:ids_end] = desktop_ids
+    del lines[plug_start:plug_end]
     return "".join(lines)
 
 
@@ -582,22 +524,38 @@ if source_path.exists():
         extract_app_list(source, app_name, "plugs"),
     )
 
-text = ensure_desktop_file_id(text, desktop_file_id)
+# The installed scaffold can carry attributes from an older revision. The
+# standard desktop plug is implicit from the app's plug list; retaining the
+# old top-level desktop-file-ids claim would force Store manual review.
+text = remove_top_level_plug(text, "desktop")
 
 meta_path.write_text(text)
 PY
 
 grep '^version:' "$SNAP_ROOT/meta/snap.yaml"
 grep -A80 "^  ${SNAP_NAME}:" "$SNAP_ROOT/meta/snap.yaml" | sed -n '/plugs:/,/^[[:space:]]*[[:alpha:]_-].*:/p'
-grep -A4 '^  desktop:' "$SNAP_ROOT/meta/snap.yaml" | grep -F -- "- $DESKTOP_FILE_ID"
+! grep -q '^  desktop:$' "$SNAP_ROOT/meta/snap.yaml"
+
+STAGED_DESKTOP_MANIFEST="$(
+  find "$SNAP_ROOT/meta/gui" -mindepth 1 -maxdepth 1 \
+    -type f -name '*.desktop' -printf '%f\n' | LC_ALL=C sort
+)"
+[[ "$STAGED_DESKTOP_MANIFEST" == "${SNAP_NAME}.desktop" ]] ||
+  fail "expected exactly one staged launcher: ${SNAP_NAME}.desktop"
 
 echo "== Pack snap =="
 snap pack "$SNAP_ROOT" --filename="$OUT"
 
 echo "== Verify packed snap =="
 unsquashfs -cat "$OUT" meta/snap.yaml | grep '^version:'
-unsquashfs -cat "$OUT" meta/snap.yaml | grep -A4 '^  desktop:' | grep -F -- "- $DESKTOP_FILE_ID"
 unsquashfs -ll "$OUT" | grep -F "$BINARY_NAME"
+PACKED_DESKTOP_MANIFEST="$(
+  unsquashfs -ll "$OUT" |
+    sed -nE 's#^.*squashfs-root/meta/gui/([^/]+\.desktop)$#\1#p' |
+    LC_ALL=C sort
+)"
+[[ "$PACKED_DESKTOP_MANIFEST" == "${SNAP_NAME}.desktop" ]] ||
+  fail "expected exactly one packed launcher: ${SNAP_NAME}.desktop"
 if [[ "$BUNDLE_GIT" == "1" ]]; then
   unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/git"
   unsquashfs -ll "$OUT" | grep -F "squashfs-root/usr/bin/setsid"
