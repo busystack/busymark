@@ -10,9 +10,9 @@ import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
+import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
-import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -938,7 +938,7 @@ void main() {}
     );
     await tester.pump();
 
-    final frame = find.byType(BusyMarkWysiwygBlockquoteFrame);
+    final frame = find.byType(BusyMarkDocumentCallout);
     final childField = find.byKey(
       ValueKey('wysiwyg-field-topic.md-${paragraph.id}'),
     );
@@ -1001,7 +1001,7 @@ void main() {}
     );
     await tester.pump();
 
-    final frame = find.byType(BusyMarkWysiwygBlockquoteFrame);
+    final frame = find.byType(BusyMarkDocumentCallout);
     expect(frame, findsOneWidget);
     expect(
       find.descendant(of: frame, matching: find.byType(TextField)),
@@ -1051,7 +1051,7 @@ void main() {}
     );
     expect(fieldFor(before.id).focusNode!.hasFocus, isTrue);
 
-    final frame = find.byType(BusyMarkWysiwygBlockquoteFrame);
+    final frame = find.byType(BusyMarkDocumentCallout);
     await tester.tap(
       find.descendant(
         of: frame,
@@ -1151,6 +1151,7 @@ void main() {}
     await tester.pump();
 
     final field = find.byKey(const ValueKey('wysiwyg-field-topic.md-quote'));
+    expect(find.byType(BusyMarkDocumentCallout), findsOneWidget);
     expect(field, findsOneWidget);
     expect(tester.widget<TextField>(field).controller!.text, 'Leaf quote');
 

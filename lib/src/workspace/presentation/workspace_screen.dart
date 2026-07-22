@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart' show Bidi;
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
@@ -23,7 +22,9 @@ import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
 import '../../core/uri_utils.dart';
+import '../../editor/document_callout.dart';
 import '../../editor/document_layout.dart';
+import '../../editor/document_text_direction.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_document.dart';
@@ -7805,9 +7806,9 @@ class _PreviewBlockView extends StatelessWidget {
         block: displayBlock,
         workspace: workspace,
       ),
-      PreviewBlockKind.admonition => _PreviewCallout(
+      PreviewBlockKind.admonition => BusyMarkDocumentCallout(
         icon: _admonitionIcon(displayBlock.attributes['style']),
-        color: switch (displayBlock.attributes['style']) {
+        backgroundColor: switch (displayBlock.attributes['style']) {
           'warning' => colors.admonitionWarning,
           'tip' => colors.admonitionTip,
           _ => colors.admonitionNote,
@@ -7817,14 +7818,12 @@ class _PreviewBlockView extends StatelessWidget {
           style: _diffPreviewTextStyle(context, displayBlock, null),
         ),
       ),
-      PreviewBlockKind.tabs => _PreviewCallout(
+      PreviewBlockKind.tabs => BusyMarkDocumentCallout(
         icon: BusyMarkGlyphs.tab,
-        color: colors.panel,
         child: Text(displayBlock.text),
       ),
-      PreviewBlockKind.procedure => _PreviewCallout(
+      PreviewBlockKind.procedure => BusyMarkDocumentCallout(
         icon: BusyMarkGlyphs.orderedList,
-        color: colors.panel,
         child: Text(displayBlock.text),
       ),
       PreviewBlockKind.list => Padding(
@@ -7862,33 +7861,19 @@ class _PreviewBlockView extends StatelessWidget {
                   start:
                       BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final (index, child) in displayBlock.children.indexed)
-                      _PreviewBlockView(
-                        child,
-                        workspace: workspace,
-                        first: false,
-                        listRunEnd: _isLastListBlock(
-                          displayBlock.children,
-                          index,
-                        ),
-                        headingKey: null,
-                      ),
-                  ],
-                ),
+                child: _previewChildBlocks(displayBlock.children, first: false),
               ),
           ],
         ),
       ),
-      PreviewBlockKind.quote => _PreviewCallout(
+      PreviewBlockKind.quote => BusyMarkDocumentCallout(
         icon: BusyMarkGlyphs.blockquote,
-        color: colors.panel,
-        child: _PreviewInlineText(
-          block: block,
-          style: _diffPreviewTextStyle(context, displayBlock, null),
-        ),
+        child: displayBlock.children.isEmpty
+            ? _PreviewInlineText(
+                block: displayBlock,
+                style: _diffPreviewTextStyle(context, displayBlock, null),
+              )
+            : _previewChildBlocks(displayBlock.children, first: true),
       ),
       PreviewBlockKind.thematicBreak => Padding(
         padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.mdPlus),
@@ -7898,18 +7883,9 @@ class _PreviewBlockView extends StatelessWidget {
       PreviewBlockKind.container
           when displayBlock.attributes['htmlTag'] == 'figure' =>
         _PreviewFigure(block: displayBlock, workspace: workspace, first: first),
-      PreviewBlockKind.container => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final (index, child) in displayBlock.children.indexed)
-            _PreviewBlockView(
-              child,
-              workspace: workspace,
-              first: first && index == 0,
-              listRunEnd: _isLastListBlock(displayBlock.children, index),
-              headingKey: null,
-            ),
-        ],
+      PreviewBlockKind.container => _previewChildBlocks(
+        displayBlock.children,
+        first: first,
       ),
       PreviewBlockKind.raw => Container(
         margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
@@ -8034,6 +8010,22 @@ class _PreviewBlockView extends StatelessWidget {
             blocks[index + 1].kind != PreviewBlockKind.list);
   }
 
+  Widget _previewChildBlocks(List<PreviewBlock> blocks, {required bool first}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (index, child) in blocks.indexed)
+          _PreviewBlockView(
+            child,
+            workspace: workspace,
+            first: first && index == 0,
+            listRunEnd: _isLastListBlock(blocks, index),
+            headingKey: null,
+          ),
+      ],
+    );
+  }
+
   PreviewBlock _localizedPreviewBlock(
     BuildContext context,
     PreviewBlock block,
@@ -8101,25 +8093,14 @@ TextDirection _previewBlockTextDirection(
   PreviewBlock block,
   TextDirection inheritedDirection,
 ) {
-  final explicitDirection = block.attributes['dir']?.trim().toLowerCase();
-  switch (explicitDirection) {
-    case 'ltr':
-      return TextDirection.ltr;
-    case 'rtl':
-      return TextDirection.rtl;
-    case 'auto':
-      final text = _previewDirectionalText(block);
-      if (Bidi.startsWithRtl(text)) {
-        return TextDirection.rtl;
-      }
-      if (Bidi.startsWithLtr(text)) {
-        return TextDirection.ltr;
-      }
-  }
-  return switch (block.kind) {
-    PreviewBlockKind.code || PreviewBlockKind.raw => TextDirection.ltr,
-    _ => inheritedDirection,
-  };
+  return busyMarkDocumentTextDirection(
+    text: _previewDirectionalText(block),
+    fallback: inheritedDirection,
+    explicitDirection: block.attributes['dir'],
+    technical:
+        block.kind == PreviewBlockKind.code ||
+        block.kind == PreviewBlockKind.raw,
+  );
 }
 
 String _previewDirectionalText(PreviewBlock block) {
@@ -9233,40 +9214,6 @@ String _decodePreviewAnchor(String value) {
     return Uri.decodeComponent(value);
   } on FormatException {
     return value;
-  }
-}
-
-class _PreviewCallout extends StatelessWidget {
-  const _PreviewCallout({
-    required this.icon,
-    required this.color,
-    required this.child,
-  });
-
-  final IconData icon;
-  final Color color;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
-      padding: BusyMarkInsets.previewCallout,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        border: Border.all(color: colors.subtleBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: BusyMarkSizes.iconMd),
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Expanded(child: child),
-        ],
-      ),
-    );
   }
 }
 

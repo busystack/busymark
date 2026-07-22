@@ -365,6 +365,60 @@ void main() {}
     );
   });
 
+  test('preview preserves structured and formatted quote children', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '''
+> First **bold** and *italic*.
+>
+> Second [site](https://example.com).
+>
+> > Nested quote
+>
+> - List item
+>
+> ```dart
+> final value = 1;
+> ```
+''',
+    );
+    final quote = previewBuilder.build(parsed).blocks.single;
+
+    expect(quote.kind, PreviewBlockKind.quote);
+    expect(quote.inlines, isEmpty);
+    expect(quote.children.map((block) => block.kind), [
+      PreviewBlockKind.paragraph,
+      PreviewBlockKind.paragraph,
+      PreviewBlockKind.quote,
+      PreviewBlockKind.list,
+      PreviewBlockKind.code,
+    ]);
+    expect(
+      quote.children.take(2).expand((block) => _flattenInlines(block.inlines)),
+      containsAll([
+        isA<PreviewInline>().having(
+          (inline) => inline.kind,
+          'kind',
+          PreviewInlineKind.strong,
+        ),
+        isA<PreviewInline>().having(
+          (inline) => inline.kind,
+          'kind',
+          PreviewInlineKind.emphasis,
+        ),
+        isA<PreviewInline>().having(
+          (inline) => inline.kind,
+          'kind',
+          PreviewInlineKind.link,
+        ),
+      ]),
+    );
+    expect(quote.children[2].children.single.text, 'Nested quote');
+    expect(quote.children[3].text, 'List item');
+    expect(quote.children[4].language, 'dart');
+    expect(quote.children[4].text, 'final value = 1;');
+  });
+
   test('preview preserves source order for code and images', () {
     final parsed = parser.parse(
       filePath: 'topic.md',

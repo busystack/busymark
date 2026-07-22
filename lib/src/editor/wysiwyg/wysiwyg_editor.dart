@@ -14,6 +14,7 @@ import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../document_callout.dart';
 import '../document_layout.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
@@ -429,34 +430,32 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }) {
     final children = entry.children!;
     final firstEditableBlock = _firstEditableBlockIn(children);
-    return Padding(
-      padding: BusyMarkInsets.wysiwygContainerBlock,
-      child: Directionality(
-        textDirection: blockTextDirection,
-        child: BusyMarkWysiwygBlockquoteFrame(
-          key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
-          iconWidth: BusyMarkSizes.wysiwygPrefixWidth,
-          onTap: firstEditableBlock == null
-              ? null
-              : () {
-                  _handleBlockFocused(firstEditableBlock.id);
-                  _focusNodeFor(firstEditableBlock).requestFocus();
-                },
-          child: Builder(
-            builder: (quoteContext) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final child in children)
-                  _buildRenderEntry(
-                    quoteContext,
-                    child,
-                    documentLayout: documentLayout,
-                    applyDocumentFrame: false,
-                    selectedBlockIds: selectedBlockIds,
-                    selectionRangesByBlockId: selectionRangesByBlockId,
-                  ),
-              ],
-            ),
+    return Directionality(
+      textDirection: blockTextDirection,
+      child: BusyMarkDocumentCallout(
+        key: ValueKey('wysiwyg-blockquote-${entry.block.id}'),
+        icon: BusyMarkGlyphs.blockquote,
+        onTap: firstEditableBlock == null
+            ? null
+            : () {
+                _handleBlockFocused(firstEditableBlock.id);
+                _focusNodeFor(firstEditableBlock).requestFocus();
+              },
+        child: Builder(
+          builder: (quoteContext) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (index, child) in children.indexed)
+                _buildRenderEntry(
+                  quoteContext,
+                  child,
+                  documentLayout: documentLayout,
+                  applyDocumentFrame: false,
+                  first: index == 0,
+                  selectedBlockIds: selectedBlockIds,
+                  selectionRangesByBlockId: selectionRangesByBlockId,
+                ),
+            ],
           ),
         ),
       ),

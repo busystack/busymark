@@ -20,6 +20,7 @@ import 'package:busymark/src/app/window_control_service.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
@@ -3105,6 +3106,206 @@ void main() {
     expect(
       tester.widget<ListView>(previewScroll).padding,
       BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding,
+    );
+  });
+
+  testWidgets('Editor and Preview reuse the same quote shell geometry', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    const service = _SearchWorkspaceService('> Shared quote.\n');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/shared-quote.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkDocumentCallout).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorShell = find.byType(BusyMarkDocumentCallout);
+    final editorText = find.descendant(
+      of: editorShell,
+      matching: find.byType(TextField),
+    );
+    final editorIcon = find.descendant(
+      of: editorShell,
+      matching: find.byIcon(BusyMarkGlyphs.blockquote),
+    );
+    expect(editorShell, findsOneWidget);
+    expect(editorText, findsOneWidget);
+    expect(editorIcon, findsOneWidget);
+    final editorShellRect = tester.getRect(editorShell);
+    final editorTextRect = tester.getRect(editorText);
+    final editorIconRect = tester.getRect(editorIcon);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewShell = find.byType(BusyMarkDocumentCallout);
+    final previewText = find.descendant(
+      of: previewShell,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText && widget.text.toPlainText() == 'Shared quote.',
+      ),
+    );
+    final previewIcon = find.descendant(
+      of: previewShell,
+      matching: find.byIcon(BusyMarkGlyphs.blockquote),
+    );
+    expect(previewShell, findsOneWidget);
+    expect(previewText, findsOneWidget);
+    expect(previewIcon, findsOneWidget);
+    final previewShellRect = tester.getRect(previewShell);
+    final previewTextRect = tester.getRect(previewText);
+    final previewIconRect = tester.getRect(previewIcon);
+
+    expect(previewShellRect.left, closeTo(editorShellRect.left, 0.1));
+    expect(previewShellRect.right, closeTo(editorShellRect.right, 0.1));
+    expect(previewShellRect.top, closeTo(editorShellRect.top, 0.1));
+    expect(
+      previewTextRect.left - previewShellRect.left,
+      closeTo(editorTextRect.left - editorShellRect.left, 0.1),
+    );
+    expect(
+      previewTextRect.top - previewShellRect.top,
+      closeTo(editorTextRect.top - editorShellRect.top, 0.1),
+    );
+    final editorIconOffset = editorIconRect.topLeft - editorShellRect.topLeft;
+    final previewIconOffset =
+        previewIconRect.topLeft - previewShellRect.topLeft;
+    expect(previewIconOffset.dx, closeTo(editorIconOffset.dx, 0.1));
+    expect(previewIconOffset.dy, closeTo(editorIconOffset.dy, 0.1));
+  });
+
+  testWidgets('Preview renders structured formatted and nested quotes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    const service = _SearchWorkspaceService('''
+> First **bold**.
+>
+> Second *italic*.
+>
+> > اقتباس متداخل
+''');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/structured-quote.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkDocumentCallout).evaluate().length == 2) {
+        break;
+      }
+    }
+
+    Finder richText(String text) => find.byWidgetPredicate(
+      (widget) => widget is RichText && widget.text.toPlainText() == text,
+    );
+
+    final shells = find.byType(BusyMarkDocumentCallout);
+    final first = richText('First bold.');
+    final second = richText('Second italic.');
+    final nested = richText('اقتباس متداخل');
+    expect(shells, findsNWidgets(2));
+    expect(first, findsOneWidget);
+    expect(second, findsOneWidget);
+    expect(nested, findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('First bold.') &&
+            widget.text.toPlainText().contains('Second italic.'),
+      ),
+      findsNothing,
+    );
+    expect(tester.getRect(second).top, greaterThan(tester.getRect(first).top));
+    expect(
+      _textSpanStyleForText(
+        tester.widget<RichText>(first).text as TextSpan,
+        'bold',
+      )?.fontWeight,
+      FontWeight.w700,
+    );
+    expect(
+      _textSpanStyleForText(
+        tester.widget<RichText>(second).text as TextSpan,
+        'italic',
+      )?.fontStyle,
+      FontStyle.italic,
+    );
+
+    final outerShell = find.ancestor(of: first, matching: shells);
+    expect(outerShell, findsOneWidget);
+    final nestedShells = find.ancestor(of: nested, matching: shells);
+    expect(nestedShells, findsNWidgets(2));
+    final outerRect = tester.getRect(outerShell);
+    final nestedTextRect = tester.getRect(nested);
+    expect(outerRect.contains(nestedTextRect.topLeft), isTrue);
+    expect(outerRect.contains(nestedTextRect.bottomRight), isTrue);
+    expect(Directionality.of(tester.element(nested)), TextDirection.rtl);
+    final quoteIconRects = find
+        .byIcon(BusyMarkGlyphs.blockquote)
+        .evaluate()
+        .map(
+          (element) => tester.getRect(
+            find.byElementPredicate((candidate) => candidate == element),
+          ),
+        );
+    expect(
+      quoteIconRects.any((rect) => rect.left > nestedTextRect.right),
+      isTrue,
     );
   });
 

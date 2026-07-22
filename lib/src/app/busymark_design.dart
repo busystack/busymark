@@ -266,7 +266,10 @@ abstract final class BusyMarkInsets {
     BusyMarkSpacing.sm,
   );
   static const previewCodeBlock = EdgeInsets.all(BusyMarkSpacing.mdPlus);
-  static const previewCallout = EdgeInsets.all(BusyMarkSpacing.md);
+  static const documentCalloutBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.sm,
+  );
+  static const documentCalloutContent = EdgeInsets.all(BusyMarkSpacing.md);
   static const previewTableCell = EdgeInsets.symmetric(
     horizontal: BusyMarkSpacing.sm,
     vertical: BusyMarkSpacing.xs,
@@ -288,9 +291,7 @@ abstract final class BusyMarkInsets {
   static const documentParagraphBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSizes.previewHeadingBottom,
   );
-  static const wysiwygContainerBlock = EdgeInsets.symmetric(
-    vertical: BusyMarkSpacing.sm,
-  );
+  static const wysiwygContainerBlock = documentCalloutBlock;
   static const wysiwygTableBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.smPlus,
   );
@@ -300,7 +301,7 @@ abstract final class BusyMarkInsets {
   static const wysiwygDefaultBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.xs,
   );
-  static const wysiwygContainerContent = EdgeInsets.all(BusyMarkSpacing.md);
+  static const wysiwygContainerContent = documentCalloutContent;
   static const wysiwygTableContent = EdgeInsets.all(BusyMarkSpacing.smPlus);
   static const wysiwygThematicBreakContent = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.md,

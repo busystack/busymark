@@ -414,27 +414,46 @@ void main() {
     expect(imageSpan, contains('fontStyle: FontStyle.normal'));
   });
 
-  test('preview resolves HTML direction and keeps code LTR by default', () {
+  test('document views share direction resolution and keep code LTR', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final direction = File(
+      'lib/src/editor/document_text_direction.dart',
     ).readAsStringSync();
     final preview = File(
       'lib/src/markdown/preview_model.dart',
     ).readAsStringSync();
 
     expect(workspace, contains('_previewBlockTextDirection'));
-    expect(
-      workspace,
-      contains("final explicitDirection = block.attributes['dir']"),
-    );
-    expect(workspace, contains('Bidi.startsWithRtl(text)'));
-    expect(
-      workspace,
-      contains(
-        'PreviewBlockKind.code || PreviewBlockKind.raw => TextDirection.ltr',
-      ),
-    );
+    expect(workspace, contains("explicitDirection: block.attributes['dir']"));
+    expect(workspace, contains('busyMarkDocumentTextDirection('));
+    expect(direction, contains('Bidi.startsWithRtl(text)'));
+    expect(direction, contains('if (technical)'));
+    expect(direction, contains('return TextDirection.ltr'));
     expect(preview, contains('attributes: block.attributes'));
+  });
+
+  test('Editor and Preview reuse the shared document callout surface', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    final blocks = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final callout = File(
+      'lib/src/editor/document_callout.dart',
+    ).readAsStringSync();
+
+    expect(callout, contains('class BusyMarkDocumentCallout'));
+    expect(workspace, contains('BusyMarkDocumentCallout('));
+    expect(editor, contains('BusyMarkDocumentCallout('));
+    expect(blocks, contains('BusyMarkDocumentCallout('));
+    expect(workspace, isNot(contains('class _PreviewCallout')));
+    expect(blocks, isNot(contains('BusyMarkWysiwygBlockquoteFrame')));
   });
 
   test('workspace isolates technical labels only at rendering boundaries', () {

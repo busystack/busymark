@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' show Bidi;
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
+import '../document_callout.dart';
+import '../document_text_direction.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -15,29 +16,12 @@ TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
   required TextDirection fallback,
 }) {
-  final directionalText = _directionalText(block);
-  switch (block.attributes['dir']?.trim().toLowerCase()) {
-    case 'ltr':
-      return TextDirection.ltr;
-    case 'rtl':
-      return TextDirection.rtl;
-    case 'auto':
-      return _firstStrongTextDirection(directionalText) ?? fallback;
-  }
-  if (_isTechnicalWysiwygBlock(block)) {
-    return TextDirection.ltr;
-  }
-  return _firstStrongTextDirection(directionalText) ?? fallback;
-}
-
-TextDirection? _firstStrongTextDirection(String text) {
-  if (Bidi.startsWithRtl(text)) {
-    return TextDirection.rtl;
-  }
-  if (Bidi.startsWithLtr(text)) {
-    return TextDirection.ltr;
-  }
-  return null;
+  return busyMarkDocumentTextDirection(
+    text: _directionalText(block),
+    fallback: fallback,
+    explicitDirection: block.attributes['dir'],
+    technical: _isTechnicalWysiwygBlock(block),
+  );
 }
 
 bool _isTechnicalWysiwygBlock(BusyBlock block) {
@@ -75,65 +59,6 @@ EdgeInsets busyMarkWysiwygOuterPadding(BusyBlock block, {bool first = false}) {
       (block.kind == BusyBlockKind.heading ||
           block.kind == BusyBlockKind.paragraph);
   return trimFirstBlockSpacing ? padding.copyWith(top: 0) : padding;
-}
-
-class BusyMarkWysiwygBlockquoteFrame extends StatelessWidget {
-  const BusyMarkWysiwygBlockquoteFrame({
-    super.key,
-    required this.child,
-    this.margin = EdgeInsets.zero,
-    this.padding = BusyMarkInsets.wysiwygContainerContent,
-    this.backgroundColor,
-    this.borderRadius = BusyMarkRadius.md,
-    this.iconWidth,
-    this.onTap,
-  });
-
-  final Widget child;
-  final EdgeInsetsGeometry margin;
-  final EdgeInsetsGeometry padding;
-  final Color? backgroundColor;
-  final double borderRadius;
-  final double? iconWidth;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final icon = Icon(
-      BusyMarkGlyphs.blockquote,
-      size: BusyMarkSizes.iconSm,
-      color: colors.mutedForeground,
-    );
-    final frame = Container(
-      margin: margin,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? colors.panel,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: colors.subtleBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (iconWidth case final width?)
-            SizedBox(width: width, child: icon)
-          else
-            icon,
-          const SizedBox(width: BusyMarkSpacing.sm),
-          Expanded(child: child),
-        ],
-      ),
-    );
-    final tapHandler = onTap;
-    return tapHandler == null
-        ? frame
-        : GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: tapHandler,
-            child: frame,
-          );
-  }
 }
 
 class BusyMarkWysiwygBlockField extends StatelessWidget {
@@ -200,43 +125,55 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final style = _textStyle(context);
     final prefix = _prefix(context);
     final readOnly = _readOnly;
+    final tapHandler = block.kind == BusyBlockKind.table
+        ? onFocused
+        : block.kind == BusyBlockKind.image
+        ? _editImageBlock
+        : _isRenderedHtmlBlock
+        ? _editHtmlBlock
+        : readOnly
+        ? onFocused
+        : _focusBlock;
+    final content = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: _minimumHeight(context)),
+      child: _blockContent(context, style, prefix, readOnly),
+    );
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: onPointerDown,
       onPointerMove: onPointerMove,
       onPointerUp: onPointerUp,
-      child: Padding(
-        padding: _padding,
-        child: GestureDetector(
-          key: block.kind == BusyBlockKind.image
-              ? ValueKey('wysiwyg-image-block-${block.id}')
-              : null,
-          behavior: HitTestBehavior.translucent,
-          onTap: block.kind == BusyBlockKind.table
-              ? onFocused
-              : block.kind == BusyBlockKind.image
-              ? _editImageBlock
-              : _isRenderedHtmlBlock
-              ? _editHtmlBlock
-              : readOnly
-              ? onFocused
-              : _focusBlock,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: _background(context),
-              borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-              border: _border(context),
-            ),
-            child: Padding(
-              padding: _contentPadding,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: _minimumHeight(context)),
-                child: _blockContent(context, style, prefix, readOnly),
+      child: block.kind == BusyBlockKind.blockquote
+          ? Directionality(
+              textDirection: busyMarkWysiwygBlockTextDirection(
+                block,
+                fallback: Directionality.of(context),
+              ),
+              child: BusyMarkDocumentCallout(
+                icon: BusyMarkGlyphs.blockquote,
+                margin: _padding,
+                onTap: tapHandler,
+                child: content,
+              ),
+            )
+          : Padding(
+              padding: _padding,
+              child: GestureDetector(
+                key: block.kind == BusyBlockKind.image
+                    ? ValueKey('wysiwyg-image-block-${block.id}')
+                    : null,
+                behavior: HitTestBehavior.translucent,
+                onTap: tapHandler,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _background(context),
+                    borderRadius: BorderRadius.circular(BusyMarkRadius.md),
+                    border: _border(context),
+                  ),
+                  child: Padding(padding: _contentPadding, child: content),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -436,7 +373,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   EdgeInsets get _contentPadding {
     return switch (block.kind) {
       BusyBlockKind.codeBlock ||
-      BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -514,11 +450,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         size: BusyMarkSizes.iconSm,
         color: colors.mutedForeground,
       ),
-      BusyBlockKind.blockquote => Icon(
-        BusyMarkGlyphs.blockquote,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
-      ),
       BusyBlockKind.codeBlock => Icon(
         BusyMarkGlyphs.code,
         size: BusyMarkSizes.iconSm,
@@ -542,7 +473,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     return switch (block.kind) {
       BusyBlockKind.codeBlock ||
-      BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -558,7 +488,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     final colors = BusyMarkSurfaceColors.of(context);
     return switch (block.kind) {
       BusyBlockKind.codeBlock ||
-      BusyBlockKind.blockquote ||
       BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -796,14 +725,13 @@ class _RenderedHtmlBlock extends StatelessWidget {
           ),
         ),
       ),
-      BusyBlockKind.blockquote => BusyMarkWysiwygBlockquoteFrame(
+      BusyBlockKind.blockquote => BusyMarkDocumentCallout(
+        icon: BusyMarkGlyphs.blockquote,
         margin: EdgeInsets.only(
           top: first ? 0 : BusyMarkSpacing.xs,
           bottom: BusyMarkSpacing.xs,
         ),
-        padding: BusyMarkInsets.previewCallout,
         backgroundColor: colors.view,
-        borderRadius: BusyMarkRadius.sm,
         child: block.children.isEmpty
             ? _RenderedHtmlInlineText(block: block)
             : _RenderedHtmlBlocks(
