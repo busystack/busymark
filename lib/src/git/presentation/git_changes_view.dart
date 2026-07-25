@@ -154,24 +154,16 @@ class _CommitPanel extends StatelessWidget {
               style: busyMarkSectionHeaderStyle(context),
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.control,
-                borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-                border: Border.all(color: colors.subtleBorder),
+            TextField(
+              controller: controller,
+              minLines: 3,
+              maxLines: 5,
+              textInputAction: TextInputAction.newline,
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.all(BusyMarkSpacing.sm),
               ),
-              child: TextField(
-                controller: controller,
-                minLines: 3,
-                maxLines: 5,
-                textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.all(BusyMarkSpacing.sm),
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
             Row(
@@ -189,10 +181,9 @@ class _CommitPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
-                BusyMarkDialogButton(
-                  label: context.l10n.gitCommit,
-                  suggested: true,
+                BusyMarkPushButton.suggested(
                   onPressed: canCommit ? () => onCommit() : null,
+                  child: Text(context.l10n.gitCommit),
                 ),
               ],
             ),

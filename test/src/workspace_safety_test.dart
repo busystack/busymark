@@ -150,41 +150,37 @@ void main() {
   testWidgets('destructive dialog buttons stay readable on dark controls', (
     tester,
   ) async {
-    late Color activeControl;
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.dark,
+      accentColor: Colors.green,
+    );
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildBusyMarkTheme(
-          brightness: Brightness.dark,
-          accentColor: Colors.green,
-        ),
+        theme: theme,
         home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              activeControl = BusyMarkSurfaceColors.of(context).controlActive;
-              return BusyMarkDialogButton(
-                label: l10n.discard,
-                icon: BusyMarkGlyphs.delete,
-                destructive: true,
-                onPressed: () {},
-              );
-            },
+          body: BusyMarkDialogButton(
+            label: l10n.discard,
+            icon: BusyMarkGlyphs.delete,
+            destructive: true,
+            onPressed: () {},
           ),
         ),
       ),
     );
 
-    final text = tester.widget<Text>(find.text(l10n.discard));
-    final foreground = text.style?.color;
+    final button = tester.widget<ElevatedButton>(
+      find.descendant(
+        of: find.byType(BusyMarkDialogButton),
+        matching: find.byType(ElevatedButton),
+      ),
+    );
+    final foreground = button.style?.foregroundColor?.resolve({});
+    final background = button.style?.backgroundColor?.resolve({});
 
     expect(foreground, isNotNull);
-    expect(
-      _contrastRatio(foreground!, activeControl),
-      greaterThanOrEqualTo(4.5),
-    );
-    expect(
-      tester.widget<Icon>(find.byIcon(BusyMarkGlyphs.delete)).color,
-      foreground,
-    );
+    expect(background, isNotNull);
+    expect(_contrastRatio(foreground!, background!), greaterThanOrEqualTo(4.5));
+    expect(button.style?.iconColor?.resolve({}), foreground);
   });
 
   testWidgets(

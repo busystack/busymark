@@ -243,14 +243,10 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   }
 
   Widget _blockStyleMenu(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
-      foregroundColor: colorScheme.onPrimary,
-      backgroundColor: _toolbarButtonBackground(context),
-      elevated: true,
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
@@ -299,39 +295,11 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required VoidCallback onPressed,
     String? shortcut,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
     return BusyMarkHeaderIconButton(
       tooltip: tooltip,
       icon: icon,
       onPressed: onPressed,
       shortcut: shortcut,
-      foregroundColor: colorScheme.onPrimary,
-      backgroundColor: _toolbarButtonBackground(context),
-      elevated: true,
     );
-  }
-
-  WidgetStateProperty<Color?> _toolbarButtonBackground(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final colors = BusyMarkSurfaceColors.of(context);
-    return WidgetStateProperty.resolveWith((states) {
-      if (states.contains(WidgetState.disabled)) {
-        return colors.disabledControl;
-      }
-      if (states.contains(WidgetState.pressed)) {
-        return Color.alphaBlend(
-          colorScheme.onPrimary.withValues(alpha: BusyMarkAlpha.toolbarPressed),
-          colorScheme.primary,
-        );
-      }
-      if (states.contains(WidgetState.hovered) ||
-          states.contains(WidgetState.focused)) {
-        return Color.alphaBlend(
-          colorScheme.onPrimary.withValues(alpha: BusyMarkAlpha.toolbarHover),
-          colorScheme.primary,
-        );
-      }
-      return colorScheme.primary;
-    });
   }
 }

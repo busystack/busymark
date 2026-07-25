@@ -1,5 +1,6 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
+import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
@@ -9,6 +10,7 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:yaru/yaru.dart';
 
 void main() {
   testWidgets('source editor remains LTR inside an Arabic interface', (
@@ -187,5 +189,70 @@ void main() {
     );
 
     expect(find.text(de.sourceSearchInvalidRegex), findsOneWidget);
+  });
+
+  testWidgets('source fold and search options use semantic icon buttons', (
+    tester,
+  ) async {
+    final en = AppLocalizationsEn();
+    SourceSearchOptions? updatedOptions;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: '# Intro\nBody\n',
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: true,
+              searchOptions: const SourceSearchOptions(caseSensitive: true),
+              onSearchOptionsChanged: (options) => updatedOptions = options,
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final foldTooltip = find.byTooltip(en.collapseKind(en.foldKindSection));
+    final foldButton = find.ancestor(
+      of: foldTooltip,
+      matching: find.byType(BusyMarkCompactIconButton),
+    );
+    expect(foldTooltip, findsOneWidget);
+    expect(foldButton, findsOneWidget);
+
+    final caseButton = find.ancestor(
+      of: find.byTooltip(en.sourceSearchCaseSensitive),
+      matching: find.byType(YaruIconButton),
+    );
+    final wholeWordButton = find.ancestor(
+      of: find.byTooltip(en.sourceSearchWholeWord),
+      matching: find.byType(YaruIconButton),
+    );
+    expect(tester.widget<YaruIconButton>(caseButton).isSelected, isTrue);
+    expect(tester.widget<YaruIconButton>(wholeWordButton).isSelected, isFalse);
+
+    await tester.tap(wholeWordButton);
+    await tester.pump();
+    expect(updatedOptions?.caseSensitive, isTrue);
+    expect(updatedOptions?.wholeWord, isTrue);
+
+    await tester.tap(foldButton);
+    await tester.pump();
+    expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
   });
 }

@@ -1,6 +1,7 @@
 import '../core/source_span.dart';
 import '../core/uri_utils.dart';
 import 'busymark_document.dart';
+import 'document_outline.dart';
 import 'markdown_model.dart';
 
 enum PreviewBlockKind {
@@ -88,6 +89,43 @@ class PreviewDocument {
   final List<PreviewBlock> blocks;
 }
 
+extension PreviewDocumentOutline on PreviewDocument {
+  List<DocumentOutlineHeading> get outline {
+    final headings = <DocumentOutlineHeading>[];
+
+    void collect(List<PreviewBlock> blocks) {
+      for (final block in blocks) {
+        if (block.kind == PreviewBlockKind.heading) {
+          final level = block.level;
+          final id = block.attributes['id'];
+          final sourceStartLine = block.sourceStartLine;
+          final sourceStartOffset = block.sourceStartOffset;
+          if (level != null &&
+              id != null &&
+              id.isNotEmpty &&
+              sourceStartLine != null &&
+              sourceStartOffset != null) {
+            headings.add(
+              DocumentOutlineHeading(
+                level: level,
+                text: block.text,
+                id: id,
+                sourceStartLine: sourceStartLine,
+                sourceStartOffset: sourceStartOffset,
+                editorBlockId: block.attributes['editorBlockId'],
+              ),
+            );
+          }
+        }
+        collect(block.children);
+      }
+    }
+
+    collect(blocks);
+    return List.unmodifiable(headings);
+  }
+}
+
 class MarkdownPreviewBuilder {
   const MarkdownPreviewBuilder();
 
@@ -131,6 +169,7 @@ class BusyMarkPreviewBuilder {
         attributes: {
           ...block.attributes,
           if (block.attributes['id'] case final id?) 'id': id,
+          'editorBlockId': block.id,
         },
       ),
       BusyBlockKind.paragraph => PreviewBlock(

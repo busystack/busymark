@@ -169,15 +169,15 @@ class MarkdownAstAdapter {
       final rawText = node.textContent.trim();
       final attrId = _attributeValue(rawText, 'id');
       final text = _stripTrailingAttributeBlock(rawText);
-      final id = attrId ?? slugForHeading(text);
+      final anchorId = attrId ?? slugForHeading(text);
       return [
         BusyBlock(
-          id: id.isEmpty ? nextId() : id,
+          id: nextId(),
           kind: BusyBlockKind.heading,
           inlines: _stripTrailingAttributeInline(_inlinesFromNodes(children)),
           attributes: {
             'level': '$level',
-            'id': id,
+            'id': anchorId,
             'generatedId': '${attrId == null}',
           },
         ),

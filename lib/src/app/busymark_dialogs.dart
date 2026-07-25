@@ -49,9 +49,11 @@ Future<T?> showBusyMarkModalDialog<T>(
   bool barrierDismissible = true,
 }) async {
   final barrierColor = busyMarkModalBarrierColor(context);
-  await headerBarService?.setModalBarrierVisible(true);
+  final barrierLease = _BusyMarkModalBarrierCoordinator.acquire(
+    headerBarService ?? LinuxHeaderBarService.instance,
+  );
   if (!context.mounted) {
-    await headerBarService?.setModalBarrierVisible(false);
+    barrierLease.release();
     return null;
   }
   try {
@@ -73,15 +75,75 @@ Future<T?> showBusyMarkModalDialog<T>(
             padding: padding,
             duration: BusyMarkMotion.modalPadding,
             curve: BusyMarkMotion.modalPaddingCurve,
-            child: Center(
-              child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
-            ),
+            child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
           ),
         );
       },
     );
   } finally {
-    await headerBarService?.setModalBarrierVisible(false);
+    barrierLease.release();
+  }
+}
+
+class _BusyMarkModalBarrierCoordinator {
+  const _BusyMarkModalBarrierCoordinator._();
+
+  static final Map<LinuxHeaderBarService, int> _activeDialogs = {};
+  static final Map<LinuxHeaderBarService, Future<void>> _pendingUpdates = {};
+
+  static _BusyMarkModalBarrierLease acquire(LinuxHeaderBarService service) {
+    final activeCount = _activeDialogs[service] ?? 0;
+    _activeDialogs[service] = activeCount + 1;
+    if (activeCount == 0) {
+      unawaited(_enqueueUpdate(service, visible: true));
+    }
+    return _BusyMarkModalBarrierLease(service);
+  }
+
+  static Future<void> release(LinuxHeaderBarService service) async {
+    final activeCount = _activeDialogs[service];
+    if (activeCount == null) {
+      return;
+    }
+    if (activeCount > 1) {
+      _activeDialogs[service] = activeCount - 1;
+      return;
+    }
+    _activeDialogs.remove(service);
+    await _enqueueUpdate(service, visible: false);
+  }
+
+  static Future<void> _enqueueUpdate(
+    LinuxHeaderBarService service, {
+    required bool visible,
+  }) async {
+    final previous = _pendingUpdates[service] ?? Future<void>.value();
+    final update = previous
+        .catchError((Object _) {})
+        .then((_) => service.setModalBarrierVisible(visible));
+    _pendingUpdates[service] = update;
+    try {
+      await update;
+    } finally {
+      if (identical(_pendingUpdates[service], update)) {
+        _pendingUpdates.remove(service);
+      }
+    }
+  }
+}
+
+class _BusyMarkModalBarrierLease {
+  _BusyMarkModalBarrierLease(this._service);
+
+  final LinuxHeaderBarService _service;
+  var _released = false;
+
+  void release() {
+    if (_released) {
+      return;
+    }
+    _released = true;
+    unawaited(_BusyMarkModalBarrierCoordinator.release(_service));
   }
 }
 
@@ -99,25 +161,16 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: maxWidth,
-        maxHeight:
-            maxHeight ??
-            MediaQuery.sizeOf(context).height *
-                BusyMarkSizes.modalMaxHeightFraction,
-      ),
-      child: Material(
-        color: colors.dialog,
-        elevation: BusyMarkElevation.popover,
-        shadowColor: BusyMarkShadow.floatingColor(context),
-        surfaceTintColor: BusyMarkLinuxPalette.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
-          side: BorderSide.none,
+    return Dialog(
+      insetPadding: EdgeInsets.zero,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: maxWidth,
+          maxHeight:
+              maxHeight ??
+              MediaQuery.sizeOf(context).height *
+                  BusyMarkSizes.modalMaxHeightFraction,
         ),
-        clipBehavior: Clip.antiAlias,
         child: child,
       ),
     );

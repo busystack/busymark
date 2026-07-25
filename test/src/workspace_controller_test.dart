@@ -1012,16 +1012,8 @@ class _WorkspaceControllerDriver {
 
   Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 
-  void updateActiveText(
-    String text, {
-    bool updatePreview = true,
-    String? sourceFilePath,
-  }) {
-    _notifier.updateActiveText(
-      text,
-      updatePreview: updatePreview,
-      sourceFilePath: sourceFilePath,
-    );
+  void updateActiveText(String text, {String? sourceFilePath}) {
+    _notifier.updateActiveText(text, sourceFilePath: sourceFilePath);
   }
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>

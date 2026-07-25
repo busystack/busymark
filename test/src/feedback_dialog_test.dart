@@ -62,7 +62,7 @@ void main() {
       ),
       findsNothing,
     );
-    expect(dialogDescendant(find.byType(TextField)), findsNothing);
+    expect(dialogDescendant(find.byType(TextFormField)), findsNWidgets(3));
 
     await _enterValidRequiredFields(tester, l10n);
     await tester.tap(find.byKey(BusyMarkFeedbackKeys.submit));

@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import '../app/app_settings.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
+import '../markdown/busymark_document.dart';
+import '../markdown/document_outline.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_topic_removal_service.dart';
@@ -672,10 +674,47 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  void updateActiveText(
+  void updateActiveText(String text, {String? sourceFilePath}) {
+    _updateActiveText(
+      text,
+      sourceFilePath: sourceFilePath,
+      rebuildPreview: true,
+    );
+  }
+
+  /// Applies a serialized WYSIWYG edit without reparsing the whole Markdown
+  /// document on every keystroke.
+  void updateActiveWysiwygText(
     String text, {
-    bool updatePreview = true,
+    required BusyDocument document,
     String? sourceFilePath,
+  }) {
+    _updateActiveText(
+      text,
+      sourceFilePath: sourceFilePath,
+      rebuildPreview: false,
+      liveOutline: document.outline,
+    );
+  }
+
+  /// Rebuilds derived preview data after leaving WYSIWYG mode without creating
+  /// another edit revision for text that is already in state.
+  void refreshActivePreview({String? sourceFilePath}) {
+    final workspace = state.workspace;
+    final activeEditorPath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    if (workspace == null ||
+        (sourceFilePath != null && activeEditorPath != sourceFilePath)) {
+      return;
+    }
+    state = state.copyWith(preview: _safePreview(workspace, state.activeText));
+  }
+
+  void _updateActiveText(
+    String text, {
+    required bool rebuildPreview,
+    String? sourceFilePath,
+    List<DocumentOutlineHeading>? liveOutline,
   }) {
     final workspace = state.workspace;
     final activeEditorPath =
@@ -684,13 +723,26 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return;
     }
     _editRevision++;
-    state = state.copyWith(
-      activeText: text,
-      preview: workspace == null || !updatePreview
-          ? state.preview
-          : _safePreview(workspace, text),
-      isDirty: true,
-    );
+    state = rebuildPreview
+        ? state.copyWith(
+            activeText: text,
+            preview: workspace == null
+                ? state.preview
+                : _safePreview(workspace, text),
+            isDirty: true,
+          )
+        : state.copyWith(
+            activeText: text,
+            liveOutline: workspace == null || liveOutline == null
+                ? null
+                : ActiveDocumentOutline(
+                    workspaceId: workspace.id,
+                    filePath: workspace.activeFilePath,
+                    source: text,
+                    headings: liveOutline,
+                  ),
+            isDirty: true,
+          );
     _parseDebounce?.cancel();
     if (!_settingsController.state.validateOnEdit) {
       _scheduleAutoSave();

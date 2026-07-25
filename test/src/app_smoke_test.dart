@@ -24,6 +24,7 @@ import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -965,8 +966,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
-    await tester.pump(const Duration(milliseconds: 200));
+    Future<void> openPopup(
+      Finder anchor, {
+      int buttons = kPrimaryButton,
+    }) async {
+      await tester.tap(anchor, buttons: buttons);
+      await tester.pumpAndSettle();
+    }
+
+    await openPopup(find.byTooltip(l10n.sidebarViewMenu));
     await tester.tap(find.text(l10n.files));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('target.md'));
@@ -985,8 +993,7 @@ void main() {
     await tester.tap(find.text(l10n.cancel));
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
-    await tester.pump(const Duration(milliseconds: 200));
+    await openPopup(find.byTooltip(l10n.sidebarViewMenu));
     await tester.tap(find.text(l10n.toc));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -994,8 +1001,7 @@ void main() {
     expect(find.byTooltip(l10n.tocActions), findsOneWidget);
     expect(find.byTooltip(l10n.newTopic), findsNothing);
     expect(find.byTooltip(l10n.newChildTopic), findsNothing);
-    await tester.tap(find.byTooltip(l10n.tocActions));
-    await tester.pump(const Duration(milliseconds: 200));
+    await openPopup(find.byTooltip(l10n.tocActions));
     expect(find.text(l10n.newTopic), findsOneWidget);
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
@@ -1003,7 +1009,7 @@ void main() {
     expect(find.text(l10n.topicPlacement), findsOneWidget);
     expect(find.text(l10n.tocRoot), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(controller.createdTopicRequest, isNotNull);
@@ -1015,23 +1021,20 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, isNull);
     expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
 
-    await tester.tap(find.byTooltip(l10n.instanceName));
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.byTooltip(l10n.instanceName));
     await tester.tap(find.text('API Reference'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('api.md'), findsOneWidget);
 
-    await tester.tap(find.byTooltip(l10n.tocActions));
-    await tester.pump(const Duration(milliseconds: 200));
+    await openPopup(find.byTooltip(l10n.tocActions));
     expect(find.text(l10n.newTopic), findsOneWidget);
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
 
-    await tester.tap(find.byTooltip(l10n.instanceName));
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.byTooltip(l10n.instanceName));
     await tester.tap(find.text('Guide').last);
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1049,8 +1052,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
     for (final label in [
       l10n.newSiblingTopic,
@@ -1073,7 +1075,7 @@ void main() {
     await tester.tap(find.text(l10n.newChildTopic));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.insideSelectedTopic), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
     await tester.pump(const Duration(milliseconds: 300));
     expect(
       controller.createdTopicRequest!.placement,
@@ -1083,12 +1085,11 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, 'nested.md');
     expect(controller.createdTopicRequest!.referenceTocIdentity, isNotNull);
 
-    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
     await tester.tap(find.text(l10n.newSiblingTopic));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.afterSelectedTopic), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
     await tester.pump(const Duration(milliseconds: 300));
     expect(
       controller.createdTopicRequest!.placement,
@@ -1096,13 +1097,11 @@ void main() {
     );
     expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
 
-    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
     await tester.tap(find.text(l10n.cut));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('parent.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('parent.md'), buttons: kSecondaryButton);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1114,7 +1113,7 @@ void main() {
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     File(
       p.join(root.path, 'topics', 'inserted.md'),
     ).writeAsStringSync('# Inserted\n');
@@ -1134,8 +1133,7 @@ void main() {
     controller.replaceWorkspace(refreshedWorkspace);
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('parent.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('parent.md'), buttons: kSecondaryButton);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1147,13 +1145,11 @@ void main() {
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('loose.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    await openPopup(find.text('loose.md'), buttons: kSecondaryButton);
     await tester.tap(find.text(l10n.cut));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('target.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('target.md'), buttons: kSecondaryButton);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -3718,6 +3714,280 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(l10n.noOutline), findsNothing);
+  });
+
+  testWidgets(
+    'outline follows unsaved source headings without live validation',
+    (tester) async {
+      const startupPath = 'test/fixtures/markdown/basic.md';
+      const unsaved = '''
+# Unsaved title
+
+Draft paragraph.
+
+Another draft paragraph.
+
+## Unsaved target
+
+Body.
+''';
+      final service = _StartupWorkspaceService();
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              validateOnEdit: false,
+              documentViewMode: DocumentViewModePreference.source,
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue(startupPath),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var i = 0; i < 20; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byType(TextField).evaluate().isNotEmpty) {
+          break;
+        }
+      }
+
+      final sourceField = find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(TextField),
+      );
+      expect(sourceField, findsOneWidget);
+      await tester.enterText(sourceField, unsaved);
+      await tester.pump();
+
+      final state = container.read(workspaceControllerProvider);
+      expect(state.isDirty, isTrue);
+      expect(state.workspace?.markdown?.title, 'Basic Markdown');
+      final outlineTree = find.byKey(
+        const ValueKey('workspace-sidebar-outline-tree'),
+      );
+      expect(
+        find.descendant(of: outlineTree, matching: find.text('Unsaved target')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: outlineTree, matching: find.text('Basic Markdown')),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.descendant(of: outlineTree, matching: find.text('Unsaved target')),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final controller = tester.widget<TextField>(sourceField).controller!;
+      expect(
+        controller.selection,
+        TextSelection.collapsed(offset: unsaved.indexOf('## Unsaved target')),
+      );
+      expect(service.saveCount, 0);
+    },
+  );
+
+  testWidgets('outline navigates to a renamed unsaved editor heading', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const startupPath = '/tmp/unsaved-editor-outline.md';
+    final source = [
+      '# [Saved heading](https://example.com)',
+      '',
+      for (var index = 0; index < 60; index += 1) ...[
+        'Paragraph $index keeps the editor scrollable.',
+        '',
+      ],
+    ].join('\n');
+    final service = _SearchWorkspaceService(source);
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.editor,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final editorScroll = find.byKey(const ValueKey('wysiwyg-document-scroll'));
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (editorScroll.evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorFields = find.descendant(
+      of: editorScroll,
+      matching: find.byType(TextField),
+    );
+    expect(editorFields, findsWidgets);
+    final scrollController = tester.widget<ListView>(editorScroll).controller!;
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    final formattedTarget = find.descendant(
+      of: outlineTree,
+      matching: find.text('Saved heading'),
+    );
+    expect(formattedTarget, findsOneWidget);
+
+    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+    await tester.pump();
+    final offsetBeforeFormattedNavigation = scrollController.offset;
+    expect(offsetBeforeFormattedNavigation, greaterThan(0));
+    await tester.tap(formattedTarget);
+    await tester.pumpAndSettle();
+    expect(scrollController.offset, lessThan(offsetBeforeFormattedNavigation));
+
+    final previewBeforeEdit = container
+        .read(workspaceControllerProvider)
+        .preview;
+    await tester.enterText(editorFields.first, 'Unsaved heading');
+    await tester.pump();
+
+    final state = container.read(workspaceControllerProvider);
+    expect(
+      state.activeText,
+      startsWith('# [Unsaved heading](https://example.com)\n'),
+    );
+    expect(state.isDirty, isTrue);
+    expect(identical(state.preview, previewBeforeEdit), isTrue);
+    expect(state.liveOutline?.headings.map((heading) => heading.text), [
+      'Unsaved heading',
+    ]);
+    final target = find.descendant(
+      of: outlineTree,
+      matching: find.text('Unsaved heading'),
+    );
+    expect(target, findsOneWidget);
+    expect(
+      find.descendant(of: outlineTree, matching: find.text('Saved heading')),
+      findsNothing,
+    );
+
+    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+    await tester.pump();
+    expect(scrollController.offset, greaterThan(0));
+    final offsetBeforeNavigation = scrollController.offset;
+
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+
+    expect(scrollController.offset, lessThan(offsetBeforeNavigation));
+    final viewportBounds = tester.getRect(editorScroll);
+    final headingBounds = tester.getRect(editorFields.first);
+    expect(headingBounds.bottom, greaterThan(viewportBounds.top));
+    expect(headingBounds.top, lessThan(viewportBounds.bottom));
+  });
+
+  testWidgets('untitled outline navigates before the first save', (
+    tester,
+  ) async {
+    const unsaved = '''
+# New document
+
+Draft paragraph.
+
+## Unsaved target
+''';
+    final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createMarkdownFile));
+    await tester.pumpAndSettle();
+    final sourceField = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+    expect(sourceField, findsOneWidget);
+    await tester.enterText(sourceField, unsaved);
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      isNull,
+    );
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    final target = find.descendant(
+      of: outlineTree,
+      matching: find.text('Unsaved target'),
+    );
+    expect(target, findsOneWidget);
+
+    await tester.tap(target);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final controller = tester.widget<TextField>(sourceField).controller!;
+    expect(
+      controller.selection,
+      TextSelection.collapsed(offset: unsaved.indexOf('## Unsaved target')),
+    );
+    expect(service.saveCount, 0);
   });
 
   testWidgets('preview tolerates duplicate heading anchors', (tester) async {

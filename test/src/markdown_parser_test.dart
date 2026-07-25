@@ -98,6 +98,61 @@ void main() {
     );
   });
 
+  test('deduplicates generated heading IDs in source order', () {
+    final parsed = parser.parse(
+      filePath: 'duplicates.md',
+      source: '# Same\n\n# Same\n\n# !\n\n# ?\n',
+    );
+
+    expect(parsed.headings.map((heading) => heading.id), [
+      'same',
+      'same-1',
+      'section',
+      'section-1',
+    ]);
+  });
+
+  test('generates heading IDs from semantic inline text', () {
+    final parsed = parser.parse(
+      filePath: 'formatted-heading.md',
+      source:
+          '# [Hello](https://example.com) and **friends** '
+          '![Logo](logo.png)\n',
+    );
+
+    expect(parsed.headings.single.text, 'Hello and friends Logo');
+    expect(parsed.headings.single.id, 'hello-and-friends-logo');
+    expect(
+      parsed.busyDocument.blocks
+          .singleWhere((block) => block.kind == BusyBlockKind.heading)
+          .attributes['id'],
+      'hello-and-friends-logo',
+    );
+  });
+
+  test('canonicalizes valid ATX and setext heading variants', () {
+    final parsed = parser.parse(
+      filePath: 'heading-variants.md',
+      source:
+          '   # [Indented](https://example.com) ###\n\n'
+          '#\n\n'
+          'Setext {id="stable"}\n'
+          '====================\n',
+    );
+
+    expect(
+      parsed.headings.map(
+        (heading) =>
+            (heading.level, heading.text, heading.id, heading.generatedId),
+      ),
+      [
+        (1, 'Indented', 'indented', true),
+        (1, '', 'section', true),
+        (1, 'Setext', 'stable', false),
+      ],
+    );
+  });
+
   test('detects unresolved links, missing images, and missing alt text', () {
     final path = fixture('links_images.md');
     final parsed = parser.parse(

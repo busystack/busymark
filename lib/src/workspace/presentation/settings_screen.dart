@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../app/app_router.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
@@ -13,212 +12,204 @@ import '../../app/busymark_main_menu.dart';
 import '../../app/localization.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
-import '../workspace_controller.dart';
 
 class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({required this.returnTarget, super.key});
+
+  final SettingsReturnTarget returnTarget;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
     final controller = ref.watch(appSettingsControllerProvider.notifier);
-    final workspaceOpen =
-        ref.watch(workspaceControllerProvider).workspace != null;
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
-        _handleHeaderBarAction(context, workspaceOpen, headerBar, event.action);
+        _handleHeaderBarAction(context, headerBar, event.action);
       });
     });
-    if (headerBar.isAvailable) {
-      _configureHeaderBar(context, headerBar);
-    }
+    final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
+        .copyWith(
+          title: l10n.settingsTitle,
+          viewMode: AppViewMode.editor,
+          searchQuery: '',
+          canRefresh: false,
+          documentControlsVisible: false,
+          searchActive: false,
+          searchVisible: false,
+          sidebarVisible: false,
+          sidebarToggleVisible: false,
+          backVisible: true,
+        );
 
-    return Scaffold(
-      backgroundColor: colors.view,
-      appBar: useNativeHeaderBar
-          ? null
-          : AppBar(
-              leadingWidth: 50,
-              titleSpacing: 0,
-              leading: Center(
-                child: BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.back,
-                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-                  onPressed: () =>
-                      context.go(workspaceOpen ? '/workspace' : '/'),
-                ),
-              ),
-              title: Text(
-                context.l10n.settingsTitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              actions: [
-                BusyMarkMainMenuButton(
-                  onSelected: (action) =>
-                      _handleMainMenuAction(context, headerBar, action),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ],
-            ),
-      body: BusyMarkClamp(
-        maxWidth: BusyMarkSizes.settingsWidth,
-        margin: EdgeInsets.zero,
-        padding: BusyMarkInsets.settingsPage,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            BusyMarkGroupedList(
-              title: context.l10n.appearance,
-              filled: true,
-              children: [
-                _LanguageRow(
-                  selectedLocaleTag: settings.localeTag,
-                  onChanged: controller.setLocaleTag,
-                ),
-                _ThemeModeRow(
-                  selected: settings.themeModePreference,
-                  onChanged: controller.setThemeModePreference,
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: context.l10n.editor,
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: context.l10n.autoSave,
-                  subtitle: context.l10n.autoSaveDescription,
-                  value: settings.autoSave,
-                  onChanged: controller.setAutoSave,
-                  leading: const Icon(BusyMarkGlyphs.save),
-                ),
-                BusyMarkSwitchRow(
-                  title: context.l10n.wordWrap,
-                  value: settings.wordWrap,
-                  onChanged: controller.setWordWrap,
-                  leading: Icon(
-                    BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
+    return HeaderBarConfigurationPublisher(
+      synchronizer: headerBar.configurationSynchronizer,
+      configuration: headerConfiguration,
+      enabled: headerBar.isAvailable,
+      child: Scaffold(
+        backgroundColor: colors.view,
+        appBar: useNativeHeaderBar
+            ? null
+            : AppBar(
+                leading: Center(
+                  child: BusyMarkHeaderIconButton(
+                    tooltip: context.l10n.back,
+                    icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+                    onPressed: () => context.go(returnTarget.location),
                   ),
                 ),
-                _EditorFontSizeRow(
-                  value: settings.editorFontSize,
-                  onChanged: controller.setEditorFontSize,
+                title: Text(
+                  context.l10n.settingsTitle,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                _EditorToolbarPlacementRow(
-                  selected: settings.editorToolbarPlacement,
-                  onChanged: controller.setEditorToolbarPlacement,
-                ),
-                _EditorToolbarDirectionRow(
-                  selected: settings.editorToolbarDirection,
-                  onChanged: controller.setEditorToolbarDirection,
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: context.l10n.validation,
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: context.l10n.validateOnEdit,
-                  value: settings.validateOnEdit,
-                  onChanged: controller.setValidateOnEdit,
-                  leading: const Icon(BusyMarkGlyphs.diagnostics),
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: l10n.settingsWindowSectionTitle,
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
-                  subtitle:
-                      l10n.settingsConfirmCloseWithUnsavedChangesDescription,
-                  value: settings.confirmCloseWithUnsavedChanges,
-                  onChanged: controller.setConfirmCloseWithUnsavedChanges,
-                  leading: const Icon(BusyMarkGlyphs.warning),
-                ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: context.l10n.privacy,
-              filled: true,
-              children: [
-                BusyMarkSwitchRow(
-                  title: context.l10n.allowRemoteImages,
-                  subtitle: context.l10n.allowRemoteImagesDescription,
-                  value: settings.allowRemoteImages,
-                  onChanged: controller.setAllowRemoteImages,
-                  leading: const Icon(BusyMarkGlyphs.image),
-                ),
-                if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
-                  BusyMarkActionRow(
-                    title: context.l10n.clearRemoteImagePermissions,
+                actions: [
+                  BusyMarkMainMenuButton(
+                    onSelected: (action) =>
+                        _handleMainMenuAction(context, headerBar, action),
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ],
+              ),
+        body: BusyMarkClamp(
+          maxWidth: BusyMarkSizes.settingsWidth,
+          margin: EdgeInsets.zero,
+          padding: BusyMarkInsets.settingsPage,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BusyMarkGroupedList(
+                title: context.l10n.appearance,
+                filled: true,
+                children: [
+                  _LanguageRow(
+                    selectedLocaleTag: settings.localeTag,
+                    onChanged: controller.setLocaleTag,
+                  ),
+                  _ThemeModeRow(
+                    selected: settings.themeModePreference,
+                    onChanged: controller.setThemeModePreference,
+                  ),
+                ],
+              ),
+              BusyMarkGroupedList(
+                title: context.l10n.editor,
+                filled: true,
+                children: [
+                  BusyMarkSwitchRow(
+                    title: context.l10n.autoSave,
+                    subtitle: context.l10n.autoSaveDescription,
+                    value: settings.autoSave,
+                    onChanged: controller.setAutoSave,
+                    leading: const Icon(BusyMarkGlyphs.save),
+                  ),
+                  BusyMarkSwitchRow(
+                    title: context.l10n.wordWrap,
+                    value: settings.wordWrap,
+                    onChanged: controller.setWordWrap,
+                    leading: Icon(
+                      BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
+                    ),
+                  ),
+                  _EditorFontSizeRow(
+                    value: settings.editorFontSize,
+                    onChanged: controller.setEditorFontSize,
+                  ),
+                  _EditorToolbarPlacementRow(
+                    selected: settings.editorToolbarPlacement,
+                    onChanged: controller.setEditorToolbarPlacement,
+                  ),
+                  _EditorToolbarDirectionRow(
+                    selected: settings.editorToolbarDirection,
+                    onChanged: controller.setEditorToolbarDirection,
+                  ),
+                ],
+              ),
+              BusyMarkGroupedList(
+                title: context.l10n.validation,
+                filled: true,
+                children: [
+                  BusyMarkSwitchRow(
+                    title: context.l10n.validateOnEdit,
+                    value: settings.validateOnEdit,
+                    onChanged: controller.setValidateOnEdit,
+                    leading: const Icon(BusyMarkGlyphs.diagnostics),
+                  ),
+                ],
+              ),
+              BusyMarkGroupedList(
+                title: l10n.settingsWindowSectionTitle,
+                filled: true,
+                children: [
+                  BusyMarkSwitchRow(
+                    title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
                     subtitle:
-                        context.l10n.clearRemoteImagePermissionsDescription,
-                    leading: const Icon(BusyMarkGlyphs.clearAll),
-                    onTap: controller.clearRemoteImageWorkspacePermissions,
+                        l10n.settingsConfirmCloseWithUnsavedChangesDescription,
+                    value: settings.confirmCloseWithUnsavedChanges,
+                    onChanged: controller.setConfirmCloseWithUnsavedChanges,
+                    leading: const Icon(BusyMarkGlyphs.warning),
                   ),
-                if (settings.trustedGitWorkspacePaths.isNotEmpty)
+                ],
+              ),
+              BusyMarkGroupedList(
+                title: context.l10n.privacy,
+                filled: true,
+                children: [
+                  BusyMarkSwitchRow(
+                    title: context.l10n.allowRemoteImages,
+                    subtitle: context.l10n.allowRemoteImagesDescription,
+                    value: settings.allowRemoteImages,
+                    onChanged: controller.setAllowRemoteImages,
+                    leading: const Icon(BusyMarkGlyphs.image),
+                  ),
+                  if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
+                    BusyMarkActionRow(
+                      title: context.l10n.clearRemoteImagePermissions,
+                      subtitle:
+                          context.l10n.clearRemoteImagePermissionsDescription,
+                      leading: const Icon(BusyMarkGlyphs.clearAll),
+                      onTap: controller.clearRemoteImageWorkspacePermissions,
+                    ),
+                  if (settings.trustedGitWorkspacePaths.isNotEmpty)
+                    BusyMarkActionRow(
+                      title: context.l10n.clearGitWorkspaceTrust,
+                      subtitle: context.l10n.clearGitWorkspaceTrustDescription,
+                      leading: const Icon(BusyMarkGlyphs.clearAll),
+                      onTap: controller.clearTrustedGitWorkspaces,
+                    ),
+                ],
+              ),
+              BusyMarkGroupedList(
+                title: context.l10n.advanced,
+                filled: true,
+                children: [
                   BusyMarkActionRow(
-                    title: context.l10n.clearGitWorkspaceTrust,
-                    subtitle: context.l10n.clearGitWorkspaceTrustDescription,
+                    title: context.l10n.clearRecentWorkspaces,
                     leading: const Icon(BusyMarkGlyphs.clearAll),
-                    onTap: controller.clearTrustedGitWorkspaces,
+                    destructive: true,
+                    onTap: controller.clearRecentWorkspaces,
                   ),
-              ],
-            ),
-            BusyMarkGroupedList(
-              title: context.l10n.advanced,
-              filled: true,
-              children: [
-                BusyMarkActionRow(
-                  title: context.l10n.clearRecentWorkspaces,
-                  leading: const Icon(BusyMarkGlyphs.clearAll),
-                  destructive: true,
-                  onTap: controller.clearRecentWorkspaces,
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _configureHeaderBar(
-    BuildContext context,
-    LinuxHeaderBarService headerBar,
-  ) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(() async {
-        await headerBar.setTitleRange(context.l10n.settings);
-        await headerBar.setSidebarVisible(false);
-        await headerBar.setSidebarToggleVisible(false);
-        await headerBar.setSearchVisible(false);
-        await headerBar.setBackVisible(true);
-        await headerBar.setDocumentControlsVisible(false);
-        await headerBar.setCanRefresh(false);
-        await headerBar.setSearchActive(false);
-      }());
-    });
-  }
-
   void _handleHeaderBarAction(
     BuildContext context,
-    bool workspaceOpen,
     LinuxHeaderBarService headerBar,
     HeaderBarAction action,
   ) {
     switch (action) {
       case HeaderBarAction.back:
-        context.go(workspaceOpen ? '/workspace' : '/');
+        context.go(returnTarget.location);
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:

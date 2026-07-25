@@ -1,5 +1,6 @@
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,6 +76,68 @@ void main() {
     expect(appShortcutInvocations, 0);
     expect(documentViewShortcutInvocations, 0);
     expect(find.text('Dismiss'), findsOneWidget);
+  });
+
+  testWidgets('overlapping dialogs retain one native modal barrier lease', (
+    tester,
+  ) async {
+    const channel = MethodChannel('com.busymark.test/modal-barrier');
+    final barrierStates = <bool>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      if (call.method == 'initialize') {
+        return true;
+      }
+      if (call.method == 'setModalBarrierVisible') {
+        barrierStates.add(call.arguments as bool);
+      }
+      return null;
+    });
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      );
+    });
+    final headerBar = LinuxHeaderBarService(channel: channel);
+    late BuildContext hostContext;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            hostContext = context;
+            return const Scaffold(body: SizedBox.expand());
+          },
+        ),
+      ),
+    );
+
+    final first = showBusyMarkModalDialog<void>(
+      hostContext,
+      headerBarService: headerBar,
+      builder: (_) => const Text('First dialog'),
+    );
+    await tester.pumpAndSettle();
+    final second = showBusyMarkModalDialog<void>(
+      hostContext,
+      headerBarService: headerBar,
+      builder: (_) => const Text('Second dialog'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(barrierStates, [isTrue]);
+
+    Navigator.of(hostContext, rootNavigator: true).pop();
+    await tester.pumpAndSettle();
+    await second;
+    expect(barrierStates, [isTrue]);
+
+    Navigator.of(hostContext, rootNavigator: true).pop();
+    await tester.pumpAndSettle();
+    await first;
+    expect(barrierStates, [isTrue, isFalse]);
   });
 }
 

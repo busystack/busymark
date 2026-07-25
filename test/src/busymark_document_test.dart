@@ -21,6 +21,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
+import 'package:busymark/src/markdown/document_outline.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
@@ -31,6 +32,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:yaru/yaru.dart';
 
 void main() {
   const parser = MarkdownParser();
@@ -481,7 +483,7 @@ void main() {}
       document: parsed.busyDocument,
     );
 
-    expect(heading.id, 'source-only-0');
+    expect(heading.attributes['id'], 'source-only-0');
     expect(opaque.id, isNot(heading.id));
 
     controller.applyBlockCommand(heading.id, BusyWysiwygBlockCommand.paragraph);
@@ -835,6 +837,90 @@ void main() {}
     ]);
     expect(parsed.title, 'Title');
     expect(parsed.anchors, containsAll(['title', 'section']));
+  });
+
+  test('live document outline follows top-level generated heading order', () {
+    const headingAttributes = {'level': '1', 'generatedId': 'true'};
+    const nestedHeading = BusyBlock(
+      id: 'nested-heading',
+      kind: BusyBlockKind.heading,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Same')],
+      attributes: headingAttributes,
+    );
+    const firstHeading = BusyBlock(
+      id: 'first-heading',
+      kind: BusyBlockKind.heading,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Same')],
+      attributes: headingAttributes,
+    );
+    const secondHeading = BusyBlock(
+      id: 'second-heading',
+      kind: BusyBlockKind.heading,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Same')],
+      attributes: headingAttributes,
+    );
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyBlock(
+          id: 'quote',
+          kind: BusyBlockKind.blockquote,
+          children: [nestedHeading],
+        ),
+        firstHeading,
+        secondHeading,
+      ],
+    );
+
+    expect(document.outline.map((heading) => heading.id), ['same', 'same-1']);
+    expect(document.outline.map((heading) => heading.editorBlockId), [
+      'first-heading',
+      'second-heading',
+    ]);
+
+    final renamed = document.copyWith(
+      blocks: [
+        document.blocks.first,
+        firstHeading.copyWith(
+          inlines: const [BusyInline(kind: BusyInlineKind.text, text: 'Other')],
+        ),
+        secondHeading,
+      ],
+    );
+    expect(renamed.outline.map((heading) => heading.id), ['other', 'same']);
+  });
+
+  test('duplicate anchors retain distinct editor block identities', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '# First {id="same"}\n\n'
+          '# Second {id="same"}\n',
+    );
+    final headingBlocks = parsed.busyDocument.blocks
+        .where((block) => block.kind == BusyBlockKind.heading)
+        .toList();
+
+    expect(headingBlocks.map((block) => block.id).toSet(), hasLength(2));
+    expect(
+      headingBlocks.map((block) => block.attributes['id']),
+      everyElement('same'),
+    );
+    expect(parsed.busyDocument.outline.map((heading) => heading.id), [
+      'same',
+      'same',
+    ]);
+    expect(
+      parsed.busyDocument.outline
+          .map((heading) => heading.editorBlockId)
+          .toSet(),
+      hasLength(2),
+    );
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.heading.duplicate-id'),
+    );
   });
 
   test('preview and WYSIWYG use the same semantic document', () {
@@ -2322,10 +2408,10 @@ void main() {}
       );
       await tester.pump();
 
-      IconButton editingToggle(String tooltip) {
-        return tester.widget<IconButton>(
+      YaruIconButton editingToggle(String tooltip) {
+        return tester.widget<YaruIconButton>(
           find.byWidgetPredicate(
-            (widget) => widget is IconButton && widget.tooltip == tooltip,
+            (widget) => widget is YaruIconButton && widget.tooltip == tooltip,
           ),
         );
       }
@@ -3641,9 +3727,9 @@ void main() {}
       expect(find.text('Apply'), findsOneWidget);
       expect(find.byType(BusyMarkDialogShell), findsOneWidget);
       expect(find.byType(BusyMarkFloatingTextEntry), findsNWidgets(2));
+      expect(find.byType(TextFormField), findsNWidgets(2));
       expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(TextField), findsNothing);
       final dialogRect = tester.getRect(find.byType(BusyMarkDialogShell));
       final sourceEntryRect = tester.getRect(
         find.byKey(BusyMarkImageDialogKeys.source),

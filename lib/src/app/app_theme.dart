@@ -9,73 +9,131 @@ ThemeData buildBusyMarkTheme({
   required Color accentColor,
 }) {
   final base = switch (brightness) {
-    Brightness.light => createYaruLightTheme(
-      primaryColor: BusyMarkLinuxPalette.light4,
-    ),
-    Brightness.dark => createYaruDarkTheme(
-      primaryColor: BusyMarkLinuxPalette.light2,
-    ),
+    Brightness.light => createYaruLightTheme(primaryColor: accentColor),
+    Brightness.dark => createYaruDarkTheme(primaryColor: accentColor),
   };
-  final colors = BusyMarkSurfaceColors.fromBrightness(brightness);
+  final colors = BusyMarkSurfaceColors.fromTheme(base);
   final syntaxColors = BusyMarkSyntaxColors.fromSurfaceColors(
     brightness,
     colors,
   );
-  final onAccent = contrastColor(accentColor);
-  final selectedContainer = colors.controlActive;
+  final onAccent = _accessibleForeground(accentColor);
+  final accentContainer = Color.alphaBlend(
+    accentColor.withValues(alpha: brightness == Brightness.dark ? 0.24 : 0.14),
+    colors.view,
+  );
   final colorScheme = base.colorScheme.copyWith(
     brightness: brightness,
     primary: accentColor,
     onPrimary: onAccent,
-    primaryContainer: selectedContainer,
-    onPrimaryContainer: colors.foreground,
-    secondary: BusyMarkLinuxPalette.blueAccent,
-    error: BusyMarkLinuxPalette.red,
+    primaryContainer: accentContainer,
+    onPrimaryContainer: _accessibleForeground(accentContainer),
+    secondary: accentColor,
+    onError: _accessibleForeground(base.colorScheme.error),
     surface: colors.view,
     onSurface: colors.foreground,
     onSurfaceVariant: colors.mutedForeground,
-    surfaceContainerLowest: colors.window,
-    surfaceContainerLow: colors.view,
+    // Keep Material fallbacks on the same opaque, neutral elevation ladder as
+    // BusyMark's native Linux surfaces. Control fills remain translucent state
+    // layers and must not leak into generic surface-container backgrounds.
+    surfaceContainerLowest: colors.view,
+    surfaceContainerLow: colors.window,
     surfaceContainer: colors.panel,
-    surfaceContainerHigh: colors.control,
-    surfaceContainerHighest: colors.controlHover,
+    surfaceContainerHigh: colors.secondarySidebar,
+    surfaceContainerHighest: colors.sidebar,
     outline: colors.border,
-    outlineVariant: colors.subtleBorder,
+    outlineVariant: colors.divider,
     scrim: BusyMarkLinuxPalette.black,
   );
-  final buttonShape = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-  );
-  final inputBorder = OutlineInputBorder(
-    borderSide: BorderSide(color: colors.border),
-    borderRadius: BorderRadius.circular(BusyMarkRadius.sm + 2),
-  );
-  final focusedInputBorder = inputBorder.copyWith(
-    borderSide: BorderSide(color: accentColor, width: BusyMarkStroke.focus),
-  );
   final textTheme = _busyMarkTextTheme(base.textTheme, colors);
-  final buttonText = WidgetStatePropertyAll(textTheme.labelLarge);
-  final inputDecorationTheme = base.inputDecorationTheme.copyWith(
-    filled: true,
-    fillColor: colors.control,
-    border: inputBorder,
-    enabledBorder: inputBorder,
-    focusedBorder: focusedInputBorder,
-    focusedErrorBorder: inputBorder.copyWith(
-      borderSide: BorderSide(
-        color: colorScheme.error,
-        width: BusyMarkStroke.focus,
-      ),
-    ),
-    contentPadding: BusyMarkInsets.input,
-    hintStyle: textTheme.bodyMedium?.copyWith(color: colors.mutedForeground),
+  final inputDecorationTheme = base.inputDecorationTheme;
+  final outlinedButtonStyle = _semanticButtonStyle(
+    base.outlinedButtonTheme.style,
+    foreground: colors.foreground,
+    background: BusyMarkLinuxPalette.transparent,
+    disabledForeground: colors.disabledForeground,
+    disabledBackground: BusyMarkLinuxPalette.transparent,
+  );
+  final filledButtonStyle = _semanticButtonStyle(
+    base.filledButtonTheme.style,
+    foreground: colors.foreground,
+    background: colors.control,
+    selectedBackground: colors.controlActive,
+    disabledForeground: colors.disabledForeground,
+    disabledBackground: colors.disabledControl,
+  );
+  final elevatedButtonStyle = _semanticButtonStyle(
+    base.elevatedButtonTheme.style,
+    foreground: onAccent,
+    background: accentColor,
+    disabledForeground: colors.disabledForeground,
+    disabledBackground: colors.disabledControl,
+  );
+  final textButtonStyle = _semanticButtonStyle(
+    base.textButtonTheme.style,
+    foreground: accentColor,
+    background: BusyMarkLinuxPalette.transparent,
+    disabledForeground: colors.disabledForeground,
+    disabledBackground: BusyMarkLinuxPalette.transparent,
+  );
+  final yaruButtonGeometry = base.filledButtonTheme.style;
+  final toggleConstraints = base.toggleButtonsTheme.constraints;
+  final segmentedShape =
+      yaruButtonGeometry?.shape ??
+      switch (base.toggleButtonsTheme.borderRadius) {
+        final BorderRadius borderRadius =>
+          WidgetStatePropertyAll<OutlinedBorder>(
+            RoundedRectangleBorder(borderRadius: borderRadius),
+          ),
+        _ => null,
+      };
+  final segmentedMinimumSize =
+      yaruButtonGeometry?.minimumSize ??
+      (toggleConstraints == null
+          ? null
+          : WidgetStatePropertyAll(
+              Size(toggleConstraints.minWidth, toggleConstraints.minHeight),
+            ));
+  final segmentedButtonStyle =
+      (base.segmentedButtonTheme.style ?? const ButtonStyle()).copyWith(
+        shape: segmentedShape,
+        padding: yaruButtonGeometry?.padding,
+        minimumSize: segmentedMinimumSize,
+        visualDensity: yaruButtonGeometry?.visualDensity,
+        tapTargetSize: yaruButtonGeometry?.tapTargetSize,
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return colors.disabledForeground;
+          }
+          return colors.foreground;
+        }),
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return colors.disabledControl;
+          }
+          if (states.contains(WidgetState.selected)) {
+            return colors.controlActive;
+          }
+          return colors.control;
+        }),
+        side: const WidgetStatePropertyAll(BorderSide.none),
+      );
+  final menuStyle = _semanticMenuSurfaceStyle(
+    base.menuTheme.style,
+    color: colors.popover,
+    shadowColor: colorScheme.shadow,
+  );
+  final dropdownMenuStyle = _semanticMenuSurfaceStyle(
+    base.dropdownMenuTheme.menuStyle,
+    color: colors.popover,
+    shadowColor: colorScheme.shadow,
   );
 
   return base.copyWith(
     brightness: brightness,
     colorScheme: colorScheme,
     primaryColor: accentColor,
-    shadowColor: colors.shade,
+    shadowColor: colorScheme.shadow,
     scaffoldBackgroundColor: colors.window,
     canvasColor: colors.window,
     cardColor: colors.card,
@@ -87,20 +145,13 @@ ThemeData buildBusyMarkTheme({
       colors,
       syntaxColors,
     ],
-    dividerColor: colors.subtleBorder,
-    visualDensity: VisualDensity.compact,
-    splashFactory: NoSplash.splashFactory,
-    focusColor: accentColor.withValues(alpha: BusyMarkAlpha.focus),
-    hoverColor: colors.controlHover,
-    splashColor: accentColor.withValues(alpha: BusyMarkAlpha.splash),
+    dividerColor: colors.divider,
     appBarTheme: base.appBarTheme.copyWith(
       elevation: BusyMarkElevation.none,
       scrolledUnderElevation: BusyMarkElevation.none,
       backgroundColor: colors.headerbar,
       foregroundColor: colors.foreground,
       surfaceTintColor: colors.headerbar,
-      shape: Border(bottom: BorderSide(color: colors.subtleBorder)),
-      toolbarHeight: BusyMarkSizes.toolbarHeight,
       systemOverlayStyle: brightness == Brightness.dark
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
@@ -110,164 +161,47 @@ ThemeData buildBusyMarkTheme({
     dialogTheme: base.dialogTheme.copyWith(
       backgroundColor: colors.dialog,
       surfaceTintColor: colors.dialog,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
-        side: BorderSide(color: colors.border),
-      ),
       titleTextStyle: textTheme.titleLarge,
       contentTextStyle: textTheme.bodyMedium,
     ),
     listTileTheme: base.listTileTheme.copyWith(
       selectedColor: colors.foreground,
-      selectedTileColor: selectedContainer,
+      selectedTileColor: accentContainer,
       iconColor: colors.mutedForeground,
       textColor: colors.foreground,
-      contentPadding: BusyMarkInsets.listTile,
-      titleTextStyle: textTheme.bodyMedium,
-      subtitleTextStyle: textTheme.bodySmall,
-      leadingAndTrailingTextStyle: textTheme.labelSmall,
     ),
     inputDecorationTheme: inputDecorationTheme,
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: _buttonStyle(
-        base.outlinedButtonTheme.style,
-        shape: buttonShape,
-        foreground: colors.foreground,
-        background: colors.control,
-        disabledForeground: colors.disabledForeground,
-        disabledBackground: colors.disabledControl,
-        textStyle: buttonText,
-        side: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.focused)) {
-            return BorderSide(color: accentColor);
-          }
-          return BorderSide.none;
-        }),
-      ),
-    ),
-    filledButtonTheme: FilledButtonThemeData(
-      style: _buttonStyle(
-        base.filledButtonTheme.style,
-        shape: buttonShape,
-        foreground: onAccent,
-        background: accentColor,
-        disabledForeground: colors.disabledForeground,
-        disabledBackground: colors.disabledControl,
-        overlayColor: _controlOverlay(onAccent),
-        textStyle: buttonText,
-      ),
-    ),
-    textButtonTheme: TextButtonThemeData(
-      style: _buttonStyle(
-        base.textButtonTheme.style,
-        shape: buttonShape,
-        foreground: accentColor,
-        background: BusyMarkLinuxPalette.transparent,
-        disabledForeground: colors.disabledForeground,
-        disabledBackground: BusyMarkLinuxPalette.transparent,
-        overlayColor: _controlOverlay(accentColor),
-        textStyle: buttonText,
-      ),
-    ),
-    iconButtonTheme: IconButtonThemeData(
-      style: _buttonStyle(
-        base.iconButtonTheme.style,
-        shape: buttonShape,
-        foreground: colors.mutedForeground,
-        background: BusyMarkLinuxPalette.transparent,
-        disabledForeground: colors.disabledForeground,
-        disabledBackground: BusyMarkLinuxPalette.transparent,
-        overlayColor: _controlOverlay(accentColor),
-        textStyle: buttonText,
-      ),
-    ),
-    segmentedButtonTheme: SegmentedButtonThemeData(
-      style:
-          _buttonStyle(
-            base.segmentedButtonTheme.style,
-            shape: buttonShape,
-            foreground: colors.foreground,
-            background: colors.control,
-            disabledForeground: colors.disabledForeground,
-            disabledBackground: colors.disabledControl,
-            overlayColor: _controlOverlay(accentColor),
-            textStyle: buttonText,
-            side: const WidgetStatePropertyAll(BorderSide.none),
-          ).copyWith(
-            foregroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.disabled)) {
-                return colors.disabledForeground;
-              }
-              if (states.contains(WidgetState.selected)) {
-                return onAccent;
-              }
-              return colors.foreground;
-            }),
-            backgroundColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.disabled)) {
-                return colors.disabledControl;
-              }
-              if (states.contains(WidgetState.selected)) {
-                return accentColor;
-              }
-              return selectedContainer;
-            }),
-          ),
-    ),
-    switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.disabled)) {
-          return colors.disabledForeground;
-        }
-        if (states.contains(WidgetState.selected)) {
-          return onAccent;
-        }
-        return colors.view;
-      }),
-      trackColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.disabled)) {
-          return colors.disabledControl;
-        }
-        if (states.contains(WidgetState.selected)) {
-          return accentColor;
-        }
-        return colors.controlHover;
-      }),
-      trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return accentColor;
-        }
-        return colors.border;
-      }),
-    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: outlinedButtonStyle),
+    filledButtonTheme: FilledButtonThemeData(style: filledButtonStyle),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: elevatedButtonStyle),
+    textButtonTheme: TextButtonThemeData(style: textButtonStyle),
+    segmentedButtonTheme: SegmentedButtonThemeData(style: segmentedButtonStyle),
     popupMenuTheme: base.popupMenuTheme.copyWith(
       color: colors.popover,
       surfaceTintColor: colors.popover,
-      elevation: BusyMarkElevation.popover,
-      shadowColor: colors.shade,
+      shadowColor: colorScheme.shadow,
       iconColor: colors.mutedForeground,
-      iconSize: BusyMarkSizes.iconSm,
       textStyle: textTheme.bodyMedium,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-      ),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        return textTheme.bodyMedium?.copyWith(
+          color: states.contains(WidgetState.disabled)
+              ? colors.disabledForeground
+              : colors.foreground,
+        );
+      }),
+    ),
+    menuTheme: MenuThemeData(
+      style: menuStyle,
+      submenuIcon: base.menuTheme.submenuIcon,
+    ),
+    dropdownMenuTheme: base.dropdownMenuTheme.copyWith(
+      textStyle: textTheme.bodyMedium,
+      menuStyle: dropdownMenuStyle,
     ),
     tabBarTheme: base.tabBarTheme.copyWith(
       labelStyle: textTheme.labelLarge,
       unselectedLabelStyle: textTheme.labelLarge,
-      dividerColor: colors.subtleBorder,
-    ),
-    tooltipTheme: base.tooltipTheme.copyWith(
-      decoration: BoxDecoration(
-        color: colors.popover,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.headerButton),
-        boxShadow: BusyMarkShadow.floatingShadows(colors.shade),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: BusyMarkSpacing.tooltipHorizontal,
-        vertical: BusyMarkSpacing.tooltipVertical,
-      ),
-      textStyle: textTheme.bodyMedium?.copyWith(color: colors.foreground),
+      dividerColor: colors.divider,
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: accentColor,
@@ -281,27 +215,27 @@ ThemeData buildBusyMarkTheme({
       ),
       selectionHandleColor: accentColor,
     ),
-    cardTheme: CardThemeData(
+    cardTheme: base.cardTheme.copyWith(
       color: colors.card,
       elevation: BusyMarkElevation.surface,
       surfaceTintColor: BusyMarkLinuxPalette.transparent,
-      shadowColor: colors.shade,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-      ),
+      shadowColor: colorScheme.shadow,
     ),
   );
 }
 
+Color _accessibleForeground(Color background) {
+  final backgroundLuminance = background.computeLuminance();
+  final blackContrast = (backgroundLuminance + 0.05) / 0.05;
+  final whiteContrast = 1.05 / (backgroundLuminance + 0.05);
+  return blackContrast >= whiteContrast
+      ? BusyMarkLinuxPalette.black
+      : BusyMarkLinuxPalette.white;
+}
+
 TextTheme _busyMarkTextTheme(TextTheme base, BusyMarkSurfaceColors colors) {
-  TextStyle? apply(TextStyle? style, {Color? color}) {
-    return style?.copyWith(
-      color: color,
-      fontFamily: BusyMarkTypography.fontFamily,
-      fontFamilyFallback: BusyMarkTypography.fontFamilyFallback,
-      letterSpacing: 0,
-    );
-  }
+  TextStyle? apply(TextStyle? style, {Color? color}) =>
+      style?.copyWith(color: color);
 
   return base.copyWith(
     displayLarge: apply(base.displayLarge, color: colors.foreground),
@@ -322,22 +256,24 @@ TextTheme _busyMarkTextTheme(TextTheme base, BusyMarkSurfaceColors colors) {
   );
 }
 
-ButtonStyle _buttonStyle(
+/// Applies BusyMark's semantic roles without replacing Yaru's geometry,
+/// typography, hover/press overlays, focus treatment, or motion.
+ButtonStyle _semanticButtonStyle(
   ButtonStyle? base, {
-  required OutlinedBorder shape,
   required Color foreground,
   required Color background,
+  Color? selectedBackground,
   required Color disabledForeground,
   required Color disabledBackground,
-  WidgetStateProperty<Color?>? overlayColor,
-  WidgetStateProperty<BorderSide?>? side,
-  WidgetStateProperty<TextStyle?>? textStyle,
 }) {
   return (base ?? const ButtonStyle()).copyWith(
-    visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
-    textStyle: textStyle,
-    shape: WidgetStatePropertyAll(shape),
     foregroundColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) {
+        return disabledForeground;
+      }
+      return foreground;
+    }),
+    iconColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.disabled)) {
         return disabledForeground;
       }
@@ -347,25 +283,24 @@ ButtonStyle _buttonStyle(
       if (states.contains(WidgetState.disabled)) {
         return disabledBackground;
       }
+      if (selectedBackground != null && states.contains(WidgetState.selected)) {
+        return selectedBackground;
+      }
       return background;
     }),
-    overlayColor: overlayColor ?? _controlOverlay(foreground),
-    side: side ?? const WidgetStatePropertyAll(BorderSide.none),
-    elevation: const WidgetStatePropertyAll(BusyMarkElevation.none),
   );
 }
 
-WidgetStateProperty<Color?> _controlOverlay(Color foreground) {
-  return WidgetStateProperty.resolveWith((states) {
-    if (states.contains(WidgetState.pressed)) {
-      return foreground.withValues(alpha: BusyMarkAlpha.overlayPressed);
-    }
-    if (states.contains(WidgetState.hovered)) {
-      return foreground.withValues(alpha: BusyMarkAlpha.overlayHover);
-    }
-    if (states.contains(WidgetState.focused)) {
-      return foreground.withValues(alpha: BusyMarkAlpha.overlayFocus);
-    }
-    return null;
-  });
+/// Changes only the floating-surface roles and keeps Yaru's menu geometry,
+/// item states, padding, focus behavior, and animation.
+MenuStyle _semanticMenuSurfaceStyle(
+  MenuStyle? base, {
+  required Color color,
+  required Color shadowColor,
+}) {
+  return (base ?? const MenuStyle()).copyWith(
+    backgroundColor: WidgetStatePropertyAll(color),
+    surfaceTintColor: WidgetStatePropertyAll(color),
+    shadowColor: WidgetStatePropertyAll(shadowColor),
+  );
 }

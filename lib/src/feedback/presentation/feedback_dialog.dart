@@ -172,7 +172,6 @@ class _BusyMarkFeedbackDialogState
               autofocus: true,
               textInputAction: TextInputAction.next,
               errorText: subjectError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.first,
             ),
             BusyMarkFloatingTextEntry(
               key: BusyMarkFeedbackKeys.message,
@@ -184,7 +183,6 @@ class _BusyMarkFeedbackDialogState
               keyboardType: TextInputType.multiline,
               textInputAction: TextInputAction.newline,
               errorText: messageError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.middle,
             ),
             BusyMarkFloatingTextEntry(
               key: BusyMarkFeedbackKeys.replyEmail,
@@ -200,7 +198,6 @@ class _BusyMarkFeedbackDialogState
                 }
               },
               errorText: replyEmailError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.last,
             ),
           ],
         ),

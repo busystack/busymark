@@ -13,6 +13,7 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/document_outline.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
@@ -42,6 +43,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onToolbarPlacementChanged,
     this.onToolbarDirectionChanged,
     this.scrollToHeadingId,
+    this.scrollToBlockId,
     this.scrollToSearchQuery,
     this.scrollRequest = 0,
     this.onOpenSearch,
@@ -63,6 +65,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final ValueChanged<EditorToolbarPlacement>? onToolbarPlacementChanged;
   final ValueChanged<EditorToolbarDirection>? onToolbarDirectionChanged;
   final String? scrollToHeadingId;
+  final String? scrollToBlockId;
   final String? scrollToSearchQuery;
   final int scrollRequest;
   final VoidCallback? onOpenSearch;
@@ -977,24 +980,33 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _scheduleHeadingScroll() {
     final headingId = widget.scrollToHeadingId;
-    if (headingId == null || headingId.isEmpty || widget.scrollRequest == 0) {
+    final editorBlockId = widget.scrollToBlockId;
+    if (widget.scrollRequest == 0 ||
+        ((headingId == null || headingId.isEmpty) &&
+            (editorBlockId == null || editorBlockId.isEmpty))) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
-      final heading = _headingBlockForId(headingId);
+      var heading = editorBlockId == null
+          ? null
+          : _documentController.blockById(editorBlockId);
+      if (heading?.kind != BusyBlockKind.heading) {
+        heading = headingId == null ? null : _headingBlockForId(headingId);
+      }
       if (heading == null) {
         return;
       }
-      if (_ensureBlockVisible(heading.id)) {
+      final headingBlockId = heading.id;
+      if (_ensureBlockVisible(headingBlockId)) {
         return;
       }
-      _jumpNearBlock(heading.id);
+      _jumpNearBlock(headingBlockId);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _ensureBlockVisible(heading.id);
+          _ensureBlockVisible(headingBlockId);
         }
       });
     });
@@ -1079,10 +1091,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   BusyBlock? _headingBlockForId(String headingId) {
-    for (final block in _flattenBlocks(_documentController.document.blocks)) {
-      if (block.kind == BusyBlockKind.heading &&
-          (block.id == headingId || block.attributes['id'] == headingId)) {
-        return block;
+    for (final heading in _documentController.document.outline) {
+      if (heading.id != headingId) {
+        continue;
+      }
+      final blockId = heading.editorBlockId;
+      if (blockId != null) {
+        return _documentController.blockById(blockId);
       }
     }
     return null;
@@ -2108,28 +2123,32 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var destination = '';
     return _showEditorDialog<String>(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.link),
-        content: TextFormField(
-          key: const ValueKey('wysiwyg-link-destination-field'),
-          autofocus: true,
-          textDirection: TextDirection.ltr,
-          onChanged: (value) => destination = value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
-            fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-          ),
-          decoration: const InputDecoration(hintText: 'https://example.com'),
-          onFieldSubmitted: (value) => Navigator.pop(context, value),
-        ),
+      builder: (context) => BusyMarkDialogShell(
+        title: context.l10n.link,
+        maxWidth: BusyMarkSizes.dialogCompact,
         actions: [
-          TextButton(
+          BusyMarkDialogButton(
+            label: context.l10n.cancel,
             onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
           ),
-          FilledButton(
+          BusyMarkDialogButton(
+            label: context.l10n.apply,
             onPressed: () => Navigator.pop(context, destination),
-            child: Text(context.l10n.apply),
+            suggested: true,
+          ),
+        ],
+        children: [
+          TextFormField(
+            key: const ValueKey('wysiwyg-link-destination-field'),
+            autofocus: true,
+            textDirection: TextDirection.ltr,
+            onChanged: (value) => destination = value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontFamily: BusyMarkTypography.monoFontFamily,
+              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+            ),
+            decoration: const InputDecoration(hintText: 'https://example.com'),
+            onFieldSubmitted: (value) => Navigator.pop(context, value),
           ),
         ],
       ),
@@ -2176,11 +2195,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var source = initialSource;
     return _showEditorDialog<String>(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.editHtml),
-        content: SizedBox(
-          width: BusyMarkSizes.dialogNarrow,
-          child: TextFormField(
+      builder: (context) => BusyMarkDialogShell(
+        title: context.l10n.editHtml,
+        maxWidth: BusyMarkSizes.dialogNarrow,
+        actions: [
+          BusyMarkDialogButton(
+            label: context.l10n.cancel,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BusyMarkDialogButton(
+            label: submitLabel,
+            onPressed: () => Navigator.pop(context, source),
+            suggested: true,
+          ),
+        ],
+        children: [
+          TextFormField(
             key: const ValueKey('wysiwyg-html-source-field'),
             initialValue: initialSource,
             onChanged: (value) => source = value,
@@ -2195,16 +2225,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             ),
             decoration: InputDecoration(labelText: context.l10n.htmlSource),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, source),
-            child: Text(submitLabel),
-          ),
         ],
       ),
     );
@@ -2217,11 +2237,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var language = initialLanguage;
     return _showEditorDialog<String>(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.codeBlockLanguage),
-        content: SizedBox(
-          width: BusyMarkSizes.tableDialogWidth,
-          child: TextFormField(
+      builder: (context) => BusyMarkDialogShell(
+        title: context.l10n.codeBlockLanguage,
+        maxWidth: BusyMarkSizes.dialogCompact,
+        actions: [
+          BusyMarkDialogButton(
+            label: context.l10n.cancel,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BusyMarkDialogButton(
+            label: context.l10n.apply,
+            onPressed: () => Navigator.pop(context, language),
+            suggested: true,
+          ),
+        ],
+        children: [
+          TextFormField(
             key: const ValueKey('wysiwyg-code-language-field'),
             initialValue: initialLanguage,
             onChanged: (value) => language = value,
@@ -2236,16 +2267,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               hintText: 'dart',
             ),
             onFieldSubmitted: (value) => Navigator.pop(context, value),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, language),
-            child: Text(context.l10n.apply),
           ),
         ],
       ),
@@ -3009,21 +3030,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         ? placement._isRight
         : !placement._isTop;
     final toolbar = visible
-        ? axis == Axis.horizontal
-              ? SizedBox(
-                  width: math.max(
-                    0,
-                    maxWidth - BusyMarkSizes.wysiwygToolbarReserve,
-                  ),
-                  child: child,
-                )
-              : SizedBox(
-                  height: math.max(
-                    0,
-                    maxHeight - BusyMarkSizes.wysiwygToolbarReserve,
-                  ),
-                  child: child,
-                )
+        ? Flexible(fit: FlexFit.loose, child: child)
         : const SizedBox.shrink();
     final configurable =
         onPlacementChanged != null || onDirectionChanged != null;
@@ -3245,13 +3252,6 @@ String? _imageSourceFromInline(BusyInline inline) {
   return null;
 }
 
-Iterable<BusyBlock> _flattenBlocks(List<BusyBlock> blocks) sync* {
-  for (final block in blocks) {
-    yield block;
-    yield* _flattenBlocks(block.children);
-  }
-}
-
 class _ImageDialogResult {
   const _ImageDialogResult({required this.source, required this.alt});
 
@@ -3444,11 +3444,22 @@ class _TableDialogState extends State<_TableDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(context.l10n.table),
-      content: SizedBox(
-        width: BusyMarkSizes.tableDialogWidth,
-        child: Row(
+    return BusyMarkDialogShell(
+      title: context.l10n.table,
+      maxWidth: BusyMarkSizes.dialogCompact,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.insert,
+          onPressed: _submit,
+          suggested: true,
+        ),
+      ],
+      children: [
+        Row(
           children: [
             Expanded(
               child: TextField(
@@ -3476,13 +3487,6 @@ class _TableDialogState extends State<_TableDialog> {
             ),
           ],
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.l10n.cancel),
-        ),
-        FilledButton(onPressed: _submit, child: Text(context.l10n.insert)),
       ],
     );
   }

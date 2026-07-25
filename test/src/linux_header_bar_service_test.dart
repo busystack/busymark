@@ -110,4 +110,61 @@ void main() {
     expect(events.map((event) => event.sequence), [1, 2, 3]);
     expect(events.first, isNot(events.last));
   });
+
+  test(
+    'native search events and focus request keep semantic meaning',
+    () async {
+      if (!Platform.isLinux) {
+        return;
+      }
+      TestWidgetsFlutterBinding.ensureInitialized();
+      const channelName = 'com.busymark.test/headerbar-search-events';
+      const channel = MethodChannel(channelName);
+      const codec = StandardMethodCodec();
+      final calls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            calls.add(call);
+            return switch (call.method) {
+              'initialize' || 'focusSearch' => true,
+              _ => null,
+            };
+          });
+      final service = LinuxHeaderBarService(channel: channel);
+      final events = <HeaderBarSearchEvent>[];
+      final subscription = service.searchEvents.listen(events.add);
+
+      addTearDown(() async {
+        await subscription.cancel();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
+        channel.setMethodCallHandler(null);
+      });
+
+      Future<void> sendNativeEvent(String method, [Object? arguments]) {
+        return TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              channelName,
+              codec.encodeMethodCall(MethodCall(method, arguments)),
+              (_) {},
+            );
+      }
+
+      expect(await service.focusSearch(), isTrue);
+      expect(calls.map((call) => call.method), ['initialize', 'focusSearch']);
+
+      await sendNativeEvent('searchQueryChanged', 'draft');
+      await sendNativeEvent('searchSubmitted', 'draft');
+      await sendNativeEvent('searchFocusChanged', true);
+      await sendNativeEvent('searchCleared');
+      await sendNativeEvent('searchEscapePressed');
+
+      expect(events, hasLength(5));
+      expect((events[0] as HeaderBarSearchQueryChanged).query, 'draft');
+      expect((events[1] as HeaderBarSearchSubmitted).query, 'draft');
+      expect((events[2] as HeaderBarSearchFocusChanged).focused, isTrue);
+      expect(events[3], isA<HeaderBarSearchCleared>());
+      expect(events[4], isA<HeaderBarSearchEscapePressed>());
+    },
+  );
 }

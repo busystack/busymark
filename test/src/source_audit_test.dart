@@ -93,7 +93,8 @@ void main() {
       router,
       contains('NoTransitionPage<void>(child: WorkspaceScreen())'),
     );
-    expect(router, contains('NoTransitionPage<void>(child: SettingsScreen())'));
+    expect(router, contains('NoTransitionPage<void>('));
+    expect(router, contains('child: SettingsScreen('));
     expect(router, isNot(contains('builder: (context, state)')));
     expect(router, isNot(contains('CustomTransitionPage')));
   });
@@ -189,7 +190,8 @@ void main() {
 
     expect(design, contains('class _BusyMarkGroupedListSurface'));
     expect(design, contains('cardTheme.shape ?? RoundedRectangleBorder'));
-    expect(design, contains('clipBehavior: Clip.antiAlias'));
+    expect(design, contains('BorderRadius.circular(BusyMarkRadius.lg)'));
+    expect(design, contains('this.clipBehavior = Clip.antiAlias'));
     expect(design, contains('height: BusyMarkStroke.hairline'));
     expect(design, isNot(contains('YaruTileList')));
     expect(design, isNot(contains('YaruBorderContainer')));
@@ -207,86 +209,107 @@ void main() {
     expect(dialogShell, contains('border: BorderSide.none'));
   });
 
-  test('BusyMark dialog buttons use shared shadowed accent surfaces', () {
+  test('BusyMark dialog buttons are thin semantic framework adapters', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final dialogButton = RegExp(
-      r'class BusyMarkDialogButton[\s\S]*?enum BusyMarkFloatingTextEntryPosition',
+      r'class BusyMarkDialogButton[\s\S]*?class BusyMarkFloatingTextEntryGroup',
     ).firstMatch(design)!.group(0)!;
 
-    expect(dialogButton, contains('busyMarkSurfaceDecoration('));
-    expect(dialogButton, contains('color: background'));
-    expect(dialogButton, contains('elevated: _enabled'));
-    expect(dialogButton, contains('return colorScheme.primary;'));
-    expect(dialogButton, contains('colorScheme.onPrimary'));
-    expect(dialogButton, isNot(contains('border: Border.all')));
-    expect(dialogButton, isNot(contains('final borderColor')));
+    expect(design, contains('abstract final class BusyMarkPushButton'));
+    expect(design, contains('static FilledButton standard('));
+    expect(design, contains('static FilledButton standardIcon('));
+    expect(design, contains('return FilledButton.icon('));
+    expect(design, contains('static ElevatedButton suggested('));
+    expect(design, contains('static ElevatedButton destructive('));
+    expect(dialogButton, contains('BusyMarkPushButton.standard('));
+    expect(dialogButton, contains('BusyMarkPushButton.suggested('));
+    expect(dialogButton, contains('BusyMarkPushButton.destructive('));
+    expect(dialogButton, isNot(contains('FocusableActionDetector(')));
+    expect(dialogButton, isNot(contains('GestureDetector(')));
+    expect(dialogButton, isNot(contains('busyMarkSurfaceDecoration(')));
+    expect(dialogButton, isNot(contains('minHeight:')));
+    expect(dialogButton, isNot(contains('minWidth:')));
   });
 
-  test('shared row hover uses the themed control hover color', () {
+  test('Writerside topic controls use shared semantic adapters', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final createTopicDialog = RegExp(
+      r'class _CreateWritersideTopicDialogState[\s\S]*?'
+      r'  String _dialogTitle',
+    ).firstMatch(workspace)!.group(0)!;
+
+    expect(workspace, contains('BusyMarkPushButton.standardIcon('));
+    expect(workspace, isNot(contains('FilledButton.icon(')));
+    expect(createTopicDialog, contains('BusyMarkFloatingTextEntryGroup('));
+    expect(
+      RegExp(
+        r'BusyMarkFloatingTextEntry\(',
+      ).allMatches(createTopicDialog).length,
+      2,
+    );
+    expect(createTopicDialog, isNot(contains('TextField(')));
+    expect(createTopicDialog, isNot(contains('InputDecoration(')));
+  });
+
+  test('shared row hover delegates to Yaru interaction state', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
     final helper = RegExp(
       r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
       dotAll: true,
     ).firstMatch(design)!.group(1)!;
-    expect(helper, contains('BusyMarkSurfaceColors.of(context).controlHover'));
+    expect(helper, contains('Theme.of(context).hoverColor'));
     expect(helper, isNot(contains('colors.foreground.withValues')));
-    expect(design, contains('class _BusyMarkHoverBackground'));
-    expect(design, contains('return MouseRegion('));
-    expect(design, contains('ColoredBox('));
-    expect(design, isNot(contains('AnimatedContainer(')));
+    expect(design, isNot(contains('class _BusyMarkHoverBackground')));
     final actionRow = RegExp(
       r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitchRow',
     ).firstMatch(design)!.group(0)!;
-    expect(actionRow, contains('_BusyMarkHoverBackground('));
-    expect(actionRow, contains('hoverColor: BusyMarkLinuxPalette.transparent'));
+    expect(actionRow, contains('return YaruListTile.square('));
+    expect(actionRow, isNot(contains('MouseRegion(')));
+    expect(actionRow, isNot(contains('hoverColor:')));
     final switchRow = RegExp(
       r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkDialogShell',
     ).firstMatch(design)!.group(0)!;
-    expect(switchRow, contains('_BusyMarkHoverBackground('));
-    expect(switchRow, contains('hoverColor: BusyMarkLinuxPalette.transparent'));
+    expect(switchRow, contains('return YaruSwitchListTile('));
+    expect(switchRow, isNot(contains('MouseRegion(')));
+    expect(switchRow, contains('hoverColor: busyMarkRowHoverColor(context)'));
+    expect(switchRow, contains('shape: const RoundedRectangleBorder()'));
   });
 
-  test('shared surfaces use semantic BusyMark shadows', () {
+  test('shared surfaces use one semantic physical-elevation path', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final dialogs = File(
       'lib/src/app/busymark_dialogs.dart',
     ).readAsStringSync();
     final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
 
-    expect(design, contains('return BusyMarkSurfaceColors.of(context).shade'));
-    expect(design, contains('surfaceShadowsFor'));
-    expect(design, contains('floatingShadowsFor'));
-    expect(design, contains('windowShadowsFor'));
-    expect(design, contains('edgeShadowsFor'));
-    expect(design, contains('_scaleAlpha(color, 0.28)'));
-    expect(design, contains('blurRadius: 8'));
-    expect(design, contains('offset: const Offset(0, -1)'));
-    expect(design, contains('BoxDecoration busyMarkSurfaceDecoration'));
-    expect(
-      design,
-      contains(
-        'boxShadow: elevated ? BusyMarkShadow.surfaceShadowsFor(context) : null',
-      ),
-    );
+    expect(design, isNot(contains('abstract final class BusyMarkShadow')));
+    expect(design, isNot(contains('BoxShadow(')));
+    expect(design, isNot(contains('busyMarkSurfaceDecoration')));
     expect(design, contains('final cardTheme = Theme.of(context).cardTheme'));
     final surface = RegExp(
       r'class BusyMarkSurface.*?class BusyMarkGroupedList',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
     expect(surface, contains('cardTheme.color ?? colors.card'));
-    expect(surface, contains('decoration: busyMarkSurfaceDecoration'));
-    expect(theme, contains('shadowColor: colors.shade'));
-    expect(theme, contains('cardTheme: CardThemeData'));
-    expect(dialogs, contains('elevation: BusyMarkElevation.popover'));
+    expect(surface, contains('elevation: filled ? BusyMarkElevation.surface'));
     expect(
-      dialogs,
-      contains('shadowColor: BusyMarkShadow.floatingColor(context)'),
+      surface,
+      contains('shadowColor: Theme.of(context).colorScheme.shadow'),
     );
-    expect(
-      theme,
-      contains('boxShadow: BusyMarkShadow.floatingShadows(colors.shade)'),
-    );
+    expect(theme, contains('shadowColor: colorScheme.shadow'));
+    expect(theme, contains('cardTheme: base.cardTheme.copyWith'));
+
+    final modalEditor = RegExp(
+      r'class BusyMarkModalEditorSurface[\s\S]*?void showBusyMarkAboutDialog',
+    ).firstMatch(dialogs)!.group(0)!;
+    expect(modalEditor, contains('Dialog('));
+    expect(modalEditor, isNot(contains('AlertDialog(')));
+    expect(modalEditor, isNot(contains('child: Material(')));
+    expect(modalEditor, isNot(contains('BusyMarkElevation.')));
+    expect(modalEditor, isNot(contains('BusyMarkShadow.')));
   });
 
   test('filled grouped action surfaces use the shared grouped surface', () {
@@ -299,24 +322,97 @@ void main() {
       r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
-    expect(groupedSurface, contains('final dividerColor = colors.view'));
     expect(groupedSurface, contains('height: BusyMarkStroke.hairline'));
     expect(groupedSurface, contains('thickness: BusyMarkStroke.hairline'));
-    expect(groupedSurface, contains('color: dividerColor'));
+    expect(groupedSurface, contains('color: colors.divider'));
     expect(design, contains('required this.groupedList'));
-    expect(design, contains('groupedList: Color(0xFFFFFFFF)'));
-    expect(design, contains('groupedList: Color(0xFF383838)'));
-    expect(groupedSurface, contains('final color = colors.groupedList'));
-    expect(groupedSurface, contains('decoration: busyMarkSurfaceDecoration'));
-    expect(groupedSurface, contains('ClipRRect('));
-    expect(groupedSurface, contains('color: BusyMarkLinuxPalette.transparent'));
+    expect(
+      design,
+      contains('BusyMarkSurfaceColors.fromTheme(ThemeData theme)'),
+    );
+    expect(
+      design,
+      contains('return _busyMarkSemanticSurfaceColors(theme.brightness)'),
+    );
+    expect(design, contains('groupedList: groupedList'));
+    expect(design, contains('class BusyMarkGroupedSurface'));
+    expect(groupedSurface, contains('return BusyMarkGroupedSurface('));
+    expect(groupedSurface, isNot(contains('busyMarkSurfaceDecoration')));
     expect(groupedSurface, isNot(contains('borderColor')));
     expect(groupedSurface, isNot(contains('Border.all')));
     expect(groupedSurface, isNot(contains('color: colors.control')));
-    expect(groupedSurface, isNot(contains('BusyMarkShadow.surfaceShadows')));
-    expect(groupedSurface, isNot(contains('elevation: cardTheme.elevation')));
     expect(welcome, isNot(contains('_welcomeGroupedCardColor')));
     expect(welcome, isNot(contains('cardTheme: theme.cardTheme.copyWith')));
+  });
+
+  test(
+    'semantic surfaces are centralized while inputs retain Yaru geometry',
+    () {
+      final design = File(
+        'lib/src/app/busymark_design.dart',
+      ).readAsStringSync();
+      final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
+      final surfaceFactory = RegExp(
+        r'factory BusyMarkSurfaceColors\.fromTheme[\s\S]*?'
+        r'static BusyMarkSurfaceColors of',
+      ).firstMatch(design)!.group(0)!;
+
+      expect(theme, contains('BusyMarkSurfaceColors.fromTheme(base)'));
+      expect(
+        theme,
+        contains(
+          'final inputDecorationTheme = '
+          'base.inputDecorationTheme',
+        ),
+      );
+      expect(theme, isNot(contains('_semanticInputDecorationTheme')));
+      expect(theme, isNot(contains('filled: true')));
+      expect(theme, isNot(contains('fillColor: colors.control')));
+      expect(
+        surfaceFactory,
+        contains('return _busyMarkSemanticSurfaceColors(theme.brightness)'),
+      );
+      expect(design, contains('Modern Yaru/libadwaita semantic roles'));
+      expect(design, contains('window: const Color(0xFFFAFAFA)'));
+      expect(design, contains('window: const Color(0xFF2C2C2C)'));
+      expect(design, contains('groupedList: groupedList'));
+      expect(design, contains('popover: const Color(0xFF3E3E3E)'));
+      expect(theme, contains('surfaceContainerLowest: colors.view'));
+      expect(theme, contains('surfaceContainerLow: colors.window'));
+      expect(theme, contains('surfaceContainer: colors.panel'));
+      expect(theme, contains('surfaceContainerHigh: colors.secondarySidebar'));
+      expect(theme, contains('surfaceContainerHighest: colors.sidebar'));
+      expect(theme, contains('outlineVariant: colors.divider'));
+      expect(surfaceFactory, isNot(contains('fromBrightness')));
+    },
+  );
+
+  test('split-view sidebars share one directional semantic boundary', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final sidebarSurface = RegExp(
+      r'class BusyMarkSidebarSurface[\s\S]*?class BusyMarkGroupedList',
+    ).firstMatch(design)!.group(0)!;
+
+    expect(sidebarSurface, contains('color: colors.sidebar'));
+    expect(sidebarSurface, contains('BorderDirectional('));
+    expect(sidebarSurface, contains('end: BorderSide('));
+    expect(sidebarSurface, contains('color: colors.sidebarBorder'));
+    expect(workspace, contains('return BusyMarkSidebarSurface('));
+    expect(welcome, contains('return BusyMarkSidebarSurface('));
+    expect(
+      workspace,
+      isNot(contains('decoration: BoxDecoration(color: colors.sidebar)')),
+    );
+    expect(
+      welcome,
+      isNot(contains('decoration: BoxDecoration(color: colors.sidebar)')),
+    );
   });
 
   test('hardcoded UI colors stay in the shared design layer', () {
@@ -375,6 +471,13 @@ void main() {
     expect(workspace, contains('_toggleSearch(ref)'));
     expect(workspace, contains('_workspaceSearchProvider'));
     expect(workspace, contains('class _HeaderSearchField'));
+    expect(workspace, contains('return BusyMarkSearchField('));
+    final searchField = RegExp(
+      r'class _HeaderSearchField[\s\S]*?class _HeaderSeparator',
+    ).firstMatch(workspace)!.group(0)!;
+    expect(searchField, isNot(contains('TextField(')));
+    expect(searchField, isNot(contains('OutlineInputBorder(')));
+    expect(searchField, contains('onEscape: widget.onEscape'));
     expect(workspace, contains('class _SearchSidebar'));
     expect(workspace, contains('_workspaceSearchResults'));
     expect(workspace, contains('_searchNavigationTargetProvider'));
@@ -583,11 +686,20 @@ void main() {
     expect(theme, contains('segmentedButtonTheme: SegmentedButtonThemeData'));
     expect(
       theme,
+      contains('final yaruButtonGeometry = base.filledButtonTheme.style'),
+    );
+    expect(theme, contains('shape: segmentedShape'));
+    expect(theme, contains('padding: yaruButtonGeometry?.padding'));
+    expect(theme, contains('minimumSize: segmentedMinimumSize'));
+    expect(theme, isNot(contains('StadiumBorder')));
+    expect(
+      theme,
       contains('side: const WidgetStatePropertyAll(BorderSide.none)'),
     );
-    expect(theme, contains('return accentColor;'));
-    expect(theme, contains('return onAccent;'));
-    expect(theme, contains('return selectedContainer;'));
+    expect(theme, contains('return colors.controlActive;'));
+    expect(theme, contains('return colors.control;'));
+    expect(theme, contains('return colors.foreground;'));
+    expect(theme, isNot(contains('return selectedContainer;')));
     expect(settings, contains('class _SegmentLabel'));
     expect(settings, contains('maxLines: 1'));
     expect(settings, contains('overflow: TextOverflow.ellipsis'));
@@ -669,35 +781,60 @@ void main() {
     expect(workspace, isNot(contains('BusyMarkMenuSelectorButton')));
   });
 
-  test('shared header popup menu matches native popover shape', () {
+  test('shared popup menus delegate rows and surfaces to framework themes', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final headerPopup = RegExp(
+      r'class BusyMarkHeaderPopupMenuButton<T>[\s\S]*?Future<T\?> '
+      r'showBusyMarkContextMenu',
+    ).firstMatch(design)!.group(0)!;
+    final popupItem = RegExp(
+      r'class BusyMarkPopupMenuItem<T>[\s\S]*?class BusyMarkPopupSelectorOption',
+    ).firstMatch(design)!.group(0)!;
 
-    expect(design, contains('showMenu<T>'));
-    expect(design, contains('_BusyMarkHeaderPopoverShape'));
-    expect(design, contains('_busyMarkHeaderPopoverArrowHeight'));
-    expect(design, contains('BorderRadius.circular(BusyMarkRadius.window)'));
-    expect(design, contains('color: colors.subtleBorder'));
-    expect(design, contains('popupMenuShortcutWidth'));
-    expect(design, contains('BoxConstraints.tightFor(width: menuWidth)'));
-    expect(design, contains('popUpAnimationStyle: AnimationStyle.noAnimation'));
-    expect(design, contains('hoverColor: colors.controlHover'));
-    expect(design, contains('static const double nativeHeaderButton = 6'));
+    expect(headerPopup, contains('PopupMenuButton<T>('));
+    expect(headerPopup, contains('GlobalKey<PopupMenuButtonState<T>>()'));
+    expect(headerPopup, contains('showButtonMenu()'));
+    expect(headerPopup, contains('BusyMarkHeaderIconButton('));
+    expect(headerPopup, contains('selected: _loading || _open'));
+    expect(headerPopup, contains('requestFocus: true'));
+    expect(
+      RegExp('requestFocus: true').allMatches(design).length,
+      2,
+      reason: 'Header and context-menu routes must both own Escape handling.',
+    );
+    expect(headerPopup, isNot(contains('findRenderObject()')));
+    expect(headerPopup, isNot(contains('BoxConstraints.tightFor')));
+    expect(headerPopup, isNot(contains('popupMenuShortcutWidth')));
+    expect(headerPopup, isNot(contains('RelativeRect.fromLTRB')));
+    expect(headerPopup, isNot(contains('_BusyMarkHeaderPopoverShape')));
+    expect(headerPopup, isNot(contains('shape:')));
+    expect(headerPopup, isNot(contains('color:')));
+    expect(headerPopup, isNot(contains('elevation:')));
+    expect(headerPopup, isNot(contains('shadowColor:')));
+    expect(design, isNot(contains('BusyMarkPopupEscapeDismissBinding')));
+    expect(
+      design,
+      contains('static const double nativeHeaderButton = kYaruButtonRadius'),
+    );
     expect(
       design,
       contains('double borderRadius = BusyMarkRadius.headerButton'),
     );
     expect(design, contains('BorderRadius.circular(borderRadius)'));
-    expect(design, contains('final String? shortcut;'));
-    expect(design, contains('final shortcutText = shortcut == null'));
-    expect(design, contains('textDirection: TextDirection.ltr'));
-    expect(design, isNot(contains("message: '\${widget.label}")));
-    expect(design, contains('this.enabled = true'));
-    expect(design, contains('enabled: widget.enabled'));
-    expect(design, contains('colors.disabledForeground'));
-    expect(
-      design,
-      contains('EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm)'),
-    );
+    final headerIcon = RegExp(
+      r'class BusyMarkHeaderIconButton[\s\S]*?class '
+      r'BusyMarkHeaderPopupMenuButton',
+    ).firstMatch(design)!.group(0)!;
+    expect(headerIcon, contains('return YaruIconButton('));
+    expect(headerIcon, contains('isSelected: selected'));
+    expect(headerIcon, isNot(contains('DecoratedBox(')));
+    expect(headerIcon, isNot(contains('BoxShadow(')));
+    expect(popupItem, contains('extends PopupMenuItem<T>'));
+    expect(popupItem, contains('child: _BusyMarkPopupMenuItemContent('));
+    expect(popupItem, contains('textDirection: TextDirection.ltr'));
+    expect(popupItem, isNot(contains('Navigator.pop')));
+    expect(popupItem, isNot(contains('InkWell(')));
+    expect(popupItem, isNot(contains('createState()')));
   });
 
   test('Git branch actions use the shared workspace-header popup', () {
@@ -837,7 +974,8 @@ void main() {
     expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
     expect(gitChanges, contains('busyMarkVcsFileColorForGitStatus(file)'));
     expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
-    expect(gitChanges, contains('BusyMarkDialogButton('));
+    expect(gitChanges, contains('BusyMarkPushButton.suggested('));
+    expect(gitChanges, isNot(contains('BusyMarkDialogButton(')));
     expect(gitChanges, isNot(contains('context.l10n.git${'Include'}InCommit')));
     expect(
       gitChanges,
@@ -853,21 +991,51 @@ void main() {
     expect(gitChanges, isNot(contains('GitCommitDialog')));
   });
 
-  test('settings language selector uses native hover and popover styling', () {
+  test('Git sidebar actions use the shared semantic button adapter', () {
+    final gitSidebar = File(
+      'lib/src/git/presentation/git_sidebar_tab.dart',
+    ).readAsStringSync();
+
+    expect(gitSidebar, contains('BusyMarkPushButton.standard('));
+    expect(gitSidebar, isNot(contains('FilledButton(')));
+  });
+
+  test('settings language selector delegates to the shared Yaru popup', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
+    ).readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
 
     expect(settings, isNot(contains('DropdownButton<String>')));
     expect(settings, contains('BusyMarkPopupSelector<String>('));
     expect(settings, isNot(contains('class _LanguageSelectorButton')));
-    expect(design, contains('class BusyMarkPopupSelector<T>'));
-    expect(design, contains('MouseRegion('));
-    expect(design, contains('colors.controlHover'));
-    expect(design, contains('elevation: BusyMarkElevation.window'));
-    expect(design, contains('BusyMarkAlpha.languageMenuShadow'));
-    expect(design, contains('softWrap: false'));
+    expect(workspace, isNot(contains('DropdownButtonFormField')));
+    expect(
+      workspace,
+      contains('BusyMarkPopupSelector<WritersideTopicRedirectTarget>'),
+    );
+    expect(
+      workspace,
+      contains('BusyMarkPopupSelector<WritersideTopicCreatePlacement>'),
+    );
+    final selector = RegExp(
+      r'class BusyMarkPopupSelector<T>[\s\S]*?class BusyMarkClamp',
+    ).firstMatch(design)!.group(0)!;
+    expect(selector, contains('YaruPopupMenuButton<T>('));
+    expect(selector, contains('Theme.of(context).filledButtonTheme.style'));
+    expect(selector, contains('BusyMarkPopupMenuItem<T>('));
+    expect(selector, contains('softWrap: false'));
+    expect(selector, isNot(contains('BusyMarkPushButton.standard(')));
+    expect(selector, isNot(contains('WidgetStatesController()')));
+    expect(selector, isNot(contains('showMenu<T>(')));
+    expect(selector, isNot(contains('MouseRegion(')));
+    expect(selector, isNot(contains('shape:')));
+    expect(selector, isNot(contains('color:')));
+    expect(selector, isNot(contains('elevation:')));
+    expect(selector, isNot(contains('shadowColor:')));
   });
 
   test('report issue form uses shared BusyMark desktop controls', () {
@@ -896,64 +1064,49 @@ void main() {
     expect(feedback, isNot(contains('InkWell(')));
   });
 
-  test('Writerside project dialog uses floating Adwaita-style entries', () {
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
-    ).readAsStringSync();
+  test(
+    'dialog text entries delegate input behavior and geometry to Flutter',
+    () {
+      final design = File(
+        'lib/src/app/busymark_design.dart',
+      ).readAsStringSync();
+      final welcome = File(
+        'lib/src/workspace/presentation/welcome_screen.dart',
+      ).readAsStringSync();
 
-    expect(design, contains('class BusyMarkFloatingTextEntry'));
-    expect(design, contains('class BusyMarkFloatingTextEntryGroup'));
-    expect(design, contains('busyMarkSurfaceDecoration('));
-    expect(design, contains('elevated: !grouped'));
-    expect(design, contains('AnimatedPositionedDirectional('));
-    expect(design, contains('AnimatedDefaultTextStyle('));
-    expect(design, contains('AnimatedOpacity('));
-    expect(design, contains('BusyMarkRadius.headerButton'));
-    expect(design, contains('MouseRegion('));
-    expect(design, contains('EditableText('));
-    expect(design, contains('BusyMarkGlyphs.edit'));
-    expect(design, contains('end: BusyMarkSizes.iconButton'));
-    expect(design, contains('opacity: focused || !widget.enabled ? 0 : 1'));
-    expect(design, contains('final labelColor = widget.enabled'));
-    expect(design, contains(': colors.disabledForeground;'));
-    expect(design, isNot(contains('final labelColor = focused')));
-    expect(design, contains('hint: widget.errorText'));
-    expect(design, contains('if (hasError)'));
-    expect(design, contains('widget.errorText!'));
-    expect(design, contains('final bool enabled;'));
-    expect(design, contains('final TextInputType? keyboardType;'));
-    expect(design, contains('final int minLines;'));
-    expect(design, contains('final int maxLines;'));
-    expect(design, contains('BusyMarkSizes.floatingTextAreaHeight'));
-    expect(design, contains('readOnly: !widget.enabled'));
-    expect(design, isNot(contains('class BusyMarkDialogTextEntry')));
-    expect(design, isNot(contains('InputDecoration(')));
-    expect(welcome, contains('BusyMarkFloatingTextEntryGroup('));
-    expect(
-      RegExp(r'BusyMarkFloatingTextEntryGroup\(').allMatches(welcome).length,
-      2,
-    );
-    expect(
-      RegExp(
-        r'groupPosition: BusyMarkFloatingTextEntryPosition\.first',
-      ).allMatches(welcome).length,
-      2,
-    );
-    expect(
-      RegExp(
-        r'groupPosition: BusyMarkFloatingTextEntryPosition\.last',
-      ).allMatches(welcome).length,
-      2,
-    );
-    expect(welcome, contains('BusyMarkFloatingTextEntry('));
-    expect(welcome, isNot(contains('BusyMarkDialogTextEntry(')));
-    expect(welcome, isNot(contains('autofocus: true')));
-    expect(
-      welcome,
-      isNot(contains('hintText: context.l10n.defaultProjectName')),
-    );
-  });
+      expect(design, contains('class BusyMarkFloatingTextEntry'));
+      expect(design, contains('class BusyMarkFloatingTextEntryGroup'));
+      final entries = RegExp(
+        r'class BusyMarkFloatingTextEntryGroup[\s\S]*?class SectionLabel',
+      ).firstMatch(design)!.group(0)!;
+      expect(entries, contains('return AutofillGroup('));
+      expect(entries, contains('return TextFormField('));
+      expect(entries, contains('InputDecoration('));
+      expect(entries, contains('labelText: label'));
+      expect(entries, contains('errorText: errorText'));
+      expect(entries, isNot(contains('EditableText(')));
+      expect(entries, isNot(contains('MouseRegion(')));
+      expect(entries, isNot(contains('GestureDetector(')));
+      expect(entries, isNot(contains('busyMarkSurfaceDecoration(')));
+      expect(entries, isNot(contains('AnimatedPositionedDirectional(')));
+      expect(entries, isNot(contains('groupPosition')));
+      expect(design, isNot(contains('class BusyMarkDialogTextEntry')));
+      expect(welcome, contains('BusyMarkFloatingTextEntryGroup('));
+      expect(
+        RegExp(r'BusyMarkFloatingTextEntryGroup\(').allMatches(welcome).length,
+        2,
+      );
+      expect(welcome, isNot(contains('BusyMarkFloatingTextEntryPosition')));
+      expect(welcome, isNot(contains('groupPosition:')));
+      expect(welcome, contains('BusyMarkFloatingTextEntry('));
+      expect(welcome, isNot(contains('BusyMarkDialogTextEntry(')));
+      expect(welcome, isNot(contains('autofocus: true')));
+      expect(
+        welcome,
+        isNot(contains('hintText: context.l10n.defaultProjectName')),
+      );
+    },
+  );
 
   test('sidebar trees share the expandable Yaru-style row', () {
     final workspace = File(
@@ -1079,8 +1232,12 @@ void main() {
 
     expect(workspace, contains('_outlineNavigationTargetProvider'));
     expect(workspace, contains('_OutlineNavigationTarget'));
+    expect(workspace, contains('outline: _activeDocumentOutline(state)'));
+    expect(workspace, contains('return preview.outline'));
     expect(workspace, contains('headingId: heading.id'));
-    expect(workspace, contains('line: heading.span.startLine'));
+    expect(workspace, contains('line: heading.sourceStartLine'));
+    expect(workspace, contains('workspaceId: widget.workspace.id'));
+    expect(workspace, isNot(contains('widget.workspace.markdown?.headings')));
     expect(workspace, contains('_sourceEditorKey.currentState?.scrollToLine'));
     expect(sourceEditor, contains('_focusNode.requestFocus()'));
     expect(sourceEditor, contains('_unfoldSourceLine(line)'));
@@ -1294,7 +1451,8 @@ void main() {
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
-    expect(toolbar, contains('elevated: true'));
+    expect(toolbar, isNot(contains('elevated: true')));
+    expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.none'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
     expect(toolbar, contains('horizontal: BusyMarkSpacing.sm'));

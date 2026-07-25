@@ -264,31 +264,15 @@ class _SourceFoldButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return Tooltip(
-      message: collapsed
+    return BusyMarkCompactIconButton(
+      tooltip: collapsed
           ? context.l10n.expandKind(_foldKindLabel(context, region.kind))
           : context.l10n.collapseKind(_foldKindLabel(context, region.kind)),
-      waitDuration: BusyMarkMotion.tooltipWait,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => onToggleFold(region),
-          child: SizedBox.square(
-            dimension: _SourceGutterRow._foldButtonSize,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-              ),
-              child: Icon(
-                collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
-                size: 12,
-                color: colors.mutedForeground,
-              ),
-            ),
-          ),
-        ),
-      ),
+      size: _SourceGutterRow._foldButtonSize,
+      glyphSize: 12,
+      foregroundColor: colors.mutedForeground,
+      onPressed: () => onToggleFold(region),
+      icon: collapsed ? YaruIcons.pan_end : YaruIcons.pan_down,
     );
   }
 }
@@ -479,9 +463,18 @@ Color sourceDiagnosticColorForSeverity(
   DiagnosticSeverity severity,
 ) {
   return switch (severity) {
-    DiagnosticSeverity.error => Theme.of(context).colorScheme.error,
-    DiagnosticSeverity.warning => BusyMarkLinuxPalette.yellow,
-    DiagnosticSeverity.info => Theme.of(context).colorScheme.primary,
+    DiagnosticSeverity.error => busyMarkStatusColor(
+      context,
+      BusyMarkStatusKind.error,
+    ),
+    DiagnosticSeverity.warning => busyMarkStatusColor(
+      context,
+      BusyMarkStatusKind.warning,
+    ),
+    DiagnosticSeverity.info => busyMarkStatusColor(
+      context,
+      BusyMarkStatusKind.information,
+    ),
     DiagnosticSeverity.hint => BusyMarkSurfaceColors.of(context).muted,
   };
 }
