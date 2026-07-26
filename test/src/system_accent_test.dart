@@ -52,40 +52,39 @@ void main() {
     expect(colorFromUbuntuAccentNameValue(const DBusString('unknown')), isNull);
   });
 
-  test('falls back to the Ubuntu setting when the RGB read fails', () async {
-    var readGnome = false;
-
-    final color = await readPreferredLinuxAccentColor(
-      readFreedesktop: () => Future<Color?>.error(
-        StateError('freedesktop accent key is unavailable'),
-      ),
-      readGnome: () async {
-        readGnome = true;
-        return YaruVariant.orange.color;
-      },
-    );
-
-    expect(color, YaruVariant.orange.color);
-    expect(readGnome, isTrue);
-  });
-
-  test('does not read the named fallback after an exact RGB result', () async {
-    var readGnome = false;
+  test('falls back to RGB when the Ubuntu accent is unavailable', () async {
+    var readFreedesktop = false;
     const exactRgb = Color(0xFF336699);
 
     final color = await readPreferredLinuxAccentColor(
-      readFreedesktop: () async => exactRgb,
-      readGnome: () async {
-        readGnome = true;
-        return YaruVariant.blue.color;
+      readGnome: () =>
+          Future<Color?>.error(StateError('Ubuntu accent key is unavailable')),
+      readFreedesktop: () async {
+        readFreedesktop = true;
+        return exactRgb;
       },
     );
 
     expect(color, exactRgb);
-    expect(readGnome, isFalse);
+    expect(readFreedesktop, isTrue);
   });
 
-  test('an exact RGB signal remains authoritative over named signals', () {
+  test('Yaru accent wins over a different generic portal RGB', () async {
+    var readFreedesktop = false;
+
+    final color = await readPreferredLinuxAccentColor(
+      readGnome: () async => YaruVariant.magenta.color,
+      readFreedesktop: () async {
+        readFreedesktop = true;
+        return const Color(0xFFD56199);
+      },
+    );
+
+    expect(color, const Color(0xFFB34CB3));
+    expect(readFreedesktop, isFalse);
+  });
+
+  test('a Yaru accent signal remains authoritative over generic RGB', () {
     final resolver = LinuxAccentChangeResolver();
     final exactRgb = DBusStruct([
       const DBusDouble(0.2),
@@ -94,19 +93,16 @@ void main() {
     ]);
 
     expect(
+      resolver.resolve('org.freedesktop.appearance', exactRgb),
+      const Color(0xFF336699),
+    );
+    expect(
       resolver.resolve(
         'org.gnome.desktop.interface',
         const DBusString('orange'),
       ),
       YaruVariant.orange.color,
     );
-    expect(
-      resolver.resolve('org.freedesktop.appearance', exactRgb),
-      const Color(0xFF336699),
-    );
-    expect(
-      resolver.resolve('org.gnome.desktop.interface', const DBusString('blue')),
-      isNull,
-    );
+    expect(resolver.resolve('org.freedesktop.appearance', exactRgb), isNull);
   });
 }

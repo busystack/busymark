@@ -2,12 +2,10 @@
 
 #include <flutter_linux/flutter_linux.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <handy.h>
 #include <pango/pango.h>
 #include <cstdio>
 #include <cstring>
-#ifdef GDK_WINDOWING_X11
-#include <gdk/gdkx.h>
-#endif
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -18,8 +16,35 @@ constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
 constexpr char kDefaultHeaderbarBackground[] = "#272727";
 constexpr char kDefaultSidebarBackground[] = "#393939";
+constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
 constexpr char kDefaultForeground[] = "#F7F7F7";
-constexpr char kDefaultPopoverBackground[] = "#3E3E3E";
+// Yaru GTK 3 adds a zero-blur 23%/75% black ring around CSD windows. Current
+// Ubuntu apps retain the diffuse shadow without that legacy hard edge. Reuse
+// Yaru's geometry here; Handy continues to own clipping, radii, and states.
+constexpr char kLegacyYaruWindowShadowCompatibilityCss[] =
+    "window#busymark-window:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen):not(.tiled):not(.tiled-top):not(.tiled-right):"
+    "not(.tiled-bottom):not(.tiled-left) > decoration {"
+    "box-shadow: 0 3px 9px 1px rgba(0,0,0,0.5);"
+    "}"
+    "window#busymark-window:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen):not(.tiled):not(.tiled-top):not(.tiled-right):"
+    "not(.tiled-bottom):not(.tiled-left) > decoration:backdrop {"
+    "box-shadow: 0 3px 9px 1px transparent,"
+    "0 2px 6px 2px rgba(0,0,0,0.2);"
+    "}"
+    "window#busymark-window.tiled:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-top:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-right:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-bottom:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-left:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration {"
+    "box-shadow: 0 0 0 20px transparent;"
+    "}";
 constexpr char kLtrIsolateStart[] = "\xE2\x81\xA6";
 constexpr char kBidiIsolateEnd[] = "\xE2\x81\xA9";
 
@@ -30,6 +55,7 @@ struct _MyApplication {
   GtkCssProvider* header_bar_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
+  GtkWidget* titlebar_handle;
   GtkWidget* titlebar_box;
   GtkHeaderBar* header_bar;
   GtkWidget* sidebar_header_box;
@@ -62,10 +88,7 @@ struct _MyApplication {
   gchar* background_color;
   gchar* sidebar_background_color;
   gchar* foreground_color;
-  gchar* popover_background_color;
-  gchar* border_color;
   gchar* sidebar_border_color;
-  gchar* floating_border_color;
   gchar* modal_barrier_color;
   gint sidebar_width;
   gboolean sidebar_visible;
@@ -210,6 +233,26 @@ static void set_gtk_theme_preference(gboolean prefer_dark) {
       g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);
     }
   }
+}
+
+static gboolean uses_legacy_yaru_window_shadow() {
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings == nullptr) {
+    return FALSE;
+  }
+
+  g_autofree gchar* theme_name = nullptr;
+  g_object_get(settings, "gtk-theme-name", &theme_name, nullptr);
+  if (theme_name == nullptr) {
+    return FALSE;
+  }
+
+  g_autofree gchar* normalized_theme = g_ascii_strdown(theme_name, -1);
+  const gboolean is_yaru =
+      g_strcmp0(normalized_theme, "yaru") == 0 ||
+      g_str_has_prefix(normalized_theme, "yaru-");
+  return is_yaru && strstr(normalized_theme, "highcontrast") == nullptr &&
+         strstr(normalized_theme, "high-contrast") == nullptr;
 }
 
 static void respond_success(FlMethodCall* method_call) {
@@ -536,18 +579,15 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->sidebar_background_color, kDefaultSidebarBackground);
   const gchar* foreground =
       css_color_or(self->foreground_color, kDefaultForeground);
-  const gchar* popover_background = css_color_or(
-      self->popover_background_color, kDefaultPopoverBackground);
-  const gchar* border =
-      css_color_or(self->border_color, "rgba(255,255,255,0.10)");
   const gchar* sidebar_border =
-      css_color_or(self->sidebar_border_color, border);
-  const gchar* floating_border =
-      css_color_or(self->floating_border_color, border);
+      css_color_or(self->sidebar_border_color, kDefaultSidebarBorder);
   const gchar* modal =
       css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
   g_autofree gchar* modal_sidebar_border =
       modal_sidebar_border_css_color(sidebar_border, sidebar_background, modal);
+  const gchar* window_shadow_css = uses_legacy_yaru_window_shadow()
+                                       ? kLegacyYaruWindowShadowCompatibilityCss
+                                       : "";
 
   gtk_style_context_add_class(gtk_widget_get_style_context(self->titlebar_box),
                               "busymark-titlebar");
@@ -561,10 +601,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}"
-      "window#busymark-window decoration,"
-      "window#busymark-window decoration:backdrop {"
-      "border-color: %s;"
-      "}"
+      "%s"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop {"
       "background-color: %s;"
@@ -637,13 +674,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: alpha(currentColor, 0.19);"
       "background-image: none;"
       "}"
-      "popover.background.busymark-header-popover,"
-      "popover.background.busymark-header-popover:backdrop {"
-      "background-color: %s;"
-      "background-image: none;"
-      "border-color: %s;"
-      "color: %s;"
-      "}"
       ".busymark-titlebar.busymark-modal-barrier,"
       ".busymark-titlebar.busymark-modal-barrier "
       "headerbar.busymark-headerbar,"
@@ -660,10 +690,10 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-sidebar-header:dir(rtl) {"
       "border-left-color: %s;"
       "}",
-      background, floating_border, background, foreground, background,
+      background, window_shadow_css, background, foreground, background,
       foreground, sidebar_background, foreground, sidebar_border,
-      sidebar_border, popover_background, floating_border, foreground, modal,
-      modal, modal_sidebar_border, modal_sidebar_border);
+      sidebar_border, modal, modal, modal_sidebar_border,
+      modal_sidebar_border);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
@@ -686,6 +716,12 @@ static void refresh_header_bar_css(MyApplication* self) {
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
+static void gtk_theme_name_changed_cb(GtkSettings*,
+                                      GParamSpec*,
+                                      gpointer user_data) {
+  refresh_header_bar_css(MY_APPLICATION(user_data));
+}
+
 static void set_header_bar_theme(MyApplication* self, FlValue* args) {
   if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
     return;
@@ -702,16 +738,8 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
   replace_css_color_field(&self->foreground_color,
                           fl_lookup_string_arg(args, "foregroundColor"));
   replace_css_color_field(
-      &self->popover_background_color,
-      fl_lookup_string_arg(args, "popoverBackgroundColor"));
-  replace_css_color_field(&self->border_color,
-                          fl_lookup_string_arg(args, "borderColor"));
-  replace_css_color_field(
       &self->sidebar_border_color,
       fl_lookup_string_arg(args, "sidebarBorderColor"));
-  replace_css_color_field(
-      &self->floating_border_color,
-      fl_lookup_string_arg(args, "floatingBorderColor"));
   replace_css_color_field(&self->modal_barrier_color,
                           fl_lookup_string_arg(args, "modalBarrierColor"));
   refresh_header_bar_css(self);
@@ -1184,9 +1212,6 @@ static GtkWidget* create_model_menu_button(GMenuModel* model,
   GtkPopover* popover = gtk_menu_button_get_popover(GTK_MENU_BUTTON(button));
   if (popover != nullptr) {
     gtk_popover_set_position(popover, GTK_POS_BOTTOM);
-    gtk_style_context_add_class(
-        gtk_widget_get_style_context(GTK_WIDGET(popover)),
-        "busymark-header-popover");
     if (popover_out != nullptr) {
       *popover_out = GTK_WIDGET(popover);
     }
@@ -1253,7 +1278,12 @@ static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
     } else {
       gtk_style_context_remove_class(context, "busymark-modal-barrier");
     }
-    gtk_widget_set_sensitive(self->titlebar_box, !visible);
+  }
+  if (self->titlebar_handle != nullptr &&
+      GTK_IS_WIDGET(self->titlebar_handle)) {
+    // The Handy handle owns native drag, double-click, and window-menu input.
+    // Disable the interaction surface itself while Flutter has a modal open.
+    gtk_widget_set_sensitive(self->titlebar_handle, !visible);
   }
 }
 
@@ -1687,8 +1717,8 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
-  GtkWindow* window =
-      GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+  GtkWindow* window = GTK_WINDOW(hdy_application_window_new());
+  gtk_application_add_window(GTK_APPLICATION(application), window);
   self->main_window = window;
   gtk_window_set_title(window, kApplicationDisplayName);
   gtk_widget_set_name(GTK_WIDGET(window), "busymark-window");
@@ -1704,21 +1734,11 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_icon_name(window, APPLICATION_ID);
   }
 
-  gboolean use_header_bar = TRUE;
-#ifdef GDK_WINDOWING_X11
-  GdkScreen* screen = gtk_window_get_screen(window);
-  if (GDK_IS_X11_SCREEN(screen)) {
-    const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
-    if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
-      use_header_bar = FALSE;
-    }
-  }
-#endif
-  if (use_header_bar) {
-    GtkWidget* titlebar = create_busymark_titlebar(self);
-    gtk_widget_show_all(titlebar);
-    gtk_window_set_titlebar(window, titlebar);
-  }
+  self->titlebar_handle = hdy_window_handle_new();
+  gtk_widget_set_hexpand(self->titlebar_handle, TRUE);
+  gtk_container_add(GTK_CONTAINER(self->titlebar_handle),
+                    create_busymark_titlebar(self));
+  gtk_widget_show_all(self->titlebar_handle);
 
   gtk_window_set_default_size(window, 1280, 720);
 
@@ -1732,7 +1752,13 @@ static void my_application_activate(GApplication* application) {
   gdk_rgba_parse(&background_color, "#00000000");
   fl_view_set_background_color(view, &background_color);
   gtk_widget_show(GTK_WIDGET(view));
-  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
+
+  GtkWidget* window_content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_box_pack_start(GTK_BOX(window_content), self->titlebar_handle, FALSE,
+                     FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(window_content), GTK_WIDGET(view), TRUE, TRUE, 0);
+  gtk_widget_show(window_content);
+  gtk_container_add(GTK_CONTAINER(window), window_content);
 
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
@@ -1767,6 +1793,14 @@ static gboolean my_application_local_command_line(GApplication* application,
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
+  hdy_init();
+
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings != nullptr) {
+    g_signal_connect_object(settings, "notify::gtk-theme-name",
+                            G_CALLBACK(gtk_theme_name_changed_cb), application,
+                            G_CONNECT_DEFAULT);
+  }
 }
 
 // Implements GApplication::shutdown.
@@ -1792,14 +1826,11 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->header_action_group);
   g_clear_pointer(&self->background_color, g_free);
   g_clear_pointer(&self->sidebar_background_color, g_free);
-  g_clear_pointer(&self->border_color, g_free);
   g_clear_pointer(&self->sidebar_border_color, g_free);
-  g_clear_pointer(&self->floating_border_color, g_free);
   g_clear_pointer(&self->modal_barrier_color, g_free);
   g_clear_pointer(&self->view_mode, g_free);
   g_clear_pointer(&self->search_query, g_free);
   g_clear_pointer(&self->foreground_color, g_free);
-  g_clear_pointer(&self->popover_background_color, g_free);
   g_clear_pointer(&self->header_configuration_session_id, g_free);
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
@@ -1820,6 +1851,7 @@ static void my_application_init(MyApplication* self) {
   self->header_bar_css_provider = nullptr;
   self->main_window = nullptr;
   self->flutter_view = nullptr;
+  self->titlebar_handle = nullptr;
   self->titlebar_box = nullptr;
   self->header_bar = nullptr;
   self->sidebar_header_box = nullptr;
@@ -1852,10 +1884,7 @@ static void my_application_init(MyApplication* self) {
   self->background_color = g_strdup(kDefaultHeaderbarBackground);
   self->sidebar_background_color = g_strdup(kDefaultSidebarBackground);
   self->foreground_color = g_strdup(kDefaultForeground);
-  self->popover_background_color = g_strdup(kDefaultPopoverBackground);
-  self->border_color = nullptr;
   self->sidebar_border_color = nullptr;
-  self->floating_border_color = nullptr;
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;

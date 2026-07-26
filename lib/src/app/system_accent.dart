@@ -51,8 +51,8 @@ class LinuxPortalAppearance {
     try {
       final object = _portalObject(client);
       return await readPreferredLinuxAccentColor(
-        readFreedesktop: () => _readFreedesktopAccent(object),
         readGnome: () => _readGnomeAccentName(object),
+        readFreedesktop: () => _readFreedesktopAccent(object),
       );
     } finally {
       await client.close();
@@ -63,20 +63,20 @@ class LinuxPortalAppearance {
     final client = DBusClient.session();
     try {
       final object = _portalObject(client);
-      final freedesktopAccent = await _readAccentSafely(
-        () => _readFreedesktopAccent(object),
+      final gnomeAccent = await _readAccentSafely(
+        () => _readGnomeAccentName(object),
       );
       final resolver = LinuxAccentChangeResolver(
-        freedesktopAuthoritative: freedesktopAccent != null,
+        gnomeAuthoritative: gnomeAccent != null,
       );
-      if (freedesktopAccent != null) {
-        yield freedesktopAccent;
+      if (gnomeAccent != null) {
+        yield gnomeAccent;
       } else {
-        final gnomeAccent = await _readAccentSafely(
-          () => _readGnomeAccentName(object),
+        final freedesktopAccent = await _readAccentSafely(
+          () => _readFreedesktopAccent(object),
         );
-        if (gnomeAccent != null) {
-          yield gnomeAccent;
+        if (freedesktopAccent != null) {
+          yield freedesktopAccent;
         }
       }
       final signals = DBusRemoteObjectSignalStream(
@@ -138,18 +138,22 @@ class LinuxPortalAppearance {
   }
 }
 
-/// Reads the exact freedesktop RGB value first, while keeping the Ubuntu
-/// named-accent setting as an independent fallback for older portals.
+/// Resolves the Yaru accent selected by Ubuntu before consulting the generic
+/// freedesktop RGB fallback.
+///
+/// Ubuntu's portal exposes both values, but its generic RGB is an Adwaita
+/// palette color and can differ from the active Yaru GTK theme. The named
+/// setting maps to the same [YaruVariant] used by native GTK controls.
 @visibleForTesting
 Future<Color?> readPreferredLinuxAccentColor({
-  required Future<Color?> Function() readFreedesktop,
   required Future<Color?> Function() readGnome,
+  required Future<Color?> Function() readFreedesktop,
 }) async {
-  final freedesktopAccent = await _readAccentSafely(readFreedesktop);
-  if (freedesktopAccent != null) {
-    return freedesktopAccent;
+  final gnomeAccent = await _readAccentSafely(readGnome);
+  if (gnomeAccent != null) {
+    return gnomeAccent;
   }
-  return _readAccentSafely(readGnome);
+  return _readAccentSafely(readFreedesktop);
 }
 
 Future<Color?> _readAccentSafely(Future<Color?> Function() read) async {
@@ -160,26 +164,26 @@ Future<Color?> _readAccentSafely(Future<Color?> Function() read) async {
   }
 }
 
-/// Resolves portal change signals without allowing an approximate named color
-/// to replace an exact RGB value once the modern freedesktop key is available.
+/// Resolves portal changes without allowing the generic freedesktop palette to
+/// replace the Yaru variant that owns native GTK controls.
 @visibleForTesting
 class LinuxAccentChangeResolver {
-  LinuxAccentChangeResolver({bool freedesktopAuthoritative = false})
-    : _freedesktopAuthoritative = freedesktopAuthoritative;
+  LinuxAccentChangeResolver({bool gnomeAuthoritative = false})
+    : _gnomeAuthoritative = gnomeAuthoritative;
 
-  bool _freedesktopAuthoritative;
+  bool _gnomeAuthoritative;
 
   Color? resolve(String namespace, DBusValue value) {
-    if (namespace == LinuxPortalAppearance._freedesktopAppearance) {
-      final color = colorFromPortalAccentValue(value);
+    if (namespace == LinuxPortalAppearance._gnomeInterface) {
+      final color = colorFromUbuntuAccentNameValue(value);
       if (color != null) {
-        _freedesktopAuthoritative = true;
+        _gnomeAuthoritative = true;
       }
       return color;
     }
-    if (namespace == LinuxPortalAppearance._gnomeInterface &&
-        !_freedesktopAuthoritative) {
-      return colorFromUbuntuAccentNameValue(value);
+    if (namespace == LinuxPortalAppearance._freedesktopAppearance &&
+        !_gnomeAuthoritative) {
+      return colorFromPortalAccentValue(value);
     }
     return null;
   }

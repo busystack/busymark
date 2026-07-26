@@ -52,7 +52,10 @@ parts:
     source: .
     flutter-target: lib/main.dart
     flutter-channel: stable
+    build-packages:
+      - libhandy-1-dev
     stage-packages:
+      - libhandy-1-0
       - libx11-6
       - libxdamage1
       - libxext6

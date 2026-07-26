@@ -373,10 +373,24 @@ void main() {
         contains('return _busyMarkSemanticSurfaceColors(theme.brightness)'),
       );
       expect(design, contains('Modern Yaru/libadwaita semantic roles'));
-      expect(design, contains('window: const Color(0xFFFAFAFA)'));
-      expect(design, contains('window: const Color(0xFF2C2C2C)'));
+      expect(design, contains('final window = switch (brightness)'));
+      expect(design, contains('final floatingSurface = switch (brightness)'));
+      expect(design, contains('window: window'));
       expect(design, contains('groupedList: groupedList'));
-      expect(design, contains('popover: const Color(0xFF3E3E3E)'));
+      expect(design, contains('dialog: floatingSurface'));
+      expect(design, contains('popover: floatingSurface'));
+      expect(theme, contains('ShapeBorder? _withOutlineSide'));
+      expect(
+        theme,
+        isNot(contains('final accentContainer = Color.alphaBlend')),
+      );
+      expect(theme, isNot(contains('selectedTileColor: accentContainer')));
+      expect(
+        theme,
+        isNot(contains('shape: _withOutlineSide(base.dialogTheme.shape')),
+      );
+      expect(theme, contains('_withOutlineSide(base.popupMenuTheme.shape'));
+      expect(theme, contains('side: WidgetStatePropertyAll(side)'));
       expect(theme, contains('surfaceContainerLowest: colors.view'));
       expect(theme, contains('surfaceContainerLow: colors.window'));
       expect(theme, contains('surfaceContainer: colors.panel'));
@@ -823,10 +837,15 @@ void main() {
     expect(design, contains('BorderRadius.circular(borderRadius)'));
     final headerIcon = RegExp(
       r'class BusyMarkHeaderIconButton[\s\S]*?class '
-      r'BusyMarkHeaderPopupMenuButton',
+      r'BusyMarkCompactIconButton',
     ).firstMatch(design)!.group(0)!;
-    expect(headerIcon, contains('return YaruIconButton('));
+    expect(headerIcon, contains('final button = IconButton('));
+    expect(headerIcon, contains('style: style.merge(yaruDefaults)'));
     expect(headerIcon, contains('isSelected: selected'));
+    expect(headerIcon, contains('padding: EdgeInsets.zero'));
+    expect(headerIcon, contains('YaruFocusBorder.primary('));
+    expect(headerIcon, contains('YaruTheme.maybeOf(context)?.focusBorders'));
+    expect(headerIcon, isNot(contains('return YaruIconButton(')));
     expect(headerIcon, isNot(contains('DecoratedBox(')));
     expect(headerIcon, isNot(contains('BoxShadow(')));
     expect(popupItem, contains('extends PopupMenuItem<T>'));
@@ -1025,7 +1044,11 @@ void main() {
       r'class BusyMarkPopupSelector<T>[\s\S]*?class BusyMarkClamp',
     ).firstMatch(design)!.group(0)!;
     expect(selector, contains('YaruPopupMenuButton<T>('));
-    expect(selector, contains('Theme.of(context).filledButtonTheme.style'));
+    expect(selector, contains('Theme.of(context).outlinedButtonTheme.style'));
+    expect(
+      selector,
+      contains('side: const WidgetStatePropertyAll(BorderSide.none)'),
+    );
     expect(selector, contains('BusyMarkPopupMenuItem<T>('));
     expect(selector, contains('softWrap: false'));
     expect(selector, isNot(contains('BusyMarkPushButton.standard(')));
@@ -1450,6 +1473,7 @@ void main() {
     expect(serializer, contains('String _listItem('));
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
+    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(2));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
     expect(toolbar, isNot(contains('elevated: true')));
     expect(toolbar, isNot(contains('accented: true')));

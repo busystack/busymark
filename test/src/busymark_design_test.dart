@@ -1,11 +1,16 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/document_layout.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
@@ -174,12 +179,13 @@ void main() {
                 accented: true,
                 onPressed: null,
               ),
-              const BusyMarkCompactIconButton(
-                key: ValueKey('disabled-compact-icon-button'),
-                tooltip: 'Disabled compact action',
+              BusyMarkHeaderIconButton(
+                key: const ValueKey('custom-icon-button'),
+                tooltip: 'Custom action',
                 icon: BusyMarkGlyphs.clear,
-                foregroundColor: Color(0xFF7764D8),
-                onPressed: null,
+                foregroundColor: const Color(0xFF7764D8),
+                transparent: false,
+                onPressed: () {},
               ),
               BusyMarkHeaderPopupMenuButton<String>(
                 key: const ValueKey('elevated-popup-button'),
@@ -197,32 +203,35 @@ void main() {
       ),
     );
 
-    YaruIconButton yaruButton(String key) {
-      return tester.widget<YaruIconButton>(
+    IconButton iconButton(String key) {
+      return tester.widget<IconButton>(
         find.descendant(
           of: find.byKey(ValueKey(key)),
-          matching: find.byType(YaruIconButton),
+          matching: find.byType(IconButton),
         ),
       );
     }
 
-    final elevatedIcon = yaruButton('elevated-icon-button');
-    final flatIcon = yaruButton('flat-icon-button');
-    final disabledAccentedIcon = yaruButton('disabled-accented-icon-button');
-    final disabledCompactIcon = yaruButton('disabled-compact-icon-button');
-    final elevatedPopup = yaruButton('elevated-popup-button');
+    final elevatedIcon = iconButton('elevated-icon-button');
+    final flatIcon = iconButton('flat-icon-button');
+    final disabledAccentedIcon = iconButton('disabled-accented-icon-button');
+    final customIcon = iconButton('custom-icon-button');
+    final elevatedPopup = iconButton('elevated-popup-button');
     final expectedElevation =
         theme.cardTheme.elevation ?? BusyMarkElevation.surface;
     final colors = theme.extension<BusyMarkSurfaceColors>()!;
 
-    expect(elevatedIcon.iconSize, BusyMarkSizes.iconButton);
+    expect(
+      elevatedIcon.style?.fixedSize?.resolve({}),
+      const Size.square(BusyMarkSizes.iconButton),
+    );
     expect(elevatedIcon.isSelected, isFalse);
     expect(elevatedIcon.style?.tapTargetSize, MaterialTapTargetSize.shrinkWrap);
     expect(
       tester.getSize(
         find.descendant(
           of: find.byKey(const ValueKey('elevated-icon-button')),
-          matching: find.byType(YaruIconButton),
+          matching: find.byType(IconButton),
         ),
       ),
       const Size.square(BusyMarkSizes.iconButton),
@@ -231,7 +240,7 @@ void main() {
       tester.getSize(
         find.descendant(
           of: find.byKey(const ValueKey('elevated-popup-button')),
-          matching: find.byType(YaruIconButton),
+          matching: find.byType(IconButton),
         ),
       ),
       const Size.square(BusyMarkSizes.iconButton),
@@ -243,7 +252,7 @@ void main() {
     );
     expect(elevatedPopup.style?.elevation?.resolve({}), expectedElevation);
     expect(flatIcon.style?.elevation, isNull);
-    expect(flatIcon.style?.backgroundColor, isNull);
+    expect(flatIcon.style?.backgroundColor?.resolve({}), isNull);
     expect(elevatedIcon.style?.backgroundColor?.resolve({}), colors.control);
     expect(elevatedPopup.style?.backgroundColor?.resolve({}), colors.control);
     expect(
@@ -259,11 +268,10 @@ void main() {
       colors.disabledControl,
     );
     expect(
-      disabledCompactIcon.style?.foregroundColor?.resolve({
-        WidgetState.disabled,
-      }),
-      colors.disabledForeground,
+      customIcon.style?.foregroundColor?.resolve({}),
+      const Color(0xFF7764D8),
     );
+    expect(customIcon.style?.backgroundColor?.resolve({}), colors.control);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('elevated-icon-button')),
@@ -371,6 +379,14 @@ void main() {
       expect(theme.colorScheme.primary, accent);
       expect(theme.colorScheme.secondary, accent);
       expect(
+        theme.colorScheme.primaryContainer,
+        base.colorScheme.primaryContainer,
+      );
+      expect(
+        theme.colorScheme.onPrimaryContainer,
+        base.colorScheme.onPrimaryContainer,
+      );
+      expect(
         _contrastRatio(theme.colorScheme.onPrimary, theme.colorScheme.primary),
         greaterThanOrEqualTo(4.5),
       );
@@ -395,8 +411,35 @@ void main() {
         theme.textTheme.bodyMedium?.letterSpacing,
         base.textTheme.bodyMedium?.letterSpacing,
       );
-      expect(theme.dialogTheme.shape, base.dialogTheme.shape);
       final colors = theme.extension<BusyMarkSurfaceColors>()!;
+      final floatingSide = BorderSide(color: colors.floatingBorder);
+      expect(theme.dialogTheme.shape, base.dialogTheme.shape);
+      _expectSameGeometryWithSide(
+        theme.popupMenuTheme.shape,
+        base.popupMenuTheme.shape,
+        floatingSide,
+      );
+      expect(
+        theme.menuTheme.style?.shape?.resolve({}),
+        base.menuTheme.style?.shape?.resolve({}),
+      );
+      expect(theme.menuTheme.style?.side?.resolve({}), floatingSide);
+      expect(
+        theme.dropdownMenuTheme.menuStyle?.shape?.resolve({}),
+        base.dropdownMenuTheme.menuStyle?.shape?.resolve({}),
+      );
+      expect(
+        theme.dropdownMenuTheme.menuStyle?.side?.resolve({}),
+        floatingSide,
+      );
+      expect(
+        theme.listTileTheme.selectedColor,
+        base.listTileTheme.selectedColor,
+      );
+      expect(
+        theme.listTileTheme.selectedTileColor,
+        base.listTileTheme.selectedTileColor,
+      );
       expect(theme.colorScheme.surface, colors.view);
       expect(theme.colorScheme.onSurface, colors.foreground);
       expect(theme.colorScheme.onSurfaceVariant, colors.mutedForeground);
@@ -515,12 +558,16 @@ void main() {
     expect(light.view, const Color(0xFFFFFFFF));
     expect(light.sidebar, const Color(0xFFEBEBEB));
     expect(light.secondarySidebar, const Color(0xFFF0F0F0));
+    expect(light.sidebarBorder, const Color.fromRGBO(24, 24, 24, 0.08));
     expect(light.headerbar, const Color(0xFFFAFAFA));
     expect(light.card, const Color(0xFFFFFFFF));
     expect(light.groupedList, light.card);
     expect(light.dialog, const Color(0xFFFAFAFA));
     expect(light.popover, const Color(0xFFFAFAFA));
+    expect(light.card, isNot(light.dialog));
+    expect(light.groupedList, isNot(light.dialog));
     expect(light.control, const Color.fromRGBO(0, 0, 0, 0.10));
+    expect(light.floatingBorder, const Color.fromRGBO(0, 0, 0, 0.14));
     expect(light.controlHover, const Color.fromRGBO(0, 0, 0, 0.14));
     expect(light.controlActive, const Color.fromRGBO(0, 0, 0, 0.18));
 
@@ -529,12 +576,16 @@ void main() {
     expect(dark.view, const Color(0xFF272727));
     expect(dark.sidebar, const Color(0xFF393939));
     expect(dark.secondarySidebar, const Color(0xFF323232));
+    expect(dark.sidebarBorder, const Color.fromRGBO(16, 16, 16, 0.35));
     expect(dark.headerbar, const Color(0xFF393939));
     expect(dark.card, const Color(0xFF3D3D3D));
     expect(dark.groupedList, dark.card);
     expect(dark.dialog, const Color(0xFF3E3E3E));
     expect(dark.popover, const Color(0xFF3E3E3E));
+    expect(dark.card, isNot(dark.dialog));
+    expect(dark.groupedList, isNot(dark.dialog));
     expect(dark.control, const Color.fromRGBO(255, 255, 255, 0.10));
+    expect(dark.floatingBorder, const Color.fromRGBO(0, 0, 0, 0.14));
     expect(dark.controlHover, const Color.fromRGBO(255, 255, 255, 0.14));
     expect(dark.controlActive, const Color.fromRGBO(255, 255, 255, 0.18));
 
@@ -667,7 +718,6 @@ void main() {
       brightness: Brightness.dark,
       accentColor: const Color(0xFF3584E4),
     );
-    final colors = theme.extension<BusyMarkSurfaceColors>()!;
     String? selectedTheme;
 
     await tester.pumpWidget(
@@ -737,7 +787,23 @@ void main() {
       matching: find.byType(YaruPopupMenuButton<String>),
     );
     final selector = tester.widget<YaruPopupMenuButton<String>>(selectorFinder);
-    expect(selector.style?.backgroundColor?.resolve({}), colors.control);
+    expect(
+      selector.style?.backgroundColor?.resolve({}),
+      BusyMarkLinuxPalette.transparent,
+    );
+    expect(selector.style?.side?.resolve({}), BorderSide.none);
+    expect(
+      selector.style?.minimumSize?.resolve({}),
+      theme.outlinedButtonTheme.style?.minimumSize?.resolve({}),
+    );
+    expect(
+      selector.style?.padding?.resolve({}),
+      theme.outlinedButtonTheme.style?.padding?.resolve({}),
+    );
+    expect(
+      selector.style?.shape?.resolve({}),
+      theme.outlinedButtonTheme.style?.shape?.resolve({}),
+    );
     expect(selector.initialValue, 'system');
     expect(selector.enabled, isTrue);
 
@@ -748,6 +814,107 @@ void main() {
     await tester.pumpAndSettle();
     expect(selectedTheme, 'light');
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'WYSIWYG toolbar uses contained Yaru controls in ${brightness.name}',
+      (tester) async {
+        final theme = buildBusyMarkTheme(
+          brightness: brightness,
+          accentColor: const Color(0xFFE95420),
+        );
+        final colors = theme.extension<BusyMarkSurfaceColors>()!;
+        final boundaryKey = GlobalKey();
+        tester.view
+          ..physicalSize = const Size(900, 240)
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: RepaintBoundary(
+              key: boundaryKey,
+              child: Scaffold(
+                body: BusyMarkWysiwygToolbar(
+                  onBlockCommand: (_) {},
+                  onInlineCommand: (_) {},
+                  onLinkCommand: () {},
+                  onImageCommand: () {},
+                  onInlineImageCommand: () {},
+                  onTableCommand: () {},
+                  onHtmlCommand: () {},
+                  onIndentCommand: () {},
+                  onOutdentCommand: () {},
+                  onToggleTaskCommand: () {},
+                  onHardBreakCommand: () {},
+                  onCodeLanguageCommand: () {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final toolbar = find.byType(BusyMarkWysiwygToolbar);
+        final popup = tester.widget<BusyMarkHeaderPopupMenuButton>(
+          find.descendant(
+            of: toolbar,
+            matching: find.byWidgetPredicate(
+              (widget) => widget is BusyMarkHeaderPopupMenuButton,
+            ),
+          ),
+        );
+        expect(popup.transparent, isFalse);
+
+        final actions = tester.widgetList<BusyMarkHeaderIconButton>(
+          find.descendant(
+            of: toolbar,
+            matching: find.byType(BusyMarkHeaderIconButton),
+          ),
+        );
+        expect(actions, isNotEmpty);
+        expect(actions.every((button) => !button.transparent), isTrue);
+
+        final renderedButtons = tester.widgetList<IconButton>(
+          find.descendant(of: toolbar, matching: find.byType(IconButton)),
+        );
+        expect(renderedButtons, isNotEmpty);
+        for (final button in renderedButtons) {
+          expect(button.style?.backgroundColor?.resolve({}), colors.control);
+        }
+
+        final actionButton = find.ancestor(
+          of: find.byIcon(BusyMarkGlyphs.unorderedList),
+          matching: find.byType(IconButton),
+        );
+        expect(actionButton, findsOneWidget);
+        final buttonSize = tester.getSize(actionButton);
+        expect(buttonSize, const Size.square(BusyMarkSizes.iconButton));
+        final probe = Offset(5, buttonSize.height / 2);
+        final restPixels = await _capturePixels(tester, boundaryKey);
+        final rest = _pixelAtLocal(tester, restPixels, actionButton, probe);
+        final expectedRest = Color.alphaBlend(colors.control, colors.window);
+        _expectColorNear(rest, expectedRest);
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(actionButton));
+        await tester.pumpAndSettle();
+        final hoverPixels = await _capturePixels(tester, boundaryKey);
+        final hover = _pixelAtLocal(tester, hoverPixels, actionButton, probe);
+        final expectedHover = Color.alphaBlend(
+          theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.08),
+          expectedRest,
+        );
+        _expectColorNear(hover, expectedHover);
+        expect(hover, isNot(rest));
+      },
+    );
+  }
 
   testWidgets('dialog actions wrap at narrow localized text widths', (
     tester,
@@ -956,4 +1123,107 @@ double _contrastRatio(Color foreground, Color background) {
       ? backgroundLuminance
       : foregroundLuminance;
   return (lighter + 0.05) / (darker + 0.05);
+}
+
+void _expectSameGeometryWithSide(
+  ShapeBorder? actual,
+  ShapeBorder? base,
+  BorderSide expectedSide,
+) {
+  expect(actual.runtimeType, base.runtimeType);
+  expect(_shapeSide(actual), expectedSide);
+  expect(
+    _shapeWithSide(actual, BorderSide.none),
+    _shapeWithSide(base, BorderSide.none),
+  );
+}
+
+BorderSide? _shapeSide(ShapeBorder? shape) {
+  return switch (shape) {
+    final InputBorder input => input.borderSide,
+    final OutlinedBorder outlined => outlined.side,
+    _ => null,
+  };
+}
+
+ShapeBorder? _shapeWithSide(ShapeBorder? shape, BorderSide side) {
+  return switch (shape) {
+    final InputBorder input => input.copyWith(borderSide: side),
+    final OutlinedBorder outlined => outlined.copyWith(side: side),
+    _ => shape,
+  };
+}
+
+Future<_CapturedPixels> _capturePixels(
+  WidgetTester tester,
+  GlobalKey boundaryKey,
+) async {
+  final boundary =
+      boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+  final image = (await tester.binding.runAsync<ui.Image>(
+    () => boundary.toImage(pixelRatio: 1),
+  ))!;
+  try {
+    final data = (await tester.binding.runAsync<ByteData?>(
+      () => image.toByteData(format: ui.ImageByteFormat.rawStraightRgba),
+    ))!;
+    return _CapturedPixels(
+      bytes: data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      width: image.width,
+      boundary: boundary,
+    );
+  } finally {
+    image.dispose();
+  }
+}
+
+Color _pixelAtLocal(
+  WidgetTester tester,
+  _CapturedPixels pixels,
+  Finder finder,
+  Offset localOffset,
+) {
+  final box = tester.renderObject<RenderBox>(finder);
+  final globalPoint = box.localToGlobal(localOffset);
+  final point = pixels.boundary.globalToLocal(globalPoint);
+  final x = point.dx.floor();
+  final y = point.dy.floor();
+  final offset = (y * pixels.width + x) * 4;
+  return Color.fromARGB(
+    pixels.bytes[offset + 3],
+    pixels.bytes[offset],
+    pixels.bytes[offset + 1],
+    pixels.bytes[offset + 2],
+  );
+}
+
+void _expectColorNear(Color actual, Color expected, {int tolerance = 4}) {
+  expect(
+    (actual.r * 255 - expected.r * 255).abs(),
+    lessThanOrEqualTo(tolerance),
+  );
+  expect(
+    (actual.g * 255 - expected.g * 255).abs(),
+    lessThanOrEqualTo(tolerance),
+  );
+  expect(
+    (actual.b * 255 - expected.b * 255).abs(),
+    lessThanOrEqualTo(tolerance),
+  );
+  expect(
+    (actual.a * 255 - expected.a * 255).abs(),
+    lessThanOrEqualTo(tolerance),
+  );
+}
+
+class _CapturedPixels {
+  const _CapturedPixels({
+    required this.bytes,
+    required this.width,
+    required this.boundary,
+  });
+
+  final Uint8List bytes;
+  final int width;
+  final RenderRepaintBoundary boundary;
 }

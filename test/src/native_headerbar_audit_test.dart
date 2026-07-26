@@ -6,11 +6,15 @@ void main() {
   test('Linux runner owns one native GTK headerbar', () {
     final source = File('linux/runner/my_application.cc').readAsStringSync();
 
+    expect(source, contains('#include <handy.h>'));
+    expect(source, contains('hdy_init()'));
+    expect(source, contains('hdy_application_window_new()'));
+    expect(source, contains('hdy_window_handle_new()'));
     expect(source, contains('gtk_header_bar_new()'));
     expect(source, contains('gtk_header_bar_set_show_close_button'));
-    expect(source, contains('gtk_window_set_titlebar'));
+    expect(source, isNot(contains('gtk_window_set_titlebar')));
     expect(source, contains('gtk_menu_button_set_menu_model'));
-    expect(source, contains('window#busymark-window decoration'));
+    expect(source, contains('kLegacyYaruWindowShadowCompatibilityCss'));
     expect(source, contains('fl_view_set_background_color'));
     expect(source, contains('"#00000000"'));
     expect(source, contains('kHeaderBarChannel'));
@@ -482,7 +486,7 @@ void main() {
     expect(css, contains('background-color: alpha(currentColor, 0.07)'));
     expect(css, contains('background-color: alpha(currentColor, 0.16)'));
     expect(css, contains('background-color: alpha(currentColor, 0.10)'));
-    expect(css, contains('popover.background.busymark-header-popover'));
+    expect(css, isNot(contains('popover.background')));
     for (final interactionSelector in <String>[
       'button.',
       'modelbutton',
@@ -506,30 +510,28 @@ void main() {
     expect(configuration, contains('backgroundColor: colors.view'));
     expect(configuration, contains('sidebarBackgroundColor: colors.sidebar'));
     expect(configuration, contains('foregroundColor: colors.foreground'));
-    expect(configuration, contains('popoverBackgroundColor: colors.popover'));
-    expect(configuration, contains('borderColor: colors.subtleBorder'));
+    expect(configuration, isNot(contains('borderColor')));
+    expect(configuration, isNot(contains('popoverBackgroundColor')));
+    expect(configuration, isNot(contains('floatingBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#272727"'));
     expect(native, contains('kDefaultSidebarBackground[] = "#393939"'));
-    expect(native, contains('kDefaultPopoverBackground[] = "#3E3E3E"'));
+    expect(native, contains('kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)"'));
     expect(
       native,
       contains('fl_lookup_string_arg(args, "sidebarBorderColor")'),
     );
+    expect(native, isNot(contains('"floatingBorderColor"')));
+    expect(native, isNot(contains('"popoverBackgroundColor"')));
     expect(
       native,
-      contains('fl_lookup_string_arg(args, "floatingBorderColor")'),
+      contains(
+        'css_color_or(self->sidebar_border_color, kDefaultSidebarBorder)',
+      ),
     );
+    expect(native, isNot(contains('busymark-header-popover')));
     expect(
       native,
-      contains('fl_lookup_string_arg(args, "popoverBackgroundColor")'),
-    );
-    expect(
-      native,
-      contains('css_color_or(self->sidebar_border_color, border)'),
-    );
-    expect(
-      native,
-      contains('css_color_or(self->floating_border_color, border)'),
+      contains('gtk_popover_set_position(popover, GTK_POS_BOTTOM)'),
     );
     expect(native, contains('.busymark-sidebar-header {'));
     expect(native, contains('background-color: %s;'));
@@ -729,24 +731,91 @@ void main() {
     },
   );
 
-  test('GTK CSD exclusively owns window shadow and rounded shape', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
+  test(
+    'Handy owns window shape while Yaru receives a scoped frame adapter',
+    () {
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
+      final linuxCmake = File('linux/CMakeLists.txt').readAsStringSync();
+      final runnerCmake = File(
+        'linux/runner/CMakeLists.txt',
+      ).readAsStringSync();
+      final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+      final readme = File('README.md').readAsStringSync();
+      final compatibilityCss = RegExp(
+        r'constexpr char kLegacyYaruWindowShadowCompatibilityCss\[\][\s\S]*?'
+        r'constexpr char kLtrIsolateStart',
+      ).firstMatch(native)!.group(0)!;
 
-    expect(native, contains('window#busymark-window decoration,'));
-    expect(native, contains('window#busymark-window decoration:backdrop {'));
-    expect(native, contains('"border-color: %s;"'));
-    expect(native, contains('gtk_window_set_titlebar(window, titlebar)'));
-    expect(native, isNot(contains('kHeaderWindowRadius')));
-    expect(native, isNot(contains('create_rounded_window_region')));
-    expect(native, isNot(contains('gdk_window_shape_combine_region')));
-    expect(native, isNot(contains('rounded_window_configure_event_cb')));
-    expect(native, isNot(contains('configure_transparent_window_backing')));
-    expect(native, isNot(contains('gtk_widget_set_app_paintable')));
-    expect(native, isNot(contains('CAIRO_OPERATOR_CLEAR')));
-    expect(native, isNot(contains('#include <cairo.h>')));
-    expect(native, isNot(contains('"box-shadow: 0 2px 10px')));
-    expect(native, isNot(contains('"border-radius:')));
-  });
+      expect(native, contains('#include <handy.h>'));
+      expect(native, contains('hdy_application_window_new()'));
+      expect(native, contains('hdy_window_handle_new()'));
+      expect(native, contains('GtkWidget* titlebar_handle;'));
+      expect(
+        native,
+        contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
+      );
+      expect(native, contains('uses_legacy_yaru_window_shadow()'));
+      expect(native, contains('g_strcmp0(normalized_theme, "yaru")'));
+      expect(native, contains('g_str_has_prefix(normalized_theme, "yaru-")'));
+      expect(native, contains('strstr(normalized_theme, "highcontrast")'));
+      expect(native, contains('"notify::gtk-theme-name"'));
+      expect(native, contains('G_CALLBACK(gtk_theme_name_changed_cb)'));
+      expect(native, contains('g_signal_connect_object('));
+      expect(native, isNot(contains('gtk_window_set_titlebar(')));
+      expect(native, isNot(contains('gtk_application_window_new(')));
+      expect(
+        compatibilityCss,
+        contains('box-shadow: 0 3px 9px 1px rgba(0,0,0,0.5)'),
+      );
+      expect(
+        compatibilityCss,
+        contains(
+          '0 3px 9px 1px transparent,'
+          '"\n    "0 2px 6px 2px rgba(0,0,0,0.2)',
+        ),
+      );
+      expect(compatibilityCss, contains(':not(.solid-csd)'));
+      expect(compatibilityCss, contains(':not(.maximized)'));
+      expect(compatibilityCss, contains('not(.fullscreen)'));
+      expect(
+        RegExp(r'not\(\.maximized\)').allMatches(compatibilityCss),
+        hasLength(7),
+      );
+      expect(
+        RegExp(r'not\(\.fullscreen\)').allMatches(compatibilityCss),
+        hasLength(7),
+      );
+      expect(compatibilityCss, contains('0 0 0 20px transparent'));
+      expect(compatibilityCss, isNot(contains('0 0 0 1px')));
+      expect(compatibilityCss, isNot(contains('border-radius')));
+      expect(compatibilityCss, isNot(contains('border-color')));
+      expect(native, isNot(contains('"window#busymark-window decoration,"')));
+      expect(
+        linuxCmake,
+        contains(
+          'pkg_check_modules(HANDY REQUIRED IMPORTED_TARGET libhandy-1)',
+        ),
+      );
+      expect(
+        runnerCmake,
+        contains(
+          r'target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::HANDY)',
+        ),
+      );
+      expect(snapcraft, contains('- libhandy-1-dev'));
+      expect(snapcraft, contains('- libhandy-1-0'));
+      expect(readme, contains('sudo apt-get install libhandy-1-dev'));
+      expect(native, isNot(contains('kHeaderWindowRadius')));
+      expect(native, isNot(contains('create_rounded_window_region')));
+      expect(native, isNot(contains('gdk_window_shape_combine_region')));
+      expect(native, isNot(contains('rounded_window_configure_event_cb')));
+      expect(native, isNot(contains('configure_transparent_window_backing')));
+      expect(native, isNot(contains('gtk_widget_set_app_paintable')));
+      expect(native, isNot(contains('CAIRO_OPERATOR_CLEAR')));
+      expect(native, isNot(contains('#include <cairo.h>')));
+      expect(native, isNot(contains('"border-radius:')));
+    },
+  );
 
   test('native header controls preserve GTK geometry with neutral states', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();

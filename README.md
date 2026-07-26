@@ -196,7 +196,11 @@ Store listing translations are managed outside `snap/snapcraft.yaml`.
 
 ## Build Linux Locally
 
+Source builds require the libhandy development headers. Packaged users receive
+the runtime library with BusyMark and do not install development packages.
+
 ```bash
+sudo apt-get install libhandy-1-dev
 flutter build linux
 ```
 

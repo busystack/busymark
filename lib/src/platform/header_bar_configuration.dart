@@ -105,10 +105,7 @@ class HeaderBarTheme {
     required this.backgroundColor,
     required this.sidebarBackgroundColor,
     required this.foregroundColor,
-    required this.popoverBackgroundColor,
-    required this.borderColor,
     required this.sidebarBorderColor,
-    required this.floatingBorderColor,
     required this.modalBarrierColor,
   });
 
@@ -122,10 +119,7 @@ class HeaderBarTheme {
       backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
-      popoverBackgroundColor: colors.popover,
-      borderColor: colors.subtleBorder,
       sidebarBorderColor: colors.sidebarBorder,
-      floatingBorderColor: colors.floatingBorder,
       modalBarrierColor: barrier,
     );
   }
@@ -134,10 +128,7 @@ class HeaderBarTheme {
   final Color backgroundColor;
   final Color sidebarBackgroundColor;
   final Color foregroundColor;
-  final Color popoverBackgroundColor;
-  final Color borderColor;
   final Color sidebarBorderColor;
-  final Color floatingBorderColor;
   final Color modalBarrierColor;
 
   Map<String, Object> toMap() => {
@@ -145,10 +136,7 @@ class HeaderBarTheme {
     'backgroundColor': _cssColor(backgroundColor),
     'sidebarBackgroundColor': _cssColor(sidebarBackgroundColor),
     'foregroundColor': _cssColor(foregroundColor),
-    'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
-    'borderColor': _cssColor(borderColor),
     'sidebarBorderColor': _cssColor(sidebarBorderColor),
-    'floatingBorderColor': _cssColor(floatingBorderColor),
     'modalBarrierColor': _cssColor(modalBarrierColor),
   };
 
@@ -160,10 +148,7 @@ class HeaderBarTheme {
             backgroundColor == other.backgroundColor &&
             sidebarBackgroundColor == other.sidebarBackgroundColor &&
             foregroundColor == other.foregroundColor &&
-            popoverBackgroundColor == other.popoverBackgroundColor &&
-            borderColor == other.borderColor &&
             sidebarBorderColor == other.sidebarBorderColor &&
-            floatingBorderColor == other.floatingBorderColor &&
             modalBarrierColor == other.modalBarrierColor;
   }
 
@@ -173,10 +158,7 @@ class HeaderBarTheme {
     backgroundColor,
     sidebarBackgroundColor,
     foregroundColor,
-    popoverBackgroundColor,
-    borderColor,
     sidebarBorderColor,
-    floatingBorderColor,
     modalBarrierColor,
   ]);
 }

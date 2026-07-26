@@ -247,6 +247,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
+      transparent: false,
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
@@ -300,6 +301,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
       icon: icon,
       onPressed: onPressed,
       shortcut: shortcut,
+      transparent: false,
     );
   }
 }

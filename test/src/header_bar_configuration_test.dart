@@ -383,16 +383,13 @@ void main() {
     },
   );
 
-  test('theme map contains only structural colors with distinct borders', () {
+  test('theme map contains only native header structure roles', () {
     expect(_theme.toMap().keys, {
       'preferDark',
       'backgroundColor',
       'sidebarBackgroundColor',
       'foregroundColor',
-      'popoverBackgroundColor',
-      'borderColor',
       'sidebarBorderColor',
-      'floatingBorderColor',
       'modalBarrierColor',
     });
     expect(
@@ -401,23 +398,7 @@ void main() {
     );
     expect(
       _theme.toMap(),
-      containsPair('floatingBorderColor', 'rgba(4,5,6,0.133)'),
-    );
-    expect(
-      _theme.toMap(),
       containsPair('foregroundColor', 'rgba(32,32,32,1.000)'),
-    );
-    expect(
-      _theme.toMap(),
-      containsPair('popoverBackgroundColor', 'rgba(250,250,250,1.000)'),
-    );
-    expect(
-      _theme.toMap()['borderColor'],
-      isNot(_theme.toMap()['sidebarBorderColor']),
-    );
-    expect(
-      _theme.toMap()['borderColor'],
-      isNot(_theme.toMap()['floatingBorderColor']),
     );
   });
 }
@@ -481,9 +462,6 @@ const _theme = HeaderBarTheme(
   backgroundColor: Color(0xFFFFFFFF),
   sidebarBackgroundColor: Color(0xFFF6F6F6),
   foregroundColor: Color(0xFF202020),
-  popoverBackgroundColor: Color(0xFFFAFAFA),
-  borderColor: Color(0x22000000),
   sidebarBorderColor: Color(0x11010203),
-  floatingBorderColor: Color(0x22040506),
   modalBarrierColor: Color(0x55000000),
 );

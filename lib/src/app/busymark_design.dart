@@ -482,6 +482,20 @@ Color busyMarkVcsFileStatusColor(
 }
 
 BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
+  final window = switch (brightness) {
+    Brightness.light => const Color(0xFFFAFAFA),
+    Brightness.dark => const Color(0xFF2C2C2C),
+  };
+  final view = switch (brightness) {
+    Brightness.light => const Color(0xFFFFFFFF),
+    Brightness.dark => const Color(0xFF272727),
+  };
+  final floatingSurface = switch (brightness) {
+    // Installed Yaru/libadwaita owns this neutral role independently from the
+    // window and content-view elevation ladder.
+    Brightness.light => const Color(0xFFFAFAFA),
+    Brightness.dark => const Color(0xFF3E3E3E),
+  };
   final foreground = switch (brightness) {
     Brightness.light => const Color(0xFF3D3D3D),
     Brightness.dark => const Color(0xFFF7F7F7),
@@ -497,6 +511,12 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
     Brightness.light => const Color(0xFFFFFFFF),
     Brightness.dark => const Color(0xFF3D3D3D),
   };
+  // Yaru renders the split-view boundary as a recessed divider in both
+  // brightness modes. A foreground tint in dark mode produces a light seam.
+  final sidebarBorder = switch (brightness) {
+    Brightness.light => const Color.fromRGBO(24, 24, 24, 0.08),
+    Brightness.dark => const Color.fromRGBO(16, 16, 16, 0.35),
+  };
 
   Color tintedSurface(Color tint) {
     final alpha = brightness == Brightness.dark ? 0.16 : 0.08;
@@ -508,8 +528,8 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       // Modern Yaru/libadwaita semantic roles. Flutter's Yaru theme exposes
       // geometry and interaction behavior, but not every contemporary
       // surface role, so these neutral fallbacks live in one resolver.
-      window: const Color(0xFFFAFAFA),
-      view: const Color(0xFFFFFFFF),
+      window: window,
+      view: view,
       sidebar: const Color(0xFFEBEBEB),
       secondarySidebar: const Color(0xFFF0F0F0),
       headerbar: const Color(0xFFFAFAFA),
@@ -517,8 +537,8 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       panel: const Color(0xFFF0F0F0),
       card: const Color(0xFFFFFFFF),
       groupedList: groupedList,
-      dialog: const Color(0xFFFAFAFA),
-      popover: const Color(0xFFFAFAFA),
+      dialog: floatingSurface,
+      popover: floatingSurface,
       control: const Color.fromRGBO(0, 0, 0, 0.10),
       controlHover: const Color.fromRGBO(0, 0, 0, 0.14),
       controlActive: const Color.fromRGBO(0, 0, 0, 0.18),
@@ -529,8 +549,10 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       border: const Color.fromRGBO(0, 0, 0, 0.18),
       subtleBorder: const Color.fromRGBO(0, 0, 0, 0.10),
       divider: const Color.fromRGBO(0, 0, 0, 0.10),
-      floatingBorder: const Color.fromRGBO(0, 0, 0, 0.10),
-      sidebarBorder: const Color.fromRGBO(0, 0, 0, 0.07),
+      // Installed libadwaita uses the same subtle black perimeter in either
+      // brightness mode; opacity is part of the semantic role.
+      floatingBorder: const Color.fromRGBO(0, 0, 0, 0.14),
+      sidebarBorder: sidebarBorder,
       shade: const Color.fromRGBO(0, 0, 0, 0.07),
       muted: mutedForeground,
       admonitionNote: tintedSurface(BusyMarkLinuxPalette.ubuntuBlueAccent),
@@ -538,8 +560,8 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       admonitionWarning: tintedSurface(BusyMarkLinuxPalette.ubuntuYellowAccent),
     ),
     Brightness.dark => BusyMarkSurfaceColors(
-      window: const Color(0xFF2C2C2C),
-      view: const Color(0xFF272727),
+      window: window,
+      view: view,
       sidebar: const Color(0xFF393939),
       secondarySidebar: const Color(0xFF323232),
       headerbar: const Color(0xFF393939),
@@ -547,8 +569,8 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       panel: const Color(0xFF323232),
       card: const Color(0xFF3D3D3D),
       groupedList: groupedList,
-      dialog: const Color(0xFF3E3E3E),
-      popover: const Color(0xFF3E3E3E),
+      dialog: floatingSurface,
+      popover: floatingSurface,
       control: const Color.fromRGBO(255, 255, 255, 0.10),
       controlHover: const Color.fromRGBO(255, 255, 255, 0.14),
       controlActive: const Color.fromRGBO(255, 255, 255, 0.18),
@@ -559,8 +581,8 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       border: const Color.fromRGBO(0, 0, 0, 0.75),
       subtleBorder: const Color.fromRGBO(255, 255, 255, 0.10),
       divider: const Color.fromRGBO(255, 255, 255, 0.10),
-      floatingBorder: const Color.fromRGBO(255, 255, 255, 0.10),
-      sidebarBorder: const Color.fromRGBO(255, 255, 255, 0.10),
+      floatingBorder: const Color.fromRGBO(0, 0, 0, 0.14),
+      sidebarBorder: sidebarBorder,
       shade: const Color.fromRGBO(0, 0, 0, 0.25),
       muted: mutedForeground,
       admonitionNote: tintedSurface(BusyMarkLinuxPalette.ubuntuBlueAccent),
@@ -871,14 +893,27 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
             shadowColor: WidgetStatePropertyAll(colorScheme.shadow),
           )
         : semanticStyle;
-    return YaruIconButton(
+    // YaruIconButton merges its defaults as the receiver, so non-null default
+    // colors win over caller-supplied semantic colors. Compose the styles in
+    // the opposite direction and give the result directly to IconButton.
+    final yaruDefaults = YaruIconButton(
+      icon: const SizedBox.shrink(),
       iconSize: BusyMarkSizes.iconButton,
+    ).defaultStyleOf(context);
+    final button = IconButton(
       isSelected: selected,
-      style: style,
       tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
       icon: Icon(icon, size: BusyMarkSizes.iconSm),
+      padding: EdgeInsets.zero,
+      style: style.merge(yaruDefaults),
       onPressed: onPressed,
     );
+    return YaruTheme.maybeOf(context)?.focusBorders == true
+        ? YaruFocusBorder.primary(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
+            child: button,
+          )
+        : button;
   }
 }
 
@@ -1225,7 +1260,11 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
           enabled: selectorEnabled,
           tooltip: tooltip,
           semanticLabel: tooltip,
-          style: Theme.of(context).filledButtonTheme.style,
+          // Preserve Yaru's selector geometry and interaction states, while
+          // matching libadwaita's inline grouped-row value affordance.
+          style: Theme.of(context).outlinedButtonTheme.style?.copyWith(
+            side: const WidgetStatePropertyAll(BorderSide.none),
+          ),
           constraints: BoxConstraints(
             minWidth: popupMinWidth,
             maxWidth: popupMaxWidth,

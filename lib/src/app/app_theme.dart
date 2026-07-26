@@ -18,16 +18,10 @@ ThemeData buildBusyMarkTheme({
     colors,
   );
   final onAccent = _accessibleForeground(accentColor);
-  final accentContainer = Color.alphaBlend(
-    accentColor.withValues(alpha: brightness == Brightness.dark ? 0.24 : 0.14),
-    colors.view,
-  );
   final colorScheme = base.colorScheme.copyWith(
     brightness: brightness,
     primary: accentColor,
     onPrimary: onAccent,
-    primaryContainer: accentContainer,
-    onPrimaryContainer: _accessibleForeground(accentContainer),
     secondary: accentColor,
     onError: _accessibleForeground(base.colorScheme.error),
     surface: colors.view,
@@ -118,15 +112,18 @@ ThemeData buildBusyMarkTheme({
         }),
         side: const WidgetStatePropertyAll(BorderSide.none),
       );
+  final popoverSurfaceSide = BorderSide(color: colors.floatingBorder);
   final menuStyle = _semanticMenuSurfaceStyle(
     base.menuTheme.style,
     color: colors.popover,
     shadowColor: colorScheme.shadow,
+    side: popoverSurfaceSide,
   );
   final dropdownMenuStyle = _semanticMenuSurfaceStyle(
     base.dropdownMenuTheme.menuStyle,
     color: colors.popover,
     shadowColor: colorScheme.shadow,
+    side: popoverSurfaceSide,
   );
 
   return base.copyWith(
@@ -165,8 +162,6 @@ ThemeData buildBusyMarkTheme({
       contentTextStyle: textTheme.bodyMedium,
     ),
     listTileTheme: base.listTileTheme.copyWith(
-      selectedColor: colors.foreground,
-      selectedTileColor: accentContainer,
       iconColor: colors.mutedForeground,
       textColor: colors.foreground,
     ),
@@ -180,6 +175,7 @@ ThemeData buildBusyMarkTheme({
       color: colors.popover,
       surfaceTintColor: colors.popover,
       shadowColor: colorScheme.shadow,
+      shape: _withOutlineSide(base.popupMenuTheme.shape, popoverSurfaceSide),
       iconColor: colors.mutedForeground,
       textStyle: textTheme.bodyMedium,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -297,10 +293,20 @@ MenuStyle _semanticMenuSurfaceStyle(
   MenuStyle? base, {
   required Color color,
   required Color shadowColor,
+  required BorderSide side,
 }) {
   return (base ?? const MenuStyle()).copyWith(
     backgroundColor: WidgetStatePropertyAll(color),
     surfaceTintColor: WidgetStatePropertyAll(color),
     shadowColor: WidgetStatePropertyAll(shadowColor),
+    side: WidgetStatePropertyAll(side),
   );
+}
+
+ShapeBorder? _withOutlineSide(ShapeBorder? shape, BorderSide side) {
+  return switch (shape) {
+    final InputBorder input => input.copyWith(borderSide: side),
+    final OutlinedBorder outlined => outlined.copyWith(side: side),
+    _ => shape,
+  };
 }
