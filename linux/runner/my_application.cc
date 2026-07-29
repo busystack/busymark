@@ -56,6 +56,8 @@ struct _MyApplication {
   GtkWindow* main_window;
   GtkWidget* flutter_view;
   GtkWidget* titlebar_handle;
+  GtkWidget* titlebar_overlay;
+  GtkWidget* modal_scrim;
   GtkWidget* titlebar_box;
   GtkHeaderBar* header_bar;
   GtkWidget* sidebar_header_box;
@@ -418,45 +420,6 @@ static void replace_css_color_field(gchar** target, const gchar* value) {
   *target = is_css_color_token(value) ? g_strdup(value) : nullptr;
 }
 
-static GdkRGBA composite_rgba(const GdkRGBA& foreground,
-                              const GdkRGBA& background) {
-  const gdouble inverse_foreground_alpha = 1.0 - foreground.alpha;
-  const gdouble alpha =
-      foreground.alpha + background.alpha * inverse_foreground_alpha;
-  if (alpha <= 0) {
-    return GdkRGBA{0, 0, 0, 0};
-  }
-  return GdkRGBA{
-      (foreground.red * foreground.alpha +
-       background.red * background.alpha * inverse_foreground_alpha) /
-          alpha,
-      (foreground.green * foreground.alpha +
-       background.green * background.alpha * inverse_foreground_alpha) /
-          alpha,
-      (foreground.blue * foreground.alpha +
-       background.blue * background.alpha * inverse_foreground_alpha) /
-          alpha,
-      alpha,
-  };
-}
-
-static gchar* modal_sidebar_border_css_color(const gchar* border_color,
-                                             const gchar* sidebar_color,
-                                             const gchar* barrier_color) {
-  GdkRGBA border;
-  GdkRGBA sidebar;
-  GdkRGBA barrier;
-  if (!gdk_rgba_parse(&border, border_color) ||
-      !gdk_rgba_parse(&sidebar, sidebar_color) ||
-      !gdk_rgba_parse(&barrier, barrier_color)) {
-    return g_strdup(border_color);
-  }
-
-  const GdkRGBA visible_border = composite_rgba(border, sidebar);
-  const GdkRGBA dimmed_border = composite_rgba(barrier, visible_border);
-  return gdk_rgba_to_string(&dimmed_border);
-}
-
 static void set_widget_visible(GtkWidget* widget, gboolean visible) {
   if (widget != nullptr && GTK_IS_WIDGET(widget)) {
     gtk_widget_set_no_show_all(widget, !visible);
@@ -583,8 +546,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->sidebar_border_color, kDefaultSidebarBorder);
   const gchar* modal =
       css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
-  g_autofree gchar* modal_sidebar_border =
-      modal_sidebar_border_css_color(sidebar_border, sidebar_background, modal);
   const gchar* window_shadow_css = uses_legacy_yaru_window_shadow()
                                        ? kLegacyYaruWindowShadowCompatibilityCss
                                        : "";
@@ -674,26 +635,13 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: alpha(currentColor, 0.19);"
       "background-image: none;"
       "}"
-      ".busymark-titlebar.busymark-modal-barrier,"
-      ".busymark-titlebar.busymark-modal-barrier "
-      "headerbar.busymark-headerbar,"
-      ".busymark-titlebar.busymark-modal-barrier "
-      "headerbar.busymark-headerbar:backdrop,"
-      ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header {"
-      "background-image: linear-gradient(%s, %s);"
-      "}"
-      ".busymark-titlebar.busymark-modal-barrier "
-      ".busymark-sidebar-header:dir(ltr) {"
-      "border-right-color: %s;"
-      "}"
-      ".busymark-titlebar.busymark-modal-barrier "
-      ".busymark-sidebar-header:dir(rtl) {"
-      "border-left-color: %s;"
+      ".busymark-modal-scrim {"
+      "background-color: %s;"
+      "background-image: none;"
       "}",
       background, window_shadow_css, background, foreground, background,
       foreground, sidebar_background, foreground, sidebar_border,
-      sidebar_border, modal, modal, modal_sidebar_border,
-      modal_sidebar_border);
+      sidebar_border, modal);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
@@ -1271,14 +1219,7 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
 
 static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
   self->modal_barrier_visible = visible;
-  if (self->titlebar_box != nullptr && GTK_IS_WIDGET(self->titlebar_box)) {
-    GtkStyleContext* context = gtk_widget_get_style_context(self->titlebar_box);
-    if (visible) {
-      gtk_style_context_add_class(context, "busymark-modal-barrier");
-    } else {
-      gtk_style_context_remove_class(context, "busymark-modal-barrier");
-    }
-  }
+  set_widget_visible(self->modal_scrim, visible);
   if (self->titlebar_handle != nullptr &&
       GTK_IS_WIDGET(self->titlebar_handle)) {
     // The Handy handle owns native drag, double-click, and window-menu input.
@@ -1616,6 +1557,32 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   return self->titlebar_box;
 }
 
+static GtkWidget* create_busymark_titlebar_overlay(MyApplication* self) {
+  self->titlebar_overlay = gtk_overlay_new();
+  gtk_widget_set_halign(self->titlebar_overlay, GTK_ALIGN_FILL);
+  gtk_widget_set_valign(self->titlebar_overlay, GTK_ALIGN_FILL);
+  gtk_widget_set_hexpand(self->titlebar_overlay, TRUE);
+  gtk_container_add(GTK_CONTAINER(self->titlebar_overlay),
+                    create_busymark_titlebar(self));
+
+  // A real overlay is the GTK equivalent of Flutter's modal barrier. Painting
+  // only the header backgrounds leaves descendant icons and button surfaces
+  // above the scrim.
+  self->modal_scrim = gtk_event_box_new();
+  gtk_widget_set_halign(self->modal_scrim, GTK_ALIGN_FILL);
+  gtk_widget_set_valign(self->modal_scrim, GTK_ALIGN_FILL);
+  gtk_widget_set_hexpand(self->modal_scrim, TRUE);
+  gtk_widget_set_vexpand(self->modal_scrim, TRUE);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->modal_scrim),
+                              "busymark-modal-scrim");
+  set_widget_visible(self->modal_scrim, FALSE);
+  gtk_overlay_add_overlay(GTK_OVERLAY(self->titlebar_overlay),
+                          self->modal_scrim);
+  gtk_overlay_set_overlay_pass_through(GTK_OVERLAY(self->titlebar_overlay),
+                                       self->modal_scrim, FALSE);
+  return self->titlebar_overlay;
+}
+
 static void header_bar_method_call_cb(FlMethodChannel* channel,
                                       FlMethodCall* method_call,
                                       gpointer user_data) {
@@ -1737,7 +1704,7 @@ static void my_application_activate(GApplication* application) {
   self->titlebar_handle = hdy_window_handle_new();
   gtk_widget_set_hexpand(self->titlebar_handle, TRUE);
   gtk_container_add(GTK_CONTAINER(self->titlebar_handle),
-                    create_busymark_titlebar(self));
+                    create_busymark_titlebar_overlay(self));
   gtk_widget_show_all(self->titlebar_handle);
 
   gtk_window_set_default_size(window, 1280, 720);
@@ -1853,6 +1820,8 @@ static void my_application_init(MyApplication* self) {
   self->flutter_view = nullptr;
   self->titlebar_handle = nullptr;
   self->titlebar_box = nullptr;
+  self->titlebar_overlay = nullptr;
+  self->modal_scrim = nullptr;
   self->header_bar = nullptr;
   self->sidebar_header_box = nullptr;
   self->sidebar_search_button = nullptr;

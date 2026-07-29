@@ -32,7 +32,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
-import 'package:yaru/yaru.dart';
 
 void main() {
   const parser = MarkdownParser();
@@ -2408,10 +2407,15 @@ void main() {}
       );
       await tester.pump();
 
-      YaruIconButton editingToggle(String tooltip) {
-        return tester.widget<YaruIconButton>(
-          find.byWidgetPredicate(
-            (widget) => widget is YaruIconButton && widget.tooltip == tooltip,
+      IconButton editingToggle(String tooltip) {
+        return tester.widget<IconButton>(
+          find.descendant(
+            of: find.byWidgetPredicate(
+              (widget) =>
+                  widget is BusyMarkHeaderIconButton &&
+                  widget.tooltip == tooltip,
+            ),
+            matching: find.byType(IconButton),
           ),
         );
       }

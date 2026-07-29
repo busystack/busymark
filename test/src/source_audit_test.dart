@@ -1475,6 +1475,8 @@ void main() {
     expect(toolbar, isNot(contains('transparent: true')));
     expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(2));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
+    expect(toolbar, contains('busyMarkContainedControlBackground('));
+    expect(toolbar, contains('foregroundColor: colors.foreground'));
     expect(toolbar, isNot(contains('elevated: true')));
     expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.none'));

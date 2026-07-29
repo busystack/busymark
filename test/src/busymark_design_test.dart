@@ -838,19 +838,22 @@ void main() {
             home: RepaintBoundary(
               key: boundaryKey,
               child: Scaffold(
-                body: BusyMarkWysiwygToolbar(
-                  onBlockCommand: (_) {},
-                  onInlineCommand: (_) {},
-                  onLinkCommand: () {},
-                  onImageCommand: () {},
-                  onInlineImageCommand: () {},
-                  onTableCommand: () {},
-                  onHtmlCommand: () {},
-                  onIndentCommand: () {},
-                  onOutdentCommand: () {},
-                  onToggleTaskCommand: () {},
-                  onHardBreakCommand: () {},
-                  onCodeLanguageCommand: () {},
+                body: ColoredBox(
+                  color: colors.view,
+                  child: BusyMarkWysiwygToolbar(
+                    onBlockCommand: (_) {},
+                    onInlineCommand: (_) {},
+                    onLinkCommand: () {},
+                    onImageCommand: () {},
+                    onInlineImageCommand: () {},
+                    onTableCommand: () {},
+                    onHtmlCommand: () {},
+                    onIndentCommand: () {},
+                    onOutdentCommand: () {},
+                    onToggleTaskCommand: () {},
+                    onHardBreakCommand: () {},
+                    onCodeLanguageCommand: () {},
+                  ),
                 ),
               ),
             ),
@@ -868,6 +871,13 @@ void main() {
           ),
         );
         expect(popup.transparent, isFalse);
+        final expectedRest = Color.alphaBlend(colors.control, colors.view);
+        final expectedDisabled = Color.alphaBlend(
+          colors.disabledControl,
+          colors.view,
+        );
+        expect(popup.foregroundColor, colors.foreground);
+        expect(popup.backgroundColor?.resolve({}), expectedRest);
 
         final actions = tester.widgetList<BusyMarkHeaderIconButton>(
           find.descendant(
@@ -877,13 +887,30 @@ void main() {
         );
         expect(actions, isNotEmpty);
         expect(actions.every((button) => !button.transparent), isTrue);
+        expect(
+          actions.every(
+            (button) => button.foregroundColor == colors.foreground,
+          ),
+          isTrue,
+        );
+        expect(
+          actions.every(
+            (button) => button.backgroundColor?.resolve({}) == expectedRest,
+          ),
+          isTrue,
+        );
 
         final renderedButtons = tester.widgetList<IconButton>(
           find.descendant(of: toolbar, matching: find.byType(IconButton)),
         );
         expect(renderedButtons, isNotEmpty);
         for (final button in renderedButtons) {
-          expect(button.style?.backgroundColor?.resolve({}), colors.control);
+          expect(button.style?.backgroundColor?.resolve({}), expectedRest);
+          expect(button.style?.foregroundColor?.resolve({}), colors.foreground);
+          expect(
+            button.style?.backgroundColor?.resolve({WidgetState.disabled}),
+            expectedDisabled,
+          );
         }
 
         final actionButton = find.ancestor(
@@ -896,7 +923,6 @@ void main() {
         final probe = Offset(5, buttonSize.height / 2);
         final restPixels = await _capturePixels(tester, boundaryKey);
         final rest = _pixelAtLocal(tester, restPixels, actionButton, probe);
-        final expectedRest = Color.alphaBlend(colors.control, colors.window);
         _expectColorNear(rest, expectedRest);
 
         final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);

@@ -810,6 +810,23 @@ WidgetStateProperty<Color?> busyMarkHeaderButtonBackground(
       WidgetStatePropertyAll(BusyMarkSurfaceColors.of(context).control);
 }
 
+/// Resolves a contained control state against its semantic host surface.
+///
+/// Yaru control fills are translucent state layers, which is appropriate when
+/// a parent control surface owns the background. Free-floating controls, such
+/// as the editing toolbar over a document, have no such parent and must resolve
+/// that layer once so document content cannot show through the button.
+WidgetStateProperty<Color?> busyMarkContainedControlBackground(
+  BuildContext context, {
+  required Color surface,
+}) {
+  final background = busyMarkHeaderButtonBackground(context);
+  return WidgetStateProperty.resolveWith((states) {
+    final stateColor = background.resolve(states);
+    return stateColor == null ? null : Color.alphaBlend(stateColor, surface);
+  });
+}
+
 WidgetStateProperty<Color?> busyMarkTransparentHeaderButtonBackground(
   BuildContext _,
 ) {

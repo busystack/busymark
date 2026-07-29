@@ -243,11 +243,17 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   }
 
   Widget _blockStyleMenu(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
       transparent: false,
+      foregroundColor: colors.foreground,
+      backgroundColor: busyMarkContainedControlBackground(
+        context,
+        surface: colors.view,
+      ),
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
@@ -296,12 +302,18 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required VoidCallback onPressed,
     String? shortcut,
   }) {
+    final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkHeaderIconButton(
       tooltip: tooltip,
       icon: icon,
       onPressed: onPressed,
       shortcut: shortcut,
       transparent: false,
+      foregroundColor: colors.foreground,
+      backgroundColor: busyMarkContainedControlBackground(
+        context,
+        surface: colors.view,
+      ),
     );
   }
 }

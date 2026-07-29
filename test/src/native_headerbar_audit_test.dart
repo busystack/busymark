@@ -19,6 +19,12 @@ void main() {
     expect(source, contains('"#00000000"'));
     expect(source, contains('kHeaderBarChannel'));
     expect(source, contains('setModalBarrierVisible'));
+    expect(source, contains('gtk_overlay_new()'));
+    expect(source, contains('gtk_overlay_add_overlay'));
+    expect(source, contains('gtk_event_box_new()'));
+    expect(source, contains('"busymark-modal-scrim"'));
+    expect(source, contains('set_widget_visible(self->modal_scrim, visible)'));
+    expect(source, contains('set_widget_visible(self->modal_scrim, FALSE)'));
     expect(source, contains('setSidebarWidth'));
     expect(source, contains('setSidebarToggleVisible'));
     expect(source, contains('setTextDirection'));
@@ -481,7 +487,7 @@ void main() {
       }
     }
     expect(braceDepth, 0, reason: 'unbalanced structural CSS blocks');
-    expect(css, contains('.busymark-titlebar.busymark-modal-barrier'));
+    expect(css, contains('.busymark-modal-scrim'));
     expect(css, contains('.busymark-header-control'));
     expect(css, contains('background-color: alpha(currentColor, 0.07)'));
     expect(css, contains('background-color: alpha(currentColor, 0.16)'));
@@ -546,27 +552,22 @@ void main() {
     expect(headerbarBlock, isNot(contains('border-radius')));
     expect(headerbarBlock, isNot(contains('"padding-left: 0;"')));
     expect(headerbarBlock, isNot(contains('"padding-right: 0;"')));
-    expect(
-      native,
-      contains(
-        '".busymark-titlebar.busymark-modal-barrier "'
-        '\n      "headerbar.busymark-headerbar,"',
-      ),
-    );
     expect(native, contains('".busymark-sidebar-header:dir(ltr) {"'));
     expect(native, contains('"border-right: 1px solid %s;"'));
     expect(native, contains('".busymark-sidebar-header:dir(rtl) {"'));
     expect(native, contains('"border-left: 1px solid %s;"'));
-    expect(native, contains('modal_sidebar_border_css_color'));
+    expect(native, contains('".busymark-modal-scrim {"'));
+    expect(native, contains('create_busymark_titlebar_overlay'));
+    expect(native, contains('gtk_overlay_set_overlay_pass_through'));
+    expect(native, isNot(contains('busymark-titlebar.busymark-modal-barrier')));
+    expect(native, isNot(contains('modal_sidebar_border_css_color')));
+    expect(native, isNot(contains('composite_rgba')));
+    expect(native, isNot(contains('"border-right-color: %s;"')));
+    expect(native, isNot(contains('"border-left-color: %s;"')));
     expect(
       native,
-      contains(
-        '".busymark-titlebar.busymark-modal-barrier "'
-        '\n      ".busymark-sidebar-header:dir(ltr) {"',
-      ),
+      contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
     );
-    expect(native, contains('"border-right-color: %s;"'));
-    expect(native, contains('"border-left-color: %s;"'));
     expect(workspace, isNot(contains('Border(right:')));
   });
 
@@ -750,6 +751,8 @@ void main() {
       expect(native, contains('hdy_application_window_new()'));
       expect(native, contains('hdy_window_handle_new()'));
       expect(native, contains('GtkWidget* titlebar_handle;'));
+      expect(native, contains('GtkWidget* titlebar_overlay;'));
+      expect(native, contains('GtkWidget* modal_scrim;'));
       expect(
         native,
         contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
