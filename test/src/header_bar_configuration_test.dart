@@ -253,6 +253,7 @@ void main() {
     });
 
     final service = LinuxHeaderBarService(channel: channel);
+    await service.initialize();
     await service.setModalBarrierDepth(1);
     await service.configurationSynchronizer.setConfiguration(
       _configuration(title: 'Welcome'),

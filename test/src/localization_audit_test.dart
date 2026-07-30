@@ -91,6 +91,67 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
+  test('package metadata uses reviewed product wording in every locale', () {
+    final desktop = File(
+      'linux/io.busystack.busymark.desktop',
+    ).readAsStringSync();
+    final metainfo = File(
+      'linux/io.busystack.busymark.metainfo.xml',
+    ).readAsStringSync();
+    const summaries = <String, String>{
+      'ar': 'محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside',
+      'de':
+          'Editor für Markdown-Dateien und Writerside-kompatible '
+          'Dokumentationsprojekte',
+      'es':
+          'Editor de archivos Markdown y proyectos de documentación '
+          'compatibles con Writerside',
+      'et':
+          'Markdowni failide ja Writerside’iga ühilduvate '
+          'dokumentatsiooniprojektide redaktor',
+      'fa':
+          'ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با '
+          'Writerside',
+      'fr':
+          'Éditeur de fichiers Markdown et de projets de documentation '
+          'compatibles avec Writerside',
+      'hi':
+          'Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का '
+          'संपादक',
+      'it':
+          'Editor per file Markdown e progetti di documentazione compatibili '
+          'con Writerside',
+      'nb':
+          'Redigerer for Markdown-filer og Writerside-kompatible '
+          'dokumentasjonsprosjekter',
+      'pl':
+          'Edytor plików Markdown i projektów dokumentacji zgodnych z '
+          'Writerside',
+      'pt':
+          'Editor de arquivos Markdown e projetos de documentação compatíveis '
+          'com o Writerside',
+      'ru':
+          'Редактор файлов Markdown и проектов документации, совместимых с '
+          'Writerside',
+      'uk':
+          'Редактор файлів Markdown і проєктів документації, сумісних із '
+          'Writerside',
+    };
+
+    for (final entry in summaries.entries) {
+      expect(
+        desktop,
+        contains('Comment[${entry.key}]=${entry.value}'),
+        reason: 'desktop ${entry.key}',
+      );
+      expect(
+        metainfo,
+        contains('<summary xml:lang="${entry.key}">${entry.value}</summary>'),
+        reason: 'AppStream ${entry.key}',
+      );
+    }
+  });
+
   test('target ARBs match the English messages and placeholders', () {
     final templateFile = File('lib/l10n/app_en.arb');
     final templateArb = _arbMessages(templateFile);

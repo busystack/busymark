@@ -20,20 +20,20 @@
   <name xml:lang="ar">BusyMark</name>
   <name xml:lang="fa">BusyMark</name>
   <name xml:lang="hi">BusyMark</name>
-  <summary>Markdown and Writerside-compatible documentation editor</summary>
-  <summary xml:lang="de">Dokumentationseditor für Markdown und Writerside-kompatible Projekte</summary>
+  <summary>Editor for Markdown files and Writerside-compatible documentation projects</summary>
+  <summary xml:lang="de">Editor für Markdown-Dateien und Writerside-kompatible Dokumentationsprojekte</summary>
   <summary xml:lang="et">Markdowni failide ja Writerside’iga ühilduvate dokumentatsiooniprojektide redaktor</summary>
-  <summary xml:lang="it">Editor per Markdown e progetti di documentazione compatibili con Writerside</summary>
-  <summary xml:lang="nb">Dokumentasjonsredigerer for Markdown og Writerside-kompatible prosjekter</summary>
-  <summary xml:lang="fr">Éditeur pour Markdown et les projets de documentation compatibles avec Writerside</summary>
-  <summary xml:lang="ru">Редактор Markdown-документации и проектов, совместимых с Writerside</summary>
-  <summary xml:lang="uk">Редактор документації Markdown і проєктів, сумісних із Writerside</summary>
-  <summary xml:lang="pl">Edytor dokumentacji Markdown i projektów zgodnych z Writerside</summary>
-  <summary xml:lang="es">Editor de documentación para Markdown y proyectos compatibles con Writerside</summary>
-  <summary xml:lang="pt">Editor de documentação para Markdown e projetos compatíveis com o Writerside</summary>
-  <summary xml:lang="ar">محرر وثائق Markdown ومشاريع توثيق متوافقة مع Writerside</summary>
-  <summary xml:lang="fa">ویرایشگر مستندات Markdown و پروژه‌های سازگار با Writerside</summary>
-  <summary xml:lang="hi">Markdown और Writerside-संगत दस्तावेज़ीकरण प्रोजेक्टों का संपादक</summary>
+  <summary xml:lang="it">Editor per file Markdown e progetti di documentazione compatibili con Writerside</summary>
+  <summary xml:lang="nb">Redigerer for Markdown-filer og Writerside-kompatible dokumentasjonsprosjekter</summary>
+  <summary xml:lang="fr">Éditeur de fichiers Markdown et de projets de documentation compatibles avec Writerside</summary>
+  <summary xml:lang="ru">Редактор файлов Markdown и проектов документации, совместимых с Writerside</summary>
+  <summary xml:lang="uk">Редактор файлів Markdown і проєктів документації, сумісних із Writerside</summary>
+  <summary xml:lang="pl">Edytor plików Markdown i projektów dokumentacji zgodnych z Writerside</summary>
+  <summary xml:lang="es">Editor de archivos Markdown y proyectos de documentación compatibles con Writerside</summary>
+  <summary xml:lang="pt">Editor de arquivos Markdown e projetos de documentação compatíveis com o Writerside</summary>
+  <summary xml:lang="ar">محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside</summary>
+  <summary xml:lang="fa">ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با Writerside</summary>
+  <summary xml:lang="hi">Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का संपादक</summary>
   <description>
     <p>BusyMark is a Linux editor for Markdown files and Writerside-compatible documentation projects.</p>
     <p xml:lang="de">BusyMark ist ein Linux-Editor für Markdown-Dateien und Writerside-kompatible Dokumentationsprojekte.</p>

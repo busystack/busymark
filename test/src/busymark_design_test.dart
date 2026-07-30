@@ -5,6 +5,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
@@ -16,6 +17,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  testWidgets(
+    'informational dialog keeps the close control at the right edge',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: const Color(0xFFB34CB4),
+          ),
+          home: const Scaffold(
+            body: BusyMarkInformationalDialog(
+              closeLabel: 'Close',
+              maxWidth: 460,
+              child: Text('Information'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final dialogRect = tester.getRect(find.byType(Dialog));
+      final closeRect = tester.getRect(find.byType(YaruWindowControl));
+      expect(closeRect.center.dx, greaterThan(dialogRect.center.dx));
+    },
+  );
+
   test('Split Preview stays fluid without copying Source-only chrome', () {
     const layout = BusyMarkDocumentLayoutSpec.splitPreview;
 
@@ -417,7 +444,12 @@ void main() {
       );
       final colors = theme.extension<BusyMarkSurfaceColors>()!;
       final floatingSide = BorderSide(color: colors.floatingBorder);
-      expect(theme.dialogTheme.shape, base.dialogTheme.shape);
+      final dialogSide = BorderSide(color: colors.dialogOutline);
+      _expectSameGeometryWithSide(
+        theme.dialogTheme.shape,
+        base.dialogTheme.shape,
+        dialogSide,
+      );
       _expectSameGeometryWithSide(
         theme.popupMenuTheme.shape,
         base.popupMenuTheme.shape,
@@ -571,6 +603,7 @@ void main() {
     expect(light.card, isNot(light.dialog));
     expect(light.groupedList, isNot(light.dialog));
     expect(light.control, const Color.fromRGBO(0, 0, 0, 0.10));
+    expect(light.dialogOutline, const Color.fromRGBO(255, 255, 255, 0.07));
     expect(light.floatingBorder, const Color.fromRGBO(0, 0, 0, 0.14));
     expect(light.controlHover, const Color.fromRGBO(0, 0, 0, 0.14));
     expect(light.controlActive, const Color.fromRGBO(0, 0, 0, 0.18));
@@ -589,6 +622,7 @@ void main() {
     expect(dark.card, isNot(dark.dialog));
     expect(dark.groupedList, isNot(dark.dialog));
     expect(dark.control, const Color.fromRGBO(255, 255, 255, 0.10));
+    expect(dark.dialogOutline, const Color.fromRGBO(255, 255, 255, 0.07));
     expect(dark.floatingBorder, const Color.fromRGBO(0, 0, 0, 0.14));
     expect(dark.controlHover, const Color.fromRGBO(255, 255, 255, 0.14));
     expect(dark.controlActive, const Color.fromRGBO(255, 255, 255, 0.18));

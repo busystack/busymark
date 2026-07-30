@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -155,6 +158,134 @@ void main() {
     await first;
     expect(barrierDepths, [1, 2, 1, 0]);
   });
+
+  testWidgets('serializes rapid manual native barrier transitions', (
+    tester,
+  ) async {
+    const channel = MethodChannel('com.busymark.test/serialized-modal-barrier');
+    final firstUpdate = Completer<void>();
+    final transitions = <int>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      if (call.method == 'initialize') {
+        return true;
+      }
+      if (call.method == 'setModalBarrierDepth') {
+        transitions.add(call.arguments as int);
+        if (transitions.length == 1) {
+          await firstUpdate.future;
+        }
+      }
+      return null;
+    });
+    addTearDown(() {
+      if (!firstUpdate.isCompleted) {
+        firstUpdate.complete();
+      }
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      );
+    });
+    final headerBar = LinuxHeaderBarService(channel: channel);
+    addTearDown(headerBar.dispose);
+    await headerBar.initialize();
+
+    final acquire = acquireBusyMarkModalBarrier(headerBar);
+    await tester.pump();
+    expect(transitions, [1]);
+
+    final release = releaseBusyMarkModalBarrier(headerBar);
+    await tester.pump();
+    expect(
+      transitions,
+      [1],
+      reason: 'the native hide must wait for the in-flight native show',
+    );
+
+    firstUpdate.complete();
+    await Future.wait([acquire, release]);
+    expect(transitions, [1, 0]);
+  });
+
+  testWidgets('failed native barrier acquisition rolls back and can retry', (
+    tester,
+  ) async {
+    final headerBar = _FailingModalBarrierService();
+    addTearDown(headerBar.dispose);
+
+    await expectLater(
+      acquireBusyMarkModalBarrier(headerBar),
+      throwsA(isA<StateError>()),
+    );
+    expect(headerBar.transitions, [1, 0]);
+
+    await acquireBusyMarkModalBarrier(headerBar);
+    await releaseBusyMarkModalBarrier(headerBar);
+    expect(headerBar.transitions, [1, 0, 1, 0]);
+  });
+
+  testWidgets('modal coordinator resolves the service from ProviderScope', (
+    tester,
+  ) async {
+    const channel = MethodChannel('com.busymark.test/automatic-modal-barrier');
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      calls.add(call);
+      return call.method == 'initialize' ? true : null;
+    });
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      );
+    });
+    final headerBar = LinuxHeaderBarService(channel: channel);
+    addTearDown(headerBar.dispose);
+    await headerBar.initialize();
+    late BuildContext hostContext;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [linuxHeaderBarServiceProvider.overrideWithValue(headerBar)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              hostContext = context;
+              return const Scaffold(body: SizedBox.expand());
+            },
+          ),
+        ),
+      ),
+    );
+
+    final result = showBusyMarkModalDialog<void>(
+      hostContext,
+      builder: (_) => const Text('Automatic barrier dialog'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      calls
+          .where((call) => call.method == 'setModalBarrierDepth')
+          .map((call) => call.arguments),
+      [1],
+    );
+
+    Navigator.of(hostContext, rootNavigator: true).pop();
+    await tester.pumpAndSettle();
+    await result;
+
+    expect(
+      calls
+          .where((call) => call.method == 'setModalBarrierDepth')
+          .map((call) => call.arguments),
+      [1, 0],
+    );
+  });
 }
 
 Future<void> _pressControlShortcut(
@@ -188,4 +319,18 @@ class _AppShortcutIntent extends Intent {
 
 class _DocumentViewShortcutIntent extends Intent {
   const _DocumentViewShortcutIntent();
+}
+
+class _FailingModalBarrierService extends LinuxHeaderBarService {
+  final transitions = <int>[];
+  var _failNextShow = true;
+
+  @override
+  Future<void> setModalBarrierDepth(int value) async {
+    transitions.add(value);
+    if (value > 0 && _failNextShow) {
+      _failNextShow = false;
+      throw StateError('simulated native modal-barrier failure');
+    }
+  }
 }

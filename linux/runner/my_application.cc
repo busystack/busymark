@@ -21,6 +21,7 @@ constexpr char kDefaultHeaderbarBackground[] = "#272727";
 constexpr char kDefaultSidebarBackground[] = "#393939";
 constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
 constexpr char kDefaultForeground[] = "#F7F7F7";
+constexpr char kDefaultModalBarrierColor[] = "rgba(0,0,0,0.25)";
 // Yaru GTK 3 adds a zero-blur 23%/75% black ring around CSD windows. Current
 // Ubuntu apps retain the diffuse shadow without that legacy hard edge. Reuse
 // Yaru's geometry here; Handy continues to own clipping, radii, and states.
@@ -466,6 +467,20 @@ static gboolean stop_modal_scrim_event(GtkWidget*, GdkEvent*, gpointer) {
   return GDK_EVENT_STOP;
 }
 
+static void close_header_menu_button(GtkWidget* menu_button) {
+  if (menu_button == nullptr || !GTK_IS_MENU_BUTTON(menu_button)) {
+    return;
+  }
+  GtkPopover* popover =
+      gtk_menu_button_get_popover(GTK_MENU_BUTTON(menu_button));
+  if (popover != nullptr && GTK_IS_POPOVER(popover)) {
+    gtk_popover_popdown(popover);
+  }
+  if (GTK_IS_TOGGLE_BUTTON(menu_button)) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(menu_button), FALSE);
+  }
+}
+
 static GtkTextDirection app_text_direction(MyApplication* self) {
   return self->text_direction_rtl ? GTK_TEXT_DIR_RTL : GTK_TEXT_DIR_LTR;
 }
@@ -578,7 +593,7 @@ static void refresh_header_bar_css(MyApplication* self) {
   const gchar* sidebar_border =
       css_color_or(self->sidebar_border_color, kDefaultSidebarBorder);
   g_autofree gchar* modal = modal_barrier_color_for_depth(
-      css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)"),
+      css_color_or(self->modal_barrier_color, kDefaultModalBarrierColor),
       self->modal_barrier_depth);
   const gchar* window_shadow_css = uses_legacy_yaru_window_shadow()
                                        ? kLegacyYaruWindowShadowCompatibilityCss
@@ -676,6 +691,26 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: alpha(currentColor, 0.19);"
       "background-image: none;"
       "}"
+      // Keep native controls visually enabled beneath the modal tint while
+      // removing transient hover and checked surfaces. The overlay below owns
+      // interaction blocking.
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:hover,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:active,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:checked,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:checked:hover,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:checked:active {"
+      "background-color: transparent;"
+      "background-image: none;"
+      "border-color: transparent;"
+      "box-shadow: none;"
+      "}"
       ".busymark-modal-scrim {"
       "background-color: %s;"
       "background-image: none;"
@@ -742,7 +777,8 @@ static void focus_flutter_view(MyApplication* self) {
 
 static void invoke_header_bar_action(MyApplication* self,
                                      const gchar* action) {
-  if (self->header_bar_channel == nullptr || action == nullptr) {
+  if (self->modal_barrier_visible ||
+      self->header_bar_channel == nullptr || action == nullptr) {
     return;
   }
   fl_method_channel_invoke_method(self->header_bar_channel, action, nullptr,
@@ -752,7 +788,8 @@ static void invoke_header_bar_action(MyApplication* self,
 static void invoke_header_bar_string_action(MyApplication* self,
                                             const gchar* action,
                                             const gchar* value) {
-  if (self->header_bar_channel == nullptr || action == nullptr) {
+  if (self->modal_barrier_visible ||
+      self->header_bar_channel == nullptr || action == nullptr) {
     return;
   }
   g_autoptr(FlValue) args = fl_value_new_string(value == nullptr ? "" : value);
@@ -763,7 +800,8 @@ static void invoke_header_bar_string_action(MyApplication* self,
 static void invoke_header_bar_bool_action(MyApplication* self,
                                           const gchar* action,
                                           gboolean value) {
-  if (self->header_bar_channel == nullptr || action == nullptr) {
+  if (self->modal_barrier_visible ||
+      self->header_bar_channel == nullptr || action == nullptr) {
     return;
   }
   g_autoptr(FlValue) args = fl_value_new_bool(value);
@@ -842,7 +880,7 @@ static void set_search_query(MyApplication* self, const gchar* query) {
 
 static void header_button_clicked_cb(GtkWidget* widget, gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions) {
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
     return;
   }
   const gchar* action = static_cast<const gchar*>(
@@ -863,7 +901,8 @@ static void connect_header_action(MyApplication* self,
 static void search_entry_changed_cb(GtkSearchEntry* entry,
                                     gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions || !self->search_active) {
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active) {
     return;
   }
   const gchar* query = gtk_entry_get_text(GTK_ENTRY(entry));
@@ -876,7 +915,8 @@ static void search_entry_changed_cb(GtkSearchEntry* entry,
 
 static void search_entry_activate_cb(GtkEntry* entry, gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions || !self->search_active) {
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active) {
     return;
   }
   invoke_header_bar_string_action(self, "searchSubmitted",
@@ -887,16 +927,20 @@ static void search_entry_activate_cb(GtkEntry* entry, gpointer user_data) {
 static gboolean search_entry_focus_in_cb(GtkWidget*,
                                          GdkEventFocus*,
                                          gpointer user_data) {
-  invoke_header_bar_bool_action(MY_APPLICATION(user_data),
-                                "searchFocusChanged", TRUE);
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (!self->modal_barrier_visible) {
+    invoke_header_bar_bool_action(self, "searchFocusChanged", TRUE);
+  }
   return FALSE;
 }
 
 static gboolean search_entry_focus_out_cb(GtkWidget*,
                                           GdkEventFocus*,
                                           gpointer user_data) {
-  invoke_header_bar_bool_action(MY_APPLICATION(user_data),
-                                "searchFocusChanged", FALSE);
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (!self->modal_barrier_visible) {
+    invoke_header_bar_bool_action(self, "searchFocusChanged", FALSE);
+  }
   return FALSE;
 }
 
@@ -905,7 +949,8 @@ static void search_entry_icon_release_cb(GtkEntry* entry,
                                          GdkEvent*,
                                          gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions || !self->search_active ||
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active ||
       icon_position != GTK_ENTRY_ICON_SECONDARY ||
       gtk_entry_get_text(entry)[0] == '\0') {
     return;
@@ -919,7 +964,8 @@ static void search_entry_icon_release_cb(GtkEntry* entry,
 
 static void search_entry_stop_search_cb(GtkSearchEntry*, gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions || !self->search_active) {
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active) {
     return;
   }
   invoke_header_bar_action(self, "searchEscapePressed");
@@ -1085,6 +1131,9 @@ static void header_gaction_activated_cb(GSimpleAction* action,
                                         GVariant* parameter,
                                         gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
+    return;
+  }
   const gchar* dart_action = static_cast<const gchar*>(
       g_object_get_data(G_OBJECT(action), "busymark-dart-action"));
   if (dart_action == nullptr) {
@@ -1097,11 +1146,14 @@ static void header_gaction_activated_cb(GSimpleAction* action,
 static void view_mode_gaction_activated_cb(GSimpleAction* action,
                                            GVariant* parameter,
                                            gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
+    return;
+  }
   if (parameter == nullptr ||
       !g_variant_is_of_type(parameter, G_VARIANT_TYPE_STRING)) {
     return;
   }
-  MyApplication* self = MY_APPLICATION(user_data);
   const gchar* mode = g_variant_get_string(parameter, nullptr);
   const gchar* dart_action = view_mode_dart_action(mode);
   if (dart_action == nullptr) {
@@ -1266,7 +1318,23 @@ static void set_modal_barrier_depth(MyApplication* self, gint64 depth) {
   self->modal_barrier_depth = effective_depth;
   self->modal_barrier_visible = visible;
   refresh_header_bar_css(self);
+  if (self->titlebar_box != nullptr &&
+      GTK_IS_WIDGET(self->titlebar_box)) {
+    GtkStyleContext* context =
+        gtk_widget_get_style_context(self->titlebar_box);
+    if (visible) {
+      gtk_style_context_add_class(context, "busymark-modal-open");
+    } else {
+      gtk_style_context_remove_class(context, "busymark-modal-open");
+    }
+  }
   set_widget_visible(self->modal_scrim, visible);
+  if (visible) {
+    close_header_menu_button(self->sidebar_menu_button);
+    close_header_menu_button(self->adaptive_menu_button);
+    close_header_menu_button(self->view_mode_button);
+    focus_flutter_view(self);
+  }
 }
 
 static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
@@ -1479,40 +1547,44 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   rebuild_main_menu_model(self, nullptr);
   rebuild_view_mode_menu_model(self, nullptr);
 
-  self->sidebar_header_box =
-      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  self->sidebar_header_box = gtk_overlay_new();
   gtk_widget_set_halign(self->sidebar_header_box, GTK_ALIGN_FILL);
   gtk_widget_set_hexpand(self->sidebar_header_box, FALSE);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_header_box),
                               "busymark-sidebar-header");
 
+  GtkWidget* sidebar_action_box =
+      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  gtk_widget_set_halign(sidebar_action_box, GTK_ALIGN_FILL);
+  gtk_widget_set_hexpand(sidebar_action_box, TRUE);
+  gtk_container_add(GTK_CONTAINER(self->sidebar_header_box),
+                    sidebar_action_box);
+
   self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
                               "busymark-sidebar-action-button");
   connect_header_action(self, self->sidebar_search_button, "search");
-  gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
+  gtk_box_pack_start(GTK_BOX(sidebar_action_box),
                      self->sidebar_search_button, FALSE, FALSE, 0);
 
-  GtkWidget* sidebar_title_box =
-      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  gtk_widget_set_hexpand(sidebar_title_box, TRUE);
-  gtk_widget_set_halign(sidebar_title_box, GTK_ALIGN_CENTER);
   self->sidebar_title_label = gtk_label_new(kApplicationDisplayName);
+  gtk_widget_set_halign(self->sidebar_title_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(self->sidebar_title_label, GTK_ALIGN_CENTER);
   gtk_label_set_ellipsize(GTK_LABEL(self->sidebar_title_label),
                           PANGO_ELLIPSIZE_END);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_title_label),
                               GTK_STYLE_CLASS_TITLE);
-  gtk_box_pack_start(GTK_BOX(sidebar_title_box), self->sidebar_title_label,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(self->sidebar_header_box), sidebar_title_box,
-                     TRUE, TRUE, 0);
+  gtk_overlay_add_overlay(GTK_OVERLAY(self->sidebar_header_box),
+                          self->sidebar_title_label);
+  gtk_overlay_set_overlay_pass_through(GTK_OVERLAY(self->sidebar_header_box),
+                                       self->sidebar_title_label, TRUE);
 
   self->sidebar_menu_button = create_model_menu_button(
       G_MENU_MODEL(self->main_menu_model), "open-menu-symbolic",
       &self->sidebar_menu);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
                               "busymark-sidebar-action-button");
-  gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
+  gtk_box_pack_end(GTK_BOX(sidebar_action_box),
                    self->sidebar_menu_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), self->sidebar_header_box,
                      FALSE, FALSE, 0);
@@ -1624,6 +1696,7 @@ static GtkWidget* create_busymark_titlebar_overlay(MyApplication* self) {
   // only the header backgrounds leaves descendant icons and button surfaces
   // above the scrim.
   self->modal_scrim = gtk_event_box_new();
+  gtk_event_box_set_visible_window(GTK_EVENT_BOX(self->modal_scrim), TRUE);
   gtk_widget_set_halign(self->modal_scrim, GTK_ALIGN_FILL);
   gtk_widget_set_valign(self->modal_scrim, GTK_ALIGN_FILL);
   gtk_widget_set_hexpand(self->modal_scrim, TRUE);
@@ -1632,6 +1705,7 @@ static GtkWidget* create_busymark_titlebar_overlay(MyApplication* self) {
   // HdyWindowHandle when the scrim becomes visible, making the header consume
   // the window's spare height.
   gtk_widget_set_vexpand(self->modal_scrim, FALSE);
+  gtk_widget_add_events(self->modal_scrim, GDK_ALL_EVENTS_MASK);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->modal_scrim),
                               "busymark-modal-scrim");
   // Keep the header subtree visually enabled beneath the modal tint. The

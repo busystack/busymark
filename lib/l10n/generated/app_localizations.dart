@@ -132,7 +132,7 @@ abstract class AppLocalizations {
   /// Short application description.
   ///
   /// In en, this message translates to:
-  /// **'Markdown and Writerside-compatible documentation editor.'**
+  /// **'Editor for Markdown files and Writerside-compatible documentation projects.'**
   String get appSubtitle;
 
   /// Menu item and tooltip for the About dialog.

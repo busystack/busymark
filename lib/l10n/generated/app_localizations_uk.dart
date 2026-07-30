@@ -15,7 +15,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'Редактор документації Markdown, сумісний із Writerside.';
+      'Редактор файлів Markdown і проєктів документації, сумісних із Writerside.';
 
   @override
   String get aboutBusyMark => 'Про BusyMark';

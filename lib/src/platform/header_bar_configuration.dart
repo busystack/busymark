@@ -111,16 +111,13 @@ class HeaderBarTheme {
 
   factory HeaderBarTheme.fromContext(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final barrier = Theme.of(
-      context,
-    ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
     return HeaderBarTheme(
       preferDark: Theme.of(context).brightness == Brightness.dark,
       backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       sidebarBorderColor: colors.sidebarBorder,
-      modalBarrierColor: barrier,
+      modalBarrierColor: colors.shade,
     );
   }
 

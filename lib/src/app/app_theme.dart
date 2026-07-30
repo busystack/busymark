@@ -113,6 +113,7 @@ ThemeData buildBusyMarkTheme({
         side: const WidgetStatePropertyAll(BorderSide.none),
       );
   final popoverSurfaceSide = BorderSide(color: colors.floatingBorder);
+  final dialogSurfaceSide = BorderSide(color: colors.dialogOutline);
   final menuStyle = _semanticMenuSurfaceStyle(
     base.menuTheme.style,
     color: colors.popover,
@@ -158,6 +159,8 @@ ThemeData buildBusyMarkTheme({
     dialogTheme: base.dialogTheme.copyWith(
       backgroundColor: colors.dialog,
       surfaceTintColor: colors.dialog,
+      shadowColor: colorScheme.shadow,
+      shape: _withOutlineSide(base.dialogTheme.shape, dialogSurfaceSide),
       titleTextStyle: textTheme.titleLarge,
       contentTextStyle: textTheme.bodyMedium,
     ),

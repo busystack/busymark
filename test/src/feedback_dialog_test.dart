@@ -4,7 +4,6 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/feedback/feedback_metadata.dart';
 import 'package:busymark/src/feedback/feedback_service.dart';
 import 'package:busymark/src/feedback/feedback_submission.dart';
@@ -341,14 +340,7 @@ Future<void> _pumpDialog(
           brightness: Brightness.light,
           accentColor: BusyMarkLinuxPalette.blueAccent,
         ),
-        home: Scaffold(
-          body: Center(
-            child: BusyMarkModalEditorSurface(
-              maxHeight: 840,
-              child: const BusyMarkFeedbackDialog(),
-            ),
-          ),
-        ),
+        home: Scaffold(body: Center(child: const BusyMarkFeedbackDialog())),
       ),
     ),
   );

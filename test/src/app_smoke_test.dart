@@ -12,7 +12,7 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -624,7 +624,7 @@ void main() {
       ),
     };
     final shortcutRowFinder = find.descendant(
-      of: find.byType(BusyMarkModalEditorSurface),
+      of: find.byType(BusyMarkInformationalDialog),
       matching: find.byType(BusyMarkActionRow),
     );
     final shortcutRows = tester

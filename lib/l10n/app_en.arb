@@ -2,7 +2,7 @@
   "@@locale": "en",
   "appTitle": "BusyMark",
   "@appTitle": {"description": "Application name."},
-  "appSubtitle": "Markdown and Writerside-compatible documentation editor.",
+  "appSubtitle": "Editor for Markdown files and Writerside-compatible documentation projects.",
   "@appSubtitle": {"description": "Short application description."},
   "aboutBusyMark": "About BusyMark",
   "@aboutBusyMark": {"description": "Menu item and tooltip for the About dialog."},

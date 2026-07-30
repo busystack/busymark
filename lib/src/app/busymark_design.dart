@@ -118,7 +118,6 @@ abstract final class BusyMarkStroke {
 }
 
 abstract final class BusyMarkAlpha {
-  static const double modalBarrier = 0.32;
   static const double textSelection = 0.32;
   static const double sourceCollapsedLine = 0.045;
   static const double sourceCursor = 0.82;
@@ -187,12 +186,12 @@ String busyMarkBidiIsolateFor(BuildContext context, Object value) {
 }
 
 abstract final class BusyMarkMotion {
-  static const Duration modalPadding = Duration(milliseconds: 100);
+  static const Duration dialogInsets = Duration(milliseconds: 160);
   static const Duration sidebarExpand = Duration(milliseconds: 120);
   static const Duration scroll = Duration(milliseconds: 180);
   static const Duration previewSearchDelay = Duration(milliseconds: 80);
   static const Duration tooltipWait = Duration(milliseconds: 450);
-  static const Curve modalPaddingCurve = Curves.decelerate;
+  static const Curve dialogInsetsCurve = Curves.easeOutCubic;
 }
 
 abstract final class BusyMarkInsets {
@@ -549,8 +548,9 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       border: const Color.fromRGBO(0, 0, 0, 0.18),
       subtleBorder: const Color.fromRGBO(0, 0, 0, 0.10),
       divider: const Color.fromRGBO(0, 0, 0, 0.10),
-      // Installed libadwaita uses the same subtle black perimeter in either
-      // brightness mode; opacity is part of the semantic role.
+      // Dialogs use libadwaita's restrained inside highlight. This is
+      // intentionally distinct from the darker popover perimeter.
+      dialogOutline: const Color.fromRGBO(255, 255, 255, 0.07),
       floatingBorder: const Color.fromRGBO(0, 0, 0, 0.14),
       sidebarBorder: sidebarBorder,
       shade: const Color.fromRGBO(0, 0, 0, 0.07),
@@ -581,6 +581,7 @@ BusyMarkSurfaceColors _busyMarkSemanticSurfaceColors(Brightness brightness) {
       border: const Color.fromRGBO(0, 0, 0, 0.75),
       subtleBorder: const Color.fromRGBO(255, 255, 255, 0.10),
       divider: const Color.fromRGBO(255, 255, 255, 0.10),
+      dialogOutline: const Color.fromRGBO(255, 255, 255, 0.07),
       floatingBorder: const Color.fromRGBO(0, 0, 0, 0.14),
       sidebarBorder: sidebarBorder,
       shade: const Color.fromRGBO(0, 0, 0, 0.25),
@@ -616,6 +617,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
     required this.border,
     required this.subtleBorder,
     required this.divider,
+    required this.dialogOutline,
     required this.floatingBorder,
     required this.sidebarBorder,
     required this.shade,
@@ -656,6 +658,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
   final Color border;
   final Color subtleBorder;
   final Color divider;
+  final Color dialogOutline;
   final Color floatingBorder;
   final Color sidebarBorder;
   final Color shade;
@@ -687,6 +690,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
     Color? border,
     Color? subtleBorder,
     Color? divider,
+    Color? dialogOutline,
     Color? floatingBorder,
     Color? sidebarBorder,
     Color? shade,
@@ -717,6 +721,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       border: border ?? this.border,
       subtleBorder: subtleBorder ?? this.subtleBorder,
       divider: divider ?? this.divider,
+      dialogOutline: dialogOutline ?? this.dialogOutline,
       floatingBorder: floatingBorder ?? this.floatingBorder,
       sidebarBorder: sidebarBorder ?? this.sidebarBorder,
       shade: shade ?? this.shade,
@@ -762,6 +767,7 @@ class BusyMarkSurfaceColors extends ThemeExtension<BusyMarkSurfaceColors> {
       border: Color.lerp(border, other.border, t)!,
       subtleBorder: Color.lerp(subtleBorder, other.subtleBorder, t)!,
       divider: Color.lerp(divider, other.divider, t)!,
+      dialogOutline: Color.lerp(dialogOutline, other.dialogOutline, t)!,
       floatingBorder: Color.lerp(floatingBorder, other.floatingBorder, t)!,
       sidebarBorder: Color.lerp(sidebarBorder, other.sidebarBorder, t)!,
       shade: Color.lerp(shade, other.shade, t)!,
@@ -1683,12 +1689,65 @@ class BusyMarkStatusBox extends StatelessWidget {
   }
 }
 
+Color busyMarkDialogSurfaceColor(BuildContext context) {
+  return DialogTheme.of(context).backgroundColor ??
+      BusyMarkSurfaceColors.of(context).dialog;
+}
+
+class BusyMarkDialogTitleBar extends StatelessWidget {
+  const BusyMarkDialogTitleBar({
+    super.key,
+    this.title,
+    this.centerTitle = true,
+    this.closeSemanticLabel,
+    this.closable = true,
+    this.showDividerInHighContrast = true,
+  });
+
+  final Widget? title;
+  final bool centerTitle;
+  final String? closeSemanticLabel;
+  final bool closable;
+  final bool showDividerInHighContrast;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final dialogSurface = busyMarkDialogSurfaceColor(context);
+    return Theme(
+      data: theme.copyWith(
+        appBarTheme: theme.appBarTheme.copyWith(
+          backgroundColor: dialogSurface,
+          surfaceTintColor: dialogSurface,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
+      ),
+      child: YaruDialogTitleBar(
+        title: title,
+        centerTitle: centerTitle,
+        isClosable: closable,
+        isActive: true,
+        backgroundColor: dialogSurface,
+        border: showDividerInHighContrast && theme.colorScheme.isHighContrast
+            ? BorderSide(color: colors.divider)
+            : BorderSide.none,
+        closeSemanticLabel: closeSemanticLabel,
+        heroTag: null,
+      ),
+    );
+  }
+}
+
 class BusyMarkDialogShell extends StatelessWidget {
   const BusyMarkDialogShell({
     super.key,
     required this.title,
     required this.children,
     this.maxWidth = BusyMarkSizes.dialog,
+    this.header,
     this.actions = const [],
     this.closable = true,
   });
@@ -1696,47 +1755,57 @@ class BusyMarkDialogShell extends StatelessWidget {
   final String title;
   final List<Widget> children;
   final double maxWidth;
+  final Widget? header;
   final List<Widget> actions;
   final bool closable;
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          YaruDialogTitleBar(
-            title: Text(title),
-            isClosable: closable,
-            centerTitle: true,
-            backgroundColor: colors.dialog,
-            border: BorderSide.none,
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: children,
+    final dialogSurface = busyMarkDialogSurfaceColor(context);
+    return Semantics(
+      scopesRoute: true,
+      namesRoute: true,
+      explicitChildNodes: true,
+      label: title,
+      child: Dialog(
+        backgroundColor: dialogSurface,
+        surfaceTintColor: dialogSurface,
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              header ??
+                  BusyMarkDialogTitleBar(
+                    title: Text(title),
+                    closable: closable,
+                  ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: children,
+                  ),
+                ),
               ),
-            ),
+              if (actions.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                  child: OverflowBar(
+                    alignment: MainAxisAlignment.end,
+                    overflowAlignment: OverflowBarAlignment.end,
+                    spacing: BusyMarkSpacing.sm,
+                    overflowSpacing: BusyMarkSpacing.sm,
+                    children: actions,
+                  ),
+                ),
+            ],
           ),
-          if (actions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-              child: OverflowBar(
-                alignment: MainAxisAlignment.end,
-                overflowAlignment: OverflowBarAlignment.end,
-                spacing: BusyMarkSpacing.sm,
-                overflowSpacing: BusyMarkSpacing.sm,
-                children: actions,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

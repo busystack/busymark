@@ -15,7 +15,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'Éditeur de documentation Markdown compatible avec Writerside.';
+      'Éditeur de fichiers Markdown et de projets de documentation compatibles avec Writerside.';
 
   @override
   String get aboutBusyMark => 'À propos de BusyMark';

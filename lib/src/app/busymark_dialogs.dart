@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../platform/linux_header_bar_service.dart';
 import 'app_metadata.dart';
+import 'busymark_dialog_identity.dart';
 import 'busymark_shortcuts.dart';
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
@@ -36,125 +38,168 @@ final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
     shortcut.activator: const DoNothingAndStopPropagationIntent(),
 };
 
+/// Prevents application navigation shortcuts from escaping a modal surface.
+///
+/// Use this around modal UI that is not presented by
+/// [showBusyMarkModalDialog], such as an in-page editor overlay.
+class BusyMarkModalShortcutBoundary extends StatelessWidget {
+  const BusyMarkModalShortcutBoundary({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shortcuts(shortcuts: _busyMarkModalShortcuts, child: child);
+  }
+}
+
+final _busyMarkModalDepths = Map<LinuxHeaderBarService, int>.identity();
+final _busyMarkModalBarrierUpdateTails =
+    Map<LinuxHeaderBarService, Future<void>>.identity();
+
 Color busyMarkModalBarrierColor(BuildContext context) {
-  return Theme.of(
-    context,
-  ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
+  return BusyMarkSurfaceColors.of(context).shade;
 }
 
 Future<T?> showBusyMarkModalDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   LinuxHeaderBarService? headerBarService,
+  Color? barrierColor,
   bool barrierDismissible = true,
 }) async {
-  final barrierColor = busyMarkModalBarrierColor(context);
   final effectiveHeaderBarService =
-      headerBarService ?? LinuxHeaderBarService.instance;
-  final coordinateNativeBarrier = effectiveHeaderBarService.isAvailable;
+      headerBarService ?? _busyMarkHeaderBarServiceFrom(context);
+  return _coordinateBusyMarkModal<T>(
+    context,
+    headerBarService: effectiveHeaderBarService,
+    showSurface: () => _showBusyMarkFlutterDialog<T>(
+      context,
+      builder: builder,
+      barrierColor: barrierColor,
+      barrierDismissible: barrierDismissible,
+    ),
+  );
+}
+
+Future<T?> _coordinateBusyMarkModal<T>(
+  BuildContext context, {
+  required LinuxHeaderBarService? headerBarService,
+  required Future<T?> Function() showSurface,
+}) async {
   final previousFocus = FocusManager.instance.primaryFocus;
-  if (coordinateNativeBarrier) {
-    await _BusyMarkModalBarrierCoordinator.acquire(effectiveHeaderBarService);
-  }
+  await acquireBusyMarkModalBarrier(headerBarService);
   if (!context.mounted) {
-    if (coordinateNativeBarrier) {
-      await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
-    }
+    await releaseBusyMarkModalBarrier(headerBarService);
     return null;
   }
   try {
-    return await showDialog<T>(
-      context: context,
-      barrierColor: barrierColor,
-      barrierDismissible: barrierDismissible,
-      traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
-      builder: (dialogContext) {
-        final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
-        final padding = EdgeInsets.fromLTRB(
-          viewInsets.left + BusyMarkSizes.modalHorizontalInset,
-          viewInsets.top + BusyMarkSizes.modalVerticalInset,
-          viewInsets.right + BusyMarkSizes.modalHorizontalInset,
-          viewInsets.bottom + BusyMarkSizes.modalVerticalInset,
-        );
-        return Shortcuts(
-          shortcuts: _busyMarkModalShortcuts,
-          child: AnimatedPadding(
-            padding: padding,
-            duration: BusyMarkMotion.modalPadding,
-            curve: BusyMarkMotion.modalPaddingCurve,
-            child: BusyMarkModalEditorSurface(child: builder(dialogContext)),
-          ),
-        );
-      },
-    );
+    return await showSurface();
   } finally {
-    if (coordinateNativeBarrier) {
-      await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
-    }
+    await releaseBusyMarkModalBarrier(headerBarService);
     if (previousFocus?.context != null && previousFocus!.canRequestFocus) {
       previousFocus.requestFocus();
     }
   }
 }
 
-class _BusyMarkModalBarrierCoordinator {
-  const _BusyMarkModalBarrierCoordinator._();
+Future<T?> _showBusyMarkFlutterDialog<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  Color? barrierColor,
+  bool barrierDismissible = true,
+}) {
+  return showDialog<T>(
+    context: context,
+    barrierColor: barrierColor ?? busyMarkModalBarrierColor(context),
+    barrierDismissible: barrierDismissible,
+    traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+    builder: (dialogContext) =>
+        BusyMarkModalShortcutBoundary(child: builder(dialogContext)),
+  );
+}
 
-  static final _activeDialogs = Map<LinuxHeaderBarService, int>.identity();
-  static final _pendingUpdates =
-      Map<LinuxHeaderBarService, Future<void>>.identity();
-
-  static Future<void> acquire(LinuxHeaderBarService service) async {
-    final depth = _activeDialogs[service] ?? 0;
-    final nextDepth = depth + 1;
-    _activeDialogs[service] = nextDepth;
-    final depthUpdate = _enqueueUpdate(service, depth: nextDepth);
-    try {
-      await depthUpdate;
-    } on Object catch (error, stackTrace) {
-      final remainingDepth = (_activeDialogs[service] ?? 0) - 1;
-      if (remainingDepth > 0) {
-        _activeDialogs[service] = remainingDepth;
-      } else {
-        _activeDialogs.remove(service);
-        try {
-          await _enqueueUpdate(service, depth: 0);
-        } on Object {
-          // Preserve the acquisition failure if its best-effort rollback fails.
-        }
-      }
-      Error.throwWithStackTrace(error, stackTrace);
-    }
+/// Acquires a reference-counted native header-bar modal barrier.
+///
+/// Every call must be paired with [releaseBusyMarkModalBarrier]. Route
+/// dialogs acquire it automatically.
+Future<void> acquireBusyMarkModalBarrier(LinuxHeaderBarService? service) async {
+  if (service == null) {
+    return;
   }
-
-  static Future<void> release(LinuxHeaderBarService service) async {
-    final depth = _activeDialogs[service] ?? 0;
-    if (depth <= 1) {
-      _activeDialogs.remove(service);
-      await _enqueueUpdate(service, depth: 0);
-      return;
-    }
-    final nextDepth = depth - 1;
-    _activeDialogs[service] = nextDepth;
-    await _enqueueUpdate(service, depth: nextDepth);
-  }
-
-  static Future<void> _enqueueUpdate(
-    LinuxHeaderBarService service, {
-    required int depth,
-  }) async {
-    final previous = _pendingUpdates[service] ?? Future<void>.value();
-    final update = previous
-        .catchError((Object _) {})
-        .then((_) => service.setModalBarrierDepth(depth));
-    _pendingUpdates[service] = update;
-    try {
-      await update;
-    } finally {
-      if (identical(_pendingUpdates[service], update)) {
-        _pendingUpdates.remove(service);
+  final depth = _busyMarkModalDepths[service] ?? 0;
+  final nextDepth = depth + 1;
+  _busyMarkModalDepths[service] = nextDepth;
+  final depthUpdate = _enqueueBusyMarkModalBarrierUpdate(
+    service,
+    depth: nextDepth,
+  );
+  try {
+    await depthUpdate;
+  } on Object catch (error, stackTrace) {
+    final remainingDepth = (_busyMarkModalDepths[service] ?? 0) - 1;
+    if (remainingDepth > 0) {
+      _busyMarkModalDepths[service] = remainingDepth;
+    } else {
+      _busyMarkModalDepths.remove(service);
+      try {
+        await _enqueueBusyMarkModalBarrierUpdate(service, depth: 0);
+      } on Object {
+        // Preserve the acquisition failure if its best-effort rollback fails.
       }
     }
+    Error.throwWithStackTrace(error, stackTrace);
+  }
+}
+
+/// Releases a barrier acquired by [acquireBusyMarkModalBarrier].
+Future<void> releaseBusyMarkModalBarrier(LinuxHeaderBarService? service) async {
+  if (service == null) {
+    return;
+  }
+  final depth = _busyMarkModalDepths[service] ?? 0;
+  if (depth <= 1) {
+    _busyMarkModalDepths.remove(service);
+    await _enqueueBusyMarkModalBarrierUpdate(service, depth: 0);
+    return;
+  }
+  final nextDepth = depth - 1;
+  _busyMarkModalDepths[service] = nextDepth;
+  await _enqueueBusyMarkModalBarrierUpdate(service, depth: nextDepth);
+}
+
+Future<void> _enqueueBusyMarkModalBarrierUpdate(
+  LinuxHeaderBarService service, {
+  required int depth,
+}) {
+  final previous =
+      _busyMarkModalBarrierUpdateTails[service] ?? Future<void>.value();
+  final ready = previous.then<void>(
+    (_) {},
+    onError: (Object _, StackTrace _) {},
+  );
+  late final Future<void> update;
+  update = ready.then((_) => service.setModalBarrierDepth(depth)).whenComplete(
+    () {
+      if (identical(_busyMarkModalBarrierUpdateTails[service], update)) {
+        _busyMarkModalBarrierUpdateTails.remove(service);
+      }
+    },
+  );
+  _busyMarkModalBarrierUpdateTails[service] = update;
+  return update;
+}
+
+LinuxHeaderBarService? _busyMarkHeaderBarServiceFrom(BuildContext context) {
+  try {
+    return ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(linuxHeaderBarServiceProvider);
+  } on StateError {
+    // Standalone widget hosts may not install Riverpod. Explicit injection
+    // remains available for those hosts.
+    return null;
   }
 }
 
@@ -162,25 +207,48 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
   const BusyMarkModalEditorSurface({
     super.key,
     required this.child,
-    this.maxWidth = BusyMarkSizes.modalMaxWidth,
+    this.minWidth = 0,
+    this.maxWidth = 700,
     this.maxHeight,
+    this.insetPadding = EdgeInsets.zero,
   });
 
   final Widget child;
+  final double minWidth;
   final double maxWidth;
   final double? maxHeight;
+  final EdgeInsets insetPadding;
 
   @override
   Widget build(BuildContext context) {
+    final editorSurface = Theme.of(context).scaffoldBackgroundColor;
+    final effectiveMaxWidth = maxWidth.isFinite
+        ? maxWidth.clamp(0.0, double.infinity).toDouble()
+        : maxWidth;
+    final effectiveMinWidth = minWidth
+        .clamp(
+          0.0,
+          effectiveMaxWidth.isFinite ? effectiveMaxWidth : double.infinity,
+        )
+        .toDouble();
+    final effectiveMaxHeight = maxHeight == null
+        ? double.infinity
+        : maxHeight!.clamp(0.0, double.infinity).toDouble();
+
     return Dialog(
-      insetPadding: EdgeInsets.zero,
+      backgroundColor: editorSurface,
+      surfaceTintColor: editorSurface,
+      insetPadding: insetPadding,
+      insetAnimationDuration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : BusyMarkMotion.dialogInsets,
+      insetAnimationCurve: BusyMarkMotion.dialogInsetsCurve,
+      clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: maxWidth,
-          maxHeight:
-              maxHeight ??
-              MediaQuery.sizeOf(context).height *
-                  BusyMarkSizes.modalMaxHeightFraction,
+          minWidth: effectiveMinWidth,
+          maxWidth: effectiveMaxWidth,
+          maxHeight: effectiveMaxHeight,
         ),
         child: child,
       ),
@@ -219,7 +287,8 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => _BusyMarkInfoDialog(
         title: context.l10n.keyboardShortcuts,
-        maxWidth: BusyMarkSizes.dialogNarrow,
+        icon: BusyMarkGlyphs.keyboard,
+        maxWidth: 460,
         children: [
           BusyMarkGroupedList(
             title: context.l10n.shortcutGroupGeneral,
@@ -762,6 +831,7 @@ void showBusyMarkMarkdownHtmlDialog(BuildContext context) {
       headerBarService: headerBar.isAvailable ? headerBar : null,
       builder: (context) => _BusyMarkInfoDialog(
         title: context.l10n.markdownAndHtml,
+        icon: BusyMarkGlyphs.markdownFile,
         maxWidth: BusyMarkSizes.dialogWide,
         children: [
           BusyMarkGroupedList(
@@ -1009,20 +1079,39 @@ class _ReferenceRow extends StatelessWidget {
 class _BusyMarkInfoDialog extends StatelessWidget {
   const _BusyMarkInfoDialog({
     required this.title,
+    required this.icon,
     required this.children,
-    this.maxWidth = 420,
+    this.maxWidth = 460,
   });
 
   final String title;
+  final IconData icon;
   final List<Widget> children;
   final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
-      title: title,
+    final colorScheme = Theme.of(context).colorScheme;
+    return BusyMarkInformationalDialog(
+      closeLabel: context.l10n.close,
       maxWidth: maxWidth,
-      children: children,
+      maxHeight: 560,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkDialogIdentity(
+            visual: Icon(
+              icon,
+              size: BusyMarkDialogIdentity.visualExtent,
+              color: colorScheme.primary,
+            ),
+            title: title,
+          ),
+          const SizedBox(height: BusyMarkSpacing.lg),
+          ...children,
+        ],
+      ),
     );
   }
 }
@@ -1034,56 +1123,56 @@ class _BusyMarkAboutDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final textTheme = Theme.of(context).textTheme;
-    return BusyMarkDialogShell(
-      title: context.l10n.aboutBusyMark,
-      maxWidth: BusyMarkSizes.dialogCompact,
-      children: [
-        _BusyMarkAboutLogo(label: context.l10n.appTitle),
-        const SizedBox(height: BusyMarkSpacing.xs),
-        Text(
-          context.l10n.appTitle,
-          textAlign: TextAlign.center,
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colors.foreground,
+    return BusyMarkInformationalDialog(
+      closeLabel: context.l10n.close,
+      maxWidth: 420,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkDialogIdentity(
+            visual: _BusyMarkAboutLogo(label: context.l10n.appTitle),
+            title: context.l10n.appTitle,
           ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.xs),
-        Text(
-          context.l10n.aboutTagline,
-          textAlign: TextAlign.center,
-          style: textTheme.bodyMedium?.copyWith(color: colors.mutedForeground),
-        ),
-        const SizedBox(height: BusyMarkSpacing.sm),
-        const _AboutVersionTag(version: busyMarkAppVersion),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            BusyMarkActionRow(
-              title: context.l10n.aboutLicenseLabel,
-              subtitle: context.l10n.aboutLicenseName,
-              leading: const Icon(BusyMarkGlyphs.info),
-              trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openApacheLicense()),
+          const SizedBox(height: BusyMarkSpacing.xs),
+          Text(
+            context.l10n.aboutTagline,
+            textAlign: TextAlign.center,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colors.mutedForeground,
             ),
-            BusyMarkActionRow(
-              title: context.l10n.aboutWebsite,
-              subtitle: _busyMarkWebsiteUrl,
-              leading: const Icon(BusyMarkGlyphs.home),
-              trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openBusyMarkWebsite()),
-            ),
-            BusyMarkActionRow(
-              title: context.l10n.aboutSourceCode,
-              subtitle: _busyMarkRepositoryUrl,
-              leading: const Icon(BusyMarkGlyphs.code),
-              trailing: const Icon(BusyMarkGlyphs.externalLink),
-              onTap: () => unawaited(_openBusyMarkRepository()),
-            ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: BusyMarkSpacing.sm),
+          const _AboutVersionTag(version: busyMarkAppVersion),
+          const SizedBox(height: BusyMarkSpacing.md),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: context.l10n.aboutLicenseLabel,
+                subtitle: context.l10n.aboutLicenseName,
+                leading: const Icon(BusyMarkGlyphs.info),
+                trailing: const Icon(BusyMarkGlyphs.externalLink),
+                onTap: () => unawaited(_openApacheLicense()),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.aboutWebsite,
+                subtitle: _busyMarkWebsiteUrl,
+                leading: const Icon(BusyMarkGlyphs.home),
+                trailing: const Icon(BusyMarkGlyphs.externalLink),
+                onTap: () => unawaited(_openBusyMarkWebsite()),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.aboutSourceCode,
+                subtitle: _busyMarkRepositoryUrl,
+                leading: const Icon(BusyMarkGlyphs.code),
+                trailing: const Icon(BusyMarkGlyphs.externalLink),
+                onTap: () => unawaited(_openBusyMarkRepository()),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1101,7 +1190,7 @@ class _BusyMarkAboutLogo extends StatelessWidget {
         label: label,
         child: ExcludeSemantics(
           child: SizedBox.square(
-            dimension: BusyMarkSizes.aboutLogoViewport,
+            dimension: BusyMarkDialogIdentity.visualExtent,
             child: SvgPicture.asset(_busyMarkLogoAsset, fit: BoxFit.contain),
           ),
         ),

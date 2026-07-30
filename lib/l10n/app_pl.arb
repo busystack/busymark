@@ -29,7 +29,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "Edytor dokumentacji Markdown zgodny z Writerside.",
+  "appSubtitle": "Edytor plików Markdown i projektów dokumentacji zgodnych z Writerside.",
   "@appSubtitle": {
     "description": "Short application description."
   },

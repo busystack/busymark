@@ -214,6 +214,9 @@ class LinuxHeaderBarService extends ChangeNotifier {
   }
 
   Future<void> setModalBarrierDepth(int value) async {
+    if (!_available) {
+      return;
+    }
     final depth = value < 0 ? 0 : value;
     final hasPublishedConfiguration =
         configurationSynchronizer.desiredConfiguration != null;

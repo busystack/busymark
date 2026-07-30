@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -19,6 +18,7 @@ void main() {
       sidebar: Color(0xFFEBEBEB),
       card: Color(0xFFFFFFFF),
       popover: Color(0xFFFAFAFA),
+      dialogOutline: Color.fromRGBO(255, 255, 255, 0.07),
       floatingBorder: Color.fromRGBO(0, 0, 0, 0.14),
     ),
     _SurfaceBaseline(
@@ -29,6 +29,7 @@ void main() {
       sidebar: Color(0xFF393939),
       card: Color(0xFF3D3D3D),
       popover: Color(0xFF3E3E3E),
+      dialogOutline: Color.fromRGBO(255, 255, 255, 0.07),
       floatingBorder: Color.fromRGBO(0, 0, 0, 0.14),
     ),
   ]) {
@@ -108,29 +109,25 @@ void main() {
                             ),
                           ),
                         ),
-                        BusyMarkModalEditorSurface(
+                        BusyMarkDialogShell(
+                          title: 'Palette',
                           maxWidth: 320,
-                          maxHeight: 260,
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox.square(
-                                  key: dialogProbe,
-                                  dimension: 16,
-                                ),
-                                const SizedBox(height: 24),
-                                BusyMarkGroupedSurface(
-                                  child: SizedBox(
-                                    key: cardProbe,
-                                    width: 180,
-                                    height: 72,
-                                  ),
-                                ),
-                              ],
+                          children: [
+                            Center(
+                              child: SizedBox.square(
+                                key: dialogProbe,
+                                dimension: 16,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 24),
+                            BusyMarkGroupedSurface(
+                              child: SizedBox(
+                                key: cardProbe,
+                                width: 180,
+                                height: 72,
+                              ),
+                            ),
+                          ],
                         ),
                         Positioned(
                           right: 24,
@@ -163,6 +160,14 @@ void main() {
             ),
           ),
         );
+        final dialogMaterial = find.ancestor(
+          of: find.byKey(dialogProbe),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Material && widget.shape == theme.dialogTheme.shape,
+          ),
+        );
+        expect(dialogMaterial, findsOneWidget);
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(popupButtonKey));
         await tester.pumpAndSettle();
@@ -184,6 +189,18 @@ void main() {
         expect(_pixelAtProbe(tester, pixels, dialogProbe), baseline.dialog);
         expect(_pixelAtProbe(tester, pixels, cardProbe), baseline.card);
         expect(_pixelAtProbe(tester, pixels, popoverProbe), baseline.popover);
+        final dialogSize = tester.getSize(dialogMaterial);
+        final dialogEdge = _pixelAtLocal(
+          tester,
+          pixels,
+          dialogMaterial,
+          Offset(0.5, dialogSize.height / 2),
+        );
+        final expectedDialogEdge = Color.alphaBlend(
+          baseline.dialogOutline,
+          baseline.dialog,
+        );
+        _expectColorNear(dialogEdge, expectedDialogEdge, tolerance: 3);
         final popupSize = tester.getSize(popupMaterial);
         final popupEdge = _pixelAtLocal(
           tester,
@@ -214,6 +231,7 @@ class _SurfaceBaseline {
     required this.sidebar,
     required this.card,
     required this.popover,
+    required this.dialogOutline,
     required this.floatingBorder,
   });
 
@@ -224,6 +242,7 @@ class _SurfaceBaseline {
   final Color sidebar;
   final Color card;
   final Color popover;
+  final Color dialogOutline;
   final Color floatingBorder;
 }
 

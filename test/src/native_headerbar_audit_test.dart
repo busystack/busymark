@@ -568,6 +568,22 @@ void main() {
     expect(native, contains('"font-weight: 800;"'));
     expect(native, contains('".busymark-sidebar-header label:backdrop {"'));
     expect(native, contains('kHeaderBackdropForegroundOpacity = 0.50'));
+    expect(native, contains('self->sidebar_header_box = gtk_overlay_new()'));
+    expect(native, contains('GtkWidget* sidebar_action_box ='));
+    expect(
+      native,
+      contains(
+        'gtk_overlay_add_overlay(GTK_OVERLAY(self->sidebar_header_box),',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_overlay_set_overlay_pass_through('
+        'GTK_OVERLAY(self->sidebar_header_box),',
+      ),
+    );
+    expect(native, isNot(contains('GtkWidget* sidebar_title_box =')));
     final headerbarBlock = RegExp(
       r'"headerbar\.busymark-headerbar,"(.*?)"\}',
       dotAll: true,

@@ -15,7 +15,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get appSubtitle =>
-      'ویرایشگر مستندات Markdown و پروژه‌های سازگار با Writerside.';
+      'ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با Writerside.';
 
   @override
   String get aboutBusyMark => 'دربارهٔ BusyMark';

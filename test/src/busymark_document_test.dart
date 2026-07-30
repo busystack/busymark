@@ -3734,7 +3734,7 @@ void main() {}
       expect(find.byType(TextFormField), findsNWidgets(2));
       expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
       expect(find.byType(AlertDialog), findsNothing);
-      final dialogRect = tester.getRect(find.byType(BusyMarkDialogShell));
+      final dialogRect = tester.getRect(find.byType(BusyMarkDialogTitleBar));
       final sourceEntryRect = tester.getRect(
         find.byKey(BusyMarkImageDialogKeys.source),
       );

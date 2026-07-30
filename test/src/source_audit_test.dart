@@ -199,14 +199,19 @@ void main() {
 
   test('BusyMark dialog title bars use the same surface as dialog body', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final dialogChrome = RegExp(
+      r'Color busyMarkDialogSurfaceColor[\s\S]*?class BusyMarkDialogShell',
+    ).firstMatch(design)!.group(0)!;
     final dialogShell = RegExp(
-      r'class BusyMarkDialogShell[\s\S]*?class SectionLabel',
+      r'class BusyMarkDialogShell[\s\S]*?abstract final class BusyMarkPushButton',
     ).firstMatch(design)!.group(0)!;
 
-    expect(dialogShell, contains('final colors = BusyMarkSurfaceColors.of'));
-    expect(dialogShell, contains('YaruDialogTitleBar('));
-    expect(dialogShell, contains('backgroundColor: colors.dialog'));
-    expect(dialogShell, contains('border: BorderSide.none'));
+    expect(dialogChrome, contains('busyMarkDialogSurfaceColor(context)'));
+    expect(dialogChrome, contains('YaruDialogTitleBar('));
+    expect(dialogChrome, contains('backgroundColor: dialogSurface'));
+    expect(dialogChrome, contains('border:'));
+    expect(dialogShell, contains('child: Dialog('));
+    expect(dialogShell, contains('clipBehavior: Clip.antiAlias'));
   });
 
   test('BusyMark dialog buttons are thin semantic framework adapters', () {
@@ -379,16 +384,21 @@ void main() {
       expect(design, contains('groupedList: groupedList'));
       expect(design, contains('dialog: floatingSurface'));
       expect(design, contains('popover: floatingSurface'));
+      expect(design, contains('dialogOutline:'));
+      expect(
+        theme,
+        contains(
+          'final dialogSurfaceSide = '
+          'BorderSide(color: colors.dialogOutline)',
+        ),
+      );
       expect(theme, contains('ShapeBorder? _withOutlineSide'));
       expect(
         theme,
         isNot(contains('final accentContainer = Color.alphaBlend')),
       );
       expect(theme, isNot(contains('selectedTileColor: accentContainer')));
-      expect(
-        theme,
-        isNot(contains('shape: _withOutlineSide(base.dialogTheme.shape')),
-      );
+      expect(theme, contains('shape: _withOutlineSide(base.dialogTheme.shape'));
       expect(theme, contains('_withOutlineSide(base.popupMenuTheme.shape'));
       expect(theme, contains('side: WidgetStatePropertyAll(side)'));
       expect(theme, contains('surfaceContainerLowest: colors.view'));
