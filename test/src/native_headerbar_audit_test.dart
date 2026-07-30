@@ -326,7 +326,7 @@ void main() {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
-    expect(configuration, contains('preferDark: Theme.of(context).brightness'));
+    expect(configuration, contains('preferDark: theme.brightness'));
     expect(configuration, contains("'preferDark': preferDark"));
     expect(native, contains('static void set_gtk_theme_preference'));
     expect(native, contains('gtk_settings_get_default()'));
@@ -488,9 +488,9 @@ void main() {
       expect(
         native,
         contains(
-          '".busymark-titlebar .busymark-sidebar-header,"'
+          '".busymark-sidebar-header,"'
           '\n      '
-          '".busymark-titlebar .busymark-sidebar-header:backdrop {"',
+          '".busymark-sidebar-header:backdrop {"',
         ),
       );
       expect(
@@ -539,10 +539,11 @@ void main() {
     expect(css, contains('background-color: alpha(currentColor, 0.07)'));
     expect(css, contains('background-color: alpha(currentColor, 0.16)'));
     expect(css, contains('background-color: alpha(currentColor, 0.10)'));
-    expect(css, isNot(contains('popover.background')));
+    expect(css, contains('popover.background.'));
+    expect(css, contains('modelbutton:hover:not(:disabled)'));
+    expect(css, contains('box-shadow: 0 1px 3px'));
     for (final interactionSelector in <String>[
       'button.',
-      'modelbutton',
       'tooltip',
       ':focus',
       '@define-color',
@@ -563,8 +564,9 @@ void main() {
     expect(configuration, contains('backgroundColor: colors.view'));
     expect(configuration, contains('sidebarBackgroundColor: colors.sidebar'));
     expect(configuration, contains('foregroundColor: colors.foreground'));
+    expect(configuration, contains('popoverBackgroundColor: colors.popover'));
+    expect(configuration, contains('menuHoverColor: colors.controlHover'));
     expect(configuration, isNot(contains('borderColor')));
-    expect(configuration, isNot(contains('popoverBackgroundColor')));
     expect(configuration, isNot(contains('floatingBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#272727"'));
     expect(native, contains('kDefaultSidebarBackground[] = "#393939"'));
@@ -573,52 +575,62 @@ void main() {
       native,
       contains('fl_lookup_string_arg(args, "sidebarBorderColor")'),
     );
+    expect(
+      native,
+      contains('fl_lookup_string_arg(args, "popoverBackgroundColor")'),
+    );
+    expect(native, contains('fl_lookup_string_arg(args, "menuHoverColor")'));
+    expect(
+      native,
+      contains('fl_lookup_string_arg(args, "popoverShadowColor")'),
+    );
     expect(native, isNot(contains('"floatingBorderColor"')));
-    expect(native, isNot(contains('"popoverBackgroundColor"')));
     expect(
       native,
       contains(
         'css_color_or(self->sidebar_border_color, kDefaultSidebarBorder)',
       ),
     );
-    expect(native, isNot(contains('busymark-header-popover')));
+    expect(native, contains('kNativePopoverStyleClass'));
+    expect(native, contains('kHeaderMenuDepthStyleClass'));
+    expect(native, contains('style_header_menu_popover(GTK_WIDGET(popover))'));
+    expect(native, contains('style_native_popover(session->popover)'));
     expect(
       native,
       contains('gtk_popover_set_position(popover, GTK_POS_BOTTOM)'),
     );
-    expect(
-      native,
-      contains('".busymark-titlebar .busymark-sidebar-header:backdrop {"'),
-    );
+    expect(native, contains('".busymark-sidebar-header:backdrop {"'));
     expect(native, contains('background-color: %s;'));
-    expect(
-      native,
-      contains('".busymark-titlebar .busymark-sidebar-header label {"'),
-    );
+    expect(native, contains('".busymark-sidebar-header label {"'));
     expect(native, contains('"font-weight: 800;"'));
-    expect(
-      native,
-      contains(
-        '".busymark-titlebar .busymark-sidebar-header label:backdrop {"',
-      ),
-    );
+    expect(native, contains('".busymark-sidebar-header label:backdrop {"'));
     expect(native, contains('kHeaderBackdropForegroundOpacity = 0.50'));
-    expect(native, contains('self->sidebar_header_box = gtk_overlay_new()'));
-    expect(native, contains('GtkWidget* sidebar_action_box ='));
     expect(
       native,
       contains(
-        'gtk_overlay_add_overlay(GTK_OVERLAY(self->sidebar_header_box),',
+        'self->sidebar_header_box =\n'
+        '      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing)',
+      ),
+    );
+    expect(native, contains('GtkWidget* sidebar_title_box ='));
+    expect(
+      native,
+      contains(
+        'gtk_box_pack_start(GTK_BOX(self->sidebar_header_box), '
+        'sidebar_title_box,',
       ),
     );
     expect(
       native,
+      isNot(contains('self->sidebar_header_box = gtk_overlay_new()')),
+    );
+    expect(
+      native,
       contains(
-        'gtk_overlay_set_overlay_pass_through('
-        'GTK_OVERLAY(self->sidebar_header_box),',
+        'gtk_widget_get_style_context(self->titlebar_handle),\n'
+        '      "busymark-titlebar"',
       ),
     );
-    expect(native, isNot(contains('GtkWidget* sidebar_title_box =')));
     final headerbarBlock = RegExp(
       r'"headerbar\.busymark-headerbar,"(.*?)"\}',
       dotAll: true,
@@ -630,15 +642,9 @@ void main() {
     expect(headerbarBlock, isNot(contains('border-radius')));
     expect(headerbarBlock, isNot(contains('"padding-left: 0;"')));
     expect(headerbarBlock, isNot(contains('"padding-right: 0;"')));
-    expect(
-      native,
-      contains('".busymark-titlebar .busymark-sidebar-header:dir(ltr) {"'),
-    );
+    expect(native, contains('".busymark-sidebar-header:dir(ltr) {"'));
     expect(native, contains('"border-right: 1px solid %s;"'));
-    expect(
-      native,
-      contains('".busymark-titlebar .busymark-sidebar-header:dir(rtl) {"'),
-    );
+    expect(native, contains('".busymark-sidebar-header:dir(rtl) {"'));
     expect(native, contains('"border-left: 1px solid %s;"'));
     expect(native, contains('".busymark-modal-scrim {"'));
     expect(native, contains('create_busymark_titlebar_overlay'));
@@ -1232,7 +1238,7 @@ void main() {
     }
     expect(native, contains('view_mode_icon_name(mode)'));
     expect(native, contains('view_mode_icon_name("split")'));
-    expect(native, isNot(contains('modelbutton:hover')));
+    expect(native, contains('modelbutton:hover:not(:disabled)'));
     expect(native, isNot(contains('modelbutton:focus')));
     expect(native, isNot(contains('modelbutton:active')));
     expect(native, isNot(contains('outline-width: 0;')));

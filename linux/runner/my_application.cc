@@ -22,6 +22,7 @@ constexpr char kDefaultHeaderbarBackground[] = "#272727";
 constexpr char kDefaultSidebarBackground[] = "#393939";
 constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
 constexpr char kDefaultForeground[] = "#F7F7F7";
+constexpr char kDefaultHeaderMenuShadowColor[] = "rgba(0,0,0,0.3)";
 constexpr char kDefaultModalBarrierColor[] = "rgba(0,0,0,0.25)";
 // Yaru GTK 3 adds a zero-blur 23%/75% black ring around CSD windows. Current
 // Ubuntu apps retain the diffuse shadow without that legacy hard edge. Reuse
@@ -56,6 +57,9 @@ constexpr char kMenuAcceleratorAttribute[] = "x-busymark-accelerator";
 constexpr char kMenuIconAttribute[] = "x-busymark-icon";
 constexpr char kModelButtonAcceleratorKey[] =
     "busymark-model-button-accelerator";
+constexpr char kNativePopoverStyleClass[] = "busymark-native-popover";
+constexpr char kHeaderMenuDepthStyleClass[] =
+    "busymark-header-menu-depth";
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -101,6 +105,9 @@ struct _MyApplication {
   gchar* sidebar_background_color;
   gchar* foreground_color;
   gchar* sidebar_border_color;
+  gchar* popover_background_color;
+  gchar* popover_shadow_color;
+  gchar* menu_hover_color;
   gchar* modal_barrier_color;
   gint sidebar_width;
   gboolean sidebar_visible;
@@ -136,6 +143,23 @@ struct HeaderBarConfiguration {
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+static void style_native_popover(GtkWidget* popover) {
+  if (popover == nullptr || !GTK_IS_POPOVER(popover)) {
+    return;
+  }
+  gtk_style_context_add_class(gtk_widget_get_style_context(popover),
+                              kNativePopoverStyleClass);
+}
+
+static void style_header_menu_popover(GtkWidget* popover) {
+  style_native_popover(popover);
+  if (popover == nullptr || !GTK_IS_POPOVER(popover)) {
+    return;
+  }
+  gtk_style_context_add_class(gtk_widget_get_style_context(popover),
+                              kHeaderMenuDepthStyleClass);
+}
 
 static GdkPixbuf* load_application_icon_at_size(gint size) {
   g_autofree gchar* executable_path =
@@ -598,10 +622,49 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->foreground_color, kDefaultForeground);
   const gchar* sidebar_border =
       css_color_or(self->sidebar_border_color, kDefaultSidebarBorder);
+  const gboolean use_legacy_yaru_compatibility =
+      uses_legacy_yaru_window_shadow();
+  g_autofree gchar* native_popover_css =
+      is_css_color_token(self->popover_background_color)
+          ? g_strdup_printf(
+                "popover.background.%s,"
+                "popover.background.%s:backdrop {"
+                "background-color: %s;"
+                "background-image: none;"
+                "}",
+                kNativePopoverStyleClass, kNativePopoverStyleClass,
+                self->popover_background_color)
+          : g_strdup("");
+  g_autofree gchar* native_menu_state_css =
+      is_css_color_token(self->menu_hover_color)
+          ? g_strdup_printf(
+                "popover.background.%s "
+                "modelbutton:hover:not(:disabled) {"
+                "background-color: %s;"
+                "background-image: none;"
+                "}"
+                "popover.background.%s "
+                "row:hover:not(:disabled) {"
+                "background-color: %s;"
+                "background-image: none;"
+                "}",
+                kNativePopoverStyleClass, self->menu_hover_color,
+                kNativePopoverStyleClass, self->menu_hover_color)
+          : g_strdup("");
+  g_autofree gchar* header_menu_shadow_css =
+      use_legacy_yaru_compatibility
+          ? g_strdup_printf(
+                "popover.background.%s.%s:not(:backdrop) {"
+                "box-shadow: 0 1px 3px %s;"
+                "}",
+                kNativePopoverStyleClass, kHeaderMenuDepthStyleClass,
+                css_color_or(self->popover_shadow_color,
+                             kDefaultHeaderMenuShadowColor))
+          : g_strdup("");
   g_autofree gchar* modal = modal_barrier_color_for_depth(
       css_color_or(self->modal_barrier_color, kDefaultModalBarrierColor),
       self->modal_barrier_depth);
-  const gchar* window_shadow_css = uses_legacy_yaru_window_shadow()
+  const gchar* window_shadow_css = use_legacy_yaru_compatibility
                                        ? kLegacyYaruWindowShadowCompatibilityCss
                                        : "";
 
@@ -617,6 +680,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}"
+      "%s"
+      "%s"
+      "%s"
       "%s"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop {"
@@ -640,25 +706,25 @@ static void refresh_header_bar_css(MyApplication* self) {
       "headerbar.busymark-headerbar:dir(rtl) {"
       "padding-right: 0;"
       "}"
-      ".busymark-titlebar .busymark-sidebar-header,"
-      ".busymark-titlebar .busymark-sidebar-header:backdrop {"
+      ".busymark-sidebar-header,"
+      ".busymark-sidebar-header:backdrop {"
       "background-color: %s;"
       "background-image: none;"
       "color: %s;"
       "border: none;"
       "box-shadow: none;"
       "}"
-      ".busymark-titlebar .busymark-sidebar-header label {"
+      ".busymark-sidebar-header label {"
       "color: %s;"
       "font-weight: 800;"
       "}"
-      ".busymark-titlebar .busymark-sidebar-header label:backdrop {"
+      ".busymark-sidebar-header label:backdrop {"
       "color: alpha(%s, %.2f);"
       "}"
-      ".busymark-titlebar .busymark-sidebar-header:dir(ltr) {"
+      ".busymark-sidebar-header:dir(ltr) {"
       "border-right: 1px solid %s;"
       "}"
-      ".busymark-titlebar .busymark-sidebar-header:dir(rtl) {"
+      ".busymark-sidebar-header:dir(rtl) {"
       "border-left: 1px solid %s;"
       "}"
       // Legacy Yaru GTK 3 uses an absolute near-black image for active and
@@ -722,8 +788,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}",
-      background, window_shadow_css, background, foreground, background,
-      foreground, sidebar_background, foreground, foreground, foreground,
+      background, window_shadow_css, native_popover_css, native_menu_state_css,
+      header_menu_shadow_css, background, foreground, background, foreground,
+      sidebar_background, foreground, foreground, foreground,
       kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border, modal);
 
   g_autoptr(GError) error = nullptr;
@@ -771,6 +838,13 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
   replace_css_color_field(
       &self->sidebar_border_color,
       fl_lookup_string_arg(args, "sidebarBorderColor"));
+  replace_css_color_field(
+      &self->popover_background_color,
+      fl_lookup_string_arg(args, "popoverBackgroundColor"));
+  replace_css_color_field(&self->popover_shadow_color,
+                          fl_lookup_string_arg(args, "popoverShadowColor"));
+  replace_css_color_field(&self->menu_hover_color,
+                          fl_lookup_string_arg(args, "menuHoverColor"));
   replace_css_color_field(&self->modal_barrier_color,
                           fl_lookup_string_arg(args, "modalBarrierColor"));
   refresh_header_bar_css(self);
@@ -1382,6 +1456,7 @@ static GtkWidget* create_model_menu_button(GMenuModel* model,
   make_icon_button_square(button);
   GtkPopover* popover = gtk_menu_button_get_popover(GTK_MENU_BUTTON(button));
   if (popover != nullptr) {
+    style_header_menu_popover(GTK_WIDGET(popover));
     gtk_popover_set_position(popover, GTK_POS_BOTTOM);
     decorate_model_menu_accelerators(GTK_WIDGET(popover), model);
     if (popover_out != nullptr) {
@@ -1699,26 +1774,29 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   rebuild_main_menu_model(self, nullptr);
   rebuild_view_mode_menu_model(self, nullptr);
 
-  self->sidebar_header_box = gtk_overlay_new();
+  // An ordinary GtkBox owns the complete painted sidebar-brand allocation.
+  // GtkOverlay can leave its own background node transparent under some GTK
+  // 3/Yaru combinations, which exposed the main headerbar color even though
+  // Dart supplied the sidebar color.
+  self->sidebar_header_box =
+      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   gtk_widget_set_halign(self->sidebar_header_box, GTK_ALIGN_FILL);
   gtk_widget_set_hexpand(self->sidebar_header_box, FALSE);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_header_box),
                               "busymark-sidebar-header");
 
-  GtkWidget* sidebar_action_box =
-      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  gtk_widget_set_halign(sidebar_action_box, GTK_ALIGN_FILL);
-  gtk_widget_set_hexpand(sidebar_action_box, TRUE);
-  gtk_container_add(GTK_CONTAINER(self->sidebar_header_box),
-                    sidebar_action_box);
-
   self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
                               "busymark-sidebar-action-button");
   connect_header_action(self, self->sidebar_search_button, "search");
-  gtk_box_pack_start(GTK_BOX(sidebar_action_box),
+  gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
                      self->sidebar_search_button, FALSE, FALSE, 0);
 
+  GtkWidget* sidebar_title_box =
+      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  gtk_widget_set_halign(sidebar_title_box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(sidebar_title_box, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(sidebar_title_box, TRUE);
   self->sidebar_title_label = gtk_label_new(kApplicationDisplayName);
   gtk_widget_set_halign(self->sidebar_title_label, GTK_ALIGN_CENTER);
   gtk_widget_set_valign(self->sidebar_title_label, GTK_ALIGN_CENTER);
@@ -1726,17 +1804,17 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                           PANGO_ELLIPSIZE_END);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_title_label),
                               GTK_STYLE_CLASS_TITLE);
-  gtk_overlay_add_overlay(GTK_OVERLAY(self->sidebar_header_box),
-                          self->sidebar_title_label);
-  gtk_overlay_set_overlay_pass_through(GTK_OVERLAY(self->sidebar_header_box),
-                                       self->sidebar_title_label, TRUE);
+  gtk_box_pack_start(GTK_BOX(sidebar_title_box), self->sidebar_title_label,
+                     FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(self->sidebar_header_box), sidebar_title_box,
+                     TRUE, TRUE, 0);
 
   self->sidebar_menu_button = create_model_menu_button(
       G_MENU_MODEL(self->main_menu_model), "open-menu-symbolic",
       &self->sidebar_menu);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
                               "busymark-sidebar-action-button");
-  gtk_box_pack_end(GTK_BOX(sidebar_action_box),
+  gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
                    self->sidebar_menu_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), self->sidebar_header_box,
                      FALSE, FALSE, 0);
@@ -2492,6 +2570,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
   session->popover = gtk_popover_new_from_model(
       data->view, G_MENU_MODEL(session->model));
   g_object_ref_sink(session->popover);
+  style_native_popover(session->popover);
   gtk_popover_set_pointing_to(GTK_POPOVER(session->popover), &anchor);
   gtk_popover_set_position(GTK_POPOVER(session->popover),
                            preferred_position);
@@ -2586,6 +2665,11 @@ static void my_application_activate(GApplication* application) {
   self->titlebar_handle = hdy_window_handle_new();
   gtk_widget_set_hexpand(self->titlebar_handle, TRUE);
   gtk_widget_set_vexpand(self->titlebar_handle, FALSE);
+  // Keep the style scope on the outer native owner. This also makes
+  // focused/backdrop selectors independent of the inner box hierarchy.
+  gtk_style_context_add_class(
+      gtk_widget_get_style_context(self->titlebar_handle),
+      "busymark-titlebar");
   gtk_container_add(GTK_CONTAINER(self->titlebar_handle),
                     create_busymark_titlebar_overlay(self));
   gtk_widget_show_all(self->titlebar_handle);
@@ -2679,6 +2763,9 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->background_color, g_free);
   g_clear_pointer(&self->sidebar_background_color, g_free);
   g_clear_pointer(&self->sidebar_border_color, g_free);
+  g_clear_pointer(&self->popover_background_color, g_free);
+  g_clear_pointer(&self->popover_shadow_color, g_free);
+  g_clear_pointer(&self->menu_hover_color, g_free);
   g_clear_pointer(&self->modal_barrier_color, g_free);
   g_clear_pointer(&self->view_mode, g_free);
   g_clear_pointer(&self->search_query, g_free);
@@ -2740,6 +2827,9 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_background_color = g_strdup(kDefaultSidebarBackground);
   self->foreground_color = g_strdup(kDefaultForeground);
   self->sidebar_border_color = nullptr;
+  self->popover_background_color = nullptr;
+  self->popover_shadow_color = nullptr;
+  self->menu_hover_color = nullptr;
   self->modal_barrier_color = nullptr;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;

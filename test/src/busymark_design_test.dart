@@ -321,6 +321,81 @@ void main() {
     );
   });
 
+  testWidgets('dark header menu delegates its tooltip to IconButton', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: const Color(0xFF3584E4),
+        ),
+        home: Scaffold(
+          body: Center(
+            child: BusyMarkHeaderPopupMenuButton<String>(
+              tooltip: 'Dark menu',
+              icon: BusyMarkGlyphs.menuVertical,
+              itemBuilder: (_) => [
+                BusyMarkPopupMenuItem(value: 'action', label: 'Action'),
+              ],
+              onSelected: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final iconButton = tester.widget<IconButton>(
+      find.descendant(
+        of: find.byType(BusyMarkHeaderPopupMenuButton<String>),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(iconButton.tooltip, 'Dark menu');
+    expect(
+      find.descendant(
+        of: find.byType(BusyMarkHeaderPopupMenuButton<String>),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Tooltip && widget.message == 'Dark menu',
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('settings dropdowns use the framework tooltip', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: const Color(0xFF3584E4),
+        ),
+        home: Scaffold(
+          body: BusyMarkPopupSelector<String>(
+            value: 'dark',
+            label: 'Dark',
+            tooltip: 'Theme',
+            options: const [
+              BusyMarkPopupSelectorOption(value: 'dark', label: 'Dark'),
+              BusyMarkPopupSelectorOption(value: 'light', label: 'Light'),
+            ],
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(BusyMarkPopupSelector<String>),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Tooltip && widget.message == 'Theme',
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'popup menu rows show shortcuts without redundant hover tooltips',
     (tester) async {

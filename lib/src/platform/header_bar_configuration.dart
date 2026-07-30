@@ -130,17 +130,28 @@ class HeaderBarTheme {
     required this.sidebarBackgroundColor,
     required this.foregroundColor,
     required this.sidebarBorderColor,
+    required this.popoverBackgroundColor,
+    required this.menuHoverColor,
+    required this.popoverShadowColor,
     required this.modalBarrierColor,
   });
 
   factory HeaderBarTheme.fromContext(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final theme = Theme.of(context);
     return HeaderBarTheme(
-      preferDark: Theme.of(context).brightness == Brightness.dark,
+      preferDark: theme.brightness == Brightness.dark,
       backgroundColor: colors.view,
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       sidebarBorderColor: colors.sidebarBorder,
+      popoverBackgroundColor: colors.popover,
+      menuHoverColor: colors.controlHover,
+      popoverShadowColor: theme.colorScheme.shadow.withValues(
+        alpha:
+            theme.colorScheme.shadow.a *
+            BusyMarkAlpha.nativeHeaderMenuShadowOpacity,
+      ),
       modalBarrierColor: colors.shade,
     );
   }
@@ -150,6 +161,9 @@ class HeaderBarTheme {
   final Color sidebarBackgroundColor;
   final Color foregroundColor;
   final Color sidebarBorderColor;
+  final Color popoverBackgroundColor;
+  final Color menuHoverColor;
+  final Color popoverShadowColor;
   final Color modalBarrierColor;
 
   Map<String, Object> toMap() => {
@@ -158,6 +172,9 @@ class HeaderBarTheme {
     'sidebarBackgroundColor': _cssColor(sidebarBackgroundColor),
     'foregroundColor': _cssColor(foregroundColor),
     'sidebarBorderColor': _cssColor(sidebarBorderColor),
+    'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
+    'menuHoverColor': _cssColor(menuHoverColor),
+    'popoverShadowColor': _cssColor(popoverShadowColor),
     'modalBarrierColor': _cssColor(modalBarrierColor),
   };
 
@@ -170,6 +187,9 @@ class HeaderBarTheme {
             sidebarBackgroundColor == other.sidebarBackgroundColor &&
             foregroundColor == other.foregroundColor &&
             sidebarBorderColor == other.sidebarBorderColor &&
+            popoverBackgroundColor == other.popoverBackgroundColor &&
+            menuHoverColor == other.menuHoverColor &&
+            popoverShadowColor == other.popoverShadowColor &&
             modalBarrierColor == other.modalBarrierColor;
   }
 
@@ -180,6 +200,9 @@ class HeaderBarTheme {
     sidebarBackgroundColor,
     foregroundColor,
     sidebarBorderColor,
+    popoverBackgroundColor,
+    menuHoverColor,
+    popoverShadowColor,
     modalBarrierColor,
   ]);
 }
