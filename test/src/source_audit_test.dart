@@ -189,10 +189,10 @@ void main() {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
 
     expect(design, contains('class _BusyMarkGroupedListSurface'));
-    expect(design, contains('cardTheme.shape ?? RoundedRectangleBorder'));
+    expect(design, contains('final fallbackShape = RoundedRectangleBorder'));
     expect(design, contains('BorderRadius.circular(BusyMarkRadius.lg)'));
     expect(design, contains('this.clipBehavior = Clip.antiAlias'));
-    expect(design, contains('height: BusyMarkStroke.hairline'));
+    expect(design, contains('height: 1'));
     expect(design, isNot(contains('YaruTileList')));
     expect(design, isNot(contains('YaruBorderContainer')));
   });
@@ -265,15 +265,21 @@ void main() {
       r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
       dotAll: true,
     ).firstMatch(design)!.group(1)!;
-    expect(helper, contains('Theme.of(context).hoverColor'));
+    expect(helper, contains('final hover = theme.hoverColor'));
+    expect(helper, contains('BusyMarkAlpha.groupedRowLightHoverStrength'));
     expect(helper, isNot(contains('colors.foreground.withValues')));
     expect(design, isNot(contains('class _BusyMarkHoverBackground')));
     final actionRow = RegExp(
       r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitchRow',
     ).firstMatch(design)!.group(0)!;
-    expect(actionRow, contains('return YaruListTile.square('));
+    expect(actionRow, contains('final row = YaruListTile.square('));
     expect(actionRow, isNot(contains('MouseRegion(')));
-    expect(actionRow, isNot(contains('hoverColor:')));
+    expect(
+      actionRow,
+      contains(
+        'hoverColor: widget.hoverColor ?? busyMarkRowHoverColor(context)',
+      ),
+    );
     final switchRow = RegExp(
       r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkDialogShell',
     ).firstMatch(design)!.group(0)!;
@@ -283,27 +289,26 @@ void main() {
     expect(switchRow, contains('shape: const RoundedRectangleBorder()'));
   });
 
-  test('shared surfaces use one semantic physical-elevation path', () {
+  test('shared grouped surfaces use native card shadow layers', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final dialogs = File(
       'lib/src/app/busymark_dialogs.dart',
     ).readAsStringSync();
     final theme = File('lib/src/app/app_theme.dart').readAsStringSync();
 
-    expect(design, isNot(contains('abstract final class BusyMarkShadow')));
-    expect(design, isNot(contains('BoxShadow(')));
+    expect(design, contains('abstract final class BusyMarkShadow'));
+    expect(design, contains('nativeCardShadows(Color semanticShadow)'));
+    expect(design, contains('BoxShadow('));
     expect(design, isNot(contains('busyMarkSurfaceDecoration')));
-    expect(design, contains('final cardTheme = Theme.of(context).cardTheme'));
+    expect(design, contains('final cardTheme = CardTheme.of(context)'));
     final surface = RegExp(
       r'class BusyMarkSurface.*?class BusyMarkGroupedList',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
-    expect(surface, contains('cardTheme.color ?? colors.card'));
-    expect(surface, contains('elevation: filled ? BusyMarkElevation.surface'));
-    expect(
-      surface,
-      contains('shadowColor: Theme.of(context).colorScheme.shadow'),
-    );
+    expect(surface, contains('cardTheme.color ?? surfaceColors.card'));
+    expect(surface, contains('BusyMarkShadow.nativeCardShadowsFor(context)'));
+    expect(surface, contains('shadowColor: Colors.transparent'));
+    expect(surface, contains('color: busyMarkGroupedSurfaceColor(context)'));
     expect(theme, contains('shadowColor: colorScheme.shadow'));
     expect(theme, contains('cardTheme: base.cardTheme.copyWith'));
 
@@ -327,10 +332,11 @@ void main() {
       r'class _BusyMarkGroupedListSurface.*?class BusyMarkActionRow',
       dotAll: true,
     ).firstMatch(design)!.group(0)!;
-    expect(groupedSurface, contains('height: BusyMarkStroke.hairline'));
-    expect(groupedSurface, contains('thickness: BusyMarkStroke.hairline'));
-    expect(groupedSurface, contains('color: colors.divider'));
-    expect(design, contains('required this.groupedList'));
+    expect(groupedSurface, contains('height: 1'));
+    expect(groupedSurface, contains('thickness: 1'));
+    expect(groupedSurface, contains('color: colors.cardShade'));
+    expect(design, contains('required this.groupedSurface'));
+    expect(design, contains('required this.cardShade'));
     expect(
       design,
       contains('BusyMarkSurfaceColors.fromTheme(ThemeData theme)'),
@@ -339,7 +345,8 @@ void main() {
       design,
       contains('return _busyMarkSemanticSurfaceColors(theme.brightness)'),
     );
-    expect(design, contains('groupedList: groupedList'));
+    expect(design, contains('groupedSurface: groupedSurface'));
+    expect(design, contains('cardShade:'));
     expect(design, contains('class BusyMarkGroupedSurface'));
     expect(groupedSurface, contains('return BusyMarkGroupedSurface('));
     expect(groupedSurface, isNot(contains('busyMarkSurfaceDecoration')));
@@ -381,7 +388,7 @@ void main() {
       expect(design, contains('final window = switch (brightness)'));
       expect(design, contains('final floatingSurface = switch (brightness)'));
       expect(design, contains('window: window'));
-      expect(design, contains('groupedList: groupedList'));
+      expect(design, contains('groupedSurface: groupedSurface'));
       expect(design, contains('dialog: floatingSurface'));
       expect(design, contains('popover: floatingSurface'));
       expect(design, contains('dialogOutline:'));

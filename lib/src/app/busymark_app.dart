@@ -591,10 +591,16 @@ class BusyMarkApp extends ConsumerWidget {
       split: l10n.split,
       viewMode: l10n.viewMode,
       editorShortcut: BusyMarkDocumentViewShortcutLabels.editor,
+      editorGtkAccelerator: BusyMarkDocumentViewShortcutGtkAccelerators.editor,
       sourceShortcut: BusyMarkDocumentViewShortcutLabels.source,
+      sourceGtkAccelerator: BusyMarkDocumentViewShortcutGtkAccelerators.source,
       previewShortcut: BusyMarkDocumentViewShortcutLabels.preview,
+      previewGtkAccelerator:
+          BusyMarkDocumentViewShortcutGtkAccelerators.preview,
       splitShortcut: BusyMarkDocumentViewShortcutLabels.split,
+      splitGtkAccelerator: BusyMarkDocumentViewShortcutGtkAccelerators.split,
       search: material.searchFieldLabel,
+      searchShortcut: BusyMarkAppShortcutLabels.search,
       refresh: l10n.validate,
       menu: l10n.mainMenu,
       sidebar: settings.sidebarVisible ? l10n.hideSidebar : l10n.showSidebar,
@@ -603,10 +609,15 @@ class BusyMarkApp extends ConsumerWidget {
       save: l10n.save,
       settings: l10n.settings,
       settingsShortcut: BusyMarkAppShortcutLabels.settings,
+      settingsGtkAccelerator: BusyMarkAppShortcutGtkAccelerators.settings,
       keyboardShortcuts: l10n.keyboardShortcuts,
       keyboardShortcutsShortcut: BusyMarkAppShortcutLabels.keyboardShortcuts,
+      keyboardShortcutsGtkAccelerator:
+          BusyMarkAppShortcutGtkAccelerators.keyboardShortcuts,
       markdownAndHtml: l10n.markdownAndHtml,
       markdownAndHtmlShortcut: BusyMarkAppShortcutLabels.markdownAndHtml,
+      markdownAndHtmlGtkAccelerator:
+          BusyMarkAppShortcutGtkAccelerators.markdownAndHtml,
       reportIssue: l10n.reportIssue,
       aboutBusyMark: l10n.aboutBusyMark,
     );

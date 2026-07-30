@@ -597,11 +597,12 @@ void main() {
     expect(light.sidebarBorder, const Color.fromRGBO(24, 24, 24, 0.08));
     expect(light.headerbar, const Color(0xFFFAFAFA));
     expect(light.card, const Color(0xFFFFFFFF));
-    expect(light.groupedList, light.card);
+    expect(light.groupedSurface, const Color(0xFFFFFFFF));
+    expect(light.cardShade, const Color.fromRGBO(24, 24, 24, 0.08));
     expect(light.dialog, const Color(0xFFFAFAFA));
     expect(light.popover, const Color(0xFFFAFAFA));
     expect(light.card, isNot(light.dialog));
-    expect(light.groupedList, isNot(light.dialog));
+    expect(light.groupedSurface, isNot(light.dialog));
     expect(light.control, const Color.fromRGBO(0, 0, 0, 0.10));
     expect(light.dialogOutline, const Color.fromRGBO(255, 255, 255, 0.07));
     expect(light.floatingBorder, const Color.fromRGBO(0, 0, 0, 0.14));
@@ -616,11 +617,16 @@ void main() {
     expect(dark.sidebarBorder, const Color.fromRGBO(16, 16, 16, 0.35));
     expect(dark.headerbar, const Color(0xFF393939));
     expect(dark.card, const Color(0xFF3D3D3D));
-    expect(dark.groupedList, dark.card);
+    expect(dark.groupedSurface, const Color.fromRGBO(255, 255, 255, 0.08));
+    expect(dark.cardShade, const Color.fromRGBO(0, 0, 0, 0.36));
+    expect(
+      Color.alphaBlend(dark.groupedSurface, dark.window).toARGB32(),
+      dark.card.toARGB32(),
+    );
     expect(dark.dialog, const Color(0xFF3E3E3E));
     expect(dark.popover, const Color(0xFF3E3E3E));
     expect(dark.card, isNot(dark.dialog));
-    expect(dark.groupedList, isNot(dark.dialog));
+    expect(dark.groupedSurface, isNot(dark.dialog));
     expect(dark.control, const Color.fromRGBO(255, 255, 255, 0.10));
     expect(dark.dialogOutline, const Color.fromRGBO(255, 255, 255, 0.07));
     expect(dark.floatingBorder, const Color.fromRGBO(0, 0, 0, 0.14));
@@ -631,10 +637,10 @@ void main() {
     final orangeDark = colors(Brightness.dark, orange);
     expect(orangeLight.window, light.window);
     expect(orangeLight.sidebar, light.sidebar);
-    expect(orangeLight.groupedList, light.groupedList);
+    expect(orangeLight.groupedSurface, light.groupedSurface);
     expect(orangeDark.window, dark.window);
     expect(orangeDark.sidebar, dark.sidebar);
-    expect(orangeDark.groupedList, dark.groupedList);
+    expect(orangeDark.groupedSurface, dark.groupedSurface);
     for (final palette in [light, dark]) {
       expect(palette.mutedForeground.a, 1);
       for (final background in [
@@ -646,7 +652,6 @@ void main() {
         palette.headerbarFlat,
         palette.panel,
         palette.card,
-        palette.groupedList,
         palette.dialog,
         palette.popover,
       ]) {
@@ -656,9 +661,9 @@ void main() {
           reason: 'Muted text must remain legible on $background',
         );
       }
-      expect(palette.admonitionNote, isNot(palette.groupedList));
-      expect(palette.admonitionTip, isNot(palette.groupedList));
-      expect(palette.admonitionWarning, isNot(palette.groupedList));
+      expect(palette.admonitionNote, isNot(palette.card));
+      expect(palette.admonitionTip, isNot(palette.card));
+      expect(palette.admonitionWarning, isNot(palette.card));
     }
   });
 
@@ -687,7 +692,7 @@ void main() {
     expect(style.side?.resolve({WidgetState.selected}), BorderSide.none);
   });
 
-  testWidgets('grouped cards use one semantic raised-surface token', (
+  testWidgets('grouped cards use native boxed-list depth and roles', (
     tester,
   ) async {
     final theme = buildBusyMarkTheme(
@@ -717,19 +722,24 @@ void main() {
       ),
     );
 
+    final groupedSurface = find.byType(BusyMarkGroupedSurface);
     final groupedMaterial = tester.widget<Material>(
       find.descendant(
-        of: find.byType(BusyMarkGroupedSurface),
+        of: groupedSurface,
         matching: find.byWidgetPredicate(
-          (widget) => widget is Material && widget.color == colors.groupedList,
+          (widget) => widget is Material && widget.color == colors.card,
         ),
       ),
     );
-    expect(groupedMaterial.elevation, BusyMarkElevation.surface);
-    expect(groupedMaterial.shadowColor, theme.colorScheme.shadow);
+    expect(groupedMaterial.elevation, theme.cardTheme.elevation);
+    expect(groupedMaterial.shadowColor, Colors.transparent);
+    expect(
+      _nativeCardDecoration(tester, groupedSurface).shadows,
+      BusyMarkShadow.nativeCardShadows(theme.colorScheme.shadow),
+    );
     expect(
       (groupedMaterial.shape! as RoundedRectangleBorder).borderRadius,
-      BorderRadius.circular(BusyMarkRadius.lg),
+      BorderRadius.circular(kYaruContainerRadius),
     );
 
     final cardMaterial = tester.widget<Material>(
@@ -740,13 +750,144 @@ void main() {
         ),
       ),
     );
-    expect(cardMaterial.elevation, BusyMarkElevation.surface);
-    expect(cardMaterial.shadowColor, theme.colorScheme.shadow);
+    expect(cardMaterial.elevation, theme.cardTheme.elevation);
+    expect(cardMaterial.shadowColor, Colors.transparent);
     expect(
       (cardMaterial.shape! as RoundedRectangleBorder).borderRadius,
-      BorderRadius.circular(BusyMarkRadius.lg),
+      BorderRadius.circular(kYaruContainerRadius),
     );
-    expect(tester.widget<Divider>(find.byType(Divider)).color, colors.divider);
+    expect(
+      tester.widget<Divider>(find.byType(Divider)).color,
+      colors.cardShade,
+    );
+    expect(
+      DefaultTextStyle.of(tester.element(find.text('One'))).style.color,
+      isNot(colors.mutedForeground),
+    );
+  });
+
+  testWidgets('dialog grouped cards resolve the contextual native layer', (
+    tester,
+  ) async {
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.dark,
+      accentColor: const Color(0xFF3584E4),
+    );
+    final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: BusyMarkSurfaceScope(
+          role: BusyMarkSurfaceRole.dialog,
+          child: const BusyMarkGroupedSurface(child: SizedBox(height: 40)),
+        ),
+      ),
+    );
+
+    final expected = Color.alphaBlend(colors.groupedSurface, colors.dialog);
+    final material = tester.widget<Material>(
+      find.descendant(
+        of: find.byType(BusyMarkGroupedSurface),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is Material && widget.color == expected,
+        ),
+      ),
+    );
+    expect(material.color, expected);
+    expect(expected, isNot(colors.card));
+  });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('grouped rows use the native ${brightness.name} hover role', (
+      tester,
+    ) async {
+      final baseTheme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      const rowHover = Color(0x1A2A7FFF);
+      final theme = baseTheme.copyWith(hoverColor: rowHover);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Column(
+              children: [
+                BusyMarkActionRow(title: 'Open', onTap: () {}),
+                BusyMarkSwitchRow(
+                  title: 'Enabled',
+                  value: true,
+                  onChanged: (_) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final expectedHover = brightness == Brightness.dark
+          ? rowHover
+          : rowHover.withValues(
+              alpha: rowHover.a * BusyMarkAlpha.groupedRowLightHoverStrength,
+            );
+      final actionTile = tester.widget<YaruListTile>(
+        find.descendant(
+          of: find.byType(BusyMarkActionRow),
+          matching: find.byType(YaruListTile),
+        ),
+      );
+      final switchTile = tester.widget<YaruListTile>(
+        find.descendant(
+          of: find.byType(BusyMarkSwitchRow),
+          matching: find.byType(YaruListTile),
+        ),
+      );
+      expect(actionTile.hoverColor, expectedHover);
+      expect(switchTile.hoverColor, expectedHover);
+    });
+  }
+
+  testWidgets('grouped row subtitles use semantic native text roles', (
+    tester,
+  ) async {
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.dark,
+      accentColor: const Color(0xFF3584E4),
+    );
+    final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: const Scaffold(
+          body: Column(
+            children: [
+              BusyMarkActionRow(title: 'Open', subtitle: 'Markdown document'),
+              BusyMarkActionRow(
+                title: 'Unavailable',
+                subtitle: 'Disabled description',
+                enabled: false,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      DefaultTextStyle.of(
+        tester.element(find.text('Markdown document')),
+      ).style.color,
+      colors.mutedForeground,
+    );
+    expect(
+      DefaultTextStyle.of(
+        tester.element(find.text('Disabled description')),
+      ).style.color,
+      colors.disabledForeground,
+    );
   });
 
   testWidgets('dialog roles and popup selectors use real themed buttons', (
@@ -1239,6 +1380,22 @@ ShapeBorder? _shapeWithSide(ShapeBorder? shape, BorderSide side) {
     final OutlinedBorder outlined => outlined.copyWith(side: side),
     _ => shape,
   };
+}
+
+ShapeDecoration _nativeCardDecoration(WidgetTester tester, Finder surface) {
+  final decoratedBox = tester.widget<DecoratedBox>(
+    find.descendant(
+      of: surface,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is DecoratedBox &&
+            widget.decoration is ShapeDecoration &&
+            ((widget.decoration as ShapeDecoration).shadows?.isNotEmpty ??
+                false),
+      ),
+    ),
+  );
+  return decoratedBox.decoration as ShapeDecoration;
 }
 
 Future<_CapturedPixels> _capturePixels(

@@ -16,10 +16,15 @@ class HeaderBarLabels {
     required this.split,
     required this.viewMode,
     required this.editorShortcut,
+    required this.editorGtkAccelerator,
     required this.sourceShortcut,
+    required this.sourceGtkAccelerator,
     required this.previewShortcut,
+    required this.previewGtkAccelerator,
     required this.splitShortcut,
+    required this.splitGtkAccelerator,
     required this.search,
+    required this.searchShortcut,
     required this.refresh,
     required this.menu,
     required this.sidebar,
@@ -28,10 +33,13 @@ class HeaderBarLabels {
     required this.save,
     required this.settings,
     required this.settingsShortcut,
+    required this.settingsGtkAccelerator,
     required this.keyboardShortcuts,
     required this.keyboardShortcutsShortcut,
+    required this.keyboardShortcutsGtkAccelerator,
     required this.markdownAndHtml,
     required this.markdownAndHtmlShortcut,
+    required this.markdownAndHtmlGtkAccelerator,
     required this.reportIssue,
     required this.aboutBusyMark,
   });
@@ -42,10 +50,15 @@ class HeaderBarLabels {
   final String split;
   final String viewMode;
   final String editorShortcut;
+  final String editorGtkAccelerator;
   final String sourceShortcut;
+  final String sourceGtkAccelerator;
   final String previewShortcut;
+  final String previewGtkAccelerator;
   final String splitShortcut;
+  final String splitGtkAccelerator;
   final String search;
+  final String searchShortcut;
   final String refresh;
   final String menu;
   final String sidebar;
@@ -54,10 +67,13 @@ class HeaderBarLabels {
   final String save;
   final String settings;
   final String settingsShortcut;
+  final String settingsGtkAccelerator;
   final String keyboardShortcuts;
   final String keyboardShortcutsShortcut;
+  final String keyboardShortcutsGtkAccelerator;
   final String markdownAndHtml;
   final String markdownAndHtmlShortcut;
+  final String markdownAndHtmlGtkAccelerator;
   final String reportIssue;
   final String aboutBusyMark;
 
@@ -68,10 +84,15 @@ class HeaderBarLabels {
     'split': split,
     'viewMode': viewMode,
     'editorShortcut': editorShortcut,
+    'editorGtkAccelerator': editorGtkAccelerator,
     'sourceShortcut': sourceShortcut,
+    'sourceGtkAccelerator': sourceGtkAccelerator,
     'previewShortcut': previewShortcut,
+    'previewGtkAccelerator': previewGtkAccelerator,
     'splitShortcut': splitShortcut,
+    'splitGtkAccelerator': splitGtkAccelerator,
     'search': search,
+    'searchShortcut': searchShortcut,
     'refresh': refresh,
     'menu': menu,
     'sidebar': sidebar,
@@ -80,10 +101,13 @@ class HeaderBarLabels {
     'save': save,
     'settings': settings,
     'settingsShortcut': settingsShortcut,
+    'settingsGtkAccelerator': settingsGtkAccelerator,
     'keyboardShortcuts': keyboardShortcuts,
     'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
+    'keyboardShortcutsGtkAccelerator': keyboardShortcutsGtkAccelerator,
     'markdownAndHtml': markdownAndHtml,
     'markdownAndHtmlShortcut': markdownAndHtmlShortcut,
+    'markdownAndHtmlGtkAccelerator': markdownAndHtmlGtkAccelerator,
     'reportIssue': reportIssue,
     'aboutBusyMark': aboutBusyMark,
   };

@@ -219,6 +219,11 @@ ThemeData buildBusyMarkTheme({
       elevation: BusyMarkElevation.surface,
       surfaceTintColor: BusyMarkLinuxPalette.transparent,
       shadowColor: colorScheme.shadow,
+      shape:
+          base.cardTheme.shape ??
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.lg),
+          ),
     ),
   );
 }

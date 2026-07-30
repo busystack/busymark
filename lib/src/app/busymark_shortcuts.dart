@@ -5,10 +5,17 @@ class BusyMarkShortcutDefinition {
   const BusyMarkShortcutDefinition({
     required this.label,
     required this.activator,
+    this.gtkAccelerator,
   });
 
   final String label;
   final ShortcutActivator activator;
+
+  /// GTK accelerator syntax for native controls that render this command.
+  ///
+  /// This is deliberately separate from [label]: GTK parses strings such as
+  /// `<Primary>comma`, then formats the visible label for the current desktop.
+  final String? gtkAccelerator;
 }
 
 enum BusyMarkAppShortcutAction {
@@ -42,21 +49,38 @@ abstract final class BusyMarkAppShortcuts {
   static const closeAllTabsLabel = 'Ctrl+Shift+W';
   static const toggleSidebarLabel = 'F9';
 
+  static const newDocumentGtkAccelerator = '<Primary>n';
+  static const openGtkAccelerator = '<Primary>o';
+  static const saveGtkAccelerator = '<Primary>s';
+  static const searchGtkAccelerator = '<Primary>f';
+  static const keyboardShortcutsGtkAccelerator = '<Primary><Alt>k';
+  static const markdownAndHtmlGtkAccelerator = '<Primary><Alt>m';
+  static const settingsGtkAccelerator = '<Primary><Alt>s';
+  static const nextTabGtkAccelerator = '<Primary>Tab';
+  static const previousTabGtkAccelerator = '<Primary><Shift>Tab';
+  static const closeTabGtkAccelerator = '<Primary>w';
+  static const closeAllTabsGtkAccelerator = '<Primary><Shift>w';
+  static const toggleSidebarGtkAccelerator = 'F9';
+
   static const newDocument = BusyMarkShortcutDefinition(
     label: newDocumentLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyN, control: true),
+    gtkAccelerator: newDocumentGtkAccelerator,
   );
   static const open = BusyMarkShortcutDefinition(
     label: openLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyO, control: true),
+    gtkAccelerator: openGtkAccelerator,
   );
   static const save = BusyMarkShortcutDefinition(
     label: saveLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyS, control: true),
+    gtkAccelerator: saveGtkAccelerator,
   );
   static const search = BusyMarkShortcutDefinition(
     label: searchLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyF, control: true),
+    gtkAccelerator: searchGtkAccelerator,
   );
   static const keyboardShortcuts = BusyMarkShortcutDefinition(
     label: keyboardShortcutsLabel,
@@ -65,6 +89,7 @@ abstract final class BusyMarkAppShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: keyboardShortcutsGtkAccelerator,
   );
   static const markdownAndHtml = BusyMarkShortcutDefinition(
     label: markdownAndHtmlLabel,
@@ -73,6 +98,7 @@ abstract final class BusyMarkAppShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: markdownAndHtmlGtkAccelerator,
   );
   static const settings = BusyMarkShortcutDefinition(
     label: settingsLabel,
@@ -81,10 +107,12 @@ abstract final class BusyMarkAppShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: settingsGtkAccelerator,
   );
   static const nextTab = BusyMarkShortcutDefinition(
     label: nextTabLabel,
     activator: SingleActivator(LogicalKeyboardKey.tab, control: true),
+    gtkAccelerator: nextTabGtkAccelerator,
   );
   static const previousTab = BusyMarkShortcutDefinition(
     label: previousTabLabel,
@@ -93,10 +121,12 @@ abstract final class BusyMarkAppShortcuts {
       control: true,
       shift: true,
     ),
+    gtkAccelerator: previousTabGtkAccelerator,
   );
   static const closeTab = BusyMarkShortcutDefinition(
     label: closeTabLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyW, control: true),
+    gtkAccelerator: closeTabGtkAccelerator,
   );
   static const closeAllTabs = BusyMarkShortcutDefinition(
     label: closeAllTabsLabel,
@@ -105,10 +135,12 @@ abstract final class BusyMarkAppShortcuts {
       control: true,
       shift: true,
     ),
+    gtkAccelerator: closeAllTabsGtkAccelerator,
   );
   static const toggleSidebar = BusyMarkShortcutDefinition(
     label: toggleSidebarLabel,
     activator: SingleActivator(LogicalKeyboardKey.f9),
+    gtkAccelerator: toggleSidebarGtkAccelerator,
   );
 
   static const definitions =
@@ -170,6 +202,17 @@ abstract final class BusyMarkAppShortcutActivators {
       BusyMarkAppShortcuts.toggleSidebar.activator;
 }
 
+abstract final class BusyMarkAppShortcutGtkAccelerators {
+  const BusyMarkAppShortcutGtkAccelerators._();
+
+  static const search = BusyMarkAppShortcuts.searchGtkAccelerator;
+  static const keyboardShortcuts =
+      BusyMarkAppShortcuts.keyboardShortcutsGtkAccelerator;
+  static const markdownAndHtml =
+      BusyMarkAppShortcuts.markdownAndHtmlGtkAccelerator;
+  static const settings = BusyMarkAppShortcuts.settingsGtkAccelerator;
+}
+
 enum BusyMarkDocumentViewShortcutAction { editor, source, preview, split }
 
 abstract final class BusyMarkDocumentViewShortcuts {
@@ -180,6 +223,11 @@ abstract final class BusyMarkDocumentViewShortcuts {
   static const previewLabel = 'Ctrl+Alt+3';
   static const splitLabel = 'Ctrl+Alt+4';
 
+  static const editorGtkAccelerator = '<Primary><Alt>1';
+  static const sourceGtkAccelerator = '<Primary><Alt>2';
+  static const previewGtkAccelerator = '<Primary><Alt>3';
+  static const splitGtkAccelerator = '<Primary><Alt>4';
+
   static const editor = BusyMarkShortcutDefinition(
     label: editorLabel,
     activator: SingleActivator(
@@ -187,6 +235,7 @@ abstract final class BusyMarkDocumentViewShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: editorGtkAccelerator,
   );
   static const source = BusyMarkShortcutDefinition(
     label: sourceLabel,
@@ -195,6 +244,7 @@ abstract final class BusyMarkDocumentViewShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: sourceGtkAccelerator,
   );
   static const preview = BusyMarkShortcutDefinition(
     label: previewLabel,
@@ -203,6 +253,7 @@ abstract final class BusyMarkDocumentViewShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: previewGtkAccelerator,
   );
   static const split = BusyMarkShortcutDefinition(
     label: splitLabel,
@@ -211,6 +262,7 @@ abstract final class BusyMarkDocumentViewShortcuts {
       control: true,
       alt: true,
     ),
+    gtkAccelerator: splitGtkAccelerator,
   );
 
   static const definitions =
@@ -242,6 +294,15 @@ abstract final class BusyMarkDocumentViewShortcutActivators {
       BusyMarkDocumentViewShortcuts.preview.activator;
   static ShortcutActivator get split =>
       BusyMarkDocumentViewShortcuts.split.activator;
+}
+
+abstract final class BusyMarkDocumentViewShortcutGtkAccelerators {
+  const BusyMarkDocumentViewShortcutGtkAccelerators._();
+
+  static const editor = BusyMarkDocumentViewShortcuts.editorGtkAccelerator;
+  static const source = BusyMarkDocumentViewShortcuts.sourceGtkAccelerator;
+  static const preview = BusyMarkDocumentViewShortcuts.previewGtkAccelerator;
+  static const split = BusyMarkDocumentViewShortcuts.splitGtkAccelerator;
 }
 
 enum BusyMarkTextEditingShortcutAction {

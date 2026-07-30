@@ -263,7 +263,8 @@ void main() {
     expect(aboutPack, isNonNegative);
     expect(reportIssuePack, lessThan(aboutPack));
     expect(native, contains('g_menu_item_set_icon(item, icon)'));
-    expect(native, contains('g_menu_item_set_attribute(item, "accel"'));
+    expect(native, contains('kMenuAcceleratorAttribute'));
+    expect(native, contains('gtk_accelerator_get_label'));
     expect(native, contains('g_action_map_add_action'));
     expect(native, contains('gtk_widget_insert_action_group'));
     expect(native, isNot(contains('static GtkWidget* create_menu_item')));
@@ -1143,6 +1144,8 @@ void main() {
       app,
       contains('editorShortcut: BusyMarkDocumentViewShortcutLabels.editor'),
     );
+    expect(app, contains('editorGtkAccelerator:'));
+    expect(app, contains('BusyMarkDocumentViewShortcutGtkAccelerators.editor'));
     expect(
       app,
       contains('sourceShortcut: BusyMarkDocumentViewShortcutLabels.source'),
@@ -1159,6 +1162,7 @@ void main() {
       app,
       contains('sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar'),
     );
+    expect(app, contains('searchShortcut: BusyMarkAppShortcutLabels.search'));
     expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
     expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
     expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
@@ -1211,9 +1215,13 @@ void main() {
         'set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar',
       ),
     );
+    expect(native, contains('view_mode_shortcut_label(self, args)'));
     expect(
       native,
-      contains('set_widget_tooltip(self->view_mode_button, view_mode)'),
+      contains(
+        'set_widget_tooltip_with_shortcut(\n'
+        '      self->view_mode_button',
+      ),
     );
     expect(native, contains('rebuild_view_mode_menu_model(self, args)'));
     expect(
@@ -1226,15 +1234,26 @@ void main() {
     expect(native, isNot(contains('viewModeAgenda')));
   });
 
-  test('native popovers use menu-model accelerators without fake rows', () {
+  test('native model-menu rows render GTK-formatted accelerator labels', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    expect(native, contains('g_menu_item_set_attribute(item, "accel"'));
+    expect(native, contains('kMenuAcceleratorAttribute'));
+    expect(native, contains('GTK_IS_MODEL_BUTTON(widget)'));
+    expect(native, contains('gtk_accelerator_parse(accelerator'));
+    expect(native, contains('gtk_accelerator_get_label'));
+    expect(native, contains('gtk_label_new(accelerator_text)'));
+    expect(native, contains('decorate_model_menu_accelerators('));
     expect(native, contains('g_menu_item_set_icon(item, icon)'));
     expect(native, contains('gtk_menu_button_set_menu_model'));
     expect(native, isNot(contains('busymark-shortcut-widget')));
     expect(native, isNot(contains('busymark-menu-row')));
-    expect(native, contains('set_widget_tooltip(self->view_mode_button'));
+    expect(
+      native,
+      contains(
+        'set_widget_tooltip_with_shortcut(\n'
+        '      self->view_mode_button',
+      ),
+    );
   });
 
   test('welcome page has a sidebar but no document controls', () {

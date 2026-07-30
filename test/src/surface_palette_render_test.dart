@@ -16,7 +16,7 @@ void main() {
       window: Color(0xFFFAFAFA),
       dialog: Color(0xFFFAFAFA),
       sidebar: Color(0xFFEBEBEB),
-      card: Color(0xFFFFFFFF),
+      groupedSurface: Color(0xFFFFFFFF),
       popover: Color(0xFFFAFAFA),
       dialogOutline: Color.fromRGBO(255, 255, 255, 0.07),
       floatingBorder: Color.fromRGBO(0, 0, 0, 0.14),
@@ -27,7 +27,7 @@ void main() {
       window: Color(0xFF2C2C2C),
       dialog: Color(0xFF3E3E3E),
       sidebar: Color(0xFF393939),
-      card: Color(0xFF3D3D3D),
+      groupedSurface: Color.fromRGBO(255, 255, 255, 0.08),
       popover: Color(0xFF3E3E3E),
       dialogOutline: Color.fromRGBO(255, 255, 255, 0.07),
       floatingBorder: Color.fromRGBO(0, 0, 0, 0.14),
@@ -187,7 +187,11 @@ void main() {
         expect(_pixelAtProbe(tester, pixels, windowProbe), baseline.window);
         expect(_pixelAtProbe(tester, pixels, sidebarProbe), baseline.sidebar);
         expect(_pixelAtProbe(tester, pixels, dialogProbe), baseline.dialog);
-        expect(_pixelAtProbe(tester, pixels, cardProbe), baseline.card);
+        _expectColorNear(
+          _pixelAtProbe(tester, pixels, cardProbe),
+          Color.alphaBlend(baseline.groupedSurface, baseline.dialog),
+          tolerance: 1,
+        );
         expect(_pixelAtProbe(tester, pixels, popoverProbe), baseline.popover);
         final dialogSize = tester.getSize(dialogMaterial);
         final dialogEdge = _pixelAtLocal(
@@ -229,7 +233,7 @@ class _SurfaceBaseline {
     required this.window,
     required this.dialog,
     required this.sidebar,
-    required this.card,
+    required this.groupedSurface,
     required this.popover,
     required this.dialogOutline,
     required this.floatingBorder,
@@ -240,7 +244,7 @@ class _SurfaceBaseline {
   final Color window;
   final Color dialog;
   final Color sidebar;
-  final Color card;
+  final Color groupedSurface;
   final Color popover;
   final Color dialogOutline;
   final Color floatingBorder;

@@ -23,27 +23,34 @@ class BusyMarkInformationalDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dialogSurface = busyMarkDialogSurfaceColor(context);
-    return Dialog(
-      backgroundColor: dialogSurface,
-      surfaceTintColor: dialogSurface,
-      clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: maxWidth,
-          maxHeight: maxHeight ?? double.infinity,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            BusyMarkDialogTitleBar(closeSemanticLabel: closeLabel),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-                child: child,
+    return BusyMarkSurfaceScope(
+      role: BusyMarkSurfaceRole.dialog,
+      child: Builder(
+        builder: (context) {
+          return Dialog(
+            backgroundColor: dialogSurface,
+            surfaceTintColor: dialogSurface,
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth,
+                maxHeight: maxHeight ?? double.infinity,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BusyMarkDialogTitleBar(closeSemanticLabel: closeLabel),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                      child: child,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

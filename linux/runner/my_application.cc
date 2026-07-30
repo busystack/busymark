@@ -51,6 +51,9 @@ constexpr char kLegacyYaruWindowShadowCompatibilityCss[] =
     "}";
 constexpr char kLtrIsolateStart[] = "\xE2\x81\xA6";
 constexpr char kBidiIsolateEnd[] = "\xE2\x81\xA9";
+constexpr char kMenuAcceleratorAttribute[] = "x-busymark-accelerator";
+constexpr char kModelButtonAcceleratorKey[] =
+    "busymark-model-button-accelerator";
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -1023,19 +1026,110 @@ static const gchar* localized_label_or(FlValue* labels,
   return value != nullptr ? value : fallback;
 }
 
+static void add_model_button_accelerator(GtkWidget* button,
+                                         const gchar* accelerator) {
+  if (button == nullptr || !GTK_IS_MODEL_BUTTON(button) ||
+      accelerator == nullptr || accelerator[0] == '\0' ||
+      g_object_get_data(G_OBJECT(button), kModelButtonAcceleratorKey) !=
+          nullptr) {
+    return;
+  }
+
+  guint accelerator_key = 0;
+  GdkModifierType accelerator_modifiers = static_cast<GdkModifierType>(0);
+  gtk_accelerator_parse(accelerator, &accelerator_key,
+                        &accelerator_modifiers);
+  if (accelerator_key == 0) {
+    return;
+  }
+
+  GtkWidget* content = gtk_bin_get_child(GTK_BIN(button));
+  if (content == nullptr || !GTK_IS_WIDGET(content)) {
+    return;
+  }
+  g_object_ref(content);
+  gtk_container_remove(GTK_CONTAINER(button), content);
+
+  GtkWidget* row =
+      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  gtk_widget_set_hexpand(content, TRUE);
+  gtk_box_pack_start(GTK_BOX(row), content, TRUE, TRUE, 0);
+
+  // GtkAccelLabel computes its accelerator width only after mapping, while a
+  // model popover allocates its width before mapping. Let GTK format the
+  // platform-native text, then render it as a regular label so the shortcut's
+  // natural width participates in the popover's first allocation.
+  g_autofree gchar* accelerator_text =
+      gtk_accelerator_get_label(accelerator_key, accelerator_modifiers);
+  GtkWidget* accelerator_label = gtk_label_new(accelerator_text);
+  gtk_widget_set_direction(accelerator_label, GTK_TEXT_DIR_LTR);
+  gtk_widget_set_halign(accelerator_label, GTK_ALIGN_END);
+  gtk_widget_set_valign(accelerator_label, GTK_ALIGN_CENTER);
+  gtk_label_set_xalign(GTK_LABEL(accelerator_label), 1.0);
+  gtk_style_context_add_class(
+      gtk_widget_get_style_context(accelerator_label), "dim-label");
+  gtk_box_pack_end(GTK_BOX(row), accelerator_label, FALSE, FALSE, 0);
+
+  gtk_container_add(GTK_CONTAINER(button), row);
+  gtk_widget_show_all(row);
+  g_object_unref(content);
+  g_object_set_data(G_OBJECT(button), kModelButtonAcceleratorKey,
+                    GINT_TO_POINTER(1));
+}
+
+struct ModelMenuAcceleratorDecoration {
+  GMenuModel* model;
+  gint item_index;
+};
+
+static void decorate_model_menu_accelerators_cb(GtkWidget* widget,
+                                                 gpointer user_data) {
+  auto* decoration =
+      static_cast<ModelMenuAcceleratorDecoration*>(user_data);
+  if (GTK_IS_MODEL_BUTTON(widget)) {
+    if (decoration->item_index <
+        g_menu_model_get_n_items(decoration->model)) {
+      g_autoptr(GVariant) value = g_menu_model_get_item_attribute_value(
+          decoration->model, decoration->item_index,
+          kMenuAcceleratorAttribute, G_VARIANT_TYPE_STRING);
+      if (value != nullptr) {
+        add_model_button_accelerator(
+            widget, g_variant_get_string(value, nullptr));
+      }
+    }
+    decoration->item_index++;
+    return;
+  }
+  if (GTK_IS_CONTAINER(widget)) {
+    gtk_container_foreach(GTK_CONTAINER(widget),
+                          decorate_model_menu_accelerators_cb, user_data);
+  }
+}
+
+static void decorate_model_menu_accelerators(GtkWidget* popover,
+                                              GMenuModel* model) {
+  if (popover == nullptr || !GTK_IS_CONTAINER(popover) || model == nullptr) {
+    return;
+  }
+  ModelMenuAcceleratorDecoration decoration = {model, 0};
+  gtk_container_foreach(GTK_CONTAINER(popover),
+                        decorate_model_menu_accelerators_cb, &decoration);
+}
+
 static void append_action_menu_item(GMenu* menu,
                                     const gchar* label,
                                     const gchar* action,
                                     const gchar* icon_name,
-                                    const gchar* shortcut) {
+                                    const gchar* accelerator) {
   GMenuItem* item = g_menu_item_new(label, action);
   if (icon_name != nullptr) {
     GIcon* icon = g_themed_icon_new(icon_name);
     g_menu_item_set_icon(item, icon);
     g_object_unref(icon);
   }
-  if (shortcut != nullptr && shortcut[0] != '\0') {
-    g_menu_item_set_attribute(item, "accel", "s", shortcut);
+  if (accelerator != nullptr && accelerator[0] != '\0') {
+    g_menu_item_set_attribute(item, kMenuAcceleratorAttribute, "s",
+                              accelerator);
   }
   g_menu_append_item(menu, item);
   g_object_unref(item);
@@ -1050,18 +1144,18 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       self->main_menu_model,
       localized_label_or(labels, "settings", ""), "header.settings",
       main_menu_icon_name("settings"),
-      fl_lookup_string_arg(labels, "settingsShortcut"));
+      fl_lookup_string_arg(labels, "settingsGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "keyboardShortcuts", ""),
       "header.keyboard-shortcuts",
       main_menu_icon_name("keyboardShortcuts"),
-      fl_lookup_string_arg(labels, "keyboardShortcutsShortcut"));
+      fl_lookup_string_arg(labels, "keyboardShortcutsGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "markdownAndHtml", ""),
       "header.markdown-and-html", main_menu_icon_name("markdownAndHtml"),
-      fl_lookup_string_arg(labels, "markdownAndHtmlShortcut"));
+      fl_lookup_string_arg(labels, "markdownAndHtmlGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "reportIssue", ""),
@@ -1070,6 +1164,10 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       self->main_menu_model,
       localized_label_or(labels, "aboutBusyMark", ""),
       "header.about", main_menu_icon_name("aboutBusyMark"), nullptr);
+  decorate_model_menu_accelerators(
+      self->sidebar_menu, G_MENU_MODEL(self->main_menu_model));
+  decorate_model_menu_accelerators(
+      self->adaptive_menu, G_MENU_MODEL(self->main_menu_model));
 }
 
 static const gchar* view_mode_dart_action(const gchar* mode) {
@@ -1198,14 +1296,15 @@ static void setup_header_actions(MyApplication* self) {
 static void append_view_mode_menu_item(GMenu* menu,
                                        const gchar* label,
                                        const gchar* mode,
-                                       const gchar* shortcut) {
+                                       const gchar* accelerator) {
   GMenuItem* item = g_menu_item_new(label, nullptr);
   g_menu_item_set_action_and_target(item, "header.view-mode", "s", mode);
   GIcon* icon = g_themed_icon_new(view_mode_icon_name(mode));
   g_menu_item_set_icon(item, icon);
   g_object_unref(icon);
-  if (shortcut != nullptr && shortcut[0] != '\0') {
-    g_menu_item_set_attribute(item, "accel", "s", shortcut);
+  if (accelerator != nullptr && accelerator[0] != '\0') {
+    g_menu_item_set_attribute(item, kMenuAcceleratorAttribute, "s",
+                              accelerator);
   }
   g_menu_append_item(menu, item);
   g_object_unref(item);
@@ -1220,19 +1319,21 @@ static void rebuild_view_mode_menu_model(MyApplication* self,
   append_view_mode_menu_item(
       self->view_mode_menu_model,
       localized_label_or(labels, "editor", ""), "editor",
-      fl_lookup_string_arg(labels, "editorShortcut"));
+      fl_lookup_string_arg(labels, "editorGtkAccelerator"));
   append_view_mode_menu_item(
       self->view_mode_menu_model,
       localized_label_or(labels, "source", ""), "source",
-      fl_lookup_string_arg(labels, "sourceShortcut"));
+      fl_lookup_string_arg(labels, "sourceGtkAccelerator"));
   append_view_mode_menu_item(
       self->view_mode_menu_model,
       localized_label_or(labels, "preview", ""), "preview",
-      fl_lookup_string_arg(labels, "previewShortcut"));
+      fl_lookup_string_arg(labels, "previewGtkAccelerator"));
   append_view_mode_menu_item(
       self->view_mode_menu_model,
       localized_label_or(labels, "split", ""), "split",
-      fl_lookup_string_arg(labels, "splitShortcut"));
+      fl_lookup_string_arg(labels, "splitGtkAccelerator"));
+  decorate_model_menu_accelerators(
+      self->view_mode_menu, G_MENU_MODEL(self->view_mode_menu_model));
 }
 
 static GtkWidget* create_model_menu_button(GMenuModel* model,
@@ -1253,6 +1354,7 @@ static GtkWidget* create_model_menu_button(GMenuModel* model,
   GtkPopover* popover = gtk_menu_button_get_popover(GTK_MENU_BUTTON(button));
   if (popover != nullptr) {
     gtk_popover_set_position(popover, GTK_POS_BOTTOM);
+    decorate_model_menu_accelerators(GTK_WIDGET(popover), model);
     if (popover_out != nullptr) {
       *popover_out = GTK_WIDGET(popover);
     }
@@ -1282,9 +1384,26 @@ static void set_widget_tooltip_with_shortcut(GtkWidget* widget,
   g_free(value);
 }
 
+static const gchar* view_mode_shortcut_label(MyApplication* self,
+                                              FlValue* labels) {
+  const gchar* mode = self->view_mode != nullptr ? self->view_mode : "split";
+  if (g_strcmp0(mode, "editor") == 0) {
+    return fl_lookup_string_arg(labels, "editorShortcut");
+  }
+  if (g_strcmp0(mode, "source") == 0) {
+    return fl_lookup_string_arg(labels, "sourceShortcut");
+  }
+  if (g_strcmp0(mode, "preview") == 0) {
+    return fl_lookup_string_arg(labels, "previewShortcut");
+  }
+  return fl_lookup_string_arg(labels, "splitShortcut");
+}
+
 static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* view_mode = fl_lookup_string_arg(args, "viewMode");
   const gchar* search = fl_lookup_string_arg(args, "search");
+  const gchar* search_shortcut =
+      fl_lookup_string_arg(args, "searchShortcut");
   const gchar* refresh = fl_lookup_string_arg(args, "refresh");
   const gchar* menu = fl_lookup_string_arg(args, "menu");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
@@ -1295,8 +1414,10 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar,
                                    sidebar_shortcut);
-  set_widget_tooltip(self->sidebar_search_button, search);
-  set_widget_tooltip(self->adaptive_search_button, search);
+  set_widget_tooltip_with_shortcut(self->sidebar_search_button, search,
+                                   search_shortcut);
+  set_widget_tooltip_with_shortcut(self->adaptive_search_button, search,
+                                   search_shortcut);
   if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
       search != nullptr) {
     gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), search);
@@ -1304,7 +1425,9 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->sidebar_menu_button, menu);
   set_widget_tooltip(self->adaptive_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
-  set_widget_tooltip(self->view_mode_button, view_mode);
+  set_widget_tooltip_with_shortcut(
+      self->view_mode_button, view_mode,
+      view_mode_shortcut_label(self, args));
   rebuild_main_menu_model(self, args);
   rebuild_view_mode_menu_model(self, args);
   update_view_mode_icon(self);
