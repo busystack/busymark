@@ -4,6 +4,8 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <handy.h>
 #include <pango/pango.h>
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 
@@ -98,6 +100,7 @@ struct _MyApplication {
   gboolean back_visible;
   gboolean search_active;
   gboolean modal_barrier_visible;
+  gint modal_barrier_depth;
   gboolean suppress_header_actions;
   gchar* header_configuration_session_id;
   gint64 header_configuration_revision;
@@ -116,6 +119,7 @@ struct HeaderBarConfiguration {
   gboolean sidebar_toggle_visible;
   gboolean back_visible;
   gboolean modal_barrier_visible;
+  gint64 modal_barrier_depth;
   const gchar* search_query;
   const gchar* text_direction;
   gdouble sidebar_width;
@@ -290,6 +294,12 @@ static gboolean fl_method_bool_arg(FlValue* args) {
              : FALSE;
 }
 
+static gint64 fl_method_int_arg(FlValue* args, gint64 fallback) {
+  return args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_INT
+             ? fl_value_get_int(args)
+             : fallback;
+}
+
 static gdouble fl_method_double_arg(FlValue* args, gdouble fallback) {
   if (args == nullptr) {
     return fallback;
@@ -415,6 +425,17 @@ static const gchar* css_color_or(const gchar* value, const gchar* fallback) {
   return is_css_color_token(value) ? value : fallback;
 }
 
+static gchar* modal_barrier_color_for_depth(const gchar* color, gint depth) {
+  GdkRGBA barrier;
+  if (!gdk_rgba_parse(&barrier, color)) {
+    return g_strdup(color);
+  }
+  const gint effective_depth = std::max(0, depth);
+  barrier.alpha =
+      1.0 - std::pow(1.0 - barrier.alpha, effective_depth);
+  return gdk_rgba_to_string(&barrier);
+}
+
 static void replace_css_color_field(gchar** target, const gchar* value) {
   g_free(*target);
   *target = is_css_color_token(value) ? g_strdup(value) : nullptr;
@@ -423,7 +444,14 @@ static void replace_css_color_field(gchar** target, const gchar* value) {
 static void set_widget_visible(GtkWidget* widget, gboolean visible) {
   if (widget != nullptr && GTK_IS_WIDGET(widget)) {
     gtk_widget_set_no_show_all(widget, !visible);
-    gtk_widget_set_visible(widget, visible);
+    if (visible) {
+      // Some header controls are nested in containers that start hidden.
+      // Showing only the container leaves children skipped by the initial
+      // gtk_widget_show_all() invisible, producing an empty header slot.
+      gtk_widget_show_all(widget);
+    } else {
+      gtk_widget_hide(widget);
+    }
   }
 }
 
@@ -431,6 +459,10 @@ static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   if (widget != nullptr && GTK_IS_WIDGET(widget)) {
     gtk_widget_set_sensitive(widget, sensitive);
   }
+}
+
+static gboolean stop_modal_scrim_event(GtkWidget*, GdkEvent*, gpointer) {
+  return GDK_EVENT_STOP;
 }
 
 static GtkTextDirection app_text_direction(MyApplication* self) {
@@ -544,8 +576,9 @@ static void refresh_header_bar_css(MyApplication* self) {
       css_color_or(self->foreground_color, kDefaultForeground);
   const gchar* sidebar_border =
       css_color_or(self->sidebar_border_color, kDefaultSidebarBorder);
-  const gchar* modal =
-      css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
+  g_autofree gchar* modal = modal_barrier_color_for_depth(
+      css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)"),
+      self->modal_barrier_depth);
   const gchar* window_shadow_css = uses_legacy_yaru_window_shadow()
                                        ? kLegacyYaruWindowShadowCompatibilityCss
                                        : "";
@@ -1217,15 +1250,19 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   update_view_mode_icon(self);
 }
 
-static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
+static void set_modal_barrier_depth(MyApplication* self, gint64 depth) {
+  const gint effective_depth =
+      depth <= 0 ? 0
+                 : depth > G_MAXINT ? G_MAXINT : static_cast<gint>(depth);
+  const gboolean visible = effective_depth > 0;
+  self->modal_barrier_depth = effective_depth;
   self->modal_barrier_visible = visible;
+  refresh_header_bar_css(self);
   set_widget_visible(self->modal_scrim, visible);
-  if (self->titlebar_handle != nullptr &&
-      GTK_IS_WIDGET(self->titlebar_handle)) {
-    // The Handy handle owns native drag, double-click, and window-menu input.
-    // Disable the interaction surface itself while Flutter has a modal open.
-    gtk_widget_set_sensitive(self->titlebar_handle, !visible);
-  }
+}
+
+static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
+  set_modal_barrier_depth(self, visible ? 1 : 0);
 }
 
 static void set_sidebar_visible(MyApplication* self, gboolean visible) {
@@ -1373,7 +1410,13 @@ static gboolean decode_header_bar_configuration(
       !fl_lookup_optional_bool_arg(args, "backVisible",
                                    &configuration->back_visible) ||
       !fl_lookup_optional_bool_arg(args, "modalBarrierVisible",
-                                   &configuration->modal_barrier_visible)) {
+                                   &configuration->modal_barrier_visible) ||
+      !fl_lookup_int64_arg(args, "modalBarrierDepth",
+                           &configuration->modal_barrier_depth) ||
+      configuration->modal_barrier_depth < 0 ||
+      configuration->modal_barrier_depth > G_MAXINT ||
+      configuration->modal_barrier_visible !=
+          (configuration->modal_barrier_depth > 0)) {
     return FALSE;
   }
 
@@ -1406,7 +1449,7 @@ static void apply_header_bar_configuration(
   set_search_query(self, configuration.search_query);
   set_search_active(self, configuration.search_active);
   set_view_mode(self, configuration.view_mode);
-  set_modal_barrier_visible(self, configuration.modal_barrier_visible);
+  set_modal_barrier_depth(self, configuration.modal_barrier_depth);
   self->header_configuration_revision = configuration.revision;
 
   if (self->titlebar_box != nullptr) {
@@ -1562,6 +1605,10 @@ static GtkWidget* create_busymark_titlebar_overlay(MyApplication* self) {
   gtk_widget_set_halign(self->titlebar_overlay, GTK_ALIGN_FILL);
   gtk_widget_set_valign(self->titlebar_overlay, GTK_ALIGN_FILL);
   gtk_widget_set_hexpand(self->titlebar_overlay, TRUE);
+  // The titlebar is packed as a fixed-height row above the Flutter view.
+  // Prevent expansion requests from overlay children from turning it into a
+  // second vertically expanding application surface.
+  gtk_widget_set_vexpand(self->titlebar_overlay, FALSE);
   gtk_container_add(GTK_CONTAINER(self->titlebar_overlay),
                     create_busymark_titlebar(self));
 
@@ -1572,9 +1619,18 @@ static GtkWidget* create_busymark_titlebar_overlay(MyApplication* self) {
   gtk_widget_set_halign(self->modal_scrim, GTK_ALIGN_FILL);
   gtk_widget_set_valign(self->modal_scrim, GTK_ALIGN_FILL);
   gtk_widget_set_hexpand(self->modal_scrim, TRUE);
-  gtk_widget_set_vexpand(self->modal_scrim, TRUE);
+  // GTK_ALIGN_FILL gives the scrim the overlay's full allocation. Asking it
+  // to expand vertically instead propagates through GtkOverlay and
+  // HdyWindowHandle when the scrim becomes visible, making the header consume
+  // the window's spare height.
+  gtk_widget_set_vexpand(self->modal_scrim, FALSE);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->modal_scrim),
                               "busymark-modal-scrim");
+  // Keep the header subtree visually enabled beneath the modal tint. The
+  // overlay owns pointer input while visible and consumes it here so events
+  // cannot bubble into HdyWindowHandle's drag and window-menu handlers.
+  g_signal_connect(self->modal_scrim, "event",
+                   G_CALLBACK(stop_modal_scrim_event), nullptr);
   set_widget_visible(self->modal_scrim, FALSE);
   gtk_overlay_add_overlay(GTK_OVERLAY(self->titlebar_overlay),
                           self->modal_scrim);
@@ -1662,6 +1718,9 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setModalBarrierVisible") == 0) {
     set_modal_barrier_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
+  } else if (strcmp(method, "setModalBarrierDepth") == 0) {
+    set_modal_barrier_depth(self, fl_method_int_arg(args, 0));
+    respond_success(method_call);
   } else {
     fl_method_call_respond_not_implemented(method_call, nullptr);
   }
@@ -1703,6 +1762,7 @@ static void my_application_activate(GApplication* application) {
 
   self->titlebar_handle = hdy_window_handle_new();
   gtk_widget_set_hexpand(self->titlebar_handle, TRUE);
+  gtk_widget_set_vexpand(self->titlebar_handle, FALSE);
   gtk_container_add(GTK_CONTAINER(self->titlebar_handle),
                     create_busymark_titlebar_overlay(self));
   gtk_widget_show_all(self->titlebar_handle);
@@ -1861,6 +1921,7 @@ static void my_application_init(MyApplication* self) {
   self->back_visible = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
+  self->modal_barrier_depth = 0;
   self->suppress_header_actions = FALSE;
   self->header_configuration_session_id = nullptr;
   self->header_configuration_revision = -1;
