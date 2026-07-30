@@ -812,7 +812,7 @@ void main() {
     expect(workspace, isNot(contains('BusyMarkMenuSelectorButton')));
   });
 
-  test('shared popup menus delegate rows and surfaces to framework themes', () {
+  test('shared popup menus prefer GTK with a themed framework fallback', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final headerPopup = RegExp(
       r'class BusyMarkHeaderPopupMenuButton<T>[\s\S]*?Future<T\?> '
@@ -822,19 +822,18 @@ void main() {
       r'class BusyMarkPopupMenuItem<T>[\s\S]*?class BusyMarkPopupSelectorOption',
     ).firstMatch(design)!.group(0)!;
 
-    expect(headerPopup, contains('PopupMenuButton<T>('));
-    expect(headerPopup, contains('GlobalKey<PopupMenuButtonState<T>>()'));
-    expect(headerPopup, contains('showButtonMenu()'));
+    expect(headerPopup, contains('NativeMenuService'));
+    expect(headerPopup, contains('showBusyMarkMenu<T>('));
+    expect(headerPopup, contains('_busyMarkNativeMenuEntries'));
+    expect(headerPopup, contains('BusyMarkMenuSession'));
+    expect(headerPopup, contains('nativeMenuService.show('));
+    expect(headerPopup, contains('showMenu<T>('));
     expect(headerPopup, contains('BusyMarkHeaderIconButton('));
     expect(headerPopup, contains('selected: _loading || _open'));
     expect(headerPopup, contains('requestFocus: true'));
-    expect(
-      RegExp('requestFocus: true').allMatches(design).length,
-      2,
-      reason: 'Header and context-menu routes must both own Escape handling.',
-    );
-    expect(headerPopup, isNot(contains('findRenderObject()')));
-    expect(headerPopup, isNot(contains('BoxConstraints.tightFor')));
+    expect(headerPopup, contains('findRenderObject()'));
+    expect(headerPopup, contains('BoxConstraints.tightFor'));
+    expect(headerPopup, isNot(contains('PopupMenuButton<T>(')));
     expect(headerPopup, isNot(contains('popupMenuShortcutWidth')));
     expect(headerPopup, isNot(contains('RelativeRect.fromLTRB')));
     expect(headerPopup, isNot(contains('_BusyMarkHeaderPopoverShape')));
@@ -866,11 +865,11 @@ void main() {
     expect(headerIcon, isNot(contains('DecoratedBox(')));
     expect(headerIcon, isNot(contains('BoxShadow(')));
     expect(popupItem, contains('extends PopupMenuItem<T>'));
-    expect(popupItem, contains('child: _BusyMarkPopupMenuItemContent('));
+    expect(popupItem, contains('child: KeyedSubtree('));
+    expect(popupItem, contains('_BusyMarkPopupMenuItemContent('));
     expect(popupItem, contains('textDirection: TextDirection.ltr'));
     expect(popupItem, isNot(contains('Navigator.pop')));
     expect(popupItem, isNot(contains('InkWell(')));
-    expect(popupItem, isNot(contains('createState()')));
   });
 
   test('Git branch actions use the shared workspace-header popup', () {
@@ -1036,7 +1035,7 @@ void main() {
     expect(gitSidebar, isNot(contains('FilledButton(')));
   });
 
-  test('settings language selector delegates to the shared Yaru popup', () {
+  test('settings language selector delegates to the shared native menu', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
@@ -1060,7 +1059,7 @@ void main() {
     final selector = RegExp(
       r'class BusyMarkPopupSelector<T>[\s\S]*?class BusyMarkClamp',
     ).firstMatch(design)!.group(0)!;
-    expect(selector, contains('YaruPopupMenuButton<T>('));
+    expect(selector, contains('BusyMarkMenuButton<T>('));
     expect(selector, contains('Theme.of(context).outlinedButtonTheme.style'));
     expect(
       selector,
@@ -1068,7 +1067,7 @@ void main() {
     );
     expect(selector, contains('BusyMarkPopupMenuItem<T>('));
     expect(selector, contains('softWrap: false'));
-    expect(selector, isNot(contains('BusyMarkPushButton.standard(')));
+    expect(selector, contains('BusyMarkPushButton.standard('));
     expect(selector, isNot(contains('WidgetStatesController()')));
     expect(selector, isNot(contains('showMenu<T>(')));
     expect(selector, isNot(contains('MouseRegion(')));

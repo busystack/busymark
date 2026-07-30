@@ -13,6 +13,7 @@
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
+constexpr char kNativeMenuChannel[] = "busymark/native_menus";
 constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
@@ -59,6 +60,7 @@ struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
+  FlMethodChannel* native_menu_channel;
   GtkCssProvider* header_bar_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
@@ -1026,20 +1028,12 @@ static const gchar* localized_label_or(FlValue* labels,
   return value != nullptr ? value : fallback;
 }
 
-static void add_model_button_accelerator(GtkWidget* button,
-                                         const gchar* accelerator) {
+static void add_model_button_shortcut_label(GtkWidget* button,
+                                            const gchar* shortcut) {
   if (button == nullptr || !GTK_IS_MODEL_BUTTON(button) ||
-      accelerator == nullptr || accelerator[0] == '\0' ||
+      shortcut == nullptr || shortcut[0] == '\0' ||
       g_object_get_data(G_OBJECT(button), kModelButtonAcceleratorKey) !=
           nullptr) {
-    return;
-  }
-
-  guint accelerator_key = 0;
-  GdkModifierType accelerator_modifiers = static_cast<GdkModifierType>(0);
-  gtk_accelerator_parse(accelerator, &accelerator_key,
-                        &accelerator_modifiers);
-  if (accelerator_key == 0) {
     return;
   }
 
@@ -1055,26 +1049,42 @@ static void add_model_button_accelerator(GtkWidget* button,
   gtk_widget_set_hexpand(content, TRUE);
   gtk_box_pack_start(GTK_BOX(row), content, TRUE, TRUE, 0);
 
-  // GtkAccelLabel computes its accelerator width only after mapping, while a
-  // model popover allocates its width before mapping. Let GTK format the
-  // platform-native text, then render it as a regular label so the shortcut's
-  // natural width participates in the popover's first allocation.
-  g_autofree gchar* accelerator_text =
-      gtk_accelerator_get_label(accelerator_key, accelerator_modifiers);
-  GtkWidget* accelerator_label = gtk_label_new(accelerator_text);
-  gtk_widget_set_direction(accelerator_label, GTK_TEXT_DIR_LTR);
-  gtk_widget_set_halign(accelerator_label, GTK_ALIGN_END);
-  gtk_widget_set_valign(accelerator_label, GTK_ALIGN_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(accelerator_label), 1.0);
+  GtkWidget* shortcut_label = gtk_label_new(shortcut);
+  gtk_widget_set_direction(shortcut_label, GTK_TEXT_DIR_LTR);
+  gtk_widget_set_halign(shortcut_label, GTK_ALIGN_END);
+  gtk_widget_set_valign(shortcut_label, GTK_ALIGN_CENTER);
+  gtk_label_set_xalign(GTK_LABEL(shortcut_label), 1.0);
   gtk_style_context_add_class(
-      gtk_widget_get_style_context(accelerator_label), "dim-label");
-  gtk_box_pack_end(GTK_BOX(row), accelerator_label, FALSE, FALSE, 0);
+      gtk_widget_get_style_context(shortcut_label), "dim-label");
+  gtk_box_pack_end(GTK_BOX(row), shortcut_label, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(button), row);
   gtk_widget_show_all(row);
   g_object_unref(content);
   g_object_set_data(G_OBJECT(button), kModelButtonAcceleratorKey,
                     GINT_TO_POINTER(1));
+}
+
+static void add_model_button_accelerator(GtkWidget* button,
+                                         const gchar* accelerator) {
+  if (accelerator == nullptr || accelerator[0] == '\0') {
+    return;
+  }
+  guint accelerator_key = 0;
+  GdkModifierType accelerator_modifiers = static_cast<GdkModifierType>(0);
+  gtk_accelerator_parse(accelerator, &accelerator_key,
+                        &accelerator_modifiers);
+  if (accelerator_key == 0) {
+    return;
+  }
+
+  // GtkAccelLabel computes its accelerator width only after mapping, while a
+  // model popover allocates its width before mapping. Let GTK format the
+  // platform-native text, then render it as a regular label so the shortcut's
+  // natural width participates in the popover's first allocation.
+  g_autofree gchar* accelerator_text =
+      gtk_accelerator_get_label(accelerator_key, accelerator_modifiers);
+  add_model_button_shortcut_label(button, accelerator_text);
 }
 
 struct ModelMenuAcceleratorDecoration {
@@ -1940,6 +1950,569 @@ static void register_header_bar_channel(MyApplication* self, FlView* view) {
       self->header_bar_channel, header_bar_method_call_cb, self, nullptr);
 }
 
+constexpr char kNativeMenuActionNamespace[] = "busymark-native-menu";
+constexpr char kNativeMenuActionIndexKey[] = "busymark-native-menu-index";
+
+struct NativeMenuHandlerData;
+
+struct NativeMenuSession {
+  NativeMenuHandlerData* owner;
+  gint64 id;
+  size_t entry_count;
+  GtkWidget* popover;
+  GMenu* model;
+  GSimpleActionGroup* action_group;
+  FlMethodCall* method_call;
+  GPtrArray* shortcut_labels;
+  gulong closed_signal_id;
+  guint cleanup_source_id;
+  gint pending_selected_index;
+};
+
+struct NativeMenuHandlerData {
+  GtkWidget* view;
+  NativeMenuSession* active;
+};
+
+static void native_menu_session_respond(NativeMenuSession* session,
+                                        gint selected_index) {
+  if (session->method_call == nullptr) {
+    return;
+  }
+  g_autoptr(FlValue) result = selected_index < 0
+                                  ? fl_value_new_null()
+                                  : fl_value_new_int(selected_index);
+  fl_method_call_respond_success(session->method_call, result, nullptr);
+  g_clear_object(&session->method_call);
+}
+
+static void native_menu_session_dispose(NativeMenuSession* session) {
+  if (session == nullptr) {
+    return;
+  }
+
+  NativeMenuHandlerData* owner = session->owner;
+  if (owner != nullptr && owner->active == session) {
+    owner->active = nullptr;
+  }
+  if (session->cleanup_source_id != 0) {
+    g_source_remove(session->cleanup_source_id);
+    session->cleanup_source_id = 0;
+  }
+  if (session->popover != nullptr) {
+    if (session->closed_signal_id != 0) {
+      g_signal_handler_disconnect(session->popover,
+                                  session->closed_signal_id);
+      session->closed_signal_id = 0;
+    }
+    if (gtk_widget_get_visible(session->popover)) {
+      gtk_widget_hide(session->popover);
+    }
+    gtk_widget_destroy(session->popover);
+    g_clear_object(&session->popover);
+  }
+  if (owner != nullptr && owner->view != nullptr) {
+    gtk_widget_insert_action_group(owner->view, kNativeMenuActionNamespace,
+                                   nullptr);
+    if (gtk_widget_get_realized(owner->view)) {
+      gtk_widget_grab_focus(owner->view);
+    }
+  }
+  g_clear_pointer(&session->shortcut_labels, g_ptr_array_unref);
+  g_clear_object(&session->model);
+  g_clear_object(&session->action_group);
+  native_menu_session_respond(session, session->pending_selected_index);
+  g_free(session);
+}
+
+static gboolean native_menu_cleanup_idle_cb(gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  session->cleanup_source_id = 0;
+  native_menu_session_dispose(session);
+  return G_SOURCE_REMOVE;
+}
+
+static void native_menu_closed_cb(GtkPopover*, gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  if (session->cleanup_source_id == 0) {
+    session->cleanup_source_id = g_idle_add_full(
+        G_PRIORITY_DEFAULT_IDLE, native_menu_cleanup_idle_cb, session,
+        nullptr);
+  }
+}
+
+static void native_menu_action_activated_cb(GSimpleAction* action,
+                                            GVariant*,
+                                            gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  session->pending_selected_index =
+      GPOINTER_TO_INT(
+          g_object_get_data(G_OBJECT(action), kNativeMenuActionIndexKey)) -
+      1;
+  if (session->popover != nullptr) {
+    gtk_popover_popdown(GTK_POPOVER(session->popover));
+  }
+}
+
+static void native_menu_selection_activated_cb(GSimpleAction* action,
+                                               GVariant* parameter,
+                                               gpointer user_data) {
+  if (parameter == nullptr ||
+      !g_variant_is_of_type(parameter, G_VARIANT_TYPE_STRING)) {
+    return;
+  }
+  const gchar* target = g_variant_get_string(parameter, nullptr);
+  gchar* end = nullptr;
+  const guint64 parsed = g_ascii_strtoull(target, &end, 10);
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  if (target[0] == '\0' || end == nullptr || *end != '\0' ||
+      parsed > static_cast<guint64>(G_MAXINT) ||
+      parsed >= session->entry_count) {
+    return;
+  }
+
+  g_simple_action_set_state(action, parameter);
+  session->pending_selected_index = static_cast<gint>(parsed);
+  if (session->popover != nullptr) {
+    gtk_popover_popdown(GTK_POPOVER(session->popover));
+  }
+}
+
+static gboolean native_menu_dismiss_active(NativeMenuHandlerData* data,
+                                           gint64 session_id) {
+  NativeMenuSession* session = data->active;
+  if (session == nullptr || session->id != session_id) {
+    return FALSE;
+  }
+  if (session->popover != nullptr &&
+      gtk_widget_get_visible(session->popover)) {
+    gtk_popover_popdown(GTK_POPOVER(session->popover));
+  } else {
+    native_menu_session_dispose(session);
+  }
+  return TRUE;
+}
+
+static gboolean fl_lookup_optional_bool_with_default(
+    FlValue* args,
+    const gchar* key,
+    gboolean fallback,
+    gboolean* value_out) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return FALSE;
+  }
+  FlValue* value = fl_value_lookup_string(args, key);
+  if (value == nullptr) {
+    *value_out = fallback;
+    return TRUE;
+  }
+  if (fl_value_get_type(value) != FL_VALUE_TYPE_BOOL) {
+    return FALSE;
+  }
+  *value_out = fl_value_get_bool(value);
+  return TRUE;
+}
+
+static gboolean fl_lookup_positive_int64_arg(FlValue* args,
+                                             const gchar* key,
+                                             gint64* value_out) {
+  if (!fl_lookup_int64_arg(args, key, value_out) || *value_out <= 0) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+static void respond_native_menu_argument_error(FlMethodCall* method_call,
+                                               const gchar* message) {
+  fl_method_call_respond_error(method_call, "invalid-arguments", message,
+                               nullptr, nullptr);
+}
+
+static gboolean parse_native_menu_anchor(FlValue* args,
+                                         GdkRectangle* rectangle_out) {
+  FlValue* anchor = fl_lookup_map_arg(args, "anchor");
+  if (anchor == nullptr) {
+    return FALSE;
+  }
+  gdouble x = 0;
+  gdouble y = 0;
+  gdouble width = 0;
+  gdouble height = 0;
+  if (!fl_lookup_double_arg(anchor, "x", &x) ||
+      !fl_lookup_double_arg(anchor, "y", &y) ||
+      !fl_lookup_double_arg(anchor, "width", &width) ||
+      !fl_lookup_double_arg(anchor, "height", &height) ||
+      !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(width) ||
+      !std::isfinite(height) || width < 0 || height < 0) {
+    return FALSE;
+  }
+
+  const gdouble left = std::floor(x);
+  const gdouble top = std::floor(y);
+  const gdouble right = std::ceil(x + width);
+  const gdouble bottom = std::ceil(y + height);
+  const gdouble pixel_width = std::max(1.0, right - left);
+  const gdouble pixel_height = std::max(1.0, bottom - top);
+  if (left < G_MININT || left > G_MAXINT || top < G_MININT ||
+      top > G_MAXINT || pixel_width > G_MAXINT ||
+      pixel_height > G_MAXINT) {
+    return FALSE;
+  }
+
+  rectangle_out->x = static_cast<gint>(left);
+  rectangle_out->y = static_cast<gint>(top);
+  rectangle_out->width = static_cast<gint>(pixel_width);
+  rectangle_out->height = static_cast<gint>(pixel_height);
+  return TRUE;
+}
+
+struct NativeMenuShortcutDecoration {
+  GPtrArray* labels;
+  guint index;
+};
+
+static void decorate_native_menu_shortcuts_cb(GtkWidget* widget,
+                                               gpointer user_data) {
+  auto* decoration = static_cast<NativeMenuShortcutDecoration*>(user_data);
+  if (GTK_IS_MODEL_BUTTON(widget)) {
+    if (decoration->index < decoration->labels->len) {
+      add_model_button_shortcut_label(
+          widget, static_cast<const gchar*>(
+                      g_ptr_array_index(decoration->labels,
+                                        decoration->index)));
+    }
+    decoration->index++;
+    return;
+  }
+  if (GTK_IS_CONTAINER(widget)) {
+    gtk_container_foreach(GTK_CONTAINER(widget),
+                          decorate_native_menu_shortcuts_cb, user_data);
+  }
+}
+
+static void decorate_native_menu_shortcuts(GtkWidget* popover,
+                                           GPtrArray* labels) {
+  if (popover == nullptr || !GTK_IS_CONTAINER(popover) || labels == nullptr) {
+    return;
+  }
+  NativeMenuShortcutDecoration decoration = {labels, 0};
+  gtk_container_foreach(GTK_CONTAINER(popover),
+                        decorate_native_menu_shortcuts_cb, &decoration);
+}
+
+static void show_native_menu(NativeMenuHandlerData* data,
+                             FlMethodCall* method_call,
+                             FlValue* args) {
+  if (data->view == nullptr || !gtk_widget_get_realized(data->view)) {
+    fl_method_call_respond_error(method_call, "unavailable",
+                                 "The native menu host is unavailable.",
+                                 nullptr, nullptr);
+    return;
+  }
+
+  GdkRectangle anchor = {};
+  gint64 session_id = 0;
+  if (!fl_lookup_positive_int64_arg(args, "sessionId", &session_id) ||
+      !parse_native_menu_anchor(args, &anchor)) {
+    respond_native_menu_argument_error(
+        method_call,
+        "sessionId must be positive and anchor must contain finite geometry.");
+    return;
+  }
+
+  FlValue* entries = fl_value_lookup_string(args, "entries");
+  gboolean focus_first = FALSE;
+  const gchar* preferred_position_arg =
+      fl_lookup_string_arg(args, "preferredPosition");
+  GtkPositionType preferred_position = GTK_POS_BOTTOM;
+  if (g_strcmp0(preferred_position_arg, "top") == 0) {
+    preferred_position = GTK_POS_TOP;
+  } else if (preferred_position_arg != nullptr &&
+             g_strcmp0(preferred_position_arg, "bottom") != 0) {
+    respond_native_menu_argument_error(
+        method_call, "preferredPosition must be top or bottom.");
+    return;
+  }
+  if (entries == nullptr ||
+      fl_value_get_type(entries) != FL_VALUE_TYPE_LIST ||
+      fl_value_get_length(entries) == 0 ||
+      fl_value_get_length(entries) > static_cast<size_t>(G_MAXINT) ||
+      !fl_lookup_optional_bool_with_default(args, "focusFirst", FALSE,
+                                            &focus_first)) {
+    respond_native_menu_argument_error(
+        method_call,
+        "entries must be non-empty and focusFirst must be boolean.");
+    return;
+  }
+
+  size_t command_count = 0;
+  size_t checkable_run_selected_count = 0;
+  gboolean checkable_run_has_disabled_entry = FALSE;
+  gboolean in_checkable_run = FALSE;
+  for (size_t index = 0; index < fl_value_get_length(entries); index++) {
+    FlValue* entry = fl_value_get_list_value(entries, index);
+    gboolean separator = FALSE;
+    gboolean enabled = TRUE;
+    gboolean checkable = FALSE;
+    gboolean selected = FALSE;
+    if (entry == nullptr || fl_value_get_type(entry) != FL_VALUE_TYPE_MAP ||
+        !fl_lookup_optional_bool_with_default(entry, "separator", FALSE,
+                                              &separator) ||
+        !fl_lookup_optional_bool_with_default(entry, "enabled", TRUE,
+                                              &enabled) ||
+        !fl_lookup_optional_bool_with_default(entry, "checkable", FALSE,
+                                              &checkable) ||
+        !fl_lookup_optional_bool_with_default(entry, "selected", FALSE,
+                                              &selected) ||
+        (!separator && fl_lookup_string_arg(entry, "label") == nullptr) ||
+        (selected && !checkable)) {
+      respond_native_menu_argument_error(
+          method_call,
+          "entries must contain valid command or separator presentation.");
+      return;
+    }
+    if (!separator) {
+      command_count++;
+    }
+    if (!separator && checkable) {
+      if (!in_checkable_run) {
+        checkable_run_selected_count = 0;
+        checkable_run_has_disabled_entry = FALSE;
+        in_checkable_run = TRUE;
+      }
+      checkable_run_selected_count += selected ? 1 : 0;
+      checkable_run_has_disabled_entry =
+          checkable_run_has_disabled_entry || !enabled;
+      continue;
+    }
+    if (in_checkable_run &&
+        (checkable_run_selected_count > 1 ||
+         checkable_run_has_disabled_entry)) {
+      respond_native_menu_argument_error(
+          method_call,
+          "single-choice groups allow at most one selected entry and require "
+          "enabled entries.");
+      return;
+    }
+    in_checkable_run = FALSE;
+  }
+  if (in_checkable_run &&
+      (checkable_run_selected_count > 1 ||
+       checkable_run_has_disabled_entry)) {
+    respond_native_menu_argument_error(
+        method_call,
+        "single-choice groups allow at most one selected entry and require "
+        "enabled entries.");
+    return;
+  }
+  if (command_count == 0) {
+    respond_native_menu_argument_error(method_call,
+                                       "entries must contain a command.");
+    return;
+  }
+
+  if (data->active != nullptr) {
+    native_menu_session_dispose(data->active);
+  }
+
+  auto* session = g_new0(NativeMenuSession, 1);
+  session->owner = data;
+  session->id = session_id;
+  session->entry_count = fl_value_get_length(entries);
+  session->pending_selected_index = -1;
+  session->method_call =
+      FL_METHOD_CALL(g_object_ref(G_OBJECT(method_call)));
+  session->action_group = g_simple_action_group_new();
+  session->model = g_menu_new();
+  session->shortcut_labels = g_ptr_array_new_with_free_func(g_free);
+  data->active = session;
+
+  GMenu* section = g_menu_new();
+  guint section_length = 0;
+  auto flush_section = [&]() {
+    if (section_length > 0) {
+      g_menu_append_section(session->model, nullptr, G_MENU_MODEL(section));
+    }
+    g_object_unref(section);
+    section = g_menu_new();
+    section_length = 0;
+  };
+
+  guint checkable_group_index = 0;
+  for (size_t index = 0; index < fl_value_get_length(entries);) {
+    FlValue* entry = fl_value_get_list_value(entries, index);
+    gboolean separator = FALSE;
+    fl_lookup_optional_bool_with_default(entry, "separator", FALSE,
+                                         &separator);
+    if (separator) {
+      flush_section();
+      index++;
+      continue;
+    }
+
+    const gchar* label = fl_lookup_string_arg(entry, "label");
+    const gchar* shortcut = fl_lookup_string_arg(entry, "shortcut");
+    gboolean enabled = TRUE;
+    gboolean checkable = FALSE;
+    gboolean selected = FALSE;
+    fl_lookup_optional_bool_with_default(entry, "enabled", TRUE, &enabled);
+    fl_lookup_optional_bool_with_default(entry, "checkable", FALSE,
+                                         &checkable);
+    fl_lookup_optional_bool_with_default(entry, "selected", FALSE, &selected);
+
+    if (checkable) {
+      const size_t run_start = index;
+      size_t run_end = run_start;
+      g_autofree gchar* selected_target = g_strdup("");
+      while (run_end < fl_value_get_length(entries)) {
+        FlValue* run_entry = fl_value_get_list_value(entries, run_end);
+        gboolean run_separator = FALSE;
+        gboolean run_checkable = FALSE;
+        gboolean run_selected = FALSE;
+        fl_lookup_optional_bool_with_default(
+            run_entry, "separator", FALSE, &run_separator);
+        fl_lookup_optional_bool_with_default(
+            run_entry, "checkable", FALSE, &run_checkable);
+        if (run_separator || !run_checkable) {
+          break;
+        }
+        fl_lookup_optional_bool_with_default(
+            run_entry, "selected", FALSE, &run_selected);
+        if (run_selected) {
+          g_free(selected_target);
+          selected_target = g_strdup_printf("%zu", run_end);
+        }
+        run_end++;
+      }
+
+      g_autofree gchar* group_action_name = g_strdup_printf(
+          "select-group-%u", checkable_group_index++);
+      GSimpleAction* group_action = g_simple_action_new_stateful(
+          group_action_name, G_VARIANT_TYPE_STRING,
+          g_variant_new_string(selected_target));
+      g_signal_connect(group_action, "activate",
+                       G_CALLBACK(native_menu_selection_activated_cb),
+                       session);
+      g_action_map_add_action(G_ACTION_MAP(session->action_group),
+                              G_ACTION(group_action));
+      g_autofree gchar* detailed_group_action = g_strdup_printf(
+          "%s.%s", kNativeMenuActionNamespace, group_action_name);
+
+      for (size_t run_index = run_start; run_index < run_end; run_index++) {
+        FlValue* run_entry = fl_value_get_list_value(entries, run_index);
+        const gchar* run_label =
+            fl_lookup_string_arg(run_entry, "label");
+        const gchar* run_shortcut =
+            fl_lookup_string_arg(run_entry, "shortcut");
+        g_autofree gchar* target = g_strdup_printf("%zu", run_index);
+        g_autoptr(GMenuItem) item = g_menu_item_new(run_label, nullptr);
+        g_menu_item_set_action_and_target_value(
+            item, detailed_group_action, g_variant_new_string(target));
+        g_menu_append_item(section, item);
+        section_length++;
+        g_ptr_array_add(
+            session->shortcut_labels,
+            g_strdup(run_shortcut != nullptr ? run_shortcut : ""));
+      }
+      g_object_unref(group_action);
+      index = run_end;
+      continue;
+    }
+
+    g_autofree gchar* action_name = g_strdup_printf("select-%zu", index);
+    GSimpleAction* action = g_simple_action_new(action_name, nullptr);
+    g_simple_action_set_enabled(action, enabled);
+    g_object_set_data(G_OBJECT(action), kNativeMenuActionIndexKey,
+                      GINT_TO_POINTER(static_cast<gint>(index) + 1));
+    g_signal_connect(action, "activate",
+                     G_CALLBACK(native_menu_action_activated_cb), session);
+    g_action_map_add_action(G_ACTION_MAP(session->action_group),
+                            G_ACTION(action));
+
+    g_autofree gchar* detailed_action =
+        g_strdup_printf("%s.%s", kNativeMenuActionNamespace, action_name);
+    g_autoptr(GMenuItem) item = g_menu_item_new(label, detailed_action);
+    g_menu_append_item(section, item);
+    g_object_unref(action);
+    section_length++;
+    g_ptr_array_add(session->shortcut_labels,
+                    g_strdup(shortcut != nullptr ? shortcut : ""));
+    index++;
+  }
+  flush_section();
+  g_object_unref(section);
+
+  gtk_widget_insert_action_group(
+      data->view, kNativeMenuActionNamespace,
+      G_ACTION_GROUP(session->action_group));
+  session->popover = gtk_popover_new_from_model(
+      data->view, G_MENU_MODEL(session->model));
+  g_object_ref_sink(session->popover);
+  gtk_popover_set_pointing_to(GTK_POPOVER(session->popover), &anchor);
+  gtk_popover_set_position(GTK_POPOVER(session->popover),
+                           preferred_position);
+  gtk_popover_set_constrain_to(GTK_POPOVER(session->popover),
+                               GTK_POPOVER_CONSTRAINT_WINDOW);
+  gtk_popover_set_modal(GTK_POPOVER(session->popover), TRUE);
+  decorate_native_menu_shortcuts(session->popover,
+                                 session->shortcut_labels);
+  session->closed_signal_id = g_signal_connect(
+      session->popover, "closed", G_CALLBACK(native_menu_closed_cb), session);
+  gtk_popover_popup(GTK_POPOVER(session->popover));
+  if (focus_first) {
+    gtk_widget_child_focus(session->popover, GTK_DIR_TAB_FORWARD);
+  }
+}
+
+static void native_menu_handler_data_free(gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  if (data->active != nullptr) {
+    native_menu_session_dispose(data->active);
+  }
+  if (data->view != nullptr) {
+    g_object_remove_weak_pointer(
+        G_OBJECT(data->view),
+        reinterpret_cast<gpointer*>(&data->view));
+  }
+  g_free(data);
+}
+
+static void native_menu_method_call_cb(FlMethodChannel*,
+                                       FlMethodCall* method_call,
+                                       gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  const gchar* method = fl_method_call_get_name(method_call);
+  if (strcmp(method, "show") == 0) {
+    show_native_menu(data, method_call, fl_method_call_get_args(method_call));
+  } else if (strcmp(method, "dismiss") == 0) {
+    gint64 session_id = 0;
+    if (!fl_lookup_positive_int64_arg(fl_method_call_get_args(method_call),
+                                      "sessionId", &session_id)) {
+      respond_native_menu_argument_error(
+          method_call, "sessionId must be a positive integer.");
+      return;
+    }
+    respond_bool(method_call,
+                 native_menu_dismiss_active(data, session_id));
+  } else {
+    fl_method_call_respond_not_implemented(method_call, nullptr);
+  }
+}
+
+static void register_native_menu_channel(MyApplication* self, FlView* view) {
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  self->native_menu_channel = fl_method_channel_new(
+      fl_engine_get_binary_messenger(fl_view_get_engine(view)),
+      kNativeMenuChannel, FL_METHOD_CODEC(codec));
+  auto* data = g_new0(NativeMenuHandlerData, 1);
+  data->view = GTK_WIDGET(view);
+  g_object_add_weak_pointer(G_OBJECT(data->view),
+                            reinterpret_cast<gpointer*>(&data->view));
+  fl_method_channel_set_method_call_handler(
+      self->native_menu_channel, native_menu_method_call_cb, data,
+      native_menu_handler_data_free);
+}
+
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
@@ -1998,6 +2571,7 @@ static void my_application_activate(GApplication* application) {
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
+  register_native_menu_channel(self, view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
@@ -2052,6 +2626,7 @@ static void my_application_dispose(GObject* object) {
   }
   g_clear_object(&self->header_bar_css_provider);
   g_clear_object(&self->header_bar_channel);
+  g_clear_object(&self->native_menu_channel);
   g_clear_object(&self->main_menu_model);
   g_clear_object(&self->view_mode_menu_model);
   g_clear_object(&self->view_mode_action);
@@ -2080,6 +2655,7 @@ static void my_application_class_init(MyApplicationClass* klass) {
 static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
+  self->native_menu_channel = nullptr;
   self->header_bar_css_provider = nullptr;
   self->main_window = nullptr;
   self->flutter_view = nullptr;

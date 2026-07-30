@@ -3,8 +3,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
+import '../platform/native_menu_service.dart';
 import 'busymark_glyphs.dart';
 
 abstract final class BusyMarkSpacing {
@@ -1069,6 +1071,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
     this.foregroundColor,
     this.backgroundColor,
     this.borderRadius = BusyMarkRadius.headerButton,
+    this.nativeMenuService = const NativeMenuService(),
   });
 
   final String tooltip;
@@ -1084,6 +1087,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final double borderRadius;
+  final NativeMenuService nativeMenuService;
 
   @override
   State<BusyMarkHeaderPopupMenuButton<T>> createState() =>
@@ -1092,38 +1096,28 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
 
 class _BusyMarkHeaderPopupMenuButtonState<T>
     extends State<BusyMarkHeaderPopupMenuButton<T>> {
-  final _menuKey = GlobalKey<PopupMenuButtonState<T>>();
-  List<PopupMenuEntry<T>> _items = const [];
+  final _triggerKey = GlobalKey();
+  BusyMarkMenuSession? _activeMenuSession;
   var _loading = false;
   var _open = false;
 
   @override
+  void dispose() {
+    final session = _activeMenuSession;
+    _activeMenuSession = null;
+    if (session != null) {
+      unawaited(session.dismiss());
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // PopupMenuButton owns route placement, RTL growth, focus, Escape, and
-        // menu semantics. The visible Yaru button only performs the async load
-        // before asking that framework control to open.
-        ExcludeSemantics(
-          child: PopupMenuButton<T>(
-            key: _menuKey,
-            enabled: false,
-            tooltip: '',
-            useRootNavigator: true,
-            position: PopupMenuPosition.under,
-            requestFocus: true,
-            itemBuilder: (_) => _items,
-            onOpened: () => _setOpen(true),
-            onCanceled: () => _setOpen(false),
-            onSelected: (selection) {
-              _setOpen(false);
-              widget.onSelected(selection);
-            },
-            child: const SizedBox.square(dimension: BusyMarkSizes.iconButton),
-          ),
-        ),
-        BusyMarkHeaderIconButton(
+    return KeyedSubtree(
+      key: _triggerKey,
+      child: Semantics(
+        expanded: _open,
+        child: BusyMarkHeaderIconButton(
           tooltip: widget.tooltip,
           icon: widget.icon,
           shortcut: widget.shortcut,
@@ -1135,7 +1129,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           borderRadius: widget.borderRadius,
           onPressed: _loadAndShowMenu,
         ),
-      ],
+      ),
     );
   }
 
@@ -1149,23 +1143,274 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
       if (!mounted || items.isEmpty) {
         return;
       }
-      _items = List.unmodifiable(items);
-      _menuKey.currentState?.showButtonMenu();
+      final triggerContext = _triggerKey.currentContext;
+      if (triggerContext == null || !triggerContext.mounted) {
+        return;
+      }
+      final session = BusyMarkMenuSession();
+      _activeMenuSession = session;
+      setState(() => _open = true);
+      T? selection;
+      try {
+        selection = await showBusyMarkMenu<T>(
+          context: triggerContext,
+          anchorContext: triggerContext,
+          items: List.unmodifiable(items),
+          nativeMenuService: widget.nativeMenuService,
+          session: session,
+        );
+      } finally {
+        if (mounted && identical(_activeMenuSession, session)) {
+          setState(() {
+            _activeMenuSession = null;
+            _open = false;
+          });
+        }
+      }
+      if (mounted && !session.dismissed && selection != null) {
+        widget.onSelected(selection);
+      }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
     }
   }
+}
 
-  void _setOpen(bool value) {
-    if (mounted && _open != value) {
-      setState(() => _open = value);
+/// Owns one native or Flutter fallback menu presentation.
+final class BusyMarkMenuSession {
+  BusyMarkMenuSession() : _nativeSession = NativeMenuSession();
+
+  final NativeMenuSession _nativeSession;
+  final GlobalKey _fallbackRouteKey = GlobalKey();
+  NativeMenuService _nativeMenuService = const NativeMenuService();
+  Route<dynamic>? _fallbackRoute;
+  var _started = false;
+  var _dismissed = false;
+
+  bool get dismissed => _dismissed;
+
+  Future<void> dismiss() async {
+    if (_dismissed) {
+      return;
     }
+    _dismissed = true;
+    _removeFallbackRoute();
+    await _nativeMenuService.dismiss(_nativeSession);
+  }
+
+  void _beginPresentation(NativeMenuService nativeMenuService) {
+    if (_started) {
+      throw StateError('A BusyMarkMenuSession can present only one menu.');
+    }
+    _started = true;
+    _nativeMenuService = nativeMenuService;
+  }
+
+  void _captureFallbackRoute() {
+    final routeContext = _fallbackRouteKey.currentContext;
+    final route = routeContext == null ? null : ModalRoute.of(routeContext);
+    if (route == null) {
+      return;
+    }
+    _fallbackRoute = route;
+    if (_dismissed) {
+      _removeFallbackRoute();
+    }
+  }
+
+  void _releaseFallbackRoute() {
+    _fallbackRoute = null;
+  }
+
+  void _removeFallbackRoute() {
+    final route = _fallbackRoute;
+    final navigator = route?.navigator;
+    if (route != null && navigator != null && route.isActive) {
+      navigator.removeRoute(route);
+    }
+    _fallbackRoute = null;
   }
 }
 
-/// Shows a BusyMark-styled context menu at a global pointer position.
+/// Presents a menu through GTK on Linux and a themed Flutter route elsewhere.
+Future<T?> showBusyMarkMenu<T>({
+  required BuildContext context,
+  required List<PopupMenuEntry<T>> items,
+  BuildContext? anchorContext,
+  Offset? anchorPoint,
+  Rect? anchorRect,
+  NativeMenuService nativeMenuService = const NativeMenuService(),
+  BusyMarkMenuSession? session,
+  bool focusFirst = false,
+  bool preferAbove = false,
+  double? width,
+}) async {
+  assert(
+    anchorRect == null || (anchorContext == null && anchorPoint == null),
+    'anchorRect cannot be combined with anchorContext or anchorPoint.',
+  );
+  if (items.isEmpty) {
+    return null;
+  }
+  final itemSnapshot = List<PopupMenuEntry<T>>.unmodifiable(items);
+  final presentation = session ?? BusyMarkMenuSession();
+  if (presentation.dismissed) {
+    return null;
+  }
+  presentation._beginPresentation(nativeMenuService);
+  final anchor =
+      anchorRect ??
+      _busyMarkMenuAnchorRect(anchorContext ?? context, anchorPoint);
+  final nativeEntries = _busyMarkNativeMenuEntries(itemSnapshot);
+  if (nativeEntries != null) {
+    final nativeResult = await nativeMenuService.show(
+      session: presentation._nativeSession,
+      anchor: anchor,
+      entries: nativeEntries,
+      focusFirst: focusFirst,
+      preferAbove: preferAbove,
+    );
+    if (presentation.dismissed) {
+      return null;
+    }
+    if (nativeResult.available) {
+      return _busyMarkMenuValueAt(itemSnapshot, nativeResult.selectedIndex);
+    }
+  }
+  if (!context.mounted) {
+    return null;
+  }
+  final selection = await _showBusyMarkFallbackMenu<T>(
+    context: context,
+    anchor: anchor,
+    items: itemSnapshot,
+    session: presentation,
+    width: width,
+  );
+  return presentation.dismissed ? null : selection;
+}
+
+Rect _busyMarkMenuAnchorRect(BuildContext anchorContext, Offset? anchorPoint) {
+  if (anchorPoint != null) {
+    return Rect.fromLTWH(anchorPoint.dx, anchorPoint.dy, 0, 0);
+  }
+  final renderObject = anchorContext.findRenderObject();
+  if (renderObject is! RenderBox || !renderObject.hasSize) {
+    return Rect.zero;
+  }
+  return renderObject.localToGlobal(Offset.zero) & renderObject.size;
+}
+
+List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
+  List<PopupMenuEntry<T>> items,
+) {
+  final entries = <NativeMenuEntry>[];
+  for (final item in items) {
+    if (item is BusyMarkPopupMenuItem<T>) {
+      entries.add(
+        NativeMenuEntry.command(
+          label: item.label,
+          shortcut: item.shortcut,
+          enabled: item.enabled,
+          checkable: item.trailingCheck,
+          selected: item.trailingCheck && item.checked,
+        ),
+      );
+    } else if (item is PopupMenuDivider) {
+      entries.add(const NativeMenuEntry.separator());
+    } else {
+      return null;
+    }
+  }
+  return entries;
+}
+
+T? _busyMarkMenuValueAt<T>(List<PopupMenuEntry<T>> items, int? index) {
+  if (index == null || index < 0 || index >= items.length) {
+    return null;
+  }
+  final item = items[index];
+  if (item is! BusyMarkPopupMenuItem<T> || !item.enabled) {
+    return null;
+  }
+  return item.menuValue;
+}
+
+Future<T?> _showBusyMarkFallbackMenu<T>({
+  required BuildContext context,
+  required Rect anchor,
+  required List<PopupMenuEntry<T>> items,
+  required BusyMarkMenuSession session,
+  required double? width,
+}) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final overlay = navigator.overlay?.context.findRenderObject();
+  if (overlay is! RenderBox || !overlay.hasSize) {
+    return null;
+  }
+  final localAnchor = Rect.fromPoints(
+    overlay.globalToLocal(anchor.topLeft),
+    overlay.globalToLocal(anchor.bottomRight),
+  );
+  final menuAnchor = Rect.fromLTWH(
+    localAnchor.left,
+    localAnchor.bottom,
+    localAnchor.width,
+    0,
+  );
+  final fallbackItems = _busyMarkFallbackItems(
+    items,
+    session._fallbackRouteKey,
+  );
+  final selection = showMenu<T>(
+    context: context,
+    useRootNavigator: true,
+    position: RelativeRect.fromRect(menuAnchor, Offset.zero & overlay.size),
+    items: fallbackItems,
+    constraints: width == null ? null : BoxConstraints.tightFor(width: width),
+    requestFocus: true,
+  );
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    session._captureFallbackRoute();
+  });
+  try {
+    return await selection;
+  } finally {
+    session._releaseFallbackRoute();
+  }
+}
+
+List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
+  List<PopupMenuEntry<T>> items,
+  GlobalKey routeKey,
+) {
+  final fallbackItems = <PopupMenuEntry<T>>[];
+  var routeKeyPending = true;
+  for (final item in items) {
+    if (item is BusyMarkPopupMenuItem<T>) {
+      fallbackItems.add(
+        BusyMarkPopupMenuItem<T>(
+          value: item.menuValue,
+          label: item.label,
+          icon: item.icon,
+          shortcut: item.shortcut,
+          enabled: item.enabled,
+          checked: item.checked,
+          trailingCheck: item.trailingCheck,
+          routeKey: routeKeyPending ? routeKey : null,
+        ),
+      );
+      routeKeyPending = false;
+    } else {
+      fallbackItems.add(item);
+    }
+  }
+  return fallbackItems;
+}
+
+/// Shows a BusyMark context menu at a global pointer position.
 ///
 /// The menu opens away from the pointer's reading-direction edge and stays
 /// inside the root overlay. Use [BusyMarkPopupMenuItem] entries to keep menu
@@ -1179,37 +1424,11 @@ Future<T?> showBusyMarkContextMenu<T>(
   if (items.isEmpty) {
     return Future<T?>.value();
   }
-  final navigator = Navigator.of(context, rootNavigator: true);
-  final overlay = navigator.overlay?.context.findRenderObject();
-  if (overlay is! RenderBox) {
-    return Future<T?>.value();
-  }
-  final localPosition = overlay.globalToLocal(globalPosition);
-  final minLeft = BusyMarkSpacing.sm;
-  final maxLeft = overlay.size.width - width - BusyMarkSpacing.sm;
-  final preferredLeft = Directionality.of(context) == TextDirection.rtl
-      ? localPosition.dx - width
-      : localPosition.dx;
-  final left = maxLeft <= minLeft
-      ? minLeft
-      : preferredLeft.clamp(minLeft, maxLeft).toDouble();
-  final maxTop = math.max(
-    BusyMarkSpacing.sm,
-    overlay.size.height - BusyMarkSpacing.sm,
-  );
-  final top = localPosition.dy.clamp(BusyMarkSpacing.sm, maxTop).toDouble();
-  return showMenu<T>(
+  return showBusyMarkMenu<T>(
     context: context,
-    useRootNavigator: true,
-    position: RelativeRect.fromLTRB(
-      left,
-      top,
-      math.max(minLeft, overlay.size.width - left - width),
-      math.max(BusyMarkSpacing.sm, overlay.size.height - top),
-    ),
+    anchorPoint: globalPosition,
     items: items,
-    constraints: BoxConstraints.tightFor(width: width),
-    requestFocus: true,
+    width: width,
   );
 }
 
@@ -1223,23 +1442,29 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
+    Key? routeKey,
   }) : label = label,
+       menuValue = value,
        icon = icon,
        shortcut = shortcut,
        checked = checked,
        trailingCheck = trailingCheck,
        super(
          value: value,
-         child: _BusyMarkPopupMenuItemContent(
-           label: label,
-           icon: icon,
-           shortcut: shortcut,
-           checked: checked,
-           trailingCheck: trailingCheck,
+         child: KeyedSubtree(
+           key: routeKey,
+           child: _BusyMarkPopupMenuItemContent(
+             label: label,
+             icon: icon,
+             shortcut: shortcut,
+             checked: checked,
+             trailingCheck: trailingCheck,
+           ),
          ),
        );
 
   final String label;
+  final T menuValue;
   final IconData? icon;
   final String? shortcut;
   final bool checked;
@@ -1306,6 +1531,181 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
   }
 }
 
+typedef BusyMarkMenuTriggerBuilder =
+    Widget Function(BuildContext context, BusyMarkMenuTriggerDetails trigger);
+
+@immutable
+class BusyMarkMenuTriggerDetails {
+  const BusyMarkMenuTriggerDetails._({
+    required this.onPressed,
+    required this.focusNode,
+    required this.isOpen,
+    required GlobalKey anchorKey,
+  }) : _anchorKey = anchorKey;
+
+  final VoidCallback? onPressed;
+  final FocusNode focusNode;
+  final bool isOpen;
+  final GlobalKey _anchorKey;
+
+  Widget anchor({required Widget child}) {
+    return KeyedSubtree(key: _anchorKey, child: child);
+  }
+}
+
+/// A shared trigger that presents GTK menus with a Flutter fallback.
+class BusyMarkMenuButton<T> extends StatefulWidget {
+  const BusyMarkMenuButton({
+    super.key,
+    required this.tooltip,
+    required this.items,
+    required this.onSelected,
+    required this.triggerBuilder,
+    this.enabled = true,
+    this.nativeMenuService = const NativeMenuService(),
+    this.fallbackMenuWidth,
+  });
+
+  final String tooltip;
+  final List<PopupMenuEntry<T>> items;
+  final ValueChanged<T> onSelected;
+  final BusyMarkMenuTriggerBuilder triggerBuilder;
+  final bool enabled;
+  final NativeMenuService nativeMenuService;
+  final double? fallbackMenuWidth;
+
+  @override
+  State<BusyMarkMenuButton<T>> createState() => _BusyMarkMenuButtonState<T>();
+}
+
+class _BusyMarkMenuButtonState<T> extends State<BusyMarkMenuButton<T>> {
+  final _triggerKey = GlobalKey();
+  final _anchorKey = GlobalKey();
+  late final FocusNode _focusNode;
+  BusyMarkMenuSession? _activeMenuSession;
+  var _open = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(
+      debugLabel: 'BusyMark menu trigger',
+      onKeyEvent: _handleKeyEvent,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant BusyMarkMenuButton<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.enabled && !widget.enabled && _open) {
+      _closeMenu();
+    }
+  }
+
+  @override
+  void dispose() {
+    final session = _activeMenuSession;
+    _activeMenuSession = null;
+    if (session != null) {
+      unawaited(session.dismiss());
+    }
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final trigger = BusyMarkMenuTriggerDetails._(
+      onPressed: widget.enabled ? _toggleMenu : null,
+      focusNode: _focusNode,
+      isOpen: _open,
+      anchorKey: _anchorKey,
+    );
+    return KeyedSubtree(
+      key: _triggerKey,
+      child: widget.triggerBuilder(context, trigger),
+    );
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (!widget.enabled || event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.space) {
+      if (!_open) {
+        unawaited(_openMenu(focusFirst: true));
+      }
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape && _open) {
+      _closeMenu();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _toggleMenu() {
+    if (_open) {
+      _closeMenu();
+      return;
+    }
+    unawaited(_openMenu());
+  }
+
+  Future<void> _openMenu({bool focusFirst = false}) async {
+    final triggerContext = _triggerKey.currentContext;
+    if (!widget.enabled ||
+        _open ||
+        triggerContext == null ||
+        widget.items.isEmpty) {
+      return;
+    }
+    final items = List<PopupMenuEntry<T>>.unmodifiable(widget.items);
+    final onSelected = widget.onSelected;
+    final session = BusyMarkMenuSession();
+    _activeMenuSession = session;
+    setState(() => _open = true);
+
+    T? selection;
+    try {
+      final anchorContext = _anchorKey.currentContext ?? triggerContext;
+      selection = await showBusyMarkMenu<T>(
+        context: triggerContext,
+        anchorContext: anchorContext,
+        items: items,
+        nativeMenuService: widget.nativeMenuService,
+        session: session,
+        focusFirst: focusFirst,
+        width: widget.fallbackMenuWidth,
+      );
+    } finally {
+      if (mounted && identical(_activeMenuSession, session)) {
+        setState(() {
+          _activeMenuSession = null;
+          _open = false;
+        });
+      }
+    }
+    if (mounted && !session.dismissed && selection != null) {
+      onSelected(selection);
+    }
+  }
+
+  void _closeMenu() {
+    final session = _activeMenuSession;
+    if (session == null) {
+      return;
+    }
+    setState(() {
+      _activeMenuSession = null;
+      _open = false;
+    });
+    unawaited(session.dismiss());
+  }
+}
+
 class BusyMarkPopupSelectorOption<T> {
   const BusyMarkPopupSelectorOption({
     required this.value,
@@ -1346,26 +1746,20 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectorEnabled = enabled && options.isNotEmpty;
+    final fallbackMenuWidth = buttonMaxWidth.clamp(
+      popupMinWidth,
+      popupMaxWidth,
+    );
     return Align(
       alignment: AlignmentDirectional.centerEnd,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: buttonMaxWidth),
-        child: YaruPopupMenuButton<T>(
-          initialValue: value,
-          enabled: selectorEnabled,
+        child: BusyMarkMenuButton<T>(
           tooltip: tooltip,
-          semanticLabel: tooltip,
-          // Preserve Yaru's selector geometry and interaction states, while
-          // matching libadwaita's inline grouped-row value affordance.
-          style: Theme.of(context).outlinedButtonTheme.style?.copyWith(
-            side: const WidgetStatePropertyAll(BorderSide.none),
-          ),
-          constraints: BoxConstraints(
-            minWidth: popupMinWidth,
-            maxWidth: popupMaxWidth,
-          ),
+          enabled: selectorEnabled,
+          fallbackMenuWidth: fallbackMenuWidth,
           onSelected: onSelected,
-          itemBuilder: (context) => [
+          items: [
             for (final option in options)
               BusyMarkPopupMenuItem<T>(
                 value: option.value,
@@ -1375,22 +1769,52 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
                 trailingCheck: true,
               ),
           ],
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: math.max(
-                0,
-                buttonMaxWidth -
-                    BusyMarkSizes.iconButton -
-                    BusyMarkSpacing.smPlus,
+          triggerBuilder: (context, trigger) {
+            return trigger.anchor(
+              child: Tooltip(
+                message: tooltip,
+                child: Semantics(
+                  expanded: trigger.isOpen,
+                  child: BusyMarkPushButton.standard(
+                    onPressed: trigger.onPressed,
+                    focusNode: trigger.focusNode,
+                    style: Theme.of(context).outlinedButtonTheme.style
+                        ?.copyWith(
+                          side: const WidgetStatePropertyAll(BorderSide.none),
+                        ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: math.max(
+                                0,
+                                buttonMaxWidth -
+                                    BusyMarkSizes.iconButton -
+                                    BusyMarkSpacing.smPlus,
+                              ),
+                            ),
+                            child: Text(
+                              label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: BusyMarkSpacing.sm),
+                        const Icon(
+                          BusyMarkGlyphs.downArrow,
+                          size: BusyMarkSizes.iconSm,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

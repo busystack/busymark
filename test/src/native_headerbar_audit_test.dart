@@ -1241,7 +1241,7 @@ void main() {
     expect(native, contains('GTK_IS_MODEL_BUTTON(widget)'));
     expect(native, contains('gtk_accelerator_parse(accelerator'));
     expect(native, contains('gtk_accelerator_get_label'));
-    expect(native, contains('gtk_label_new(accelerator_text)'));
+    expect(native, contains('gtk_label_new(shortcut)'));
     expect(native, contains('decorate_model_menu_accelerators('));
     expect(native, contains('g_menu_item_set_icon(item, icon)'));
     expect(native, contains('gtk_menu_button_set_menu_model'));
@@ -1254,6 +1254,34 @@ void main() {
         '      self->view_mode_button',
       ),
     );
+  });
+
+  test('Flutter content menus use GTK popovers with native menu semantics', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final service = File(
+      'lib/src/platform/native_menu_service.dart',
+    ).readAsStringSync();
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+
+    expect(native, contains('kNativeMenuChannel'));
+    expect(native, contains('"busymark/native_menus"'));
+    expect(native, contains('gtk_popover_new_from_model('));
+    expect(native, contains('g_menu_append_section('));
+    expect(native, contains('decorate_native_menu_shortcuts('));
+    expect(native, contains('native_menu_selection_activated_cb'));
+    expect(native, contains('G_VARIANT_TYPE_STRING'));
+    expect(native, contains('gtk_popover_set_modal'));
+    expect(native, contains('gtk_popover_set_constrain_to'));
+    expect(service, contains('final String? shortcut'));
+    expect(service, contains("'shortcut': shortcut!"));
+    expect(service, contains('this.checkable = false'));
+    expect(service, contains('separator = false'));
+    expect(design, contains('NativeMenuEntry.separator()'));
+    expect(design, contains('NativeMenuEntry.command('));
+    expect(design, contains('shortcut: item.shortcut'));
+    expect(design, contains('checkable: item.trailingCheck'));
+    expect(design, contains('class BusyMarkMenuButton<T>'));
+    expect(design, isNot(contains('YaruPopupMenuButton<T>(')));
   });
 
   test('welcome page has a sidebar but no document controls', () {

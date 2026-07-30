@@ -9,6 +9,7 @@ import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
+import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -17,6 +18,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   testWidgets(
     'informational dialog keeps the close control at the right edge',
     (tester) async {
@@ -357,6 +360,97 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
       expect(find.text('Editor'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'header popup sends shortcuts and separators to GTK and maps selection',
+    (tester) async {
+      const channel = MethodChannel('busymark/test/header-native-menu');
+      MethodCall? showCall;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            if (call.method == 'show') {
+              showCall = call;
+              return 2;
+            }
+            return false;
+          });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
+      });
+      String? selection;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: BusyMarkHeaderPopupMenuButton<String>(
+                tooltip: 'Native menu',
+                icon: BusyMarkGlyphs.menuVertical,
+                nativeMenuService: const NativeMenuService(channel: channel),
+                itemBuilder: (_) => [
+                  BusyMarkPopupMenuItem<String>(
+                    value: 'open',
+                    label: 'Open',
+                    shortcut: 'Ctrl+O',
+                  ),
+                  const PopupMenuDivider(),
+                  BusyMarkPopupMenuItem<String>(
+                    value: 'preview',
+                    label: 'Preview',
+                    shortcut: 'Ctrl+3',
+                    checked: true,
+                    trailingCheck: true,
+                  ),
+                ],
+                onSelected: (value) => selection = value,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final triggerRect = tester.getRect(find.byTooltip('Native menu'));
+      await tester.tap(find.byTooltip('Native menu'));
+      await tester.pumpAndSettle();
+
+      expect(selection, 'preview');
+      expect(showCall?.method, 'show');
+      final arguments = showCall?.arguments as Map<Object?, Object?>;
+      expect(arguments['entries'], [
+        {
+          'label': 'Open',
+          'shortcut': 'Ctrl+O',
+          'enabled': true,
+          'checkable': false,
+          'selected': false,
+          'separator': false,
+        },
+        {
+          'label': '',
+          'enabled': false,
+          'checkable': false,
+          'selected': false,
+          'separator': true,
+        },
+        {
+          'label': 'Preview',
+          'shortcut': 'Ctrl+3',
+          'enabled': true,
+          'checkable': true,
+          'selected': true,
+          'separator': false,
+        },
+      ]);
+      expect(arguments['anchor'], {
+        'x': triggerRect.left,
+        'y': triggerRect.top,
+        'width': triggerRect.width,
+        'height': triggerRect.height,
+      });
     },
   );
 
@@ -961,32 +1055,37 @@ void main() {
       theme.colorScheme.error,
     );
 
+    final menuFinder = find.descendant(
+      of: find.byType(BusyMarkPopupSelector<String>),
+      matching: find.byType(BusyMarkMenuButton<String>),
+    );
+    final selector = tester.widget<BusyMarkMenuButton<String>>(menuFinder);
     final selectorFinder = find.descendant(
       of: find.byType(BusyMarkPopupSelector<String>),
-      matching: find.byType(YaruPopupMenuButton<String>),
+      matching: find.byType(FilledButton),
     );
-    final selector = tester.widget<YaruPopupMenuButton<String>>(selectorFinder);
+    final selectorButton = tester.widget<FilledButton>(selectorFinder);
     expect(
-      selector.style?.backgroundColor?.resolve({}),
+      selectorButton.style?.backgroundColor?.resolve({}),
       BusyMarkLinuxPalette.transparent,
     );
-    expect(selector.style?.side?.resolve({}), BorderSide.none);
+    expect(selectorButton.style?.side?.resolve({}), BorderSide.none);
     expect(
-      selector.style?.minimumSize?.resolve({}),
+      selectorButton.style?.minimumSize?.resolve({}),
       theme.outlinedButtonTheme.style?.minimumSize?.resolve({}),
     );
     expect(
-      selector.style?.padding?.resolve({}),
+      selectorButton.style?.padding?.resolve({}),
       theme.outlinedButtonTheme.style?.padding?.resolve({}),
     );
     expect(
-      selector.style?.shape?.resolve({}),
+      selectorButton.style?.shape?.resolve({}),
       theme.outlinedButtonTheme.style?.shape?.resolve({}),
     );
-    expect(selector.initialValue, 'system');
     expect(selector.enabled, isTrue);
+    expect(selector.items, hasLength(2));
 
-    await tester.tap(selectorFinder);
+    await tester.tap(find.byTooltip('Theme'));
     await tester.pumpAndSettle();
     expect(find.text('Light'), findsOneWidget);
     await tester.tap(find.text('Light'));
