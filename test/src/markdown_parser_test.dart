@@ -153,6 +153,51 @@ void main() {
     );
   });
 
+  test('retains Writerside title when complex list source needs fallback', () {
+    final parsed = parser.parse(
+      filePath: 'Wi-Fi-Interface.md',
+      source: '''
+# Wi-Fi Interface
+
+## Development
+
+1. Create the component.
+
+    ```Bash
+    idf.py create-component wi_fi_sta_interface -C components
+    ```
+
+2. Rename and move the source file. {collapsible="true"}
+
+    1. Rename the file.
+    2. Move it to the source folder.
+3. Update the build file. {collapsible="true"}
+
+    1. Add the required dependencies.
+
+   The build file should look like this:
+
+    ```CMake
+    idf_component_register(SRCS "src/wi_fi_sta_interface.cpp")
+    ```
+   {collapsible="true" collapsed-title="CMakeLists.txt"}
+
+## References
+''',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(parsed.title, 'Wi-Fi Interface');
+    expect(
+      parsed.headings.map((heading) => heading.text),
+      containsAll(['Wi-Fi Interface', 'Development', 'References']),
+    );
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('writerside.topic.missing-title')),
+    );
+  });
+
   test('detects unresolved links, missing images, and missing alt text', () {
     final path = fixture('links_images.md');
     final parsed = parser.parse(

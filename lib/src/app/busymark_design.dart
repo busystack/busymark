@@ -1071,6 +1071,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
     this.foregroundColor,
     this.backgroundColor,
     this.borderRadius = BusyMarkRadius.headerButton,
+    this.highlightWhenOpen = true,
     this.nativeMenuService = const NativeMenuService(),
   });
 
@@ -1087,6 +1088,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   final Color? foregroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
   final double borderRadius;
+  final bool highlightWhenOpen;
   final NativeMenuService nativeMenuService;
 
   @override
@@ -1121,7 +1123,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           tooltip: widget.tooltip,
           icon: widget.icon,
           shortcut: widget.shortcut,
-          selected: _loading || _open,
+          selected: widget.highlightWhenOpen && (_loading || _open),
           transparent: widget.transparent,
           elevated: widget.elevated,
           foregroundColor: widget.foregroundColor,
@@ -1312,6 +1314,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
       entries.add(
         NativeMenuEntry.command(
           label: item.label,
+          iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon),
           shortcut: item.shortcut,
           enabled: item.enabled,
           checkable: item.trailingCheck,

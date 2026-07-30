@@ -197,6 +197,10 @@ ThemeData buildBusyMarkTheme({
       textStyle: textTheme.bodyMedium,
       menuStyle: dropdownMenuStyle,
     ),
+    // Keep Yaru's native desktop tooltip palette. Re-deriving Material's
+    // tooltip defaults from BusyMark's remapped surface ColorScheme gives
+    // dropdown triggers a different floating color than native GTK.
+    tooltipTheme: base.tooltipTheme,
     tabBarTheme: base.tabBarTheme.copyWith(
       labelStyle: textTheme.labelLarge,
       unselectedLabelStyle: textTheme.labelLarge,

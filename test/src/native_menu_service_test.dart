@@ -27,6 +27,7 @@ void main() {
         entries: const [
           NativeMenuEntry.command(
             label: 'Open',
+            iconName: 'document-open-symbolic',
             shortcut: 'Ctrl+O',
             checkable: true,
             selected: true,
@@ -47,6 +48,7 @@ void main() {
         'entries': [
           {
             'label': 'Open',
+            'icon': 'document-open-symbolic',
             'shortcut': 'Ctrl+O',
             'enabled': true,
             'checkable': true,

@@ -22,6 +22,7 @@ final class NativeMenuSession {
 final class NativeMenuEntry {
   const NativeMenuEntry.command({
     required this.label,
+    this.iconName,
     this.shortcut,
     this.enabled = true,
     this.checkable = false,
@@ -30,6 +31,7 @@ final class NativeMenuEntry {
 
   const NativeMenuEntry.separator()
     : label = '',
+      iconName = null,
       shortcut = null,
       enabled = false,
       checkable = false,
@@ -37,6 +39,7 @@ final class NativeMenuEntry {
       separator = true;
 
   final String label;
+  final String? iconName;
   final String? shortcut;
   final bool enabled;
   final bool checkable;
@@ -46,6 +49,7 @@ final class NativeMenuEntry {
   Map<String, Object> _toPlatformMap() {
     return <String, Object>{
       'label': label,
+      if (iconName != null && iconName!.isNotEmpty) 'icon': iconName!,
       if (shortcut != null && shortcut!.isNotEmpty) 'shortcut': shortcut!,
       'enabled': enabled,
       'checkable': checkable,

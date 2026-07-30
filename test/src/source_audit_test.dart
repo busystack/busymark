@@ -829,7 +829,10 @@ void main() {
     expect(headerPopup, contains('nativeMenuService.show('));
     expect(headerPopup, contains('showMenu<T>('));
     expect(headerPopup, contains('BusyMarkHeaderIconButton('));
-    expect(headerPopup, contains('selected: _loading || _open'));
+    expect(
+      headerPopup,
+      contains('selected: widget.highlightWhenOpen && (_loading || _open)'),
+    );
     expect(headerPopup, contains('requestFocus: true'));
     expect(headerPopup, contains('findRenderObject()'));
     expect(headerPopup, contains('BoxConstraints.tightFor'));

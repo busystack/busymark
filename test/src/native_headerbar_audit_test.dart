@@ -480,6 +480,29 @@ void main() {
     expect(native, isNot(contains('"tooltip label {"')));
   });
 
+  test(
+    'native sidebar header uses the same semantic surface as the sidebar',
+    () {
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+      expect(
+        native,
+        contains(
+          '".busymark-titlebar .busymark-sidebar-header,"'
+          '\n      '
+          '".busymark-titlebar .busymark-sidebar-header:backdrop {"',
+        ),
+      );
+      expect(
+        native,
+        contains(
+          'css_color_or(self->sidebar_background_color, '
+          'kDefaultSidebarBackground)',
+        ),
+      );
+    },
+  );
+
   test('native header CSS is balanced and narrowly semantic', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final refreshFunction = RegExp(
@@ -563,11 +586,22 @@ void main() {
       native,
       contains('gtk_popover_set_position(popover, GTK_POS_BOTTOM)'),
     );
-    expect(native, contains('.busymark-sidebar-header {'));
+    expect(
+      native,
+      contains('".busymark-titlebar .busymark-sidebar-header:backdrop {"'),
+    );
     expect(native, contains('background-color: %s;'));
-    expect(native, contains('".busymark-sidebar-header label {"'));
+    expect(
+      native,
+      contains('".busymark-titlebar .busymark-sidebar-header label {"'),
+    );
     expect(native, contains('"font-weight: 800;"'));
-    expect(native, contains('".busymark-sidebar-header label:backdrop {"'));
+    expect(
+      native,
+      contains(
+        '".busymark-titlebar .busymark-sidebar-header label:backdrop {"',
+      ),
+    );
     expect(native, contains('kHeaderBackdropForegroundOpacity = 0.50'));
     expect(native, contains('self->sidebar_header_box = gtk_overlay_new()'));
     expect(native, contains('GtkWidget* sidebar_action_box ='));
@@ -596,9 +630,15 @@ void main() {
     expect(headerbarBlock, isNot(contains('border-radius')));
     expect(headerbarBlock, isNot(contains('"padding-left: 0;"')));
     expect(headerbarBlock, isNot(contains('"padding-right: 0;"')));
-    expect(native, contains('".busymark-sidebar-header:dir(ltr) {"'));
+    expect(
+      native,
+      contains('".busymark-titlebar .busymark-sidebar-header:dir(ltr) {"'),
+    );
     expect(native, contains('"border-right: 1px solid %s;"'));
-    expect(native, contains('".busymark-sidebar-header:dir(rtl) {"'));
+    expect(
+      native,
+      contains('".busymark-titlebar .busymark-sidebar-header:dir(rtl) {"'),
+    );
     expect(native, contains('"border-left: 1px solid %s;"'));
     expect(native, contains('".busymark-modal-scrim {"'));
     expect(native, contains('create_busymark_titlebar_overlay'));
@@ -1262,26 +1302,52 @@ void main() {
       'lib/src/platform/native_menu_service.dart',
     ).readAsStringSync();
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final toolbar = File(
+      'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
+    ).readAsStringSync();
 
     expect(native, contains('kNativeMenuChannel'));
     expect(native, contains('"busymark/native_menus"'));
     expect(native, contains('gtk_popover_new_from_model('));
     expect(native, contains('g_menu_append_section('));
     expect(native, contains('decorate_native_menu_shortcuts('));
+    expect(native, contains('kMenuIconAttribute'));
+    expect(native, contains('gtk_image_new_from_icon_name(icon_name'));
+    expect(native, contains('session->icon_names'));
     expect(native, contains('native_menu_selection_activated_cb'));
     expect(native, contains('G_VARIANT_TYPE_STRING'));
     expect(native, contains('gtk_popover_set_modal'));
     expect(native, contains('gtk_popover_set_constrain_to'));
     expect(service, contains('final String? shortcut'));
+    expect(service, contains('final String? iconName'));
+    expect(service, contains("'icon': iconName!"));
     expect(service, contains("'shortcut': shortcut!"));
     expect(service, contains('this.checkable = false'));
     expect(service, contains('separator = false'));
     expect(design, contains('NativeMenuEntry.separator()'));
     expect(design, contains('NativeMenuEntry.command('));
+    expect(
+      design,
+      contains('iconName: BusyMarkGlyphs.nativeMenuIconName(item.icon)'),
+    );
     expect(design, contains('shortcut: item.shortcut'));
     expect(design, contains('checkable: item.trailingCheck'));
     expect(design, contains('class BusyMarkMenuButton<T>'));
     expect(design, isNot(contains('YaruPopupMenuButton<T>(')));
+    for (final shortcut in <String>[
+      'paragraph',
+      'heading1',
+      'heading2',
+      'heading3',
+      'heading4',
+      'heading5',
+      'heading6',
+    ]) {
+      expect(
+        toolbar,
+        contains('shortcut: BusyMarkEditorShortcutLabels.$shortcut'),
+      );
+    }
   });
 
   test('welcome page has a sidebar but no document controls', () {

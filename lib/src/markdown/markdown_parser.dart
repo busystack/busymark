@@ -330,9 +330,23 @@ class MarkdownParser {
         .toList(growable: false);
     final canAssignSource = modeledSourceChunks.length == contentBlocks.length;
     if (!canAssignSource) {
+      // A complex construct can be modeled as a different number of blocks by
+      // the AST and the lossless source scanner. Preserve top-level heading
+      // spans independently: title and outline projection must not disappear
+      // merely because unrelated content falls back to protected source.
+      final headingSourceChunks = sourceChunks
+          .where(_isScannedHeadingSource)
+          .toList(growable: false);
+      var headingSourceIndex = 0;
       final contentWithMetadata = [
         for (final block in contentBlocks)
-          _blockWithScannedSourceMetadata(block, null),
+          _blockWithScannedSourceMetadata(
+            block,
+            block.kind == BusyBlockKind.heading &&
+                    headingSourceIndex < headingSourceChunks.length
+                ? headingSourceChunks[headingSourceIndex++]
+                : null,
+          ),
       ];
       if (sourceChunks.any((chunk) => chunk.protectEdits)) {
         final source = document.source!;
@@ -389,6 +403,17 @@ class MarkdownParser {
         ...generatedBlocks,
       ],
     );
+  }
+
+  bool _isScannedHeadingSource(_ScannedBlockSource chunk) {
+    final lines = chunk.rawSource.split('\n');
+    if (lines.isEmpty) {
+      return false;
+    }
+    if (_isAtxHeading(lines.first)) {
+      return true;
+    }
+    return lines.length > 1 && _setextUnderlineLevel(lines[1].trim()) != null;
   }
 
   _CanonicalHeadingProjection _canonicalizeHeadings({

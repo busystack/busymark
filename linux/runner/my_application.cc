@@ -53,6 +53,7 @@ constexpr char kLegacyYaruWindowShadowCompatibilityCss[] =
 constexpr char kLtrIsolateStart[] = "\xE2\x81\xA6";
 constexpr char kBidiIsolateEnd[] = "\xE2\x81\xA9";
 constexpr char kMenuAcceleratorAttribute[] = "x-busymark-accelerator";
+constexpr char kMenuIconAttribute[] = "x-busymark-icon";
 constexpr char kModelButtonAcceleratorKey[] =
     "busymark-model-button-accelerator";
 
@@ -639,24 +640,25 @@ static void refresh_header_bar_css(MyApplication* self) {
       "headerbar.busymark-headerbar:dir(rtl) {"
       "padding-right: 0;"
       "}"
-      ".busymark-sidebar-header {"
+      ".busymark-titlebar .busymark-sidebar-header,"
+      ".busymark-titlebar .busymark-sidebar-header:backdrop {"
       "background-color: %s;"
       "background-image: none;"
       "color: %s;"
       "border: none;"
       "box-shadow: none;"
       "}"
-      ".busymark-sidebar-header label {"
+      ".busymark-titlebar .busymark-sidebar-header label {"
       "color: %s;"
       "font-weight: 800;"
       "}"
-      ".busymark-sidebar-header label:backdrop {"
+      ".busymark-titlebar .busymark-sidebar-header label:backdrop {"
       "color: alpha(%s, %.2f);"
       "}"
-      ".busymark-sidebar-header:dir(ltr) {"
+      ".busymark-titlebar .busymark-sidebar-header:dir(ltr) {"
       "border-right: 1px solid %s;"
       "}"
-      ".busymark-sidebar-header:dir(rtl) {"
+      ".busymark-titlebar .busymark-sidebar-header:dir(rtl) {"
       "border-left: 1px solid %s;"
       "}"
       // Legacy Yaru GTK 3 uses an absolute near-black image for active and
@@ -1028,10 +1030,12 @@ static const gchar* localized_label_or(FlValue* labels,
   return value != nullptr ? value : fallback;
 }
 
-static void add_model_button_shortcut_label(GtkWidget* button,
-                                            const gchar* shortcut) {
+static void add_model_button_presentation(GtkWidget* button,
+                                          const gchar* icon_name,
+                                          const gchar* shortcut) {
   if (button == nullptr || !GTK_IS_MODEL_BUTTON(button) ||
-      shortcut == nullptr || shortcut[0] == '\0' ||
+      ((icon_name == nullptr || icon_name[0] == '\0') &&
+       (shortcut == nullptr || shortcut[0] == '\0')) ||
       g_object_get_data(G_OBJECT(button), kModelButtonAcceleratorKey) !=
           nullptr) {
     return;
@@ -1046,17 +1050,25 @@ static void add_model_button_shortcut_label(GtkWidget* button,
 
   GtkWidget* row =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
+  if (icon_name != nullptr && icon_name[0] != '\0') {
+    GtkWidget* icon =
+        gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU);
+    gtk_widget_set_valign(icon, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(row), icon, FALSE, FALSE, 0);
+  }
   gtk_widget_set_hexpand(content, TRUE);
   gtk_box_pack_start(GTK_BOX(row), content, TRUE, TRUE, 0);
 
-  GtkWidget* shortcut_label = gtk_label_new(shortcut);
-  gtk_widget_set_direction(shortcut_label, GTK_TEXT_DIR_LTR);
-  gtk_widget_set_halign(shortcut_label, GTK_ALIGN_END);
-  gtk_widget_set_valign(shortcut_label, GTK_ALIGN_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(shortcut_label), 1.0);
-  gtk_style_context_add_class(
-      gtk_widget_get_style_context(shortcut_label), "dim-label");
-  gtk_box_pack_end(GTK_BOX(row), shortcut_label, FALSE, FALSE, 0);
+  if (shortcut != nullptr && shortcut[0] != '\0') {
+    GtkWidget* shortcut_label = gtk_label_new(shortcut);
+    gtk_widget_set_direction(shortcut_label, GTK_TEXT_DIR_LTR);
+    gtk_widget_set_halign(shortcut_label, GTK_ALIGN_END);
+    gtk_widget_set_valign(shortcut_label, GTK_ALIGN_CENTER);
+    gtk_label_set_xalign(GTK_LABEL(shortcut_label), 1.0);
+    gtk_style_context_add_class(
+        gtk_widget_get_style_context(shortcut_label), "dim-label");
+    gtk_box_pack_end(GTK_BOX(row), shortcut_label, FALSE, FALSE, 0);
+  }
 
   gtk_container_add(GTK_CONTAINER(button), row);
   gtk_widget_show_all(row);
@@ -1066,25 +1078,24 @@ static void add_model_button_shortcut_label(GtkWidget* button,
 }
 
 static void add_model_button_accelerator(GtkWidget* button,
+                                         const gchar* icon_name,
                                          const gchar* accelerator) {
-  if (accelerator == nullptr || accelerator[0] == '\0') {
-    return;
+  g_autofree gchar* accelerator_text = nullptr;
+  if (accelerator != nullptr && accelerator[0] != '\0') {
+    guint accelerator_key = 0;
+    GdkModifierType accelerator_modifiers = static_cast<GdkModifierType>(0);
+    gtk_accelerator_parse(accelerator, &accelerator_key,
+                          &accelerator_modifiers);
+    if (accelerator_key != 0) {
+      // GtkAccelLabel computes its accelerator width only after mapping, while
+      // a model popover allocates its width before mapping. Let GTK format the
+      // platform-native text, then render it as a regular label so the
+      // shortcut's natural width participates in the first allocation.
+      accelerator_text =
+          gtk_accelerator_get_label(accelerator_key, accelerator_modifiers);
+    }
   }
-  guint accelerator_key = 0;
-  GdkModifierType accelerator_modifiers = static_cast<GdkModifierType>(0);
-  gtk_accelerator_parse(accelerator, &accelerator_key,
-                        &accelerator_modifiers);
-  if (accelerator_key == 0) {
-    return;
-  }
-
-  // GtkAccelLabel computes its accelerator width only after mapping, while a
-  // model popover allocates its width before mapping. Let GTK format the
-  // platform-native text, then render it as a regular label so the shortcut's
-  // natural width participates in the popover's first allocation.
-  g_autofree gchar* accelerator_text =
-      gtk_accelerator_get_label(accelerator_key, accelerator_modifiers);
-  add_model_button_shortcut_label(button, accelerator_text);
+  add_model_button_presentation(button, icon_name, accelerator_text);
 }
 
 struct ModelMenuAcceleratorDecoration {
@@ -1102,10 +1113,15 @@ static void decorate_model_menu_accelerators_cb(GtkWidget* widget,
       g_autoptr(GVariant) value = g_menu_model_get_item_attribute_value(
           decoration->model, decoration->item_index,
           kMenuAcceleratorAttribute, G_VARIANT_TYPE_STRING);
-      if (value != nullptr) {
-        add_model_button_accelerator(
-            widget, g_variant_get_string(value, nullptr));
-      }
+      g_autoptr(GVariant) icon_value =
+          g_menu_model_get_item_attribute_value(
+              decoration->model, decoration->item_index, kMenuIconAttribute,
+              G_VARIANT_TYPE_STRING);
+      add_model_button_accelerator(
+          widget,
+          icon_value != nullptr ? g_variant_get_string(icon_value, nullptr)
+                                : nullptr,
+          value != nullptr ? g_variant_get_string(value, nullptr) : nullptr);
     }
     decoration->item_index++;
     return;
@@ -1136,6 +1152,7 @@ static void append_action_menu_item(GMenu* menu,
     GIcon* icon = g_themed_icon_new(icon_name);
     g_menu_item_set_icon(item, icon);
     g_object_unref(icon);
+    g_menu_item_set_attribute(item, kMenuIconAttribute, "s", icon_name);
   }
   if (accelerator != nullptr && accelerator[0] != '\0') {
     g_menu_item_set_attribute(item, kMenuAcceleratorAttribute, "s",
@@ -1312,6 +1329,8 @@ static void append_view_mode_menu_item(GMenu* menu,
   GIcon* icon = g_themed_icon_new(view_mode_icon_name(mode));
   g_menu_item_set_icon(item, icon);
   g_object_unref(icon);
+  g_menu_item_set_attribute(item, kMenuIconAttribute, "s",
+                            view_mode_icon_name(mode));
   if (accelerator != nullptr && accelerator[0] != '\0') {
     g_menu_item_set_attribute(item, kMenuAcceleratorAttribute, "s",
                               accelerator);
@@ -1964,6 +1983,7 @@ struct NativeMenuSession {
   GSimpleActionGroup* action_group;
   FlMethodCall* method_call;
   GPtrArray* shortcut_labels;
+  GPtrArray* icon_names;
   gulong closed_signal_id;
   guint cleanup_source_id;
   gint pending_selected_index;
@@ -2019,6 +2039,7 @@ static void native_menu_session_dispose(NativeMenuSession* session) {
     }
   }
   g_clear_pointer(&session->shortcut_labels, g_ptr_array_unref);
+  g_clear_pointer(&session->icon_names, g_ptr_array_unref);
   g_clear_object(&session->model);
   g_clear_object(&session->action_group);
   native_menu_session_respond(session, session->pending_selected_index);
@@ -2168,6 +2189,7 @@ static gboolean parse_native_menu_anchor(FlValue* args,
 
 struct NativeMenuShortcutDecoration {
   GPtrArray* labels;
+  GPtrArray* icon_names;
   guint index;
 };
 
@@ -2176,10 +2198,12 @@ static void decorate_native_menu_shortcuts_cb(GtkWidget* widget,
   auto* decoration = static_cast<NativeMenuShortcutDecoration*>(user_data);
   if (GTK_IS_MODEL_BUTTON(widget)) {
     if (decoration->index < decoration->labels->len) {
-      add_model_button_shortcut_label(
-          widget, static_cast<const gchar*>(
-                      g_ptr_array_index(decoration->labels,
-                                        decoration->index)));
+      add_model_button_presentation(
+          widget,
+          static_cast<const gchar*>(
+              g_ptr_array_index(decoration->icon_names, decoration->index)),
+          static_cast<const gchar*>(
+              g_ptr_array_index(decoration->labels, decoration->index)));
     }
     decoration->index++;
     return;
@@ -2191,11 +2215,13 @@ static void decorate_native_menu_shortcuts_cb(GtkWidget* widget,
 }
 
 static void decorate_native_menu_shortcuts(GtkWidget* popover,
-                                           GPtrArray* labels) {
-  if (popover == nullptr || !GTK_IS_CONTAINER(popover) || labels == nullptr) {
+                                           GPtrArray* labels,
+                                           GPtrArray* icon_names) {
+  if (popover == nullptr || !GTK_IS_CONTAINER(popover) || labels == nullptr ||
+      icon_names == nullptr) {
     return;
   }
-  NativeMenuShortcutDecoration decoration = {labels, 0};
+  NativeMenuShortcutDecoration decoration = {labels, icon_names, 0};
   gtk_container_foreach(GTK_CONTAINER(popover),
                         decorate_native_menu_shortcuts_cb, &decoration);
 }
@@ -2265,6 +2291,9 @@ static void show_native_menu(NativeMenuHandlerData* data,
         !fl_lookup_optional_bool_with_default(entry, "selected", FALSE,
                                               &selected) ||
         (!separator && fl_lookup_string_arg(entry, "label") == nullptr) ||
+        (fl_value_lookup_string(entry, "icon") != nullptr &&
+         fl_value_get_type(fl_value_lookup_string(entry, "icon")) !=
+             FL_VALUE_TYPE_STRING) ||
         (selected && !checkable)) {
       respond_native_menu_argument_error(
           method_call,
@@ -2325,6 +2354,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
   session->action_group = g_simple_action_group_new();
   session->model = g_menu_new();
   session->shortcut_labels = g_ptr_array_new_with_free_func(g_free);
+  session->icon_names = g_ptr_array_new_with_free_func(g_free);
   data->active = session;
 
   GMenu* section = g_menu_new();
@@ -2351,6 +2381,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
     }
 
     const gchar* label = fl_lookup_string_arg(entry, "label");
+    const gchar* icon_name = fl_lookup_string_arg(entry, "icon");
     const gchar* shortcut = fl_lookup_string_arg(entry, "shortcut");
     gboolean enabled = TRUE;
     gboolean checkable = FALSE;
@@ -2402,17 +2433,24 @@ static void show_native_menu(NativeMenuHandlerData* data,
         FlValue* run_entry = fl_value_get_list_value(entries, run_index);
         const gchar* run_label =
             fl_lookup_string_arg(run_entry, "label");
+        const gchar* run_icon = fl_lookup_string_arg(run_entry, "icon");
         const gchar* run_shortcut =
             fl_lookup_string_arg(run_entry, "shortcut");
         g_autofree gchar* target = g_strdup_printf("%zu", run_index);
         g_autoptr(GMenuItem) item = g_menu_item_new(run_label, nullptr);
         g_menu_item_set_action_and_target_value(
             item, detailed_group_action, g_variant_new_string(target));
+        if (run_icon != nullptr && run_icon[0] != '\0') {
+          g_autoptr(GIcon) icon = g_themed_icon_new(run_icon);
+          g_menu_item_set_icon(item, icon);
+        }
         g_menu_append_item(section, item);
         section_length++;
         g_ptr_array_add(
             session->shortcut_labels,
             g_strdup(run_shortcut != nullptr ? run_shortcut : ""));
+        g_ptr_array_add(session->icon_names,
+                        g_strdup(run_icon != nullptr ? run_icon : ""));
       }
       g_object_unref(group_action);
       index = run_end;
@@ -2432,11 +2470,17 @@ static void show_native_menu(NativeMenuHandlerData* data,
     g_autofree gchar* detailed_action =
         g_strdup_printf("%s.%s", kNativeMenuActionNamespace, action_name);
     g_autoptr(GMenuItem) item = g_menu_item_new(label, detailed_action);
+    if (icon_name != nullptr && icon_name[0] != '\0') {
+      g_autoptr(GIcon) icon = g_themed_icon_new(icon_name);
+      g_menu_item_set_icon(item, icon);
+    }
     g_menu_append_item(section, item);
     g_object_unref(action);
     section_length++;
     g_ptr_array_add(session->shortcut_labels,
                     g_strdup(shortcut != nullptr ? shortcut : ""));
+    g_ptr_array_add(session->icon_names,
+                    g_strdup(icon_name != nullptr ? icon_name : ""));
     index++;
   }
   flush_section();
@@ -2455,7 +2499,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
                                GTK_POPOVER_CONSTRAINT_WINDOW);
   gtk_popover_set_modal(GTK_POPOVER(session->popover), TRUE);
   decorate_native_menu_shortcuts(session->popover,
-                                 session->shortcut_labels);
+                                 session->shortcut_labels,
+                                 session->icon_names);
   session->closed_signal_id = g_signal_connect(
       session->popover, "closed", G_CALLBACK(native_menu_closed_cb), session);
   gtk_popover_popup(GTK_POPOVER(session->popover));

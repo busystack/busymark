@@ -1971,6 +1971,7 @@ class _SidebarHeader extends StatelessWidget {
                     ),
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    highlightWhenOpen: false,
                     itemBuilder: (context) => [
                       for (final tab in tabs)
                         BusyMarkPopupMenuItem(

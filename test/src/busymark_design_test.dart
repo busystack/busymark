@@ -330,6 +330,7 @@ void main() {
             body: BusyMarkHeaderPopupMenuButton<String>(
               tooltip: 'Main menu',
               icon: BusyMarkGlyphs.menuVertical,
+              highlightWhenOpen: false,
               itemBuilder: (_) => [
                 BusyMarkPopupMenuItem<String>(
                   value: 'editor',
@@ -345,6 +346,17 @@ void main() {
 
       await tester.tap(find.byTooltip('Main menu'));
       await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: find.byType(BusyMarkHeaderPopupMenuButton<String>),
+                matching: find.byType(IconButton),
+              ),
+            )
+            .isSelected,
+        isFalse,
+      );
       expect(find.text('Editor'), findsOneWidget);
       expect(find.text('Ctrl+1'), findsOneWidget);
       expect(find.byTooltip('Editor (Ctrl+1)'), findsNothing);
@@ -395,12 +407,14 @@ void main() {
                   BusyMarkPopupMenuItem<String>(
                     value: 'open',
                     label: 'Open',
+                    icon: BusyMarkGlyphs.folderOpen,
                     shortcut: 'Ctrl+O',
                   ),
                   const PopupMenuDivider(),
                   BusyMarkPopupMenuItem<String>(
                     value: 'preview',
                     label: 'Preview',
+                    icon: BusyMarkGlyphs.previewView,
                     shortcut: 'Ctrl+3',
                     checked: true,
                     trailingCheck: true,
@@ -423,6 +437,7 @@ void main() {
       expect(arguments['entries'], [
         {
           'label': 'Open',
+          'icon': 'folder-open-symbolic',
           'shortcut': 'Ctrl+O',
           'enabled': true,
           'checkable': false,
@@ -438,6 +453,7 @@ void main() {
         },
         {
           'label': 'Preview',
+          'icon': 'image-viewer-symbolic',
           'shortcut': 'Ctrl+3',
           'enabled': true,
           'checkable': true,
@@ -528,6 +544,7 @@ void main() {
       );
       expect(theme.visualDensity, base.visualDensity);
       expect(theme.splashFactory.runtimeType, base.splashFactory.runtimeType);
+      expect(theme.tooltipTheme, base.tooltipTheme);
       expect(
         theme.textTheme.bodyMedium?.fontFamily,
         base.textTheme.bodyMedium?.fontFamily,
