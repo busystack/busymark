@@ -9,6 +9,19 @@ void main() {
   testWidgets('modal dialogs stop app and document-view shortcuts', (
     tester,
   ) async {
+    const channel = MethodChannel('com.busymark.test/modal-shortcuts');
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      return call.method == 'initialize' ? true : null;
+    });
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      );
+    });
+    final headerBar = LinuxHeaderBarService(channel: channel);
     var appShortcutInvocations = 0;
     var documentViewShortcutInvocations = 0;
 
@@ -49,6 +62,7 @@ void main() {
                 onPressed: () {
                   showBusyMarkModalDialog<void>(
                     context,
+                    headerBarService: headerBar,
                     builder: (dialogContext) => TextButton(
                       autofocus: true,
                       onPressed: () => Navigator.pop(dialogContext),
@@ -78,19 +92,19 @@ void main() {
     expect(find.text('Dismiss'), findsOneWidget);
   });
 
-  testWidgets('overlapping dialogs retain one native modal barrier lease', (
+  testWidgets('overlapping dialogs synchronize native modal depth', (
     tester,
   ) async {
     const channel = MethodChannel('com.busymark.test/modal-barrier');
-    final barrierStates = <bool>[];
+    final barrierDepths = <int>[];
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
       call,
     ) async {
       if (call.method == 'initialize') {
         return true;
       }
-      if (call.method == 'setModalBarrierVisible') {
-        barrierStates.add(call.arguments as bool);
+      if (call.method == 'setModalBarrierDepth') {
+        barrierDepths.add(call.arguments as int);
       }
       return null;
     });
@@ -127,17 +141,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(barrierStates, [isTrue]);
+    expect(barrierDepths, [1, 2]);
 
     Navigator.of(hostContext, rootNavigator: true).pop();
     await tester.pumpAndSettle();
     await second;
-    expect(barrierStates, [isTrue]);
+    expect(barrierDepths, [1, 2, 1]);
 
     Navigator.of(hostContext, rootNavigator: true).pop();
     await tester.pumpAndSettle();
     await first;
-    expect(barrierStates, [isTrue, isFalse]);
+    expect(barrierDepths, [1, 2, 1, 0]);
   });
 }
 

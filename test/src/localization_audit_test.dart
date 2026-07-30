@@ -7,6 +7,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/diagnostic_localizations.dart';
+import 'package:busymark/src/app/app_locale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -201,6 +202,33 @@ void main() {
     // The generic `ar` locale in package:intl intentionally uses Latin digits.
     // Regional Arabic locales can choose different numbering systems.
     expect(AppLocalizationsAr().diagnosticCount(12), contains('12'));
+  });
+
+  test(
+    'locale resolution considers all preferences and falls back to English',
+    () {
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('eo'),
+          Locale('de', 'DE'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('de'),
+      );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('eo'),
+          Locale('kl'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('en'),
+      );
+    },
+  );
+
+  test('every selectable locale has a generated catalog', () {
+    expect(
+      busyMarkLocaleOptions.map((option) => option.locale).toSet(),
+      AppLocalizations.supportedLocales.toSet(),
+    );
   });
 
   testWidgets('diagnostics localize at render time from codes and args', (

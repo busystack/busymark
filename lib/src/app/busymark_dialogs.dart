@@ -49,11 +49,12 @@ Future<T?> showBusyMarkModalDialog<T>(
   bool barrierDismissible = true,
 }) async {
   final barrierColor = busyMarkModalBarrierColor(context);
-  final barrierLease = _BusyMarkModalBarrierCoordinator.acquire(
-    headerBarService ?? LinuxHeaderBarService.instance,
-  );
+  final effectiveHeaderBarService =
+      headerBarService ?? LinuxHeaderBarService.instance;
+  final previousFocus = FocusManager.instance.primaryFocus;
+  await _BusyMarkModalBarrierCoordinator.acquire(effectiveHeaderBarService);
   if (!context.mounted) {
-    barrierLease.release();
+    await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
     return null;
   }
   try {
@@ -61,6 +62,7 @@ Future<T?> showBusyMarkModalDialog<T>(
       context: context,
       barrierColor: barrierColor,
       barrierDismissible: barrierDismissible,
+      traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
       builder: (dialogContext) {
         final viewInsets = MediaQuery.viewInsetsOf(dialogContext);
         final padding = EdgeInsets.fromLTRB(
@@ -81,46 +83,63 @@ Future<T?> showBusyMarkModalDialog<T>(
       },
     );
   } finally {
-    barrierLease.release();
+    await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
+    if (previousFocus?.context != null && previousFocus!.canRequestFocus) {
+      previousFocus.requestFocus();
+    }
   }
 }
 
 class _BusyMarkModalBarrierCoordinator {
   const _BusyMarkModalBarrierCoordinator._();
 
-  static final Map<LinuxHeaderBarService, int> _activeDialogs = {};
-  static final Map<LinuxHeaderBarService, Future<void>> _pendingUpdates = {};
+  static final _activeDialogs = Map<LinuxHeaderBarService, int>.identity();
+  static final _pendingUpdates =
+      Map<LinuxHeaderBarService, Future<void>>.identity();
 
-  static _BusyMarkModalBarrierLease acquire(LinuxHeaderBarService service) {
-    final activeCount = _activeDialogs[service] ?? 0;
-    _activeDialogs[service] = activeCount + 1;
-    if (activeCount == 0) {
-      unawaited(_enqueueUpdate(service, visible: true));
+  static Future<void> acquire(LinuxHeaderBarService service) async {
+    final depth = _activeDialogs[service] ?? 0;
+    final nextDepth = depth + 1;
+    _activeDialogs[service] = nextDepth;
+    final depthUpdate = _enqueueUpdate(service, depth: nextDepth);
+    try {
+      await depthUpdate;
+    } on Object catch (error, stackTrace) {
+      final remainingDepth = (_activeDialogs[service] ?? 0) - 1;
+      if (remainingDepth > 0) {
+        _activeDialogs[service] = remainingDepth;
+      } else {
+        _activeDialogs.remove(service);
+        try {
+          await _enqueueUpdate(service, depth: 0);
+        } on Object {
+          // Preserve the acquisition failure if its best-effort rollback fails.
+        }
+      }
+      Error.throwWithStackTrace(error, stackTrace);
     }
-    return _BusyMarkModalBarrierLease(service);
   }
 
   static Future<void> release(LinuxHeaderBarService service) async {
-    final activeCount = _activeDialogs[service];
-    if (activeCount == null) {
+    final depth = _activeDialogs[service] ?? 0;
+    if (depth <= 1) {
+      _activeDialogs.remove(service);
+      await _enqueueUpdate(service, depth: 0);
       return;
     }
-    if (activeCount > 1) {
-      _activeDialogs[service] = activeCount - 1;
-      return;
-    }
-    _activeDialogs.remove(service);
-    await _enqueueUpdate(service, visible: false);
+    final nextDepth = depth - 1;
+    _activeDialogs[service] = nextDepth;
+    await _enqueueUpdate(service, depth: nextDepth);
   }
 
   static Future<void> _enqueueUpdate(
     LinuxHeaderBarService service, {
-    required bool visible,
+    required int depth,
   }) async {
     final previous = _pendingUpdates[service] ?? Future<void>.value();
     final update = previous
         .catchError((Object _) {})
-        .then((_) => service.setModalBarrierVisible(visible));
+        .then((_) => service.setModalBarrierDepth(depth));
     _pendingUpdates[service] = update;
     try {
       await update;
@@ -129,21 +148,6 @@ class _BusyMarkModalBarrierCoordinator {
         _pendingUpdates.remove(service);
       }
     }
-  }
-}
-
-class _BusyMarkModalBarrierLease {
-  _BusyMarkModalBarrierLease(this._service);
-
-  final LinuxHeaderBarService _service;
-  var _released = false;
-
-  void release() {
-    if (_released) {
-      return;
-    }
-    _released = true;
-    unawaited(_BusyMarkModalBarrierCoordinator.release(_service));
   }
 }
 

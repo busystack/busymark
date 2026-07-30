@@ -3048,6 +3048,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         onPressed: onToggle,
         accented: true,
         elevated: true,
+        foregroundColor: BusyMarkLinuxPalette.white,
       ),
     );
     final gap = visible

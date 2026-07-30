@@ -19,12 +19,35 @@ void main() {
     expect(source, contains('"#00000000"'));
     expect(source, contains('kHeaderBarChannel'));
     expect(source, contains('setModalBarrierVisible'));
+    expect(source, contains('setModalBarrierDepth'));
+    expect(source, contains('modal_barrier_color_for_depth'));
+    expect(
+      source,
+      contains('1.0 - std::pow(1.0 - barrier.alpha, effective_depth)'),
+    );
     expect(source, contains('gtk_overlay_new()'));
     expect(source, contains('gtk_overlay_add_overlay'));
     expect(source, contains('gtk_event_box_new()'));
     expect(source, contains('"busymark-modal-scrim"'));
     expect(source, contains('set_widget_visible(self->modal_scrim, visible)'));
     expect(source, contains('set_widget_visible(self->modal_scrim, FALSE)'));
+    expect(source, contains('gtk_widget_show_all(widget)'));
+    expect(source, isNot(contains('gtk_widget_set_visible(widget, visible)')));
+    expect(source, contains('G_CALLBACK(stop_modal_scrim_event)'));
+    expect(
+      source,
+      isNot(
+        contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
+      ),
+    );
+    expect(
+      source,
+      contains('gtk_widget_set_vexpand(self->modal_scrim, FALSE)'),
+    );
+    expect(
+      source,
+      isNot(contains('gtk_widget_set_vexpand(self->modal_scrim, TRUE)')),
+    );
     expect(source, contains('setSidebarWidth'));
     expect(source, contains('setSidebarToggleVisible'));
     expect(source, contains('setTextDirection'));
@@ -77,6 +100,7 @@ void main() {
       'textDirection',
       'backVisible',
       'modalBarrierVisible',
+      'modalBarrierDepth',
       'labels',
       'theme',
     ]) {
@@ -280,15 +304,14 @@ void main() {
     expect(configuration, contains('class HeaderBarTheme'));
     expect(configuration, contains('HeaderBarTheme.fromContext'));
     expect(configuration, contains('BusyMarkSurfaceColors.of(context)'));
-    expect(
-      configuration,
-      contains('modalBarrierVisible: _modalBarrierVisible'),
-    );
+    expect(configuration, contains('modalBarrierDepth: _modalBarrierDepth'));
+    expect(configuration, contains('setModalBarrierDepth(int depth)'));
     expect(configuration, contains('setModalBarrierVisible(bool visible)'));
+    expect(service, contains('setModalBarrierDepth'));
     expect(service, contains('setModalBarrierVisible'));
     expect(
       service,
-      contains('configurationSynchronizer.setModalBarrierVisible(value)'),
+      contains('configurationSynchronizer.setModalBarrierDepth(depth)'),
     );
     expect(dialogs, contains('showBusyMarkModalDialog'));
     expect(dialogs, contains('busyMarkModalBarrierColor'));
@@ -564,9 +587,12 @@ void main() {
     expect(native, isNot(contains('composite_rgba')));
     expect(native, isNot(contains('"border-right-color: %s;"')));
     expect(native, isNot(contains('"border-left-color: %s;"')));
+    expect(native, contains('G_CALLBACK(stop_modal_scrim_event)'));
     expect(
       native,
-      contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
+      isNot(
+        contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
+      ),
     );
     expect(workspace, isNot(contains('Border(right:')));
   });
@@ -755,7 +781,18 @@ void main() {
       expect(native, contains('GtkWidget* modal_scrim;'));
       expect(
         native,
-        contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
+        contains('gtk_widget_set_vexpand(self->titlebar_handle, FALSE)'),
+      );
+      expect(
+        native,
+        contains('gtk_widget_set_vexpand(self->titlebar_overlay, FALSE)'),
+      );
+      expect(native, contains('G_CALLBACK(stop_modal_scrim_event)'));
+      expect(
+        native,
+        isNot(
+          contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
+        ),
       );
       expect(native, contains('uses_legacy_yaru_window_shadow()'));
       expect(native, contains('g_strcmp0(normalized_theme, "yaru")'));

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../app/app_router.dart';
 import '../../app/app_settings.dart';
+import '../../app/app_locale.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -331,11 +332,8 @@ class _LanguageControl extends StatelessWidget {
           value: _systemLocaleTag,
           label: context.l10n.systemLanguage,
         ),
-        for (final option in _languageOptions())
-          BusyMarkPopupSelectorOption(
-            value: option.localeTag,
-            label: option.label,
-          ),
+        for (final option in busyMarkLocaleOptions)
+          BusyMarkPopupSelectorOption(value: option.tag, label: option.endonym),
       ],
       onSelected: (value) {
         onChanged(value == _systemLocaleTag ? null : value);
@@ -347,39 +345,16 @@ class _LanguageControl extends StatelessWidget {
     if (value == _systemLocaleTag) {
       return context.l10n.systemLanguage;
     }
-    return _languageOptions()
+    return busyMarkLocaleOptions
         .firstWhere(
-          (option) => option.localeTag == value,
-          orElse: () => const _LanguageOption('en', 'English'),
+          (option) => option.tag == value,
+          orElse: () => const BusyMarkLocaleOption(
+            locale: Locale('en'),
+            endonym: 'English',
+          ),
         )
-        .label;
+        .endonym;
   }
-
-  List<_LanguageOption> _languageOptions() {
-    return const [
-      _LanguageOption('en', 'English'),
-      _LanguageOption('et', 'Eesti'),
-      _LanguageOption('de', 'Deutsch'),
-      _LanguageOption('it', 'Italiano'),
-      _LanguageOption('nb', 'Norsk'),
-      _LanguageOption('fr', 'Français'),
-      _LanguageOption('ru', 'Русский'),
-      _LanguageOption('uk', 'Українська'),
-      _LanguageOption('pl', 'Polski'),
-      _LanguageOption('es', 'Español'),
-      _LanguageOption('pt', 'Português'),
-      _LanguageOption('ar', 'العربية'),
-      _LanguageOption('fa', 'فارسی'),
-      _LanguageOption('hi', 'हिन्दी'),
-    ];
-  }
-}
-
-class _LanguageOption {
-  const _LanguageOption(this.localeTag, this.label);
-
-  final String localeTag;
-  final String label;
 }
 
 class _ThemeModeRow extends StatelessWidget {

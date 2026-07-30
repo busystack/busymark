@@ -250,6 +250,10 @@ void main() {
       elevatedIcon.style?.shadowColor?.resolve({}),
       theme.colorScheme.shadow,
     );
+    expect(
+      elevatedIcon.style?.surfaceTintColor?.resolve({}),
+      BusyMarkLinuxPalette.transparent,
+    );
     expect(elevatedPopup.style?.elevation?.resolve({}), expectedElevation);
     expect(flatIcon.style?.elevation, isNull);
     expect(flatIcon.style?.backgroundColor?.resolve({}), isNull);
@@ -816,130 +820,153 @@ void main() {
   });
 
   for (final brightness in Brightness.values) {
-    testWidgets(
-      'WYSIWYG toolbar uses contained Yaru controls in ${brightness.name}',
-      (tester) async {
-        final theme = buildBusyMarkTheme(
-          brightness: brightness,
-          accentColor: const Color(0xFFE95420),
-        );
-        final colors = theme.extension<BusyMarkSurfaceColors>()!;
-        final boundaryKey = GlobalKey();
-        tester.view
-          ..physicalSize = const Size(900, 240)
-          ..devicePixelRatio = 1;
-        addTearDown(tester.view.reset);
+    testWidgets('WYSIWYG toolbar uses accent controls in ${brightness.name}', (
+      tester,
+    ) async {
+      const accent = Color(0xFFE95420);
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: accent,
+      );
+      final colors = theme.extension<BusyMarkSurfaceColors>()!;
+      final boundaryKey = GlobalKey();
+      tester.view
+        ..physicalSize = const Size(900, 240)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: theme,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: RepaintBoundary(
-              key: boundaryKey,
-              child: Scaffold(
-                body: ColoredBox(
-                  color: colors.view,
-                  child: BusyMarkWysiwygToolbar(
-                    onBlockCommand: (_) {},
-                    onInlineCommand: (_) {},
-                    onLinkCommand: () {},
-                    onImageCommand: () {},
-                    onInlineImageCommand: () {},
-                    onTableCommand: () {},
-                    onHtmlCommand: () {},
-                    onIndentCommand: () {},
-                    onOutdentCommand: () {},
-                    onToggleTaskCommand: () {},
-                    onHardBreakCommand: () {},
-                    onCodeLanguageCommand: () {},
-                  ),
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: RepaintBoundary(
+            key: boundaryKey,
+            child: Scaffold(
+              body: ColoredBox(
+                color: colors.view,
+                child: BusyMarkWysiwygToolbar(
+                  onBlockCommand: (_) {},
+                  onInlineCommand: (_) {},
+                  onLinkCommand: () {},
+                  onImageCommand: () {},
+                  onInlineImageCommand: () {},
+                  onTableCommand: () {},
+                  onHtmlCommand: () {},
+                  onIndentCommand: () {},
+                  onOutdentCommand: () {},
+                  onToggleTaskCommand: () {},
+                  onHardBreakCommand: () {},
+                  onCodeLanguageCommand: () {},
                 ),
               ),
             ),
           ),
-        );
-        await tester.pump();
+        ),
+      );
+      await tester.pump();
 
-        final toolbar = find.byType(BusyMarkWysiwygToolbar);
-        final popup = tester.widget<BusyMarkHeaderPopupMenuButton>(
-          find.descendant(
-            of: toolbar,
-            matching: find.byWidgetPredicate(
-              (widget) => widget is BusyMarkHeaderPopupMenuButton,
-            ),
+      final toolbar = find.byType(BusyMarkWysiwygToolbar);
+      final popup = tester.widget<BusyMarkHeaderPopupMenuButton>(
+        find.descendant(
+          of: toolbar,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is BusyMarkHeaderPopupMenuButton,
           ),
+        ),
+      );
+      expect(popup.transparent, isFalse);
+      expect(popup.elevated, isTrue);
+      expect(popup.foregroundColor, BusyMarkLinuxPalette.white);
+      expect(popup.backgroundColor?.resolve({}), accent);
+      expect(
+        popup.backgroundColor?.resolve({WidgetState.disabled}),
+        colors.disabledControl,
+      );
+
+      final actions = tester.widgetList<BusyMarkHeaderIconButton>(
+        find.descendant(
+          of: toolbar,
+          matching: find.byType(BusyMarkHeaderIconButton),
+        ),
+      );
+      expect(actions, isNotEmpty);
+      expect(actions.every((button) => !button.transparent), isTrue);
+      expect(actions.every((button) => button.elevated), isTrue);
+      expect(
+        actions.every(
+          (button) => button.foregroundColor == BusyMarkLinuxPalette.white,
+        ),
+        isTrue,
+      );
+      expect(
+        actions.every(
+          (button) => button.backgroundColor?.resolve({}) == accent,
+        ),
+        isTrue,
+      );
+      expect(
+        actions.every(
+          (button) =>
+              button.backgroundColor?.resolve({WidgetState.disabled}) ==
+              colors.disabledControl,
+        ),
+        isTrue,
+      );
+
+      final renderedButtons = tester.widgetList<IconButton>(
+        find.descendant(of: toolbar, matching: find.byType(IconButton)),
+      );
+      expect(renderedButtons, isNotEmpty);
+      final expectedElevation =
+          theme.cardTheme.elevation ?? BusyMarkElevation.surface;
+      for (final button in renderedButtons) {
+        expect(button.style?.backgroundColor?.resolve({}), accent);
+        expect(button.style?.elevation?.resolve({}), expectedElevation);
+        expect(
+          button.style?.shadowColor?.resolve({}),
+          theme.colorScheme.shadow,
         );
-        expect(popup.transparent, isFalse);
-        final expectedRest = Color.alphaBlend(colors.control, colors.view);
-        final expectedDisabled = Color.alphaBlend(
+        expect(
+          button.style?.surfaceTintColor?.resolve({}),
+          BusyMarkLinuxPalette.transparent,
+        );
+        expect(
+          button.style?.foregroundColor?.resolve({}),
+          BusyMarkLinuxPalette.white,
+        );
+        expect(
+          button.style?.backgroundColor?.resolve({WidgetState.disabled}),
           colors.disabledControl,
-          colors.view,
         );
-        expect(popup.foregroundColor, colors.foreground);
-        expect(popup.backgroundColor?.resolve({}), expectedRest);
+      }
 
-        final actions = tester.widgetList<BusyMarkHeaderIconButton>(
-          find.descendant(
-            of: toolbar,
-            matching: find.byType(BusyMarkHeaderIconButton),
-          ),
-        );
-        expect(actions, isNotEmpty);
-        expect(actions.every((button) => !button.transparent), isTrue);
-        expect(
-          actions.every(
-            (button) => button.foregroundColor == colors.foreground,
-          ),
-          isTrue,
-        );
-        expect(
-          actions.every(
-            (button) => button.backgroundColor?.resolve({}) == expectedRest,
-          ),
-          isTrue,
-        );
+      final actionButton = find.ancestor(
+        of: find.byIcon(BusyMarkGlyphs.unorderedList),
+        matching: find.byType(IconButton),
+      );
+      expect(actionButton, findsOneWidget);
+      final buttonSize = tester.getSize(actionButton);
+      expect(buttonSize, const Size.square(BusyMarkSizes.iconButton));
+      final probe = Offset(5, buttonSize.height / 2);
+      final restPixels = await _capturePixels(tester, boundaryKey);
+      final rest = _pixelAtLocal(tester, restPixels, actionButton, probe);
+      _expectColorNear(rest, accent);
 
-        final renderedButtons = tester.widgetList<IconButton>(
-          find.descendant(of: toolbar, matching: find.byType(IconButton)),
-        );
-        expect(renderedButtons, isNotEmpty);
-        for (final button in renderedButtons) {
-          expect(button.style?.backgroundColor?.resolve({}), expectedRest);
-          expect(button.style?.foregroundColor?.resolve({}), colors.foreground);
-          expect(
-            button.style?.backgroundColor?.resolve({WidgetState.disabled}),
-            expectedDisabled,
-          );
-        }
-
-        final actionButton = find.ancestor(
-          of: find.byIcon(BusyMarkGlyphs.unorderedList),
-          matching: find.byType(IconButton),
-        );
-        expect(actionButton, findsOneWidget);
-        final buttonSize = tester.getSize(actionButton);
-        expect(buttonSize, const Size.square(BusyMarkSizes.iconButton));
-        final probe = Offset(5, buttonSize.height / 2);
-        final restPixels = await _capturePixels(tester, boundaryKey);
-        final rest = _pixelAtLocal(tester, restPixels, actionButton, probe);
-        _expectColorNear(rest, expectedRest);
-
-        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
-        addTearDown(mouse.removePointer);
-        await mouse.addPointer(location: Offset.zero);
-        await mouse.moveTo(tester.getCenter(actionButton));
-        await tester.pumpAndSettle();
-        final hoverPixels = await _capturePixels(tester, boundaryKey);
-        final hover = _pixelAtLocal(tester, hoverPixels, actionButton, probe);
-        final expectedHover = Color.alphaBlend(
-          theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.08),
-          expectedRest,
-        );
-        _expectColorNear(hover, expectedHover);
-        expect(hover, isNot(rest));
-      },
-    );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(actionButton));
+      await tester.pumpAndSettle();
+      final hoverPixels = await _capturePixels(tester, boundaryKey);
+      final hover = _pixelAtLocal(tester, hoverPixels, actionButton, probe);
+      final expectedHover = Color.alphaBlend(
+        theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.08),
+        accent,
+      );
+      _expectColorNear(hover, expectedHover);
+      expect(hover, isNot(rest));
+    });
   }
 
   testWidgets('dialog actions wrap at narrow localized text widths', (

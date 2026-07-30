@@ -1475,9 +1475,17 @@ void main() {
     expect(toolbar, isNot(contains('transparent: true')));
     expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(2));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
-    expect(toolbar, contains('busyMarkContainedControlBackground('));
-    expect(toolbar, contains('foregroundColor: colors.foreground'));
-    expect(toolbar, isNot(contains('elevated: true')));
+    expect(toolbar, contains('_editorToolbarButtonBackground(context)'));
+    expect(toolbar, contains('return theme.colorScheme.primary'));
+    expect(
+      RegExp(
+        r'foregroundColor: BusyMarkLinuxPalette\.white',
+      ).allMatches(toolbar),
+      hasLength(2),
+    );
+    expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
+    expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
+    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(2));
     expect(toolbar, isNot(contains('accented: true')));
     expect(toolbar, contains('clipBehavior: Clip.none'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
@@ -1492,6 +1500,10 @@ void main() {
     ).firstMatch(editor)!.group(0)!;
     expect(floatingToolbar, contains('elevated: true'));
     expect(floatingToolbar, contains('accented: true'));
+    expect(
+      floatingToolbar,
+      contains('foregroundColor: BusyMarkLinuxPalette.white'),
+    );
     expect(floatingToolbar, isNot(contains('_editorToolbarButtonBackground')));
     expect(floatingToolbar, isNot(contains('boxShadow:')));
     expect(floatingToolbar, isNot(contains('BusyMarkShadow.')));

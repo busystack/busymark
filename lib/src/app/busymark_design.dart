@@ -908,6 +908,9 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
               theme.cardTheme.elevation ?? BusyMarkElevation.surface,
             ),
             shadowColor: WidgetStatePropertyAll(colorScheme.shadow),
+            surfaceTintColor: const WidgetStatePropertyAll(
+              BusyMarkLinuxPalette.transparent,
+            ),
           )
         : semanticStyle;
     // YaruIconButton merges its defaults as the receiver, so non-null default

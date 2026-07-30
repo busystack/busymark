@@ -213,13 +213,18 @@ class LinuxHeaderBarService extends ChangeNotifier {
     return _invokeLegacy('setTheme', theme.toMap());
   }
 
-  Future<void> setModalBarrierVisible(bool value) async {
+  Future<void> setModalBarrierDepth(int value) async {
+    final depth = value < 0 ? 0 : value;
     final hasPublishedConfiguration =
         configurationSynchronizer.desiredConfiguration != null;
-    await configurationSynchronizer.setModalBarrierVisible(value);
+    await configurationSynchronizer.setModalBarrierDepth(depth);
     if (!hasPublishedConfiguration) {
-      await _invokeLegacy('setModalBarrierVisible', value);
+      await _invokeLegacy('setModalBarrierDepth', depth);
     }
+  }
+
+  Future<void> setModalBarrierVisible(bool value) {
+    return setModalBarrierDepth(value ? 1 : 0);
   }
 
   Future<bool> _applyConfiguration(HeaderBarConfiguration configuration) async {

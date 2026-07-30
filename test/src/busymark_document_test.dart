@@ -2430,7 +2430,7 @@ void main() {}
       );
       expect(
         hideButton.style?.foregroundColor?.resolve(const {}),
-        colorScheme.onPrimary,
+        BusyMarkLinuxPalette.white,
       );
       final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
 
@@ -2447,7 +2447,7 @@ void main() {}
       );
       expect(
         showButton.style?.foregroundColor?.resolve(const {}),
-        colorScheme.onPrimary,
+        BusyMarkLinuxPalette.white,
       );
     },
   );
@@ -3161,16 +3161,16 @@ void main() {}
     await tester.pumpAndSettle();
 
     expect(
-      calls.where((call) => call.method == 'setModalBarrierVisible').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', true),
+      calls.where((call) => call.method == 'setModalBarrierDepth').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', 1),
     );
 
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
 
     expect(
-      calls.where((call) => call.method == 'setModalBarrierVisible').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', false),
+      calls.where((call) => call.method == 'setModalBarrierDepth').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', 0),
     );
   });
 

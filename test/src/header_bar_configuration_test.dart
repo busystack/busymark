@@ -101,6 +101,7 @@ void main() {
         'sidebarToggleVisible': false,
         'backVisible': true,
         'modalBarrierVisible': false,
+        'modalBarrierDepth': 0,
         'sidebarWidth': 300.0,
         'labels': _labels.toMap(),
         'theme': _theme.toMap(),
@@ -169,7 +170,7 @@ void main() {
     ]);
   });
 
-  test('modal barrier is an atomic overlay on the latest page state', () async {
+  test('modal depth is an atomic overlay on the latest page state', () async {
     if (!Platform.isLinux) {
       return;
     }
@@ -197,16 +198,26 @@ void main() {
     await service.configurationSynchronizer.setConfiguration(
       _configuration(title: 'Settings', backVisible: true),
     );
-    await service.setModalBarrierVisible(true);
-    await service.setModalBarrierVisible(true);
-    await service.setModalBarrierVisible(false);
+    await service.setModalBarrierDepth(1);
+    await service.setModalBarrierDepth(2);
+    await service.setModalBarrierDepth(1);
+    await service.setModalBarrierDepth(0);
 
-    expect(atomicCalls, hasLength(3));
-    expect(atomicCalls.map((payload) => payload['revision']), [1, 2, 3]);
+    expect(atomicCalls, hasLength(5));
+    expect(atomicCalls.map((payload) => payload['revision']), [1, 2, 3, 4, 5]);
     expect(atomicCalls.map((payload) => payload['modalBarrierVisible']), [
       false,
       true,
+      true,
+      true,
       false,
+    ]);
+    expect(atomicCalls.map((payload) => payload['modalBarrierDepth']), [
+      0,
+      1,
+      2,
+      1,
+      0,
     ]);
     expect(
       atomicCalls.every((payload) => payload['title'] == 'Settings'),
@@ -242,17 +253,17 @@ void main() {
     });
 
     final service = LinuxHeaderBarService(channel: channel);
-    await service.setModalBarrierVisible(true);
+    await service.setModalBarrierDepth(1);
     await service.configurationSynchronizer.setConfiguration(
       _configuration(title: 'Welcome'),
     );
 
     expect(
       calls
-          .where((call) => call.method == 'setModalBarrierVisible')
+          .where((call) => call.method == 'setModalBarrierDepth')
           .single
           .arguments,
-      true,
+      1,
     );
     final atomicPayload =
         calls
@@ -261,6 +272,7 @@ void main() {
                 .arguments
             as Map<Object?, Object?>;
     expect(atomicPayload['modalBarrierVisible'], true);
+    expect(atomicPayload['modalBarrierDepth'], 1);
   });
 
   test('older runners fall back once to the ordered legacy protocol', () async {
@@ -423,7 +435,7 @@ HeaderBarConfiguration _configuration({
     sidebarVisible: sidebarVisible,
     sidebarToggleVisible: sidebarToggleVisible,
     backVisible: backVisible,
-    modalBarrierVisible: false,
+    modalBarrierDepth: 0,
     sidebarWidth: 300,
     labels: _labels,
     theme: _theme,

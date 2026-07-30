@@ -17,6 +17,7 @@ import '../workspace/workspace_model.dart';
 import '../workspace/workspace_safety.dart';
 import '../workspace/workspace_tabs.dart';
 import 'app_router.dart';
+import 'app_locale.dart';
 import 'app_settings.dart';
 import 'busymark_shortcuts.dart';
 import 'app_theme.dart';
@@ -61,6 +62,7 @@ class BusyMarkApp extends ConsumerWidget {
       ),
       themeMode: settings.themeMode,
       locale: settings.locale,
+      localeListResolutionCallback: resolveBusyMarkLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -620,7 +622,7 @@ class BusyMarkApp extends ConsumerWidget {
       sidebarVisible: false,
       sidebarToggleVisible: false,
       backVisible: false,
-      modalBarrierVisible: false,
+      modalBarrierDepth: 0,
       sidebarWidth: BusyMarkSizes.sidebarWidth,
       labels: labels,
       theme: theme,

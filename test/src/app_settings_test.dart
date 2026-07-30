@@ -101,15 +101,28 @@ void main() {
     expect(settings.toJson()['localeTag'], 'nb');
   });
 
-  test('script-only locale tag is not treated as a country code', () {
+  test('supported script variants canonicalize to the available catalog', () {
     final settings = AppSettings.fromJson(<String, Object?>{
       'localeTag': 'fa-Arab',
     });
 
-    expect(
-      settings.locale,
-      const Locale.fromSubtags(languageCode: 'fa', scriptCode: 'Arab'),
-    );
+    expect(settings.localeTag, 'fa');
+    expect(settings.locale, const Locale('fa'));
+  });
+
+  test('regional variants canonicalize and unsupported tags are discarded', () {
+    final regional = AppSettings.fromJson(<String, Object?>{
+      'localeTag': 'de-DE',
+    });
+    final unsupported = AppSettings.fromJson(<String, Object?>{
+      'localeTag': 'eo',
+    });
+
+    expect(regional.localeTag, 'de');
+    expect(regional.locale, const Locale('de'));
+    expect(unsupported.localeTag, isNull);
+    expect(unsupported.locale, isNull);
+    expect(AppSettings.defaults().copyWith(localeTag: 'eo').localeTag, isNull);
   });
 
   test('unused product settings are not persisted', () {

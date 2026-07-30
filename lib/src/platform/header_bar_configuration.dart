@@ -178,11 +178,12 @@ class HeaderBarConfiguration {
     required this.sidebarVisible,
     required this.sidebarToggleVisible,
     required this.backVisible,
-    required this.modalBarrierVisible,
+    required this.modalBarrierDepth,
     required this.sidebarWidth,
     required this.labels,
     required this.theme,
-  }) : assert(revision >= 0);
+  }) : assert(revision >= 0),
+       assert(modalBarrierDepth >= 0);
 
   final int revision;
   final String title;
@@ -196,10 +197,12 @@ class HeaderBarConfiguration {
   final bool sidebarVisible;
   final bool sidebarToggleVisible;
   final bool backVisible;
-  final bool modalBarrierVisible;
+  final int modalBarrierDepth;
   final double sidebarWidth;
   final HeaderBarLabels labels;
   final HeaderBarTheme theme;
+
+  bool get modalBarrierVisible => modalBarrierDepth > 0;
 
   HeaderBarConfiguration copyWith({
     int? revision,
@@ -214,7 +217,7 @@ class HeaderBarConfiguration {
     bool? sidebarVisible,
     bool? sidebarToggleVisible,
     bool? backVisible,
-    bool? modalBarrierVisible,
+    int? modalBarrierDepth,
     double? sidebarWidth,
     HeaderBarLabels? labels,
     HeaderBarTheme? theme,
@@ -233,7 +236,7 @@ class HeaderBarConfiguration {
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       sidebarToggleVisible: sidebarToggleVisible ?? this.sidebarToggleVisible,
       backVisible: backVisible ?? this.backVisible,
-      modalBarrierVisible: modalBarrierVisible ?? this.modalBarrierVisible,
+      modalBarrierDepth: modalBarrierDepth ?? this.modalBarrierDepth,
       sidebarWidth: sidebarWidth ?? this.sidebarWidth,
       labels: labels ?? this.labels,
       theme: theme ?? this.theme,
@@ -254,6 +257,7 @@ class HeaderBarConfiguration {
     'sidebarToggleVisible': sidebarToggleVisible,
     'backVisible': backVisible,
     'modalBarrierVisible': modalBarrierVisible,
+    'modalBarrierDepth': modalBarrierDepth,
     'sidebarWidth': sidebarWidth,
     'labels': labels.toMap(),
     'theme': theme.toMap(),
@@ -271,7 +275,7 @@ class HeaderBarConfiguration {
         sidebarVisible == other.sidebarVisible &&
         sidebarToggleVisible == other.sidebarToggleVisible &&
         backVisible == other.backVisible &&
-        modalBarrierVisible == other.modalBarrierVisible &&
+        modalBarrierDepth == other.modalBarrierDepth &&
         sidebarWidth == other.sidebarWidth &&
         labels == other.labels &&
         theme == other.theme;
@@ -299,7 +303,7 @@ class HeaderBarConfiguration {
     sidebarVisible,
     sidebarToggleVisible,
     backVisible,
-    modalBarrierVisible,
+    modalBarrierDepth,
     sidebarWidth,
     labels,
     theme,
@@ -324,7 +328,7 @@ class HeaderBarConfigurationSynchronizer {
   HeaderBarConfiguration? _appliedConfiguration;
   Future<void>? _drainFuture;
   var _lastRevision = 0;
-  var _modalBarrierVisible = false;
+  var _modalBarrierDepth = 0;
 
   HeaderBarConfiguration? get desiredConfiguration => _desiredConfiguration;
   HeaderBarConfiguration? get appliedConfiguration => _appliedConfiguration;
@@ -339,12 +343,17 @@ class HeaderBarConfigurationSynchronizer {
     return _enqueueEffectiveConfiguration();
   }
 
-  Future<bool> setModalBarrierVisible(bool visible) {
-    if (_modalBarrierVisible == visible) {
+  Future<bool> setModalBarrierDepth(int depth) {
+    final effectiveDepth = depth < 0 ? 0 : depth;
+    if (_modalBarrierDepth == effectiveDepth) {
       return _waitForDesiredConfiguration();
     }
-    _modalBarrierVisible = visible;
+    _modalBarrierDepth = effectiveDepth;
     return _enqueueEffectiveConfiguration();
+  }
+
+  Future<bool> setModalBarrierVisible(bool visible) {
+    return setModalBarrierDepth(visible ? 1 : 0);
   }
 
   Future<bool> _enqueueEffectiveConfiguration() {
@@ -354,7 +363,7 @@ class HeaderBarConfigurationSynchronizer {
     }
     final effective = base.copyWith(
       revision: 0,
-      modalBarrierVisible: _modalBarrierVisible,
+      modalBarrierDepth: _modalBarrierDepth,
     );
     final desired = _desiredConfiguration;
     if (desired != null && desired.hasSameContentAs(effective)) {
