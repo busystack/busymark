@@ -22,6 +22,7 @@ void main() {
       );
     });
     final headerBar = LinuxHeaderBarService(channel: channel);
+    await headerBar.initialize();
     var appShortcutInvocations = 0;
     var documentViewShortcutInvocations = 0;
 
@@ -115,6 +116,7 @@ void main() {
       );
     });
     final headerBar = LinuxHeaderBarService(channel: channel);
+    await headerBar.initialize();
     late BuildContext hostContext;
 
     await tester.pumpWidget(

@@ -564,6 +564,10 @@ void main() {
     );
     expect(native, contains('.busymark-sidebar-header {'));
     expect(native, contains('background-color: %s;'));
+    expect(native, contains('".busymark-sidebar-header label {"'));
+    expect(native, contains('"font-weight: 800;"'));
+    expect(native, contains('".busymark-sidebar-header label:backdrop {"'));
+    expect(native, contains('kHeaderBackdropForegroundOpacity = 0.50'));
     final headerbarBlock = RegExp(
       r'"headerbar\.busymark-headerbar,"(.*?)"\}',
       dotAll: true,

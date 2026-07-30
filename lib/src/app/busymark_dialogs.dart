@@ -51,10 +51,15 @@ Future<T?> showBusyMarkModalDialog<T>(
   final barrierColor = busyMarkModalBarrierColor(context);
   final effectiveHeaderBarService =
       headerBarService ?? LinuxHeaderBarService.instance;
+  final coordinateNativeBarrier = effectiveHeaderBarService.isAvailable;
   final previousFocus = FocusManager.instance.primaryFocus;
-  await _BusyMarkModalBarrierCoordinator.acquire(effectiveHeaderBarService);
+  if (coordinateNativeBarrier) {
+    await _BusyMarkModalBarrierCoordinator.acquire(effectiveHeaderBarService);
+  }
   if (!context.mounted) {
-    await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
+    if (coordinateNativeBarrier) {
+      await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
+    }
     return null;
   }
   try {
@@ -83,7 +88,9 @@ Future<T?> showBusyMarkModalDialog<T>(
       },
     );
   } finally {
-    await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
+    if (coordinateNativeBarrier) {
+      await _BusyMarkModalBarrierCoordinator.release(effectiveHeaderBarService);
+    }
     if (previousFocus?.context != null && previousFocus!.canRequestFocus) {
       previousFocus.requestFocus();
     }

@@ -16,6 +16,7 @@ constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
 constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
+constexpr gdouble kHeaderBackdropForegroundOpacity = 0.50;
 constexpr char kDefaultHeaderbarBackground[] = "#272727";
 constexpr char kDefaultSidebarBackground[] = "#393939";
 constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
@@ -625,6 +626,13 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border: none;"
       "box-shadow: none;"
       "}"
+      ".busymark-sidebar-header label {"
+      "color: %s;"
+      "font-weight: 800;"
+      "}"
+      ".busymark-sidebar-header label:backdrop {"
+      "color: alpha(%s, %.2f);"
+      "}"
       ".busymark-sidebar-header:dir(ltr) {"
       "border-right: 1px solid %s;"
       "}"
@@ -673,8 +681,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-image: none;"
       "}",
       background, window_shadow_css, background, foreground, background,
-      foreground, sidebar_background, foreground, sidebar_border,
-      sidebar_border, modal);
+      foreground, sidebar_background, foreground, foreground, foreground,
+      kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border, modal);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
