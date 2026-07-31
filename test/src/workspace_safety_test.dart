@@ -177,11 +177,80 @@ void main() {
     final foreground = button.style?.foregroundColor?.resolve({});
     final background = button.style?.backgroundColor?.resolve({});
 
-    expect(foreground, isNotNull);
-    expect(background, isNotNull);
+    expect(foreground, BusyMarkDestructiveButtonStyle.foreground(theme));
+    expect(background, BusyMarkDestructiveButtonStyle.background(theme));
     expect(_contrastRatio(foreground!, background!), greaterThanOrEqualTo(4.5));
     expect(button.style?.iconColor?.resolve({}), foreground);
   });
+
+  testWidgets(
+    'unsaved changes Discard action renders white in the dark dialog',
+    (tester) async {
+      late WidgetRef widgetRef;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: buildBusyMarkTheme(
+              brightness: Brightness.dark,
+              accentColor: Colors.green,
+            ),
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, child) {
+                  widgetRef = ref;
+                  return TextButton(
+                    onPressed: () => confirmSafeToContinue(context, ref),
+                    child: const Text('Navigate'),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final controller = widgetRef.read(workspaceControllerProvider.notifier);
+      await tester.runAsync(() async {
+        await controller.openPath('test/fixtures/markdown/other.md');
+        controller.updateActiveText('# Dirty\n');
+      });
+
+      await tester.tap(find.text('Navigate'));
+      await tester.pumpAndSettle();
+
+      final discardButton = find.widgetWithText(
+        BusyMarkDialogButton,
+        l10n.discard,
+      );
+      final elevated = tester.widget<ElevatedButton>(
+        find.descendant(
+          of: discardButton,
+          matching: find.byType(ElevatedButton),
+        ),
+      );
+      expect(
+        elevated.style?.foregroundColor?.resolve({}),
+        BusyMarkLinuxPalette.white,
+      );
+      expect(
+        elevated.style?.backgroundColor?.resolve({}),
+        BusyMarkLinuxPalette.red,
+      );
+      expect(
+        DefaultTextStyle.of(
+          tester.element(find.text(l10n.discard)),
+        ).style.color,
+        BusyMarkLinuxPalette.white,
+      );
+    },
+  );
 
   testWidgets(
     'overwrite confirmation stays pinned to the document being saved',

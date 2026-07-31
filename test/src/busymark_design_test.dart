@@ -1249,11 +1249,11 @@ void main() {
     );
     expect(
       destructive.style?.foregroundColor?.resolve({}),
-      theme.colorScheme.onError,
+      BusyMarkDestructiveButtonStyle.foreground(theme),
     );
     expect(
       destructive.style?.backgroundColor?.resolve({}),
-      theme.colorScheme.error,
+      BusyMarkDestructiveButtonStyle.background(theme),
     );
 
     final menuFinder = find.descendant(

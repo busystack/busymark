@@ -406,6 +406,23 @@ abstract final class BusyMarkTooltipStyle {
   );
 }
 
+/// Filled destructive actions use Yaru's dark red button treatment.
+///
+/// The dark theme's generic error role is intentionally a light tint with
+/// black content, which is appropriate for error text but not for destructive
+/// push buttons.
+abstract final class BusyMarkDestructiveButtonStyle {
+  static Color background(ThemeData theme) =>
+      theme.brightness == Brightness.dark
+      ? BusyMarkLinuxPalette.red
+      : theme.colorScheme.error;
+
+  static Color foreground(ThemeData theme) =>
+      theme.brightness == Brightness.dark
+      ? BusyMarkLinuxPalette.white
+      : theme.colorScheme.onError;
+}
+
 @immutable
 class BusyMarkSyntaxColors extends ThemeExtension<BusyMarkSyntaxColors> {
   const BusyMarkSyntaxColors({
@@ -3241,11 +3258,11 @@ ButtonStyle _destructiveButtonStyle(BuildContext context) {
   Color? background(Set<WidgetState> states) =>
       states.contains(WidgetState.disabled)
       ? colors.disabledControl
-      : theme.colorScheme.error;
+      : BusyMarkDestructiveButtonStyle.background(theme);
   Color? foreground(Set<WidgetState> states) =>
       states.contains(WidgetState.disabled)
       ? colors.disabledForeground
-      : theme.colorScheme.onError;
+      : BusyMarkDestructiveButtonStyle.foreground(theme);
   return ButtonStyle(
     backgroundColor: WidgetStateProperty.resolveWith(background),
     foregroundColor: WidgetStateProperty.resolveWith(foreground),
