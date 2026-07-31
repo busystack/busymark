@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'busymark_glyphs.dart';
 abstract final class BusyMarkSpacing {
   static const double xxs = 2;
   static const double xs = 4;
+  static const double headerInset = 6;
   static const double sm = 8;
   static const double smPlus = 10;
   static const double md = 12;
@@ -107,6 +109,10 @@ abstract final class BusyMarkSizes {
   static const int tableMaxColumns = 12;
   static const int tableMinRows = 1;
   static const int tableMaxRows = 50;
+}
+
+abstract final class BusyMarkFormLayout {
+  static const double comboInlineMaxFraction = 0.46;
 }
 
 abstract final class BusyMarkElevation {
@@ -1827,6 +1833,60 @@ class BusyMarkPopupSelector<T> extends StatelessWidget {
   }
 }
 
+/// Input decoration inherited by controls hosted in a grouped-list row.
+///
+/// The grouped list owns the surface, outline, padding, and separators. Yaru
+/// and Flutter continue to own editing behavior without painting a second
+/// Material input surface inside the native desktop row.
+InputDecorationThemeData busyMarkGroupedInputDecorationTheme(
+  BuildContext context,
+) {
+  final theme = Theme.of(context);
+  final labelColor = theme.colorScheme.onSurfaceVariant;
+  final labelStyle = theme.textTheme.bodyMedium?.copyWith(color: labelColor);
+
+  return theme.inputDecorationTheme.copyWith(
+    filled: false,
+    fillColor: Colors.transparent,
+    hoverColor: Colors.transparent,
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    disabledBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
+    contentPadding: EdgeInsets.zero,
+    labelStyle: labelStyle,
+    floatingLabelStyle: labelStyle,
+    floatingLabelBehavior: FloatingLabelBehavior.auto,
+  );
+}
+
+InputDecoration busyMarkGroupedTextFieldDecoration(
+  BuildContext context, {
+  required String labelText,
+  String? errorText,
+  bool alignLabelWithHint = false,
+}) {
+  final decoration = InputDecoration(
+    labelText: labelText,
+    errorText: errorText,
+    alignLabelWithHint: alignLabelWithHint,
+  );
+  final defaults = busyMarkGroupedInputDecorationTheme(context);
+  final resolved = decoration.applyDefaults(defaults);
+  if (errorText == null) {
+    return resolved;
+  }
+  final errorLabelStyle = Theme.of(
+    context,
+  ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error);
+  return resolved.copyWith(
+    labelStyle: errorLabelStyle,
+    floatingLabelStyle: errorLabelStyle,
+  );
+}
+
 class BusyMarkClamp extends StatelessWidget {
   const BusyMarkClamp({
     super.key,
@@ -2188,6 +2248,206 @@ class _BusyMarkGroupedListSurface extends StatelessWidget {
   }
 }
 
+/// A single-selection row following the native AdwComboRow interaction model.
+///
+/// The complete row owns hover, focus, and activation. Menu presentation is
+/// delegated to BusyMark's GTK menu bridge on Linux.
+class BusyMarkComboRow<T> extends StatelessWidget {
+  BusyMarkComboRow({
+    super.key,
+    required this.title,
+    required List<T> values,
+    required this.selected,
+    required this.labelFor,
+    required this.onSelected,
+    this.subtitle,
+    this.errorText,
+    this.leading,
+    this.enabled = true,
+    this.tooltip,
+    this.width = BusyMarkSizes.controlRowWidth,
+  }) : values = List<T>.unmodifiable(values) {
+    if (this.values.isEmpty) {
+      throw ArgumentError.value(
+        values,
+        'values',
+        'A combo row requires at least one value.',
+      );
+    }
+    if (this.values.toSet().length != this.values.length) {
+      throw ArgumentError.value(
+        values,
+        'values',
+        'A combo row requires unique values.',
+      );
+    }
+    if (!this.values.contains(selected)) {
+      throw ArgumentError.value(
+        selected,
+        'selected',
+        'The selected value must be present in values.',
+      );
+    }
+    if (!width.isFinite || width <= 0) {
+      throw ArgumentError.value(
+        width,
+        'width',
+        'The maximum value width must be finite and positive.',
+      );
+    }
+  }
+
+  final String title;
+  final List<T> values;
+  final T selected;
+  final String Function(T value) labelFor;
+  final ValueChanged<T> onSelected;
+  final String? subtitle;
+  final String? errorText;
+  final Widget? leading;
+  final bool enabled;
+  final String? tooltip;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasError = errorText?.isNotEmpty ?? false;
+        final subtitleWidget = hasError
+            ? Text(
+                errorText!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              )
+            : subtitle == null
+            ? null
+            : Text(subtitle!);
+        final styledSubtitle = subtitleWidget == null
+            ? null
+            : _busyMarkGroupedRowSubtitle(
+                context,
+                subtitleWidget,
+                enabled: enabled,
+              );
+        final availableWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : width + BusyMarkSpacing.md * 2;
+        final maximumValueWidth =
+            (availableWidth * BusyMarkFormLayout.comboInlineMaxFraction)
+                .clamp(0.0, width)
+                .toDouble();
+
+        return BusyMarkMenuButton<int>(
+          tooltip: tooltip ?? title,
+          enabled: enabled,
+          onSelected: (index) {
+            final value = values[index];
+            if (value != selected) {
+              onSelected(value);
+            }
+          },
+          items: [
+            for (var index = 0; index < values.length; index++)
+              BusyMarkPopupMenuItem<int>(
+                value: index,
+                label: labelFor(values[index]),
+                checked: values[index] == selected,
+                trailingCheck: true,
+              ),
+          ],
+          triggerBuilder: (context, trigger) {
+            final colors = BusyMarkSurfaceColors.of(context);
+            final valueForeground = enabled
+                ? colors.foreground
+                : colors.disabledForeground;
+            final value = ExcludeSemantics(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maximumValueWidth),
+                child: DefaultTextStyle.merge(
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: valueForeground),
+                  child: IconTheme.merge(
+                    data: IconThemeData(
+                      color: valueForeground,
+                      size: BusyMarkSizes.iconSm,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            labelFor(selected),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: BusyMarkSpacing.sm),
+                        trigger.anchor(
+                          child: const Icon(BusyMarkGlyphs.downArrow),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            final row = YaruListTile.square(
+              leading: leading == null
+                  ? null
+                  : ExcludeSemantics(child: leading!),
+              title: ExcludeSemantics(child: Text(title)),
+              subtitle: styledSubtitle == null
+                  ? null
+                  : ExcludeSemantics(child: styledSubtitle),
+              trailing: value,
+              onTap: trigger.onPressed,
+              focusNode: trigger.focusNode,
+              hoverColor: busyMarkRowHoverColor(context),
+              enabled: enabled,
+            );
+            final semanticRow = Semantics(
+              container: true,
+              button: true,
+              enabled: enabled,
+              expanded: trigger.isOpen,
+              onTap: enabled ? trigger.onPressed : null,
+              label: subtitle == null || subtitle!.isEmpty
+                  ? title
+                  : '$title, $subtitle',
+              value: labelFor(selected),
+              hint: hasError ? errorText : null,
+              liveRegion: hasError,
+              validationResult: hasError
+                  ? ui.SemanticsValidationResult.invalid
+                  : ui.SemanticsValidationResult.valid,
+              child: ExcludeSemantics(child: row),
+            );
+            final statefulRow = ColoredBox(
+              color: trigger.isOpen
+                  ? busyMarkRowHoverColor(context)
+                  : Colors.transparent,
+              child: semanticRow,
+            );
+            final boundedRow = constraints.hasBoundedWidth
+                ? statefulRow
+                : SizedBox(width: availableWidth, child: statefulRow);
+            return tooltip == null
+                ? boundedRow
+                : Tooltip(
+                    message: tooltip!,
+                    excludeFromSemantics: true,
+                    child: boundedRow,
+                  );
+          },
+        );
+      },
+    );
+  }
+}
+
 typedef BusyMarkRowActivationCallback =
     void Function(BuildContext context, Offset? globalPosition);
 
@@ -2453,6 +2713,180 @@ class BusyMarkStatusBox extends StatelessWidget {
 Color busyMarkDialogSurfaceColor(BuildContext context) {
   return DialogTheme.of(context).backgroundColor ??
       BusyMarkSurfaceColors.of(context).dialog;
+}
+
+class BusyMarkEditorHeader extends StatelessWidget {
+  const BusyMarkEditorHeader({
+    super.key,
+    required this.title,
+    required this.cancelLabel,
+    required this.saveLabel,
+    required this.onCancel,
+    required this.onSave,
+    this.saving = false,
+    this.cancelEnabled = true,
+    this.cancelKey,
+    this.saveKey,
+  });
+
+  final String title;
+  final String cancelLabel;
+  final String saveLabel;
+  final VoidCallback onCancel;
+  final VoidCallback? onSave;
+  final bool saving;
+  final bool cancelEnabled;
+  final Key? cancelKey;
+  final Key? saveKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final actionStyle = ButtonStyle(
+      textStyle: WidgetStatePropertyAll(Theme.of(context).textTheme.titleSmall),
+    );
+    return Padding(
+      padding: const EdgeInsets.all(BusyMarkSpacing.headerInset),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              heightFactor: 1,
+              child: BusyMarkPushButton.standard(
+                key: cancelKey,
+                onPressed: cancelEnabled ? onCancel : null,
+                style: actionStyle,
+                child: Text(cancelLabel, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              heightFactor: 1,
+              child: BusyMarkPushButton.suggested(
+                key: saveKey,
+                onPressed: onSave,
+                style: actionStyle,
+                child: saving
+                    ? const ExcludeSemantics(
+                        child: SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : Text(saveLabel, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class BusyMarkEditorScrollBody extends StatelessWidget {
+  const BusyMarkEditorScrollBody({
+    super.key,
+    required this.child,
+    this.maxWidth = 640,
+  });
+
+  final Widget child;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return YaruScrollViewUndershoot.builder(
+      endUndershoot: false,
+      builder: (context, controller) => BusyMarkClamp(
+        maxWidth: maxWidth,
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.fromLTRB(
+          BusyMarkSpacing.lg,
+          BusyMarkSpacing.headerInset,
+          BusyMarkSpacing.lg,
+          0,
+        ),
+        controller: controller,
+        child: child,
+      ),
+    );
+  }
+}
+
+class BusyMarkModalEditorScaffold extends StatelessWidget {
+  const BusyMarkModalEditorScaffold({
+    super.key,
+    required this.title,
+    required this.cancelLabel,
+    required this.saveLabel,
+    required this.onCancel,
+    required this.onSave,
+    required this.children,
+    this.saving = false,
+    this.cancelEnabled = true,
+    this.contentMaxWidth = 640,
+    this.cancelKey,
+    this.saveKey,
+  });
+
+  final String title;
+  final String cancelLabel;
+  final String saveLabel;
+  final VoidCallback onCancel;
+  final VoidCallback? onSave;
+  final bool saving;
+  final bool cancelEnabled;
+  final double contentMaxWidth;
+  final List<Widget> children;
+  final Key? cancelKey;
+  final Key? saveKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      scopesRoute: true,
+      namesRoute: true,
+      explicitChildNodes: true,
+      label: title,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BusyMarkEditorHeader(
+            title: title,
+            cancelLabel: cancelLabel,
+            saveLabel: saveLabel,
+            onCancel: onCancel,
+            onSave: onSave,
+            saving: saving,
+            cancelEnabled: cancelEnabled,
+            cancelKey: cancelKey,
+            saveKey: saveKey,
+          ),
+          Flexible(
+            child: BusyMarkEditorScrollBody(
+              maxWidth: contentMaxWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: children,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class BusyMarkDialogTitleBar extends StatelessWidget {

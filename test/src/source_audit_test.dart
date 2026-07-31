@@ -1102,7 +1102,8 @@ void main() {
       contains('BusyMarkPopupSelector<WritersideTopicCreatePlacement>'),
     );
     final selector = RegExp(
-      r'class BusyMarkPopupSelector<T>[\s\S]*?class BusyMarkClamp',
+      r'class BusyMarkPopupSelector<T>[\s\S]*?'
+      r'InputDecorationThemeData busyMarkGroupedInputDecorationTheme',
     ).firstMatch(design)!.group(0)!;
     expect(selector, contains('BusyMarkMenuButton<T>('));
     expect(selector, contains('Theme.of(context).outlinedButtonTheme.style'));
@@ -1122,7 +1123,7 @@ void main() {
     expect(selector, isNot(contains('shadowColor:')));
   });
 
-  test('report issue form uses shared BusyMark desktop controls', () {
+  test('report issue form uses the native grouped modal editor', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
@@ -1132,20 +1133,36 @@ void main() {
     ).readAsStringSync();
 
     expect(design, contains('class BusyMarkPopupSelector<T>'));
-    expect(design, contains('class BusyMarkStatusBox'));
+    expect(design, contains('class BusyMarkComboRow<T>'));
+    expect(design, contains('class BusyMarkModalEditorScaffold'));
+    expect(design, contains('busyMarkGroupedTextFieldDecoration('));
     expect(settings, contains('BusyMarkPopupSelector<String>('));
-    expect(feedback, contains('BusyMarkPopupSelector<FeedbackCategory>('));
+    expect(RegExp(r'YaruListTile\.square\(').allMatches(feedback).length, 3);
+    expect(feedback, contains('BusyMarkModalEditorScaffold('));
+    expect(feedback, contains('BusyMarkComboRow<FeedbackCategory?>('));
     expect(
-      RegExp(r'BusyMarkFloatingTextEntry\(').allMatches(feedback).length,
-      3,
+      feedback,
+      contains('values: const [null, ...FeedbackCategory.values]'),
     );
-    expect(feedback, contains('BusyMarkGroupedList('));
-    expect(feedback, contains('BusyMarkSwitchRow('));
-    expect(feedback, contains('BusyMarkStatusBox('));
+    expect(feedback, contains('busyMarkGroupedTextFieldDecoration('));
+    expect(feedback, contains('YaruCheckboxListTile('));
+    expect(feedback, contains('CallbackShortcuts('));
+    expect(feedback, isNot(contains('BusyMarkDialogShell(')));
+    expect(feedback, isNot(contains('BusyMarkDialogButton(')));
+    expect(
+      feedback,
+      isNot(contains('BusyMarkPopupSelector<FeedbackCategory>')),
+    );
+    expect(feedback, isNot(contains('BusyMarkFloatingTextEntry(')));
+    expect(feedback, isNot(contains('BusyMarkSwitchRow(')));
+    expect(feedback, isNot(contains('BusyMarkStatusBox(')));
     expect(feedback, isNot(contains('DropdownButtonFormField')));
-    expect(feedback, isNot(contains('TextField(')));
     expect(feedback, isNot(contains('InputDecoration(')));
     expect(feedback, isNot(contains('InkWell(')));
+    expect(
+      design,
+      contains("delegated to BusyMark's GTK menu bridge on Linux"),
+    );
   });
 
   test(

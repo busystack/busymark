@@ -763,6 +763,28 @@ void main() {
     }
   });
 
+  test('accent controls use the native Yaru foreground and fill roles', () {
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.dark,
+      accentColor: BusyMarkLinuxPalette.ubuntuMagentaAccent,
+    );
+    const selected = {WidgetState.selected};
+
+    expect(theme.colorScheme.onPrimary, BusyMarkLinuxPalette.white);
+    expect(
+      theme.elevatedButtonTheme.style?.foregroundColor?.resolve({}),
+      BusyMarkLinuxPalette.white,
+    );
+    expect(
+      theme.checkboxTheme.checkColor?.resolve(selected),
+      BusyMarkLinuxPalette.white,
+    );
+    expect(
+      theme.radioTheme.fillColor?.resolve(selected),
+      BusyMarkLinuxPalette.ubuntuMagentaAccent,
+    );
+  });
+
   test('semantic surfaces use one modern neutral Linux role ladder', () {
     const blue = Color(0xFF3584E4);
     const orange = Color(0xFFE95420);

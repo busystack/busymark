@@ -2065,6 +2065,7 @@ class _SidebarHeader extends StatelessWidget {
                     icon: BusyMarkGlyphs.menuVertical,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    highlightWhenOpen: false,
                     itemBuilder: (menuContext) =>
                         loadBranchMenuItems(menuContext, repository),
                     onSelected: (action) =>

@@ -119,6 +119,26 @@ Future<T?> _showBusyMarkFlutterDialog<T>(
   );
 }
 
+Future<T?> showBusyMarkModalEditorDialog<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  LinuxHeaderBarService? headerBarService,
+  double maxWidth = 700,
+  double? maxHeight = 760,
+}) {
+  return showBusyMarkModalDialog<T>(
+    context,
+    headerBarService: headerBarService,
+    barrierDismissible: false,
+    builder: (dialogContext) => BusyMarkModalEditorSurface(
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
+      insetPadding: const EdgeInsets.all(BusyMarkSpacing.lg),
+      child: builder(dialogContext),
+    ),
+  );
+}
+
 /// Acquires a reference-counted native header-bar modal barrier.
 ///
 /// Every call must be paired with [releaseBusyMarkModalBarrier]. Route
@@ -235,22 +255,25 @@ class BusyMarkModalEditorSurface extends StatelessWidget {
         ? double.infinity
         : maxHeight!.clamp(0.0, double.infinity).toDouble();
 
-    return Dialog(
-      backgroundColor: editorSurface,
-      surfaceTintColor: editorSurface,
-      insetPadding: insetPadding,
-      insetAnimationDuration: MediaQuery.disableAnimationsOf(context)
-          ? Duration.zero
-          : BusyMarkMotion.dialogInsets,
-      insetAnimationCurve: BusyMarkMotion.dialogInsetsCurve,
-      clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minWidth: effectiveMinWidth,
-          maxWidth: effectiveMaxWidth,
-          maxHeight: effectiveMaxHeight,
+    return BusyMarkSurfaceScope(
+      role: BusyMarkSurfaceRole.window,
+      child: Dialog(
+        backgroundColor: editorSurface,
+        surfaceTintColor: editorSurface,
+        insetPadding: insetPadding,
+        insetAnimationDuration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : BusyMarkMotion.dialogInsets,
+        insetAnimationCurve: BusyMarkMotion.dialogInsetsCurve,
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: effectiveMinWidth,
+            maxWidth: effectiveMaxWidth,
+            maxHeight: effectiveMaxHeight,
+          ),
+          child: child,
         ),
-        child: child,
       ),
     );
   }

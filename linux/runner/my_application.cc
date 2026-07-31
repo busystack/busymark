@@ -626,22 +626,6 @@ static void refresh_header_bar_css(MyApplication* self) {
                 kNativePopoverStyleClass, kNativePopoverStyleClass,
                 self->popover_background_color)
           : g_strdup("");
-  g_autofree gchar* native_menu_state_css =
-      is_css_color_token(self->menu_hover_color)
-          ? g_strdup_printf(
-                "popover.background.%s "
-                "modelbutton:hover:not(:disabled) {"
-                "background-color: %s;"
-                "background-image: none;"
-                "}"
-                "popover.background.%s "
-                "row:hover:not(:disabled) {"
-                "background-color: %s;"
-                "background-image: none;"
-                "}",
-                kNativePopoverStyleClass, self->menu_hover_color,
-                kNativePopoverStyleClass, self->menu_hover_color)
-          : g_strdup("");
   g_autofree gchar* header_menu_shadow_css =
       use_legacy_yaru_compatibility
           ? g_strdup_printf(
@@ -720,7 +704,6 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}"
-      "%s"
       "%s"
       "%s"
       "%s"
@@ -829,7 +812,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}",
-      background, window_shadow_css, native_popover_css, native_menu_state_css,
+      background, window_shadow_css, native_popover_css,
       header_menu_shadow_css, background, foreground, background, foreground,
       sidebar_background, foreground, foreground, foreground,
       kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border,

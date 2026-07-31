@@ -2133,9 +2133,15 @@ void main() {
       ),
       findsOneWidget,
     );
+    final branchMenuButton = find.descendant(
+      of: branchMenu,
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(branchMenuButton).isSelected, isFalse);
     expect(gitController.branchLoadCount, 0);
     await tester.tap(branchMenu);
     await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(branchMenuButton).isSelected, isFalse);
     expect(gitController.branchLoadCount, 1);
     expect(find.text(l10n.gitPull), findsOneWidget);
     expect(find.text(l10n.gitPush), findsOneWidget);

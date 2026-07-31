@@ -17,7 +17,11 @@ ThemeData buildBusyMarkTheme({
     brightness,
     colors,
   );
-  final onAccent = _accessibleForeground(accentColor);
+  // Match Yaru/GTK suggested-action buttons. The native toolkit classifies
+  // mid-tone Ubuntu accents such as magenta as dark and uses white content;
+  // choosing whichever of black or white has a fractionally higher WCAG ratio
+  // makes those buttons look unlike their native counterparts.
+  final onAccent = contrastColor(accentColor);
   final colorScheme = base.colorScheme.copyWith(
     brightness: brightness,
     primary: accentColor,
@@ -174,6 +178,57 @@ ThemeData buildBusyMarkTheme({
     elevatedButtonTheme: ElevatedButtonThemeData(style: elevatedButtonStyle),
     textButtonTheme: TextButtonThemeData(style: textButtonStyle),
     segmentedButtonTheme: SegmentedButtonThemeData(style: segmentedButtonStyle),
+    switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return colors.disabledForeground;
+        }
+        if (states.contains(WidgetState.selected)) {
+          return onAccent;
+        }
+        return colors.view;
+      }),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return colors.disabledControl;
+        }
+        if (states.contains(WidgetState.selected)) {
+          return accentColor;
+        }
+        return colors.controlHover;
+      }),
+      trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return accentColor;
+        }
+        return colors.border;
+      }),
+    ),
+    checkboxTheme: base.checkboxTheme.copyWith(
+      fillColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return colors.disabledControl;
+        }
+        if (states.contains(WidgetState.selected)) {
+          return accentColor;
+        }
+        return colors.control;
+      }),
+      // The mark is content on an accent surface, not ordinary foreground.
+      checkColor: WidgetStatePropertyAll(onAccent),
+      side: BorderSide(color: colors.border),
+    ),
+    radioTheme: RadioThemeData(
+      fillColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return colors.disabledForeground;
+        }
+        if (states.contains(WidgetState.selected)) {
+          return accentColor;
+        }
+        return colors.mutedForeground;
+      }),
+    ),
     popupMenuTheme: base.popupMenuTheme.copyWith(
       color: colors.popover,
       surfaceTintColor: colors.popover,
