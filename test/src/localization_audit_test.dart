@@ -187,6 +187,31 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
+  test('unsaved-changes discard actions are distinct from cancel', () {
+    for (final locale in AppLocalizations.supportedLocales) {
+      final localizations = lookupAppLocalizations(locale);
+      expect(
+        localizations.discard,
+        isNot(localizations.cancel),
+        reason:
+            '${locale.toLanguageTag()} must not translate Discard as Cancel',
+      );
+      expect(
+        localizations.closeUnsavedChangesDiscard,
+        isNot(localizations.closeUnsavedChangesCancel),
+        reason:
+            '${locale.toLanguageTag()} must not translate window-close '
+            'Discard as Cancel',
+      );
+    }
+
+    final russian = lookupAppLocalizations(const Locale('ru'));
+    expect(russian.discard, 'Не сохранять');
+    expect(russian.closeUnsavedChangesDiscard, 'Не сохранять');
+    expect(russian.unsavedChanges, 'Несохранённые изменения');
+    expect(russian.closeUnsavedChangesTitle, 'Несохранённые изменения');
+  });
+
   test('English-identical target messages are explicitly reviewed', () {
     final english = _arbMessageStrings(File('lib/l10n/app_en.arb'));
     final failures = <String>[];
