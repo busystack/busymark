@@ -659,25 +659,34 @@ class _ThemeModeControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<BusyMarkThemeModePreference>(
-      showSelectedIcon: false,
-      segments: [
-        ButtonSegment(
+    return BusyMarkPopupSelector<BusyMarkThemeModePreference>(
+      value: selected,
+      label: _label(context, selected),
+      tooltip: context.l10n.theme,
+      options: [
+        BusyMarkPopupSelectorOption(
           value: BusyMarkThemeModePreference.system,
-          label: _SegmentLabel(context.l10n.systemTheme),
+          label: context.l10n.systemTheme,
         ),
-        ButtonSegment(
+        BusyMarkPopupSelectorOption(
           value: BusyMarkThemeModePreference.light,
-          label: _SegmentLabel(context.l10n.lightTheme),
+          label: context.l10n.lightTheme,
         ),
-        ButtonSegment(
+        BusyMarkPopupSelectorOption(
           value: BusyMarkThemeModePreference.dark,
-          label: _SegmentLabel(context.l10n.darkTheme),
+          label: context.l10n.darkTheme,
         ),
       ],
-      selected: {selected},
-      onSelectionChanged: (value) => onChanged(value.first),
+      onSelected: onChanged,
     );
+  }
+
+  String _label(BuildContext context, BusyMarkThemeModePreference preference) {
+    return switch (preference) {
+      BusyMarkThemeModePreference.system => context.l10n.systemTheme,
+      BusyMarkThemeModePreference.light => context.l10n.lightTheme,
+      BusyMarkThemeModePreference.dark => context.l10n.darkTheme,
+    };
   }
 }
 
@@ -849,29 +858,39 @@ class _EditorToolbarPlacementControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<EditorToolbarPlacement>(
-      showSelectedIcon: false,
-      segments: [
-        ButtonSegment(
+    return BusyMarkPopupSelector<EditorToolbarPlacement>(
+      value: selected,
+      label: _label(context, selected),
+      tooltip: context.l10n.editingButtonsPosition,
+      options: [
+        BusyMarkPopupSelectorOption(
           value: EditorToolbarPlacement.topLeft,
-          label: _SegmentLabel(context.l10n.topLeft),
+          label: context.l10n.topLeft,
         ),
-        ButtonSegment(
+        BusyMarkPopupSelectorOption(
           value: EditorToolbarPlacement.topRight,
-          label: _SegmentLabel(context.l10n.topRight),
+          label: context.l10n.topRight,
         ),
-        ButtonSegment(
+        BusyMarkPopupSelectorOption(
           value: EditorToolbarPlacement.bottomLeft,
-          label: _SegmentLabel(context.l10n.bottomLeft),
+          label: context.l10n.bottomLeft,
         ),
-        ButtonSegment(
+        BusyMarkPopupSelectorOption(
           value: EditorToolbarPlacement.bottomRight,
-          label: _SegmentLabel(context.l10n.bottomRight),
+          label: context.l10n.bottomRight,
         ),
       ],
-      selected: {selected},
-      onSelectionChanged: (value) => onChanged(value.first),
+      onSelected: onChanged,
     );
+  }
+
+  String _label(BuildContext context, EditorToolbarPlacement placement) {
+    return switch (placement) {
+      EditorToolbarPlacement.topLeft => context.l10n.topLeft,
+      EditorToolbarPlacement.topRight => context.l10n.topRight,
+      EditorToolbarPlacement.bottomLeft => context.l10n.bottomLeft,
+      EditorToolbarPlacement.bottomRight => context.l10n.bottomRight,
+    };
   }
 }
 
@@ -886,31 +905,28 @@ class _EditorToolbarDirectionControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<EditorToolbarDirection>(
-      showSelectedIcon: false,
-      segments: [
-        ButtonSegment(
+    return BusyMarkPopupSelector<EditorToolbarDirection>(
+      value: selected,
+      label: _label(context, selected),
+      tooltip: context.l10n.editingButtonsDirection,
+      options: [
+        BusyMarkPopupSelectorOption(
           value: EditorToolbarDirection.horizontal,
-          label: _SegmentLabel(context.l10n.horizontal),
+          label: context.l10n.horizontal,
         ),
-        ButtonSegment(
+        BusyMarkPopupSelectorOption(
           value: EditorToolbarDirection.vertical,
-          label: _SegmentLabel(context.l10n.vertical),
+          label: context.l10n.vertical,
         ),
       ],
-      selected: {selected},
-      onSelectionChanged: (value) => onChanged(value.first),
+      onSelected: onChanged,
     );
   }
-}
 
-class _SegmentLabel extends StatelessWidget {
-  const _SegmentLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, maxLines: 1, overflow: TextOverflow.ellipsis);
+  String _label(BuildContext context, EditorToolbarDirection direction) {
+    return switch (direction) {
+      EditorToolbarDirection.horizontal => context.l10n.horizontal,
+      EditorToolbarDirection.vertical => context.l10n.vertical,
+    };
   }
 }

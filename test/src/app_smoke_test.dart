@@ -348,10 +348,55 @@ void main() {
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
 
+    expect(
+      find.byType(BusyMarkPopupSelector<BusyMarkThemeModePreference>),
+      findsOneWidget,
+    );
+    expect(
+      find.byType(SegmentedButton<BusyMarkThemeModePreference>),
+      findsNothing,
+    );
+    await tester.tap(find.byTooltip(l10n.theme));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.systemTheme), findsWidgets);
+    expect(find.text(l10n.lightTheme), findsOneWidget);
+    expect(find.text(l10n.darkTheme), findsOneWidget);
+    await tester.tap(find.text(l10n.darkTheme));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['themeModePreference'], 'dark');
+
     await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.editor));
     await tester.pumpAndSettle();
+
+    expect(
+      find.byWidgetPredicate((widget) => widget is SegmentedButton),
+      findsNothing,
+    );
+    expect(
+      find.byType(BusyMarkPopupSelector<EditorToolbarPlacement>),
+      findsOneWidget,
+    );
+    expect(
+      find.byType(BusyMarkPopupSelector<EditorToolbarDirection>),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip(l10n.editingButtonsPosition));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.bottomRight));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['editorToolbarPlacement'], 'bottomRight');
+
+    await tester.tap(find.byTooltip(l10n.editingButtonsDirection));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.vertical));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['editorToolbarDirection'], 'vertical');
 
     expect(find.text(l10n.autoSave), findsOneWidget);
     expect(find.text(l10n.autoSaveDescription), findsOneWidget);

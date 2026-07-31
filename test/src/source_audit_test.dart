@@ -752,12 +752,20 @@ void main() {
     expect(theme, contains('return colors.control;'));
     expect(theme, contains('return colors.foreground;'));
     expect(theme, isNot(contains('return selectedContainer;')));
-    expect(settings, contains('class _SegmentLabel'));
-    expect(settings, contains('maxLines: 1'));
-    expect(settings, contains('overflow: TextOverflow.ellipsis'));
+    expect(settings, isNot(contains('SegmentedButton<')));
+    expect(settings, isNot(contains('ButtonSegment(')));
+    expect(settings, isNot(contains('class _SegmentLabel')));
     expect(
       settings,
-      contains('label: _SegmentLabel(context.l10n.bottomRight)'),
+      contains('BusyMarkPopupSelector<BusyMarkThemeModePreference>('),
+    );
+    expect(
+      settings,
+      contains('BusyMarkPopupSelector<EditorToolbarPlacement>('),
+    );
+    expect(
+      settings,
+      contains('BusyMarkPopupSelector<EditorToolbarDirection>('),
     );
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, isNot(contains('class _SidebarSegmentLabel')));
@@ -1059,7 +1067,7 @@ void main() {
     expect(gitSidebar, isNot(contains('FilledButton(')));
   });
 
-  test('settings language selector delegates to the shared native menu', () {
+  test('settings selectors delegate to the shared native menu', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File(
       'lib/src/workspace/presentation/settings_screen.dart',
@@ -1070,6 +1078,19 @@ void main() {
 
     expect(settings, isNot(contains('DropdownButton<String>')));
     expect(settings, contains('BusyMarkPopupSelector<String>('));
+    expect(
+      settings,
+      contains('BusyMarkPopupSelector<BusyMarkThemeModePreference>('),
+    );
+    expect(
+      settings,
+      contains('BusyMarkPopupSelector<EditorToolbarPlacement>('),
+    );
+    expect(
+      settings,
+      contains('BusyMarkPopupSelector<EditorToolbarDirection>('),
+    );
+    expect(settings, isNot(contains('SegmentedButton<')));
     expect(settings, isNot(contains('class _LanguageSelectorButton')));
     expect(workspace, isNot(contains('DropdownButtonFormField')));
     expect(
