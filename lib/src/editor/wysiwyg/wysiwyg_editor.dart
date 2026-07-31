@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
@@ -88,7 +89,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _blockKeys = <String, GlobalKey>{};
   final _undoStack = <BusyDocument>[];
   final _redoStack = <BusyDocument>[];
-  final _scrollController = ScrollController();
+  final _itemScrollController = ItemScrollController();
   final _selectionFocusNode = FocusNode(
     debugLabel: 'BusyMark WYSIWYG block selection',
   );
@@ -153,7 +154,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     for (final focusNode in _focusNodes.values) {
       focusNode.dispose();
     }
-    _scrollController.dispose();
     _selectionFocusNode.dispose();
     super.dispose();
   }
@@ -307,9 +307,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       },
                       child: Focus(
                         focusNode: _selectionFocusNode,
-                        child: ListView.builder(
+                        child: ScrollablePositionedList.builder(
                           key: const ValueKey('wysiwyg-document-scroll'),
-                          controller: _scrollController,
+                          itemScrollController: _itemScrollController,
                           padding: documentLayout.scrollPadding,
                           itemCount: renderEntries.length,
                           itemBuilder: (context, index) => _buildRenderEntry(
@@ -1000,16 +1000,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (heading == null) {
         return;
       }
-      final headingBlockId = heading.id;
-      if (_ensureBlockVisible(headingBlockId)) {
-        return;
-      }
-      _jumpNearBlock(headingBlockId);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _ensureBlockVisible(headingBlockId);
-        }
-      });
+      _jumpToBlockAndAlign(heading.id);
     });
   }
 
@@ -1038,15 +1029,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           extentOffset: matchStart + query.length,
         );
       }
-      if (_ensureBlockVisible(target.id)) {
-        return;
-      }
-      _jumpNearBlock(target.id);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _ensureBlockVisible(target.id);
-        }
-      });
+      _jumpToBlockAndAlign(target.id);
     });
   }
 
@@ -1076,19 +1059,41 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return true;
   }
 
-  void _jumpNearBlock(String blockId) {
-    if (!_scrollController.hasClients) {
+  void _jumpToBlockAndAlign(String blockId) {
+    final request = widget.scrollRequest;
+    if (!_jumpToBlock(blockId)) {
       return;
     }
-    final entries = _editableBlockEntries(_documentController.document.blocks);
-    final index = entries.indexWhere((entry) => entry.block.id == blockId);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.scrollRequest == request) {
+        _ensureBlockVisible(blockId);
+      }
+    });
+  }
+
+  bool _jumpToBlock(String blockId) {
+    if (!_itemScrollController.isAttached) {
+      return false;
+    }
+    final entries = _editorRenderEntries(_documentController.document.blocks);
+    final index = entries.indexWhere(
+      (entry) => _renderEntryContainsBlock(entry, blockId),
+    );
     if (index < 0) {
-      return;
+      return false;
     }
-    final targetOffset = (index * 72.0)
-        .clamp(0.0, _scrollController.position.maxScrollExtent)
-        .toDouble();
-    _scrollController.jumpTo(targetOffset);
+    _itemScrollController.jumpTo(index: index, alignment: 0.04);
+    return true;
+  }
+
+  bool _renderEntryContainsBlock(_EditorRenderEntry entry, String blockId) {
+    if (entry.block.id == blockId) {
+      return true;
+    }
+    return entry.children?.any(
+          (child) => _renderEntryContainsBlock(child, blockId),
+        ) ??
+        false;
   }
 
   BusyBlock? _headingBlockForId(String headingId) {

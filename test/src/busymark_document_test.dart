@@ -33,6 +33,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
@@ -1006,6 +1007,84 @@ void main() {}
     expect(markdown, 'Editable text\n');
     expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG heading navigation skips across large documents', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final source = StringBuffer();
+    for (var index = 0; index <= 1800; index += 1) {
+      if (index % 600 == 0) {
+        source
+          ..writeln('# Heading $index')
+          ..writeln();
+      }
+      source
+        ..writeln('Paragraph $index keeps the rich editor scrollable.')
+        ..writeln();
+    }
+    final document = parser
+        .parse(filePath: 'large.md', source: source.toString())
+        .busyDocument;
+    final headings = document.outline;
+    expect(document.blocks.length, greaterThan(1800));
+    expect(headings.map((heading) => heading.text), [
+      'Heading 0',
+      'Heading 600',
+      'Heading 1200',
+      'Heading 1800',
+    ]);
+
+    Widget editor(DocumentOutlineHeading? target, int request) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: BusyMarkWysiwygEditor(
+          document: document,
+          scrollToHeadingId: target?.id,
+          scrollToBlockId: target?.editorBlockId,
+          scrollRequest: request,
+          onSourceChanged: (_, _) {},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(editor(null, 0));
+    await tester.pump();
+
+    var request = 0;
+    Future<void> navigateTo(DocumentOutlineHeading target) async {
+      request += 1;
+      await tester.pumpWidget(editor(target, request));
+      await tester.pump();
+      await tester.pump(BusyMarkMotion.scroll);
+      await tester.pump();
+      await tester.pump(BusyMarkMotion.scroll);
+
+      final targetField = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField && widget.controller?.text == target.text,
+      );
+      expect(targetField, findsOneWidget);
+      final viewport = tester.getRect(
+        find.byKey(const ValueKey('wysiwyg-document-scroll')),
+      );
+      final targetBounds = tester.getRect(targetField);
+      expect(targetBounds.bottom, greaterThan(viewport.top));
+      expect(targetBounds.top, lessThan(viewport.bottom));
+    }
+
+    await navigateTo(headings.last);
+    await navigateTo(headings.first);
+    await navigateTo(headings[2]);
+    await navigateTo(headings.last);
   });
 
   testWidgets('WYSIWYG renders a blockquote around its editable text', (
@@ -2463,10 +2542,8 @@ void main() {}
           BusyMarkSpacing.sm,
     );
 
-    Finder editorList() => find.descendant(
-      of: find.byType(BusyMarkWysiwygEditor),
-      matching: find.byType(ListView),
-    );
+    Finder editorList() =>
+        find.byKey(const ValueKey('wysiwyg-document-scroll'));
 
     for (final direction in EditorToolbarDirection.values) {
       for (final placement in EditorToolbarPlacement.values) {
@@ -2505,7 +2582,10 @@ void main() {}
               : BusyMarkSpacing.xl * 2,
         );
         expect(editorList(), findsOneWidget);
-        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        expect(
+          tester.widget<ScrollablePositionedList>(editorList()).padding,
+          expectedPadding,
+        );
         final toolbarScrollView = tester.widget<SingleChildScrollView>(
           find.descendant(
             of: find.byType(BusyMarkWysiwygToolbar),
@@ -2537,7 +2617,10 @@ void main() {}
         await tester.tap(find.byTooltip('Hide editing buttons'));
         await tester.pump();
 
-        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        expect(
+          tester.widget<ScrollablePositionedList>(editorList()).padding,
+          expectedPadding,
+        );
         expect(tester.getRect(find.byType(TextField).first), shownFieldRect);
       }
     }

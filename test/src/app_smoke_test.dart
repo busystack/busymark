@@ -43,6 +43,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
@@ -3309,7 +3310,9 @@ void main() {
               .at(1),
         )
         .style;
-    final editorPadding = tester.widget<ListView>(editorScroll).padding;
+    final editorPadding = tester
+        .widget<ScrollablePositionedList>(editorScroll)
+        .padding;
     final expectedStandalone = BusyMarkDocumentLayoutSpec.standalone
         .withEditingToolbar(
           placement: EditorToolbarPlacement.topLeft,
@@ -4141,7 +4144,14 @@ Body.
       matching: find.byType(TextField),
     );
     expect(editorFields, findsWidgets);
-    final scrollController = tester.widget<ListView>(editorScroll).controller!;
+    ScrollablePositionedList editorList() =>
+        tester.widget<ScrollablePositionedList>(editorScroll);
+    Finder editorFieldWithText(String text) => find.descendant(
+      of: editorScroll,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.controller?.text == text,
+      ),
+    );
     final outlineTree = find.byKey(
       const ValueKey('workspace-sidebar-outline-tree'),
     );
@@ -4151,13 +4161,14 @@ Body.
     );
     expect(formattedTarget, findsOneWidget);
 
-    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+    editorList().itemScrollController!.jumpTo(
+      index: editorList().itemCount - 1,
+    );
     await tester.pump();
-    final offsetBeforeFormattedNavigation = scrollController.offset;
-    expect(offsetBeforeFormattedNavigation, greaterThan(0));
+    expect(editorFieldWithText('Saved heading'), findsNothing);
     await tester.tap(formattedTarget);
     await tester.pumpAndSettle();
-    expect(scrollController.offset, lessThan(offsetBeforeFormattedNavigation));
+    expect(editorFieldWithText('Saved heading'), findsOneWidget);
 
     final previewBeforeEdit = container
         .read(workspaceControllerProvider)
@@ -4185,15 +4196,16 @@ Body.
       findsNothing,
     );
 
-    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+    editorList().itemScrollController!.jumpTo(
+      index: editorList().itemCount - 1,
+    );
     await tester.pump();
-    expect(scrollController.offset, greaterThan(0));
-    final offsetBeforeNavigation = scrollController.offset;
+    expect(editorFieldWithText('Unsaved heading'), findsNothing);
 
     await tester.tap(target);
     await tester.pumpAndSettle();
 
-    expect(scrollController.offset, lessThan(offsetBeforeNavigation));
+    expect(editorFieldWithText('Unsaved heading'), findsOneWidget);
     final viewportBounds = tester.getRect(editorScroll);
     final headingBounds = tester.getRect(editorFields.first);
     expect(headingBounds.bottom, greaterThan(viewportBounds.top));
