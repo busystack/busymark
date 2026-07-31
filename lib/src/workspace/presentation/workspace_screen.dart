@@ -2005,7 +2005,7 @@ class _SidebarHeader extends StatelessWidget {
                       style: detailsStyle,
                       leadingEllipsis: true,
                       tooltip: busyMarkLtrIsolateFor(context, path),
-                      onSecondaryTapDown: (lineContext, details) =>
+                      onSecondaryTapUp: (lineContext, details) =>
                           _showWorkspacePathMenu(
                             lineContext,
                             name: _workspaceName(context, workspace),
@@ -2134,7 +2134,7 @@ List<Widget> _branchSyncIndicators(
 }
 
 typedef _SidebarHeaderSecondaryTapHandler =
-    Future<void> Function(BuildContext context, TapDownDetails details);
+    Future<void> Function(BuildContext context, TapUpDetails details);
 
 class _SidebarHeaderRow extends StatelessWidget {
   const _SidebarHeaderRow({super.key, required this.child});
@@ -2159,7 +2159,7 @@ class _SidebarHeaderLine extends StatelessWidget {
     this.leadingEllipsis = false,
     this.inlineTrailing = const [],
     this.tooltip,
-    this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
   });
 
   final IconData icon;
@@ -2168,7 +2168,7 @@ class _SidebarHeaderLine extends StatelessWidget {
   final bool leadingEllipsis;
   final List<Widget> inlineTrailing;
   final String? tooltip;
-  final _SidebarHeaderSecondaryTapHandler? onSecondaryTapDown;
+  final _SidebarHeaderSecondaryTapHandler? onSecondaryTapUp;
 
   @override
   Widget build(BuildContext context) {
@@ -2209,13 +2209,13 @@ class _SidebarHeaderLine extends StatelessWidget {
         ),
       ],
     );
-    final secondaryTapHandler = onSecondaryTapDown;
+    final secondaryTapHandler = onSecondaryTapUp;
     if (secondaryTapHandler == null) {
       return line;
     }
     final clickable = GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onSecondaryTapDown: (details) =>
+      onSecondaryTapUp: (details) =>
           unawaited(secondaryTapHandler(context, details)),
       child: line,
     );
@@ -3046,7 +3046,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                 }
               }
 
-              void onSecondaryTapDown(TapDownDetails details) {
+              void onSecondaryTapUp(TapUpDetails details) {
                 selectEntry();
                 unawaited(
                   _showFileContextMenu(
@@ -3094,7 +3094,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                         }
                       }
                     : null,
-                onSecondaryTapDown: onSecondaryTapDown,
+                onSecondaryTapUp: onSecondaryTapUp,
               );
             },
           ),
@@ -3640,7 +3640,7 @@ class _SidebarTreeRow extends StatelessWidget {
     this.vcsColor,
     this.onToggle,
     this.onTap,
-    this.onSecondaryTapDown,
+    this.onSecondaryTapUp,
   });
 
   final String title;
@@ -3655,13 +3655,13 @@ class _SidebarTreeRow extends StatelessWidget {
   final BusyMarkVcsFileColor? vcsColor;
   final VoidCallback? onToggle;
   final VoidCallback? onTap;
-  final GestureTapDownCallback? onSecondaryTapDown;
+  final GestureTapUpCallback? onSecondaryTapUp;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final direction = Directionality.of(context);
-    final clickable = enabled && (onTap != null || onSecondaryTapDown != null);
+    final clickable = enabled && (onTap != null || onSecondaryTapUp != null);
     final vcsForeground = vcsColor == null
         ? null
         : busyMarkVcsFileStatusColor(context, vcsColor!);
@@ -3688,7 +3688,7 @@ class _SidebarTreeRow extends StatelessWidget {
               ? busyMarkRowHoverColor(context)
               : BusyMarkLinuxPalette.transparent,
           onTap: enabled ? onTap : null,
-          onSecondaryTapDown: enabled ? onSecondaryTapDown : null,
+          onSecondaryTapUp: enabled ? onSecondaryTapUp : null,
           child: SizedBox(
             height: BusyMarkSizes.sidebarTreeRowHeight,
             child: Row(
@@ -4294,7 +4294,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     : () {
                         selectEntry();
                       },
-                onSecondaryTapDown: (details) {
+                onSecondaryTapUp: (details) {
                   selectEntry();
                   unawaited(
                     _showTopicContextMenu(

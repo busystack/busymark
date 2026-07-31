@@ -152,7 +152,7 @@ class _CommitFileRow extends StatelessWidget {
         child: InkWell(
           hoverColor: busyMarkRowHoverColor(context),
           onTap: path.isEmpty ? null : onShowDiff,
-          onSecondaryTapDown: path.isEmpty
+          onSecondaryTapUp: path.isEmpty
               ? null
               : (details) async {
                   final action = await _showCommitFileMenu(

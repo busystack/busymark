@@ -979,7 +979,7 @@ void main() {
     expect(workspace, contains('tooltip: context.l10n.pathActions'));
     expect(workspace, contains('icon: BusyMarkGlyphs.menuVertical'));
     expect(workspace, isNot(contains('SystemMouseCursors.contextMenu')));
-    expect(workspace, contains('onSecondaryTapDown: (lineContext, details)'));
+    expect(workspace, contains('onSecondaryTapUp: (lineContext, details)'));
     expect(workspace, contains('position: details.globalPosition'));
     expect(
       workspace,
@@ -1249,7 +1249,7 @@ void main() {
     expect(workspace, contains('enabled: node.isFolder || openable'));
     expect(workspace, contains('openActiveFile(file.absolutePath)'));
     expect(workspace, contains('_showFileTreeMenu'));
-    expect(workspace, contains('onSecondaryTapDown'));
+    expect(workspace, contains('onSecondaryTapUp'));
     expect(
       RegExp(
         r'BusyMarkTreeShortcutActivators\.deleteSelection',
@@ -1674,6 +1674,21 @@ void main() {
     expect(imageDialog, isNot(contains('OutlinedButton(')));
     expect(imageDialog, isNot(contains('TextButton(')));
     expect(imageDialog, isNot(contains('FilledButton(')));
+  });
+
+  test('native context menus wait for the secondary pointer release', () {
+    final contextMenuSources = <String>[
+      File(
+        'lib/src/workspace/presentation/workspace_screen.dart',
+      ).readAsStringSync(),
+      File('lib/src/git/presentation/git_history_view.dart').readAsStringSync(),
+      File('lib/src/editor/wysiwyg/wysiwyg_editor.dart').readAsStringSync(),
+    ];
+
+    for (final source in contextMenuSources) {
+      expect(source, contains('onSecondaryTapUp'));
+      expect(source, isNot(contains('onSecondaryTapDown')));
+    }
   });
 
   test('source view has compact gutter without pane status chrome', () {

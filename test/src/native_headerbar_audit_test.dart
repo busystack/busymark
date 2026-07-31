@@ -603,7 +603,8 @@ void main() {
     expect(css, contains('background-color: alpha(currentColor, 0.16)'));
     expect(css, contains('background-color: alpha(currentColor, 0.10)'));
     expect(css, contains('popover.background.'));
-    expect(css, contains('modelbutton:hover:not(:disabled)'));
+    expect(css, contains('modelbutton.%s:hover:not(:disabled)'));
+    expect(css, contains('modelbutton.%s.%s:not(:disabled)'));
     expect(css, contains('box-shadow: 0 1px 3px'));
     expect(css, contains('tooltip.background'));
     expect(css, contains('tooltip decoration'));
@@ -625,7 +626,12 @@ void main() {
     expect(configuration, contains('sidebarBackgroundColor: colors.sidebar'));
     expect(configuration, contains('foregroundColor: colors.foreground'));
     expect(configuration, contains('popoverBackgroundColor: colors.popover'));
-    expect(configuration, contains('menuHoverColor: colors.controlHover'));
+    expect(
+      configuration,
+      contains(
+        'menuHoverColor: Color.alphaBlend(colors.controlHover, colors.popover)',
+      ),
+    );
     expect(configuration, isNot(contains('borderColor: colors.')));
     expect(configuration, isNot(contains('floatingBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#272727"'));
@@ -1263,7 +1269,29 @@ void main() {
     }
     expect(native, contains('view_mode_icon_name(mode)'));
     expect(native, contains('view_mode_icon_name("split")'));
-    expect(native, contains('modelbutton:hover:not(:disabled)'));
+    expect(native, contains('modelbutton.%s:hover:not(:disabled)'));
+    expect(native, contains('modelbutton.%s.%s:not(:disabled)'));
+    expect(native, contains('kNativeMenuItemStyleClass'));
+    expect(native, contains('kNativeMenuItemHoverStyleClass'));
+    expect(native, contains('style_native_menu_item(widget)'));
+    expect(native, contains('native_menu_item_enter_cb'));
+    expect(native, contains('native_menu_item_motion_cb'));
+    expect(native, contains('native_menu_item_leave_cb'));
+    expect(native, contains('native_menu_popover_hidden_reset_hover_cb'));
+    expect(
+      native,
+      contains(
+        'gtk_style_context_add_class(context, '
+        'kNativeMenuItemHoverStyleClass)',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        'gtk_style_context_remove_class(context, '
+        'kNativeMenuItemHoverStyleClass)',
+      ),
+    );
     expect(native, isNot(contains('modelbutton:focus')));
     expect(native, isNot(contains('modelbutton:active')));
     expect(native, isNot(contains('outline-width: 0;')));
@@ -1349,6 +1377,16 @@ void main() {
     expect(native, contains('G_VARIANT_TYPE_STRING'));
     expect(native, contains('gtk_popover_set_modal'));
     expect(native, contains('gtk_popover_set_constrain_to'));
+    expect(native, contains('native_menu_release_input_grab(session)'));
+    expect(native, contains('native_menu_close(session)'));
+    expect(native, contains('native_menu_popup_idle_cb'));
+    expect(
+      native,
+      contains(
+        'session->popup_source_id = g_idle_add_full(\n'
+        '      G_PRIORITY_DEFAULT_IDLE, native_menu_popup_idle_cb',
+      ),
+    );
     expect(service, contains('final String? shortcut'));
     expect(service, contains('final String? iconName'));
     expect(service, contains("'icon': iconName!"));
@@ -1379,6 +1417,58 @@ void main() {
         contains('shortcut: BusyMarkEditorShortcutLabels.$shortcut'),
       );
     }
+  });
+
+  test('native content menus release their GTK grab on every close path', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+
+    final releaseGrab = RegExp(
+      r'static void native_menu_release_input_grab[\s\S]*?'
+      r'(?=static void native_menu_schedule_cleanup)',
+    ).firstMatch(native)?.group(0);
+    final close = RegExp(
+      r'static void native_menu_close[\s\S]*?'
+      r'(?=static void native_menu_session_dispose)',
+    ).firstMatch(native)?.group(0);
+    final dispose = RegExp(
+      r'static void native_menu_session_dispose[\s\S]*?'
+      r'(?=static gboolean native_menu_cleanup_idle_cb)',
+    ).firstMatch(native)?.group(0);
+    final closed = RegExp(
+      r'static void native_menu_closed_cb[\s\S]*?'
+      r'(?=static void native_menu_hidden_cb)',
+    ).firstMatch(native)?.group(0);
+    final hidden = RegExp(
+      r'static void native_menu_hidden_cb[\s\S]*?'
+      r'(?=static void native_menu_action_activated_cb)',
+    ).firstMatch(native)?.group(0);
+    final show = RegExp(
+      r'static void show_native_menu[\s\S]*?'
+      r'(?=static void native_menu_handler_data_free)',
+    ).firstMatch(native)?.group(0);
+
+    expect(releaseGrab, contains('gtk_popover_set_modal('));
+    expect(releaseGrab, contains('FALSE'));
+    expect(releaseGrab, contains('gtk_grab_remove(session->popover)'));
+    expect(close, contains('native_menu_release_input_grab(session)'));
+    expect(close, contains('gtk_widget_hide(session->popover)'));
+    expect(close, contains('native_menu_schedule_cleanup(session)'));
+    expect(
+      close!.indexOf('native_menu_release_input_grab(session)'),
+      lessThan(close.indexOf('gtk_widget_hide(session->popover)')),
+    );
+    expect(dispose, contains('native_menu_release_input_grab(session)'));
+    expect(closed, contains('native_menu_release_input_grab(session)'));
+    expect(closed, isNot(contains('native_menu_schedule_cleanup(session)')));
+    expect(hidden, contains('native_menu_release_input_grab(session)'));
+    expect(hidden, contains('native_menu_schedule_cleanup(session)'));
+    expect(show, contains('native_menu_popup_idle_cb'));
+    expect(show, contains('"hide", G_CALLBACK(native_menu_hidden_cb)'));
+    expect(show, isNot(contains('gtk_popover_popup(')));
+    expect(
+      native,
+      isNot(contains('gtk_popover_popdown(GTK_POPOVER(session->popover))')),
+    );
   });
 
   test('welcome page has a sidebar but no document controls', () {

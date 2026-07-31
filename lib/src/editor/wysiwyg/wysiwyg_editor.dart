@@ -3031,7 +3031,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         onPlacementChanged != null || onDirectionChanged != null;
     final toggle = GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onSecondaryTapDown: configurable
+      onSecondaryTapUp: configurable
           ? (details) =>
                 unawaited(_showSettingsMenu(context, details.globalPosition))
           : null,

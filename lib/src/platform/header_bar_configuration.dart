@@ -220,7 +220,10 @@ class HeaderBarTheme {
       foregroundColor: colors.foreground,
       sidebarBorderColor: colors.sidebarBorder,
       popoverBackgroundColor: colors.popover,
-      menuHoverColor: colors.controlHover,
+      // GTK themes do not all composite translucent model-button backgrounds
+      // consistently. Send the already-composited semantic hover surface so
+      // native rows get the same visible result on X11, Wayland, and Snap.
+      menuHoverColor: Color.alphaBlend(colors.controlHover, colors.popover),
       popoverShadowColor: theme.colorScheme.shadow.withValues(
         alpha:
             theme.colorScheme.shadow.a *
