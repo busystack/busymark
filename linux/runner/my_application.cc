@@ -35,6 +35,11 @@ constexpr gdouble kDefaultTooltipFontSize = 14.0;
 constexpr gdouble kDefaultTooltipHorizontalPadding = 10.0;
 constexpr gdouble kDefaultTooltipVerticalPadding = 6.0;
 constexpr gdouble kDefaultTooltipMinimumHeight = 30.0;
+constexpr gdouble kTooltipBorderWidth = 1.0;
+// GtkTooltipWindow applies a private GtkContainer border-width of 6 px around
+// its content. Compensate for it so native header hints have the same visible
+// border-to-text padding as Flutter tooltips.
+constexpr gdouble kGtkTooltipContainerInset = 6.0;
 // Yaru GTK 3 adds a zero-blur 23%/75% black ring around CSD windows. Current
 // Ubuntu apps retain the diffuse shadow without that legacy hard edge. Reuse
 // Yaru's geometry here; Handy continues to own clipping, radii, and states.
@@ -686,18 +691,31 @@ static void refresh_header_bar_css(MyApplication* self) {
       self->tooltip_foreground_color, kDefaultTooltipForeground);
   const gchar* tooltip_border =
       css_color_or(self->tooltip_border_color, kDefaultTooltipBorder);
+  const gdouble tooltip_label_horizontal_padding = std::max(
+      0.0, self->tooltip_horizontal_padding -
+               (kGtkTooltipContainerInset - kTooltipBorderWidth));
+  const gdouble tooltip_label_vertical_padding = std::max(
+      0.0, self->tooltip_vertical_padding -
+               (kGtkTooltipContainerInset - kTooltipBorderWidth));
+  const gdouble tooltip_label_minimum_height = std::max(
+      0.0, self->tooltip_minimum_height -
+               kGtkTooltipContainerInset * 2 -
+               tooltip_label_vertical_padding * 2);
   g_autofree gchar* tooltip_css = g_strdup_printf(
       "tooltip,"
-      "tooltip.background {"
+      "tooltip.background,"
+      "tooltip box,"
+      "tooltip.background box {"
       "margin: 0;"
       "padding: 0;"
-      "min-height: %.2fpx;"
+      "min-width: 0;"
+      "min-height: 0;"
       "}"
       "tooltip.background {"
       "background-color: %s;"
       "background-image: none;"
       "background-clip: padding-box;"
-      "border: 1px solid %s;"
+      "border: %.2fpx solid %s;"
       "border-radius: %.2fpx;"
       "}"
       "tooltip decoration,"
@@ -706,28 +724,24 @@ static void refresh_header_bar_css(MyApplication* self) {
       "border-radius: %.2fpx;"
       "box-shadow: none;"
       "}"
-      "tooltip > box,"
-      "tooltip.background > box {"
-      "margin: 0;"
-      "padding: 0;"
-      "min-height: 0;"
-      "}"
       "tooltip * {"
       "background-color: transparent;"
       "color: %s;"
       "}"
-      "tooltip label {"
+      "tooltip label,"
+      "tooltip.background label {"
       "margin: 0;"
       "padding: %.2fpx %.2fpx;"
-      "min-height: 0;"
+      "min-width: 0;"
+      "min-height: %.2fpx;"
       "font-family: Ubuntu;"
       "font-size: %.2fpx;"
       "font-weight: 400;"
       "}",
-      self->tooltip_minimum_height, tooltip_background, tooltip_border,
+      tooltip_background, kTooltipBorderWidth, tooltip_border,
       self->tooltip_radius, self->tooltip_radius, tooltip_foreground,
-      self->tooltip_vertical_padding, self->tooltip_horizontal_padding,
-      self->tooltip_font_size);
+      tooltip_label_vertical_padding, tooltip_label_horizontal_padding,
+      tooltip_label_minimum_height, self->tooltip_font_size);
   g_autofree gchar* header_focus_css = g_strdup_printf(
       ".busymark-titlebar.%s .busymark-sidebar-header label,"
       ".busymark-titlebar.%s .busymark-header-title {"
