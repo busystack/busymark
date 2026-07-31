@@ -18,6 +18,7 @@ import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_layout.dart';
+import '../document_surface.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_document_controller.dart';
@@ -2926,9 +2927,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
-      _ => theme.bodyMedium!.copyWith(
-        height: BusyMarkTypography.bodyLineHeight,
-      ),
+      _ => busyMarkDocumentBodyTextStyle(context),
     };
   }
 

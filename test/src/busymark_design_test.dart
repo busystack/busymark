@@ -1517,6 +1517,12 @@ void main() {
       ),
     );
 
+    final surface = tester.widget<Material>(
+      find.descendant(
+        of: find.byType(BusyMarkSidebarSurface),
+        matching: find.byType(Material),
+      ),
+    );
     final box = tester.widget<DecoratedBox>(
       find.descendant(
         of: find.byType(BusyMarkSidebarSurface),
@@ -1524,7 +1530,9 @@ void main() {
       ),
     );
     final decoration = box.decoration as BoxDecoration;
-    expect(decoration.color, colors.sidebar);
+    expect(surface.color, colors.sidebar);
+    expect(decoration.color, isNull);
+    expect(box.position, DecorationPosition.foreground);
     expect(
       (decoration.border! as BorderDirectional).end.color,
       colors.sidebarBorder,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,191 +16,265 @@ import '../../app/localization.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
 
-class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({required this.returnTarget, super.key});
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({
+    required this.returnTarget,
+    this.initialPage = SettingsPage.appearance,
+    super.key,
+  });
 
   final SettingsReturnTarget returnTarget;
+  final SettingsPage initialPage;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late SettingsPage _page = widget.initialPage;
+
+  @override
+  void didUpdateWidget(covariant SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialPage != widget.initialPage) {
+      _page = widget.initialPage;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
-    final controller = ref.watch(appSettingsControllerProvider.notifier);
+    final controller = ref.read(appSettingsControllerProvider.notifier);
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
+    final title = _settingsPageLabel(context, _page);
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, headerBar, event.action);
       });
     });
-    final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
-        .copyWith(
-          title: l10n.settingsTitle,
-          viewMode: AppViewMode.editor,
-          searchQuery: '',
-          canRefresh: false,
-          documentControlsVisible: false,
-          searchActive: false,
-          searchVisible: false,
-          sidebarVisible: false,
-          sidebarToggleVisible: false,
-          backVisible: true,
-        );
+    final pageBody = switch (_page) {
+      SettingsPage.appearance => BusyMarkGroupedList(
+        title: l10n.appearance,
+        filled: true,
+        children: [
+          _LanguageRow(
+            selectedLocaleTag: settings.localeTag,
+            onChanged: controller.setLocaleTag,
+          ),
+          _ThemeModeRow(
+            selected: settings.themeModePreference,
+            onChanged: controller.setThemeModePreference,
+          ),
+        ],
+      ),
+      SettingsPage.editor => BusyMarkGroupedList(
+        title: l10n.editor,
+        filled: true,
+        children: [
+          BusyMarkSwitchRow(
+            title: l10n.autoSave,
+            subtitle: l10n.autoSaveDescription,
+            value: settings.autoSave,
+            onChanged: controller.setAutoSave,
+            leading: const Icon(BusyMarkGlyphs.save),
+          ),
+          BusyMarkSwitchRow(
+            title: l10n.wordWrap,
+            value: settings.wordWrap,
+            onChanged: controller.setWordWrap,
+            leading: Icon(
+              BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
+            ),
+          ),
+          _EditorFontSizeRow(
+            value: settings.editorFontSize,
+            onChanged: controller.setEditorFontSize,
+          ),
+          _EditorToolbarPlacementRow(
+            selected: settings.editorToolbarPlacement,
+            onChanged: controller.setEditorToolbarPlacement,
+          ),
+          _EditorToolbarDirectionRow(
+            selected: settings.editorToolbarDirection,
+            onChanged: controller.setEditorToolbarDirection,
+          ),
+        ],
+      ),
+      SettingsPage.validation => BusyMarkGroupedList(
+        title: l10n.validation,
+        filled: true,
+        children: [
+          BusyMarkSwitchRow(
+            title: l10n.validateOnEdit,
+            value: settings.validateOnEdit,
+            onChanged: controller.setValidateOnEdit,
+            leading: const Icon(BusyMarkGlyphs.diagnostics),
+          ),
+        ],
+      ),
+      SettingsPage.window => BusyMarkGroupedList(
+        title: l10n.settingsWindowSectionTitle,
+        filled: true,
+        children: [
+          BusyMarkSwitchRow(
+            title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
+            subtitle: l10n.settingsConfirmCloseWithUnsavedChangesDescription,
+            value: settings.confirmCloseWithUnsavedChanges,
+            onChanged: controller.setConfirmCloseWithUnsavedChanges,
+            leading: const Icon(BusyMarkGlyphs.warning),
+          ),
+        ],
+      ),
+      SettingsPage.privacy => BusyMarkGroupedList(
+        title: l10n.privacy,
+        filled: true,
+        children: [
+          BusyMarkSwitchRow(
+            title: l10n.allowRemoteImages,
+            subtitle: l10n.allowRemoteImagesDescription,
+            value: settings.allowRemoteImages,
+            onChanged: controller.setAllowRemoteImages,
+            leading: const Icon(BusyMarkGlyphs.image),
+          ),
+          if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
+            BusyMarkActionRow(
+              title: l10n.clearRemoteImagePermissions,
+              subtitle: l10n.clearRemoteImagePermissionsDescription,
+              leading: const Icon(BusyMarkGlyphs.clearAll),
+              onTap: controller.clearRemoteImageWorkspacePermissions,
+            ),
+          if (settings.trustedGitWorkspacePaths.isNotEmpty)
+            BusyMarkActionRow(
+              title: l10n.clearGitWorkspaceTrust,
+              subtitle: l10n.clearGitWorkspaceTrustDescription,
+              leading: const Icon(BusyMarkGlyphs.clearAll),
+              onTap: controller.clearTrustedGitWorkspaces,
+            ),
+        ],
+      ),
+      SettingsPage.advanced => BusyMarkGroupedList(
+        title: l10n.advanced,
+        filled: true,
+        children: [
+          BusyMarkActionRow(
+            title: l10n.clearRecentWorkspaces,
+            leading: const Icon(BusyMarkGlyphs.clearAll),
+            destructive: true,
+            onTap: controller.clearRecentWorkspaces,
+          ),
+        ],
+      ),
+    };
 
-    return HeaderBarConfigurationPublisher(
-      synchronizer: headerBar.configurationSynchronizer,
-      configuration: headerConfiguration,
-      enabled: headerBar.isAvailable,
-      child: Scaffold(
-        backgroundColor: colors.view,
-        appBar: useNativeHeaderBar
-            ? null
-            : AppBar(
-                leading: Center(
-                  child: BusyMarkHeaderIconButton(
-                    tooltip: context.l10n.back,
-                    icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-                    onPressed: () => context.go(returnTarget.location),
-                  ),
-                ),
-                title: Text(
-                  context.l10n.settingsTitle,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                actions: [
-                  BusyMarkMainMenuButton(
-                    onSelected: (action) =>
-                        _handleMainMenuAction(context, headerBar, action),
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                ],
-              ),
-        body: BusyMarkClamp(
-          maxWidth: BusyMarkSizes.settingsWidth,
-          margin: EdgeInsets.zero,
-          padding: BusyMarkInsets.settingsPage,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showSidebar =
+            constraints.maxWidth >= BusyMarkSizes.settingsSidebarBreakpoint;
+        final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
+            .copyWith(
+              title: title,
+              viewMode: AppViewMode.editor,
+              searchQuery: '',
+              canRefresh: false,
+              documentControlsVisible: false,
+              searchActive: false,
+              searchVisible: false,
+              sidebarVisible: showSidebar,
+              sidebarToggleVisible: false,
+              backVisible: true,
+            );
+        final content = ColoredBox(
+          key: const ValueKey('settings-content-surface'),
+          color: colors.view,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              BusyMarkGroupedList(
-                title: context.l10n.appearance,
-                filled: true,
-                children: [
-                  _LanguageRow(
-                    selectedLocaleTag: settings.localeTag,
-                    onChanged: controller.setLocaleTag,
+              if (!useNativeHeaderBar)
+                _SettingsFallbackHeader(
+                  title: title,
+                  onBack: _goBack,
+                  onMenuSelected: (action) =>
+                      _handleMainMenuAction(context, headerBar, action),
+                ),
+              if (!showSidebar)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    BusyMarkSpacing.lg,
+                    BusyMarkSpacing.md,
+                    BusyMarkSpacing.lg,
+                    0,
                   ),
-                  _ThemeModeRow(
-                    selected: settings.themeModePreference,
-                    onChanged: controller.setThemeModePreference,
+                  child: _SettingsPageSelector(
+                    selected: _page,
+                    onSelected: _selectPage,
                   ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: context.l10n.editor,
-                filled: true,
-                children: [
-                  BusyMarkSwitchRow(
-                    title: context.l10n.autoSave,
-                    subtitle: context.l10n.autoSaveDescription,
-                    value: settings.autoSave,
-                    onChanged: controller.setAutoSave,
-                    leading: const Icon(BusyMarkGlyphs.save),
-                  ),
-                  BusyMarkSwitchRow(
-                    title: context.l10n.wordWrap,
-                    value: settings.wordWrap,
-                    onChanged: controller.setWordWrap,
-                    leading: Icon(
-                      BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
-                    ),
-                  ),
-                  _EditorFontSizeRow(
-                    value: settings.editorFontSize,
-                    onChanged: controller.setEditorFontSize,
-                  ),
-                  _EditorToolbarPlacementRow(
-                    selected: settings.editorToolbarPlacement,
-                    onChanged: controller.setEditorToolbarPlacement,
-                  ),
-                  _EditorToolbarDirectionRow(
-                    selected: settings.editorToolbarDirection,
-                    onChanged: controller.setEditorToolbarDirection,
-                  ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: context.l10n.validation,
-                filled: true,
-                children: [
-                  BusyMarkSwitchRow(
-                    title: context.l10n.validateOnEdit,
-                    value: settings.validateOnEdit,
-                    onChanged: controller.setValidateOnEdit,
-                    leading: const Icon(BusyMarkGlyphs.diagnostics),
-                  ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: l10n.settingsWindowSectionTitle,
-                filled: true,
-                children: [
-                  BusyMarkSwitchRow(
-                    title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
-                    subtitle:
-                        l10n.settingsConfirmCloseWithUnsavedChangesDescription,
-                    value: settings.confirmCloseWithUnsavedChanges,
-                    onChanged: controller.setConfirmCloseWithUnsavedChanges,
-                    leading: const Icon(BusyMarkGlyphs.warning),
-                  ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: context.l10n.privacy,
-                filled: true,
-                children: [
-                  BusyMarkSwitchRow(
-                    title: context.l10n.allowRemoteImages,
-                    subtitle: context.l10n.allowRemoteImagesDescription,
-                    value: settings.allowRemoteImages,
-                    onChanged: controller.setAllowRemoteImages,
-                    leading: const Icon(BusyMarkGlyphs.image),
-                  ),
-                  if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
-                    BusyMarkActionRow(
-                      title: context.l10n.clearRemoteImagePermissions,
-                      subtitle:
-                          context.l10n.clearRemoteImagePermissionsDescription,
-                      leading: const Icon(BusyMarkGlyphs.clearAll),
-                      onTap: controller.clearRemoteImageWorkspacePermissions,
-                    ),
-                  if (settings.trustedGitWorkspacePaths.isNotEmpty)
-                    BusyMarkActionRow(
-                      title: context.l10n.clearGitWorkspaceTrust,
-                      subtitle: context.l10n.clearGitWorkspaceTrustDescription,
-                      leading: const Icon(BusyMarkGlyphs.clearAll),
-                      onTap: controller.clearTrustedGitWorkspaces,
-                    ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: context.l10n.advanced,
-                filled: true,
-                children: [
-                  BusyMarkActionRow(
-                    title: context.l10n.clearRecentWorkspaces,
-                    leading: const Icon(BusyMarkGlyphs.clearAll),
-                    destructive: true,
-                    onTap: controller.clearRecentWorkspaces,
-                  ),
-                ],
+                ),
+              Expanded(
+                child: BusyMarkClamp(
+                  maxWidth: BusyMarkSizes.settingsWidth,
+                  margin: EdgeInsets.zero,
+                  padding: BusyMarkInsets.settingsPage,
+                  child: pageBody,
+                ),
               ),
             ],
           ),
-        ),
+        );
+        final body = showSidebar
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: BusyMarkSizes.sidebarWidth,
+                    child: _SettingsSidebar(
+                      selected: _page,
+                      onSelected: _selectPage,
+                    ),
+                  ),
+                  Expanded(child: content),
+                ],
+              )
+            : content;
+
+        return HeaderBarConfigurationPublisher(
+          synchronizer: headerBar.configurationSynchronizer,
+          configuration: headerConfiguration,
+          enabled: headerBar.isAvailable,
+          child: Scaffold(backgroundColor: colors.view, body: body),
+        );
+      },
+    );
+  }
+
+  void _goBack() {
+    context.go(widget.returnTarget.location);
+  }
+
+  void _selectPage(SettingsPage page) {
+    if (_page != page) {
+      setState(() => _page = page);
+    }
+    final router = GoRouter.maybeOf(context);
+    final uri = router?.state.uri;
+    if (router == null || uri == null || uri.path != settingsRoutePath) {
+      return;
+    }
+    if (uri.queryParameters['page'] == settingsPageRouteValue(page)) {
+      return;
+    }
+    unawaited(
+      router.replace(
+        uri
+            .replace(
+              queryParameters: {
+                ...uri.queryParameters,
+                'page': settingsPageRouteValue(page),
+              },
+            )
+            .toString(),
       ),
     );
   }
@@ -210,7 +286,7 @@ class SettingsScreen extends ConsumerWidget {
   ) {
     switch (action) {
       case HeaderBarAction.back:
-        context.go(returnTarget.location);
+        _goBack();
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
@@ -223,6 +299,7 @@ class SettingsScreen extends ConsumerWidget {
           headerBarService: headerBar.isAvailable ? headerBar : null,
         );
       case HeaderBarAction.settings:
+        _selectPage(SettingsPage.appearance);
       case HeaderBarAction.sidebarToggle:
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
@@ -243,7 +320,7 @@ class SettingsScreen extends ConsumerWidget {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.settings:
-        break;
+        _selectPage(SettingsPage.appearance);
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
       case BusyMarkMainMenuAction.markdownAndHtml:
@@ -256,6 +333,177 @@ class SettingsScreen extends ConsumerWidget {
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
     }
+  }
+}
+
+enum SettingsPage { appearance, editor, validation, window, privacy, advanced }
+
+SettingsPage settingsPageFromRouteValue(String? value) {
+  return switch (value) {
+    'editor' => SettingsPage.editor,
+    'validation' => SettingsPage.validation,
+    'window' => SettingsPage.window,
+    'privacy' => SettingsPage.privacy,
+    'advanced' => SettingsPage.advanced,
+    _ => SettingsPage.appearance,
+  };
+}
+
+String settingsPageRouteValue(SettingsPage page) => page.name;
+
+String _settingsPageLabel(BuildContext context, SettingsPage page) {
+  final l10n = context.l10n;
+  return switch (page) {
+    SettingsPage.appearance => l10n.appearance,
+    SettingsPage.editor => l10n.editor,
+    SettingsPage.validation => l10n.validation,
+    SettingsPage.window => l10n.settingsWindowSectionTitle,
+    SettingsPage.privacy => l10n.privacy,
+    SettingsPage.advanced => l10n.advanced,
+  };
+}
+
+IconData _settingsPageIcon(SettingsPage page) {
+  return switch (page) {
+    SettingsPage.appearance => BusyMarkGlyphs.appearance,
+    SettingsPage.editor => BusyMarkGlyphs.editorView,
+    SettingsPage.validation => BusyMarkGlyphs.diagnostics,
+    SettingsPage.window => BusyMarkGlyphs.desktop,
+    SettingsPage.privacy => BusyMarkGlyphs.privacy,
+    SettingsPage.advanced => BusyMarkGlyphs.settings,
+  };
+}
+
+class _SettingsSidebar extends StatelessWidget {
+  const _SettingsSidebar({required this.selected, required this.onSelected});
+
+  final SettingsPage selected;
+  final ValueChanged<SettingsPage> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkSidebarSurface(
+      child: BusyMarkSidebarNavigation(
+        children: [
+          for (final page in SettingsPage.values)
+            BusyMarkSidebarNavigationTile(
+              key: ValueKey('settings-navigation-${page.name}'),
+              selected: page == selected,
+              leading: Icon(_settingsPageIcon(page)),
+              title: Text(_settingsPageLabel(context, page)),
+              onTap: () => onSelected(page),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsPageSelector extends StatelessWidget {
+  const _SettingsPageSelector({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final SettingsPage selected;
+  final ValueChanged<SettingsPage> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey('settings-page-selector'),
+      width: double.infinity,
+      child: BusyMarkMenuButton<SettingsPage>(
+        tooltip: _settingsPageLabel(context, selected),
+        fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
+        items: [
+          for (final page in SettingsPage.values)
+            BusyMarkPopupMenuItem<SettingsPage>(
+              value: page,
+              label: _settingsPageLabel(context, page),
+              icon: _settingsPageIcon(page),
+              checked: page == selected,
+              trailingCheck: true,
+            ),
+        ],
+        onSelected: onSelected,
+        triggerBuilder: (context, trigger) {
+          return trigger.anchor(
+            child: Tooltip(
+              message: _settingsPageLabel(context, selected),
+              child: Semantics(
+                expanded: trigger.isOpen,
+                child: BusyMarkPushButton.standard(
+                  onPressed: trigger.onPressed,
+                  focusNode: trigger.focusNode,
+                  child: Row(
+                    children: [
+                      Icon(_settingsPageIcon(selected)),
+                      const SizedBox(width: BusyMarkSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          _settingsPageLabel(context, selected),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(BusyMarkGlyphs.downArrow),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SettingsFallbackHeader extends StatelessWidget {
+  const _SettingsFallbackHeader({
+    required this.title,
+    required this.onBack,
+    required this.onMenuSelected,
+  });
+
+  final String title;
+  final VoidCallback onBack;
+  final ValueChanged<BusyMarkMainMenuAction> onMenuSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return Material(
+      color: colors.window,
+      child: SizedBox(
+        height: BusyMarkSizes.toolbarHeight,
+        child: Row(
+          children: [
+            const SizedBox(width: BusyMarkSpacing.sm),
+            BusyMarkHeaderIconButton(
+              tooltip: context.l10n.back,
+              icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+              onPressed: onBack,
+            ),
+            const SizedBox(width: BusyMarkSpacing.sm),
+            Expanded(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            BusyMarkMainMenuButton(onSelected: onMenuSelected),
+            const SizedBox(width: BusyMarkSpacing.sm),
+          ],
+        ),
+      ),
+    );
   }
 }
 

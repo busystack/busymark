@@ -18,6 +18,9 @@ constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
 constexpr gdouble kHeaderBackdropForegroundOpacity = 0.50;
+constexpr gdouble kHeaderDisabledForegroundOpacity = 0.38;
+constexpr gdouble kHeaderDisabledBackdropForegroundOpacity =
+    kHeaderDisabledForegroundOpacity * kHeaderBackdropForegroundOpacity;
 constexpr char kDefaultHeaderbarBackground[] = "#272727";
 constexpr char kDefaultSidebarBackground[] = "#393939";
 constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
@@ -60,6 +63,10 @@ constexpr char kModelButtonAcceleratorKey[] =
 constexpr char kNativePopoverStyleClass[] = "busymark-native-popover";
 constexpr char kHeaderMenuDepthStyleClass[] =
     "busymark-header-menu-depth";
+constexpr char kHeaderApplicationActiveStyleClass[] =
+    "busymark-focus-active";
+constexpr char kHeaderApplicationBackdropStyleClass[] =
+    "busymark-focus-backdrop";
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -75,10 +82,7 @@ struct _MyApplication {
   GtkWidget* titlebar_box;
   GtkHeaderBar* header_bar;
   GtkWidget* sidebar_header_box;
-  GtkWidget* sidebar_search_button;
   GtkWidget* sidebar_title_label;
-  GtkWidget* sidebar_menu_button;
-  GtkWidget* sidebar_menu;
   GMenu* main_menu_model;
   GtkWidget* header_start_box;
   GtkWidget* back_button;
@@ -94,9 +98,9 @@ struct _MyApplication {
   GtkWidget* view_mode_menu;
   GMenu* view_mode_menu_model;
   GtkWidget* refresh_button;
-  GtkWidget* adaptive_search_button;
-  GtkWidget* adaptive_menu_button;
-  GtkWidget* adaptive_menu;
+  GtkWidget* search_button;
+  GtkWidget* main_menu_button;
+  GtkWidget* main_menu;
   GSimpleActionGroup* header_action_group;
   GSimpleAction* view_mode_action;
   gchar* view_mode;
@@ -143,6 +147,8 @@ struct HeaderBarConfiguration {
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+static void schedule_header_bar_focus_state_refresh(MyApplication* self);
 
 static void style_native_popover(GtkWidget* popover) {
   if (popover == nullptr || !GTK_IS_POPOVER(popover)) {
@@ -542,13 +548,6 @@ static void set_toggle_button_active(MyApplication* self,
   self->suppress_header_actions = previous;
 }
 
-static void update_adaptive_header_actions(MyApplication* self) {
-  const gboolean use_main_header = !self->sidebar_visible;
-  set_widget_visible(self->adaptive_search_button,
-                     use_main_header && self->search_visible);
-  set_widget_visible(self->adaptive_menu_button, use_main_header);
-}
-
 static void update_sidebar_header_geometry(MyApplication* self) {
   if (self->sidebar_header_box == nullptr ||
       !GTK_IS_WIDGET(self->sidebar_header_box)) {
@@ -557,7 +556,6 @@ static void update_sidebar_header_geometry(MyApplication* self) {
   const gint width = self->sidebar_visible ? self->sidebar_width : 0;
   gtk_widget_set_size_request(self->sidebar_header_box, width, -1);
   set_widget_visible(self->sidebar_header_box, width > 0);
-  update_adaptive_header_actions(self);
 }
 
 static void update_titlebar_direction(MyApplication* self) {
@@ -591,20 +589,13 @@ static void update_titlebar_direction(MyApplication* self) {
   set_widget_direction(self->view_mode_button, direction);
   set_widget_direction(self->view_mode_icon, direction);
   set_widget_direction(self->refresh_button, direction);
-  set_widget_direction(self->adaptive_search_button, direction);
-  set_widget_direction(self->adaptive_menu_button, direction);
-  set_widget_direction(self->adaptive_menu, direction);
-  set_widget_direction(self->sidebar_search_button, direction);
-  set_widget_direction(self->sidebar_menu_button, direction);
-  set_widget_direction(self->sidebar_menu, direction);
+  set_widget_direction(self->search_button, direction);
+  set_widget_direction(self->main_menu_button, direction);
+  set_widget_direction(self->main_menu, direction);
   set_widget_direction(self->view_mode_menu, direction);
 
   // GTK 3 resolves logical margins against the widget direction at setter
   // time, so reapply both sides after a live LTR/RTL direction change.
-  set_widget_horizontal_margins(self->sidebar_search_button,
-                                kHeaderSidebarInset, 0);
-  set_widget_horizontal_margins(self->sidebar_menu_button, 0,
-                                kHeaderSidebarInset);
   set_widget_horizontal_margins(self->header_start_box, kHeaderSidebarInset,
                                 0);
 }
@@ -661,6 +652,55 @@ static void refresh_header_bar_css(MyApplication* self) {
                 css_color_or(self->popover_shadow_color,
                              kDefaultHeaderMenuShadowColor))
           : g_strdup("");
+  g_autofree gchar* header_focus_css = g_strdup_printf(
+      ".busymark-titlebar.%s .busymark-sidebar-header label,"
+      ".busymark-titlebar.%s .busymark-header-title {"
+      "color: %s;"
+      "}"
+      ".busymark-titlebar.%s .busymark-sidebar-header label,"
+      ".busymark-titlebar.%s .busymark-header-title {"
+      "color: alpha(%s, %.2f);"
+      "}"
+      ".busymark-titlebar.%s "
+      ".busymark-header-control:not(:disabled),"
+      ".busymark-titlebar.%s "
+      "headerbar button.titlebutton:not(:disabled) {"
+      "color: %s;"
+      "-gtk-icon-effect: none;"
+      "}"
+      ".busymark-titlebar.%s "
+      ".busymark-header-control:not(:disabled),"
+      ".busymark-titlebar.%s "
+      "headerbar button.titlebutton:not(:disabled) {"
+      "color: alpha(%s, %.2f);"
+      "-gtk-icon-effect: none;"
+      "}"
+      ".busymark-titlebar.%s .busymark-header-control:disabled,"
+      ".busymark-titlebar.%s headerbar button.titlebutton:disabled {"
+      "color: alpha(%s, %.2f);"
+      "-gtk-icon-effect: none;"
+      "}"
+      ".busymark-titlebar.%s .busymark-header-control:disabled,"
+      ".busymark-titlebar.%s headerbar button.titlebutton:disabled {"
+      "color: alpha(%s, %.2f);"
+      "-gtk-icon-effect: none;"
+      "}",
+      kHeaderApplicationActiveStyleClass,
+      kHeaderApplicationActiveStyleClass, foreground,
+      kHeaderApplicationBackdropStyleClass,
+      kHeaderApplicationBackdropStyleClass, foreground,
+      kHeaderBackdropForegroundOpacity,
+      kHeaderApplicationActiveStyleClass,
+      kHeaderApplicationActiveStyleClass, foreground,
+      kHeaderApplicationBackdropStyleClass,
+      kHeaderApplicationBackdropStyleClass, foreground,
+      kHeaderBackdropForegroundOpacity,
+      kHeaderApplicationActiveStyleClass,
+      kHeaderApplicationActiveStyleClass, foreground,
+      kHeaderDisabledForegroundOpacity,
+      kHeaderApplicationBackdropStyleClass,
+      kHeaderApplicationBackdropStyleClass, foreground,
+      kHeaderDisabledBackdropForegroundOpacity);
   g_autofree gchar* modal = modal_barrier_color_for_depth(
       css_color_or(self->modal_barrier_color, kDefaultModalBarrierColor),
       self->modal_barrier_depth);
@@ -727,6 +767,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       ".busymark-sidebar-header:dir(rtl) {"
       "border-left: 1px solid %s;"
       "}"
+      "%s"
       // Legacy Yaru GTK 3 uses an absolute near-black image for active and
       // checked buttons. BusyMark-owned controls use neutral current-color
       // layers while GTK continues to own geometry, focus, and motion.
@@ -791,7 +832,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       background, window_shadow_css, native_popover_css, native_menu_state_css,
       header_menu_shadow_css, background, foreground, background, foreground,
       sidebar_background, foreground, foreground, foreground,
-      kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border, modal);
+      kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border,
+      header_focus_css, modal);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
@@ -812,6 +854,48 @@ static void refresh_header_bar_css(MyApplication* self) {
   gtk_style_context_add_provider_for_screen(
       screen, GTK_STYLE_PROVIDER(self->header_bar_css_provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+static gboolean refresh_header_bar_focus_state_cb(gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->titlebar_handle == nullptr ||
+      !GTK_IS_WIDGET(self->titlebar_handle)) {
+    return G_SOURCE_REMOVE;
+  }
+
+  const gboolean application_active =
+      self->main_window != nullptr &&
+      gtk_window_is_active(self->main_window);
+  GtkStyleContext* context =
+      gtk_widget_get_style_context(self->titlebar_handle);
+  gtk_style_context_remove_class(context,
+                                 kHeaderApplicationActiveStyleClass);
+  gtk_style_context_remove_class(context,
+                                 kHeaderApplicationBackdropStyleClass);
+  gtk_style_context_add_class(
+      context,
+      application_active ? kHeaderApplicationActiveStyleClass
+                         : kHeaderApplicationBackdropStyleClass);
+
+  // The headerbar is embedded above Flutter rather than installed as
+  // GtkWindow's titlebar. Reset its subtree after the compositor's focus
+  // transfer settles so :backdrop declarations cannot remain one event late.
+  gtk_widget_reset_style(self->titlebar_handle);
+  gtk_widget_queue_draw(self->titlebar_handle);
+  return G_SOURCE_REMOVE;
+}
+
+static void schedule_header_bar_focus_state_refresh(MyApplication* self) {
+  g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                  refresh_header_bar_focus_state_cb, g_object_ref(self),
+                  g_object_unref);
+}
+
+static void header_focus_window_is_active_notify_cb(
+    GtkWindow*,
+    GParamSpec*,
+    gpointer user_data) {
+  schedule_header_bar_focus_state_refresh(MY_APPLICATION(user_data));
 }
 
 static void gtk_theme_name_changed_cb(GtkSettings*,
@@ -1266,9 +1350,7 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       localized_label_or(labels, "aboutBusyMark", ""),
       "header.about", main_menu_icon_name("aboutBusyMark"), nullptr);
   decorate_model_menu_accelerators(
-      self->sidebar_menu, G_MENU_MODEL(self->main_menu_model));
-  decorate_model_menu_accelerators(
-      self->adaptive_menu, G_MENU_MODEL(self->main_menu_model));
+      self->main_menu, G_MENU_MODEL(self->main_menu_model));
 }
 
 static const gchar* view_mode_dart_action(const gchar* mode) {
@@ -1518,16 +1600,13 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar,
                                    sidebar_shortcut);
-  set_widget_tooltip_with_shortcut(self->sidebar_search_button, search,
-                                   search_shortcut);
-  set_widget_tooltip_with_shortcut(self->adaptive_search_button, search,
+  set_widget_tooltip_with_shortcut(self->search_button, search,
                                    search_shortcut);
   if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
       search != nullptr) {
     gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), search);
   }
-  set_widget_tooltip(self->sidebar_menu_button, menu);
-  set_widget_tooltip(self->adaptive_menu_button, menu);
+  set_widget_tooltip(self->main_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
   set_widget_tooltip_with_shortcut(
       self->view_mode_button, view_mode,
@@ -1557,8 +1636,7 @@ static void set_modal_barrier_depth(MyApplication* self, gint64 depth) {
   }
   set_widget_visible(self->modal_scrim, visible);
   if (visible) {
-    close_header_menu_button(self->sidebar_menu_button);
-    close_header_menu_button(self->adaptive_menu_button);
+    close_header_menu_button(self->main_menu_button);
     close_header_menu_button(self->view_mode_button);
     focus_flutter_view(self);
   }
@@ -1609,8 +1687,7 @@ static void set_document_controls_visible(MyApplication* self,
 static void set_search_active(MyApplication* self, gboolean active) {
   const gboolean changed = self->search_active != active;
   self->search_active = active;
-  set_toggle_button_active(self, self->sidebar_search_button, active);
-  set_toggle_button_active(self, self->adaptive_search_button, active);
+  set_toggle_button_active(self, self->search_button, active);
   if (self->title_stack != nullptr && GTK_IS_STACK(self->title_stack)) {
     GtkWidget* visible_child = active ? self->search_entry : self->title_label;
     if (visible_child != nullptr && GTK_IS_WIDGET(visible_child)) {
@@ -1646,8 +1723,7 @@ static gboolean focus_search_entry(MyApplication* self) {
 
 static void set_search_visible(MyApplication* self, gboolean visible) {
   self->search_visible = visible;
-  set_widget_visible(self->sidebar_search_button, visible);
-  update_adaptive_header_actions(self);
+  set_widget_visible(self->search_button, visible);
   if (!visible && self->search_active) {
     set_search_active(self, FALSE);
   }
@@ -1785,13 +1861,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_header_box),
                               "busymark-sidebar-header");
 
-  self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
-                              "busymark-sidebar-action-button");
-  connect_header_action(self, self->sidebar_search_button, "search");
-  gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
-                     self->sidebar_search_button, FALSE, FALSE, 0);
-
   GtkWidget* sidebar_title_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   gtk_widget_set_halign(sidebar_title_box, GTK_ALIGN_CENTER);
@@ -1809,13 +1878,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_box_pack_start(GTK_BOX(self->sidebar_header_box), sidebar_title_box,
                      TRUE, TRUE, 0);
 
-  self->sidebar_menu_button = create_model_menu_button(
-      G_MENU_MODEL(self->main_menu_model), "open-menu-symbolic",
-      &self->sidebar_menu);
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
-                              "busymark-sidebar-action-button");
-  gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
-                   self->sidebar_menu_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), self->sidebar_header_box,
                      FALSE, FALSE, 0);
 
@@ -1887,15 +1949,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
   connect_header_action(self, self->refresh_button, "refresh");
   gtk_box_pack_start(GTK_BOX(end_box), self->refresh_button, FALSE, FALSE, 0);
-  self->adaptive_search_button =
+  self->search_button =
       create_header_toggle_button("system-search-symbolic");
-  connect_header_action(self, self->adaptive_search_button, "search");
-  gtk_box_pack_start(GTK_BOX(end_box), self->adaptive_search_button, FALSE,
-                     FALSE, 0);
-  self->adaptive_menu_button = create_model_menu_button(
+  connect_header_action(self, self->search_button, "search");
+  gtk_box_pack_start(GTK_BOX(end_box), self->search_button, FALSE, FALSE, 0);
+  self->main_menu_button = create_model_menu_button(
       G_MENU_MODEL(self->main_menu_model), "open-menu-symbolic",
-      &self->adaptive_menu);
-  gtk_box_pack_start(GTK_BOX(end_box), self->adaptive_menu_button, FALSE, FALSE,
+      &self->main_menu);
+  gtk_box_pack_start(GTK_BOX(end_box), self->main_menu_button, FALSE, FALSE,
                      0);
   gtk_header_bar_pack_end(self->header_bar, end_box);
 
@@ -2675,6 +2736,9 @@ static void my_application_activate(GApplication* application) {
   gtk_widget_show_all(self->titlebar_handle);
 
   gtk_window_set_default_size(window, 1280, 720);
+  g_signal_connect(
+      window, "notify::is-active",
+      G_CALLBACK(header_focus_window_is_active_notify_cb), self);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
@@ -2703,6 +2767,7 @@ static void my_application_activate(GApplication* application) {
   register_native_menu_channel(self, view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
+  schedule_header_bar_focus_state_refresh(self);
 }
 
 // Implements GApplication::local_command_line.
@@ -2797,10 +2862,7 @@ static void my_application_init(MyApplication* self) {
   self->modal_scrim = nullptr;
   self->header_bar = nullptr;
   self->sidebar_header_box = nullptr;
-  self->sidebar_search_button = nullptr;
   self->sidebar_title_label = nullptr;
-  self->sidebar_menu_button = nullptr;
-  self->sidebar_menu = nullptr;
   self->main_menu_model = nullptr;
   self->header_start_box = nullptr;
   self->back_button = nullptr;
@@ -2816,9 +2878,9 @@ static void my_application_init(MyApplication* self) {
   self->view_mode_menu = nullptr;
   self->view_mode_menu_model = nullptr;
   self->refresh_button = nullptr;
-  self->adaptive_search_button = nullptr;
-  self->adaptive_menu_button = nullptr;
-  self->adaptive_menu = nullptr;
+  self->search_button = nullptr;
+  self->main_menu_button = nullptr;
+  self->main_menu = nullptr;
   self->header_action_group = nullptr;
   self->view_mode_action = nullptr;
   self->view_mode = nullptr;

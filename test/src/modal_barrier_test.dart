@@ -32,11 +32,7 @@ void main() {
     );
     expect(
       source,
-      contains('close_header_menu_button(self->sidebar_menu_button);'),
-    );
-    expect(
-      source,
-      contains('close_header_menu_button(self->adaptive_menu_button);'),
+      contains('close_header_menu_button(self->main_menu_button);'),
     );
     expect(
       source,

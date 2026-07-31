@@ -4,9 +4,11 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -63,6 +65,20 @@ void main() {
     );
   });
 
+  test('settings page routes are explicit and validated', () {
+    expect(settingsPageFromRouteValue(null), SettingsPage.appearance);
+    expect(settingsPageFromRouteValue('editor'), SettingsPage.editor);
+    expect(settingsPageFromRouteValue('validation'), SettingsPage.validation);
+    expect(settingsPageFromRouteValue('window'), SettingsPage.window);
+    expect(settingsPageFromRouteValue('privacy'), SettingsPage.privacy);
+    expect(settingsPageFromRouteValue('advanced'), SettingsPage.advanced);
+    expect(settingsPageFromRouteValue('unexpected'), SettingsPage.appearance);
+    expect(
+      SettingsPage.values.map(settingsPageRouteValue),
+      SettingsPage.values.map((page) => page.name),
+    );
+  });
+
   testWidgets(
     'Settings opened from Welcome returns to Welcome with a stale workspace',
     (tester) async {
@@ -88,12 +104,18 @@ void main() {
       await tester.tap(find.text(l10n.settings));
       await tester.pumpAndSettle();
 
-      expect(find.text(l10n.settingsTitle), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('settings-page-selector')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byTooltip(l10n.back));
       await tester.pumpAndSettle();
 
-      expect(find.text(l10n.settingsTitle), findsNothing);
+      expect(
+        find.byKey(const ValueKey('settings-page-selector')),
+        findsNothing,
+      );
       expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     },
   );

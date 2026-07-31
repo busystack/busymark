@@ -446,9 +446,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
-      _ => theme.bodyMedium!.copyWith(
-        height: BusyMarkTypography.bodyLineHeight,
-      ),
+      _ => busyMarkDocumentBodyTextStyle(context),
     };
   }
 

@@ -627,6 +627,27 @@ void main() {
     );
   });
 
+  test('Editor and Preview reuse one prose line-height style', () {
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final blocks = File(
+      'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
+    final surface = File(
+      'lib/src/editor/document_surface.dart',
+    ).readAsStringSync();
+
+    expect(surface, contains('busyMarkDocumentBodyTextStyle('));
+    expect(surface, contains('height: BusyMarkTypography.bodyLineHeight'));
+    expect(workspace, contains('busyMarkDocumentBodyTextStyle(context)'));
+    expect(blocks, contains('busyMarkDocumentBodyTextStyle(context)'));
+    expect(editor, contains('busyMarkDocumentBodyTextStyle(context)'));
+  });
+
   test('workspace isolates technical labels only at rendering boundaries', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',

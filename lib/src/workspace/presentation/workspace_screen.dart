@@ -27,6 +27,7 @@ import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
 import '../../editor/document_layout.dart';
+import '../../editor/document_surface.dart';
 import '../../editor/document_text_direction.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source/source_controller.dart';
@@ -7947,7 +7948,7 @@ class _PreviewBlockView extends StatelessWidget {
     return TextSpan(style: blockStyle, children: spans);
   }
 
-  TextStyle? _diffPreviewTextStyle(
+  TextStyle _diffPreviewTextStyle(
     BuildContext context,
     PreviewBlock block,
     TextStyle? base,
@@ -7959,22 +7960,22 @@ class _PreviewBlockView extends StatelessWidget {
     );
   }
 
-  TextStyle? _diffPreviewTextStyleForTone(
+  TextStyle _diffPreviewTextStyleForTone(
     BuildContext context,
     _DiffPreviewTone? tone,
     TextStyle? base,
   ) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final effectiveBase = base ?? Theme.of(context).textTheme.bodyMedium;
+    final effectiveBase = base ?? busyMarkDocumentBodyTextStyle(context);
     return switch (tone) {
       _DiffPreviewTone.added || _DiffPreviewTone.changed =>
-        effectiveBase?.copyWith(backgroundColor: colors.admonitionTip),
-      _DiffPreviewTone.removed => effectiveBase?.copyWith(
+        effectiveBase.copyWith(backgroundColor: colors.admonitionTip),
+      _DiffPreviewTone.removed => effectiveBase.copyWith(
         color: colors.mutedForeground,
         backgroundColor: colors.admonitionWarning,
         decoration: TextDecoration.lineThrough,
       ),
-      null => base,
+      null => effectiveBase,
     };
   }
 
@@ -8180,7 +8181,7 @@ class _PreviewInlineText extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final baseStyle = style ?? Theme.of(context).textTheme.bodyMedium;
+    final baseStyle = style ?? busyMarkDocumentBodyTextStyle(context);
     final searchState = ref.watch(_workspaceSearchProvider);
     final workspace = ref.watch(workspaceControllerProvider).workspace;
     final settings = ref.watch(appSettingsControllerProvider);

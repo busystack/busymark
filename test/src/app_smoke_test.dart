@@ -34,6 +34,7 @@ import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -214,7 +215,10 @@ void main() {
     await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
     expect(find.text(l10n.reportIssue), findsNothing);
 
     await tester.tap(find.byTooltip(l10n.mainMenu));
@@ -289,7 +293,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await pressShortcut(LogicalKeyboardKey.keyS, control: true, alt: true);
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('settings screen opens', (tester) async {
@@ -313,22 +320,13 @@ void main() {
     await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
     expect(find.text(l10n.appLanguage), findsOneWidget);
     expect(find.text(l10n.systemLanguage), findsWidgets);
-    expect(find.text(l10n.autoSave), findsOneWidget);
-    expect(find.text(l10n.autoSaveDescription), findsOneWidget);
-    expect(find.text(l10n.validateOnEdit), findsOneWidget);
     expect(find.byType(DropdownButton<String>), findsNothing);
-    expect(find.text(l10n.settingsWindowSectionTitle), findsOneWidget);
-    expect(
-      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
-      findsOneWidget,
-    );
-    expect(
-      find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
-      findsOneWidget,
-    );
 
     await tester.tap(find.byTooltip(l10n.appLanguage));
     await tester.pumpAndSettle();
@@ -350,21 +348,173 @@ void main() {
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.editor));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    expect(find.text(l10n.autoSaveDescription), findsOneWidget);
     await tester.tap(find.text(l10n.autoSave));
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['autoSave'], isFalse);
 
-    await tester.ensureVisible(
-      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
-    );
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.validation));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.validateOnEdit), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settingsWindowSectionTitle));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
+      findsOneWidget,
+    );
     await tester.tap(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
     );
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
+  });
+
+  testWidgets('settings uses the regular split sidebar at desktop width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 760);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    expect(find.byType(BusyMarkSidebarNavigation), findsOneWidget);
+    expect(
+      find.byType(BusyMarkSidebarNavigationTile),
+      findsNWidgets(SettingsPage.values.length),
+    );
+    expect(
+      tester.getSize(find.byType(BusyMarkSidebarSurface)).width,
+      BusyMarkSizes.sidebarWidth,
+    );
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+
+    final appearanceTile = tester.widget<BusyMarkSidebarNavigationTile>(
+      find.byKey(const ValueKey('settings-navigation-appearance')),
+    );
+    final editorTile = tester.widget<BusyMarkSidebarNavigationTile>(
+      find.byKey(const ValueKey('settings-navigation-editor')),
+    );
+    expect(appearanceTile.selected, isTrue);
+    expect(editorTile.selected, isFalse);
+
+    var header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.sidebarToggleVisible, isFalse);
+    expect(header.configuration.title, l10n.appearance);
+
+    await tester.tap(find.byKey(const ValueKey('settings-navigation-editor')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<BusyMarkSidebarNavigationTile>(
+            find.byKey(const ValueKey('settings-navigation-editor')),
+          )
+          .selected,
+      isTrue,
+    );
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.title, l10n.editor);
+  });
+
+  testWidgets('settings main surface matches the headerbar in light and dark', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 760);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    for (final preference in [
+      BusyMarkThemeModePreference.light,
+      BusyMarkThemeModePreference.dark,
+    ]) {
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(themeModePreference: preference)
+            .toJson();
+      headerBarService = _FallbackHeaderBarService();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+          ],
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settings));
+      await tester.pumpAndSettle();
+
+      final surfaceFinder = find.byKey(
+        const ValueKey('settings-content-surface'),
+      );
+      expect(surfaceFinder, findsOneWidget);
+      final surface = tester.widget<ColoredBox>(surfaceFinder);
+      final surfaceContext = tester.element(surfaceFinder);
+      final colors = BusyMarkSurfaceColors.of(surfaceContext);
+      final header = tester.widget<HeaderBarConfigurationPublisher>(
+        find.byType(HeaderBarConfigurationPublisher),
+      );
+
+      expect(
+        Theme.of(surfaceContext).brightness,
+        preference == BusyMarkThemeModePreference.dark
+            ? Brightness.dark
+            : Brightness.light,
+      );
+      expect(surface.color, colors.view);
+      expect(surface.color, header.configuration.theme.backgroundColor);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
   });
 
   testWidgets('stored language override localizes app text', (tester) async {
@@ -388,8 +538,17 @@ void main() {
     await tester.tap(find.text(de.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text(de.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
     expect(find.text(de.appLanguage), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(de.validation));
+    await tester.pumpAndSettle();
+
     expect(find.text(de.validateOnEdit), findsOneWidget);
   });
 
@@ -2998,7 +3157,7 @@ void main() {
           .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
     const service = _SearchWorkspaceService(
-      '# Shared document frame\n\nParagraph\n',
+      '# Shared document frame\n\nParagraph line one\nParagraph line two\n',
     );
     final container = ProviderContainer(
       overrides: [
@@ -3039,6 +3198,13 @@ void main() {
     final editorParagraphRect = tester.getRect(
       find.descendant(of: editorScroll, matching: find.byType(TextField)).at(1),
     );
+    final editorParagraphStyle = tester
+        .widget<TextField>(
+          find
+              .descendant(of: editorScroll, matching: find.byType(TextField))
+              .at(1),
+        )
+        .style;
     final editorPadding = tester.widget<ListView>(editorScroll).padding;
     final expectedStandalone = BusyMarkDocumentLayoutSpec.standalone
         .withEditingToolbar(
@@ -3073,11 +3239,17 @@ void main() {
       of: previewContent,
       matching: find.byWidgetPredicate(
         (widget) =>
-            widget is RichText && widget.text.toPlainText() == 'Paragraph',
+            widget is Text &&
+            widget.textSpan?.toPlainText().contains('Paragraph line one') ==
+                true,
       ),
     );
     expect(previewParagraph, findsOneWidget);
     final previewParagraphRect = tester.getRect(previewParagraph);
+    final previewParagraphStyle = tester
+        .widget<Text>(previewParagraph)
+        .textSpan
+        ?.style;
     expect(previewRect.left, closeTo(editorRect.left, 0.1));
     expect(previewRect.right, closeTo(editorRect.right, 0.1));
     expect(previewRect.top, closeTo(editorRect.top, 0.1));
@@ -3085,6 +3257,12 @@ void main() {
     expect(previewHeadingRect.top, closeTo(editorHeadingRect.top, 0.1));
     expect(previewParagraphRect.left, closeTo(editorParagraphRect.left, 0.1));
     expect(previewParagraphRect.top, closeTo(editorParagraphRect.top, 0.1));
+    expect(editorParagraphStyle?.height, BusyMarkTypography.bodyLineHeight);
+    expect(previewParagraphStyle?.height, editorParagraphStyle?.height);
+    expect(
+      previewParagraphRect.height,
+      closeTo(editorParagraphRect.height, 0.1),
+    );
     expect(tester.widget<ListView>(previewScroll).padding, editorPadding);
 
     await container

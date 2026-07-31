@@ -40,7 +40,9 @@ abstract final class BusyMarkSizes {
   static const double contentWidth = 760;
   static const double documentContentWidth = contentWidth;
   static const double sidebarWidth = 300;
+  static const double sidebarRowHeight = 36;
   static const double settingsWidth = 760;
+  static const double settingsSidebarBreakpoint = sidebarWidth + 520;
   static const double toolbarHeight = kYaruTitleBarHeight;
   static const double paneHeaderHeight = 38;
   static const double iconButton = kYaruTitleBarItemHeight;
@@ -2008,17 +2010,95 @@ class BusyMarkSidebarSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.sidebar,
-        border: BorderDirectional(
-          end: BorderSide(
-            color: colors.sidebarBorder,
-            width: BusyMarkStroke.hairline,
+    return Material(
+      color: colors.sidebar,
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(
+          border: BorderDirectional(
+            end: BorderSide(
+              color: colors.sidebarBorder,
+              width: BusyMarkStroke.hairline,
+            ),
           ),
         ),
+        child: child,
       ),
-      child: child,
+    );
+  }
+}
+
+/// A GTK-style navigation list for a persistent desktop sidebar.
+class BusyMarkSidebarNavigation extends StatelessWidget {
+  const BusyMarkSidebarNavigation({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final masterDetailTheme = YaruMasterDetailTheme.of(context);
+
+    return Theme(
+      data: theme.copyWith(
+        listTileTheme: theme.listTileTheme.copyWith(
+          selectedColor: colors.foreground,
+          selectedTileColor: Color.alphaBlend(colors.control, colors.sidebar),
+          tileColor: Colors.transparent,
+          iconColor: colors.mutedForeground,
+          textColor: colors.foreground,
+          titleTextStyle: theme.textTheme.bodyMedium,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.sm,
+          ),
+          horizontalTitleGap: BusyMarkSpacing.sm,
+          minVerticalPadding: 0,
+          minLeadingWidth: BusyMarkSizes.iconSm,
+          minTileHeight: BusyMarkSizes.sidebarRowHeight,
+          visualDensity: VisualDensity.standard,
+          titleAlignment: ListTileTitleAlignment.center,
+        ),
+      ),
+      child: ListView.separated(
+        padding:
+            masterDetailTheme.listPadding ??
+            const EdgeInsets.symmetric(vertical: BusyMarkSpacing.sm),
+        itemCount: children.length,
+        itemBuilder: (context, index) => children[index],
+        separatorBuilder: (context, index) => SizedBox(
+          height: masterDetailTheme.tileSpacing ?? BusyMarkSpacing.xxs,
+        ),
+      ),
+    );
+  }
+}
+
+/// A selectable row for [BusyMarkSidebarNavigation].
+class BusyMarkSidebarNavigationTile extends StatelessWidget {
+  const BusyMarkSidebarNavigationTile({
+    super.key,
+    required this.selected,
+    required this.leading,
+    required this.title,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final Widget leading;
+  final Widget title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return YaruMasterTile(
+      selected: selected,
+      leading: IconTheme.merge(
+        data: const IconThemeData(size: BusyMarkSizes.iconSm),
+        child: leading,
+      ),
+      title: title,
+      onTap: onTap,
     );
   }
 }

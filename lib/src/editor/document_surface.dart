@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
 
+/// Shared prose typography for editable and rendered document views.
+TextStyle busyMarkDocumentBodyTextStyle(BuildContext context, {Color? color}) {
+  return (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(
+    color: color,
+    height: BusyMarkTypography.bodyLineHeight,
+  );
+}
+
 /// Resolves the actual child inset of [BusyMarkDocumentSurface].
 ///
 /// Flutter includes a decorated container's border dimensions in addition to

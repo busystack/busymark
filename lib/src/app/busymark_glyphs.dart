@@ -21,6 +21,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData copy = YaruIcons.copy;
   static const IconData cut = YaruIcons.cut;
   static const IconData delete = YaruIcons.trash;
+  static const IconData desktop = YaruIcons.desktop;
   static const IconData diagnostics = YaruIcons.task_list;
   static const IconData document = YaruIcons.document;
   static const IconData documentHistory = YaruIcons.document_history;
@@ -58,6 +59,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData paste = YaruIcons.paste;
   static const IconData preview = YaruIcons.eye;
   static const IconData previewView = YaruIcons.eye;
+  static const IconData privacy = YaruIcons.shield_warning;
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
@@ -137,6 +139,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == delete) {
       return 'user-trash-symbolic';
+    }
+    if (icon == desktop) {
+      return 'video-display-symbolic';
     }
     if (icon == document || icon == startTopic) {
       return 'text-x-generic-symbolic';
@@ -221,6 +226,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == preview || icon == previewView) {
       return 'image-viewer-symbolic';
+    }
+    if (icon == privacy) {
+      return 'security-high-symbolic';
     }
     if (icon == pull) {
       return 'folder-download-symbolic';
