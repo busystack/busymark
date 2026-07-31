@@ -1210,7 +1210,13 @@ void main() {
     expect(find.byTooltip(l10n.tocActions), findsOneWidget);
     expect(find.byTooltip(l10n.newTopic), findsNothing);
     expect(find.byTooltip(l10n.newChildTopic), findsNothing);
+    final tocMenuButton = find.descendant(
+      of: find.byKey(const ValueKey('workspace-sidebar-toc-menu')),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
     await openPopup(find.byTooltip(l10n.tocActions));
+    expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
     expect(find.text(l10n.newTopic), findsOneWidget);
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));

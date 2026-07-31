@@ -4988,6 +4988,7 @@ class _TocHeader extends StatelessWidget {
               icon: BusyMarkGlyphs.menuVertical,
               transparent: true,
               borderRadius: BusyMarkRadius.nativeHeaderButton,
+              highlightWhenOpen: false,
               itemBuilder: (context) => [
                 BusyMarkPopupMenuItem(
                   value: _TocHeaderAction.newTopic,

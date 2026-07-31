@@ -1309,6 +1309,7 @@ void main() {
     expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
     expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
+    expect(tocHeader, contains('highlightWhenOpen: false'));
     expect(tocHeader, contains('label: context.l10n.newTopic'));
     expect(tocHeader, isNot(contains('BusyMarkHeaderIconButton')));
     expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
