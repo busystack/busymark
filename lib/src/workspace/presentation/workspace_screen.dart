@@ -2021,6 +2021,7 @@ class _SidebarHeader extends StatelessWidget {
                     icon: BusyMarkGlyphs.menuVertical,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    highlightWhenOpen: false,
                     itemBuilder: _sidebarPathMenuItems,
                     onSelected: (action) => unawaited(
                       _performWorkspacePathAction(

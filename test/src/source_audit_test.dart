@@ -978,6 +978,11 @@ void main() {
     expect(workspace, contains("ValueKey('workspace-sidebar-path-menu')"));
     expect(workspace, contains('tooltip: context.l10n.pathActions'));
     expect(workspace, contains('icon: BusyMarkGlyphs.menuVertical'));
+    final pathMenu = RegExp(
+      r'BusyMarkHeaderPopupMenuButton<_PathMenuAction>[\s\S]*?'
+      r'itemBuilder: _sidebarPathMenuItems',
+    ).firstMatch(workspace)?.group(0);
+    expect(pathMenu, contains('highlightWhenOpen: false'));
     expect(workspace, isNot(contains('SystemMouseCursors.contextMenu')));
     expect(workspace, contains('onSecondaryTapUp: (lineContext, details)'));
     expect(workspace, contains('position: details.globalPosition'));

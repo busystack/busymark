@@ -1935,8 +1935,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(l10n.openInFiles), findsNothing);
 
+    final pathMenuButton = find.descendant(
+      of: find.byKey(const ValueKey('workspace-sidebar-path-menu')),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(pathMenuButton).isSelected, isFalse);
     await tester.tap(find.byTooltip(l10n.pathActions));
     await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(pathMenuButton).isSelected, isFalse);
     expect(find.text(l10n.copyName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
