@@ -123,6 +123,79 @@ class HeaderBarLabels {
 }
 
 @immutable
+class HeaderBarTooltipTheme {
+  const HeaderBarTooltipTheme({
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.borderColor,
+    required this.borderRadius,
+    required this.fontSize,
+    required this.horizontalPadding,
+    required this.verticalPadding,
+    required this.minimumHeight,
+  });
+
+  factory HeaderBarTooltipTheme.busyMark() {
+    return HeaderBarTooltipTheme(
+      backgroundColor: BusyMarkTooltipStyle.background,
+      foregroundColor: BusyMarkTooltipStyle.foreground,
+      borderColor: BusyMarkTooltipStyle.border,
+      borderRadius: BusyMarkRadius.tooltip,
+      fontSize: BusyMarkTypography.tooltipFontSize,
+      horizontalPadding: BusyMarkSpacing.tooltipHorizontal,
+      verticalPadding: BusyMarkSpacing.tooltipVertical,
+      minimumHeight: BusyMarkSizes.tooltipMinHeight,
+    );
+  }
+
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final Color borderColor;
+  final double borderRadius;
+  final double fontSize;
+  final double horizontalPadding;
+  final double verticalPadding;
+  final double minimumHeight;
+
+  Map<String, Object> toMap() => {
+    'backgroundColor': _cssColor(backgroundColor),
+    'foregroundColor': _cssColor(foregroundColor),
+    'borderColor': _cssColor(borderColor),
+    'borderRadius': borderRadius,
+    'fontSize': fontSize,
+    'horizontalPadding': horizontalPadding,
+    'verticalPadding': verticalPadding,
+    'minimumHeight': minimumHeight,
+  };
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is HeaderBarTooltipTheme &&
+            backgroundColor == other.backgroundColor &&
+            foregroundColor == other.foregroundColor &&
+            borderColor == other.borderColor &&
+            borderRadius == other.borderRadius &&
+            fontSize == other.fontSize &&
+            horizontalPadding == other.horizontalPadding &&
+            verticalPadding == other.verticalPadding &&
+            minimumHeight == other.minimumHeight;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    backgroundColor,
+    foregroundColor,
+    borderColor,
+    borderRadius,
+    fontSize,
+    horizontalPadding,
+    verticalPadding,
+    minimumHeight,
+  );
+}
+
+@immutable
 class HeaderBarTheme {
   const HeaderBarTheme({
     required this.preferDark,
@@ -134,6 +207,7 @@ class HeaderBarTheme {
     required this.menuHoverColor,
     required this.popoverShadowColor,
     required this.modalBarrierColor,
+    required this.tooltip,
   });
 
   factory HeaderBarTheme.fromContext(BuildContext context) {
@@ -153,6 +227,7 @@ class HeaderBarTheme {
             BusyMarkAlpha.nativeHeaderMenuShadowOpacity,
       ),
       modalBarrierColor: colors.shade,
+      tooltip: HeaderBarTooltipTheme.busyMark(),
     );
   }
 
@@ -165,6 +240,7 @@ class HeaderBarTheme {
   final Color menuHoverColor;
   final Color popoverShadowColor;
   final Color modalBarrierColor;
+  final HeaderBarTooltipTheme tooltip;
 
   Map<String, Object> toMap() => {
     'preferDark': preferDark,
@@ -176,6 +252,7 @@ class HeaderBarTheme {
     'menuHoverColor': _cssColor(menuHoverColor),
     'popoverShadowColor': _cssColor(popoverShadowColor),
     'modalBarrierColor': _cssColor(modalBarrierColor),
+    'tooltip': tooltip.toMap(),
   };
 
   @override
@@ -190,7 +267,8 @@ class HeaderBarTheme {
             popoverBackgroundColor == other.popoverBackgroundColor &&
             menuHoverColor == other.menuHoverColor &&
             popoverShadowColor == other.popoverShadowColor &&
-            modalBarrierColor == other.modalBarrierColor;
+            modalBarrierColor == other.modalBarrierColor &&
+            tooltip == other.tooltip;
   }
 
   @override
@@ -204,6 +282,7 @@ class HeaderBarTheme {
     menuHoverColor,
     popoverShadowColor,
     modalBarrierColor,
+    tooltip,
   ]);
 }
 

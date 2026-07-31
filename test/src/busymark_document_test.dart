@@ -8,6 +8,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/document_callout.dart';
@@ -32,6 +33,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:yaru/yaru.dart';
 
 void main() {
   const parser = MarkdownParser();
@@ -3729,12 +3731,20 @@ void main() {}
 
       expect(find.text('Image'), findsOneWidget);
       expect(find.text('Apply'), findsOneWidget);
-      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-      expect(find.byType(BusyMarkFloatingTextEntry), findsNWidgets(2));
+      expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+      expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+      expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
+      expect(find.byType(BusyMarkGroupedList), findsOneWidget);
+      expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
       expect(find.byType(TextFormField), findsNWidgets(2));
-      expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
+      expect(find.byType(YaruListTile), findsNWidgets(2));
+      expect(find.byType(BusyMarkDialogShell), findsNothing);
+      expect(find.byType(BusyMarkDialogButton), findsNothing);
+      expect(find.byType(YaruDialogTitleBar), findsNothing);
       expect(find.byType(AlertDialog), findsNothing);
-      final dialogRect = tester.getRect(find.byType(BusyMarkDialogTitleBar));
+      final dialogRect = tester.getRect(
+        find.byType(BusyMarkModalEditorScaffold),
+      );
       final sourceEntryRect = tester.getRect(
         find.byKey(BusyMarkImageDialogKeys.source),
       );
@@ -3753,10 +3763,8 @@ void main() {}
         altEntryRect.left - dialogRect.left,
         closeTo(BusyMarkSpacing.lg, 0.1),
       );
-      expect(
-        dialogRect.right - chooseRect.right,
-        closeTo(BusyMarkSpacing.lg, 0.1),
-      );
+      expect(chooseRect.right, lessThan(sourceEntryRect.right));
+      expect(chooseRect.center.dy, closeTo(sourceEntryRect.center.dy, 0.1));
       final sourceField = find.descendant(
         of: find.byKey(BusyMarkImageDialogKeys.source),
         matching: find.byType(EditableText),

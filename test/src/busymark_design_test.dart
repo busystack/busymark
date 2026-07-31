@@ -396,6 +396,78 @@ void main() {
     );
   });
 
+  testWidgets('desktop tooltips use one explicit natural-width geometry', (
+    tester,
+  ) async {
+    Future<({Rect surface, Rect text})> measureTooltip({
+      required Brightness brightness,
+      required String message,
+    }) async {
+      final tooltipKey = GlobalKey<TooltipState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: brightness,
+            accentColor: const Color(0xFF3584E4),
+          ),
+          home: Scaffold(
+            body: Center(
+              child: Tooltip(
+                key: tooltipKey,
+                message: message,
+                child: const SizedBox.square(dimension: 32),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tooltipKey.currentState!.ensureTooltipVisible(), isTrue);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final messageFinder = find.text(message);
+      expect(messageFinder, findsOneWidget);
+      final textRect = tester.getRect(messageFinder);
+      Rect? surfaceRect;
+      tester.element(messageFinder).visitAncestorElements((element) {
+        if (element.widget case final ConstrainedBox constrained
+            when constrained.constraints == BusyMarkTooltipStyle.constraints) {
+          final box = element.renderObject! as RenderBox;
+          surfaceRect = box.localToGlobal(Offset.zero) & box.size;
+          return false;
+        }
+        return true;
+      });
+      expect(surfaceRect, isNotNull);
+      return (surface: surfaceRect!, text: textRect);
+    }
+
+    for (final brightness in Brightness.values) {
+      final short = await measureTooltip(
+        brightness: brightness,
+        message: 'Main menu',
+      );
+      final long = await measureTooltip(
+        brightness: brightness,
+        message: 'Show editing buttons',
+      );
+
+      for (final measurement in [short, long]) {
+        expect(measurement.surface.height, BusyMarkSizes.tooltipMinHeight);
+        expect(
+          measurement.surface.width,
+          moreOrLessEquals(
+            measurement.text.width +
+                (BusyMarkSpacing.tooltipHorizontal + BusyMarkStroke.hairline) *
+                    2,
+            epsilon: 0.01,
+          ),
+        );
+      }
+      expect(long.surface.width, greaterThan(short.surface.width));
+    }
+  });
+
   testWidgets(
     'popup menu rows show shortcuts without redundant hover tooltips',
     (tester) async {
@@ -619,7 +691,22 @@ void main() {
       );
       expect(theme.visualDensity, base.visualDensity);
       expect(theme.splashFactory.runtimeType, base.splashFactory.runtimeType);
-      expect(theme.tooltipTheme, base.tooltipTheme);
+      final tooltipDecoration = theme.tooltipTheme.decoration! as BoxDecoration;
+      final tooltipBorder = tooltipDecoration.border! as Border;
+      expect(tooltipDecoration.color, BusyMarkTooltipStyle.background);
+      expect(tooltipDecoration.borderRadius, BusyMarkTooltipStyle.borderRadius);
+      expect(tooltipBorder.top.color, BusyMarkTooltipStyle.border);
+      expect(
+        theme.tooltipTheme.textStyle?.color,
+        BusyMarkTooltipStyle.foreground,
+      );
+      expect(
+        theme.tooltipTheme.textStyle?.fontSize,
+        BusyMarkTypography.tooltipFontSize,
+      );
+      expect(theme.tooltipTheme.padding, BusyMarkTooltipStyle.padding);
+      expect(theme.tooltipTheme.constraints, BusyMarkTooltipStyle.constraints);
+      expect(theme.tooltipTheme.waitDuration, BusyMarkMotion.tooltipWait);
       expect(
         theme.textTheme.bodyMedium?.fontFamily,
         base.textTheme.bodyMedium?.fontFamily,
@@ -1483,6 +1570,50 @@ void main() {
 
     expect(find.byType(AutofillGroup), findsOneWidget);
     expect(find.byType(TextFormField), findsNWidgets(2));
+    expect(find.text('Required'), findsOneWidget);
+  });
+
+  testWidgets('grouped text entry uses the native row-owned form surface', (
+    tester,
+  ) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: const Color(0xFF3584E4),
+        ),
+        home: Scaffold(
+          body: BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                label: 'Language',
+                controller: controller,
+                hintText: 'dart',
+                errorText: 'Required',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(YaruListTile), findsOneWidget);
+    expect(find.byType(TextFormField), findsOneWidget);
+    final field = tester.widget<TextField>(find.byType(TextField));
+    final decoration = field.decoration!;
+    expect(decoration.filled, isFalse);
+    expect(decoration.fillColor, Colors.transparent);
+    expect(decoration.hoverColor, Colors.transparent);
+    expect(decoration.border, InputBorder.none);
+    expect(decoration.enabledBorder, InputBorder.none);
+    expect(decoration.focusedBorder, InputBorder.none);
+    expect(decoration.contentPadding, EdgeInsets.zero);
+    expect(decoration.labelText, 'Language');
+    expect(decoration.hintText, 'dart');
     expect(find.text('Required'), findsOneWidget);
   });
 

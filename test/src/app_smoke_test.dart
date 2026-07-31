@@ -635,6 +635,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.createWritersideProject), findsWidgets);
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(5));
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(find.byType(BusyMarkDialogButton), findsNothing);
 
     final entries = find.byWidgetPredicate(
       (widget) => widget is EditableText && !widget.readOnly,
@@ -1212,8 +1217,29 @@ void main() {
 
     expect(find.text(l10n.topicPlacement), findsOneWidget);
     expect(find.text(l10n.tocRoot), findsOneWidget);
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkComboRow<WritersideTopicCreatePlacement>,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkComboRow<WritersideTopicFormat>,
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(find.byType(SegmentedButton<WritersideTopicFormat>), findsNothing);
 
-    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(controller.createdTopicRequest, isNotNull);
@@ -1234,7 +1260,12 @@ void main() {
     expect(find.text(l10n.newTopic), findsOneWidget);
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
 
@@ -1279,7 +1310,12 @@ void main() {
     await tester.tap(find.text(l10n.newChildTopic));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.insideSelectedTopic), findsOneWidget);
-    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(
       controller.createdTopicRequest!.placement,
@@ -1293,7 +1329,12 @@ void main() {
     await tester.tap(find.text(l10n.newSiblingTopic));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.afterSelectedTopic), findsOneWidget);
-    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(
       controller.createdTopicRequest!.placement,

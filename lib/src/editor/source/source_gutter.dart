@@ -292,7 +292,6 @@ class _SourceDiagnosticMarkerDot extends StatelessWidget {
         .join('\n');
     return Tooltip(
       message: message,
-      waitDuration: BusyMarkMotion.tooltipWait,
       child: SizedBox.square(
         dimension: 6,
         child: DecoratedBox(

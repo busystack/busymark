@@ -476,13 +476,32 @@ void main() {
     expect(script, contains('--skip-bundled-git'));
   });
 
-  test('native headerbar delegates tooltip appearance to GTK', () {
+  test('native headerbar uses the shared tooltip visuals', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
     expect(native, contains('gtk_widget_set_tooltip_text'));
-    expect(native, isNot(contains('"tooltip, tooltip.background {"')));
-    expect(native, isNot(contains('"tooltip > box')));
-    expect(native, isNot(contains('"tooltip label {"')));
+    expect(native, contains('kDefaultTooltipBackground'));
+    expect(native, contains('kDefaultTooltipForeground'));
+    expect(native, contains('kDefaultTooltipBorder'));
+    expect(native, contains('kDefaultTooltipRadius'));
+    expect(native, contains('"tooltip,"'));
+    expect(native, contains('"tooltip.background {"'));
+    expect(native, contains('"tooltip decoration,"'));
+    expect(native, contains('"tooltip.csd decoration {"'));
+    expect(native, contains('"tooltip > box,"'));
+    expect(native, contains('"tooltip label {"'));
+    expect(native, contains('"border-radius: %.2fpx;"'));
+    expect(native, contains('fl_lookup_map_arg(args, "tooltip")'));
+    expect(native, contains('"backgroundColor"'));
+    expect(native, contains('"foregroundColor"'));
+    expect(native, contains('"borderColor"'));
+    expect(native, contains('"borderRadius"'));
+    expect(native, contains('"fontSize"'));
+    expect(native, contains('"horizontalPadding"'));
+    expect(native, contains('"verticalPadding"'));
+    expect(native, contains('"minimumHeight"'));
+    expect(native, contains('"font-family: Ubuntu;"'));
+    expect(native, contains('"font-weight: 400;"'));
   });
 
   test(
@@ -575,11 +594,9 @@ void main() {
     expect(css, contains('popover.background.'));
     expect(css, contains('modelbutton:hover:not(:disabled)'));
     expect(css, contains('box-shadow: 0 1px 3px'));
-    for (final interactionSelector in <String>[
-      'tooltip',
-      ':focus',
-      '@define-color',
-    ]) {
+    expect(css, contains('tooltip.background'));
+    expect(css, contains('tooltip decoration'));
+    for (final interactionSelector in <String>[':focus', '@define-color']) {
       expect(css, isNot(contains(interactionSelector)));
     }
   });
@@ -598,7 +615,7 @@ void main() {
     expect(configuration, contains('foregroundColor: colors.foreground'));
     expect(configuration, contains('popoverBackgroundColor: colors.popover'));
     expect(configuration, contains('menuHoverColor: colors.controlHover'));
-    expect(configuration, isNot(contains('borderColor')));
+    expect(configuration, isNot(contains('borderColor: colors.')));
     expect(configuration, isNot(contains('floatingBorderColor')));
     expect(native, contains('kDefaultHeaderbarBackground[] = "#272727"'));
     expect(native, contains('kDefaultSidebarBackground[] = "#393939"'));
@@ -916,7 +933,11 @@ void main() {
       expect(native, isNot(contains('gtk_widget_set_app_paintable')));
       expect(native, isNot(contains('CAIRO_OPERATOR_CLEAR')));
       expect(native, isNot(contains('#include <cairo.h>')));
-      expect(native, isNot(contains('"border-radius:')));
+      expect(
+        RegExp(r'"border-radius:').allMatches(native),
+        hasLength(2),
+        reason: 'Only the tooltip surface and native window clip own a radius',
+      );
     },
   );
 

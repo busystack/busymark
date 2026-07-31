@@ -247,14 +247,20 @@ void main() {
 
     expect(workspace, contains('BusyMarkPushButton.standardIcon('));
     expect(workspace, isNot(contains('FilledButton.icon(')));
-    expect(createTopicDialog, contains('BusyMarkFloatingTextEntryGroup('));
+    expect(createTopicDialog, contains('BusyMarkModalEditorScaffold('));
     expect(
       RegExp(
-        r'BusyMarkFloatingTextEntry\(',
+        r'BusyMarkGroupedTextEntry\(',
       ).allMatches(createTopicDialog).length,
       2,
     );
-    expect(createTopicDialog, isNot(contains('TextField(')));
+    expect(
+      RegExp(r'BusyMarkComboRow<').allMatches(createTopicDialog).length,
+      2,
+    );
+    expect(createTopicDialog, isNot(contains('BusyMarkDialogShell(')));
+    expect(createTopicDialog, isNot(contains('SegmentedButton<')));
+    expect(createTopicDialog, isNot(contains('BusyMarkFloatingTextEntry')));
     expect(createTopicDialog, isNot(contains('InputDecoration(')));
   });
 
@@ -1099,7 +1105,7 @@ void main() {
     );
     expect(
       workspace,
-      contains('BusyMarkPopupSelector<WritersideTopicCreatePlacement>'),
+      contains('BusyMarkComboRow<WritersideTopicCreatePlacement>'),
     );
     final selector = RegExp(
       r'class BusyMarkPopupSelector<T>[\s\S]*?'
@@ -1165,49 +1171,45 @@ void main() {
     );
   });
 
-  test(
-    'dialog text entries delegate input behavior and geometry to Flutter',
-    () {
-      final design = File(
-        'lib/src/app/busymark_design.dart',
-      ).readAsStringSync();
-      final welcome = File(
-        'lib/src/workspace/presentation/welcome_screen.dart',
-      ).readAsStringSync();
+  test('data-entry dialogs use native grouped modal editors', () {
+    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final welcome = File(
+      'lib/src/workspace/presentation/welcome_screen.dart',
+    ).readAsStringSync();
+    final workspace = File(
+      'lib/src/workspace/presentation/workspace_screen.dart',
+    ).readAsStringSync();
+    final editor = File(
+      'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+    ).readAsStringSync();
 
-      expect(design, contains('class BusyMarkFloatingTextEntry'));
-      expect(design, contains('class BusyMarkFloatingTextEntryGroup'));
-      final entries = RegExp(
-        r'class BusyMarkFloatingTextEntryGroup[\s\S]*?class SectionLabel',
-      ).firstMatch(design)!.group(0)!;
-      expect(entries, contains('return AutofillGroup('));
-      expect(entries, contains('return TextFormField('));
-      expect(entries, contains('InputDecoration('));
-      expect(entries, contains('labelText: label'));
-      expect(entries, contains('errorText: errorText'));
-      expect(entries, isNot(contains('EditableText(')));
-      expect(entries, isNot(contains('MouseRegion(')));
-      expect(entries, isNot(contains('GestureDetector(')));
-      expect(entries, isNot(contains('busyMarkSurfaceDecoration(')));
-      expect(entries, isNot(contains('AnimatedPositionedDirectional(')));
-      expect(entries, isNot(contains('groupPosition')));
-      expect(design, isNot(contains('class BusyMarkDialogTextEntry')));
-      expect(welcome, contains('BusyMarkFloatingTextEntryGroup('));
-      expect(
-        RegExp(r'BusyMarkFloatingTextEntryGroup\(').allMatches(welcome).length,
-        2,
-      );
-      expect(welcome, isNot(contains('BusyMarkFloatingTextEntryPosition')));
-      expect(welcome, isNot(contains('groupPosition:')));
-      expect(welcome, contains('BusyMarkFloatingTextEntry('));
-      expect(welcome, isNot(contains('BusyMarkDialogTextEntry(')));
-      expect(welcome, isNot(contains('autofocus: true')));
-      expect(
-        welcome,
-        isNot(contains('hintText: context.l10n.defaultProjectName')),
-      );
-    },
-  );
+    expect(design, contains('class BusyMarkGroupedTextEntry'));
+    final entries = RegExp(
+      r'class BusyMarkGroupedTextEntry[\s\S]*?class BusyMarkClamp',
+    ).firstMatch(design)!.group(0)!;
+    expect(entries, contains('return YaruListTile.square('));
+    expect(entries, contains('title: TextFormField('));
+    expect(entries, contains('busyMarkGroupedTextFieldDecoration('));
+    expect(entries, contains('trailing: trailing'));
+    expect(entries, isNot(contains('EditableText(')));
+    expect(entries, isNot(contains('MouseRegion(')));
+    expect(entries, isNot(contains('GestureDetector(')));
+    expect(entries, isNot(contains('busyMarkSurfaceDecoration(')));
+    expect(welcome, contains('showBusyMarkModalEditorDialog<bool>('));
+    expect(welcome, contains('BusyMarkModalEditorScaffold('));
+    expect(RegExp(r'BusyMarkGroupedTextEntry\(').allMatches(welcome).length, 5);
+    expect(workspace, contains('showBusyMarkModalEditorDialog<String>('));
+    expect(workspace, contains('showBusyMarkModalEditorDialog<void>('));
+    expect(editor, contains('showBusyMarkModalEditorDialog<T>('));
+    expect(welcome, isNot(contains('BusyMarkFloatingTextEntry')));
+    expect(workspace, isNot(contains('BusyMarkFloatingTextEntry')));
+    expect(editor, isNot(contains('BusyMarkFloatingTextEntry')));
+    expect(welcome, isNot(contains('autofocus: true')));
+    expect(
+      welcome,
+      isNot(contains('hintText: context.l10n.defaultProjectName')),
+    );
+  });
 
   test('sidebar trees share the expandable Yaru-style row', () {
     final workspace = File(
@@ -1657,11 +1659,15 @@ void main() {
     expect(editor, contains('_handleImageBlockEditRequested'));
     expect(editor, contains('initialSource: _imageSourceForBlock(block)'));
     expect(editor, contains('submitLabel: context.l10n.apply'));
-    expect(imageDialog, contains('BusyMarkDialogShell('));
-    expect(imageDialog, contains('BusyMarkFloatingTextEntry('));
-    expect(imageDialog, contains('BusyMarkDialogButton('));
+    expect(imageDialog, contains('BusyMarkModalEditorScaffold('));
+    expect(imageDialog, contains('BusyMarkGroupedList('));
+    expect(imageDialog, contains('BusyMarkGroupedTextEntry('));
+    expect(imageDialog, contains('BusyMarkPushButton.standardIcon('));
     expect(imageDialog, contains("hintText: 'images/example.png'"));
     expect(imageDialog, contains('hintText: context.l10n.describeTheImage'));
+    expect(imageDialog, isNot(contains('BusyMarkDialogShell(')));
+    expect(imageDialog, isNot(contains('BusyMarkFloatingTextEntry(')));
+    expect(imageDialog, isNot(contains('BusyMarkDialogButton(')));
     expect(imageDialog, isNot(contains('AlertDialog(')));
     expect(imageDialog, isNot(contains('TextField(')));
     expect(imageDialog, isNot(contains('InputDecoration(')));

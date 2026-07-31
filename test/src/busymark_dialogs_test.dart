@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
@@ -285,6 +287,78 @@ void main() {
           .map((call) => call.arguments),
       [1, 0],
     );
+  });
+
+  testWidgets('open modal barrier follows live theme changes', (tester) async {
+    const accent = Color(0xFF3584E4);
+    final lightTheme = buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: accent,
+    );
+    final darkTheme = buildBusyMarkTheme(
+      brightness: Brightness.dark,
+      accentColor: accent,
+    );
+    final themeMode = ValueNotifier(ThemeMode.light);
+    addTearDown(themeMode.dispose);
+    late BuildContext hostContext;
+
+    await tester.pumpWidget(
+      ValueListenableBuilder(
+        valueListenable: themeMode,
+        builder: (context, mode, child) {
+          return MaterialApp(
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            themeMode: mode,
+            home: Builder(
+              builder: (context) {
+                hostContext = context;
+                return const SizedBox.shrink();
+              },
+            ),
+          );
+        },
+      ),
+    );
+
+    final result = showBusyMarkModalDialog<void>(
+      hostContext,
+      builder: (context) => const Dialog(child: Text('Theme-aware dialog')),
+    );
+    await tester.pumpAndSettle();
+
+    Color? currentBarrierColor() {
+      return tester
+          .widget<AnimatedModalBarrier>(find.byType(AnimatedModalBarrier).last)
+          .color
+          .value;
+    }
+
+    expect(
+      currentBarrierColor(),
+      lightTheme.extension<BusyMarkSurfaceColors>()!.shade,
+    );
+
+    themeMode.value = ThemeMode.dark;
+    await tester.pumpAndSettle();
+
+    expect(
+      currentBarrierColor(),
+      darkTheme.extension<BusyMarkSurfaceColors>()!.shade,
+    );
+
+    themeMode.value = ThemeMode.light;
+    await tester.pumpAndSettle();
+
+    expect(
+      currentBarrierColor(),
+      lightTheme.extension<BusyMarkSurfaceColors>()!.shade,
+    );
+
+    Navigator.of(hostContext, rootNavigator: true).pop();
+    await tester.pumpAndSettle();
+    await result;
   });
 }
 

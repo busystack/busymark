@@ -130,6 +130,20 @@ ThemeData buildBusyMarkTheme({
     shadowColor: colorScheme.shadow,
     side: popoverSurfaceSide,
   );
+  final tooltipTheme = base.tooltipTheme.copyWith(
+    decoration: BoxDecoration(
+      color: BusyMarkTooltipStyle.background,
+      border: Border.all(color: BusyMarkTooltipStyle.border),
+      borderRadius: BusyMarkTooltipStyle.borderRadius,
+    ),
+    textStyle: textTheme.bodyMedium?.copyWith(
+      color: BusyMarkTooltipStyle.foreground,
+      fontSize: BusyMarkTypography.tooltipFontSize,
+    ),
+    padding: BusyMarkTooltipStyle.padding,
+    constraints: BusyMarkTooltipStyle.constraints,
+    waitDuration: BusyMarkMotion.tooltipWait,
+  );
 
   return base.copyWith(
     brightness: brightness,
@@ -252,10 +266,7 @@ ThemeData buildBusyMarkTheme({
       textStyle: textTheme.bodyMedium,
       menuStyle: dropdownMenuStyle,
     ),
-    // Keep Yaru's native desktop tooltip palette. Re-deriving Material's
-    // tooltip defaults from BusyMark's remapped surface ColorScheme gives
-    // dropdown triggers a different floating color than native GTK.
-    tooltipTheme: base.tooltipTheme,
+    tooltipTheme: tooltipTheme,
     tabBarTheme: base.tabBarTheme.copyWith(
       labelStyle: textTheme.labelLarge,
       unselectedLabelStyle: textTheme.labelLarge,

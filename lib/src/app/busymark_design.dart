@@ -22,12 +22,13 @@ abstract final class BusyMarkSpacing {
   static const double lgPlus = 18;
   static const double xl = 24;
   static const double xxl = 32;
-  static const double tooltipHorizontal = 8;
-  static const double tooltipVertical = 5;
+  static const double tooltipHorizontal = 10;
+  static const double tooltipVertical = 6;
 }
 
 abstract final class BusyMarkRadius {
   static const double sm = 4;
+  static const double tooltip = kYaruButtonRadius;
   static const double md = 8;
   static const double lg = kYaruContainerRadius;
   static const double headerButton = kYaruButtonRadius;
@@ -52,6 +53,7 @@ abstract final class BusyMarkSizes {
   static const double compactIcon = 13;
   static const double iconSm = 16;
   static const double iconMd = 20;
+  static const double tooltipMinHeight = 30;
   static const double previewMinWidth = 320;
   static const double modalMaxWidth = 860;
   static const double modalHorizontalInset = 40;
@@ -131,6 +133,8 @@ abstract final class BusyMarkStroke {
 abstract final class BusyMarkAlpha {
   static const double groupedRowLightHoverStrength = 0.50;
   static const double nativeHeaderMenuShadowOpacity = 0.30;
+  static const double tooltipBackground = 0.80;
+  static const double tooltipBorder = 0.10;
   static const double textSelection = 0.32;
   static const double sourceCollapsedLine = 0.045;
   static const double sourceCursor = 0.82;
@@ -194,6 +198,7 @@ abstract final class BusyMarkTypography {
   static const double codeLineHeight = 1.45;
   static const double bodyLineHeight = 1.5;
   static const double defaultFontSize = 14;
+  static const double tooltipFontSize = defaultFontSize;
   static const double previewThematicBreakHeight = BusyMarkStroke.thematicBreak;
   static const double sourceCursorHeightScale = 1.22;
   static const double sourceLineNumberScale = 0.92;
@@ -374,6 +379,31 @@ abstract final class BusyMarkLinuxPalette {
   static const light4 = Color(0xFFC0BFBC);
   static const dark4 = Color(0xFF242424);
   static const black = Color(0xFF000000);
+}
+
+/// Cross-toolkit tooltip visuals.
+///
+/// Flutter and the native GTK header bar render their own tooltip widgets.
+/// Keeping the palette and shape here lets each toolkit retain its native
+/// layout, positioning, focus, and motion while presenting the same surface.
+abstract final class BusyMarkTooltipStyle {
+  static final Color background = BusyMarkLinuxPalette.black.withValues(
+    alpha: BusyMarkAlpha.tooltipBackground,
+  );
+  static const Color foreground = BusyMarkLinuxPalette.white;
+  static final Color border = BusyMarkLinuxPalette.white.withValues(
+    alpha: BusyMarkAlpha.tooltipBorder,
+  );
+  static const EdgeInsets padding = EdgeInsets.symmetric(
+    horizontal: BusyMarkSpacing.tooltipHorizontal,
+    vertical: BusyMarkSpacing.tooltipVertical,
+  );
+  static const BorderRadius borderRadius = BorderRadius.all(
+    Radius.circular(BusyMarkRadius.tooltip),
+  );
+  static const BoxConstraints constraints = BoxConstraints(
+    minHeight: BusyMarkSizes.tooltipMinHeight,
+  );
 }
 
 @immutable
@@ -1865,11 +1895,13 @@ InputDecorationThemeData busyMarkGroupedInputDecorationTheme(
 InputDecoration busyMarkGroupedTextFieldDecoration(
   BuildContext context, {
   required String labelText,
+  String? hintText,
   String? errorText,
   bool alignLabelWithHint = false,
 }) {
   final decoration = InputDecoration(
     labelText: labelText,
+    hintText: hintText,
     errorText: errorText,
     alignLabelWithHint: alignLabelWithHint,
   );
@@ -1885,6 +1917,81 @@ InputDecoration busyMarkGroupedTextFieldDecoration(
     labelStyle: errorLabelStyle,
     floatingLabelStyle: errorLabelStyle,
   );
+}
+
+/// A text entry hosted by the native grouped-list form surface.
+///
+/// The row owns the background, outline, padding, and separators while
+/// [TextFormField] continues to own editing, validation, and focus behavior.
+class BusyMarkGroupedTextEntry extends StatelessWidget {
+  const BusyMarkGroupedTextEntry({
+    super.key,
+    required this.label,
+    this.controller,
+    this.initialValue,
+    this.errorText,
+    this.hintText,
+    this.enabled = true,
+    this.autofocus = false,
+    this.keyboardType,
+    this.minLines = 1,
+    this.maxLines = 1,
+    this.textInputAction,
+    this.textDirection,
+    this.textStyle,
+    this.alignLabelWithHint = false,
+    this.trailing,
+    this.onChanged,
+    this.onSubmitted,
+  }) : assert(controller == null || initialValue == null),
+       assert(minLines > 0),
+       assert(maxLines >= minLines);
+
+  final String label;
+  final TextEditingController? controller;
+  final String? initialValue;
+  final String? errorText;
+  final String? hintText;
+  final bool enabled;
+  final bool autofocus;
+  final TextInputType? keyboardType;
+  final int minLines;
+  final int maxLines;
+  final TextInputAction? textInputAction;
+  final TextDirection? textDirection;
+  final TextStyle? textStyle;
+  final bool alignLabelWithHint;
+  final Widget? trailing;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return YaruListTile.square(
+      title: TextFormField(
+        controller: controller,
+        initialValue: initialValue,
+        enabled: enabled,
+        autofocus: autofocus,
+        keyboardType: keyboardType,
+        minLines: minLines,
+        maxLines: maxLines,
+        textInputAction: textInputAction,
+        textDirection: textDirection,
+        style: textStyle,
+        onChanged: enabled ? onChanged : null,
+        onFieldSubmitted: enabled ? onSubmitted : null,
+        decoration: busyMarkGroupedTextFieldDecoration(
+          context,
+          labelText: label,
+          hintText: hintText,
+          errorText: errorText,
+          alignLabelWithHint: alignLabelWithHint,
+        ),
+      ),
+      trailing: trailing,
+    );
+  }
 }
 
 class BusyMarkClamp extends StatelessWidget {

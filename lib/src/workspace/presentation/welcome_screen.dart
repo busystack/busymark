@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
@@ -364,9 +365,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     _logSelectedPickerPath(parentPath);
 
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final created = await showBusyMarkModalDialog<bool>(
+    final created = await showBusyMarkModalEditorDialog<bool>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
+      maxWidth: BusyMarkSizes.dialogWide,
       builder: (context) => _CreateWritersideProjectDialog(
         parentDirectoryPath: parentPath,
         onCreate: (request) => ref
@@ -601,100 +603,85 @@ class _CreateWritersideProjectDialogState
         directoryError == null &&
         instanceIdError == null &&
         topicTitleError == null;
-    return BusyMarkDialogShell(
-      title: context.l10n.createWritersideProject,
-      maxWidth: BusyMarkSizes.dialogWide,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: _creating ? context.l10n.creating : context.l10n.create,
-          onPressed: canCreate ? _submit : null,
-          suggested: true,
-        ),
-      ],
-      children: [
-        BusyMarkFloatingTextEntryGroup(
-          children: [
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.projectName,
-              controller: _projectNameController,
-              textInputAction: TextInputAction.next,
-              errorText: projectError,
-            ),
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.directoryName,
-              controller: _directoryNameController,
-              textDirection: TextDirection.ltr,
-              textInputAction: TextInputAction.next,
-              errorText: directoryError,
+    return PopScope(
+      canPop: !_creating,
+      child: BusyMarkModalEditorScaffold(
+        title: context.l10n.createWritersideProject,
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.create,
+        onCancel: () => Navigator.pop(context),
+        cancelEnabled: !_creating,
+        onSave: canCreate ? _submit : null,
+        saving: _creating,
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.projectName,
+                controller: _projectNameController,
+                textInputAction: TextInputAction.next,
+                errorText: projectError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.directoryName,
+                controller: _directoryNameController,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.next,
+                errorText: directoryError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.instanceName,
+                controller: _instanceNameController,
+                textInputAction: TextInputAction.next,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.instanceId,
+                controller: _instanceIdController,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.next,
+                errorText: instanceIdError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.startTopicTitle,
+                controller: _topicTitleController,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) {
+                  if (canCreate) {
+                    _submit();
+                  }
+                },
+                errorText: topicTitleError,
+              ),
+            ],
+          ),
+          if (_creationError != null) ...[
+            const SizedBox(height: BusyMarkSpacing.md),
+            BusyMarkStatusBox(
+              message: _creationError!,
+              kind: BusyMarkStatusKind.error,
             ),
           ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntryGroup(
-          children: [
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.instanceName,
-              controller: _instanceNameController,
-              textInputAction: TextInputAction.next,
-            ),
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.instanceId,
-              controller: _instanceIdController,
-              textDirection: TextDirection.ltr,
-              textInputAction: TextInputAction.next,
-              errorText: instanceIdError,
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntry(
-          label: context.l10n.startTopicTitle,
-          controller: _topicTitleController,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (canCreate) {
-              _submit();
-            }
-          },
-          errorText: topicTitleError,
-        ),
-        const SizedBox(height: BusyMarkSpacing.lg),
-        if (_creationError != null) ...[
-          BusyMarkStatusBox(
-            message: _creationError!,
-            kind: BusyMarkStatusKind.error,
+          BusyMarkGroupedList(
+            title: context.l10n.location,
+            filled: true,
+            children: [
+              YaruListTile.square(
+                title: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    _targetPath,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: colors.foreground),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: BusyMarkSpacing.lg),
         ],
-        Text(
-          context.l10n.location,
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(color: colors.mutedForeground),
-        ),
-        const SizedBox(height: BusyMarkSpacing.xs),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.control,
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            border: Border.all(color: colors.subtleBorder),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.md),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: SelectableText(
-                _targetPath,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 

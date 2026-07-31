@@ -27,6 +27,14 @@ constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
 constexpr char kDefaultForeground[] = "#F7F7F7";
 constexpr char kDefaultHeaderMenuShadowColor[] = "rgba(0,0,0,0.3)";
 constexpr char kDefaultModalBarrierColor[] = "rgba(0,0,0,0.25)";
+constexpr char kDefaultTooltipBackground[] = "rgba(0,0,0,0.8)";
+constexpr char kDefaultTooltipForeground[] = "#FFFFFF";
+constexpr char kDefaultTooltipBorder[] = "rgba(255,255,255,0.1)";
+constexpr gdouble kDefaultTooltipRadius = 8.0;
+constexpr gdouble kDefaultTooltipFontSize = 14.0;
+constexpr gdouble kDefaultTooltipHorizontalPadding = 10.0;
+constexpr gdouble kDefaultTooltipVerticalPadding = 6.0;
+constexpr gdouble kDefaultTooltipMinimumHeight = 30.0;
 // Yaru GTK 3 adds a zero-blur 23%/75% black ring around CSD windows. Current
 // Ubuntu apps retain the diffuse shadow without that legacy hard edge. Reuse
 // Yaru's geometry here; Handy continues to own clipping, radii, and states.
@@ -113,6 +121,14 @@ struct _MyApplication {
   gchar* popover_shadow_color;
   gchar* menu_hover_color;
   gchar* modal_barrier_color;
+  gchar* tooltip_background_color;
+  gchar* tooltip_foreground_color;
+  gchar* tooltip_border_color;
+  gdouble tooltip_radius;
+  gdouble tooltip_font_size;
+  gdouble tooltip_horizontal_padding;
+  gdouble tooltip_vertical_padding;
+  gdouble tooltip_minimum_height;
   gint sidebar_width;
   gboolean sidebar_visible;
   gboolean text_direction_rtl;
@@ -412,6 +428,18 @@ static gboolean fl_lookup_double_arg(FlValue* args,
   return FALSE;
 }
 
+static void update_bounded_double_arg(FlValue* args,
+                                      const gchar* key,
+                                      gdouble minimum,
+                                      gdouble maximum,
+                                      gdouble* target) {
+  gdouble value = 0;
+  if (fl_lookup_double_arg(args, key, &value) && value >= minimum &&
+      value <= maximum) {
+    *target = value;
+  }
+}
+
 static FlValue* fl_lookup_map_arg(FlValue* args, const gchar* key) {
   if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
     return nullptr;
@@ -652,6 +680,54 @@ static void refresh_header_bar_css(MyApplication* self) {
                 css_color_or(self->popover_shadow_color,
                              kDefaultHeaderMenuShadowColor))
           : g_strdup("");
+  const gchar* tooltip_background = css_color_or(
+      self->tooltip_background_color, kDefaultTooltipBackground);
+  const gchar* tooltip_foreground = css_color_or(
+      self->tooltip_foreground_color, kDefaultTooltipForeground);
+  const gchar* tooltip_border =
+      css_color_or(self->tooltip_border_color, kDefaultTooltipBorder);
+  g_autofree gchar* tooltip_css = g_strdup_printf(
+      "tooltip,"
+      "tooltip.background {"
+      "margin: 0;"
+      "padding: 0;"
+      "min-height: %.2fpx;"
+      "}"
+      "tooltip.background {"
+      "background-color: %s;"
+      "background-image: none;"
+      "background-clip: padding-box;"
+      "border: 1px solid %s;"
+      "border-radius: %.2fpx;"
+      "}"
+      "tooltip decoration,"
+      "tooltip.csd decoration {"
+      "background-color: transparent;"
+      "border-radius: %.2fpx;"
+      "box-shadow: none;"
+      "}"
+      "tooltip > box,"
+      "tooltip.background > box {"
+      "margin: 0;"
+      "padding: 0;"
+      "min-height: 0;"
+      "}"
+      "tooltip * {"
+      "background-color: transparent;"
+      "color: %s;"
+      "}"
+      "tooltip label {"
+      "margin: 0;"
+      "padding: %.2fpx %.2fpx;"
+      "min-height: 0;"
+      "font-family: Ubuntu;"
+      "font-size: %.2fpx;"
+      "font-weight: 400;"
+      "}",
+      self->tooltip_minimum_height, tooltip_background, tooltip_border,
+      self->tooltip_radius, self->tooltip_radius, tooltip_foreground,
+      self->tooltip_vertical_padding, self->tooltip_horizontal_padding,
+      self->tooltip_font_size);
   g_autofree gchar* header_focus_css = g_strdup_printf(
       ".busymark-titlebar.%s .busymark-sidebar-header label,"
       ".busymark-titlebar.%s .busymark-header-title {"
@@ -720,6 +796,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}"
+      "%s"
       "%s"
       "%s"
       "%s"
@@ -830,8 +907,8 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-image: none;"
       "}",
       background, window_shadow_css, native_popover_css, native_menu_state_css,
-      header_menu_shadow_css, background, foreground, background, foreground,
-      sidebar_background, foreground, foreground, foreground,
+      header_menu_shadow_css, tooltip_css, background, foreground, background,
+      foreground, sidebar_background, foreground, foreground, foreground,
       kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border,
       header_focus_css, modal);
 
@@ -931,6 +1008,27 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
                           fl_lookup_string_arg(args, "menuHoverColor"));
   replace_css_color_field(&self->modal_barrier_color,
                           fl_lookup_string_arg(args, "modalBarrierColor"));
+  FlValue* tooltip = fl_lookup_map_arg(args, "tooltip");
+  if (tooltip != nullptr) {
+    replace_css_color_field(
+        &self->tooltip_background_color,
+        fl_lookup_string_arg(tooltip, "backgroundColor"));
+    replace_css_color_field(
+        &self->tooltip_foreground_color,
+        fl_lookup_string_arg(tooltip, "foregroundColor"));
+    replace_css_color_field(&self->tooltip_border_color,
+                            fl_lookup_string_arg(tooltip, "borderColor"));
+    update_bounded_double_arg(tooltip, "borderRadius", 0, 64,
+                              &self->tooltip_radius);
+    update_bounded_double_arg(tooltip, "fontSize", 1, 64,
+                              &self->tooltip_font_size);
+    update_bounded_double_arg(tooltip, "horizontalPadding", 0, 64,
+                              &self->tooltip_horizontal_padding);
+    update_bounded_double_arg(tooltip, "verticalPadding", 0, 64,
+                              &self->tooltip_vertical_padding);
+    update_bounded_double_arg(tooltip, "minimumHeight", 1, 128,
+                              &self->tooltip_minimum_height);
+  }
   refresh_header_bar_css(self);
 }
 
@@ -2832,6 +2930,9 @@ static void my_application_dispose(GObject* object) {
   g_clear_pointer(&self->popover_shadow_color, g_free);
   g_clear_pointer(&self->menu_hover_color, g_free);
   g_clear_pointer(&self->modal_barrier_color, g_free);
+  g_clear_pointer(&self->tooltip_background_color, g_free);
+  g_clear_pointer(&self->tooltip_foreground_color, g_free);
+  g_clear_pointer(&self->tooltip_border_color, g_free);
   g_clear_pointer(&self->view_mode, g_free);
   g_clear_pointer(&self->search_query, g_free);
   g_clear_pointer(&self->foreground_color, g_free);
@@ -2893,6 +2994,14 @@ static void my_application_init(MyApplication* self) {
   self->popover_shadow_color = nullptr;
   self->menu_hover_color = nullptr;
   self->modal_barrier_color = nullptr;
+  self->tooltip_background_color = nullptr;
+  self->tooltip_foreground_color = nullptr;
+  self->tooltip_border_color = nullptr;
+  self->tooltip_radius = kDefaultTooltipRadius;
+  self->tooltip_font_size = kDefaultTooltipFontSize;
+  self->tooltip_horizontal_padding = kDefaultTooltipHorizontalPadding;
+  self->tooltip_vertical_padding = kDefaultTooltipVerticalPadding;
+  self->tooltip_minimum_height = kDefaultTooltipMinimumHeight;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
   self->text_direction_rtl = FALSE;

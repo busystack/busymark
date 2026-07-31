@@ -396,7 +396,7 @@ void main() {
     },
   );
 
-  test('theme map contains only native header structure roles', () {
+  test('theme map contains the native semantic visual roles', () {
     expect(_theme.toMap().keys, {
       'preferDark',
       'backgroundColor',
@@ -407,6 +407,7 @@ void main() {
       'menuHoverColor',
       'popoverShadowColor',
       'modalBarrierColor',
+      'tooltip',
     });
     expect(
       _theme.toMap(),
@@ -416,6 +417,16 @@ void main() {
       _theme.toMap(),
       containsPair('foregroundColor', 'rgba(32,32,32,1.000)'),
     );
+    expect(_theme.toMap(), containsPair('tooltip', _tooltipTheme.toMap()));
+    expect(
+      _tooltipTheme.toMap(),
+      containsPair('backgroundColor', 'rgba(0,0,0,0.800)'),
+    );
+    expect(_tooltipTheme.toMap(), containsPair('borderRadius', 8.0));
+    expect(_tooltipTheme.toMap(), containsPair('fontSize', 14.0));
+    expect(_tooltipTheme.toMap(), containsPair('horizontalPadding', 10.0));
+    expect(_tooltipTheme.toMap(), containsPair('verticalPadding', 6.0));
+    expect(_tooltipTheme.toMap(), containsPair('minimumHeight', 30.0));
   });
 }
 
@@ -491,4 +502,16 @@ const _theme = HeaderBarTheme(
   menuHoverColor: Color(0x16000000),
   popoverShadowColor: Color(0x4D000000),
   modalBarrierColor: Color(0x55000000),
+  tooltip: _tooltipTheme,
+);
+
+const _tooltipTheme = HeaderBarTooltipTheme(
+  backgroundColor: Color.fromRGBO(0, 0, 0, 0.8),
+  foregroundColor: Color(0xFFFFFFFF),
+  borderColor: Color.fromRGBO(255, 255, 255, 0.1),
+  borderRadius: 8,
+  fontSize: 14,
+  horizontalPadding: 10,
+  verticalPadding: 6,
+  minimumHeight: 30,
 );

@@ -2109,13 +2109,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<T?> _showEditorDialog<T>(
     BuildContext context, {
     required WidgetBuilder builder,
+    double maxWidth = BusyMarkSizes.dialogCompact,
   }) {
     final headerBar = widget.headerBarService;
-    return showBusyMarkModalDialog<T>(
+    return showBusyMarkModalEditorDialog<T>(
       context,
       headerBarService: headerBar != null && headerBar.isAvailable
           ? headerBar
           : null,
+      maxWidth: maxWidth,
       builder: builder,
     );
   }
@@ -2124,33 +2126,32 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var destination = '';
     return _showEditorDialog<String>(
       context,
-      builder: (context) => BusyMarkDialogShell(
+      builder: (context) => BusyMarkModalEditorScaffold(
         title: context.l10n.link,
-        maxWidth: BusyMarkSizes.dialogCompact,
-        actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.cancel,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BusyMarkDialogButton(
-            label: context.l10n.apply,
-            onPressed: () => Navigator.pop(context, destination),
-            suggested: true,
-          ),
-        ],
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.apply,
+        onCancel: () => Navigator.pop(context),
+        onSave: () => Navigator.pop(context, destination),
         children: [
-          TextFormField(
-            key: const ValueKey('wysiwyg-link-destination-field'),
-            autofocus: true,
-            textDirection: TextDirection.ltr,
-            onChanged: (value) => destination = value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-            ),
-            decoration: const InputDecoration(hintText: 'https://example.com'),
-            onFieldSubmitted: (value) => Navigator.pop(context, value),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: const ValueKey('wysiwyg-link-destination-field'),
+                label: context.l10n.source,
+                autofocus: true,
+                textDirection: TextDirection.ltr,
+                onChanged: (value) => destination = value,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+                hintText: 'https://example.com',
+                onSubmitted: (value) => Navigator.pop(context, value),
+              ),
+            ],
           ),
+          const SizedBox(height: BusyMarkSpacing.lg),
         ],
       ),
     );
@@ -2196,36 +2197,36 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var source = initialSource;
     return _showEditorDialog<String>(
       context,
-      builder: (context) => BusyMarkDialogShell(
+      maxWidth: BusyMarkSizes.dialogNarrow,
+      builder: (context) => BusyMarkModalEditorScaffold(
         title: context.l10n.editHtml,
-        maxWidth: BusyMarkSizes.dialogNarrow,
-        actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.cancel,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BusyMarkDialogButton(
-            label: submitLabel,
-            onPressed: () => Navigator.pop(context, source),
-            suggested: true,
-          ),
-        ],
+        cancelLabel: context.l10n.cancel,
+        saveLabel: submitLabel,
+        onCancel: () => Navigator.pop(context),
+        onSave: () => Navigator.pop(context, source),
         children: [
-          TextFormField(
-            key: const ValueKey('wysiwyg-html-source-field'),
-            initialValue: initialSource,
-            onChanged: (value) => source = value,
-            autofocus: true,
-            minLines: 8,
-            maxLines: 16,
-            textInputAction: TextInputAction.newline,
-            textDirection: TextDirection.ltr,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-            ),
-            decoration: InputDecoration(labelText: context.l10n.htmlSource),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: const ValueKey('wysiwyg-html-source-field'),
+                label: context.l10n.htmlSource,
+                initialValue: initialSource,
+                onChanged: (value) => source = value,
+                autofocus: true,
+                minLines: 8,
+                maxLines: 16,
+                textInputAction: TextInputAction.newline,
+                textDirection: TextDirection.ltr,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+                alignLabelWithHint: true,
+              ),
+            ],
           ),
+          const SizedBox(height: BusyMarkSpacing.lg),
         ],
       ),
     );
@@ -2238,37 +2239,33 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var language = initialLanguage;
     return _showEditorDialog<String>(
       context,
-      builder: (context) => BusyMarkDialogShell(
+      builder: (context) => BusyMarkModalEditorScaffold(
         title: context.l10n.codeBlockLanguage,
-        maxWidth: BusyMarkSizes.dialogCompact,
-        actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.cancel,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BusyMarkDialogButton(
-            label: context.l10n.apply,
-            onPressed: () => Navigator.pop(context, language),
-            suggested: true,
-          ),
-        ],
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.apply,
+        onCancel: () => Navigator.pop(context),
+        onSave: () => Navigator.pop(context, language),
         children: [
-          TextFormField(
-            key: const ValueKey('wysiwyg-code-language-field'),
-            initialValue: initialLanguage,
-            onChanged: (value) => language = value,
-            autofocus: true,
-            textDirection: TextDirection.ltr,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-            ),
-            decoration: InputDecoration(
-              labelText: context.l10n.language,
-              hintText: 'dart',
-            ),
-            onFieldSubmitted: (value) => Navigator.pop(context, value),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: const ValueKey('wysiwyg-code-language-field'),
+                label: context.l10n.language,
+                initialValue: initialLanguage,
+                onChanged: (value) => language = value,
+                autofocus: true,
+                textDirection: TextDirection.ltr,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+                hintText: 'dart',
+                onSubmitted: (value) => Navigator.pop(context, value),
+              ),
+            ],
           ),
+          const SizedBox(height: BusyMarkSpacing.lg),
         ],
       ),
     );
@@ -3306,59 +3303,48 @@ class _ImageDialogState extends State<_ImageDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
+    return BusyMarkModalEditorScaffold(
       title: widget.title,
-      maxWidth: BusyMarkSizes.dialogCompact,
-      actions: [
-        BusyMarkDialogButton(
-          key: BusyMarkImageDialogKeys.cancel,
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          key: BusyMarkImageDialogKeys.submit,
-          label: widget.submitLabel,
-          onPressed: _canSubmit ? _submit : null,
-          suggested: true,
-        ),
-      ],
+      cancelLabel: context.l10n.cancel,
+      saveLabel: widget.submitLabel,
+      cancelKey: BusyMarkImageDialogKeys.cancel,
+      saveKey: BusyMarkImageDialogKeys.submit,
+      onCancel: () => Navigator.pop(context),
+      onSave: _canSubmit ? _submit : null,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        BusyMarkGroupedList(
+          filled: true,
           children: [
-            Expanded(
-              child: BusyMarkFloatingTextEntry(
-                key: BusyMarkImageDialogKeys.source,
-                label: context.l10n.source,
-                controller: _sourceController,
-                hintText: 'images/example.png',
-                autofocus: true,
-                textDirection: TextDirection.ltr,
-                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: BusyMarkTypography.monoFontFamily,
-                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-                ),
-                textInputAction: TextInputAction.next,
+            BusyMarkGroupedTextEntry(
+              key: BusyMarkImageDialogKeys.source,
+              label: context.l10n.source,
+              controller: _sourceController,
+              hintText: 'images/example.png',
+              autofocus: true,
+              textDirection: TextDirection.ltr,
+              textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontFamily: BusyMarkTypography.monoFontFamily,
+                fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+              ),
+              textInputAction: TextInputAction.next,
+              trailing: BusyMarkPushButton.standardIcon(
+                key: BusyMarkImageDialogKeys.choose,
+                icon: const Icon(BusyMarkGlyphs.folderOpen),
+                label: Text(context.l10n.choose),
+                onPressed: _chooseImage,
               ),
             ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            BusyMarkDialogButton(
-              key: BusyMarkImageDialogKeys.choose,
-              label: context.l10n.choose,
-              icon: BusyMarkGlyphs.folderOpen,
-              onPressed: _chooseImage,
+            BusyMarkGroupedTextEntry(
+              key: BusyMarkImageDialogKeys.alt,
+              label: context.l10n.altText,
+              controller: _altController,
+              hintText: context.l10n.describeTheImage,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
             ),
           ],
         ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntry(
-          key: BusyMarkImageDialogKeys.alt,
-          label: context.l10n.altText,
-          controller: _altController,
-          hintText: context.l10n.describeTheImage,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
-        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
       ],
     );
   }
@@ -3444,49 +3430,34 @@ class _TableDialogState extends State<_TableDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
+    return BusyMarkModalEditorScaffold(
       title: context.l10n.table,
-      maxWidth: BusyMarkSizes.dialogCompact,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: context.l10n.insert,
-          onPressed: _submit,
-          suggested: true,
-        ),
-      ],
+      cancelLabel: context.l10n.cancel,
+      saveLabel: context.l10n.insert,
+      onCancel: () => Navigator.pop(context),
+      onSave: _submit,
       children: [
-        Row(
+        BusyMarkGroupedList(
+          filled: true,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _columnsController,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: context.l10n.columns,
-                  hintText: '2',
-                ),
-                onSubmitted: (_) => _submit(),
-              ),
+            BusyMarkGroupedTextEntry(
+              label: context.l10n.columns,
+              controller: _columnsController,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              hintText: '2',
+              onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(width: BusyMarkSpacing.md),
-            Expanded(
-              child: TextField(
-                controller: _rowsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: context.l10n.rows,
-                  hintText: '2',
-                ),
-                onSubmitted: (_) => _submit(),
-              ),
+            BusyMarkGroupedTextEntry(
+              label: context.l10n.rows,
+              controller: _rowsController,
+              keyboardType: TextInputType.number,
+              hintText: '2',
+              onSubmitted: (_) => _submit(),
             ),
           ],
         ),
+        const SizedBox(height: BusyMarkSpacing.lg),
       ],
     );
   }

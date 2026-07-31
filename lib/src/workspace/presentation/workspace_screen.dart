@@ -1190,8 +1190,9 @@ Future<_PathMenuAction?> _showSidebarPathMenu(
 }
 
 Future<String?> _showCreateBranchDialog(BuildContext context) {
-  return showBusyMarkModalDialog<String>(
+  return showBusyMarkModalEditorDialog<String>(
     context,
+    maxWidth: BusyMarkSizes.dialogCompact,
     builder: (context) => const _CreateBranchDialog(),
   );
 }
@@ -1246,29 +1247,27 @@ class _CreateBranchDialogState extends State<_CreateBranchDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
+    return BusyMarkModalEditorScaffold(
       title: context.l10n.gitCreateBranch,
-      maxWidth: BusyMarkSizes.dialogCompact,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: context.l10n.gitCreateBranch,
-          suggested: true,
-          onPressed: _canCreate ? _submit : null,
-        ),
-      ],
+      cancelLabel: context.l10n.cancel,
+      saveLabel: context.l10n.gitCreateBranch,
+      onCancel: () => Navigator.pop(context),
+      onSave: _canCreate ? _submit : null,
       children: [
-        BusyMarkFloatingTextEntry(
-          label: context.l10n.gitBranchName,
-          controller: _controller,
-          textDirection: TextDirection.ltr,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkGroupedTextEntry(
+              label: context.l10n.gitBranchName,
+              controller: _controller,
+              textDirection: TextDirection.ltr,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+            ),
+          ],
         ),
+        const SizedBox(height: BusyMarkSpacing.lg),
       ],
     );
   }
@@ -3501,8 +3500,9 @@ Future<String?> _showFileNameDialog(
   required String actionLabel,
   required String initialValue,
 }) {
-  return showBusyMarkModalDialog<String>(
+  return showBusyMarkModalEditorDialog<String>(
     context,
+    maxWidth: BusyMarkSizes.dialogCompact,
     builder: (context) => _FileNameDialog(
       title: title,
       actionLabel: actionLabel,
@@ -3548,29 +3548,27 @@ class _FileNameDialogState extends State<_FileNameDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
+    return BusyMarkModalEditorScaffold(
       title: widget.title,
-      maxWidth: BusyMarkSizes.dialogCompact,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: widget.actionLabel,
-          suggested: true,
-          onPressed: _canSubmit ? _submit : null,
-        ),
-      ],
+      cancelLabel: context.l10n.cancel,
+      saveLabel: widget.actionLabel,
+      onCancel: () => Navigator.pop(context),
+      onSave: _canSubmit ? _submit : null,
       children: [
-        BusyMarkFloatingTextEntry(
-          label: context.l10n.fileName,
-          controller: _controller,
-          textDirection: TextDirection.ltr,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
+        BusyMarkGroupedList(
+          filled: true,
+          children: [
+            BusyMarkGroupedTextEntry(
+              label: context.l10n.fileName,
+              controller: _controller,
+              textDirection: TextDirection.ltr,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+            ),
+          ],
         ),
+        const SizedBox(height: BusyMarkSpacing.lg),
       ],
     );
   }
@@ -4571,9 +4569,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
       return;
     }
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    await showBusyMarkModalDialog<void>(
+    await showBusyMarkModalEditorDialog<void>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
+      maxWidth: BusyMarkSizes.dialogWide,
       builder: (dialogContext) => _CreateWritersideTopicDialog(
         workspace: widget.workspace,
         instanceTreePath: instanceTreePath,
@@ -5078,142 +5077,107 @@ class _CreateWritersideTopicDialogState
     final titleError = _titleError(context);
     final fileNameError = _fileNameError(context);
     final canCreate = !_creating && titleError == null && fileNameError == null;
-    return BusyMarkDialogShell(
-      title: _dialogTitle(context),
-      maxWidth: BusyMarkSizes.dialogWide,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: _creating ? context.l10n.creating : context.l10n.create,
-          suggested: true,
-          onPressed: canCreate ? _submit : null,
-        ),
-      ],
-      children: [
-        BusyMarkFloatingTextEntryGroup(
-          children: [
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.topicTitle,
-              controller: _titleController,
-              autofocus: true,
-              textInputAction: TextInputAction.next,
-              errorText: titleError,
-            ),
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.fileName,
-              controller: _fileNameController,
-              textDirection: TextDirection.ltr,
-              textInputAction: TextInputAction.done,
-              errorText: fileNameError,
-              onSubmitted: (_) {
-                if (canCreate) {
-                  _submit();
-                }
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            BusyMarkActionRow(
-              title: context.l10n.topicPlacement,
-              leading: const Icon(BusyMarkGlyphs.tree),
-              trailing: BusyMarkPopupSelector<WritersideTopicCreatePlacement>(
-                value: _placement,
-                label: _placementLabel(context, _placement),
-                tooltip: context.l10n.topicPlacement,
-                enabled: !_creating,
-                options: [
-                  BusyMarkPopupSelectorOption(
-                    value: WritersideTopicCreatePlacement.root,
-                    label: context.l10n.tocRoot,
-                  ),
+    return PopScope(
+      canPop: !_creating,
+      child: BusyMarkModalEditorScaffold(
+        title: _dialogTitle(context),
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.create,
+        onCancel: () => Navigator.pop(context),
+        cancelEnabled: !_creating,
+        onSave: canCreate ? _submit : null,
+        saving: _creating,
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.topicTitle,
+                controller: _titleController,
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                errorText: titleError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.fileName,
+                controller: _fileNameController,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.done,
+                errorText: fileNameError,
+                onSubmitted: (_) {
+                  if (canCreate) {
+                    _submit();
+                  }
+                },
+              ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkComboRow<WritersideTopicCreatePlacement>(
+                title: context.l10n.topicPlacement,
+                subtitle:
+                    _placement != WritersideTopicCreatePlacement.root &&
+                        widget.referenceLabel != null
+                    ? widget.referenceLabel
+                    : null,
+                leading: const Icon(BusyMarkGlyphs.tree),
+                values: [
+                  WritersideTopicCreatePlacement.root,
                   if (widget.referencePath != null)
-                    BusyMarkPopupSelectorOption(
-                      value: WritersideTopicCreatePlacement.sibling,
-                      label: context.l10n.afterSelectedTopic,
-                    ),
+                    WritersideTopicCreatePlacement.sibling,
                   if (widget.referencePath != null)
-                    BusyMarkPopupSelectorOption(
-                      value: WritersideTopicCreatePlacement.child,
-                      label: context.l10n.insideSelectedTopic,
-                    ),
+                    WritersideTopicCreatePlacement.child,
                 ],
+                selected: _placement,
+                labelFor: (value) => _placementLabel(context, value),
+                enabled: !_creating,
                 onSelected: (value) {
                   setState(() => _placement = value);
                 },
               ),
-            ),
-          ],
-        ),
-        if (_placement != WritersideTopicCreatePlacement.root &&
-            widget.referenceLabel != null) ...[
-          const SizedBox(height: BusyMarkSpacing.xs),
-          Text(
-            widget.referenceLabel!,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: BusyMarkSurfaceColors.of(context).mutedForeground,
-            ),
+              BusyMarkComboRow<WritersideTopicFormat>(
+                title: context.l10n.file,
+                leading: const Icon(BusyMarkGlyphs.document),
+                values: WritersideTopicFormat.values,
+                selected: _format,
+                labelFor: (value) => switch (value) {
+                  WritersideTopicFormat.markdown => context.l10n.markdown,
+                  WritersideTopicFormat.xml => context.l10n.xml,
+                },
+                enabled: !_creating,
+                onSelected: _setFormat,
+              ),
+            ],
           ),
-        ],
-        const SizedBox(height: BusyMarkSpacing.md),
-        SegmentedButton<WritersideTopicFormat>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment(
-              value: WritersideTopicFormat.markdown,
-              label: Text(context.l10n.markdown),
-            ),
-            ButtonSegment(
-              value: WritersideTopicFormat.xml,
-              label: Text(context.l10n.xml),
+          if (_creationError != null) ...[
+            const SizedBox(height: BusyMarkSpacing.md),
+            BusyMarkStatusBox(
+              message: _creationError!,
+              kind: BusyMarkStatusKind.error,
             ),
           ],
-          selected: {_format},
-          onSelectionChanged: (value) => _setFormat(value.first),
-        ),
-        const SizedBox(height: BusyMarkSpacing.lg),
-        if (_creationError != null) ...[
-          BusyMarkStatusBox(
-            message: _creationError!,
-            kind: BusyMarkStatusKind.error,
+          BusyMarkGroupedList(
+            title: context.l10n.location,
+            filled: true,
+            children: [
+              YaruListTile.square(
+                title: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    _targetPath,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: BusyMarkSurfaceColors.of(context).foreground,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: BusyMarkSpacing.lg),
         ],
-        Text(
-          context.l10n.location,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: BusyMarkSurfaceColors.of(context).mutedForeground,
-          ),
-        ),
-        const SizedBox(height: BusyMarkSpacing.xs),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: BusyMarkSurfaceColors.of(context).control,
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            border: Border.all(
-              color: BusyMarkSurfaceColors.of(context).subtleBorder,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.md),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: SelectableText(
-                _targetPath,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
