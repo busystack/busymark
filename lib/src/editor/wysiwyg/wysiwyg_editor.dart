@@ -2260,7 +2260,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                   fontFamily: BusyMarkTypography.monoFontFamily,
                   fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
                 ),
-                hintText: 'dart',
                 onSubmitted: (value) => Navigator.pop(context, value),
               ),
             ],

@@ -148,6 +148,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _autoSaveDebounce?.cancel();
     _invalidateActiveDocumentOperations();
     _resetSaveTracking(dirty: true);
+    final viewModeChange = _showEditorForNewFile();
     final workspace = _service.createUntitledMarkdown();
     state = WorkspaceState(
       workspace: workspace,
@@ -155,6 +156,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       isDirty: true,
       isLoading: false,
     );
+    await viewModeChange;
   }
 
   Future<void> openPath(String path) async {
@@ -370,9 +372,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String directoryPath,
     String fileName,
   ) async {
-    return _runWorkspaceFileOperation((workspace) async {
+    final created = await _runWorkspaceFileOperation((workspace) async {
       return _service.createFile(workspace, directoryPath, fileName);
     });
+    if (created) {
+      await _showEditorForNewFile();
+    }
+    return created;
   }
 
   Future<bool> renameWorkspaceEntity(String path, String newName) async {
@@ -1277,6 +1283,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: text)],
       );
     }
+  }
+
+  Future<void> _showEditorForNewFile() {
+    if (_settingsController.state.documentViewMode !=
+        DocumentViewModePreference.preview) {
+      return Future<void>.value();
+    }
+    return _settingsController.setDocumentViewMode(
+      DocumentViewModePreference.editor,
+    );
   }
 
   void _scheduleAutoSave() {

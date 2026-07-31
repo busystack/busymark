@@ -4327,6 +4327,44 @@ Draft paragraph.
     );
   });
 
+  testWidgets('new empty document leaves remembered preview mode for editor', (
+    tester,
+  ) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(_StartupWorkspaceService()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createMarkdownFile));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(appSettingsControllerProvider).documentViewMode,
+      DocumentViewModePreference.editor,
+    );
+    expect(
+      find.byKey(const ValueKey('wysiwyg-document-scroll')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('preview-document-scroll')), findsNothing);
+  });
+
   testWidgets('blocked remote image prompt allows the current workspace', (
     tester,
   ) async {

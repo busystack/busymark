@@ -75,6 +75,9 @@ void main() {
       final controller = harness.controller;
 
       await controller.openPath(directory.path);
+      await settingsController.setDocumentViewMode(
+        DocumentViewModePreference.preview,
+      );
 
       final created = p.join(directory.path, 'new.md');
       expect(
@@ -83,6 +86,10 @@ void main() {
       );
       expect(File(created).existsSync(), isTrue);
       expect(controller.state.workspace?.activeFilePath, created);
+      expect(
+        settingsController.state.documentViewMode,
+        DocumentViewModePreference.editor,
+      );
 
       final renamed = p.join(directory.path, 'renamed.md');
       expect(
@@ -131,6 +138,45 @@ void main() {
       settingsController.dispose();
     },
   );
+
+  test('new Markdown files leave preview mode for editor mode', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await settingsController.setDocumentViewMode(
+      DocumentViewModePreference.preview,
+    );
+    await controller.createMarkdownFile();
+
+    expect(
+      settingsController.state.documentViewMode,
+      DocumentViewModePreference.editor,
+    );
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('new Markdown files preserve non-preview view modes', () async {
+    for (final mode in <DocumentViewModePreference>[
+      DocumentViewModePreference.editor,
+      DocumentViewModePreference.source,
+      DocumentViewModePreference.split,
+    ]) {
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await settingsController.setDocumentViewMode(mode);
+      await controller.createMarkdownFile();
+
+      expect(settingsController.state.documentViewMode, mode);
+
+      controller.dispose();
+      settingsController.dispose();
+    }
+  });
 
   test('discarding an untitled Markdown file clears the workspace', () async {
     final harness = await _createControllerHarness();
@@ -1040,6 +1086,9 @@ class _AppSettingsControllerDriver {
       _container.read(appSettingsControllerProvider.notifier);
 
   AppSettings get state => _container.read(appSettingsControllerProvider);
+
+  Future<void> setDocumentViewMode(DocumentViewModePreference mode) =>
+      _notifier.setDocumentViewMode(mode);
 
   Future<void> setValidateOnEdit(bool enabled) =>
       _notifier.setValidateOnEdit(enabled);

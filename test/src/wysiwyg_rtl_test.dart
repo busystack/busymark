@@ -319,6 +319,7 @@ void main() {
     expect(find.byType(BusyMarkDialogShell), findsNothing);
     expect(find.byType(BusyMarkDialogButton), findsNothing);
     expect(languageField.textDirection, TextDirection.ltr);
+    expect(languageField.decoration?.hintText, isNull);
     Navigator.of(
       tester.element(find.byKey(const ValueKey('wysiwyg-code-language-field'))),
     ).pop();
