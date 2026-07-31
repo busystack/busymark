@@ -573,7 +573,7 @@ void main() {
     expect(css, contains('background-color: alpha(currentColor, 0.16)'));
     expect(css, contains('background-color: alpha(currentColor, 0.10)'));
     expect(css, contains('popover.background.'));
-    expect(css, isNot(contains('modelbutton:hover')));
+    expect(css, contains('modelbutton:hover:not(:disabled)'));
     expect(css, contains('box-shadow: 0 1px 3px'));
     for (final interactionSelector in <String>[
       'tooltip',
@@ -1231,7 +1231,7 @@ void main() {
     }
     expect(native, contains('view_mode_icon_name(mode)'));
     expect(native, contains('view_mode_icon_name("split")'));
-    expect(native, isNot(contains('modelbutton:hover')));
+    expect(native, contains('modelbutton:hover:not(:disabled)'));
     expect(native, isNot(contains('modelbutton:focus')));
     expect(native, isNot(contains('modelbutton:active')));
     expect(native, isNot(contains('outline-width: 0;')));
@@ -1283,8 +1283,6 @@ void main() {
     expect(native, contains('gtk_label_new(shortcut)'));
     expect(native, contains('decorate_model_menu_accelerators('));
     expect(native, contains('g_menu_item_set_icon(item, icon)'));
-    expect(native, isNot(contains('native_menu_state_css')));
-    expect(native, isNot(contains('row:hover:not(:disabled)')));
     expect(native, contains('gtk_menu_button_set_menu_model'));
     expect(native, isNot(contains('busymark-shortcut-widget')));
     expect(native, isNot(contains('busymark-menu-row')));
