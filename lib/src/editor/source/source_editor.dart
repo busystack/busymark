@@ -62,6 +62,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _sourceEditorKey = GlobalKey();
   final _foldedRegionKeys = <String>{};
   final _searchController = SourceSearchController();
+  final _lineLayoutCache = SourceLineLayoutCache();
   List<SourceFoldRegion> _foldRegions = const [];
   String _lastPath = '';
 
@@ -231,6 +232,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               collapsedRegionKeys: _foldedRegionKeys,
               foldRegions: _foldRegions,
               diagnosticMarkers: markers,
+              layoutCache: _lineLayoutCache,
               onToggleFold: _toggleFold,
               child: SizedBox(
                 key: _sourceEditorKey,
@@ -810,6 +812,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
+    required this.layoutCache,
     required this.onToggleFold,
     required this.child,
   });
@@ -829,6 +832,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
+  final SourceLineLayoutCache layoutCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
   final Widget child;
 
@@ -865,6 +869,7 @@ class _SourceEditorFrame extends StatelessWidget {
                   collapsedRegionKeys: collapsedRegionKeys,
                   diagnosticMarkers: diagnosticMarkers,
                   onToggleFold: onToggleFold,
+                  layoutCache: layoutCache,
                 ),
               ),
               VerticalDivider(
@@ -883,18 +888,21 @@ class _SourceEditorFrame extends StatelessWidget {
                         textWidth: textWidth,
                       ),
                     ),
-                    Positioned.fill(
-                      child: _CollapsedSourceLineOverlay(
-                        controller: controller,
-                        scrollController: scrollController,
-                        lineHeight: lineHeight,
-                        textWidth: textWidth,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        foldRegions: foldRegions,
-                        collapsedRegionKeys: collapsedRegionKeys,
+                    if (collapsedRegionKeys.isNotEmpty)
+                      Positioned.fill(
+                        child: _CollapsedSourceLineOverlay(
+                          controller: controller,
+                          scrollController: scrollController,
+                          lineHeight: lineHeight,
+                          textWidth: textWidth,
+                          textStyle: textStyle,
+                          strutStyle: strutStyle,
+                          foldRegions: foldRegions,
+                          collapsedRegionKeys: collapsedRegionKeys,
+                          diagnosticMarkers: diagnosticMarkers,
+                          layoutCache: layoutCache,
+                        ),
                       ),
-                    ),
                     Positioned.fill(child: child),
                   ],
                 ),
@@ -924,11 +932,24 @@ class _SourceRenderedTextLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final renderedText = RichText(
+      textDirection: TextDirection.ltr,
+      text: controller.buildSourceTextSpan(
+        context: context,
+        style: textStyle,
+        hideCollapsedStartLines: true,
+      ),
+      strutStyle: strutStyle,
+      textHeightBehavior: sourceTextHeightBehavior,
+      textScaler: MediaQuery.textScalerOf(context),
+      textWidthBasis: TextWidthBasis.parent,
+    );
     return IgnorePointer(
       child: ClipRect(
         child: AnimatedBuilder(
-          animation: Listenable.merge([controller, scrollController]),
-          builder: (context, _) {
+          animation: scrollController,
+          child: renderedText,
+          builder: (context, child) {
             final scrollOffset = safeScrollOffset(scrollController);
             return Stack(
               clipBehavior: Clip.none,
@@ -937,18 +958,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                   top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
                   left: _SourceEditorFrame.editorPaddingLeft,
                   width: textWidth,
-                  child: RichText(
-                    textDirection: TextDirection.ltr,
-                    text: controller.buildSourceTextSpan(
-                      context: context,
-                      style: textStyle,
-                      hideCollapsedStartLines: true,
-                    ),
-                    strutStyle: strutStyle,
-                    textHeightBehavior: sourceTextHeightBehavior,
-                    textScaler: MediaQuery.textScalerOf(context),
-                    textWidthBasis: TextWidthBasis.parent,
-                  ),
+                  child: child!,
                 ),
               ],
             );
@@ -969,6 +979,8 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
     required this.strutStyle,
     required this.foldRegions,
     required this.collapsedRegionKeys,
+    required this.diagnosticMarkers,
+    required this.layoutCache,
   });
 
   final BusyMarkSourceEditingController controller;
@@ -979,6 +991,8 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   final StrutStyle? strutStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
+  final List<SourceDiagnosticMarker> diagnosticMarkers;
+  final SourceLineLayoutCache layoutCache;
 
   @override
   Widget build(BuildContext context) {
@@ -989,7 +1003,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
             return AnimatedBuilder(
               animation: Listenable.merge([controller, scrollController]),
               builder: (context, _) {
-                final layouts = sourceLineLayoutEntries(
+                final layouts = layoutCache.resolve(
                   context,
                   controller: controller,
                   foldRegions: foldRegions,
@@ -998,6 +1012,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                   strutStyle: strutStyle,
                   lineHeight: lineHeight,
                   textWidth: textWidth,
+                  diagnostics: diagnosticMarkers,
                 );
                 final linesByNumber = {
                   for (final line in sourceLineInfos(controller.fullText))

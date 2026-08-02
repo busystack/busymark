@@ -188,9 +188,13 @@ void main() {
         workspace,
         activeFile.readAsStringSync(),
       );
-      parserService.buildPreview(workspace, activeFile.readAsStringSync());
+      final preview = parserService.buildPreview(
+        workspace,
+        activeFile.readAsStringSync(),
+      );
 
-      expect(parser.validationFlags, [false, false]);
+      expect(parser.validationFlags, [false]);
+      expect(preview?.blocks.map((block) => block.text), ['Intro', 'API']);
       expect(
         reparsed.diagnostics.map((diagnostic) => diagnostic.code),
         isNot(contains('markdown.link.unresolved-target')),
@@ -396,6 +400,26 @@ void main() {
         .where((entity) => p.basename(entity.path).contains('busymark-save'))
         .toList();
     expect(leftovers, isEmpty);
+  });
+
+  test('file change detection ignores timestamp-only changes', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-metadata-touch-',
+    );
+    addTearDown(() async {
+      if (await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
+    });
+    final file = File(p.join(directory.path, 'note.md'));
+    await file.writeAsString('# Unchanged\n');
+    final snapshot = await service.fileSnapshot(file.path);
+
+    await file.setLastModified(
+      snapshot.modifiedAt.add(const Duration(seconds: 2)),
+    );
+
+    expect(await service.fileChangedSince(file.path, snapshot), isFalse);
   });
 
   test('saveNewText writes a missing file and returns its snapshot', () async {

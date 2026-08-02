@@ -217,6 +217,24 @@ void main() {}
     },
   );
 
+  test('WYSIWYG text edits preserve unrelated block instances', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final before = controller.document.blocks;
+
+    controller.updateBlockText(before[1].id, 'Changed');
+
+    final after = controller.document.blocks;
+    expect(identical(after[0], before[0]), isTrue);
+    expect(identical(after[1], before[1]), isFalse);
+    expect(identical(after[2], before[2]), isTrue);
+  });
+
   test('unrelated edits preserve source-only reference definitions', () {
     for (final source in const [
       '[guide]: docs.md "Title"\nOriginal\n',

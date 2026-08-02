@@ -861,7 +861,7 @@ class WorkspaceService {
           .where((item) => item.filePath == active)
           .firstOrNull;
       if (topic?.format == WritersideTopicFormat.markdown) {
-        final markdown = markdownParser.parse(
+        final markdown = await markdownParser.parseAsync(
           filePath: active,
           source: source,
           mode: MarkdownMode.writersideMarkdown,
@@ -908,6 +908,12 @@ class WorkspaceService {
     if (active == null) {
       return null;
     }
+    final currentMarkdown = workspace.markdown;
+    if (currentMarkdown != null &&
+        p.equals(currentMarkdown.filePath, active) &&
+        currentMarkdown.source == source) {
+      return previewBuilder.build(currentMarkdown);
+    }
     if (workspace.kind == WorkspaceKind.writersideModule) {
       final module = workspace.writersideModule;
       if (module == null) {
@@ -942,6 +948,65 @@ class WorkspaceService {
       );
     }
     final parsed = markdownParser.parse(
+      filePath: active,
+      source: source,
+      mode: MarkdownMode.commonMark,
+      workspaceRoot: workspace.rootPath,
+      validateLocalReferences: false,
+    );
+    return previewBuilder.build(parsed);
+  }
+
+  /// Builds preview data without running Markdown parsing on Flutter's UI
+  /// isolate. An already-current workspace parse is reused when available.
+  Future<PreviewDocument?> buildPreviewAsync(
+    Workspace workspace,
+    String source,
+  ) async {
+    final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (active == null) {
+      return null;
+    }
+    final currentMarkdown = workspace.markdown;
+    if (currentMarkdown != null &&
+        p.equals(currentMarkdown.filePath, active) &&
+        currentMarkdown.source == source) {
+      return previewBuilder.build(currentMarkdown);
+    }
+    if (workspace.kind == WorkspaceKind.writersideModule) {
+      final module = workspace.writersideModule;
+      if (module == null) {
+        return null;
+      }
+      final topic = module.topics
+          .where((item) => item.filePath == active)
+          .firstOrNull;
+      if (topic == null) {
+        return PreviewDocument(
+          title: p.basename(active),
+          modeLabel: '',
+          compatibility: '',
+          blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: source)],
+        );
+      }
+      if (topic.format == WritersideTopicFormat.markdown) {
+        final parsed = await markdownParser.parseAsync(
+          filePath: active,
+          source: source,
+          mode: MarkdownMode.writersideMarkdown,
+          workspaceRoot: topic.topicRoot,
+          validateLocalReferences: false,
+        );
+        return previewBuilder.build(parsed);
+      }
+      return PreviewDocument(
+        title: topic.title ?? topic.fileName,
+        modeLabel: '',
+        compatibility: '',
+        blocks: _xmlPreviewBlocks(source, topic.title),
+      );
+    }
+    final parsed = await markdownParser.parseAsync(
       filePath: active,
       source: source,
       mode: MarkdownMode.commonMark,

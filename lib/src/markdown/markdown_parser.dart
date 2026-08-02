@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:markdown/markdown.dart' as md;
 import 'package:path/path.dart' as p;
@@ -18,6 +19,7 @@ import 'raw_html_policy.dart';
 // resolve inside the opened workspace. Targets outside that root, unsupported
 // file types, and oversized files are not inspected.
 const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
+const int _backgroundParseThresholdBytes = 64 * 1024;
 
 class MarkdownParser {
   const MarkdownParser();
@@ -29,13 +31,25 @@ class MarkdownParser {
     String? workspaceRoot,
     bool validateLocalReferences = true,
   }) async {
-    final parsed = parse(
-      filePath: filePath,
-      source: source,
-      mode: mode,
-      workspaceRoot: workspaceRoot,
-      validateLocalReferences: false,
-    );
+    final parsed =
+        source.length < _backgroundParseThresholdBytes ||
+            runtimeType != MarkdownParser
+        ? parse(
+            filePath: filePath,
+            source: source,
+            mode: mode,
+            workspaceRoot: workspaceRoot,
+            validateLocalReferences: false,
+          )
+        : await Isolate.run(
+            () => parse(
+              filePath: filePath,
+              source: source,
+              mode: mode,
+              workspaceRoot: workspaceRoot,
+              validateLocalReferences: false,
+            ),
+          );
     if (!validateLocalReferences) {
       return parsed;
     }

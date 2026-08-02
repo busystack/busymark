@@ -43,6 +43,24 @@ void main() {
     expect(parsed.title, 'Front Matter Title');
   });
 
+  test('parseAsync handles documents above the background threshold', () async {
+    final source = List.generate(
+      1800,
+      (index) => '## Section $index\n\nParagraph ${'content ' * 4}$index.\n',
+    ).join('\n');
+
+    final parsed = await parser.parseAsync(
+      filePath: 'large.md',
+      source: source,
+      validateLocalReferences: false,
+    );
+
+    expect(source.length, greaterThan(64 * 1024));
+    expect(parsed.source, source);
+    expect(parsed.headings, hasLength(1800));
+    expect(parsed.headings.last.text, 'Section 1799');
+  });
+
   test('generates Unicode heading anchors for supported languages', () {
     final localizedHeadings = <String, ({String heading, String slug})>{
       'en': (heading: 'Getting Started', slug: 'getting-started'),

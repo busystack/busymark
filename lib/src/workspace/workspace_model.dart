@@ -63,9 +63,13 @@ class WorkspaceFileSnapshot {
   final String contentHash;
 
   bool differsFrom(WorkspaceFileSnapshot other) {
-    return modifiedAt != other.modifiedAt ||
-        size != other.size ||
-        contentHash != other.contentHash;
+    // A timestamp-only change cannot lose user content. Prefer the hashes when
+    // both snapshots have one so metadata touches and filesystem timestamp
+    // rounding do not produce false external-edit conflicts.
+    if (contentHash.isNotEmpty && other.contentHash.isNotEmpty) {
+      return contentHash != other.contentHash;
+    }
+    return modifiedAt != other.modifiedAt || size != other.size;
   }
 }
 

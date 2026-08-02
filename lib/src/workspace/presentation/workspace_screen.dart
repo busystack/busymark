@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
@@ -133,10 +134,6 @@ class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
   void clear() {
     state = null;
   }
-}
-
-ScrollPosition? _safeScrollPosition(ScrollController controller) {
-  return controller.positions.isEmpty ? null : controller.positions.last;
 }
 
 class _OutlineNavigationTarget {
@@ -6168,24 +6165,16 @@ class _GitDiffDocumentView extends StatefulWidget {
 }
 
 class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
-  late final ScrollController _previewScrollController;
+  final _previewScrollController = ItemScrollController();
   late final GitDiffChangeNavigatorController _sourceChangeNavigatorController;
-  final _previewHeadingKeys = <String, GlobalKey>{};
-  final _previewSearchKeys = <int, GlobalKey>{};
+  final _previewBlockContexts = <int, BuildContext>{};
   int _currentChangeIndex = 0;
   String? _initialScrollToken;
 
   @override
   void initState() {
     super.initState();
-    _previewScrollController = ScrollController();
     _sourceChangeNavigatorController = GitDiffChangeNavigatorController();
-  }
-
-  @override
-  void dispose() {
-    _previewScrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -6296,8 +6285,10 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                             preview: previewData?.document,
                             workspace: widget.workspace,
                             controller: _previewScrollController,
-                            headingKeys: _previewHeadingKeys,
-                            searchKeys: _previewSearchKeys,
+                            onBlockContextAvailable:
+                                _rememberPreviewBlockContext,
+                            onBlockContextUnavailable:
+                                _forgetPreviewBlockContext,
                             documentLayout:
                                 BusyMarkDocumentLayoutSpec.standalone,
                           ),
@@ -6359,17 +6350,33 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
     List<_DiffPreviewChangeTarget> targets,
     int index,
   ) {
-    final context =
-        _previewSearchKeys[targets[index].blockIndex]?.currentContext;
-    if (context == null) {
+    final blockIndex = targets[index].blockIndex;
+    final blockContext = _previewBlockContexts[blockIndex];
+    if (blockContext != null && blockContext.mounted) {
+      unawaited(
+        Scrollable.ensureVisible(
+          blockContext,
+          duration: BusyMarkMotion.scroll,
+          curve: Curves.easeOutCubic,
+          alignment: 0.1,
+        ),
+      );
       return;
     }
-    Scrollable.ensureVisible(
-      context,
-      duration: BusyMarkMotion.scroll,
-      curve: Curves.easeOutCubic,
-      alignment: 0.1,
-    );
+    if (!_previewScrollController.isAttached) {
+      return;
+    }
+    _previewScrollController.jumpTo(index: blockIndex, alignment: 0.1);
+  }
+
+  void _rememberPreviewBlockContext(int index, BuildContext context) {
+    _previewBlockContexts[index] = context;
+  }
+
+  void _forgetPreviewBlockContext(int index, BuildContext context) {
+    if (identical(_previewBlockContexts[index], context)) {
+      _previewBlockContexts.remove(index);
+    }
   }
 
   void _scheduleInitialScroll({
@@ -7067,10 +7074,9 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
-  late final ScrollController _previewScrollController;
+  final _previewScrollController = ItemScrollController();
   final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
-  final _previewHeadingKeys = <String, GlobalKey>{};
-  final _previewSearchKeys = <int, GlobalKey>{};
+  final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
   var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
@@ -7084,7 +7090,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
-    _previewScrollController = ScrollController();
     _lastPath = widget.state.workspace?.activeFilePath ?? '';
   }
 
@@ -7095,8 +7100,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (path != _lastPath) {
       _lastPath = path;
       _clearWysiwygCache();
-      _previewHeadingKeys.clear();
-      _previewSearchKeys.clear();
+      _previewBlockContexts.clear();
       _wysiwygScrollHeadingId = null;
       _wysiwygScrollBlockId = null;
       _wysiwygSearchQuery = null;
@@ -7120,12 +7124,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             .refreshActivePreview(sourceFilePath: sourceFilePath);
       });
     }
-  }
-
-  @override
-  void dispose() {
-    _previewScrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -7277,8 +7275,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 preview: widget.state.preview,
                 workspace: widget.state.workspace,
                 controller: _previewScrollController,
-                headingKeys: _previewHeadingKeys,
-                searchKeys: _previewSearchKeys,
+                onBlockContextAvailable: _rememberPreviewBlockContext,
+                onBlockContextUnavailable: _forgetPreviewBlockContext,
                 documentLayout: sourceVisible
                     ? BusyMarkDocumentLayoutSpec.splitPreview
                     : standaloneDocumentLayout,
@@ -7287,6 +7285,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         ],
       ),
     );
+  }
+
+  void _rememberPreviewBlockContext(int index, BuildContext context) {
+    _previewBlockContexts[index] = context;
+  }
+
+  void _forgetPreviewBlockContext(int index, BuildContext context) {
+    if (identical(_previewBlockContexts[index], context)) {
+      _previewBlockContexts.remove(index);
+    }
   }
 
   void _handleSourceChanged(String value, String? sourceFilePath) {
@@ -7430,16 +7438,132 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _scrollPreviewToHeading(String headingId) {
-    final context = _previewHeadingKeys[headingId]?.currentContext;
-    if (context == null) {
+    final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
+    final index = blocks.indexWhere(
+      (block) =>
+          block.kind == PreviewBlockKind.heading &&
+          block.attributes['id'] == headingId,
+    );
+    if (index < 0 || !_previewScrollController.isAttached) {
       return;
     }
-    Scrollable.ensureVisible(
-      context,
-      duration: BusyMarkMotion.scroll,
-      curve: Curves.easeOutCubic,
-      alignment: 0.0,
+    unawaited(_scrollPreviewToIndex(index, alignment: 0.0));
+  }
+
+  Future<void> _scrollPreviewToIndex(
+    int index, {
+    double alignment = 0.04,
+  }) async {
+    final blockContext = _previewBlockContexts[index];
+    if (blockContext != null && blockContext.mounted) {
+      await Scrollable.ensureVisible(
+        blockContext,
+        alignment: alignment,
+        duration: BusyMarkMotion.scroll,
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+    if (!_previewScrollController.isAttached) {
+      return;
+    }
+    _previewScrollController.jumpTo(index: index, alignment: alignment);
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
+  bool _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
+    final query = target.query.trim();
+    if (query.isEmpty || !_previewScrollController.isAttached) {
+      return false;
+    }
+    final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
+    final index = _previewSearchBlockIndex(
+      blocks,
+      target,
+      widget.state.activeText,
     );
+    if (index == null) {
+      return _scrollPreviewToApproximateLine(target, blocks.length);
+    }
+    unawaited(_scrollPreviewToSearchBlock(target, index, blocks[index]));
+    return true;
+  }
+
+  Future<void> _scrollPreviewToSearchBlock(
+    _SearchNavigationTarget target,
+    int index,
+    PreviewBlock block,
+  ) async {
+    await _scrollPreviewToIndex(index, alignment: 0.0);
+    if (!mounted || !_isCurrentPreviewSearchScroll(target)) {
+      return;
+    }
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || !_isCurrentPreviewSearchScroll(target)) {
+      return;
+    }
+    var blockContext = _previewBlockContexts[index];
+    if (blockContext == null) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !_isCurrentPreviewSearchScroll(target)) {
+        return;
+      }
+      blockContext = _previewBlockContexts[index];
+    }
+    if (blockContext != null && blockContext.mounted) {
+      _scrollPreviewToBlockOffset(blockContext, block, target);
+    }
+  }
+
+  void _scrollPreviewToBlockOffset(
+    BuildContext blockContext,
+    PreviewBlock block,
+    _SearchNavigationTarget target,
+  ) {
+    final renderObject = blockContext.findRenderObject();
+    final position = Scrollable.maybeOf(blockContext)?.position;
+    if (renderObject is! RenderBox || position == null) {
+      return;
+    }
+    final viewportBox =
+        position.context.notificationContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null) {
+      return;
+    }
+    final targetY = renderObject
+        .localToGlobal(
+          Offset(
+            0,
+            renderObject.size.height *
+                _previewBlockTargetFraction(
+                  block,
+                  target,
+                  widget.state.activeText,
+                ),
+          ),
+        )
+        .dy;
+    final viewportTop = viewportBox.localToGlobal(Offset.zero).dy;
+    final targetOffset =
+        position.pixels + targetY - viewportTop - BusyMarkSpacing.lg;
+    position.jumpTo(
+      targetOffset.clamp(0.0, position.maxScrollExtent).toDouble(),
+    );
+  }
+
+  bool _scrollPreviewToApproximateLine(
+    _SearchNavigationTarget target,
+    int blockCount,
+  ) {
+    if (!_previewScrollController.isAttached || blockCount == 0) {
+      return false;
+    }
+    final sourceLineCount = widget.state.activeText.split('\n').length;
+    final denominator = math.max(1, sourceLineCount - 1);
+    final fraction = ((target.line - 1) / denominator).clamp(0.0, 1.0);
+    final index = (fraction * (blockCount - 1)).round();
+    unawaited(_scrollPreviewToIndex(index));
+    return true;
   }
 
   void _schedulePreviewSearchScroll(_SearchNavigationTarget target) {
@@ -7475,108 +7599,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     return mounted && target.request == _previewSearchScrollRequest;
   }
 
-  bool _scrollPreviewToSearchTarget(_SearchNavigationTarget target) {
-    final query = target.query.trim();
-    if (query.isEmpty) {
-      return false;
-    }
-    final blocks = widget.state.preview?.blocks ?? const <PreviewBlock>[];
-    final index = _previewSearchBlockIndex(
-      blocks,
-      target,
-      widget.state.activeText,
-    );
-    if (index == null) {
-      return _scrollPreviewToApproximateLine(target);
-    }
-    final context = _previewSearchKeys[index]?.currentContext;
-    if (context == null) {
-      _scrollPreviewToApproximateLine(target);
-      return false;
-    }
-    _scrollPreviewToBlockOffset(context, blocks[index], target);
-    return true;
-  }
-
-  void _scrollPreviewToBlockOffset(
-    BuildContext blockContext,
-    PreviewBlock block,
-    _SearchNavigationTarget target,
-  ) {
-    if (!_previewScrollController.hasClients) {
-      Scrollable.ensureVisible(
-        blockContext,
-        duration: BusyMarkMotion.scroll,
-        curve: Curves.easeOutCubic,
-        alignment: 0.0,
-      );
-      return;
-    }
-    final renderObject = blockContext.findRenderObject();
-    if (renderObject is! RenderBox) {
-      Scrollable.ensureVisible(
-        blockContext,
-        duration: BusyMarkMotion.scroll,
-        curve: Curves.easeOutCubic,
-        alignment: 0.0,
-      );
-      return;
-    }
-
-    final position = _safeScrollPosition(_previewScrollController);
-    if (position == null) {
-      return;
-    }
-    final viewportBox =
-        position.context.notificationContext?.findRenderObject() as RenderBox?;
-    if (viewportBox == null) {
-      Scrollable.ensureVisible(
-        blockContext,
-        duration: BusyMarkMotion.scroll,
-        curve: Curves.easeOutCubic,
-        alignment: 0.0,
-      );
-      return;
-    }
-    final blockHeight = renderObject.size.height;
-    final targetY = renderObject
-        .localToGlobal(
-          Offset(
-            0,
-            blockHeight *
-                _previewBlockTargetFraction(
-                  block,
-                  target,
-                  widget.state.activeText,
-                ),
-          ),
-        )
-        .dy;
-    final viewportTop = viewportBox.localToGlobal(Offset.zero).dy;
-    final targetOffset =
-        position.pixels + targetY - viewportTop - BusyMarkSpacing.lg;
-    _previewScrollController.jumpTo(
-      targetOffset.clamp(0.0, position.maxScrollExtent).toDouble(),
-    );
-  }
-
-  bool _scrollPreviewToApproximateLine(_SearchNavigationTarget target) {
-    final position = _safeScrollPosition(_previewScrollController);
-    if (position == null) {
-      return false;
-    }
-    final sourceLineCount = widget.state.activeText.split('\n').length;
-    final denominator = math.max(1, sourceLineCount - 1);
-    final fraction = ((target.line - 1) / denominator).clamp(0.0, 1.0);
-    _previewScrollController.jumpTo(
-      (position.maxScrollExtent * fraction).clamp(
-        0.0,
-        position.maxScrollExtent,
-      ),
-    );
-    return true;
-  }
-
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
     return kind == DocumentKind.markdown ||
@@ -7593,6 +7615,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (_cachedWysiwygPath == activePath &&
         _cachedWysiwygSource == widget.state.activeText) {
       return _cachedWysiwygDocument;
+    }
+    final currentMarkdown = workspace.markdown;
+    if (currentMarkdown != null &&
+        p.equals(currentMarkdown.filePath, activePath) &&
+        currentMarkdown.source == widget.state.activeText) {
+      final document = currentMarkdown.busyDocument;
+      _cachedWysiwygDocument = document;
+      _cachedWysiwygPath = activePath;
+      _cachedWysiwygSource = widget.state.activeText;
+      return document;
     }
     final mode = workspace.kind == WorkspaceKind.writersideModule
         ? MarkdownMode.writersideMarkdown
@@ -7622,17 +7654,18 @@ class _PreviewPane extends StatelessWidget {
     required this.preview,
     required this.workspace,
     required this.controller,
-    required this.headingKeys,
-    required this.searchKeys,
     required this.documentLayout,
+    this.onBlockContextAvailable,
+    this.onBlockContextUnavailable,
   });
 
   final PreviewDocument? preview;
   final Workspace? workspace;
-  final ScrollController controller;
-  final Map<String, GlobalKey> headingKeys;
-  final Map<int, GlobalKey> searchKeys;
+  final ItemScrollController controller;
   final BusyMarkDocumentLayoutSpec documentLayout;
+  final void Function(int index, BuildContext context)? onBlockContextAvailable;
+  final void Function(int index, BuildContext context)?
+  onBlockContextUnavailable;
 
   @override
   Widget build(BuildContext context) {
@@ -7644,27 +7677,20 @@ class _PreviewPane extends StatelessWidget {
         title: context.l10n.noPreview,
       );
     }
-    final keyedHeadingIds = <String>{};
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: SelectionArea(
-        child: ListView(
-          key: const ValueKey('preview-document-scroll'),
-          controller: controller,
-          padding: documentLayout.scrollPadding,
-          children: [
-            BusyMarkDocumentContentFrame(
-              layout: documentLayout,
-              contentKey: const ValueKey('preview-document-content'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final (index, block) in document.blocks.indexed)
-                    _keyedPreviewBlock(context, index, block, keyedHeadingIds),
-                ],
-              ),
-            ),
-          ],
+        child: BusyMarkDocumentContentFrame(
+          layout: documentLayout,
+          contentKey: const ValueKey('preview-document-content'),
+          child: ScrollablePositionedList.builder(
+            key: const ValueKey('preview-document-scroll'),
+            itemScrollController: controller,
+            padding: documentLayout.scrollPadding,
+            itemCount: document.blocks.length,
+            itemBuilder: (context, index) =>
+                _keyedPreviewBlock(context, index, document.blocks[index]),
+          ),
         ),
       ),
     );
@@ -7674,17 +7700,21 @@ class _PreviewPane extends StatelessWidget {
     BuildContext context,
     int index,
     PreviewBlock block,
-    Set<String> keyedHeadingIds,
   ) {
     final child = _PreviewBlockView(
       block,
       first: index == 0,
       listRunEnd: _isLastListBlock(index),
       workspace: workspace,
-      headingKey: _keyForBlock(block, keyedHeadingIds),
+      headingKey: block.kind == PreviewBlockKind.heading
+          ? ValueKey('preview-heading-$index')
+          : null,
     );
-    return KeyedSubtree(
-      key: searchKeys.putIfAbsent(index, () => GlobalKey()),
+    return _PreviewBlockContextAnchor(
+      key: ValueKey('preview-block-$index'),
+      index: index,
+      onAvailable: onBlockContextAvailable,
+      onUnavailable: onBlockContextUnavailable,
       child: child,
     );
   }
@@ -7697,19 +7727,52 @@ class _PreviewPane extends StatelessWidget {
     return index == blocks.length - 1 ||
         blocks[index + 1].kind != PreviewBlockKind.list;
   }
+}
 
-  Key? _keyForBlock(PreviewBlock block, Set<String> keyedHeadingIds) {
-    if (block.kind != PreviewBlockKind.heading) {
-      return null;
+class _PreviewBlockContextAnchor extends StatefulWidget {
+  const _PreviewBlockContextAnchor({
+    super.key,
+    required this.index,
+    required this.child,
+    this.onAvailable,
+    this.onUnavailable,
+  });
+
+  final int index;
+  final Widget child;
+  final void Function(int index, BuildContext context)? onAvailable;
+  final void Function(int index, BuildContext context)? onUnavailable;
+
+  @override
+  State<_PreviewBlockContextAnchor> createState() =>
+      _PreviewBlockContextAnchorState();
+}
+
+class _PreviewBlockContextAnchorState
+    extends State<_PreviewBlockContextAnchor> {
+  @override
+  void didUpdateWidget(covariant _PreviewBlockContextAnchor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index ||
+        oldWidget.onUnavailable != widget.onUnavailable) {
+      oldWidget.onUnavailable?.call(oldWidget.index, context);
     }
-    final id = block.attributes['id'];
-    if (id == null || id.isEmpty) {
-      return null;
-    }
-    if (!keyedHeadingIds.add(id)) {
-      return null;
-    }
-    return headingKeys.putIfAbsent(id, () => GlobalKey());
+  }
+
+  @override
+  void dispose() {
+    widget.onUnavailable?.call(widget.index, context);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.onAvailable?.call(widget.index, this.context);
+      }
+    });
+    return widget.child;
   }
 }
 

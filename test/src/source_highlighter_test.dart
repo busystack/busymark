@@ -261,6 +261,75 @@ void main() {
     },
   );
 
+  testWidgets('transparent editing layout matches rendered Markdown layout', (
+    tester,
+  ) async {
+    const source =
+        '# A wrapped heading with words\n'
+        'Text with **strong words**, *emphasis*, and `inline code`.\n'
+        '```dart\n'
+        'final value = "**not emphasis**";\n'
+        '```\n';
+    const style = TextStyle(
+      fontFamily: 'Ubuntu Mono',
+      fontSize: 14,
+      height: 1.45,
+    );
+    late TextPainter transparentPainter;
+    late TextPainter renderedPainter;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Builder(
+          builder: (context) {
+            final controller = BusyMarkSourceEditingController(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+            )..renderText = false;
+            transparentPainter = TextPainter(
+              text: controller.buildTextSpan(
+                context: context,
+                style: style,
+                withComposing: false,
+              ),
+              textDirection: TextDirection.ltr,
+            )..layout(maxWidth: 180);
+            renderedPainter = TextPainter(
+              text: controller.buildSourceTextSpan(
+                context: context,
+                style: style,
+              ),
+              textDirection: TextDirection.ltr,
+            )..layout(maxWidth: 180);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    addTearDown(transparentPainter.dispose);
+    addTearDown(renderedPainter.dispose);
+
+    final transparentMetrics = transparentPainter.computeLineMetrics();
+    final renderedMetrics = renderedPainter.computeLineMetrics();
+    expect(transparentMetrics, hasLength(renderedMetrics.length));
+    for (var index = 0; index < renderedMetrics.length; index++) {
+      expect(
+        transparentMetrics[index].height,
+        closeTo(renderedMetrics[index].height, 0.01),
+      );
+      expect(
+        transparentMetrics[index].width,
+        closeTo(renderedMetrics[index].width, 0.01),
+      );
+    }
+  });
+
   testWidgets('folded regions project body lines out of editable text', (
     tester,
   ) async {

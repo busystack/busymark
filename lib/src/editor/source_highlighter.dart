@@ -12,6 +12,40 @@ import 'source_language.dart';
 
 export 'source_language.dart';
 
+final _markdownHeadingPattern = RegExp(r'^(\s{0,3}#{1,6}(?:\s+|$))(.*)$');
+final _markdownInlineCodePattern = RegExp(r'`[^`\n]+`');
+final _markdownStrongPattern = RegExp(r'(\*\*[^*\n]+\*\*|__[^_\n]+__)');
+final _markdownBlockquotePattern = RegExp(r'^\s{0,3}>\s?');
+final _markdownListMarkerPattern = RegExp(r'^\s*(?:[-*+]|\d+\.)\s+');
+final _markdownTaskMarkerPattern = RegExp(
+  r'^\s*(?:[-*+]|\d+\.)\s+(\[[ xX]\])\s+',
+);
+final _markdownThematicBreakPattern = RegExp(r'^\s{0,3}(?:(?:[-*_])\s*){3,}$');
+final _markdownLinkPattern = RegExp(r'!?\[[^\]\n]+\]\([^\)\n]+\)');
+final _markdownInlineHtmlPattern = RegExp(r'</?[A-Za-z_][^>\n]*>');
+final _markdownStrikethroughPattern = RegExp(r'~~[^~\n]+~~');
+final _jsonAttributePattern = RegExp(r'"(?:\\.|[^"\\])*"(?=\s*:)');
+final _codeNumberPattern = RegExp(r'\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b');
+final _codeWordPattern = RegExp(r'\b[A-Za-z_][A-Za-z0-9_]*\b');
+final _codeTypePattern = RegExp(r'\b[A-Z][A-Za-z0-9_]*\b');
+final _codeFunctionPattern = RegExp(r'\b[A-Za-z_][A-Za-z0-9_]*\b(?=\s*\()');
+final _codePunctuationPattern = RegExp(r'[{}()\[\],.;:+\-*/%=<>!&|?]+');
+final _jsonStringPattern = RegExp(r'"(?:\\.|[^"\\])*"');
+final _codeStringPattern = RegExp(
+  "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|`(?:\\\\.|[^`\\\\])*`",
+);
+final _codeBlockCommentPattern = RegExp(r'/\*.*?(?:\*/|$)');
+final _xmlCommentPattern = RegExp(r'<!--[\s\S]*?-->');
+final _xmlTagPattern = RegExp(r'</?[^>]+/?>');
+final _xmlTagNamePattern = RegExp(r'^</?\s*([A-Za-z_][\w:.-]*)');
+final _xmlAttributePattern = RegExp(r'([A-Za-z_:][\w:.-]*)(?=\s*=)');
+final _xmlLiteralPattern = RegExp("\"[^\"\\n]*\"|'[^'\\n]*'");
+final _visualMarkdownHeadingPattern = RegExp(r'^(\s{0,3}#{1,6}\s+)(.*)$');
+final _visualMarkdownListPattern = RegExp(
+  r'^(\s{0,8}(?:[-*+]|\d+[.)])\s+)(\[[ xX]\]\s+)?(.*)$',
+);
+final _visualMarkdownQuotePattern = RegExp(r'^(\s{0,3}>\s?)(.*)$');
+
 TextSpan buildBusyMarkReadOnlySourceTextSpan({
   required BuildContext context,
   required String source,
@@ -263,14 +297,33 @@ class BusyMarkSourceEditingController extends TextEditingController {
     final hiddenRanges = hideCollapsedStartLines
         ? _collapsedStartLineHiddenRanges()
         : const <_HiddenRange>[];
+    if (!visible) {
+      return TextSpan(
+        style: baseStyle,
+        children: _language == SourceSyntaxLanguage.markdown
+            ? _layoutOnlyMarkdownSpans(
+                source,
+                baseStyle,
+                hiddenRanges,
+                styleOverride: _transparentLayoutStyle,
+              )
+            : _spansFromRanges(
+                source,
+                const <_HighlightRange>[],
+                hiddenRanges,
+                baseStyle,
+                styleOverride: _transparentLayoutStyle,
+              ),
+      );
+    }
     final palette = BusyMarkSyntaxColors.of(context);
-    final styleOverride = visible ? null : _transparentLayoutStyle;
-    final searchRanges = visible
-        ? _searchHighlightRanges(source, baseStyle, colors, _searchResult)
-        : const <_HighlightRange>[];
-    if (visible &&
-        visualMarkdown &&
-        _language == SourceSyntaxLanguage.markdown) {
+    final searchRanges = _searchHighlightRanges(
+      source,
+      baseStyle,
+      colors,
+      _searchResult,
+    );
+    if (visualMarkdown && _language == SourceSyntaxLanguage.markdown) {
       return _visualMarkdownTextSpan(source, baseStyle, palette);
     }
     return TextSpan(
@@ -282,7 +335,6 @@ class BusyMarkSourceEditingController extends TextEditingController {
           palette,
           hiddenRanges,
           overlayRanges: searchRanges,
-          styleOverride: styleOverride,
         ),
         SourceSyntaxLanguage.xml => _highlightXml(
           source,
@@ -290,16 +342,9 @@ class BusyMarkSourceEditingController extends TextEditingController {
           palette,
           hiddenRanges,
           overlayRanges: searchRanges,
-          styleOverride: styleOverride,
         ),
         SourceSyntaxLanguage.plain => [
-          ..._spansFromRanges(
-            source,
-            searchRanges,
-            hiddenRanges,
-            baseStyle,
-            styleOverride: styleOverride,
-          ),
+          ..._spansFromRanges(source, searchRanges, hiddenRanges, baseStyle),
         ],
       },
     );
@@ -344,6 +389,102 @@ class BusyMarkSourceEditingController extends TextEditingController {
     }
     return ranges;
   }
+}
+
+List<TextSpan> _layoutOnlyMarkdownSpans(
+  String source,
+  TextStyle baseStyle,
+  List<_HiddenRange> hiddenRanges, {
+  required TextStyle Function(TextStyle style) styleOverride,
+}) {
+  final ranges = <_HighlightRange>[];
+  var offset = 0;
+  MarkdownFence? openFence;
+  var inFrontMatter = source.startsWith('---\n') || source == '---';
+  for (final line in source.split('\n')) {
+    final lineStart = offset;
+    final lineEnd = lineStart + line.length;
+    if (inFrontMatter) {
+      if (lineStart > 0 && line.trim() == '---') {
+        inFrontMatter = false;
+      }
+      offset = lineEnd + 1;
+      continue;
+    }
+    final activeFence = openFence;
+    if (activeFence != null) {
+      if (activeFence.closes(line)) {
+        openFence = null;
+      }
+      offset = lineEnd + 1;
+      continue;
+    }
+    final openingFence = MarkdownFence.parse(line);
+    if (openingFence != null) {
+      openFence = openingFence;
+      offset = lineEnd + 1;
+      continue;
+    }
+    final heading = _markdownHeadingPattern.firstMatch(line);
+    if (heading != null) {
+      final marker = heading.group(1)!;
+      final content = heading.group(2)!;
+      if (content.isNotEmpty) {
+        _addRange(
+          ranges,
+          lineStart + marker.length,
+          lineEnd,
+          _markdownHeadingStyle(baseStyle, marker.trim().length),
+        );
+      }
+      offset = lineEnd + 1;
+      continue;
+    }
+    _addDelimitedInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      _markdownInlineCodePattern,
+      baseStyle.copyWith(fontFamily: BusyMarkTypography.monoFontFamily),
+      openingLength: 1,
+      closingLength: 1,
+      markerStyle: baseStyle,
+    );
+    _addDelimitedInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      _markdownStrongPattern,
+      baseStyle.copyWith(fontWeight: FontWeight.w700),
+      openingLength: 2,
+      closingLength: 2,
+      markerStyle: baseStyle,
+    );
+    _addSingleDelimiterInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      '*',
+      baseStyle.copyWith(fontStyle: FontStyle.italic),
+      markerStyle: baseStyle,
+    );
+    _addSingleDelimiterInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      '_',
+      baseStyle.copyWith(fontStyle: FontStyle.italic),
+      markerStyle: baseStyle,
+    );
+    offset = lineEnd + 1;
+  }
+  return _spansFromRanges(
+    source,
+    ranges,
+    hiddenRanges,
+    baseStyle,
+    styleOverride: styleOverride,
+  );
 }
 
 class _HighlightRange {
@@ -454,7 +595,7 @@ List<TextSpan> _highlightMarkdown(
       continue;
     }
 
-    final heading = RegExp(r'^(\s{0,3}#{1,6}(?:\s+|$))(.*)$').firstMatch(line);
+    final heading = _markdownHeadingPattern.firstMatch(line);
     if (heading != null) {
       final marker = heading.group(1)!;
       final content = heading.group(2)!;
@@ -472,7 +613,7 @@ List<TextSpan> _highlightMarkdown(
       continue;
     }
 
-    final blockquote = RegExp(r'^\s{0,3}>\s?').firstMatch(line);
+    final blockquote = _markdownBlockquotePattern.firstMatch(line);
     if (blockquote != null) {
       _addRange(
         ranges,
@@ -482,7 +623,7 @@ List<TextSpan> _highlightMarkdown(
       );
     }
 
-    final listMarker = RegExp(r'^\s*(?:[-*+]|\d+\.)\s+').firstMatch(line);
+    final listMarker = _markdownListMarkerPattern.firstMatch(line);
     if (listMarker != null) {
       _addRange(
         ranges,
@@ -492,9 +633,7 @@ List<TextSpan> _highlightMarkdown(
       );
     }
 
-    final taskMarker = RegExp(
-      r'^\s*(?:[-*+]|\d+\.)\s+(\[[ xX]\])\s+',
-    ).firstMatch(line);
+    final taskMarker = _markdownTaskMarkerPattern.firstMatch(line);
     if (taskMarker != null) {
       final checkbox = taskMarker.group(1)!;
       final checkboxStart = line.indexOf(checkbox, listMarker?.end ?? 0);
@@ -508,9 +647,7 @@ List<TextSpan> _highlightMarkdown(
       }
     }
 
-    final thematicBreak = RegExp(
-      r'^\s{0,3}(?:(?:[-*_])\s*){3,}$',
-    ).firstMatch(line);
+    final thematicBreak = _markdownThematicBreakPattern.firstMatch(line);
     if (thematicBreak != null) {
       _addRange(ranges, lineStart, lineEnd, blockMarkerStyle);
     }
@@ -519,7 +656,7 @@ List<TextSpan> _highlightMarkdown(
       ranges,
       lineStart,
       line,
-      RegExp(r'`[^`\n]+`'),
+      _markdownInlineCodePattern,
       baseStyle.copyWith(
         fontFamily: BusyMarkTypography.monoFontFamily,
         backgroundColor: palette.punctuation.withValues(
@@ -534,7 +671,7 @@ List<TextSpan> _highlightMarkdown(
       ranges,
       lineStart,
       line,
-      RegExp(r'!?\[[^\]\n]+\]\([^\)\n]+\)'),
+      _markdownLinkPattern,
       baseStyle.copyWith(
         color: palette.link,
         decoration: TextDecoration.underline,
@@ -546,14 +683,14 @@ List<TextSpan> _highlightMarkdown(
       ranges,
       lineStart,
       line,
-      RegExp(r'</?[A-Za-z_][^>\n]*>'),
+      _markdownInlineHtmlPattern,
       baseStyle.copyWith(color: palette.tag),
     );
     _addDelimitedInlineMatches(
       ranges,
       lineStart,
       line,
-      RegExp(r'(\*\*[^*\n]+\*\*|__[^_\n]+__)'),
+      _markdownStrongPattern,
       baseStyle.copyWith(fontWeight: FontWeight.w700),
       openingLength: 2,
       closingLength: 2,
@@ -579,7 +716,7 @@ List<TextSpan> _highlightMarkdown(
       ranges,
       lineStart,
       line,
-      RegExp(r'~~[^~\n]+~~'),
+      _markdownStrikethroughPattern,
       baseStyle.copyWith(decoration: TextDecoration.lineThrough),
       openingLength: 2,
       closingLength: 2,
@@ -635,7 +772,7 @@ bool _addFencedCodeLineRanges(
       ranges,
       lineStart,
       line,
-      RegExp(r'"(?:\\.|[^"\\])*"(?=\s*:)'),
+      _jsonAttributePattern,
       attributeStyle,
     );
   }
@@ -643,16 +780,10 @@ bool _addFencedCodeLineRanges(
   _addCodeStringRanges(ranges, lineStart, line, language, stringStyle);
   _addCodeCommentRanges(ranges, lineStart, line, language, commentStyle);
 
-  _addInlineMatches(
-    ranges,
-    lineStart,
-    line,
-    RegExp(r'\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b'),
-    literalStyle,
-  );
+  _addInlineMatches(ranges, lineStart, line, _codeNumberPattern, literalStyle);
 
   final keywords = _codeKeywords(language);
-  for (final word in RegExp(r'\b[A-Za-z_][A-Za-z0-9_]*\b').allMatches(line)) {
+  for (final word in _codeWordPattern.allMatches(line)) {
     final token = word.group(0)!;
     final style = _codeLiterals.contains(token.toLowerCase())
         ? literalStyle
@@ -664,13 +795,11 @@ bool _addFencedCodeLineRanges(
     }
   }
 
-  for (final type in RegExp(r'\b[A-Z][A-Za-z0-9_]*\b').allMatches(line)) {
+  for (final type in _codeTypePattern.allMatches(line)) {
     _addRange(ranges, lineStart + type.start, lineStart + type.end, tagStyle);
   }
 
-  for (final function in RegExp(
-    r'\b[A-Za-z_][A-Za-z0-9_]*\b(?=\s*\()',
-  ).allMatches(line)) {
+  for (final function in _codeFunctionPattern.allMatches(line)) {
     final token = function.group(0)!;
     if (!keywords.contains(token) &&
         !_codeLiterals.contains(token.toLowerCase())) {
@@ -687,7 +816,7 @@ bool _addFencedCodeLineRanges(
     ranges,
     lineStart,
     line,
-    RegExp(r'[{}()\[\],.;:+\-*/%=<>!&|?]+'),
+    _codePunctuationPattern,
     punctuationStyle,
   );
 
@@ -721,11 +850,7 @@ void _addCodeStringRanges(
   String language,
   TextStyle style,
 ) {
-  final pattern = language == 'json'
-      ? RegExp(r'"(?:\\.|[^"\\])*"')
-      : RegExp(
-          "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|`(?:\\\\.|[^`\\\\])*`",
-        );
+  final pattern = language == 'json' ? _jsonStringPattern : _codeStringPattern;
   _addInlineMatches(ranges, lineStart, line, pattern, style);
 }
 
@@ -736,7 +861,7 @@ void _addCodeCommentRanges(
   String language,
   TextStyle style,
 ) {
-  for (final block in RegExp(r'/\*.*?(?:\*/|$)').allMatches(line)) {
+  for (final block in _codeBlockCommentPattern.allMatches(line)) {
     _addRange(ranges, lineStart + block.start, lineStart + block.end, style);
   }
 
@@ -949,7 +1074,7 @@ void _addXmlRanges(
   final stringStyle = baseStyle.copyWith(color: palette.string);
   final punctuationStyle = baseStyle.copyWith(color: palette.punctuation);
 
-  for (final comment in RegExp(r'<!--[\s\S]*?-->').allMatches(source)) {
+  for (final comment in _xmlCommentPattern.allMatches(source)) {
     _addRange(
       ranges,
       sourceOffset + comment.start,
@@ -958,7 +1083,7 @@ void _addXmlRanges(
     );
   }
 
-  for (final tag in RegExp(r'</?[^>]+/?>').allMatches(source)) {
+  for (final tag in _xmlTagPattern.allMatches(source)) {
     final text = tag.group(0)!;
     if (text.startsWith('<!--')) {
       continue;
@@ -992,7 +1117,7 @@ void _addXmlRanges(
       );
     }
 
-    final name = RegExp(r'^</?\s*([A-Za-z_][\w:.-]*)').firstMatch(text);
+    final name = _xmlTagNamePattern.firstMatch(text);
     if (name != null) {
       final nameText = name.group(1)!;
       final nameOffset = text.indexOf(nameText, name.start);
@@ -1006,9 +1131,7 @@ void _addXmlRanges(
       }
     }
 
-    for (final attr in RegExp(
-      r'([A-Za-z_:][\w:.-]*)(?=\s*=)',
-    ).allMatches(text)) {
+    for (final attr in _xmlAttributePattern.allMatches(text)) {
       _addRange(
         ranges,
         sourceOffset + tag.start + attr.start,
@@ -1016,7 +1139,7 @@ void _addXmlRanges(
         attributeStyle,
       );
     }
-    for (final literal in RegExp("\"[^\"\\n]*\"|'[^'\\n]*'").allMatches(text)) {
+    for (final literal in _xmlLiteralPattern.allMatches(text)) {
       _addRange(
         ranges,
         sourceOffset + tag.start + literal.start,
@@ -1351,7 +1474,7 @@ List<TextSpan> _visualMarkdownLineSpans(
   TextStyle baseStyle,
   BusyMarkSyntaxColors palette,
 ) {
-  final heading = RegExp(r'^(\s{0,3}#{1,6}\s+)(.*)$').firstMatch(line);
+  final heading = _visualMarkdownHeadingPattern.firstMatch(line);
   if (heading != null) {
     final marker = heading.group(1)!;
     final content = heading.group(2)!;
@@ -1366,9 +1489,7 @@ List<TextSpan> _visualMarkdownLineSpans(
     ];
   }
 
-  final list = RegExp(
-    r'^(\s{0,8}(?:[-*+]|\d+[.)])\s+)(\[[ xX]\]\s+)?(.*)$',
-  ).firstMatch(line);
+  final list = _visualMarkdownListPattern.firstMatch(line);
   if (list != null) {
     final marker = list.group(1)!;
     final task = list.group(2);
@@ -1387,7 +1508,7 @@ List<TextSpan> _visualMarkdownLineSpans(
     ];
   }
 
-  final quote = RegExp(r'^(\s{0,3}>\s?)(.*)$').firstMatch(line);
+  final quote = _visualMarkdownQuotePattern.firstMatch(line);
   if (quote != null) {
     return [
       TextSpan(

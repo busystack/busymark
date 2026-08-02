@@ -3359,7 +3359,6 @@ void main() {
         ?.style;
     expect(previewRect.left, closeTo(editorRect.left, 0.1));
     expect(previewRect.right, closeTo(editorRect.right, 0.1));
-    expect(previewRect.top, closeTo(editorRect.top, 0.1));
     expect(previewHeadingRect.left, closeTo(editorHeadingRect.left, 0.1));
     expect(previewHeadingRect.top, closeTo(editorHeadingRect.top, 0.1));
     expect(previewParagraphRect.left, closeTo(editorParagraphRect.left, 0.1));
@@ -3370,7 +3369,10 @@ void main() {
       previewParagraphRect.height,
       closeTo(editorParagraphRect.height, 0.1),
     );
-    expect(tester.widget<ListView>(previewScroll).padding, editorPadding);
+    expect(
+      tester.widget<ScrollablePositionedList>(previewScroll).padding,
+      editorPadding,
+    );
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -3379,14 +3381,11 @@ void main() {
 
     final splitPaneRect = tester.getRect(previewScroll);
     final splitContentRect = tester.getRect(previewContent);
-    expect(splitContentRect.left - splitPaneRect.left, BusyMarkSpacing.xl);
-    expect(splitPaneRect.right - splitContentRect.right, BusyMarkSpacing.xl);
+    expect(splitContentRect.left, splitPaneRect.left);
+    expect(splitContentRect.right, splitPaneRect.right);
+    expect(splitContentRect.top, splitPaneRect.top);
     expect(
-      splitContentRect.top - splitPaneRect.top,
-      BusyMarkSourceEditorMetrics.paddingTop,
-    );
-    expect(
-      tester.widget<ListView>(previewScroll).padding,
+      tester.widget<ScrollablePositionedList>(previewScroll).padding,
       BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding,
     );
   });
@@ -5020,21 +5019,83 @@ Draft paragraph.
 
     await _tapLeftmostText(tester, 'Second needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    final secondOffset = _largestScrollableOffset(tester);
-    expect(secondOffset, greaterThan(100));
+    await tester.pumpAndSettle();
+    final secondRect = _rightmostTextRect(tester, 'Second needle target');
+    expect(secondRect.top, greaterThan(40));
+    expect(secondRect.bottom, lessThan(800));
 
     await _tapLeftmostText(tester, 'First needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    final firstOffset = _largestScrollableOffset(tester);
-    expect(firstOffset, lessThan(secondOffset));
+    await tester.pumpAndSettle();
+    final firstRect = _rightmostTextRect(tester, 'First needle target');
+    expect(firstRect.top, greaterThan(40));
+    expect(firstRect.bottom, lessThan(800));
 
     await _tapLeftmostText(tester, 'Second needle target');
     await _tapLeftmostText(tester, 'First needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(_largestScrollableOffset(tester), lessThan(secondOffset));
+    await tester.pumpAndSettle();
+    final repeatedFirstRect = _rightmostTextRect(tester, 'First needle target');
+    expect(repeatedFirstRect.top, greaterThan(40));
+    expect(repeatedFirstRect.bottom, lessThan(800));
+  });
+
+  testWidgets('preview lazily builds large documents', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final source = List.generate(
+      1200,
+      (index) => 'Preview paragraph ${index + 1}',
+    ).join('\n\n');
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/large-preview.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byKey(const ValueKey('preview-document-scroll'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    final previewList = tester.widget<ScrollablePositionedList>(
+      find.byKey(const ValueKey('preview-document-scroll')),
+    );
+    expect(previewList.itemCount, 1200);
+    expect(find.text('Preview paragraph 1200'), findsNothing);
+    expect(
+      find.textContaining('Preview paragraph').evaluate().length,
+      lessThan(80),
+    );
+
+    previewList.itemScrollController!.jumpTo(index: 1199);
+    await tester.pump();
+    expect(find.text('Preview paragraph 1200'), findsOneWidget);
   });
 
   testWidgets('preview search result clicks scroll to code block matches', (
@@ -5107,14 +5168,17 @@ Draft paragraph.
 
     await _tapLeftmostText(tester, 'second code needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    final secondOffset = _largestScrollableOffset(tester);
-    expect(secondOffset, greaterThan(100));
+    await tester.pumpAndSettle();
+    final secondRect = _rightmostTextRect(tester, 'second code needle target');
+    expect(secondRect.top, greaterThan(40));
+    expect(secondRect.bottom, lessThan(800));
 
     await _tapLeftmostText(tester, 'first code needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(_largestScrollableOffset(tester), lessThan(secondOffset));
+    await tester.pumpAndSettle();
+    final firstRect = _rightmostTextRect(tester, 'first code needle target');
+    expect(firstRect.top, greaterThan(40));
+    expect(firstRect.bottom, lessThan(800));
   });
 
   testWidgets('preview search result click lands on paragraph after lists', (

@@ -1354,16 +1354,32 @@ void main() {
     expect(sourceEditor, contains('_scrollOffsetForLine'));
     expect(sourceEditor, contains('_jumpScrollToLine'));
     expect(sourceEditor, contains('scrollController: _scrollController'));
-    expect(workspace, contains('Scrollable.ensureVisible'));
-    expect(workspace, contains('alignment: 0.0'));
-    expect(workspace, isNot(contains('alignment: 0.04')));
-    expect(workspace, contains('headingKeys: _previewHeadingKeys'));
-    expect(workspace, contains('keyedHeadingIds'));
     expect(
       workspace,
-      contains('headingKey: _keyForBlock(block, keyedHeadingIds)'),
+      contains(
+        'package:scrollable_positioned_list/scrollable_positioned_list.dart',
+      ),
     );
-    expect(workspace, contains('if (!keyedHeadingIds.add(id))'));
+    expect(
+      workspace,
+      contains('final _previewScrollController = ItemScrollController()'),
+    );
+    expect(
+      workspace,
+      contains('void _scrollPreviewToHeading(String headingId)'),
+    );
+    expect(workspace, contains('_previewScrollController.jumpTo('));
+    expect(workspace, contains('Scrollable.ensureVisible('));
+    expect(workspace, contains('_scrollPreviewToIndex(index, alignment: 0.0)'));
+    expect(workspace, contains('duration: BusyMarkMotion.scroll'));
+    expect(workspace, contains('alignment: 0.0'));
+    expect(
+      workspace,
+      contains('class _PreviewBlockContextAnchor extends StatefulWidget'),
+    );
+    expect(workspace, contains('final _previewBlockContexts'));
+    expect(workspace, contains('onBlockContextAvailable'));
+    expect(workspace, contains('onBlockContextUnavailable'));
     expect(workspace, contains('key: headingKey'));
     expect(workspace, contains('scrollToHeadingId: _wysiwygScrollHeadingId'));
     expect(workspace, contains('scrollRequest: _wysiwygScrollRequest'));
@@ -1387,6 +1403,7 @@ void main() {
     expect(workspace, contains('_previewBlockContainsSearchTarget'));
     expect(workspace, contains('_previewBlockTargetFraction'));
     expect(workspace, contains('_schedulePreviewSearchScroll'));
+    expect(workspace, contains('_scrollPreviewToSearchBlock'));
     expect(workspace, contains('localToGlobal'));
     expect(workspace, contains('position.pixels + targetY - viewportTop'));
     expect(workspace, contains('target.startOffset >= startOffset'));
