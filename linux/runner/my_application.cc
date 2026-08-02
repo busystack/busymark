@@ -75,12 +75,6 @@ constexpr char kModelButtonAcceleratorKey[] =
     "busymark-model-button-accelerator";
 constexpr char kNativePopoverStyleClass[] = "busymark-native-popover";
 constexpr char kNativeMenuItemStyleClass[] = "busymark-native-menu-item";
-constexpr char kNativeMenuItemHoverStyleClass[] =
-    "busymark-native-menu-item-hover";
-constexpr char kNativeMenuItemHoverHandlersKey[] =
-    "busymark-native-menu-item-hover-handlers";
-constexpr char kNativeMenuPopoverHoverResetHandlerKey[] =
-    "busymark-native-menu-popover-hover-reset-handler";
 constexpr char kHeaderMenuDepthStyleClass[] =
     "busymark-header-menu-depth";
 constexpr char kHeaderApplicationActiveStyleClass[] =
@@ -177,8 +171,6 @@ struct HeaderBarConfiguration {
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
 static void schedule_header_bar_focus_state_refresh(MyApplication* self);
-static void native_menu_popover_hidden_reset_hover_cb(GtkWidget* widget,
-                                                       gpointer user_data);
 
 static void style_native_popover(GtkWidget* popover) {
   if (popover == nullptr || !GTK_IS_POPOVER(popover)) {
@@ -186,64 +178,6 @@ static void style_native_popover(GtkWidget* popover) {
   }
   gtk_style_context_add_class(gtk_widget_get_style_context(popover),
                               kNativePopoverStyleClass);
-  if (g_object_get_data(
-          G_OBJECT(popover),
-          kNativeMenuPopoverHoverResetHandlerKey) == nullptr) {
-    g_signal_connect(
-        popover, "hide",
-        G_CALLBACK(native_menu_popover_hidden_reset_hover_cb), nullptr);
-    g_object_set_data(G_OBJECT(popover),
-                      kNativeMenuPopoverHoverResetHandlerKey,
-                      GINT_TO_POINTER(1));
-  }
-}
-
-static void set_native_menu_item_hovered(GtkWidget* widget,
-                                         gboolean hovered) {
-  if (widget == nullptr || !GTK_IS_MODEL_BUTTON(widget)) {
-    return;
-  }
-  GtkStyleContext* context = gtk_widget_get_style_context(widget);
-  const gboolean should_hover = hovered && gtk_widget_is_sensitive(widget);
-  if (gtk_style_context_has_class(context, kNativeMenuItemHoverStyleClass) ==
-      should_hover) {
-    return;
-  }
-  if (should_hover) {
-    gtk_style_context_add_class(context, kNativeMenuItemHoverStyleClass);
-  } else {
-    gtk_style_context_remove_class(context, kNativeMenuItemHoverStyleClass);
-  }
-  gtk_widget_queue_draw(widget);
-}
-
-static gboolean native_menu_item_enter_cb(GtkWidget* widget,
-                                           GdkEventCrossing*,
-                                           gpointer) {
-  set_native_menu_item_hovered(widget, TRUE);
-  return GDK_EVENT_PROPAGATE;
-}
-
-static gboolean native_menu_item_motion_cb(GtkWidget* widget,
-                                            GdkEventMotion*,
-                                            gpointer) {
-  set_native_menu_item_hovered(widget, TRUE);
-  return GDK_EVENT_PROPAGATE;
-}
-
-static gboolean native_menu_item_leave_cb(GtkWidget* widget,
-                                           GdkEventCrossing*,
-                                           gpointer) {
-  set_native_menu_item_hovered(widget, FALSE);
-  return GDK_EVENT_PROPAGATE;
-}
-
-static void native_menu_item_sensitive_changed_cb(GtkWidget* widget,
-                                                   GParamSpec*,
-                                                   gpointer) {
-  if (!gtk_widget_is_sensitive(widget)) {
-    set_native_menu_item_hovered(widget, FALSE);
-  }
 }
 
 static void style_native_menu_item(GtkWidget* widget) {
@@ -252,41 +186,6 @@ static void style_native_menu_item(GtkWidget* widget) {
   }
   gtk_style_context_add_class(gtk_widget_get_style_context(widget),
                               kNativeMenuItemStyleClass);
-  if (g_object_get_data(G_OBJECT(widget),
-                        kNativeMenuItemHoverHandlersKey) != nullptr) {
-    return;
-  }
-  gtk_widget_add_events(widget, GDK_ENTER_NOTIFY_MASK |
-                                   GDK_LEAVE_NOTIFY_MASK |
-                                   GDK_POINTER_MOTION_MASK);
-  g_signal_connect(widget, "enter-notify-event",
-                   G_CALLBACK(native_menu_item_enter_cb), nullptr);
-  g_signal_connect(widget, "motion-notify-event",
-                   G_CALLBACK(native_menu_item_motion_cb), nullptr);
-  g_signal_connect(widget, "leave-notify-event",
-                   G_CALLBACK(native_menu_item_leave_cb), nullptr);
-  g_signal_connect(widget, "notify::sensitive",
-                   G_CALLBACK(native_menu_item_sensitive_changed_cb), nullptr);
-  g_object_set_data(G_OBJECT(widget), kNativeMenuItemHoverHandlersKey,
-                    GINT_TO_POINTER(1));
-}
-
-static void clear_native_menu_item_hover_cb(GtkWidget* widget, gpointer) {
-  if (GTK_IS_MODEL_BUTTON(widget)) {
-    set_native_menu_item_hovered(widget, FALSE);
-  }
-  if (GTK_IS_CONTAINER(widget)) {
-    gtk_container_foreach(GTK_CONTAINER(widget),
-                          clear_native_menu_item_hover_cb, nullptr);
-  }
-}
-
-static void native_menu_popover_hidden_reset_hover_cb(GtkWidget* widget,
-                                                       gpointer) {
-  if (GTK_IS_CONTAINER(widget)) {
-    gtk_container_foreach(GTK_CONTAINER(widget),
-                          clear_native_menu_item_hover_cb, nullptr);
-  }
 }
 
 static void style_header_menu_popover(GtkWidget* popover) {
@@ -769,19 +668,38 @@ static void refresh_header_bar_css(MyApplication* self) {
                 kNativePopoverStyleClass, kNativePopoverStyleClass,
                 self->popover_background_color)
           : g_strdup("");
+  g_autofree gchar* native_menu_geometry_css = g_strdup_printf(
+      "popover.background.%s .%s {"
+      "font-size: 0.92em;"
+      "padding: 2px 6px;"
+      "}",
+      kNativePopoverStyleClass, kNativeMenuItemStyleClass);
   g_autofree gchar* native_menu_state_css =
       is_css_color_token(self->menu_hover_color)
           ? g_strdup_printf(
                 "popover.background.%s "
-                "modelbutton.%s:hover:not(:disabled),"
-                "popover.background.%s "
-                "modelbutton.%s.%s:not(:disabled) {"
+                "modelbutton:hover:not(:disabled) {"
                 "background-color: %s;"
                 "background-image: none;"
+                "}"
+                "popover.background.%s "
+                "row:hover:not(:disabled) {"
+                "background-color: %s;"
+                "background-image: none;"
+                "}"
+                "popover.background.%s "
+                ".%s:hover:not(:disabled),"
+                "popover.background.%s "
+                ".%s:focus:not(:disabled) {"
+                "background-color: %s;"
+                "background-image: none;"
+                "border-color: transparent;"
+                "outline-width: 0;"
                 "}",
+                kNativePopoverStyleClass, self->menu_hover_color,
+                kNativePopoverStyleClass, self->menu_hover_color,
                 kNativePopoverStyleClass, kNativeMenuItemStyleClass,
                 kNativePopoverStyleClass, kNativeMenuItemStyleClass,
-                kNativeMenuItemHoverStyleClass,
                 self->menu_hover_color)
           : g_strdup("");
   g_autofree gchar* header_menu_shadow_css =
@@ -924,6 +842,7 @@ static void refresh_header_bar_css(MyApplication* self) {
       "%s"
       "%s"
       "%s"
+      "%s"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop {"
       "background-color: %s;"
@@ -1029,11 +948,12 @@ static void refresh_header_bar_css(MyApplication* self) {
       "background-color: %s;"
       "background-image: none;"
       "}",
-      background, window_shadow_css, native_popover_css, native_menu_state_css,
-      header_menu_shadow_css, tooltip_css, background, foreground, background,
-      foreground, sidebar_background, foreground, foreground, foreground,
-      kHeaderBackdropForegroundOpacity, sidebar_border, sidebar_border,
-      header_focus_css, modal);
+      background, window_shadow_css, native_popover_css,
+      native_menu_geometry_css, native_menu_state_css,
+      header_menu_shadow_css, tooltip_css,
+      background, foreground, background, foreground, sidebar_background,
+      foreground, foreground, foreground, kHeaderBackdropForegroundOpacity,
+      sidebar_border, sidebar_border, header_focus_css, modal);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
@@ -2346,16 +2266,23 @@ struct NativeMenuSession {
   GPtrArray* shortcut_labels;
   GPtrArray* icon_names;
   gulong closed_signal_id;
-  gulong hide_signal_id;
-  guint popup_source_id;
   guint cleanup_source_id;
-  gboolean focus_first;
   gint pending_selected_index;
 };
 
 struct NativeMenuHandlerData {
   GtkWidget* view;
+  GtkWidget* input_layer;
+  GtkWidget* menu_layer;
+  GtkWidget* menu_button;
   NativeMenuSession* active;
+};
+
+struct NativeMenuHostWidgets {
+  GtkWidget* overlay;
+  GtkWidget* input_layer;
+  GtkWidget* menu_layer;
+  GtkWidget* menu_button;
 };
 
 static void native_menu_session_respond(NativeMenuSession* session,
@@ -2370,49 +2297,6 @@ static void native_menu_session_respond(NativeMenuSession* session,
   g_clear_object(&session->method_call);
 }
 
-static gboolean native_menu_cleanup_idle_cb(gpointer user_data);
-
-static void native_menu_release_input_grab(NativeMenuSession* session) {
-  if (session == nullptr || session->popover == nullptr ||
-      !GTK_IS_POPOVER(session->popover)) {
-    return;
-  }
-  // GtkPopover's modal property owns a GTK grab over the whole toplevel.
-  // Release it before every close path so a delayed transition or signal can
-  // never leave the embedded Flutter view unable to receive pointer input.
-  gtk_popover_set_modal(GTK_POPOVER(session->popover), FALSE);
-  // Keep an explicit, idempotent removal beside the modal-property update so
-  // cleanup is safe even if GTK's internal popover state is already changing.
-  gtk_grab_remove(session->popover);
-}
-
-static void native_menu_schedule_cleanup(NativeMenuSession* session) {
-  if (session != nullptr && session->cleanup_source_id == 0) {
-    session->cleanup_source_id = g_idle_add_full(
-        G_PRIORITY_DEFAULT_IDLE, native_menu_cleanup_idle_cb, session,
-        nullptr);
-  }
-}
-
-static void native_menu_close(NativeMenuSession* session) {
-  if (session == nullptr) {
-    return;
-  }
-  if (session->popup_source_id != 0) {
-    g_source_remove(session->popup_source_id);
-    session->popup_source_id = 0;
-  }
-  native_menu_release_input_grab(session);
-  if (session->popover != nullptr &&
-      gtk_widget_get_visible(session->popover)) {
-    // A menu selection and an explicit dismiss do not need an animated
-    // popdown. Hiding immediately releases the native surface while cleanup
-    // stays deferred until the current GTK callback has returned.
-    gtk_widget_hide(session->popover);
-  }
-  native_menu_schedule_cleanup(session);
-}
-
 static void native_menu_session_dispose(NativeMenuSession* session) {
   if (session == nullptr) {
     return;
@@ -2421,34 +2305,34 @@ static void native_menu_session_dispose(NativeMenuSession* session) {
   if (owner != nullptr && owner->active == session) {
     owner->active = nullptr;
   }
-  if (session->popup_source_id != 0) {
-    g_source_remove(session->popup_source_id);
-    session->popup_source_id = 0;
-  }
   if (session->cleanup_source_id != 0) {
     g_source_remove(session->cleanup_source_id);
     session->cleanup_source_id = 0;
   }
   if (session->popover != nullptr) {
-    native_menu_release_input_grab(session);
     if (session->closed_signal_id != 0) {
       g_signal_handler_disconnect(session->popover,
                                   session->closed_signal_id);
       session->closed_signal_id = 0;
     }
-    if (session->hide_signal_id != 0) {
-      g_signal_handler_disconnect(session->popover, session->hide_signal_id);
-      session->hide_signal_id = 0;
-    }
     if (gtk_widget_get_visible(session->popover)) {
       gtk_widget_hide(session->popover);
     }
-    gtk_widget_destroy(session->popover);
-    g_clear_object(&session->popover);
   }
-  if (owner != nullptr && owner->view != nullptr) {
-    gtk_widget_insert_action_group(owner->view, kNativeMenuActionNamespace,
+  if (owner != nullptr && owner->menu_button != nullptr) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(owner->menu_button),
+                                 FALSE);
+    gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(owner->menu_button),
                                    nullptr);
+    gtk_widget_insert_action_group(owner->menu_button,
+                                   kNativeMenuActionNamespace, nullptr);
+  }
+  g_clear_object(&session->popover);
+  if (owner != nullptr && owner->input_layer != nullptr) {
+    gtk_widget_hide(owner->input_layer);
+  }
+
+  if (owner != nullptr && owner->view != nullptr) {
     if (gtk_widget_get_realized(owner->view)) {
       gtk_widget_grab_focus(owner->view);
     }
@@ -2470,17 +2354,11 @@ static gboolean native_menu_cleanup_idle_cb(gpointer user_data) {
 
 static void native_menu_closed_cb(GtkPopover*, gpointer user_data) {
   auto* session = static_cast<NativeMenuSession*>(user_data);
-  // ::closed is emitted when a popdown starts. Drop the grab now, but let the
-  // transition reach ::hide before destroying the popover.
-  native_menu_release_input_grab(session);
-}
-
-static void native_menu_hidden_cb(GtkWidget*, gpointer user_data) {
-  auto* session = static_cast<NativeMenuSession*>(user_data);
-  // ::hide is the end of the visual lifecycle, including an animated outside
-  // dismissal. Resolve the pending Dart method call only after GTK reaches it.
-  native_menu_release_input_grab(session);
-  native_menu_schedule_cleanup(session);
+  if (session->cleanup_source_id == 0) {
+    session->cleanup_source_id = g_idle_add_full(
+        G_PRIORITY_DEFAULT_IDLE, native_menu_cleanup_idle_cb, session,
+        nullptr);
+  }
 }
 
 static void native_menu_action_activated_cb(GSimpleAction* action,
@@ -2491,7 +2369,9 @@ static void native_menu_action_activated_cb(GSimpleAction* action,
       GPOINTER_TO_INT(
           g_object_get_data(G_OBJECT(action), kNativeMenuActionIndexKey)) -
       1;
-  native_menu_close(session);
+  if (session->popover != nullptr) {
+    gtk_popover_popdown(GTK_POPOVER(session->popover));
+  }
 }
 
 static void native_menu_selection_activated_cb(GSimpleAction* action,
@@ -2513,7 +2393,9 @@ static void native_menu_selection_activated_cb(GSimpleAction* action,
 
   g_simple_action_set_state(action, parameter);
   session->pending_selected_index = static_cast<gint>(parsed);
-  native_menu_close(session);
+  if (session->popover != nullptr) {
+    gtk_popover_popdown(GTK_POPOVER(session->popover));
+  }
 }
 
 static gboolean native_menu_dismiss_active(NativeMenuHandlerData* data,
@@ -2522,7 +2404,12 @@ static gboolean native_menu_dismiss_active(NativeMenuHandlerData* data,
   if (session == nullptr || session->id != session_id) {
     return FALSE;
   }
-  native_menu_close(session);
+  if (session->popover != nullptr &&
+      gtk_widget_get_visible(session->popover)) {
+    gtk_popover_popdown(GTK_POPOVER(session->popover));
+  } else {
+    native_menu_session_dispose(session);
+  }
   return TRUE;
 }
 
@@ -2639,34 +2526,22 @@ static void decorate_native_menu_shortcuts(GtkWidget* popover,
                         decorate_native_menu_shortcuts_cb, &decoration);
 }
 
-static gboolean native_menu_popup_idle_cb(gpointer user_data) {
-  auto* session = static_cast<NativeMenuSession*>(user_data);
-  session->popup_source_id = 0;
-  if (session->owner == nullptr || session->owner->active != session ||
-      session->popover == nullptr) {
-    return G_SOURCE_REMOVE;
-  }
-
-  // Flutter requests pointer-opened menus while GTK is still dispatching the
-  // originating button event. Start the modal popover after that dispatch has
-  // unwound so its grab begins from a clean pointer state.
-  gtk_popover_popup(GTK_POPOVER(session->popover));
-  if (session->focus_first) {
-    gtk_widget_child_focus(session->popover, GTK_DIR_TAB_FORWARD);
-  }
-  return G_SOURCE_REMOVE;
-}
-
 static void show_native_menu(NativeMenuHandlerData* data,
                              FlMethodCall* method_call,
                              FlValue* args) {
-  if (data->view == nullptr || !gtk_widget_get_realized(data->view)) {
+  if (data->view == nullptr || data->input_layer == nullptr ||
+      data->menu_layer == nullptr || data->menu_button == nullptr ||
+      !gtk_widget_get_realized(data->view) ||
+      !GTK_IS_FIXED(data->menu_layer) ||
+      gtk_widget_get_parent(data->menu_button) != data->menu_layer ||
+      gtk_widget_get_parent(data->menu_layer) != data->input_layer ||
+      !GTK_IS_EVENT_BOX(data->input_layer) ||
+      !GTK_IS_OVERLAY(gtk_widget_get_parent(data->input_layer))) {
     fl_method_call_respond_error(method_call, "unavailable",
                                  "The native menu host is unavailable.",
                                  nullptr, nullptr);
     return;
   }
-
   GdkRectangle anchor = {};
   gint64 session_id = 0;
   if (!fl_lookup_positive_int64_arg(args, "sessionId", &session_id) ||
@@ -2779,7 +2654,6 @@ static void show_native_menu(NativeMenuHandlerData* data,
   session->owner = data;
   session->id = session_id;
   session->entry_count = fl_value_get_length(entries);
-  session->focus_first = focus_first;
   session->pending_selected_index = -1;
   session->method_call =
       FL_METHOD_CALL(g_object_ref(G_OBJECT(method_call)));
@@ -2821,7 +2695,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
     fl_lookup_optional_bool_with_default(entry, "enabled", TRUE, &enabled);
     fl_lookup_optional_bool_with_default(entry, "checkable", FALSE,
                                          &checkable);
-    fl_lookup_optional_bool_with_default(entry, "selected", FALSE, &selected);
+    fl_lookup_optional_bool_with_default(entry, "selected", FALSE,
+                                         &selected);
 
     if (checkable) {
       const size_t run_start = index;
@@ -2848,8 +2723,8 @@ static void show_native_menu(NativeMenuHandlerData* data,
         run_end++;
       }
 
-      g_autofree gchar* group_action_name = g_strdup_printf(
-          "select-group-%u", checkable_group_index++);
+      g_autofree gchar* group_action_name =
+          g_strdup_printf("select-group-%u", checkable_group_index++);
       GSimpleAction* group_action = g_simple_action_new_stateful(
           group_action_name, G_VARIANT_TYPE_STRING,
           g_variant_new_string(selected_target));
@@ -2863,8 +2738,7 @@ static void show_native_menu(NativeMenuHandlerData* data,
 
       for (size_t run_index = run_start; run_index < run_end; run_index++) {
         FlValue* run_entry = fl_value_get_list_value(entries, run_index);
-        const gchar* run_label =
-            fl_lookup_string_arg(run_entry, "label");
+        const gchar* run_label = fl_lookup_string_arg(run_entry, "label");
         const gchar* run_icon = fl_lookup_string_arg(run_entry, "icon");
         const gchar* run_shortcut =
             fl_lookup_string_arg(run_entry, "shortcut");
@@ -2918,16 +2792,33 @@ static void show_native_menu(NativeMenuHandlerData* data,
   flush_section();
   g_object_unref(section);
 
+  gtk_fixed_move(GTK_FIXED(data->menu_layer), data->menu_button, anchor.x,
+                 anchor.y);
+  gtk_widget_set_size_request(data->menu_button, anchor.width, anchor.height);
+  gtk_widget_show(data->input_layer);
+
+  gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(data->menu_button), TRUE);
+  gtk_menu_button_set_direction(
+      GTK_MENU_BUTTON(data->menu_button),
+      preferred_position == GTK_POS_TOP ? GTK_ARROW_UP : GTK_ARROW_DOWN);
   gtk_widget_insert_action_group(
-      data->view, kNativeMenuActionNamespace,
+      data->menu_button, kNativeMenuActionNamespace,
       G_ACTION_GROUP(session->action_group));
-  session->popover = gtk_popover_new_from_model(
-      data->view, G_MENU_MODEL(session->model));
-  g_object_ref_sink(session->popover);
+  gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(data->menu_button),
+                                 G_MENU_MODEL(session->model));
+  session->popover =
+      GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(data->menu_button)));
+  if (session->popover == nullptr) {
+    fl_method_call_respond_error(method_call, "unavailable",
+                                 "GTK could not create the native menu.",
+                                 nullptr, nullptr);
+    g_clear_object(&session->method_call);
+    native_menu_session_dispose(session);
+    return;
+  }
+  g_object_ref(session->popover);
   style_native_popover(session->popover);
-  gtk_popover_set_pointing_to(GTK_POPOVER(session->popover), &anchor);
-  gtk_popover_set_position(GTK_POPOVER(session->popover),
-                           preferred_position);
+  gtk_popover_set_position(GTK_POPOVER(session->popover), preferred_position);
   gtk_popover_set_constrain_to(GTK_POPOVER(session->popover),
                                GTK_POPOVER_CONSTRAINT_WINDOW);
   gtk_popover_set_modal(GTK_POPOVER(session->popover), TRUE);
@@ -2936,10 +2827,10 @@ static void show_native_menu(NativeMenuHandlerData* data,
                                  session->icon_names);
   session->closed_signal_id = g_signal_connect(
       session->popover, "closed", G_CALLBACK(native_menu_closed_cb), session);
-  session->hide_signal_id = g_signal_connect(
-      session->popover, "hide", G_CALLBACK(native_menu_hidden_cb), session);
-  session->popup_source_id = g_idle_add_full(
-      G_PRIORITY_DEFAULT_IDLE, native_menu_popup_idle_cb, session, nullptr);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(data->menu_button), TRUE);
+  if (focus_first) {
+    gtk_widget_child_focus(session->popover, GTK_DIR_TAB_FORWARD);
+  }
 }
 
 static void native_menu_handler_data_free(gpointer user_data) {
@@ -2951,6 +2842,21 @@ static void native_menu_handler_data_free(gpointer user_data) {
     g_object_remove_weak_pointer(
         G_OBJECT(data->view),
         reinterpret_cast<gpointer*>(&data->view));
+  }
+  if (data->input_layer != nullptr) {
+    g_object_remove_weak_pointer(
+        G_OBJECT(data->input_layer),
+        reinterpret_cast<gpointer*>(&data->input_layer));
+  }
+  if (data->menu_layer != nullptr) {
+    g_object_remove_weak_pointer(
+        G_OBJECT(data->menu_layer),
+        reinterpret_cast<gpointer*>(&data->menu_layer));
+  }
+  if (data->menu_button != nullptr) {
+    g_object_remove_weak_pointer(
+        G_OBJECT(data->menu_button),
+        reinterpret_cast<gpointer*>(&data->menu_button));
   }
   g_free(data);
 }
@@ -2977,15 +2883,60 @@ static void native_menu_method_call_cb(FlMethodChannel*,
   }
 }
 
-static void register_native_menu_channel(MyApplication* self, FlView* view) {
+static NativeMenuHostWidgets create_native_menu_host(FlView* view) {
+  NativeMenuHostWidgets host = {};
+  host.overlay = gtk_overlay_new();
+  gtk_container_add(GTK_CONTAINER(host.overlay), GTK_WIDGET(view));
+
+  host.input_layer = gtk_event_box_new();
+  gtk_event_box_set_above_child(GTK_EVENT_BOX(host.input_layer), TRUE);
+  gtk_event_box_set_visible_window(GTK_EVENT_BOX(host.input_layer), FALSE);
+  gtk_widget_set_halign(host.input_layer, GTK_ALIGN_FILL);
+  gtk_widget_set_valign(host.input_layer, GTK_ALIGN_FILL);
+  gtk_overlay_add_overlay(GTK_OVERLAY(host.overlay), host.input_layer);
+
+  host.menu_layer = gtk_fixed_new();
+  gtk_container_add(GTK_CONTAINER(host.input_layer), host.menu_layer);
+
+  host.menu_button = gtk_menu_button_new();
+  gtk_widget_set_opacity(host.menu_button, 0);
+  gtk_widget_set_can_focus(host.menu_button, FALSE);
+  gtk_widget_set_focus_on_click(host.menu_button, FALSE);
+  gtk_widget_set_size_request(host.menu_button, 1, 1);
+  gtk_fixed_put(GTK_FIXED(host.menu_layer), host.menu_button, 0, 0);
+
+  gtk_widget_show(host.menu_button);
+  gtk_widget_show(host.menu_layer);
+  gtk_widget_set_no_show_all(host.input_layer, TRUE);
+  gtk_widget_hide(host.input_layer);
+  gtk_widget_show(host.overlay);
+  return host;
+}
+
+static void register_native_menu_channel(
+    MyApplication* self,
+    FlView* view,
+    const NativeMenuHostWidgets& host) {
   g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
   self->native_menu_channel = fl_method_channel_new(
       fl_engine_get_binary_messenger(fl_view_get_engine(view)),
       kNativeMenuChannel, FL_METHOD_CODEC(codec));
   auto* data = g_new0(NativeMenuHandlerData, 1);
   data->view = GTK_WIDGET(view);
+  data->input_layer = host.input_layer;
+  data->menu_layer = host.menu_layer;
+  data->menu_button = host.menu_button;
   g_object_add_weak_pointer(G_OBJECT(data->view),
                             reinterpret_cast<gpointer*>(&data->view));
+  g_object_add_weak_pointer(
+      G_OBJECT(data->input_layer),
+      reinterpret_cast<gpointer*>(&data->input_layer));
+  g_object_add_weak_pointer(
+      G_OBJECT(data->menu_layer),
+      reinterpret_cast<gpointer*>(&data->menu_layer));
+  g_object_add_weak_pointer(
+      G_OBJECT(data->menu_button),
+      reinterpret_cast<gpointer*>(&data->menu_button));
   fl_method_channel_set_method_call_handler(
       self->native_menu_channel, native_menu_method_call_cb, data,
       native_menu_handler_data_free);
@@ -3044,10 +2995,13 @@ static void my_application_activate(GApplication* application) {
   fl_view_set_background_color(view, &background_color);
   gtk_widget_show(GTK_WIDGET(view));
 
+  NativeMenuHostWidgets native_menu_host = create_native_menu_host(view);
+
   GtkWidget* window_content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_pack_start(GTK_BOX(window_content), self->titlebar_handle, FALSE,
                      FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(window_content), GTK_WIDGET(view), TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(window_content), native_menu_host.overlay, TRUE,
+                     TRUE, 0);
   gtk_widget_show(window_content);
   gtk_container_add(GTK_CONTAINER(window), window_content);
 
@@ -3057,7 +3011,7 @@ static void my_application_activate(GApplication* application) {
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
-  register_native_menu_channel(self, view);
+  register_native_menu_channel(self, view, native_menu_host);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
   schedule_header_bar_focus_state_refresh(self);

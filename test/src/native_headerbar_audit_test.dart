@@ -603,12 +603,19 @@ void main() {
     expect(css, contains('background-color: alpha(currentColor, 0.16)'));
     expect(css, contains('background-color: alpha(currentColor, 0.10)'));
     expect(css, contains('popover.background.'));
-    expect(css, contains('modelbutton.%s:hover:not(:disabled)'));
-    expect(css, contains('modelbutton.%s.%s:not(:disabled)'));
+    expect(css, contains('modelbutton:hover:not(:disabled)'));
+    expect(css, contains('row:hover:not(:disabled)'));
+    expect(css, contains('.%s:hover:not(:disabled)'));
+    expect(css, contains('.%s:focus:not(:disabled)'));
+    expect(css, contains('border-color: transparent'));
+    expect(css, contains('outline-width: 0'));
+    expect(css, contains('font-size: 0.92em'));
+    expect(css, contains('padding: 2px 6px'));
+    expect(css, isNot(contains('modelbutton.%s.%s:not(:disabled)')));
     expect(css, contains('box-shadow: 0 1px 3px'));
     expect(css, contains('tooltip.background'));
     expect(css, contains('tooltip decoration'));
-    for (final interactionSelector in <String>[':focus', '@define-color']) {
+    for (final interactionSelector in <String>['@define-color']) {
       expect(css, isNot(contains(interactionSelector)));
     }
   });
@@ -960,6 +967,11 @@ void main() {
 
   test('native header controls preserve GTK geometry with neutral states', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final contentMenuStart = native.indexOf(
+      'constexpr char kNativeMenuActionNamespace',
+    );
+    expect(contentMenuStart, isNonNegative);
+    final headerOnly = native.substring(0, contentMenuStart);
 
     expect(native, contains('kHeaderButtonHeight = 32'));
     expect(native, contains('kHeaderButtonSpacing = 8'));
@@ -981,8 +993,8 @@ void main() {
     expect(native, isNot(contains('button.busymark-header-button:hover')));
     expect(native, isNot(contains('button.busymark-header-button:checked')));
     expect(native, isNot(contains('button.busymark-header-button:focus')));
-    expect(native, isNot(contains('GTK_RELIEF_NONE')));
-    expect(native, isNot(contains('GTK_STYLE_CLASS_FLAT')));
+    expect(headerOnly, isNot(contains('GTK_RELIEF_NONE')));
+    expect(headerOnly, isNot(contains('GTK_STYLE_CLASS_FLAT')));
     expect(native, contains('"busymark-header-control"'));
     expect(native, isNot(contains('"busymark-header-icon-button"')));
     expect(native, contains('alpha(currentColor, 0.07)'));
@@ -991,7 +1003,7 @@ void main() {
     expect(native, contains('alpha(currentColor, 0.13)'));
     expect(native, contains('alpha(currentColor, 0.19)'));
     expect(native, isNot(contains('"outline-width: 2px;"')));
-    expect(native, isNot(contains('"outline-width: 0;"')));
+    expect(native, contains('"outline-width: 0;"'));
     expect(native, contains('"searchSubmitted"'));
     expect(
       native,
@@ -1269,32 +1281,21 @@ void main() {
     }
     expect(native, contains('view_mode_icon_name(mode)'));
     expect(native, contains('view_mode_icon_name("split")'));
-    expect(native, contains('modelbutton.%s:hover:not(:disabled)'));
-    expect(native, contains('modelbutton.%s.%s:not(:disabled)'));
+    expect(native, contains('modelbutton:hover:not(:disabled)'));
+    expect(native, isNot(contains('modelbutton.%s:hover:not(:disabled)')));
     expect(native, contains('kNativeMenuItemStyleClass'));
-    expect(native, contains('kNativeMenuItemHoverStyleClass'));
     expect(native, contains('style_native_menu_item(widget)'));
-    expect(native, contains('native_menu_item_enter_cb'));
-    expect(native, contains('native_menu_item_motion_cb'));
-    expect(native, contains('native_menu_item_leave_cb'));
-    expect(native, contains('native_menu_popover_hidden_reset_hover_cb'));
+    expect(native, isNot(contains('kNativeMenuItemHoverStyleClass')));
+    expect(native, isNot(contains('native_menu_item_enter_cb')));
+    expect(native, isNot(contains('native_menu_item_motion_cb')));
+    expect(native, isNot(contains('native_menu_item_leave_cb')));
     expect(
       native,
-      contains(
-        'gtk_style_context_add_class(context, '
-        'kNativeMenuItemHoverStyleClass)',
-      ),
-    );
-    expect(
-      native,
-      contains(
-        'gtk_style_context_remove_class(context, '
-        'kNativeMenuItemHoverStyleClass)',
-      ),
+      isNot(contains('native_menu_popover_hidden_reset_hover_cb')),
     );
     expect(native, isNot(contains('modelbutton:focus')));
     expect(native, isNot(contains('modelbutton:active')));
-    expect(native, isNot(contains('outline-width: 0;')));
+    expect(native, contains('outline-width: 0;'));
     expect(native, contains('static GtkWidget* create_model_menu_button'));
     expect(native, contains('gtk_menu_button_set_menu_model'));
     expect(
@@ -1364,29 +1365,68 @@ void main() {
     final toolbar = File(
       'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
     ).readAsStringSync();
+    final nativeMenuStart = native.indexOf(
+      'constexpr char kNativeMenuActionNamespace',
+    );
+    final nativeMenuEnd = native.indexOf(
+      'static void my_application_activate',
+      nativeMenuStart,
+    );
+    expect(nativeMenuStart, isNonNegative);
+    expect(nativeMenuEnd, greaterThan(nativeMenuStart));
+    final nativeMenu = native.substring(nativeMenuStart, nativeMenuEnd);
 
     expect(native, contains('kNativeMenuChannel'));
     expect(native, contains('"busymark/native_menus"'));
-    expect(native, contains('gtk_popover_new_from_model('));
-    expect(native, contains('g_menu_append_section('));
-    expect(native, contains('decorate_native_menu_shortcuts('));
-    expect(native, contains('kMenuIconAttribute'));
-    expect(native, contains('gtk_image_new_from_icon_name(icon_name'));
-    expect(native, contains('session->icon_names'));
-    expect(native, contains('native_menu_selection_activated_cb'));
-    expect(native, contains('G_VARIANT_TYPE_STRING'));
-    expect(native, contains('gtk_popover_set_modal'));
-    expect(native, contains('gtk_popover_set_constrain_to'));
-    expect(native, contains('native_menu_release_input_grab(session)'));
-    expect(native, contains('native_menu_close(session)'));
-    expect(native, contains('native_menu_popup_idle_cb'));
+    expect(nativeMenu, contains('struct NativeMenuHostWidgets'));
+    expect(nativeMenu, contains('gtk_event_box_set_above_child('));
+    expect(nativeMenu, contains('gtk_widget_show(data->input_layer)'));
+    expect(nativeMenu, contains('GMenu* model;'));
+    expect(nativeMenu, contains('GSimpleActionGroup* action_group;'));
+    expect(nativeMenu, contains('g_simple_action_new_stateful('));
+    expect(nativeMenu, contains('g_menu_item_set_action_and_target_value('));
+    expect(nativeMenu, contains('GTK_IS_MODEL_BUTTON(widget)'));
+    expect(nativeMenu, contains('style_native_menu_item(widget)'));
+    expect(nativeMenu, contains('gtk_menu_button_set_menu_model('));
+    expect(nativeMenu, contains('gtk_menu_button_get_popover('));
     expect(
-      native,
+      nativeMenu,
       contains(
-        'session->popup_source_id = g_idle_add_full(\n'
-        '      G_PRIORITY_DEFAULT_IDLE, native_menu_popup_idle_cb',
+        'gtk_widget_insert_action_group(\n'
+        '      data->menu_button, kNativeMenuActionNamespace',
       ),
     );
+    expect(nativeMenu, isNot(contains('gtk_button_new()')));
+    expect(nativeMenu, isNot(contains('gtk_radio_button_new(')));
+    expect(nativeMenu, isNot(contains('gtk_toggle_button_new()')));
+    expect(nativeMenu, isNot(contains('"radio-checked-symbolic"')));
+    expect(nativeMenu, isNot(contains('"radio-symbolic"')));
+    expect(native, isNot(contains('kNativeMenuSelectedIndicatorStyleClass')));
+    expect(nativeMenu, isNot(contains('create_native_content_menu_item(')));
+    expect(nativeMenu, isNot(contains('gtk_render_option(')));
+    expect(native, isNot(contains('kNativeContentMenuPopoverStyleClass')));
+    expect(nativeMenu, contains('g_menu_append_section('));
+    expect(nativeMenu, contains('add_model_button_presentation('));
+    expect(nativeMenu, contains('native_menu_action_activated_cb'));
+    expect(nativeMenu, contains('native_menu_selection_activated_cb'));
+    expect(
+      nativeMenu,
+      contains(
+        'gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(data->menu_button), TRUE)',
+      ),
+    );
+    expect(nativeMenu, isNot(contains('gtk_popover_new_from_model(')));
+    expect(nativeMenu, isNot(contains('gtk_popover_new(data->view')));
+    expect(
+      nativeMenu,
+      isNot(contains('gtk_widget_insert_action_group(\n      data->view')),
+    );
+    expect(nativeMenu, isNot(contains('GTK_STATE_FLAG_PRELIGHT')));
+    expect(nativeMenu, isNot(contains('gtk_widget_set_state_flags')));
+    expect(nativeMenu, contains('gtk_popover_set_modal'));
+    expect(nativeMenu, contains('gtk_popover_set_constrain_to'));
+    expect(nativeMenu, isNot(contains('native_menu_release_input_grab')));
+    expect(nativeMenu, isNot(contains('native_menu_popup_idle_cb')));
     expect(service, contains('final String? shortcut'));
     expect(service, contains('final String? iconName'));
     expect(service, contains("'icon': iconName!"));
@@ -1419,27 +1459,37 @@ void main() {
     }
   });
 
-  test('native content menus release their GTK grab on every close path', () {
+  test('content menu consolidation leaves GTK headerbar menus intact', () {
+    final native = File('linux/runner/my_application.cc').readAsStringSync();
+    final nativeMenuStart = native.indexOf(
+      'constexpr char kNativeMenuActionNamespace',
+    );
+    final nativeMenuEnd = native.indexOf(
+      'static void my_application_activate',
+      nativeMenuStart,
+    );
+    expect(nativeMenuStart, isNonNegative);
+    expect(nativeMenuEnd, greaterThan(nativeMenuStart));
+
+    final headerbar = native.substring(0, nativeMenuStart);
+    final contentMenu = native.substring(nativeMenuStart, nativeMenuEnd);
+    expect(headerbar, contains('static GtkWidget* create_model_menu_button'));
+    expect(headerbar, contains('gtk_menu_button_set_menu_model('));
+    expect(headerbar, contains('GTK_IS_MODEL_BUTTON(widget)'));
+    expect(contentMenu, contains('gtk_menu_button_set_menu_model('));
+    expect(contentMenu, contains('GTK_IS_MODEL_BUTTON(widget)'));
+    expect(contentMenu, isNot(contains('create_model_menu_button(')));
+  });
+
+  test('native content menus retire their mapped GTK input host', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
-    final releaseGrab = RegExp(
-      r'static void native_menu_release_input_grab[\s\S]*?'
-      r'(?=static void native_menu_schedule_cleanup)',
-    ).firstMatch(native)?.group(0);
-    final close = RegExp(
-      r'static void native_menu_close[\s\S]*?'
-      r'(?=static void native_menu_session_dispose)',
-    ).firstMatch(native)?.group(0);
     final dispose = RegExp(
       r'static void native_menu_session_dispose[\s\S]*?'
       r'(?=static gboolean native_menu_cleanup_idle_cb)',
     ).firstMatch(native)?.group(0);
     final closed = RegExp(
       r'static void native_menu_closed_cb[\s\S]*?'
-      r'(?=static void native_menu_hidden_cb)',
-    ).firstMatch(native)?.group(0);
-    final hidden = RegExp(
-      r'static void native_menu_hidden_cb[\s\S]*?'
       r'(?=static void native_menu_action_activated_cb)',
     ).firstMatch(native)?.group(0);
     final show = RegExp(
@@ -1447,28 +1497,37 @@ void main() {
       r'(?=static void native_menu_handler_data_free)',
     ).firstMatch(native)?.group(0);
 
-    expect(releaseGrab, contains('gtk_popover_set_modal('));
-    expect(releaseGrab, contains('FALSE'));
-    expect(releaseGrab, contains('gtk_grab_remove(session->popover)'));
-    expect(close, contains('native_menu_release_input_grab(session)'));
-    expect(close, contains('gtk_widget_hide(session->popover)'));
-    expect(close, contains('native_menu_schedule_cleanup(session)'));
+    expect(dispose, contains('gtk_widget_hide(session->popover)'));
     expect(
-      close!.indexOf('native_menu_release_input_grab(session)'),
-      lessThan(close.indexOf('gtk_widget_hide(session->popover)')),
+      dispose,
+      matches(
+        RegExp(
+          r'gtk_toggle_button_set_active\(GTK_TOGGLE_BUTTON\(owner->menu_button\),\s*FALSE\)',
+        ),
+      ),
     );
-    expect(dispose, contains('native_menu_release_input_grab(session)'));
-    expect(closed, contains('native_menu_release_input_grab(session)'));
-    expect(closed, isNot(contains('native_menu_schedule_cleanup(session)')));
-    expect(hidden, contains('native_menu_release_input_grab(session)'));
-    expect(hidden, contains('native_menu_schedule_cleanup(session)'));
-    expect(show, contains('native_menu_popup_idle_cb'));
-    expect(show, contains('"hide", G_CALLBACK(native_menu_hidden_cb)'));
+    expect(dispose, contains('gtk_menu_button_set_menu_model('));
+    expect(dispose, contains('kNativeMenuActionNamespace, nullptr'));
+    expect(dispose, isNot(contains('gtk_widget_destroy(session->popover)')));
+    expect(dispose, contains('gtk_widget_hide(owner->input_layer)'));
+    expect(dispose, contains('g_clear_object(&session->popover)'));
+    expect(closed, contains('g_idle_add_full('));
+    expect(show, contains('gtk_fixed_move('));
+    expect(show, contains('gtk_widget_show(data->input_layer)'));
+    expect(show, contains('gtk_menu_button_set_menu_model('));
+    expect(show, contains('gtk_menu_button_get_popover('));
+    expect(show, contains('G_ACTION_GROUP(session->action_group)'));
+    expect(show, isNot(contains('gtk_button_new()')));
+    expect(show, isNot(contains('gtk_radio_button_new(')));
+    expect(show, contains('gtk_toggle_button_set_active('));
+    expect(show, isNot(contains('gtk_popover_new_from_model(')));
+    expect(show, isNot(contains('gtk_menu_button_set_popover(')));
     expect(show, isNot(contains('gtk_popover_popup(')));
     expect(
       native,
-      isNot(contains('gtk_popover_popdown(GTK_POPOVER(session->popover))')),
+      contains('gtk_popover_popdown(GTK_POPOVER(session->popover))'),
     );
+    expect(native, isNot(contains('gtk_grab_remove(')));
   });
 
   test('welcome page has a sidebar but no document controls', () {
