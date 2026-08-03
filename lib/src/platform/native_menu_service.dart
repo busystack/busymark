@@ -7,7 +7,7 @@ const nativeMenuChannelName = 'busymark/native_menus';
 /// Identifies one native menu presentation.
 ///
 /// The host compares this identity when dismissing a menu, so a retiring
-/// widget cannot close a newer caller's popover.
+/// widget cannot close a newer caller's menu.
 @immutable
 final class NativeMenuSession {
   NativeMenuSession() : id = _nextId++;

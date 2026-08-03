@@ -403,9 +403,6 @@ void main() {
       'sidebarBackgroundColor',
       'foregroundColor',
       'sidebarBorderColor',
-      'popoverBackgroundColor',
-      'menuHoverColor',
-      'popoverShadowColor',
       'modalBarrierColor',
       'tooltip',
     });
@@ -498,9 +495,6 @@ const _theme = HeaderBarTheme(
   sidebarBackgroundColor: Color(0xFFF6F6F6),
   foregroundColor: Color(0xFF202020),
   sidebarBorderColor: Color(0x11010203),
-  popoverBackgroundColor: Color(0xFFFAFAFA),
-  menuHoverColor: Color(0x16000000),
-  popoverShadowColor: Color(0x4D000000),
   modalBarrierColor: Color(0x55000000),
   tooltip: _tooltipTheme,
 );

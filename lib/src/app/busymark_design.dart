@@ -132,7 +132,6 @@ abstract final class BusyMarkStroke {
 
 abstract final class BusyMarkAlpha {
   static const double groupedRowLightHoverStrength = 0.50;
-  static const double nativeHeaderMenuShadowOpacity = 0.30;
   static const double tooltipBackground = 0.80;
   static const double tooltipBorder = 0.10;
   static const double textSelection = 0.32;

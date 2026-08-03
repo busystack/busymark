@@ -203,9 +203,6 @@ class HeaderBarTheme {
     required this.sidebarBackgroundColor,
     required this.foregroundColor,
     required this.sidebarBorderColor,
-    required this.popoverBackgroundColor,
-    required this.menuHoverColor,
-    required this.popoverShadowColor,
     required this.modalBarrierColor,
     required this.tooltip,
   });
@@ -219,16 +216,6 @@ class HeaderBarTheme {
       sidebarBackgroundColor: colors.sidebar,
       foregroundColor: colors.foreground,
       sidebarBorderColor: colors.sidebarBorder,
-      popoverBackgroundColor: colors.popover,
-      // GTK themes do not all composite translucent model-button backgrounds
-      // consistently. Send the already-composited semantic hover surface so
-      // native rows get the same visible result on X11, Wayland, and Snap.
-      menuHoverColor: Color.alphaBlend(colors.controlHover, colors.popover),
-      popoverShadowColor: theme.colorScheme.shadow.withValues(
-        alpha:
-            theme.colorScheme.shadow.a *
-            BusyMarkAlpha.nativeHeaderMenuShadowOpacity,
-      ),
       modalBarrierColor: colors.shade,
       tooltip: HeaderBarTooltipTheme.busyMark(),
     );
@@ -239,9 +226,6 @@ class HeaderBarTheme {
   final Color sidebarBackgroundColor;
   final Color foregroundColor;
   final Color sidebarBorderColor;
-  final Color popoverBackgroundColor;
-  final Color menuHoverColor;
-  final Color popoverShadowColor;
   final Color modalBarrierColor;
   final HeaderBarTooltipTheme tooltip;
 
@@ -251,9 +235,6 @@ class HeaderBarTheme {
     'sidebarBackgroundColor': _cssColor(sidebarBackgroundColor),
     'foregroundColor': _cssColor(foregroundColor),
     'sidebarBorderColor': _cssColor(sidebarBorderColor),
-    'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
-    'menuHoverColor': _cssColor(menuHoverColor),
-    'popoverShadowColor': _cssColor(popoverShadowColor),
     'modalBarrierColor': _cssColor(modalBarrierColor),
     'tooltip': tooltip.toMap(),
   };
@@ -267,9 +248,6 @@ class HeaderBarTheme {
             sidebarBackgroundColor == other.sidebarBackgroundColor &&
             foregroundColor == other.foregroundColor &&
             sidebarBorderColor == other.sidebarBorderColor &&
-            popoverBackgroundColor == other.popoverBackgroundColor &&
-            menuHoverColor == other.menuHoverColor &&
-            popoverShadowColor == other.popoverShadowColor &&
             modalBarrierColor == other.modalBarrierColor &&
             tooltip == other.tooltip;
   }
@@ -281,9 +259,6 @@ class HeaderBarTheme {
     sidebarBackgroundColor,
     foregroundColor,
     sidebarBorderColor,
-    popoverBackgroundColor,
-    menuHoverColor,
-    popoverShadowColor,
     modalBarrierColor,
     tooltip,
   ]);
