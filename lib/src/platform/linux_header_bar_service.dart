@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
-import '../app/busymark_design.dart';
+import 'header_bar_configuration.dart';
+
+export 'header_bar_configuration.dart';
 
 enum HeaderBarAction {
   back,
@@ -25,8 +28,6 @@ enum HeaderBarAction {
   viewModeSplit,
 }
 
-enum AppViewMode { editor, source, preview, split }
-
 class HeaderBarActionEvent {
   const HeaderBarActionEvent({required this.sequence, required this.action});
 
@@ -44,184 +45,71 @@ class HeaderBarActionEvent {
   int get hashCode => Object.hash(sequence, action);
 }
 
-class HeaderBarLabels {
-  const HeaderBarLabels({
-    required this.editor,
-    required this.source,
-    required this.preview,
-    required this.split,
-    required this.viewMode,
-    required this.editorShortcut,
-    required this.sourceShortcut,
-    required this.previewShortcut,
-    required this.splitShortcut,
-    required this.search,
-    required this.refresh,
-    required this.menu,
-    required this.sidebar,
-    required this.sidebarShortcut,
-    required this.back,
-    required this.save,
-    required this.settings,
-    required this.settingsShortcut,
-    required this.keyboardShortcuts,
-    required this.keyboardShortcutsShortcut,
-    required this.markdownAndHtml,
-    required this.markdownAndHtmlShortcut,
-    required this.reportIssue,
-    required this.aboutBusyMark,
-  });
-
-  final String editor;
-  final String source;
-  final String preview;
-  final String split;
-  final String viewMode;
-  final String editorShortcut;
-  final String sourceShortcut;
-  final String previewShortcut;
-  final String splitShortcut;
-  final String search;
-  final String refresh;
-  final String menu;
-  final String sidebar;
-  final String sidebarShortcut;
-  final String back;
-  final String save;
-  final String settings;
-  final String settingsShortcut;
-  final String keyboardShortcuts;
-  final String keyboardShortcutsShortcut;
-  final String markdownAndHtml;
-  final String markdownAndHtmlShortcut;
-  final String reportIssue;
-  final String aboutBusyMark;
-
-  Map<String, String> toMap() => {
-    'editor': editor,
-    'source': source,
-    'preview': preview,
-    'split': split,
-    'viewMode': viewMode,
-    'editorShortcut': editorShortcut,
-    'sourceShortcut': sourceShortcut,
-    'previewShortcut': previewShortcut,
-    'splitShortcut': splitShortcut,
-    'search': search,
-    'refresh': refresh,
-    'menu': menu,
-    'sidebar': sidebar,
-    'sidebarShortcut': sidebarShortcut,
-    'back': back,
-    'save': save,
-    'settings': settings,
-    'settingsShortcut': settingsShortcut,
-    'keyboardShortcuts': keyboardShortcuts,
-    'keyboardShortcutsShortcut': keyboardShortcutsShortcut,
-    'markdownAndHtml': markdownAndHtml,
-    'markdownAndHtmlShortcut': markdownAndHtmlShortcut,
-    'reportIssue': reportIssue,
-    'aboutBusyMark': aboutBusyMark,
-  };
+sealed class HeaderBarSearchEvent {
+  const HeaderBarSearchEvent();
 }
 
-class HeaderBarTheme {
-  const HeaderBarTheme({
-    required this.preferDark,
-    required this.backgroundColor,
-    required this.sidebarBackgroundColor,
-    required this.foregroundColor,
-    required this.mutedForegroundColor,
-    required this.disabledForegroundColor,
-    required this.controlColor,
-    required this.controlHoverColor,
-    required this.accentColor,
-    required this.accentForegroundColor,
-    required this.popoverBackgroundColor,
-    required this.borderColor,
-    required this.shadeColor,
-    required this.modalBarrierColor,
-  });
+class HeaderBarSearchQueryChanged extends HeaderBarSearchEvent {
+  const HeaderBarSearchQueryChanged(this.query);
 
-  factory HeaderBarTheme.fromContext(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final barrier = Theme.of(
-      context,
-    ).colorScheme.scrim.withValues(alpha: BusyMarkAlpha.modalBarrier);
-    return HeaderBarTheme(
-      preferDark: Theme.of(context).brightness == Brightness.dark,
-      backgroundColor: colors.view,
-      sidebarBackgroundColor: colors.sidebar,
-      foregroundColor: colors.foreground,
-      mutedForegroundColor: colors.mutedForeground,
-      disabledForegroundColor: colors.disabledForeground,
-      controlColor: colors.control,
-      controlHoverColor: colors.controlHover,
-      accentColor: Theme.of(context).colorScheme.primary,
-      accentForegroundColor: Theme.of(context).colorScheme.onPrimary,
-      popoverBackgroundColor: colors.popover,
-      borderColor: colors.subtleBorder,
-      shadeColor: colors.shade,
-      modalBarrierColor: barrier,
+  final String query;
+}
+
+class HeaderBarSearchSubmitted extends HeaderBarSearchEvent {
+  const HeaderBarSearchSubmitted(this.query);
+
+  final String query;
+}
+
+class HeaderBarSearchFocusChanged extends HeaderBarSearchEvent {
+  const HeaderBarSearchFocusChanged(this.focused);
+
+  final bool focused;
+}
+
+class HeaderBarSearchCleared extends HeaderBarSearchEvent {
+  const HeaderBarSearchCleared();
+}
+
+class HeaderBarSearchEscapePressed extends HeaderBarSearchEvent {
+  const HeaderBarSearchEscapePressed();
+}
+
+class LinuxHeaderBarService extends ChangeNotifier {
+  LinuxHeaderBarService({
+    MethodChannel? channel,
+    @visibleForTesting String? sessionId,
+  }) : assert(sessionId == null || sessionId != ''),
+       _channel = channel ?? const MethodChannel('com.busymark.app/headerbar'),
+       _sessionId = sessionId ?? const Uuid().v4() {
+    configurationSynchronizer = HeaderBarConfigurationSynchronizer(
+      apply: _applyConfiguration,
     );
-  }
-
-  final bool preferDark;
-  final Color backgroundColor;
-  final Color sidebarBackgroundColor;
-  final Color foregroundColor;
-  final Color mutedForegroundColor;
-  final Color disabledForegroundColor;
-  final Color controlColor;
-  final Color controlHoverColor;
-  final Color accentColor;
-  final Color accentForegroundColor;
-  final Color popoverBackgroundColor;
-  final Color borderColor;
-  final Color shadeColor;
-  final Color modalBarrierColor;
-
-  Map<String, Object> toMap() => {
-    'preferDark': preferDark,
-    'backgroundColor': _cssColor(backgroundColor),
-    'sidebarBackgroundColor': _cssColor(sidebarBackgroundColor),
-    'foregroundColor': _cssColor(foregroundColor),
-    'mutedForegroundColor': _cssColor(mutedForegroundColor),
-    'disabledForegroundColor': _cssColor(disabledForegroundColor),
-    'controlColor': _cssColor(controlColor),
-    'controlHoverColor': _cssColor(controlHoverColor),
-    'accentColor': _cssColor(accentColor),
-    'accentForegroundColor': _cssColor(accentForegroundColor),
-    'popoverBackgroundColor': _cssColor(popoverBackgroundColor),
-    'borderColor': _cssColor(borderColor),
-    'shadeColor': _cssColor(shadeColor),
-    'modalBarrierColor': _cssColor(modalBarrierColor),
-  };
-}
-
-class LinuxHeaderBarService {
-  LinuxHeaderBarService({MethodChannel? channel})
-    : _channel = channel ?? const MethodChannel('com.busymark.app/headerbar') {
     _channel.setMethodCallHandler(_handleNativeAction);
   }
 
   static final LinuxHeaderBarService instance = LinuxHeaderBarService();
 
   final MethodChannel _channel;
+  final String _sessionId;
   final _actions = StreamController<HeaderBarAction>.broadcast();
   final _actionEvents = StreamController<HeaderBarActionEvent>.broadcast();
-  final _searchQueries = StreamController<String>.broadcast();
+  final _searchEvents = StreamController<HeaderBarSearchEvent>.broadcast();
+
+  late final HeaderBarConfigurationSynchronizer configurationSynchronizer;
+
   var _initialized = false;
   var _channelReady = false;
   var _available = false;
   var _actionSequence = 0;
+  bool? _atomicConfigurationSupported;
 
   bool get isAvailable => _available;
   bool get usesNativeHeaderBar => _available;
 
   Stream<HeaderBarAction> get actions => _actions.stream;
   Stream<HeaderBarActionEvent> get actionEvents => _actionEvents.stream;
-  Stream<String> get searchQueries => _searchQueries.stream;
+  Stream<HeaderBarSearchEvent> get searchEvents => _searchEvents.stream;
 
   Future<void> initialize() async {
     if (_channelReady || (_initialized && !Platform.isLinux)) {
@@ -233,112 +121,240 @@ class LinuxHeaderBarService {
     }
     _initialized = true;
     try {
-      _available = await _channel.invokeMethod<bool>('initialize') ?? false;
+      final available =
+          await _channel.invokeMethod<bool>('initialize', {
+            'sessionId': _sessionId,
+          }) ??
+          false;
       _channelReady = true;
+      _setAvailable(available);
     } on MissingPluginException {
-      _initialized = false;
-      _channelReady = false;
-      _available = false;
+      _markUnavailable();
     } on Object {
-      _initialized = false;
-      _channelReady = false;
-      _available = false;
+      _markUnavailable();
     }
   }
 
+  /// Legacy setters remain available for an older Linux runner. Product
+  /// screens publish a complete [HeaderBarConfiguration] instead.
   Future<void> setTitleRange(String value) {
-    return _invoke('setTitleRange', value);
+    return _invokeLegacy('setTitleRange', value);
   }
 
   Future<void> setViewMode(AppViewMode mode) {
-    return _invoke('setViewMode', mode.name);
+    return _invokeLegacy('setViewMode', mode.name);
   }
 
   Future<void> setCanRefresh(bool value) {
-    return _invoke('setCanRefresh', value);
-  }
-
-  Future<void> setCanSave(bool value) {
-    return _invoke('setCanSave', value);
+    return _invokeLegacy('setCanRefresh', value);
   }
 
   Future<void> setDocumentControlsVisible(bool value) {
-    return _invoke('setDocumentControlsVisible', value);
+    return _invokeLegacy('setDocumentControlsVisible', value);
   }
 
   Future<void> setSearchActive(bool value) {
-    return _invoke('setSearchActive', value);
+    return _invokeLegacy('setSearchActive', value);
   }
 
   Future<void> setSearchVisible(bool value) {
-    return _invoke('setSearchVisible', value);
+    return _invokeLegacy('setSearchVisible', value);
   }
 
   Future<void> setSearchQuery(String value) {
-    return _invoke('setSearchQuery', value);
+    return _invokeLegacy('setSearchQuery', value);
+  }
+
+  Future<bool> focusSearch() async {
+    if (!_channelReady) {
+      await initialize();
+    }
+    if (!_channelReady || !_available) {
+      return false;
+    }
+    try {
+      return await _channel.invokeMethod<bool>('focusSearch') ?? false;
+    } on MissingPluginException {
+      _markUnavailable();
+    } on Object {
+      _markUnavailable();
+    }
+    return false;
   }
 
   Future<void> setSidebarVisible(bool value) {
-    return _invoke('setSidebarVisible', value);
+    return _invokeLegacy('setSidebarVisible', value);
   }
 
   Future<void> setSidebarToggleVisible(bool value) {
-    return _invoke('setSidebarToggleVisible', value);
+    return _invokeLegacy('setSidebarToggleVisible', value);
   }
 
   Future<void> setSidebarWidth(double value) {
-    return _invoke('setSidebarWidth', value);
+    return _invokeLegacy('setSidebarWidth', value);
   }
 
   Future<void> setTextDirection(TextDirection value) {
-    return _invoke(
+    return _invokeLegacy(
       'setTextDirection',
       value == TextDirection.rtl ? 'rtl' : 'ltr',
     );
   }
 
   Future<void> setBackVisible(bool value) {
-    return _invoke('setBackVisible', value);
+    return _invokeLegacy('setBackVisible', value);
   }
 
   Future<void> setLocalizedLabels(HeaderBarLabels labels) {
-    return _invoke('setLocalizedLabels', labels.toMap());
+    return _invokeLegacy('setLocalizedLabels', labels.toMap());
   }
 
   Future<void> setTheme(HeaderBarTheme theme) {
-    return _invoke('setTheme', theme.toMap());
+    return _invokeLegacy('setTheme', theme.toMap());
+  }
+
+  Future<void> setModalBarrierDepth(int value) async {
+    if (!_available) {
+      return;
+    }
+    final depth = value < 0 ? 0 : value;
+    final hasPublishedConfiguration =
+        configurationSynchronizer.desiredConfiguration != null;
+    await configurationSynchronizer.setModalBarrierDepth(depth);
+    if (!hasPublishedConfiguration) {
+      await _invokeLegacy('setModalBarrierDepth', depth);
+    }
   }
 
   Future<void> setModalBarrierVisible(bool value) {
-    return _invoke('setModalBarrierVisible', value);
+    return setModalBarrierDepth(value ? 1 : 0);
   }
 
-  Future<void> _invoke(
-    String method, [
-    Object? arguments,
-    bool requireHeaderBar = true,
-  ]) async {
+  Future<bool> _applyConfiguration(HeaderBarConfiguration configuration) async {
     if (!_channelReady) {
       await initialize();
     }
-    if (!_channelReady || (requireHeaderBar && !_available)) {
-      return;
+    if (!_channelReady || !_available) {
+      return false;
+    }
+    if (_atomicConfigurationSupported == false) {
+      return _applyLegacyConfiguration(configuration);
     }
     try {
-      await _channel.invokeMethod<void>(method, arguments);
+      final appliedRevision = await _channel.invokeMethod<int>(
+        'applyConfiguration',
+        <String, Object?>{'sessionId': _sessionId, ...configuration.toMap()},
+      );
+      if (appliedRevision != configuration.revision) {
+        _markUnavailable();
+        return false;
+      }
+      _atomicConfigurationSupported = true;
+      return true;
     } on MissingPluginException {
-      _channelReady = false;
-      _available = false;
+      _atomicConfigurationSupported = false;
+      return _applyLegacyConfiguration(configuration);
+    } on PlatformException catch (error) {
+      if (error.code == 'not_implemented' ||
+          error.code == 'unimplemented' ||
+          error.code == 'method_not_found') {
+        _atomicConfigurationSupported = false;
+        return _applyLegacyConfiguration(configuration);
+      }
+      _markUnavailable();
+      return false;
     } on Object {
-      // Native headerbar is a progressive Linux enhancement. Flutter fallback
-      // remains usable if the host shell rejects an update.
+      _markUnavailable();
+      return false;
     }
   }
 
+  Future<bool> _applyLegacyConfiguration(
+    HeaderBarConfiguration configuration,
+  ) async {
+    final updates = <(String, Object?)>[
+      ('setTextDirection', configuration.textDirection.name),
+      ('setSidebarWidth', configuration.sidebarWidth),
+      ('setTheme', configuration.theme.toMap()),
+      ('setLocalizedLabels', configuration.labels.toMap()),
+      ('setTitleRange', configuration.title),
+      ('setViewMode', configuration.viewMode.name),
+      ('setCanRefresh', configuration.canRefresh),
+      ('setDocumentControlsVisible', configuration.documentControlsVisible),
+      ('setSearchVisible', configuration.searchVisible),
+      ('setSidebarVisible', configuration.sidebarVisible),
+      ('setSidebarToggleVisible', configuration.sidebarToggleVisible),
+      ('setBackVisible', configuration.backVisible),
+      ('setSearchQuery', configuration.searchQuery),
+      ('setSearchActive', configuration.searchActive),
+      ('setModalBarrierVisible', configuration.modalBarrierVisible),
+    ];
+    for (final (method, arguments) in updates) {
+      if (!configurationSynchronizer.isLatestRevision(configuration.revision)) {
+        return false;
+      }
+      if (!await _tryInvokeLegacy(method, arguments)) {
+        return false;
+      }
+    }
+    return configurationSynchronizer.isLatestRevision(configuration.revision);
+  }
+
+  Future<void> _invokeLegacy(String method, [Object? arguments]) async {
+    await _tryInvokeLegacy(method, arguments);
+  }
+
+  Future<bool> _tryInvokeLegacy(String method, [Object? arguments]) async {
+    if (!_channelReady) {
+      await initialize();
+    }
+    if (!_channelReady || !_available) {
+      return false;
+    }
+    try {
+      await _channel.invokeMethod<void>(method, arguments);
+      return true;
+    } on MissingPluginException {
+      _markUnavailable();
+      return false;
+    } on Object {
+      _markUnavailable();
+      return false;
+    }
+  }
+
+  void _markUnavailable() {
+    _initialized = false;
+    _channelReady = false;
+    _setAvailable(false);
+  }
+
+  void _setAvailable(bool value) {
+    if (_available == value) {
+      return;
+    }
+    _available = value;
+    notifyListeners();
+  }
+
   Future<void> _handleNativeAction(MethodCall call) async {
-    if (call.method == 'searchQueryChanged') {
-      if (!_searchQueries.isClosed) {
-        _searchQueries.add((call.arguments as String?) ?? '');
+    final searchEvent = switch ((call.method, call.arguments)) {
+      ('searchQueryChanged', final String query) => HeaderBarSearchQueryChanged(
+        query,
+      ),
+      ('searchSubmitted', final String query) => HeaderBarSearchSubmitted(
+        query,
+      ),
+      ('searchFocusChanged', final bool focused) => HeaderBarSearchFocusChanged(
+        focused,
+      ),
+      ('searchCleared', _) => const HeaderBarSearchCleared(),
+      ('searchEscapePressed', _) => const HeaderBarSearchEscapePressed(),
+      _ => null,
+    };
+    if (searchEvent != null) {
+      if (!_searchEvents.isClosed) {
+        _searchEvents.add(searchEvent);
       }
       return;
     }
@@ -378,22 +394,20 @@ class LinuxHeaderBarService {
   }
 }
 
-final linuxHeaderBarServiceProvider = Provider<LinuxHeaderBarService>(
-  (ref) => LinuxHeaderBarService.instance,
-);
+final linuxHeaderBarServiceProvider = Provider<LinuxHeaderBarService>((ref) {
+  final service = LinuxHeaderBarService.instance;
+  void notifyConsumers() => ref.notifyListeners();
+  service.addListener(notifyConsumers);
+  ref.onDispose(() => service.removeListener(notifyConsumers));
+  return service;
+});
 
 final headerBarActionsProvider = StreamProvider<HeaderBarActionEvent>((ref) {
   return ref.watch(linuxHeaderBarServiceProvider).actionEvents;
 });
 
-final headerBarSearchQueriesProvider = StreamProvider<String>((ref) {
-  return ref.watch(linuxHeaderBarServiceProvider).searchQueries;
+final headerBarSearchEventsProvider = StreamProvider<HeaderBarSearchEvent>((
+  ref,
+) {
+  return ref.watch(linuxHeaderBarServiceProvider).searchEvents;
 });
-
-String _cssColor(Color color) {
-  final alpha = (color.a).clamp(0.0, 1.0).toStringAsFixed(3);
-  return 'rgba(${(color.r * 255).round()},'
-      '${(color.g * 255).round()},'
-      '${(color.b * 255).round()},'
-      '$alpha)';
-}

@@ -63,23 +63,9 @@ Future<_CommitFileAction?> _showCommitFileMenu(
   BuildContext context,
   Offset position,
 ) {
-  final navigator = Navigator.of(context, rootNavigator: true);
-  final overlay = navigator.overlay?.context.findRenderObject();
-  if (overlay is! RenderBox) {
-    return Future.value(null);
-  }
-  final theme = Theme.of(context);
-  final colors = BusyMarkSurfaceColors.of(context);
-  final popupTheme = theme.popupMenuTheme;
-  return showMenu<_CommitFileAction>(
-    context: context,
-    useRootNavigator: true,
-    position: RelativeRect.fromLTRB(
-      position.dx,
-      position.dy,
-      overlay.size.width - position.dx,
-      overlay.size.height - position.dy,
-    ),
+  return showBusyMarkContextMenu<_CommitFileAction>(
+    context,
+    position,
     items: [
       BusyMarkPopupMenuItem(
         value: _CommitFileAction.showDiff,
@@ -87,13 +73,6 @@ Future<_CommitFileAction?> _showCommitFileMenu(
         icon: BusyMarkGlyphs.preview,
       ),
     ],
-    color: popupTheme.color ?? colors.popover,
-    surfaceTintColor: BusyMarkLinuxPalette.transparent,
-    elevation: BusyMarkElevation.popover,
-    shadowColor: colors.shade,
-    constraints: const BoxConstraints.tightFor(
-      width: BusyMarkSizes.popupMenuMinWidth,
-    ),
   );
 }
 
@@ -173,7 +152,7 @@ class _CommitFileRow extends StatelessWidget {
         child: InkWell(
           hoverColor: busyMarkRowHoverColor(context),
           onTap: path.isEmpty ? null : onShowDiff,
-          onSecondaryTapDown: path.isEmpty
+          onSecondaryTapUp: path.isEmpty
               ? null
               : (details) async {
                   final action = await _showCommitFileMenu(

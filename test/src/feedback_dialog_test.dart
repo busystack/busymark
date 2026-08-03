@@ -18,7 +18,7 @@ import 'package:yaru/yaru.dart';
 void main() {
   final l10n = AppLocalizationsEn();
 
-  testWidgets('uses shared BusyMark desktop form controls', (tester) async {
+  testWidgets('uses the native grouped modal-editor structure', (tester) async {
     final service = _FakeFeedbackService(
       handler: (_) async =>
           throw const FeedbackSubmissionException(FeedbackFailureKind.rejected),
@@ -29,29 +29,55 @@ void main() {
     Finder dialogDescendant(Finder matching) =>
         find.descendant(of: dialog, matching: matching, matchRoot: true);
 
-    expect(dialogDescendant(find.byType(BusyMarkDialogShell)), findsOneWidget);
-    expect(dialogDescendant(find.byType(YaruDialogTitleBar)), findsOneWidget);
     expect(
-      dialogDescendant(find.byType(BusyMarkDialogButton)),
-      findsNWidgets(2),
-    );
-    expect(
-      dialogDescendant(
-        find.byWidgetPredicate(
-          (widget) => widget is BusyMarkPopupSelector<FeedbackCategory>,
-        ),
-      ),
+      dialogDescendant(find.byType(BusyMarkModalEditorScaffold)),
       findsOneWidget,
     );
+    expect(dialogDescendant(find.byType(BusyMarkEditorHeader)), findsOneWidget);
     expect(
-      dialogDescendant(find.byType(BusyMarkFloatingTextEntry)),
-      findsNWidgets(3),
+      dialogDescendant(find.byType(BusyMarkComboRow<FeedbackCategory?>)),
+      findsOneWidget,
     );
     expect(
       dialogDescendant(find.byType(BusyMarkGroupedList)),
       findsNWidgets(2),
     );
-    expect(dialogDescendant(find.byType(BusyMarkSwitchRow)), findsOneWidget);
+    expect(dialogDescendant(find.byType(YaruCheckboxListTile)), findsOneWidget);
+    expect(dialogDescendant(find.byType(TextField)), findsNWidgets(3));
+    expect(dialogDescendant(find.byType(YaruListTile)), findsNWidgets(5));
+
+    for (final key in const [
+      BusyMarkFeedbackKeys.subject,
+      BusyMarkFeedbackKeys.message,
+      BusyMarkFeedbackKeys.replyEmail,
+    ]) {
+      final field = tester.widget<TextField>(find.byKey(key));
+      final decoration = field.decoration!;
+
+      expect(decoration.filled, isFalse);
+      expect(decoration.fillColor, Colors.transparent);
+      expect(decoration.hoverColor, Colors.transparent);
+      expect(decoration.border, InputBorder.none);
+      expect(decoration.enabledBorder, InputBorder.none);
+      expect(decoration.focusedBorder, InputBorder.none);
+      expect(decoration.disabledBorder, InputBorder.none);
+      expect(decoration.errorBorder, InputBorder.none);
+      expect(decoration.focusedErrorBorder, InputBorder.none);
+      expect(decoration.contentPadding, EdgeInsets.zero);
+      expect(
+        find.ancestor(of: find.byKey(key), matching: find.byType(YaruListTile)),
+        findsOneWidget,
+      );
+    }
+
+    expect(dialogDescendant(find.byType(BusyMarkDialogShell)), findsNothing);
+    expect(dialogDescendant(find.byType(YaruDialogTitleBar)), findsNothing);
+    expect(dialogDescendant(find.byType(BusyMarkDialogButton)), findsNothing);
+    expect(
+      dialogDescendant(find.byType(BusyMarkFloatingTextEntry)),
+      findsNothing,
+    );
+    expect(dialogDescendant(find.byType(BusyMarkSwitchRow)), findsNothing);
     expect(dialogDescendant(find.byType(BusyMarkStatusBox)), findsNothing);
     expect(dialogDescendant(find.byType(AlertDialog)), findsNothing);
     expect(
@@ -62,13 +88,14 @@ void main() {
       ),
       findsNothing,
     );
-    expect(dialogDescendant(find.byType(TextField)), findsNothing);
+    expect(dialogDescendant(find.byType(TextFormField)), findsNothing);
 
     await _enterValidRequiredFields(tester, l10n);
     await tester.tap(find.byKey(BusyMarkFeedbackKeys.submit));
     await tester.pumpAndSettle();
 
-    expect(dialogDescendant(find.byType(BusyMarkStatusBox)), findsOneWidget);
+    expect(find.byKey(BusyMarkFeedbackKeys.status), findsOneWidget);
+    expect(dialogDescendant(find.byType(BusyMarkStatusBox)), findsNothing);
   });
 
   testWidgets('shared report form remains directional in an Arabic UI', (
@@ -97,6 +124,41 @@ void main() {
 
     expect(find.text(localized.feedbackCategoryProblem), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('dark route keeps the modal and fields theme-owned', (
+    tester,
+  ) async {
+    final service = _FakeFeedbackService();
+    await _pumpDialogRoute(tester, service, brightness: Brightness.dark);
+
+    final feedback = find.byType(BusyMarkFeedbackDialog);
+    final feedbackContext = tester.element(feedback);
+    final dialog = tester.widget<Dialog>(
+      find.descendant(
+        of: find.byType(BusyMarkModalEditorSurface),
+        matching: find.byType(Dialog),
+      ),
+    );
+    expect(
+      dialog.backgroundColor,
+      Theme.of(feedbackContext).scaffoldBackgroundColor,
+    );
+    expect(dialog.surfaceTintColor, dialog.backgroundColor);
+
+    for (final key in const [
+      BusyMarkFeedbackKeys.subject,
+      BusyMarkFeedbackKeys.message,
+      BusyMarkFeedbackKeys.replyEmail,
+    ]) {
+      final decoration = tester.widget<TextField>(find.byKey(key)).decoration!;
+      expect(decoration.filled, isFalse);
+      expect(decoration.fillColor, Colors.transparent);
+      expect(decoration.border, InputBorder.none);
+    }
+
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(find.byType(YaruDialogTitleBar), findsNothing);
   });
 
   testWidgets('shows required-field validation without sending', (
@@ -130,6 +192,27 @@ void main() {
     expect(service.submissions, isEmpty);
   });
 
+  testWidgets('category can return to the unselected placeholder', (
+    tester,
+  ) async {
+    final service = _FakeFeedbackService();
+    await _pumpDialog(tester, service);
+
+    await tester.tap(find.byKey(BusyMarkFeedbackKeys.category));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.feedbackCategoryProblem).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(BusyMarkFeedbackKeys.category));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.feedbackChooseCategory).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(BusyMarkFeedbackKeys.submit));
+    await tester.pump();
+
+    expect(find.text(l10n.feedbackCategoryRequired), findsOneWidget);
+    expect(service.submissions, isEmpty);
+  });
+
   testWidgets('disables submit while a request is active', (tester) async {
     final completion = Completer<FeedbackReceipt>();
     final service = _FakeFeedbackService(handler: (_) => completion.future);
@@ -141,8 +224,9 @@ void main() {
 
     expect(service.submissions, hasLength(1));
     expect(service.submissions.single.technicalDetails, isNull);
-    expect(find.text(l10n.feedbackSubmitting), findsOneWidget);
-    final button = tester.widget<BusyMarkDialogButton>(
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text(l10n.feedbackSubmit), findsNothing);
+    final button = tester.widget<ElevatedButton>(
       find.byKey(BusyMarkFeedbackKeys.submit),
     );
     expect(button.onPressed, isNull);
@@ -284,9 +368,9 @@ void main() {
     expect(find.byType(BusyMarkFeedbackDialog), findsOneWidget);
     expect(
       tester
-          .widget<YaruDialogTitleBar>(find.byType(YaruDialogTitleBar))
-          .isClosable,
-      isFalse,
+          .widget<FilledButton>(find.byKey(BusyMarkFeedbackKeys.cancel))
+          .onPressed,
+      isNull,
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -301,9 +385,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<YaruDialogTitleBar>(find.byType(YaruDialogTitleBar))
-          .isClosable,
-      isTrue,
+          .widget<FilledButton>(find.byKey(BusyMarkFeedbackKeys.cancel))
+          .onPressed,
+      isNotNull,
     );
     await tester.tap(find.byKey(BusyMarkFeedbackKeys.cancel));
     await tester.pumpAndSettle();
@@ -341,14 +425,7 @@ Future<void> _pumpDialog(
           brightness: Brightness.light,
           accentColor: BusyMarkLinuxPalette.blueAccent,
         ),
-        home: Scaffold(
-          body: Center(
-            child: BusyMarkModalEditorSurface(
-              maxHeight: 840,
-              child: const BusyMarkFeedbackDialog(),
-            ),
-          ),
-        ),
+        home: Scaffold(body: Center(child: const BusyMarkFeedbackDialog())),
       ),
     ),
   );
@@ -357,8 +434,9 @@ Future<void> _pumpDialog(
 
 Future<void> _pumpDialogRoute(
   WidgetTester tester,
-  _FakeFeedbackService service,
-) async {
+  _FakeFeedbackService service, {
+  Brightness brightness = Brightness.light,
+}) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(1000, 900);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -380,7 +458,7 @@ Future<void> _pumpDialogRoute(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         theme: buildBusyMarkTheme(
-          brightness: Brightness.light,
+          brightness: brightness,
           accentColor: BusyMarkLinuxPalette.blueAccent,
         ),
         home: Builder(

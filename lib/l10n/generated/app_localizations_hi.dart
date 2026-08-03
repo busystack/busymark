@@ -14,7 +14,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'Markdown और Writerside-संगत दस्तावेज़ीकरण संपादक।';
+  String get appSubtitle =>
+      'Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का संपादक।';
 
   @override
   String get aboutBusyMark => 'BusyMark के बारे में';

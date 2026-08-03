@@ -12,7 +12,7 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -24,6 +24,7 @@ import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -33,6 +34,7 @@ import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -41,6 +43,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
@@ -213,7 +216,10 @@ void main() {
     await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
     expect(find.text(l10n.reportIssue), findsNothing);
 
     await tester.tap(find.byTooltip(l10n.mainMenu));
@@ -288,7 +294,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await pressShortcut(LogicalKeyboardKey.keyS, control: true, alt: true);
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('settings screen opens', (tester) async {
@@ -312,22 +321,13 @@ void main() {
     await tester.tap(find.text(l10n.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
     expect(find.text(l10n.appLanguage), findsOneWidget);
     expect(find.text(l10n.systemLanguage), findsWidgets);
-    expect(find.text(l10n.autoSave), findsOneWidget);
-    expect(find.text(l10n.autoSaveDescription), findsOneWidget);
-    expect(find.text(l10n.validateOnEdit), findsOneWidget);
     expect(find.byType(DropdownButton<String>), findsNothing);
-    expect(find.text(l10n.settingsWindowSectionTitle), findsOneWidget);
-    expect(
-      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
-      findsOneWidget,
-    );
-    expect(
-      find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
-      findsOneWidget,
-    );
 
     await tester.tap(find.byTooltip(l10n.appLanguage));
     await tester.pumpAndSettle();
@@ -349,21 +349,218 @@ void main() {
     await tester.tap(find.text(l10n.systemLanguage).last);
     await tester.pumpAndSettle();
 
+    expect(
+      find.byType(BusyMarkPopupSelector<BusyMarkThemeModePreference>),
+      findsOneWidget,
+    );
+    expect(
+      find.byType(SegmentedButton<BusyMarkThemeModePreference>),
+      findsNothing,
+    );
+    await tester.tap(find.byTooltip(l10n.theme));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.systemTheme), findsWidgets);
+    expect(find.text(l10n.lightTheme), findsOneWidget);
+    expect(find.text(l10n.darkTheme), findsOneWidget);
+    await tester.tap(find.text(l10n.darkTheme));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['themeModePreference'], 'dark');
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.editor));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byWidgetPredicate((widget) => widget is SegmentedButton),
+      findsNothing,
+    );
+    expect(
+      find.byType(BusyMarkPopupSelector<EditorToolbarPlacement>),
+      findsOneWidget,
+    );
+    expect(
+      find.byType(BusyMarkPopupSelector<EditorToolbarDirection>),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip(l10n.editingButtonsPosition));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.bottomRight));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['editorToolbarPlacement'], 'bottomRight');
+
+    await tester.tap(find.byTooltip(l10n.editingButtonsDirection));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.vertical));
+    await tester.pumpAndSettle();
+
+    expect(settingsStore.value['editorToolbarDirection'], 'vertical');
+
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    expect(find.text(l10n.autoSaveDescription), findsOneWidget);
     await tester.tap(find.text(l10n.autoSave));
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['autoSave'], isFalse);
 
-    await tester.ensureVisible(
-      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
-    );
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.validation));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.validateOnEdit), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settingsWindowSectionTitle));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
+      findsOneWidget,
+    );
     await tester.tap(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
     );
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
+  });
+
+  testWidgets('settings uses the regular split sidebar at desktop width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 760);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    expect(find.byType(BusyMarkSidebarNavigation), findsOneWidget);
+    expect(
+      find.byType(BusyMarkSidebarNavigationTile),
+      findsNWidgets(SettingsPage.values.length),
+    );
+    expect(
+      tester.getSize(find.byType(BusyMarkSidebarSurface)).width,
+      BusyMarkSizes.sidebarWidth,
+    );
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+
+    final appearanceTile = tester.widget<BusyMarkSidebarNavigationTile>(
+      find.byKey(const ValueKey('settings-navigation-appearance')),
+    );
+    final editorTile = tester.widget<BusyMarkSidebarNavigationTile>(
+      find.byKey(const ValueKey('settings-navigation-editor')),
+    );
+    expect(appearanceTile.selected, isTrue);
+    expect(editorTile.selected, isFalse);
+
+    var header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.sidebarToggleVisible, isFalse);
+    expect(header.configuration.title, l10n.appearance);
+
+    await tester.tap(find.byKey(const ValueKey('settings-navigation-editor')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<BusyMarkSidebarNavigationTile>(
+            find.byKey(const ValueKey('settings-navigation-editor')),
+          )
+          .selected,
+      isTrue,
+    );
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.title, l10n.editor);
+  });
+
+  testWidgets('settings main surface matches the headerbar in light and dark', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 760);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    for (final preference in [
+      BusyMarkThemeModePreference.light,
+      BusyMarkThemeModePreference.dark,
+    ]) {
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(themeModePreference: preference)
+            .toJson();
+      headerBarService = _FallbackHeaderBarService();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(settingsStore),
+          ],
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settings));
+      await tester.pumpAndSettle();
+
+      final surfaceFinder = find.byKey(
+        const ValueKey('settings-content-surface'),
+      );
+      expect(surfaceFinder, findsOneWidget);
+      final surface = tester.widget<ColoredBox>(surfaceFinder);
+      final surfaceContext = tester.element(surfaceFinder);
+      final colors = BusyMarkSurfaceColors.of(surfaceContext);
+      final header = tester.widget<HeaderBarConfigurationPublisher>(
+        find.byType(HeaderBarConfigurationPublisher),
+      );
+
+      expect(
+        Theme.of(surfaceContext).brightness,
+        preference == BusyMarkThemeModePreference.dark
+            ? Brightness.dark
+            : Brightness.light,
+      );
+      expect(surface.color, colors.view);
+      expect(surface.color, header.configuration.theme.backgroundColor);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
   });
 
   testWidgets('stored language override localizes app text', (tester) async {
@@ -387,8 +584,17 @@ void main() {
     await tester.tap(find.text(de.settings));
     await tester.pumpAndSettle();
 
-    expect(find.text(de.settingsTitle), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
     expect(find.text(de.appLanguage), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(de.validation));
+    await tester.pumpAndSettle();
+
     expect(find.text(de.validateOnEdit), findsOneWidget);
   });
 
@@ -430,6 +636,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.createWritersideProject), findsWidgets);
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(5));
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(find.byType(BusyMarkDialogButton), findsNothing);
 
     final entries = find.byWidgetPredicate(
       (widget) => widget is EditableText && !widget.readOnly,
@@ -623,7 +834,7 @@ void main() {
       ),
     };
     final shortcutRowFinder = find.descendant(
-      of: find.byType(BusyMarkModalEditorSurface),
+      of: find.byType(BusyMarkInformationalDialog),
       matching: find.byType(BusyMarkActionRow),
     );
     final shortcutRows = tester
@@ -965,8 +1176,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
-    await tester.pump(const Duration(milliseconds: 200));
+    Future<void> openPopup(
+      Finder anchor, {
+      int buttons = kPrimaryButton,
+    }) async {
+      await tester.tap(anchor, buttons: buttons);
+      await tester.pumpAndSettle();
+    }
+
+    await openPopup(find.byTooltip(l10n.sidebarViewMenu));
     await tester.tap(find.text(l10n.files));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('target.md'));
@@ -985,8 +1203,7 @@ void main() {
     await tester.tap(find.text(l10n.cancel));
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
-    await tester.pump(const Duration(milliseconds: 200));
+    await openPopup(find.byTooltip(l10n.sidebarViewMenu));
     await tester.tap(find.text(l10n.toc));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -994,16 +1211,42 @@ void main() {
     expect(find.byTooltip(l10n.tocActions), findsOneWidget);
     expect(find.byTooltip(l10n.newTopic), findsNothing);
     expect(find.byTooltip(l10n.newChildTopic), findsNothing);
-    await tester.tap(find.byTooltip(l10n.tocActions));
-    await tester.pump(const Duration(milliseconds: 200));
+    final tocMenuButton = find.descendant(
+      of: find.byKey(const ValueKey('workspace-sidebar-toc-menu')),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
+    await openPopup(find.byTooltip(l10n.tocActions));
+    expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
     expect(find.text(l10n.newTopic), findsOneWidget);
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text(l10n.topicPlacement), findsOneWidget);
     expect(find.text(l10n.tocRoot), findsOneWidget);
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkComboRow<WritersideTopicCreatePlacement>,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkComboRow<WritersideTopicFormat>,
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(find.byType(SegmentedButton<WritersideTopicFormat>), findsNothing);
 
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(controller.createdTopicRequest, isNotNull);
@@ -1015,23 +1258,25 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, isNull);
     expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
 
-    await tester.tap(find.byTooltip(l10n.instanceName));
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.byTooltip(l10n.instanceName));
     await tester.tap(find.text('API Reference'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('api.md'), findsOneWidget);
 
-    await tester.tap(find.byTooltip(l10n.tocActions));
-    await tester.pump(const Duration(milliseconds: 200));
+    await openPopup(find.byTooltip(l10n.tocActions));
     expect(find.text(l10n.newTopic), findsOneWidget);
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(controller.createdTopicTreePath, p.join(root.path, 'api.tree'));
 
-    await tester.tap(find.byTooltip(l10n.instanceName));
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.byTooltip(l10n.instanceName));
     await tester.tap(find.text('Guide').last);
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1049,8 +1294,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
     for (final label in [
       l10n.newSiblingTopic,
@@ -1073,7 +1317,12 @@ void main() {
     await tester.tap(find.text(l10n.newChildTopic));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.insideSelectedTopic), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(
       controller.createdTopicRequest!.placement,
@@ -1083,12 +1332,16 @@ void main() {
     expect(controller.createdTopicRequest!.referenceTopic, 'nested.md');
     expect(controller.createdTopicRequest!.referenceTocIdentity, isNotNull);
 
-    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
     await tester.tap(find.text(l10n.newSiblingTopic));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.afterSelectedTopic), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, l10n.create));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkEditorHeader),
+        matching: find.widgetWithText(ElevatedButton, l10n.create),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 300));
     expect(
       controller.createdTopicRequest!.placement,
@@ -1096,13 +1349,11 @@ void main() {
     );
     expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
 
-    await tester.tap(find.text('Nested entry'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
 
     await tester.tap(find.text(l10n.cut));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('parent.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('parent.md'), buttons: kSecondaryButton);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1114,7 +1365,7 @@ void main() {
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     File(
       p.join(root.path, 'topics', 'inserted.md'),
     ).writeAsStringSync('# Inserted\n');
@@ -1134,8 +1385,7 @@ void main() {
     controller.replaceWorkspace(refreshedWorkspace);
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.text('parent.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('parent.md'), buttons: kSecondaryButton);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1147,13 +1397,11 @@ void main() {
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('loose.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    await openPopup(find.text('loose.md'), buttons: kSecondaryButton);
     await tester.tap(find.text(l10n.cut));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('target.md'), buttons: kSecondaryButton);
-    await tester.pump(const Duration(milliseconds: 300));
+    await openPopup(find.text('target.md'), buttons: kSecondaryButton);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1688,8 +1936,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(l10n.openInFiles), findsNothing);
 
+    final pathMenuButton = find.descendant(
+      of: find.byKey(const ValueKey('workspace-sidebar-path-menu')),
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(pathMenuButton).isSelected, isFalse);
     await tester.tap(find.byTooltip(l10n.pathActions));
     await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(pathMenuButton).isSelected, isFalse);
     expect(find.text(l10n.copyName), findsOneWidget);
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
@@ -1933,9 +2187,15 @@ void main() {
       ),
       findsOneWidget,
     );
+    final branchMenuButton = find.descendant(
+      of: branchMenu,
+      matching: find.byType(IconButton),
+    );
+    expect(tester.widget<IconButton>(branchMenuButton).isSelected, isFalse);
     expect(gitController.branchLoadCount, 0);
     await tester.tap(branchMenu);
     await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(branchMenuButton).isSelected, isFalse);
     expect(gitController.branchLoadCount, 1);
     expect(find.text(l10n.gitPull), findsOneWidget);
     expect(find.text(l10n.gitPush), findsOneWidget);
@@ -3002,7 +3262,7 @@ void main() {
           .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
     const service = _SearchWorkspaceService(
-      '# Shared document frame\n\nParagraph\n',
+      '# Shared document frame\n\nParagraph line one\nParagraph line two\n',
     );
     final container = ProviderContainer(
       overrides: [
@@ -3043,7 +3303,16 @@ void main() {
     final editorParagraphRect = tester.getRect(
       find.descendant(of: editorScroll, matching: find.byType(TextField)).at(1),
     );
-    final editorPadding = tester.widget<ListView>(editorScroll).padding;
+    final editorParagraphStyle = tester
+        .widget<TextField>(
+          find
+              .descendant(of: editorScroll, matching: find.byType(TextField))
+              .at(1),
+        )
+        .style;
+    final editorPadding = tester
+        .widget<ScrollablePositionedList>(editorScroll)
+        .padding;
     final expectedStandalone = BusyMarkDocumentLayoutSpec.standalone
         .withEditingToolbar(
           placement: EditorToolbarPlacement.topLeft,
@@ -3077,19 +3346,33 @@ void main() {
       of: previewContent,
       matching: find.byWidgetPredicate(
         (widget) =>
-            widget is RichText && widget.text.toPlainText() == 'Paragraph',
+            widget is Text &&
+            widget.textSpan?.toPlainText().contains('Paragraph line one') ==
+                true,
       ),
     );
     expect(previewParagraph, findsOneWidget);
     final previewParagraphRect = tester.getRect(previewParagraph);
+    final previewParagraphStyle = tester
+        .widget<Text>(previewParagraph)
+        .textSpan
+        ?.style;
     expect(previewRect.left, closeTo(editorRect.left, 0.1));
     expect(previewRect.right, closeTo(editorRect.right, 0.1));
-    expect(previewRect.top, closeTo(editorRect.top, 0.1));
     expect(previewHeadingRect.left, closeTo(editorHeadingRect.left, 0.1));
     expect(previewHeadingRect.top, closeTo(editorHeadingRect.top, 0.1));
     expect(previewParagraphRect.left, closeTo(editorParagraphRect.left, 0.1));
     expect(previewParagraphRect.top, closeTo(editorParagraphRect.top, 0.1));
-    expect(tester.widget<ListView>(previewScroll).padding, editorPadding);
+    expect(editorParagraphStyle?.height, BusyMarkTypography.bodyLineHeight);
+    expect(previewParagraphStyle?.height, editorParagraphStyle?.height);
+    expect(
+      previewParagraphRect.height,
+      closeTo(editorParagraphRect.height, 0.1),
+    );
+    expect(
+      tester.widget<ScrollablePositionedList>(previewScroll).padding,
+      editorPadding,
+    );
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -3098,14 +3381,11 @@ void main() {
 
     final splitPaneRect = tester.getRect(previewScroll);
     final splitContentRect = tester.getRect(previewContent);
-    expect(splitContentRect.left - splitPaneRect.left, BusyMarkSpacing.xl);
-    expect(splitPaneRect.right - splitContentRect.right, BusyMarkSpacing.xl);
+    expect(splitContentRect.left, splitPaneRect.left);
+    expect(splitContentRect.right, splitPaneRect.right);
+    expect(splitContentRect.top, splitPaneRect.top);
     expect(
-      splitContentRect.top - splitPaneRect.top,
-      BusyMarkSourceEditorMetrics.paddingTop,
-    );
-    expect(
-      tester.widget<ListView>(previewScroll).padding,
+      tester.widget<ScrollablePositionedList>(previewScroll).padding,
       BusyMarkDocumentLayoutSpec.splitPreview.scrollPadding,
     );
   });
@@ -3720,6 +4000,289 @@ void main() {
     expect(find.text(l10n.noOutline), findsNothing);
   });
 
+  testWidgets(
+    'outline follows unsaved source headings without live validation',
+    (tester) async {
+      const startupPath = 'test/fixtures/markdown/basic.md';
+      const unsaved = '''
+# Unsaved title
+
+Draft paragraph.
+
+Another draft paragraph.
+
+## Unsaved target
+
+Body.
+''';
+      final service = _StartupWorkspaceService();
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              validateOnEdit: false,
+              documentViewMode: DocumentViewModePreference.source,
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue(startupPath),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var i = 0; i < 20; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byType(TextField).evaluate().isNotEmpty) {
+          break;
+        }
+      }
+
+      final sourceField = find.descendant(
+        of: find.byType(BusyMarkSourceEditor),
+        matching: find.byType(TextField),
+      );
+      expect(sourceField, findsOneWidget);
+      await tester.enterText(sourceField, unsaved);
+      await tester.pump();
+
+      final state = container.read(workspaceControllerProvider);
+      expect(state.isDirty, isTrue);
+      expect(state.workspace?.markdown?.title, 'Basic Markdown');
+      final outlineTree = find.byKey(
+        const ValueKey('workspace-sidebar-outline-tree'),
+      );
+      expect(
+        find.descendant(of: outlineTree, matching: find.text('Unsaved target')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: outlineTree, matching: find.text('Basic Markdown')),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.descendant(of: outlineTree, matching: find.text('Unsaved target')),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final controller = tester.widget<TextField>(sourceField).controller!;
+      expect(
+        controller.selection,
+        TextSelection.collapsed(offset: unsaved.indexOf('## Unsaved target')),
+      );
+      expect(service.saveCount, 0);
+    },
+  );
+
+  testWidgets('outline navigates to a renamed unsaved editor heading', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const startupPath = '/tmp/unsaved-editor-outline.md';
+    final source = [
+      '# [Saved heading](https://example.com)',
+      '',
+      for (var index = 0; index < 60; index += 1) ...[
+        'Paragraph $index keeps the editor scrollable.',
+        '',
+      ],
+    ].join('\n');
+    final service = _SearchWorkspaceService(source);
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.editor,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final editorScroll = find.byKey(const ValueKey('wysiwyg-document-scroll'));
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (editorScroll.evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorFields = find.descendant(
+      of: editorScroll,
+      matching: find.byType(TextField),
+    );
+    expect(editorFields, findsWidgets);
+    ScrollablePositionedList editorList() =>
+        tester.widget<ScrollablePositionedList>(editorScroll);
+    Finder editorFieldWithText(String text) => find.descendant(
+      of: editorScroll,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.controller?.text == text,
+      ),
+    );
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    final formattedTarget = find.descendant(
+      of: outlineTree,
+      matching: find.text('Saved heading'),
+    );
+    expect(formattedTarget, findsOneWidget);
+
+    editorList().itemScrollController!.jumpTo(
+      index: editorList().itemCount - 1,
+    );
+    await tester.pump();
+    expect(editorFieldWithText('Saved heading'), findsNothing);
+    await tester.tap(formattedTarget);
+    await tester.pumpAndSettle();
+    expect(editorFieldWithText('Saved heading'), findsOneWidget);
+
+    final previewBeforeEdit = container
+        .read(workspaceControllerProvider)
+        .preview;
+    await tester.enterText(editorFields.first, 'Unsaved heading');
+    await tester.pump();
+
+    final state = container.read(workspaceControllerProvider);
+    expect(
+      state.activeText,
+      startsWith('# [Unsaved heading](https://example.com)\n'),
+    );
+    expect(state.isDirty, isTrue);
+    expect(identical(state.preview, previewBeforeEdit), isTrue);
+    expect(state.liveOutline?.headings.map((heading) => heading.text), [
+      'Unsaved heading',
+    ]);
+    final target = find.descendant(
+      of: outlineTree,
+      matching: find.text('Unsaved heading'),
+    );
+    expect(target, findsOneWidget);
+    expect(
+      find.descendant(of: outlineTree, matching: find.text('Saved heading')),
+      findsNothing,
+    );
+
+    editorList().itemScrollController!.jumpTo(
+      index: editorList().itemCount - 1,
+    );
+    await tester.pump();
+    expect(editorFieldWithText('Unsaved heading'), findsNothing);
+
+    await tester.tap(target);
+    await tester.pumpAndSettle();
+
+    expect(editorFieldWithText('Unsaved heading'), findsOneWidget);
+    final viewportBounds = tester.getRect(editorScroll);
+    final headingBounds = tester.getRect(editorFields.first);
+    expect(headingBounds.bottom, greaterThan(viewportBounds.top));
+    expect(headingBounds.top, lessThan(viewportBounds.bottom));
+  });
+
+  testWidgets('untitled outline navigates before the first save', (
+    tester,
+  ) async {
+    const unsaved = '''
+# New document
+
+Draft paragraph.
+
+## Unsaved target
+''';
+    final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createMarkdownFile));
+    await tester.pumpAndSettle();
+    final sourceField = find.descendant(
+      of: find.byType(BusyMarkSourceEditor),
+      matching: find.byType(TextField),
+    );
+    expect(sourceField, findsOneWidget);
+    await tester.enterText(sourceField, unsaved);
+    await tester.pump();
+
+    expect(
+      container.read(workspaceControllerProvider).workspace?.activeFilePath,
+      isNull,
+    );
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    final target = find.descendant(
+      of: outlineTree,
+      matching: find.text('Unsaved target'),
+    );
+    expect(target, findsOneWidget);
+
+    await tester.tap(target);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final controller = tester.widget<TextField>(sourceField).controller!;
+    expect(
+      controller.selection,
+      TextSelection.collapsed(offset: unsaved.indexOf('## Unsaved target')),
+    );
+    expect(service.saveCount, 0);
+  });
+
   testWidgets('preview tolerates duplicate heading anchors', (tester) async {
     const startupPath = '/tmp/duplicate-headings.md';
     const source = '''
@@ -3785,6 +4348,44 @@ void main() {
       find.descendant(of: outlineTree, matching: find.text('Second')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('new empty document leaves remembered preview mode for editor', (
+    tester,
+  ) async {
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(_StartupWorkspaceService()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.createMarkdownFile));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(appSettingsControllerProvider).documentViewMode,
+      DocumentViewModePreference.editor,
+    );
+    expect(
+      find.byKey(const ValueKey('wysiwyg-document-scroll')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('preview-document-scroll')), findsNothing);
   });
 
   testWidgets('blocked remote image prompt allows the current workspace', (
@@ -4061,22 +4662,28 @@ void main() {
     },
   );
 
-  testWidgets('shared Markdown image renderer resolves home-relative paths', (
+  testWidgets('shared Markdown image renderer resolves Snap real-home paths', (
     tester,
   ) async {
-    final fakeHome = Directory.systemTemp.createTempSync(
-      'busymark_preview_image_home_',
+    final root = Directory.systemTemp.createTempSync(
+      'busymark_preview_image_snap_home_',
     );
     try {
-      final downloads = Directory('${fakeHome.path}/Downloads')..createSync();
-      File('${downloads.path}/example.jpg').writeAsBytesSync(
+      final realHome = Directory(p.join(root.path, 'real-home'))..createSync();
+      final snapHome = Directory(p.join(root.path, 'snap-home'))..createSync();
+      final downloads = Directory(p.join(realHome.path, 'Downloads'))
+        ..createSync();
+      File(p.join(downloads.path, 'example.jpg')).writeAsBytesSync(
         base64Decode(
           'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l8Kz3wAAAABJRU5ErkJggg==',
         ),
       );
-      debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      debugLocalImageEnvironmentOverride = {
+        'SNAP_REAL_HOME': realHome.path,
+        'HOME': snapHome.path,
+      };
       addTearDown(() {
-        debugLocalImageHomeDirectoryOverride = null;
+        debugLocalImageEnvironmentOverride = null;
       });
 
       await tester.pumpWidget(
@@ -4101,8 +4708,8 @@ void main() {
       expect(find.byType(Image), findsOneWidget);
       expect(find.textContaining('~/Downloads/example.jpg'), findsNothing);
     } finally {
-      debugLocalImageHomeDirectoryOverride = null;
-      fakeHome.deleteSync(recursive: true);
+      debugLocalImageEnvironmentOverride = null;
+      root.deleteSync(recursive: true);
     }
   });
 
@@ -4412,21 +5019,83 @@ void main() {
 
     await _tapLeftmostText(tester, 'Second needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    final secondOffset = _largestScrollableOffset(tester);
-    expect(secondOffset, greaterThan(100));
+    await tester.pumpAndSettle();
+    final secondRect = _rightmostTextRect(tester, 'Second needle target');
+    expect(secondRect.top, greaterThan(40));
+    expect(secondRect.bottom, lessThan(800));
 
     await _tapLeftmostText(tester, 'First needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    final firstOffset = _largestScrollableOffset(tester);
-    expect(firstOffset, lessThan(secondOffset));
+    await tester.pumpAndSettle();
+    final firstRect = _rightmostTextRect(tester, 'First needle target');
+    expect(firstRect.top, greaterThan(40));
+    expect(firstRect.bottom, lessThan(800));
 
     await _tapLeftmostText(tester, 'Second needle target');
     await _tapLeftmostText(tester, 'First needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(_largestScrollableOffset(tester), lessThan(secondOffset));
+    await tester.pumpAndSettle();
+    final repeatedFirstRect = _rightmostTextRect(tester, 'First needle target');
+    expect(repeatedFirstRect.top, greaterThan(40));
+    expect(repeatedFirstRect.bottom, lessThan(800));
+  });
+
+  testWidgets('preview lazily builds large documents', (tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final source = List.generate(
+      1200,
+      (index) => 'Preview paragraph ${index + 1}',
+    ).join('\n\n');
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .toJson();
+    final service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/large-preview.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byKey(const ValueKey('preview-document-scroll'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    final previewList = tester.widget<ScrollablePositionedList>(
+      find.byKey(const ValueKey('preview-document-scroll')),
+    );
+    expect(previewList.itemCount, 1200);
+    expect(find.text('Preview paragraph 1200'), findsNothing);
+    expect(
+      find.textContaining('Preview paragraph').evaluate().length,
+      lessThan(80),
+    );
+
+    previewList.itemScrollController!.jumpTo(index: 1199);
+    await tester.pump();
+    expect(find.text('Preview paragraph 1200'), findsOneWidget);
   });
 
   testWidgets('preview search result clicks scroll to code block matches', (
@@ -4499,14 +5168,17 @@ void main() {
 
     await _tapLeftmostText(tester, 'second code needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    final secondOffset = _largestScrollableOffset(tester);
-    expect(secondOffset, greaterThan(100));
+    await tester.pumpAndSettle();
+    final secondRect = _rightmostTextRect(tester, 'second code needle target');
+    expect(secondRect.top, greaterThan(40));
+    expect(secondRect.bottom, lessThan(800));
 
     await _tapLeftmostText(tester, 'first code needle target');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(_largestScrollableOffset(tester), lessThan(secondOffset));
+    await tester.pumpAndSettle();
+    final firstRect = _rightmostTextRect(tester, 'first code needle target');
+    expect(firstRect.top, greaterThan(40));
+    expect(firstRect.bottom, lessThan(800));
   });
 
   testWidgets('preview search result click lands on paragraph after lists', (

@@ -29,7 +29,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "محرر وثائق متوافق مع Markdown وWriterside.",
+  "appSubtitle": "محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside.",
   "@appSubtitle": {
     "description": "Short application description."
   },

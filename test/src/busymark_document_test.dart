@@ -8,6 +8,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/document_callout.dart';
@@ -21,6 +22,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_toolbar.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
+import 'package:busymark/src/markdown/document_outline.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
@@ -31,6 +33,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:yaru/yaru.dart';
 
 void main() {
   const parser = MarkdownParser();
@@ -212,6 +216,24 @@ void main() {}
       );
     },
   );
+
+  test('WYSIWYG text edits preserve unrelated block instances', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final before = controller.document.blocks;
+
+    controller.updateBlockText(before[1].id, 'Changed');
+
+    final after = controller.document.blocks;
+    expect(identical(after[0], before[0]), isTrue);
+    expect(identical(after[1], before[1]), isFalse);
+    expect(identical(after[2], before[2]), isTrue);
+  });
 
   test('unrelated edits preserve source-only reference definitions', () {
     for (final source in const [
@@ -481,7 +503,7 @@ void main() {}
       document: parsed.busyDocument,
     );
 
-    expect(heading.id, 'source-only-0');
+    expect(heading.attributes['id'], 'source-only-0');
     expect(opaque.id, isNot(heading.id));
 
     controller.applyBlockCommand(heading.id, BusyWysiwygBlockCommand.paragraph);
@@ -837,6 +859,90 @@ void main() {}
     expect(parsed.anchors, containsAll(['title', 'section']));
   });
 
+  test('live document outline follows top-level generated heading order', () {
+    const headingAttributes = {'level': '1', 'generatedId': 'true'};
+    const nestedHeading = BusyBlock(
+      id: 'nested-heading',
+      kind: BusyBlockKind.heading,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Same')],
+      attributes: headingAttributes,
+    );
+    const firstHeading = BusyBlock(
+      id: 'first-heading',
+      kind: BusyBlockKind.heading,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Same')],
+      attributes: headingAttributes,
+    );
+    const secondHeading = BusyBlock(
+      id: 'second-heading',
+      kind: BusyBlockKind.heading,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Same')],
+      attributes: headingAttributes,
+    );
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyBlock(
+          id: 'quote',
+          kind: BusyBlockKind.blockquote,
+          children: [nestedHeading],
+        ),
+        firstHeading,
+        secondHeading,
+      ],
+    );
+
+    expect(document.outline.map((heading) => heading.id), ['same', 'same-1']);
+    expect(document.outline.map((heading) => heading.editorBlockId), [
+      'first-heading',
+      'second-heading',
+    ]);
+
+    final renamed = document.copyWith(
+      blocks: [
+        document.blocks.first,
+        firstHeading.copyWith(
+          inlines: const [BusyInline(kind: BusyInlineKind.text, text: 'Other')],
+        ),
+        secondHeading,
+      ],
+    );
+    expect(renamed.outline.map((heading) => heading.id), ['other', 'same']);
+  });
+
+  test('duplicate anchors retain distinct editor block identities', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source:
+          '# First {id="same"}\n\n'
+          '# Second {id="same"}\n',
+    );
+    final headingBlocks = parsed.busyDocument.blocks
+        .where((block) => block.kind == BusyBlockKind.heading)
+        .toList();
+
+    expect(headingBlocks.map((block) => block.id).toSet(), hasLength(2));
+    expect(
+      headingBlocks.map((block) => block.attributes['id']),
+      everyElement('same'),
+    );
+    expect(parsed.busyDocument.outline.map((heading) => heading.id), [
+      'same',
+      'same',
+    ]);
+    expect(
+      parsed.busyDocument.outline
+          .map((heading) => heading.editorBlockId)
+          .toSet(),
+      hasLength(2),
+    );
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('markdown.heading.duplicate-id'),
+    );
+  });
+
   test('preview and WYSIWYG use the same semantic document', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -919,6 +1025,84 @@ void main() {}
     expect(markdown, 'Editable text\n');
     expect(sourceFilePath, 'Untitled.md');
     expect(find.text('Editable text'), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG heading navigation skips across large documents', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final source = StringBuffer();
+    for (var index = 0; index <= 1800; index += 1) {
+      if (index % 600 == 0) {
+        source
+          ..writeln('# Heading $index')
+          ..writeln();
+      }
+      source
+        ..writeln('Paragraph $index keeps the rich editor scrollable.')
+        ..writeln();
+    }
+    final document = parser
+        .parse(filePath: 'large.md', source: source.toString())
+        .busyDocument;
+    final headings = document.outline;
+    expect(document.blocks.length, greaterThan(1800));
+    expect(headings.map((heading) => heading.text), [
+      'Heading 0',
+      'Heading 600',
+      'Heading 1200',
+      'Heading 1800',
+    ]);
+
+    Widget editor(DocumentOutlineHeading? target, int request) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: BusyMarkWysiwygEditor(
+          document: document,
+          scrollToHeadingId: target?.id,
+          scrollToBlockId: target?.editorBlockId,
+          scrollRequest: request,
+          onSourceChanged: (_, _) {},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(editor(null, 0));
+    await tester.pump();
+
+    var request = 0;
+    Future<void> navigateTo(DocumentOutlineHeading target) async {
+      request += 1;
+      await tester.pumpWidget(editor(target, request));
+      await tester.pump();
+      await tester.pump(BusyMarkMotion.scroll);
+      await tester.pump();
+      await tester.pump(BusyMarkMotion.scroll);
+
+      final targetField = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField && widget.controller?.text == target.text,
+      );
+      expect(targetField, findsOneWidget);
+      final viewport = tester.getRect(
+        find.byKey(const ValueKey('wysiwyg-document-scroll')),
+      );
+      final targetBounds = tester.getRect(targetField);
+      expect(targetBounds.bottom, greaterThan(viewport.top));
+      expect(targetBounds.top, lessThan(viewport.bottom));
+    }
+
+    await navigateTo(headings.last);
+    await navigateTo(headings.first);
+    await navigateTo(headings[2]);
+    await navigateTo(headings.last);
   });
 
   testWidgets('WYSIWYG renders a blockquote around its editable text', (
@@ -2324,8 +2508,13 @@ void main() {}
 
       IconButton editingToggle(String tooltip) {
         return tester.widget<IconButton>(
-          find.byWidgetPredicate(
-            (widget) => widget is IconButton && widget.tooltip == tooltip,
+          find.descendant(
+            of: find.byWidgetPredicate(
+              (widget) =>
+                  widget is BusyMarkHeaderIconButton &&
+                  widget.tooltip == tooltip,
+            ),
+            matching: find.byType(IconButton),
           ),
         );
       }
@@ -2340,7 +2529,7 @@ void main() {}
       );
       expect(
         hideButton.style?.foregroundColor?.resolve(const {}),
-        colorScheme.onPrimary,
+        BusyMarkLinuxPalette.white,
       );
       final hideRect = tester.getRect(find.byTooltip('Hide editing buttons'));
 
@@ -2357,7 +2546,7 @@ void main() {}
       );
       expect(
         showButton.style?.foregroundColor?.resolve(const {}),
-        colorScheme.onPrimary,
+        BusyMarkLinuxPalette.white,
       );
     },
   );
@@ -2371,10 +2560,8 @@ void main() {}
           BusyMarkSpacing.sm,
     );
 
-    Finder editorList() => find.descendant(
-      of: find.byType(BusyMarkWysiwygEditor),
-      matching: find.byType(ListView),
-    );
+    Finder editorList() =>
+        find.byKey(const ValueKey('wysiwyg-document-scroll'));
 
     for (final direction in EditorToolbarDirection.values) {
       for (final placement in EditorToolbarPlacement.values) {
@@ -2413,7 +2600,10 @@ void main() {}
               : BusyMarkSpacing.xl * 2,
         );
         expect(editorList(), findsOneWidget);
-        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        expect(
+          tester.widget<ScrollablePositionedList>(editorList()).padding,
+          expectedPadding,
+        );
         final toolbarScrollView = tester.widget<SingleChildScrollView>(
           find.descendant(
             of: find.byType(BusyMarkWysiwygToolbar),
@@ -2445,7 +2635,10 @@ void main() {}
         await tester.tap(find.byTooltip('Hide editing buttons'));
         await tester.pump();
 
-        expect(tester.widget<ListView>(editorList()).padding, expectedPadding);
+        expect(
+          tester.widget<ScrollablePositionedList>(editorList()).padding,
+          expectedPadding,
+        );
         expect(tester.getRect(find.byType(TextField).first), shownFieldRect);
       }
     }
@@ -3071,16 +3264,16 @@ void main() {}
     await tester.pumpAndSettle();
 
     expect(
-      calls.where((call) => call.method == 'setModalBarrierVisible').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', true),
+      calls.where((call) => call.method == 'setModalBarrierDepth').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', 1),
     );
 
     await tester.tap(find.text(l10n.cancel));
     await tester.pumpAndSettle();
 
     expect(
-      calls.where((call) => call.method == 'setModalBarrierVisible').last,
-      isA<MethodCall>().having((call) => call.arguments, 'arguments', false),
+      calls.where((call) => call.method == 'setModalBarrierDepth').last,
+      isA<MethodCall>().having((call) => call.arguments, 'arguments', 0),
     );
   });
 
@@ -3639,12 +3832,20 @@ void main() {}
 
       expect(find.text('Image'), findsOneWidget);
       expect(find.text('Apply'), findsOneWidget);
-      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-      expect(find.byType(BusyMarkFloatingTextEntry), findsNWidgets(2));
-      expect(find.byType(BusyMarkDialogButton), findsNWidgets(3));
+      expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+      expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+      expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
+      expect(find.byType(BusyMarkGroupedList), findsOneWidget);
+      expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
+      expect(find.byType(TextFormField), findsNWidgets(2));
+      expect(find.byType(YaruListTile), findsNWidgets(2));
+      expect(find.byType(BusyMarkDialogShell), findsNothing);
+      expect(find.byType(BusyMarkDialogButton), findsNothing);
+      expect(find.byType(YaruDialogTitleBar), findsNothing);
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(TextField), findsNothing);
-      final dialogRect = tester.getRect(find.byType(BusyMarkDialogShell));
+      final dialogRect = tester.getRect(
+        find.byType(BusyMarkModalEditorScaffold),
+      );
       final sourceEntryRect = tester.getRect(
         find.byKey(BusyMarkImageDialogKeys.source),
       );
@@ -3663,10 +3864,8 @@ void main() {}
         altEntryRect.left - dialogRect.left,
         closeTo(BusyMarkSpacing.lg, 0.1),
       );
-      expect(
-        dialogRect.right - chooseRect.right,
-        closeTo(BusyMarkSpacing.lg, 0.1),
-      );
+      expect(chooseRect.right, lessThan(sourceEntryRect.right));
+      expect(chooseRect.center.dy, closeTo(sourceEntryRect.center.dy, 0.1));
       final sourceField = find.descendant(
         of: find.byKey(BusyMarkImageDialogKeys.source),
         matching: find.byType(EditableText),

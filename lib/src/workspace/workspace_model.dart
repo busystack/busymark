@@ -1,4 +1,5 @@
 import '../core/diagnostic.dart';
+import '../markdown/document_outline.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_model.dart';
@@ -30,6 +31,26 @@ enum DocumentKind {
   unknown,
 }
 
+class ActiveDocumentOutline {
+  const ActiveDocumentOutline({
+    required this.workspaceId,
+    required this.filePath,
+    required this.source,
+    required this.headings,
+  });
+
+  final String workspaceId;
+  final String? filePath;
+  final String source;
+  final List<DocumentOutlineHeading> headings;
+
+  bool matches(Workspace workspace, String activeSource) {
+    return workspaceId == workspace.id &&
+        filePath == workspace.activeFilePath &&
+        source == activeSource;
+  }
+}
+
 class WorkspaceFileSnapshot {
   const WorkspaceFileSnapshot({
     required this.modifiedAt,
@@ -42,9 +63,13 @@ class WorkspaceFileSnapshot {
   final String contentHash;
 
   bool differsFrom(WorkspaceFileSnapshot other) {
-    return modifiedAt != other.modifiedAt ||
-        size != other.size ||
-        contentHash != other.contentHash;
+    // A timestamp-only change cannot lose user content. Prefer the hashes when
+    // both snapshots have one so metadata touches and filesystem timestamp
+    // rounding do not produce false external-edit conflicts.
+    if (contentHash.isNotEmpty && other.contentHash.isNotEmpty) {
+      return contentHash != other.contentHash;
+    }
+    return modifiedAt != other.modifiedAt || size != other.size;
   }
 }
 
@@ -171,6 +196,7 @@ class WorkspaceState {
     this.workspace,
     this.activeText = '',
     this.preview,
+    this.liveOutline,
     this.isDirty = false,
     this.isLoading = false,
     this.message,
@@ -179,6 +205,7 @@ class WorkspaceState {
   final Workspace? workspace;
   final String activeText;
   final PreviewDocument? preview;
+  final ActiveDocumentOutline? liveOutline;
   final bool isDirty;
   final bool isLoading;
   final WorkspaceMessage? message;
@@ -189,18 +216,26 @@ class WorkspaceState {
     Workspace? workspace,
     String? activeText,
     Object? preview = _copyWithUnset,
+    Object? liveOutline = _copyWithUnset,
     bool? isDirty,
     bool? isLoading,
     WorkspaceMessage? message,
     bool clearMessage = false,
   }) {
-    final nextPreview = identical(preview, _copyWithUnset)
+    final replacesPreview = !identical(preview, _copyWithUnset);
+    final nextPreview = !replacesPreview
         ? this.preview
         : preview as PreviewDocument?;
+    final nextLiveOutline = !identical(liveOutline, _copyWithUnset)
+        ? liveOutline as ActiveDocumentOutline?
+        : replacesPreview
+        ? null
+        : this.liveOutline;
     return WorkspaceState(
       workspace: workspace ?? this.workspace,
       activeText: activeText ?? this.activeText,
       preview: nextPreview,
+      liveOutline: nextLiveOutline,
       isDirty: isDirty ?? this.isDirty,
       isLoading: isLoading ?? this.isLoading,
       message: clearMessage ? null : message ?? this.message,

@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/busymark_design.dart';
-import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
@@ -63,6 +62,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _sourceEditorKey = GlobalKey();
   final _foldedRegionKeys = <String>{};
   final _searchController = SourceSearchController();
+  final _lineLayoutCache = SourceLineLayoutCache();
   List<SourceFoldRegion> _foldRegions = const [];
   String _lastPath = '';
 
@@ -232,6 +232,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               collapsedRegionKeys: _foldedRegionKeys,
               foldRegions: _foldRegions,
               diagnosticMarkers: markers,
+              layoutCache: _lineLayoutCache,
               onToggleFold: _toggleFold,
               child: SizedBox(
                 key: _sourceEditorKey,
@@ -811,6 +812,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
+    required this.layoutCache,
     required this.onToggleFold,
     required this.child,
   });
@@ -830,6 +832,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
+  final SourceLineLayoutCache layoutCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
   final Widget child;
 
@@ -866,6 +869,7 @@ class _SourceEditorFrame extends StatelessWidget {
                   collapsedRegionKeys: collapsedRegionKeys,
                   diagnosticMarkers: diagnosticMarkers,
                   onToggleFold: onToggleFold,
+                  layoutCache: layoutCache,
                 ),
               ),
               VerticalDivider(
@@ -884,18 +888,21 @@ class _SourceEditorFrame extends StatelessWidget {
                         textWidth: textWidth,
                       ),
                     ),
-                    Positioned.fill(
-                      child: _CollapsedSourceLineOverlay(
-                        controller: controller,
-                        scrollController: scrollController,
-                        lineHeight: lineHeight,
-                        textWidth: textWidth,
-                        textStyle: textStyle,
-                        strutStyle: strutStyle,
-                        foldRegions: foldRegions,
-                        collapsedRegionKeys: collapsedRegionKeys,
+                    if (collapsedRegionKeys.isNotEmpty)
+                      Positioned.fill(
+                        child: _CollapsedSourceLineOverlay(
+                          controller: controller,
+                          scrollController: scrollController,
+                          lineHeight: lineHeight,
+                          textWidth: textWidth,
+                          textStyle: textStyle,
+                          strutStyle: strutStyle,
+                          foldRegions: foldRegions,
+                          collapsedRegionKeys: collapsedRegionKeys,
+                          diagnosticMarkers: diagnosticMarkers,
+                          layoutCache: layoutCache,
+                        ),
                       ),
-                    ),
                     Positioned.fill(child: child),
                   ],
                 ),
@@ -925,11 +932,24 @@ class _SourceRenderedTextLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final renderedText = RichText(
+      textDirection: TextDirection.ltr,
+      text: controller.buildSourceTextSpan(
+        context: context,
+        style: textStyle,
+        hideCollapsedStartLines: true,
+      ),
+      strutStyle: strutStyle,
+      textHeightBehavior: sourceTextHeightBehavior,
+      textScaler: MediaQuery.textScalerOf(context),
+      textWidthBasis: TextWidthBasis.parent,
+    );
     return IgnorePointer(
       child: ClipRect(
         child: AnimatedBuilder(
-          animation: Listenable.merge([controller, scrollController]),
-          builder: (context, _) {
+          animation: scrollController,
+          child: renderedText,
+          builder: (context, child) {
             final scrollOffset = safeScrollOffset(scrollController);
             return Stack(
               clipBehavior: Clip.none,
@@ -938,18 +958,7 @@ class _SourceRenderedTextLayer extends StatelessWidget {
                   top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
                   left: _SourceEditorFrame.editorPaddingLeft,
                   width: textWidth,
-                  child: RichText(
-                    textDirection: TextDirection.ltr,
-                    text: controller.buildSourceTextSpan(
-                      context: context,
-                      style: textStyle,
-                      hideCollapsedStartLines: true,
-                    ),
-                    strutStyle: strutStyle,
-                    textHeightBehavior: sourceTextHeightBehavior,
-                    textScaler: MediaQuery.textScalerOf(context),
-                    textWidthBasis: TextWidthBasis.parent,
-                  ),
+                  child: child!,
                 ),
               ],
             );
@@ -970,6 +979,8 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
     required this.strutStyle,
     required this.foldRegions,
     required this.collapsedRegionKeys,
+    required this.diagnosticMarkers,
+    required this.layoutCache,
   });
 
   final BusyMarkSourceEditingController controller;
@@ -980,6 +991,8 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   final StrutStyle? strutStyle;
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
+  final List<SourceDiagnosticMarker> diagnosticMarkers;
+  final SourceLineLayoutCache layoutCache;
 
   @override
   Widget build(BuildContext context) {
@@ -990,7 +1003,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
             return AnimatedBuilder(
               animation: Listenable.merge([controller, scrollController]),
               builder: (context, _) {
-                final layouts = sourceLineLayoutEntries(
+                final layouts = layoutCache.resolve(
                   context,
                   controller: controller,
                   foldRegions: foldRegions,
@@ -999,6 +1012,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                   strutStyle: strutStyle,
                   lineHeight: lineHeight,
                   textWidth: textWidth,
+                  diagnostics: diagnosticMarkers,
                 );
                 final linesByNumber = {
                   for (final line in sourceLineInfos(controller.fullText))
@@ -1116,71 +1130,63 @@ class _SourceSearchPanel extends StatelessWidget {
         : result.totalMatchCount == 0
         ? '0 / 0'
         : '${(result.currentMatchIndex ?? 0) + 1} / ${result.totalMatchCount}';
-    return Material(
-      elevation: 2,
+    return BusyMarkSurface(
       color: colors.panel,
-      borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-          border: Border.all(color: colors.subtleBorder),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BusyMarkSpacing.xs,
+          vertical: BusyMarkSpacing.xxs,
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BusyMarkSpacing.xs,
-            vertical: BusyMarkSpacing.xxs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                status,
-                textDirection: result.invalidRegex
-                    ? Directionality.of(context)
-                    : TextDirection.ltr,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: result.invalidRegex
-                      ? Theme.of(context).colorScheme.error
-                      : colors.mutedForeground,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              status,
+              textDirection: result.invalidRegex
+                  ? Directionality.of(context)
+                  : TextDirection.ltr,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: result.invalidRegex
+                    ? Theme.of(context).colorScheme.error
+                    : colors.mutedForeground,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
-              const SizedBox(width: BusyMarkSpacing.xs),
-              _SearchPanelIconButton(
-                tooltip: context.l10n.sourceSearchPreviousMatch,
-                icon: YaruIcons.pan_up,
-                onPressed: result.totalMatchCount == 0 ? null : onPrevious,
-              ),
-              _SearchPanelIconButton(
-                tooltip: context.l10n.sourceSearchNextMatch,
-                icon: YaruIcons.pan_down,
-                onPressed: result.totalMatchCount == 0 ? null : onNext,
-              ),
-              _SearchOptionButton(
-                label: 'Aa',
-                tooltip: context.l10n.sourceSearchCaseSensitive,
-                selected: result.options.caseSensitive,
-                onPressed: onToggleCaseSensitive,
-              ),
-              _SearchOptionButton(
-                label: 'W',
-                tooltip: context.l10n.sourceSearchWholeWord,
-                selected: result.options.wholeWord,
-                onPressed: onToggleWholeWord,
-              ),
-              _SearchOptionButton(
-                label: '.*',
-                tooltip: context.l10n.sourceSearchRegex,
-                selected: result.options.regex,
-                onPressed: onToggleRegex,
-              ),
-              _SearchPanelIconButton(
-                tooltip: context.l10n.close,
-                icon: YaruIcons.window_close,
-                onPressed: onClose,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: BusyMarkSpacing.xs),
+            _SearchPanelIconButton(
+              tooltip: context.l10n.sourceSearchPreviousMatch,
+              icon: YaruIcons.pan_up,
+              onPressed: result.totalMatchCount == 0 ? null : onPrevious,
+            ),
+            _SearchPanelIconButton(
+              tooltip: context.l10n.sourceSearchNextMatch,
+              icon: YaruIcons.pan_down,
+              onPressed: result.totalMatchCount == 0 ? null : onNext,
+            ),
+            _SearchOptionButton(
+              label: 'Aa',
+              tooltip: context.l10n.sourceSearchCaseSensitive,
+              selected: result.options.caseSensitive,
+              onPressed: onToggleCaseSensitive,
+            ),
+            _SearchOptionButton(
+              label: 'W',
+              tooltip: context.l10n.sourceSearchWholeWord,
+              selected: result.options.wholeWord,
+              onPressed: onToggleWholeWord,
+            ),
+            _SearchOptionButton(
+              label: '.*',
+              tooltip: context.l10n.sourceSearchRegex,
+              selected: result.options.regex,
+              onPressed: onToggleRegex,
+            ),
+            _SearchPanelIconButton(
+              tooltip: context.l10n.close,
+              icon: YaruIcons.window_close,
+              onPressed: onClose,
+            ),
+          ],
         ),
       ),
     );
@@ -1200,19 +1206,11 @@ class _SearchPanelIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Tooltip(
-      message: tooltip,
-      waitDuration: BusyMarkMotion.tooltipWait,
-      child: IconButton(
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints.tightFor(width: 28, height: 28),
-        padding: EdgeInsets.zero,
-        iconSize: 14,
-        color: colors.mutedForeground,
-        onPressed: onPressed,
-        icon: Icon(icon),
-      ),
+    return YaruIconButton(
+      tooltip: tooltip,
+      iconSize: 28,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 14),
     );
   }
 }
@@ -1232,41 +1230,26 @@ class _SearchOptionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Tooltip(
-      message: tooltip,
-      waitDuration: BusyMarkMotion.tooltipWait,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 1),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-          onTap: onPressed,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: selected
-                  ? colors.controlActive
-                  : BusyMarkLinuxPalette.transparent,
-              borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-            ),
-            child: SizedBox(
-              width: 28,
-              height: 28,
-              child: Center(
-                child: Text(
-                  label,
-                  textDirection: TextDirection.ltr,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: selected
-                        ? colors.foreground
-                        : colors.mutedForeground,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-            ),
-          ),
+    Widget optionLabel() => Builder(
+      builder: (context) => Text(
+        label,
+        textDirection: TextDirection.ltr,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: IconTheme.of(context).color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
         ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 1),
+      child: YaruIconButton(
+        tooltip: tooltip,
+        iconSize: 28,
+        isSelected: selected,
+        onPressed: onPressed,
+        icon: optionLabel(),
+        selectedIcon: optionLabel(),
       ),
     );
   }
@@ -1277,40 +1260,10 @@ class _SourceLargeFileBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
-      color: colors.panel,
-      elevation: 1,
-      borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-          border: Border.all(color: colors.subtleBorder),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BusyMarkSpacing.sm,
-            vertical: BusyMarkSpacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                BusyMarkGlyphs.info,
-                size: BusyMarkSizes.iconSm,
-                color: colors.mutedForeground,
-              ),
-              const SizedBox(width: BusyMarkSpacing.xs),
-              Text(
-                context.l10n.sourceLargeFileFeaturesPaused,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: colors.mutedForeground,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
-          ),
-        ),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: BusyMarkSizes.dialogCompact),
+      child: BusyMarkStatusBox(
+        message: context.l10n.sourceLargeFileFeaturesPaused,
       ),
     );
   }

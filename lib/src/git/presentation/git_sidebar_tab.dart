@@ -118,37 +118,12 @@ class _GitMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.admonitionWarning,
-        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(BusyMarkGlyphs.warning, size: BusyMarkSizes.iconSm),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(child: Text(_failureMessage(context, failure))),
-              ],
-            ),
-            if (failure.rawMessage.trim().isNotEmpty) ...[
-              const SizedBox(height: BusyMarkSpacing.xs),
-              SelectableText(
-                failure.rawMessage.trim(),
-                textDirection: TextDirection.ltr,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontFamily: BusyMarkTypography.monoFontFamily,
-                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-                ),
-              ),
-            ],
-          ],
-        ),
+    final message = _failureMessage(context, failure);
+    final rawMessage = failure.rawMessage.trim();
+    return SelectionArea(
+      child: BusyMarkStatusBox(
+        message: rawMessage.isEmpty ? message : '$message\n$rawMessage',
+        kind: _gitFailureStatusKind(failure.code),
       ),
     );
   }
@@ -184,18 +159,32 @@ class _GitOperationMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.admonitionTip,
-        border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-        child: Text(message, maxLines: 4, overflow: TextOverflow.ellipsis),
-      ),
+    return BusyMarkStatusBox(
+      message: message,
+      kind: BusyMarkStatusKind.success,
     );
   }
+}
+
+BusyMarkStatusKind _gitFailureStatusKind(GitFailureCode code) {
+  return switch (code) {
+    GitFailureCode.noStagedFiles ||
+    GitFailureCode.noRemote ||
+    GitFailureCode.noUpstream ||
+    GitFailureCode.multipleRemotes => BusyMarkStatusKind.information,
+    GitFailureCode.dirtyWorkspace ||
+    GitFailureCode.diverged ||
+    GitFailureCode.conflict => BusyMarkStatusKind.warning,
+    GitFailureCode.unavailable ||
+    GitFailureCode.unsupportedVersion ||
+    GitFailureCode.notRepository ||
+    GitFailureCode.invalidPath ||
+    GitFailureCode.invalidBranchName ||
+    GitFailureCode.invalidCommitMessage ||
+    GitFailureCode.authentication ||
+    GitFailureCode.network ||
+    GitFailureCode.commandFailed => BusyMarkStatusKind.error,
+  };
 }
 
 class _GitEmptyState extends StatelessWidget {
@@ -239,7 +228,10 @@ class _GitEmptyState extends StatelessWidget {
             ),
             if (actionLabel != null) ...[
               const SizedBox(height: BusyMarkSpacing.md),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+              BusyMarkPushButton.standard(
+                onPressed: onAction,
+                child: Text(actionLabel!),
+              ),
             ],
           ],
         ),

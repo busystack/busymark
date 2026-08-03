@@ -446,9 +446,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
-      _ => theme.bodyMedium!.copyWith(
-        height: BusyMarkTypography.bodyLineHeight,
-      ),
+      _ => busyMarkDocumentBodyTextStyle(context),
     };
   }
 
@@ -595,16 +593,10 @@ class _RenderedHtmlBlockEditor extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              IconButton(
+              BusyMarkHeaderIconButton(
                 tooltip: context.l10n.editHtml,
-                style: busyMarkHeaderIconButtonStyle(
-                  foregroundColor: colors.mutedForeground,
-                  backgroundColor: busyMarkHeaderButtonBackground(context),
-                ),
-                icon: const Icon(
-                  BusyMarkGlyphs.edit,
-                  size: BusyMarkSizes.iconSm,
-                ),
+                icon: BusyMarkGlyphs.edit,
+                foregroundColor: colors.mutedForeground,
                 onPressed: onEdit,
               ),
             ],
@@ -1267,13 +1259,10 @@ class _TableBlockEditor extends StatelessWidget {
       children: [
         Align(
           alignment: AlignmentDirectional.centerEnd,
-          child: IconButton(
+          child: BusyMarkHeaderIconButton(
             tooltip: context.l10n.deleteTable,
-            style: busyMarkHeaderIconButtonStyle(
-              foregroundColor: colors.mutedForeground,
-              backgroundColor: busyMarkHeaderButtonBackground(context),
-            ),
-            icon: const Icon(BusyMarkGlyphs.delete, size: BusyMarkSizes.iconSm),
+            icon: BusyMarkGlyphs.delete,
+            foregroundColor: colors.mutedForeground,
             onPressed: onTableDeleted,
           ),
         ),
@@ -1460,17 +1449,17 @@ class _TableControlMenuButton extends StatelessWidget {
       tooltip: tooltip,
       icon: icon,
       itemBuilder: (context) => [
-        PopupMenuItem(
+        BusyMarkPopupMenuItem(
           value: _TableControlAction.insertBefore,
-          child: Text(beforeLabel),
+          label: beforeLabel,
         ),
-        PopupMenuItem(
+        BusyMarkPopupMenuItem(
           value: _TableControlAction.insertAfter,
-          child: Text(afterLabel),
+          label: afterLabel,
         ),
-        PopupMenuItem(
+        BusyMarkPopupMenuItem(
           value: _TableControlAction.delete,
-          child: Text(deleteLabel),
+          label: deleteLabel,
         ),
       ],
       onSelected: onSelected,

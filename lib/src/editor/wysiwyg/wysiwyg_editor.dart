@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
@@ -13,10 +14,12 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/document_outline.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_layout.dart';
+import '../document_surface.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_document_controller.dart';
@@ -42,6 +45,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onToolbarPlacementChanged,
     this.onToolbarDirectionChanged,
     this.scrollToHeadingId,
+    this.scrollToBlockId,
     this.scrollToSearchQuery,
     this.scrollRequest = 0,
     this.onOpenSearch,
@@ -63,6 +67,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final ValueChanged<EditorToolbarPlacement>? onToolbarPlacementChanged;
   final ValueChanged<EditorToolbarDirection>? onToolbarDirectionChanged;
   final String? scrollToHeadingId;
+  final String? scrollToBlockId;
   final String? scrollToSearchQuery;
   final int scrollRequest;
   final VoidCallback? onOpenSearch;
@@ -84,7 +89,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _blockKeys = <String, GlobalKey>{};
   final _undoStack = <BusyDocument>[];
   final _redoStack = <BusyDocument>[];
-  final _scrollController = ScrollController();
+  final _itemScrollController = ItemScrollController();
   final _selectionFocusNode = FocusNode(
     debugLabel: 'BusyMark WYSIWYG block selection',
   );
@@ -149,7 +154,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     for (final focusNode in _focusNodes.values) {
       focusNode.dispose();
     }
-    _scrollController.dispose();
     _selectionFocusNode.dispose();
     super.dispose();
   }
@@ -303,9 +307,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       },
                       child: Focus(
                         focusNode: _selectionFocusNode,
-                        child: ListView.builder(
+                        child: ScrollablePositionedList.builder(
                           key: const ValueKey('wysiwyg-document-scroll'),
-                          controller: _scrollController,
+                          itemScrollController: _itemScrollController,
                           padding: documentLayout.scrollPadding,
                           itemCount: renderEntries.length,
                           itemBuilder: (context, index) => _buildRenderEntry(
@@ -977,26 +981,26 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _scheduleHeadingScroll() {
     final headingId = widget.scrollToHeadingId;
-    if (headingId == null || headingId.isEmpty || widget.scrollRequest == 0) {
+    final editorBlockId = widget.scrollToBlockId;
+    if (widget.scrollRequest == 0 ||
+        ((headingId == null || headingId.isEmpty) &&
+            (editorBlockId == null || editorBlockId.isEmpty))) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
-      final heading = _headingBlockForId(headingId);
+      var heading = editorBlockId == null
+          ? null
+          : _documentController.blockById(editorBlockId);
+      if (heading?.kind != BusyBlockKind.heading) {
+        heading = headingId == null ? null : _headingBlockForId(headingId);
+      }
       if (heading == null) {
         return;
       }
-      if (_ensureBlockVisible(heading.id)) {
-        return;
-      }
-      _jumpNearBlock(heading.id);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _ensureBlockVisible(heading.id);
-        }
-      });
+      _jumpToBlockAndAlign(heading.id);
     });
   }
 
@@ -1025,15 +1029,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           extentOffset: matchStart + query.length,
         );
       }
-      if (_ensureBlockVisible(target.id)) {
-        return;
-      }
-      _jumpNearBlock(target.id);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _ensureBlockVisible(target.id);
-        }
-      });
+      _jumpToBlockAndAlign(target.id);
     });
   }
 
@@ -1063,26 +1059,51 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return true;
   }
 
-  void _jumpNearBlock(String blockId) {
-    if (!_scrollController.hasClients) {
+  void _jumpToBlockAndAlign(String blockId) {
+    final request = widget.scrollRequest;
+    if (!_jumpToBlock(blockId)) {
       return;
     }
-    final entries = _editableBlockEntries(_documentController.document.blocks);
-    final index = entries.indexWhere((entry) => entry.block.id == blockId);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.scrollRequest == request) {
+        _ensureBlockVisible(blockId);
+      }
+    });
+  }
+
+  bool _jumpToBlock(String blockId) {
+    if (!_itemScrollController.isAttached) {
+      return false;
+    }
+    final entries = _editorRenderEntries(_documentController.document.blocks);
+    final index = entries.indexWhere(
+      (entry) => _renderEntryContainsBlock(entry, blockId),
+    );
     if (index < 0) {
-      return;
+      return false;
     }
-    final targetOffset = (index * 72.0)
-        .clamp(0.0, _scrollController.position.maxScrollExtent)
-        .toDouble();
-    _scrollController.jumpTo(targetOffset);
+    _itemScrollController.jumpTo(index: index, alignment: 0.04);
+    return true;
+  }
+
+  bool _renderEntryContainsBlock(_EditorRenderEntry entry, String blockId) {
+    if (entry.block.id == blockId) {
+      return true;
+    }
+    return entry.children?.any(
+          (child) => _renderEntryContainsBlock(child, blockId),
+        ) ??
+        false;
   }
 
   BusyBlock? _headingBlockForId(String headingId) {
-    for (final block in _flattenBlocks(_documentController.document.blocks)) {
-      if (block.kind == BusyBlockKind.heading &&
-          (block.id == headingId || block.attributes['id'] == headingId)) {
-        return block;
+    for (final heading in _documentController.document.outline) {
+      if (heading.id != headingId) {
+        continue;
+      }
+      final blockId = heading.editorBlockId;
+      if (blockId != null) {
+        return _documentController.blockById(blockId);
       }
     }
     return null;
@@ -2093,13 +2114,15 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Future<T?> _showEditorDialog<T>(
     BuildContext context, {
     required WidgetBuilder builder,
+    double maxWidth = BusyMarkSizes.dialogCompact,
   }) {
     final headerBar = widget.headerBarService;
-    return showBusyMarkModalDialog<T>(
+    return showBusyMarkModalEditorDialog<T>(
       context,
       headerBarService: headerBar != null && headerBar.isAvailable
           ? headerBar
           : null,
+      maxWidth: maxWidth,
       builder: builder,
     );
   }
@@ -2108,29 +2131,32 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var destination = '';
     return _showEditorDialog<String>(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.link),
-        content: TextFormField(
-          key: const ValueKey('wysiwyg-link-destination-field'),
-          autofocus: true,
-          textDirection: TextDirection.ltr,
-          onChanged: (value) => destination = value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: BusyMarkTypography.monoFontFamily,
-            fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+      builder: (context) => BusyMarkModalEditorScaffold(
+        title: context.l10n.link,
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.apply,
+        onCancel: () => Navigator.pop(context),
+        onSave: () => Navigator.pop(context, destination),
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: const ValueKey('wysiwyg-link-destination-field'),
+                label: context.l10n.source,
+                autofocus: true,
+                textDirection: TextDirection.ltr,
+                onChanged: (value) => destination = value,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+                hintText: 'https://example.com',
+                onSubmitted: (value) => Navigator.pop(context, value),
+              ),
+            ],
           ),
-          decoration: const InputDecoration(hintText: 'https://example.com'),
-          onFieldSubmitted: (value) => Navigator.pop(context, value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, destination),
-            child: Text(context.l10n.apply),
-          ),
+          const SizedBox(height: BusyMarkSpacing.lg),
         ],
       ),
     );
@@ -2176,35 +2202,36 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var source = initialSource;
     return _showEditorDialog<String>(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.editHtml),
-        content: SizedBox(
-          width: BusyMarkSizes.dialogNarrow,
-          child: TextFormField(
-            key: const ValueKey('wysiwyg-html-source-field'),
-            initialValue: initialSource,
-            onChanged: (value) => source = value,
-            autofocus: true,
-            minLines: 8,
-            maxLines: 16,
-            textInputAction: TextInputAction.newline,
-            textDirection: TextDirection.ltr,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-            ),
-            decoration: InputDecoration(labelText: context.l10n.htmlSource),
+      maxWidth: BusyMarkSizes.dialogNarrow,
+      builder: (context) => BusyMarkModalEditorScaffold(
+        title: context.l10n.editHtml,
+        cancelLabel: context.l10n.cancel,
+        saveLabel: submitLabel,
+        onCancel: () => Navigator.pop(context),
+        onSave: () => Navigator.pop(context, source),
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: const ValueKey('wysiwyg-html-source-field'),
+                label: context.l10n.htmlSource,
+                initialValue: initialSource,
+                onChanged: (value) => source = value,
+                autofocus: true,
+                minLines: 8,
+                maxLines: 16,
+                textInputAction: TextInputAction.newline,
+                textDirection: TextDirection.ltr,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+                alignLabelWithHint: true,
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, source),
-            child: Text(submitLabel),
-          ),
+          const SizedBox(height: BusyMarkSpacing.lg),
         ],
       ),
     );
@@ -2217,36 +2244,32 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var language = initialLanguage;
     return _showEditorDialog<String>(
       context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.codeBlockLanguage),
-        content: SizedBox(
-          width: BusyMarkSizes.tableDialogWidth,
-          child: TextFormField(
-            key: const ValueKey('wysiwyg-code-language-field'),
-            initialValue: initialLanguage,
-            onChanged: (value) => language = value,
-            autofocus: true,
-            textDirection: TextDirection.ltr,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontFamily: BusyMarkTypography.monoFontFamily,
-              fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-            ),
-            decoration: InputDecoration(
-              labelText: context.l10n.language,
-              hintText: 'dart',
-            ),
-            onFieldSubmitted: (value) => Navigator.pop(context, value),
+      builder: (context) => BusyMarkModalEditorScaffold(
+        title: context.l10n.codeBlockLanguage,
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.apply,
+        onCancel: () => Navigator.pop(context),
+        onSave: () => Navigator.pop(context, language),
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                key: const ValueKey('wysiwyg-code-language-field'),
+                label: context.l10n.language,
+                initialValue: initialLanguage,
+                onChanged: (value) => language = value,
+                autofocus: true,
+                textDirection: TextDirection.ltr,
+                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: BusyMarkTypography.monoFontFamily,
+                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+                ),
+                onSubmitted: (value) => Navigator.pop(context, value),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, language),
-            child: Text(context.l10n.apply),
-          ),
+          const SizedBox(height: BusyMarkSpacing.lg),
         ],
       ),
     );
@@ -2905,9 +2928,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         fontWeight: FontWeight.w700,
       ),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
-      _ => theme.bodyMedium!.copyWith(
-        height: BusyMarkTypography.bodyLineHeight,
-      ),
+      _ => busyMarkDocumentBodyTextStyle(context),
     };
   }
 
@@ -3009,27 +3030,13 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         ? placement._isRight
         : !placement._isTop;
     final toolbar = visible
-        ? axis == Axis.horizontal
-              ? SizedBox(
-                  width: math.max(
-                    0,
-                    maxWidth - BusyMarkSizes.wysiwygToolbarReserve,
-                  ),
-                  child: child,
-                )
-              : SizedBox(
-                  height: math.max(
-                    0,
-                    maxHeight - BusyMarkSizes.wysiwygToolbarReserve,
-                  ),
-                  child: child,
-                )
+        ? Flexible(fit: FlexFit.loose, child: child)
         : const SizedBox.shrink();
     final configurable =
         onPlacementChanged != null || onDirectionChanged != null;
     final toggle = GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onSecondaryTapDown: configurable
+      onSecondaryTapUp: configurable
           ? (details) =>
                 unawaited(_showSettingsMenu(context, details.globalPosition))
           : null,
@@ -3041,6 +3048,7 @@ class _FloatingWysiwygToolbar extends StatelessWidget {
         onPressed: onToggle,
         accented: true,
         elevated: true,
+        foregroundColor: BusyMarkLinuxPalette.white,
       ),
     );
     final gap = visible
@@ -3245,13 +3253,6 @@ String? _imageSourceFromInline(BusyInline inline) {
   return null;
 }
 
-Iterable<BusyBlock> _flattenBlocks(List<BusyBlock> blocks) sync* {
-  for (final block in blocks) {
-    yield block;
-    yield* _flattenBlocks(block.children);
-  }
-}
-
 class _ImageDialogResult {
   const _ImageDialogResult({required this.source, required this.alt});
 
@@ -3306,59 +3307,48 @@ class _ImageDialogState extends State<_ImageDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BusyMarkDialogShell(
+    return BusyMarkModalEditorScaffold(
       title: widget.title,
-      maxWidth: BusyMarkSizes.dialogCompact,
-      actions: [
-        BusyMarkDialogButton(
-          key: BusyMarkImageDialogKeys.cancel,
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          key: BusyMarkImageDialogKeys.submit,
-          label: widget.submitLabel,
-          onPressed: _canSubmit ? _submit : null,
-          suggested: true,
-        ),
-      ],
+      cancelLabel: context.l10n.cancel,
+      saveLabel: widget.submitLabel,
+      cancelKey: BusyMarkImageDialogKeys.cancel,
+      saveKey: BusyMarkImageDialogKeys.submit,
+      onCancel: () => Navigator.pop(context),
+      onSave: _canSubmit ? _submit : null,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        BusyMarkGroupedList(
+          filled: true,
           children: [
-            Expanded(
-              child: BusyMarkFloatingTextEntry(
-                key: BusyMarkImageDialogKeys.source,
-                label: context.l10n.source,
-                controller: _sourceController,
-                hintText: 'images/example.png',
-                autofocus: true,
-                textDirection: TextDirection.ltr,
-                textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: BusyMarkTypography.monoFontFamily,
-                  fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
-                ),
-                textInputAction: TextInputAction.next,
+            BusyMarkGroupedTextEntry(
+              key: BusyMarkImageDialogKeys.source,
+              label: context.l10n.source,
+              controller: _sourceController,
+              hintText: 'images/example.png',
+              autofocus: true,
+              textDirection: TextDirection.ltr,
+              textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontFamily: BusyMarkTypography.monoFontFamily,
+                fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
+              ),
+              textInputAction: TextInputAction.next,
+              trailing: BusyMarkPushButton.standardIcon(
+                key: BusyMarkImageDialogKeys.choose,
+                icon: const Icon(BusyMarkGlyphs.folderOpen),
+                label: Text(context.l10n.choose),
+                onPressed: _chooseImage,
               ),
             ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            BusyMarkDialogButton(
-              key: BusyMarkImageDialogKeys.choose,
-              label: context.l10n.choose,
-              icon: BusyMarkGlyphs.folderOpen,
-              onPressed: _chooseImage,
+            BusyMarkGroupedTextEntry(
+              key: BusyMarkImageDialogKeys.alt,
+              label: context.l10n.altText,
+              controller: _altController,
+              hintText: context.l10n.describeTheImage,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
             ),
           ],
         ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntry(
-          key: BusyMarkImageDialogKeys.alt,
-          label: context.l10n.altText,
-          controller: _altController,
-          hintText: context.l10n.describeTheImage,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
-        ),
+        const SizedBox(height: BusyMarkSpacing.lg),
       ],
     );
   }
@@ -3444,45 +3434,34 @@ class _TableDialogState extends State<_TableDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(context.l10n.table),
-      content: SizedBox(
-        width: BusyMarkSizes.tableDialogWidth,
-        child: Row(
+    return BusyMarkModalEditorScaffold(
+      title: context.l10n.table,
+      cancelLabel: context.l10n.cancel,
+      saveLabel: context.l10n.insert,
+      onCancel: () => Navigator.pop(context),
+      onSave: _submit,
+      children: [
+        BusyMarkGroupedList(
+          filled: true,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _columnsController,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: context.l10n.columns,
-                  hintText: '2',
-                ),
-                onSubmitted: (_) => _submit(),
-              ),
+            BusyMarkGroupedTextEntry(
+              label: context.l10n.columns,
+              controller: _columnsController,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              hintText: '2',
+              onSubmitted: (_) => _submit(),
             ),
-            const SizedBox(width: BusyMarkSpacing.md),
-            Expanded(
-              child: TextField(
-                controller: _rowsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: context.l10n.rows,
-                  hintText: '2',
-                ),
-                onSubmitted: (_) => _submit(),
-              ),
+            BusyMarkGroupedTextEntry(
+              label: context.l10n.rows,
+              controller: _rowsController,
+              keyboardType: TextInputType.number,
+              hintText: '2',
+              onSubmitted: (_) => _submit(),
             ),
           ],
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(context.l10n.cancel),
-        ),
-        FilledButton(onPressed: _submit, child: Text(context.l10n.insert)),
+        const SizedBox(height: BusyMarkSpacing.lg),
       ],
     );
   }

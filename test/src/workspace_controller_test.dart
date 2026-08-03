@@ -75,6 +75,9 @@ void main() {
       final controller = harness.controller;
 
       await controller.openPath(directory.path);
+      await settingsController.setDocumentViewMode(
+        DocumentViewModePreference.preview,
+      );
 
       final created = p.join(directory.path, 'new.md');
       expect(
@@ -83,6 +86,10 @@ void main() {
       );
       expect(File(created).existsSync(), isTrue);
       expect(controller.state.workspace?.activeFilePath, created);
+      expect(
+        settingsController.state.documentViewMode,
+        DocumentViewModePreference.editor,
+      );
 
       final renamed = p.join(directory.path, 'renamed.md');
       expect(
@@ -131,6 +138,45 @@ void main() {
       settingsController.dispose();
     },
   );
+
+  test('new Markdown files leave preview mode for editor mode', () async {
+    final harness = await _createControllerHarness();
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await settingsController.setDocumentViewMode(
+      DocumentViewModePreference.preview,
+    );
+    await controller.createMarkdownFile();
+
+    expect(
+      settingsController.state.documentViewMode,
+      DocumentViewModePreference.editor,
+    );
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
+  test('new Markdown files preserve non-preview view modes', () async {
+    for (final mode in <DocumentViewModePreference>[
+      DocumentViewModePreference.editor,
+      DocumentViewModePreference.source,
+      DocumentViewModePreference.split,
+    ]) {
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await settingsController.setDocumentViewMode(mode);
+      await controller.createMarkdownFile();
+
+      expect(settingsController.state.documentViewMode, mode);
+
+      controller.dispose();
+      settingsController.dispose();
+    }
+  });
 
   test('discarding an untitled Markdown file clears the workspace', () async {
     final harness = await _createControllerHarness();
@@ -586,6 +632,43 @@ void main() {
   );
 
   test(
+    'validation completing after save preserves the saved snapshot',
+    () async {
+      final service = _DelayedValidationWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+      await settingsController.setValidateOnEdit(false);
+
+      await controller.openPath(service.rootPath);
+      controller.updateActiveText('# Dirty A\n');
+      final validation = controller.validateActive();
+      await service.validationStarted.future;
+
+      expect(await controller.saveActive(), isTrue);
+      final savedSnapshot = controller.state.workspace!.activeFileSnapshot!;
+      expect(savedSnapshot.contentHash, '# Dirty A\n');
+
+      service.finishValidation();
+      await validation;
+
+      final finalSnapshot = controller.state.workspace!.activeFileSnapshot!;
+      expect(finalSnapshot.contentHash, savedSnapshot.contentHash);
+      expect(finalSnapshot.modifiedAt, savedSnapshot.modifiedAt);
+
+      controller.updateActiveText('# Dirty A again\n');
+      expect(await controller.saveActive(), isTrue);
+      expect(
+        controller.state.message?.code,
+        isNot(WorkspaceMessageCode.saveBlockedFileChangedOnDisk),
+      );
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test(
     'stale text update from previous file cannot dirty active tab',
     () async {
       final service = _DelayedValidationWorkspaceService();
@@ -767,7 +850,7 @@ void main() {
 
     await controller.openPath('test/fixtures/markdown/other.md');
     controller.updateActiveText('# Changed\n\nVisible preview.');
-    await Future<void>.delayed(const Duration(milliseconds: 450));
+    await Future<void>.delayed(Duration.zero);
 
     expect(controller.state.workspace?.markdown?.title, 'Other');
     expect(controller.state.preview?.blocks.map((block) => block.text), [
@@ -1012,16 +1095,8 @@ class _WorkspaceControllerDriver {
 
   Future<bool> closeAllOpenFileTabs() => _notifier.closeAllOpenFileTabs();
 
-  void updateActiveText(
-    String text, {
-    bool updatePreview = true,
-    String? sourceFilePath,
-  }) {
-    _notifier.updateActiveText(
-      text,
-      updatePreview: updatePreview,
-      sourceFilePath: sourceFilePath,
-    );
+  void updateActiveText(String text, {String? sourceFilePath}) {
+    _notifier.updateActiveText(text, sourceFilePath: sourceFilePath);
   }
 
   Future<bool> saveActive({bool overwriteExternalChanges = false}) =>
@@ -1048,6 +1123,9 @@ class _AppSettingsControllerDriver {
       _container.read(appSettingsControllerProvider.notifier);
 
   AppSettings get state => _container.read(appSettingsControllerProvider);
+
+  Future<void> setDocumentViewMode(DocumentViewModePreference mode) =>
+      _notifier.setDocumentViewMode(mode);
 
   Future<void> setValidateOnEdit(bool enabled) =>
       _notifier.setValidateOnEdit(enabled);
@@ -1199,19 +1277,29 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
   late final aPath = p.join(rootPath, 'a.md');
   late final bPath = p.join(rootPath, 'b.md');
   final savedTexts = <String>[];
+  final _documents = <String, String>{};
+  final _snapshots = <String, WorkspaceFileSnapshot>{};
   final validationStarted = Completer<void>();
   final _finishValidation = Completer<void>();
   var _pausedValidation = false;
 
+  void _ensureDocuments() {
+    _documents.putIfAbsent(aPath, () => '# A\n');
+    _documents.putIfAbsent(bPath, () => '# B\n');
+    _snapshots.putIfAbsent(aPath, () => _delayedSnapshot(_documents[aPath]!));
+    _snapshots.putIfAbsent(bPath, () => _delayedSnapshot(_documents[bPath]!));
+  }
+
   @override
   Future<Workspace> openPath(String path) async {
+    _ensureDocuments();
     return Workspace(
       id: rootPath,
       rootPath: rootPath,
       kind: WorkspaceKind.markdownFolder,
       openedAt: DateTime(2026),
       activeFilePath: aPath,
-      activeFileSnapshot: _delayedSnapshot('# A\n'),
+      activeFileSnapshot: _snapshots[aPath],
       openFilePaths: [aPath],
       files: [
         DocumentFile(
@@ -1235,8 +1323,11 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
 
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
-    final text = path == bPath ? '# B\n' : '# A\n';
-    return WorkspaceFileLoad(text: text, snapshot: _delayedSnapshot(text));
+    _ensureDocuments();
+    return WorkspaceFileLoad(
+      text: _documents[path]!,
+      snapshot: _snapshots[path]!,
+    );
   }
 
   @override
@@ -1244,13 +1335,20 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
     String path,
     WorkspaceFileSnapshot? knownSnapshot,
   ) async {
-    return false;
+    _ensureDocuments();
+    final current = _snapshots[path];
+    return knownSnapshot == null ||
+        current == null ||
+        current.differsFrom(knownSnapshot);
   }
 
   @override
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     savedTexts.add(text);
-    return _delayedSnapshot(text, savedTexts.length);
+    final snapshot = _delayedSnapshot(text, savedTexts.length);
+    _documents[path] = text;
+    _snapshots[path] = snapshot;
+    return snapshot;
   }
 
   @override

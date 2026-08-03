@@ -21,6 +21,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData copy = YaruIcons.copy;
   static const IconData cut = YaruIcons.cut;
   static const IconData delete = YaruIcons.trash;
+  static const IconData desktop = YaruIcons.desktop;
   static const IconData diagnostics = YaruIcons.task_list;
   static const IconData document = YaruIcons.document;
   static const IconData documentHistory = YaruIcons.document_history;
@@ -58,6 +59,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData paste = YaruIcons.paste;
   static const IconData preview = YaruIcons.eye;
   static const IconData previewView = YaruIcons.eye;
+  static const IconData privacy = YaruIcons.shield_warning;
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
@@ -86,6 +88,204 @@ abstract final class BusyMarkGlyphs {
   static const IconData unorderedList = YaruIcons.unordered_list;
   static const IconData warning = YaruIcons.warning;
   static const IconData writersideProject = YaruIcons.book;
+
+  /// Maps Flutter menu glyphs to freedesktop themed-icon names for GTK.
+  ///
+  /// The native menu bridge cannot render an [IconData] font glyph directly.
+  /// Keeping the mapping beside the semantic glyph catalog lets Flutter and
+  /// GTK use equivalent, platform-native artwork for the same command.
+  static String? nativeMenuIconName(IconData? icon) {
+    if (icon == null) {
+      return null;
+    }
+    if (icon == about || icon == info) {
+      return 'help-about-symbolic';
+    }
+    if (icon == appearance || icon == settings) {
+      return 'preferences-system-symbolic';
+    }
+    if (icon == blockquote || icon == feedback) {
+      return 'chat-symbolic';
+    }
+    if (icon == bold) {
+      return 'format-text-bold-symbolic';
+    }
+    if (icon == branch || icon == tree) {
+      return 'view-treemap-symbolic';
+    }
+    if (icon == category || icon == tag) {
+      return 'tag-symbolic';
+    }
+    if (icon == checkedBox) {
+      return 'checkbox-checked-symbolic';
+    }
+    if (icon == checklist || icon == diagnostics) {
+      return 'view-tasks-unscheduled-symbolic';
+    }
+    if (icon == clear) {
+      return 'edit-clear-symbolic';
+    }
+    if (icon == clearAll) {
+      return 'edit-clear-all-symbolic';
+    }
+    if (icon == code || icon == sourceView || icon == symbols) {
+      return 'text-x-generic-symbolic';
+    }
+    if (icon == copy) {
+      return 'edit-copy-symbolic';
+    }
+    if (icon == cut) {
+      return 'edit-cut-symbolic';
+    }
+    if (icon == delete) {
+      return 'user-trash-symbolic';
+    }
+    if (icon == desktop) {
+      return 'video-display-symbolic';
+    }
+    if (icon == document || icon == startTopic) {
+      return 'text-x-generic-symbolic';
+    }
+    if (icon == documentHistory || icon == history) {
+      return 'document-open-recent-symbolic';
+    }
+    if (icon == documentOpen) {
+      return 'document-open-symbolic';
+    }
+    if (icon == edit) {
+      return 'document-edit-symbolic';
+    }
+    if (icon == error) {
+      return 'dialog-error-symbolic';
+    }
+    if (icon == externalLink) {
+      return 'external-link-symbolic';
+    }
+    if (icon == folder) {
+      return 'folder-symbolic';
+    }
+    if (icon == folderOpen) {
+      return 'folder-open-symbolic';
+    }
+    if (icon == font || icon == heading) {
+      return 'font-select-symbolic';
+    }
+    if (icon == goTop || icon == toolbarPlacement) {
+      return 'go-top-symbolic';
+    }
+    if (icon == hardBreak) {
+      return 'go-down-symbolic';
+    }
+    if (icon == hide) {
+      return 'eye-not-looking-symbolic';
+    }
+    if (icon == home) {
+      return 'go-home-symbolic';
+    }
+    if (icon == image) {
+      return 'image-x-generic-symbolic';
+    }
+    if (icon == imageMissing) {
+      return 'image-missing-symbolic';
+    }
+    if (icon == indent) {
+      return 'format-indent-more-symbolic';
+    }
+    if (icon == inlineImage) {
+      return 'insert-image-symbolic';
+    }
+    if (icon == insertObject) {
+      return 'insert-object-symbolic';
+    }
+    if (icon == italic) {
+      return 'format-text-italic-symbolic';
+    }
+    if (icon == keyboard) {
+      return 'input-keyboard-symbolic';
+    }
+    if (icon == link) {
+      return 'insert-link-symbolic';
+    }
+    if (icon == markdownFile || icon == editorView || icon == text) {
+      return 'accessories-text-editor-symbolic';
+    }
+    if (icon == newDocument) {
+      return 'document-new-symbolic';
+    }
+    if (icon == orderedList) {
+      return 'format-ordered-list-symbolic';
+    }
+    if (icon == outdent) {
+      return 'format-indent-less-symbolic';
+    }
+    if (icon == paragraph) {
+      return 'insert-text-symbolic';
+    }
+    if (icon == paste) {
+      return 'edit-paste-symbolic';
+    }
+    if (icon == preview || icon == previewView) {
+      return 'image-viewer-symbolic';
+    }
+    if (icon == privacy) {
+      return 'security-high-symbolic';
+    }
+    if (icon == pull) {
+      return 'folder-download-symbolic';
+    }
+    if (icon == push) {
+      return 'document-send-symbolic';
+    }
+    if (icon == redo) {
+      return 'edit-redo-symbolic';
+    }
+    if (icon == save) {
+      return 'document-save-symbolic';
+    }
+    if (icon == search) {
+      return 'system-search-symbolic';
+    }
+    if (icon == searchUnavailable) {
+      return 'edit-find-replace-symbolic';
+    }
+    if (icon == selectAll) {
+      return 'edit-select-all-symbolic';
+    }
+    if (icon == sidebar) {
+      return 'sidebar-show-symbolic';
+    }
+    if (icon == strikethrough) {
+      return 'format-text-strikethrough-symbolic';
+    }
+    if (icon == splitView) {
+      return 'panel-right-symbolic';
+    }
+    if (icon == table) {
+      return 'x-office-spreadsheet-symbolic';
+    }
+    if (icon == task) {
+      return 'checkbox-symbolic';
+    }
+    if (icon == thematicBreak) {
+      return 'list-remove-symbolic';
+    }
+    if (icon == underline) {
+      return 'format-text-underline-symbolic';
+    }
+    if (icon == undo) {
+      return 'edit-undo-symbolic';
+    }
+    if (icon == unorderedList) {
+      return 'format-unordered-list-symbolic';
+    }
+    if (icon == warning) {
+      return 'dialog-warning-symbolic';
+    }
+    if (icon == writersideProject) {
+      return 'folder-documents-symbolic';
+    }
+    return null;
+  }
 
   /// Resolves a navigation glyph against the surrounding reading direction.
   ///

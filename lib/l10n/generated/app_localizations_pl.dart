@@ -14,7 +14,8 @@ class AppLocalizationsPl extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'Edytor dokumentacji Markdown zgodny z Writerside.';
+  String get appSubtitle =>
+      'Edytor plików Markdown i projektów dokumentacji zgodnych z Writerside.';
 
   @override
   String get aboutBusyMark => 'O aplikacji BusyMark';

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:markdown/markdown.dart' as md;
 import 'package:path/path.dart' as p;
@@ -18,6 +19,7 @@ import 'raw_html_policy.dart';
 // resolve inside the opened workspace. Targets outside that root, unsupported
 // file types, and oversized files are not inspected.
 const int _maxLocalReferenceTargetBytes = 2 * 1024 * 1024;
+const int _backgroundParseThresholdBytes = 64 * 1024;
 
 class MarkdownParser {
   const MarkdownParser();
@@ -29,13 +31,25 @@ class MarkdownParser {
     String? workspaceRoot,
     bool validateLocalReferences = true,
   }) async {
-    final parsed = parse(
-      filePath: filePath,
-      source: source,
-      mode: mode,
-      workspaceRoot: workspaceRoot,
-      validateLocalReferences: false,
-    );
+    final parsed =
+        source.length < _backgroundParseThresholdBytes ||
+            runtimeType != MarkdownParser
+        ? parse(
+            filePath: filePath,
+            source: source,
+            mode: mode,
+            workspaceRoot: workspaceRoot,
+            validateLocalReferences: false,
+          )
+        : await Isolate.run(
+            () => parse(
+              filePath: filePath,
+              source: source,
+              mode: mode,
+              workspaceRoot: workspaceRoot,
+              validateLocalReferences: false,
+            ),
+          );
     if (!validateLocalReferences) {
       return parsed;
     }
@@ -66,12 +80,9 @@ class MarkdownParser {
     final codeBlocks = <MarkdownCodeBlock>[];
     final xmlBlocks = <MarkdownXmlBlock>[];
     final variables = <MarkdownVariableToken>[];
-    final ids = <String, SourceSpan>{};
-    final generatedIds = <String, int>{};
+    const astAdapter = MarkdownAstAdapter();
     var title = _frontMatterTitle(filePath, source, diagnostics);
-    void addScannedHeading({
-      required int level,
-      required String rawText,
+    void inspectScannedHeadingAttributes({
       required String? attrText,
       required int startOffset,
       required int endOffset,
@@ -90,55 +101,9 @@ class MarkdownParser {
             sourceSpan: SourceSpan.fromOffsets(
               filePath: filePath,
               source: source,
-              startOffset: startOffset + rawText.length,
+              startOffset: startOffset,
               endOffset: endOffset,
             ),
-          ),
-        );
-      }
-      final text = _stripTrailingAttributeBlock(rawText).trim();
-      final baseId = explicitId ?? slugForHeading(text);
-      final generated = explicitId == null;
-      final id = generated ? _deduplicatedId(baseId, generatedIds) : baseId;
-      final span = SourceSpan.fromOffsets(
-        filePath: filePath,
-        source: source,
-        startOffset: startOffset,
-        endOffset: endOffset,
-      );
-      headings.add(
-        MarkdownHeading(
-          level: level,
-          text: text,
-          id: id,
-          generatedId: generated,
-          span: span,
-        ),
-      );
-      title ??= level == 1 ? text : null;
-      if (ids.containsKey(id)) {
-        diagnostics.add(
-          Diagnostic(
-            code: 'markdown.heading.duplicate-id',
-            severity: DiagnosticSeverity.warning,
-            filePath: filePath,
-            args: {'id': id},
-            sourceSpan: span,
-            relatedSpans: [ids[id]!],
-          ),
-        );
-      } else {
-        ids[id] = span;
-      }
-      if (mode == MarkdownMode.writersideMarkdown &&
-          level == 1 &&
-          headings.where((item) => item.level == 1).length > 1) {
-        diagnostics.add(
-          Diagnostic(
-            code: 'writerside.topic.h1-converted-to-chapter',
-            severity: DiagnosticSeverity.warning,
-            filePath: filePath,
-            sourceSpan: span,
           ),
         );
       }
@@ -218,29 +183,27 @@ class MarkdownParser {
       }
       final inRawHtmlBlock = offset < rawHtmlBlockEndOffset;
       final heading = RegExp(
-        r'^(#{1,6})\s+(.+?)\s*(\{[^}]+\})?\s*$',
+        r'^[ ]{0,3}(#{1,6})(?:[ \t]+(.*?))?[ \t]*$',
       ).firstMatch(inRawHtmlBlock ? '' : trimmed);
       if (heading != null) {
-        addScannedHeading(
-          level: heading.group(1)!.length,
-          rawText: heading.group(2)!.trim(),
-          attrText: heading.group(3),
+        final headingText = (heading.group(2) ?? '').replaceFirst(
+          RegExp(r'[ \t]+#+[ \t]*$'),
+          '',
+        );
+        final attributeMatch = RegExp(
+          r'(\{[^}]+\})[ \t]*$',
+        ).firstMatch(headingText);
+        inspectScannedHeadingAttributes(
+          attrText: attributeMatch?.group(1),
           startOffset: offset,
           endOffset: offset + line.length,
         );
         previousSetextCandidateLine = null;
         previousSetextCandidateOffset = null;
-      } else if (_setextUnderlineLevel(trimmed) case final level?
-          when !inRawHtmlBlock &&
-              previousSetextCandidateLine != null &&
-              previousSetextCandidateOffset != null) {
-        addScannedHeading(
-          level: level,
-          rawText: previousSetextCandidateLine.trim(),
-          attrText: null,
-          startOffset: previousSetextCandidateOffset,
-          endOffset: offset + line.length,
-        );
+      } else if (_setextUnderlineLevel(trimmed) != null &&
+          !inRawHtmlBlock &&
+          previousSetextCandidateLine != null &&
+          previousSetextCandidateOffset != null) {
         previousSetextCandidateLine = null;
         previousSetextCandidateOffset = null;
       }
@@ -285,6 +248,26 @@ class MarkdownParser {
       lineIndex += 1;
     }
 
+    final renderedDocument = astAdapter.parse(
+      filePath: filePath,
+      source: source,
+      mode: mode,
+      title: title,
+    );
+    var busyDocument = _withScannedSourceMetadata(
+      renderedDocument,
+      sortDiagnostics(diagnostics),
+    );
+    final canonicalHeadings = _canonicalizeHeadings(
+      document: busyDocument,
+      filePath: filePath,
+      mode: mode,
+      initialTitle: title,
+    );
+    busyDocument = canonicalHeadings.document;
+    headings.addAll(canonicalHeadings.headings);
+    diagnostics.addAll(canonicalHeadings.diagnostics);
+    title = canonicalHeadings.title;
     if (mode == MarkdownMode.writersideMarkdown && title == null) {
       diagnostics.add(
         Diagnostic(
@@ -300,18 +283,6 @@ class MarkdownParser {
         ),
       );
     }
-
-    final renderedDocument = const MarkdownAstAdapter().parse(
-      filePath: filePath,
-      source: source,
-      mode: mode,
-      title: title,
-    );
-    var busyDocument = _withScannedMetadata(
-      renderedDocument,
-      headings,
-      sortDiagnostics(diagnostics),
-    );
     final inlineReferences = _extractAstInlineReferences(
       filePath: filePath,
       source: source,
@@ -352,12 +323,10 @@ class MarkdownParser {
     );
   }
 
-  BusyDocument _withScannedMetadata(
+  BusyDocument _withScannedSourceMetadata(
     BusyDocument document,
-    List<MarkdownHeading> headings,
     List<Diagnostic> diagnostics,
   ) {
-    var headingIndex = 0;
     final sourceChunks = document.source == null
         ? const <_ScannedBlockSource>[]
         : _scannedBlockSources(document.filePath, document.source!);
@@ -375,13 +344,22 @@ class MarkdownParser {
         .toList(growable: false);
     final canAssignSource = modeledSourceChunks.length == contentBlocks.length;
     if (!canAssignSource) {
+      // A complex construct can be modeled as a different number of blocks by
+      // the AST and the lossless source scanner. Preserve top-level heading
+      // spans independently: title and outline projection must not disappear
+      // merely because unrelated content falls back to protected source.
+      final headingSourceChunks = sourceChunks
+          .where(_isScannedHeadingSource)
+          .toList(growable: false);
+      var headingSourceIndex = 0;
       final contentWithMetadata = [
         for (final block in contentBlocks)
-          _blockWithScannedMetadata(
+          _blockWithScannedSourceMetadata(
             block,
-            headings,
-            null,
-            headingIndexRef: () => headingIndex++,
+            block.kind == BusyBlockKind.heading &&
+                    headingSourceIndex < headingSourceChunks.length
+                ? headingSourceChunks[headingSourceIndex++]
+                : null,
           ),
       ];
       if (sourceChunks.any((chunk) => chunk.protectEdits)) {
@@ -435,14 +413,110 @@ class MarkdownParser {
           if (chunk.sourceOnly)
             _sourceOnlyBlock(chunk)
           else
-            _blockWithScannedMetadata(
-              contentBlocks[blockIndex++],
-              headings,
-              chunk,
-              headingIndexRef: () => headingIndex++,
-            ),
+            _blockWithScannedSourceMetadata(contentBlocks[blockIndex++], chunk),
         ...generatedBlocks,
       ],
+    );
+  }
+
+  bool _isScannedHeadingSource(_ScannedBlockSource chunk) {
+    final lines = chunk.rawSource.split('\n');
+    if (lines.isEmpty) {
+      return false;
+    }
+    if (_isAtxHeading(lines.first)) {
+      return true;
+    }
+    return lines.length > 1 && _setextUnderlineLevel(lines[1].trim()) != null;
+  }
+
+  _CanonicalHeadingProjection _canonicalizeHeadings({
+    required BusyDocument document,
+    required String filePath,
+    required MarkdownMode mode,
+    required String? initialTitle,
+  }) {
+    final headings = <MarkdownHeading>[];
+    final diagnostics = <Diagnostic>[];
+    final generatedIdOccurrences = <String, int>{};
+    final firstSpansById = <String, SourceSpan>{};
+    var title = initialTitle;
+    var levelOneCount = 0;
+    final blocks = <BusyBlock>[];
+
+    for (final block in document.blocks) {
+      if (block.kind != BusyBlockKind.heading) {
+        blocks.add(block);
+        continue;
+      }
+      final level = (int.tryParse(block.attributes['level'] ?? '') ?? 1)
+          .clamp(1, 6)
+          .toInt();
+      final generated = block.attributes['generatedId'] != 'false';
+      final id = generated
+          ? nextGeneratedHeadingId(
+              slugForHeading(block.plainText),
+              generatedIdOccurrences,
+            )
+          : block.attributes['id'] ?? block.id;
+      blocks.add(
+        block.copyWith(
+          attributes: {
+            ...block.attributes,
+            'id': id,
+            'level': '$level',
+            'generatedId': '$generated',
+          },
+        ),
+      );
+      final span = block.sourceSpan;
+      if (span == null) {
+        continue;
+      }
+      final heading = MarkdownHeading(
+        level: level,
+        text: block.plainText,
+        id: id,
+        generatedId: generated,
+        span: span,
+      );
+      headings.add(heading);
+      if (level == 1) {
+        title ??= heading.text;
+        levelOneCount += 1;
+        if (mode == MarkdownMode.writersideMarkdown && levelOneCount > 1) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'writerside.topic.h1-converted-to-chapter',
+              severity: DiagnosticSeverity.warning,
+              filePath: filePath,
+              sourceSpan: span,
+            ),
+          );
+        }
+      }
+      final firstSpan = firstSpansById[id];
+      if (firstSpan == null) {
+        firstSpansById[id] = span;
+      } else {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.heading.duplicate-id',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            args: {'id': id},
+            sourceSpan: span,
+            relatedSpans: [firstSpan],
+          ),
+        );
+      }
+    }
+
+    return _CanonicalHeadingProjection(
+      document: document.copyWith(title: title, blocks: blocks),
+      headings: List.unmodifiable(headings),
+      diagnostics: List.unmodifiable(diagnostics),
+      title: title,
     );
   }
 
@@ -532,19 +606,11 @@ class MarkdownParser {
     return _AstInlineReferences(links: links, images: images);
   }
 
-  BusyBlock _blockWithScannedMetadata(
+  BusyBlock _blockWithScannedSourceMetadata(
     BusyBlock block,
-    List<MarkdownHeading> headings,
-    _ScannedBlockSource? sourceChunk, {
-    required int Function() headingIndexRef,
-  }) {
+    _ScannedBlockSource? sourceChunk,
+  ) {
     var updated = block;
-    if (updated.kind == BusyBlockKind.heading) {
-      final headingIndex = headingIndexRef();
-      if (headingIndex < headings.length) {
-        updated = _headingWithScannedMetadata(updated, headings[headingIndex]);
-      }
-    }
     if (updated.kind != BusyBlockKind.frontMatter && sourceChunk != null) {
       updated = updated.copyWith(
         rawSource: sourceChunk.rawSource,
@@ -576,22 +642,6 @@ class MarkdownParser {
       preserveRaw: true,
       isSourceOnly: true,
       isSourceProtected: true,
-    );
-  }
-
-  BusyBlock _headingWithScannedMetadata(
-    BusyBlock block,
-    MarkdownHeading heading,
-  ) {
-    return block.copyWith(
-      id: heading.id,
-      attributes: {
-        ...block.attributes,
-        'id': heading.id,
-        'level': '${heading.level}',
-        'generatedId': '${heading.generatedId}',
-      },
-      sourceSpan: heading.span,
     );
   }
 
@@ -937,7 +987,7 @@ class MarkdownParser {
   }
 
   bool _isAtxHeading(String line) {
-    return RegExp(r'^\s{0,3}#{1,6}\s+').hasMatch(line);
+    return RegExp(r'^[ ]{0,3}#{1,6}(?:[ \t]+|$)').hasMatch(line);
   }
 
   bool _isBlockquoteStart(String line) {
@@ -1068,10 +1118,6 @@ class MarkdownParser {
     return match?.group(1);
   }
 
-  String _stripTrailingAttributeBlock(String value) {
-    return value.replaceFirst(RegExp(r'\s*\{[^}]+\}\s*$'), '').trimRight();
-  }
-
   int? _setextUnderlineLevel(String trimmedLine) {
     if (RegExp(r'^=+\s*$').hasMatch(trimmedLine)) {
       return 1;
@@ -1086,7 +1132,7 @@ class MarkdownParser {
     if (trimmedLine.isEmpty) {
       return false;
     }
-    if (RegExp(r'^(#{1,6})\s+').hasMatch(trimmedLine)) {
+    if (RegExp(r'^#{1,6}(?:[ \t]+|$)').hasMatch(trimmedLine)) {
       return false;
     }
     if (RegExp(r'^([-+*]|\d+[.)])\s+').hasMatch(trimmedLine)) {
@@ -1096,13 +1142,6 @@ class MarkdownParser {
       return false;
     }
     return _setextUnderlineLevel(trimmedLine) == null;
-  }
-
-  String _deduplicatedId(String baseId, Map<String, int> counts) {
-    final base = baseId.isEmpty ? 'section' : baseId;
-    final count = counts[base] ?? 0;
-    counts[base] = count + 1;
-    return count == 0 ? base : '$base-$count';
   }
 
   void _extractVariableTokens({
@@ -1584,6 +1623,20 @@ class _AstInlineReferences {
 
   final List<MarkdownLink> links;
   final List<MarkdownImage> images;
+}
+
+class _CanonicalHeadingProjection {
+  const _CanonicalHeadingProjection({
+    required this.document,
+    required this.headings,
+    required this.diagnostics,
+    required this.title,
+  });
+
+  final BusyDocument document;
+  final List<MarkdownHeading> headings;
+  final List<Diagnostic> diagnostics;
+  final String? title;
 }
 
 String _decodeLocalReferencePath(String value) {

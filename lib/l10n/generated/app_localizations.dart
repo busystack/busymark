@@ -132,7 +132,7 @@ abstract class AppLocalizations {
   /// Short application description.
   ///
   /// In en, this message translates to:
-  /// **'Markdown and Writerside-compatible documentation editor.'**
+  /// **'Editor for Markdown files and Writerside-compatible documentation projects.'**
   String get appSubtitle;
 
   /// Menu item and tooltip for the About dialog.
@@ -429,7 +429,7 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get delete;
 
-  /// Discard unsaved changes button label.
+  /// Destructive button that throws away unsaved editor changes. Translate it distinctly from Cancel.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
@@ -1407,7 +1407,7 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get closeUnsavedChangesCancel;
 
-  /// Discard button label in the window close unsaved-changes dialog.
+  /// Destructive button that closes BusyMark without saving editor changes. Translate it distinctly from Cancel.
   ///
   /// In en, this message translates to:
   /// **'Discard'**

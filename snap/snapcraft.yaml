@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "0.2.2"
+version: "0.2.3"
 summary: Markdown and Writerside documentation editor
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
@@ -52,7 +52,10 @@ parts:
     source: .
     flutter-target: lib/main.dart
     flutter-channel: stable
+    build-packages:
+      - libhandy-1-dev
     stage-packages:
+      - libhandy-1-0
       - libx11-6
       - libxdamage1
       - libxext6

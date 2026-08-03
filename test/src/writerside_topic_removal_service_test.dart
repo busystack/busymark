@@ -517,16 +517,10 @@ Read [the old topic](doomed.md).
 ''');
       final preprocessingDisabled = await service.analyze(
         module: fixture.module,
-        topicPath: _topic(
-          fixture.module,
-          'Document_everything.topic',
-        ).filePath,
+        topicPath: _topic(fixture.module, 'Document_everything.topic').filePath,
         mode: WritersideTopicRemovalMode.safeDeleteFile,
       );
-      expect(
-        preprocessingDisabled.oldWebFileName,
-        'Document_everything.html',
-      );
+      expect(preprocessingDisabled.oldWebFileName, 'Document_everything.html');
     },
   );
 

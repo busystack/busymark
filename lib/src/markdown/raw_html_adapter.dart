@@ -174,16 +174,16 @@ class RawHtmlAdapter {
     final text = _plainTextFromNodes(children).trim();
 
     if (_headingLevel(tag) case final level?) {
-      final id = attributes['id'] ?? slugForHeading(text);
+      final anchorId = attributes['id'] ?? slugForHeading(text);
       return _applyHtmlDirection([
         BusyBlock(
-          id: id.isEmpty ? nextId() : id,
+          id: nextId(),
           kind: BusyBlockKind.heading,
           inlines: _trimInlineEdges(_inlinesFromNodes(children)),
           attributes: {
             ...attributes,
             'level': '$level',
-            'id': id,
+            'id': anchorId,
             'generatedId': '${attributes['id'] == null}',
           },
         ),

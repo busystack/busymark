@@ -1,5 +1,6 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -271,9 +272,7 @@ void main() {
     );
     expect(
       tester
-          .widget<BusyMarkDialogButton>(
-            find.byKey(BusyMarkImageDialogKeys.submit),
-          )
+          .widget<ElevatedButton>(find.byKey(BusyMarkImageDialogKeys.submit))
           .onPressed,
       isNull,
     );
@@ -281,9 +280,7 @@ void main() {
     await tester.pump();
     expect(
       tester
-          .widget<BusyMarkDialogButton>(
-            find.byKey(BusyMarkImageDialogKeys.submit),
-          )
+          .widget<ElevatedButton>(find.byKey(BusyMarkImageDialogKeys.submit))
           .onPressed,
       isNotNull,
     );
@@ -314,7 +311,15 @@ void main() {
         matching: find.byType(TextField),
       ),
     );
+    expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+    expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+    expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedList), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsOneWidget);
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(find.byType(BusyMarkDialogButton), findsNothing);
     expect(languageField.textDirection, TextDirection.ltr);
+    expect(languageField.decoration?.hintText, isNull);
     Navigator.of(
       tester.element(find.byKey(const ValueKey('wysiwyg-code-language-field'))),
     ).pop();

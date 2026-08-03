@@ -7,6 +7,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/diagnostic_localizations.dart';
+import 'package:busymark/src/app/app_locale.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -90,6 +91,67 @@ void main() {
     expect(failures, isEmpty, reason: failures.join('\n'));
   });
 
+  test('package metadata uses reviewed product wording in every locale', () {
+    final desktop = File(
+      'linux/io.busystack.busymark.desktop',
+    ).readAsStringSync();
+    final metainfo = File(
+      'linux/io.busystack.busymark.metainfo.xml',
+    ).readAsStringSync();
+    const summaries = <String, String>{
+      'ar': 'محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside',
+      'de':
+          'Editor für Markdown-Dateien und Writerside-kompatible '
+          'Dokumentationsprojekte',
+      'es':
+          'Editor de archivos Markdown y proyectos de documentación '
+          'compatibles con Writerside',
+      'et':
+          'Markdowni failide ja Writerside’iga ühilduvate '
+          'dokumentatsiooniprojektide redaktor',
+      'fa':
+          'ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با '
+          'Writerside',
+      'fr':
+          'Éditeur de fichiers Markdown et de projets de documentation '
+          'compatibles avec Writerside',
+      'hi':
+          'Markdown फ़ाइलों और Writerside-संगत दस्तावेज़ीकरण परियोजनाओं का '
+          'संपादक',
+      'it':
+          'Editor per file Markdown e progetti di documentazione compatibili '
+          'con Writerside',
+      'nb':
+          'Redigerer for Markdown-filer og Writerside-kompatible '
+          'dokumentasjonsprosjekter',
+      'pl':
+          'Edytor plików Markdown i projektów dokumentacji zgodnych z '
+          'Writerside',
+      'pt':
+          'Editor de arquivos Markdown e projetos de documentação compatíveis '
+          'com o Writerside',
+      'ru':
+          'Редактор файлов Markdown и проектов документации, совместимых с '
+          'Writerside',
+      'uk':
+          'Редактор файлів Markdown і проєктів документації, сумісних із '
+          'Writerside',
+    };
+
+    for (final entry in summaries.entries) {
+      expect(
+        desktop,
+        contains('Comment[${entry.key}]=${entry.value}'),
+        reason: 'desktop ${entry.key}',
+      );
+      expect(
+        metainfo,
+        contains('<summary xml:lang="${entry.key}">${entry.value}</summary>'),
+        reason: 'AppStream ${entry.key}',
+      );
+    }
+  });
+
   test('target ARBs match the English messages and placeholders', () {
     final templateFile = File('lib/l10n/app_en.arb');
     final templateArb = _arbMessages(templateFile);
@@ -123,6 +185,31 @@ void main() {
     }
 
     expect(failures, isEmpty, reason: failures.join('\n'));
+  });
+
+  test('unsaved-changes discard actions are distinct from cancel', () {
+    for (final locale in AppLocalizations.supportedLocales) {
+      final localizations = lookupAppLocalizations(locale);
+      expect(
+        localizations.discard,
+        isNot(localizations.cancel),
+        reason:
+            '${locale.toLanguageTag()} must not translate Discard as Cancel',
+      );
+      expect(
+        localizations.closeUnsavedChangesDiscard,
+        isNot(localizations.closeUnsavedChangesCancel),
+        reason:
+            '${locale.toLanguageTag()} must not translate window-close '
+            'Discard as Cancel',
+      );
+    }
+
+    final russian = lookupAppLocalizations(const Locale('ru'));
+    expect(russian.discard, 'Не сохранять');
+    expect(russian.closeUnsavedChangesDiscard, 'Не сохранять');
+    expect(russian.unsavedChanges, 'Несохранённые изменения');
+    expect(russian.closeUnsavedChangesTitle, 'Несохранённые изменения');
   });
 
   test('English-identical target messages are explicitly reviewed', () {
@@ -201,6 +288,33 @@ void main() {
     // The generic `ar` locale in package:intl intentionally uses Latin digits.
     // Regional Arabic locales can choose different numbering systems.
     expect(AppLocalizationsAr().diagnosticCount(12), contains('12'));
+  });
+
+  test(
+    'locale resolution considers all preferences and falls back to English',
+    () {
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('eo'),
+          Locale('de', 'DE'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('de'),
+      );
+      expect(
+        resolveBusyMarkLocales(const [
+          Locale('eo'),
+          Locale('kl'),
+        ], AppLocalizations.supportedLocales),
+        const Locale('en'),
+      );
+    },
+  );
+
+  test('every selectable locale has a generated catalog', () {
+    expect(
+      busyMarkLocaleOptions.map((option) => option.locale).toSet(),
+      AppLocalizations.supportedLocales.toSet(),
+    );
   });
 
   testWidgets('diagnostics localize at render time from codes and args', (

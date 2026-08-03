@@ -1157,17 +1157,32 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String blockId,
     BusyBlock Function(BusyBlock) replace,
   ) {
-    return [
-      for (final block in blocks)
-        if (block.isSourceProtected)
-          block
-        else if (block.id == blockId)
-          replace(block)
-        else
-          block.copyWith(
-            children: _replaceInBlocks(block.children, blockId, replace),
-          ),
-    ];
+    for (var index = 0; index < blocks.length; index += 1) {
+      final block = blocks[index];
+      if (block.isSourceProtected) {
+        continue;
+      }
+      if (block.id == blockId) {
+        return [
+          ...blocks.take(index),
+          replace(block),
+          ...blocks.skip(index + 1),
+        ];
+      }
+      if (block.children.isEmpty) {
+        continue;
+      }
+      final children = _replaceInBlocks(block.children, blockId, replace);
+      if (identical(children, block.children)) {
+        continue;
+      }
+      return [
+        ...blocks.take(index),
+        block.copyWith(children: children),
+        ...blocks.skip(index + 1),
+      ];
+    }
+    return blocks;
   }
 
   List<BusyBlock> _replaceBlockWithMany(

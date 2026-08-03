@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'app_locale.dart';
+
 enum BusyMarkThemeModePreference { system, light, dark }
 
 enum DocumentViewModePreference { editor, source, preview, split }
@@ -114,7 +116,7 @@ class AppSettings {
         json['themeModePreference'],
         defaults.themeModePreference,
       ),
-      localeTag: _localeTagFromJson(json['localeTag']),
+      localeTag: normalizeBusyMarkLocaleTag(json['localeTag']?.toString()),
       sidebarVisible:
           json['sidebarVisible'] as bool? ?? defaults.sidebarVisible,
       previewVisible: documentViewMode != DocumentViewModePreference.source,
@@ -179,7 +181,7 @@ class AppSettings {
 
   ThemeMode get themeMode => themeModePreference.themeMode;
 
-  Locale? get locale => _localeFromTag(_normalizeLocaleTag(localeTag));
+  Locale? get locale => busyMarkLocaleFromTag(localeTag);
 
   Map<String, Object?> toJson() => {
     'themeModePreference': themeModePreference.name,
@@ -245,7 +247,7 @@ class AppSettings {
       themeModePreference: themeModePreference ?? this.themeModePreference,
       localeTag: identical(localeTag, _unset)
           ? this.localeTag
-          : localeTag as String?,
+          : normalizeBusyMarkLocaleTag(localeTag as String?),
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       previewVisible: previewVisible ?? this.previewVisible,
       documentViewMode: documentViewMode ?? this.documentViewMode,
@@ -327,7 +329,7 @@ class AppSettingsController extends Notifier<AppSettings> {
   Future<void> setLocaleTag(String? localeTag) {
     return _mutate(
       (settings) =>
-          settings.copyWith(localeTag: _normalizeLocaleTag(localeTag)),
+          settings.copyWith(localeTag: normalizeBusyMarkLocaleTag(localeTag)),
     );
   }
 
@@ -571,53 +573,4 @@ String? _normalizedStoredGitWorkspacePath(String? value) {
     return null;
   }
   return p.normalize(p.absolute(value));
-}
-
-String? _localeTagFromJson(Object? value) {
-  if (value == null) {
-    return null;
-  }
-  final tag = value.toString().trim();
-  return _normalizeLocaleTag(tag);
-}
-
-String? _normalizeLocaleTag(String? tag) {
-  if (tag == null) {
-    return null;
-  }
-  final trimmed = tag.trim();
-  if (trimmed.isEmpty) {
-    return null;
-  }
-  if (trimmed == 'no') {
-    return 'nb';
-  }
-  if (trimmed.startsWith('no_') || trimmed.startsWith('no-')) {
-    return 'nb${trimmed.substring(2)}';
-  }
-  return trimmed;
-}
-
-Locale? _localeFromTag(String? tag) {
-  if (tag == null || tag.isEmpty) {
-    return null;
-  }
-  final parts = tag.split(RegExp('[-_]'));
-  if (parts.length == 1) {
-    return Locale(parts.first);
-  }
-  if (parts.length == 2) {
-    if (parts.last.length == 4) {
-      return Locale.fromSubtags(
-        languageCode: parts.first,
-        scriptCode: parts.last,
-      );
-    }
-    return Locale(parts.first, parts.last);
-  }
-  return Locale.fromSubtags(
-    languageCode: parts[0],
-    scriptCode: parts[1].isEmpty ? null : parts[1],
-    countryCode: parts[2].isEmpty ? null : parts[2],
-  );
 }

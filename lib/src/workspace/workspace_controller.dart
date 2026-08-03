@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import '../app/app_settings.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
+import '../markdown/busymark_document.dart';
+import '../markdown/document_outline.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_topic_removal_service.dart';
@@ -78,10 +80,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
-  Timer? _parseDebounce;
   Timer? _autoSaveDebounce;
   Future<bool>? _activeSave;
   ActiveDocumentSaveTarget? _activeSaveTarget;
+  var _derivedRefreshRunning = false;
+  var _derivedRefreshPending = false;
+  var _pendingPreviewRefresh = false;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
 
@@ -99,7 +103,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     });
     ref.onDispose(() {
-      _parseDebounce?.cancel();
+      _cancelPendingDerivedRefresh();
       _autoSaveDebounce?.cancel();
     });
     return const WorkspaceState();
@@ -142,10 +146,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> createMarkdownFile() async {
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     _invalidateActiveDocumentOperations();
     _resetSaveTracking(dirty: true);
+    final viewModeChange = _showEditorForNewFile();
     final workspace = _service.createUntitledMarkdown();
     state = WorkspaceState(
       workspace: workspace,
@@ -153,10 +158,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       isDirty: true,
       isLoading: false,
     );
+    await viewModeChange;
   }
 
   Future<void> openPath(String path) async {
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     final operationRevision = _invalidateActiveDocumentOperations();
     _resetSaveTracking();
@@ -210,7 +216,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> createWritersideProject(
     WritersideProjectCreateRequest request,
   ) async {
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     final operationRevision = _invalidateActiveDocumentOperations();
     _resetSaveTracking();
@@ -271,7 +277,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (workspace == null) {
       return false;
     }
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     final operationRevision = _invalidateActiveDocumentOperations();
     _resetSaveTracking();
@@ -368,9 +374,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String directoryPath,
     String fileName,
   ) async {
-    return _runWorkspaceFileOperation((workspace) async {
+    final created = await _runWorkspaceFileOperation((workspace) async {
       return _service.createFile(workspace, directoryPath, fileName);
     });
+    if (created) {
+      await _showEditorForNewFile();
+    }
+    return created;
   }
 
   Future<bool> renameWorkspaceEntity(String path, String newName) async {
@@ -592,7 +602,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (!_supportsOpenFileTabs(workspace)) {
       return;
     }
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     _invalidateActiveDocumentOperations();
     _resetSaveTracking();
@@ -627,7 +637,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (workspace == null) {
       return false;
     }
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     final operationRevision = _invalidateActiveDocumentOperations();
     try {
@@ -672,10 +682,47 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  void updateActiveText(
+  void updateActiveText(String text, {String? sourceFilePath}) {
+    _updateActiveText(
+      text,
+      sourceFilePath: sourceFilePath,
+      rebuildPreview: true,
+    );
+  }
+
+  /// Applies a serialized WYSIWYG edit without reparsing the whole Markdown
+  /// document on every keystroke.
+  void updateActiveWysiwygText(
     String text, {
-    bool updatePreview = true,
+    required BusyDocument document,
     String? sourceFilePath,
+  }) {
+    _updateActiveText(
+      text,
+      sourceFilePath: sourceFilePath,
+      rebuildPreview: false,
+      liveOutline: document.outline,
+    );
+  }
+
+  /// Rebuilds derived preview data after leaving WYSIWYG mode without creating
+  /// another edit revision for text that is already in state.
+  void refreshActivePreview({String? sourceFilePath}) {
+    final workspace = state.workspace;
+    final activeEditorPath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    if (workspace == null ||
+        (sourceFilePath != null && activeEditorPath != sourceFilePath)) {
+      return;
+    }
+    _requestDerivedRefresh(rebuildPreview: true);
+  }
+
+  void _updateActiveText(
+    String text, {
+    required bool rebuildPreview,
+    String? sourceFilePath,
+    List<DocumentOutlineHeading>? liveOutline,
   }) {
     final workspace = state.workspace;
     final activeEditorPath =
@@ -686,20 +733,90 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _editRevision++;
     state = state.copyWith(
       activeText: text,
-      preview: workspace == null || !updatePreview
-          ? state.preview
-          : _safePreview(workspace, text),
+      liveOutline: workspace == null || liveOutline == null
+          ? null
+          : ActiveDocumentOutline(
+              workspaceId: workspace.id,
+              filePath: workspace.activeFilePath,
+              source: text,
+              headings: liveOutline,
+            ),
       isDirty: true,
     );
-    _parseDebounce?.cancel();
-    if (!_settingsController.state.validateOnEdit) {
-      _scheduleAutoSave();
+    _requestDerivedRefresh(rebuildPreview: rebuildPreview);
+    _scheduleAutoSave();
+  }
+
+  void _requestDerivedRefresh({required bool rebuildPreview}) {
+    if (!_settingsController.state.validateOnEdit && !rebuildPreview) {
       return;
     }
-    _parseDebounce = Timer(const Duration(milliseconds: 350), () {
-      unawaited(validateActive());
-    });
-    _scheduleAutoSave();
+    _derivedRefreshPending = true;
+    _pendingPreviewRefresh = _pendingPreviewRefresh || rebuildPreview;
+    if (!_derivedRefreshRunning) {
+      unawaited(_drainDerivedRefreshes());
+    }
+  }
+
+  Future<void> _drainDerivedRefreshes() async {
+    if (_derivedRefreshRunning) {
+      return;
+    }
+    _derivedRefreshRunning = true;
+    try {
+      while (_derivedRefreshPending) {
+        _derivedRefreshPending = false;
+        final rebuildPreview = _pendingPreviewRefresh;
+        _pendingPreviewRefresh = false;
+        if (_settingsController.state.validateOnEdit) {
+          await validateActive();
+        } else if (rebuildPreview) {
+          await _refreshActivePreview();
+        }
+      }
+    } finally {
+      _derivedRefreshRunning = false;
+      if (_derivedRefreshPending) {
+        unawaited(_drainDerivedRefreshes());
+      }
+    }
+  }
+
+  void _cancelPendingDerivedRefresh() {
+    _derivedRefreshPending = false;
+    _pendingPreviewRefresh = false;
+  }
+
+  Future<void> _refreshActivePreview() async {
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return;
+    }
+    final workspaceId = workspace.id;
+    final activeFilePath = workspace.activeFilePath;
+    final text = state.activeText;
+    final editRevision = _editRevision;
+    final operationRevision = _activeDocumentRevision;
+    try {
+      final preview = await _service.buildPreviewAsync(workspace, text);
+      if (!_isCurrentActiveDocument(
+            operationRevision,
+            workspaceId: workspaceId,
+            activeFilePath: activeFilePath,
+          ) ||
+          state.activeText != text ||
+          _editRevision != editRevision) {
+        return;
+      }
+      state = state.copyWith(preview: preview);
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Could not refresh preview',
+        error,
+        stackTrace,
+        context: {'path': busyMarkLogPath(activeFilePath ?? '')},
+      );
+    }
   }
 
   Future<bool> autoSaveActiveIfNeeded() async {
@@ -723,7 +840,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     _autoSaveDebounce?.cancel();
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     final inFlight = _activeSave;
     if (inFlight != null) {
       if (_sameSaveTarget(_activeSaveTarget, operationTarget)) {
@@ -868,7 +985,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     _autoSaveDebounce?.cancel();
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     final operationRevision = _invalidateActiveDocumentOperations();
     try {
       if (overwriteExisting) {
@@ -887,7 +1004,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final hasNewerEdits =
           _editRevision != operationTarget.editRevision ||
           latestText != operationTarget.text;
-      _parseDebounce?.cancel();
+      _cancelPendingDerivedRefresh();
       state = WorkspaceState(
         workspace: savedWorkspace,
         activeText: hasNewerEdits ? latestText : operationTarget.text,
@@ -971,7 +1088,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return true;
     }
     _autoSaveDebounce?.cancel();
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
@@ -1030,7 +1147,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     final operationRevision = _invalidateActiveDocumentOperations();
-    _parseDebounce?.cancel();
+    _cancelPendingDerivedRefresh();
     _autoSaveDebounce?.cancel();
     state = state.copyWith(isLoading: true, clearMessage: true);
     try {
@@ -1191,8 +1308,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           _editRevision != editRevision) {
         return;
       }
+      final currentSnapshot = currentWorkspace.activeFileSnapshot;
       state = state.copyWith(
-        workspace: reparsed,
+        workspace: reparsed.copyWith(
+          activeFileSnapshot: currentSnapshot,
+          openFilePaths: currentWorkspace.openFilePaths,
+          files: currentWorkspace.files,
+        ),
         preview: _safePreview(reparsed, text),
         clearMessage: true,
       );
@@ -1225,6 +1347,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         blocks: [PreviewBlock(kind: PreviewBlockKind.code, text: text)],
       );
     }
+  }
+
+  Future<void> _showEditorForNewFile() {
+    if (_settingsController.state.documentViewMode !=
+        DocumentViewModePreference.preview) {
+      return Future<void>.value();
+    }
+    return _settingsController.setDocumentViewMode(
+      DocumentViewModePreference.editor,
+    );
   }
 
   void _scheduleAutoSave() {

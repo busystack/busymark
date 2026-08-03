@@ -230,3 +230,18 @@ String slugForHeading(String text) {
   }
   return buffer.toString();
 }
+
+/// Returns the next source-order ID for a generated Markdown heading.
+///
+/// [occurrenceCounts] is updated so every parser or editor projection applies
+/// the same duplicate suffixes. Empty slugs use the conventional `section`
+/// fallback.
+String nextGeneratedHeadingId(
+  String baseId,
+  Map<String, int> occurrenceCounts,
+) {
+  final normalizedBase = baseId.isEmpty ? 'section' : baseId;
+  final occurrence = occurrenceCounts[normalizedBase] ?? 0;
+  occurrenceCounts[normalizedBase] = occurrence + 1;
+  return occurrence == 0 ? normalizedBase : '$normalizedBase-$occurrence';
+}

@@ -198,6 +198,9 @@ void main() {
     );
 
     expect(find.text(l10n.gitCommitMessage), findsOneWidget);
+    final commitField = tester.widget<TextField>(find.byType(TextField));
+    expect(commitField.decoration?.border, isNull);
+    expect(commitField.decoration?.filled, isNull);
     await tester.tap(find.text(l10n.gitCommit));
     await tester.pump();
     expect(committedMessage, isNull);

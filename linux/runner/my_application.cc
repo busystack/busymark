@@ -1,58 +1,95 @@
 #include "my_application.h"
 
-#include <cairo.h>
 #include <flutter_linux/flutter_linux.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <handy.h>
 #include <pango/pango.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#ifdef GDK_WINDOWING_X11
-#include <gdk/gdkx.h>
-#endif
 
 #include "flutter/generated_plugin_registrant.h"
 
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
+constexpr char kNativeMenuChannel[] = "busymark/native_menus";
 constexpr gint kHeaderButtonHeight = 32;
-constexpr gint kHeaderControlHeight = 34;
-constexpr gint kHeaderSearchEntryBorderWidth = 1;
-constexpr gint kHeaderSearchEntryContentHeight =
-    kHeaderButtonHeight - kHeaderSearchEntryBorderWidth * 2;
-constexpr gint kHeaderButtonRadius = 8;
-constexpr gint kHeaderControlHorizontalPadding = 8;
 constexpr gint kHeaderButtonSpacing = 8;
 constexpr gint kHeaderSidebarInset = 8;
-constexpr gint kHeaderWindowRadius = 14;
-constexpr gint kHeaderWindowControlsBalanceWidth = kHeaderButtonHeight * 3;
-constexpr gint kHeaderTooltipVerticalPadding = 5;
-constexpr gint kHeaderTooltipHorizontalPadding = 8;
-constexpr char kDefaultHeaderbarBackground[] = "#242424";
-constexpr char kDefaultSidebarBackground[] = "#303030";
+constexpr gdouble kHeaderBackdropForegroundOpacity = 0.50;
+constexpr gdouble kHeaderDisabledForegroundOpacity = 0.38;
+constexpr gdouble kHeaderDisabledBackdropForegroundOpacity =
+    kHeaderDisabledForegroundOpacity * kHeaderBackdropForegroundOpacity;
+constexpr char kDefaultHeaderbarBackground[] = "#272727";
+constexpr char kDefaultSidebarBackground[] = "#393939";
+constexpr char kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)";
+constexpr char kDefaultForeground[] = "#F7F7F7";
+constexpr char kDefaultModalBarrierColor[] = "rgba(0,0,0,0.25)";
+constexpr char kDefaultTooltipBackground[] = "rgba(0,0,0,0.8)";
+constexpr char kDefaultTooltipForeground[] = "#FFFFFF";
+constexpr char kDefaultTooltipBorder[] = "rgba(255,255,255,0.1)";
+constexpr gdouble kDefaultTooltipRadius = 8.0;
+constexpr gdouble kDefaultTooltipFontSize = 14.0;
+constexpr gdouble kDefaultTooltipHorizontalPadding = 10.0;
+constexpr gdouble kDefaultTooltipVerticalPadding = 6.0;
+constexpr gdouble kDefaultTooltipMinimumHeight = 30.0;
+constexpr gdouble kTooltipBorderWidth = 1.0;
+// GtkTooltipWindow applies a private GtkContainer border-width of 6 px around
+// its content. Compensate for it so native header hints have the same visible
+// border-to-text padding as Flutter tooltips.
+constexpr gdouble kGtkTooltipContainerInset = 6.0;
+// Yaru GTK 3 adds a zero-blur 23%/75% black ring around CSD windows. Current
+// Ubuntu apps retain the diffuse shadow without that legacy hard edge. Reuse
+// Yaru's geometry here; Handy continues to own clipping, radii, and states.
+constexpr char kLegacyYaruWindowShadowCompatibilityCss[] =
+    "window#busymark-window:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen):not(.tiled):not(.tiled-top):not(.tiled-right):"
+    "not(.tiled-bottom):not(.tiled-left) > decoration {"
+    "box-shadow: 0 3px 9px 1px rgba(0,0,0,0.5);"
+    "}"
+    "window#busymark-window:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen):not(.tiled):not(.tiled-top):not(.tiled-right):"
+    "not(.tiled-bottom):not(.tiled-left) > decoration:backdrop {"
+    "box-shadow: 0 3px 9px 1px transparent,"
+    "0 2px 6px 2px rgba(0,0,0,0.2);"
+    "}"
+    "window#busymark-window.tiled:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-top:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-right:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-bottom:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration,"
+    "window#busymark-window.tiled-left:not(.solid-csd):not(.maximized):"
+    "not(.fullscreen) > decoration {"
+    "box-shadow: 0 0 0 20px transparent;"
+    "}";
 constexpr char kLtrIsolateStart[] = "\xE2\x81\xA6";
 constexpr char kBidiIsolateEnd[] = "\xE2\x81\xA9";
+constexpr char kMenuAccelAttribute[] = "accel";
+constexpr char kHeaderApplicationActiveStyleClass[] =
+    "busymark-focus-active";
+constexpr char kHeaderApplicationBackdropStyleClass[] =
+    "busymark-focus-backdrop";
 
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
   FlMethodChannel* header_bar_channel;
+  FlMethodChannel* native_menu_channel;
   GtkCssProvider* header_bar_css_provider;
-  GtkCssProvider* gtk_accent_css_provider;
   GtkWindow* main_window;
   GtkWidget* flutter_view;
+  GtkWidget* titlebar_handle;
+  GtkWidget* titlebar_overlay;
+  GtkWidget* modal_scrim;
   GtkWidget* titlebar_box;
   GtkHeaderBar* header_bar;
   GtkWidget* sidebar_header_box;
-  GtkWidget* sidebar_search_button;
   GtkWidget* sidebar_title_label;
-  GtkWidget* sidebar_menu_button;
-  GtkWidget* sidebar_menu;
-  GtkWidget* settings_item;
-  GtkWidget* keyboard_shortcuts_item;
-  GtkWidget* markdown_html_item;
-  GtkWidget* report_issue_item;
-  GtkWidget* about_item;
+  GMenu* main_menu_model;
   GtkWidget* header_start_box;
   GtkWidget* back_button;
   GtkWidget* sidebar_toggle_button;
@@ -65,35 +102,120 @@ struct _MyApplication {
   GtkWidget* view_mode_button;
   GtkWidget* view_mode_icon;
   GtkWidget* view_mode_menu;
-  GtkWidget* view_mode_editor_item;
-  GtkWidget* view_mode_source_item;
-  GtkWidget* view_mode_preview_item;
-  GtkWidget* view_mode_split_item;
+  GMenu* view_mode_menu_model;
   GtkWidget* refresh_button;
+  GtkWidget* search_button;
+  GtkWidget* main_menu_button;
+  GtkWidget* main_menu;
+  GSimpleActionGroup* header_action_group;
+  GSimpleAction* view_mode_action;
   gchar* view_mode;
+  gchar* search_query;
   gchar* background_color;
   gchar* sidebar_background_color;
   gchar* foreground_color;
-  gchar* muted_foreground_color;
-  gchar* disabled_foreground_color;
-  gchar* control_color;
-  gchar* control_hover_color;
-  gchar* accent_color;
-  gchar* accent_foreground_color;
-  gchar* popover_background_color;
-  gchar* border_color;
-  gchar* shade_color;
+  gchar* sidebar_border_color;
   gchar* modal_barrier_color;
+  gchar* tooltip_background_color;
+  gchar* tooltip_foreground_color;
+  gchar* tooltip_border_color;
+  gdouble tooltip_radius;
+  gdouble tooltip_font_size;
+  gdouble tooltip_horizontal_padding;
+  gdouble tooltip_vertical_padding;
+  gdouble tooltip_minimum_height;
   gint sidebar_width;
   gboolean sidebar_visible;
   gboolean text_direction_rtl;
   gboolean back_visible;
   gboolean search_active;
   gboolean modal_barrier_visible;
+  gint modal_barrier_depth;
   gboolean suppress_header_actions;
+  gchar* header_configuration_session_id;
+  gint64 header_configuration_revision;
+};
+
+struct HeaderBarConfiguration {
+  const gchar* session_id;
+  gint64 revision;
+  const gchar* title;
+  const gchar* view_mode;
+  gboolean can_refresh;
+  gboolean document_controls_visible;
+  gboolean search_active;
+  gboolean search_visible;
+  gboolean sidebar_visible;
+  gboolean sidebar_toggle_visible;
+  gboolean back_visible;
+  gboolean modal_barrier_visible;
+  gint64 modal_barrier_depth;
+  const gchar* search_query;
+  const gchar* text_direction;
+  gdouble sidebar_width;
+  FlValue* labels;
+  FlValue* theme;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
+
+static void schedule_header_bar_focus_state_refresh(MyApplication* self);
+
+static gchar* gtk_accelerator_from_shortcut_label(const gchar* shortcut) {
+  if (shortcut == nullptr || shortcut[0] == '\0') {
+    return nullptr;
+  }
+
+  guint key = 0;
+  GdkModifierType modifiers = static_cast<GdkModifierType>(0);
+  gtk_accelerator_parse(shortcut, &key, &modifiers);
+  if (key != 0) {
+    return g_strdup(shortcut);
+  }
+
+  gchar** parts = g_strsplit(shortcut, "+", -1);
+  const gsize part_count = g_strv_length(parts);
+  GString* accelerator = g_string_new(nullptr);
+  gboolean valid = part_count > 0;
+  for (gsize index = 0; valid && index + 1 < part_count; index++) {
+    const gchar* part = g_strstrip(parts[index]);
+    if (g_strcmp0(part, "Ctrl") == 0 ||
+        g_strcmp0(part, "Control") == 0) {
+      g_string_append(accelerator, "<Control>");
+    } else if (g_strcmp0(part, "Alt") == 0) {
+      g_string_append(accelerator, "<Alt>");
+    } else if (g_strcmp0(part, "Shift") == 0) {
+      g_string_append(accelerator, "<Shift>");
+    } else if (g_strcmp0(part, "Super") == 0) {
+      g_string_append(accelerator, "<Super>");
+    } else if (g_strcmp0(part, "Meta") == 0) {
+      g_string_append(accelerator, "<Meta>");
+    } else {
+      valid = FALSE;
+    }
+  }
+  if (valid) {
+    const gchar* key_label = g_strstrip(parts[part_count - 1]);
+    g_string_append(accelerator,
+                    g_strcmp0(key_label, "Esc") == 0 ? "Escape" : key_label);
+    key = 0;
+    modifiers = static_cast<GdkModifierType>(0);
+    gtk_accelerator_parse(accelerator->str, &key, &modifiers);
+    valid = key != 0;
+  }
+
+  g_strfreev(parts);
+  return g_string_free(accelerator, !valid);
+}
+
+static void set_menu_item_accelerator(GMenuItem* item,
+                                      const gchar* shortcut) {
+  g_autofree gchar* accelerator =
+      gtk_accelerator_from_shortcut_label(shortcut);
+  if (accelerator != nullptr) {
+    g_menu_item_set_attribute(item, kMenuAccelAttribute, "s", accelerator);
+  }
+}
 
 static GdkPixbuf* load_application_icon_at_size(gint size) {
   g_autofree gchar* executable_path =
@@ -194,23 +316,37 @@ static void set_gtk_theme_preference(gboolean prefer_dark) {
     g_autofree gchar* theme_name = nullptr;
     g_object_get(settings, "gtk-theme-name", &theme_name, nullptr);
     const gchar* fallback = available_gtk_theme_fallback(prefer_dark);
-    if (fallback != nullptr) {
-      if (!gtk_theme_exists(theme_name) ||
-          g_strcmp0(theme_name, fallback) != 0) {
-        g_object_set(settings, "gtk-theme-name", fallback, nullptr);
-      }
+    if (fallback != nullptr && !gtk_theme_exists(theme_name)) {
+      g_object_set(settings, "gtk-theme-name", fallback, nullptr);
     }
 
     g_autofree gchar* icon_theme_name = nullptr;
     g_object_get(settings, "gtk-icon-theme-name", &icon_theme_name, nullptr);
     const gchar* icon_fallback = available_icon_theme_fallback(prefer_dark);
-    if (icon_fallback != nullptr) {
-      if (!icon_theme_exists(icon_theme_name) ||
-          g_strcmp0(icon_theme_name, icon_fallback) != 0) {
-        g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);
-      }
+    if (icon_fallback != nullptr && !icon_theme_exists(icon_theme_name)) {
+      g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);
     }
   }
+}
+
+static gboolean uses_legacy_yaru_window_shadow() {
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings == nullptr) {
+    return FALSE;
+  }
+
+  g_autofree gchar* theme_name = nullptr;
+  g_object_get(settings, "gtk-theme-name", &theme_name, nullptr);
+  if (theme_name == nullptr) {
+    return FALSE;
+  }
+
+  g_autofree gchar* normalized_theme = g_ascii_strdown(theme_name, -1);
+  const gboolean is_yaru =
+      g_strcmp0(normalized_theme, "yaru") == 0 ||
+      g_str_has_prefix(normalized_theme, "yaru-");
+  return is_yaru && strstr(normalized_theme, "highcontrast") == nullptr &&
+         strstr(normalized_theme, "high-contrast") == nullptr;
 }
 
 static void respond_success(FlMethodCall* method_call) {
@@ -223,6 +359,17 @@ static void respond_bool(FlMethodCall* method_call, gboolean value) {
   fl_method_call_respond_success(method_call, result, nullptr);
 }
 
+static void respond_int64(FlMethodCall* method_call, gint64 value) {
+  g_autoptr(FlValue) result = fl_value_new_int(value);
+  fl_method_call_respond_success(method_call, result, nullptr);
+}
+
+static void respond_invalid_configuration(FlMethodCall* method_call,
+                                          const gchar* message) {
+  fl_method_call_respond_error(method_call, "invalid-header-configuration",
+                               message, nullptr, nullptr);
+}
+
 static const gchar* fl_method_string_arg(FlValue* args) {
   return args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_STRING
              ? fl_value_get_string(args)
@@ -233,6 +380,12 @@ static gboolean fl_method_bool_arg(FlValue* args) {
   return args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_BOOL
              ? fl_value_get_bool(args)
              : FALSE;
+}
+
+static gint64 fl_method_int_arg(FlValue* args, gint64 fallback) {
+  return args != nullptr && fl_value_get_type(args) == FL_VALUE_TYPE_INT
+             ? fl_value_get_int(args)
+             : fallback;
 }
 
 static gdouble fl_method_double_arg(FlValue* args, gdouble fallback) {
@@ -272,6 +425,63 @@ static gboolean fl_lookup_optional_bool_arg(FlValue* args,
   }
   *value_out = fl_value_get_bool(value);
   return TRUE;
+}
+
+static gboolean fl_lookup_int64_arg(FlValue* args,
+                                    const gchar* key,
+                                    gint64* value_out) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return FALSE;
+  }
+  FlValue* value = fl_value_lookup_string(args, key);
+  if (value == nullptr || fl_value_get_type(value) != FL_VALUE_TYPE_INT) {
+    return FALSE;
+  }
+  *value_out = fl_value_get_int(value);
+  return TRUE;
+}
+
+static gboolean fl_lookup_double_arg(FlValue* args,
+                                     const gchar* key,
+                                     gdouble* value_out) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return FALSE;
+  }
+  FlValue* value = fl_value_lookup_string(args, key);
+  if (value == nullptr) {
+    return FALSE;
+  }
+  if (fl_value_get_type(value) == FL_VALUE_TYPE_FLOAT) {
+    *value_out = fl_value_get_float(value);
+    return TRUE;
+  }
+  if (fl_value_get_type(value) == FL_VALUE_TYPE_INT) {
+    *value_out = static_cast<gdouble>(fl_value_get_int(value));
+    return TRUE;
+  }
+  return FALSE;
+}
+
+static void update_bounded_double_arg(FlValue* args,
+                                      const gchar* key,
+                                      gdouble minimum,
+                                      gdouble maximum,
+                                      gdouble* target) {
+  gdouble value = 0;
+  if (fl_lookup_double_arg(args, key, &value) && value >= minimum &&
+      value <= maximum) {
+    *target = value;
+  }
+}
+
+static FlValue* fl_lookup_map_arg(FlValue* args, const gchar* key) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return nullptr;
+  }
+  FlValue* value = fl_value_lookup_string(args, key);
+  return value != nullptr && fl_value_get_type(value) == FL_VALUE_TYPE_MAP
+             ? value
+             : nullptr;
 }
 
 static gboolean has_header_bar(MyApplication* self) {
@@ -315,23 +525,57 @@ static const gchar* css_color_or(const gchar* value, const gchar* fallback) {
   return is_css_color_token(value) ? value : fallback;
 }
 
-static void set_css_color_field(gchar** target, const gchar* value) {
-  if (!is_css_color_token(value)) {
-    return;
+static gchar* modal_barrier_color_for_depth(const gchar* color, gint depth) {
+  GdkRGBA barrier;
+  if (!gdk_rgba_parse(&barrier, color)) {
+    return g_strdup(color);
   }
+  const gint effective_depth = std::max(0, depth);
+  barrier.alpha =
+      1.0 - std::pow(1.0 - barrier.alpha, effective_depth);
+  return gdk_rgba_to_string(&barrier);
+}
+
+static void replace_css_color_field(gchar** target, const gchar* value) {
   g_free(*target);
-  *target = g_strdup(value);
+  *target = is_css_color_token(value) ? g_strdup(value) : nullptr;
 }
 
 static void set_widget_visible(GtkWidget* widget, gboolean visible) {
   if (widget != nullptr && GTK_IS_WIDGET(widget)) {
-    gtk_widget_set_visible(widget, visible);
+    gtk_widget_set_no_show_all(widget, !visible);
+    if (visible) {
+      // Some header controls are nested in containers that start hidden.
+      // Showing only the container leaves children skipped by the initial
+      // gtk_widget_show_all() invisible, producing an empty header slot.
+      gtk_widget_show_all(widget);
+    } else {
+      gtk_widget_hide(widget);
+    }
   }
 }
 
 static void set_widget_sensitive(GtkWidget* widget, gboolean sensitive) {
   if (widget != nullptr && GTK_IS_WIDGET(widget)) {
     gtk_widget_set_sensitive(widget, sensitive);
+  }
+}
+
+static gboolean stop_modal_scrim_event(GtkWidget*, GdkEvent*, gpointer) {
+  return GDK_EVENT_STOP;
+}
+
+static void close_header_menu_button(GtkWidget* menu_button) {
+  if (menu_button == nullptr || !GTK_IS_MENU_BUTTON(menu_button)) {
+    return;
+  }
+  GtkMenu* menu = gtk_menu_button_get_popup(GTK_MENU_BUTTON(menu_button));
+  if (menu != nullptr && GTK_IS_MENU(menu) &&
+      gtk_widget_get_visible(GTK_WIDGET(menu))) {
+    gtk_menu_shell_deactivate(GTK_MENU_SHELL(menu));
+  }
+  if (GTK_IS_TOGGLE_BUTTON(menu_button)) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(menu_button), FALSE);
   }
 }
 
@@ -352,37 +596,6 @@ static void set_widget_horizontal_margins(GtkWidget* widget,
     gtk_widget_set_margin_start(widget, margin_start);
     gtk_widget_set_margin_end(widget, margin_end);
   }
-}
-
-static void update_header_menu_item_direction(GtkWidget* item,
-                                              GtkTextDirection direction) {
-  if (item == nullptr || !GTK_IS_WIDGET(item)) {
-    return;
-  }
-  set_widget_direction(item, direction);
-  GtkWidget* label = static_cast<GtkWidget*>(
-      g_object_get_data(G_OBJECT(item), "busymark-label-widget"));
-  if (label != nullptr && GTK_IS_LABEL(label)) {
-    set_widget_direction(label, direction);
-    gtk_label_set_xalign(GTK_LABEL(label),
-                         direction == GTK_TEXT_DIR_RTL ? 1.0 : 0.0);
-  }
-  GtkWidget* shortcut = static_cast<GtkWidget*>(
-      g_object_get_data(G_OBJECT(item), "busymark-shortcut-widget"));
-  if (shortcut != nullptr && GTK_IS_LABEL(shortcut)) {
-    set_widget_direction(shortcut, GTK_TEXT_DIR_LTR);
-    gtk_label_set_xalign(GTK_LABEL(shortcut),
-                         direction == GTK_TEXT_DIR_RTL ? 0.0 : 1.0);
-  }
-}
-
-static void update_title_stack_alignment(MyApplication* self) {
-  if (self->title_stack == nullptr || !GTK_IS_WIDGET(self->title_stack)) {
-    return;
-  }
-  set_widget_horizontal_margins(
-      self->title_stack,
-      self->search_active ? 0 : kHeaderWindowControlsBalanceWidth, 0);
 }
 
 static void set_toggle_button_active(MyApplication* self,
@@ -438,27 +651,13 @@ static void update_titlebar_direction(MyApplication* self) {
   set_widget_direction(self->view_mode_button, direction);
   set_widget_direction(self->view_mode_icon, direction);
   set_widget_direction(self->refresh_button, direction);
-  set_widget_direction(self->sidebar_search_button, direction);
-  set_widget_direction(self->sidebar_menu_button, direction);
-  set_widget_direction(self->sidebar_menu, direction);
-  update_header_menu_item_direction(self->settings_item, direction);
-  update_header_menu_item_direction(self->keyboard_shortcuts_item, direction);
-  update_header_menu_item_direction(self->markdown_html_item, direction);
-  update_header_menu_item_direction(self->report_issue_item, direction);
-  update_header_menu_item_direction(self->about_item, direction);
+  set_widget_direction(self->search_button, direction);
+  set_widget_direction(self->main_menu_button, direction);
+  set_widget_direction(self->main_menu, direction);
   set_widget_direction(self->view_mode_menu, direction);
-  update_header_menu_item_direction(self->view_mode_editor_item, direction);
-  update_header_menu_item_direction(self->view_mode_source_item, direction);
-  update_header_menu_item_direction(self->view_mode_preview_item, direction);
-  update_header_menu_item_direction(self->view_mode_split_item, direction);
 
   // GTK 3 resolves logical margins against the widget direction at setter
   // time, so reapply both sides after a live LTR/RTL direction change.
-  update_title_stack_alignment(self);
-  set_widget_horizontal_margins(self->sidebar_search_button,
-                                kHeaderSidebarInset, 0);
-  set_widget_horizontal_margins(self->sidebar_menu_button, 0,
-                                kHeaderSidebarInset);
   set_widget_horizontal_margins(self->header_start_box, kHeaderSidebarInset,
                                 0);
 }
@@ -473,32 +672,123 @@ static void refresh_header_bar_css(MyApplication* self) {
   const gchar* sidebar_background =
       css_color_or(self->sidebar_background_color, kDefaultSidebarBackground);
   const gchar* foreground =
-      css_color_or(self->foreground_color, "rgba(255,255,255,0.92)");
-  const gchar* muted =
-      css_color_or(self->muted_foreground_color, "rgba(255,255,255,0.70)");
-  const gchar* control =
-      css_color_or(self->control_color, "rgba(255,255,255,0.10)");
-  const gchar* control_hover =
-      css_color_or(self->control_hover_color, "rgba(255,255,255,0.14)");
-  const gchar* accent = css_color_or(self->accent_color, "#3584e4");
-  const gchar* popover =
-      css_color_or(self->popover_background_color, background);
-  const gchar* border =
-      css_color_or(self->border_color, "rgba(255,255,255,0.10)");
-  const gchar* shade = css_color_or(self->shade_color, "rgba(0,0,0,0.28)");
-  const gchar* modal =
-      css_color_or(self->modal_barrier_color, "rgba(0,0,0,0.32)");
-  const gint headerbar_left_radius =
-      self->sidebar_visible && !self->text_direction_rtl
-          ? 0
-          : kHeaderWindowRadius;
-  const gint headerbar_right_radius =
-      self->sidebar_visible && self->text_direction_rtl ? 0
-                                                        : kHeaderWindowRadius;
-  const gint sidebar_left_radius =
-      self->text_direction_rtl ? 0 : kHeaderWindowRadius;
-  const gint sidebar_right_radius =
-      self->text_direction_rtl ? kHeaderWindowRadius : 0;
+      css_color_or(self->foreground_color, kDefaultForeground);
+  const gchar* sidebar_border =
+      css_color_or(self->sidebar_border_color, kDefaultSidebarBorder);
+  const gboolean use_legacy_yaru_compatibility =
+      uses_legacy_yaru_window_shadow();
+  const gchar* tooltip_background = css_color_or(
+      self->tooltip_background_color, kDefaultTooltipBackground);
+  const gchar* tooltip_foreground = css_color_or(
+      self->tooltip_foreground_color, kDefaultTooltipForeground);
+  const gchar* tooltip_border =
+      css_color_or(self->tooltip_border_color, kDefaultTooltipBorder);
+  const gdouble tooltip_label_horizontal_padding = std::max(
+      0.0, self->tooltip_horizontal_padding -
+               (kGtkTooltipContainerInset - kTooltipBorderWidth));
+  const gdouble tooltip_label_vertical_padding = std::max(
+      0.0, self->tooltip_vertical_padding -
+               (kGtkTooltipContainerInset - kTooltipBorderWidth));
+  const gdouble tooltip_label_minimum_height = std::max(
+      0.0, self->tooltip_minimum_height -
+               kGtkTooltipContainerInset * 2 -
+               tooltip_label_vertical_padding * 2);
+  g_autofree gchar* tooltip_css = g_strdup_printf(
+      "tooltip,"
+      "tooltip.background,"
+      "tooltip box,"
+      "tooltip.background box {"
+      "margin: 0;"
+      "padding: 0;"
+      "min-width: 0;"
+      "min-height: 0;"
+      "}"
+      "tooltip.background {"
+      "background-color: %s;"
+      "background-image: none;"
+      "background-clip: padding-box;"
+      "border: %.2fpx solid %s;"
+      "border-radius: %.2fpx;"
+      "}"
+      "tooltip decoration,"
+      "tooltip.csd decoration {"
+      "background-color: transparent;"
+      "border-radius: %.2fpx;"
+      "box-shadow: none;"
+      "}"
+      "tooltip * {"
+      "background-color: transparent;"
+      "color: %s;"
+      "}"
+      "tooltip label,"
+      "tooltip.background label {"
+      "margin: 0;"
+      "padding: %.2fpx %.2fpx;"
+      "min-width: 0;"
+      "min-height: %.2fpx;"
+      "font-family: Ubuntu;"
+      "font-size: %.2fpx;"
+      "font-weight: 400;"
+      "}",
+      tooltip_background, kTooltipBorderWidth, tooltip_border,
+      self->tooltip_radius, self->tooltip_radius, tooltip_foreground,
+      tooltip_label_vertical_padding, tooltip_label_horizontal_padding,
+      tooltip_label_minimum_height, self->tooltip_font_size);
+  g_autofree gchar* header_focus_css = g_strdup_printf(
+      ".busymark-titlebar.%s .busymark-sidebar-header label,"
+      ".busymark-titlebar.%s .busymark-header-title {"
+      "color: %s;"
+      "}"
+      ".busymark-titlebar.%s .busymark-sidebar-header label,"
+      ".busymark-titlebar.%s .busymark-header-title {"
+      "color: alpha(%s, %.2f);"
+      "}"
+      ".busymark-titlebar.%s "
+      ".busymark-header-control:not(:disabled),"
+      ".busymark-titlebar.%s "
+      "headerbar button.titlebutton:not(:disabled) {"
+      "color: %s;"
+      "-gtk-icon-effect: none;"
+      "}"
+      ".busymark-titlebar.%s "
+      ".busymark-header-control:not(:disabled),"
+      ".busymark-titlebar.%s "
+      "headerbar button.titlebutton:not(:disabled) {"
+      "color: alpha(%s, %.2f);"
+      "-gtk-icon-effect: none;"
+      "}"
+      ".busymark-titlebar.%s .busymark-header-control:disabled,"
+      ".busymark-titlebar.%s headerbar button.titlebutton:disabled {"
+      "color: alpha(%s, %.2f);"
+      "-gtk-icon-effect: none;"
+      "}"
+      ".busymark-titlebar.%s .busymark-header-control:disabled,"
+      ".busymark-titlebar.%s headerbar button.titlebutton:disabled {"
+      "color: alpha(%s, %.2f);"
+      "-gtk-icon-effect: none;"
+      "}",
+      kHeaderApplicationActiveStyleClass,
+      kHeaderApplicationActiveStyleClass, foreground,
+      kHeaderApplicationBackdropStyleClass,
+      kHeaderApplicationBackdropStyleClass, foreground,
+      kHeaderBackdropForegroundOpacity,
+      kHeaderApplicationActiveStyleClass,
+      kHeaderApplicationActiveStyleClass, foreground,
+      kHeaderApplicationBackdropStyleClass,
+      kHeaderApplicationBackdropStyleClass, foreground,
+      kHeaderBackdropForegroundOpacity,
+      kHeaderApplicationActiveStyleClass,
+      kHeaderApplicationActiveStyleClass, foreground,
+      kHeaderDisabledForegroundOpacity,
+      kHeaderApplicationBackdropStyleClass,
+      kHeaderApplicationBackdropStyleClass, foreground,
+      kHeaderDisabledBackdropForegroundOpacity);
+  g_autofree gchar* modal = modal_barrier_color_for_depth(
+      css_color_or(self->modal_barrier_color, kDefaultModalBarrierColor),
+      self->modal_barrier_depth);
+  const gchar* window_shadow_css = use_legacy_yaru_compatibility
+                                       ? kLegacyYaruWindowShadowCompatibilityCss
+                                       : "";
 
   gtk_style_context_add_class(gtk_widget_get_style_context(self->titlebar_box),
                               "busymark-titlebar");
@@ -509,35 +799,26 @@ static void refresh_header_bar_css(MyApplication* self) {
   g_autofree gchar* css = g_strdup_printf(
       "window#busymark-window,"
       "window#busymark-window:backdrop {"
-      "background-color: transparent;"
+      "background-color: %s;"
       "background-image: none;"
       "}"
-      "window#busymark-window decoration,"
-      "window#busymark-window decoration:backdrop {"
-      "background-color: transparent;"
-      "background-image: none;"
-      "border: none;"
-      "outline: none;"
-      "border-radius: %dpx;"
-      "box-shadow: 0 2px 10px 0 %s;"
-      "}"
+      "%s"
+      "%s"
       ".busymark-titlebar,"
       ".busymark-titlebar:backdrop {"
       "background-color: %s;"
       "background-image: none;"
+      "color: %s;"
       "border: none;"
       "box-shadow: none;"
-      "border-top-left-radius: %dpx;"
-      "border-top-right-radius: %dpx;"
       "}"
       "headerbar.busymark-headerbar,"
       "headerbar.busymark-headerbar:backdrop {"
       "background-color: %s;"
       "background-image: none;"
+      "color: %s;"
       "border: none;"
       "box-shadow: none;"
-      "border-top-left-radius: %dpx;"
-      "border-top-right-radius: %dpx;"
       "}"
       "headerbar.busymark-headerbar:dir(ltr) {"
       "padding-left: 0;"
@@ -545,121 +826,93 @@ static void refresh_header_bar_css(MyApplication* self) {
       "headerbar.busymark-headerbar:dir(rtl) {"
       "padding-right: 0;"
       "}"
-      ".busymark-sidebar-header {"
+      ".busymark-sidebar-header,"
+      ".busymark-sidebar-header:backdrop {"
       "background-color: %s;"
       "background-image: none;"
+      "color: %s;"
       "border: none;"
       "box-shadow: none;"
-      "border-top-left-radius: %dpx;"
-      "border-top-right-radius: %dpx;"
       "}"
-      ".busymark-sidebar-header label,"
-      ".busymark-header-title {"
+      ".busymark-sidebar-header label {"
       "color: %s;"
+      "font-weight: 800;"
       "}"
-      ".busymark-titlebar entry.busymark-search-entry,"
-      ".busymark-titlebar entry.busymark-search-entry:backdrop {"
-      "color: %s;"
-      "background-color: %s;"
-      "background-image: none;"
-      "border: 1px solid %s;"
-      "box-shadow: none;"
-      "text-shadow: none;"
-      "min-height: %dpx;"
-      "border-radius: %dpx;"
-      "padding: 0 %dpx;"
+      ".busymark-sidebar-header label:backdrop {"
+      "color: alpha(%s, %.2f);"
       "}"
-      ".busymark-titlebar entry.busymark-search-entry:focus {"
-      "border-color: %s;"
-      "box-shadow: none;"
+      ".busymark-sidebar-header:dir(ltr) {"
+      "border-right: 1px solid %s;"
       "}"
-      ".busymark-titlebar.busymark-modal-barrier,"
-      ".busymark-titlebar.busymark-modal-barrier "
-      "headerbar.busymark-headerbar,"
-      ".busymark-titlebar.busymark-modal-barrier "
-      "headerbar.busymark-headerbar:backdrop,"
-      ".busymark-titlebar.busymark-modal-barrier .busymark-sidebar-header {"
-      "background-image: linear-gradient(%s, %s);"
+      ".busymark-sidebar-header:dir(rtl) {"
+      "border-left: 1px solid %s;"
       "}"
-      "popover.busymark-header-popover,"
-      "popover.background.busymark-header-popover,"
-      "popover.background.busymark-header-popover > contents,"
-      "popover.background.busymark-header-popover arrow {"
-      "background-color: %s;"
-      "color: %s;"
-      "}"
-      "popover.busymark-header-popover > contents {"
-      "border: 1px solid %s;"
-      "box-shadow: 0 6px 18px %s;"
-      "}"
-      "popover.busymark-header-popover button.busymark-menu-row {"
-      "color: %s;"
+      "%s"
+      // Legacy Yaru GTK 3 uses an absolute near-black image for active and
+      // checked buttons. BusyMark-owned controls use neutral current-color
+      // layers while GTK continues to own geometry, focus, and motion.
+      ".busymark-titlebar "
+      ".busymark-header-control:not(.suggested-action):not(:disabled) {"
       "background-color: transparent;"
       "background-image: none;"
-      "border: none;"
-      "border-width: 0;"
       "border-color: transparent;"
       "box-shadow: none;"
-      "text-shadow: none;"
-      "outline-style: none;"
-      "outline-width: 0;"
-      "outline-offset: 0;"
-      "transition: none;"
-      "min-height: %dpx;"
-      "padding: 0 %dpx;"
-      "border-radius: %dpx;"
       "}"
-      "popover.busymark-header-popover button.busymark-menu-row:focus,"
-      "popover.busymark-header-popover button.busymark-menu-row:active,"
-      "popover.busymark-header-popover button.busymark-menu-row:checked {"
-      "border: none;"
-      "border-width: 0;"
+      ".busymark-titlebar "
+      ".busymark-header-control:not(.suggested-action):not(:disabled):hover {"
+      "background-color: alpha(currentColor, 0.07);"
+      "background-image: none;"
+      "}"
+      ".busymark-titlebar "
+      ".busymark-header-control:not(.suggested-action):not(:disabled):active {"
+      "background-color: alpha(currentColor, 0.16);"
+      "background-image: none;"
+      "}"
+      ".busymark-titlebar "
+      ".busymark-header-control:not(.suggested-action):not(:disabled):checked {"
+      "background-color: alpha(currentColor, 0.10);"
+      "background-image: none;"
+      "}"
+      ".busymark-titlebar "
+      ".busymark-header-control:not(.suggested-action):"
+      "not(:disabled):checked:hover {"
+      "background-color: alpha(currentColor, 0.13);"
+      "background-image: none;"
+      "}"
+      ".busymark-titlebar "
+      ".busymark-header-control:not(.suggested-action):"
+      "not(:disabled):checked:active {"
+      "background-color: alpha(currentColor, 0.19);"
+      "background-image: none;"
+      "}"
+      // Keep native controls visually enabled beneath the modal tint while
+      // removing transient hover and checked surfaces. The overlay below owns
+      // interaction blocking.
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:hover,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:active,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:checked,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:checked:hover,"
+      ".busymark-titlebar.busymark-modal-open "
+      ".busymark-header-control:checked:active {"
+      "background-color: transparent;"
+      "background-image: none;"
       "border-color: transparent;"
       "box-shadow: none;"
-      "outline-style: none;"
-      "outline-width: 0;"
-      "outline-offset: 0;"
-      "text-shadow: none;"
       "}"
-      "popover.busymark-header-popover button.busymark-menu-row:hover {"
+      ".busymark-modal-scrim {"
       "background-color: %s;"
-      "}"
-      "popover.busymark-header-popover button.busymark-menu-row label {"
-      "color: %s;"
-      "}"
-      "popover.busymark-header-popover button.busymark-menu-row image {"
-      "color: %s;"
-      "}"
-      "tooltip, tooltip.background {"
-      "margin: 0;"
-      "padding: 0;"
-      "min-height: 0;"
-      "border-radius: %dpx;"
-      "}"
-      "tooltip > box, tooltip.background > box {"
-      "margin: 0;"
-      "padding: 0;"
-      "min-height: 0;"
-      "}"
-      "tooltip label {"
-      "margin: 0;"
-      "padding: %dpx %dpx;"
-      "min-height: 0;"
-      "border-radius: %dpx;"
+      "background-image: none;"
       "}",
-      kHeaderWindowRadius, shade, background, kHeaderWindowRadius,
-      kHeaderWindowRadius, background, headerbar_left_radius,
-      headerbar_right_radius,
-      sidebar_background,
-      sidebar_left_radius, sidebar_right_radius, foreground, foreground, control, border,
-      kHeaderSearchEntryContentHeight, kHeaderButtonRadius,
-      kHeaderControlHorizontalPadding, accent, modal, modal,
-      popover, foreground, border, shade, foreground,
-      kHeaderControlHeight, kHeaderControlHorizontalPadding,
-      kHeaderButtonRadius, control_hover, foreground, muted,
-      kHeaderButtonRadius,
-      kHeaderTooltipVerticalPadding, kHeaderTooltipHorizontalPadding,
-      kHeaderButtonRadius);
+      background, window_shadow_css, tooltip_css,
+      background, foreground, background, foreground, sidebar_background,
+      foreground, foreground, foreground, kHeaderBackdropForegroundOpacity,
+      sidebar_border, sidebar_border, header_focus_css, modal);
 
   g_autoptr(GError) error = nullptr;
   GtkCssProvider* provider = gtk_css_provider_new();
@@ -682,83 +935,52 @@ static void refresh_header_bar_css(MyApplication* self) {
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
-static void refresh_gtk_accent_css(MyApplication* self) {
-  const gchar* accent = css_color_or(self->accent_color, "#3584e4");
-  const gchar* accent_foreground =
-      css_color_or(self->accent_foreground_color, "#ffffff");
-
-  g_autofree gchar* css = g_strdup_printf(
-      "@define-color theme_selected_bg_color %s;"
-      "@define-color theme_selected_fg_color %s;"
-      "@define-color theme_unfocused_selected_bg_color %s;"
-      "@define-color theme_unfocused_selected_fg_color %s;"
-      "@define-color accent_bg_color %s;"
-      "@define-color accent_fg_color %s;"
-      "treeview.view:selected,"
-      "treeview.view:selected:focus,"
-      "iconview:selected,"
-      "iconview:selected:focus,"
-      "row:selected,"
-      "row:selected:focus,"
-      "rubberband,"
-      ".rubberband {"
-      "background-color: %s;"
-      "color: %s;"
-      "}"
-      "treeview.view:selected *,"
-      "iconview:selected *,"
-      "row:selected * {"
-      "color: %s;"
-      "}"
-      "button.suggested-action,"
-      "button.suggested-action:hover,"
-      "button.suggested-action:active,"
-      "button.suggested-action:checked {"
-      "background-color: %s;"
-      "background-image: none;"
-      "border-color: %s;"
-      "color: %s;"
-      "}"
-      "button.suggested-action label,"
-      "button.suggested-action image {"
-      "color: %s;"
-      "}"
-      "checkbutton check:checked,"
-      "radiobutton radio:checked,"
-      "switch:checked,"
-      "scale trough highlight,"
-      "progressbar progress {"
-      "background-color: %s;"
-      "background-image: none;"
-      "border-color: %s;"
-      "}",
-      accent, accent_foreground, accent, accent_foreground, accent,
-      accent_foreground, accent, accent_foreground, accent_foreground, accent,
-      accent, accent_foreground, accent_foreground, accent, accent);
-
-  g_autoptr(GError) error = nullptr;
-  GtkCssProvider* provider = gtk_css_provider_new();
-  gtk_css_provider_load_from_data(provider, css, -1, &error);
-  if (error != nullptr) {
-    g_warning("Failed to load BusyMark GTK accent CSS: %s", error->message);
-    g_object_unref(provider);
-    return;
+static gboolean refresh_header_bar_focus_state_cb(gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->titlebar_handle == nullptr ||
+      !GTK_IS_WIDGET(self->titlebar_handle)) {
+    return G_SOURCE_REMOVE;
   }
 
-  GdkScreen* screen = gdk_screen_get_default();
-  if (screen == nullptr) {
-    g_object_unref(provider);
-    return;
-  }
-  if (self->gtk_accent_css_provider != nullptr) {
-    gtk_style_context_remove_provider_for_screen(
-        screen, GTK_STYLE_PROVIDER(self->gtk_accent_css_provider));
-    g_clear_object(&self->gtk_accent_css_provider);
-  }
-  self->gtk_accent_css_provider = provider;
-  gtk_style_context_add_provider_for_screen(
-      screen, GTK_STYLE_PROVIDER(self->gtk_accent_css_provider),
-      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+  const gboolean application_active =
+      self->main_window != nullptr &&
+      gtk_window_is_active(self->main_window);
+  GtkStyleContext* context =
+      gtk_widget_get_style_context(self->titlebar_handle);
+  gtk_style_context_remove_class(context,
+                                 kHeaderApplicationActiveStyleClass);
+  gtk_style_context_remove_class(context,
+                                 kHeaderApplicationBackdropStyleClass);
+  gtk_style_context_add_class(
+      context,
+      application_active ? kHeaderApplicationActiveStyleClass
+                         : kHeaderApplicationBackdropStyleClass);
+
+  // The headerbar is embedded above Flutter rather than installed as
+  // GtkWindow's titlebar. Reset its subtree after the compositor's focus
+  // transfer settles so :backdrop declarations cannot remain one event late.
+  gtk_widget_reset_style(self->titlebar_handle);
+  gtk_widget_queue_draw(self->titlebar_handle);
+  return G_SOURCE_REMOVE;
+}
+
+static void schedule_header_bar_focus_state_refresh(MyApplication* self) {
+  g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                  refresh_header_bar_focus_state_cb, g_object_ref(self),
+                  g_object_unref);
+}
+
+static void header_focus_window_is_active_notify_cb(
+    GtkWindow*,
+    GParamSpec*,
+    gpointer user_data) {
+  schedule_header_bar_focus_state_refresh(MY_APPLICATION(user_data));
+}
+
+static void gtk_theme_name_changed_cb(GtkSettings*,
+                                      GParamSpec*,
+                                      gpointer user_data) {
+  refresh_header_bar_css(MY_APPLICATION(user_data));
 }
 
 static void set_header_bar_theme(MyApplication* self, FlValue* args) {
@@ -769,33 +991,39 @@ static void set_header_bar_theme(MyApplication* self, FlValue* args) {
   if (fl_lookup_optional_bool_arg(args, "preferDark", &prefer_dark)) {
     set_gtk_theme_preference(prefer_dark);
   }
-  set_css_color_field(&self->background_color,
-                      fl_lookup_string_arg(args, "backgroundColor"));
-  set_css_color_field(&self->sidebar_background_color,
-                      fl_lookup_string_arg(args, "sidebarBackgroundColor"));
-  set_css_color_field(&self->foreground_color,
-                      fl_lookup_string_arg(args, "foregroundColor"));
-  set_css_color_field(&self->muted_foreground_color,
-                      fl_lookup_string_arg(args, "mutedForegroundColor"));
-  set_css_color_field(&self->disabled_foreground_color,
-                      fl_lookup_string_arg(args, "disabledForegroundColor"));
-  set_css_color_field(&self->control_color,
-                      fl_lookup_string_arg(args, "controlColor"));
-  set_css_color_field(&self->control_hover_color,
-                      fl_lookup_string_arg(args, "controlHoverColor"));
-  set_css_color_field(&self->accent_color,
-                      fl_lookup_string_arg(args, "accentColor"));
-  set_css_color_field(&self->accent_foreground_color,
-                      fl_lookup_string_arg(args, "accentForegroundColor"));
-  set_css_color_field(&self->popover_background_color,
-                      fl_lookup_string_arg(args, "popoverBackgroundColor"));
-  set_css_color_field(&self->border_color,
-                      fl_lookup_string_arg(args, "borderColor"));
-  set_css_color_field(&self->shade_color,
-                      fl_lookup_string_arg(args, "shadeColor"));
-  set_css_color_field(&self->modal_barrier_color,
-                      fl_lookup_string_arg(args, "modalBarrierColor"));
-  refresh_gtk_accent_css(self);
+  replace_css_color_field(&self->background_color,
+                          fl_lookup_string_arg(args, "backgroundColor"));
+  replace_css_color_field(
+      &self->sidebar_background_color,
+      fl_lookup_string_arg(args, "sidebarBackgroundColor"));
+  replace_css_color_field(&self->foreground_color,
+                          fl_lookup_string_arg(args, "foregroundColor"));
+  replace_css_color_field(
+      &self->sidebar_border_color,
+      fl_lookup_string_arg(args, "sidebarBorderColor"));
+  replace_css_color_field(&self->modal_barrier_color,
+                          fl_lookup_string_arg(args, "modalBarrierColor"));
+  FlValue* tooltip = fl_lookup_map_arg(args, "tooltip");
+  if (tooltip != nullptr) {
+    replace_css_color_field(
+        &self->tooltip_background_color,
+        fl_lookup_string_arg(tooltip, "backgroundColor"));
+    replace_css_color_field(
+        &self->tooltip_foreground_color,
+        fl_lookup_string_arg(tooltip, "foregroundColor"));
+    replace_css_color_field(&self->tooltip_border_color,
+                            fl_lookup_string_arg(tooltip, "borderColor"));
+    update_bounded_double_arg(tooltip, "borderRadius", 0, 64,
+                              &self->tooltip_radius);
+    update_bounded_double_arg(tooltip, "fontSize", 1, 64,
+                              &self->tooltip_font_size);
+    update_bounded_double_arg(tooltip, "horizontalPadding", 0, 64,
+                              &self->tooltip_horizontal_padding);
+    update_bounded_double_arg(tooltip, "verticalPadding", 0, 64,
+                              &self->tooltip_vertical_padding);
+    update_bounded_double_arg(tooltip, "minimumHeight", 1, 128,
+                              &self->tooltip_minimum_height);
+  }
   refresh_header_bar_css(self);
 }
 
@@ -807,7 +1035,8 @@ static void focus_flutter_view(MyApplication* self) {
 
 static void invoke_header_bar_action(MyApplication* self,
                                      const gchar* action) {
-  if (self->header_bar_channel == nullptr || action == nullptr) {
+  if (self->modal_barrier_visible ||
+      self->header_bar_channel == nullptr || action == nullptr) {
     return;
   }
   fl_method_channel_invoke_method(self->header_bar_channel, action, nullptr,
@@ -817,7 +1046,8 @@ static void invoke_header_bar_action(MyApplication* self,
 static void invoke_header_bar_string_action(MyApplication* self,
                                             const gchar* action,
                                             const gchar* value) {
-  if (self->header_bar_channel == nullptr || action == nullptr) {
+  if (self->modal_barrier_visible ||
+      self->header_bar_channel == nullptr || action == nullptr) {
     return;
   }
   g_autoptr(FlValue) args = fl_value_new_string(value == nullptr ? "" : value);
@@ -825,9 +1055,90 @@ static void invoke_header_bar_string_action(MyApplication* self,
                                   nullptr, nullptr, nullptr);
 }
 
+static void invoke_header_bar_bool_action(MyApplication* self,
+                                          const gchar* action,
+                                          gboolean value) {
+  if (self->modal_barrier_visible ||
+      self->header_bar_channel == nullptr || action == nullptr) {
+    return;
+  }
+  g_autoptr(FlValue) args = fl_value_new_bool(value);
+  fl_method_channel_invoke_method(self->header_bar_channel, action, args,
+                                  nullptr, nullptr, nullptr);
+}
+
+enum class SearchQueryUpdateDisposition {
+  kAlreadyCurrent,
+  kPreserveNativeText,
+  kApplyDartSnapshot,
+};
+
+constexpr SearchQueryUpdateDisposition resolve_search_query_update(
+    bool queries_match,
+    bool native_entry_has_authority) {
+  if (queries_match) {
+    return SearchQueryUpdateDisposition::kAlreadyCurrent;
+  }
+  return native_entry_has_authority
+             ? SearchQueryUpdateDisposition::kPreserveNativeText
+             : SearchQueryUpdateDisposition::kApplyDartSnapshot;
+}
+
+static_assert(
+    resolve_search_query_update(false, true) ==
+        SearchQueryUpdateDisposition::kPreserveNativeText,
+    "A newer focused native edit must survive a delayed Dart snapshot");
+static_assert(
+    resolve_search_query_update(false, false) ==
+        SearchQueryUpdateDisposition::kApplyDartSnapshot,
+    "Dart owns search text while the native entry is not being edited");
+
+static void cache_search_query(MyApplication* self, const gchar* query) {
+  const gchar* normalized_query = query == nullptr ? "" : query;
+  if (g_strcmp0(self->search_query, normalized_query) == 0) {
+    return;
+  }
+  g_free(self->search_query);
+  self->search_query = g_strdup(normalized_query);
+}
+
+static void set_search_query(MyApplication* self, const gchar* query) {
+  const gchar* normalized_query = query == nullptr ? "" : query;
+  if (self->search_entry == nullptr || !GTK_IS_ENTRY(self->search_entry)) {
+    cache_search_query(self, normalized_query);
+    return;
+  }
+  const gchar* current_query =
+      gtk_entry_get_text(GTK_ENTRY(self->search_entry));
+  const bool native_entry_has_authority =
+      self->search_active && gtk_widget_has_focus(self->search_entry);
+  switch (resolve_search_query_update(
+      g_strcmp0(current_query, normalized_query) == 0,
+      native_entry_has_authority)) {
+    case SearchQueryUpdateDisposition::kAlreadyCurrent:
+      cache_search_query(self, normalized_query);
+      return;
+    case SearchQueryUpdateDisposition::kPreserveNativeText:
+      // GtkSearchEntry emits search-changed after a short delay. Dart can
+      // therefore publish an older mirrored snapshot after the user has
+      // already typed more text. While the active entry has focus, native
+      // text is authoritative. Do not update the cache here: a pending
+      // search-changed signal still needs to publish the newer native text.
+      return;
+    case SearchQueryUpdateDisposition::kApplyDartSnapshot:
+      break;
+  }
+
+  cache_search_query(self, normalized_query);
+  const gboolean previous_suppression = self->suppress_header_actions;
+  self->suppress_header_actions = TRUE;
+  gtk_entry_set_text(GTK_ENTRY(self->search_entry), normalized_query);
+  self->suppress_header_actions = previous_suppression;
+}
+
 static void header_button_clicked_cb(GtkWidget* widget, gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions) {
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
     return;
   }
   const gchar* action = static_cast<const gchar*>(
@@ -845,99 +1156,103 @@ static void connect_header_action(MyApplication* self,
                    self);
 }
 
-static void search_entry_changed_cb(GtkEditable* editable, gpointer user_data) {
+static void search_entry_changed_cb(GtkSearchEntry* entry,
+                                    gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  if (self->suppress_header_actions) {
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active) {
     return;
   }
-  const gchar* text = gtk_entry_get_text(GTK_ENTRY(editable));
-  invoke_header_bar_string_action(self, "searchQueryChanged", text);
+  const gchar* query = gtk_entry_get_text(GTK_ENTRY(entry));
+  if (g_strcmp0(self->search_query, query) == 0) {
+    return;
+  }
+  cache_search_query(self, query);
+  invoke_header_bar_string_action(self, "searchQueryChanged", query);
 }
 
 static void search_entry_activate_cb(GtkEntry* entry, gpointer user_data) {
-  focus_flutter_view(MY_APPLICATION(user_data));
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active) {
+    return;
+  }
+  invoke_header_bar_string_action(self, "searchSubmitted",
+                                  gtk_entry_get_text(entry));
+  focus_flutter_view(self);
 }
 
-static gboolean search_entry_key_press_cb(GtkWidget* widget,
-                                          GdkEventKey* event,
-                                          gpointer user_data) {
-  if (event != nullptr && event->keyval == GDK_KEY_Escape) {
-    MyApplication* self = MY_APPLICATION(user_data);
-    invoke_header_bar_action(self, "search");
-    return TRUE;
+static gboolean search_entry_focus_in_cb(GtkWidget*,
+                                         GdkEventFocus*,
+                                         gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (!self->modal_barrier_visible) {
+    invoke_header_bar_bool_action(self, "searchFocusChanged", TRUE);
   }
   return FALSE;
+}
+
+static gboolean search_entry_focus_out_cb(GtkWidget*,
+                                          GdkEventFocus*,
+                                          gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (!self->modal_barrier_visible) {
+    invoke_header_bar_bool_action(self, "searchFocusChanged", FALSE);
+  }
+  return FALSE;
+}
+
+static void search_entry_icon_release_cb(GtkEntry* entry,
+                                         GtkEntryIconPosition icon_position,
+                                         GdkEvent*,
+                                         gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active ||
+      icon_position != GTK_ENTRY_ICON_SECONDARY ||
+      gtk_entry_get_text(entry)[0] == '\0') {
+    return;
+  }
+
+  // GtkSearchEntry clears the entry after this signal. Cache the semantic
+  // result now so its subsequent search-changed signal is deduplicated.
+  cache_search_query(self, "");
+  invoke_header_bar_action(self, "searchCleared");
+}
+
+static void search_entry_stop_search_cb(GtkSearchEntry*, gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      !self->search_active) {
+    return;
+  }
+  invoke_header_bar_action(self, "searchEscapePressed");
 }
 
 static void make_icon_button_square(GtkWidget* button) {
   gtk_widget_set_size_request(button, kHeaderButtonHeight,
                               kHeaderButtonHeight);
   gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              "busymark-header-icon-button");
 }
 
 static GtkWidget* create_header_icon_button(const gchar* icon_name) {
   GtkWidget* button = gtk_button_new();
+  gtk_style_context_add_class(gtk_widget_get_style_context(button),
+                              "busymark-header-control");
   GtkWidget* image = gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU);
   gtk_button_set_image(GTK_BUTTON(button), image);
-  gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              "busymark-header-button");
   make_icon_button_square(button);
   return button;
 }
 
 static GtkWidget* create_header_toggle_button(const gchar* icon_name) {
   GtkWidget* button = gtk_toggle_button_new();
+  gtk_style_context_add_class(gtk_widget_get_style_context(button),
+                              "busymark-header-control");
   GtkWidget* image = gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU);
   gtk_button_set_image(GTK_BUTTON(button), image);
-  gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              "busymark-header-button");
   make_icon_button_square(button);
   return button;
-}
-
-static GtkWidget* create_header_popover() {
-  GtkWidget* popover = gtk_popover_menu_new();
-  gtk_popover_set_position(GTK_POPOVER(popover), GTK_POS_BOTTOM);
-  gtk_style_context_add_class(gtk_widget_get_style_context(popover),
-                              "busymark-header-popover");
-  return popover;
-}
-
-static GtkWidget* create_popover_box(GtkWidget* popover) {
-  GtkWidget* box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-  gtk_widget_set_margin_top(box, kHeaderButtonSpacing);
-  gtk_widget_set_margin_bottom(box, kHeaderButtonSpacing);
-  gtk_widget_set_margin_start(box, kHeaderButtonSpacing);
-  gtk_widget_set_margin_end(box, kHeaderButtonSpacing);
-  gtk_container_add(GTK_CONTAINER(popover), box);
-  return box;
-}
-
-static void close_menu_button(GtkWidget* button) {
-  if (button == nullptr || !GTK_IS_MENU_BUTTON(button)) {
-    return;
-  }
-  GtkPopover* popover = gtk_menu_button_get_popover(GTK_MENU_BUTTON(button));
-  if (popover != nullptr && GTK_IS_POPOVER(popover)) {
-    gtk_popover_popdown(popover);
-  }
-}
-
-static void menu_item_clicked_cb(GtkWidget* widget, gpointer user_data) {
-  MyApplication* self = MY_APPLICATION(user_data);
-  const gchar* action = static_cast<const gchar*>(
-      g_object_get_data(G_OBJECT(widget), "busymark-action"));
-  close_menu_button(self->sidebar_menu_button);
-  focus_flutter_view(self);
-  invoke_header_bar_action(self, action);
 }
 
 static const gchar* main_menu_icon_name(const gchar* action) {
@@ -959,43 +1274,63 @@ static const gchar* main_menu_icon_name(const gchar* action) {
   return "open-menu-symbolic";
 }
 
-static GtkWidget* create_menu_item(MyApplication* self, const gchar* action) {
-  GtkWidget* item = gtk_button_new();
-  GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  GtkWidget* icon =
-      gtk_image_new_from_icon_name(main_menu_icon_name(action),
-                                   GTK_ICON_SIZE_MENU);
-  GtkWidget* label = gtk_label_new("");
-  GtkWidget* shortcut = gtk_label_new("");
-  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(icon, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(shortcut, GTK_ALIGN_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
-  gtk_label_set_xalign(GTK_LABEL(shortcut), 1.0);
-  gtk_widget_set_hexpand(label, TRUE);
-  gtk_style_context_add_class(gtk_widget_get_style_context(shortcut),
-                              "dim-label");
-  gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
-  gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(item), box);
-  gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
-  gtk_widget_set_halign(item, GTK_ALIGN_FILL);
-  gtk_widget_set_hexpand(item, TRUE);
-  gtk_style_context_add_class(gtk_widget_get_style_context(item),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(item),
-                              "busymark-menu-row");
-  g_object_set_data(G_OBJECT(item), "busymark-label-widget", label);
-  g_object_set_data(G_OBJECT(item), "busymark-shortcut-widget", shortcut);
-  g_object_set_data_full(G_OBJECT(item), "busymark-action",
-                         g_strdup(action), g_free);
-  g_signal_connect(item, "clicked", G_CALLBACK(menu_item_clicked_cb), self);
-  return item;
+static const gchar* localized_label_or(FlValue* labels,
+                                       const gchar* key,
+                                       const gchar* fallback) {
+  const gchar* value = fl_lookup_string_arg(labels, key);
+  return value != nullptr ? value : fallback;
 }
 
-static const gchar* view_mode_action(const gchar* mode) {
+static void append_action_menu_item(GMenu* menu,
+                                    const gchar* label,
+                                    const gchar* action,
+                                    const gchar* icon_name,
+                                    const gchar* accelerator) {
+  GMenuItem* item = g_menu_item_new(label, action);
+  if (icon_name != nullptr) {
+    GIcon* icon = g_themed_icon_new(icon_name);
+    g_menu_item_set_icon(item, icon);
+    g_object_unref(icon);
+  }
+  if (accelerator != nullptr && accelerator[0] != '\0') {
+    set_menu_item_accelerator(item, accelerator);
+  }
+  g_menu_append_item(menu, item);
+  g_object_unref(item);
+}
+
+static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
+  if (self->main_menu_model == nullptr) {
+    return;
+  }
+  g_menu_remove_all(self->main_menu_model);
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "settings", ""), "header.settings",
+      main_menu_icon_name("settings"),
+      fl_lookup_string_arg(labels, "settingsGtkAccelerator"));
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "keyboardShortcuts", ""),
+      "header.keyboard-shortcuts",
+      main_menu_icon_name("keyboardShortcuts"),
+      fl_lookup_string_arg(labels, "keyboardShortcutsGtkAccelerator"));
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "markdownAndHtml", ""),
+      "header.markdown-and-html", main_menu_icon_name("markdownAndHtml"),
+      fl_lookup_string_arg(labels, "markdownAndHtmlGtkAccelerator"));
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "reportIssue", ""),
+      "header.report-issue", main_menu_icon_name("reportIssue"), nullptr);
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "aboutBusyMark", ""),
+      "header.about", main_menu_icon_name("aboutBusyMark"), nullptr);
+}
+
+static const gchar* view_mode_dart_action(const gchar* mode) {
   if (g_strcmp0(mode, "editor") == 0) {
     return "viewModeEditor";
   }
@@ -1027,40 +1362,6 @@ static const gchar* view_mode_icon_name(const gchar* mode) {
   return "view-dual-symbolic";
 }
 
-static void set_menu_item_label(GtkWidget* item, const gchar* text) {
-  if (item == nullptr || text == nullptr) {
-    return;
-  }
-  GtkWidget* label = static_cast<GtkWidget*>(
-      g_object_get_data(G_OBJECT(item), "busymark-label-widget"));
-  if (label != nullptr && GTK_IS_LABEL(label)) {
-    gtk_label_set_text(GTK_LABEL(label), text);
-  }
-}
-
-static void set_menu_item_shortcut(GtkWidget* item, const gchar* shortcut) {
-  if (item == nullptr) {
-    return;
-  }
-  GtkWidget* label = static_cast<GtkWidget*>(
-      g_object_get_data(G_OBJECT(item), "busymark-shortcut-widget"));
-  if (label != nullptr && GTK_IS_LABEL(label)) {
-    gtk_label_set_text(GTK_LABEL(label), shortcut != nullptr ? shortcut : "");
-    gtk_widget_set_visible(label, shortcut != nullptr && shortcut[0] != '\0');
-  }
-}
-
-static void set_menu_item_checked(GtkWidget* item, gboolean checked) {
-  if (item == nullptr) {
-    return;
-  }
-  GtkWidget* check = static_cast<GtkWidget*>(
-      g_object_get_data(G_OBJECT(item), "busymark-check-widget"));
-  if (check != nullptr && GTK_IS_WIDGET(check)) {
-    gtk_widget_set_opacity(check, checked ? 1.0 : 0.0);
-  }
-}
-
 static void update_view_mode_icon(MyApplication* self) {
   if (self->view_mode_icon == nullptr ||
       !GTK_IS_IMAGE(self->view_mode_icon)) {
@@ -1072,92 +1373,147 @@ static void update_view_mode_icon(MyApplication* self) {
 }
 
 static void set_view_mode(MyApplication* self, const gchar* mode) {
-  if (view_mode_action(mode) == nullptr) {
+  if (view_mode_dart_action(mode) == nullptr) {
     return;
   }
   g_free(self->view_mode);
   self->view_mode = g_strdup(mode);
-  set_menu_item_checked(self->view_mode_editor_item,
-                        g_strcmp0(mode, "editor") == 0);
-  set_menu_item_checked(self->view_mode_source_item,
-                        g_strcmp0(mode, "source") == 0);
-  set_menu_item_checked(self->view_mode_preview_item,
-                        g_strcmp0(mode, "preview") == 0);
-  set_menu_item_checked(self->view_mode_split_item,
-                        g_strcmp0(mode, "split") == 0);
+  if (self->view_mode_action != nullptr) {
+    g_simple_action_set_state(self->view_mode_action,
+                              g_variant_new_string(mode));
+  }
   update_view_mode_icon(self);
 }
 
-static void view_mode_clicked_cb(GtkWidget* widget, gpointer user_data) {
+static void header_gaction_activated_cb(GSimpleAction* action,
+                                        GVariant* parameter,
+                                        gpointer user_data) {
   MyApplication* self = MY_APPLICATION(user_data);
-  const gchar* mode = static_cast<const gchar*>(
-      g_object_get_data(G_OBJECT(widget), "busymark-view-mode"));
-  const gchar* action = view_mode_action(mode);
-  if (action == nullptr) {
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
+    return;
+  }
+  const gchar* dart_action = static_cast<const gchar*>(
+      g_object_get_data(G_OBJECT(action), "busymark-dart-action"));
+  if (dart_action == nullptr) {
+    return;
+  }
+  focus_flutter_view(self);
+  invoke_header_bar_action(self, dart_action);
+}
+
+static void view_mode_gaction_activated_cb(GSimpleAction* action,
+                                           GVariant* parameter,
+                                           gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
+    return;
+  }
+  if (parameter == nullptr ||
+      !g_variant_is_of_type(parameter, G_VARIANT_TYPE_STRING)) {
+    return;
+  }
+  const gchar* mode = g_variant_get_string(parameter, nullptr);
+  const gchar* dart_action = view_mode_dart_action(mode);
+  if (dart_action == nullptr) {
     return;
   }
   set_view_mode(self, mode);
-  close_menu_button(self->view_mode_button);
   focus_flutter_view(self);
-  invoke_header_bar_action(self, action);
+  invoke_header_bar_action(self, dart_action);
 }
 
-static GtkWidget* create_view_mode_item(MyApplication* self,
-                                        const gchar* mode) {
-  GtkWidget* item = gtk_button_new();
-  GtkWidget* box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  GtkWidget* icon =
-      gtk_image_new_from_icon_name(view_mode_icon_name(mode), GTK_ICON_SIZE_MENU);
-  GtkWidget* check =
-      gtk_image_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_MENU);
-  GtkWidget* label = gtk_label_new("");
-  GtkWidget* shortcut = gtk_label_new("");
-  gtk_widget_set_opacity(check, 0.0);
-  gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(icon, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
-  gtk_widget_set_valign(shortcut, GTK_ALIGN_CENTER);
-  gtk_label_set_xalign(GTK_LABEL(label), 0.0);
-  gtk_label_set_xalign(GTK_LABEL(shortcut), 1.0);
-  gtk_widget_set_hexpand(label, TRUE);
-  gtk_style_context_add_class(gtk_widget_get_style_context(shortcut),
-                              "dim-label");
-  gtk_box_pack_start(GTK_BOX(box), icon, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
-  gtk_box_pack_start(GTK_BOX(box), shortcut, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(box), check, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(item), box);
-  gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_NONE);
-  gtk_widget_set_halign(item, GTK_ALIGN_FILL);
-  gtk_widget_set_hexpand(item, TRUE);
-  gtk_style_context_add_class(gtk_widget_get_style_context(item),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(item),
-                              "busymark-menu-row");
-  g_object_set_data(G_OBJECT(item), "busymark-label-widget", label);
-  g_object_set_data(G_OBJECT(item), "busymark-shortcut-widget", shortcut);
-  g_object_set_data(G_OBJECT(item), "busymark-check-widget", check);
-  g_object_set_data_full(G_OBJECT(item), "busymark-view-mode",
-                         g_strdup(mode), g_free);
-  g_signal_connect(item, "clicked", G_CALLBACK(view_mode_clicked_cb), self);
-  return item;
+static void add_header_gaction(MyApplication* self,
+                               const gchar* action_name,
+                               const gchar* dart_action) {
+  GSimpleAction* action = g_simple_action_new(action_name, nullptr);
+  g_object_set_data_full(G_OBJECT(action), "busymark-dart-action",
+                         g_strdup(dart_action), g_free);
+  g_signal_connect(action, "activate", G_CALLBACK(header_gaction_activated_cb),
+                   self);
+  g_action_map_add_action(G_ACTION_MAP(self->header_action_group),
+                          G_ACTION(action));
+  g_object_unref(action);
 }
 
-static GtkWidget* create_menu_button(GtkWidget* popover,
-                                     const gchar* icon_name) {
+static void setup_header_actions(MyApplication* self) {
+  self->header_action_group = g_simple_action_group_new();
+  add_header_gaction(self, "settings", "settings");
+  add_header_gaction(self, "keyboard-shortcuts", "keyboardShortcuts");
+  add_header_gaction(self, "markdown-and-html", "markdownAndHtml");
+  add_header_gaction(self, "report-issue", "reportIssue");
+  add_header_gaction(self, "about", "aboutBusyMark");
+
+  self->view_mode_action = g_simple_action_new_stateful(
+      "view-mode", G_VARIANT_TYPE_STRING, g_variant_new_string("split"));
+  g_signal_connect(self->view_mode_action, "activate",
+                   G_CALLBACK(view_mode_gaction_activated_cb), self);
+  g_action_map_add_action(G_ACTION_MAP(self->header_action_group),
+                          G_ACTION(self->view_mode_action));
+  gtk_widget_insert_action_group(self->titlebar_box, "header",
+                                 G_ACTION_GROUP(self->header_action_group));
+}
+
+static void append_view_mode_menu_item(GMenu* menu,
+                                       const gchar* label,
+                                       const gchar* mode,
+                                       const gchar* accelerator) {
+  GMenuItem* item = g_menu_item_new(label, nullptr);
+  g_menu_item_set_action_and_target(item, "header.view-mode", "s", mode);
+  GIcon* icon = g_themed_icon_new(view_mode_icon_name(mode));
+  g_menu_item_set_icon(item, icon);
+  g_object_unref(icon);
+  if (accelerator != nullptr && accelerator[0] != '\0') {
+    set_menu_item_accelerator(item, accelerator);
+  }
+  g_menu_append_item(menu, item);
+  g_object_unref(item);
+}
+
+static void rebuild_view_mode_menu_model(MyApplication* self,
+                                         FlValue* labels) {
+  if (self->view_mode_menu_model == nullptr) {
+    return;
+  }
+  g_menu_remove_all(self->view_mode_menu_model);
+  append_view_mode_menu_item(
+      self->view_mode_menu_model,
+      localized_label_or(labels, "editor", ""), "editor",
+      fl_lookup_string_arg(labels, "editorGtkAccelerator"));
+  append_view_mode_menu_item(
+      self->view_mode_menu_model,
+      localized_label_or(labels, "source", ""), "source",
+      fl_lookup_string_arg(labels, "sourceGtkAccelerator"));
+  append_view_mode_menu_item(
+      self->view_mode_menu_model,
+      localized_label_or(labels, "preview", ""), "preview",
+      fl_lookup_string_arg(labels, "previewGtkAccelerator"));
+  append_view_mode_menu_item(
+      self->view_mode_menu_model,
+      localized_label_or(labels, "split", ""), "split",
+      fl_lookup_string_arg(labels, "splitGtkAccelerator"));
+}
+
+static GtkWidget* create_model_menu_button(GMenuModel* model,
+                                           const gchar* icon_name,
+                                           GtkWidget** menu_out) {
   GtkWidget* button = gtk_menu_button_new();
-  gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+  gtk_style_context_add_class(gtk_widget_get_style_context(button),
+                              "busymark-header-control");
   gtk_button_set_image(GTK_BUTTON(button),
                        gtk_image_new_from_icon_name(icon_name,
                                                     GTK_ICON_SIZE_MENU));
-  gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(button), TRUE);
-  gtk_menu_button_set_popover(GTK_MENU_BUTTON(button), popover);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(button),
-                              "busymark-header-button");
+  // Pointer-opened model menus should not paint a keyboard focus ring around
+  // their first row. Keyboard traversal can still focus the trigger.
+  gtk_widget_set_focus_on_click(button, FALSE);
+  // GtkMenu maps as an independent xdg_popup on Wayland. GtkPopover maps as a
+  // child subsurface whose GDK redraw clock can stall while Flutter is idle.
+  gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(button), FALSE);
+  gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(button), model);
   make_icon_button_square(button);
+  GtkMenu* menu = gtk_menu_button_get_popup(GTK_MENU_BUTTON(button));
+  if (menu != nullptr && GTK_IS_MENU(menu) && menu_out != nullptr) {
+    *menu_out = GTK_WIDGET(menu);
+  }
   return button;
 }
 
@@ -1183,85 +1539,80 @@ static void set_widget_tooltip_with_shortcut(GtkWidget* widget,
   g_free(value);
 }
 
-static void set_menu_item_label_with_shortcut(GtkWidget* item,
-                                              const gchar* text,
-                                              const gchar* shortcut) {
-  set_menu_item_label(item, text);
-  set_menu_item_shortcut(item, shortcut);
+static const gchar* view_mode_shortcut_label(MyApplication* self,
+                                              FlValue* labels) {
+  const gchar* mode = self->view_mode != nullptr ? self->view_mode : "split";
+  if (g_strcmp0(mode, "editor") == 0) {
+    return fl_lookup_string_arg(labels, "editorShortcut");
+  }
+  if (g_strcmp0(mode, "source") == 0) {
+    return fl_lookup_string_arg(labels, "sourceShortcut");
+  }
+  if (g_strcmp0(mode, "preview") == 0) {
+    return fl_lookup_string_arg(labels, "previewShortcut");
+  }
+  return fl_lookup_string_arg(labels, "splitShortcut");
 }
 
 static void set_localized_labels(MyApplication* self, FlValue* args) {
-  const gchar* editor = fl_lookup_string_arg(args, "editor");
-  const gchar* source = fl_lookup_string_arg(args, "source");
-  const gchar* preview = fl_lookup_string_arg(args, "preview");
-  const gchar* split = fl_lookup_string_arg(args, "split");
   const gchar* view_mode = fl_lookup_string_arg(args, "viewMode");
-  const gchar* editor_shortcut = fl_lookup_string_arg(args, "editorShortcut");
-  const gchar* source_shortcut = fl_lookup_string_arg(args, "sourceShortcut");
-  const gchar* preview_shortcut = fl_lookup_string_arg(args, "previewShortcut");
-  const gchar* split_shortcut = fl_lookup_string_arg(args, "splitShortcut");
   const gchar* search = fl_lookup_string_arg(args, "search");
+  const gchar* search_shortcut =
+      fl_lookup_string_arg(args, "searchShortcut");
   const gchar* refresh = fl_lookup_string_arg(args, "refresh");
   const gchar* menu = fl_lookup_string_arg(args, "menu");
   const gchar* sidebar = fl_lookup_string_arg(args, "sidebar");
   const gchar* sidebar_shortcut =
       fl_lookup_string_arg(args, "sidebarShortcut");
   const gchar* back = fl_lookup_string_arg(args, "back");
-  const gchar* settings = fl_lookup_string_arg(args, "settings");
-  const gchar* settings_shortcut =
-      fl_lookup_string_arg(args, "settingsShortcut");
-  const gchar* keyboard_shortcuts =
-      fl_lookup_string_arg(args, "keyboardShortcuts");
-  const gchar* keyboard_shortcuts_shortcut =
-      fl_lookup_string_arg(args, "keyboardShortcutsShortcut");
-  const gchar* markdown_html = fl_lookup_string_arg(args, "markdownAndHtml");
-  const gchar* markdown_html_shortcut =
-      fl_lookup_string_arg(args, "markdownAndHtmlShortcut");
-  const gchar* report_issue = fl_lookup_string_arg(args, "reportIssue");
-  const gchar* about = fl_lookup_string_arg(args, "aboutBusyMark");
 
   set_widget_tooltip(self->back_button, back);
   set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar,
                                    sidebar_shortcut);
-  set_widget_tooltip(self->sidebar_search_button, search);
+  set_widget_tooltip_with_shortcut(self->search_button, search,
+                                   search_shortcut);
   if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
       search != nullptr) {
     gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), search);
   }
-  set_widget_tooltip(self->sidebar_menu_button, menu);
+  set_widget_tooltip(self->main_menu_button, menu);
   set_widget_tooltip(self->refresh_button, refresh);
-  set_widget_tooltip(self->view_mode_button, view_mode);
-  set_menu_item_label_with_shortcut(self->view_mode_editor_item, editor,
-                                    editor_shortcut);
-  set_menu_item_label_with_shortcut(self->view_mode_source_item, source,
-                                    source_shortcut);
-  set_menu_item_label_with_shortcut(self->view_mode_preview_item, preview,
-                                    preview_shortcut);
-  set_menu_item_label_with_shortcut(self->view_mode_split_item, split,
-                                    split_shortcut);
-  set_menu_item_label_with_shortcut(self->settings_item, settings,
-                                    settings_shortcut);
-  set_menu_item_label_with_shortcut(self->keyboard_shortcuts_item,
-                                    keyboard_shortcuts,
-                                    keyboard_shortcuts_shortcut);
-  set_menu_item_label_with_shortcut(self->markdown_html_item,
-                                    markdown_html, markdown_html_shortcut);
-  set_menu_item_label(self->report_issue_item, report_issue);
-  set_menu_item_label(self->about_item, about);
+  set_widget_tooltip_with_shortcut(
+      self->view_mode_button, view_mode,
+      view_mode_shortcut_label(self, args));
+  rebuild_main_menu_model(self, args);
+  rebuild_view_mode_menu_model(self, args);
   update_view_mode_icon(self);
 }
 
-static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
+static void set_modal_barrier_depth(MyApplication* self, gint64 depth) {
+  const gint effective_depth =
+      depth <= 0 ? 0
+                 : depth > G_MAXINT ? G_MAXINT : static_cast<gint>(depth);
+  const gboolean visible = effective_depth > 0;
+  self->modal_barrier_depth = effective_depth;
   self->modal_barrier_visible = visible;
-  if (self->titlebar_box != nullptr && GTK_IS_WIDGET(self->titlebar_box)) {
-    GtkStyleContext* context = gtk_widget_get_style_context(self->titlebar_box);
+  refresh_header_bar_css(self);
+  if (self->titlebar_box != nullptr &&
+      GTK_IS_WIDGET(self->titlebar_box)) {
+    GtkStyleContext* context =
+        gtk_widget_get_style_context(self->titlebar_box);
     if (visible) {
-      gtk_style_context_add_class(context, "busymark-modal-barrier");
+      gtk_style_context_add_class(context, "busymark-modal-open");
     } else {
-      gtk_style_context_remove_class(context, "busymark-modal-barrier");
+      gtk_style_context_remove_class(context, "busymark-modal-open");
     }
-    gtk_widget_set_sensitive(self->titlebar_box, !visible);
   }
+  set_widget_visible(self->modal_scrim, visible);
+  if (visible) {
+    close_header_menu_button(self->main_menu_button);
+    close_header_menu_button(self->view_mode_button);
+    focus_flutter_view(self);
+  }
+}
+
+static void set_modal_barrier_visible(MyApplication* self, gboolean visible) {
+  set_modal_barrier_depth(self, visible ? 1 : 0);
 }
 
 static void set_sidebar_visible(MyApplication* self, gboolean visible) {
@@ -1305,8 +1656,7 @@ static void set_document_controls_visible(MyApplication* self,
 static void set_search_active(MyApplication* self, gboolean active) {
   const gboolean changed = self->search_active != active;
   self->search_active = active;
-  set_toggle_button_active(self, self->sidebar_search_button, active);
-  update_title_stack_alignment(self);
+  set_toggle_button_active(self, self->search_button, active);
   if (self->title_stack != nullptr && GTK_IS_STACK(self->title_stack)) {
     GtkWidget* visible_child = active ? self->search_entry : self->title_label;
     if (visible_child != nullptr && GTK_IS_WIDGET(visible_child)) {
@@ -1326,12 +1676,135 @@ static void set_search_active(MyApplication* self, gboolean active) {
   }
 }
 
+static gboolean focus_search_entry(MyApplication* self) {
+  if (self->modal_barrier_visible || !self->search_active ||
+      self->search_entry == nullptr || !GTK_IS_ENTRY(self->search_entry) ||
+      !gtk_widget_get_visible(self->search_entry) ||
+      !gtk_widget_get_child_visible(self->search_entry) ||
+      !gtk_widget_get_sensitive(self->search_entry)) {
+    return FALSE;
+  }
+
+  gtk_widget_grab_focus(self->search_entry);
+  gtk_editable_select_region(GTK_EDITABLE(self->search_entry), 0, -1);
+  return gtk_widget_has_focus(self->search_entry);
+}
+
 static void set_search_visible(MyApplication* self, gboolean visible) {
   self->search_visible = visible;
-  set_widget_visible(self->sidebar_search_button, visible);
+  set_widget_visible(self->search_button, visible);
   if (!visible && self->search_active) {
     set_search_active(self, FALSE);
   }
+}
+
+static gboolean begin_header_configuration_session(MyApplication* self,
+                                                   FlValue* args) {
+  const gchar* session_id = fl_lookup_string_arg(args, "sessionId");
+  if (session_id == nullptr || session_id[0] == '\0') {
+    return FALSE;
+  }
+  if (g_strcmp0(session_id, self->header_configuration_session_id) != 0) {
+    g_free(self->header_configuration_session_id);
+    self->header_configuration_session_id = g_strdup(session_id);
+    self->header_configuration_revision = -1;
+  }
+  return TRUE;
+}
+
+static gboolean decode_header_bar_configuration(
+    FlValue* args,
+    HeaderBarConfiguration* configuration) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP ||
+      (configuration->session_id =
+           fl_lookup_string_arg(args, "sessionId")) == nullptr ||
+      !fl_lookup_int64_arg(args, "revision", &configuration->revision)) {
+    return FALSE;
+  }
+
+  configuration->title = fl_lookup_string_arg(args, "title");
+  configuration->view_mode = fl_lookup_string_arg(args, "viewMode");
+  configuration->search_query = fl_lookup_string_arg(args, "searchQuery");
+  configuration->text_direction =
+      fl_lookup_string_arg(args, "textDirection");
+  configuration->labels = fl_lookup_map_arg(args, "labels");
+  configuration->theme = fl_lookup_map_arg(args, "theme");
+
+  if (configuration->session_id[0] == '\0' || configuration->revision < 0 ||
+      configuration->title == nullptr ||
+      configuration->view_mode == nullptr ||
+      view_mode_dart_action(configuration->view_mode) == nullptr ||
+      configuration->search_query == nullptr ||
+      configuration->text_direction == nullptr ||
+      (g_strcmp0(configuration->text_direction, "ltr") != 0 &&
+       g_strcmp0(configuration->text_direction, "rtl") != 0) ||
+      configuration->labels == nullptr || configuration->theme == nullptr ||
+      !fl_lookup_double_arg(args, "sidebarWidth",
+                            &configuration->sidebar_width) ||
+      configuration->sidebar_width <= 0 ||
+      !fl_lookup_optional_bool_arg(args, "canRefresh",
+                                   &configuration->can_refresh) ||
+      !fl_lookup_optional_bool_arg(
+          args, "documentControlsVisible",
+          &configuration->document_controls_visible) ||
+      !fl_lookup_optional_bool_arg(args, "searchActive",
+                                   &configuration->search_active) ||
+      !fl_lookup_optional_bool_arg(args, "searchVisible",
+                                   &configuration->search_visible) ||
+      !fl_lookup_optional_bool_arg(args, "sidebarVisible",
+                                   &configuration->sidebar_visible) ||
+      !fl_lookup_optional_bool_arg(args, "sidebarToggleVisible",
+                                   &configuration->sidebar_toggle_visible) ||
+      !fl_lookup_optional_bool_arg(args, "backVisible",
+                                   &configuration->back_visible) ||
+      !fl_lookup_optional_bool_arg(args, "modalBarrierVisible",
+                                   &configuration->modal_barrier_visible) ||
+      !fl_lookup_int64_arg(args, "modalBarrierDepth",
+                           &configuration->modal_barrier_depth) ||
+      configuration->modal_barrier_depth < 0 ||
+      configuration->modal_barrier_depth > G_MAXINT ||
+      configuration->modal_barrier_visible !=
+          (configuration->modal_barrier_depth > 0)) {
+    return FALSE;
+  }
+
+  return configuration->search_visible || !configuration->search_active;
+}
+
+static void apply_header_bar_configuration(
+    MyApplication* self,
+    const HeaderBarConfiguration& configuration) {
+  const gboolean previous_suppression = self->suppress_header_actions;
+  self->suppress_header_actions = TRUE;
+  if (self->titlebar_box != nullptr) {
+    g_object_freeze_notify(G_OBJECT(self->titlebar_box));
+  }
+
+  set_header_bar_theme(self, configuration.theme);
+  set_localized_labels(self, configuration.labels);
+  if (self->title_label != nullptr && GTK_IS_LABEL(self->title_label)) {
+    gtk_label_set_text(GTK_LABEL(self->title_label), configuration.title);
+  }
+  set_widget_sensitive(self->refresh_button, configuration.can_refresh);
+  set_sidebar_width(self, configuration.sidebar_width);
+  set_text_direction(self, configuration.text_direction);
+  set_sidebar_visible(self, configuration.sidebar_visible);
+  set_sidebar_toggle_visible(self, configuration.sidebar_toggle_visible);
+  set_search_visible(self, configuration.search_visible);
+  set_back_visible(self, configuration.back_visible);
+  set_document_controls_visible(
+      self, configuration.document_controls_visible);
+  set_search_query(self, configuration.search_query);
+  set_search_active(self, configuration.search_active);
+  set_view_mode(self, configuration.view_mode);
+  set_modal_barrier_depth(self, configuration.modal_barrier_depth);
+  self->header_configuration_revision = configuration.revision;
+
+  if (self->titlebar_box != nullptr) {
+    g_object_thaw_notify(G_OBJECT(self->titlebar_box));
+    gtk_widget_queue_draw(self->titlebar_box);
+  }
+  self->suppress_header_actions = previous_suppression;
 }
 
 static GtkWidget* create_busymark_titlebar(MyApplication* self) {
@@ -1340,7 +1813,16 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_widget_set_hexpand(self->titlebar_box, TRUE);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->titlebar_box),
                               "busymark-titlebar");
+  setup_header_actions(self);
+  self->main_menu_model = g_menu_new();
+  self->view_mode_menu_model = g_menu_new();
+  rebuild_main_menu_model(self, nullptr);
+  rebuild_view_mode_menu_model(self, nullptr);
 
+  // An ordinary GtkBox owns the complete painted sidebar-brand allocation.
+  // GtkOverlay can leave its own background node transparent under some GTK
+  // 3/Yaru combinations, which exposed the main headerbar color even though
+  // Dart supplied the sidebar color.
   self->sidebar_header_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   gtk_widget_set_halign(self->sidebar_header_box, GTK_ALIGN_FILL);
@@ -1348,18 +1830,14 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_header_box),
                               "busymark-sidebar-header");
 
-  self->sidebar_search_button = create_header_toggle_button("system-search-symbolic");
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_search_button),
-                              "busymark-sidebar-action-button");
-  connect_header_action(self, self->sidebar_search_button, "search");
-  gtk_box_pack_start(GTK_BOX(self->sidebar_header_box),
-                     self->sidebar_search_button, FALSE, FALSE, 0);
-
   GtkWidget* sidebar_title_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
-  gtk_widget_set_hexpand(sidebar_title_box, TRUE);
   gtk_widget_set_halign(sidebar_title_box, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(sidebar_title_box, GTK_ALIGN_CENTER);
+  gtk_widget_set_hexpand(sidebar_title_box, TRUE);
   self->sidebar_title_label = gtk_label_new(kApplicationDisplayName);
+  gtk_widget_set_halign(self->sidebar_title_label, GTK_ALIGN_CENTER);
+  gtk_widget_set_valign(self->sidebar_title_label, GTK_ALIGN_CENTER);
   gtk_label_set_ellipsize(GTK_LABEL(self->sidebar_title_label),
                           PANGO_ELLIPSIZE_END);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_title_label),
@@ -1369,31 +1847,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   gtk_box_pack_start(GTK_BOX(self->sidebar_header_box), sidebar_title_box,
                      TRUE, TRUE, 0);
 
-  self->sidebar_menu = create_header_popover();
-  GtkWidget* sidebar_menu_box = create_popover_box(self->sidebar_menu);
-  self->settings_item = create_menu_item(self, "settings");
-  self->keyboard_shortcuts_item =
-      create_menu_item(self, "keyboardShortcuts");
-  self->markdown_html_item = create_menu_item(self, "markdownAndHtml");
-  self->report_issue_item = create_menu_item(self, "reportIssue");
-  self->about_item = create_menu_item(self, "aboutBusyMark");
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->settings_item, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box),
-                     self->keyboard_shortcuts_item, FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->markdown_html_item,
-                     FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->report_issue_item, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(sidebar_menu_box), self->about_item, FALSE,
-                     FALSE, 0);
-  gtk_widget_show_all(sidebar_menu_box);
-  self->sidebar_menu_button =
-      create_menu_button(self->sidebar_menu, "open-menu-symbolic");
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->sidebar_menu_button),
-                              "busymark-sidebar-action-button");
-  gtk_box_pack_end(GTK_BOX(self->sidebar_header_box),
-                   self->sidebar_menu_button, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), self->sidebar_header_box,
                      FALSE, FALSE, 0);
 
@@ -1418,7 +1871,6 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
 
   self->title_stack = gtk_stack_new();
   gtk_widget_set_hexpand(self->title_stack, TRUE);
-  update_title_stack_alignment(self);
   gtk_stack_set_transition_type(GTK_STACK(self->title_stack),
                                 GTK_STACK_TRANSITION_TYPE_NONE);
   self->title_label = gtk_label_new("");
@@ -1429,15 +1881,20 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->search_entry = gtk_search_entry_new();
   gtk_entry_set_placeholder_text(GTK_ENTRY(self->search_entry), "");
   gtk_widget_set_hexpand(self->search_entry, TRUE);
-  gtk_widget_set_size_request(self->search_entry, 360, kHeaderButtonHeight);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->search_entry),
                               "busymark-search-entry");
   g_signal_connect(self->search_entry, "search-changed",
                    G_CALLBACK(search_entry_changed_cb), self);
   g_signal_connect(self->search_entry, "activate",
                    G_CALLBACK(search_entry_activate_cb), self);
-  g_signal_connect(self->search_entry, "key-press-event",
-                   G_CALLBACK(search_entry_key_press_cb), self);
+  g_signal_connect(self->search_entry, "focus-in-event",
+                   G_CALLBACK(search_entry_focus_in_cb), self);
+  g_signal_connect(self->search_entry, "focus-out-event",
+                   G_CALLBACK(search_entry_focus_out_cb), self);
+  g_signal_connect(self->search_entry, "icon-release",
+                   G_CALLBACK(search_entry_icon_release_cb), self);
+  g_signal_connect(self->search_entry, "stop-search",
+                   G_CALLBACK(search_entry_stop_search_cb), self);
   gtk_stack_add_named(GTK_STACK(self->title_stack), self->title_label, "title");
   gtk_stack_add_named(GTK_STACK(self->title_stack), self->search_entry,
                       "search");
@@ -1447,41 +1904,13 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   GtkWidget* end_box =
       gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing);
   self->view_mode_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  self->view_mode_menu = create_header_popover();
-  GtkWidget* view_menu_box = create_popover_box(self->view_mode_menu);
-  self->view_mode_editor_item = create_view_mode_item(self, "editor");
-  self->view_mode_source_item = create_view_mode_item(self, "source");
-  self->view_mode_preview_item = create_view_mode_item(self, "preview");
-  self->view_mode_split_item = create_view_mode_item(self, "split");
-  gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_editor_item, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_source_item, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_preview_item, FALSE,
-                     FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(view_menu_box), self->view_mode_split_item, FALSE,
-                     FALSE, 0);
-  gtk_widget_show_all(view_menu_box);
-
-  self->view_mode_button = gtk_menu_button_new();
-  gtk_button_set_relief(GTK_BUTTON(self->view_mode_button), GTK_RELIEF_NONE);
-  gtk_widget_set_valign(self->view_mode_button, GTK_ALIGN_CENTER);
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
-                              GTK_STYLE_CLASS_FLAT);
-  gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
-                              "busymark-header-button");
+  self->view_mode_button = create_model_menu_button(
+      G_MENU_MODEL(self->view_mode_menu_model), view_mode_icon_name("split"),
+      &self->view_mode_menu);
   gtk_style_context_add_class(gtk_widget_get_style_context(self->view_mode_button),
                               "busymark-view-mode-button");
-  gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(self->view_mode_button),
-                                  TRUE);
-  gtk_menu_button_set_popover(GTK_MENU_BUTTON(self->view_mode_button),
-                              self->view_mode_menu);
   self->view_mode_icon =
-      gtk_image_new_from_icon_name(view_mode_icon_name("split"),
-                                   GTK_ICON_SIZE_MENU);
-  gtk_container_add(GTK_CONTAINER(self->view_mode_button),
-                    self->view_mode_icon);
-  make_icon_button_square(self->view_mode_button);
+      gtk_button_get_image(GTK_BUTTON(self->view_mode_button));
   gtk_box_pack_start(GTK_BOX(self->view_mode_box), self->view_mode_button,
                      FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(end_box), self->view_mode_box, FALSE, FALSE, 0);
@@ -1489,6 +1918,15 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   self->refresh_button = create_header_icon_button("tools-check-spelling-symbolic");
   connect_header_action(self, self->refresh_button, "refresh");
   gtk_box_pack_start(GTK_BOX(end_box), self->refresh_button, FALSE, FALSE, 0);
+  self->search_button =
+      create_header_toggle_button("system-search-symbolic");
+  connect_header_action(self, self->search_button, "search");
+  gtk_box_pack_start(GTK_BOX(end_box), self->search_button, FALSE, FALSE, 0);
+  self->main_menu_button = create_model_menu_button(
+      G_MENU_MODEL(self->main_menu_model), "open-menu-symbolic",
+      &self->main_menu);
+  gtk_box_pack_start(GTK_BOX(end_box), self->main_menu_button, FALSE, FALSE,
+                     0);
   gtk_header_bar_pack_end(self->header_bar, end_box);
 
   gtk_box_pack_start(GTK_BOX(self->titlebar_box), GTK_WIDGET(self->header_bar),
@@ -1502,6 +1940,47 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
   return self->titlebar_box;
 }
 
+static GtkWidget* create_busymark_titlebar_overlay(MyApplication* self) {
+  self->titlebar_overlay = gtk_overlay_new();
+  gtk_widget_set_halign(self->titlebar_overlay, GTK_ALIGN_FILL);
+  gtk_widget_set_valign(self->titlebar_overlay, GTK_ALIGN_FILL);
+  gtk_widget_set_hexpand(self->titlebar_overlay, TRUE);
+  // The titlebar is packed as a fixed-height row above the Flutter view.
+  // Prevent expansion requests from overlay children from turning it into a
+  // second vertically expanding application surface.
+  gtk_widget_set_vexpand(self->titlebar_overlay, FALSE);
+  gtk_container_add(GTK_CONTAINER(self->titlebar_overlay),
+                    create_busymark_titlebar(self));
+
+  // A real overlay is the GTK equivalent of Flutter's modal barrier. Painting
+  // only the header backgrounds leaves descendant icons and button surfaces
+  // above the scrim.
+  self->modal_scrim = gtk_event_box_new();
+  gtk_event_box_set_visible_window(GTK_EVENT_BOX(self->modal_scrim), TRUE);
+  gtk_widget_set_halign(self->modal_scrim, GTK_ALIGN_FILL);
+  gtk_widget_set_valign(self->modal_scrim, GTK_ALIGN_FILL);
+  gtk_widget_set_hexpand(self->modal_scrim, TRUE);
+  // GTK_ALIGN_FILL gives the scrim the overlay's full allocation. Asking it
+  // to expand vertically instead propagates through GtkOverlay and
+  // HdyWindowHandle when the scrim becomes visible, making the header consume
+  // the window's spare height.
+  gtk_widget_set_vexpand(self->modal_scrim, FALSE);
+  gtk_widget_add_events(self->modal_scrim, GDK_ALL_EVENTS_MASK);
+  gtk_style_context_add_class(gtk_widget_get_style_context(self->modal_scrim),
+                              "busymark-modal-scrim");
+  // Keep the header subtree visually enabled beneath the modal tint. The
+  // overlay owns pointer input while visible and consumes it here so events
+  // cannot bubble into HdyWindowHandle's drag and window-menu handlers.
+  g_signal_connect(self->modal_scrim, "event",
+                   G_CALLBACK(stop_modal_scrim_event), nullptr);
+  set_widget_visible(self->modal_scrim, FALSE);
+  gtk_overlay_add_overlay(GTK_OVERLAY(self->titlebar_overlay),
+                          self->modal_scrim);
+  gtk_overlay_set_overlay_pass_through(GTK_OVERLAY(self->titlebar_overlay),
+                                       self->modal_scrim, FALSE);
+  return self->titlebar_overlay;
+}
+
 static void header_bar_method_call_cb(FlMethodChannel* channel,
                                       FlMethodCall* method_call,
                                       gpointer user_data) {
@@ -1509,7 +1988,27 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   const gchar* method = fl_method_call_get_name(method_call);
   FlValue* args = fl_method_call_get_args(method_call);
   if (strcmp(method, "initialize") == 0) {
-    respond_bool(method_call, has_header_bar(self));
+    respond_bool(method_call,
+                 begin_header_configuration_session(self, args) &&
+                     has_header_bar(self));
+  } else if (strcmp(method, "applyConfiguration") == 0) {
+    HeaderBarConfiguration configuration = {};
+    if (!decode_header_bar_configuration(args, &configuration)) {
+      respond_invalid_configuration(
+          method_call,
+          "applyConfiguration requires a complete, typed header snapshot");
+    } else if (g_strcmp0(configuration.session_id,
+                         self->header_configuration_session_id) != 0) {
+      respond_invalid_configuration(
+          method_call,
+          "applyConfiguration requires the active Dart session");
+    } else if (configuration.revision <=
+               self->header_configuration_revision) {
+      respond_int64(method_call, self->header_configuration_revision);
+    } else {
+      apply_header_bar_configuration(self, configuration);
+      respond_int64(method_call, self->header_configuration_revision);
+    }
   } else if (strcmp(method, "setTitleRange") == 0) {
     const gchar* value = fl_method_string_arg(args);
     if (self->title_label != nullptr && GTK_IS_LABEL(self->title_label) &&
@@ -1523,23 +2022,16 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setCanRefresh") == 0) {
     set_widget_sensitive(self->refresh_button, fl_method_bool_arg(args));
     respond_success(method_call);
-  } else if (strcmp(method, "setCanSave") == 0) {
-    respond_success(method_call);
   } else if (strcmp(method, "setDocumentControlsVisible") == 0) {
     set_document_controls_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setSearchActive") == 0) {
     set_search_active(self, fl_method_bool_arg(args));
     respond_success(method_call);
+  } else if (strcmp(method, "focusSearch") == 0) {
+    respond_bool(method_call, focus_search_entry(self));
   } else if (strcmp(method, "setSearchQuery") == 0) {
-    const gchar* value = fl_method_string_arg(args);
-    if (self->search_entry != nullptr && GTK_IS_ENTRY(self->search_entry) &&
-        value != nullptr) {
-      const gboolean previous = self->suppress_header_actions;
-      self->suppress_header_actions = TRUE;
-      gtk_entry_set_text(GTK_ENTRY(self->search_entry), value);
-      self->suppress_header_actions = previous;
-    }
+    set_search_query(self, fl_method_string_arg(args));
     respond_success(method_call);
   } else if (strcmp(method, "setSidebarVisible") == 0) {
     set_sidebar_visible(self, fl_method_bool_arg(args));
@@ -1568,6 +2060,9 @@ static void header_bar_method_call_cb(FlMethodChannel* channel,
   } else if (strcmp(method, "setModalBarrierVisible") == 0) {
     set_modal_barrier_visible(self, fl_method_bool_arg(args));
     respond_success(method_call);
+  } else if (strcmp(method, "setModalBarrierDepth") == 0) {
+    set_modal_barrier_depth(self, fl_method_int_arg(args, 0));
+    respond_success(method_call);
   } else {
     fl_method_call_respond_not_implemented(method_call, nullptr);
   }
@@ -1582,107 +2077,583 @@ static void register_header_bar_channel(MyApplication* self, FlView* view) {
       self->header_bar_channel, header_bar_method_call_cb, self, nullptr);
 }
 
-static gboolean clear_transparent_window_cb(GtkWidget* widget,
-                                            cairo_t* cr,
-                                            gpointer user_data) {
-  cairo_save(cr);
-  cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
-  cairo_paint(cr);
-  cairo_restore(cr);
-  return FALSE;
+constexpr char kNativeMenuActionNamespace[] = "busymark-native-menu";
+constexpr char kNativeMenuActionIndexKey[] = "busymark-native-menu-index";
+
+struct NativeMenuHandlerData;
+
+struct NativeMenuSession {
+  NativeMenuHandlerData* owner;
+  gint64 id;
+  size_t entry_count;
+  GtkWidget* menu;
+  GMenu* model;
+  GSimpleActionGroup* action_group;
+  FlMethodCall* method_call;
+  gulong deactivate_signal_id;
+  guint cleanup_source_id;
+  gint pending_selected_index;
+};
+
+struct NativeMenuHandlerData {
+  GtkWidget* view;
+  NativeMenuSession* active;
+};
+
+static void native_menu_session_respond(NativeMenuSession* session,
+                                        gint selected_index) {
+  if (session->method_call == nullptr) {
+    return;
+  }
+  g_autoptr(FlValue) result = selected_index < 0
+                                  ? fl_value_new_null()
+                                  : fl_value_new_int(selected_index);
+  fl_method_call_respond_success(session->method_call, result, nullptr);
+  g_clear_object(&session->method_call);
 }
 
-static cairo_region_t* create_rounded_window_region(gint width,
-                                                    gint height,
-                                                    gint radius) {
-  cairo_region_t* region = cairo_region_create();
-  if (width <= 0 || height <= 0) {
-    return region;
+static void native_menu_session_dispose(NativeMenuSession* session) {
+  if (session == nullptr) {
+    return;
   }
-
-  if (radius <= 0 || width < radius * 2 || height < radius * 2) {
-    const cairo_rectangle_int_t rect = {0, 0, width, height};
-    cairo_region_union_rectangle(region, &rect);
-    return region;
+  NativeMenuHandlerData* owner = session->owner;
+  if (owner != nullptr && owner->active == session) {
+    owner->active = nullptr;
   }
-
-  const gdouble radius_squared = radius * radius;
-  for (gint y = 0; y < height; y++) {
-    gint inset = 0;
-    if (y < radius) {
-      const gdouble dy = radius - y - 1;
-      inset = radius - static_cast<gint>(std::sqrt(radius_squared - dy * dy));
-    } else if (y >= height - radius) {
-      const gdouble dy = y - (height - radius);
-      inset = radius - static_cast<gint>(std::sqrt(radius_squared - dy * dy));
+  if (session->cleanup_source_id != 0) {
+    g_source_remove(session->cleanup_source_id);
+    session->cleanup_source_id = 0;
+  }
+  if (session->menu != nullptr) {
+    if (session->deactivate_signal_id != 0) {
+      g_signal_handler_disconnect(session->menu,
+                                  session->deactivate_signal_id);
+      session->deactivate_signal_id = 0;
     }
+    if (gtk_widget_get_visible(session->menu)) {
+      gtk_menu_shell_deactivate(GTK_MENU_SHELL(session->menu));
+    }
+  }
+  if (owner != nullptr && owner->view != nullptr) {
+    gtk_widget_insert_action_group(owner->view,
+                                   kNativeMenuActionNamespace, nullptr);
+  }
+  if (session->menu != nullptr && GTK_IS_MENU(session->menu) &&
+      gtk_menu_get_attach_widget(GTK_MENU(session->menu)) != nullptr) {
+    gtk_menu_detach(GTK_MENU(session->menu));
+  }
+  g_clear_object(&session->menu);
 
-    const gint row_width = width - inset * 2;
-    if (row_width <= 0) {
+  if (owner != nullptr && owner->view != nullptr) {
+    if (gtk_widget_get_realized(owner->view)) {
+      gtk_widget_grab_focus(owner->view);
+    }
+  }
+  g_clear_object(&session->model);
+  g_clear_object(&session->action_group);
+  native_menu_session_respond(session, session->pending_selected_index);
+  g_free(session);
+}
+
+static gboolean native_menu_cleanup_idle_cb(gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  session->cleanup_source_id = 0;
+  native_menu_session_dispose(session);
+  return G_SOURCE_REMOVE;
+}
+
+static void native_menu_deactivate_cb(GtkMenuShell*, gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  if (session->cleanup_source_id == 0) {
+    // GtkMenu deactivates before invoking the selected GAction. Let the
+    // action run before resolving and freeing the native session.
+    session->cleanup_source_id = g_idle_add_full(
+        G_PRIORITY_DEFAULT_IDLE, native_menu_cleanup_idle_cb, session,
+        nullptr);
+  }
+}
+
+static void native_menu_action_activated_cb(GSimpleAction* action,
+                                            GVariant*,
+                                            gpointer user_data) {
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  session->pending_selected_index =
+      GPOINTER_TO_INT(
+          g_object_get_data(G_OBJECT(action), kNativeMenuActionIndexKey)) -
+      1;
+}
+
+static void native_menu_selection_activated_cb(GSimpleAction* action,
+                                               GVariant* parameter,
+                                               gpointer user_data) {
+  if (parameter == nullptr ||
+      !g_variant_is_of_type(parameter, G_VARIANT_TYPE_STRING)) {
+    return;
+  }
+  const gchar* target = g_variant_get_string(parameter, nullptr);
+  gchar* end = nullptr;
+  const guint64 parsed = g_ascii_strtoull(target, &end, 10);
+  auto* session = static_cast<NativeMenuSession*>(user_data);
+  if (target[0] == '\0' || end == nullptr || *end != '\0' ||
+      parsed > static_cast<guint64>(G_MAXINT) ||
+      parsed >= session->entry_count) {
+    return;
+  }
+
+  g_simple_action_set_state(action, parameter);
+  session->pending_selected_index = static_cast<gint>(parsed);
+}
+
+static gboolean native_menu_dismiss_active(NativeMenuHandlerData* data,
+                                           gint64 session_id) {
+  NativeMenuSession* session = data->active;
+  if (session == nullptr || session->id != session_id) {
+    return FALSE;
+  }
+  if (session->menu != nullptr && gtk_widget_get_visible(session->menu)) {
+    gtk_menu_shell_deactivate(GTK_MENU_SHELL(session->menu));
+  } else {
+    native_menu_session_dispose(session);
+  }
+  return TRUE;
+}
+
+static gboolean fl_lookup_optional_bool_with_default(
+    FlValue* args,
+    const gchar* key,
+    gboolean fallback,
+    gboolean* value_out) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return FALSE;
+  }
+  FlValue* value = fl_value_lookup_string(args, key);
+  if (value == nullptr) {
+    *value_out = fallback;
+    return TRUE;
+  }
+  if (fl_value_get_type(value) != FL_VALUE_TYPE_BOOL) {
+    return FALSE;
+  }
+  *value_out = fl_value_get_bool(value);
+  return TRUE;
+}
+
+static gboolean fl_lookup_positive_int64_arg(FlValue* args,
+                                             const gchar* key,
+                                             gint64* value_out) {
+  if (!fl_lookup_int64_arg(args, key, value_out) || *value_out <= 0) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+static void respond_native_menu_argument_error(FlMethodCall* method_call,
+                                               const gchar* message) {
+  fl_method_call_respond_error(method_call, "invalid-arguments", message,
+                               nullptr, nullptr);
+}
+
+static gboolean parse_native_menu_anchor(FlValue* args,
+                                         GdkRectangle* rectangle_out) {
+  FlValue* anchor = fl_lookup_map_arg(args, "anchor");
+  if (anchor == nullptr) {
+    return FALSE;
+  }
+  gdouble x = 0;
+  gdouble y = 0;
+  gdouble width = 0;
+  gdouble height = 0;
+  if (!fl_lookup_double_arg(anchor, "x", &x) ||
+      !fl_lookup_double_arg(anchor, "y", &y) ||
+      !fl_lookup_double_arg(anchor, "width", &width) ||
+      !fl_lookup_double_arg(anchor, "height", &height) ||
+      !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(width) ||
+      !std::isfinite(height) || !std::isfinite(x + width) ||
+      !std::isfinite(y + height) || width < 0 || height < 0) {
+    return FALSE;
+  }
+
+  const gdouble left = std::floor(x);
+  const gdouble top = std::floor(y);
+  const gdouble right = std::ceil(x + width);
+  const gdouble bottom = std::ceil(y + height);
+  const gdouble pixel_width = std::max(1.0, right - left);
+  const gdouble pixel_height = std::max(1.0, bottom - top);
+  if (left < G_MININT || left > G_MAXINT || top < G_MININT ||
+      top > G_MAXINT || right < G_MININT || right > G_MAXINT ||
+      bottom < G_MININT || bottom > G_MAXINT || pixel_width > G_MAXINT ||
+      pixel_height > G_MAXINT) {
+    return FALSE;
+  }
+
+  rectangle_out->x = static_cast<gint>(left);
+  rectangle_out->y = static_cast<gint>(top);
+  rectangle_out->width = static_cast<gint>(pixel_width);
+  rectangle_out->height = static_cast<gint>(pixel_height);
+  return TRUE;
+}
+
+static void show_native_menu(NativeMenuHandlerData* data,
+                             FlMethodCall* method_call,
+                             FlValue* args) {
+  if (data->view == nullptr || !gtk_widget_get_realized(data->view) ||
+      gtk_widget_get_window(data->view) == nullptr) {
+    fl_method_call_respond_error(method_call, "unavailable",
+                                 "The native menu host is unavailable.",
+                                 nullptr, nullptr);
+    return;
+  }
+  GdkRectangle anchor = {};
+  gint64 session_id = 0;
+  if (!fl_lookup_positive_int64_arg(args, "sessionId", &session_id) ||
+      !parse_native_menu_anchor(args, &anchor)) {
+    respond_native_menu_argument_error(
+        method_call,
+        "sessionId must be positive and anchor must contain finite geometry.");
+    return;
+  }
+
+  GtkWidget* toplevel = gtk_widget_get_toplevel(data->view);
+  GdkWindow* rect_window =
+      GTK_IS_WINDOW(toplevel) ? gtk_widget_get_window(toplevel) : nullptr;
+  GdkRectangle window_anchor = anchor;
+  if (rect_window == nullptr ||
+      !gtk_widget_translate_coordinates(
+          data->view, toplevel, anchor.x, anchor.y, &window_anchor.x,
+          &window_anchor.y)) {
+    fl_method_call_respond_error(
+        method_call, "unavailable",
+        "GTK could not translate the menu anchor into window coordinates.",
+        nullptr, nullptr);
+    return;
+  }
+
+  FlValue* entries = fl_value_lookup_string(args, "entries");
+  gboolean focus_first = FALSE;
+  const gchar* preferred_position_arg =
+      fl_lookup_string_arg(args, "preferredPosition");
+  GtkPositionType preferred_position = GTK_POS_BOTTOM;
+  if (g_strcmp0(preferred_position_arg, "top") == 0) {
+    preferred_position = GTK_POS_TOP;
+  } else if (preferred_position_arg != nullptr &&
+             g_strcmp0(preferred_position_arg, "bottom") != 0) {
+    respond_native_menu_argument_error(
+        method_call, "preferredPosition must be top or bottom.");
+    return;
+  }
+  if (entries == nullptr ||
+      fl_value_get_type(entries) != FL_VALUE_TYPE_LIST ||
+      fl_value_get_length(entries) == 0 ||
+      fl_value_get_length(entries) > static_cast<size_t>(G_MAXINT) ||
+      !fl_lookup_optional_bool_with_default(args, "focusFirst", FALSE,
+                                            &focus_first)) {
+    respond_native_menu_argument_error(
+        method_call,
+        "entries must be non-empty and focusFirst must be boolean.");
+    return;
+  }
+
+  size_t command_count = 0;
+  size_t checkable_run_selected_count = 0;
+  gboolean checkable_run_has_disabled_entry = FALSE;
+  gboolean in_checkable_run = FALSE;
+  for (size_t index = 0; index < fl_value_get_length(entries); index++) {
+    FlValue* entry = fl_value_get_list_value(entries, index);
+    gboolean separator = FALSE;
+    gboolean enabled = TRUE;
+    gboolean checkable = FALSE;
+    gboolean selected = FALSE;
+    if (entry == nullptr || fl_value_get_type(entry) != FL_VALUE_TYPE_MAP ||
+        !fl_lookup_optional_bool_with_default(entry, "separator", FALSE,
+                                              &separator) ||
+        !fl_lookup_optional_bool_with_default(entry, "enabled", TRUE,
+                                              &enabled) ||
+        !fl_lookup_optional_bool_with_default(entry, "checkable", FALSE,
+                                              &checkable) ||
+        !fl_lookup_optional_bool_with_default(entry, "selected", FALSE,
+                                              &selected) ||
+        (!separator && fl_lookup_string_arg(entry, "label") == nullptr) ||
+        (fl_value_lookup_string(entry, "icon") != nullptr &&
+         fl_value_get_type(fl_value_lookup_string(entry, "icon")) !=
+             FL_VALUE_TYPE_STRING) ||
+        (selected && !checkable)) {
+      respond_native_menu_argument_error(
+          method_call,
+          "entries must contain valid command or separator presentation.");
+      return;
+    }
+    if (!separator) {
+      command_count++;
+    }
+    if (!separator && checkable) {
+      if (!in_checkable_run) {
+        checkable_run_selected_count = 0;
+        checkable_run_has_disabled_entry = FALSE;
+        in_checkable_run = TRUE;
+      }
+      checkable_run_selected_count += selected ? 1 : 0;
+      checkable_run_has_disabled_entry =
+          checkable_run_has_disabled_entry || !enabled;
+      continue;
+    }
+    if (in_checkable_run &&
+        (checkable_run_selected_count > 1 ||
+         checkable_run_has_disabled_entry)) {
+      respond_native_menu_argument_error(
+          method_call,
+          "single-choice groups allow at most one selected entry and require "
+          "enabled entries.");
+      return;
+    }
+    in_checkable_run = FALSE;
+  }
+  if (in_checkable_run &&
+      (checkable_run_selected_count > 1 ||
+       checkable_run_has_disabled_entry)) {
+    respond_native_menu_argument_error(
+        method_call,
+        "single-choice groups allow at most one selected entry and require "
+        "enabled entries.");
+    return;
+  }
+  if (command_count == 0) {
+    respond_native_menu_argument_error(method_call,
+                                       "entries must contain a command.");
+    return;
+  }
+
+  if (data->active != nullptr) {
+    native_menu_session_dispose(data->active);
+  }
+
+  auto* session = g_new0(NativeMenuSession, 1);
+  session->owner = data;
+  session->id = session_id;
+  session->entry_count = fl_value_get_length(entries);
+  session->pending_selected_index = -1;
+  session->method_call =
+      FL_METHOD_CALL(g_object_ref(G_OBJECT(method_call)));
+  session->action_group = g_simple_action_group_new();
+  session->model = g_menu_new();
+  data->active = session;
+
+  GMenu* section = g_menu_new();
+  guint section_length = 0;
+  auto flush_section = [&]() {
+    if (section_length > 0) {
+      g_menu_append_section(session->model, nullptr, G_MENU_MODEL(section));
+    }
+    g_object_unref(section);
+    section = g_menu_new();
+    section_length = 0;
+  };
+
+  guint checkable_group_index = 0;
+  for (size_t index = 0; index < fl_value_get_length(entries);) {
+    FlValue* entry = fl_value_get_list_value(entries, index);
+    gboolean separator = FALSE;
+    fl_lookup_optional_bool_with_default(entry, "separator", FALSE,
+                                         &separator);
+    if (separator) {
+      flush_section();
+      index++;
       continue;
     }
 
-    const cairo_rectangle_int_t row = {inset, y, row_width, 1};
-    cairo_region_union_rectangle(region, &row);
+    const gchar* label = fl_lookup_string_arg(entry, "label");
+    const gchar* icon_name = fl_lookup_string_arg(entry, "icon");
+    const gchar* shortcut = fl_lookup_string_arg(entry, "shortcut");
+    gboolean enabled = TRUE;
+    gboolean checkable = FALSE;
+    gboolean selected = FALSE;
+    fl_lookup_optional_bool_with_default(entry, "enabled", TRUE, &enabled);
+    fl_lookup_optional_bool_with_default(entry, "checkable", FALSE,
+                                         &checkable);
+    fl_lookup_optional_bool_with_default(entry, "selected", FALSE,
+                                         &selected);
+
+    if (checkable) {
+      const size_t run_start = index;
+      size_t run_end = run_start;
+      g_autofree gchar* selected_target = g_strdup("");
+      while (run_end < fl_value_get_length(entries)) {
+        FlValue* run_entry = fl_value_get_list_value(entries, run_end);
+        gboolean run_separator = FALSE;
+        gboolean run_checkable = FALSE;
+        gboolean run_selected = FALSE;
+        fl_lookup_optional_bool_with_default(
+            run_entry, "separator", FALSE, &run_separator);
+        fl_lookup_optional_bool_with_default(
+            run_entry, "checkable", FALSE, &run_checkable);
+        if (run_separator || !run_checkable) {
+          break;
+        }
+        fl_lookup_optional_bool_with_default(
+            run_entry, "selected", FALSE, &run_selected);
+        if (run_selected) {
+          g_free(selected_target);
+          selected_target = g_strdup_printf("%zu", run_end);
+        }
+        run_end++;
+      }
+
+      g_autofree gchar* group_action_name =
+          g_strdup_printf("select-group-%u", checkable_group_index++);
+      GSimpleAction* group_action = g_simple_action_new_stateful(
+          group_action_name, G_VARIANT_TYPE_STRING,
+          g_variant_new_string(selected_target));
+      g_signal_connect(group_action, "activate",
+                       G_CALLBACK(native_menu_selection_activated_cb),
+                       session);
+      g_action_map_add_action(G_ACTION_MAP(session->action_group),
+                              G_ACTION(group_action));
+      g_autofree gchar* detailed_group_action = g_strdup_printf(
+          "%s.%s", kNativeMenuActionNamespace, group_action_name);
+
+      for (size_t run_index = run_start; run_index < run_end; run_index++) {
+        FlValue* run_entry = fl_value_get_list_value(entries, run_index);
+        const gchar* run_label = fl_lookup_string_arg(run_entry, "label");
+        const gchar* run_icon = fl_lookup_string_arg(run_entry, "icon");
+        const gchar* run_shortcut =
+            fl_lookup_string_arg(run_entry, "shortcut");
+        g_autofree gchar* target = g_strdup_printf("%zu", run_index);
+        g_autoptr(GMenuItem) item = g_menu_item_new(run_label, nullptr);
+        g_menu_item_set_action_and_target_value(
+            item, detailed_group_action, g_variant_new_string(target));
+        if (run_icon != nullptr && run_icon[0] != '\0') {
+          g_autoptr(GIcon) icon = g_themed_icon_new(run_icon);
+          g_menu_item_set_icon(item, icon);
+        }
+        if (run_shortcut != nullptr && run_shortcut[0] != '\0') {
+          set_menu_item_accelerator(item, run_shortcut);
+        }
+        g_menu_append_item(section, item);
+        section_length++;
+      }
+      g_object_unref(group_action);
+      index = run_end;
+      continue;
+    }
+
+    g_autofree gchar* action_name = g_strdup_printf("select-%zu", index);
+    GSimpleAction* action = g_simple_action_new(action_name, nullptr);
+    g_simple_action_set_enabled(action, enabled);
+    g_object_set_data(G_OBJECT(action), kNativeMenuActionIndexKey,
+                      GINT_TO_POINTER(static_cast<gint>(index) + 1));
+    g_signal_connect(action, "activate",
+                     G_CALLBACK(native_menu_action_activated_cb), session);
+    g_action_map_add_action(G_ACTION_MAP(session->action_group),
+                            G_ACTION(action));
+
+    g_autofree gchar* detailed_action =
+        g_strdup_printf("%s.%s", kNativeMenuActionNamespace, action_name);
+    g_autoptr(GMenuItem) item = g_menu_item_new(label, detailed_action);
+    if (icon_name != nullptr && icon_name[0] != '\0') {
+      g_autoptr(GIcon) icon = g_themed_icon_new(icon_name);
+      g_menu_item_set_icon(item, icon);
+    }
+    if (shortcut != nullptr && shortcut[0] != '\0') {
+      set_menu_item_accelerator(item, shortcut);
+    }
+    g_menu_append_item(section, item);
+    g_object_unref(action);
+    section_length++;
+    index++;
   }
+  flush_section();
+  g_object_unref(section);
 
-  return region;
-}
-
-static void configure_rounded_window_shape(GtkWidget* widget) {
-  if (widget == nullptr || !GTK_IS_WIDGET(widget) ||
-      !gtk_widget_get_realized(widget)) {
+  // GtkPopover maps as a Wayland subsurface whose frame callback can stall
+  // while Flutter's parent surface is idle. GtkMenu maps as an independent
+  // native xdg_popup instead.
+  gtk_widget_insert_action_group(
+      data->view, kNativeMenuActionNamespace,
+      G_ACTION_GROUP(session->action_group));
+  session->menu = gtk_menu_new_from_model(G_MENU_MODEL(session->model));
+  if (session->menu == nullptr || !GTK_IS_MENU(session->menu)) {
+    fl_method_call_respond_error(method_call, "unavailable",
+                                 "GTK could not create the native menu.",
+                                 nullptr, nullptr);
+    g_clear_object(&session->method_call);
+    native_menu_session_dispose(session);
     return;
   }
+  g_object_ref_sink(session->menu);
+  gtk_menu_attach_to_widget(GTK_MENU(session->menu), data->view, nullptr);
+  gtk_widget_show_all(session->menu);
+  session->deactivate_signal_id = g_signal_connect(
+      session->menu, "deactivate", G_CALLBACK(native_menu_deactivate_cb),
+      session);
 
-  GdkWindow* window = gtk_widget_get_window(widget);
-  if (window == nullptr || !GDK_IS_WINDOW(window)) {
-    return;
+  const gboolean open_above = preferred_position == GTK_POS_TOP;
+  g_object_set(session->menu, "anchor-hints",
+               GDK_ANCHOR_FLIP_Y | GDK_ANCHOR_SLIDE | GDK_ANCHOR_RESIZE,
+               nullptr);
+  if (!open_above) {
+    g_object_set(session->menu, "menu-type-hint",
+                 GDK_WINDOW_TYPE_HINT_DROPDOWN_MENU, nullptr);
   }
-
-  const GdkWindowState state = gdk_window_get_state(window);
-  if ((state & GDK_WINDOW_STATE_MAXIMIZED) != 0 ||
-      (state & GDK_WINDOW_STATE_FULLSCREEN) != 0) {
-    gdk_window_shape_combine_region(window, nullptr, 0, 0);
-    return;
+  // Flutter reports view-local coordinates, while FlView is a no-window
+  // widget below the native titlebar. Use the translated toplevel rectangle
+  // directly instead of a hidden proxy whose GTK allocation is deferred.
+  gtk_menu_popup_at_rect(
+      GTK_MENU(session->menu), rect_window, &window_anchor,
+      open_above ? GDK_GRAVITY_NORTH_WEST : GDK_GRAVITY_SOUTH_WEST,
+      open_above ? GDK_GRAVITY_SOUTH_WEST : GDK_GRAVITY_NORTH_WEST, nullptr);
+  if (focus_first) {
+    gtk_menu_shell_select_first(GTK_MENU_SHELL(session->menu), TRUE);
+  } else {
+    gtk_menu_shell_deselect(GTK_MENU_SHELL(session->menu));
   }
-
-  const gint width = gtk_widget_get_allocated_width(widget);
-  const gint height = gtk_widget_get_allocated_height(widget);
-  if (width <= 0 || height <= 0) {
-    return;
-  }
-
-  cairo_region_t* region =
-      create_rounded_window_region(width, height, kHeaderWindowRadius);
-  gdk_window_shape_combine_region(window, region, 0, 0);
-  cairo_region_destroy(region);
 }
 
-static void rounded_window_realize_cb(GtkWidget* widget, gpointer user_data) {
-  configure_rounded_window_shape(widget);
-}
-
-static gboolean rounded_window_configure_event_cb(GtkWidget* widget,
-                                                  GdkEventConfigure* event,
-                                                  gpointer user_data) {
-  configure_rounded_window_shape(widget);
-  return FALSE;
-}
-
-static void configure_transparent_window_backing(GtkWindow* window) {
-  GdkScreen* screen = gtk_window_get_screen(window);
-  GdkVisual* visual = gdk_screen_get_rgba_visual(screen);
-  if (visual != nullptr) {
-    gtk_widget_set_visual(GTK_WIDGET(window), visual);
+static void native_menu_handler_data_free(gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  if (data->active != nullptr) {
+    native_menu_session_dispose(data->active);
   }
-  gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
-  g_signal_connect(window, "draw", G_CALLBACK(clear_transparent_window_cb),
-                   nullptr);
-  g_signal_connect_after(window, "realize",
-                         G_CALLBACK(rounded_window_realize_cb), nullptr);
-  g_signal_connect(window, "configure-event",
-                   G_CALLBACK(rounded_window_configure_event_cb), nullptr);
+  if (data->view != nullptr) {
+    g_object_remove_weak_pointer(
+        G_OBJECT(data->view),
+        reinterpret_cast<gpointer*>(&data->view));
+  }
+  g_free(data);
+}
+
+static void native_menu_method_call_cb(FlMethodChannel*,
+                                       FlMethodCall* method_call,
+                                       gpointer user_data) {
+  auto* data = static_cast<NativeMenuHandlerData*>(user_data);
+  const gchar* method = fl_method_call_get_name(method_call);
+  if (strcmp(method, "show") == 0) {
+    show_native_menu(data, method_call, fl_method_call_get_args(method_call));
+  } else if (strcmp(method, "dismiss") == 0) {
+    gint64 session_id = 0;
+    if (!fl_lookup_positive_int64_arg(fl_method_call_get_args(method_call),
+                                      "sessionId", &session_id)) {
+      respond_native_menu_argument_error(
+          method_call, "sessionId must be a positive integer.");
+      return;
+    }
+    respond_bool(method_call,
+                 native_menu_dismiss_active(data, session_id));
+  } else {
+    fl_method_call_respond_not_implemented(method_call, nullptr);
+  }
+}
+
+static void register_native_menu_channel(MyApplication* self, FlView* view) {
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  self->native_menu_channel = fl_method_channel_new(
+      fl_engine_get_binary_messenger(fl_view_get_engine(view)),
+      kNativeMenuChannel, FL_METHOD_CODEC(codec));
+  auto* data = g_new0(NativeMenuHandlerData, 1);
+  data->view = GTK_WIDGET(view);
+  g_object_add_weak_pointer(G_OBJECT(data->view),
+                            reinterpret_cast<gpointer*>(&data->view));
+  fl_method_channel_set_method_call_handler(
+      self->native_menu_channel, native_menu_method_call_cb, data,
+      native_menu_handler_data_free);
 }
 
 // Called when first Flutter frame received.
@@ -1693,12 +2664,11 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
-  GtkWindow* window =
-      GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+  GtkWindow* window = GTK_WINDOW(hdy_application_window_new());
+  gtk_application_add_window(GTK_APPLICATION(application), window);
   self->main_window = window;
   gtk_window_set_title(window, kApplicationDisplayName);
   gtk_widget_set_name(GTK_WIDGET(window), "busymark-window");
-  configure_transparent_window_backing(window);
   g_autoptr(GdkPixbuf) application_icon = load_application_icon();
   if (application_icon != nullptr) {
     gtk_window_set_default_icon(application_icon);
@@ -1711,23 +2681,22 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_icon_name(window, APPLICATION_ID);
   }
 
-  gboolean use_header_bar = TRUE;
-#ifdef GDK_WINDOWING_X11
-  GdkScreen* screen = gtk_window_get_screen(window);
-  if (GDK_IS_X11_SCREEN(screen)) {
-    const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
-    if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
-      use_header_bar = FALSE;
-    }
-  }
-#endif
-  if (use_header_bar) {
-    GtkWidget* titlebar = create_busymark_titlebar(self);
-    gtk_widget_show_all(titlebar);
-    gtk_window_set_titlebar(window, titlebar);
-  }
+  self->titlebar_handle = hdy_window_handle_new();
+  gtk_widget_set_hexpand(self->titlebar_handle, TRUE);
+  gtk_widget_set_vexpand(self->titlebar_handle, FALSE);
+  // Keep the style scope on the outer native owner. This also makes
+  // focused/backdrop selectors independent of the inner box hierarchy.
+  gtk_style_context_add_class(
+      gtk_widget_get_style_context(self->titlebar_handle),
+      "busymark-titlebar");
+  gtk_container_add(GTK_CONTAINER(self->titlebar_handle),
+                    create_busymark_titlebar_overlay(self));
+  gtk_widget_show_all(self->titlebar_handle);
 
   gtk_window_set_default_size(window, 1280, 720);
+  g_signal_connect(
+      window, "notify::is-active",
+      G_CALLBACK(header_focus_window_is_active_notify_cb), self);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
@@ -1739,7 +2708,13 @@ static void my_application_activate(GApplication* application) {
   gdk_rgba_parse(&background_color, "#00000000");
   fl_view_set_background_color(view, &background_color);
   gtk_widget_show(GTK_WIDGET(view));
-  gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
+
+  GtkWidget* window_content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_box_pack_start(GTK_BOX(window_content), self->titlebar_handle, FALSE,
+                     FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(window_content), GTK_WIDGET(view), TRUE, TRUE, 0);
+  gtk_widget_show(window_content);
+  gtk_container_add(GTK_CONTAINER(window), window_content);
 
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
@@ -1747,8 +2722,10 @@ static void my_application_activate(GApplication* application) {
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   register_header_bar_channel(self, view);
+  register_native_menu_channel(self, view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
+  schedule_header_bar_focus_state_refresh(self);
 }
 
 // Implements GApplication::local_command_line.
@@ -1774,6 +2751,14 @@ static gboolean my_application_local_command_line(GApplication* application,
 // Implements GApplication::startup.
 static void my_application_startup(GApplication* application) {
   G_APPLICATION_CLASS(my_application_parent_class)->startup(application);
+  hdy_init();
+
+  GtkSettings* settings = gtk_settings_get_default();
+  if (settings != nullptr) {
+    g_signal_connect_object(settings, "notify::gtk-theme-name",
+                            G_CALLBACK(gtk_theme_name_changed_cb), application,
+                            G_CONNECT_DEFAULT);
+  }
 }
 
 // Implements GApplication::shutdown.
@@ -1790,28 +2775,25 @@ static void my_application_dispose(GObject* object) {
       gtk_style_context_remove_provider_for_screen(
           screen, GTK_STYLE_PROVIDER(self->header_bar_css_provider));
     }
-    if (self->gtk_accent_css_provider != nullptr) {
-      gtk_style_context_remove_provider_for_screen(
-          screen, GTK_STYLE_PROVIDER(self->gtk_accent_css_provider));
-    }
   }
   g_clear_object(&self->header_bar_css_provider);
-  g_clear_object(&self->gtk_accent_css_provider);
   g_clear_object(&self->header_bar_channel);
+  g_clear_object(&self->native_menu_channel);
+  g_clear_object(&self->main_menu_model);
+  g_clear_object(&self->view_mode_menu_model);
+  g_clear_object(&self->view_mode_action);
+  g_clear_object(&self->header_action_group);
   g_clear_pointer(&self->background_color, g_free);
   g_clear_pointer(&self->sidebar_background_color, g_free);
-  g_clear_pointer(&self->foreground_color, g_free);
-  g_clear_pointer(&self->muted_foreground_color, g_free);
-  g_clear_pointer(&self->disabled_foreground_color, g_free);
-  g_clear_pointer(&self->control_color, g_free);
-  g_clear_pointer(&self->control_hover_color, g_free);
-  g_clear_pointer(&self->accent_color, g_free);
-  g_clear_pointer(&self->accent_foreground_color, g_free);
-  g_clear_pointer(&self->popover_background_color, g_free);
-  g_clear_pointer(&self->border_color, g_free);
-  g_clear_pointer(&self->shade_color, g_free);
+  g_clear_pointer(&self->sidebar_border_color, g_free);
   g_clear_pointer(&self->modal_barrier_color, g_free);
+  g_clear_pointer(&self->tooltip_background_color, g_free);
+  g_clear_pointer(&self->tooltip_foreground_color, g_free);
+  g_clear_pointer(&self->tooltip_border_color, g_free);
   g_clear_pointer(&self->view_mode, g_free);
+  g_clear_pointer(&self->search_query, g_free);
+  g_clear_pointer(&self->foreground_color, g_free);
+  g_clear_pointer(&self->header_configuration_session_id, g_free);
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
 }
@@ -1828,22 +2810,18 @@ static void my_application_class_init(MyApplicationClass* klass) {
 static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
   self->header_bar_channel = nullptr;
+  self->native_menu_channel = nullptr;
   self->header_bar_css_provider = nullptr;
-  self->gtk_accent_css_provider = nullptr;
   self->main_window = nullptr;
   self->flutter_view = nullptr;
+  self->titlebar_handle = nullptr;
   self->titlebar_box = nullptr;
+  self->titlebar_overlay = nullptr;
+  self->modal_scrim = nullptr;
   self->header_bar = nullptr;
   self->sidebar_header_box = nullptr;
-  self->sidebar_search_button = nullptr;
   self->sidebar_title_label = nullptr;
-  self->sidebar_menu_button = nullptr;
-  self->sidebar_menu = nullptr;
-  self->settings_item = nullptr;
-  self->keyboard_shortcuts_item = nullptr;
-  self->markdown_html_item = nullptr;
-  self->report_issue_item = nullptr;
-  self->about_item = nullptr;
+  self->main_menu_model = nullptr;
   self->header_start_box = nullptr;
   self->back_button = nullptr;
   self->sidebar_toggle_button = nullptr;
@@ -1856,32 +2834,38 @@ static void my_application_init(MyApplication* self) {
   self->view_mode_button = nullptr;
   self->view_mode_icon = nullptr;
   self->view_mode_menu = nullptr;
-  self->view_mode_editor_item = nullptr;
-  self->view_mode_source_item = nullptr;
-  self->view_mode_preview_item = nullptr;
-  self->view_mode_split_item = nullptr;
+  self->view_mode_menu_model = nullptr;
   self->refresh_button = nullptr;
+  self->search_button = nullptr;
+  self->main_menu_button = nullptr;
+  self->main_menu = nullptr;
+  self->header_action_group = nullptr;
+  self->view_mode_action = nullptr;
   self->view_mode = nullptr;
+  self->search_query = g_strdup("");
   self->background_color = g_strdup(kDefaultHeaderbarBackground);
   self->sidebar_background_color = g_strdup(kDefaultSidebarBackground);
-  self->foreground_color = nullptr;
-  self->muted_foreground_color = nullptr;
-  self->disabled_foreground_color = nullptr;
-  self->control_color = nullptr;
-  self->control_hover_color = nullptr;
-  self->accent_color = nullptr;
-  self->accent_foreground_color = nullptr;
-  self->popover_background_color = nullptr;
-  self->border_color = nullptr;
-  self->shade_color = nullptr;
+  self->foreground_color = g_strdup(kDefaultForeground);
+  self->sidebar_border_color = nullptr;
   self->modal_barrier_color = nullptr;
+  self->tooltip_background_color = nullptr;
+  self->tooltip_foreground_color = nullptr;
+  self->tooltip_border_color = nullptr;
+  self->tooltip_radius = kDefaultTooltipRadius;
+  self->tooltip_font_size = kDefaultTooltipFontSize;
+  self->tooltip_horizontal_padding = kDefaultTooltipHorizontalPadding;
+  self->tooltip_vertical_padding = kDefaultTooltipVerticalPadding;
+  self->tooltip_minimum_height = kDefaultTooltipMinimumHeight;
   self->sidebar_width = 300;
   self->sidebar_visible = TRUE;
   self->text_direction_rtl = FALSE;
   self->back_visible = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
+  self->modal_barrier_depth = 0;
   self->suppress_header_actions = FALSE;
+  self->header_configuration_session_id = nullptr;
+  self->header_configuration_revision = -1;
 }
 
 MyApplication* my_application_new() {

@@ -43,6 +43,24 @@ void main() {
     expect(parsed.title, 'Front Matter Title');
   });
 
+  test('parseAsync handles documents above the background threshold', () async {
+    final source = List.generate(
+      1800,
+      (index) => '## Section $index\n\nParagraph ${'content ' * 4}$index.\n',
+    ).join('\n');
+
+    final parsed = await parser.parseAsync(
+      filePath: 'large.md',
+      source: source,
+      validateLocalReferences: false,
+    );
+
+    expect(source.length, greaterThan(64 * 1024));
+    expect(parsed.source, source);
+    expect(parsed.headings, hasLength(1800));
+    expect(parsed.headings.last.text, 'Section 1799');
+  });
+
   test('generates Unicode heading anchors for supported languages', () {
     final localizedHeadings = <String, ({String heading, String slug})>{
       'en': (heading: 'Getting Started', slug: 'getting-started'),
@@ -98,6 +116,106 @@ void main() {
     );
   });
 
+  test('deduplicates generated heading IDs in source order', () {
+    final parsed = parser.parse(
+      filePath: 'duplicates.md',
+      source: '# Same\n\n# Same\n\n# !\n\n# ?\n',
+    );
+
+    expect(parsed.headings.map((heading) => heading.id), [
+      'same',
+      'same-1',
+      'section',
+      'section-1',
+    ]);
+  });
+
+  test('generates heading IDs from semantic inline text', () {
+    final parsed = parser.parse(
+      filePath: 'formatted-heading.md',
+      source:
+          '# [Hello](https://example.com) and **friends** '
+          '![Logo](logo.png)\n',
+    );
+
+    expect(parsed.headings.single.text, 'Hello and friends Logo');
+    expect(parsed.headings.single.id, 'hello-and-friends-logo');
+    expect(
+      parsed.busyDocument.blocks
+          .singleWhere((block) => block.kind == BusyBlockKind.heading)
+          .attributes['id'],
+      'hello-and-friends-logo',
+    );
+  });
+
+  test('canonicalizes valid ATX and setext heading variants', () {
+    final parsed = parser.parse(
+      filePath: 'heading-variants.md',
+      source:
+          '   # [Indented](https://example.com) ###\n\n'
+          '#\n\n'
+          'Setext {id="stable"}\n'
+          '====================\n',
+    );
+
+    expect(
+      parsed.headings.map(
+        (heading) =>
+            (heading.level, heading.text, heading.id, heading.generatedId),
+      ),
+      [
+        (1, 'Indented', 'indented', true),
+        (1, '', 'section', true),
+        (1, 'Setext', 'stable', false),
+      ],
+    );
+  });
+
+  test('retains Writerside title when complex list source needs fallback', () {
+    final parsed = parser.parse(
+      filePath: 'Wi-Fi-Interface.md',
+      source: '''
+# Wi-Fi Interface
+
+## Development
+
+1. Create the component.
+
+    ```Bash
+    idf.py create-component wi_fi_sta_interface -C components
+    ```
+
+2. Rename and move the source file. {collapsible="true"}
+
+    1. Rename the file.
+    2. Move it to the source folder.
+3. Update the build file. {collapsible="true"}
+
+    1. Add the required dependencies.
+
+   The build file should look like this:
+
+    ```CMake
+    idf_component_register(SRCS "src/wi_fi_sta_interface.cpp")
+    ```
+   {collapsible="true" collapsed-title="CMakeLists.txt"}
+
+## References
+''',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(parsed.title, 'Wi-Fi Interface');
+    expect(
+      parsed.headings.map((heading) => heading.text),
+      containsAll(['Wi-Fi Interface', 'Development', 'References']),
+    );
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('writerside.topic.missing-title')),
+    );
+  });
+
   test('detects unresolved links, missing images, and missing alt text', () {
     final path = fixture('links_images.md');
     final parsed = parser.parse(
@@ -144,9 +262,15 @@ void main() {
       final downloads = Directory(p.join(fakeHome.path, 'Downloads'))
         ..createSync();
       File(p.join(downloads.path, 'example.jpg')).writeAsBytesSync([0]);
+      final competingHome = Directory(p.join(fakeHome.path, 'snap-real-home'))
+        ..createSync();
       debugLocalImageHomeDirectoryOverride = fakeHome.path;
+      debugLocalImageEnvironmentOverride = {
+        'SNAP_REAL_HOME': competingHome.path,
+      };
       addTearDown(() {
         debugLocalImageHomeDirectoryOverride = null;
+        debugLocalImageEnvironmentOverride = null;
       });
 
       final parsed = parser.parse(
@@ -161,6 +285,7 @@ void main() {
       );
     } finally {
       debugLocalImageHomeDirectoryOverride = null;
+      debugLocalImageEnvironmentOverride = null;
       fakeHome.deleteSync(recursive: true);
     }
   });

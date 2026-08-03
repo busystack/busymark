@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
+import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
@@ -54,9 +56,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         _handleHeaderBarAction(context, event.action);
       });
     });
-    if (headerBar.isAvailable) {
-      _configureHeaderBar(headerBar, sidebarVisible);
-    }
     final startupPath = ref.watch(startupPathProvider);
     if (!_startupPathConsumed &&
         startupPath != null &&
@@ -141,8 +140,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               ],
               if (state.message != null) ...[
                 const SizedBox(height: BusyMarkSpacing.lg),
-                _WelcomeMessage(
+                BusyMarkStatusBox(
                   message: localizeWorkspaceMessage(context, state.message!),
+                  kind: busyMarkWorkspaceMessageStatusKind(state.message!.code),
                 ),
               ],
             ],
@@ -156,68 +156,65 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       welcomeContent,
       if (sidebarOnRight && sidebarVisible) welcomeSidebar,
     ];
+    final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
+        .copyWith(
+          title: context.l10n.appTitle,
+          viewMode: AppViewMode.editor,
+          searchQuery: '',
+          canRefresh: false,
+          documentControlsVisible: false,
+          searchActive: false,
+          searchVisible: false,
+          sidebarVisible: sidebarVisible,
+          sidebarToggleVisible: true,
+          backVisible: false,
+        );
 
-    return Scaffold(
-      backgroundColor: welcomeMainColor,
-      appBar: useNativeHeaderBar
-          ? null
-          : AppBar(
-              leadingWidth: 0,
-              titleSpacing: BusyMarkSpacing.lg,
-              title: Text(
-                context.l10n.appTitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+    return HeaderBarConfigurationPublisher(
+      synchronizer: headerBar.configurationSynchronizer,
+      configuration: headerConfiguration,
+      enabled: headerBar.isAvailable,
+      child: Scaffold(
+        backgroundColor: welcomeMainColor,
+        appBar: useNativeHeaderBar
+            ? null
+            : AppBar(
+                title: Text(
+                  context.l10n.appTitle,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                actions: [
+                  BusyMarkHeaderIconButton(
+                    tooltip: sidebarVisible
+                        ? context.l10n.hideSidebar
+                        : context.l10n.showSidebar,
+                    icon: BusyMarkGlyphs.sidebar,
+                    selected: sidebarVisible,
+                    shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                    onPressed: _toggleSidebar,
+                  ),
+                  BusyMarkMainMenuButton(
+                    onSelected: (action) =>
+                        _handleMainMenuAction(context, headerBar, action),
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ],
               ),
-              actions: [
-                BusyMarkHeaderIconButton(
-                  tooltip: sidebarVisible
-                      ? context.l10n.hideSidebar
-                      : context.l10n.showSidebar,
-                  icon: BusyMarkGlyphs.sidebar,
-                  selected: sidebarVisible,
-                  shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
-                  onPressed: _toggleSidebar,
-                ),
-                BusyMarkMainMenuButton(
-                  onSelected: (action) =>
-                      _handleMainMenuAction(context, headerBar, action),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ],
-            ),
-      body: Row(
-        textDirection: TextDirection.ltr,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: bodyChildren,
+        body: Row(
+          textDirection: TextDirection.ltr,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: bodyChildren,
+        ),
       ),
     );
-  }
-
-  void _configureHeaderBar(
-    LinuxHeaderBarService headerBar,
-    bool sidebarVisible,
-  ) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(() async {
-        await headerBar.setTitleRange(context.l10n.appTitle);
-        await headerBar.setSidebarWidth(BusyMarkSizes.sidebarWidth);
-        await headerBar.setSidebarVisible(sidebarVisible);
-        await headerBar.setSidebarToggleVisible(true);
-        await headerBar.setSearchVisible(false);
-        await headerBar.setBackVisible(false);
-        await headerBar.setDocumentControlsVisible(false);
-        await headerBar.setCanRefresh(false);
-        await headerBar.setSearchActive(false);
-      }());
-    });
   }
 
   void _handleHeaderBarAction(BuildContext context, HeaderBarAction action) {
     switch (action) {
       case HeaderBarAction.settings:
-        context.go('/settings');
+        context.go(settingsLocation(SettingsReturnTarget.welcome));
       case HeaderBarAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
       case HeaderBarAction.keyboardShortcuts:
@@ -260,7 +257,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.settings:
-        context.go('/settings');
+        context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
       case BusyMarkMainMenuAction.markdownAndHtml:
@@ -368,9 +365,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     _logSelectedPickerPath(parentPath);
 
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
-    final created = await showBusyMarkModalDialog<bool>(
+    final created = await showBusyMarkModalEditorDialog<bool>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
+      maxWidth: BusyMarkSizes.dialogWide,
       builder: (context) => _CreateWritersideProjectDialog(
         parentDirectoryPath: parentPath,
         onCreate: (request) => ref
@@ -427,9 +425,7 @@ class _WelcomeSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.sidebar),
+    return BusyMarkSidebarSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -607,101 +603,85 @@ class _CreateWritersideProjectDialogState
         directoryError == null &&
         instanceIdError == null &&
         topicTitleError == null;
-    return BusyMarkDialogShell(
-      title: context.l10n.createWritersideProject,
-      maxWidth: BusyMarkSizes.dialogWide,
-      actions: [
-        BusyMarkDialogButton(
-          label: context.l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          label: _creating ? context.l10n.creating : context.l10n.create,
-          onPressed: canCreate ? _submit : null,
-          suggested: true,
-        ),
-      ],
-      children: [
-        BusyMarkFloatingTextEntryGroup(
-          children: [
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.projectName,
-              controller: _projectNameController,
-              textInputAction: TextInputAction.next,
-              errorText: projectError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.first,
-            ),
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.directoryName,
-              controller: _directoryNameController,
-              textDirection: TextDirection.ltr,
-              textInputAction: TextInputAction.next,
-              errorText: directoryError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.last,
+    return PopScope(
+      canPop: !_creating,
+      child: BusyMarkModalEditorScaffold(
+        title: context.l10n.createWritersideProject,
+        cancelLabel: context.l10n.cancel,
+        saveLabel: context.l10n.create,
+        onCancel: () => Navigator.pop(context),
+        cancelEnabled: !_creating,
+        onSave: canCreate ? _submit : null,
+        saving: _creating,
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.projectName,
+                controller: _projectNameController,
+                textInputAction: TextInputAction.next,
+                errorText: projectError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.directoryName,
+                controller: _directoryNameController,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.next,
+                errorText: directoryError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.instanceName,
+                controller: _instanceNameController,
+                textInputAction: TextInputAction.next,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.instanceId,
+                controller: _instanceIdController,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.next,
+                errorText: instanceIdError,
+              ),
+              BusyMarkGroupedTextEntry(
+                label: context.l10n.startTopicTitle,
+                controller: _topicTitleController,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) {
+                  if (canCreate) {
+                    _submit();
+                  }
+                },
+                errorText: topicTitleError,
+              ),
+            ],
+          ),
+          if (_creationError != null) ...[
+            const SizedBox(height: BusyMarkSpacing.md),
+            BusyMarkStatusBox(
+              message: _creationError!,
+              kind: BusyMarkStatusKind.error,
             ),
           ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntryGroup(
-          children: [
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.instanceName,
-              controller: _instanceNameController,
-              textInputAction: TextInputAction.next,
-              groupPosition: BusyMarkFloatingTextEntryPosition.first,
-            ),
-            BusyMarkFloatingTextEntry(
-              label: context.l10n.instanceId,
-              controller: _instanceIdController,
-              textDirection: TextDirection.ltr,
-              textInputAction: TextInputAction.next,
-              errorText: instanceIdError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.last,
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntry(
-          label: context.l10n.startTopicTitle,
-          controller: _topicTitleController,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) {
-            if (canCreate) {
-              _submit();
-            }
-          },
-          errorText: topicTitleError,
-        ),
-        const SizedBox(height: BusyMarkSpacing.lg),
-        if (_creationError != null) ...[
-          _WelcomeMessage(message: _creationError!),
+          BusyMarkGroupedList(
+            title: context.l10n.location,
+            filled: true,
+            children: [
+              YaruListTile.square(
+                title: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    _targetPath,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: colors.foreground),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: BusyMarkSpacing.lg),
         ],
-        Text(
-          context.l10n.location,
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(color: colors.mutedForeground),
-        ),
-        const SizedBox(height: BusyMarkSpacing.xs),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.control,
-            borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-            border: Border.all(color: colors.subtleBorder),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(BusyMarkSpacing.md),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: SelectableText(
-                _targetPath,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -866,31 +846,20 @@ class _CreateWritersideProjectDialogState
   }
 }
 
-class _WelcomeMessage extends StatelessWidget {
-  const _WelcomeMessage({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.admonitionWarning,
-        borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-        border: Border.all(color: colors.subtleBorder),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(BusyMarkGlyphs.warning),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(child: Text(message)),
-          ],
-        ),
-      ),
-    );
-  }
+BusyMarkStatusKind busyMarkWorkspaceMessageStatusKind(
+  WorkspaceMessageCode code,
+) {
+  return switch (code) {
+    WorkspaceMessageCode.chooseWhereToSaveMarkdown =>
+      BusyMarkStatusKind.information,
+    WorkspaceMessageCode.saveBlockedFileChangedOnDisk =>
+      BusyMarkStatusKind.warning,
+    WorkspaceMessageCode.openFailed ||
+    WorkspaceMessageCode.createWritersideProjectFailed ||
+    WorkspaceMessageCode.createWritersideTopicFailed ||
+    WorkspaceMessageCode.couldNotOpenFile ||
+    WorkspaceMessageCode.saveFailed ||
+    WorkspaceMessageCode.fileOperationFailed ||
+    WorkspaceMessageCode.validationFailed => BusyMarkStatusKind.error,
+  };
 }

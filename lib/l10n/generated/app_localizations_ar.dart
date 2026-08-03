@@ -14,7 +14,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'BusyMark';
 
   @override
-  String get appSubtitle => 'محرر وثائق متوافق مع Markdown وWriterside.';
+  String get appSubtitle =>
+      'محرر لملفات Markdown ومشاريع التوثيق المتوافقة مع Writerside.';
 
   @override
   String get aboutBusyMark => 'حول BusyMark';

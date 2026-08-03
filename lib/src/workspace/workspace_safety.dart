@@ -126,13 +126,14 @@ Future<bool> saveActiveWithOverwriteConfirmation(
       title: context.l10n.fileChangedOnDisk,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
-          child: Text(context.l10n.cancel),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: context.l10n.overwrite,
+          destructive: true,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
-          child: Text(context.l10n.overwrite),
         ),
       ],
       children: [Text(context.l10n.fileChangedOnDiskMessage)],
@@ -207,13 +208,14 @@ Future<_OverwriteAction?> _confirmSaveAsOverwrite(
       title: context.l10n.warning,
       maxWidth: BusyMarkSizes.dialog,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
           onPressed: () => Navigator.pop(context, _OverwriteAction.cancel),
-          child: Text(context.l10n.cancel),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: context.l10n.overwrite,
+          destructive: true,
           onPressed: () => Navigator.pop(context, _OverwriteAction.overwrite),
-          child: Text(context.l10n.overwrite),
         ),
       ],
       children: [Text(context.l10n.errorPathAlreadyExists(savePath))],

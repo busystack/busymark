@@ -31,6 +31,27 @@ void main() {
       parsed.headings[0].id,
       'details',
     ]);
+    expect(
+      preview.outline
+          .map(
+            (heading) => (
+              heading.text,
+              heading.id,
+              heading.sourceStartLine,
+              heading.sourceStartOffset,
+            ),
+          )
+          .toList(),
+      [
+        ('Title', parsed.headings[0].id, 1, 0),
+        (
+          'Details',
+          'details',
+          parsed.headings[1].span.startLine,
+          parsed.headings[1].span.startOffset,
+        ),
+      ],
+    );
   });
 
   test('preview blocks carry source locations for search navigation', () {

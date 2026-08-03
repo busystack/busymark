@@ -4,10 +4,9 @@ import 'dart:io';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yaru/yaru.dart';
 
-import 'busymark_design.dart';
-
-const busyMarkDefaultAccentColor = BusyMarkLinuxPalette.blueAccent;
+final busyMarkDefaultAccentColor = YaruVariant.orange.color;
 
 final initialSystemAccentColorProvider = Provider<Color>(
   (ref) => busyMarkDefaultAccentColor,
@@ -15,7 +14,8 @@ final initialSystemAccentColorProvider = Provider<Color>(
 
 final systemAccentColorProvider = StreamProvider<Color>((ref) async* {
   final fallback = ref.watch(initialSystemAccentColorProvider);
-  yield fallback;
+  var current = fallback;
+  yield current;
 
   if (!Platform.isLinux) {
     return;
@@ -23,10 +23,17 @@ final systemAccentColorProvider = StreamProvider<Color>((ref) async* {
 
   final appearance = LinuxPortalAppearance();
   final initial = await appearance.readAccentColor();
-  if (initial != null && initial != fallback) {
+  if (initial != null && initial != current) {
+    current = initial;
     yield initial;
   }
-  yield* appearance.accentColorChanges().distinct();
+  await for (final color in appearance.accentColorChanges()) {
+    if (color == current) {
+      continue;
+    }
+    current = color;
+    yield color;
+  }
 });
 
 class LinuxPortalAppearance {
@@ -43,10 +50,10 @@ class LinuxPortalAppearance {
     final client = DBusClient.session();
     try {
       final object = _portalObject(client);
-      return await _readFreedesktopAccent(object) ??
-          await _readGnomeAccentName(object);
-    } on Object {
-      return null;
+      return await readPreferredLinuxAccentColor(
+        readGnome: () => _readGnomeAccentName(object),
+        readFreedesktop: () => _readFreedesktopAccent(object),
+      );
     } finally {
       await client.close();
     }
@@ -56,6 +63,22 @@ class LinuxPortalAppearance {
     final client = DBusClient.session();
     try {
       final object = _portalObject(client);
+      final gnomeAccent = await _readAccentSafely(
+        () => _readGnomeAccentName(object),
+      );
+      final resolver = LinuxAccentChangeResolver(
+        gnomeAuthoritative: gnomeAccent != null,
+      );
+      if (gnomeAccent != null) {
+        yield gnomeAccent;
+      } else {
+        final freedesktopAccent = await _readAccentSafely(
+          () => _readFreedesktopAccent(object),
+        );
+        if (freedesktopAccent != null) {
+          yield freedesktopAccent;
+        }
+      }
       final signals = DBusRemoteObjectSignalStream(
         object: object,
         interface: _settingsInterface,
@@ -68,12 +91,7 @@ class LinuxPortalAppearance {
         if (key != _accentColor) {
           continue;
         }
-        final value = signal.values[2].asVariant();
-        final color = namespace == _freedesktopAppearance
-            ? colorFromPortalAccentValue(value)
-            : namespace == _gnomeInterface
-            ? colorFromUbuntuAccentNameValue(value)
-            : null;
+        final color = resolver.resolve(namespace, signal.values[2].asVariant());
         if (color != null) {
           yield color;
         }
@@ -120,6 +138,57 @@ class LinuxPortalAppearance {
   }
 }
 
+/// Resolves the Yaru accent selected by Ubuntu before consulting the generic
+/// freedesktop RGB fallback.
+///
+/// Ubuntu's portal exposes both values, but its generic RGB is an Adwaita
+/// palette color and can differ from the active Yaru GTK theme. The named
+/// setting maps to the same [YaruVariant] used by native GTK controls.
+@visibleForTesting
+Future<Color?> readPreferredLinuxAccentColor({
+  required Future<Color?> Function() readGnome,
+  required Future<Color?> Function() readFreedesktop,
+}) async {
+  final gnomeAccent = await _readAccentSafely(readGnome);
+  if (gnomeAccent != null) {
+    return gnomeAccent;
+  }
+  return _readAccentSafely(readFreedesktop);
+}
+
+Future<Color?> _readAccentSafely(Future<Color?> Function() read) async {
+  try {
+    return await read();
+  } on Object {
+    return null;
+  }
+}
+
+/// Resolves portal changes without allowing the generic freedesktop palette to
+/// replace the Yaru variant that owns native GTK controls.
+@visibleForTesting
+class LinuxAccentChangeResolver {
+  LinuxAccentChangeResolver({bool gnomeAuthoritative = false})
+    : _gnomeAuthoritative = gnomeAuthoritative;
+
+  bool _gnomeAuthoritative;
+
+  Color? resolve(String namespace, DBusValue value) {
+    if (namespace == LinuxPortalAppearance._gnomeInterface) {
+      final color = colorFromUbuntuAccentNameValue(value);
+      if (color != null) {
+        _gnomeAuthoritative = true;
+      }
+      return color;
+    }
+    if (namespace == LinuxPortalAppearance._freedesktopAppearance &&
+        !_gnomeAuthoritative) {
+      return colorFromPortalAccentValue(value);
+    }
+    return null;
+  }
+}
+
 Color? colorFromPortalAccentValue(DBusValue value) {
   final resolved = value.signature == DBusSignature('v')
       ? value.asVariant()
@@ -149,21 +218,20 @@ Color? colorFromUbuntuAccentNameValue(DBusValue value) {
 
 Color? ubuntuAccentNameColor(String name) {
   return switch (name) {
-    'blue' => BusyMarkLinuxPalette.ubuntuBlueAccent,
-    'teal' => BusyMarkLinuxPalette.ubuntuTealAccent,
-    'green' => BusyMarkLinuxPalette.ubuntuGreenAccent,
-    'yellow' => BusyMarkLinuxPalette.ubuntuYellowAccent,
-    'orange' => BusyMarkLinuxPalette.ubuntuOrangeAccent,
-    'red' => BusyMarkLinuxPalette.ubuntuRedAccent,
-    'pink' => BusyMarkLinuxPalette.ubuntuPinkAccent,
-    'purple' => BusyMarkLinuxPalette.ubuntuPurpleAccent,
-    'slate' => BusyMarkLinuxPalette.ubuntuSlateAccent,
-    'brown' => BusyMarkLinuxPalette.ubuntuBrownAccent,
-    'magenta' => BusyMarkLinuxPalette.ubuntuMagentaAccent,
-    'olive' => BusyMarkLinuxPalette.ubuntuOliveAccent,
-    'prussiangreen' => BusyMarkLinuxPalette.ubuntuPrussianGreenAccent,
-    'sage' => BusyMarkLinuxPalette.ubuntuSageAccent,
-    'wartybrown' => BusyMarkLinuxPalette.ubuntuWartyBrownAccent,
+    'blue' => YaruVariant.blue.color,
+    'teal' => YaruVariant.adwaitaTeal.color,
+    'green' => YaruVariant.adwaitaGreen.color,
+    'yellow' => YaruVariant.adwaitaYellow.color,
+    'orange' => YaruVariant.orange.color,
+    'red' => YaruVariant.red.color,
+    'pink' => YaruVariant.magenta.color,
+    'purple' => YaruVariant.purple.color,
+    'slate' => YaruVariant.adwaitaSlate.color,
+    'brown' || 'wartybrown' => YaruVariant.wartyBrown.color,
+    'magenta' => YaruVariant.magenta.color,
+    'olive' => YaruVariant.olive.color,
+    'prussiangreen' => YaruVariant.prussianGreen.color,
+    'sage' => YaruVariant.sage.color,
     _ => null,
   };
 }

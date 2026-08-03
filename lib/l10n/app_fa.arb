@@ -29,7 +29,7 @@
   "@appTitle": {
     "description": "Application name."
   },
-  "appSubtitle": "ویرایشگر مستندات Markdown و پروژه‌های سازگار با Writerside.",
+  "appSubtitle": "ویرایشگر فایل‌های Markdown و پروژه‌های مستندسازی سازگار با Writerside.",
   "@appSubtitle": {
     "description": "Short application description."
   },

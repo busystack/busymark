@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:yaru/yaru.dart';
 
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
-import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../feedback_metadata.dart';
@@ -38,17 +39,22 @@ void showBusyMarkFeedbackDialog(
   LinuxHeaderBarService? headerBarService,
 }) {
   unawaited(
-    showBusyMarkModalDialog<void>(
+    showBusyMarkModalEditorDialog<void>(
       context,
       headerBarService: headerBarService,
-      builder: (context) => const BusyMarkFeedbackDialog(),
-      barrierDismissible: false,
+      maxWidth: 680,
+      maxHeight: 760,
+      builder: (dialogContext) => BusyMarkFeedbackDialog(
+        onCancel: () => Navigator.of(dialogContext).pop(),
+      ),
     ),
   );
 }
 
 class BusyMarkFeedbackDialog extends ConsumerStatefulWidget {
-  const BusyMarkFeedbackDialog({super.key});
+  const BusyMarkFeedbackDialog({super.key, this.onCancel});
+
+  final VoidCallback? onCancel;
 
   @override
   ConsumerState<BusyMarkFeedbackDialog> createState() =>
@@ -110,131 +116,146 @@ class _BusyMarkFeedbackDialogState
     final replyEmailError = _showValidationErrors
         ? _validationMessage(context, validation[FeedbackField.replyEmail])
         : null;
-    return BusyMarkDialogShell(
-      title: context.l10n.reportIssue,
-      closable: !_submitting,
-      maxWidth: BusyMarkSizes.dialogWide,
-      actions: [
-        BusyMarkDialogButton(
-          key: BusyMarkFeedbackKeys.cancel,
-          label: context.l10n.cancel,
-          onPressed: _submitting ? null : () => Navigator.pop(context),
-        ),
-        BusyMarkDialogButton(
-          key: BusyMarkFeedbackKeys.submit,
-          label: _submitting
-              ? context.l10n.feedbackSubmitting
-              : context.l10n.feedbackSubmit,
-          onPressed: _submitting ? null : _submit,
-          suggested: true,
-        ),
-      ],
-      children: [
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            BusyMarkActionRow(
-              title: context.l10n.feedbackCategory,
-              subtitle: categoryError,
-              leading: const Icon(BusyMarkGlyphs.category),
-              destructive: categoryError != null,
-              trailing: SizedBox(
-                width: BusyMarkSizes.controlRowWidth,
-                child: BusyMarkPopupSelector<FeedbackCategory>(
-                  key: BusyMarkFeedbackKeys.category,
-                  value: _category,
-                  label: _category == null
-                      ? context.l10n.feedbackChooseCategory
-                      : _categoryLabel(context, _category!),
-                  tooltip: context.l10n.feedbackCategory,
-                  enabled: !_submitting,
-                  options: [
-                    for (final category in FeedbackCategory.values)
-                      BusyMarkPopupSelectorOption(
-                        value: category,
-                        label: _categoryLabel(context, category),
+    return PopScope(
+      canPop: !_submitting,
+      child: CallbackShortcuts(
+        bindings: {const SingleActivator(LogicalKeyboardKey.escape): _cancel},
+        child: Focus(
+          autofocus: true,
+          child: BusyMarkModalEditorScaffold(
+            title: context.l10n.reportIssue,
+            cancelLabel: context.l10n.cancel,
+            saveLabel: context.l10n.feedbackSubmit,
+            cancelKey: BusyMarkFeedbackKeys.cancel,
+            saveKey: BusyMarkFeedbackKeys.submit,
+            onCancel: _cancel,
+            cancelEnabled: !_submitting,
+            onSave: _submitting ? null : _submit,
+            saving: _submitting,
+            children: [
+              BusyMarkGroupedList(
+                filled: true,
+                children: [
+                  BusyMarkComboRow<FeedbackCategory?>(
+                    key: BusyMarkFeedbackKeys.category,
+                    title: context.l10n.feedbackCategory,
+                    errorText: categoryError,
+                    values: const [null, ...FeedbackCategory.values],
+                    selected: _category,
+                    labelFor: (category) => category == null
+                        ? context.l10n.feedbackChooseCategory
+                        : _categoryLabel(context, category),
+                    enabled: !_submitting,
+                    onSelected: _setCategory,
+                  ),
+                  YaruListTile.square(
+                    title: TextField(
+                      key: BusyMarkFeedbackKeys.subject,
+                      controller: _subjectController,
+                      enabled: !_submitting,
+                      textInputAction: TextInputAction.next,
+                      decoration: busyMarkGroupedTextFieldDecoration(
+                        context,
+                        labelText: context.l10n.feedbackSubject,
+                        errorText: subjectError,
                       ),
-                  ],
-                  onSelected: _setCategory,
-                ),
+                    ),
+                  ),
+                  YaruListTile.square(
+                    title: TextField(
+                      key: BusyMarkFeedbackKeys.message,
+                      controller: _messageController,
+                      enabled: !_submitting,
+                      minLines: 4,
+                      maxLines: 8,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                      decoration: busyMarkGroupedTextFieldDecoration(
+                        context,
+                        labelText: context.l10n.feedbackMessage,
+                        alignLabelWithHint: true,
+                        errorText: messageError,
+                      ),
+                    ),
+                  ),
+                  YaruListTile.square(
+                    title: TextField(
+                      key: BusyMarkFeedbackKeys.replyEmail,
+                      controller: _replyEmailController,
+                      enabled: !_submitting,
+                      textDirection: TextDirection.ltr,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.done,
+                      decoration: busyMarkGroupedTextFieldDecoration(
+                        context,
+                        labelText: context.l10n.feedbackReplyEmail,
+                        errorText: replyEmailError,
+                      ),
+                      onSubmitted: (_) {
+                        if (!_submitting) {
+                          _submit();
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: BusyMarkSpacing.md),
-        BusyMarkFloatingTextEntryGroup(
-          children: [
-            BusyMarkFloatingTextEntry(
-              key: BusyMarkFeedbackKeys.subject,
-              label: context.l10n.feedbackSubject,
-              controller: _subjectController,
-              enabled: !_submitting,
-              autofocus: true,
-              textInputAction: TextInputAction.next,
-              errorText: subjectError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.first,
-            ),
-            BusyMarkFloatingTextEntry(
-              key: BusyMarkFeedbackKeys.message,
-              label: context.l10n.feedbackMessage,
-              controller: _messageController,
-              enabled: !_submitting,
-              minLines: 5,
-              maxLines: 8,
-              keyboardType: TextInputType.multiline,
-              textInputAction: TextInputAction.newline,
-              errorText: messageError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.middle,
-            ),
-            BusyMarkFloatingTextEntry(
-              key: BusyMarkFeedbackKeys.replyEmail,
-              label: context.l10n.feedbackReplyEmail,
-              controller: _replyEmailController,
-              enabled: !_submitting,
-              textDirection: TextDirection.ltr,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) {
-                if (!_submitting) {
-                  _submit();
-                }
-              },
-              errorText: replyEmailError,
-              groupPosition: BusyMarkFloatingTextEntryPosition.last,
-            ),
-          ],
-        ),
-        BusyMarkGroupedList(
-          filled: true,
-          children: [
-            BusyMarkSwitchRow(
-              key: BusyMarkFeedbackKeys.technicalDetails,
-              title: context.l10n.feedbackIncludeTechnicalDetails,
-              subtitle: context.l10n.feedbackTechnicalDetailsDisclosure,
-              leading: const Icon(BusyMarkGlyphs.diagnostics),
-              value: _includeTechnicalDetails,
-              enabled: !_submitting,
-              onChanged: _setIncludeTechnicalDetails,
-            ),
-          ],
-        ),
-        if (_receiptId != null || _failure != null) ...[
-          const SizedBox(height: BusyMarkSpacing.lg),
-          Semantics(
-            key: BusyMarkFeedbackKeys.status,
-            liveRegion: true,
-            child: BusyMarkStatusBox(
-              message: _receiptId != null
-                  ? context.l10n.feedbackSuccess(_receiptId!)
-                  : _failureMessage(context, _failure!),
-              kind: _receiptId != null
-                  ? BusyMarkStatusKind.success
-                  : BusyMarkStatusKind.error,
-            ),
+              BusyMarkGroupedList(
+                filled: true,
+                children: [
+                  YaruCheckboxListTile(
+                    key: BusyMarkFeedbackKeys.technicalDetails,
+                    value: _includeTechnicalDetails,
+                    onChanged: _submitting
+                        ? null
+                        : (value) =>
+                              _setIncludeTechnicalDetails(value ?? false),
+                    title: Text(context.l10n.feedbackIncludeTechnicalDetails),
+                    subtitle: Text(
+                      context.l10n.feedbackTechnicalDetailsDisclosure,
+                    ),
+                    shape: const RoundedRectangleBorder(),
+                  ),
+                ],
+              ),
+              if (_receiptId != null || _failure != null) ...[
+                const SizedBox(height: BusyMarkSpacing.md),
+                Semantics(
+                  key: BusyMarkFeedbackKeys.status,
+                  liveRegion: true,
+                  child: Text(
+                    _receiptId != null
+                        ? context.l10n.feedbackSuccess(_receiptId!)
+                        : _failureMessage(context, _failure!),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _failure != null
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: BusyMarkSpacing.lg),
+            ],
           ),
-        ],
-      ],
+        ),
+      ),
     );
+  }
+
+  void _cancel() {
+    if (_submitting) {
+      return;
+    }
+    final onCancel = widget.onCancel;
+    if (onCancel != null) {
+      onCancel();
+      return;
+    }
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
   }
 
   void _handleFieldChanged() {
@@ -260,7 +281,7 @@ class _BusyMarkFeedbackDialogState
     });
   }
 
-  void _setCategory(FeedbackCategory category) {
+  void _setCategory(FeedbackCategory? category) {
     setState(() {
       if (category != _category) {
         _rotateSubmissionIdAfterAttempt();

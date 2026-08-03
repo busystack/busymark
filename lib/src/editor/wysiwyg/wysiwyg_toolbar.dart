@@ -243,49 +243,56 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   }
 
   Widget _blockStyleMenu(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
-      foregroundColor: colorScheme.onPrimary,
-      backgroundColor: _toolbarButtonBackground(context),
+      transparent: false,
       elevated: true,
+      foregroundColor: BusyMarkLinuxPalette.white,
+      backgroundColor: _editorToolbarButtonBackground(context),
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.paragraph,
           label: context.l10n.paragraph,
           icon: BusyMarkGlyphs.paragraph,
+          shortcut: BusyMarkEditorShortcutLabels.paragraph,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading1,
           label: context.l10n.heading1,
           icon: BusyMarkGlyphs.heading,
+          shortcut: BusyMarkEditorShortcutLabels.heading1,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading2,
           label: context.l10n.heading2,
           icon: BusyMarkGlyphs.heading,
+          shortcut: BusyMarkEditorShortcutLabels.heading2,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading3,
           label: context.l10n.heading3,
           icon: BusyMarkGlyphs.heading,
+          shortcut: BusyMarkEditorShortcutLabels.heading3,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading4,
           label: context.l10n.heading4,
           icon: BusyMarkGlyphs.heading,
+          shortcut: BusyMarkEditorShortcutLabels.heading4,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading5,
           label: context.l10n.heading5,
           icon: BusyMarkGlyphs.heading,
+          shortcut: BusyMarkEditorShortcutLabels.heading5,
         ),
         BusyMarkPopupMenuItem(
           value: BusyWysiwygBlockCommand.heading6,
           label: context.l10n.heading6,
           icon: BusyMarkGlyphs.heading,
+          shortcut: BusyMarkEditorShortcutLabels.heading6,
         ),
       ],
       onSelected: onBlockCommand,
@@ -299,39 +306,28 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required VoidCallback onPressed,
     String? shortcut,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
     return BusyMarkHeaderIconButton(
       tooltip: tooltip,
       icon: icon,
       onPressed: onPressed,
       shortcut: shortcut,
-      foregroundColor: colorScheme.onPrimary,
-      backgroundColor: _toolbarButtonBackground(context),
+      transparent: false,
       elevated: true,
+      foregroundColor: BusyMarkLinuxPalette.white,
+      backgroundColor: _editorToolbarButtonBackground(context),
     );
   }
 
-  WidgetStateProperty<Color?> _toolbarButtonBackground(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  WidgetStateProperty<Color?> _editorToolbarButtonBackground(
+    BuildContext context,
+  ) {
+    final theme = Theme.of(context);
     final colors = BusyMarkSurfaceColors.of(context);
     return WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.disabled)) {
         return colors.disabledControl;
       }
-      if (states.contains(WidgetState.pressed)) {
-        return Color.alphaBlend(
-          colorScheme.onPrimary.withValues(alpha: BusyMarkAlpha.toolbarPressed),
-          colorScheme.primary,
-        );
-      }
-      if (states.contains(WidgetState.hovered) ||
-          states.contains(WidgetState.focused)) {
-        return Color.alphaBlend(
-          colorScheme.onPrimary.withValues(alpha: BusyMarkAlpha.toolbarHover),
-          colorScheme.primary,
-        );
-      }
-      return colorScheme.primary;
+      return theme.colorScheme.primary;
     });
   }
 }
