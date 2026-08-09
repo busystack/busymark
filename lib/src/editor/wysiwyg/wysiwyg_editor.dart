@@ -1150,7 +1150,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           ? KeyEventResult.handled
           : KeyEventResult.ignored;
     }
-    if (event is! KeyDownEvent) {
+    final isRepeatedArrowKey =
+        event is KeyRepeatEvent &&
+        (key == LogicalKeyboardKey.arrowUp ||
+            key == LogicalKeyboardKey.arrowDown ||
+            key == LogicalKeyboardKey.arrowLeft ||
+            key == LogicalKeyboardKey.arrowRight);
+    if (event is! KeyDownEvent && !isRepeatedArrowKey) {
       return KeyEventResult.ignored;
     }
     _activeBlockId = blockId;

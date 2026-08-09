@@ -1617,6 +1617,49 @@ void main() {}
     expect(fieldAt(0).focusNode?.hasFocus, isTrue);
   });
 
+  testWidgets('WYSIWYG repeated arrow keys keep moving between paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) {
+      return tester.widget<TextField>(find.byType(TextField).at(index));
+    }
+
+    expect(fieldAt(0).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(1).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(2).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown);
+  });
+
   testWidgets('WYSIWYG drag selection can copy multiple paragraphs', (
     tester,
   ) async {
