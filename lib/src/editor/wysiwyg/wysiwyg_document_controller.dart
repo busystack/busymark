@@ -1877,7 +1877,7 @@ List<BusyInline> _inlinesFromStyleRanges(
       ..add(range.end);
   }
   final sortedBoundaries = boundaries.toList()..sort();
-  return [
+  final segments = [
     for (var index = 0; index < sortedBoundaries.length - 1; index++)
       if (sortedBoundaries[index + 1] > sortedBoundaries[index])
         _inlineForSegment(
@@ -1889,6 +1889,57 @@ List<BusyInline> _inlinesFromStyleRanges(
           ),
         ),
   ];
+  return _mergeAdjacentInlineStyles(segments);
+}
+
+List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
+  final merged = <BusyInline>[];
+  for (final sourceInline in inlines) {
+    final inline = sourceInline.children.isEmpty
+        ? sourceInline
+        : sourceInline.copyWith(
+            children: _mergeAdjacentInlineStyles(sourceInline.children),
+          );
+    if (merged.isEmpty || !_canMergeInlineStyles(merged.last, inline)) {
+      merged.add(inline);
+      continue;
+    }
+    final previous = merged.removeLast();
+    if (inline.kind == BusyInlineKind.text) {
+      merged.add(previous.copyWith(text: previous.text + inline.text));
+      continue;
+    }
+    final children = _mergeAdjacentInlineStyles([
+      ...previous.children,
+      ...inline.children,
+    ]);
+    merged.add(
+      previous.copyWith(
+        text: children.map((child) => child.plainText).join(),
+        children: children,
+      ),
+    );
+  }
+  return merged;
+}
+
+bool _canMergeInlineStyles(BusyInline left, BusyInline right) {
+  if (left.kind != right.kind || left.destination != right.destination) {
+    return false;
+  }
+  if (left.kind == BusyInlineKind.text) {
+    return left.children.isEmpty && right.children.isEmpty;
+  }
+  return left.children.isNotEmpty &&
+      right.children.isNotEmpty &&
+      switch (left.kind) {
+        BusyInlineKind.strong ||
+        BusyInlineKind.emphasis ||
+        BusyInlineKind.underline ||
+        BusyInlineKind.strikethrough ||
+        BusyInlineKind.link => true,
+        _ => false,
+      };
 }
 
 List<BusyInlineStyleRange> _styleRangesForSlice(

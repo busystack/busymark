@@ -3548,6 +3548,52 @@ void main() {}
     expect(linkController.markdown, 'Alpha [Beta](target.md)\n');
   });
 
+  test('WYSIWYG serializes italic nested at the end of bold text', () {
+    const source =
+        'Learner listens to audio of a word transcription and has to type '
+        'sequence of the phonemes of that word.\n';
+    const boldText = 'listens to audio of a word transcription';
+    const italicText = 'audio of a word transcription';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = controller.document.blocks.first.id;
+    final boldStart = source.indexOf(boldText);
+    final italicStart = source.indexOf(italicText);
+    final formattedEnd = boldStart + boldText.length;
+
+    controller.applyInlineCommand(
+      blockId,
+      BusyWysiwygInlineCommand.bold,
+      boldStart,
+      formattedEnd,
+    );
+    controller.applyInlineCommand(
+      blockId,
+      BusyWysiwygInlineCommand.italic,
+      italicStart,
+      formattedEnd,
+    );
+
+    final markdown = controller.markdown;
+    expect(
+      markdown,
+      'Learner **listens to *audio of a word transcription*** and has to '
+      'type sequence of the phonemes of that word.\n',
+    );
+
+    final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+    final strong = reparsed.busyDocument.blocks.first.inlines.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.strong,
+    );
+    final emphasis = strong.children.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.emphasis,
+    );
+    expect(strong.plainText, boldText);
+    expect(emphasis.plainText, italicText);
+  });
+
   test('WYSIWYG text edits preserve inline ranges where possible', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
