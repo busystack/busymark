@@ -399,6 +399,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         ? _buildEditableBlockField(
             block,
             first: first,
+            listRunEnd: entry.listRunEnd,
             selectedBlockIds: selectedBlockIds,
             selectionRangesByBlockId: selectionRangesByBlockId,
           )
@@ -412,7 +413,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           );
     final indentedContent = Padding(
       padding: EdgeInsetsDirectional.only(
-        start: entry.depth * BusyMarkSizes.wysiwygBlockIndent,
+        start: entry.depth * BusyMarkSizes.documentListIndent,
       ).resolve(blockTextDirection),
       child: content,
     );
@@ -486,6 +487,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   Widget _buildEditableBlockField(
     BusyBlock block, {
     required bool first,
+    required bool listRunEnd,
     required Set<String> selectedBlockIds,
     required Map<String, BusyMarkWysiwygSelectionRange>
     selectionRangesByBlockId,
@@ -495,6 +497,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       key: _blockKeyFor(block.id),
       block: block,
       first: first,
+      listRunEnd: listRunEnd,
       documentFilePath: documentFilePath,
       workspaceRoot: widget.workspaceRoot,
       writersideRoot: widget.writersideRoot,
@@ -667,10 +670,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     int depth = 0,
   ]) {
     final entries = <_EditorRenderEntry>[];
-    for (final block in blocks) {
-      if (block.kind == BusyBlockKind.frontMatter || block.isSourceOnly) {
-        continue;
-      }
+    final visibleBlocks = blocks
+        .where(
+          (block) =>
+              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+        )
+        .toList();
+    for (final (index, block) in visibleBlocks.indexed) {
       if (_isStructuralBlockquote(block)) {
         entries.add(
           _EditorRenderEntry.blockquote(
@@ -681,7 +687,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         );
         continue;
       }
-      entries.add(_EditorRenderEntry.block(block: block, depth: depth));
+      final nextBlock = index + 1 < visibleBlocks.length
+          ? visibleBlocks[index + 1]
+          : null;
+      entries.add(
+        _EditorRenderEntry.block(
+          block: block,
+          depth: depth,
+          listRunEnd:
+              _isListItemBlock(block) &&
+              (nextBlock == null || !_isListItemBlock(nextBlock)),
+        ),
+      );
       if (_showsNestedEditorBlocks(block)) {
         entries.addAll(_editorRenderEntries(block.children, depth + 1));
       }
@@ -3520,9 +3537,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       first: _isFirstRootBlock(block.id),
     );
     final contentPadding = busyMarkWysiwygTextLayoutInsets(block);
-    final prefixWidth = busyMarkWysiwygHasPrefix(block)
-        ? BusyMarkSizes.wysiwygPrefixWidth + BusyMarkSpacing.sm
-        : 0.0;
+    final prefixWidth = busyMarkWysiwygPrefixExtent(block);
     final textDirection = busyMarkWysiwygBlockTextDirection(
       block,
       fallback: Directionality.of(context),
@@ -3561,27 +3576,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   TextStyle _textStyleForBlock(BusyBlock block) {
-    final theme = Theme.of(context).textTheme;
     final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
     return switch (block.kind) {
-      BusyBlockKind.heading when level == 1 => theme.headlineSmall!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 2 => theme.titleLarge!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 3 => theme.titleMedium!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 4 => theme.titleSmall!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 5 => theme.bodyLarge!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading => theme.bodyMedium!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
+      BusyBlockKind.heading => busyMarkDocumentHeadingTextStyle(context, level),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => busyMarkDocumentBodyTextStyle(context),
     };
@@ -3681,17 +3678,21 @@ class _EditableBlockEntry {
 }
 
 class _EditorRenderEntry {
-  const _EditorRenderEntry.block({required this.block, required this.depth})
-    : children = null;
+  const _EditorRenderEntry.block({
+    required this.block,
+    required this.depth,
+    required this.listRunEnd,
+  }) : children = null;
 
   const _EditorRenderEntry.blockquote({
     required this.block,
     required this.depth,
     required this.children,
-  });
+  }) : listRunEnd = false;
 
   final BusyBlock block;
   final int depth;
+  final bool listRunEnd;
   final List<_EditorRenderEntry>? children;
 }
 

@@ -52,6 +52,20 @@ void main() {
     );
   });
 
+  test('document image width resolution is bounded consistently', () {
+    expect(busyMarkDocumentImageWidth(const {}), isNull);
+    expect(busyMarkDocumentImageWidth(const {'width': 'invalid'}), isNull);
+    expect(
+      busyMarkDocumentImageWidth(const {'width': '40px'}),
+      BusyMarkSizes.documentImageMinWidth,
+    );
+    expect(busyMarkDocumentImageWidth(const {'width': '320'}), 320);
+    expect(
+      busyMarkDocumentImageWidth(const {'width': '1200px'}),
+      BusyMarkSizes.documentImageMaxWidth,
+    );
+  });
+
   test('package markdown AST imports into BusyDocument core blocks', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -1308,7 +1322,7 @@ void main() {}
     expect(nestedRect.left, closeTo(parentRect.left, 0.1));
     expect(
       nestedRect.right,
-      closeTo(parentRect.right - BusyMarkSizes.wysiwygBlockIndent, 0.1),
+      closeTo(parentRect.right - BusyMarkSizes.documentListIndent, 0.1),
     );
   });
 

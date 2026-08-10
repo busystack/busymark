@@ -23,6 +23,8 @@ import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
+import 'package:busymark/src/editor/document_list_marker.dart';
+import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
@@ -3605,6 +3607,212 @@ void main() {
     expect(previewStyle?.height, editorStyle?.height);
   });
 
+  testWidgets('Editor and Preview share heading and thematic-break geometry', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    const headings = ['Third', 'Fourth', 'Fifth', 'Sixth'];
+    const service = _SearchWorkspaceService('''
+### Third
+
+#### Fourth
+
+##### Fifth
+
+###### Sixth
+
+Before break.
+
+---
+
+After break.
+''');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/shared-block-geometry.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkDocumentThematicBreak).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    Finder editorHeading(String text) => find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.controller?.text == text,
+    );
+    final editorHeadingRects = <String, Rect>{};
+    final editorHeadingStyles = <String, TextStyle?>{};
+    for (final heading in headings) {
+      final finder = editorHeading(heading);
+      expect(finder, findsOneWidget);
+      editorHeadingRects[heading] = tester.getRect(finder);
+      editorHeadingStyles[heading] = tester.widget<TextField>(finder).style;
+    }
+    final editorBreak = find.byType(BusyMarkDocumentThematicBreak);
+    expect(editorBreak, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkDocumentThematicBreak>(editorBreak).editable,
+      isTrue,
+    );
+    final editorBreakRect = tester.getRect(editorBreak);
+    final editorAfterRect = _rightmostTextRect(tester, 'After break.');
+    expect(
+      editorBreakRect.height,
+      closeTo(
+        BusyMarkInsets.documentThematicBreakBlock.vertical +
+            BusyMarkStroke.thematicBreak,
+        0.01,
+      ),
+    );
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewContent = find.byKey(
+      const ValueKey('preview-document-content'),
+    );
+    Finder previewHeading(String text) => find.descendant(
+      of: previewContent,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is Text && widget.textSpan?.toPlainText() == text,
+      ),
+    );
+    for (final heading in headings) {
+      final finder = previewHeading(heading);
+      expect(finder, findsOneWidget);
+      final previewRect = tester.getRect(finder);
+      final previewStyle = tester.widget<Text>(finder).textSpan?.style;
+      final editorRect = editorHeadingRects[heading]!;
+      final editorStyle = editorHeadingStyles[heading];
+      expect(previewRect.left, closeTo(editorRect.left, 0.1));
+      expect(previewRect.top, closeTo(editorRect.top, 0.1));
+      expect(previewRect.height, closeTo(editorRect.height, 0.1));
+      expect(previewStyle?.fontSize, editorStyle?.fontSize);
+      expect(previewStyle?.fontWeight, editorStyle?.fontWeight);
+      expect(previewStyle?.height, editorStyle?.height);
+    }
+
+    final previewBreak = find.byType(BusyMarkDocumentThematicBreak);
+    expect(previewBreak, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkDocumentThematicBreak>(previewBreak).editable,
+      isFalse,
+    );
+    final previewBreakRect = tester.getRect(previewBreak);
+    final previewAfterRect = _rightmostTextRect(tester, 'After break.');
+    expect(previewBreakRect, editorBreakRect);
+    expect(previewAfterRect.left, closeTo(editorAfterRect.left, 0.1));
+    expect(previewAfterRect.top, closeTo(editorAfterRect.top, 0.1));
+  });
+
+  testWidgets('Editor and Preview share admonition and image presentation', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    const service = _SearchWorkspaceService('''
+<warning>Shared warning.</warning>
+
+![Shared image](missing.png){ width="320" }
+''');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/shared-rich-blocks.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.byType(BusyMarkDocumentAdmonition).evaluate().isNotEmpty &&
+          find.byType(MarkdownImageView).evaluate().isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorAdmonition = find.byType(BusyMarkDocumentAdmonition);
+    final editorImage = find.byType(MarkdownImageView);
+    expect(editorAdmonition, findsOneWidget);
+    expect(editorImage, findsOneWidget);
+    expect(
+      find.descendant(
+        of: editorAdmonition,
+        matching: find.byIcon(BusyMarkGlyphs.warning),
+      ),
+      findsOneWidget,
+    );
+    final editorAdmonitionRect = tester.getRect(editorAdmonition);
+    final editorImageRect = tester.getRect(editorImage);
+    final editorImageWidget = tester.widget<MarkdownImageView>(editorImage);
+    expect(editorImageWidget.width, 320);
+    expect(editorImageWidget.maxWidth, 320);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewAdmonition = find.byType(BusyMarkDocumentAdmonition);
+    final previewImage = find.byType(MarkdownImageView);
+    expect(previewAdmonition, findsOneWidget);
+    expect(previewImage, findsOneWidget);
+    expect(
+      find.descendant(
+        of: previewAdmonition,
+        matching: find.byIcon(BusyMarkGlyphs.warning),
+      ),
+      findsOneWidget,
+    );
+    final previewImageWidget = tester.widget<MarkdownImageView>(previewImage);
+    expect(previewImageWidget.width, editorImageWidget.width);
+    expect(previewImageWidget.maxWidth, editorImageWidget.maxWidth);
+    expect(tester.getRect(previewAdmonition), editorAdmonitionRect);
+    expect(tester.getRect(previewImage), editorImageRect);
+  });
+
   testWidgets('Preview renders structured formatted and nested quotes', (
     tester,
   ) async {
@@ -5242,7 +5450,9 @@ Draft paragraph.
     expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
   });
 
-  testWidgets('preview adds extra vertical space after a list', (tester) async {
+  testWidgets('Editor and Preview share list indentation and run spacing', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1200, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -5252,7 +5462,7 @@ Draft paragraph.
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.preview)
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
     final service = _SearchWorkspaceService(
       '# Title\n\n'
@@ -5279,18 +5489,43 @@ Draft paragraph.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find.byType(BusyMarkDocumentListMarker).evaluate().length == 2) {
         break;
       }
     }
 
-    final first = _rightmostTextRect(tester, 'First item');
-    final second = _rightmostTextRect(tester, 'Second item');
-    final after = _rightmostTextRect(tester, 'After list paragraph.');
-    final itemGap = second.top - first.bottom;
-    final afterListGap = after.top - second.bottom;
+    final editorFirst = _rightmostTextRect(tester, 'First item');
+    final editorSecond = _rightmostTextRect(tester, 'Second item');
+    final editorAfter = _rightmostTextRect(tester, 'After list paragraph.');
+    final editorMarkers = find.byType(BusyMarkDocumentListMarker);
+    expect(editorMarkers, findsNWidgets(2));
+    final editorMarkerRect = tester.getRect(editorMarkers.first);
+    final editorItemGap = editorSecond.top - editorFirst.bottom;
+    final editorAfterListGap = editorAfter.top - editorSecond.bottom;
 
-    expect(afterListGap, greaterThan(itemGap + BusyMarkSpacing.xs));
+    expect(editorAfterListGap, greaterThan(editorItemGap + BusyMarkSpacing.xs));
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewFirst = _rightmostTextRect(tester, 'First item');
+    final previewSecond = _rightmostTextRect(tester, 'Second item');
+    final previewAfter = _rightmostTextRect(tester, 'After list paragraph.');
+    final previewMarkers = find.byType(BusyMarkDocumentListMarker);
+    expect(previewMarkers, findsNWidgets(2));
+    final previewMarkerRect = tester.getRect(previewMarkers.first);
+    final previewItemGap = previewSecond.top - previewFirst.bottom;
+    final previewAfterListGap = previewAfter.top - previewSecond.bottom;
+
+    expect(previewFirst.left, closeTo(editorFirst.left, 0.1));
+    expect(previewSecond.left, closeTo(editorSecond.left, 0.1));
+    expect(previewAfter.left, closeTo(editorAfter.left, 0.1));
+    expect(previewMarkerRect.left, closeTo(editorMarkerRect.left, 0.1));
+    expect(previewMarkerRect.width, editorMarkerRect.width);
+    expect(previewItemGap, closeTo(editorItemGap, 0.1));
+    expect(previewAfterListGap, closeTo(editorAfterListGap, 0.1));
   });
 
   testWidgets('preview renders nested list children', (tester) async {

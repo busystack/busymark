@@ -85,6 +85,25 @@ void main() {
     expect(File('pubspec.yaml').readAsStringSync(), contains('name: busymark'));
   });
 
+  test('release version metadata stays in sync', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final version = RegExp(
+      r'^version:\s*([^\s]+)\s*$',
+      multiLine: true,
+    ).firstMatch(pubspec)!.group(1)!;
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final appMetadata = File(
+      'lib/src/app/app_metadata.dart',
+    ).readAsStringSync();
+    final appstream = File(
+      'linux/io.busystack.busymark.metainfo.xml',
+    ).readAsStringSync();
+
+    expect(snapcraft, contains('version: "$version"'));
+    expect(appMetadata, contains("busyMarkAppVersion = '$version'"));
+    expect(appstream, contains('<release version="$version"'));
+  });
+
   test('top-level app routes do not animate between desktop surfaces', () {
     final router = File('lib/src/app/app_router.dart').readAsStringSync();
 
@@ -653,6 +672,59 @@ void main() {
     expect(blocks, contains('busyMarkDocumentBodyTextStyle(context)'));
     expect(editor, contains('busyMarkDocumentBodyTextStyle(context)'));
   });
+
+  test(
+    'equivalent Editor and Preview blocks use shared document primitives',
+    () {
+      final workspace = File(
+        'lib/src/workspace/presentation/workspace_screen.dart',
+      ).readAsStringSync();
+      final blocks = File(
+        'lib/src/editor/wysiwyg/wysiwyg_block_widgets.dart',
+      ).readAsStringSync();
+      final editor = File(
+        'lib/src/editor/wysiwyg/wysiwyg_editor.dart',
+      ).readAsStringSync();
+      final surface = File(
+        'lib/src/editor/document_surface.dart',
+      ).readAsStringSync();
+      final thematicBreak = File(
+        'lib/src/editor/document_thematic_break.dart',
+      ).readAsStringSync();
+      final listMarker = File(
+        'lib/src/editor/document_list_marker.dart',
+      ).readAsStringSync();
+
+      expect(
+        thematicBreak,
+        contains('class BusyMarkDocumentThematicBreak extends StatelessWidget'),
+      );
+      expect(workspace, contains('const BusyMarkDocumentThematicBreak()'));
+      expect(blocks, contains('BusyMarkDocumentThematicBreak('));
+      expect(workspace, isNot(contains('class _PreviewThematicBreak')));
+      expect(blocks, isNot(contains('class _ThematicBreakBlockView')));
+
+      expect(surface, contains('busyMarkDocumentHeadingTextStyle('));
+      expect(workspace, contains('busyMarkDocumentHeadingTextStyle('));
+      expect(blocks, contains('busyMarkDocumentHeadingTextStyle('));
+      expect(editor, contains('busyMarkDocumentHeadingTextStyle('));
+
+      expect(
+        listMarker,
+        contains('class BusyMarkDocumentListMarker extends StatelessWidget'),
+      );
+      expect(listMarker, contains('busyMarkDocumentListItemPadding('));
+      expect(workspace, contains('BusyMarkDocumentListMarker('));
+      expect(blocks, contains('BusyMarkDocumentListMarker('));
+      expect(workspace, contains('busyMarkDocumentListItemPadding('));
+      expect(blocks, contains('busyMarkDocumentListItemPadding('));
+
+      expect(workspace, contains('BusyMarkDocumentAdmonition('));
+      expect(blocks, contains('BusyMarkDocumentAdmonition('));
+      expect(workspace, contains('busyMarkDocumentImageWidth('));
+      expect(blocks, contains('busyMarkDocumentImageWidth('));
+    },
+  );
 
   test('workspace isolates technical labels only at rendering boundaries', () {
     final workspace = File(

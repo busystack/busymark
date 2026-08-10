@@ -13,6 +13,24 @@ import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../core/local_image_resolver.dart';
 
+/// Resolves an authored image width using the shared document-view bounds.
+double? busyMarkDocumentImageWidth(Map<String, String> attributes) {
+  final value = attributes['width'];
+  if (value == null) {
+    return null;
+  }
+  final parsed = double.tryParse(value.replaceAll(RegExp('[^0-9.]'), ''));
+  if (parsed == null || parsed <= 0) {
+    return null;
+  }
+  return parsed
+      .clamp(
+        BusyMarkSizes.documentImageMinWidth,
+        BusyMarkSizes.documentImageMaxWidth,
+      )
+      .toDouble();
+}
+
 class MarkdownImageView extends StatelessWidget {
   const MarkdownImageView({
     super.key,
@@ -26,7 +44,7 @@ class MarkdownImageView extends StatelessWidget {
     this.onRemoteImageBlocked,
     this.width,
     this.height,
-    this.maxWidth = 760,
+    this.maxWidth = BusyMarkSizes.documentImageMaxWidth,
     this.maxHeight,
   });
 
