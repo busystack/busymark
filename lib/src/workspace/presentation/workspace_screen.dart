@@ -28,8 +28,10 @@ import '../../core/uri_utils.dart';
 import '../../editor/document_callout.dart';
 import '../../editor/document_code_block.dart';
 import '../../editor/document_layout.dart';
+import '../../editor/document_list_marker.dart';
 import '../../editor/document_surface.dart';
 import '../../editor/document_text_direction.dart';
+import '../../editor/document_thematic_break.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_document.dart';
@@ -7819,7 +7821,7 @@ class _PreviewBlockView extends StatelessWidget {
           style: _diffPreviewTextStyle(
             context,
             displayBlock,
-            _headingStyle(context, displayBlock.level),
+            busyMarkDocumentHeadingTextStyle(context, displayBlock.level),
           ),
         ),
       ),
@@ -7838,13 +7840,8 @@ class _PreviewBlockView extends StatelessWidget {
         block: displayBlock,
         workspace: workspace,
       ),
-      PreviewBlockKind.admonition => BusyMarkDocumentCallout(
-        icon: _admonitionIcon(displayBlock.attributes['style']),
-        backgroundColor: switch (displayBlock.attributes['style']) {
-          'warning' => colors.admonitionWarning,
-          'tip' => colors.admonitionTip,
-          _ => colors.admonitionNote,
-        },
+      PreviewBlockKind.admonition => BusyMarkDocumentAdmonition(
+        style: displayBlock.attributes['style'],
         child: _PreviewInlineText(
           block: displayBlock,
           style: _diffPreviewTextStyle(context, displayBlock, null),
@@ -7859,9 +7856,11 @@ class _PreviewBlockView extends StatelessWidget {
         child: Text(displayBlock.text),
       ),
       PreviewBlockKind.list => Padding(
-        padding: EdgeInsets.only(
-          top: BusyMarkSpacing.xs,
-          bottom: _listBottomSpacing(displayBlock),
+        padding: busyMarkDocumentListItemPadding(
+          listRunEnd: listRunEnd,
+          endsWithNestedList:
+              displayBlock.children.isNotEmpty &&
+              displayBlock.children.last.kind == PreviewBlockKind.list,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -7869,14 +7868,14 @@ class _PreviewBlockView extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: BusyMarkSizes.previewListMarkerWidth,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: BusyMarkSizes.previewListMarkerTopInset,
-                    ),
-                    child: _ListMarker(block: displayBlock),
-                  ),
+                BusyMarkDocumentListMarker(
+                  ordered: displayBlock.attributes['ordered'] == 'true',
+                  marker: displayBlock.attributes['marker'],
+                  task: switch (displayBlock.attributes['task']) {
+                    'true' => true,
+                    'false' => false,
+                    _ => null,
+                  },
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
                 Expanded(
@@ -7890,8 +7889,7 @@ class _PreviewBlockView extends StatelessWidget {
             if (displayBlock.children.isNotEmpty)
               Padding(
                 padding: const EdgeInsetsDirectional.only(
-                  start:
-                      BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
+                  start: BusyMarkSizes.documentListIndent,
                 ),
                 child: _previewChildBlocks(displayBlock.children, first: false),
               ),
@@ -7907,10 +7905,7 @@ class _PreviewBlockView extends StatelessWidget {
               )
             : _previewChildBlocks(displayBlock.children, first: true),
       ),
-      PreviewBlockKind.thematicBreak => Padding(
-        padding: const EdgeInsets.symmetric(vertical: BusyMarkSpacing.mdPlus),
-        child: const _PreviewThematicBreak(),
-      ),
+      PreviewBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
       PreviewBlockKind.table => _PreviewTable(block: displayBlock),
       PreviewBlockKind.container
           when displayBlock.attributes['htmlTag'] == 'figure' =>
@@ -8017,17 +8012,6 @@ class _PreviewBlockView extends StatelessWidget {
     };
   }
 
-  double _listBottomSpacing(PreviewBlock displayBlock) {
-    if (!listRunEnd) {
-      return BusyMarkSpacing.xs;
-    }
-    if (displayBlock.children.isNotEmpty &&
-        displayBlock.children.last.kind == PreviewBlockKind.list) {
-      return BusyMarkSpacing.xs;
-    }
-    return BusyMarkSpacing.md;
-  }
-
   bool _isLastListBlock(List<PreviewBlock> blocks, int index) {
     return blocks[index].kind == PreviewBlockKind.list &&
         (index == blocks.length - 1 ||
@@ -8094,23 +8078,6 @@ class _PreviewBlockView extends StatelessWidget {
       sourceEndOffset: block.sourceEndOffset,
     );
   }
-
-  TextStyle? _headingStyle(BuildContext context, int? level) {
-    final theme = Theme.of(context).textTheme;
-    return switch (level ?? 2) {
-      1 => theme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-      2 => theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-      _ => theme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-    };
-  }
-
-  IconData _admonitionIcon(String? style) {
-    return switch (style) {
-      'warning' => BusyMarkGlyphs.warning,
-      'tip' => BusyMarkGlyphs.tip,
-      _ => BusyMarkGlyphs.info,
-    };
-  }
 }
 
 TextDirection _previewBlockTextDirection(
@@ -8171,13 +8138,14 @@ class _PreviewTable extends StatelessWidget {
                 children: [
                   for (var index = 0; index < columnCount; index += 1)
                     Padding(
-                      padding: BusyMarkInsets.previewTableCell,
+                      padding: BusyMarkInsets.documentTableCell,
                       child: index < row.children.length
                           ? _PreviewInlineText(
                               block: row.children[index],
                               style: row.attributes['header'] == 'true'
-                                  ? Theme.of(context).textTheme.bodyMedium
-                                        ?.copyWith(fontWeight: FontWeight.w700)
+                                  ? busyMarkDocumentBodyTextStyle(
+                                      context,
+                                    ).copyWith(fontWeight: FontWeight.w700)
                                   : null,
                             )
                           : const SizedBox.shrink(),
@@ -8185,26 +8153,6 @@ class _PreviewTable extends StatelessWidget {
                 ],
               ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PreviewThematicBreak extends StatelessWidget {
-  const _PreviewThematicBreak();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Center(
-      child: Container(
-        height: BusyMarkTypography.previewThematicBreakHeight,
-        decoration: BoxDecoration(
-          color: colors.mutedForeground.withValues(
-            alpha: BusyMarkAlpha.thematicBreak,
-          ),
-          borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
         ),
       ),
     );
@@ -8452,46 +8400,6 @@ double _previewBlockTargetFraction(
   return 0.0;
 }
 
-class _ListMarker extends StatelessWidget {
-  const _ListMarker({required this.block});
-
-  final PreviewBlock block;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final task = block.attributes['task'];
-    if (task != null) {
-      return Icon(
-        task == 'true' ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
-      );
-    }
-    if (block.attributes['ordered'] == 'true') {
-      return Text(
-        block.attributes['marker'] ?? '1.',
-        textAlign: TextAlign.end,
-        style: Theme.of(
-          context,
-        ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(top: BusyMarkSizes.listMarkerTopInset),
-      child: SizedBox.square(
-        dimension: BusyMarkSizes.markerDot,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.mutedForeground,
-            shape: BoxShape.circle,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _PreviewFigure extends StatelessWidget {
   const _PreviewFigure({
     required this.block,
@@ -8581,12 +8489,12 @@ class _PreviewFigure extends StatelessWidget {
       if (child.kind != PreviewBlockKind.image) {
         continue;
       }
-      final width = _previewImageWidth(child);
+      final width = busyMarkDocumentImageWidth(child.attributes);
       if (width != null) {
         return math.max(width, _captionMinWidth);
       }
     }
-    return BusyMarkSizes.previewImageMaxWidth;
+    return BusyMarkSizes.documentImageMaxWidth;
   }
 
   bool _isLastListBlock(List<PreviewBlock> blocks, int index) {
@@ -8608,7 +8516,7 @@ class _PreviewImageBlock extends ConsumerWidget {
   const _PreviewImageBlock({
     required this.block,
     required this.workspace,
-    this.padding = const EdgeInsets.symmetric(vertical: BusyMarkSpacing.smPlus),
+    this.padding = BusyMarkInsets.documentImageBlock,
   });
 
   final PreviewBlock block;
@@ -8617,7 +8525,7 @@ class _PreviewImageBlock extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final width = _previewImageWidth(block);
+    final width = busyMarkDocumentImageWidth(block.attributes);
     final source = _previewImageSource(block);
     final activeFilePath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
@@ -8627,20 +8535,26 @@ class _PreviewImageBlock extends ConsumerWidget {
     );
     return Padding(
       padding: padding,
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: MarkdownImageView(
-          source: source,
-          alt: block.text,
-          activeFilePath: activeFilePath ?? '',
-          workspaceRoot: _imageWorkspaceRoot(workspace),
-          writersideRoot: workspace?.writersideModule?.rootPath,
-          imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
-          allowRemoteImages: allowRemoteImages,
-          onRemoteImageBlocked: () =>
-              unawaited(_showRemoteImagesPrompt(context, ref)),
-          width: width,
-          maxWidth: width ?? BusyMarkSizes.previewImageMaxWidth,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: BusyMarkSizes.documentImageMinHeight,
+        ),
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: MarkdownImageView(
+            source: source,
+            alt: block.text,
+            activeFilePath: activeFilePath ?? '',
+            workspaceRoot: _imageWorkspaceRoot(workspace),
+            writersideRoot: workspace?.writersideModule?.rootPath,
+            imagesDir:
+                workspace?.writersideModule?.config.imagesDir ?? 'images',
+            allowRemoteImages: allowRemoteImages,
+            onRemoteImageBlocked: () =>
+                unawaited(_showRemoteImagesPrompt(context, ref)),
+            width: width,
+            maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
+          ),
         ),
       ),
     );
@@ -8693,23 +8607,6 @@ String? _previewImageSourceFromInline(PreviewInline inline) {
     }
   }
   return null;
-}
-
-double? _previewImageWidth(PreviewBlock block) {
-  final value = block.attributes['width'];
-  if (value == null) {
-    return null;
-  }
-  final parsed = double.tryParse(value.replaceAll(RegExp('[^0-9.]'), ''));
-  if (parsed == null || parsed <= 0) {
-    return null;
-  }
-  return parsed
-      .clamp(
-        BusyMarkSizes.previewImageMinWidth,
-        BusyMarkSizes.previewImageMaxWidth,
-      )
-      .toDouble();
 }
 
 InlineSpan _previewInlineSpan(
