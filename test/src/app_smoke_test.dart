@@ -3813,7 +3813,9 @@ void main() {
     expect(service.savedText, '# Edited Introduction\n');
   });
 
-  testWidgets('Tab inserts a tab character in editor view', (tester) async {
+  testWidgets('Tab inserts a tab character in editor view paragraphs', (
+    tester,
+  ) async {
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
           .copyWith(
@@ -3821,7 +3823,7 @@ void main() {
             editorToolbarPlacement: EditorToolbarPlacement.bottomLeft,
           )
           .toJson();
-    final service = _SearchWorkspaceService('- Item\n');
+    final service = _SearchWorkspaceService('Paragraph\n');
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
@@ -3861,10 +3863,10 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
 
-    expect(controller.text, '\tItem');
+    expect(controller.text, '\tParagraph');
     expect(
       container.read(workspaceControllerProvider).activeText,
-      '- \tItem\n',
+      '\tParagraph\n',
     );
     await tester.pump(const Duration(seconds: 2));
     await tester.pump();

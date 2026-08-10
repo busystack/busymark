@@ -195,11 +195,12 @@ abstract final class BusyMarkTypography {
     'DejaVu Sans',
   ];
   static const double codeLineHeight = 1.45;
+  static const double sourceEditorLineHeight = 1.6;
   static const double bodyLineHeight = 1.5;
   static const double defaultFontSize = 14;
   static const double tooltipFontSize = defaultFontSize;
   static const double previewThematicBreakHeight = BusyMarkStroke.thematicBreak;
-  static const double sourceCursorHeightScale = 1.22;
+  static const double sourceCursorHeightScale = 1.34;
   static const double sourceLineNumberScale = 0.92;
   static const double hiddenLayoutFontSize = 0.01;
   static const double hiddenLayoutHeight = 0.01;

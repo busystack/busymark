@@ -1,3 +1,5 @@
+import 'dart:ui' show BoxHeightStyle;
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -6,9 +8,12 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/source/source_gutter.dart'
+    show sourceTextHeightBehavior;
 import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
@@ -255,4 +260,93 @@ void main() {
     await tester.pump();
     expect(find.byTooltip(en.expandKind(en.foldKindSection)), findsOneWidget);
   });
+
+  testWidgets(
+    'source editor gives glyphs, caret, and selection breathing room',
+    (tester) async {
+      const source = 'Agjpqy\nSecond line\n';
+      const fontSize = 14.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.dark,
+            accentColor: BusyMarkLinuxPalette.blueAccent,
+          ),
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: source,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/topic.md',
+                diagnostics: const [],
+                editorFontSize: fontSize,
+                wordWrap: true,
+                searchActive: false,
+                searchOptions: const SourceSearchOptions(),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (_, _) {},
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      final renderEditable = _findRenderEditable(
+        tester.renderObject<RenderObject>(find.byType(EditableText)),
+      );
+      expect(renderEditable, isNotNull);
+      expect(field.style?.height, BusyMarkTypography.sourceEditorLineHeight);
+      expect(field.selectionHeightStyle, BoxHeightStyle.strut);
+      expect(
+        field.cursorHeight,
+        fontSize * BusyMarkTypography.sourceCursorHeightScale,
+      );
+
+      const selection = TextSelection(baseOffset: 0, extentOffset: 6);
+      final selectionBox = renderEditable!
+          .getBoxesForSelection(selection)
+          .single
+          .toRect();
+      final caret = renderEditable.getLocalRectForCaret(
+        const TextPosition(offset: 3),
+      );
+      final textPainter = TextPainter(
+        text: TextSpan(text: source, style: field.style),
+        strutStyle: field.strutStyle,
+        textDirection: TextDirection.ltr,
+        textHeightBehavior: sourceTextHeightBehavior,
+      )..layout(maxWidth: 800);
+      final glyphBox = textPainter
+          .getBoxesForSelection(selection, boxHeightStyle: BoxHeightStyle.tight)
+          .single
+          .toRect();
+      textPainter.dispose();
+
+      expect(selectionBox.top, lessThan(glyphBox.top));
+      expect(selectionBox.bottom, greaterThan(glyphBox.bottom));
+      expect(caret.top, lessThan(glyphBox.top));
+      expect(caret.bottom, greaterThan(glyphBox.bottom));
+      expect(selectionBox.bottom - glyphBox.bottom, greaterThan(2));
+      expect(selectionBox.bottom - caret.bottom, greaterThan(1));
+    },
+  );
+}
+
+RenderEditable? _findRenderEditable(RenderObject root) {
+  if (root is RenderEditable) {
+    return root;
+  }
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findRenderEditable(child);
+  });
+  return result;
 }

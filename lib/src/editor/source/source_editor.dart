@@ -252,45 +252,48 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                               },
                             ),
                       },
-                      child: TextField(
-                        controller: _controller,
-                        undoController: _undoController,
-                        focusNode: _focusNode,
-                        scrollController: _scrollController,
-                        textDirection: TextDirection.ltr,
-                        keyboardType: widget.wordWrap
-                            ? TextInputType.multiline
-                            : TextInputType.text,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        smartDashesType: SmartDashesType.disabled,
-                        smartQuotesType: SmartQuotesType.disabled,
-                        maxLines: null,
-                        expands: true,
-                        textAlignVertical: TextAlignVertical.top,
-                        style: _sourceTextStyle,
-                        strutStyle: sourceStrutStyle,
-                        selectionHeightStyle: BoxHeightStyle.max,
-                        selectionWidthStyle: BoxWidthStyle.tight,
-                        cursorColor: colors.foreground.withValues(
-                          alpha: BusyMarkAlpha.sourceCursor,
+                      child: DefaultTextHeightBehavior(
+                        textHeightBehavior: sourceTextHeightBehavior,
+                        child: TextField(
+                          controller: _controller,
+                          undoController: _undoController,
+                          focusNode: _focusNode,
+                          scrollController: _scrollController,
+                          textDirection: TextDirection.ltr,
+                          keyboardType: widget.wordWrap
+                              ? TextInputType.multiline
+                              : TextInputType.text,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          smartDashesType: SmartDashesType.disabled,
+                          smartQuotesType: SmartQuotesType.disabled,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          style: _sourceTextStyle,
+                          strutStyle: sourceStrutStyle,
+                          selectionHeightStyle: BoxHeightStyle.strut,
+                          selectionWidthStyle: BoxWidthStyle.tight,
+                          cursorColor: colors.foreground.withValues(
+                            alpha: BusyMarkAlpha.sourceCursor,
+                          ),
+                          cursorHeight:
+                              widget.editorFontSize *
+                              BusyMarkTypography.sourceCursorHeightScale,
+                          cursorWidth: BusyMarkStroke.sourceCursor,
+                          decoration: const InputDecoration(
+                            isCollapsed: true,
+                            filled: false,
+                            fillColor: BusyMarkLinuxPalette.transparent,
+                            hoverColor: BusyMarkLinuxPalette.transparent,
+                            focusColor: BusyMarkLinuxPalette.transparent,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: BusyMarkInsets.sourceEditor,
+                          ),
+                          onChanged: (_) => _handleSourceChanged(),
                         ),
-                        cursorHeight:
-                            widget.editorFontSize *
-                            BusyMarkTypography.sourceCursorHeightScale,
-                        cursorWidth: BusyMarkStroke.sourceCursor,
-                        decoration: const InputDecoration(
-                          isCollapsed: true,
-                          filled: false,
-                          fillColor: BusyMarkLinuxPalette.transparent,
-                          hoverColor: BusyMarkLinuxPalette.transparent,
-                          focusColor: BusyMarkLinuxPalette.transparent,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: BusyMarkInsets.sourceEditor,
-                        ),
-                        onChanged: (_) => _handleSourceChanged(),
                       ),
                     ),
                   ),
@@ -718,7 +721,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     fontFamily: BusyMarkTypography.monoFontFamily,
     fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
     fontSize: widget.editorFontSize,
-    height: BusyMarkTypography.codeLineHeight,
+    height: BusyMarkTypography.sourceEditorLineHeight,
     leadingDistribution: TextLeadingDistribution.even,
   );
 

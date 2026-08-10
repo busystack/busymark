@@ -784,7 +784,10 @@ void main() {
       sourceEditor,
       contains('focusColor: BusyMarkLinuxPalette.transparent'),
     );
-    expect(sourceEditor, contains('selectionHeightStyle: BoxHeightStyle.max'));
+    expect(
+      sourceEditor,
+      contains('selectionHeightStyle: BoxHeightStyle.strut'),
+    );
     expect(sourceEditor, contains('selectionWidthStyle: BoxWidthStyle.tight'));
     expect(sourceEditor, contains('cursorColor: colors.foreground.withValues'));
     expect(sourceEditor, contains('BusyMarkAlpha.sourceCursor'));
