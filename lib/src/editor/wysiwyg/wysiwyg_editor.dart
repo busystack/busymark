@@ -1260,12 +1260,13 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return KeyEventResult.handled;
     }
     if (keyboard.isControlPressed &&
-        !keyboard.isShiftPressed &&
         !keyboard.isAltPressed &&
         !keyboard.isMetaPressed &&
         (key == LogicalKeyboardKey.arrowLeft ||
             key == LogicalKeyboardKey.arrowRight)) {
-      final boundaryResult = _moveWordCaretAcrossBlockBoundary(blockId, key);
+      final boundaryResult = keyboard.isShiftPressed
+          ? _extendKeyboardSelectionByWord(blockId, key)
+          : _moveWordCaretAcrossBlockBoundary(blockId, key);
       if (boundaryResult == KeyEventResult.handled) {
         return boundaryResult;
       }
@@ -1485,6 +1486,25 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return KeyEventResult.handled;
   }
 
+  KeyEventResult _extendKeyboardSelectionByWord(
+    String blockId,
+    LogicalKeyboardKey key,
+  ) {
+    final selection = _keyboardSelectionFor(blockId);
+    if (selection == null) {
+      return KeyEventResult.ignored;
+    }
+    final target = _wordCaretTarget(selection.extent, key);
+    if (target == null) {
+      return KeyEventResult.ignored;
+    }
+    _resetVerticalCaretMovement();
+    _applyKeyboardSelection(
+      _DocumentTextSelection(anchor: selection.anchor, extent: target),
+    );
+    return KeyEventResult.handled;
+  }
+
   _DocumentTextSelection? _keyboardSelectionFor(String fallbackBlockId) {
     final documentSelection = _documentSelection;
     if (documentSelection != null) {
@@ -1539,6 +1559,54 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return _DocumentTextPosition(
         blockId: position.blockId,
         offset: boundary.getLeadingTextBoundaryAt(offset - 1) ?? 0,
+      );
+    }
+    final nextBlock = _relativeFocusableBlock(
+      position.blockId,
+      forward ? 1 : -1,
+    );
+    if (nextBlock == null) {
+      return position;
+    }
+    final nextController = _textControllerFor(nextBlock);
+    return _DocumentTextPosition(
+      blockId: nextBlock.id,
+      offset: forward ? 0 : nextController.text.length,
+    );
+  }
+
+  _DocumentTextPosition? _wordCaretTarget(
+    _DocumentTextPosition position,
+    LogicalKeyboardKey key,
+  ) {
+    final block = _documentController.blockById(position.blockId);
+    final controller = _textControllers[position.blockId];
+    if (block == null || controller == null) {
+      return null;
+    }
+    final textDirection = busyMarkWysiwygBlockTextDirection(
+      block,
+      fallback: Directionality.of(context),
+    );
+    final forwardKey = textDirection == TextDirection.rtl
+        ? LogicalKeyboardKey.arrowLeft
+        : LogicalKeyboardKey.arrowRight;
+    final forward = key == forwardKey;
+    final offset = position.offset.clamp(0, controller.text.length).toInt();
+    if ((forward && offset < controller.text.length) ||
+        (!forward && offset > 0)) {
+      final wordBoundary = _renderEditableForBlock(
+        position.blockId,
+      )?.wordBoundaries.moveByWordBoundary;
+      if (wordBoundary == null) {
+        return null;
+      }
+      return _DocumentTextPosition(
+        blockId: position.blockId,
+        offset: forward
+            ? wordBoundary.getTrailingTextBoundaryAt(offset) ??
+                  controller.text.length
+            : wordBoundary.getLeadingTextBoundaryAt(offset - 1) ?? 0,
       );
     }
     final nextBlock = _relativeFocusableBlock(
