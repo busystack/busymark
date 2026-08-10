@@ -380,6 +380,22 @@ void main() {
     expect(fieldAt(0).focusNode!.hasFocus, isTrue);
     expect(fieldAt(0).controller!.selection.extentOffset, firstText.length);
 
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.arrowLeft,
+      control: true,
+    );
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.arrowRight,
+      control: true,
+    );
+    expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(0).controller!.selection.extentOffset, firstText.length);
+
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);

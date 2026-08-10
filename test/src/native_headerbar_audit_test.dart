@@ -90,6 +90,7 @@ void main() {
       'title',
       'viewMode',
       'canRefresh',
+      'canExportPdf',
       'documentControlsVisible',
       'searchActive',
       'searchVisible',
@@ -240,11 +241,15 @@ void main() {
     expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
     expect(mainMenu, contains('label: l10n.reportIssue'));
+    expect(mainMenu, contains('label: l10n.exportAsPdf'));
+    expect(mainMenu, contains('enabled: canExportPdf'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
     expect(native, contains('GSimpleActionGroup* header_action_group;'));
     expect(native, contains('rebuild_main_menu_model'));
     expect(native, contains('"header.keyboard-shortcuts"'));
+    expect(native, contains('"header.export-pdf"'));
+    expect(native, contains('configuration.can_export_pdf'));
     expect(native, contains('"header.markdown-and-html"'));
     expect(native, contains('"header.report-issue"'));
     expect(native, contains('static const gchar* main_menu_icon_name'));
@@ -945,7 +950,10 @@ void main() {
       );
       expect(snapcraft, contains('- libhandy-1-dev'));
       expect(snapcraft, contains('- libhandy-1-0'));
-      expect(readme, contains('sudo apt-get install libhandy-1-dev'));
+      expect(
+        readme,
+        contains('sudo apt-get install curl libhandy-1-dev xz-utils'),
+      );
       expect(native, isNot(contains('kHeaderWindowRadius')));
       expect(native, isNot(contains('create_rounded_window_region')));
       expect(native, isNot(contains('gdk_window_shape_combine_region')));

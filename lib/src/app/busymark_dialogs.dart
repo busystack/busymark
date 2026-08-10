@@ -382,6 +382,14 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
+                title: context.l10n.exportAsPdf,
+                subtitle: context.l10n.shortcutExportPdfDescription,
+                leading: const Icon(BusyMarkGlyphs.exportPdf),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.exportPdf,
+                ),
+              ),
+              BusyMarkActionRow(
                 title: context.l10n.search,
                 subtitle: context.l10n.shortcutSearchDescription,
                 leading: const Icon(BusyMarkGlyphs.search),

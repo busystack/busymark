@@ -2331,4 +2331,83 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'Lenker tillater http, https, mailto, tel, relative URL-er og fragmenter; usikre URI-skjemaer blokkeres.';
+
+  @override
+  String get exportAsPdf => 'Eksporter som PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'Velg sideoppsett for en gjennomarbeidet, selvstendig PDF.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'Eksterne bilder lastes ikke ned under eksport. Lokale bilder tas med når de er tilgjengelige.';
+
+  @override
+  String get pdfPageSize => 'Sidestørrelse';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'US Letter';
+
+  @override
+  String get pdfOrientation => 'Retning';
+
+  @override
+  String get pdfPortrait => 'Stående';
+
+  @override
+  String get pdfLandscape => 'Liggende';
+
+  @override
+  String get pdfMargins => 'Marger';
+
+  @override
+  String get pdfMarginNarrow => 'Smale';
+
+  @override
+  String get pdfMarginNormal => 'Normale';
+
+  @override
+  String get pdfMarginWide => 'Brede';
+
+  @override
+  String get pdfIncludePageNumbers => 'Ta med sidetall';
+
+  @override
+  String get export => 'Eksporter';
+
+  @override
+  String get exportingPdf => 'Eksporterer PDF…';
+
+  @override
+  String get fileTypePdf => 'PDF-dokument';
+
+  @override
+  String pdfExported(String fileName) {
+    return '$fileName ble eksportert.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return '$fileName ble eksportert. Bilder som ikke kunne tas med: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'PDF-eksportkomponenten mangler. Installer BusyMark på nytt og prøv igjen.';
+
+  @override
+  String get pdfExportTimedOut =>
+      'PDF-eksporten tok for lang tid og ble stoppet.';
+
+  @override
+  String get pdfExportFailed =>
+      'BusyMark kunne ikke eksportere dette dokumentet som PDF.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'Eksporter det aktive Markdown-dokumentet som PDF.';
 }

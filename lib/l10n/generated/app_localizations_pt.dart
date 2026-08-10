@@ -2347,4 +2347,83 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'Links permitem http, https, mailto, tel, URLs relativas e fragmentos; esquemas inseguros são bloqueados.';
+
+  @override
+  String get exportAsPdf => 'Exportar como PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'Escolha o esquema da página para criar um PDF bem acabado e independente.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'As imagens remotas não são transferidas durante a exportação. As imagens locais são incluídas quando disponíveis.';
+
+  @override
+  String get pdfPageSize => 'Tamanho da página';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'Carta';
+
+  @override
+  String get pdfOrientation => 'Orientação';
+
+  @override
+  String get pdfPortrait => 'Vertical';
+
+  @override
+  String get pdfLandscape => 'Horizontal';
+
+  @override
+  String get pdfMargins => 'Margens';
+
+  @override
+  String get pdfMarginNarrow => 'Estreitas';
+
+  @override
+  String get pdfMarginNormal => 'Normais';
+
+  @override
+  String get pdfMarginWide => 'Largas';
+
+  @override
+  String get pdfIncludePageNumbers => 'Incluir números de página';
+
+  @override
+  String get export => 'Exportar';
+
+  @override
+  String get exportingPdf => 'A exportar PDF…';
+
+  @override
+  String get fileTypePdf => 'Documento PDF';
+
+  @override
+  String pdfExported(String fileName) {
+    return '$fileName foi exportado.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return '$fileName foi exportado. Imagens que não foi possível incluir: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'O componente de exportação para PDF está em falta. Reinstale o BusyMark e tente novamente.';
+
+  @override
+  String get pdfExportTimedOut =>
+      'A exportação para PDF demorou demasiado e foi interrompida.';
+
+  @override
+  String get pdfExportFailed =>
+      'O BusyMark não conseguiu exportar este documento como PDF.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'Exportar o documento Markdown ativo como PDF.';
 }

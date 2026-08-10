@@ -587,6 +587,7 @@ const _sharedEnglishMatches = <String>{
   'writerside',
   'xml',
   'fileTypeMarkdown',
+  'pdfPageSizeA4',
   'headingLevelAbbreviation',
   'git',
   'gitPull',
@@ -625,6 +626,8 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitBranches',
     'gitCommit',
     'editorPlaceholderCode',
+    'pdfOrientation',
+    'pdfPortrait',
   },
   'it': {
     'editor',

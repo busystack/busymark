@@ -232,6 +232,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
+      case HeaderBarAction.exportPdf:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
@@ -256,6 +257,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.exportPdf:
+        break;
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:

@@ -304,6 +304,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.search:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
+      case HeaderBarAction.exportPdf:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
@@ -319,6 +320,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.exportPdf:
+        break;
       case BusyMarkMainMenuAction.settings:
         _selectPage(SettingsPage.appearance);
       case BusyMarkMainMenuAction.keyboardShortcuts:

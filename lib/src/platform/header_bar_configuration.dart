@@ -31,6 +31,9 @@ class HeaderBarLabels {
     required this.sidebarShortcut,
     required this.back,
     required this.save,
+    required this.exportPdf,
+    required this.exportPdfShortcut,
+    required this.exportPdfGtkAccelerator,
     required this.settings,
     required this.settingsShortcut,
     required this.settingsGtkAccelerator,
@@ -65,6 +68,9 @@ class HeaderBarLabels {
   final String sidebarShortcut;
   final String back;
   final String save;
+  final String exportPdf;
+  final String exportPdfShortcut;
+  final String exportPdfGtkAccelerator;
   final String settings;
   final String settingsShortcut;
   final String settingsGtkAccelerator;
@@ -99,6 +105,9 @@ class HeaderBarLabels {
     'sidebarShortcut': sidebarShortcut,
     'back': back,
     'save': save,
+    'exportPdf': exportPdf,
+    'exportPdfShortcut': exportPdfShortcut,
+    'exportPdfGtkAccelerator': exportPdfGtkAccelerator,
     'settings': settings,
     'settingsShortcut': settingsShortcut,
     'settingsGtkAccelerator': settingsGtkAccelerator,
@@ -273,6 +282,7 @@ class HeaderBarConfiguration {
     required this.searchQuery,
     required this.textDirection,
     required this.canRefresh,
+    this.canExportPdf = false,
     required this.documentControlsVisible,
     required this.searchActive,
     required this.searchVisible,
@@ -292,6 +302,7 @@ class HeaderBarConfiguration {
   final String searchQuery;
   final TextDirection textDirection;
   final bool canRefresh;
+  final bool canExportPdf;
   final bool documentControlsVisible;
   final bool searchActive;
   final bool searchVisible;
@@ -312,6 +323,7 @@ class HeaderBarConfiguration {
     String? searchQuery,
     TextDirection? textDirection,
     bool? canRefresh,
+    bool? canExportPdf,
     bool? documentControlsVisible,
     bool? searchActive,
     bool? searchVisible,
@@ -330,6 +342,7 @@ class HeaderBarConfiguration {
       searchQuery: searchQuery ?? this.searchQuery,
       textDirection: textDirection ?? this.textDirection,
       canRefresh: canRefresh ?? this.canRefresh,
+      canExportPdf: canExportPdf ?? this.canExportPdf,
       documentControlsVisible:
           documentControlsVisible ?? this.documentControlsVisible,
       searchActive: searchActive ?? this.searchActive,
@@ -351,6 +364,7 @@ class HeaderBarConfiguration {
     'searchQuery': searchQuery,
     'textDirection': textDirection == TextDirection.rtl ? 'rtl' : 'ltr',
     'canRefresh': canRefresh,
+    'canExportPdf': canExportPdf,
     'documentControlsVisible': documentControlsVisible,
     'searchActive': searchActive,
     'searchVisible': searchVisible,
@@ -370,6 +384,7 @@ class HeaderBarConfiguration {
         searchQuery == other.searchQuery &&
         textDirection == other.textDirection &&
         canRefresh == other.canRefresh &&
+        canExportPdf == other.canExportPdf &&
         documentControlsVisible == other.documentControlsVisible &&
         searchActive == other.searchActive &&
         searchVisible == other.searchVisible &&
@@ -398,6 +413,7 @@ class HeaderBarConfiguration {
     searchQuery,
     textDirection,
     canRefresh,
+    canExportPdf,
     documentControlsVisible,
     searchActive,
     searchVisible,

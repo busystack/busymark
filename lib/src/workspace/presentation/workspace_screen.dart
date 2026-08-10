@@ -37,6 +37,7 @@ import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
+import '../../export/markdown_pdf_export_ui.dart';
 import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
@@ -365,12 +366,14 @@ class WorkspaceScreen extends ConsumerWidget {
         ? '*${_activeFileName(context, workspace)}'
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
+    final canExportPdf = canExportActiveMarkdown(state);
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
           viewMode: _headerBarViewMode(settings.documentViewMode),
           searchQuery: searchState.query,
           canRefresh: true,
+          canExportPdf: canExportPdf,
           documentControlsVisible: true,
           searchActive: searchState.active,
           searchVisible: true,
@@ -535,6 +538,7 @@ class WorkspaceScreen extends ConsumerWidget {
                               settingsController.setDocumentViewMode(mode),
                         ),
                         BusyMarkMainMenuButton(
+                          canExportPdf: canExportPdf,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
                         ),
@@ -653,6 +657,8 @@ class WorkspaceScreen extends ConsumerWidget {
         unawaited(_validateActiveAndShowProblems(context, ref));
       case HeaderBarAction.save:
         break;
+      case HeaderBarAction.exportPdf:
+        unawaited(exportActiveMarkdownToPdf(context, ref));
       case HeaderBarAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case HeaderBarAction.keyboardShortcuts:
@@ -704,6 +710,8 @@ class WorkspaceScreen extends ConsumerWidget {
     BusyMarkMainMenuAction action,
   ) {
     switch (action) {
+      case BusyMarkMainMenuAction.exportPdf:
+        unawaited(exportActiveMarkdownToPdf(context, ref));
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case BusyMarkMainMenuAction.keyboardShortcuts:

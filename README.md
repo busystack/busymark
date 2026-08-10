@@ -24,6 +24,7 @@ projects.
 - Create Writerside Markdown and XML topics from the TOC.
 - Edit and save local files.
 - Preview Markdown content.
+- Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
 - Run basic diagnostics.
 - Reopen recent workspaces.
@@ -82,6 +83,19 @@ binary resources are not opened in the text editor.
 Large folders are scanned defensively. Generated and vendor directories such as
 `.git`, `build`, `dist`, `node_modules`, `.dart_tool`, `.gradle`, and `target`
 are skipped to keep the app responsive.
+
+## PDF export
+
+Use **Main menu → Export as PDF** or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>
+while a Markdown document is active. BusyMark exports the current editor
+contents, including unsaved changes, and offers A4 or Letter paper, portrait or
+landscape orientation, three margin sizes, and optional page numbers. Writerside
+topics are not exported yet.
+
+PDF generation is local and offline. BusyMark bundles the pinned Typst compiler;
+users do not install or configure a separate program. Local PNG, JPEG, GIF, and
+safe SVG images are included. Remote images are deliberately not downloaded
+during export and are represented by their alternative text.
 
 ## Run From Source
 
@@ -196,12 +210,22 @@ Store listing translations are managed outside `snap/snapcraft.yaml`.
 
 ## Build Linux Locally
 
-Source builds require the libhandy development headers. Packaged users receive
-the runtime library with BusyMark and do not install development packages.
+Source builds require the libhandy development headers, `curl`, and `xz-utils`.
+Packaged users receive every runtime component with BusyMark and do not install
+development packages.
 
 ```bash
-sudo apt-get install libhandy-1-dev
+sudo apt-get install curl libhandy-1-dev xz-utils
 flutter build linux
+```
+
+The Linux build downloads the matching x86_64 or ARM64 Typst 0.15.1 binary from
+its official release and verifies its pinned SHA-256 checksum before bundling
+it. For an offline build, point the build at the matching official archive:
+
+```bash
+BUSYMARK_TYPST_ARCHIVE=/path/to/typst-x86_64-unknown-linux-musl.tar.xz \
+  flutter build linux
 ```
 
 The Linux desktop file uses the application id `io.busystack.busymark` and
@@ -215,4 +239,5 @@ handling, and clear user-facing behavior.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE). The bundled Typst compiler's license and
+upstream notices are installed under `share/licenses/typst`.

@@ -3949,6 +3949,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.'**
   String get markdownHtmlSafeUrlsDescription;
+
+  /// Menu action and dialog title for exporting the active Markdown document as PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Export as PDF'**
+  String get exportAsPdf;
+
+  /// Introductory text in the PDF export options dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the page layout for a polished, self-contained PDF.'**
+  String get pdfExportDescription;
+
+  /// Privacy note explaining image handling during PDF export.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote images are not downloaded during export. Local images are included when available.'**
+  String get pdfRemoteImagesNote;
+
+  /// PDF export page-size setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Page size'**
+  String get pdfPageSize;
+
+  /// A4 PDF page-size option.
+  ///
+  /// In en, this message translates to:
+  /// **'A4'**
+  String get pdfPageSizeA4;
+
+  /// US Letter PDF page-size option.
+  ///
+  /// In en, this message translates to:
+  /// **'Letter'**
+  String get pdfPageSizeLetter;
+
+  /// PDF export page-orientation setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Orientation'**
+  String get pdfOrientation;
+
+  /// Portrait PDF page-orientation option.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get pdfPortrait;
+
+  /// Landscape PDF page-orientation option.
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get pdfLandscape;
+
+  /// PDF export page-margin setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Margins'**
+  String get pdfMargins;
+
+  /// Narrow PDF page-margin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow'**
+  String get pdfMarginNarrow;
+
+  /// Normal PDF page-margin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get pdfMarginNormal;
+
+  /// Wide PDF page-margin option.
+  ///
+  /// In en, this message translates to:
+  /// **'Wide'**
+  String get pdfMarginWide;
+
+  /// Toggle for page numbers in an exported PDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Include page numbers'**
+  String get pdfIncludePageNumbers;
+
+  /// Button label that starts an export.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get export;
+
+  /// Progress dialog title while a PDF is being exported.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting PDF…'**
+  String get exportingPdf;
+
+  /// File picker label for PDF documents.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF document'**
+  String get fileTypePdf;
+
+  /// PDF export success message.
+  ///
+  /// In en, this message translates to:
+  /// **'{fileName} was exported.'**
+  String pdfExported(String fileName);
+
+  /// PDF export success message when some images were omitted.
+  ///
+  /// In en, this message translates to:
+  /// **'{fileName} was exported. Images that could not be included: {count}.'**
+  String pdfExportedWithWarnings(String fileName, int count);
+
+  /// Error shown when the bundled PDF compiler is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF export component is missing. Reinstall BusyMark and try again.'**
+  String get pdfExportUnavailable;
+
+  /// Error shown when PDF compilation times out.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF export took too long and was stopped.'**
+  String get pdfExportTimedOut;
+
+  /// Generic PDF export failure message.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark could not export this document as PDF.'**
+  String get pdfExportFailed;
+
+  /// Keyboard-shortcut description for PDF export.
+  ///
+  /// In en, this message translates to:
+  /// **'Export the active Markdown document as a PDF.'**
+  String get shortcutExportPdfDescription;
 }
 
 class _AppLocalizationsDelegate

@@ -1709,6 +1709,51 @@ void main() {}
     expect(fieldAt(0).focusNode?.hasFocus, isTrue);
   });
 
+  testWidgets('WYSIWYG Ctrl+Arrow crosses paragraph boundaries', (
+    tester,
+  ) async {
+    const firstText = 'First paragraph';
+    const secondText = 'Second paragraph';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '$firstText\n\n$secondText\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(
+      offset: firstText.length,
+    );
+    await _pressControlShortcut(tester, LogicalKeyboardKey.arrowRight);
+
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+    await _pressControlShortcut(tester, LogicalKeyboardKey.arrowLeft);
+
+    expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(0).controller!.selection.extentOffset, firstText.length);
+  });
+
   testWidgets('WYSIWYG repeated arrow keys keep moving between paragraphs', (
     tester,
   ) async {

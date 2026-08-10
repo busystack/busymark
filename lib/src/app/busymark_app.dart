@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:ubuntu_localizations/ubuntu_localizations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../export/markdown_pdf_export_ui.dart';
 import '../git/application/git_controller.dart';
 import '../platform/linux_header_bar_service.dart';
 import '../workspace/workspace_controller.dart';
@@ -83,6 +84,8 @@ class BusyMarkApp extends ConsumerWidget {
                 BusyMarkAppShortcutActivators.open:
                     const _OpenWorkspaceIntent(),
                 BusyMarkAppShortcutActivators.save: const _SaveActiveIntent(),
+                BusyMarkAppShortcutActivators.exportPdf:
+                    const _ExportPdfIntent(),
                 BusyMarkAppShortcutActivators.keyboardShortcuts:
                     const _KeyboardShortcutsIntent(),
                 BusyMarkAppShortcutActivators.settings: const _SettingsIntent(),
@@ -162,6 +165,19 @@ class BusyMarkApp extends ConsumerWidget {
                             navigatorContext,
                             ref,
                           ),
+                        );
+                      }
+                      return null;
+                    },
+                  ),
+                  _ExportPdfIntent: CallbackAction<_ExportPdfIntent>(
+                    onInvoke: (intent) {
+                      final state = ref.read(workspaceControllerProvider);
+                      final navigatorContext = rootNavigatorKey.currentContext;
+                      if (navigatorContext != null &&
+                          canExportActiveMarkdown(state)) {
+                        unawaited(
+                          exportActiveMarkdownToPdf(navigatorContext, ref),
                         );
                       }
                       return null;
@@ -607,6 +623,9 @@ class BusyMarkApp extends ConsumerWidget {
       sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
       back: material.backButtonTooltip,
       save: l10n.save,
+      exportPdf: l10n.exportAsPdf,
+      exportPdfShortcut: BusyMarkAppShortcutLabels.exportPdf,
+      exportPdfGtkAccelerator: BusyMarkAppShortcutGtkAccelerators.exportPdf,
       settings: l10n.settings,
       settingsShortcut: BusyMarkAppShortcutLabels.settings,
       settingsGtkAccelerator: BusyMarkAppShortcutGtkAccelerators.settings,
@@ -826,6 +845,10 @@ final class _OpenRecentWorkspace extends _OpenChooserChoice {
 
 class _SaveActiveIntent extends Intent {
   const _SaveActiveIntent();
+}
+
+class _ExportPdfIntent extends Intent {
+  const _ExportPdfIntent();
 }
 
 class _KeyboardShortcutsIntent extends Intent {

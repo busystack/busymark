@@ -42,6 +42,7 @@ apps:
       - ssh-keys
     environment:
       GDK_BACKEND: wayland,x11
+      TYPST_FONT_PATHS: $SNAP/usr/share/fonts
       XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
       XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
       XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
@@ -53,7 +54,9 @@ parts:
     flutter-target: lib/main.dart
     flutter-channel: stable
     build-packages:
+      - curl
       - libhandy-1-dev
+      - xz-utils
     stage-packages:
       - libhandy-1-0
       - libx11-6

@@ -29,6 +29,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData edit = YaruIcons.pen;
   static const IconData editorView = YaruIcons.text_editor;
   static const IconData error = YaruIcons.error;
+  static const IconData exportPdf = YaruIcons.save_as;
   static const IconData externalLink = YaruIcons.external_link;
   static const IconData feedback = YaruIcons.chat_text;
   static const IconData folder = YaruIcons.folder;
@@ -238,6 +239,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == redo) {
       return 'edit-redo-symbolic';
+    }
+    if (icon == exportPdf) {
+      return 'document-save-as-symbolic';
     }
     if (icon == save) {
       return 'document-save-symbolic';

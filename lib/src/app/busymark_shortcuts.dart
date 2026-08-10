@@ -22,6 +22,7 @@ enum BusyMarkAppShortcutAction {
   newDocument,
   open,
   save,
+  exportPdf,
   search,
   keyboardShortcuts,
   markdownAndHtml,
@@ -39,6 +40,7 @@ abstract final class BusyMarkAppShortcuts {
   static const newDocumentLabel = 'Ctrl+N';
   static const openLabel = 'Ctrl+O';
   static const saveLabel = 'Ctrl+S';
+  static const exportPdfLabel = 'Ctrl+Shift+E';
   static const searchLabel = 'Ctrl+F';
   static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
   static const markdownAndHtmlLabel = 'Ctrl+Alt+M';
@@ -52,6 +54,7 @@ abstract final class BusyMarkAppShortcuts {
   static const newDocumentGtkAccelerator = '<Primary>n';
   static const openGtkAccelerator = '<Primary>o';
   static const saveGtkAccelerator = '<Primary>s';
+  static const exportPdfGtkAccelerator = '<Primary><Shift>e';
   static const searchGtkAccelerator = '<Primary>f';
   static const keyboardShortcutsGtkAccelerator = '<Primary><Alt>k';
   static const markdownAndHtmlGtkAccelerator = '<Primary><Alt>m';
@@ -76,6 +79,15 @@ abstract final class BusyMarkAppShortcuts {
     label: saveLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyS, control: true),
     gtkAccelerator: saveGtkAccelerator,
+  );
+  static const exportPdf = BusyMarkShortcutDefinition(
+    label: exportPdfLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyE,
+      control: true,
+      shift: true,
+    ),
+    gtkAccelerator: exportPdfGtkAccelerator,
   );
   static const search = BusyMarkShortcutDefinition(
     label: searchLabel,
@@ -148,6 +160,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.newDocument: newDocument,
         BusyMarkAppShortcutAction.open: open,
         BusyMarkAppShortcutAction.save: save,
+        BusyMarkAppShortcutAction.exportPdf: exportPdf,
         BusyMarkAppShortcutAction.search: search,
         BusyMarkAppShortcutAction.keyboardShortcuts: keyboardShortcuts,
         BusyMarkAppShortcutAction.markdownAndHtml: markdownAndHtml,
@@ -166,6 +179,7 @@ abstract final class BusyMarkAppShortcutLabels {
   static const newDocument = BusyMarkAppShortcuts.newDocumentLabel;
   static const open = BusyMarkAppShortcuts.openLabel;
   static const save = BusyMarkAppShortcuts.saveLabel;
+  static const exportPdf = BusyMarkAppShortcuts.exportPdfLabel;
   static const search = BusyMarkAppShortcuts.searchLabel;
   static const keyboardShortcuts = BusyMarkAppShortcuts.keyboardShortcutsLabel;
   static const markdownAndHtml = BusyMarkAppShortcuts.markdownAndHtmlLabel;
@@ -183,6 +197,8 @@ abstract final class BusyMarkAppShortcutActivators {
       BusyMarkAppShortcuts.newDocument.activator;
   static ShortcutActivator get open => BusyMarkAppShortcuts.open.activator;
   static ShortcutActivator get save => BusyMarkAppShortcuts.save.activator;
+  static ShortcutActivator get exportPdf =>
+      BusyMarkAppShortcuts.exportPdf.activator;
   static ShortcutActivator get search => BusyMarkAppShortcuts.search.activator;
   static ShortcutActivator get keyboardShortcuts =>
       BusyMarkAppShortcuts.keyboardShortcuts.activator;
@@ -206,6 +222,7 @@ abstract final class BusyMarkAppShortcutGtkAccelerators {
   const BusyMarkAppShortcutGtkAccelerators._();
 
   static const search = BusyMarkAppShortcuts.searchGtkAccelerator;
+  static const exportPdf = BusyMarkAppShortcuts.exportPdfGtkAccelerator;
   static const keyboardShortcuts =
       BusyMarkAppShortcuts.keyboardShortcutsGtkAccelerator;
   static const markdownAndHtml =

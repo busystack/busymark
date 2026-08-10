@@ -6,6 +6,7 @@ import 'busymark_shortcuts.dart';
 import 'localization.dart';
 
 enum BusyMarkMainMenuAction {
+  exportPdf,
   settings,
   keyboardShortcuts,
   markdownAndHtml,
@@ -14,9 +15,14 @@ enum BusyMarkMainMenuAction {
 }
 
 class BusyMarkMainMenuButton extends StatelessWidget {
-  const BusyMarkMainMenuButton({super.key, required this.onSelected});
+  const BusyMarkMainMenuButton({
+    super.key,
+    required this.onSelected,
+    this.canExportPdf = false,
+  });
 
   final ValueChanged<BusyMarkMainMenuAction> onSelected;
+  final bool canExportPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +31,13 @@ class BusyMarkMainMenuButton extends StatelessWidget {
       tooltip: l10n.mainMenu,
       icon: BusyMarkGlyphs.menuVertical,
       itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.exportPdf,
+          label: l10n.exportAsPdf,
+          icon: BusyMarkGlyphs.exportPdf,
+          shortcut: BusyMarkAppShortcutLabels.exportPdf,
+          enabled: canExportPdf,
+        ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.settings,
           label: l10n.settings,

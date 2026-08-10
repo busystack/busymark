@@ -1259,6 +1259,17 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _applyEditorShortcutAction(shortcutAction);
       return KeyEventResult.handled;
     }
+    if (keyboard.isControlPressed &&
+        !keyboard.isShiftPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isMetaPressed &&
+        (key == LogicalKeyboardKey.arrowLeft ||
+            key == LogicalKeyboardKey.arrowRight)) {
+      final boundaryResult = _moveWordCaretAcrossBlockBoundary(blockId, key);
+      if (boundaryResult == KeyEventResult.handled) {
+        return boundaryResult;
+      }
+    }
     if (_hasCommandModifierPressed()) {
       return KeyEventResult.ignored;
     }
@@ -1386,6 +1397,37 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return keyboard.isControlPressed ||
         keyboard.isAltPressed ||
         keyboard.isMetaPressed;
+  }
+
+  KeyEventResult _moveWordCaretAcrossBlockBoundary(
+    String blockId,
+    LogicalKeyboardKey key,
+  ) {
+    if (_hasBlockSelection) {
+      return KeyEventResult.ignored;
+    }
+    final controller = _textControllers[blockId];
+    final selection = controller?.selection;
+    if (controller == null ||
+        selection == null ||
+        !selection.isValid ||
+        !selection.isCollapsed) {
+      return KeyEventResult.ignored;
+    }
+    final position = _DocumentTextPosition(
+      blockId: blockId,
+      offset: selection.extentOffset.clamp(0, controller.text.length).toInt(),
+      affinity: selection.affinity,
+    );
+    final target = _horizontalCaretTarget(position, key);
+    if (target == null || target.blockId == blockId) {
+      return KeyEventResult.ignored;
+    }
+    _resetVerticalCaretMovement();
+    _applyKeyboardSelection(
+      _DocumentTextSelection(anchor: target, extent: target),
+    );
+    return KeyEventResult.handled;
   }
 
   KeyEventResult _focusRelativeBlock(

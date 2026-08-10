@@ -2371,4 +2371,83 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'Łącza dopuszczają http, https, mailto, tel, względne adresy URL i fragmenty; niebezpieczne schematy są blokowane.';
+
+  @override
+  String get exportAsPdf => 'Eksportuj jako PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'Wybierz układ strony dla dopracowanego, samodzielnego pliku PDF.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'Obrazy zdalne nie są pobierane podczas eksportu. Dostępne obrazy lokalne zostaną dołączone.';
+
+  @override
+  String get pdfPageSize => 'Rozmiar strony';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'US Letter';
+
+  @override
+  String get pdfOrientation => 'Orientacja';
+
+  @override
+  String get pdfPortrait => 'Pionowa';
+
+  @override
+  String get pdfLandscape => 'Pozioma';
+
+  @override
+  String get pdfMargins => 'Marginesy';
+
+  @override
+  String get pdfMarginNarrow => 'Wąskie';
+
+  @override
+  String get pdfMarginNormal => 'Normalne';
+
+  @override
+  String get pdfMarginWide => 'Szerokie';
+
+  @override
+  String get pdfIncludePageNumbers => 'Dodaj numery stron';
+
+  @override
+  String get export => 'Eksportuj';
+
+  @override
+  String get exportingPdf => 'Eksportowanie PDF…';
+
+  @override
+  String get fileTypePdf => 'Dokument PDF';
+
+  @override
+  String pdfExported(String fileName) {
+    return 'Wyeksportowano $fileName.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return 'Wyeksportowano $fileName. Obrazy, których nie udało się dołączyć: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'Brakuje składnika eksportu PDF. Zainstaluj ponownie BusyMark i spróbuj jeszcze raz.';
+
+  @override
+  String get pdfExportTimedOut =>
+      'Eksport PDF trwał zbyt długo i został zatrzymany.';
+
+  @override
+  String get pdfExportFailed =>
+      'BusyMark nie mógł wyeksportować tego dokumentu jako PDF.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'Eksportuj aktywny dokument Markdown jako PDF.';
 }
