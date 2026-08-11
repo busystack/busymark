@@ -176,7 +176,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       insertThematicBreakAfter(blockId);
       return;
     }
-    _replaceBlock(blockId, (block) => _blockWithCommand(block, command));
+    final blocks = _replaceInBlocks(
+      _document.blocks,
+      blockId,
+      (block) => _blockWithCommand(block, command),
+    );
+    _document = _document.copyWith(
+      blocks: command == BusyWysiwygBlockCommand.orderedList
+          ? _normalizeOrderedListMarkers(blocks)
+          : blocks,
+    );
+    notifyListeners();
   }
 
   void applyBlockCommandToBlocks(
@@ -192,14 +202,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return;
     }
     final idSet = ids.toSet();
-    var orderedIndex = 0;
+    final replaced = _replaceBlocksByIds(_document.blocks, idSet, (block) {
+      return _blockWithCommand(block, command);
+    });
     _document = _document.copyWith(
-      blocks: _replaceBlocksByIds(_document.blocks, idSet, (block) {
-        final orderedNumber = command == BusyWysiwygBlockCommand.orderedList
-            ? ++orderedIndex
-            : null;
-        return _blockWithCommand(block, command, orderedNumber: orderedNumber);
-      }),
+      blocks: command == BusyWysiwygBlockCommand.orderedList
+          ? _normalizeOrderedListMarkers(replaced)
+          : replaced,
     );
     notifyListeners();
   }
@@ -718,9 +727,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             _isListItemKind(result.last.kind) &&
             !result.last.isSourceProtected) {
           final parent = result.removeLast();
+          final indented = _numberIndentedListItem(
+            updated.copyWith(dirty: true),
+            parent.children,
+          );
           result.add(
             parent.copyWith(
-              children: [...parent.children, updated.copyWith(dirty: true)],
+              children: [...parent.children, indented],
               dirty: true,
             ),
           );
@@ -736,7 +749,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (!changed) {
       return false;
     }
-    _document = _document.copyWith(blocks: blocks);
+    _document = _document.copyWith(
+      blocks: _normalizeOrderedListMarkers(blocks),
+    );
     notifyListeners();
     return true;
   }
@@ -788,7 +803,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (!changed) {
       return false;
     }
-    _document = _document.copyWith(blocks: result);
+    _document = _document.copyWith(
+      blocks: _normalizeOrderedListMarkers(result),
+    );
     notifyListeners();
     return true;
   }
@@ -1292,17 +1309,20 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     Set<String> blockIds,
     BusyBlock Function(BusyBlock) replace,
   ) {
-    return [
-      for (final block in blocks)
-        if (block.isSourceProtected)
-          block
-        else if (blockIds.contains(block.id))
-          replace(block)
-        else
-          block.copyWith(
-            children: _replaceBlocksByIds(block.children, blockIds, replace),
-          ),
-    ];
+    final result = <BusyBlock>[];
+    for (final block in blocks) {
+      if (block.isSourceProtected) {
+        result.add(block);
+        continue;
+      }
+      var updated = blockIds.contains(block.id) ? replace(block) : block;
+      final children = _replaceBlocksByIds(updated.children, blockIds, replace);
+      if (!identical(children, updated.children)) {
+        updated = updated.copyWith(children: children);
+      }
+      result.add(updated);
+    }
+    return result;
   }
 
   Iterable<BusyBlock> _flatten(List<BusyBlock> blocks) sync* {
@@ -1609,11 +1629,7 @@ BusyBlock _withoutSourceSpan(BusyBlock block, {required bool dirty}) {
   );
 }
 
-BusyBlock _blockWithCommand(
-  BusyBlock block,
-  BusyWysiwygBlockCommand command, {
-  int? orderedNumber,
-}) {
+BusyBlock _blockWithCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
   final kind = blockKindForCommand(command);
   final attributes = {...block.attributes}
     ..remove('ordered')
@@ -1645,9 +1661,7 @@ BusyBlock _blockWithCommand(
   }
   if (kind == BusyBlockKind.orderedListItem) {
     attributes['ordered'] = 'true';
-    attributes['marker'] = orderedNumber == null
-        ? block.attributes['marker'] ?? '1.'
-        : '$orderedNumber.';
+    attributes['marker'] = _orderedMarker(block) ?? '1.';
   }
   if (kind == BusyBlockKind.unorderedListItem) {
     attributes['ordered'] = 'false';
@@ -1659,6 +1673,99 @@ BusyBlock _blockWithCommand(
     attributes['task'] = block.attributes['task'] ?? 'false';
   }
   return block.copyWith(kind: kind, attributes: attributes, dirty: true);
+}
+
+BusyBlock _numberIndentedListItem(
+  BusyBlock block,
+  List<BusyBlock> existingSiblings,
+) {
+  if (!_isOrderedListBlock(block)) {
+    return block;
+  }
+  final previous = existingSiblings.lastOrNull;
+  final previousMarker = previous == null || !_isOrderedListBlock(previous)
+      ? null
+      : _orderedMarkerParts(previous.attributes['marker']);
+  final marker = previousMarker == null
+      ? '1.'
+      : '${previousMarker.number + 1}${previousMarker.suffix}';
+  return _withOrderedMarker(block, marker);
+}
+
+List<BusyBlock> _normalizeOrderedListMarkers(List<BusyBlock> blocks) {
+  var changed = false;
+  var nextNumber = 0;
+  var suffix = '.';
+  final result = <BusyBlock>[];
+  for (final block in blocks) {
+    var updated = block;
+    if (!block.preserveRaw && !block.isSourceProtected) {
+      final children = _normalizeOrderedListMarkers(block.children);
+      if (!identical(children, block.children)) {
+        updated = block.copyWith(children: children);
+        changed = true;
+      }
+    }
+    if (updated.preserveRaw || updated.isSourceProtected) {
+      nextNumber = 0;
+      suffix = '.';
+      result.add(updated);
+      continue;
+    }
+    if (_isOrderedListBlock(updated)) {
+      if (nextNumber == 0) {
+        final firstMarker = _orderedMarkerParts(updated.attributes['marker']);
+        nextNumber = firstMarker?.number ?? 1;
+        suffix = firstMarker?.suffix ?? '.';
+      }
+      final marker = '$nextNumber$suffix';
+      if (updated.attributes['marker'] != marker ||
+          updated.attributes['ordered'] != 'true') {
+        updated = _withOrderedMarker(updated, marker);
+        changed = true;
+      }
+      nextNumber += 1;
+    } else {
+      nextNumber = 0;
+      suffix = '.';
+    }
+    result.add(updated);
+  }
+  return changed ? result : blocks;
+}
+
+BusyBlock _withOrderedMarker(BusyBlock block, String marker) {
+  return block.copyWith(
+    attributes: {...block.attributes, 'ordered': 'true', 'marker': marker},
+    preserveRaw: false,
+    dirty: true,
+  );
+}
+
+bool _isOrderedListBlock(BusyBlock block) {
+  return block.kind == BusyBlockKind.orderedListItem ||
+      (block.kind == BusyBlockKind.taskListItem &&
+          block.attributes['ordered'] == 'true');
+}
+
+String? _orderedMarker(BusyBlock block) {
+  if (!_isOrderedListBlock(block)) {
+    return null;
+  }
+  final marker = _orderedMarkerParts(block.attributes['marker']);
+  return marker == null ? null : '${marker.number}${marker.suffix}';
+}
+
+({int number, String suffix})? _orderedMarkerParts(String? marker) {
+  final match = RegExp(r'^(\d+)([.)])$').firstMatch(marker?.trim() ?? '');
+  if (match == null) {
+    return null;
+  }
+  final number = int.tryParse(match.group(1) ?? '');
+  if (number == null) {
+    return null;
+  }
+  return (number: number, suffix: match.group(2) ?? '.');
 }
 
 BusyBlock _blockWithInlineCommand(

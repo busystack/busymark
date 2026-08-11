@@ -5606,6 +5606,120 @@ void main() {}
     taskController.toggleTaskChecked([taskId]);
     expect(taskController.markdown, '- [x] Todo\n');
   });
+
+  test('WYSIWYG ordered indentation starts a nested list at one', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. One\n2. Two\n3. Three\n4. Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.last.id;
+
+    expect(controller.indentListItems([childId]), isTrue);
+
+    final nested = controller.document.blocks.last.children.single;
+    expect(nested.attributes['marker'], '1.');
+    expect(controller.markdown, '1. One\n\n2. Two\n\n3. Three\n   1. Child\n');
+  });
+
+  test('WYSIWYG ordered indentation preserves a top-level start value', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '5. Parent\n6. Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    expect(
+      controller.indentListItems([controller.document.blocks.last.id]),
+      isTrue,
+    );
+
+    final parent = controller.document.blocks.single;
+    expect(parent.attributes['marker'], '5.');
+    expect(parent.children.single.attributes['marker'], '1.');
+  });
+
+  test('WYSIWYG ordered indentation numbers multiple nested siblings', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. Parent\n2. First child\n3. Second child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childIds = controller.document.blocks
+        .skip(1)
+        .map((block) => block.id)
+        .toList();
+
+    expect(controller.indentListItems(childIds), isTrue);
+
+    expect(
+      controller.document.blocks.single.children.map(
+        (block) => block.attributes['marker'],
+      ),
+      ['1.', '2.'],
+    );
+  });
+
+  test('WYSIWYG ordered outdent continues the parent list numbering', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. One\n2. Parent\n   1. Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.last.children.single.id;
+
+    expect(controller.outdentListItems([childId]), isTrue);
+
+    expect(
+      controller.document.blocks.map((block) => block.attributes['marker']),
+      ['1.', '2.', '3.'],
+    );
+  });
+
+  test('WYSIWYG converts an unordered item to a valid ordered marker', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: '- Item\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = controller.document.blocks.single.id;
+
+    controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.orderedList);
+
+    expect(controller.document.blocks.single.attributes['marker'], '1.');
+    expect(controller.markdown, '1. Item\n');
+  });
+
+  test('WYSIWYG converts selected nested items at each list depth', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n  - Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final parent = controller.document.blocks.single;
+    final child = parent.children.single;
+
+    controller.applyBlockCommandToBlocks([
+      parent.id,
+      child.id,
+    ], BusyWysiwygBlockCommand.orderedList);
+
+    final convertedParent = controller.document.blocks.single;
+    expect(convertedParent.kind, BusyBlockKind.orderedListItem);
+    expect(convertedParent.attributes['marker'], '1.');
+    expect(convertedParent.children.single.kind, BusyBlockKind.orderedListItem);
+    expect(convertedParent.children.single.attributes['marker'], '1.');
+    expect(controller.markdown, '1. Parent\n   1. Child\n');
+  });
 }
 
 TextStyle? _spanStyleForText(InlineSpan span, String text) {

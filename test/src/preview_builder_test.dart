@@ -213,6 +213,22 @@ void main() {
     );
   });
 
+  test('preview keeps ordered list numbering independent at each depth', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. One\n2. Two\n3. Parent\n   1. Child\n',
+    );
+    final preview = previewBuilder.build(parsed);
+    final parent = preview.blocks.last;
+
+    expect(preview.blocks.map((block) => block.attributes['marker']), [
+      '1.',
+      '2.',
+      '3.',
+    ]);
+    expect(parent.children.single.attributes['marker'], '1.');
+  });
+
   test('preview preserves inline Markdown semantics', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
