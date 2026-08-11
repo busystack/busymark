@@ -22,9 +22,7 @@ void main() {
       });
       final destination = p.join(temporaryDirectory.path, 'guide.pdf');
       final service = MarkdownPdfExportService(
-        templateLoader: () => File(
-          'assets/export/markdown.typ',
-        ).readAsString(),
+        templateLoader: () => File('assets/export/markdown.typ').readAsString(),
       );
 
       final result = await service.export(

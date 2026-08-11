@@ -89,4 +89,3 @@ Text with **bold**, [safe](https://example.com), and [unsafe](javascript:alert(1
     expect(json, isNot(contains('private/diagram.png')));
   });
 }
-
