@@ -2325,4 +2325,83 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'लिंक http, https, mailto, tel, सापेक्ष URL और फ़्रैगमेंट स्वीकार करते हैं; असुरक्षित स्कीमें अवरुद्ध की जाती हैं।';
+
+  @override
+  String get exportAsPdf => 'PDF के रूप में निर्यात करें';
+
+  @override
+  String get pdfExportDescription =>
+      'सुंदर और स्व-निहित PDF के लिए पृष्ठ लेआउट चुनें।';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'निर्यात के दौरान दूरस्थ चित्र डाउनलोड नहीं किए जाते। उपलब्ध स्थानीय चित्र शामिल किए जाते हैं।';
+
+  @override
+  String get pdfPageSize => 'पृष्ठ आकार';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'लेटर';
+
+  @override
+  String get pdfOrientation => 'दिशा';
+
+  @override
+  String get pdfPortrait => 'पोर्ट्रेट';
+
+  @override
+  String get pdfLandscape => 'लैंडस्केप';
+
+  @override
+  String get pdfMargins => 'हाशिए';
+
+  @override
+  String get pdfMarginNarrow => 'संकीर्ण';
+
+  @override
+  String get pdfMarginNormal => 'सामान्य';
+
+  @override
+  String get pdfMarginWide => 'चौड़े';
+
+  @override
+  String get pdfIncludePageNumbers => 'पृष्ठ संख्याएँ शामिल करें';
+
+  @override
+  String get export => 'निर्यात करें';
+
+  @override
+  String get exportingPdf => 'PDF निर्यात हो रहा है…';
+
+  @override
+  String get fileTypePdf => 'PDF दस्तावेज़';
+
+  @override
+  String pdfExported(String fileName) {
+    return '$fileName निर्यात किया गया।';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return '$fileName निर्यात किया गया। शामिल न हो सकने वाले चित्र: $count।';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'PDF निर्यात घटक उपलब्ध नहीं है। BusyMark को फिर स्थापित करके दोबारा प्रयास करें।';
+
+  @override
+  String get pdfExportTimedOut =>
+      'PDF निर्यात में बहुत समय लगा और इसे रोक दिया गया।';
+
+  @override
+  String get pdfExportFailed =>
+      'BusyMark इस दस्तावेज़ को PDF के रूप में निर्यात नहीं कर सका।';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'सक्रिय Markdown दस्तावेज़ को PDF के रूप में निर्यात करें।';
 }

@@ -5,8 +5,10 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
+import '../document_list_marker.dart';
 import '../document_surface.dart';
 import '../document_text_direction.dart';
+import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -41,7 +43,11 @@ bool _isTechnicalWysiwygBlock(BusyBlock block) {
   };
 }
 
-EdgeInsets busyMarkWysiwygOuterPadding(BusyBlock block, {bool first = false}) {
+EdgeInsets busyMarkWysiwygOuterPadding(
+  BusyBlock block, {
+  bool first = false,
+  bool listRunEnd = false,
+}) {
   final padding = switch (block.kind) {
     BusyBlockKind.heading => BusyMarkInsets.documentHeadingBlock,
     BusyBlockKind.paragraph => BusyMarkInsets.documentParagraphBlock,
@@ -54,7 +60,14 @@ EdgeInsets busyMarkWysiwygOuterPadding(BusyBlock block, {bool first = false}) {
     BusyBlockKind.htmlBlock ||
     BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerBlock,
     BusyBlockKind.table => BusyMarkInsets.wysiwygTableBlock,
-    BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakBlock,
+    BusyBlockKind.image => BusyMarkInsets.documentImageBlock,
+    BusyBlockKind.thematicBreak => EdgeInsets.zero,
+    BusyBlockKind.unorderedListItem ||
+    BusyBlockKind.orderedListItem ||
+    BusyBlockKind.taskListItem => busyMarkDocumentListItemPadding(
+      listRunEnd: listRunEnd,
+      endsWithNestedList: _endsWithNestedList(block),
+    ),
     _ => BusyMarkInsets.wysiwygDefaultBlock,
   };
   final trimFirstBlockSpacing =
@@ -75,7 +88,6 @@ EdgeInsets busyMarkWysiwygContentPadding(BusyBlock block) {
     BusyBlockKind.htmlBlock ||
     BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
     BusyBlockKind.table => BusyMarkInsets.wysiwygTableContent,
-    BusyBlockKind.thematicBreak => BusyMarkInsets.wysiwygThematicBreakContent,
     _ => EdgeInsets.zero,
   };
 }
@@ -83,22 +95,35 @@ EdgeInsets busyMarkWysiwygContentPadding(BusyBlock block) {
 EdgeInsets busyMarkWysiwygTextLayoutInsets(BusyBlock block) {
   final contentPadding = busyMarkWysiwygContentPadding(block);
   return switch (block.kind) {
-    BusyBlockKind.codeBlock || BusyBlockKind.blockquote =>
-      busyMarkDocumentSurfaceLayoutInsets(contentPadding),
+    BusyBlockKind.codeBlock ||
+    BusyBlockKind.blockquote ||
+    BusyBlockKind.writersideAdmonition => busyMarkDocumentSurfaceLayoutInsets(
+      contentPadding,
+    ),
     _ => contentPadding,
   };
 }
 
-bool busyMarkWysiwygHasPrefix(BusyBlock block) {
+double busyMarkWysiwygPrefixExtent(BusyBlock block) {
   return switch (block.kind) {
     BusyBlockKind.unorderedListItem ||
     BusyBlockKind.orderedListItem ||
-    BusyBlockKind.taskListItem ||
-    BusyBlockKind.blockquote ||
-    BusyBlockKind.writersideAdmonition ||
-    BusyBlockKind.htmlBlock => true,
-    _ => false,
+    BusyBlockKind.taskListItem => BusyMarkSizes.documentListIndent,
+    BusyBlockKind.htmlBlock =>
+      BusyMarkSizes.wysiwygPrefixWidth + BusyMarkSpacing.sm,
+    _ => 0,
   };
+}
+
+bool _isWysiwygListItem(BusyBlock block) => switch (block.kind) {
+  BusyBlockKind.unorderedListItem ||
+  BusyBlockKind.orderedListItem ||
+  BusyBlockKind.taskListItem => true,
+  _ => false,
+};
+
+bool _endsWithNestedList(BusyBlock block) {
+  return block.children.isNotEmpty && _isWysiwygListItem(block.children.last);
 }
 
 class BusyMarkWysiwygBlockField extends StatelessWidget {
@@ -106,6 +131,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     super.key,
     required this.block,
     this.first = false,
+    this.listRunEnd = false,
     required this.documentFilePath,
     this.workspaceRoot,
     this.writersideRoot,
@@ -134,6 +160,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   final BusyBlock block;
   final bool first;
+  final bool listRunEnd;
   final String documentFilePath;
   final String? workspaceRoot;
   final String? writersideRoot;
@@ -207,6 +234,19 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                 child: content,
               ),
             )
+          : block.kind == BusyBlockKind.writersideAdmonition
+          ? Directionality(
+              textDirection: busyMarkWysiwygBlockTextDirection(
+                block,
+                fallback: Directionality.of(context),
+              ),
+              child: BusyMarkDocumentAdmonition(
+                style: block.attributes['element'] ?? block.attributes['style'],
+                margin: _padding,
+                onTap: tapHandler,
+                child: content,
+              ),
+            )
           : Padding(
               padding: _padding,
               child: GestureDetector(
@@ -240,7 +280,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       fallback: Directionality.of(context),
     );
     if (block.kind == BusyBlockKind.thematicBreak) {
-      return _ThematicBreakBlockView(selected: selected);
+      return BusyMarkDocumentThematicBreak(editable: true, selected: selected);
     }
     if (block.kind == BusyBlockKind.table) {
       return Directionality(
@@ -275,7 +315,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (prefix != null) ...[
-            SizedBox(width: BusyMarkSizes.wysiwygPrefixWidth, child: prefix),
+            prefix,
             const SizedBox(width: BusyMarkSpacing.sm),
           ],
           Expanded(
@@ -398,15 +438,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         14;
     return switch (block.kind) {
       BusyBlockKind.blockquote ||
-      BusyBlockKind.writersideAdmonition ||
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => fontSize * 2.4,
       BusyBlockKind.table => fontSize * 5.8,
-      BusyBlockKind.thematicBreak => fontSize * 2.2,
-      BusyBlockKind.image => BusyMarkSizes.iconButton,
+      BusyBlockKind.image => BusyMarkSizes.documentImageMinHeight,
       _ => 0,
     };
   }
@@ -419,32 +457,15 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     return block.rawSource ?? block.plainText;
   }
 
-  EdgeInsets get _padding => busyMarkWysiwygOuterPadding(block, first: first);
+  EdgeInsets get _padding =>
+      busyMarkWysiwygOuterPadding(block, first: first, listRunEnd: listRunEnd);
 
   EdgeInsets get _contentPadding => busyMarkWysiwygContentPadding(block);
 
   TextStyle _textStyle(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
     final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
     return switch (block.kind) {
-      BusyBlockKind.heading when level == 1 => theme.headlineSmall!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 2 => theme.titleLarge!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 3 => theme.titleMedium!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 4 => theme.titleSmall!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading when level == 5 => theme.bodyLarge!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
-      BusyBlockKind.heading => theme.bodyMedium!.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
+      BusyBlockKind.heading => busyMarkDocumentHeadingTextStyle(context, level),
       BusyBlockKind.codeBlock => busyMarkDocumentCodeTextStyle(context),
       _ => busyMarkDocumentBodyTextStyle(context),
     };
@@ -452,45 +473,22 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
 
   Widget? _prefix(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final markerStyle = _textStyle(context).copyWith(
-      color: colors.mutedForeground,
-      fontWeight: FontWeight.w500,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
     return switch (block.kind) {
-      BusyBlockKind.unorderedListItem => Padding(
-        padding: const EdgeInsets.only(top: BusyMarkSpacing.sm),
-        child: SizedBox.square(
-          dimension: BusyMarkSizes.markerDot,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.mutedForeground,
-              shape: BoxShape.circle,
-            ),
-          ),
+      BusyBlockKind.unorderedListItem => const BusyMarkDocumentListMarker(),
+      BusyBlockKind.orderedListItem => BusyMarkDocumentListMarker(
+        ordered: true,
+        marker: block.attributes['marker'],
+      ),
+      BusyBlockKind.taskListItem => BusyMarkDocumentListMarker(
+        task: block.attributes['task'] == 'true',
+      ),
+      BusyBlockKind.htmlBlock => SizedBox(
+        width: BusyMarkSizes.wysiwygPrefixWidth,
+        child: Icon(
+          BusyMarkGlyphs.code,
+          size: BusyMarkSizes.iconSm,
+          color: colors.mutedForeground,
         ),
-      ),
-      BusyBlockKind.orderedListItem => Text(
-        block.attributes['marker'] ?? '1.',
-        textAlign: TextAlign.end,
-        style: markerStyle,
-      ),
-      BusyBlockKind.taskListItem => Icon(
-        block.attributes['task'] == 'true'
-            ? BusyMarkGlyphs.checkedBox
-            : BusyMarkGlyphs.task,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
-      ),
-      BusyBlockKind.writersideAdmonition => Icon(
-        BusyMarkGlyphs.info,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
-      ),
-      BusyBlockKind.htmlBlock => Icon(
-        BusyMarkGlyphs.code,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
       ),
       _ => null,
     };
@@ -690,7 +688,10 @@ class _RenderedHtmlBlock extends StatelessWidget {
         ),
         child: _RenderedHtmlInlineText(
           block: block,
-          style: _headingStyle(context, block),
+          style: busyMarkDocumentHeadingTextStyle(
+            context,
+            int.tryParse(block.attributes['level'] ?? ''),
+          ),
         ),
       ),
       BusyBlockKind.paragraph => Padding(
@@ -768,13 +769,7 @@ class _RenderedHtmlBlock extends StatelessWidget {
         onRemoteImageBlocked: onRemoteImageBlocked,
         first: first,
       ),
-      BusyBlockKind.thematicBreak => Padding(
-        padding: EdgeInsets.only(
-          top: first ? 0 : BusyMarkSpacing.sm,
-          bottom: BusyMarkSpacing.sm,
-        ),
-        child: Divider(height: BusyMarkStroke.thematicBreak),
-      ),
+      BusyBlockKind.thematicBreak => const BusyMarkDocumentThematicBreak(),
       BusyBlockKind.htmlBlock when block.attributes['htmlTag'] == 'figure' =>
         _RenderedHtmlFigure(
           block: block,
@@ -811,19 +806,6 @@ class _RenderedHtmlBlock extends StatelessWidget {
     return blockDirection == inheritedDirection
         ? content
         : Directionality(textDirection: blockDirection, child: content);
-  }
-
-  TextStyle? _headingStyle(BuildContext context, BusyBlock block) {
-    final level = int.tryParse(block.attributes['level'] ?? '') ?? 0;
-    final theme = Theme.of(context).textTheme;
-    return switch (level) {
-      1 => theme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-      2 => theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-      3 => theme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-      4 => theme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-      5 => theme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-      _ => theme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-    };
   }
 }
 
@@ -921,10 +903,6 @@ class _RenderedHtmlListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final marker = block.kind == BusyBlockKind.orderedListItem
-        ? block.attributes['marker'] ?? '1.'
-        : '•';
     return Padding(
       padding: EdgeInsets.only(
         top: first ? 0 : BusyMarkSpacing.xs,
@@ -936,16 +914,12 @@ class _RenderedHtmlListItem extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: BusyMarkSizes.previewListMarkerWidth,
-                child: Text(
-                  marker,
-                  textAlign: TextAlign.end,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.mutedForeground,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
+              BusyMarkDocumentListMarker(
+                ordered: block.kind == BusyBlockKind.orderedListItem,
+                marker: block.attributes['marker'],
+                task: block.kind == BusyBlockKind.taskListItem
+                    ? block.attributes['task'] == 'true'
+                    : null,
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
               Expanded(child: _RenderedHtmlInlineText(block: block)),
@@ -954,8 +928,7 @@ class _RenderedHtmlListItem extends StatelessWidget {
           if (block.children.isNotEmpty)
             Padding(
               padding: const EdgeInsetsDirectional.only(
-                start:
-                    BusyMarkSizes.previewListMarkerWidth + BusyMarkSpacing.sm,
+                start: BusyMarkSizes.documentListIndent,
               ),
               child: _RenderedHtmlBlocks(
                 blocks: block.children,
@@ -1049,12 +1022,11 @@ class _RenderedHtmlTableCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      fontWeight: header ? FontWeight.w700 : FontWeight.w400,
-      height: BusyMarkTypography.bodyLineHeight,
-    );
+    final style = busyMarkDocumentBodyTextStyle(
+      context,
+    ).copyWith(fontWeight: header ? FontWeight.w700 : FontWeight.w400);
     return Padding(
-      padding: BusyMarkInsets.wysiwygTableCell,
+      padding: BusyMarkInsets.documentTableCell,
       child: cell == null
           ? const SizedBox.shrink()
           : _RenderedHtmlInlineText(block: cell!, style: style),
@@ -1180,48 +1152,6 @@ String _directionalText(BusyBlock block) {
   ].join(' ');
 }
 
-class _ThematicBreakBlockView extends StatelessWidget {
-  const _ThematicBreakBlockView({required this.selected});
-
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final lineColor = selected
-        ? scheme.primary.withValues(alpha: BusyMarkAlpha.thematicBreakSelected)
-        : colors.mutedForeground.withValues(alpha: BusyMarkAlpha.thematicBreak);
-    final accentColor = selected
-        ? scheme.primary
-        : colors.mutedForeground.withValues(
-            alpha: BusyMarkAlpha.thematicBreakHandle,
-          );
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            height: BusyMarkStroke.thematicBreak,
-            decoration: BoxDecoration(
-              color: lineColor,
-              borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
-            ),
-          ),
-          Container(
-            width: BusyMarkSizes.thematicBreakHandleWidth,
-            height: BusyMarkSizes.markerDot,
-            decoration: BoxDecoration(
-              color: accentColor,
-              borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _TableBlockEditor extends StatelessWidget {
   const _TableBlockEditor({
     required this.block,
@@ -1248,7 +1178,6 @@ class _TableBlockEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final theme = Theme.of(context).textTheme;
     final rows = block.children;
     final columnCount = _columnCount(rows);
     final dataWidth = (columnCount * BusyMarkSizes.tableColumnBaseWidth)
@@ -1303,7 +1232,7 @@ class _TableBlockEditor extends StatelessWidget {
                   TableRow(
                     decoration: BoxDecoration(
                       color: _isHeaderRow(row, rowIndex)
-                          ? colors.controlHover
+                          ? colors.control
                           : BusyMarkLinuxPalette.transparent,
                     ),
                     children: [
@@ -1318,9 +1247,7 @@ class _TableBlockEditor extends StatelessWidget {
                               ? row.children[column]
                               : null,
                           header: _isHeaderRow(row, rowIndex),
-                          style: theme.bodyMedium!.copyWith(
-                            height: BusyMarkTypography.codeLineHeight,
-                          ),
+                          style: busyMarkDocumentBodyTextStyle(context),
                           onFocused: onFocused,
                           onChanged: onCellChanged,
                         ),
@@ -1533,7 +1460,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: BusyMarkInsets.wysiwygTableCell,
+      padding: BusyMarkInsets.documentTableCell,
       child: TextField(
         key: ValueKey(cell.id),
         controller: _controller,
@@ -1660,6 +1587,7 @@ class _ImageBlockEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final source = _imageSource(block);
+    final width = busyMarkDocumentImageWidth(block.attributes);
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: MarkdownImageView(
@@ -1671,6 +1599,8 @@ class _ImageBlockEditor extends StatelessWidget {
         imagesDir: imagesDir,
         allowRemoteImages: allowRemoteImages,
         onRemoteImageBlocked: onRemoteImageBlocked,
+        width: width,
+        maxWidth: width ?? BusyMarkSizes.documentImageMaxWidth,
       ),
     );
   }

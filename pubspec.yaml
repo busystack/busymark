@@ -1,7 +1,7 @@
 name: busymark
 description: Local-first Markdown and Writerside-compatible documentation editor.
 publish_to: 'none'
-version: 0.2.3
+version: 0.2.4
 
 environment:
   sdk: ^3.12.1
@@ -43,3 +43,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/busymark_logo.svg
+    - assets/export/markdown.typ

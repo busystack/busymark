@@ -2387,4 +2387,81 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'پیوندها http، https، mailto، tel، URLهای نسبی و قطعه‌ها را می‌پذیرند؛ طرح‌های ناامن مسدود می‌شوند.';
+
+  @override
+  String get exportAsPdf => 'خروجی به‌صورت PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'چیدمان صفحه را برای یک PDF حرفه‌ای و مستقل انتخاب کنید.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'تصاویر راه‌دور هنگام خروجی دانلود نمی‌شوند. تصاویر محلی در صورت دسترس بودن افزوده می‌شوند.';
+
+  @override
+  String get pdfPageSize => 'اندازه صفحه';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'Letter (نامه)';
+
+  @override
+  String get pdfOrientation => 'جهت';
+
+  @override
+  String get pdfPortrait => 'عمودی';
+
+  @override
+  String get pdfLandscape => 'افقی';
+
+  @override
+  String get pdfMargins => 'حاشیه‌ها';
+
+  @override
+  String get pdfMarginNarrow => 'باریک';
+
+  @override
+  String get pdfMarginNormal => 'عادی';
+
+  @override
+  String get pdfMarginWide => 'پهن';
+
+  @override
+  String get pdfIncludePageNumbers => 'افزودن شماره صفحه';
+
+  @override
+  String get export => 'خروجی';
+
+  @override
+  String get exportingPdf => 'در حال تهیه PDF…';
+
+  @override
+  String get fileTypePdf => 'سند PDF';
+
+  @override
+  String pdfExported(String fileName) {
+    return '$fileName صادر شد.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return '$fileName صادر شد. تصاویر افزوده‌نشده: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'مؤلفه خروجی PDF موجود نیست. BusyMark را دوباره نصب و تلاش کنید.';
+
+  @override
+  String get pdfExportTimedOut => 'خروجی PDF بیش از حد طول کشید و متوقف شد.';
+
+  @override
+  String get pdfExportFailed => 'BusyMark نتوانست این سند را به PDF تبدیل کند.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'سند Markdown فعال را به PDF صادر کنید.';
 }

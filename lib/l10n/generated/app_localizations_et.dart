@@ -2332,4 +2332,83 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'Linkides on lubatud HTTP-, HTTPS-, mailto- ja tel-skeemiga URL-id ning suhtelised ja fragmendi-URL-id; ebaturvalised skeemid blokeeritakse.';
+
+  @override
+  String get exportAsPdf => 'Ekspordi PDF-ina';
+
+  @override
+  String get pdfExportDescription =>
+      'Vali viimistletud ja iseseisva PDF-i leheküljendus.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'Kaugpilte eksportimisel alla ei laadita. Kohalikud pildid lisatakse, kui need on saadaval.';
+
+  @override
+  String get pdfPageSize => 'Lehe suurus';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'USA Letter';
+
+  @override
+  String get pdfOrientation => 'Paigutus';
+
+  @override
+  String get pdfPortrait => 'Püstpaigutus';
+
+  @override
+  String get pdfLandscape => 'Rõhtpaigutus';
+
+  @override
+  String get pdfMargins => 'Veerised';
+
+  @override
+  String get pdfMarginNarrow => 'Kitsad';
+
+  @override
+  String get pdfMarginNormal => 'Tavalised';
+
+  @override
+  String get pdfMarginWide => 'Laiad';
+
+  @override
+  String get pdfIncludePageNumbers => 'Lisa leheküljenumbrid';
+
+  @override
+  String get export => 'Ekspordi';
+
+  @override
+  String get exportingPdf => 'PDF-i eksportimine…';
+
+  @override
+  String get fileTypePdf => 'PDF-dokument';
+
+  @override
+  String pdfExported(String fileName) {
+    return '$fileName eksporditi.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return '$fileName eksporditi. Lisamata jäänud pilte: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'PDF-i ekspordikomponent puudub. Paigalda BusyMark uuesti ja proovi veel kord.';
+
+  @override
+  String get pdfExportTimedOut =>
+      'PDF-i eksport võttis liiga kaua aega ja peatati.';
+
+  @override
+  String get pdfExportFailed =>
+      'BusyMark ei saanud seda dokumenti PDF-ina eksportida.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'Ekspordi aktiivne Markdowni dokument PDF-ina.';
 }

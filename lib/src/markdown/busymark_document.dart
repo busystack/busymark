@@ -2,6 +2,9 @@ import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import 'markdown_model.dart';
 
+/// Marks an empty WYSIWYG paragraph that must remain a source blank line.
+const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
+
 class BusyDocument {
   const BusyDocument({
     required this.filePath,

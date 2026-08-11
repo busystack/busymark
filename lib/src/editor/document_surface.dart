@@ -10,6 +10,20 @@ TextStyle busyMarkDocumentBodyTextStyle(BuildContext context, {Color? color}) {
   );
 }
 
+/// Shared heading typography for editable and rendered document views.
+TextStyle busyMarkDocumentHeadingTextStyle(BuildContext context, int? level) {
+  final theme = Theme.of(context).textTheme;
+  final style = switch (level ?? 6) {
+    1 => theme.headlineSmall,
+    2 => theme.titleLarge,
+    3 => theme.titleMedium,
+    4 => theme.titleSmall,
+    5 => theme.bodyLarge,
+    _ => theme.bodyMedium,
+  };
+  return (style ?? const TextStyle()).copyWith(fontWeight: FontWeight.w700);
+}
+
 /// Resolves the actual child inset of [BusyMarkDocumentSurface].
 ///
 /// Flutter includes a decorated container's border dimensions in addition to

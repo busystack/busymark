@@ -18,15 +18,16 @@ class BusyMarkMarkdownSerializer {
       if (!_isSourceBackedBlock(block)) {
         continue;
       }
+      if (_isPreservedEmptyParagraph(block)) {
+        chunks.add('');
+        continue;
+      }
       final source = serializeBlock(block);
       if (source.trim().isNotEmpty) {
         chunks.add(source.trimRight());
       }
     }
-    if (chunks.isEmpty) {
-      return '';
-    }
-    return '${chunks.join('\n\n')}\n';
+    return _joinDocumentChunks(chunks);
   }
 
   String serializeBlock(BusyBlock block) {
@@ -84,6 +85,13 @@ class BusyMarkMarkdownSerializer {
       return null;
     }
     if (dirtyBlocks.any((block) => block.sourceSpan == null)) {
+      return null;
+    }
+    if (dirtyBlocks.any(
+      (block) =>
+          _isPreservedEmptyParagraph(block) ||
+          block.sourceSpan!.startOffset == block.sourceSpan!.endOffset,
+    )) {
       return null;
     }
     final spannedBlocks = [
@@ -200,6 +208,40 @@ class BusyMarkMarkdownSerializer {
 
   bool _isSourceBackedBlock(BusyBlock block) {
     return block.kind != BusyBlockKind.frontMatter && !block.isGenerated;
+  }
+
+  bool _isPreservedEmptyParagraph(BusyBlock block) {
+    return block.kind == BusyBlockKind.paragraph &&
+        block.plainText.isEmpty &&
+        block.attributes[busyMarkPreserveEmptyParagraphAttribute] == 'true';
+  }
+
+  String _joinDocumentChunks(List<String> chunks) {
+    if (chunks.isEmpty) {
+      return '';
+    }
+    // Empty chunks are intentional WYSIWYG paragraphs. Each contributes one
+    // source line in addition to normal Markdown block separation.
+    final firstContentIndex = chunks.indexWhere((chunk) => chunk.isNotEmpty);
+    if (firstContentIndex == -1) {
+      return chunks.length <= 1 ? '' : '\n' * (chunks.length - 1);
+    }
+    final buffer = StringBuffer()
+      ..write('\n' * firstContentIndex)
+      ..write(chunks[firstContentIndex]);
+    var emptyParagraphs = 0;
+    for (final chunk in chunks.skip(firstContentIndex + 1)) {
+      if (chunk.isEmpty) {
+        emptyParagraphs += 1;
+        continue;
+      }
+      buffer
+        ..write('\n' * (2 + emptyParagraphs))
+        ..write(chunk);
+      emptyParagraphs = 0;
+    }
+    buffer.write('\n' * (1 + emptyParagraphs));
+    return buffer.toString();
   }
 
   bool _hasDirtyContent(BusyBlock block) {

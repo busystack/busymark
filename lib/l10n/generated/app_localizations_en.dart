@@ -2327,4 +2327,82 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'Links allow http, https, mailto, tel, relative, and fragment URLs; unsafe schemes are blocked.';
+
+  @override
+  String get exportAsPdf => 'Export as PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'Choose the page layout for a polished, self-contained PDF.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'Remote images are not downloaded during export. Local images are included when available.';
+
+  @override
+  String get pdfPageSize => 'Page size';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'Letter';
+
+  @override
+  String get pdfOrientation => 'Orientation';
+
+  @override
+  String get pdfPortrait => 'Portrait';
+
+  @override
+  String get pdfLandscape => 'Landscape';
+
+  @override
+  String get pdfMargins => 'Margins';
+
+  @override
+  String get pdfMarginNarrow => 'Narrow';
+
+  @override
+  String get pdfMarginNormal => 'Normal';
+
+  @override
+  String get pdfMarginWide => 'Wide';
+
+  @override
+  String get pdfIncludePageNumbers => 'Include page numbers';
+
+  @override
+  String get export => 'Export';
+
+  @override
+  String get exportingPdf => 'Exporting PDF…';
+
+  @override
+  String get fileTypePdf => 'PDF document';
+
+  @override
+  String pdfExported(String fileName) {
+    return '$fileName was exported.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return '$fileName was exported. Images that could not be included: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'The PDF export component is missing. Reinstall BusyMark and try again.';
+
+  @override
+  String get pdfExportTimedOut => 'PDF export took too long and was stopped.';
+
+  @override
+  String get pdfExportFailed =>
+      'BusyMark could not export this document as PDF.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'Export the active Markdown document as a PDF.';
 }

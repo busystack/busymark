@@ -2355,4 +2355,83 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'تسمح الروابط بـ http وhttps وmailto وtel والروابط النسبية والمقاطع؛ وتحظر المخططات غير الآمنة.';
+
+  @override
+  String get exportAsPdf => 'تصدير بصيغة PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'اختر تخطيط الصفحة لإنشاء ملف PDF متقن ومستقل.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'لا تُنزّل الصور البعيدة أثناء التصدير. تُضمّن الصور المحلية عند توفرها.';
+
+  @override
+  String get pdfPageSize => 'حجم الصفحة';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'Letter (رسائل)';
+
+  @override
+  String get pdfOrientation => 'الاتجاه';
+
+  @override
+  String get pdfPortrait => 'عمودي';
+
+  @override
+  String get pdfLandscape => 'أفقي';
+
+  @override
+  String get pdfMargins => 'الهوامش';
+
+  @override
+  String get pdfMarginNarrow => 'ضيقة';
+
+  @override
+  String get pdfMarginNormal => 'عادية';
+
+  @override
+  String get pdfMarginWide => 'عريضة';
+
+  @override
+  String get pdfIncludePageNumbers => 'تضمين أرقام الصفحات';
+
+  @override
+  String get export => 'تصدير';
+
+  @override
+  String get exportingPdf => 'جارٍ تصدير PDF…';
+
+  @override
+  String get fileTypePdf => 'مستند PDF';
+
+  @override
+  String pdfExported(String fileName) {
+    return 'تم تصدير $fileName.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return 'تم تصدير $fileName. صور تعذر تضمينها: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'مكوّن تصدير PDF مفقود. أعد تثبيت BusyMark ثم حاول مجددًا.';
+
+  @override
+  String get pdfExportTimedOut =>
+      'استغرق تصدير PDF وقتًا طويلًا جدًا وتم إيقافه.';
+
+  @override
+  String get pdfExportFailed =>
+      'تعذر على BusyMark تصدير هذا المستند بصيغة PDF.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'تصدير مستند Markdown النشط بصيغة PDF.';
 }

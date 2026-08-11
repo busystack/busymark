@@ -2365,4 +2365,83 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get markdownHtmlSafeUrlsDescription =>
       'Ссылки допускают http, https, mailto, tel, относительные URL и фрагменты; небезопасные схемы блокируются.';
+
+  @override
+  String get exportAsPdf => 'Экспортировать в PDF';
+
+  @override
+  String get pdfExportDescription =>
+      'Выберите макет страницы для аккуратного автономного PDF-файла.';
+
+  @override
+  String get pdfRemoteImagesNote =>
+      'Удалённые изображения при экспорте не загружаются. Доступные локальные изображения будут добавлены.';
+
+  @override
+  String get pdfPageSize => 'Размер страницы';
+
+  @override
+  String get pdfPageSizeA4 => 'A4';
+
+  @override
+  String get pdfPageSizeLetter => 'US Letter';
+
+  @override
+  String get pdfOrientation => 'Ориентация';
+
+  @override
+  String get pdfPortrait => 'Книжная';
+
+  @override
+  String get pdfLandscape => 'Альбомная';
+
+  @override
+  String get pdfMargins => 'Поля';
+
+  @override
+  String get pdfMarginNarrow => 'Узкие';
+
+  @override
+  String get pdfMarginNormal => 'Обычные';
+
+  @override
+  String get pdfMarginWide => 'Широкие';
+
+  @override
+  String get pdfIncludePageNumbers => 'Добавить номера страниц';
+
+  @override
+  String get export => 'Экспортировать';
+
+  @override
+  String get exportingPdf => 'Экспорт PDF…';
+
+  @override
+  String get fileTypePdf => 'Документ PDF';
+
+  @override
+  String pdfExported(String fileName) {
+    return 'Файл $fileName экспортирован.';
+  }
+
+  @override
+  String pdfExportedWithWarnings(String fileName, int count) {
+    return 'Файл $fileName экспортирован. Не удалось добавить изображений: $count.';
+  }
+
+  @override
+  String get pdfExportUnavailable =>
+      'Компонент экспорта PDF отсутствует. Переустановите BusyMark и повторите попытку.';
+
+  @override
+  String get pdfExportTimedOut =>
+      'Экспорт PDF занял слишком много времени и был остановлен.';
+
+  @override
+  String get pdfExportFailed =>
+      'BusyMark не удалось экспортировать этот документ в PDF.';
+
+  @override
+  String get shortcutExportPdfDescription =>
+      'Экспортировать активный документ Markdown в PDF.';
 }

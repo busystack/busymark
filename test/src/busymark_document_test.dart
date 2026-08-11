@@ -52,6 +52,20 @@ void main() {
     );
   });
 
+  test('document image width resolution is bounded consistently', () {
+    expect(busyMarkDocumentImageWidth(const {}), isNull);
+    expect(busyMarkDocumentImageWidth(const {'width': 'invalid'}), isNull);
+    expect(
+      busyMarkDocumentImageWidth(const {'width': '40px'}),
+      BusyMarkSizes.documentImageMinWidth,
+    );
+    expect(busyMarkDocumentImageWidth(const {'width': '320'}), 320);
+    expect(
+      busyMarkDocumentImageWidth(const {'width': '1200px'}),
+      BusyMarkSizes.documentImageMaxWidth,
+    );
+  });
+
   test('package markdown AST imports into BusyDocument core blocks', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -1308,7 +1322,7 @@ void main() {}
     expect(nestedRect.left, closeTo(parentRect.left, 0.1));
     expect(
       nestedRect.right,
-      closeTo(parentRect.right - BusyMarkSizes.wysiwygBlockIndent, 0.1),
+      closeTo(parentRect.right - BusyMarkSizes.documentListIndent, 0.1),
     );
   });
 
@@ -1573,6 +1587,98 @@ void main() {}
     expect(markdown, 'Title\n');
   });
 
+  testWidgets(
+    'WYSIWYG Tab nests eligible list items and Shift+Tab lifts them',
+    (tester) async {
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '- First\n- Second\n- Third\n',
+      );
+      final emittedMarkdown = <String>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_, value) => emittedMarkdown.add(value),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      Finder fieldFinder(String text) => find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.controller?.text == text,
+        description: 'TextField containing "$text"',
+      );
+
+      TextField field(String text) =>
+          tester.widget<TextField>(fieldFinder(text));
+
+      Future<void> focusAtStart(String text) async {
+        final textField = field(text);
+        textField.focusNode!.requestFocus();
+        textField.controller!.selection = const TextSelection.collapsed(
+          offset: 0,
+        );
+        await tester.pump();
+      }
+
+      final firstStart = tester.getTopLeft(fieldFinder('First')).dx;
+      await focusAtStart('First');
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      expect(emittedMarkdown, isEmpty);
+      expect(field('First').controller!.text, 'First');
+      expect(tester.getTopLeft(fieldFinder('First')).dx, firstStart);
+      expect(field('First').focusNode!.hasFocus, isTrue);
+
+      final secondStart = tester.getTopLeft(fieldFinder('Second')).dx;
+      await focusAtStart('Second');
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+
+      expect(emittedMarkdown, ['- First\n  - Second\n\n- Third\n']);
+      expect(
+        tester.getTopLeft(fieldFinder('Second')).dx,
+        greaterThan(secondStart),
+      );
+      expect(field('Second').focusNode!.hasFocus, isTrue);
+      expect(field('Second').controller!.selection.extentOffset, 0);
+      expect(field('Second').controller!.text, isNot(contains('\t')));
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+
+      expect(emittedMarkdown.last, '- First\n\n- Second\n\n- Third\n');
+      expect(emittedMarkdown, hasLength(2));
+      expect(
+        tester.getTopLeft(fieldFinder('Second')).dx,
+        closeTo(secondStart, 0.1),
+      );
+      expect(field('Second').focusNode!.hasFocus, isTrue);
+      expect(field('Second').controller!.selection.extentOffset, 0);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+
+      expect(emittedMarkdown, hasLength(2));
+      expect(field('Second').focusNode!.hasFocus, isTrue);
+    },
+  );
+
   testWidgets('WYSIWYG arrow keys move focus between paragraphs', (
     tester,
   ) async {
@@ -1615,6 +1721,630 @@ void main() {}
     await tester.pump();
 
     expect(fieldAt(0).focusNode?.hasFocus, isTrue);
+  });
+
+  testWidgets('WYSIWYG Ctrl+Arrow crosses paragraph boundaries', (
+    tester,
+  ) async {
+    const firstText = 'First paragraph';
+    const secondText = 'Second paragraph';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '$firstText\n\n$secondText\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(
+      offset: firstText.length,
+    );
+    await _pressControlShortcut(tester, LogicalKeyboardKey.arrowRight);
+
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+    await _pressControlShortcut(tester, LogicalKeyboardKey.arrowLeft);
+
+    expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(0).controller!.selection.extentOffset, firstText.length);
+  });
+
+  testWidgets('WYSIWYG Ctrl+Shift+Arrow extends into the next paragraph', (
+    tester,
+  ) async {
+    const firstText = 'First paragraph';
+    const secondText = 'Second paragraph';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '$firstText\n\n$secondText\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(
+      offset: firstText.length,
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, greaterThan(0));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+    expect(
+      fieldAt(0).controller!.selection,
+      const TextSelection.collapsed(offset: firstText.length),
+    );
+  });
+
+  testWidgets('WYSIWYG repeated arrow keys keep moving between paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) {
+      return tester.widget<TextField>(find.byType(TextField).at(index));
+    }
+
+    expect(fieldAt(0).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(1).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(2).focusNode?.hasFocus, isTrue);
+
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown);
+  });
+
+  testWidgets(
+    'WYSIWYG Shift+Down selection continues character by character in the next paragraph',
+    (tester) async {
+      const first = 'As a learner,';
+      const second = 'I want to submit audio-transcription probes,';
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$first\n\n$second\n\nSo I can recognize words.\n',
+      );
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            final arguments = call.arguments as Map<Object?, Object?>;
+            copiedText = arguments['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      TextField fieldAt(int index) =>
+          tester.widget<TextField>(find.byType(TextField).at(index));
+
+      fieldAt(0).controller!.selection = const TextSelection.collapsed(
+        offset: 0,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+
+      expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+      expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+
+      expect(fieldAt(1).controller!.selection.extentOffset, 1);
+      await _pressControlShortcut(tester, LogicalKeyboardKey.keyC);
+      expect(copiedText, '$first\n\nI');
+    },
+  );
+
+  testWidgets('WYSIWYG repeated Shift+Arrow extends one selection', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n\nThird\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(offset: 0);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(2).focusNode!.hasFocus, isTrue);
+
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyRepeatEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(fieldAt(2).controller!.selection.extentOffset, 2);
+  });
+
+  testWidgets(
+    'WYSIWYG horizontal selection continues vertically into the next paragraph',
+    (tester) async {
+      const first = 'As a learner,';
+      const second = 'I want to submit audio-transcription probes,';
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$first\n\n$second\n\nSo I can recognize words.\n',
+      );
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            final arguments = call.arguments as Map<Object?, Object?>;
+            copiedText = arguments['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      TextField fieldAt(int index) =>
+          tester.widget<TextField>(find.byType(TextField).at(index));
+
+      fieldAt(0).controller!.selection = const TextSelection.collapsed(
+        offset: 0,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+
+      expect(
+        fieldAt(0).controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 1),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+
+      expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+      expect(fieldAt(1).controller!.selection.extentOffset, 1);
+      await _pressControlShortcut(tester, LogicalKeyboardKey.keyC);
+      expect(copiedText, '$first\n\nI');
+    },
+  );
+
+  testWidgets(
+    'WYSIWYG reverse Shift+Up selection continues left in the previous paragraph',
+    (tester) async {
+      const first = 'As a learner,';
+      const second = 'I want to submit audio-transcription probes,';
+      final parsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$first\n\n$second\n',
+      );
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            final arguments = call.arguments as Map<Object?, Object?>;
+            copiedText = arguments['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 640,
+              child: BusyMarkWysiwygEditor(
+                document: parsed.busyDocument,
+                onSourceChanged: (_, _) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      TextField fieldAt(int index) =>
+          tester.widget<TextField>(find.byType(TextField).at(index));
+
+      fieldAt(1).focusNode!.requestFocus();
+      fieldAt(1).controller!.selection = const TextSelection.collapsed(
+        offset: 1,
+      );
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+
+      expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+      expect(fieldAt(0).controller!.selection.extentOffset, 1);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+
+      expect(fieldAt(0).controller!.selection.extentOffset, 0);
+      await _pressControlShortcut(tester, LogicalKeyboardKey.keyC);
+      expect(copiedText, '$first\n\nI');
+    },
+  );
+
+  testWidgets('WYSIWYG Shift+Down traverses explicit empty paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\n\nSecond\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    expect(find.byType(TextField), findsNWidgets(3));
+    expect(fieldAt(1).controller!.text, isEmpty);
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(offset: 0);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(fieldAt(2).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(2).controller!.selection.extentOffset, 0);
+  });
+
+  testWidgets('typing replaces a WYSIWYG selection across paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n',
+    );
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(offset: 2);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(fieldAt(1).controller!.selection.extentOffset, 2);
+
+    await tester.enterText(find.byType(TextField).at(1), 'SeXcond');
+    await tester.pump();
+
+    expect(markdown, 'FiXcond\n');
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('deleting a selected paragraph boundary merges paragraphs', (
+    tester,
+  ) async {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n',
+    );
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final firstField = tester.widget<TextField>(find.byType(TextField).first);
+    firstField.controller!.selection = TextSelection.collapsed(
+      offset: firstField.controller!.text.length,
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pump();
+
+    expect(markdown, 'FirstSecond\n');
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('WYSIWYG Shift+Down follows visual lines before paragraphs', (
+    tester,
+  ) async {
+    const wrapped =
+        'This deliberately long paragraph wraps across several visual lines '
+        'inside a narrow editor while keeping one Markdown paragraph.';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '$wrapped\n\nSecond paragraph\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(offset: 0);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(0).controller!.selection.baseOffset, 0);
+    expect(fieldAt(0).controller!.selection.extentOffset, greaterThan(0));
+    expect(fieldAt(1).focusNode!.hasFocus, isFalse);
+  });
+
+  testWidgets('WYSIWYG Shift+Arrow selects whole grapheme clusters', (
+    tester,
+  ) async {
+    const grapheme = '👍🏽';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '${grapheme}X\n\nSecond\n',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, _) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    field.controller!.selection = const TextSelection.collapsed(offset: 0);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+
+    expect(field.controller!.selection.baseOffset, 0);
+    expect(field.controller!.selection.extentOffset, grapheme.length);
   });
 
   testWidgets('WYSIWYG drag selection can copy multiple paragraphs', (
@@ -3505,6 +4235,52 @@ void main() {}
     expect(linkController.markdown, 'Alpha [Beta](target.md)\n');
   });
 
+  test('WYSIWYG serializes italic nested at the end of bold text', () {
+    const source =
+        'Learner listens to audio of a word transcription and has to type '
+        'sequence of the phonemes of that word.\n';
+    const boldText = 'listens to audio of a word transcription';
+    const italicText = 'audio of a word transcription';
+    final parsed = parser.parse(filePath: 'topic.md', source: source);
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = controller.document.blocks.first.id;
+    final boldStart = source.indexOf(boldText);
+    final italicStart = source.indexOf(italicText);
+    final formattedEnd = boldStart + boldText.length;
+
+    controller.applyInlineCommand(
+      blockId,
+      BusyWysiwygInlineCommand.bold,
+      boldStart,
+      formattedEnd,
+    );
+    controller.applyInlineCommand(
+      blockId,
+      BusyWysiwygInlineCommand.italic,
+      italicStart,
+      formattedEnd,
+    );
+
+    final markdown = controller.markdown;
+    expect(
+      markdown,
+      'Learner **listens to *audio of a word transcription*** and has to '
+      'type sequence of the phonemes of that word.\n',
+    );
+
+    final reparsed = parser.parse(filePath: 'topic.md', source: markdown);
+    final strong = reparsed.busyDocument.blocks.first.inlines.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.strong,
+    );
+    final emphasis = strong.children.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.emphasis,
+    );
+    expect(strong.plainText, boldText);
+    expect(emphasis.plainText, italicText);
+  });
+
   test('WYSIWYG text edits preserve inline ranges where possible', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -4001,6 +4777,82 @@ void main() {}
     expect(controller.markdown, 'First\n\nSecond\n');
   });
 
+  test('WYSIWYG Enter preserves an empty paragraph across reloads', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: 'First\n\nSecond\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final firstBlock = controller.document.blocks.first;
+
+    final emptyBlockId = controller.applyEnterAt(
+      firstBlock.id,
+      firstBlock.plainText.length,
+    );
+
+    expect(emptyBlockId, isNotNull);
+    expect(controller.markdown, 'First\n\n\nSecond\n');
+    expect(controller.document.blocks.map((block) => block.plainText), [
+      'First',
+      '',
+      'Second',
+    ]);
+
+    final reopened = BusyMarkWysiwygDocumentController(
+      document: parser
+          .parse(filePath: 'topic.md', source: controller.markdown)
+          .busyDocument,
+    );
+    expect(reopened.document.blocks.map((block) => block.plainText), [
+      'First',
+      '',
+      'Second',
+    ]);
+  });
+
+  test('WYSIWYG Enter preserves an empty paragraph at end of file', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: 'First\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final firstBlock = controller.document.blocks.first;
+
+    controller.applyEnterAt(firstBlock.id, firstBlock.plainText.length);
+
+    expect(controller.markdown, 'First\n\n');
+    final reopened = BusyMarkWysiwygDocumentController(
+      document: parser
+          .parse(filePath: 'topic.md', source: controller.markdown)
+          .busyDocument,
+    );
+    expect(reopened.document.blocks.map((block) => block.plainText), [
+      'First',
+      '',
+    ]);
+  });
+
+  test('WYSIWYG can edit and remove a restored empty paragraph', () {
+    BusyMarkWysiwygDocumentController open(String source) {
+      return BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: source)
+            .busyDocument,
+      );
+    }
+
+    final edited = open('First\n\n\nSecond\n');
+    final emptyBlock = edited.document.blocks[1];
+    edited.updateBlockText(emptyBlock.id, 'Middle');
+    expect(edited.markdown, 'First\n\nMiddle\n\nSecond\n');
+
+    final removed = open('First\n\n\nSecond\n');
+    final removedEmptyBlock = removed.document.blocks[1];
+    removed.applyBackspaceAtStart(removedEmptyBlock.id);
+    expect(removed.markdown, 'First\n\nSecond\n');
+  });
+
   test('WYSIWYG Enter in unordered list creates next item then exits list', () {
     final parsed = parser.parse(filePath: 'topic.md', source: '- First\n');
     final controller = BusyMarkWysiwygDocumentController(
@@ -4024,7 +4876,7 @@ void main() {}
 
     expect(paragraph?.blockId, nextItem.blockId);
     expect(controller.document.blocks[1].kind, BusyBlockKind.paragraph);
-    expect(controller.markdown, '- First\n');
+    expect(controller.markdown, '- First\n\n');
   });
 
   test('WYSIWYG Enter in ordered list creates next numbered item', () {
@@ -4179,7 +5031,7 @@ void main() {}
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
 
-    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n');
+    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n\n');
     final context = tester.element(find.byType(TextField).first);
     final span = field.controller!.buildTextSpan(
       context: context,
@@ -4232,7 +5084,7 @@ void main() {}
     await tester.enterText(find.byType(TextField).first, '$sentence\n');
     await tester.pump();
 
-    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n');
+    expect(markdown, '${sentence.replaceFirst('grouped', '**grouped**')}\n\n');
     final updatedField = tester.widget<TextField>(find.byType(TextField).first);
     final context = tester.element(find.byType(TextField).first);
     final span = updatedField.controller!.buildTextSpan(
@@ -4729,13 +5581,18 @@ void main() {}
     final controller = BusyMarkWysiwygDocumentController(
       document: parsed.busyDocument,
     );
+    final firstId = parsed.busyDocument.blocks.first.id;
     final childId = parsed.busyDocument.blocks[1].id;
 
-    controller.indentListItems([childId]);
+    expect(controller.indentListItems([firstId]), isFalse);
+    expect(controller.markdown, '- Parent\n- Child\n');
+
+    expect(controller.indentListItems([childId]), isTrue);
     expect(controller.markdown, '- Parent\n  - Child\n');
 
-    controller.outdentListItems([childId]);
+    expect(controller.outdentListItems([childId]), isTrue);
     expect(controller.markdown, '- Parent\n\n- Child\n');
+    expect(controller.outdentListItems([childId]), isFalse);
 
     final taskParsed = parser.parse(
       filePath: 'topic.md',

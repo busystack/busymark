@@ -380,6 +380,22 @@ void main() {
     expect(fieldAt(0).focusNode!.hasFocus, isTrue);
     expect(fieldAt(0).controller!.selection.extentOffset, firstText.length);
 
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.arrowLeft,
+      control: true,
+    );
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.arrowRight,
+      control: true,
+    );
+    expect(fieldAt(0).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(0).controller!.selection.extentOffset, firstText.length);
+
     await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
@@ -387,6 +403,44 @@ void main() {
 
     expect(fieldAt(1).focusNode!.hasFocus, isTrue);
     expect(fieldAt(1).controller!.selection.extentOffset, 0);
+  });
+
+  testWidgets('RTL Ctrl+Shift+Arrow extends word selection across paragraphs', (
+    tester,
+  ) async {
+    const firstText = 'الفقرة الأولى';
+    const secondText = 'الفقرة الثانية';
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '$firstText\n\n$secondText\n',
+    );
+
+    await _pumpEditor(
+      tester,
+      parsed.busyDocument,
+      textDirection: TextDirection.rtl,
+    );
+
+    TextField fieldAt(int index) =>
+        tester.widget<TextField>(find.byType(TextField).at(index));
+
+    fieldAt(0).controller!.selection = const TextSelection.collapsed(
+      offset: firstText.length,
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+
+    expect(fieldAt(1).focusNode!.hasFocus, isTrue);
+    expect(fieldAt(1).controller!.selection.extentOffset, 0);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(fieldAt(1).controller!.selection.extentOffset, greaterThan(0));
   });
 
   testWidgets('code blocks stay LTR and use LTR boundary arrows in RTL UI', (

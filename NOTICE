@@ -9,3 +9,7 @@ Source repository: https://github.com/busystack/busymark
 The BusyMark name and logo are identifying marks of BusyStack.
 This license does not grant permission to use the BusyMark name or logo to
 imply endorsement, sponsorship, or official status for modified versions.
+
+BusyMark includes the Typst compiler (https://typst.app/), distributed under
+the Apache License 2.0. Its license and upstream notices are installed with the
+application under share/licenses/typst.

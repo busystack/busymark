@@ -80,15 +80,17 @@ abstract final class BusyMarkSizes {
   static const double sourceGutterWidth = 50;
   static const double sourceFoldButton = 16;
   static const double sourceFoldButtonRightInset = 1;
-  static const double previewHeadingTop = 18;
-  static const double previewHeadingBottom = 6;
-  static const double previewListMarkerWidth = 18;
-  static const double previewListMarkerTopInset = 2;
-  static const double previewImageMinWidth = 80;
-  static const double previewImageMaxWidth = documentContentWidth;
+  static const double documentHeadingTop = 18;
+  static const double documentHeadingBottom = 6;
+  static const double documentListMarkerWidth = 18;
+  static const double documentListMarkerTopInset = 2;
+  static const double documentListIndent =
+      documentListMarkerWidth + BusyMarkSpacing.sm;
+  static const double documentImageMinWidth = 80;
+  static const double documentImageMaxWidth = documentContentWidth;
+  static const double documentImageMinHeight = iconButton;
   static const double previewInlineImageMaxHeight = 180;
   static const double previewInlineImageHeight = 96;
-  static const double wysiwygBlockIndent = 28;
   static const double wysiwygToolbarReserve =
       iconButton + BusyMarkSpacing.xs * 2;
   static const double wysiwygToolbarClearance =
@@ -195,11 +197,11 @@ abstract final class BusyMarkTypography {
     'DejaVu Sans',
   ];
   static const double codeLineHeight = 1.45;
+  static const double sourceEditorLineHeight = 1.6;
   static const double bodyLineHeight = 1.5;
   static const double defaultFontSize = 14;
   static const double tooltipFontSize = defaultFontSize;
-  static const double previewThematicBreakHeight = BusyMarkStroke.thematicBreak;
-  static const double sourceCursorHeightScale = 1.22;
+  static const double sourceCursorHeightScale = 1.34;
   static const double sourceLineNumberScale = 0.92;
   static const double hiddenLayoutFontSize = 0.01;
   static const double hiddenLayoutHeight = 0.01;
@@ -295,7 +297,7 @@ abstract final class BusyMarkInsets {
     vertical: BusyMarkSpacing.sm,
   );
   static const documentCalloutContent = EdgeInsets.all(BusyMarkSpacing.md);
-  static const previewTableCell = EdgeInsets.symmetric(
+  static const documentTableCell = EdgeInsets.symmetric(
     horizontal: BusyMarkSpacing.sm,
     vertical: BusyMarkSpacing.xs,
   );
@@ -306,31 +308,27 @@ abstract final class BusyMarkInsets {
     6,
   );
   static const documentHeadingBlock = EdgeInsets.only(
-    top: BusyMarkSizes.previewHeadingTop,
-    bottom: BusyMarkSizes.previewHeadingBottom,
+    top: BusyMarkSizes.documentHeadingTop,
+    bottom: BusyMarkSizes.documentHeadingBottom,
   );
   static const documentParagraphBlock = EdgeInsets.symmetric(
-    vertical: BusyMarkSizes.previewHeadingBottom,
+    vertical: BusyMarkSizes.documentHeadingBottom,
+  );
+  static const documentImageBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.smPlus,
+  );
+  static const documentThematicBreakBlock = EdgeInsets.symmetric(
+    vertical: BusyMarkSpacing.mdPlus,
   );
   static const wysiwygContainerBlock = documentCalloutBlock;
   static const wysiwygTableBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.smPlus,
-  );
-  static const wysiwygThematicBreakBlock = EdgeInsets.symmetric(
-    vertical: BusyMarkSpacing.md,
   );
   static const wysiwygDefaultBlock = EdgeInsets.symmetric(
     vertical: BusyMarkSpacing.xs,
   );
   static const wysiwygContainerContent = documentCalloutContent;
   static const wysiwygTableContent = EdgeInsets.all(BusyMarkSpacing.smPlus);
-  static const wysiwygThematicBreakContent = EdgeInsets.symmetric(
-    vertical: BusyMarkSpacing.md,
-  );
-  static const wysiwygTableCell = EdgeInsets.symmetric(
-    horizontal: BusyMarkSpacing.smPlus,
-    vertical: BusyMarkSpacing.sm,
-  );
   static const sourceEditor = EdgeInsets.fromLTRB(
     BusyMarkSourceEditorMetrics.paddingLeft,
     BusyMarkSourceEditorMetrics.paddingTop,

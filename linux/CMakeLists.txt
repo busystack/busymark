@@ -61,6 +61,37 @@ add_subdirectory("runner")
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
 
+# BusyMark bundles a pinned static Typst compiler for deterministic PDF export.
+# The preparation script verifies the upstream release checksum before the
+# compiler becomes part of the application bundle.
+set(TYPST_BUNDLE_DIR "${CMAKE_BINARY_DIR}/typst/linux-${CMAKE_SYSTEM_PROCESSOR}")
+set(TYPST_EXECUTABLE "${TYPST_BUNDLE_DIR}/typst")
+set(TYPST_LICENSE "${TYPST_BUNDLE_DIR}/LICENSE")
+set(TYPST_NOTICE "${TYPST_BUNDLE_DIR}/NOTICE")
+set(TYPST_VERSION_FILE "${TYPST_BUNDLE_DIR}/VERSION")
+add_custom_command(
+  OUTPUT
+    "${TYPST_EXECUTABLE}"
+    "${TYPST_LICENSE}"
+    "${TYPST_NOTICE}"
+    "${TYPST_VERSION_FILE}"
+  COMMAND
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_typst.sh"
+    "${TYPST_BUNDLE_DIR}"
+    "${CMAKE_SYSTEM_PROCESSOR}"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_typst.sh"
+  COMMENT "Preparing pinned Typst compiler for PDF export"
+  VERBATIM
+)
+add_custom_target(busymark_typst ALL
+  DEPENDS
+    "${TYPST_EXECUTABLE}"
+    "${TYPST_LICENSE}"
+    "${TYPST_NOTICE}"
+    "${TYPST_VERSION_FILE}"
+)
+add_dependencies(${BINARY_NAME} busymark_typst)
+
 # Only the install-generated bundle's copy of the executable will launch
 # correctly, since the resources must in the right relative locations. To avoid
 # people trying to run the unbundled copy, put it in a subdirectory instead of
@@ -91,6 +122,14 @@ install(CODE "
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+install(PROGRAMS "${TYPST_EXECUTABLE}"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/libexec/busymark"
+  COMPONENT Runtime)
+
+install(FILES "${TYPST_LICENSE}" "${TYPST_NOTICE}" "${TYPST_VERSION_FILE}"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/typst"
+  COMPONENT Runtime)
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)

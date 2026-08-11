@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
+import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/raw_html_adapter.dart';
@@ -133,18 +134,24 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       );
       if (index == 0) {
         replacements.add(
-          block.copyWith(inlines: inlines, preserveRaw: false, dirty: true),
+          block.copyWith(
+            inlines: inlines,
+            attributes: _attributesForText(block.attributes, block.kind, part),
+            preserveRaw: false,
+            dirty: true,
+          ),
         );
       } else {
+        final splitKind = _splitKindFor(block.kind);
         replacements.add(
           BusyBlock(
             id: _nextGeneratedBlockId(_newBlockPrefixFor(block.kind)),
-            kind: _splitKindFor(block.kind),
+            kind: splitKind,
             inlines: inlines,
-            attributes: _splitAttributesFor(
-              block,
-              _splitKindFor(block.kind),
-              orderedOffset: index,
+            attributes: _attributesForText(
+              _splitAttributesFor(block, splitKind, orderedOffset: index),
+              splitKind,
+              part,
             ),
             dirty: true,
           ),
@@ -691,10 +698,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void indentListItems(Iterable<String> blockIds) {
+  bool indentListItems(Iterable<String> blockIds) {
     final ids = blockIds.toSet();
     if (ids.isEmpty) {
-      return;
+      return false;
     }
     var changed = false;
     List<BusyBlock> visit(List<BusyBlock> blocks) {
@@ -727,16 +734,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
     final blocks = visit(_document.blocks);
     if (!changed) {
-      return;
+      return false;
     }
     _document = _document.copyWith(blocks: blocks);
     notifyListeners();
+    return true;
   }
 
-  void outdentListItems(Iterable<String> blockIds) {
+  bool outdentListItems(Iterable<String> blockIds) {
     final ids = blockIds.toSet();
     if (ids.isEmpty) {
-      return;
+      return false;
     }
     var changed = false;
 
@@ -778,10 +786,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       result.addAll(childResult.outdented);
     }
     if (!changed) {
-      return;
+      return false;
     }
     _document = _document.copyWith(blocks: result);
     notifyListeners();
+    return true;
   }
 
   String? splitBlockAt(String blockId, int offset) {
@@ -804,7 +813,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         _styleRangesForSlice(ranges, 0, safeOffset),
       ),
       children: block.children,
-      attributes: block.attributes,
+      attributes: _attributesForText(block.attributes, block.kind, leftText),
       dirty: true,
     );
     final nextBlock = BusyBlock(
@@ -814,7 +823,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         rightText,
         _styleRangesForSlice(ranges, safeOffset, text.length),
       ),
-      attributes: _splitAttributesFor(block, nextKind, orderedOffset: 1),
+      attributes: _attributesForText(
+        _splitAttributesFor(block, nextKind, orderedOffset: 1),
+        nextKind,
+        rightText,
+      ),
       dirty: true,
     );
     _document = _document.copyWith(
@@ -857,8 +870,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final previousText = previous.plainText;
     final currentText = current.plainText;
     if (currentText.isEmpty) {
+      final updatedPrevious = _withoutSourceSpan(previous, dirty: true);
       _document = _document.copyWith(
-        blocks: [...blocks.take(index), ...blocks.skip(index + 1)],
+        blocks: [
+          ...blocks.take(index - 1),
+          updatedPrevious,
+          ...blocks.skip(index + 1),
+        ],
       );
       notifyListeners();
       return BusyWysiwygTextSplitResult(
@@ -1147,6 +1165,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         id: block.id,
         kind: BusyBlockKind.paragraph,
         inlines: _textInlines(''),
+        attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
         dirty: true,
       ),
     );
@@ -1320,14 +1339,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     List<BusyInlineStyleRange>? ranges,
   }) {
     final kind = styled.kind;
+    final blockText = text ?? styled.text;
     return BusyBlock(
       id: _nextGeneratedBlockId(_newBlockPrefixFor(kind)),
       kind: kind,
-      inlines: _inlinesFromStyleRanges(
-        text ?? styled.text,
-        ranges ?? styled.ranges,
-      ),
-      attributes: styled.attributes,
+      inlines: _inlinesFromStyleRanges(blockText, ranges ?? styled.ranges),
+      attributes: _attributesForText(styled.attributes, kind, blockText),
       preserveRaw: false,
       dirty: true,
     );
@@ -1485,6 +1502,19 @@ Map<String, String> _splitAttributesFor(
   return attributes;
 }
 
+Map<String, String> _attributesForText(
+  Map<String, String> attributes,
+  BusyBlockKind kind,
+  String text,
+) {
+  final updated = {...attributes}
+    ..remove(busyMarkPreserveEmptyParagraphAttribute);
+  if (kind == BusyBlockKind.paragraph && text.isEmpty) {
+    updated[busyMarkPreserveEmptyParagraphAttribute] = 'true';
+  }
+  return updated;
+}
+
 bool _shouldSplitNewlines(BusyBlockKind kind) {
   return switch (kind) {
     BusyBlockKind.paragraph ||
@@ -1557,8 +1587,25 @@ BusyBlock _blockWithEditedText(
   }
   return block.copyWith(
     inlines: _inlinesFromStyleRanges(nextText, nextRanges),
+    attributes: _attributesForText(block.attributes, block.kind, nextText),
     preserveRaw: false,
     dirty: true,
+  );
+}
+
+BusyBlock _withoutSourceSpan(BusyBlock block, {required bool dirty}) {
+  return BusyBlock(
+    id: block.id,
+    kind: block.kind,
+    inlines: block.inlines,
+    children: block.children,
+    attributes: block.attributes,
+    rawSource: block.rawSource,
+    preserveRaw: block.preserveRaw,
+    isSourceOnly: block.isSourceOnly,
+    isGenerated: block.isGenerated,
+    isSourceProtected: block.isSourceProtected,
+    dirty: dirty,
   );
 }
 
@@ -1571,7 +1618,8 @@ BusyBlock _blockWithCommand(
   final attributes = {...block.attributes}
     ..remove('ordered')
     ..remove('marker')
-    ..remove('task');
+    ..remove('task')
+    ..remove(busyMarkPreserveEmptyParagraphAttribute);
   if (command == BusyWysiwygBlockCommand.heading1) {
     attributes['level'] = '1';
   } else if (command == BusyWysiwygBlockCommand.heading2) {
@@ -1779,24 +1827,152 @@ String _incrementOrderedMarker(String? marker, int offset) {
 }
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
-  final hasEditableBlock = document.blocks.any(
+  final withBlankParagraphs = _restoreSourceBlankParagraphs(document);
+  final hasEditableBlock = withBlankParagraphs.blocks.any(
     (block) =>
         block.kind != BusyBlockKind.frontMatter &&
         !block.isSourceOnly &&
         !block.isSourceProtected,
   );
   if (hasEditableBlock) {
-    return document;
+    return withBlankParagraphs;
   }
-  return document.copyWith(
+  return withBlankParagraphs.copyWith(
     blocks: [
-      ...document.blocks,
+      ...withBlankParagraphs.blocks,
       const BusyBlock(
         id: 'empty-paragraph',
         kind: BusyBlockKind.paragraph,
         inlines: [BusyInline(kind: BusyInlineKind.text, text: '')],
       ),
     ],
+  );
+}
+
+BusyDocument _restoreSourceBlankParagraphs(BusyDocument document) {
+  final source = document.source;
+  if (source == null ||
+      document.blocks.any(
+        (block) =>
+            block.kind == BusyBlockKind.paragraph && block.plainText.isEmpty,
+      )) {
+    return document;
+  }
+  final frontMatterBlocks = document.blocks
+      .where((block) => block.kind == BusyBlockKind.frontMatter)
+      .toList();
+  final sourceBlocks = document.blocks
+      .where(
+        (block) =>
+            block.kind != BusyBlockKind.frontMatter && !block.isGenerated,
+      )
+      .toList();
+  final generatedBlocks = document.blocks
+      .where((block) => block.isGenerated)
+      .toList();
+  if (sourceBlocks.isEmpty) {
+    if (document.rawFrontMatter != null || source.trim().isNotEmpty) {
+      return document;
+    }
+    final blankOffsets = <int>[
+      0,
+      for (final match in '\n'.allMatches(source)) match.end,
+    ];
+    return document.copyWith(
+      blocks: [
+        ...frontMatterBlocks,
+        for (final (index, offset) in blankOffsets.indexed)
+          _sourceBlankParagraph(document, offset, index),
+        ...generatedBlocks,
+      ],
+    );
+  }
+  if (sourceBlocks.any((block) => block.sourceSpan == null)) {
+    return document;
+  }
+
+  final expanded = <BusyBlock>[];
+  var previousEnd = document.rawFrontMatter?.length ?? 0;
+  for (final (index, block) in sourceBlocks.indexed) {
+    final span = block.sourceSpan!;
+    if (span.startOffset < previousEnd || span.endOffset > source.length) {
+      return document;
+    }
+    final gap = source.substring(previousEnd, span.startOffset);
+    if (gap.trim().isNotEmpty) {
+      return document;
+    }
+    // Two newlines are the ordinary Markdown block boundary. Every newline
+    // after that represents another blank paragraph in the rich editor.
+    final baselineNewlines = index == 0 && document.rawFrontMatter == null
+        ? 0
+        : 2;
+    final blankOffsets = _extraBlankLineOffsets(
+      gap,
+      startOffset: previousEnd,
+      baselineNewlines: baselineNewlines,
+    );
+    for (final (blankIndex, offset) in blankOffsets.indexed) {
+      expanded.add(_sourceBlankParagraph(document, offset, blankIndex));
+    }
+    expanded.add(block);
+    previousEnd = span.endOffset;
+  }
+
+  final trailing = source.substring(previousEnd);
+  if (trailing.trim().isNotEmpty) {
+    return document;
+  }
+  final trailingBlankOffsets = _extraBlankLineOffsets(
+    trailing,
+    startOffset: previousEnd,
+    baselineNewlines: 1,
+  );
+  for (final (blankIndex, offset) in trailingBlankOffsets.indexed) {
+    expanded.add(_sourceBlankParagraph(document, offset, blankIndex));
+  }
+  if (expanded.length == sourceBlocks.length) {
+    return document;
+  }
+  return document.copyWith(
+    blocks: [...frontMatterBlocks, ...expanded, ...generatedBlocks],
+  );
+}
+
+List<int> _extraBlankLineOffsets(
+  String gap, {
+  required int startOffset,
+  required int baselineNewlines,
+}) {
+  final newlineOffsets = [
+    for (final match in '\n'.allMatches(gap)) startOffset + match.start,
+  ];
+  if (newlineOffsets.length <= baselineNewlines) {
+    return const [];
+  }
+  final lineStarts = <int>[
+    startOffset,
+    for (final offset in newlineOffsets) offset + 1,
+  ];
+  return [
+    for (var index = baselineNewlines; index < newlineOffsets.length; index++)
+      lineStarts[index],
+  ];
+}
+
+BusyBlock _sourceBlankParagraph(BusyDocument document, int offset, int index) {
+  return BusyBlock(
+    id: '\u0000source-blank:$offset:$index',
+    kind: BusyBlockKind.paragraph,
+    inlines: const [BusyInline(kind: BusyInlineKind.text, text: '')],
+    attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
+    rawSource: '',
+    sourceSpan: SourceSpan.fromOffsets(
+      filePath: document.filePath,
+      source: document.source ?? '',
+      startOffset: offset,
+      endOffset: offset,
+    ),
   );
 }
 
@@ -1877,7 +2053,7 @@ List<BusyInline> _inlinesFromStyleRanges(
       ..add(range.end);
   }
   final sortedBoundaries = boundaries.toList()..sort();
-  return [
+  final segments = [
     for (var index = 0; index < sortedBoundaries.length - 1; index++)
       if (sortedBoundaries[index + 1] > sortedBoundaries[index])
         _inlineForSegment(
@@ -1889,6 +2065,57 @@ List<BusyInline> _inlinesFromStyleRanges(
           ),
         ),
   ];
+  return _mergeAdjacentInlineStyles(segments);
+}
+
+List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
+  final merged = <BusyInline>[];
+  for (final sourceInline in inlines) {
+    final inline = sourceInline.children.isEmpty
+        ? sourceInline
+        : sourceInline.copyWith(
+            children: _mergeAdjacentInlineStyles(sourceInline.children),
+          );
+    if (merged.isEmpty || !_canMergeInlineStyles(merged.last, inline)) {
+      merged.add(inline);
+      continue;
+    }
+    final previous = merged.removeLast();
+    if (inline.kind == BusyInlineKind.text) {
+      merged.add(previous.copyWith(text: previous.text + inline.text));
+      continue;
+    }
+    final children = _mergeAdjacentInlineStyles([
+      ...previous.children,
+      ...inline.children,
+    ]);
+    merged.add(
+      previous.copyWith(
+        text: children.map((child) => child.plainText).join(),
+        children: children,
+      ),
+    );
+  }
+  return merged;
+}
+
+bool _canMergeInlineStyles(BusyInline left, BusyInline right) {
+  if (left.kind != right.kind || left.destination != right.destination) {
+    return false;
+  }
+  if (left.kind == BusyInlineKind.text) {
+    return left.children.isEmpty && right.children.isEmpty;
+  }
+  return left.children.isNotEmpty &&
+      right.children.isNotEmpty &&
+      switch (left.kind) {
+        BusyInlineKind.strong ||
+        BusyInlineKind.emphasis ||
+        BusyInlineKind.underline ||
+        BusyInlineKind.strikethrough ||
+        BusyInlineKind.link => true,
+        _ => false,
+      };
 }
 
 List<BusyInlineStyleRange> _styleRangesForSlice(
