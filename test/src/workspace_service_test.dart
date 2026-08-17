@@ -868,7 +868,9 @@ void main() {
         }
 
         final limitedService = WorkspaceService(
-          scanOptions: const WorkspaceScanOptions(maxTreeEntries: 2),
+          // Three root directories and the two shallow files consume the
+          // traversal budget before the deep subtree is visited.
+          scanOptions: const WorkspaceScanOptions(maxTreeEntries: 5),
         );
         final workspace = await limitedService.openPath(directory.path);
         final relativePaths = workspace.files.map((file) => file.relativePath);
