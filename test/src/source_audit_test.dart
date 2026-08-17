@@ -536,6 +536,9 @@ void main() {
     expect(searchField, contains('onEscape: widget.onEscape'));
     expect(workspace, contains('class _SearchSidebar'));
     expect(workspace, contains('_workspaceSearchResults'));
+    expect(workspace, contains('_loadWorkspaceSearchMatches'));
+    expect(workspace, contains('await loadText(file.absolutePath)'));
+    expect(workspace, isNot(contains('readAsStringSync()')));
     expect(workspace, contains('_searchNavigationTargetProvider'));
   });
 

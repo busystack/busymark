@@ -108,11 +108,117 @@ class _SourceNavigationTargetController
 }
 
 class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
+  static const _debounceDelay = Duration(milliseconds: 120);
+
+  Timer? _debounce;
+  late Future<String> Function(String path) _loadText;
+  var _request = 0;
+  var _disposed = false;
+
   @override
-  _WorkspaceSearchState build() => const _WorkspaceSearchState();
+  _WorkspaceSearchState build() {
+    _loadText = ref.read(workspaceServiceProvider).loadText;
+    ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
+      refresh(next);
+    });
+    ref.onDispose(() {
+      _disposed = true;
+      _request += 1;
+      _debounce?.cancel();
+    });
+    return const _WorkspaceSearchState();
+  }
 
   void set(_WorkspaceSearchState searchState) {
-    state = searchState;
+    final inputChanged =
+        state.query != searchState.query ||
+        state.caseSensitive != searchState.caseSensitive ||
+        state.wholeWord != searchState.wholeWord ||
+        state.regex != searchState.regex ||
+        state.active != searchState.active;
+    state = searchState.copyWith(
+      matches: inputChanged ? const [] : state.matches,
+      searching: false,
+    );
+    _schedule(ref.read(workspaceControllerProvider));
+  }
+
+  void refresh(WorkspaceState workspaceState) {
+    if (!state.active || state.options.query.isEmpty) {
+      return;
+    }
+    _schedule(workspaceState);
+  }
+
+  Future<bool> submit() async {
+    _debounce?.cancel();
+    final request = ++_request;
+    final workspaceState = ref.read(workspaceControllerProvider);
+    final options = state.options;
+    if (!state.active ||
+        options.query.isEmpty ||
+        workspaceState.workspace == null) {
+      return false;
+    }
+    state = state.copyWith(matches: const [], searching: true);
+    await _runSearch(
+      request: request,
+      workspaceState: workspaceState,
+      options: options,
+    );
+    return !_disposed && request == _request;
+  }
+
+  void _schedule(WorkspaceState workspaceState) {
+    _debounce?.cancel();
+    final request = ++_request;
+    final workspace = workspaceState.workspace;
+    final options = state.options;
+    if (!state.active || options.query.isEmpty || workspace == null) {
+      final clearMatches = options.query.isEmpty || workspace == null;
+      if (state.searching || (clearMatches && state.matches.isNotEmpty)) {
+        state = state.copyWith(
+          matches: clearMatches ? const [] : state.matches,
+          searching: false,
+        );
+      }
+      return;
+    }
+    state = state.copyWith(matches: const [], searching: true);
+    _debounce = Timer(_debounceDelay, () {
+      _debounce = null;
+      unawaited(
+        _runSearch(
+          request: request,
+          workspaceState: workspaceState,
+          options: options,
+        ),
+      );
+    });
+  }
+
+  Future<void> _runSearch({
+    required int request,
+    required WorkspaceState workspaceState,
+    required SourceSearchOptions options,
+  }) async {
+    try {
+      final matches = await _loadWorkspaceSearchMatches(
+        workspaceState,
+        options,
+        loadText: _loadText,
+        isCancelled: () => _disposed || request != _request,
+      );
+      if (_disposed || request != _request) {
+        return;
+      }
+      state = state.copyWith(matches: matches, searching: false);
+    } on Object {
+      if (_disposed || request != _request) {
+        return;
+      }
+      state = state.copyWith(matches: const [], searching: false);
+    }
   }
 }
 
@@ -169,6 +275,8 @@ class _WorkspaceSearchState {
     this.caseSensitive = false,
     this.wholeWord = false,
     this.regex = false,
+    this.matches = const [],
+    this.searching = false,
   });
 
   final bool active;
@@ -176,6 +284,8 @@ class _WorkspaceSearchState {
   final bool caseSensitive;
   final bool wholeWord;
   final bool regex;
+  final List<_WorkspaceSearchMatch> matches;
+  final bool searching;
 
   SourceSearchOptions get options => SourceSearchOptions(
     query: query.trim(),
@@ -190,6 +300,8 @@ class _WorkspaceSearchState {
     bool? caseSensitive,
     bool? wholeWord,
     bool? regex,
+    List<_WorkspaceSearchMatch>? matches,
+    bool? searching,
   }) {
     return _WorkspaceSearchState(
       active: active ?? this.active,
@@ -197,6 +309,8 @@ class _WorkspaceSearchState {
       caseSensitive: caseSensitive ?? this.caseSensitive,
       wholeWord: wholeWord ?? this.wholeWord,
       regex: regex ?? this.regex,
+      matches: matches ?? this.matches,
+      searching: searching ?? this.searching,
     );
   }
 
@@ -255,11 +369,7 @@ class WorkspaceScreen extends ConsumerWidget {
     }
     final searchState = ref.watch(_workspaceSearchProvider);
     final gitState = ref.watch(gitControllerProvider);
-    final searchResults = _workspaceSearchResults(
-      context,
-      state,
-      searchState.options,
-    );
+    final searchResults = _workspaceSearchResults(context, searchState.matches);
 
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -330,9 +440,7 @@ class WorkspaceScreen extends ConsumerWidget {
                 .set(current.copyWith(active: true, query: query));
             unawaited(settingsController.setSidebarVisible(true));
           case HeaderBarSearchSubmitted():
-            if (searchResults.isNotEmpty) {
-              unawaited(_openSearchResult(context, ref, searchResults.first));
-            }
+            unawaited(_submitSearch(context, ref));
           case HeaderBarSearchCleared():
             _clearSearchQuery(ref);
           case HeaderBarSearchEscapePressed():
@@ -459,17 +567,8 @@ class WorkspaceScreen extends ConsumerWidget {
                               query: searchState.query,
                               onChanged: (query) => _setSearchQuery(ref, query),
                               onClear: () => _clearSearchQuery(ref),
-                              onSubmitted: () {
-                                if (searchResults.isNotEmpty) {
-                                  unawaited(
-                                    _openSearchResult(
-                                      context,
-                                      ref,
-                                      searchResults.first,
-                                    ),
-                                  );
-                                }
-                              },
+                              onSubmitted: () =>
+                                  unawaited(_submitSearch(context, ref)),
                               onEscape: () => _closeSearch(ref),
                             )
                           : _HeaderTitle(
@@ -633,6 +732,19 @@ class WorkspaceScreen extends ConsumerWidget {
     ref
         .read(_workspaceSearchProvider.notifier)
         .set(current.copyWith(query: ''));
+  }
+
+  Future<void> _submitSearch(BuildContext context, WidgetRef ref) async {
+    final current = await ref.read(_workspaceSearchProvider.notifier).submit();
+    if (!current || !context.mounted) {
+      return;
+    }
+    final matches = ref.read(_workspaceSearchProvider).matches;
+    if (matches.isEmpty) {
+      return;
+    }
+    final result = _workspaceSearchResults(context, matches).first;
+    await _openSearchResult(context, ref, result);
   }
 
   void _handleHeaderBarAction(
@@ -1544,6 +1656,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                 ? _SearchSidebar(
                     query: widget.searchState.query,
                     results: widget.searchResults,
+                    searching: widget.searchState.searching,
                     onOpenResult: widget.onOpenSearchResult,
                   )
                 : _topicUsageReview != null
@@ -9171,11 +9284,13 @@ class _SearchSidebar extends StatelessWidget {
   const _SearchSidebar({
     required this.query,
     required this.results,
+    required this.searching,
     required this.onOpenResult,
   });
 
   final String query;
   final List<_WorkspaceSearchResult> results;
+  final bool searching;
   final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
 
   @override
@@ -9185,6 +9300,13 @@ class _SearchSidebar extends StatelessWidget {
       return _SidebarEmptyState(
         icon: BusyMarkGlyphs.search,
         title: context.l10n.search,
+      );
+    }
+    if (searching && results.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(
+          key: ValueKey('workspace-search-progress'),
+        ),
       );
     }
     final colors = BusyMarkSurfaceColors.of(context);
@@ -9337,6 +9459,32 @@ class _WorkspaceSearchResult {
   final IconData icon;
 }
 
+enum _WorkspaceSearchMatchKind { text, fileName }
+
+class _WorkspaceSearchMatch {
+  const _WorkspaceSearchMatch({
+    required this.kind,
+    required this.filePath,
+    required this.relativePath,
+    required this.fileKind,
+    required this.line,
+    required this.startOffset,
+    required this.endOffset,
+    required this.query,
+    this.lineText,
+  });
+
+  final _WorkspaceSearchMatchKind kind;
+  final String filePath;
+  final String relativePath;
+  final DocumentKind fileKind;
+  final int line;
+  final int startOffset;
+  final int endOffset;
+  final String query;
+  final String? lineText;
+}
+
 class _WorkspaceSearchFileGroup {
   const _WorkspaceSearchFileGroup({
     required this.relativePath,
@@ -9365,23 +9513,69 @@ List<_WorkspaceSearchFileGroup> _workspaceSearchFileGroups(
 
 List<_WorkspaceSearchResult> _workspaceSearchResults(
   BuildContext context,
-  WorkspaceState state,
-  SourceSearchOptions options,
+  List<_WorkspaceSearchMatch> matches,
 ) {
+  return [
+    for (final match in matches)
+      _WorkspaceSearchResult(
+        filePath: match.filePath,
+        relativePath: match.relativePath,
+        line: match.line,
+        startOffset: match.startOffset,
+        endOffset: match.endOffset,
+        query: match.query,
+        title: switch (match.kind) {
+          _WorkspaceSearchMatchKind.text => _searchResultTitle(
+            context,
+            match.lineText ?? '',
+          ),
+          _WorkspaceSearchMatchKind.fileName => busyMarkLtrIsolateFor(
+            context,
+            match.relativePath,
+          ),
+        },
+        subtitle: switch (match.kind) {
+          _WorkspaceSearchMatchKind.text => context.l10n.searchResultLine(
+            match.relativePath,
+            match.line,
+          ),
+          _WorkspaceSearchMatchKind.fileName => _documentKindLabel(
+            context,
+            match.fileKind,
+          ),
+        },
+        icon: switch (match.kind) {
+          _WorkspaceSearchMatchKind.text => BusyMarkGlyphs.paragraph,
+          _WorkspaceSearchMatchKind.fileName => _documentKindIcon(
+            match.fileKind,
+          ),
+        },
+      ),
+  ];
+}
+
+const int _maxWorkspaceSearchResults = 80;
+const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
+
+Future<List<_WorkspaceSearchMatch>> _loadWorkspaceSearchMatches(
+  WorkspaceState state,
+  SourceSearchOptions options, {
+  required Future<String> Function(String path) loadText,
+  required bool Function() isCancelled,
+}) async {
   final workspace = state.workspace;
   final trimmedQuery = options.query.trim();
-  if (workspace == null || trimmedQuery.isEmpty) {
+  if (workspace == null || trimmedQuery.isEmpty || isCancelled()) {
     return const [];
   }
-  final results = <_WorkspaceSearchResult>[];
+  final normalizedOptions = options.copyWith(query: trimmedQuery);
+  final results = <_WorkspaceSearchMatch>[];
   final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
   final sortedFiles = [...workspace.files]
     ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
   if (activePath != null &&
       sortedFiles.every((file) => file.absolutePath != activePath)) {
-    _addWorkspaceSearchTextResults(
-      context: context,
-      workspace: workspace,
+    _addWorkspaceSearchTextMatches(
       file: DocumentFile(
         absolutePath: activePath,
         relativePath: p.basename(activePath),
@@ -9390,97 +9584,92 @@ List<_WorkspaceSearchResult> _workspaceSearchResults(
         lastModified: DateTime.fromMillisecondsSinceEpoch(0),
       ),
       text: state.activeText,
-      options: options.copyWith(query: trimmedQuery),
+      options: normalizedOptions,
       results: results,
     );
     if (results.length >= _maxWorkspaceSearchResults) {
-      return results;
+      return List.unmodifiable(results);
     }
   }
   for (final file in sortedFiles) {
+    if (isCancelled()) {
+      return const [];
+    }
     if (!_isOpenableTextDocument(file)) {
       continue;
     }
-    final text = file.absolutePath == activePath
-        ? state.activeText
-        : _readWorkspaceSearchText(file);
+    final String? text;
+    if (file.absolutePath == activePath) {
+      text = state.activeText;
+    } else if (file.size > _maxWorkspaceSearchFileBytes) {
+      text = null;
+    } else {
+      String? loadedText;
+      try {
+        loadedText = await loadText(file.absolutePath);
+      } on Object {
+        // Keep filename matching available when a document cannot be read.
+      }
+      if (isCancelled()) {
+        return const [];
+      }
+      text = loadedText;
+    }
     if (text != null) {
-      _addWorkspaceSearchTextResults(
-        context: context,
-        workspace: workspace,
+      _addWorkspaceSearchTextMatches(
         file: file,
         text: text,
-        options: options.copyWith(query: trimmedQuery),
+        options: normalizedOptions,
         results: results,
       );
       if (results.length >= _maxWorkspaceSearchResults) {
-        return results;
+        return List.unmodifiable(results);
       }
     }
-    if (!_fileNameMatchesSearch(file.relativePath, options)) {
+    if (!_fileNameMatchesSearch(file.relativePath, normalizedOptions)) {
       continue;
     }
-    final displayPath = file.relativePath;
-    final kindLabel = _documentKindLabel(context, file.kind);
     results.add(
-      _WorkspaceSearchResult(
+      _WorkspaceSearchMatch(
+        kind: _WorkspaceSearchMatchKind.fileName,
         filePath: file.absolutePath,
-        relativePath: displayPath,
+        relativePath: file.relativePath,
+        fileKind: file.kind,
         line: 1,
         startOffset: 0,
         endOffset: 0,
         query: trimmedQuery,
-        title: busyMarkLtrIsolateFor(context, displayPath),
-        subtitle: kindLabel,
-        icon: _documentKindIcon(file.kind),
       ),
     );
     if (results.length >= _maxWorkspaceSearchResults) {
-      return results;
+      return List.unmodifiable(results);
     }
   }
-  return results;
+  return List.unmodifiable(results);
 }
 
-const int _maxWorkspaceSearchResults = 80;
-const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
-
-String? _readWorkspaceSearchText(DocumentFile file) {
-  if (file.size > _maxWorkspaceSearchFileBytes) {
-    return null;
-  }
-  try {
-    return File(file.absolutePath).readAsStringSync();
-  } on Object {
-    return null;
-  }
-}
-
-void _addWorkspaceSearchTextResults({
-  required BuildContext context,
-  required Workspace workspace,
+void _addWorkspaceSearchTextMatches({
   required DocumentFile file,
   required String text,
   required SourceSearchOptions options,
-  required List<_WorkspaceSearchResult> results,
+  required List<_WorkspaceSearchMatch> results,
 }) {
-  final relativePath = _relativeDocumentPath(workspace, file.absolutePath);
   final document = SourceDocument(fullText: text);
   final searchResult = searchSourceDocument(document, options);
   for (final match in searchResult.matches) {
     final lineNumber = document.lineIndex.lineNumberAtOffset(match.fullStart);
     final line = document.lineIndex.lineAt(lineNumber).text;
     results.add(
-      _WorkspaceSearchResult(
+      _WorkspaceSearchMatch(
+        kind: _WorkspaceSearchMatchKind.text,
         filePath: file.absolutePath,
-        relativePath: relativePath,
+        relativePath: file.relativePath,
+        fileKind: file.kind,
         line: lineNumber,
         startOffset: match.fullStart,
         endOffset: match.fullEnd,
         query: options.query,
-        title: _searchResultTitle(context, line),
-        subtitle: context.l10n.searchResultLine(relativePath, lineNumber),
-        icon: BusyMarkGlyphs.paragraph,
+        lineText: line,
       ),
     );
     if (results.length >= _maxWorkspaceSearchResults) {

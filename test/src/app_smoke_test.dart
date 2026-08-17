@@ -5155,6 +5155,74 @@ Draft paragraph.
     expect(find.byType(TextField).evaluate().length, initialTextFields);
   });
 
+  testWidgets(
+    'workspace search awaits non-active file reads without blocking builds',
+    (tester) async {
+      final service = _DeferredWorkspaceSearchService();
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.preview)
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue(
+            _DeferredWorkspaceSearchService.activePath,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var i = 0; i < 20; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+          break;
+        }
+      }
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      await tester.enterText(find.byType(TextField), 'needle');
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(service.searchReadCount, 1);
+      expect(
+        find.byKey(const ValueKey('workspace-search-progress')),
+        findsOneWidget,
+      );
+
+      service.completeSearchRead('Delayed needle result');
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('workspace-search-progress')),
+        findsNothing,
+      );
+      expect(find.text('Delayed needle result'), findsOneWidget);
+
+      final settings = container.read(appSettingsControllerProvider);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setWordWrap(!settings.wordWrap);
+      await tester.pump();
+
+      expect(service.searchReadCount, 1);
+      expect(find.text('Delayed needle result'), findsOneWidget);
+    },
+  );
+
   testWidgets('preview search result clicks move preview scroll repeatedly', (
     tester,
   ) async {
@@ -5217,6 +5285,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'needle');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     expect(
@@ -5374,6 +5443,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'code needle');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     await _tapLeftmostText(tester, 'second code needle target');
@@ -5437,6 +5507,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'ac');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     await _tapLeftmostText(tester, target);
@@ -5658,6 +5729,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'ac');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     await _tapLeftmostText(tester, target);
@@ -6346,6 +6418,76 @@ class _SearchWorkspaceService extends WorkspaceService {
         contentHash: 'search',
       ),
     );
+  }
+}
+
+class _DeferredWorkspaceSearchService extends WorkspaceService {
+  _DeferredWorkspaceSearchService();
+
+  static const activePath = '/tmp/busymark-search-active.md';
+  static const secondaryPath = '/tmp/busymark-search-secondary.md';
+  static const _activeSource = '# Active document\n';
+
+  final Completer<String> _searchRead = Completer<String>();
+  int searchReadCount = 0;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    final markdown = markdownParser.parse(
+      filePath: activePath,
+      source: _activeSource,
+    );
+    return Workspace(
+      id: '/tmp/busymark-search-workspace',
+      rootPath: '/tmp',
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: activePath,
+      activeFileModifiedAt: DateTime(2026),
+      files: [
+        DocumentFile(
+          absolutePath: activePath,
+          relativePath: 'active.md',
+          kind: DocumentKind.markdown,
+          size: _activeSource.length,
+          lastModified: DateTime(2026),
+        ),
+        DocumentFile(
+          absolutePath: secondaryPath,
+          relativePath: 'secondary.md',
+          kind: DocumentKind.markdown,
+          size: 64,
+          lastModified: DateTime(2026),
+        ),
+      ],
+      diagnostics: markdown.diagnostics,
+      markdown: markdown,
+    );
+  }
+
+  @override
+  Future<String> loadText(String path) {
+    if (path == secondaryPath) {
+      searchReadCount += 1;
+      return _searchRead.future;
+    }
+    return Future.value(_activeSource);
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: _activeSource,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: _activeSource.length,
+        contentHash: 'deferred-search-active',
+      ),
+    );
+  }
+
+  void completeSearchRead(String source) {
+    _searchRead.complete(source);
   }
 }
 
