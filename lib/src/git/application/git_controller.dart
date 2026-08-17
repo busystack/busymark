@@ -171,6 +171,11 @@ class GitController extends Notifier<GitState> {
   Timer? _debounce;
   var _knownHashes = <String>{};
   var _refreshEpoch = 0;
+  var _workspaceEpoch = 0;
+  var _commitDetailsEpoch = 0;
+  var _branchesEpoch = 0;
+  var _historyEpoch = 0;
+  var _diffEpoch = 0;
   var _isUpdatingWorkspaceTrust = false;
 
   @override
@@ -199,6 +204,9 @@ class GitController extends Notifier<GitState> {
   }
 
   void attachWorkspace(Workspace workspace) {
+    if (state.attachedWorkspace?.id != workspace.id) {
+      _workspaceEpoch++;
+    }
     if (_gateway is UnavailableGitRepositoryGateway) {
       _debounce?.cancel();
       _knownHashes = {};
@@ -403,8 +411,11 @@ class GitController extends Notifier<GitState> {
   Future<void> loadProjectHistory() => _loadHistory();
 
   Future<void> loadCommitDetails(String hash) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null || !_knownHashes.contains(hash)) {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
+      return;
+    }
+    if (!_knownHashes.contains(hash)) {
       state = state.copyWith(
         lastError: GitFailure(
           code: GitFailureCode.invalidPath,
@@ -415,13 +426,19 @@ class GitController extends Notifier<GitState> {
       );
       return;
     }
+    final requestEpoch = ++_commitDetailsEpoch;
+    final historyFilePath = state.historyFilePath;
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
       final details = await _gateway.commitDetails(
-        repository,
+        operation.repository,
         hash,
-        repoRelativePath: state.historyFilePath,
+        repoRelativePath: historyFilePath,
       );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
       final firstFilePath = _firstDiffFilePath(details.changedFiles);
       state = state.copyWith(
         isRunningOperation: false,
@@ -438,6 +455,10 @@ class GitController extends Notifier<GitState> {
         ),
       );
     } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
       _setFailure(error, commandName: 'show');
       state = state.copyWith(isRunningOperation: false);
     }
@@ -501,9 +522,9 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> discardFiles(List<String> repoRelativePaths) async {
-    final repository = _trustedRepositoryInfo;
+    final operation = _captureRepositoryOperation();
     final snapshot = state.statusSnapshot;
-    if (repository == null || snapshot == null) {
+    if (operation == null || snapshot == null) {
       return;
     }
     final failure = _validation.validateRepoRelativePaths(repoRelativePaths);
@@ -527,33 +548,45 @@ class GitController extends Notifier<GitState> {
     try {
       GitOperationResult? result;
       if (tracked.isNotEmpty) {
-        result = await _gateway.discardTracked(repository, tracked);
+        result = await _gateway.discardTracked(operation.repository, tracked);
+        if (!_isCurrentRepositoryOperation(operation)) {
+          return;
+        }
       }
       if (untracked.isNotEmpty) {
         result = await _gateway.discardUntracked(
-          repository,
+          operation.repository,
           untracked,
           snapshot,
         );
+        if (!_isCurrentRepositoryOperation(operation)) {
+          return;
+        }
       }
       state = state.copyWith(
         isRunningOperation: false,
         lastOperationMessage: result?.message,
       );
       await refresh();
+      if (!_isCurrentRepositoryOperation(operation)) {
+        return;
+      }
       final selected = state.selectedFilePath;
       if (selected != null && repoRelativePaths.contains(selected)) {
         state = state.copyWith(selectedDiff: null);
       }
     } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation)) {
+        return;
+      }
       _setFailure(error, commandName: 'restore');
       state = state.copyWith(isRunningOperation: false);
     }
   }
 
   Future<void> commit(String message) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
       return;
     }
     final messageFailure = _validation.validateCommitMessage(message);
@@ -565,23 +598,32 @@ class GitController extends Notifier<GitState> {
       state = state.copyWith(lastError: failure);
       return;
     }
-    await _runOperation((repository) => _gateway.commit(repository, message));
-    await loadProjectHistory();
+    final completed = await _runOperation(
+      (repository) => _gateway.commit(repository, message),
+      context: operation,
+    );
+    if (completed) {
+      await loadProjectHistory();
+    }
   }
 
-  Future<void> pullFastForwardOnly() {
-    return _runOperation(
+  Future<void> pullFastForwardOnly() async {
+    await _runOperation(
       (repository) => _gateway.pullFastForwardOnly(repository),
     );
   }
 
   Future<void> push({bool allowSetUpstream = false}) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
       return;
     }
+    final repository = operation.repository;
     if (repository.upstreamBranch != null) {
-      await _runOperation((repository) => _gateway.push(repository));
+      await _runOperation(
+        (repository) => _gateway.push(repository),
+        context: operation,
+      );
       return;
     }
     final branch = repository.currentBranch;
@@ -597,6 +639,12 @@ class GitController extends Notifier<GitState> {
       return;
     }
     final remotes = await _gateway.remotes(repository);
+    final currentRepository = _trustedRepositoryInfo;
+    if (!_isCurrentRepositoryOperation(operation) ||
+        currentRepository?.currentBranch != branch ||
+        currentRepository?.upstreamBranch != null) {
+      return;
+    }
     if (remotes.isEmpty) {
       state = state.copyWith(
         lastError: const GitFailure(
@@ -626,6 +674,7 @@ class GitController extends Notifier<GitState> {
     await _runOperation(
       (repository) =>
           _gateway.pushSetUpstream(repository, remotes.single, branch),
+      context: operation,
     );
   }
 
@@ -635,10 +684,12 @@ class GitController extends Notifier<GitState> {
       state = state.copyWith(lastError: failure);
       return;
     }
-    await _runOperation(
+    final completed = await _runOperation(
       (repository) => _gateway.createBranch(repository, branchName.trim()),
     );
-    await loadBranches();
+    if (completed) {
+      await loadBranches();
+    }
   }
 
   Future<void> switchBranch(String branchName) async {
@@ -653,18 +704,22 @@ class GitController extends Notifier<GitState> {
       );
       return;
     }
-    await _runOperation(
+    final completed = await _runOperation(
       (repository) => _gateway.switchBranch(repository, branchName),
     );
-    await loadBranches();
+    if (completed) {
+      await loadBranches();
+    }
   }
 
   Future<void> initializeRepository() async {
     final workspace = state.attachedWorkspace;
+    final context = _captureWorkspaceOperation();
     final trustedWorkspacePath = workspace == null
         ? null
         : _trustedWorkspaceGitPath(workspace);
     if (workspace == null ||
+        context == null ||
         trustedWorkspacePath == null ||
         workspace.kind == WorkspaceKind.untitledMarkdown ||
         workspace.kind == WorkspaceKind.singleMarkdown) {
@@ -673,20 +728,30 @@ class GitController extends Notifier<GitState> {
     await _runRootOperation(
       trustedWorkspacePath,
       _gateway.initializeRepository,
+      context: context,
     );
   }
 
   Future<List<GitBranch>> loadBranches() async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
       return state.branches;
     }
+    final requestEpoch = ++_branchesEpoch;
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
-      final branches = await _gateway.branches(repository);
+      final branches = await _gateway.branches(operation.repository);
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _branchesEpoch) {
+        return state.branches;
+      }
       state = state.copyWith(isRunningOperation: false, branches: branches);
       return branches;
     } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _branchesEpoch) {
+        return state.branches;
+      }
       _setFailure(error, commandName: 'branch');
       state = state.copyWith(isRunningOperation: false);
       return state.branches;
@@ -694,16 +759,21 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> _loadHistory({String? repoRelativePath}) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
       return;
     }
+    final requestEpoch = ++_historyEpoch;
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
       final history = await _gateway.history(
-        repository,
+        operation.repository,
         repoRelativePath: repoRelativePath,
       );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _historyEpoch) {
+        return;
+      }
       _knownHashes = {for (final commit in history) commit.fullHash};
       state = state.copyWith(
         isRunningOperation: false,
@@ -718,28 +788,41 @@ class GitController extends Notifier<GitState> {
             : state.selectedView,
       );
     } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _historyEpoch) {
+        return;
+      }
       _setFailure(error, commandName: 'log');
       state = state.copyWith(isRunningOperation: false);
     }
   }
 
   Future<void> _loadChangedFileDiff(String repoRelativePath) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
       return;
     }
+    final requestEpoch = ++_diffEpoch;
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
       final staged = await _gateway.diffFile(
-        repository,
+        operation.repository,
         repoRelativePath,
         staged: true,
       );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _diffEpoch) {
+        return;
+      }
       final unstaged = await _gateway.diffFile(
-        repository,
+        operation.repository,
         repoRelativePath,
         staged: false,
       );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _diffEpoch) {
+        return;
+      }
       state = state.copyWith(
         isRunningOperation: false,
         selectedCommitFilePath: repoRelativePath,
@@ -751,6 +834,10 @@ class GitController extends Notifier<GitState> {
         ),
       );
     } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _diffEpoch) {
+        return;
+      }
       _setFailure(error, commandName: 'diff');
       state = state.copyWith(isRunningOperation: false);
     }
@@ -764,8 +851,8 @@ class GitController extends Notifier<GitState> {
     )
     operation,
   ) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
+    final context = _captureRepositoryOperation();
+    if (context == null) {
       return;
     }
     final failure = _validation.validateRepoRelativePaths(repoRelativePaths);
@@ -775,49 +862,79 @@ class GitController extends Notifier<GitState> {
     }
     await _runOperation(
       (repository) => operation(repository, repoRelativePaths),
+      context: context,
     );
   }
 
-  Future<void> _runOperation(
-    Future<GitOperationResult> Function(GitRepositoryInfo repository) operation,
-  ) async {
-    final repository = _trustedRepositoryInfo;
-    if (repository == null) {
-      return;
+  Future<bool> _runOperation(
+    Future<GitOperationResult> Function(GitRepositoryInfo repository)
+    operation, {
+    _GitRepositoryOperation? context,
+  }) async {
+    final currentContext = context ?? _captureRepositoryOperation();
+    if (currentContext == null ||
+        !_isCurrentRepositoryOperation(currentContext)) {
+      return false;
     }
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
-      final result = await operation(repository);
+      final result = await operation(currentContext.repository);
+      if (!_isCurrentRepositoryOperation(currentContext)) {
+        return false;
+      }
       state = state.copyWith(
         isRunningOperation: false,
         lastOperationMessage: result.message,
       );
       await refresh();
+      if (!_isCurrentRepositoryOperation(currentContext)) {
+        return false;
+      }
       final selected = state.selectedFilePath;
       if (selected != null) {
         await _loadChangedFileDiff(selected);
+        if (!_isCurrentRepositoryOperation(currentContext)) {
+          return false;
+        }
       }
+      return true;
     } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(currentContext)) {
+        return false;
+      }
       _setFailure(error, commandName: 'git');
       state = state.copyWith(isRunningOperation: false);
+      return false;
     }
   }
 
-  Future<void> _runRootOperation(
+  Future<bool> _runRootOperation(
     String rootPath,
-    Future<GitOperationResult> Function(String rootPath) operation,
-  ) async {
+    Future<GitOperationResult> Function(String rootPath) operation, {
+    required _GitWorkspaceOperation context,
+  }) async {
+    if (!_isCurrentWorkspaceOperation(context)) {
+      return false;
+    }
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
       final result = await operation(rootPath);
+      if (!_isCurrentWorkspaceOperation(context)) {
+        return false;
+      }
       state = state.copyWith(
         isRunningOperation: false,
         lastOperationMessage: result.message,
       );
       await refresh();
+      return _isCurrentWorkspaceOperation(context);
     } on Object catch (error) {
+      if (!_isCurrentWorkspaceOperation(context)) {
+        return false;
+      }
       _setFailure(error, commandName: 'git');
       state = state.copyWith(isRunningOperation: false);
+      return false;
     }
   }
 
@@ -832,6 +949,7 @@ class GitController extends Notifier<GitState> {
 
   void _setWorkspaceTrustRequiredState() {
     _debounce?.cancel();
+    _workspaceEpoch++;
     _knownHashes = {};
     state = state.copyWith(
       isRefreshing: false,
@@ -883,6 +1001,44 @@ class GitController extends Notifier<GitState> {
 
   bool _isCurrentRefresh(String workspaceId, int refreshEpoch) {
     return _refreshEpoch == refreshEpoch && _isCurrentWorkspace(workspaceId);
+  }
+
+  _GitWorkspaceOperation? _captureWorkspaceOperation() {
+    final workspace = state.attachedWorkspace;
+    if (workspace == null) {
+      return null;
+    }
+    return _GitWorkspaceOperation(
+      workspaceId: workspace.id,
+      workspaceEpoch: _workspaceEpoch,
+    );
+  }
+
+  _GitRepositoryOperation? _captureRepositoryOperation() {
+    final workspace = _captureWorkspaceOperation();
+    final repository = _trustedRepositoryInfo;
+    if (workspace == null || repository == null) {
+      return null;
+    }
+    return _GitRepositoryOperation(
+      workspace: workspace,
+      repository: repository,
+    );
+  }
+
+  bool _isCurrentWorkspaceOperation(_GitWorkspaceOperation operation) {
+    return _workspaceEpoch == operation.workspaceEpoch &&
+        _isCurrentWorkspace(operation.workspaceId);
+  }
+
+  bool _isCurrentRepositoryOperation(_GitRepositoryOperation operation) {
+    if (!_isCurrentWorkspaceOperation(operation.workspace)) {
+      return false;
+    }
+    final repository = _trustedRepositoryInfo;
+    return repository != null &&
+        repository.rootPath == operation.repository.rootPath &&
+        repository.gitDirPath == operation.repository.gitDirPath;
   }
 
   bool _workspaceHasGitTrust(Workspace workspace) {
@@ -956,6 +1112,26 @@ class GitController extends Notifier<GitState> {
       fileSnapshots: {...staged.fileSnapshots, ...unstaged.fileSnapshots},
     );
   }
+}
+
+class _GitWorkspaceOperation {
+  const _GitWorkspaceOperation({
+    required this.workspaceId,
+    required this.workspaceEpoch,
+  });
+
+  final String workspaceId;
+  final int workspaceEpoch;
+}
+
+class _GitRepositoryOperation {
+  const _GitRepositoryOperation({
+    required this.workspace,
+    required this.repository,
+  });
+
+  final _GitWorkspaceOperation workspace;
+  final GitRepositoryInfo repository;
 }
 
 class UnavailableGitRepositoryGateway implements GitRepositoryGateway {

@@ -370,6 +370,65 @@ void main() {
     expect(state.statusSnapshot?.repositoryInfo.rootPath, '/other');
   });
 
+  test(
+    'cancels set-upstream push when the workspace changes during remote lookup',
+    () async {
+      final gateway = _DeferredSetUpstreamPushGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+
+      controller.attachWorkspace(_workspace());
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).repositoryInfo?.rootPath,
+        '/repo',
+      );
+
+      final push = controller.push(allowSetUpstream: true);
+      await gateway.remotesStarted.future;
+      expect(gateway.remotesRepository?.rootPath, '/repo');
+
+      controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
+      await controller.refresh();
+      expect(
+        container.read(gitControllerProvider).repositoryInfo?.rootPath,
+        '/other',
+      );
+
+      gateway.remotesResult.complete(const ['origin']);
+      await push;
+
+      expect(gateway.setUpstreamPushes, isEmpty);
+      expect(
+        container.read(gitControllerProvider).repositoryInfo?.rootPath,
+        '/other',
+      );
+    },
+  );
+
+  test('ignores stale history after a workspace switch', () async {
+    final gateway = _DeferredHistoryGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+    final history = controller.loadProjectHistory();
+    await gateway.historyStarted.future;
+
+    controller.attachWorkspace(_workspace(id: '/other', rootPath: '/other'));
+    await controller.refresh();
+    gateway.historyResult.complete([
+      _commitSummary('aaaaaaaaaaaaaaaa', 'History from the old repository'),
+    ]);
+    await history;
+
+    final state = container.read(gitControllerProvider);
+    expect(state.repositoryInfo?.rootPath, '/other');
+    expect(state.history, isEmpty);
+    expect(state.selectedView, GitView.changes);
+  });
+
   test('history tab reloads project history after workspace switch', () async {
     final gateway = _FakeGitGateway();
     final container = _container(gateway);
@@ -896,6 +955,95 @@ class _DeferredDetectGitGateway extends _FakeGitGateway {
       ],
     );
   }
+}
+
+class _DeferredHistoryGitGateway extends _FakeGitGateway {
+  final historyStarted = Completer<void>();
+  final historyResult = Completer<List<GitCommitSummary>>();
+
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
+    return GitRepositoryInfo(
+      rootPath: workspacePath,
+      gitDirPath: '$workspacePath/.git',
+    );
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
+    return GitStatusSnapshot(repositoryInfo: repository, files: const []);
+  }
+
+  @override
+  Future<List<GitCommitSummary>> history(
+    GitRepositoryInfo repository, {
+    String? repoRelativePath,
+    int limit = 200,
+    int skip = 0,
+  }) {
+    if (!historyStarted.isCompleted) {
+      historyStarted.complete();
+    }
+    return historyResult.future;
+  }
+}
+
+class _DeferredSetUpstreamPushGitGateway extends _FakeGitGateway {
+  final remotesStarted = Completer<void>();
+  final remotesResult = Completer<List<String>>();
+  final setUpstreamPushes =
+      <({String rootPath, String remote, String branch})>[];
+  GitRepositoryInfo? remotesRepository;
+
+  @override
+  Future<GitRepositoryInfo?> detectRepository(String workspacePath) async {
+    return GitRepositoryInfo(
+      rootPath: workspacePath,
+      gitDirPath: '$workspacePath/.git',
+      currentBranch: workspacePath == '/repo' ? 'branch-a' : 'branch-b',
+      hasRemote: true,
+    );
+  }
+
+  @override
+  Future<GitStatusSnapshot> status(GitRepositoryInfo repository) async {
+    return GitStatusSnapshot(repositoryInfo: repository, files: const []);
+  }
+
+  @override
+  Future<List<String>> remotes(GitRepositoryInfo repository) {
+    remotesRepository = repository;
+    if (!remotesStarted.isCompleted) {
+      remotesStarted.complete();
+    }
+    return remotesResult.future;
+  }
+
+  @override
+  Future<GitOperationResult> pushSetUpstream(
+    GitRepositoryInfo repository,
+    String remote,
+    String branch,
+  ) async {
+    setUpstreamPushes.add((
+      rootPath: repository.rootPath,
+      remote: remote,
+      branch: branch,
+    ));
+    return _result();
+  }
+}
+
+GitCommitSummary _commitSummary(String hash, String subject) {
+  return GitCommitSummary(
+    fullHash: hash,
+    shortHash: hash.substring(0, 7),
+    authorName: 'BusyMark Test',
+    authorEmail: 'busymark@example.com',
+    authorDate: DateTime(2026),
+    subject: subject,
+    parentHashes: const [],
+  );
 }
 
 GitDiffFile _diffFile(String path) {
