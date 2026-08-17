@@ -290,6 +290,7 @@ class WritersideModule {
     required this.variables,
     required this.categories,
     required this.diagnostics,
+    required this.validatedImageDirs,
   });
 
   final String rootPath;
@@ -299,6 +300,9 @@ class WritersideModule {
   final List<WritersideVariable> variables;
   final List<WritersideCategory> categories;
   final List<Diagnostic> diagnostics;
+  final List<String> validatedImageDirs;
+
+  String get effectiveImagesDir => validatedImageDirs.firstOrNull ?? 'images';
 
   Map<String, WritersideTopic> get topicsByFileName {
     final grouped = <String, List<WritersideTopic>>{};

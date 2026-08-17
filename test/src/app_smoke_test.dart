@@ -6038,6 +6038,7 @@ class _MutableWorkspaceController extends WorkspaceController {
       variables: module.variables,
       categories: module.categories,
       diagnostics: module.diagnostics,
+      validatedImageDirs: module.validatedImageDirs,
     );
     state = state.copyWith(
       workspace: workspace.copyWith(writersideModule: updatedModule),

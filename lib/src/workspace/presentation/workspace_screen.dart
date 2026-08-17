@@ -7217,8 +7217,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                         .state
                         .workspace
                         ?.writersideModule
-                        ?.config
-                        .imagesDir ??
+                        ?.effectiveImagesDir ??
                     'images',
                 allowRemoteImages: allowRemoteImages,
                 onRemoteImageBlocked: () =>
@@ -8548,7 +8547,7 @@ class _PreviewImageBlock extends ConsumerWidget {
             workspaceRoot: _imageWorkspaceRoot(workspace),
             writersideRoot: workspace?.writersideModule?.rootPath,
             imagesDir:
-                workspace?.writersideModule?.config.imagesDir ?? 'images',
+                workspace?.writersideModule?.effectiveImagesDir ?? 'images',
             allowRemoteImages: allowRemoteImages,
             onRemoteImageBlocked: () =>
                 unawaited(_showRemoteImagesPrompt(context, ref)),
@@ -8813,7 +8812,8 @@ InlineSpan _previewInlineImageSpan(
           activeFilePath: activeFilePath ?? '',
           workspaceRoot: _imageWorkspaceRoot(workspace),
           writersideRoot: workspace?.writersideModule?.rootPath,
-          imagesDir: workspace?.writersideModule?.config.imagesDir ?? 'images',
+          imagesDir:
+              workspace?.writersideModule?.effectiveImagesDir ?? 'images',
           allowRemoteImages: allowRemoteImages,
           onRemoteImageBlocked: onRemoteImageBlocked,
           maxWidth: BusyMarkSizes.previewMinWidth,

@@ -190,6 +190,133 @@ void main() {
     },
   );
 
+  test('rejects configured paths outside the module root', () async {
+    final parent = await Directory.systemTemp.createTemp(
+      'busymark-writerside-config-escape-',
+    );
+    addTearDown(() => parent.deleteSync(recursive: true));
+    final root = Directory(p.join(parent.path, 'module'))..createSync();
+    final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+    Directory(p.join(outside.path, 'topics')).createSync();
+    Directory(p.join(outside.path, 'images')).createSync();
+    File(
+      p.join(outside.path, 'topics', 'secret.md'),
+    ).writeAsStringSync('# Outside\n');
+    File(p.join(outside.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="Outside" start-page="secret.md">
+  <toc-element topic="secret.md"/>
+</instance-profile>
+''');
+    File(p.join(outside.path, 'v.list')).writeAsStringSync('''
+<vars><var name="outside">secret</var></vars>
+''');
+    File(p.join(outside.path, 'c.list')).writeAsStringSync('''
+<categories><category id="outside" name="Outside"/></categories>
+''');
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="../outside/topics"/>
+  <images dir="../outside/images"/>
+  <build-config dir="../outside/build"/>
+  <api-specifications dir="../outside/api"/>
+  <snippets src="../outside/snippets"/>
+  <resources src="../outside/resources.xml" dir="../outside/resources"/>
+  <vars src="../outside/v.list"/>
+  <categories src="../outside/c.list"/>
+  <instance-groups src="../outside/groups.xml"/>
+  <instance src="../outside/ug.tree"/>
+</ihp>
+''');
+
+    final module = await moduleService.load(root.path);
+    final workspace = await workspaceService.openPath(root.path);
+    final unsafeDiagnostics = module.diagnostics.where(
+      (diagnostic) => diagnostic.code == 'writerside.config.path-unsafe',
+    );
+
+    expect(unsafeDiagnostics, hasLength(11));
+    expect(
+      unsafeDiagnostics.map((diagnostic) => diagnostic.args['reason']).toSet(),
+      {'outsideRoot'},
+    );
+    expect(module.topics, isEmpty);
+    expect(module.instances, isEmpty);
+    expect(module.variables, isEmpty);
+    expect(module.categories, isEmpty);
+    expect(module.effectiveImagesDir, 'images');
+    expect(workspace.activeFilePath, isNull);
+  });
+
+  test(
+    'rejects a configured topic root reached through a symlink',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-writerside-config-symlink-',
+      );
+      addTearDown(() => parent.deleteSync(recursive: true));
+      final root = Directory(p.join(parent.path, 'module'))..createSync();
+      final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+      final outsideTopic = File(p.join(outside.path, 'secret.md'))
+        ..writeAsStringSync('# Outside\n');
+      await Link(p.join(root.path, 'topics')).create(outside.path);
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+</ihp>
+''');
+
+      final module = await moduleService.load(root.path);
+
+      expect(
+        module.topics.map((topic) => topic.filePath),
+        isNot(contains(outsideTopic.path)),
+      );
+      expect(
+        module.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'writerside.config.path-unsafe' &&
+              diagnostic.args['reason'] == 'symlinkComponent',
+        ),
+        isNotEmpty,
+      );
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'rejects a Writerside config file reached through a symlink',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-writerside-config-file-symlink-',
+      );
+      addTearDown(() => parent.deleteSync(recursive: true));
+      final root = Directory(p.join(parent.path, 'module'))..createSync();
+      final outsideConfig = File(p.join(parent.path, 'outside.cfg'))
+        ..writeAsStringSync('''
+<ihp version="2.0">
+  <module name="Outside"/>
+</ihp>
+''');
+      await Link(
+        p.join(root.path, 'writerside.cfg'),
+      ).create(outsideConfig.path);
+
+      final module = await moduleService.load(root.path);
+
+      expect(module.config.moduleName, isNull);
+      expect(
+        module.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'writerside.config.path-unsafe' &&
+              diagnostic.args['kind'] == 'config' &&
+              diagnostic.args['reason'] == 'symlinkComponent',
+        ),
+        isNotEmpty,
+      );
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
   test('loads project.ihp as an equivalent Writerside config file', () async {
     final root = await Directory.systemTemp.createTemp('busymark-project-ihp-');
     addTearDown(() => root.deleteSync(recursive: true));

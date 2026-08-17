@@ -61,6 +61,7 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
     ),
     'writerside.config.invalid-root' =>
       l10n.diagnosticWritersideConfigInvalidRoot,
+    'writerside.config.path-unsafe' => l10n.errorFileOperationOutsideRoot,
     'writerside.config.missing-snippets-src' =>
       l10n.diagnosticWritersideConfigMissingSnippetsSrc,
     'writerside.config.missing-instance-groups-src' =>
