@@ -2162,6 +2162,23 @@ void main() {
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
     tester,
   ) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
     final temp = Directory.systemTemp.createTempSync('busymark_sidebar_keys_');
     addTearDown(() {
       temp.deleteSync(recursive: true);
@@ -2351,6 +2368,28 @@ void main() {
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
+    final outlineFileMenu = find.byKey(
+      const ValueKey('workspace-sidebar-outline-file-menu'),
+    );
+    expect(outlineFileMenu, findsOneWidget);
+    expect(find.byTooltip(first.path), findsOneWidget);
+    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.copyFileName), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+
+    await tester.tap(find.text(l10n.copyFileName));
+    await tester.pumpAndSettle();
+    expect(clipboardText, 'Intro.md');
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.copyPath));
+    await tester.pumpAndSettle();
+    expect(clipboardText, first.path);
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
@@ -2469,6 +2508,11 @@ void main() {
       if (key == LogicalKeyboardKey.digit2) {
         return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
       }
+      if (key == LogicalKeyboardKey.digit3) {
+        return find.byKey(
+          const ValueKey('workspace-sidebar-outline-file-menu'),
+        );
+      }
       if (key == LogicalKeyboardKey.digit4 ||
           key == LogicalKeyboardKey.digit5) {
         return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
@@ -2505,7 +2549,7 @@ void main() {
           (
             LogicalKeyboardKey.digit3,
             'Outline',
-            false,
+            true,
             LogicalKeyboardKey.digit4,
             DocumentViewModePreference.split,
           ),

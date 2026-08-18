@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "Копіювати назву файлу",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "Копіювати шлях",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -2227,7 +2231,7 @@
   "gitProjectHistory": "Проєкт",
   "gitFileHistory": "Поточний файл",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "Дії з файлом",
+  "fileActions": "Дії з файлом",
   "gitStatusAdded": "Додано",
   "gitStatusDeleted": "Видалено",
   "gitStatusRenamed": "Перейменовано",

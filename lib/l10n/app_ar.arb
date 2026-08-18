@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "نسخ اسم الملف",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "نسخ المسار",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -2211,7 +2215,7 @@
   "gitProjectHistory": "المشروع",
   "gitFileHistory": "الملف الحالي",
   "gitAdditionsDeletions": "\u2068+{additions} -{deletions}\u2069",
-  "gitFileActions": "إجراءات الملف",
+  "fileActions": "إجراءات الملف",
   "gitStatusAdded": "مضاف",
   "gitStatusDeleted": "محذوف",
   "gitStatusRenamed": "أُعيدت تسميته",

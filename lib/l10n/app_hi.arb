@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "फ़ाइल नाम कॉपी करें",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "पथ कॉपी करें",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -2211,7 +2215,7 @@
   "gitProjectHistory": "प्रोजेक्ट",
   "gitFileHistory": "मौजूदा फ़ाइल",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "फ़ाइल कार्रवाइयाँ",
+  "fileActions": "फ़ाइल कार्रवाइयाँ",
   "gitStatusAdded": "जोड़ा गया",
   "gitStatusDeleted": "हटाया गया",
   "gitStatusRenamed": "नाम बदला गया",

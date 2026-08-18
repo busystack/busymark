@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "کپی نام فایل",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "کپی مسیر",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -2230,7 +2234,7 @@
       "deletions": {"type": "int", "format": "decimalPattern"}
     }
   },
-  "gitFileActions": "عملیات فایل",
+  "fileActions": "عملیات فایل",
   "gitStatusAdded": "افزوده‌شده",
   "gitStatusDeleted": "حذف‌شده",
   "gitStatusRenamed": "تغییرنام‌یافته",

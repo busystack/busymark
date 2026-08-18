@@ -393,6 +393,12 @@ abstract class AppLocalizations {
   /// **'Copy name'**
   String get copyName;
 
+  /// Menu action that copies the active document file name.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy file name'**
+  String get copyFileName;
+
   /// Menu action that copies the selected file, folder, or workspace path.
   ///
   /// In en, this message translates to:
@@ -3650,11 +3656,11 @@ abstract class AppLocalizations {
   /// **'+{additions} -{deletions}'**
   String gitAdditionsDeletions(int additions, int deletions);
 
-  /// Tooltip for a changed file action menu.
+  /// Tooltip for a file action menu.
   ///
   /// In en, this message translates to:
   /// **'File actions'**
-  String get gitFileActions;
+  String get fileActions;
 
   /// Git file status label.
   ///

@@ -156,6 +156,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get copyName => 'Kopeeri nimi';
 
   @override
+  String get copyFileName => 'Kopeeri failinimi';
+
+  @override
   String get copyPath => 'Kopeeri tee';
 
   @override
@@ -2170,7 +2173,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Failitoimingud';
+  String get fileActions => 'Failitoimingud';
 
   @override
   String get gitStatusAdded => 'Lisatud';

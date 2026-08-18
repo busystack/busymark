@@ -156,6 +156,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get copyName => 'کپی نام';
 
   @override
+  String get copyFileName => 'کپی نام فایل';
+
+  @override
   String get copyPath => 'کپی مسیر';
 
   @override
@@ -2227,7 +2230,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'عملیات فایل';
+  String get fileActions => 'عملیات فایل';
 
   @override
   String get gitStatusAdded => 'افزوده‌شده';

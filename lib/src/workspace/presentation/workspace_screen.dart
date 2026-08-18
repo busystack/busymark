@@ -1304,8 +1304,15 @@ Future<void> _showWorkspacePathMenu(
   required String name,
   required String path,
   required Offset position,
+  String? copyNameLabel,
+  bool pathActionsEnabled = true,
 }) async {
-  final action = await _showSidebarPathMenu(context, position);
+  final action = await _showSidebarPathMenu(
+    context,
+    position,
+    copyNameLabel: copyNameLabel,
+    pathActionsEnabled: pathActionsEnabled,
+  );
   if (action == null || !context.mounted) {
     return;
   }
@@ -1323,6 +1330,9 @@ Future<void> _performWorkspacePathAction(
   required String path,
   required _PathMenuAction action,
 }) async {
+  if (path.isEmpty && action != _PathMenuAction.copyName) {
+    return;
+  }
   switch (action) {
     case _PathMenuAction.copyName:
       await _copyToClipboard(name);
@@ -1336,36 +1346,46 @@ Future<void> _performWorkspacePathAction(
 enum _PathMenuAction { copyName, copyPath, openInFiles }
 
 List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
-  BuildContext context,
-) {
+  BuildContext context, {
+  String? copyNameLabel,
+  bool pathActionsEnabled = true,
+}) {
   return [
     BusyMarkPopupMenuItem(
       value: _PathMenuAction.copyName,
-      label: context.l10n.copyName,
+      label: copyNameLabel ?? context.l10n.copyName,
       icon: BusyMarkGlyphs.copy,
     ),
     BusyMarkPopupMenuItem(
       value: _PathMenuAction.copyPath,
       label: context.l10n.copyPath,
       icon: BusyMarkGlyphs.copy,
+      enabled: pathActionsEnabled,
     ),
     const PopupMenuDivider(height: BusyMarkSpacing.sm),
     BusyMarkPopupMenuItem(
       value: _PathMenuAction.openInFiles,
       label: context.l10n.openInFiles,
       icon: BusyMarkGlyphs.folderOpen,
+      enabled: pathActionsEnabled,
     ),
   ];
 }
 
 Future<_PathMenuAction?> _showSidebarPathMenu(
   BuildContext context,
-  Offset position,
-) {
+  Offset position, {
+  String? copyNameLabel,
+  bool pathActionsEnabled = true,
+}) {
   return showBusyMarkContextMenu<_PathMenuAction>(
     context,
     position,
-    items: _sidebarPathMenuItems(context),
+    items: _sidebarPathMenuItems(
+      context,
+      copyNameLabel: copyNameLabel,
+      pathActionsEnabled: pathActionsEnabled,
+    ),
   );
 }
 
@@ -2113,6 +2133,15 @@ class _SidebarHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final path = _workspacePath(workspace);
+    final activeDocumentPath =
+        workspace.activeFilePath ?? workspace.markdown?.filePath ?? '';
+    final hasActiveDocumentPath = activeDocumentPath.isNotEmpty;
+    final activeDocumentName = hasActiveDocumentPath
+        ? _fileNameFromPath(activeDocumentPath)
+        : context.l10n.untitledMarkdownFileName;
+    final activeDocumentFile = hasActiveDocumentPath
+        ? _documentFileForPath(workspace, activeDocumentPath)
+        : null;
     final repository = repositoryInfo;
     final branchLabel = _gitBranchLabel(context, repositoryInfo);
     final detailsStyle = Theme.of(
@@ -2209,6 +2238,62 @@ class _SidebarHeader extends StatelessWidget {
                         context,
                         name: _workspaceName(context, workspace),
                         path: path,
+                        action: action,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (selectedTab == _SidebarTab.outline) ...[
+            const SizedBox(height: BusyMarkSpacing.sm),
+            _SidebarHeaderRow(
+              key: const ValueKey('workspace-sidebar-first-content'),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _SidebarHeaderLine(
+                      key: const ValueKey(
+                        'workspace-sidebar-outline-file-label',
+                      ),
+                      icon: _documentKindIcon(
+                        activeDocumentFile?.kind ?? DocumentKind.markdown,
+                      ),
+                      text: busyMarkLtrIsolateFor(context, activeDocumentName),
+                      style: detailsStyle,
+                      tooltip: hasActiveDocumentPath
+                          ? busyMarkLtrIsolateFor(context, activeDocumentPath)
+                          : null,
+                      onSecondaryTapUp: (lineContext, details) =>
+                          _showWorkspacePathMenu(
+                            lineContext,
+                            name: activeDocumentName,
+                            path: activeDocumentPath,
+                            position: details.globalPosition,
+                            copyNameLabel: lineContext.l10n.copyFileName,
+                            pathActionsEnabled: hasActiveDocumentPath,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                  BusyMarkHeaderPopupMenuButton<_PathMenuAction>(
+                    key: const ValueKey('workspace-sidebar-outline-file-menu'),
+                    tooltip: context.l10n.fileActions,
+                    icon: BusyMarkGlyphs.menuVertical,
+                    transparent: true,
+                    borderRadius: BusyMarkRadius.nativeHeaderButton,
+                    highlightWhenOpen: false,
+                    itemBuilder: (menuContext) => _sidebarPathMenuItems(
+                      menuContext,
+                      copyNameLabel: menuContext.l10n.copyFileName,
+                      pathActionsEnabled: hasActiveDocumentPath,
+                    ),
+                    onSelected: (action) => unawaited(
+                      _performWorkspacePathAction(
+                        context,
+                        name: activeDocumentName,
+                        path: activeDocumentPath,
                         action: action,
                       ),
                     ),
@@ -3809,7 +3894,6 @@ Future<bool> _confirmDeleteFileTreeEntry(
 
 class _SidebarTreeRow extends StatelessWidget {
   const _SidebarTreeRow({
-    super.key,
     required this.title,
     required this.depth,
     required this.icon,
@@ -5965,9 +6049,6 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         return KeyedSubtree(
           key: ValueKey('workspace-sidebar-outline-row-$headingIndex'),
           child: _SidebarTreeRow(
-            key: index == 0
-                ? const ValueKey('workspace-sidebar-first-content')
-                : null,
             title: heading.text,
             depth: entry.depth,
             icon: BusyMarkGlyphs.tag,

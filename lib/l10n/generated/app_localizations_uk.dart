@@ -158,6 +158,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copyName => 'Копіювати назву';
 
   @override
+  String get copyFileName => 'Копіювати назву файлу';
+
+  @override
   String get copyPath => 'Копіювати шлях';
 
   @override
@@ -2210,7 +2213,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Дії з файлом';
+  String get fileActions => 'Дії з файлом';
 
   @override
   String get gitStatusAdded => 'Додано';

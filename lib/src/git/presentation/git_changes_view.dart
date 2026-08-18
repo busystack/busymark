@@ -382,7 +382,7 @@ class _ChangedFileRow extends StatelessWidget {
                   ),
                 ),
                 BusyMarkHeaderPopupMenuButton<_FileAction>(
-                  tooltip: context.l10n.gitFileActions,
+                  tooltip: context.l10n.fileActions,
                   icon: BusyMarkGlyphs.menuHorizontal,
                   transparent: true,
                   itemBuilder: (context) => [

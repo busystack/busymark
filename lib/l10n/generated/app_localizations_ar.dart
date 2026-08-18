@@ -156,6 +156,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copyName => 'نسخ الاسم';
 
   @override
+  String get copyFileName => 'نسخ اسم الملف';
+
+  @override
   String get copyPath => 'نسخ المسار';
 
   @override
@@ -2195,7 +2198,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'إجراءات الملف';
+  String get fileActions => 'إجراءات الملف';
 
   @override
   String get gitStatusAdded => 'مضاف';

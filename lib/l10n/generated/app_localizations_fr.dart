@@ -159,6 +159,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get copyName => 'Copier le nom';
 
   @override
+  String get copyFileName => 'Copier le nom du fichier';
+
+  @override
   String get copyPath => 'Copier le chemin';
 
   @override
@@ -2190,7 +2193,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Actions sur le fichier';
+  String get fileActions => 'Actions sur le fichier';
 
   @override
   String get gitStatusAdded => 'Ajouté';
