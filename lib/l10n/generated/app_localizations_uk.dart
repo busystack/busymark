@@ -170,6 +170,26 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cut => 'Вирізати';
 
   @override
+  String get promoteHeading => 'Підвищити рівень заголовка';
+
+  @override
+  String get demoteHeading => 'Знизити рівень заголовка';
+
+  @override
+  String get moveSectionUp => 'Перемістити розділ вище';
+
+  @override
+  String get moveSectionDown => 'Перемістити розділ нижче';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Видалити розділ?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Видалити розділ «$name» з усім його вмістом? Цю дію не можна скасувати.';
+  }
+
+  @override
   String get darkTheme => 'Темна';
 
   @override

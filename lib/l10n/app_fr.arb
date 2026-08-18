@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Promouvoir le titre",
+  "demoteHeading": "Rétrograder le titre",
+  "moveSectionUp": "Déplacer la section vers le haut",
+  "moveSectionDown": "Déplacer la section vers le bas",
+  "confirmDeleteSectionTitle": "Supprimer la section ?",
+  "confirmDeleteSectionMessage": "Supprimer « {name} » et tout le contenu de sa section ? Cette action est irréversible.",
   "darkTheme": "Sombre",
   "@darkTheme": {
     "description": "Dark theme option."

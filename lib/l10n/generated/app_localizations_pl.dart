@@ -170,6 +170,26 @@ class AppLocalizationsPl extends AppLocalizations {
   String get cut => 'Wytnij';
 
   @override
+  String get promoteHeading => 'Podnieś rangę nagłówka';
+
+  @override
+  String get demoteHeading => 'Obniż rangę nagłówka';
+
+  @override
+  String get moveSectionUp => 'Przenieś sekcję wyżej';
+
+  @override
+  String get moveSectionDown => 'Przenieś sekcję niżej';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Usunąć sekcję?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Usunąć „$name” i całą zawartość tej sekcji? Tej operacji nie można cofnąć.';
+  }
+
+  @override
   String get darkTheme => 'Ciemny';
 
   @override

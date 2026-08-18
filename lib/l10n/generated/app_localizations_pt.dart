@@ -171,6 +171,26 @@ class AppLocalizationsPt extends AppLocalizations {
   String get cut => 'Recortar';
 
   @override
+  String get promoteHeading => 'Promover título';
+
+  @override
+  String get demoteHeading => 'Rebaixar título';
+
+  @override
+  String get moveSectionUp => 'Mover seção para cima';
+
+  @override
+  String get moveSectionDown => 'Mover seção para baixo';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Excluir seção?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Excluir “$name” e todo o conteúdo da seção? Isso não pode ser desfeito.';
+  }
+
+  @override
   String get darkTheme => 'Escuro';
 
   @override

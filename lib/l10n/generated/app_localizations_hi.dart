@@ -170,6 +170,26 @@ class AppLocalizationsHi extends AppLocalizations {
   String get cut => 'कट करें';
 
   @override
+  String get promoteHeading => 'शीर्षक को ऊपर करें';
+
+  @override
+  String get demoteHeading => 'शीर्षक को नीचे करें';
+
+  @override
+  String get moveSectionUp => 'अनुभाग ऊपर ले जाएँ';
+
+  @override
+  String get moveSectionDown => 'अनुभाग नीचे ले जाएँ';
+
+  @override
+  String get confirmDeleteSectionTitle => 'अनुभाग हटाएँ?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return '$name और उसके अनुभाग की सारी सामग्री हटाएँ? इसे वापस नहीं किया जा सकता।';
+  }
+
+  @override
   String get darkTheme => 'डार्क';
 
   @override

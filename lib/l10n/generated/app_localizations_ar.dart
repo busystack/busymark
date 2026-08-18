@@ -168,6 +168,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cut => 'قص';
 
   @override
+  String get promoteHeading => 'ترقية العنوان';
+
+  @override
+  String get demoteHeading => 'خفض رتبة العنوان';
+
+  @override
+  String get moveSectionUp => 'نقل القسم إلى أعلى';
+
+  @override
+  String get moveSectionDown => 'نقل القسم إلى أسفل';
+
+  @override
+  String get confirmDeleteSectionTitle => 'حذف القسم؟';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'هل تريد حذف ⁨$name⁩ وكل محتوى قسمه؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
+
+  @override
   String get darkTheme => 'داكن';
 
   @override

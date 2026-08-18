@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "ترقية العنوان",
+  "demoteHeading": "خفض رتبة العنوان",
+  "moveSectionUp": "نقل القسم إلى أعلى",
+  "moveSectionDown": "نقل القسم إلى أسفل",
+  "confirmDeleteSectionTitle": "حذف القسم؟",
+  "confirmDeleteSectionMessage": "هل تريد حذف \u2068{name}\u2069 وكل محتوى قسمه؟ لا يمكن التراجع عن هذا الإجراء.",
   "darkTheme": "داكن",
   "@darkTheme": {
     "description": "Dark theme option."

@@ -4612,6 +4612,213 @@ Body.
     },
   );
 
+  testWidgets('outline context menu edits complete heading sections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const startupPath = '/tmp/outline-section-actions.md';
+    const source = '''
+# Root
+
+## Parent
+
+Parent intro.
+
+### Alpha
+
+Alpha body.
+
+#### Alpha child
+
+Child body.
+
+### Beta
+
+Beta body.
+
+### Gamma
+
+Gamma body.
+''';
+    const alphaSection = '''### Alpha
+
+Alpha body.
+
+#### Alpha child
+
+Child body.
+
+''';
+    const betaSection = '''### Beta
+
+Beta body.
+
+''';
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .descendant(of: outlineTree, matching: find.text('Alpha'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+    expect(outlineTree, findsOneWidget);
+
+    Finder headingRow(String heading) =>
+        find.descendant(of: outlineTree, matching: find.text(heading));
+    Finder menuItem(String label) => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+    );
+    BusyMarkPopupMenuItem<Object?> popupItem(String label) =>
+        tester.widget<BusyMarkPopupMenuItem<Object?>>(menuItem(label));
+
+    Future<void> openMenu(String heading) async {
+      await tester.tap(headingRow(heading), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> expectSource(String expected) async {
+      for (var index = 0; index < 30; index += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (container.read(workspaceControllerProvider).activeText ==
+            expected) {
+          break;
+        }
+      }
+      expect(container.read(workspaceControllerProvider).activeText, expected);
+    }
+
+    Future<void> resetSource() async {
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveText(source, sourceFilePath: startupPath);
+      await expectSource(source);
+      for (var index = 0; index < 30; index += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (headingRow('Beta').evaluate().isNotEmpty) {
+          break;
+        }
+      }
+    }
+
+    await openMenu('Alpha');
+    for (final label in [
+      l10n.copy,
+      l10n.cut,
+      l10n.promoteHeading,
+      l10n.demoteHeading,
+      l10n.moveSectionUp,
+      l10n.moveSectionDown,
+      l10n.delete,
+    ]) {
+      expect(menuItem(label), findsOneWidget);
+    }
+    expect(popupItem(l10n.promoteHeading).enabled, isTrue);
+    expect(popupItem(l10n.demoteHeading).enabled, isTrue);
+    expect(popupItem(l10n.moveSectionUp).enabled, isFalse);
+    expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
+
+    await tester.tap(find.text(l10n.copy));
+    await tester.pumpAndSettle();
+    expect(clipboardText, alphaSection);
+    expect(container.read(workspaceControllerProvider).activeText, source);
+
+    await openMenu('Alpha');
+    await tester.tap(find.text(l10n.promoteHeading));
+    final promoted = source
+        .replaceFirst('### Alpha', '## Alpha')
+        .replaceFirst('#### Alpha child', '### Alpha child');
+    await expectSource(promoted);
+
+    await resetSource();
+    await openMenu('Alpha');
+    await tester.tap(find.text(l10n.demoteHeading));
+    final demoted = source
+        .replaceFirst('### Alpha', '#### Alpha')
+        .replaceFirst('#### Alpha child', '##### Alpha child');
+    await expectSource(demoted);
+
+    await resetSource();
+    await openMenu('Alpha');
+    await tester.tap(find.text(l10n.moveSectionDown));
+    final movedDown = source.replaceFirst(
+      '$alphaSection$betaSection',
+      '$betaSection$alphaSection',
+    );
+    await expectSource(movedDown);
+
+    await resetSource();
+    await openMenu('Beta');
+    expect(popupItem(l10n.moveSectionUp).enabled, isTrue);
+    expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
+    await tester.tap(find.text(l10n.cut));
+    await expectSource(source.replaceFirst(betaSection, ''));
+    expect(clipboardText, betaSection);
+
+    await resetSource();
+    await openMenu('Beta');
+    await tester.tap(find.text(l10n.delete));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.confirmDeleteSectionTitle), findsOneWidget);
+    expect(find.text(l10n.confirmDeleteSectionMessage('Beta')), findsOneWidget);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
+    await expectSource(source.replaceFirst(betaSection, ''));
+  });
+
   testWidgets('outline navigates to a renamed unsaved editor heading', (
     tester,
   ) async {

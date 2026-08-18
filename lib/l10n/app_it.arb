@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Promuovi intestazione",
+  "demoteHeading": "Retrocedi intestazione",
+  "moveSectionUp": "Sposta sezione in alto",
+  "moveSectionDown": "Sposta sezione in basso",
+  "confirmDeleteSectionTitle": "Eliminare la sezione?",
+  "confirmDeleteSectionMessage": "Eliminare «{name}» e tutto il contenuto della sua sezione? Questa operazione non può essere annullata.",
   "darkTheme": "Scuro",
   "@darkTheme": {
     "description": "Dark theme option."

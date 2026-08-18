@@ -171,6 +171,26 @@ class AppLocalizationsNb extends AppLocalizations {
   String get cut => 'Klipp ut';
 
   @override
+  String get promoteHeading => 'Hev overskrift';
+
+  @override
+  String get demoteHeading => 'Senk overskrift';
+
+  @override
+  String get moveSectionUp => 'Flytt seksjonen opp';
+
+  @override
+  String get moveSectionDown => 'Flytt seksjonen ned';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Slette seksjonen?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Slette «$name» og alt innholdet i seksjonen? Dette kan ikke angres.';
+  }
+
+  @override
   String get darkTheme => 'Mørk';
 
   @override

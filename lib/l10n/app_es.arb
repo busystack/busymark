@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Promover encabezado",
+  "demoteHeading": "Degradar encabezado",
+  "moveSectionUp": "Mover sección hacia arriba",
+  "moveSectionDown": "Mover sección hacia abajo",
+  "confirmDeleteSectionTitle": "¿Eliminar sección?",
+  "confirmDeleteSectionMessage": "¿Eliminar «{name}» y todo el contenido de su sección? Esto no se puede deshacer.",
   "darkTheme": "Oscuro",
   "@darkTheme": {
     "description": "Dark theme option."

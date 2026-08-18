@@ -171,6 +171,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cut => 'Couper';
 
   @override
+  String get promoteHeading => 'Promouvoir le titre';
+
+  @override
+  String get demoteHeading => 'Rétrograder le titre';
+
+  @override
+  String get moveSectionUp => 'Déplacer la section vers le haut';
+
+  @override
+  String get moveSectionDown => 'Déplacer la section vers le bas';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Supprimer la section ?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Supprimer « $name » et tout le contenu de sa section ? Cette action est irréversible.';
+  }
+
+  @override
   String get darkTheme => 'Sombre';
 
   @override

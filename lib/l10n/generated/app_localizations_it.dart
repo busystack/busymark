@@ -170,6 +170,26 @@ class AppLocalizationsIt extends AppLocalizations {
   String get cut => 'Taglia';
 
   @override
+  String get promoteHeading => 'Promuovi intestazione';
+
+  @override
+  String get demoteHeading => 'Retrocedi intestazione';
+
+  @override
+  String get moveSectionUp => 'Sposta sezione in alto';
+
+  @override
+  String get moveSectionDown => 'Sposta sezione in basso';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Eliminare la sezione?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Eliminare «$name» e tutto il contenuto della sua sezione? Questa operazione non può essere annullata.';
+  }
+
+  @override
   String get darkTheme => 'Scuro';
 
   @override

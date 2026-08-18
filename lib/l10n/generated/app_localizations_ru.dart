@@ -171,6 +171,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cut => 'Вырезать';
 
   @override
+  String get promoteHeading => 'Повысить уровень заголовка';
+
+  @override
+  String get demoteHeading => 'Понизить уровень заголовка';
+
+  @override
+  String get moveSectionUp => 'Переместить раздел вверх';
+
+  @override
+  String get moveSectionDown => 'Переместить раздел вниз';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Удалить раздел?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Удалить раздел «$name» со всем его содержимым? Это действие нельзя отменить.';
+  }
+
+  @override
   String get darkTheme => 'Тёмная';
 
   @override

@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Hev overskrift",
+  "demoteHeading": "Senk overskrift",
+  "moveSectionUp": "Flytt seksjonen opp",
+  "moveSectionDown": "Flytt seksjonen ned",
+  "confirmDeleteSectionTitle": "Slette seksjonen?",
+  "confirmDeleteSectionMessage": "Slette «{name}» og alt innholdet i seksjonen? Dette kan ikke angres.",
   "darkTheme": "Mørk",
   "@darkTheme": {
     "description": "Dark theme option."

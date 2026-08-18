@@ -51,6 +51,7 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
+import '../../markdown/markdown_section_editor.dart';
 import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_model.dart';
@@ -5716,6 +5717,116 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     }
   }
 
+  Future<void> _showSectionMenu(
+    DocumentOutlineHeading heading,
+    int headingIndex,
+    Offset position,
+  ) async {
+    final capabilities = _outlineSectionCapabilities(
+      widget.headings,
+      headingIndex,
+    );
+    final action = await showBusyMarkContextMenu<_OutlineSectionAction>(
+      context,
+      position,
+      items: _outlineSectionMenuItems(context, capabilities),
+    );
+    if (action == null || !mounted) {
+      return;
+    }
+    await _runSectionAction(heading, headingIndex, action);
+  }
+
+  Future<void> _runSectionAction(
+    DocumentOutlineHeading heading,
+    int preferredIndex,
+    _OutlineSectionAction action,
+  ) async {
+    final initialState = ref.read(workspaceControllerProvider);
+    final workspace = initialState.workspace;
+    if (workspace == null) {
+      return;
+    }
+    final workspaceId = workspace.id;
+    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    final source = initialState.activeText;
+    final mode =
+        workspace.markdown?.mode ??
+        (workspace.kind == WorkspaceKind.writersideModule
+            ? MarkdownMode.writersideMarkdown
+            : MarkdownMode.commonMark);
+    final parsed = await const MarkdownParser().parseAsync(
+      filePath: activePath ?? 'untitled.md',
+      source: source,
+      mode: mode,
+      workspaceRoot: workspace.rootPath,
+      validateLocalReferences: false,
+    );
+    if (!mounted ||
+        !_isSameActiveDocument(
+          ref.read(workspaceControllerProvider),
+          workspaceId: workspaceId,
+          activePath: activePath,
+          source: source,
+        )) {
+      return;
+    }
+    final headingIndex = _resolveParsedOutlineHeadingIndex(
+      parsed.headings,
+      heading,
+      preferredIndex,
+    );
+    if (headingIndex < 0) {
+      return;
+    }
+    final section = MarkdownSectionEditor.fromHeadings(
+      source: source,
+      headings: parsed.headings,
+      headingIndex: headingIndex,
+    );
+    String? updatedSource;
+    switch (action) {
+      case _OutlineSectionAction.copy:
+        await _copyToClipboard(section.sectionText);
+        return;
+      case _OutlineSectionAction.cut:
+        await _copyToClipboard(section.sectionText);
+        updatedSource = section.withoutSection();
+      case _OutlineSectionAction.delete:
+        final confirmed = await _confirmDeleteOutlineSection(
+          context,
+          ref,
+          heading.text,
+        );
+        if (!confirmed || !mounted) {
+          return;
+        }
+        updatedSource = section.withoutSection();
+      case _OutlineSectionAction.promote:
+        updatedSource = section.promote();
+      case _OutlineSectionAction.demote:
+        updatedSource = section.demote();
+      case _OutlineSectionAction.moveUp:
+        updatedSource = section.moveUp();
+      case _OutlineSectionAction.moveDown:
+        updatedSource = section.moveDown();
+    }
+    if (!mounted ||
+        updatedSource == null ||
+        updatedSource == source ||
+        !_isSameActiveDocument(
+          ref.read(workspaceControllerProvider),
+          workspaceId: workspaceId,
+          activePath: activePath,
+          source: source,
+        )) {
+      return;
+    }
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText(updatedSource, sourceFilePath: activePath);
+  }
+
   @override
   Widget build(BuildContext context) {
     final headings = widget.headings;
@@ -5727,6 +5838,10 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     }
     final tree = _buildOutlineTree(headings);
     final entries = _visibleOutlineTreeEntries(tree, _expandedNodeKeys);
+    final headingIndexes = {
+      for (var index = 0; index < headings.length; index += 1)
+        _outlineNodeKey(headings[index]): index,
+    };
     return ListView.builder(
       key: const ValueKey('workspace-sidebar-outline-tree'),
       padding: BusyMarkInsets.sidebarList,
@@ -5736,6 +5851,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         final node = entry.node;
         final heading = node.heading;
         final key = _outlineNodeKey(heading);
+        final headingIndex = headingIndexes[key]!;
         final expanded = _expandedNodeKeys.contains(key);
         final hasChildren = node.children.isNotEmpty;
         void toggle() {
@@ -5772,10 +5888,185 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
                   ),
                 );
           },
+          onSecondaryTapUp: (details) => unawaited(
+            _showSectionMenu(heading, headingIndex, details.globalPosition),
+          ),
         );
       },
     );
   }
+}
+
+enum _OutlineSectionAction {
+  copy,
+  cut,
+  delete,
+  promote,
+  demote,
+  moveUp,
+  moveDown,
+}
+
+typedef _OutlineSectionCapabilities = ({
+  bool canPromote,
+  bool canDemote,
+  bool canMoveUp,
+  bool canMoveDown,
+});
+
+_OutlineSectionCapabilities _outlineSectionCapabilities(
+  List<DocumentOutlineHeading> headings,
+  int headingIndex,
+) {
+  final level = headings[headingIndex].level;
+  var sectionEndIndex = headingIndex + 1;
+  while (sectionEndIndex < headings.length &&
+      headings[sectionEndIndex].level > level) {
+    sectionEndIndex += 1;
+  }
+  var canMoveUp = false;
+  for (var index = headingIndex - 1; index >= 0; index -= 1) {
+    if (headings[index].level < level) {
+      break;
+    }
+    if (headings[index].level == level) {
+      canMoveUp = true;
+      break;
+    }
+  }
+  return (
+    canPromote: level > 1,
+    canDemote: headings
+        .getRange(headingIndex, sectionEndIndex)
+        .every((candidate) => candidate.level < 6),
+    canMoveUp: canMoveUp,
+    canMoveDown:
+        sectionEndIndex < headings.length &&
+        headings[sectionEndIndex].level == level,
+  );
+}
+
+List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
+  BuildContext context,
+  _OutlineSectionCapabilities capabilities,
+) {
+  final direction = Directionality.of(context);
+  return [
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.copy,
+      label: context.l10n.copy,
+      icon: BusyMarkGlyphs.copy,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.cut,
+      label: context.l10n.cut,
+      icon: BusyMarkGlyphs.cut,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.promote,
+      label: context.l10n.promoteHeading,
+      icon: BusyMarkGlyphs.outdentFor(direction),
+      enabled: capabilities.canPromote,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.demote,
+      label: context.l10n.demoteHeading,
+      icon: BusyMarkGlyphs.indentFor(direction),
+      enabled: capabilities.canDemote,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.moveUp,
+      label: context.l10n.moveSectionUp,
+      icon: BusyMarkGlyphs.upArrow,
+      enabled: capabilities.canMoveUp,
+    ),
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.moveDown,
+      label: context.l10n.moveSectionDown,
+      icon: BusyMarkGlyphs.downArrow,
+      enabled: capabilities.canMoveDown,
+    ),
+    const PopupMenuDivider(height: BusyMarkSpacing.sm),
+    BusyMarkPopupMenuItem(
+      value: _OutlineSectionAction.delete,
+      label: context.l10n.delete,
+      icon: BusyMarkGlyphs.delete,
+    ),
+  ];
+}
+
+int _resolveParsedOutlineHeadingIndex(
+  List<MarkdownHeading> headings,
+  DocumentOutlineHeading target,
+  int preferredIndex,
+) {
+  bool matches(MarkdownHeading candidate) =>
+      candidate.level == target.level &&
+      candidate.text == target.text &&
+      candidate.id == target.id;
+  if (preferredIndex >= 0 &&
+      preferredIndex < headings.length &&
+      matches(headings[preferredIndex])) {
+    return preferredIndex;
+  }
+  final sourceOffset = target.sourceStartOffset;
+  if (sourceOffset != null) {
+    final index = headings.indexWhere(
+      (candidate) =>
+          candidate.span.startOffset == sourceOffset &&
+          candidate.level == target.level &&
+          candidate.text == target.text,
+    );
+    if (index >= 0) {
+      return index;
+    }
+  }
+  return headings.indexWhere(matches);
+}
+
+bool _isSameActiveDocument(
+  WorkspaceState state, {
+  required String workspaceId,
+  required String? activePath,
+  required String source,
+}) {
+  final workspace = state.workspace;
+  return workspace?.id == workspaceId &&
+      (workspace?.activeFilePath ?? workspace?.markdown?.filePath) ==
+          activePath &&
+      state.activeText == source;
+}
+
+Future<bool> _confirmDeleteOutlineSection(
+  BuildContext context,
+  WidgetRef ref,
+  String heading,
+) async {
+  final headerBar = ref.read(linuxHeaderBarServiceProvider);
+  final confirmed = await showBusyMarkModalDialog<bool>(
+    context,
+    headerBarService: headerBar.isAvailable ? headerBar : null,
+    builder: (context) => BusyMarkDialogShell(
+      title: context.l10n.confirmDeleteSectionTitle,
+      maxWidth: BusyMarkSizes.dialog,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.delete,
+          icon: BusyMarkGlyphs.delete,
+          destructive: true,
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
+      children: [Text(context.l10n.confirmDeleteSectionMessage(heading))],
+    ),
+  );
+  return confirmed ?? false;
 }
 
 List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {

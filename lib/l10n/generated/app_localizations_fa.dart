@@ -168,6 +168,26 @@ class AppLocalizationsFa extends AppLocalizations {
   String get cut => 'برش';
 
   @override
+  String get promoteHeading => 'ارتقای عنوان';
+
+  @override
+  String get demoteHeading => 'تنزل عنوان';
+
+  @override
+  String get moveSectionUp => 'انتقال بخش به بالا';
+
+  @override
+  String get moveSectionDown => 'انتقال بخش به پایین';
+
+  @override
+  String get confirmDeleteSectionTitle => 'بخش حذف شود؟';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return '«⁨$name⁩» و همهٔ محتوای بخش آن حذف شود؟ این کار قابل بازگشت نیست.';
+  }
+
+  @override
   String get darkTheme => 'تیره';
 
   @override

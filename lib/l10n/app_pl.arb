@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Podnieś rangę nagłówka",
+  "demoteHeading": "Obniż rangę nagłówka",
+  "moveSectionUp": "Przenieś sekcję wyżej",
+  "moveSectionDown": "Przenieś sekcję niżej",
+  "confirmDeleteSectionTitle": "Usunąć sekcję?",
+  "confirmDeleteSectionMessage": "Usunąć „{name}” i całą zawartość tej sekcji? Tej operacji nie można cofnąć.",
   "darkTheme": "Ciemny",
   "@darkTheme": {
     "description": "Dark theme option."

@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Повысить уровень заголовка",
+  "demoteHeading": "Понизить уровень заголовка",
+  "moveSectionUp": "Переместить раздел вверх",
+  "moveSectionDown": "Переместить раздел вниз",
+  "confirmDeleteSectionTitle": "Удалить раздел?",
+  "confirmDeleteSectionMessage": "Удалить раздел «{name}» со всем его содержимым? Это действие нельзя отменить.",
   "darkTheme": "Тёмная",
   "@darkTheme": {
     "description": "Dark theme option."

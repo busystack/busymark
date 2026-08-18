@@ -171,6 +171,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cut => 'Cortar';
 
   @override
+  String get promoteHeading => 'Promover encabezado';
+
+  @override
+  String get demoteHeading => 'Degradar encabezado';
+
+  @override
+  String get moveSectionUp => 'Mover sección hacia arriba';
+
+  @override
+  String get moveSectionDown => 'Mover sección hacia abajo';
+
+  @override
+  String get confirmDeleteSectionTitle => '¿Eliminar sección?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return '¿Eliminar «$name» y todo el contenido de su sección? Esto no se puede deshacer.';
+  }
+
+  @override
   String get darkTheme => 'Oscuro';
 
   @override

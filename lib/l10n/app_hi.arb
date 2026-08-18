@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "शीर्षक को ऊपर करें",
+  "demoteHeading": "शीर्षक को नीचे करें",
+  "moveSectionUp": "अनुभाग ऊपर ले जाएँ",
+  "moveSectionDown": "अनुभाग नीचे ले जाएँ",
+  "confirmDeleteSectionTitle": "अनुभाग हटाएँ?",
+  "confirmDeleteSectionMessage": "{name} और उसके अनुभाग की सारी सामग्री हटाएँ? इसे वापस नहीं किया जा सकता।",
   "darkTheme": "डार्क",
   "@darkTheme": {
     "description": "Dark theme option."

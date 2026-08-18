@@ -169,6 +169,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cut => 'Cut';
 
   @override
+  String get promoteHeading => 'Promote heading';
+
+  @override
+  String get demoteHeading => 'Demote heading';
+
+  @override
+  String get moveSectionUp => 'Move section up';
+
+  @override
+  String get moveSectionDown => 'Move section down';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Delete section?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Delete “$name” and all content in its section? This cannot be undone.';
+  }
+
+  @override
   String get darkTheme => 'Dark';
 
   @override

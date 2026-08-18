@@ -168,6 +168,26 @@ class AppLocalizationsEt extends AppLocalizations {
   String get cut => 'Lõika';
 
   @override
+  String get promoteHeading => 'Tõsta pealkirja taset';
+
+  @override
+  String get demoteHeading => 'Langeta pealkirja taset';
+
+  @override
+  String get moveSectionUp => 'Liiguta jaotis üles';
+
+  @override
+  String get moveSectionDown => 'Liiguta jaotis alla';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Kas kustutada jaotis?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Kas kustutada „$name” ja kogu selle jaotise sisu? Seda toimingut ei saa tagasi võtta.';
+  }
+
+  @override
   String get darkTheme => 'Tume';
 
   @override

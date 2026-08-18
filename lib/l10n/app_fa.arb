@@ -117,6 +117,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "ارتقای عنوان",
+  "demoteHeading": "تنزل عنوان",
+  "moveSectionUp": "انتقال بخش به بالا",
+  "moveSectionDown": "انتقال بخش به پایین",
+  "confirmDeleteSectionTitle": "بخش حذف شود؟",
+  "confirmDeleteSectionMessage": "«\u2068{name}\u2069» و همهٔ محتوای بخش آن حذف شود؟ این کار قابل بازگشت نیست.",
   "darkTheme": "تیره",
   "@darkTheme": {
     "description": "Dark theme option."
