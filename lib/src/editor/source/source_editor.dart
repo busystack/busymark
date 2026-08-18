@@ -35,6 +35,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
     required this.onChanged,
     required this.onOpenSearch,
     required this.onCloseSearch,
+    this.onVisibleLineChanged,
   });
 
   final String text;
@@ -49,6 +50,7 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final BusyMarkSourceChanged onChanged;
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
+  final ValueChanged<int?>? onVisibleLineChanged;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -234,6 +236,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               diagnosticMarkers: markers,
               layoutCache: _lineLayoutCache,
               onToggleFold: _toggleFold,
+              onVisibleLineChanged: widget.onVisibleLineChanged,
               child: SizedBox(
                 key: _sourceEditorKey,
                 child: KeyedSubtree(
@@ -817,6 +820,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.diagnosticMarkers,
     required this.layoutCache,
     required this.onToggleFold,
+    this.onVisibleLineChanged,
     required this.child,
   });
 
@@ -837,6 +841,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final List<SourceDiagnosticMarker> diagnosticMarkers;
   final SourceLineLayoutCache layoutCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
+  final ValueChanged<int?>? onVisibleLineChanged;
   final Widget child;
 
   @override
@@ -853,6 +858,48 @@ class _SourceEditorFrame extends StatelessWidget {
         final textWidth = math
             .max(1, editorWidth - editorPaddingLeft - editorPaddingRight)
             .toDouble();
+        int? visibleLineAt(double scrollOffset) {
+          final layouts = layoutCache.resolve(
+            context,
+            controller: controller,
+            foldRegions: foldRegions,
+            collapsedRegionKeys: collapsedRegionKeys,
+            textStyle: textStyle,
+            strutStyle: strutStyle,
+            lineHeight: lineHeight,
+            textWidth: textWidth,
+            diagnostics: diagnosticMarkers,
+          );
+          if (layouts.isEmpty) {
+            return null;
+          }
+          final anchor = scrollOffset + lineHeight * 0.25;
+          var low = 0;
+          var high = layouts.length - 1;
+          var result = 0;
+          while (low <= high) {
+            final middle = (low + high) >> 1;
+            if (layouts[middle].top <= anchor) {
+              result = middle;
+              low = middle + 1;
+            } else {
+              high = middle - 1;
+            }
+          }
+          return layouts[result].gutterLine.fullLine;
+        }
+
+        void reportVisibleLine(double scrollOffset) {
+          onVisibleLineChanged?.call(visibleLineAt(scrollOffset));
+        }
+
+        if (onVisibleLineChanged != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              reportVisibleLine(safeScrollOffset(scrollController));
+            }
+          });
+        }
         return DecoratedBox(
           decoration: BoxDecoration(color: colors.view),
           child: Row(
@@ -906,7 +953,17 @@ class _SourceEditorFrame extends StatelessWidget {
                           layoutCache: layoutCache,
                         ),
                       ),
-                    Positioned.fill(child: child),
+                    Positioned.fill(
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification.metrics.axis == Axis.vertical) {
+                            reportVisibleLine(notification.metrics.pixels);
+                          }
+                          return false;
+                        },
+                        child: child,
+                      ),
+                    ),
                   ],
                 ),
               ),

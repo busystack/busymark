@@ -33,6 +33,7 @@ import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
@@ -4817,6 +4818,159 @@ Beta body.
     expect(find.text(l10n.confirmDeleteSectionMessage('Beta')), findsOneWidget);
     await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
     await expectSource(source.replaceFirst(betaSection, ''));
+  });
+
+  testWidgets('outline highlights the heading at the document viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final source = [
+      '# First section',
+      '',
+      for (var index = 0; index < 40; index += 1) ...[
+        'First section paragraph $index.',
+        '',
+      ],
+      '## Second section',
+      '',
+      for (var index = 0; index < 40; index += 1) ...[
+        'Second section paragraph $index.',
+        '',
+      ],
+      '## Third section',
+      '',
+      for (var index = 0; index < 40; index += 1) ...[
+        'Third section paragraph $index.',
+        '',
+      ],
+    ].join('\n');
+    const startupPath = '/tmp/outline-scroll-position.md';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            documentViewMode: DocumentViewModePreference.preview,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(
+          _SearchWorkspaceService(source),
+        ),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final previewScroll = find.byKey(const ValueKey('preview-document-scroll'));
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (previewScroll.evaluate().isNotEmpty &&
+          find
+              .byKey(const ValueKey('workspace-sidebar-outline-row-2'))
+              .evaluate()
+              .isNotEmpty) {
+        break;
+      }
+    }
+
+    Finder outlineRow(int index) =>
+        find.byKey(ValueKey('workspace-sidebar-outline-row-$index'));
+    Color outlineRowColor(int index) {
+      final material = find.descendant(
+        of: outlineRow(index),
+        matching: find.byType(Material),
+      );
+      expect(material, findsOneWidget);
+      return tester.widget<Material>(material).color ?? Colors.transparent;
+    }
+
+    void expectSelectedOutlineRow(int selectedIndex) {
+      final selectedColor = busyMarkSelectedBackground(
+        tester.element(outlineRow(selectedIndex)),
+      );
+      for (var index = 0; index < 3; index += 1) {
+        expect(
+          outlineRowColor(index),
+          index == selectedIndex
+              ? selectedColor
+              : BusyMarkLinuxPalette.transparent,
+          reason: 'Outline row $index',
+        );
+      }
+    }
+
+    final state = container.read(workspaceControllerProvider);
+    final outline = state.preview!.outline;
+    expect(outline.map((heading) => heading.text), [
+      'First section',
+      'Second section',
+      'Third section',
+    ]);
+    final secondPreviewIndex = state.preview!.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[1].id,
+    );
+    expect(secondPreviewIndex, isNonNegative);
+
+    expectSelectedOutlineRow(0);
+    tester
+        .widget<ScrollablePositionedList>(previewScroll)
+        .itemScrollController!
+        .jumpTo(index: secondPreviewIndex);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expectSelectedOutlineRow(1);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 100));
+    final editorScroll = find.byKey(const ValueKey('wysiwyg-document-scroll'));
+    expect(editorScroll, findsOneWidget);
+    final editorDocument = container
+        .read(workspaceControllerProvider)
+        .workspace!
+        .markdown!
+        .busyDocument;
+    final thirdEditorIndex = editorDocument.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[2].id,
+    );
+    expect(thirdEditorIndex, isNonNegative);
+    tester
+        .widget<ScrollablePositionedList>(editorScroll)
+        .itemScrollController!
+        .jumpTo(index: thirdEditorIndex);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expectSelectedOutlineRow(2);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 100));
+    final sourceEditor = find.byType(BusyMarkSourceEditor);
+    expect(sourceEditor, findsOneWidget);
+    tester
+        .state<BusyMarkSourceEditorState>(sourceEditor)
+        .scrollToLine(outline[1].sourceStartLine!);
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump(const Duration(milliseconds: 100));
+    expectSelectedOutlineRow(1);
   });
 
   testWidgets('outline navigates to a renamed unsaved editor heading', (

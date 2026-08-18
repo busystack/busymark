@@ -50,6 +50,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.scrollToBlockId,
     this.scrollToSearchQuery,
     this.scrollRequest = 0,
+    this.onVisibleHeadingChanged,
     this.onOpenSearch,
     this.onCloseSearch,
     this.headerBarService,
@@ -72,6 +73,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final String? scrollToBlockId;
   final String? scrollToSearchQuery;
   final int scrollRequest;
+  final ValueChanged<DocumentOutlineHeading?>? onVisibleHeadingChanged;
   final VoidCallback? onOpenSearch;
   final VoidCallback? onCloseSearch;
   final LinuxHeaderBarService? headerBarService;
@@ -92,6 +94,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _undoStack = <BusyDocument>[];
   final _redoStack = <BusyDocument>[];
   final _itemScrollController = ItemScrollController();
+  final _itemPositionsListener = ItemPositionsListener.create();
+  List<_EditorRenderEntry> _viewportRenderEntries = const [];
+  List<DocumentOutlineHeading> _viewportOutline = const [];
+  String? _reportedVisibleHeadingKey;
+  bool _hasReportedVisibleHeading = false;
   late final FocusNode _selectionFocusNode;
   String? _activeBlockId;
   _DocumentTextSelection? _documentSelection;
@@ -118,10 +125,14 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _documentController = BusyMarkWysiwygDocumentController(
       document: widget.document,
     )..addListener(_handleDocumentControllerChanged);
+    _itemPositionsListener.itemPositions.addListener(
+      _handleVisibleItemsChanged,
+    );
     _syncBlockControllers();
     _scheduleInitialFocus();
     _scheduleHeadingScroll();
     _scheduleSearchScroll();
+    _scheduleVisibleHeadingReport();
   }
 
   @override
@@ -130,6 +141,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final fileChanged = oldWidget.document.filePath != widget.document.filePath;
     final sourceChanged = oldWidget.document.source != widget.document.source;
     if (fileChanged || (sourceChanged && !_internalChange)) {
+      _hasReportedVisibleHeading = false;
       _undoStack.clear();
       _redoStack.clear();
       if (fileChanged) {
@@ -139,6 +151,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _documentController.replaceDocument(widget.document);
       _initialFocusScheduled = false;
       _scheduleInitialFocus();
+      _scheduleVisibleHeadingReport();
+    } else if (oldWidget.onVisibleHeadingChanged !=
+        widget.onVisibleHeadingChanged) {
+      _hasReportedVisibleHeading = false;
+      _scheduleVisibleHeadingReport();
     }
     if (oldWidget.scrollRequest != widget.scrollRequest) {
       _scheduleHeadingScroll();
@@ -148,6 +165,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
+    _itemPositionsListener.itemPositions.removeListener(
+      _handleVisibleItemsChanged,
+    );
     _documentController.removeListener(_handleDocumentControllerChanged);
     _documentController.dispose();
     for (final controller in _textControllers.values) {
@@ -184,6 +204,60 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _resetVerticalCaretMovement();
   }
 
+  void _scheduleVisibleHeadingReport() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _handleVisibleItemsChanged();
+      }
+    });
+  }
+
+  void _handleVisibleItemsChanged() {
+    if (!mounted || _viewportRenderEntries.isEmpty) {
+      return;
+    }
+    int? firstVisible;
+    for (final position in _itemPositionsListener.itemPositions.value) {
+      if (position.itemTrailingEdge <= 0 || position.itemLeadingEdge >= 1) {
+        continue;
+      }
+      if (firstVisible == null || position.index < firstVisible) {
+        firstVisible = position.index;
+      }
+    }
+    if (firstVisible == null) {
+      return;
+    }
+    DocumentOutlineHeading? heading;
+    for (
+      var index = math.min(firstVisible, _viewportRenderEntries.length - 1);
+      index >= 0;
+      index -= 1
+    ) {
+      final block = _viewportRenderEntries[index].block;
+      if (block.kind != BusyBlockKind.heading) {
+        continue;
+      }
+      heading = _viewportOutline
+          .where((candidate) => candidate.editorBlockId == block.id)
+          .firstOrNull;
+      heading ??= _viewportOutline
+          .where((candidate) => candidate.id == block.attributes['id'])
+          .firstOrNull;
+      break;
+    }
+    final key = heading == null
+        ? null
+        : '${heading.id}\u0000${heading.editorBlockId ?? ''}'
+              '\u0000${heading.sourceStartOffset ?? ''}';
+    if (_hasReportedVisibleHeading && _reportedVisibleHeadingKey == key) {
+      return;
+    }
+    _hasReportedVisibleHeading = true;
+    _reportedVisibleHeadingKey = key;
+    widget.onVisibleHeadingChanged?.call(heading);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
@@ -191,6 +265,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final renderEntries = _editorRenderEntries(
       _documentController.document.blocks,
     );
+    _viewportRenderEntries = renderEntries;
+    _viewportOutline = _documentController.document.outline;
     final blocks = entries.map((entry) => entry.block).toList();
     final blockSelectionActive = _hasBlockSelection;
     final selectionRangesByBlockId = {
@@ -313,6 +389,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                         child: ScrollablePositionedList.builder(
                           key: const ValueKey('wysiwyg-document-scroll'),
                           itemScrollController: _itemScrollController,
+                          itemPositionsListener: _itemPositionsListener,
                           padding: documentLayout.scrollPadding,
                           itemCount: renderEntries.length,
                           itemBuilder: (context, index) => _buildRenderEntry(

@@ -70,6 +70,10 @@ final _outlineNavigationTargetProvider =
       _OutlineNavigationTargetController,
       _OutlineNavigationTarget?
     >(_OutlineNavigationTargetController.new);
+final _outlineViewportTargetProvider =
+    NotifierProvider<_OutlineViewportTargetController, _OutlineViewportTarget?>(
+      _OutlineViewportTargetController.new,
+    );
 final _sourceNavigationTargetProvider =
     NotifierProvider<
       _SourceNavigationTargetController,
@@ -95,6 +99,19 @@ class _OutlineNavigationTargetController
   _OutlineNavigationTarget? build() => null;
 
   void set(_OutlineNavigationTarget? target) {
+    state = target;
+  }
+}
+
+class _OutlineViewportTargetController
+    extends Notifier<_OutlineViewportTarget?> {
+  @override
+  _OutlineViewportTarget? build() => null;
+
+  void set(_OutlineViewportTarget target) {
+    if (state?.sameLocationAs(target) ?? false) {
+      return;
+    }
     state = target;
   }
 }
@@ -263,6 +280,30 @@ class _OutlineNavigationTarget {
   final String? editorBlockId;
 }
 
+class _OutlineViewportTarget {
+  const _OutlineViewportTarget({
+    required this.workspaceId,
+    required this.filePath,
+    required this.headingId,
+    required this.sourceStartOffset,
+    required this.editorBlockId,
+  });
+
+  final String workspaceId;
+  final String? filePath;
+  final String? headingId;
+  final int? sourceStartOffset;
+  final String? editorBlockId;
+
+  bool sameLocationAs(_OutlineViewportTarget other) {
+    return workspaceId == other.workspaceId &&
+        filePath == other.filePath &&
+        headingId == other.headingId &&
+        sourceStartOffset == other.sourceStartOffset &&
+        editorBlockId == other.editorBlockId;
+  }
+}
+
 class _SourceNavigationTarget {
   const _SourceNavigationTarget({required this.filePath, required this.line});
 
@@ -379,11 +420,12 @@ class WorkspaceScreen extends ConsumerWidget {
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     final sidebarVisible =
         settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
+    final documentOutline = _activeDocumentOutline(state);
     final sidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
       child: _Sidebar(
         workspace: workspace,
-        outline: _activeDocumentOutline(state),
+        outline: documentOutline,
         searchState: searchState,
         searchResults: searchResults,
         onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
@@ -398,6 +440,7 @@ class WorkspaceScreen extends ConsumerWidget {
             child: gitState.selectedDiffForDisplay == null
                 ? _EditorPreviewSplit(
                     state: state,
+                    outline: documentOutline,
                     viewMode: settings.documentViewMode,
                     editorFontSize: settings.editorFontSize,
                     editorToolbarPlacement: settings.editorToolbarPlacement,
@@ -5696,6 +5739,9 @@ class _OutlineTab extends ConsumerStatefulWidget {
 class _OutlineTabState extends ConsumerState<_OutlineTab> {
   late String _outlineStateKey;
   late Set<String> _expandedNodeKeys;
+  final _treeScrollController = ItemScrollController();
+  final _treeItemPositionsListener = ItemPositionsListener.create();
+  String? _revealedActiveNodeKey;
 
   @override
   void initState() {
@@ -5714,7 +5760,43 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     if (nextKey != _outlineStateKey) {
       _outlineStateKey = nextKey;
       _expandedNodeKeys = _initialExpandedOutlineNodeKeys(widget.headings);
+      _revealedActiveNodeKey = null;
     }
+  }
+
+  void _scheduleActiveNodeReveal(
+    List<_OutlineTreeEntry> entries,
+    String? activeNodeKey,
+  ) {
+    if (activeNodeKey == null) {
+      _revealedActiveNodeKey = null;
+      return;
+    }
+    if (activeNodeKey == _revealedActiveNodeKey) {
+      return;
+    }
+    final index = entries.indexWhere(
+      (entry) => _outlineNodeKey(entry.node.heading) == activeNodeKey,
+    );
+    if (index < 0) {
+      return;
+    }
+    _revealedActiveNodeKey = activeNodeKey;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_treeScrollController.isAttached) {
+        _revealedActiveNodeKey = null;
+        return;
+      }
+      final alreadyVisible = _treeItemPositionsListener.itemPositions.value.any(
+        (position) =>
+            position.index == index &&
+            position.itemTrailingEdge > 0 &&
+            position.itemLeadingEdge < 1,
+      );
+      if (!alreadyVisible) {
+        _treeScrollController.jumpTo(index: index, alignment: 0.35);
+      }
+    });
   }
 
   Future<void> _showSectionMenu(
@@ -5838,12 +5920,22 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     }
     final tree = _buildOutlineTree(headings);
     final entries = _visibleOutlineTreeEntries(tree, _expandedNodeKeys);
+    final viewportTarget = ref.watch(_outlineViewportTargetProvider);
+    final activeNodeKey = _activeVisibleOutlineNodeKey(
+      workspace: widget.workspace,
+      headings: headings,
+      entries: entries,
+      target: viewportTarget,
+    );
+    _scheduleActiveNodeReveal(entries, activeNodeKey);
     final headingIndexes = {
       for (var index = 0; index < headings.length; index += 1)
         _outlineNodeKey(headings[index]): index,
     };
-    return ListView.builder(
+    return ScrollablePositionedList.builder(
       key: const ValueKey('workspace-sidebar-outline-tree'),
+      itemScrollController: _treeScrollController,
+      itemPositionsListener: _treeItemPositionsListener,
       padding: BusyMarkInsets.sidebarList,
       itemCount: entries.length,
       itemBuilder: (context, index) {
@@ -5864,32 +5956,41 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
           });
         }
 
-        return _SidebarTreeRow(
-          key: index == 0
-              ? const ValueKey('workspace-sidebar-first-content')
-              : null,
-          title: heading.text,
-          depth: entry.depth,
-          icon: BusyMarkGlyphs.tag,
-          leading: _HeadingBadge(level: heading.level),
-          hasChildren: hasChildren,
-          expanded: expanded,
-          onToggle: hasChildren ? toggle : null,
-          onTap: () {
-            ref
-                .read(_outlineNavigationTargetProvider.notifier)
-                .set(
-                  _OutlineNavigationTarget(
-                    workspaceId: widget.workspace.id,
-                    filePath: widget.workspace.activeFilePath,
-                    headingId: heading.id,
-                    line: heading.sourceStartLine,
-                    editorBlockId: heading.editorBlockId,
-                  ),
-                );
-          },
-          onSecondaryTapUp: (details) => unawaited(
-            _showSectionMenu(heading, headingIndex, details.globalPosition),
+        return KeyedSubtree(
+          key: ValueKey('workspace-sidebar-outline-row-$headingIndex'),
+          child: _SidebarTreeRow(
+            key: index == 0
+                ? const ValueKey('workspace-sidebar-first-content')
+                : null,
+            title: heading.text,
+            depth: entry.depth,
+            icon: BusyMarkGlyphs.tag,
+            leading: _HeadingBadge(level: heading.level),
+            hasChildren: hasChildren,
+            expanded: expanded,
+            selected: key == activeNodeKey,
+            onToggle: hasChildren ? toggle : null,
+            onTap: () {
+              _setOutlineViewportTarget(
+                ref,
+                workspace: widget.workspace,
+                heading: heading,
+              );
+              ref
+                  .read(_outlineNavigationTargetProvider.notifier)
+                  .set(
+                    _OutlineNavigationTarget(
+                      workspaceId: widget.workspace.id,
+                      filePath: widget.workspace.activeFilePath,
+                      headingId: heading.id,
+                      line: heading.sourceStartLine,
+                      editorBlockId: heading.editorBlockId,
+                    ),
+                  );
+            },
+            onSecondaryTapUp: (details) => unawaited(
+              _showSectionMenu(heading, headingIndex, details.globalPosition),
+            ),
           ),
         );
       },
@@ -6067,6 +6168,80 @@ Future<bool> _confirmDeleteOutlineSection(
     ),
   );
   return confirmed ?? false;
+}
+
+void _setOutlineViewportTarget(
+  WidgetRef ref, {
+  required Workspace workspace,
+  required DocumentOutlineHeading? heading,
+}) {
+  ref
+      .read(_outlineViewportTargetProvider.notifier)
+      .set(
+        _OutlineViewportTarget(
+          workspaceId: workspace.id,
+          filePath: workspace.activeFilePath ?? workspace.markdown?.filePath,
+          headingId: heading?.id,
+          sourceStartOffset: heading?.sourceStartOffset,
+          editorBlockId: heading?.editorBlockId,
+        ),
+      );
+}
+
+String? _activeVisibleOutlineNodeKey({
+  required Workspace workspace,
+  required List<DocumentOutlineHeading> headings,
+  required List<_OutlineTreeEntry> entries,
+  required _OutlineViewportTarget? target,
+}) {
+  if (target == null ||
+      target.workspaceId != workspace.id ||
+      target.filePath !=
+          (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
+    return headings.isEmpty ? null : _outlineNodeKey(headings.first);
+  }
+  final targetIndex = _outlineViewportHeadingIndex(headings, target);
+  if (targetIndex < 0) {
+    return null;
+  }
+  final visibleKeys = {
+    for (final entry in entries) _outlineNodeKey(entry.node.heading),
+  };
+  for (var index = targetIndex; index >= 0; index -= 1) {
+    final key = _outlineNodeKey(headings[index]);
+    if (visibleKeys.contains(key)) {
+      return key;
+    }
+  }
+  return null;
+}
+
+int _outlineViewportHeadingIndex(
+  List<DocumentOutlineHeading> headings,
+  _OutlineViewportTarget target,
+) {
+  final editorBlockId = target.editorBlockId;
+  if (editorBlockId != null) {
+    final index = headings.indexWhere(
+      (heading) => heading.editorBlockId == editorBlockId,
+    );
+    if (index >= 0) {
+      return index;
+    }
+  }
+  final sourceStartOffset = target.sourceStartOffset;
+  if (sourceStartOffset != null) {
+    final index = headings.indexWhere(
+      (heading) => heading.sourceStartOffset == sourceStartOffset,
+    );
+    if (index >= 0) {
+      return index;
+    }
+  }
+  final headingId = target.headingId;
+  return headingId == null
+      ? -1
+      : headings.indexWhere((heading) => heading.id == headingId);
 }
 
 List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {
@@ -7479,6 +7654,7 @@ DocumentFile? _documentFileForPath(Workspace workspace, String path) {
 class _EditorPreviewSplit extends ConsumerStatefulWidget {
   const _EditorPreviewSplit({
     required this.state,
+    required this.outline,
     required this.viewMode,
     required this.editorFontSize,
     required this.editorToolbarPlacement,
@@ -7487,6 +7663,7 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
   });
 
   final WorkspaceState state;
+  final List<DocumentOutlineHeading> outline;
   final DocumentViewModePreference viewMode;
   final double editorFontSize;
   final EditorToolbarPlacement editorToolbarPlacement;
@@ -7500,6 +7677,9 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewScrollController = ItemScrollController();
+  final _previewItemPositionsListener = ItemPositionsListener.create();
+  PreviewDocument? _outlineStopsPreview;
+  List<_PositionedOutlineHeading> _previewOutlineStops = const [];
   final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
   final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
@@ -7516,6 +7696,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   void initState() {
     super.initState();
     _lastPath = widget.state.workspace?.activeFilePath ?? '';
+    _previewItemPositionsListener.itemPositions.addListener(
+      _handlePreviewVisibleItemsChanged,
+    );
+  }
+
+  @override
+  void dispose() {
+    _previewItemPositionsListener.itemPositions.removeListener(
+      _handlePreviewVisibleItemsChanged,
+    );
+    super.dispose();
   }
 
   @override
@@ -7549,6 +7740,61 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             .refreshActivePreview(sourceFilePath: sourceFilePath);
       });
     }
+  }
+
+  void _handlePreviewVisibleItemsChanged() {
+    if (!mounted ||
+        (widget.viewMode != DocumentViewModePreference.preview &&
+            widget.viewMode != DocumentViewModePreference.split)) {
+      return;
+    }
+    final preview = widget.state.preview;
+    if (preview == null || preview.blocks.isEmpty) {
+      _publishVisibleOutlineHeading(null);
+      return;
+    }
+    final firstVisible = _firstVisiblePositionedItemIndex(
+      _previewItemPositionsListener.itemPositions.value,
+    );
+    if (firstVisible == null) {
+      return;
+    }
+    if (!identical(_outlineStopsPreview, preview)) {
+      _outlineStopsPreview = preview;
+      _previewOutlineStops = [
+        for (final (index, block) in preview.blocks.indexed)
+          if (_outlineHeadingForPreviewBlock(block) case final heading?)
+            (itemIndex: index, heading: heading),
+      ];
+    }
+    _publishVisibleOutlineHeading(
+      _outlineHeadingAtItemIndex(_previewOutlineStops, firstVisible),
+    );
+  }
+
+  void _handleWysiwygVisibleHeadingChanged(DocumentOutlineHeading? heading) {
+    if (widget.viewMode == DocumentViewModePreference.editor) {
+      _publishVisibleOutlineHeading(heading);
+    }
+  }
+
+  void _handleSourceVisibleLineChanged(int? line) {
+    if (widget.viewMode != DocumentViewModePreference.source &&
+        widget.viewMode != DocumentViewModePreference.split) {
+      return;
+    }
+    final heading = line == null
+        ? null
+        : _outlineHeadingAtOrBeforeLine(widget.outline, line);
+    _publishVisibleOutlineHeading(heading);
+  }
+
+  void _publishVisibleOutlineHeading(DocumentOutlineHeading? heading) {
+    final workspace = widget.state.workspace;
+    if (!mounted || workspace == null) {
+      return;
+    }
+    _setOutlineViewportTarget(ref, workspace: workspace, heading: heading);
   }
 
   @override
@@ -7651,6 +7897,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 scrollToBlockId: _wysiwygScrollBlockId,
                 scrollToSearchQuery: _wysiwygSearchQuery,
                 scrollRequest: _wysiwygScrollRequest,
+                onVisibleHeadingChanged: _handleWysiwygVisibleHeadingChanged,
                 documentLayout: standaloneDocumentLayout,
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
@@ -7685,6 +7932,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 onCloseSearch: () => ref
                     .read(workspaceSearchCloseRequestProvider.notifier)
                     .request(),
+                onVisibleLineChanged: _handleSourceVisibleLineChanged,
                 onChanged: _handleSourceChanged,
               ),
             ),
@@ -7699,6 +7947,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 preview: widget.state.preview,
                 workspace: widget.state.workspace,
                 controller: _previewScrollController,
+                itemPositionsListener: _previewItemPositionsListener,
                 onBlockContextAvailable: _rememberPreviewBlockContext,
                 onBlockContextUnavailable: _forgetPreviewBlockContext,
                 documentLayout: sourceVisible
@@ -8073,12 +8322,116 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 }
 
+int? _firstVisiblePositionedItemIndex(Iterable<ItemPosition> positions) {
+  int? first;
+  for (final position in positions) {
+    if (position.itemTrailingEdge <= 0 || position.itemLeadingEdge >= 1) {
+      continue;
+    }
+    if (first == null || position.index < first) {
+      first = position.index;
+    }
+  }
+  return first;
+}
+
+typedef _PositionedOutlineHeading = ({
+  int itemIndex,
+  DocumentOutlineHeading heading,
+});
+
+DocumentOutlineHeading? _outlineHeadingForPreviewBlock(PreviewBlock block) {
+  if (block.kind != PreviewBlockKind.heading) {
+    return null;
+  }
+  final headingId = block.attributes['id'];
+  final level = block.level;
+  final sourceStartLine = block.sourceStartLine;
+  final sourceStartOffset = block.sourceStartOffset;
+  if (headingId == null ||
+      headingId.isEmpty ||
+      level == null ||
+      sourceStartLine == null ||
+      sourceStartOffset == null) {
+    return null;
+  }
+  return DocumentOutlineHeading(
+    level: level,
+    text: block.text,
+    id: headingId,
+    sourceStartLine: sourceStartLine,
+    sourceStartOffset: sourceStartOffset,
+    editorBlockId: block.attributes['editorBlockId'],
+  );
+}
+
+DocumentOutlineHeading? _outlineHeadingAtItemIndex(
+  List<_PositionedOutlineHeading> headings,
+  int itemIndex,
+) {
+  var low = 0;
+  var high = headings.length - 1;
+  DocumentOutlineHeading? result;
+  while (low <= high) {
+    final middle = (low + high) >> 1;
+    final candidate = headings[middle];
+    if (candidate.itemIndex <= itemIndex) {
+      result = candidate.heading;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return result;
+}
+
+DocumentOutlineHeading? _outlineHeadingAtOrBeforeLine(
+  List<DocumentOutlineHeading> headings,
+  int line,
+) {
+  var low = 0;
+  var high = headings.length - 1;
+  DocumentOutlineHeading? result;
+  var encounteredMissingLine = false;
+  while (low <= high) {
+    final middle = (low + high) >> 1;
+    final heading = headings[middle];
+    final headingLine = heading.sourceStartLine;
+    if (headingLine == null) {
+      encounteredMissingLine = true;
+      break;
+    }
+    if (headingLine <= line) {
+      result = heading;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  if (!encounteredMissingLine) {
+    return result;
+  }
+  result = null;
+  for (final heading in headings) {
+    final headingLine = heading.sourceStartLine;
+    if (headingLine == null) {
+      continue;
+    }
+    if (headingLine > line) {
+      break;
+    }
+    result = heading;
+  }
+  return result;
+}
+
 class _PreviewPane extends StatelessWidget {
   const _PreviewPane({
     required this.preview,
     required this.workspace,
     required this.controller,
     required this.documentLayout,
+    this.itemPositionsListener,
     this.onBlockContextAvailable,
     this.onBlockContextUnavailable,
   });
@@ -8086,6 +8439,7 @@ class _PreviewPane extends StatelessWidget {
   final PreviewDocument? preview;
   final Workspace? workspace;
   final ItemScrollController controller;
+  final ItemPositionsListener? itemPositionsListener;
   final BusyMarkDocumentLayoutSpec documentLayout;
   final void Function(int index, BuildContext context)? onBlockContextAvailable;
   final void Function(int index, BuildContext context)?
@@ -8110,6 +8464,7 @@ class _PreviewPane extends StatelessWidget {
           child: ScrollablePositionedList.builder(
             key: const ValueKey('preview-document-scroll'),
             itemScrollController: controller,
+            itemPositionsListener: itemPositionsListener,
             padding: documentLayout.scrollPadding,
             itemCount: document.blocks.length,
             itemBuilder: (context, index) =>
