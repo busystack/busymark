@@ -544,7 +544,7 @@ class WorkspaceScreen extends ConsumerWidget {
               },
             ),
           },
-          child: Focus(
+          child: FocusScope(
             autofocus: true,
             child: Scaffold(
               backgroundColor: colors.window,
@@ -812,6 +812,16 @@ class WorkspaceScreen extends ConsumerWidget {
             DocumentViewModePreference.split,
           ),
         );
+      case HeaderBarAction.sidebarFiles:
+        _selectSidebarShortcut(ref, _SidebarTab.files);
+      case HeaderBarAction.sidebarToc:
+        _selectSidebarShortcut(ref, _SidebarTab.toc);
+      case HeaderBarAction.sidebarOutline:
+        _selectSidebarShortcut(ref, _SidebarTab.outline);
+      case HeaderBarAction.sidebarGit:
+        _selectSidebarShortcut(ref, _SidebarTab.git);
+      case HeaderBarAction.sidebarHistory:
+        _selectSidebarShortcut(ref, _SidebarTab.gitHistory);
       case HeaderBarAction.search:
         _toggleSearch(ref);
       case HeaderBarAction.menu:

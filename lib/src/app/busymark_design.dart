@@ -197,7 +197,6 @@ abstract final class BusyMarkTypography {
   static const double codeLineHeight = 1.45;
   static const double sourceEditorLineHeight = 1.6;
   static const double bodyLineHeight = 1.5;
-  static const double headingLineHeight = 1.25;
   static const double defaultFontSize = 14;
   static const double tooltipFontSize = defaultFontSize;
   static const double sourceCursorHeightScale = 1.34;
@@ -210,9 +209,20 @@ abstract final class BusyMarkTypography {
       1 => 1.55,
       2 => 1.36,
       3 => 1.22,
-      4 => 1.12,
-      5 => 1.04,
-      _ => 1.0,
+      4 => 1.10,
+      5 => 1.08,
+      _ => 1.06,
+    };
+  }
+
+  static double markdownHeadingLineHeight(int level) {
+    return switch (level) {
+      1 => 1.20,
+      2 => 1.23,
+      3 => 1.28,
+      4 => 1.37,
+      5 => 1.39,
+      _ => 1.42,
     };
   }
 }

@@ -2095,10 +2095,14 @@ void main() {
     final gitController = _PresetGitController(
       _gitSidebarShortcutState(temp.path),
     );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
         gitControllerProvider.overrideWith(() => gitController),
@@ -2113,6 +2117,24 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    Future<void> pressDocumentViewShortcut(
+      LogicalKeyboardKey key,
+      DocumentViewModePreference expectedMode,
+    ) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        expectedMode,
+      );
     }
 
     await tester.pumpWidget(
@@ -2152,12 +2174,34 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
 
+    final activeEditorField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.controller?.text.contains('Intro.md') == true,
+    );
+    expect(activeEditorField, findsOneWidget);
+    await tester.tap(activeEditorField);
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(activeEditorField).focusNode?.hasFocus,
+      isTrue,
+      reason: 'The shortcut must work while the document field owns focus.',
+    );
+
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit2,
+      DocumentViewModePreference.source,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
 
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit3,
+      DocumentViewModePreference.preview,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
@@ -2207,12 +2251,20 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit4,
+      DocumentViewModePreference.split,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit5);
     expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
     expect(branchMenu, findsOneWidget);
 
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit1,
+      DocumentViewModePreference.editor,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
@@ -2235,7 +2287,7 @@ void main() {
     }
   });
 
-  testWidgets('Writerside sidebar keeps one gap below the project row', (
+  testWidgets('Writerside sidebar shortcuts survive document view changes', (
     tester,
   ) async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -2283,6 +2335,32 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    Future<void> switchDocumentView(
+      LogicalKeyboardKey key,
+      DocumentViewModePreference expectedMode,
+    ) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        expectedMode,
+      );
+    }
+
+    final activeDocumentField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.controller?.text.contains('# Introduction') == true,
+    );
+    expect(activeDocumentField, findsOneWidget);
+    await tester.tap(activeDocumentField);
+    await tester.pump();
+
     final primaryRow = find.byKey(
       const ValueKey('workspace-sidebar-primary-row'),
     );
@@ -2320,13 +2398,53 @@ void main() {
 
     final actionMenuGuideRight = tester.getRect(primaryRow).right;
     double? actionMenuRight;
-    for (final (key, label, contextRow) in <(LogicalKeyboardKey, String, bool)>[
-      (LogicalKeyboardKey.digit1, 'Files', true),
-      (LogicalKeyboardKey.digit2, 'Topics', true),
-      (LogicalKeyboardKey.digit3, 'Outline', false),
-      (LogicalKeyboardKey.digit4, 'Commit', true),
-      (LogicalKeyboardKey.digit5, 'History', true),
-    ]) {
+    for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
+        in <
+          (
+            LogicalKeyboardKey,
+            String,
+            bool,
+            LogicalKeyboardKey,
+            DocumentViewModePreference,
+          )
+        >[
+          (
+            LogicalKeyboardKey.digit1,
+            'Files',
+            true,
+            LogicalKeyboardKey.digit2,
+            DocumentViewModePreference.source,
+          ),
+          (
+            LogicalKeyboardKey.digit2,
+            'Topics',
+            true,
+            LogicalKeyboardKey.digit3,
+            DocumentViewModePreference.preview,
+          ),
+          (
+            LogicalKeyboardKey.digit3,
+            'Outline',
+            false,
+            LogicalKeyboardKey.digit4,
+            DocumentViewModePreference.split,
+          ),
+          (
+            LogicalKeyboardKey.digit4,
+            'Commit',
+            true,
+            LogicalKeyboardKey.digit1,
+            DocumentViewModePreference.editor,
+          ),
+          (
+            LogicalKeyboardKey.digit5,
+            'History',
+            true,
+            LogicalKeyboardKey.digit3,
+            DocumentViewModePreference.preview,
+          ),
+        ]) {
+      await switchDocumentView(documentViewKey, expectedDocumentView);
       await selectView(key);
       expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
       final firstContent = find.byKey(firstContentKey);
@@ -3801,6 +3919,7 @@ After break.
     );
     expect(editorBody, findsOneWidget);
     final editorBodyStyle = tester.widget<TextField>(editorBody).style;
+    final editorBodyRect = tester.getRect(editorBody);
     final editorColors = BusyMarkSurfaceColors.of(
       tester.element(editorHeading(headings.first)),
     );
@@ -3816,10 +3935,33 @@ After break.
             '${headings[index + 1]}',
       );
     }
+    final editorBodySize = editorBodyStyle!.fontSize!;
+    for (var index = 0; index < editorHeadingSizes.length; index += 1) {
+      expect(
+        editorHeadingSizes[index],
+        greaterThan(editorBodySize),
+        reason: '${headings[index]} should be visibly larger than body text',
+      );
+    }
     expect(
-      editorHeadingSizes.last,
-      greaterThanOrEqualTo(editorBodyStyle!.fontSize!),
+      editorHeadingSizes[3],
+      lessThanOrEqualTo(editorBodySize * 1.11),
+      reason: 'H4 should not jump disproportionately above body text',
     );
+    for (var index = 3; index < editorHeadingSizes.length - 1; index += 1) {
+      expect(
+        editorHeadingSizes[index] - editorHeadingSizes[index + 1],
+        lessThanOrEqualTo(editorBodySize * 0.03),
+        reason: 'H4-H6 should form a smooth visual progression',
+      );
+    }
+    for (final heading in headings.skip(3)) {
+      expect(
+        editorHeadingRects[heading]!.height,
+        greaterThanOrEqualTo(editorBodyRect.height - 0.1),
+        reason: '$heading should not render shorter than body text',
+      );
+    }
     for (final style in editorHeadingStyles.values) {
       expect(style?.color, editorColors.foreground);
       expect(style?.fontWeight, FontWeight.w700);

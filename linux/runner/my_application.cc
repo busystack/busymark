@@ -1068,6 +1068,50 @@ static void invoke_header_bar_bool_action(MyApplication* self,
                                   nullptr, nullptr, nullptr);
 }
 
+static const gchar* sidebar_shortcut_action_for_key(guint keyval) {
+  switch (keyval) {
+    case GDK_KEY_1:
+    case GDK_KEY_KP_1:
+      return "sidebarFiles";
+    case GDK_KEY_2:
+    case GDK_KEY_KP_2:
+      return "sidebarToc";
+    case GDK_KEY_3:
+    case GDK_KEY_KP_3:
+      return "sidebarOutline";
+    case GDK_KEY_4:
+    case GDK_KEY_KP_4:
+      return "sidebarGit";
+    case GDK_KEY_5:
+    case GDK_KEY_KP_5:
+      return "sidebarHistory";
+    default:
+      return nullptr;
+  }
+}
+
+// GtkSearchEntry owns the native keyboard focus while search is active, so
+// these workspace shortcuts cannot reach Flutter's Shortcuts widget. Bridge
+// them through the same header-bar channel used by the native controls.
+static gboolean search_entry_key_press_cb(GtkWidget*,
+                                           GdkEventKey* event,
+                                           gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  const guint modifiers =
+      event->state & gtk_accelerator_get_default_mod_mask();
+  if (self->suppress_header_actions || self->modal_barrier_visible ||
+      modifiers != GDK_CONTROL_MASK) {
+    return FALSE;
+  }
+  const gchar* action = sidebar_shortcut_action_for_key(event->keyval);
+  if (action == nullptr) {
+    return FALSE;
+  }
+  focus_flutter_view(self);
+  invoke_header_bar_action(self, action);
+  return TRUE;
+}
+
 enum class SearchQueryUpdateDisposition {
   kAlreadyCurrent,
   kPreserveNativeText,
@@ -1915,6 +1959,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                    G_CALLBACK(search_entry_changed_cb), self);
   g_signal_connect(self->search_entry, "activate",
                    G_CALLBACK(search_entry_activate_cb), self);
+  g_signal_connect(self->search_entry, "key-press-event",
+                   G_CALLBACK(search_entry_key_press_cb), self);
   g_signal_connect(self->search_entry, "focus-in-event",
                    G_CALLBACK(search_entry_focus_in_cb), self);
   g_signal_connect(self->search_entry, "focus-out-event",

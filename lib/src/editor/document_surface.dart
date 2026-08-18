@@ -19,7 +19,7 @@ TextStyle busyMarkDocumentHeadingTextStyle(BuildContext context, int? level) {
     fontSize:
         bodySize * BusyMarkTypography.markdownHeadingScale(effectiveLevel),
     fontWeight: FontWeight.w700,
-    height: BusyMarkTypography.headingLineHeight,
+    height: BusyMarkTypography.markdownHeadingLineHeight(effectiveLevel),
   );
 }
 

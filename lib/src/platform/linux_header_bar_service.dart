@@ -27,6 +27,11 @@ enum HeaderBarAction {
   viewModeSource,
   viewModePreview,
   viewModeSplit,
+  sidebarFiles,
+  sidebarToc,
+  sidebarOutline,
+  sidebarGit,
+  sidebarHistory,
 }
 
 class HeaderBarActionEvent {
@@ -396,6 +401,11 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'viewModeSource' => HeaderBarAction.viewModeSource,
       'viewModePreview' => HeaderBarAction.viewModePreview,
       'viewModeSplit' => HeaderBarAction.viewModeSplit,
+      'sidebarFiles' => HeaderBarAction.sidebarFiles,
+      'sidebarToc' => HeaderBarAction.sidebarToc,
+      'sidebarOutline' => HeaderBarAction.sidebarOutline,
+      'sidebarGit' => HeaderBarAction.sidebarGit,
+      'sidebarHistory' => HeaderBarAction.sidebarHistory,
       _ => null,
     };
   }

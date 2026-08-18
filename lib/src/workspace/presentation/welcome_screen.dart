@@ -238,6 +238,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.viewModeSource:
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:
+      case HeaderBarAction.sidebarFiles:
+      case HeaderBarAction.sidebarToc:
+      case HeaderBarAction.sidebarOutline:
+      case HeaderBarAction.sidebarGit:
+      case HeaderBarAction.sidebarHistory:
         break;
     }
   }
