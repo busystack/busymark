@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 
@@ -28,7 +30,11 @@ class WritersideModuleService {
   final WritersideCategoriesParser categoriesParser;
   final WorkspaceScanOptions scanOptions;
 
-  Future<WritersideModule> load(String rootPath) async {
+  Future<WritersideModule> load(
+    String rootPath, {
+    WorkspaceScanOptions? options,
+  }) async {
+    final effectiveScanOptions = options ?? scanOptions;
     var root = normalizePath(rootPath);
     final diagnostics = <Diagnostic>[];
     final CanonicalPathAnchor anchor;
@@ -87,7 +93,15 @@ class WritersideModuleService {
       return _emptyModule(root, configResolution.path, diagnostics);
     }
     final configPath = configResolution.path;
-    final configSource = await File(configPath).readAsString();
+    final configSource = await _readFileForParsing(
+      File(configPath),
+      diagnostics,
+      effectiveScanOptions,
+      readFailureCode: 'workspace.file.read-failed',
+    );
+    if (configSource == null) {
+      return _emptyModule(root, configPath, diagnostics);
+    }
     final config = configParser.parse(configPath, configSource);
     diagnostics.addAll(config.diagnostics);
     final usableTopicRoots = await _existingTopicRoots(
@@ -210,24 +224,61 @@ class WritersideModuleService {
         );
         continue;
       }
-      final treeSource = await File(treePath).readAsString();
+      final treeSource = await _readFileForParsing(
+        File(treePath),
+        diagnostics,
+        effectiveScanOptions,
+        readFailureCode: 'workspace.file.read-failed',
+      );
+      if (treeSource == null) {
+        continue;
+      }
       final instance = treeParser.parse(treePath, treeSource);
       diagnostics.addAll(instance.diagnostics);
       instances.add(instance);
     }
 
     final topics = <WritersideTopic>[];
+    final unparsedTopics = _UnparsedTopicIndex();
+    var parsedDocuments = 0;
     for (final topicsRoot in usableTopicRoots) {
       final scan = await scanWorkspaceEntities(
         topicsRoot,
-        options: scanOptions,
+        options: effectiveScanOptions,
       );
       diagnostics.addAll(scan.diagnostics);
       for (final entity in scan.entities.whereType<File>()) {
         final extension = p.extension(entity.path).toLowerCase();
+        if (extension != '.md' &&
+            extension != '.markdown' &&
+            extension != '.topic') {
+          continue;
+        }
+        final topicFileName = normalizedRelative(topicsRoot, entity.path);
+        if (parsedDocuments >= effectiveScanOptions.maxParsedDocuments) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'workspace.scan.document-limit',
+              severity: DiagnosticSeverity.warning,
+              filePath: entity.path,
+            ),
+          );
+          unparsedTopics.add(topicFileName);
+          continue;
+        }
+        final source = await _readFileForParsing(
+          entity,
+          diagnostics,
+          effectiveScanOptions,
+          readFailureCode: 'writerside.topic.read-failed',
+        );
+        if (source == null) {
+          unparsedTopics.add(topicFileName);
+          continue;
+        }
+        parsedDocuments++;
         try {
           if (extension == '.md' || extension == '.markdown') {
-            final source = await entity.readAsString();
             final topic = topicParser.parseMarkdown(
               filePath: entity.path,
               source: source,
@@ -235,8 +286,7 @@ class WritersideModuleService {
             );
             diagnostics.addAll(topic.diagnostics);
             topics.add(topic);
-          } else if (extension == '.topic') {
-            final source = await entity.readAsString();
+          } else {
             final topic = topicParser.parseXml(
               filePath: entity.path,
               source: source,
@@ -246,6 +296,7 @@ class WritersideModuleService {
             topics.add(topic);
           }
         } on Object catch (error) {
+          unparsedTopics.add(topicFileName);
           diagnostics.add(
             Diagnostic(
               code: 'writerside.topic.read-failed',
@@ -259,27 +310,43 @@ class WritersideModuleService {
     }
 
     final variables = <WritersideVariable>[];
+    var validateVariables = true;
     if (variablesResolution?.type == FileSystemEntityType.file) {
       final file = File(variablesResolution!.path);
       if (await file.exists()) {
-        final parsed = variablesParser.parse(
-          file.path,
-          await file.readAsString(),
+        final source = await _readFileForParsing(
+          file,
+          diagnostics,
+          effectiveScanOptions,
+          readFailureCode: 'workspace.file.read-failed',
         );
-        variables.addAll(parsed.$1);
-        diagnostics.addAll(parsed.$2);
+        if (source == null) {
+          validateVariables = false;
+        } else {
+          final parsed = variablesParser.parse(file.path, source);
+          variables.addAll(parsed.$1);
+          diagnostics.addAll(parsed.$2);
+        }
       }
     }
     final categories = <WritersideCategory>[];
+    var validateCategories = true;
     if (categoriesResolution?.type == FileSystemEntityType.file) {
       final file = File(categoriesResolution!.path);
       if (await file.exists()) {
-        final parsed = categoriesParser.parse(
-          file.path,
-          await file.readAsString(),
+        final source = await _readFileForParsing(
+          file,
+          diagnostics,
+          effectiveScanOptions,
+          readFailureCode: 'workspace.file.read-failed',
         );
-        categories.addAll(parsed.$1);
-        diagnostics.addAll(parsed.$2);
+        if (source == null) {
+          validateCategories = false;
+        } else {
+          final parsed = categoriesParser.parse(file.path, source);
+          categories.addAll(parsed.$1);
+          diagnostics.addAll(parsed.$2);
+        }
       }
     }
 
@@ -293,7 +360,15 @@ class WritersideModuleService {
       diagnostics: const [],
       validatedImageDirs: validatedImageDirs,
     );
-    diagnostics.addAll(_resolve(module, validatedImageDirs));
+    diagnostics.addAll(
+      _resolve(
+        module,
+        validatedImageDirs,
+        unparsedTopics: unparsedTopics,
+        validateVariables: validateVariables,
+        validateCategories: validateCategories,
+      ),
+    );
     return WritersideModule(
       rootPath: module.rootPath,
       config: module.config,
@@ -362,6 +437,48 @@ class WritersideModuleService {
       categories: const [],
       diagnostics: sortDiagnostics(diagnostics),
       validatedImageDirs: const ['images'],
+    );
+  }
+
+  Future<String?> _readFileForParsing(
+    File file,
+    List<Diagnostic> diagnostics,
+    WorkspaceScanOptions options, {
+    required String readFailureCode,
+  }) async {
+    final maxBytes = options.maxParsedFileBytes;
+    if (maxBytes < 0) {
+      diagnostics.add(_fileTooLargeDiagnostic(file.path));
+      return null;
+    }
+    try {
+      final bytes = BytesBuilder(copy: false);
+      await for (final chunk in file.openRead(0, maxBytes + 1)) {
+        bytes.add(chunk);
+      }
+      if (bytes.length > maxBytes) {
+        diagnostics.add(_fileTooLargeDiagnostic(file.path));
+        return null;
+      }
+      return utf8.decode(bytes.takeBytes());
+    } on Object catch (error) {
+      diagnostics.add(
+        Diagnostic(
+          code: readFailureCode,
+          severity: DiagnosticSeverity.warning,
+          filePath: file.path,
+          args: {'error': '$error'},
+        ),
+      );
+      return null;
+    }
+  }
+
+  Diagnostic _fileTooLargeDiagnostic(String filePath) {
+    return Diagnostic(
+      code: 'workspace.file.too-large',
+      severity: DiagnosticSeverity.warning,
+      filePath: filePath,
     );
   }
 
@@ -608,8 +725,11 @@ class WritersideModuleService {
 
   List<Diagnostic> _resolve(
     WritersideModule module,
-    List<String> validatedImageDirs,
-  ) {
+    List<String> validatedImageDirs, {
+    required _UnparsedTopicIndex unparsedTopics,
+    required bool validateVariables,
+    required bool validateCategories,
+  }) {
     final diagnostics = <Diagnostic>[];
     final variableNames = module.variableNames;
     final categoryIds = module.categories.map((item) => item.id).toSet();
@@ -632,7 +752,8 @@ class WritersideModuleService {
     for (final instance in module.instances) {
       if (instance.startPage != null) {
         final resolved = _resolveTopicReference(module, instance.startPage!);
-        if (resolved.isMissing) {
+        if (resolved.isMissing &&
+            !unparsedTopics.matches(instance.startPage!)) {
           diagnostics.add(
             Diagnostic(
               code: 'writerside.tree.missing-start-page',
@@ -654,7 +775,7 @@ class WritersideModuleService {
         final topic = node.topicFileName;
         if (topic != null) {
           final resolved = _resolveTopicReference(module, topic);
-          if (resolved.isMissing) {
+          if (resolved.isMissing && !unparsedTopics.matches(topic)) {
             diagnostics.add(
               Diagnostic(
                 code: 'writerside.tree.missing-topic',
@@ -715,17 +836,19 @@ class WritersideModuleService {
         }
         duplicateIds[id.id] = id.span;
       }
-      for (final variable in topic.variables) {
-        if (!variableNames.contains(variable.name)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.variable.unresolved',
-              severity: DiagnosticSeverity.warning,
-              filePath: topic.filePath,
-              args: {'name': variable.name},
-              sourceSpan: variable.span,
-            ),
-          );
+      if (validateVariables) {
+        for (final variable in topic.variables) {
+          if (!variableNames.contains(variable.name)) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.variable.unresolved',
+                severity: DiagnosticSeverity.warning,
+                filePath: topic.filePath,
+                args: {'name': variable.name},
+                sourceSpan: variable.span,
+              ),
+            );
+          }
         }
       }
       for (final link in topic.links) {
@@ -741,6 +864,10 @@ class WritersideModuleService {
             : _resolveTopicReference(module, targetReference, fromTopic: topic);
         final target = resolved.topic;
         if (target == null) {
+          if (resolved.isMissing &&
+              unparsedTopics.matches(targetReference, fromTopic: topic)) {
+            continue;
+          }
           diagnostics.add(
             resolved.isAmbiguous
                 ? _ambiguousTopicReferenceDiagnostic(
@@ -823,6 +950,10 @@ class WritersideModuleService {
         );
         final target = resolved.topic;
         if (target == null) {
+          if (resolved.isMissing &&
+              unparsedTopics.matches(include.from!, fromTopic: topic)) {
+            continue;
+          }
           if (!include.nullable) {
             diagnostics.add(
               resolved.isAmbiguous
@@ -857,25 +988,27 @@ class WritersideModuleService {
           }
         }
       }
-      for (final categoryRef in RegExp(
-        r'<category\b[^>]*ref="([^"]+)"',
-      ).allMatches(topic.markdown?.source ?? '')) {
-        final ref = categoryRef.group(1)!;
-        if (!categoryIds.contains(ref)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.category.unresolved',
-              severity: DiagnosticSeverity.warning,
-              filePath: topic.filePath,
-              args: {'ref': ref},
-              sourceSpan: SourceSpan.fromOffsets(
+      if (validateCategories) {
+        for (final categoryRef in RegExp(
+          r'<category\b[^>]*ref="([^"]+)"',
+        ).allMatches(topic.markdown?.source ?? '')) {
+          final ref = categoryRef.group(1)!;
+          if (!categoryIds.contains(ref)) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.category.unresolved',
+                severity: DiagnosticSeverity.warning,
                 filePath: topic.filePath,
-                source: topic.markdown!.source,
-                startOffset: categoryRef.start,
-                endOffset: categoryRef.end,
+                args: {'ref': ref},
+                sourceSpan: SourceSpan.fromOffsets(
+                  filePath: topic.filePath,
+                  source: topic.markdown!.source,
+                  startOffset: categoryRef.start,
+                  endOffset: categoryRef.end,
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
       }
     }
@@ -958,4 +1091,33 @@ class _TopicResolution {
   bool get isMissing => matches.isEmpty;
   bool get isAmbiguous => matches.length > 1;
   WritersideTopic? get topic => matches.length == 1 ? matches.single : null;
+}
+
+class _UnparsedTopicIndex {
+  final _fileNames = <String>{};
+  final _baseNames = <String>{};
+
+  void add(String fileName) {
+    _fileNames.add(fileName);
+    _baseNames.add(p.basename(fileName));
+  }
+
+  bool matches(String reference, {WritersideTopic? fromTopic}) {
+    final normalized = p.normalize(reference.trim()).replaceAll(r'\', '/');
+    if (normalized.isEmpty) {
+      return false;
+    }
+    if (_fileNames.contains(normalized)) {
+      return true;
+    }
+    if (fromTopic != null && !p.isAbsolute(normalized)) {
+      final relative = p
+          .normalize(p.join(p.dirname(fromTopic.fileName), normalized))
+          .replaceAll(r'\', '/');
+      if (_fileNames.contains(relative)) {
+        return true;
+      }
+    }
+    return _baseNames.contains(p.basename(normalized));
+  }
 }

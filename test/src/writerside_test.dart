@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:busymark/src/core/diagnostic.dart';
+import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
@@ -189,6 +190,32 @@ void main() {
       );
     },
   );
+
+  test('does not parse a Writerside config above the byte limit', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-writerside-large-config-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    final config = File(p.join(root.path, 'writerside.cfg'))
+      ..writeAsStringSync(
+        '<ihp><module name="${List.filled(128, 'x').join()}"/></ihp>',
+      );
+    const limitedService = WritersideModuleService(
+      scanOptions: WorkspaceScanOptions(maxParsedFileBytes: 64),
+    );
+
+    final module = await limitedService.load(root.path);
+
+    expect(module.config.moduleName, isNull);
+    expect(
+      module.diagnostics.where(
+        (diagnostic) =>
+            diagnostic.code == 'workspace.file.too-large' &&
+            diagnostic.filePath == config.path,
+      ),
+      hasLength(1),
+    );
+  });
 
   test('rejects configured paths outside the module root', () async {
     final parent = await Directory.systemTemp.createTemp(

@@ -6,6 +6,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -938,6 +939,101 @@ void main() {
       await directory.delete(recursive: true);
     },
   );
+
+  test(
+    'large Writerside topics are listed but not parsed automatically',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-large-writerside-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      Directory(p.join(directory.path, 'topics')).createSync();
+      File(p.join(directory.path, 'writerside.cfg')).writeAsStringSync(
+        '<ihp><topics dir="topics"/><instance src="ug.tree"/></ihp>',
+      );
+      File(p.join(directory.path, 'ug.tree')).writeAsStringSync(
+        '<instance-profile id="ug" start-page="large.md">'
+        '<toc-element topic="large.md"/>'
+        '</instance-profile>',
+      );
+      final largeTopic = File(p.join(directory.path, 'topics', 'large.md'))
+        ..writeAsStringSync('# Large\n\n${List.filled(512, 'x').join()}');
+      final limitedService = WorkspaceService(
+        scanOptions: const WorkspaceScanOptions(maxParsedFileBytes: 256),
+      );
+
+      final workspace = await limitedService.openPath(directory.path);
+
+      expect(
+        workspace.files.map((file) => file.relativePath),
+        contains('topics/large.md'),
+      );
+      expect(workspace.writersideModule?.instances, hasLength(1));
+      expect(workspace.writersideModule?.topics, isEmpty);
+      expect(workspace.markdown, isNull);
+      expect(workspace.activeFilePath, isNull);
+      expect(
+        workspace.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'workspace.file.too-large' &&
+              diagnostic.filePath == largeTopic.path,
+        ),
+        hasLength(1),
+      );
+      expect(
+        workspace.diagnostics.map((diagnostic) => diagnostic.code),
+        isNot(contains('writerside.tree.missing-topic')),
+      );
+    },
+  );
+
+  test('Writerside topic loading honors the document limit', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-writerside-document-limit-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    Directory(p.join(directory.path, 'topics')).createSync();
+    File(p.join(directory.path, 'writerside.cfg')).writeAsStringSync(
+      '<ihp><topics dir="topics"/><instance src="ug.tree"/></ihp>',
+    );
+    File(p.join(directory.path, 'ug.tree')).writeAsStringSync(
+      '<instance-profile id="ug" start-page="a.md">'
+      '<toc-element topic="a.md"/>'
+      '<toc-element topic="b.md"/>'
+      '</instance-profile>',
+    );
+    File(p.join(directory.path, 'topics', 'a.md')).writeAsStringSync('# A\n');
+    final skippedTopic = File(p.join(directory.path, 'topics', 'b.md'))
+      ..writeAsStringSync('# B\n');
+    final limitedService = WorkspaceService(
+      writersideService: const WritersideModuleService(
+        scanOptions: WorkspaceScanOptions(maxParsedDocuments: 1),
+      ),
+    );
+
+    final workspace = await limitedService.openPath(directory.path);
+
+    expect(
+      workspace.files.map((file) => file.relativePath),
+      containsAll(['topics/a.md', 'topics/b.md']),
+    );
+    expect(workspace.writersideModule?.topics.map((topic) => topic.fileName), [
+      'a.md',
+    ]);
+    expect(workspace.markdown?.title, 'A');
+    expect(
+      workspace.diagnostics.where(
+        (diagnostic) =>
+            diagnostic.code == 'workspace.scan.document-limit' &&
+            diagnostic.filePath == skippedTopic.path,
+      ),
+      hasLength(1),
+    );
+    expect(
+      workspace.diagnostics.map((diagnostic) => diagnostic.code),
+      isNot(contains('writerside.tree.missing-topic')),
+    );
+  });
 }
 
 Future<_WorkspaceSymlinkFixture> _createWorkspaceSymlinkFixture() async {
