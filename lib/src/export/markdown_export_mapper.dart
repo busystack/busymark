@@ -60,6 +60,10 @@ class MarkdownExportMapper {
     var index = 0;
     while (index < blocks.length) {
       final block = blocks[index];
+      if (block.isSourceOnly) {
+        index++;
+        continue;
+      }
       if (_isListItem(block.kind)) {
         final ordered = _isOrderedListItem(block);
         final items = <MarkdownExportBlock>[];

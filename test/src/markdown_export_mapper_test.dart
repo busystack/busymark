@@ -70,6 +70,45 @@ Text with **bold**, [safe](https://example.com), and [unsafe](javascript:alert(1
     expect(links.last.destination, isNull);
   });
 
+  test('omits reference definitions while preserving their resolved links', () {
+    final parsed = parser.parse(
+      filePath: '/workspace/guide.md',
+      source: '''
+[1]: https://example.com/exports "Exports"
+[2]: https://example.com/security "Security"
+
+# Plan
+
+Review [the export guide][1].
+''',
+      validateLocalReferences: false,
+    );
+
+    expect(
+      parsed.busyDocument.blocks.where((block) => block.isSourceOnly),
+      hasLength(2),
+    );
+
+    final document = mapper.map(parsed.busyDocument);
+    expect(document.blocks.map((block) => block.kind), [
+      MarkdownExportBlockKind.heading,
+      MarkdownExportBlockKind.paragraph,
+    ]);
+
+    final link = document.blocks.last.inlines.singleWhere(
+      (inline) => inline.kind == MarkdownExportInlineKind.link,
+    );
+    expect(link.destination, 'https://example.com/exports');
+
+    final payload = const TypstPayloadBuilder().build(
+      document: document,
+      options: const MarkdownPdfOptions(),
+      assets: const {},
+    );
+    expect(jsonEncode(payload), isNot(contains('[1]:')));
+    expect(jsonEncode(payload), isNot(contains('[2]:')));
+  });
+
   test('Typst payload contains data but never raw local image paths', () {
     final parsed = parser.parse(
       filePath: '/workspace/guide.md',

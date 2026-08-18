@@ -3394,7 +3394,7 @@ void main() {
     );
   });
 
-  testWidgets('Editor and Preview wrap task-list text at the same offsets', (
+  testWidgets('Editor and Preview share task-list presentation and wrapping', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 800);
@@ -3413,7 +3413,10 @@ void main() {
       ..value = AppSettings.defaults()
           .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
-    const service = _SearchWorkspaceService('- [x] $paragraph\n');
+    const service = _SearchWorkspaceService(
+      '- [x] $paragraph\n'
+      '- [ ] Pending task\n',
+    );
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
@@ -3456,6 +3459,18 @@ void main() {
     );
     final editorFieldWidth = tester.getSize(editorField).width;
     expect(editorLineEnds.length, greaterThan(1));
+    final editorCheckedMarker = _taskMarkerVisual(tester, checked: true);
+    final editorUncheckedMarker = _taskMarkerVisual(tester, checked: false);
+    final editorMarkerColors = BusyMarkSurfaceColors.of(
+      tester.element(editorCheckedMarker.finder),
+    );
+    final editorPrimary = Theme.of(
+      tester.element(editorCheckedMarker.finder),
+    ).colorScheme.primary;
+    expect(editorCheckedMarker.onTaskChanged, isNotNull);
+    expect(editorUncheckedMarker.onTaskChanged, isNotNull);
+    expect(editorCheckedMarker.color, editorPrimary);
+    expect(editorUncheckedMarker.color, editorMarkerColors.foreground);
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -3474,6 +3489,8 @@ void main() {
       paragraph,
       (selection) => previewRender.getBoxesForSelection(selection),
     );
+    final previewCheckedMarker = _taskMarkerVisual(tester, checked: true);
+    final previewUncheckedMarker = _taskMarkerVisual(tester, checked: false);
 
     expect(previewLineEnds, editorLineEnds);
     expect(
@@ -3483,6 +3500,14 @@ void main() {
         0.01,
       ),
     );
+    expect(previewCheckedMarker.onTaskChanged, isNull);
+    expect(previewUncheckedMarker.onTaskChanged, isNull);
+    expect(previewCheckedMarker.size, editorCheckedMarker.size);
+    expect(previewUncheckedMarker.size, editorUncheckedMarker.size);
+    expect(previewCheckedMarker.glyphSize, editorCheckedMarker.glyphSize);
+    expect(previewUncheckedMarker.glyphSize, editorUncheckedMarker.glyphSize);
+    expect(previewCheckedMarker.color, editorCheckedMarker.color);
+    expect(previewUncheckedMarker.color, editorUncheckedMarker.color);
   });
 
   testWidgets('Editor and Preview reuse the same quote shell geometry', (
@@ -3700,7 +3725,7 @@ void main() {
     expect(previewStyle?.height, editorStyle?.height);
   });
 
-  testWidgets('Editor and Preview share heading and thematic-break geometry', (
+  testWidgets('Editor and Preview share professional heading hierarchy', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -3714,8 +3739,12 @@ void main() {
       ..value = AppSettings.defaults()
           .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
-    const headings = ['Third', 'Fourth', 'Fifth', 'Sixth'];
+    const headings = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
     const service = _SearchWorkspaceService('''
+# First
+
+## Second
+
 ### Third
 
 #### Fourth
@@ -3723,6 +3752,8 @@ void main() {
 ##### Fifth
 
 ###### Sixth
+
+Body paragraph.
 
 Before break.
 
@@ -3764,6 +3795,37 @@ After break.
       editorHeadingRects[heading] = tester.getRect(finder);
       editorHeadingStyles[heading] = tester.widget<TextField>(finder).style;
     }
+    final editorBody = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.controller?.text == 'Body paragraph.',
+    );
+    expect(editorBody, findsOneWidget);
+    final editorBodyStyle = tester.widget<TextField>(editorBody).style;
+    final editorColors = BusyMarkSurfaceColors.of(
+      tester.element(editorHeading(headings.first)),
+    );
+    final editorHeadingSizes = [
+      for (final heading in headings) editorHeadingStyles[heading]!.fontSize!,
+    ];
+    for (var index = 0; index < editorHeadingSizes.length - 1; index += 1) {
+      expect(
+        editorHeadingSizes[index],
+        greaterThan(editorHeadingSizes[index + 1]),
+        reason:
+            '${headings[index]} should be larger than '
+            '${headings[index + 1]}',
+      );
+    }
+    expect(
+      editorHeadingSizes.last,
+      greaterThanOrEqualTo(editorBodyStyle!.fontSize!),
+    );
+    for (final style in editorHeadingStyles.values) {
+      expect(style?.color, editorColors.foreground);
+      expect(style?.fontWeight, FontWeight.w700);
+      expect(style?.height, isNotNull);
+      expect(style?.height, lessThan(BusyMarkTypography.bodyLineHeight));
+    }
     final editorBreak = find.byType(BusyMarkDocumentThematicBreak);
     expect(editorBreak, findsOneWidget);
     expect(
@@ -3795,11 +3857,13 @@ After break.
         (widget) => widget is Text && widget.textSpan?.toPlainText() == text,
       ),
     );
+    final previewHeadingStyles = <String, TextStyle?>{};
     for (final heading in headings) {
       final finder = previewHeading(heading);
       expect(finder, findsOneWidget);
       final previewRect = tester.getRect(finder);
       final previewStyle = tester.widget<Text>(finder).textSpan?.style;
+      previewHeadingStyles[heading] = previewStyle;
       final editorRect = editorHeadingRects[heading]!;
       final editorStyle = editorHeadingStyles[heading];
       expect(previewRect.left, closeTo(editorRect.left, 0.1));
@@ -3808,6 +3872,23 @@ After break.
       expect(previewStyle?.fontSize, editorStyle?.fontSize);
       expect(previewStyle?.fontWeight, editorStyle?.fontWeight);
       expect(previewStyle?.height, editorStyle?.height);
+    }
+    final previewBody = find.descendant(
+      of: previewContent,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.textSpan?.toPlainText() == 'Body paragraph.',
+      ),
+    );
+    expect(previewBody, findsOneWidget);
+    final previewBodyStyle = tester.widget<Text>(previewBody).textSpan?.style;
+    expect(previewBodyStyle?.fontSize, editorBodyStyle.fontSize);
+    for (final heading in headings) {
+      expect(
+        previewHeadingStyles[heading]?.color,
+        editorHeadingStyles[heading]?.color,
+      );
     }
 
     final previewBreak = find.byType(BusyMarkDocumentThematicBreak);
@@ -6039,6 +6120,37 @@ List<int> _visualLineEndOffsets(
   }
   ends.add(text.length);
   return ends;
+}
+
+({
+  Finder finder,
+  Size size,
+  Color? color,
+  double? glyphSize,
+  ValueChanged<bool>? onTaskChanged,
+})
+_taskMarkerVisual(WidgetTester tester, {required bool checked}) {
+  final markerFinder = find.byWidgetPredicate(
+    (widget) => widget is BusyMarkDocumentListMarker && widget.task == checked,
+  );
+  expect(markerFinder, findsOneWidget);
+  final marker = tester.widget<BusyMarkDocumentListMarker>(markerFinder);
+  final iconFinder = find.descendant(
+    of: markerFinder,
+    matching: find.byIcon(
+      checked ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
+    ),
+  );
+  expect(iconFinder, findsOneWidget);
+  final icon = tester.widget<Icon>(iconFinder);
+  final iconTheme = IconTheme.of(tester.element(iconFinder));
+  return (
+    finder: markerFinder,
+    size: tester.getSize(markerFinder),
+    color: icon.color ?? iconTheme.color,
+    glyphSize: icon.size ?? iconTheme.size,
+    onTaskChanged: marker.onTaskChanged,
+  );
 }
 
 Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
