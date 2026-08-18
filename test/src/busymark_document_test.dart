@@ -5618,10 +5618,28 @@ void main() {}
     );
     await tester.pump();
 
-    expect(find.byType(Table), findsOneWidget);
+    final tableFinder = find.byType(Table);
+    final deleteTableFinder = find.byTooltip('Delete table');
+    expect(tableFinder, findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(5));
     expect(find.text('| Header 1 | Header 2 |'), findsNothing);
-    expect(find.byTooltip('Delete table'), findsOneWidget);
+    expect(deleteTableFinder, findsOneWidget);
+    expect(
+      find.descendant(of: tableFinder, matching: deleteTableFinder),
+      findsOneWidget,
+    );
+    final framedTableAncestors = <DecoratedBox>[];
+    tester.element(tableFinder).visitAncestorElements((element) {
+      if (element.widget is BusyMarkWysiwygBlockField) {
+        return false;
+      }
+      if (element.widget case final DecoratedBox decoratedBox) {
+        framedTableAncestors.add(decoratedBox);
+      }
+      return true;
+    });
+    expect(framedTableAncestors, isEmpty);
+    expect(busyMarkWysiwygContentPadding(widgetTable), EdgeInsets.zero);
     expect(find.byTooltip('Column 1'), findsOneWidget);
     expect(find.byTooltip('Column 2'), findsOneWidget);
     expect(find.byTooltip('Row 1'), findsOneWidget);
@@ -5648,6 +5666,12 @@ void main() {}
       '| --- | --- |\n'
       '| Alice | Cell |\n',
     );
+
+    await tester.tap(deleteTableFinder);
+    await tester.pump();
+
+    expect(find.byType(Table), findsNothing);
+    expect(markdown, 'Intro\n');
   });
 
   test('WYSIWYG list indent outdent and task toggle commands serialize', () {

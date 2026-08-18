@@ -337,7 +337,6 @@ abstract final class BusyMarkInsets {
     vertical: BusyMarkSpacing.xs,
   );
   static const wysiwygContainerContent = documentCalloutContent;
-  static const wysiwygTableContent = EdgeInsets.all(BusyMarkSpacing.smPlus);
   static const sourceEditor = EdgeInsets.fromLTRB(
     BusyMarkSourceEditorMetrics.paddingLeft,
     BusyMarkSourceEditorMetrics.paddingTop,
