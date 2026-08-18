@@ -21,6 +21,7 @@ import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_layout.dart';
 import '../document_surface.dart';
+import '../document_text_geometry.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_document_controller.dart';
@@ -3563,9 +3564,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                 outerPadding.horizontal)
             .clamp(1.0, double.infinity)
             .toDouble();
-    final textLayoutWidth = (maxWidth - busyMarkWysiwygTextFieldLayoutInset)
-        .clamp(1.0, double.infinity)
-        .toDouble();
+    final textLayoutWidth =
+        (maxWidth - BusyMarkDocumentTextGeometry.editableLayoutInset)
+            .clamp(1.0, double.infinity)
+            .toDouble();
     final physicalLeftInset =
         outerPadding.left +
         contentPadding.left +

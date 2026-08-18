@@ -30,6 +30,7 @@ import '../../editor/document_code_block.dart';
 import '../../editor/document_layout.dart';
 import '../../editor/document_list_marker.dart';
 import '../../editor/document_surface.dart';
+import '../../editor/document_text_geometry.dart';
 import '../../editor/document_text_direction.dart';
 import '../../editor/document_thematic_break.dart';
 import '../../editor/markdown_image_view.dart';
@@ -8290,23 +8291,28 @@ class _PreviewInlineText extends ConsumerWidget {
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
         : block.inlines;
-    return Text.rich(
-      TextSpan(
-        style: baseStyle,
-        children: [
-          for (final inline in inlines)
-            _previewInlineSpan(
-              context,
-              inline,
-              workspace: workspace,
-              highlightQuery: highlightQuery,
-              allowRemoteImages: allowRemoteImages,
-              onRemoteImageBlocked: () =>
-                  unawaited(_showRemoteImagesPrompt(context, ref)),
-              onLinkTap: (destination) =>
-                  _openPreviewLink(context, ref, destination),
-            ),
-        ],
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        end: BusyMarkDocumentTextGeometry.editableLayoutInset,
+      ),
+      child: Text.rich(
+        TextSpan(
+          style: baseStyle,
+          children: [
+            for (final inline in inlines)
+              _previewInlineSpan(
+                context,
+                inline,
+                workspace: workspace,
+                highlightQuery: highlightQuery,
+                allowRemoteImages: allowRemoteImages,
+                onRemoteImageBlocked: () =>
+                    unawaited(_showRemoteImagesPrompt(context, ref)),
+                onLinkTap: (destination) =>
+                    _openPreviewLink(context, ref, destination),
+              ),
+          ],
+        ),
       ),
     );
   }

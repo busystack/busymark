@@ -7,15 +7,12 @@ import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_list_marker.dart';
 import '../document_surface.dart';
+import '../document_text_geometry.dart';
 import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
-
-const double _wysiwygTextFieldCursorWidth = 2.0;
-const double busyMarkWysiwygTextFieldLayoutInset =
-    1.0 + _wysiwygTextFieldCursorWidth;
 
 TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
@@ -351,15 +348,21 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                               text: controller.text,
                               style: style,
                               selectionRange: selectionRange,
-                              color: Theme.of(context).colorScheme.primary
-                                  .withValues(
-                                    alpha: BusyMarkAlpha.previewHighlight,
+                              color:
+                                  DefaultSelectionStyle.of(
+                                    context,
+                                  ).selectionColor ??
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(
+                                    alpha: BusyMarkDocumentTextGeometry
+                                        .fallbackSelectionAlpha,
                                   ),
                               textDirection: textDirection,
                               textScaler: MediaQuery.textScalerOf(context),
                               locale: Localizations.maybeLocaleOf(context),
-                              layoutWidthInset:
-                                  busyMarkWysiwygTextFieldLayoutInset,
+                              layoutWidthInset: BusyMarkDocumentTextGeometry
+                                  .editableLayoutInset,
                             ),
                           ),
                         ),
@@ -382,7 +385,12 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                           minLines: 1,
                           textDirection: textDirection,
                           style: style,
-                          cursorWidth: _wysiwygTextFieldCursorWidth,
+                          cursorWidth:
+                              BusyMarkDocumentTextGeometry.editableCursorWidth,
+                          selectionHeightStyle:
+                              BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                          selectionWidthStyle:
+                              BusyMarkDocumentTextGeometry.selectionWidthStyle,
                           decoration: const InputDecoration(
                             isCollapsed: true,
                             border: InputBorder.none,
@@ -1536,22 +1544,12 @@ class _WysiwygSelectionPainter extends CustomPainter {
     )..layout(maxWidth: maxWidth);
     final boxes = textPainter.getBoxesForSelection(
       TextSelection(baseOffset: start, extentOffset: end),
+      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
     final paint = Paint()..color = color;
     for (final box in boxes) {
-      final rect = Rect.fromLTRB(
-        box.left,
-        box.top,
-        box.right,
-        box.bottom,
-      ).inflate(BusyMarkStroke.selectionInflate);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          rect,
-          const Radius.circular(BusyMarkRadius.selection),
-        ),
-        paint,
-      );
+      canvas.drawRect(box.toRect(), paint);
     }
   }
 

@@ -24,6 +24,7 @@ import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
+import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
@@ -42,6 +43,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -3392,6 +3394,97 @@ void main() {
     );
   });
 
+  testWidgets('Editor and Preview wrap task-list text at the same offsets', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const paragraph =
+        'P1 — Git push can target the wrong workspace. '
+        'lib/src/git/application/git_controller.dart captures repository A, '
+        'awaits its remotes, then reads the current repository again. '
+        'Switching repositories during that await can target the wrong remote.';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    const service = _SearchWorkspaceService('- [x] $paragraph\n');
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/wrap-parity.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is TextField && widget.controller?.text == paragraph,
+          )
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorField = find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.controller?.text == paragraph,
+    );
+    final editorRender = _findRenderEditable(
+      tester.renderObject<RenderObject>(editorField),
+    );
+    expect(editorRender, isNotNull);
+    final editorLineEnds = _visualLineEndOffsets(
+      paragraph,
+      (selection) => editorRender!.getBoxesForSelection(selection),
+    );
+    final editorFieldWidth = tester.getSize(editorField).width;
+    expect(editorLineEnds.length, greaterThan(1));
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewText = find.byWidgetPredicate(
+      (widget) => widget is Text && widget.textSpan?.toPlainText() == paragraph,
+    );
+    final previewRichText = find.descendant(
+      of: previewText,
+      matching: find.byType(RichText),
+    );
+    final previewRender = tester.renderObject<RenderParagraph>(previewRichText);
+    final previewLineEnds = _visualLineEndOffsets(
+      paragraph,
+      (selection) => previewRender.getBoxesForSelection(selection),
+    );
+
+    expect(previewLineEnds, editorLineEnds);
+    expect(
+      tester.getSize(previewRichText).width,
+      closeTo(
+        editorFieldWidth - BusyMarkDocumentTextGeometry.editableLayoutInset,
+        0.01,
+      ),
+    );
+  });
+
   testWidgets('Editor and Preview reuse the same quote shell geometry', (
     tester,
   ) async {
@@ -5911,6 +6004,41 @@ Draft paragraph.
       editedText,
     );
   });
+}
+
+RenderEditable? _findRenderEditable(RenderObject root) {
+  if (root is RenderEditable) {
+    return root;
+  }
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findRenderEditable(child);
+  });
+  return result;
+}
+
+List<int> _visualLineEndOffsets(
+  String text,
+  List<TextBox> Function(TextSelection selection) boxesForSelection,
+) {
+  final ends = <int>[];
+  double? previousTop;
+  for (var offset = 0; offset < text.length; offset += 1) {
+    final boxes = boxesForSelection(
+      TextSelection(baseOffset: offset, extentOffset: offset + 1),
+    );
+    if (boxes.isEmpty) {
+      continue;
+    }
+    final top = boxes.first.top;
+    final priorTop = previousTop;
+    if (priorTop != null && (top - priorTop).abs() > 0.01) {
+      ends.add(offset);
+    }
+    previousTop = top;
+  }
+  ends.add(text.length);
+  return ends;
 }
 
 Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {

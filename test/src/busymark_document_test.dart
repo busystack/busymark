@@ -15,6 +15,7 @@ import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
+import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
@@ -2839,6 +2840,17 @@ void main() {}
     );
     await tester.pump();
 
+    final paragraphField = tester.widget<TextField>(
+      find.byType(TextField).at(1),
+    );
+    expect(
+      paragraphField.selectionHeightStyle,
+      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+    );
+    expect(
+      paragraphField.selectionWidthStyle,
+      BusyMarkDocumentTextGeometry.selectionWidthStyle,
+    );
     final textFieldRender = tester.renderObject<RenderObject>(
       find.byType(TextField).at(1),
     );
@@ -2862,6 +2874,14 @@ void main() {}
     final painter = customPaint.painter! as dynamic;
     expect(painter.selectionRange.start, 0);
     expect(painter.selectionRange.end, firstParagraph.length);
+    final painterContext = tester.element(painterFinder.at(1));
+    expect(
+      painter.color,
+      DefaultSelectionStyle.of(painterContext).selectionColor ??
+          Theme.of(painterContext).colorScheme.primary.withValues(
+            alpha: BusyMarkDocumentTextGeometry.fallbackSelectionAlpha,
+          ),
+    );
 
     final paintBox = tester.renderObject<RenderBox>(painterFinder.at(1));
     final painterText =
@@ -2881,20 +2901,19 @@ void main() {}
         baseOffset: exampleStart,
         extentOffset: exampleStart + 'example.'.length,
       ),
+      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
     painterText.dispose();
 
     expect(highlightBoxes, hasLength(exampleBoxes.length));
-    final lineTolerance =
-        (exampleBoxes.last.bottom - exampleBoxes.last.top) / 3;
-    expect(
-      (highlightBoxes.last.top - exampleBoxes.last.top).abs(),
-      lessThan(lineTolerance),
-    );
-    expect(
-      (highlightBoxes.last.bottom - exampleBoxes.last.bottom).abs(),
-      lessThan(lineTolerance),
-    );
+    for (var index = 0; index < exampleBoxes.length; index += 1) {
+      expect(highlightBoxes[index].top, closeTo(exampleBoxes[index].top, 0.01));
+      expect(
+        highlightBoxes[index].bottom,
+        closeTo(exampleBoxes[index].bottom, 0.01),
+      );
+    }
   });
 
   testWidgets('WYSIWYG Ctrl+X cuts block selection', (tester) async {

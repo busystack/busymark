@@ -36,7 +36,6 @@ abstract final class BusyMarkRadius {
   static const double nativeHeaderButton = kYaruButtonRadius;
   static const double window = kYaruWindowRadius;
   static const double pill = 999;
-  static const double selection = 3;
 }
 
 abstract final class BusyMarkSizes {
@@ -129,7 +128,6 @@ abstract final class BusyMarkStroke {
   static const double focus = kYaruFocusBorderWidth;
   static const double sourceCursor = 1.4;
   static const double thematicBreak = 1.6;
-  static const double selectionInflate = 1.5;
 }
 
 abstract final class BusyMarkAlpha {
