@@ -4953,10 +4953,54 @@ Draft paragraph.
           ),
         ),
       );
-      await tester.pump();
 
+      expect(find.byType(SvgPicture), findsNothing);
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+      expect(find.textContaining('logo.svg'), findsNothing);
       expect(find.byType(SvgPicture), findsOneWidget);
-      expect(find.text('logo.svg'), findsNothing);
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  testWidgets('shared Markdown image renderer rejects oversized local SVGs', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync(
+      'busymark_preview_svg_oversized_',
+    );
+    try {
+      final padding = ''.padRight(1024 * 1024, 'x');
+      File('${temp.path}/oversized.svg').writeAsStringSync(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">'
+        '<!--$padding--><rect width="16" height="16" fill="#3584e4"/>'
+        '</svg>',
+      );
+      final markdown = File('${temp.path}/image.md')
+        ..writeAsStringSync('# Image\n\n![Large](oversized.svg)\n');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: MarkdownImageView(
+              source: 'oversized.svg',
+              alt: 'Large',
+              activeFilePath: markdown.path,
+              workspaceRoot: temp.path,
+              writersideRoot: null,
+              imagesDir: 'images',
+              allowRemoteImages: true,
+            ),
+          ),
+        ),
+      );
+      await _pumpUntilFound(tester, find.textContaining('oversized.svg'));
+
+      expect(find.byType(SvgPicture), findsNothing);
+      expect(find.textContaining('oversized.svg'), findsOneWidget);
     } finally {
       temp.deleteSync(recursive: true);
     }
@@ -5003,8 +5047,7 @@ Draft paragraph.
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await _pumpUntilFound(tester, find.byType(SvgPicture));
 
         expect(tester.takeException(), isNull);
         expect(find.byType(SvgPicture), findsOneWidget);
@@ -5087,7 +5130,7 @@ Draft paragraph.
           ),
         ),
       );
-      await tester.pump();
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
 
       expect(tester.takeException(), isNull);
       expect(find.byType(SvgPicture), findsOneWidget);
@@ -5855,6 +5898,15 @@ Draft paragraph.
       editedText,
     );
   });
+}
+
+Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 20 && finder.evaluate().isEmpty; i += 1) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+  }
 }
 
 double _largestScrollableOffset(WidgetTester tester) {
