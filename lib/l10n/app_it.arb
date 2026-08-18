@@ -2449,6 +2449,7 @@
   "gitRestoreVersion": "Ripristina questa versione",
   "gitConfirmRestoreTitle": "Ripristinare questa versione del file?",
   "gitConfirmRestoreMessage": "BusyMark sostituirà il file corrente nell’albero di lavoro con la versione selezionata del commit. Il file ripristinato resterà fuori dallo stage.",
-  "gitBinaryFileInfo": "File binario ({size} byte). BusyMark non visualizza le patch binarie."
+  "gitBinaryFileInfo": "File binario ({size} byte). BusyMark non visualizza le patch binarie.",
+  "gitErrorRestoreStagedFile": "Rimuovi il file dall’indice prima di ripristinare una versione precedente."
 
 }

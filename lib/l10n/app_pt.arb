@@ -2449,6 +2449,7 @@
   "gitRestoreVersion": "Restaurar esta versão",
   "gitConfirmRestoreTitle": "Restaurar esta versão do arquivo?",
   "gitConfirmRestoreMessage": "O BusyMark substituirá o arquivo atual da árvore de trabalho pela versão selecionada do commit. O arquivo restaurado permanecerá não preparado.",
-  "gitBinaryFileInfo": "Arquivo binário ({size} bytes). O BusyMark não exibe patches binários."
+  "gitBinaryFileInfo": "Arquivo binário ({size} bytes). O BusyMark não exibe patches binários.",
+  "gitErrorRestoreStagedFile": "Remova o arquivo do índice antes de restaurar uma versão anterior."
 
 }

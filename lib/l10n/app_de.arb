@@ -2472,6 +2472,7 @@
   "gitRestoreVersion": "Diese Version wiederherstellen",
   "gitConfirmRestoreTitle": "Diese Dateiversion wiederherstellen?",
   "gitConfirmRestoreMessage": "BusyMark ersetzt die aktuelle Datei im Arbeitsverzeichnis durch die ausgewählte Commit-Version. Die wiederhergestellte Datei bleibt nicht vorgemerkt.",
-  "gitBinaryFileInfo": "Binärdatei ({size} Byte). BusyMark stellt Binär-Patches nicht dar."
+  "gitBinaryFileInfo": "Binärdatei ({size} Byte). BusyMark stellt Binär-Patches nicht dar.",
+  "gitErrorRestoreStagedFile": "Entfernen Sie die Datei aus dem Index, bevor Sie eine frühere Version wiederherstellen."
 
 }

@@ -2300,6 +2300,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Salve ou descarte as alterações do editor do BusyMark antes de trocar de branch.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Remova o arquivo do índice antes de restaurar uma versão anterior.';
+
+  @override
   String get gitErrorDiverged =>
       'A branch divergiu. Resolva o merge ou o rebase fora desta versão do BusyMark.';
 

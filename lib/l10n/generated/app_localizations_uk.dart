@@ -2324,6 +2324,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Приберіть файл з індексу перед відновленням попередньої версії.';
+
+  @override
   String get gitErrorDiverged =>
       'Гілка розійшлася з upstream-гілкою. Виконайте злиття або rebase поза цією версією BusyMark.';
 

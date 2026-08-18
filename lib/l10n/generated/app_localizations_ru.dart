@@ -2316,6 +2316,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перед переключением ветки сохраните или отмените изменения в редакторе BusyMark.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Уберите файл из индекса перед восстановлением предыдущей версии.';
+
+  @override
   String get gitErrorDiverged =>
       'Ветка разошлась с upstream-веткой. Выполните слияние или rebase вне этой версии BusyMark.';
 

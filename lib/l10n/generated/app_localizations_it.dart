@@ -2305,6 +2305,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Salva o scarta le modifiche dell’editor di BusyMark prima di cambiare ramo.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Rimuovi il file dall’indice prima di ripristinare una versione precedente.';
+
+  @override
   String get gitErrorDiverged =>
       'Il ramo è divergente. Risolvi il merge o il rebase al di fuori di questa versione di BusyMark.';
 

@@ -17,6 +17,7 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     String repoRelativePath, {
     required bool staged,
+    String? originalRepoRelativePath,
   });
   Future<GitDiff> diffUntrackedFile(
     GitRepositoryInfo repository,

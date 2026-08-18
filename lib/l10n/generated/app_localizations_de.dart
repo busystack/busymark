@@ -2311,6 +2311,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Speichern oder verwerfen Sie die Editoränderungen in BusyMark, bevor Sie den Branch wechseln.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Entfernen Sie die Datei aus dem Index, bevor Sie eine frühere Version wiederherstellen.';
+
+  @override
   String get gitErrorDiverged =>
       'Der Branch ist auseinandergelaufen. Führen Sie Merge oder Rebase außerhalb dieser BusyMark-Version aus.';
 

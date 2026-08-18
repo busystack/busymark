@@ -2278,6 +2278,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'शाखा बदलने से पहले BusyMark संपादक के बदलाव सहेजें या त्यागें।';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'पिछला संस्करण पुनर्स्थापित करने से पहले फ़ाइल को अनस्टेज करें।';
+
+  @override
   String get gitErrorDiverged =>
       'शाखा अलग हो गई है। इस BusyMark संस्करण के बाहर मर्ज या रीबेस करके इसे सुलझाएँ।';
 

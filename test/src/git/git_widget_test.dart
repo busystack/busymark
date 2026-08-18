@@ -45,7 +45,7 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
@@ -81,7 +81,7 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: selectedPaths.addAll,
             unselect: unselectedPaths.addAll,
@@ -116,7 +116,7 @@ void main() {
       await tester.pumpWidget(
         _localized(
           GitCommitActions(
-            commit: (_) async {},
+            commit: (_) async => true,
             child: GitFileActions(
               select: (_) {},
               unselect: (_) {},
@@ -153,13 +153,65 @@ void main() {
     },
   );
 
+  testWidgets('staged rename preserves both paths and workspace scope', (
+    tester,
+  ) async {
+    final selections = <GitChangeSelection>[];
+    final unstagedPaths = <String>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: unstagedPaths.addAll,
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file(
+                    'docs/new.md',
+                    originalPath: 'outside/old.md',
+                    staged: true,
+                    unstaged: false,
+                    category: GitFileStatusCategory.renamed,
+                  ),
+                ],
+              ),
+              outsideWorkspacePaths: const {'outside/old.md'},
+              onSelectFile: selections.add,
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('outside/old.md → docs/new.md'), findsOneWidget);
+    expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+
+    await tester.tap(find.text('outside/old.md → docs/new.md'));
+    await tester.tap(find.byType(YaruCheckbox).last);
+    await tester.pump();
+
+    expect(selections, const [
+      GitChangeSelection(
+        path: 'docs/new.md',
+        comparison: GitComparisonType.staged,
+        originalRepoRelativePath: 'outside/old.md',
+      ),
+    ]);
+    expect(unstagedPaths, ['outside/old.md', 'docs/new.md']);
+  });
+
   testWidgets('commit panel reports staged count and unsaved editor state', (
     tester,
   ) async {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
@@ -232,7 +284,7 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
@@ -261,7 +313,7 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
@@ -297,7 +349,10 @@ void main() {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (message) async => committedMessage = message,
+          commit: (message) async {
+            committedMessage = message;
+            return true;
+          },
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
@@ -325,15 +380,95 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Docs');
     await tester.pump();
     await tester.tap(find.text(l10n.gitCommit));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(committedMessage, 'Docs');
+    expect(find.text('Docs'), findsNothing);
+  });
+
+  testWidgets('failed commit preserves the commit message', (tester) async {
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => false,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'Keep this message');
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep this message'), findsOneWidget);
+  });
+
+  testWidgets('commit message clears when repository or workspace changes', (
+    tester,
+  ) async {
+    Widget changesView(GitState state) => _localized(
+      GitCommitActions(
+        commit: (_) async => true,
+        child: GitFileActions(
+          select: (_) {},
+          unselect: (_) {},
+          discard: (_) {},
+          child: GitChangesView(
+            state: state,
+            onSelectFile: (_) {},
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+          ),
+        ),
+      ),
+    );
+    final staged = [_file('README.md', staged: true, unstaged: false)];
+    final firstWorkspace = _workspace();
+    const otherRepository = GitRepositoryInfo(
+      rootPath: '/other-repo',
+      gitDirPath: '/other-repo/.git',
+    );
+
+    await tester.pumpWidget(
+      changesView(_state(files: staged, workspace: firstWorkspace)),
+    );
+    await tester.enterText(find.byType(TextField), 'Repository message');
+    await tester.pumpWidget(
+      changesView(
+        _state(files: staged, repo: otherRepository, workspace: firstWorkspace),
+      ),
+    );
+    expect(find.text('Repository message'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'Workspace message');
+    await tester.pumpWidget(
+      changesView(
+        _state(
+          files: staged,
+          repo: otherRepository,
+          workspace: _workspace(id: '/another-workspace'),
+        ),
+      ),
+    );
+    expect(find.text('Workspace message'), findsNothing);
   });
 
   testWidgets('conflict group is visible', (tester) async {
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
-          commit: (_) async {},
+          commit: (_) async => true,
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
@@ -521,25 +656,6 @@ void main() {
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
   });
 
-  testWidgets('history view does not show project or current file controls', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _localized(
-        GitHistoryView(
-          state: _state(files: const [], scopedFilePath: 'docs/topic.md'),
-          onSelectCommit: (_) {},
-          onShowFileDiff: (_) {},
-        ),
-      ),
-    );
-
-    expect(find.text(l10n.gitProjectHistory), findsNothing);
-    expect(find.text(l10n.gitFileHistory), findsNothing);
-    expect(find.byType(BusyMarkHeaderIconButton), findsNothing);
-    expect(find.byType(OutlinedButton), findsNothing);
-  });
-
   testWidgets('project history file rows show selected file diff', (
     tester,
   ) async {
@@ -580,7 +696,7 @@ void main() {
               children: [
                 SizedBox(
                   width: 320,
-                  child: GitHistoryView(
+                  child: GitProjectHistoryView(
                     state: state,
                     onSelectCommit: (_) {},
                     onShowFileDiff: (path) {
@@ -594,6 +710,8 @@ void main() {
                         );
                       });
                     },
+                    onChangesInCommit: () {},
+                    onLoadMore: () {},
                   ),
                 ),
                 Expanded(
@@ -614,6 +732,8 @@ void main() {
 
     expect(find.text('README.md'), findsAtLeastNWidgets(1));
     expect(find.text('guide.md'), findsOneWidget);
+    expect(find.text(de.gitChangesInCommit), findsOneWidget);
+    expect(find.text(de.gitCompareWithCurrent), findsNothing);
     expect(
       find.textContaining('Readme change', findRichText: true),
       findsOneWidget,
@@ -1181,6 +1301,7 @@ GitState _state({
   List<String> openDiffFilePaths = const [],
   GitDiff? selectedDiff,
   bool requiresWorkspaceTrust = false,
+  Workspace? workspace,
 }) {
   return GitState(
     availability: const GitAvailability(
@@ -1254,11 +1375,13 @@ GitState _state({
     selectedCommitFilePath: selectedCommitFilePath,
     openDiffFilePaths: openDiffFilePaths,
     requiresWorkspaceTrust: requiresWorkspaceTrust,
+    attachedWorkspace: workspace,
   );
 }
 
 GitFileStatus _file(
   String path, {
+  String? originalPath,
   bool staged = false,
   bool unstaged = true,
   bool untracked = false,
@@ -1275,6 +1398,7 @@ GitFileStatus _file(
   return GitFileStatus(
     repoRelativePath: path,
     absolutePath: '/repo/$path',
+    originalRepoRelativePath: originalPath,
     indexStatus: staged
         ? GitFileChangeStatus.modified
         : GitFileChangeStatus.unmodified,
@@ -1332,9 +1456,9 @@ GitDiffFile _diffFile(
   );
 }
 
-Workspace _workspace() {
+Workspace _workspace({String id = '/repo'}) {
   return Workspace(
-    id: '/repo',
+    id: id,
     rootPath: '/repo',
     kind: WorkspaceKind.markdownFolder,
     openedAt: DateTime(2026),

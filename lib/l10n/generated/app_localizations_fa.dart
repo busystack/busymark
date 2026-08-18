@@ -2340,6 +2340,10 @@ class AppLocalizationsFa extends AppLocalizations {
       'پیش از تغییر شاخه، تغییرات ویرایشگر BusyMark را ذخیره کنید یا دور بیندازید.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید.';
+
+  @override
   String get gitErrorDiverged =>
       'شاخه واگرا شده است. مشکل را با ادغام یا بازپایه‌گذاری در خارج از این نسخهٔ BusyMark حل کنید.';
 

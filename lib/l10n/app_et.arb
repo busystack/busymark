@@ -1660,6 +1660,7 @@
   "gitRestoreVersion": "Taasta see versioon",
   "gitConfirmRestoreTitle": "Kas taastada see failiversioon?",
   "gitConfirmRestoreMessage": "BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.",
-  "gitBinaryFileInfo": "Kahendfail ({size} baiti). BusyMark ei kuva kahendpaiku."
+  "gitBinaryFileInfo": "Kahendfail ({size} baiti). BusyMark ei kuva kahendpaiku.",
+  "gitErrorRestoreStagedFile": "Eemalda fail enne varasema versiooni taastamist indeksist."
 
 }

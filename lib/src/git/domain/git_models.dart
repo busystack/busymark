@@ -49,6 +49,7 @@ enum GitFailureCode {
   noUpstream,
   multipleRemotes,
   dirtyWorkspace,
+  stagedChanges,
   diverged,
   authentication,
   network,
@@ -67,20 +68,34 @@ enum GitComparisonType {
 }
 
 class GitChangeSelection {
-  const GitChangeSelection({required this.path, required this.comparison});
+  const GitChangeSelection({
+    required this.path,
+    required this.comparison,
+    this.originalRepoRelativePath,
+  });
 
   final String path;
   final GitComparisonType comparison;
+  final String? originalRepoRelativePath;
+
+  List<String> get repoRelativePaths {
+    final originalPath = originalRepoRelativePath;
+    return [
+      if (originalPath != null && originalPath != path) originalPath,
+      path,
+    ];
+  }
 
   @override
   bool operator ==(Object other) {
     return other is GitChangeSelection &&
         other.path == path &&
-        other.comparison == comparison;
+        other.comparison == comparison &&
+        other.originalRepoRelativePath == originalRepoRelativePath;
   }
 
   @override
-  int get hashCode => Object.hash(path, comparison);
+  int get hashCode => Object.hash(path, comparison, originalRepoRelativePath);
 }
 
 class GitAvailability {

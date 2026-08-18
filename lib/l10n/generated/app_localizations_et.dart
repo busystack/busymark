@@ -2283,6 +2283,10 @@ class AppLocalizationsEt extends AppLocalizations {
       'Enne haru vahetamist salvesta või hülga BusyMarki redaktori muudatused.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Eemalda fail enne varasema versiooni taastamist indeksist.';
+
+  @override
   String get gitErrorDiverged =>
       'Haru ajalugu on lahknenud. Lahenda ühendamine või ümberbaasimine mõne muu tööriistaga; see BusyMarki versioon seda ei võimalda.';
 

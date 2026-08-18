@@ -1569,6 +1569,8 @@
   "@gitErrorMultipleRemotes": {"description": "Git error message."},
   "gitErrorDirtyWorkspace": "Save or discard BusyMark editor changes before switching branches.",
   "@gitErrorDirtyWorkspace": {"description": "Git error message."},
+  "gitErrorRestoreStagedFile": "Unstage this file before restoring a historical version.",
+  "@gitErrorRestoreStagedFile": {"description": "Git error shown when historical restoration is blocked because the current file is staged."},
   "gitErrorDiverged": "Branch has diverged. Resolve merge or rebase outside this BusyMark version.",
   "@gitErrorDiverged": {"description": "Git error message."},
   "gitErrorAuthentication": "Git authentication failed. In the snap, SSH remotes may require connecting the ssh-keys interface.",

@@ -132,8 +132,18 @@ class GitCliGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String repoRelativePath, {
     required bool staged,
+    String? originalRepoRelativePath,
   }) async {
     _validateRepoPath(repository, repoRelativePath);
+    if (originalRepoRelativePath != null) {
+      _validateRepoPath(repository, originalRepoRelativePath);
+    }
+    final paths = <String>[
+      if (originalRepoRelativePath != null &&
+          originalRepoRelativePath != repoRelativePath)
+        originalRepoRelativePath,
+      repoRelativePath,
+    ];
     final args = [
       'diff',
       if (staged) '--cached',
@@ -143,7 +153,7 @@ class GitCliGateway implements GitRepositoryGateway {
       '--find-renames',
       '--find-copies',
       '--',
-      repoRelativePath,
+      ...paths,
     ];
     final executable = await _executable();
     final result = await _runGit(
@@ -157,7 +167,7 @@ class GitCliGateway implements GitRepositoryGateway {
       title: staged ? '$repoRelativePath staged' : '$repoRelativePath unstaged',
     );
     final parsedFile = diff.files
-        .where((file) => file.matchesPath(repoRelativePath))
+        .where((file) => paths.any(file.matchesPath))
         .firstOrNull;
     if (parsedFile == null || parsedFile.binary) {
       return diff;
@@ -1093,14 +1103,69 @@ class GitCliGateway implements GitRepositoryGateway {
     String revision,
     String repoRelativePath,
   ) async {
-    final result = await _runGitMaybe(executable, repoRoot, [
-      'show',
-      '$revision:$repoRelativePath',
-    ], commandName: 'show');
-    if (result == null || !result.success) {
+    final objectId = await _blobObjectIdAtRevision(
+      executable,
+      repoRoot,
+      revision,
+      repoRelativePath,
+    );
+    if (objectId == null) {
       return null;
     }
+    final result = await _runGit(executable, repoRoot, [
+      'cat-file',
+      'blob',
+      objectId,
+    ], commandName: 'show');
     return result.stdoutBytes;
+  }
+
+  Future<String?> _blobObjectIdAtRevision(
+    String executable,
+    String repoRoot,
+    String revision,
+    String repoRelativePath,
+  ) async {
+    final literalPath = ':(literal)$repoRelativePath';
+    final result = revision.isEmpty
+        ? await _runGit(executable, repoRoot, [
+            'ls-files',
+            '--stage',
+            '-z',
+            '--',
+            literalPath,
+          ], commandName: 'show')
+        : await _runGit(executable, repoRoot, [
+            'ls-tree',
+            '--full-tree',
+            '-z',
+            revision,
+            '--',
+            literalPath,
+          ], commandName: 'show');
+    if (result.stdoutBytes.isEmpty) {
+      return null;
+    }
+    for (final record in result.stdoutText.split('\x00')) {
+      final tab = record.indexOf('\t');
+      if (tab < 0) {
+        continue;
+      }
+      final fields = record.substring(0, tab).split(' ');
+      if (revision.isEmpty) {
+        if (fields.length >= 3 && fields[2] == '0') {
+          return fields[1];
+        }
+      } else if (fields.length >= 3 && fields[1] == 'blob') {
+        return fields[2];
+      }
+    }
+    throw GitFailure(
+      code: GitFailureCode.commandFailed,
+      userMessageKey: 'gitErrorCommandFailed',
+      rawMessage: 'Git did not report a readable blob for $repoRelativePath.',
+      commandName: 'show',
+    );
   }
 
   Future<String?> _textAtRevision(

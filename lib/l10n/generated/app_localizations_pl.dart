@@ -2324,6 +2324,10 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przed przełączeniem gałęzi zapisz lub odrzuć zmiany w edytorze BusyMark.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Usuń plik z indeksu przed przywróceniem wcześniejszej wersji.';
+
+  @override
   String get gitErrorDiverged =>
       'Gałęzie się rozeszły. Rozwiąż scalanie lub wykonaj rebase poza tą wersją BusyMark.';
 

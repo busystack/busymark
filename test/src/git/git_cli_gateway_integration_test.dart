@@ -141,6 +141,48 @@ void main() {
     );
   });
 
+  test('staged rename diff and unstage preserve both paths', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-staged-rename-');
+    await _git(root.path, ['mv', 'README.md', 'renamed.md']);
+
+    const gateway = GitCliGateway();
+    final info = (await gateway.detectRepository(root.path))!;
+    final before = await gateway.status(info);
+    final rename = before.stagedFiles.single;
+    expect(rename.originalRepoRelativePath, 'README.md');
+    expect(rename.repoRelativePath, 'renamed.md');
+
+    final diff = await gateway.diffFile(
+      info,
+      rename.repoRelativePath,
+      staged: true,
+      originalRepoRelativePath: rename.originalRepoRelativePath,
+    );
+    expect(diff.files.single.status, GitDiffFileStatus.renamed);
+    expect(diff.files.single.oldPath, 'README.md');
+    expect(diff.files.single.newPath, 'renamed.md');
+
+    await gateway.unstage(info, [
+      rename.originalRepoRelativePath!,
+      rename.repoRelativePath,
+    ]);
+
+    expect((await gateway.status(info)).stagedFiles, isEmpty);
+    final cachedDiff = await Process.run('git', [
+      '-C',
+      root.path,
+      'diff',
+      '--cached',
+      '--quiet',
+      '--exit-code',
+    ], runInShell: false);
+    expect(cachedDiff.exitCode, 0, reason: '${cachedDiff.stderr}');
+  });
+
   test(
     'preserves complete deleted content and restores a deleted version',
     () async {
@@ -194,6 +236,57 @@ void main() {
       expect(restoredStatus.stagedFiles, isEmpty);
     },
   );
+
+  test('failed historical blob read cannot delete the working file', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-missing-blob-');
+    final readme = File(p.join(root.path, 'README.md'));
+    const workingContent = '# Keep this working file\n';
+    await readme.writeAsString(workingContent);
+    final commitHash = await _gitOutput(root.path, ['rev-parse', 'HEAD']);
+    final blobId = await _gitOutput(root.path, ['rev-parse', 'HEAD:README.md']);
+    final objectFile = File(
+      p.join(
+        root.path,
+        '.git',
+        'objects',
+        blobId.substring(0, 2),
+        blobId.substring(2),
+      ),
+    );
+    final backup = File('${objectFile.path}.busymark-test-backup');
+    expect(await objectFile.exists(), isTrue);
+    await objectFile.rename(backup.path);
+
+    const gateway = GitCliGateway();
+    final info = (await gateway.detectRepository(root.path))!;
+    try {
+      await expectLater(
+        gateway.restoreFileFromCommit(
+          info,
+          commitHash,
+          historicalPath: 'README.md',
+          currentPath: 'README.md',
+        ),
+        throwsA(
+          isA<GitFailure>().having(
+            (failure) => failure.code,
+            'code',
+            GitFailureCode.commandFailed,
+          ),
+        ),
+      );
+      expect(await readme.exists(), isTrue);
+      expect(await readme.readAsString(), workingContent);
+    } finally {
+      if (await backup.exists()) {
+        await backup.rename(objectFile.path);
+      }
+    }
+  });
 
   test(
     'constructs complete text and binary comparisons for untracked files',

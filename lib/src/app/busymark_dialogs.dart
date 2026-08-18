@@ -881,14 +881,14 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.gitCommit,
+                title: context.l10n.gitChanges,
                 leading: const Icon(BusyMarkGlyphs.checklist),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.git,
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.gitHistory,
+                title: context.l10n.gitProjectHistory,
                 leading: const Icon(BusyMarkGlyphs.history),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.history,

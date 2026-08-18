@@ -890,6 +890,9 @@ void main() {
     expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
     expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
+    expect(find.text(l10n.gitChanges), findsOneWidget);
+    expect(find.text(l10n.gitProjectHistory), findsOneWidget);
+    expect(find.text(l10n.gitHistory), findsNothing);
     expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
     expect(find.text(l10n.viewMode), findsOneWidget);
     expect(find.text(l10n.editor), findsOneWidget);
@@ -2554,14 +2557,14 @@ void main() {
           ),
           (
             LogicalKeyboardKey.digit4,
-            'Commit',
+            'Changes',
             true,
             LogicalKeyboardKey.digit1,
             DocumentViewModePreference.editor,
           ),
           (
             LogicalKeyboardKey.digit5,
-            'History',
+            'Project History',
             true,
             LogicalKeyboardKey.digit3,
             DocumentViewModePreference.preview,

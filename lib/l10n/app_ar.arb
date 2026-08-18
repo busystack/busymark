@@ -2451,6 +2451,7 @@
   "gitRestoreVersion": "استعادة هذا الإصدار",
   "gitConfirmRestoreTitle": "هل تريد استعادة إصدار الملف هذا؟",
   "gitConfirmRestoreMessage": "سيستبدل BusyMark ملف شجرة العمل الحالي بالإصدار المحدد من الإيداع. سيبقى الملف المستعاد غير مُرحَّل.",
-  "gitBinaryFileInfo": "ملف ثنائي ({size} بايت). لا يعرض BusyMark رقع الملفات الثنائية."
+  "gitBinaryFileInfo": "ملف ثنائي ({size} بايت). لا يعرض BusyMark رقع الملفات الثنائية.",
+  "gitErrorRestoreStagedFile": "أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق."
 
 }

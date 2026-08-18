@@ -263,6 +263,25 @@ void main() {
     expect(gateway.diffRequests, isEmpty);
   });
 
+  test('staged rename comparison preserves the original path', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+
+    await controller.selectChange(
+      const GitChangeSelection(
+        path: 'new.md',
+        comparison: GitComparisonType.staged,
+        originalRepoRelativePath: 'old.md',
+      ),
+    );
+
+    expect(gateway.diffRequests, [('new.md', true)]);
+    expect(gateway.diffOriginalPaths, ['old.md']);
+  });
+
   test('reactivates an open change comparison tab', () async {
     final gateway = _FakeGitGateway();
     final container = _container(gateway);
@@ -369,6 +388,30 @@ void main() {
       );
     },
   );
+
+  test('restore is blocked while the current file is staged', () async {
+    final gateway = _FakeGitGateway(staged: true);
+    final originalIndex = gateway.indexContent;
+    final originalWorkingTree = gateway.workingTreeContent;
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
+    await controller.refresh();
+    await controller.loadFileHistory('/repo/README.md');
+    await controller.selectFileHistoryCommit('1234567890abcdef');
+
+    final restored = await controller.restoreSelectedFileVersion();
+
+    expect(restored, isFalse);
+    expect(gateway.restoreCalls, 0);
+    expect(gateway.staged, isTrue);
+    expect(gateway.indexContent, originalIndex);
+    expect(gateway.workingTreeContent, originalWorkingTree);
+    expect(
+      container.read(gitControllerProvider).lastError?.code,
+      GitFailureCode.stagedChanges,
+    );
+  });
 
   test('fetch refreshes repository status', () async {
     final gateway = _FakeGitGateway();
@@ -851,11 +894,16 @@ class _FakeGitGateway implements GitRepositoryGateway {
   var fetchCalls = 0;
   var restoreCalls = 0;
   final diffRequests = <(String, bool)>[];
+  final diffOriginalPaths = <String?>[];
   final untrackedDiffRequests = <String>[];
+  var indexContent = '# Indexed\n';
+  var workingTreeContent = '# Working tree\n';
   String? lastDetectedWorkspacePath;
   String? lastInitializeRootPath;
   String? lastHistoryPath;
   String? lastCommitDetailsPath;
+
+  bool get staged => _staged;
 
   static const repo = GitRepositoryInfo(
     rootPath: '/repo',
@@ -1000,8 +1048,10 @@ class _FakeGitGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String repoRelativePath, {
     required bool staged,
+    String? originalRepoRelativePath,
   }) async {
     diffRequests.add((repoRelativePath, staged));
+    diffOriginalPaths.add(originalRepoRelativePath);
     return const GitDiff(
       title: 'README.md',
       files: [],
@@ -1136,6 +1186,7 @@ class _FakeGitGateway implements GitRepositoryGateway {
     required String currentPath,
   }) async {
     restoreCalls += 1;
+    workingTreeContent = '# Restored\n';
     return _result();
   }
 

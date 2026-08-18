@@ -2470,6 +2470,7 @@
   "gitRestoreVersion": "بازیابی این نسخه",
   "gitConfirmRestoreTitle": "این نسخهٔ فایل بازیابی شود؟",
   "gitConfirmRestoreMessage": "BusyMark فایل فعلی در درخت کاری را با نسخهٔ انتخاب‌شده از ثبت جایگزین می‌کند. فایل بازیابی‌شده مرحله‌بندی‌نشده باقی می‌ماند.",
-  "gitBinaryFileInfo": "فایل دودویی ({size} بایت). BusyMark وصله‌های دودویی را نمایش نمی‌دهد."
+  "gitBinaryFileInfo": "فایل دودویی ({size} بایت). BusyMark وصله‌های دودویی را نمایش نمی‌دهد.",
+  "gitErrorRestoreStagedFile": "پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید."
 
 }

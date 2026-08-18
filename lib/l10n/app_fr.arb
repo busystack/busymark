@@ -2472,6 +2472,7 @@
   "gitRestoreVersion": "Restaurer cette version",
   "gitConfirmRestoreTitle": "Restaurer cette version du fichier ?",
   "gitConfirmRestoreMessage": "BusyMark remplacera le fichier actuel de l’arbre de travail par la version sélectionnée du commit. Le fichier restauré restera non indexé.",
-  "gitBinaryFileInfo": "Fichier binaire ({size} octets). BusyMark n’affiche pas les correctifs binaires."
+  "gitBinaryFileInfo": "Fichier binaire ({size} octets). BusyMark n’affiche pas les correctifs binaires.",
+  "gitErrorRestoreStagedFile": "Retirez le fichier de l’index avant de restaurer une version antérieure."
 
 }

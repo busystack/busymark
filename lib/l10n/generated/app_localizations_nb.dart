@@ -2284,6 +2284,10 @@ class AppLocalizationsNb extends AppLocalizations {
       'Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Fjern filen fra indeksen før du gjenoppretter en tidligere versjon.';
+
+  @override
   String get gitErrorDiverged =>
       'Grenen har divergert. Løs merge eller rebase utenfor denne versjonen av BusyMark.';
 

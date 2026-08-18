@@ -2449,6 +2449,7 @@
   "gitRestoreVersion": "Gjenopprett denne versjonen",
   "gitConfirmRestoreTitle": "Gjenopprette denne filversjonen?",
   "gitConfirmRestoreMessage": "BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.",
-  "gitBinaryFileInfo": "Binærfil ({size} byte). BusyMark viser ikke binære patcher."
+  "gitBinaryFileInfo": "Binærfil ({size} byte). BusyMark viser ikke binære patcher.",
+  "gitErrorRestoreStagedFile": "Fjern filen fra indeksen før du gjenoppretter en tidligere versjon."
 
 }

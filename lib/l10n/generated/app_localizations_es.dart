@@ -2312,6 +2312,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Guarde o descarte los cambios del editor de BusyMark antes de cambiar de rama.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'Quite el archivo del área de preparación antes de restaurar una versión anterior.';
+
+  @override
   String get gitErrorDiverged =>
       'La rama ha divergido. Resuelva el merge o el rebase fuera de esta versión de BusyMark.';
 

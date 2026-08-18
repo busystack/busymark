@@ -41,6 +41,20 @@ class _GitChangesViewState extends State<GitChangesView> {
   }
 
   @override
+  void didUpdateWidget(GitChangesView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final workspaceChanged =
+        oldWidget.state.attachedWorkspace?.id !=
+        widget.state.attachedWorkspace?.id;
+    final repositoryChanged =
+        oldWidget.state.repositoryInfo?.rootPath !=
+        widget.state.repositoryInfo?.rootPath;
+    if (workspaceChanged || repositoryChanged) {
+      _commitMessageController.clear();
+    }
+  }
+
+  @override
   void dispose() {
     _commitMessageController
       ..removeListener(_handleCommitMessageChanged)
@@ -130,7 +144,12 @@ class _GitChangesViewState extends State<GitChangesView> {
     }
     setState(() => _committing = true);
     try {
-      await GitCommitActions.of(context).commit(_commitMessageController.text);
+      final succeeded = await GitCommitActions.of(
+        context,
+      ).commit(_commitMessageController.text);
+      if (succeeded && mounted) {
+        _commitMessageController.clear();
+      }
     } finally {
       if (mounted) {
         setState(() => _committing = false);
@@ -232,7 +251,7 @@ class GitCommitActions extends InheritedWidget {
     required super.child,
   });
 
-  final Future<void> Function(String message) commit;
+  final Future<bool> Function(String message) commit;
 
   static GitCommitActions of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<GitCommitActions>()!;
@@ -289,9 +308,13 @@ class _ChangeGroup extends StatelessWidget {
               file: file,
               kind: kind,
               selected: _selectionFor(file) == selectedChange,
-              outsideWorkspace: outsideWorkspacePaths.contains(
-                file.repoRelativePath,
-              ),
+              outsideWorkspace:
+                  outsideWorkspacePaths.contains(file.repoRelativePath) ||
+                  (file.renamed &&
+                      file.originalRepoRelativePath != null &&
+                      outsideWorkspacePaths.contains(
+                        file.originalRepoRelativePath,
+                      )),
               onSelect: () {
                 if (kind == _ChangeGroupKind.conflicts) {
                   onOpenFile(file.repoRelativePath);
@@ -302,9 +325,9 @@ class _ChangeGroup extends StatelessWidget {
               onSelectionChanged: (selected) {
                 final actions = GitFileActions.of(context);
                 if (selected) {
-                  actions.select([file.repoRelativePath]);
+                  actions.select(_pathsFor(file));
                 } else {
-                  actions.unselect([file.repoRelativePath]);
+                  actions.unselect(_pathsFor(file));
                 }
               },
               onOpen: () => onOpenFile(file.repoRelativePath),
@@ -332,7 +355,21 @@ class _ChangeGroup extends StatelessWidget {
         : GitChangeSelection(
             path: file.repoRelativePath,
             comparison: comparison,
+            originalRepoRelativePath: file.renamed
+                ? file.originalRepoRelativePath
+                : null,
           );
+  }
+
+  List<String> _pathsFor(GitFileStatus file) {
+    final originalPath = file.originalRepoRelativePath;
+    return [
+      if (file.renamed &&
+          originalPath != null &&
+          originalPath != file.repoRelativePath)
+        originalPath,
+      file.repoRelativePath,
+    ];
   }
 }
 
@@ -387,7 +424,17 @@ class _ChangedFileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final directory = _directoryLabel(file.repoRelativePath);
+    final isStagedRename =
+        kind == _ChangeGroupKind.staged &&
+        file.renamed &&
+        file.originalRepoRelativePath != null &&
+        file.originalRepoRelativePath != file.repoRelativePath;
+    final displayPath = isStagedRename
+        ? '${file.originalRepoRelativePath} → ${file.repoRelativePath}'
+        : file.repoRelativePath;
+    final directory = isStagedRename
+        ? ''
+        : _directoryLabel(file.repoRelativePath);
     final statusColor = busyMarkVcsFileStatusColor(
       context,
       busyMarkVcsFileColorForGitStatus(file),
@@ -439,7 +486,7 @@ class _ChangedFileRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _fileName(file.repoRelativePath),
+                        isStagedRename ? displayPath : _fileName(displayPath),
                         textDirection: TextDirection.ltr,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

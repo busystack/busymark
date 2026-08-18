@@ -2308,6 +2308,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.';
 
   @override
+  String get gitErrorRestoreStagedFile =>
+      'أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق.';
+
+  @override
   String get gitErrorDiverged =>
       'تباعد الفرع. عالج الدمج أو إعادة التأسيس خارج هذا الإصدار من BusyMark.';
 

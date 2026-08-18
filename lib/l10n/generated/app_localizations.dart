@@ -3848,6 +3848,12 @@ abstract class AppLocalizations {
   /// **'Save or discard BusyMark editor changes before switching branches.'**
   String get gitErrorDirtyWorkspace;
 
+  /// Git error shown when historical restoration is blocked because the current file is staged.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstage this file before restoring a historical version.'**
+  String get gitErrorRestoreStagedFile;
+
   /// Git error message.
   ///
   /// In en, this message translates to:

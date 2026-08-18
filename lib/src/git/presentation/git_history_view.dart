@@ -55,7 +55,6 @@ class GitFileHistoryView extends StatelessWidget {
           ),
           if (entry.commit.fullHash == history.selectedCommitHash)
             _FileHistoryActions(
-              comparisonType: history.comparisonType,
               canRestore: entry.newPath != null,
               onChangesInCommit: onChangesInCommit,
               onCompareWithCurrent: onCompareWithCurrent,
@@ -79,7 +78,6 @@ class GitProjectHistoryView extends StatelessWidget {
     required this.onSelectCommit,
     required this.onShowFileDiff,
     required this.onChangesInCommit,
-    required this.onCompareWithCurrent,
     required this.onLoadMore,
   });
 
@@ -87,7 +85,6 @@ class GitProjectHistoryView extends StatelessWidget {
   final ValueChanged<String> onSelectCommit;
   final ValueChanged<String> onShowFileDiff;
   final VoidCallback onChangesInCommit;
-  final VoidCallback onCompareWithCurrent;
   final VoidCallback onLoadMore;
 
   @override
@@ -126,9 +123,7 @@ class GitProjectHistoryView extends StatelessWidget {
                           ),
                         if (showFileMenu && project.selectedFilePath != null)
                           _ProjectHistoryActions(
-                            comparisonType: project.comparisonType,
                             onChangesInCommit: onChangesInCommit,
-                            onCompareWithCurrent: onCompareWithCurrent,
                           ),
                       ],
                     );
@@ -145,41 +140,14 @@ class GitProjectHistoryView extends StatelessWidget {
   }
 }
 
-class GitHistoryView extends StatelessWidget {
-  const GitHistoryView({
-    super.key,
-    required this.state,
-    required this.onSelectCommit,
-    required this.onShowFileDiff,
-  });
-
-  final GitState state;
-  final ValueChanged<String> onSelectCommit;
-  final ValueChanged<String> onShowFileDiff;
-
-  @override
-  Widget build(BuildContext context) {
-    return GitProjectHistoryView(
-      state: state,
-      onSelectCommit: onSelectCommit,
-      onShowFileDiff: onShowFileDiff,
-      onChangesInCommit: () {},
-      onCompareWithCurrent: () {},
-      onLoadMore: () {},
-    );
-  }
-}
-
 class _FileHistoryActions extends StatelessWidget {
   const _FileHistoryActions({
-    required this.comparisonType,
     required this.canRestore,
     required this.onChangesInCommit,
     required this.onCompareWithCurrent,
     required this.onRestoreVersion,
   });
 
-  final GitComparisonType comparisonType;
   final bool canRestore;
   final VoidCallback onChangesInCommit;
   final VoidCallback onCompareWithCurrent;
@@ -218,15 +186,9 @@ class _FileHistoryActions extends StatelessWidget {
 }
 
 class _ProjectHistoryActions extends StatelessWidget {
-  const _ProjectHistoryActions({
-    required this.comparisonType,
-    required this.onChangesInCommit,
-    required this.onCompareWithCurrent,
-  });
+  const _ProjectHistoryActions({required this.onChangesInCommit});
 
-  final GitComparisonType comparisonType;
   final VoidCallback onChangesInCommit;
-  final VoidCallback onCompareWithCurrent;
 
   @override
   Widget build(BuildContext context) {
@@ -243,11 +205,6 @@ class _ProjectHistoryActions extends StatelessWidget {
           BusyMarkPushButton.standard(
             onPressed: onChangesInCommit,
             child: Text(context.l10n.gitChangesInCommit),
-          ),
-          const SizedBox(height: BusyMarkSpacing.xs),
-          BusyMarkPushButton.standard(
-            onPressed: onCompareWithCurrent,
-            child: Text(context.l10n.gitCompareWithCurrent),
           ),
         ],
       ),

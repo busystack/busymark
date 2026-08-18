@@ -2467,6 +2467,7 @@
   "gitRestoreVersion": "Відновити цю версію",
   "gitConfirmRestoreTitle": "Відновити цю версію файлу?",
   "gitConfirmRestoreMessage": "BusyMark замінить поточний файл робочого дерева вибраною версією з коміту. Відновлений файл залишиться неіндексованим.",
-  "gitBinaryFileInfo": "Двійковий файл ({size} байтів). BusyMark не відображає двійкові патчі."
+  "gitBinaryFileInfo": "Двійковий файл ({size} байтів). BusyMark не відображає двійкові патчі.",
+  "gitErrorRestoreStagedFile": "Приберіть файл з індексу перед відновленням попередньої версії."
 
 }

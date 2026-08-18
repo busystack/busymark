@@ -541,7 +541,9 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> selectChange(GitChangeSelection selection) async {
-    final failure = _validation.validateRepoRelativePaths([selection.path]);
+    final failure = _validation.validateRepoRelativePaths(
+      selection.repoRelativePaths,
+    );
     if (failure != null) {
       state = state.copyWith(lastError: failure);
       return;
@@ -787,52 +789,6 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  Future<void> compareProjectFileWithCurrent() async {
-    final operation = _captureRepositoryOperation();
-    final project = state.projectHistory;
-    final hash = project.selectedCommitHash;
-    final path = project.selectedFilePath;
-    final file = project.details?.changedFiles
-        .where((candidate) => path != null && candidate.matchesPath(path))
-        .firstOrNull;
-    if (operation == null || hash == null || path == null || file == null) {
-      return;
-    }
-    final historicalPath = file.newPath;
-    final requestEpoch = ++_commitDetailsEpoch;
-    state = state.copyWith(isRunningOperation: true, lastError: null);
-    try {
-      final comparison = historicalPath == null
-          ? await _comparisonFromEmptyWorkingTree(operation.repository, path)
-          : await _gateway.compareFileWithWorkingTree(
-              operation.repository,
-              hash,
-              historicalPath: historicalPath,
-              currentPath: path,
-            );
-      if (!_isCurrentRepositoryOperation(operation) ||
-          requestEpoch != _commitDetailsEpoch) {
-        return;
-      }
-      state = state.copyWith(
-        isRunningOperation: false,
-        projectHistory: state.projectHistory.copyWith(
-          comparisonType: GitComparisonType.commitVersusCurrent,
-          comparison: comparison,
-        ),
-        selectedCommitFilePath: path,
-        openDiffFilePaths: [path],
-      );
-    } on Object catch (error) {
-      if (!_isCurrentRepositoryOperation(operation) ||
-          requestEpoch != _commitDetailsEpoch) {
-        return;
-      }
-      _setFailure(error, commandName: 'diff');
-      state = state.copyWith(isRunningOperation: false);
-    }
-  }
-
   Future<void> showProjectCommitChange() async {
     final path = state.projectHistory.selectedFilePath;
     if (path != null) {
@@ -846,6 +802,17 @@ class GitController extends Notifier<GitState> {
         lastError: const GitFailure(
           code: GitFailureCode.dirtyWorkspace,
           userMessageKey: 'gitErrorDirtyWorkspace',
+          rawMessage: '',
+          commandName: 'restore',
+        ),
+      );
+      return false;
+    }
+    if (selectedFileHasStagedChanges) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.stagedChanges,
+          userMessageKey: 'gitErrorRestoreStagedFile',
           rawMessage: '',
           commandName: 'restore',
         ),
@@ -894,6 +861,19 @@ class GitController extends Notifier<GitState> {
       state = state.copyWith(isRunningOperation: false);
       return false;
     }
+  }
+
+  bool get selectedFileHasStagedChanges {
+    final currentPath = state.fileHistory.currentPath;
+    if (currentPath == null) {
+      return false;
+    }
+    return state.statusSnapshot?.stagedFiles.any(
+          (file) =>
+              file.repoRelativePath == currentPath ||
+              file.originalRepoRelativePath == currentPath,
+        ) ??
+        false;
   }
 
   bool isOutsideWorkspace(String repoRelativePath) {
@@ -1025,10 +1005,10 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  Future<void> commit(String message) async {
+  Future<bool> commit(String message) async {
     final operation = _captureRepositoryOperation();
     if (operation == null) {
-      return;
+      return false;
     }
     final messageFailure = _validation.validateCommitMessage(message);
     final stagedFailure = _validation.validateHasStagedFiles(
@@ -1037,7 +1017,7 @@ class GitController extends Notifier<GitState> {
     final failure = messageFailure ?? stagedFailure;
     if (failure != null) {
       state = state.copyWith(lastError: failure);
-      return;
+      return false;
     }
     final completed = await _runOperation(
       (repository) => _gateway.commit(repository, message),
@@ -1046,6 +1026,7 @@ class GitController extends Notifier<GitState> {
     if (completed) {
       await loadProjectHistory();
     }
+    return completed;
   }
 
   Future<void> pullFastForwardOnly() async {
@@ -1356,11 +1337,13 @@ class GitController extends Notifier<GitState> {
           operation.repository,
           selection.path,
           staged: true,
+          originalRepoRelativePath: selection.originalRepoRelativePath,
         ),
         GitComparisonType.unstaged => _gateway.diffFile(
           operation.repository,
           selection.path,
           staged: false,
+          originalRepoRelativePath: selection.originalRepoRelativePath,
         ),
         GitComparisonType.untracked => _gateway.diffUntrackedFile(
           operation.repository,
@@ -1712,18 +1695,27 @@ class GitController extends Notifier<GitState> {
       return GitChangeSelection(
         path: repoRelativePath,
         comparison: GitComparisonType.unstaged,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
       );
     }
     if (file.untracked) {
       return GitChangeSelection(
         path: repoRelativePath,
         comparison: GitComparisonType.untracked,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
       );
     }
     if (file.staged) {
       return GitChangeSelection(
         path: repoRelativePath,
         comparison: GitComparisonType.staged,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
       );
     }
     return null;
@@ -1750,24 +1742,39 @@ class GitController extends Notifier<GitState> {
       GitComparisonType.commitVersusCurrent => false,
     };
     if (stillExists) {
-      return selection;
+      return GitChangeSelection(
+        path: selection.path,
+        comparison: selection.comparison,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
+      );
     }
     if (file.unstaged) {
       return GitChangeSelection(
         path: selection.path,
         comparison: GitComparisonType.unstaged,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
       );
     }
     if (file.untracked) {
       return GitChangeSelection(
         path: selection.path,
         comparison: GitComparisonType.untracked,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
       );
     }
     if (file.staged) {
       return GitChangeSelection(
         path: selection.path,
         comparison: GitComparisonType.staged,
+        originalRepoRelativePath: file.renamed
+            ? file.originalRepoRelativePath
+            : null,
       );
     }
     return null;
@@ -1839,6 +1846,7 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String repoRelativePath, {
     required bool staged,
+    String? originalRepoRelativePath,
   }) => _unavailable();
 
   @override

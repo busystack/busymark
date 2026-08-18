@@ -2451,6 +2451,7 @@
   "gitRestoreVersion": "यह संस्करण पुनर्स्थापित करें",
   "gitConfirmRestoreTitle": "फ़ाइल का यह संस्करण पुनर्स्थापित करें?",
   "gitConfirmRestoreMessage": "BusyMark वर्तमान कार्य-वृक्ष फ़ाइल को चुने गए कमिट संस्करण से बदल देगा। पुनर्स्थापित फ़ाइल स्टेज नहीं की जाएगी।",
-  "gitBinaryFileInfo": "बाइनरी फ़ाइल ({size} बाइट)। BusyMark बाइनरी पैच प्रदर्शित नहीं करता।"
+  "gitBinaryFileInfo": "बाइनरी फ़ाइल ({size} बाइट)। BusyMark बाइनरी पैच प्रदर्शित नहीं करता।",
+  "gitErrorRestoreStagedFile": "पिछला संस्करण पुनर्स्थापित करने से पहले फ़ाइल को अनस्टेज करें।"
 
 }

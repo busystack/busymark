@@ -2467,6 +2467,7 @@
   "gitRestoreVersion": "Przywróć tę wersję",
   "gitConfirmRestoreTitle": "Przywrócić tę wersję pliku?",
   "gitConfirmRestoreMessage": "BusyMark zastąpi bieżący plik w drzewie roboczym wybraną wersją z commita. Przywrócony plik pozostanie poza indeksem.",
-  "gitBinaryFileInfo": "Plik binarny ({size} bajtów). BusyMark nie wyświetla poprawek binarnych."
+  "gitBinaryFileInfo": "Plik binarny ({size} bajtów). BusyMark nie wyświetla poprawek binarnych.",
+  "gitErrorRestoreStagedFile": "Usuń plik z indeksu przed przywróceniem wcześniejszej wersji."
 
 }

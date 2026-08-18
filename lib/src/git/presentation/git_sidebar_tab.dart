@@ -114,6 +114,15 @@ class GitSidebarTab extends ConsumerWidget {
                             const <GitFileStatus>[])
                       if (controller.isOutsideWorkspace(file.repoRelativePath))
                         file.repoRelativePath,
+                    for (final file
+                        in state.statusSnapshot?.stagedFiles ??
+                            const <GitFileStatus>[])
+                      if (file.renamed &&
+                          file.originalRepoRelativePath != null &&
+                          controller.isOutsideWorkspace(
+                            file.originalRepoRelativePath!,
+                          ))
+                        file.originalRepoRelativePath!,
                   },
                 ),
                 GitView.fileHistory => GitFileHistoryView(
@@ -134,8 +143,6 @@ class GitSidebarTab extends ConsumerWidget {
                   onSelectCommit: controller.selectProjectCommit,
                   onShowFileDiff: controller.selectCommitFile,
                   onChangesInCommit: controller.showProjectCommitChange,
-                  onCompareWithCurrent:
-                      controller.compareProjectFileWithCurrent,
                   onLoadMore: controller.loadMoreProjectHistory,
                 ),
               },
@@ -151,7 +158,7 @@ class GitSidebarTab extends ConsumerWidget {
     GitController controller,
     bool hasUnsavedEditorChanges,
   ) async {
-    if (hasUnsavedEditorChanges) {
+    if (hasUnsavedEditorChanges || controller.selectedFileHasStagedChanges) {
       await controller.restoreSelectedFileVersion();
       return;
     }
@@ -218,6 +225,7 @@ class _GitMessage extends StatelessWidget {
       GitFailureCode.noUpstream => context.l10n.gitErrorNoUpstream,
       GitFailureCode.multipleRemotes => context.l10n.gitErrorMultipleRemotes,
       GitFailureCode.dirtyWorkspace => context.l10n.gitErrorDirtyWorkspace,
+      GitFailureCode.stagedChanges => context.l10n.gitErrorRestoreStagedFile,
       GitFailureCode.diverged => context.l10n.gitErrorDiverged,
       GitFailureCode.authentication => context.l10n.gitErrorAuthentication,
       GitFailureCode.network => context.l10n.gitErrorNetwork,
@@ -248,6 +256,7 @@ BusyMarkStatusKind _gitFailureStatusKind(GitFailureCode code) {
     GitFailureCode.noUpstream ||
     GitFailureCode.multipleRemotes => BusyMarkStatusKind.information,
     GitFailureCode.dirtyWorkspace ||
+    GitFailureCode.stagedChanges ||
     GitFailureCode.diverged ||
     GitFailureCode.conflict => BusyMarkStatusKind.warning,
     GitFailureCode.unavailable ||
