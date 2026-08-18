@@ -197,6 +197,7 @@ abstract final class BusyMarkTypography {
   static const double codeLineHeight = 1.45;
   static const double sourceEditorLineHeight = 1.6;
   static const double bodyLineHeight = 1.5;
+  static const double headingLineHeight = 1.25;
   static const double defaultFontSize = 14;
   static const double tooltipFontSize = defaultFontSize;
   static const double sourceCursorHeightScale = 1.34;
@@ -211,7 +212,7 @@ abstract final class BusyMarkTypography {
       3 => 1.22,
       4 => 1.12,
       5 => 1.04,
-      _ => 0.98,
+      _ => 1.0,
     };
   }
 }
@@ -1090,22 +1091,34 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return YaruIconButton(
-      iconSize: size,
-      tooltip: tooltip,
-      style: foregroundColor == null
+    final semanticStyle = ButtonStyle(
+      foregroundColor: foregroundColor == null
           ? null
-          : ButtonStyle(
-              foregroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.disabled)) {
-                  return colors.disabledForeground;
-                }
-                return foregroundColor;
-              }),
-            ),
+          : WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return colors.disabledForeground;
+              }
+              return foregroundColor;
+            }),
+    );
+    final yaruDefaults = YaruIconButton(
+      icon: const SizedBox.shrink(),
+      iconSize: size,
+    ).defaultStyleOf(context);
+    final button = IconButton(
+      tooltip: tooltip,
       icon: Icon(icon, size: glyphSize),
+      constraints: BoxConstraints.tightFor(width: size, height: size),
+      padding: EdgeInsets.zero,
+      style: semanticStyle.merge(yaruDefaults),
       onPressed: onPressed,
     );
+    return YaruTheme.maybeOf(context)?.focusBorders == true
+        ? YaruFocusBorder.primary(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
+            child: button,
+          )
+        : button;
   }
 }
 

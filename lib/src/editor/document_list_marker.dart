@@ -72,12 +72,20 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
     BusyMarkSurfaceColors colors,
     bool taskState,
   ) {
+    final foreground = taskState
+        ? Theme.of(context).colorScheme.primary
+        : colors.foreground;
     final onChanged = onTaskChanged;
     if (onChanged == null) {
-      return Icon(
-        taskState ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
-        size: BusyMarkSizes.iconSm,
-        color: colors.mutedForeground,
+      return SizedBox.square(
+        dimension: BusyMarkSizes.compactIconButton,
+        child: Center(
+          child: Icon(
+            taskState ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
+            size: BusyMarkSizes.iconSm,
+            color: foreground,
+          ),
+        ),
       );
     }
     void toggle() => onChanged(!taskState);
@@ -94,9 +102,7 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
           icon: taskState ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
           size: BusyMarkSizes.compactIconButton,
           glyphSize: BusyMarkSizes.iconSm,
-          foregroundColor: taskState
-              ? Theme.of(context).colorScheme.primary
-              : colors.foreground,
+          foregroundColor: foreground,
           onPressed: toggle,
         ),
       ),
