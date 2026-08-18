@@ -4626,7 +4626,12 @@ After break.
     expect(service.openedPath, startupPath);
     expect(find.text(l10n.openMarkdownFile), findsNothing);
     expect(find.textContaining('Basic Markdown'), findsWidgets);
-    expect(find.byTooltip(startupPath), findsNothing);
+    expect(find.byTooltip(startupPath), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('workspace-sidebar-outline-file-menu')),
+      findsOneWidget,
+    );
+    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
     final primarySidebarLabel = find.descendant(
       of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
       matching: find.byType(Text),
@@ -5037,6 +5042,28 @@ Beta body.
       }
     }
 
+    final firstOutlineRowTop = tester.getTopLeft(outlineRow(0)).dy;
+    Finder firstOutlineToggle() => find.descendant(
+      of: outlineRow(0),
+      matching: find.byIcon(
+        BusyMarkGlyphs.collapsedTreeArrowFor(TextDirection.ltr),
+      ),
+    );
+    expect(firstOutlineToggle(), findsOneWidget);
+    await tester.tap(firstOutlineToggle());
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.sidebarExpand);
+    await tester.pump();
+    expect(
+      tester.getTopLeft(outlineRow(0)).dy,
+      closeTo(firstOutlineRowTop, 1),
+      reason: 'Collapsing the Outline must preserve its top anchor.',
+    );
+    await tester.tap(firstOutlineToggle());
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.sidebarExpand);
+    await tester.pump();
+
     final state = container.read(workspaceControllerProvider);
     final outline = state.preview!.outline;
     expect(outline.map((heading) => heading.text), [
@@ -5057,6 +5084,31 @@ Beta body.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expectSelectedOutlineRow(1);
+
+    final thirdPreviewIndex = state.preview!.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[2].id,
+    );
+    expect(thirdPreviewIndex, isNonNegative);
+    await tester.tap(outlineRow(2));
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump();
+    final previewPositions = tester
+        .widget<ScrollablePositionedList>(previewScroll)
+        .itemPositionsNotifier!
+        .itemPositions
+        .value;
+    final thirdPreviewPosition = previewPositions.singleWhere(
+      (position) => position.index == thirdPreviewIndex,
+    );
+    expect(
+      thirdPreviewPosition.itemLeadingEdge,
+      closeTo(0, 0.005),
+      reason: 'Preview Outline navigation must use the tracking anchor.',
+    );
+    expectSelectedOutlineRow(2);
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -5080,6 +5132,29 @@ Beta body.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expectSelectedOutlineRow(2);
+
+    final secondEditorIndex = editorDocument.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[1].id,
+    );
+    expect(secondEditorIndex, isNonNegative);
+    await tester.tap(outlineRow(1));
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump();
+    final editorPositions = tester
+        .widget<ScrollablePositionedList>(editorScroll)
+        .itemPositionsNotifier!
+        .itemPositions
+        .value;
+    final secondEditorPosition = editorPositions.singleWhere(
+      (position) => position.index == secondEditorIndex,
+    );
+    expect(
+      secondEditorPosition.itemLeadingEdge,
+      closeTo(0, 0.005),
+      reason: 'Outline navigation must use the viewport tracking anchor.',
+    );
+    expectSelectedOutlineRow(1);
 
     await container
         .read(appSettingsControllerProvider.notifier)

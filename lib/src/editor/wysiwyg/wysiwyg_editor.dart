@@ -1143,7 +1143,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (heading == null) {
         return;
       }
-      _jumpToBlockAndAlign(heading.id);
+      _jumpToBlockAndAlign(heading.id, alignment: 0);
     });
   }
 
@@ -1172,7 +1172,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           extentOffset: matchStart + query.length,
         );
       }
-      _jumpToBlockAndAlign(target.id);
+      _jumpToBlockAndAlign(target.id, alignment: 0.04);
     });
   }
 
@@ -1188,7 +1188,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return null;
   }
 
-  bool _ensureBlockVisible(String blockId) {
+  bool _ensureBlockVisible(String blockId, {required double alignment}) {
     final targetContext = _blockKeys[blockId]?.currentContext;
     if (targetContext == null) {
       return false;
@@ -1197,24 +1197,24 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       targetContext,
       duration: BusyMarkMotion.scroll,
       curve: Curves.easeOutCubic,
-      alignment: 0.04,
+      alignment: alignment,
     );
     return true;
   }
 
-  void _jumpToBlockAndAlign(String blockId) {
+  void _jumpToBlockAndAlign(String blockId, {required double alignment}) {
     final request = widget.scrollRequest;
-    if (!_jumpToBlock(blockId)) {
+    if (!_jumpToBlock(blockId, alignment: alignment)) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && widget.scrollRequest == request) {
-        _ensureBlockVisible(blockId);
+        _ensureBlockVisible(blockId, alignment: alignment);
       }
     });
   }
 
-  bool _jumpToBlock(String blockId) {
+  bool _jumpToBlock(String blockId, {required double alignment}) {
     if (!_itemScrollController.isAttached) {
       return false;
     }
@@ -1225,7 +1225,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (index < 0) {
       return false;
     }
-    _itemScrollController.jumpTo(index: index, alignment: 0.04);
+    _itemScrollController.jumpTo(index: index, alignment: alignment);
     return true;
   }
 

@@ -5827,10 +5827,12 @@ class _OutlineTab extends ConsumerStatefulWidget {
 }
 
 class _OutlineTabState extends ConsumerState<_OutlineTab> {
+  static const _treeRowExtent =
+      BusyMarkSizes.sidebarTreeRowHeight + BusyMarkStroke.hairline * 2;
+
   late String _outlineStateKey;
   late Set<String> _expandedNodeKeys;
-  final _treeScrollController = ItemScrollController();
-  final _treeItemPositionsListener = ItemPositionsListener.create();
+  final _treeScrollController = ScrollController();
   String? _revealedActiveNodeKey;
 
   @override
@@ -5854,6 +5856,12 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     }
   }
 
+  @override
+  void dispose() {
+    _treeScrollController.dispose();
+    super.dispose();
+  }
+
   void _scheduleActiveNodeReveal(
     List<_OutlineTreeEntry> entries,
     String? activeNodeKey,
@@ -5873,18 +5881,22 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     }
     _revealedActiveNodeKey = activeNodeKey;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_treeScrollController.isAttached) {
+      if (!mounted || !_treeScrollController.hasClients) {
         _revealedActiveNodeKey = null;
         return;
       }
-      final alreadyVisible = _treeItemPositionsListener.itemPositions.value.any(
-        (position) =>
-            position.index == index &&
-            position.itemTrailingEdge > 0 &&
-            position.itemLeadingEdge < 1,
-      );
+      final position = _treeScrollController.position;
+      final itemTop = BusyMarkInsets.sidebarList.top + index * _treeRowExtent;
+      final itemBottom = itemTop + _treeRowExtent;
+      final viewportTop = position.pixels;
+      final viewportBottom = viewportTop + position.viewportDimension;
+      final alreadyVisible =
+          itemBottom > viewportTop && itemTop < viewportBottom;
       if (!alreadyVisible) {
-        _treeScrollController.jumpTo(index: index, alignment: 0.35);
+        final target = (itemTop - position.viewportDimension * 0.35)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+        _treeScrollController.jumpTo(target);
       }
     });
   }
@@ -6022,11 +6034,11 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
       for (var index = 0; index < headings.length; index += 1)
         _outlineNodeKey(headings[index]): index,
     };
-    return ScrollablePositionedList.builder(
+    return ListView.builder(
       key: const ValueKey('workspace-sidebar-outline-tree'),
-      itemScrollController: _treeScrollController,
-      itemPositionsListener: _treeItemPositionsListener,
+      controller: _treeScrollController,
       padding: BusyMarkInsets.sidebarList,
+      itemExtent: _treeRowExtent,
       itemCount: entries.length,
       itemBuilder: (context, index) {
         final entry = entries[index];
@@ -6038,6 +6050,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         final hasChildren = node.children.isNotEmpty;
         void toggle() {
           setState(() {
+            _revealedActiveNodeKey = null;
             if (expanded) {
               _expandedNodeKeys.remove(key);
             } else {
