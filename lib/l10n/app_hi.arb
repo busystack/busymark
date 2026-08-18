@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "फ़ाइल नाम कॉपी करें",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "पथ कॉपी करें",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -117,6 +121,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "शीर्षक को ऊपर करें",
+  "demoteHeading": "शीर्षक को नीचे करें",
+  "moveSectionUp": "अनुभाग ऊपर ले जाएँ",
+  "moveSectionDown": "अनुभाग नीचे ले जाएँ",
+  "confirmDeleteSectionTitle": "अनुभाग हटाएँ?",
+  "confirmDeleteSectionMessage": "{name} और उसके अनुभाग की सारी सामग्री हटाएँ? इसे वापस नहीं किया जा सकता।",
   "darkTheme": "डार्क",
   "@darkTheme": {
     "description": "Dark theme option."
@@ -156,6 +166,10 @@
   "mainMenu": "मुख्य मेन्यू",
   "@mainMenu": {
     "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "पूर्ण स्क्रीन",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
   },
   "markdown": "Markdown",
   "@markdown": {
@@ -2201,7 +2215,7 @@
   "gitProjectHistory": "प्रोजेक्ट",
   "gitFileHistory": "मौजूदा फ़ाइल",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "फ़ाइल कार्रवाइयाँ",
+  "fileActions": "फ़ाइल कार्रवाइयाँ",
   "gitStatusAdded": "जोड़ा गया",
   "gitStatusDeleted": "हटाया गया",
   "gitStatusRenamed": "नाम बदला गया",

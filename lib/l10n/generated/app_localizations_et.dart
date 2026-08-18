@@ -156,6 +156,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get copyName => 'Kopeeri nimi';
 
   @override
+  String get copyFileName => 'Kopeeri failinimi';
+
+  @override
   String get copyPath => 'Kopeeri tee';
 
   @override
@@ -166,6 +169,26 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get cut => 'Lõika';
+
+  @override
+  String get promoteHeading => 'Tõsta pealkirja taset';
+
+  @override
+  String get demoteHeading => 'Langeta pealkirja taset';
+
+  @override
+  String get moveSectionUp => 'Liiguta jaotis üles';
+
+  @override
+  String get moveSectionDown => 'Liiguta jaotis alla';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Kas kustutada jaotis?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Kas kustutada „$name” ja kogu selle jaotise sisu? Seda toimingut ei saa tagasi võtta.';
+  }
 
   @override
   String get darkTheme => 'Tume';
@@ -199,6 +222,9 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get mainMenu => 'Peamenüü';
+
+  @override
+  String get fullScreen => 'Täisekraan';
 
   @override
   String get markdown => 'Markdown';
@@ -2147,7 +2173,7 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Failitoimingud';
+  String get fileActions => 'Failitoimingud';
 
   @override
   String get gitStatusAdded => 'Lisatud';

@@ -23,6 +23,36 @@ void main() {
     skip: Platform.isWindows,
   );
 
+  test(
+    'runner terminates commands that exceed the combined output limit',
+    () async {
+      const runner = DartGitCommandRunner(maxOutputBytes: 128);
+
+      await expectLater(
+        runner.run(
+          '/bin/sh',
+          const ['-c', 'printf %080d 0; printf %080d 0 >&2; sleep 10'],
+          timeout: const Duration(seconds: 5),
+          commandName: 'noisy-command',
+        ),
+        throwsA(
+          isA<GitFailure>()
+              .having(
+                (failure) => failure.commandName,
+                'commandName',
+                'noisy-command',
+              )
+              .having(
+                (failure) => failure.rawMessage,
+                'rawMessage',
+                contains('128-byte'),
+              ),
+        ),
+      );
+    },
+    skip: Platform.isWindows,
+  );
+
   test('normal gateway commands always receive a finite timeout', () async {
     final runner = _RecordingGitRunner();
     final gateway = GitCliGateway(

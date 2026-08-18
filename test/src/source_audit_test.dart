@@ -536,6 +536,9 @@ void main() {
     expect(searchField, contains('onEscape: widget.onEscape'));
     expect(workspace, contains('class _SearchSidebar'));
     expect(workspace, contains('_workspaceSearchResults'));
+    expect(workspace, contains('_loadWorkspaceSearchMatches'));
+    expect(workspace, contains('await loadText(file.absolutePath)'));
+    expect(workspace, isNot(contains('readAsStringSync()')));
     expect(workspace, contains('_searchNavigationTargetProvider'));
   });
 
@@ -1069,6 +1072,13 @@ void main() {
       workspace,
       contains('selectedTab == _SidebarTab.files && path.isNotEmpty'),
     );
+    expect(workspace, contains('selectedTab == _SidebarTab.outline'));
+    expect(
+      workspace,
+      contains("ValueKey('workspace-sidebar-outline-file-menu')"),
+    );
+    expect(workspace, contains('copyNameLabel: menuContext.l10n.copyFileName'));
+    expect(workspace, contains('tooltip: context.l10n.fileActions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
     expect(workspace, isNot(contains('boldLeadingIcon')));
@@ -1416,7 +1426,11 @@ void main() {
 
     expect(workspace, contains('_outlineNavigationTargetProvider'));
     expect(workspace, contains('_OutlineNavigationTarget'));
-    expect(workspace, contains('outline: _activeDocumentOutline(state)'));
+    expect(
+      workspace,
+      contains('final documentOutline = _activeDocumentOutline(state);'),
+    );
+    expect(workspace, contains('outline: documentOutline'));
     expect(workspace, contains('return preview.outline'));
     expect(workspace, contains('headingId: heading.id'));
     expect(workspace, contains('line: heading.sourceStartLine'));

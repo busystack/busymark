@@ -109,6 +109,7 @@ struct _MyApplication {
   GtkWidget* main_menu;
   GSimpleActionGroup* header_action_group;
   GSimpleAction* view_mode_action;
+  GSimpleAction* full_screen_action;
   gchar* view_mode;
   gchar* search_query;
   gchar* background_color;
@@ -128,6 +129,7 @@ struct _MyApplication {
   gboolean sidebar_visible;
   gboolean text_direction_rtl;
   gboolean back_visible;
+  gboolean full_screen;
   gboolean search_active;
   gboolean modal_barrier_visible;
   gint modal_barrier_depth;
@@ -149,6 +151,7 @@ struct HeaderBarConfiguration {
   gboolean sidebar_visible;
   gboolean sidebar_toggle_visible;
   gboolean back_visible;
+  gboolean full_screen;
   gboolean modal_barrier_visible;
   gint64 modal_barrier_depth;
   const gchar* search_query;
@@ -1068,6 +1071,62 @@ static void invoke_header_bar_bool_action(MyApplication* self,
                                   nullptr, nullptr, nullptr);
 }
 
+static const gchar* sidebar_shortcut_action_for_key(guint keyval) {
+  switch (keyval) {
+    case GDK_KEY_1:
+    case GDK_KEY_KP_1:
+      return "sidebarFiles";
+    case GDK_KEY_2:
+    case GDK_KEY_KP_2:
+      return "sidebarToc";
+    case GDK_KEY_3:
+    case GDK_KEY_KP_3:
+      return "sidebarOutline";
+    case GDK_KEY_4:
+    case GDK_KEY_KP_4:
+      return "sidebarGit";
+    case GDK_KEY_5:
+    case GDK_KEY_KP_5:
+      return "sidebarHistory";
+    default:
+      return nullptr;
+  }
+}
+
+// GtkSearchEntry owns the native keyboard focus while search is active, so
+// these workspace shortcuts cannot reach Flutter's Shortcuts widget. Bridge
+// them through the same header-bar channel used by the native controls.
+static gboolean search_entry_key_press_cb(GtkWidget*,
+                                           GdkEventKey* event,
+                                           gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  const guint modifiers =
+      event->state & gtk_accelerator_get_default_mod_mask();
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
+    return FALSE;
+  }
+  if (modifiers == 0 && event->keyval == GDK_KEY_F11) {
+    invoke_header_bar_action(self, "fullScreen");
+    return TRUE;
+  }
+  if (self->back_visible && modifiers == GDK_MOD1_MASK &&
+      (event->keyval == GDK_KEY_Left ||
+       event->keyval == GDK_KEY_KP_Left)) {
+    invoke_header_bar_action(self, "back");
+    return TRUE;
+  }
+  if (modifiers != GDK_CONTROL_MASK) {
+    return FALSE;
+  }
+  const gchar* action = sidebar_shortcut_action_for_key(event->keyval);
+  if (action == nullptr) {
+    return FALSE;
+  }
+  focus_flutter_view(self);
+  invoke_header_bar_action(self, action);
+  return TRUE;
+}
+
 enum class SearchQueryUpdateDisposition {
   kAlreadyCurrent,
   kPreserveNativeText,
@@ -1266,6 +1325,9 @@ static const gchar* main_menu_icon_name(const gchar* action) {
   if (g_strcmp0(action, "keyboardShortcuts") == 0) {
     return "input-keyboard-symbolic";
   }
+  if (g_strcmp0(action, "fullScreen") == 0) {
+    return "view-fullscreen-symbolic";
+  }
   if (g_strcmp0(action, "markdownAndHtml") == 0) {
     return "text-x-generic-symbolic";
   }
@@ -1313,6 +1375,11 @@ static void rebuild_main_menu_model(MyApplication* self, FlValue* labels) {
       localized_label_or(labels, "exportPdf", ""), "header.export-pdf",
       main_menu_icon_name("exportPdf"),
       fl_lookup_string_arg(labels, "exportPdfGtkAccelerator"));
+  append_action_menu_item(
+      self->main_menu_model,
+      localized_label_or(labels, "fullScreen", ""), "header.full-screen",
+      main_menu_icon_name("fullScreen"),
+      fl_lookup_string_arg(labels, "fullScreenGtkAccelerator"));
   append_action_menu_item(
       self->main_menu_model,
       localized_label_or(labels, "settings", ""), "header.settings",
@@ -1394,6 +1461,14 @@ static void set_view_mode(MyApplication* self, const gchar* mode) {
   update_view_mode_icon(self);
 }
 
+static void set_full_screen(MyApplication* self, gboolean full_screen) {
+  self->full_screen = full_screen;
+  if (self->full_screen_action != nullptr) {
+    g_simple_action_set_state(self->full_screen_action,
+                              g_variant_new_boolean(full_screen));
+  }
+}
+
 static void header_gaction_activated_cb(GSimpleAction* action,
                                         GVariant* parameter,
                                         gpointer user_data) {
@@ -1431,6 +1506,18 @@ static void view_mode_gaction_activated_cb(GSimpleAction* action,
   invoke_header_bar_action(self, dart_action);
 }
 
+static void full_screen_gaction_activated_cb(GSimpleAction* action,
+                                             GVariant* parameter,
+                                             gpointer user_data) {
+  MyApplication* self = MY_APPLICATION(user_data);
+  if (self->suppress_header_actions || self->modal_barrier_visible) {
+    return;
+  }
+  set_full_screen(self, !self->full_screen);
+  focus_flutter_view(self);
+  invoke_header_bar_action(self, "fullScreen");
+}
+
 static void add_header_gaction(MyApplication* self,
                                const gchar* action_name,
                                const gchar* dart_action) {
@@ -1466,6 +1553,13 @@ static void setup_header_actions(MyApplication* self) {
   add_header_gaction(self, "markdown-and-html", "markdownAndHtml");
   add_header_gaction(self, "report-issue", "reportIssue");
   add_header_gaction(self, "about", "aboutBusyMark");
+
+  self->full_screen_action = g_simple_action_new_stateful(
+      "full-screen", nullptr, g_variant_new_boolean(FALSE));
+  g_signal_connect(self->full_screen_action, "activate",
+                   G_CALLBACK(full_screen_gaction_activated_cb), self);
+  g_action_map_add_action(G_ACTION_MAP(self->header_action_group),
+                          G_ACTION(self->full_screen_action));
 
   self->view_mode_action = g_simple_action_new_stateful(
       "view-mode", G_VARIANT_TYPE_STRING, g_variant_new_string("split"));
@@ -1589,8 +1683,10 @@ static void set_localized_labels(MyApplication* self, FlValue* args) {
   const gchar* sidebar_shortcut =
       fl_lookup_string_arg(args, "sidebarShortcut");
   const gchar* back = fl_lookup_string_arg(args, "back");
+  const gchar* back_shortcut =
+      fl_lookup_string_arg(args, "backShortcut");
 
-  set_widget_tooltip(self->back_button, back);
+  set_widget_tooltip_with_shortcut(self->back_button, back, back_shortcut);
   set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar,
                                    sidebar_shortcut);
   set_widget_tooltip_with_shortcut(self->search_button, search,
@@ -1783,6 +1879,8 @@ static gboolean decode_header_bar_configuration(
                                    &configuration->sidebar_toggle_visible) ||
       !fl_lookup_optional_bool_arg(args, "backVisible",
                                    &configuration->back_visible) ||
+      !fl_lookup_optional_bool_arg(args, "fullScreen",
+                                   &configuration->full_screen) ||
       !fl_lookup_optional_bool_arg(args, "modalBarrierVisible",
                                    &configuration->modal_barrier_visible) ||
       !fl_lookup_int64_arg(args, "modalBarrierDepth",
@@ -1820,6 +1918,7 @@ static void apply_header_bar_configuration(
   set_sidebar_toggle_visible(self, configuration.sidebar_toggle_visible);
   set_search_visible(self, configuration.search_visible);
   set_back_visible(self, configuration.back_visible);
+  set_full_screen(self, configuration.full_screen);
   set_document_controls_visible(
       self, configuration.document_controls_visible);
   set_search_query(self, configuration.search_query);
@@ -1915,6 +2014,8 @@ static GtkWidget* create_busymark_titlebar(MyApplication* self) {
                    G_CALLBACK(search_entry_changed_cb), self);
   g_signal_connect(self->search_entry, "activate",
                    G_CALLBACK(search_entry_activate_cb), self);
+  g_signal_connect(self->search_entry, "key-press-event",
+                   G_CALLBACK(search_entry_key_press_cb), self);
   g_signal_connect(self->search_entry, "focus-in-event",
                    G_CALLBACK(search_entry_focus_in_cb), self);
   g_signal_connect(self->search_entry, "focus-out-event",
@@ -2813,6 +2914,7 @@ static void my_application_dispose(GObject* object) {
   g_clear_object(&self->main_menu_model);
   g_clear_object(&self->view_mode_menu_model);
   g_clear_object(&self->view_mode_action);
+  g_clear_object(&self->full_screen_action);
   g_clear_object(&self->header_action_group);
   g_clear_pointer(&self->background_color, g_free);
   g_clear_pointer(&self->sidebar_background_color, g_free);
@@ -2872,6 +2974,7 @@ static void my_application_init(MyApplication* self) {
   self->main_menu = nullptr;
   self->header_action_group = nullptr;
   self->view_mode_action = nullptr;
+  self->full_screen_action = nullptr;
   self->view_mode = nullptr;
   self->search_query = g_strdup("");
   self->background_color = g_strdup(kDefaultHeaderbarBackground);
@@ -2891,6 +2994,7 @@ static void my_application_init(MyApplication* self) {
   self->sidebar_visible = TRUE;
   self->text_direction_rtl = FALSE;
   self->back_visible = FALSE;
+  self->full_screen = FALSE;
   self->search_active = FALSE;
   self->modal_barrier_visible = FALSE;
   self->modal_barrier_depth = 0;

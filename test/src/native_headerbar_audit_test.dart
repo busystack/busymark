@@ -100,6 +100,7 @@ void main() {
       'sidebarWidth',
       'textDirection',
       'backVisible',
+      'fullScreen',
       'modalBarrierVisible',
       'modalBarrierDepth',
       'labels',
@@ -212,11 +213,13 @@ void main() {
     expect(service, contains('keyboardShortcuts'));
     expect(service, contains('markdownAndHtml'));
     expect(service, contains('reportIssue'));
+    expect(service, contains('fullScreen'));
     expect(app, contains('menu: l10n.mainMenu'));
     expect(app, contains('settings: l10n.settings'));
     expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
     expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
     expect(app, contains('reportIssue: l10n.reportIssue'));
+    expect(app, contains('fullScreen: l10n.fullScreen'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
@@ -226,6 +229,8 @@ void main() {
     expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.redo'));
     expect(shortcuts, contains("newDocumentLabel = 'Ctrl+N'"));
     expect(shortcuts, contains("saveLabel = 'Ctrl+S'"));
+    expect(shortcuts, contains("fullScreenLabel = 'F11'"));
+    expect(shortcuts, contains("backLabel = 'Alt+Left'"));
     expect(shortcuts, contains("undoLabel = 'Ctrl+Z'"));
     expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
@@ -242,6 +247,7 @@ void main() {
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
     expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(mainMenu, contains('label: l10n.exportAsPdf'));
+    expect(mainMenu, contains('label: l10n.fullScreen'));
     expect(mainMenu, contains('enabled: canExportPdf'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
@@ -249,6 +255,9 @@ void main() {
     expect(native, contains('rebuild_main_menu_model'));
     expect(native, contains('"header.keyboard-shortcuts"'));
     expect(native, contains('"header.export-pdf"'));
+    expect(native, contains('"header.full-screen"'));
+    expect(native, contains('full_screen_gaction_activated_cb'));
+    expect(native, contains('configuration.full_screen'));
     expect(native, contains('configuration.can_export_pdf'));
     expect(native, contains('"header.markdown-and-html"'));
     expect(native, contains('"header.report-issue"'));
@@ -1019,6 +1028,16 @@ void main() {
     expect(native, contains('"searchFocusChanged"'));
     expect(native, contains('"searchCleared"'));
     expect(native, contains('"searchEscapePressed"'));
+    expect(native, contains('sidebar_shortcut_action_for_key'));
+    expect(native, contains('GDK_KEY_KP_1'));
+    expect(native, contains('GDK_KEY_KP_5'));
+    expect(native, contains('"sidebarFiles"'));
+    expect(native, contains('"sidebarHistory"'));
+    expect(native, contains('modifiers != GDK_CONTROL_MASK'));
+    expect(
+      native,
+      contains('g_signal_connect(self->search_entry, "key-press-event",'),
+    );
     expect(native, contains('strcmp(method, "focusSearch") == 0'));
     expect(native, contains('enum class SearchQueryUpdateDisposition'));
     expect(native, contains('resolve_search_query_update(false, true)'));
@@ -1034,7 +1053,11 @@ void main() {
     );
     expect(native, contains('native_entry_has_authority'));
     expect(native, isNot(contains('echoes_last_native_query')));
-    expect(native, isNot(contains('"key-press-event"')));
+    expect(
+      RegExp(r'"key-press-event"').allMatches(native),
+      hasLength(1),
+      reason: 'Only the native-focus shortcut bridge handles raw keys.',
+    );
   });
 
   test(

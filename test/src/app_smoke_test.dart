@@ -24,6 +24,7 @@ import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
+import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/document_thematic_break.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
@@ -32,6 +33,7 @@ import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
 import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
@@ -42,6 +44,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -140,6 +143,85 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('main menu and F11 toggle full-screen mode', (tester) async {
+    final nativeWindow = _FakeNativeWindowController();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Finder fullScreenMenuItem() => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> &&
+          widget.label == l10n.fullScreen,
+    );
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.fullScreen), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcutLabels.fullScreen), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkPopupMenuItem<Object?>>(fullScreenMenuItem())
+          .checked,
+      isFalse,
+    );
+
+    await tester.tap(find.text(l10n.fullScreen));
+    await tester.pumpAndSettle();
+    expect(nativeWindow.fullScreenValues, [true]);
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BusyMarkPopupMenuItem<Object?>>(fullScreenMenuItem())
+          .checked,
+      isTrue,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f11);
+    await tester.pumpAndSettle();
+    expect(nativeWindow.fullScreenValues, [true, false]);
+  });
+
+  testWidgets('Alt+Left activates the header Back command', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
+    await tester.pumpAndSettle();
+    expect(
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
   });
 
   testWidgets('Escape closes header popup menus', (tester) async {
@@ -2080,6 +2162,23 @@ void main() {
   testWidgets('sidebar view shortcuts select workspace sidebar tabs', (
     tester,
   ) async {
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
     final temp = Directory.systemTemp.createTempSync('busymark_sidebar_keys_');
     addTearDown(() {
       temp.deleteSync(recursive: true);
@@ -2093,10 +2192,14 @@ void main() {
     final gitController = _PresetGitController(
       _gitSidebarShortcutState(temp.path),
     );
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(temp.path),
         gitControllerProvider.overrideWith(() => gitController),
@@ -2111,6 +2214,24 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    Future<void> pressDocumentViewShortcut(
+      LogicalKeyboardKey key,
+      DocumentViewModePreference expectedMode,
+    ) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        expectedMode,
+      );
     }
 
     await tester.pumpWidget(
@@ -2150,12 +2271,34 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
 
+    final activeEditorField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.controller?.text.contains('Intro.md') == true,
+    );
+    expect(activeEditorField, findsOneWidget);
+    await tester.tap(activeEditorField);
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(activeEditorField).focusNode?.hasFocus,
+      isTrue,
+      reason: 'The shortcut must work while the document field owns focus.',
+    );
+
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit2,
+      DocumentViewModePreference.source,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
 
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit3,
+      DocumentViewModePreference.preview,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
@@ -2205,18 +2348,48 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
 
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit4,
+      DocumentViewModePreference.split,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit5);
     expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
     expect(branchMenu, findsOneWidget);
 
+    await pressDocumentViewShortcut(
+      LogicalKeyboardKey.digit1,
+      DocumentViewModePreference.editor,
+    );
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
+    final outlineFileMenu = find.byKey(
+      const ValueKey('workspace-sidebar-outline-file-menu'),
+    );
+    expect(outlineFileMenu, findsOneWidget);
+    expect(find.byTooltip(first.path), findsOneWidget);
+    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.copyFileName), findsOneWidget);
+    expect(find.text(l10n.copyPath), findsOneWidget);
+    expect(find.text(l10n.openInFiles), findsOneWidget);
+
+    await tester.tap(find.text(l10n.copyFileName));
+    await tester.pumpAndSettle();
+    expect(clipboardText, 'Intro.md');
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.copyPath));
+    await tester.pumpAndSettle();
+    expect(clipboardText, first.path);
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
@@ -2233,7 +2406,7 @@ void main() {
     }
   });
 
-  testWidgets('Writerside sidebar keeps one gap below the project row', (
+  testWidgets('Writerside sidebar shortcuts survive document view changes', (
     tester,
   ) async {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -2281,6 +2454,32 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    Future<void> switchDocumentView(
+      LogicalKeyboardKey key,
+      DocumentViewModePreference expectedMode,
+    ) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        expectedMode,
+      );
+    }
+
+    final activeDocumentField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.controller?.text.contains('# Introduction') == true,
+    );
+    expect(activeDocumentField, findsOneWidget);
+    await tester.tap(activeDocumentField);
+    await tester.pump();
+
     final primaryRow = find.byKey(
       const ValueKey('workspace-sidebar-primary-row'),
     );
@@ -2309,6 +2508,11 @@ void main() {
       if (key == LogicalKeyboardKey.digit2) {
         return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
       }
+      if (key == LogicalKeyboardKey.digit3) {
+        return find.byKey(
+          const ValueKey('workspace-sidebar-outline-file-menu'),
+        );
+      }
       if (key == LogicalKeyboardKey.digit4 ||
           key == LogicalKeyboardKey.digit5) {
         return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
@@ -2318,13 +2522,53 @@ void main() {
 
     final actionMenuGuideRight = tester.getRect(primaryRow).right;
     double? actionMenuRight;
-    for (final (key, label, contextRow) in <(LogicalKeyboardKey, String, bool)>[
-      (LogicalKeyboardKey.digit1, 'Files', true),
-      (LogicalKeyboardKey.digit2, 'Topics', true),
-      (LogicalKeyboardKey.digit3, 'Outline', false),
-      (LogicalKeyboardKey.digit4, 'Commit', true),
-      (LogicalKeyboardKey.digit5, 'History', true),
-    ]) {
+    for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
+        in <
+          (
+            LogicalKeyboardKey,
+            String,
+            bool,
+            LogicalKeyboardKey,
+            DocumentViewModePreference,
+          )
+        >[
+          (
+            LogicalKeyboardKey.digit1,
+            'Files',
+            true,
+            LogicalKeyboardKey.digit2,
+            DocumentViewModePreference.source,
+          ),
+          (
+            LogicalKeyboardKey.digit2,
+            'Topics',
+            true,
+            LogicalKeyboardKey.digit3,
+            DocumentViewModePreference.preview,
+          ),
+          (
+            LogicalKeyboardKey.digit3,
+            'Outline',
+            true,
+            LogicalKeyboardKey.digit4,
+            DocumentViewModePreference.split,
+          ),
+          (
+            LogicalKeyboardKey.digit4,
+            'Commit',
+            true,
+            LogicalKeyboardKey.digit1,
+            DocumentViewModePreference.editor,
+          ),
+          (
+            LogicalKeyboardKey.digit5,
+            'History',
+            true,
+            LogicalKeyboardKey.digit3,
+            DocumentViewModePreference.preview,
+          ),
+        ]) {
+      await switchDocumentView(documentViewKey, expectedDocumentView);
       await selectView(key);
       expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
       final firstContent = find.byKey(firstContentKey);
@@ -3392,6 +3636,122 @@ void main() {
     );
   });
 
+  testWidgets('Editor and Preview share task-list presentation and wrapping', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const paragraph =
+        'P1 — Git push can target the wrong workspace. '
+        'lib/src/git/application/git_controller.dart captures repository A, '
+        'awaits its remotes, then reads the current repository again. '
+        'Switching repositories during that await can target the wrong remote.';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .toJson();
+    const service = _SearchWorkspaceService(
+      '- [x] $paragraph\n'
+      '- [ ] Pending task\n',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue('/tmp/wrap-parity.md'),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (var i = 0; i < 30; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is TextField && widget.controller?.text == paragraph,
+          )
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+
+    final editorField = find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.controller?.text == paragraph,
+    );
+    final editorRender = _findRenderEditable(
+      tester.renderObject<RenderObject>(editorField),
+    );
+    expect(editorRender, isNotNull);
+    final editorLineEnds = _visualLineEndOffsets(
+      paragraph,
+      (selection) => editorRender!.getBoxesForSelection(selection),
+    );
+    final editorFieldWidth = tester.getSize(editorField).width;
+    expect(editorLineEnds.length, greaterThan(1));
+    final editorCheckedMarker = _taskMarkerVisual(tester, checked: true);
+    final editorUncheckedMarker = _taskMarkerVisual(tester, checked: false);
+    final editorMarkerColors = BusyMarkSurfaceColors.of(
+      tester.element(editorCheckedMarker.finder),
+    );
+    final editorPrimary = Theme.of(
+      tester.element(editorCheckedMarker.finder),
+    ).colorScheme.primary;
+    expect(editorCheckedMarker.onTaskChanged, isNotNull);
+    expect(editorUncheckedMarker.onTaskChanged, isNotNull);
+    expect(editorCheckedMarker.color, editorPrimary);
+    expect(editorUncheckedMarker.color, editorMarkerColors.foreground);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final previewText = find.byWidgetPredicate(
+      (widget) => widget is Text && widget.textSpan?.toPlainText() == paragraph,
+    );
+    final previewRichText = find.descendant(
+      of: previewText,
+      matching: find.byType(RichText),
+    );
+    final previewRender = tester.renderObject<RenderParagraph>(previewRichText);
+    final previewLineEnds = _visualLineEndOffsets(
+      paragraph,
+      (selection) => previewRender.getBoxesForSelection(selection),
+    );
+    final previewCheckedMarker = _taskMarkerVisual(tester, checked: true);
+    final previewUncheckedMarker = _taskMarkerVisual(tester, checked: false);
+
+    expect(previewLineEnds, editorLineEnds);
+    expect(
+      tester.getSize(previewRichText).width,
+      closeTo(
+        editorFieldWidth - BusyMarkDocumentTextGeometry.editableLayoutInset,
+        0.01,
+      ),
+    );
+    expect(previewCheckedMarker.onTaskChanged, isNull);
+    expect(previewUncheckedMarker.onTaskChanged, isNull);
+    expect(previewCheckedMarker.size, editorCheckedMarker.size);
+    expect(previewUncheckedMarker.size, editorUncheckedMarker.size);
+    expect(previewCheckedMarker.glyphSize, editorCheckedMarker.glyphSize);
+    expect(previewUncheckedMarker.glyphSize, editorUncheckedMarker.glyphSize);
+    expect(previewCheckedMarker.color, editorCheckedMarker.color);
+    expect(previewUncheckedMarker.color, editorUncheckedMarker.color);
+  });
+
   testWidgets('Editor and Preview reuse the same quote shell geometry', (
     tester,
   ) async {
@@ -3607,7 +3967,7 @@ void main() {
     expect(previewStyle?.height, editorStyle?.height);
   });
 
-  testWidgets('Editor and Preview share heading and thematic-break geometry', (
+  testWidgets('Editor and Preview share professional heading hierarchy', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -3621,8 +3981,12 @@ void main() {
       ..value = AppSettings.defaults()
           .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
-    const headings = ['Third', 'Fourth', 'Fifth', 'Sixth'];
+    const headings = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
     const service = _SearchWorkspaceService('''
+# First
+
+## Second
+
 ### Third
 
 #### Fourth
@@ -3630,6 +3994,8 @@ void main() {
 ##### Fifth
 
 ###### Sixth
+
+Body paragraph.
 
 Before break.
 
@@ -3671,6 +4037,61 @@ After break.
       editorHeadingRects[heading] = tester.getRect(finder);
       editorHeadingStyles[heading] = tester.widget<TextField>(finder).style;
     }
+    final editorBody = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.controller?.text == 'Body paragraph.',
+    );
+    expect(editorBody, findsOneWidget);
+    final editorBodyStyle = tester.widget<TextField>(editorBody).style;
+    final editorBodyRect = tester.getRect(editorBody);
+    final editorColors = BusyMarkSurfaceColors.of(
+      tester.element(editorHeading(headings.first)),
+    );
+    final editorHeadingSizes = [
+      for (final heading in headings) editorHeadingStyles[heading]!.fontSize!,
+    ];
+    for (var index = 0; index < editorHeadingSizes.length - 1; index += 1) {
+      expect(
+        editorHeadingSizes[index],
+        greaterThan(editorHeadingSizes[index + 1]),
+        reason:
+            '${headings[index]} should be larger than '
+            '${headings[index + 1]}',
+      );
+    }
+    final editorBodySize = editorBodyStyle!.fontSize!;
+    for (var index = 0; index < editorHeadingSizes.length; index += 1) {
+      expect(
+        editorHeadingSizes[index],
+        greaterThan(editorBodySize),
+        reason: '${headings[index]} should be visibly larger than body text',
+      );
+    }
+    expect(
+      editorHeadingSizes[3],
+      lessThanOrEqualTo(editorBodySize * 1.11),
+      reason: 'H4 should not jump disproportionately above body text',
+    );
+    for (var index = 3; index < editorHeadingSizes.length - 1; index += 1) {
+      expect(
+        editorHeadingSizes[index] - editorHeadingSizes[index + 1],
+        lessThanOrEqualTo(editorBodySize * 0.03),
+        reason: 'H4-H6 should form a smooth visual progression',
+      );
+    }
+    for (final heading in headings.skip(3)) {
+      expect(
+        editorHeadingRects[heading]!.height,
+        greaterThanOrEqualTo(editorBodyRect.height - 0.1),
+        reason: '$heading should not render shorter than body text',
+      );
+    }
+    for (final style in editorHeadingStyles.values) {
+      expect(style?.color, editorColors.foreground);
+      expect(style?.fontWeight, FontWeight.w700);
+      expect(style?.height, isNotNull);
+      expect(style?.height, lessThan(BusyMarkTypography.bodyLineHeight));
+    }
     final editorBreak = find.byType(BusyMarkDocumentThematicBreak);
     expect(editorBreak, findsOneWidget);
     expect(
@@ -3702,11 +4123,13 @@ After break.
         (widget) => widget is Text && widget.textSpan?.toPlainText() == text,
       ),
     );
+    final previewHeadingStyles = <String, TextStyle?>{};
     for (final heading in headings) {
       final finder = previewHeading(heading);
       expect(finder, findsOneWidget);
       final previewRect = tester.getRect(finder);
       final previewStyle = tester.widget<Text>(finder).textSpan?.style;
+      previewHeadingStyles[heading] = previewStyle;
       final editorRect = editorHeadingRects[heading]!;
       final editorStyle = editorHeadingStyles[heading];
       expect(previewRect.left, closeTo(editorRect.left, 0.1));
@@ -3715,6 +4138,23 @@ After break.
       expect(previewStyle?.fontSize, editorStyle?.fontSize);
       expect(previewStyle?.fontWeight, editorStyle?.fontWeight);
       expect(previewStyle?.height, editorStyle?.height);
+    }
+    final previewBody = find.descendant(
+      of: previewContent,
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            widget.textSpan?.toPlainText() == 'Body paragraph.',
+      ),
+    );
+    expect(previewBody, findsOneWidget);
+    final previewBodyStyle = tester.widget<Text>(previewBody).textSpan?.style;
+    expect(previewBodyStyle?.fontSize, editorBodyStyle.fontSize);
+    for (final heading in headings) {
+      expect(
+        previewHeadingStyles[heading]?.color,
+        editorHeadingStyles[heading]?.color,
+      );
     }
 
     final previewBreak = find.byType(BusyMarkDocumentThematicBreak);
@@ -4186,7 +4626,12 @@ After break.
     expect(service.openedPath, startupPath);
     expect(find.text(l10n.openMarkdownFile), findsNothing);
     expect(find.textContaining('Basic Markdown'), findsWidgets);
-    expect(find.byTooltip(startupPath), findsNothing);
+    expect(find.byTooltip(startupPath), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('workspace-sidebar-outline-file-menu')),
+      findsOneWidget,
+    );
+    expect(find.byTooltip(l10n.fileActions), findsOneWidget);
     final primarySidebarLabel = find.descendant(
       of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
       matching: find.byType(Text),
@@ -4295,6 +4740,436 @@ Body.
       expect(service.saveCount, 0);
     },
   );
+
+  testWidgets('outline context menu edits complete heading sections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    const startupPath = '/tmp/outline-section-actions.md';
+    const source = '''
+# Root
+
+## Parent
+
+Parent intro.
+
+### Alpha
+
+Alpha body.
+
+#### Alpha child
+
+Child body.
+
+### Beta
+
+Beta body.
+
+### Gamma
+
+Gamma body.
+''';
+    const alphaSection = '''### Alpha
+
+Alpha body.
+
+#### Alpha child
+
+Child body.
+
+''';
+    const betaSection = '''### Beta
+
+Beta body.
+
+''';
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          final arguments = call.arguments as Map<Object?, Object?>;
+          clipboardText = arguments['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            validateOnEdit: false,
+            documentViewMode: DocumentViewModePreference.source,
+          )
+          .toJson();
+    const service = _SearchWorkspaceService(source);
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final outlineTree = find.byKey(
+      const ValueKey('workspace-sidebar-outline-tree'),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find
+          .descendant(of: outlineTree, matching: find.text('Alpha'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
+    expect(outlineTree, findsOneWidget);
+
+    Finder headingRow(String heading) =>
+        find.descendant(of: outlineTree, matching: find.text(heading));
+    Finder menuItem(String label) => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> && widget.label == label,
+    );
+    BusyMarkPopupMenuItem<Object?> popupItem(String label) =>
+        tester.widget<BusyMarkPopupMenuItem<Object?>>(menuItem(label));
+
+    Future<void> openMenu(String heading) async {
+      await tester.tap(headingRow(heading), buttons: kSecondaryButton);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> expectSource(String expected) async {
+      for (var index = 0; index < 30; index += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (container.read(workspaceControllerProvider).activeText ==
+            expected) {
+          break;
+        }
+      }
+      expect(container.read(workspaceControllerProvider).activeText, expected);
+    }
+
+    Future<void> resetSource() async {
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveText(source, sourceFilePath: startupPath);
+      await expectSource(source);
+      for (var index = 0; index < 30; index += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (headingRow('Beta').evaluate().isNotEmpty) {
+          break;
+        }
+      }
+    }
+
+    await openMenu('Alpha');
+    for (final label in [
+      l10n.copy,
+      l10n.cut,
+      l10n.promoteHeading,
+      l10n.demoteHeading,
+      l10n.moveSectionUp,
+      l10n.moveSectionDown,
+      l10n.delete,
+    ]) {
+      expect(menuItem(label), findsOneWidget);
+    }
+    expect(popupItem(l10n.promoteHeading).enabled, isTrue);
+    expect(popupItem(l10n.demoteHeading).enabled, isTrue);
+    expect(popupItem(l10n.moveSectionUp).enabled, isFalse);
+    expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
+
+    await tester.tap(find.text(l10n.copy));
+    await tester.pumpAndSettle();
+    expect(clipboardText, alphaSection);
+    expect(container.read(workspaceControllerProvider).activeText, source);
+
+    await openMenu('Alpha');
+    await tester.tap(find.text(l10n.promoteHeading));
+    final promoted = source
+        .replaceFirst('### Alpha', '## Alpha')
+        .replaceFirst('#### Alpha child', '### Alpha child');
+    await expectSource(promoted);
+
+    await resetSource();
+    await openMenu('Alpha');
+    await tester.tap(find.text(l10n.demoteHeading));
+    final demoted = source
+        .replaceFirst('### Alpha', '#### Alpha')
+        .replaceFirst('#### Alpha child', '##### Alpha child');
+    await expectSource(demoted);
+
+    await resetSource();
+    await openMenu('Alpha');
+    await tester.tap(find.text(l10n.moveSectionDown));
+    final movedDown = source.replaceFirst(
+      '$alphaSection$betaSection',
+      '$betaSection$alphaSection',
+    );
+    await expectSource(movedDown);
+
+    await resetSource();
+    await openMenu('Beta');
+    expect(popupItem(l10n.moveSectionUp).enabled, isTrue);
+    expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
+    await tester.tap(find.text(l10n.cut));
+    await expectSource(source.replaceFirst(betaSection, ''));
+    expect(clipboardText, betaSection);
+
+    await resetSource();
+    await openMenu('Beta');
+    await tester.tap(find.text(l10n.delete));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.confirmDeleteSectionTitle), findsOneWidget);
+    expect(find.text(l10n.confirmDeleteSectionMessage('Beta')), findsOneWidget);
+    await tester.tap(find.widgetWithText(BusyMarkDialogButton, l10n.delete));
+    await expectSource(source.replaceFirst(betaSection, ''));
+  });
+
+  testWidgets('outline highlights the heading at the document viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final source = [
+      '# First section',
+      '',
+      for (var index = 0; index < 40; index += 1) ...[
+        'First section paragraph $index.',
+        '',
+      ],
+      '## Second section',
+      '',
+      for (var index = 0; index < 40; index += 1) ...[
+        'Second section paragraph $index.',
+        '',
+      ],
+      '## Third section',
+      '',
+      for (var index = 0; index < 40; index += 1) ...[
+        'Third section paragraph $index.',
+        '',
+      ],
+    ].join('\n');
+    const startupPath = '/tmp/outline-scroll-position.md';
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(
+            autoSave: false,
+            documentViewMode: DocumentViewModePreference.preview,
+          )
+          .toJson();
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(settingsStore),
+        workspaceServiceProvider.overrideWithValue(
+          _SearchWorkspaceService(source),
+        ),
+        startupPathProvider.overrideWithValue(startupPath),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    final previewScroll = find.byKey(const ValueKey('preview-document-scroll'));
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (previewScroll.evaluate().isNotEmpty &&
+          find
+              .byKey(const ValueKey('workspace-sidebar-outline-row-2'))
+              .evaluate()
+              .isNotEmpty) {
+        break;
+      }
+    }
+
+    Finder outlineRow(int index) =>
+        find.byKey(ValueKey('workspace-sidebar-outline-row-$index'));
+    Color outlineRowColor(int index) {
+      final material = find.descendant(
+        of: outlineRow(index),
+        matching: find.byType(Material),
+      );
+      expect(material, findsOneWidget);
+      return tester.widget<Material>(material).color ?? Colors.transparent;
+    }
+
+    void expectSelectedOutlineRow(int selectedIndex) {
+      final selectedColor = busyMarkSelectedBackground(
+        tester.element(outlineRow(selectedIndex)),
+      );
+      for (var index = 0; index < 3; index += 1) {
+        expect(
+          outlineRowColor(index),
+          index == selectedIndex
+              ? selectedColor
+              : BusyMarkLinuxPalette.transparent,
+          reason: 'Outline row $index',
+        );
+      }
+    }
+
+    final firstOutlineRowTop = tester.getTopLeft(outlineRow(0)).dy;
+    Finder firstOutlineToggle() => find.descendant(
+      of: outlineRow(0),
+      matching: find.byIcon(
+        BusyMarkGlyphs.collapsedTreeArrowFor(TextDirection.ltr),
+      ),
+    );
+    expect(firstOutlineToggle(), findsOneWidget);
+    await tester.tap(firstOutlineToggle());
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.sidebarExpand);
+    await tester.pump();
+    expect(
+      tester.getTopLeft(outlineRow(0)).dy,
+      closeTo(firstOutlineRowTop, 1),
+      reason: 'Collapsing the Outline must preserve its top anchor.',
+    );
+    await tester.tap(firstOutlineToggle());
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.sidebarExpand);
+    await tester.pump();
+
+    final state = container.read(workspaceControllerProvider);
+    final outline = state.preview!.outline;
+    expect(outline.map((heading) => heading.text), [
+      'First section',
+      'Second section',
+      'Third section',
+    ]);
+    final secondPreviewIndex = state.preview!.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[1].id,
+    );
+    expect(secondPreviewIndex, isNonNegative);
+
+    expectSelectedOutlineRow(0);
+    tester
+        .widget<ScrollablePositionedList>(previewScroll)
+        .itemScrollController!
+        .jumpTo(index: secondPreviewIndex);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expectSelectedOutlineRow(1);
+
+    final thirdPreviewIndex = state.preview!.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[2].id,
+    );
+    expect(thirdPreviewIndex, isNonNegative);
+    await tester.tap(outlineRow(2));
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump();
+    final previewPositions = tester
+        .widget<ScrollablePositionedList>(previewScroll)
+        .itemPositionsNotifier!
+        .itemPositions
+        .value;
+    final thirdPreviewPosition = previewPositions.singleWhere(
+      (position) => position.index == thirdPreviewIndex,
+    );
+    expect(
+      thirdPreviewPosition.itemLeadingEdge,
+      closeTo(0, 0.005),
+      reason: 'Preview Outline navigation must use the tracking anchor.',
+    );
+    expectSelectedOutlineRow(2);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 100));
+    final editorScroll = find.byKey(const ValueKey('wysiwyg-document-scroll'));
+    expect(editorScroll, findsOneWidget);
+    final editorDocument = container
+        .read(workspaceControllerProvider)
+        .workspace!
+        .markdown!
+        .busyDocument;
+    final thirdEditorIndex = editorDocument.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[2].id,
+    );
+    expect(thirdEditorIndex, isNonNegative);
+    tester
+        .widget<ScrollablePositionedList>(editorScroll)
+        .itemScrollController!
+        .jumpTo(index: thirdEditorIndex);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expectSelectedOutlineRow(2);
+
+    final secondEditorIndex = editorDocument.blocks.indexWhere(
+      (block) => block.attributes['id'] == outline[1].id,
+    );
+    expect(secondEditorIndex, isNonNegative);
+    await tester.tap(outlineRow(1));
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump();
+    final editorPositions = tester
+        .widget<ScrollablePositionedList>(editorScroll)
+        .itemPositionsNotifier!
+        .itemPositions
+        .value;
+    final secondEditorPosition = editorPositions.singleWhere(
+      (position) => position.index == secondEditorIndex,
+    );
+    expect(
+      secondEditorPosition.itemLeadingEdge,
+      closeTo(0, 0.005),
+      reason: 'Outline navigation must use the viewport tracking anchor.',
+    );
+    expectSelectedOutlineRow(1);
+
+    await container
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 100));
+    final sourceEditor = find.byType(BusyMarkSourceEditor);
+    expect(sourceEditor, findsOneWidget);
+    tester
+        .state<BusyMarkSourceEditorState>(sourceEditor)
+        .scrollToLine(outline[1].sourceStartLine!);
+    await tester.pump();
+    await tester.pump(BusyMarkMotion.scroll);
+    await tester.pump(const Duration(milliseconds: 100));
+    expectSelectedOutlineRow(1);
+  });
 
   testWidgets('outline navigates to a renamed unsaved editor heading', (
     tester,
@@ -4953,10 +5828,54 @@ Draft paragraph.
           ),
         ),
       );
-      await tester.pump();
 
+      expect(find.byType(SvgPicture), findsNothing);
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
+
+      expect(find.textContaining('logo.svg'), findsNothing);
       expect(find.byType(SvgPicture), findsOneWidget);
-      expect(find.text('logo.svg'), findsNothing);
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  testWidgets('shared Markdown image renderer rejects oversized local SVGs', (
+    tester,
+  ) async {
+    final temp = Directory.systemTemp.createTempSync(
+      'busymark_preview_svg_oversized_',
+    );
+    try {
+      final padding = ''.padRight(1024 * 1024, 'x');
+      File('${temp.path}/oversized.svg').writeAsStringSync(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">'
+        '<!--$padding--><rect width="16" height="16" fill="#3584e4"/>'
+        '</svg>',
+      );
+      final markdown = File('${temp.path}/image.md')
+        ..writeAsStringSync('# Image\n\n![Large](oversized.svg)\n');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: MarkdownImageView(
+              source: 'oversized.svg',
+              alt: 'Large',
+              activeFilePath: markdown.path,
+              workspaceRoot: temp.path,
+              writersideRoot: null,
+              imagesDir: 'images',
+              allowRemoteImages: true,
+            ),
+          ),
+        ),
+      );
+      await _pumpUntilFound(tester, find.textContaining('oversized.svg'));
+
+      expect(find.byType(SvgPicture), findsNothing);
+      expect(find.textContaining('oversized.svg'), findsOneWidget);
     } finally {
       temp.deleteSync(recursive: true);
     }
@@ -5003,8 +5922,7 @@ Draft paragraph.
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
+        await _pumpUntilFound(tester, find.byType(SvgPicture));
 
         expect(tester.takeException(), isNull);
         expect(find.byType(SvgPicture), findsOneWidget);
@@ -5087,7 +6005,7 @@ Draft paragraph.
           ),
         ),
       );
-      await tester.pump();
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
 
       expect(tester.takeException(), isNull);
       expect(find.byType(SvgPicture), findsOneWidget);
@@ -5155,6 +6073,74 @@ Draft paragraph.
     expect(find.byType(TextField).evaluate().length, initialTextFields);
   });
 
+  testWidgets(
+    'workspace search awaits non-active file reads without blocking builds',
+    (tester) async {
+      final service = _DeferredWorkspaceSearchService();
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.preview)
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue(
+            _DeferredWorkspaceSearchService.activePath,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var i = 0; i < 20; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+          break;
+        }
+      }
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      await tester.enterText(find.byType(TextField), 'needle');
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(service.searchReadCount, 1);
+      expect(
+        find.byKey(const ValueKey('workspace-search-progress')),
+        findsOneWidget,
+      );
+
+      service.completeSearchRead('Delayed needle result');
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('workspace-search-progress')),
+        findsNothing,
+      );
+      expect(find.text('Delayed needle result'), findsOneWidget);
+
+      final settings = container.read(appSettingsControllerProvider);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setWordWrap(!settings.wordWrap);
+      await tester.pump();
+
+      expect(service.searchReadCount, 1);
+      expect(find.text('Delayed needle result'), findsOneWidget);
+    },
+  );
+
   testWidgets('preview search result clicks move preview scroll repeatedly', (
     tester,
   ) async {
@@ -5217,6 +6203,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'needle');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     expect(
@@ -5374,6 +6361,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'code needle');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     await _tapLeftmostText(tester, 'second code needle target');
@@ -5437,6 +6425,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'ac');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     await _tapLeftmostText(tester, target);
@@ -5450,7 +6439,7 @@ Draft paragraph.
     expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
   });
 
-  testWidgets('Editor and Preview share list indentation and run spacing', (
+  testWidgets('Editor and Preview share ordered list styling and geometry', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 800);
@@ -5466,8 +6455,8 @@ Draft paragraph.
           .toJson();
     final service = _SearchWorkspaceService(
       '# Title\n\n'
-      '- First item\n'
-      '- Second item\n'
+      '1. First item\n'
+      '2. Second item\n'
       '\n'
       'After list paragraph.\n',
     );
@@ -5500,9 +6489,18 @@ Draft paragraph.
     final editorMarkers = find.byType(BusyMarkDocumentListMarker);
     expect(editorMarkers, findsNWidgets(2));
     final editorMarkerRect = tester.getRect(editorMarkers.first);
+    final editorMarkerText = tester.widget<Text>(
+      find.descendant(of: editorMarkers.first, matching: find.text('1.')),
+    );
+    final editorMarkerColors = BusyMarkSurfaceColors.of(
+      tester.element(editorMarkers.first),
+    );
     final editorItemGap = editorSecond.top - editorFirst.bottom;
     final editorAfterListGap = editorAfter.top - editorSecond.bottom;
 
+    expect(editorMarkerRect.width, greaterThanOrEqualTo(24));
+    expect(editorMarkerText.style?.color, editorMarkerColors.foreground);
+    expect(editorMarkerText.style?.fontWeight, FontWeight.w600);
     expect(editorAfterListGap, greaterThan(editorItemGap + BusyMarkSpacing.xs));
 
     await container
@@ -5516,6 +6514,9 @@ Draft paragraph.
     final previewMarkers = find.byType(BusyMarkDocumentListMarker);
     expect(previewMarkers, findsNWidgets(2));
     final previewMarkerRect = tester.getRect(previewMarkers.first);
+    final previewMarkerText = tester.widget<Text>(
+      find.descendant(of: previewMarkers.first, matching: find.text('1.')),
+    );
     final previewItemGap = previewSecond.top - previewFirst.bottom;
     final previewAfterListGap = previewAfter.top - previewSecond.bottom;
 
@@ -5524,6 +6525,7 @@ Draft paragraph.
     expect(previewAfter.left, closeTo(editorAfter.left, 0.1));
     expect(previewMarkerRect.left, closeTo(editorMarkerRect.left, 0.1));
     expect(previewMarkerRect.width, editorMarkerRect.width);
+    expect(previewMarkerText.style, editorMarkerText.style);
     expect(previewItemGap, closeTo(editorItemGap, 0.1));
     expect(previewAfterListGap, closeTo(editorAfterListGap, 0.1));
   });
@@ -5658,6 +6660,7 @@ Draft paragraph.
     await tester.pump();
 
     await tester.enterText(find.byType(TextField), 'ac');
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pump();
 
     await _tapLeftmostText(tester, target);
@@ -5783,6 +6786,81 @@ Draft paragraph.
       editedText,
     );
   });
+}
+
+RenderEditable? _findRenderEditable(RenderObject root) {
+  if (root is RenderEditable) {
+    return root;
+  }
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findRenderEditable(child);
+  });
+  return result;
+}
+
+List<int> _visualLineEndOffsets(
+  String text,
+  List<TextBox> Function(TextSelection selection) boxesForSelection,
+) {
+  final ends = <int>[];
+  double? previousTop;
+  for (var offset = 0; offset < text.length; offset += 1) {
+    final boxes = boxesForSelection(
+      TextSelection(baseOffset: offset, extentOffset: offset + 1),
+    );
+    if (boxes.isEmpty) {
+      continue;
+    }
+    final top = boxes.first.top;
+    final priorTop = previousTop;
+    if (priorTop != null && (top - priorTop).abs() > 0.01) {
+      ends.add(offset);
+    }
+    previousTop = top;
+  }
+  ends.add(text.length);
+  return ends;
+}
+
+({
+  Finder finder,
+  Size size,
+  Color? color,
+  double? glyphSize,
+  ValueChanged<bool>? onTaskChanged,
+})
+_taskMarkerVisual(WidgetTester tester, {required bool checked}) {
+  final markerFinder = find.byWidgetPredicate(
+    (widget) => widget is BusyMarkDocumentListMarker && widget.task == checked,
+  );
+  expect(markerFinder, findsOneWidget);
+  final marker = tester.widget<BusyMarkDocumentListMarker>(markerFinder);
+  final iconFinder = find.descendant(
+    of: markerFinder,
+    matching: find.byIcon(
+      checked ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
+    ),
+  );
+  expect(iconFinder, findsOneWidget);
+  final icon = tester.widget<Icon>(iconFinder);
+  final iconTheme = IconTheme.of(tester.element(iconFinder));
+  return (
+    finder: markerFinder,
+    size: tester.getSize(markerFinder),
+    color: icon.color ?? iconTheme.color,
+    glyphSize: icon.size ?? iconTheme.size,
+    onTaskChanged: marker.onTaskChanged,
+  );
+}
+
+Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 20 && finder.evaluate().isEmpty; i += 1) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+  }
 }
 
 double _largestScrollableOffset(WidgetTester tester) {
@@ -6038,6 +7116,7 @@ class _MutableWorkspaceController extends WorkspaceController {
       variables: module.variables,
       categories: module.categories,
       diagnostics: module.diagnostics,
+      validatedImageDirs: module.validatedImageDirs,
     );
     state = state.copyWith(
       workspace: workspace.copyWith(writersideModule: updatedModule),
@@ -6348,6 +7427,76 @@ class _SearchWorkspaceService extends WorkspaceService {
   }
 }
 
+class _DeferredWorkspaceSearchService extends WorkspaceService {
+  _DeferredWorkspaceSearchService();
+
+  static const activePath = '/tmp/busymark-search-active.md';
+  static const secondaryPath = '/tmp/busymark-search-secondary.md';
+  static const _activeSource = '# Active document\n';
+
+  final Completer<String> _searchRead = Completer<String>();
+  int searchReadCount = 0;
+
+  @override
+  Future<Workspace> openPath(String path) async {
+    final markdown = markdownParser.parse(
+      filePath: activePath,
+      source: _activeSource,
+    );
+    return Workspace(
+      id: '/tmp/busymark-search-workspace',
+      rootPath: '/tmp',
+      kind: WorkspaceKind.singleMarkdown,
+      openedAt: DateTime(2026),
+      activeFilePath: activePath,
+      activeFileModifiedAt: DateTime(2026),
+      files: [
+        DocumentFile(
+          absolutePath: activePath,
+          relativePath: 'active.md',
+          kind: DocumentKind.markdown,
+          size: _activeSource.length,
+          lastModified: DateTime(2026),
+        ),
+        DocumentFile(
+          absolutePath: secondaryPath,
+          relativePath: 'secondary.md',
+          kind: DocumentKind.markdown,
+          size: 64,
+          lastModified: DateTime(2026),
+        ),
+      ],
+      diagnostics: markdown.diagnostics,
+      markdown: markdown,
+    );
+  }
+
+  @override
+  Future<String> loadText(String path) {
+    if (path == secondaryPath) {
+      searchReadCount += 1;
+      return _searchRead.future;
+    }
+    return Future.value(_activeSource);
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    return WorkspaceFileLoad(
+      text: _activeSource,
+      snapshot: WorkspaceFileSnapshot(
+        modifiedAt: DateTime(2026),
+        size: _activeSource.length,
+        contentHash: 'deferred-search-active',
+      ),
+    );
+  }
+
+  void completeSearchRead(String source) {
+    _searchRead.complete(source);
+  }
+}
+
 class _PresetGitController extends GitController {
   _PresetGitController(this.initialState);
 
@@ -6606,8 +7755,10 @@ class _MemorySettingsStore implements LocalSettingsStore {
 
 class _FakeNativeWindowController implements NativeWindowController {
   final preventCloseValues = <bool>[];
+  final fullScreenValues = <bool>[];
   final listeners = <WindowListener>[];
   var closeCount = 0;
+  var fullScreen = false;
 
   @override
   Future<void> setPreventClose(bool value) async {
@@ -6617,6 +7768,15 @@ class _FakeNativeWindowController implements NativeWindowController {
   @override
   Future<void> close() async {
     closeCount++;
+  }
+
+  @override
+  Future<bool> isFullScreen() async => fullScreen;
+
+  @override
+  Future<void> setFullScreen(bool value) async {
+    fullScreen = value;
+    fullScreenValues.add(value);
   }
 
   @override

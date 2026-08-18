@@ -12,7 +12,9 @@ import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
+import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../app/window_control_service.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
 
@@ -305,11 +307,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
       case HeaderBarAction.exportPdf:
+      case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
       case HeaderBarAction.viewModePreview:
       case HeaderBarAction.viewModeSplit:
+      case HeaderBarAction.sidebarFiles:
+      case HeaderBarAction.sidebarToc:
+      case HeaderBarAction.sidebarOutline:
+      case HeaderBarAction.sidebarGit:
+      case HeaderBarAction.sidebarHistory:
         break;
     }
   }
@@ -322,6 +330,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
         break;
+      case BusyMarkMainMenuAction.fullScreen:
+        unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         _selectPage(SettingsPage.appearance);
       case BusyMarkMainMenuAction.keyboardShortcuts:
@@ -487,6 +497,7 @@ class _SettingsFallbackHeader extends StatelessWidget {
             BusyMarkHeaderIconButton(
               tooltip: context.l10n.back,
               icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+              shortcut: BusyMarkAppShortcutLabels.back,
               onPressed: onBack,
             ),
             const SizedBox(width: BusyMarkSpacing.sm),

@@ -279,7 +279,14 @@ abstract class LocalSettingsStore {
 }
 
 class JsonFileLocalSettingsStore implements LocalSettingsStore {
-  const JsonFileLocalSettingsStore();
+  const JsonFileLocalSettingsStore({
+    String? settingsFilePathOverride,
+    Future<void> Function(File stagedFile, File targetFile)? beforePublish,
+  }) : _settingsFilePathOverride = settingsFilePathOverride,
+       _beforePublish = beforePublish;
+
+  final String? _settingsFilePathOverride;
+  final Future<void> Function(File stagedFile, File targetFile)? _beforePublish;
 
   @override
   Future<Map<String, Object?>> load() async {
@@ -297,11 +304,41 @@ class JsonFileLocalSettingsStore implements LocalSettingsStore {
   @override
   Future<void> save(Map<String, Object?> json) async {
     final file = await _settingsFile();
+    final content = const JsonEncoder.withIndent('  ').convert(json);
     await file.parent.create(recursive: true);
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(json));
+    // Keep staging on the target filesystem so publication is one atomic
+    // directory-entry replacement after the complete JSON has been flushed.
+    final stagingDirectory = await file.parent.createTemp(
+      '.busymark-settings-',
+    );
+    final stagedFile = File(p.join(stagingDirectory.path, 'settings.json'));
+    try {
+      await stagedFile.writeAsString(content, flush: true);
+      await _beforePublish?.call(stagedFile, file);
+      await stagedFile.rename(file.path);
+    } finally {
+      try {
+        if (await stagedFile.exists()) {
+          await stagedFile.delete();
+        }
+      } on Object {
+        // Cleanup must not hide the original save result or error.
+      }
+      try {
+        if (await stagingDirectory.exists()) {
+          await stagingDirectory.delete(recursive: true);
+        }
+      } on Object {
+        // Cleanup must not turn a successful atomic replacement into a failure.
+      }
+    }
   }
 
   Future<File> _settingsFile() async {
+    final override = _settingsFilePathOverride;
+    if (override != null) {
+      return File(override);
+    }
     final directory = await getApplicationSupportDirectory();
     return File(p.join(directory.path, 'settings.json'));
   }

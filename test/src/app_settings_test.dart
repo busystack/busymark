@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   test('window behavior defaults protect unsaved changes', () {
@@ -137,6 +139,111 @@ void main() {
       isNot(containsPair('officialBuilderIntegrationEnabled', anything)),
     );
   });
+
+  test(
+    'file settings store keeps the live JSON intact until publication',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-settings-atomic-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final settingsPath = p.join(directory.path, 'settings.json');
+      final target = File(settingsPath);
+      final initialStore = JsonFileLocalSettingsStore(
+        settingsFilePathOverride: settingsPath,
+      );
+      await initialStore.save(<String, Object?>{'generation': 1});
+      final publishReached = Completer<void>();
+      final allowPublish = Completer<void>();
+      addTearDown(() {
+        if (!allowPublish.isCompleted) {
+          allowPublish.complete();
+        }
+      });
+      final store = JsonFileLocalSettingsStore(
+        settingsFilePathOverride: settingsPath,
+        beforePublish: (stagedFile, targetFile) async {
+          publishReached.complete();
+          expect(targetFile.path, target.path);
+          expect(
+            (jsonDecode(await targetFile.readAsString()) as Map)['generation'],
+            1,
+          );
+          expect(
+            (jsonDecode(await stagedFile.readAsString()) as Map)['generation'],
+            2,
+          );
+          expect(p.dirname(stagedFile.parent.path), directory.path);
+          await allowPublish.future;
+        },
+      );
+
+      final save = store.save(<String, Object?>{'generation': 2});
+      await publishReached.future;
+
+      expect((jsonDecode(await target.readAsString()) as Map)['generation'], 1);
+      allowPublish.complete();
+      await save;
+
+      expect((await store.load())['generation'], 2);
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) =>
+                  p.basename(entity.path).startsWith('.busymark-settings-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'failed settings publication preserves the previous valid JSON',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-settings-failure-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final settingsPath = p.join(directory.path, 'settings.json');
+      final initialStore = JsonFileLocalSettingsStore(
+        settingsFilePathOverride: settingsPath,
+      );
+      await initialStore.save(<String, Object?>{'generation': 1});
+      final interruptedStore = JsonFileLocalSettingsStore(
+        settingsFilePathOverride: settingsPath,
+        beforePublish: (stagedFile, targetFile) {
+          throw StateError('simulated interruption before atomic publication');
+        },
+      );
+
+      await expectLater(
+        interruptedStore.save(<String, Object?>{'generation': 2}),
+        throwsStateError,
+      );
+
+      expect((await initialStore.load())['generation'], 1);
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) =>
+                  p.basename(entity.path).startsWith('.busymark-settings-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+  );
 
   test('window behavior settings persist', () async {
     final store = _MemorySettingsStore();

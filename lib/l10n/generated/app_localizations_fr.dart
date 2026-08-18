@@ -159,6 +159,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get copyName => 'Copier le nom';
 
   @override
+  String get copyFileName => 'Copier le nom du fichier';
+
+  @override
   String get copyPath => 'Copier le chemin';
 
   @override
@@ -169,6 +172,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get cut => 'Couper';
+
+  @override
+  String get promoteHeading => 'Promouvoir le titre';
+
+  @override
+  String get demoteHeading => 'Rétrograder le titre';
+
+  @override
+  String get moveSectionUp => 'Déplacer la section vers le haut';
+
+  @override
+  String get moveSectionDown => 'Déplacer la section vers le bas';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Supprimer la section ?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Supprimer « $name » et tout le contenu de sa section ? Cette action est irréversible.';
+  }
 
   @override
   String get darkTheme => 'Sombre';
@@ -202,6 +225,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mainMenu => 'Menu principal';
+
+  @override
+  String get fullScreen => 'Plein écran';
 
   @override
   String get markdown => 'Markdown';
@@ -2167,7 +2193,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Actions sur le fichier';
+  String get fileActions => 'Actions sur le fichier';
 
   @override
   String get gitStatusAdded => 'Ajouté';

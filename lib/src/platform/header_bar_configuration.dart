@@ -30,10 +30,14 @@ class HeaderBarLabels {
     required this.sidebar,
     required this.sidebarShortcut,
     required this.back,
+    required this.backShortcut,
     required this.save,
     required this.exportPdf,
     required this.exportPdfShortcut,
     required this.exportPdfGtkAccelerator,
+    required this.fullScreen,
+    required this.fullScreenShortcut,
+    required this.fullScreenGtkAccelerator,
     required this.settings,
     required this.settingsShortcut,
     required this.settingsGtkAccelerator,
@@ -67,10 +71,14 @@ class HeaderBarLabels {
   final String sidebar;
   final String sidebarShortcut;
   final String back;
+  final String backShortcut;
   final String save;
   final String exportPdf;
   final String exportPdfShortcut;
   final String exportPdfGtkAccelerator;
+  final String fullScreen;
+  final String fullScreenShortcut;
+  final String fullScreenGtkAccelerator;
   final String settings;
   final String settingsShortcut;
   final String settingsGtkAccelerator;
@@ -104,10 +112,14 @@ class HeaderBarLabels {
     'sidebar': sidebar,
     'sidebarShortcut': sidebarShortcut,
     'back': back,
+    'backShortcut': backShortcut,
     'save': save,
     'exportPdf': exportPdf,
     'exportPdfShortcut': exportPdfShortcut,
     'exportPdfGtkAccelerator': exportPdfGtkAccelerator,
+    'fullScreen': fullScreen,
+    'fullScreenShortcut': fullScreenShortcut,
+    'fullScreenGtkAccelerator': fullScreenGtkAccelerator,
     'settings': settings,
     'settingsShortcut': settingsShortcut,
     'settingsGtkAccelerator': settingsGtkAccelerator,
@@ -289,6 +301,7 @@ class HeaderBarConfiguration {
     required this.sidebarVisible,
     required this.sidebarToggleVisible,
     required this.backVisible,
+    required this.fullScreen,
     required this.modalBarrierDepth,
     required this.sidebarWidth,
     required this.labels,
@@ -309,6 +322,7 @@ class HeaderBarConfiguration {
   final bool sidebarVisible;
   final bool sidebarToggleVisible;
   final bool backVisible;
+  final bool fullScreen;
   final int modalBarrierDepth;
   final double sidebarWidth;
   final HeaderBarLabels labels;
@@ -330,6 +344,7 @@ class HeaderBarConfiguration {
     bool? sidebarVisible,
     bool? sidebarToggleVisible,
     bool? backVisible,
+    bool? fullScreen,
     int? modalBarrierDepth,
     double? sidebarWidth,
     HeaderBarLabels? labels,
@@ -350,6 +365,7 @@ class HeaderBarConfiguration {
       sidebarVisible: sidebarVisible ?? this.sidebarVisible,
       sidebarToggleVisible: sidebarToggleVisible ?? this.sidebarToggleVisible,
       backVisible: backVisible ?? this.backVisible,
+      fullScreen: fullScreen ?? this.fullScreen,
       modalBarrierDepth: modalBarrierDepth ?? this.modalBarrierDepth,
       sidebarWidth: sidebarWidth ?? this.sidebarWidth,
       labels: labels ?? this.labels,
@@ -371,6 +387,7 @@ class HeaderBarConfiguration {
     'sidebarVisible': sidebarVisible,
     'sidebarToggleVisible': sidebarToggleVisible,
     'backVisible': backVisible,
+    'fullScreen': fullScreen,
     'modalBarrierVisible': modalBarrierVisible,
     'modalBarrierDepth': modalBarrierDepth,
     'sidebarWidth': sidebarWidth,
@@ -391,6 +408,7 @@ class HeaderBarConfiguration {
         sidebarVisible == other.sidebarVisible &&
         sidebarToggleVisible == other.sidebarToggleVisible &&
         backVisible == other.backVisible &&
+        fullScreen == other.fullScreen &&
         modalBarrierDepth == other.modalBarrierDepth &&
         sidebarWidth == other.sidebarWidth &&
         labels == other.labels &&
@@ -420,6 +438,7 @@ class HeaderBarConfiguration {
     sidebarVisible,
     sidebarToggleVisible,
     backVisible,
+    fullScreen,
     modalBarrierDepth,
     sidebarWidth,
     labels,

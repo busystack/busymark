@@ -35,6 +35,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData folder = YaruIcons.folder;
   static const IconData folderOpen = YaruIcons.folder_open;
   static const IconData font = YaruIcons.font;
+  static const IconData fullScreen = YaruIcons.fullscreen;
   static const IconData goTop = YaruIcons.go_top;
   static const IconData hardBreak = YaruIcons.go_down;
   static const IconData heading = YaruIcons.font;
@@ -87,6 +88,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData underline = YaruIcons.underline;
   static const IconData undo = YaruIcons.undo;
   static const IconData unorderedList = YaruIcons.unordered_list;
+  static const IconData upArrow = YaruIcons.pan_up;
   static const IconData warning = YaruIcons.warning;
   static const IconData writersideProject = YaruIcons.book;
 
@@ -171,10 +173,13 @@ abstract final class BusyMarkGlyphs {
     if (icon == font || icon == heading) {
       return 'font-select-symbolic';
     }
+    if (icon == fullScreen) {
+      return 'view-fullscreen-symbolic';
+    }
     if (icon == goTop || icon == toolbarPlacement) {
       return 'go-top-symbolic';
     }
-    if (icon == hardBreak) {
+    if (icon == downArrow || icon == hardBreak) {
       return 'go-down-symbolic';
     }
     if (icon == hide) {
@@ -281,6 +286,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == unorderedList) {
       return 'format-unordered-list-symbolic';
+    }
+    if (icon == upArrow) {
+      return 'go-up-symbolic';
     }
     if (icon == warning) {
       return 'dialog-warning-symbolic';

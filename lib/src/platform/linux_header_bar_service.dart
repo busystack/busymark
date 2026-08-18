@@ -17,6 +17,7 @@ enum HeaderBarAction {
   refresh,
   save,
   exportPdf,
+  fullScreen,
   menu,
   settings,
   keyboardShortcuts,
@@ -27,6 +28,11 @@ enum HeaderBarAction {
   viewModeSource,
   viewModePreview,
   viewModeSplit,
+  sidebarFiles,
+  sidebarToc,
+  sidebarOutline,
+  sidebarGit,
+  sidebarHistory,
 }
 
 class HeaderBarActionEvent {
@@ -386,6 +392,7 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'refresh' => HeaderBarAction.refresh,
       'save' => HeaderBarAction.save,
       'exportPdf' => HeaderBarAction.exportPdf,
+      'fullScreen' => HeaderBarAction.fullScreen,
       'menu' => HeaderBarAction.menu,
       'settings' => HeaderBarAction.settings,
       'keyboardShortcuts' => HeaderBarAction.keyboardShortcuts,
@@ -396,6 +403,11 @@ class LinuxHeaderBarService extends ChangeNotifier {
       'viewModeSource' => HeaderBarAction.viewModeSource,
       'viewModePreview' => HeaderBarAction.viewModePreview,
       'viewModeSplit' => HeaderBarAction.viewModeSplit,
+      'sidebarFiles' => HeaderBarAction.sidebarFiles,
+      'sidebarToc' => HeaderBarAction.sidebarToc,
+      'sidebarOutline' => HeaderBarAction.sidebarOutline,
+      'sidebarGit' => HeaderBarAction.sidebarGit,
+      'sidebarHistory' => HeaderBarAction.sidebarHistory,
       _ => null,
     };
   }

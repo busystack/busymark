@@ -44,7 +44,7 @@ void main() {
       r'class _RenderedHtmlBlock[\s\S]*?class _RenderedHtmlBlocks',
     ).firstMatch(widgets)!.group(0)!;
     final tableEditor = RegExp(
-      r'class _TableBlockEditor[\s\S]*?class _TableCornerCell',
+      r'class _TableBlockEditor[\s\S]*?class _TableColumnControlCell',
     ).firstMatch(widgets)!.group(0)!;
     final tableMenu = RegExp(
       r'class _TableControlMenuButton[\s\S]*?class _TableCellEditor',

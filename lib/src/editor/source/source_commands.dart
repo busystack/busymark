@@ -183,8 +183,15 @@ abstract final class SourceCommands {
     final markerPattern = RegExp(
       r'^(\s*)(?:#{1,6}\s+)?(?:[-*+]\s+(?:\[[ xX]\]\s+)?|\d+[.)]\s+)?(.*)$',
     );
+    if (command == SourceBlockCommand.orderedList) {
+      return _replaceLineRange(
+        value,
+        range,
+        _orderedListLines(range.lines, markerPattern).join('\n'),
+      );
+    }
     final replacementLines = <String>[];
-    for (final (index, line) in range.lines.indexed) {
+    for (final line in range.lines) {
       final match = markerPattern.firstMatch(line);
       final indent = match?.group(1) ?? '';
       final content = match?.group(2) ?? line.trimLeft();
@@ -196,7 +203,9 @@ abstract final class SourceCommands {
         SourceBlockCommand.heading4 => '#### ',
         SourceBlockCommand.heading5 => '##### ',
         SourceBlockCommand.heading6 => '###### ',
-        SourceBlockCommand.orderedList => '${index + 1}. ',
+        SourceBlockCommand.orderedList => throw StateError(
+          'Ordered lists are handled above.',
+        ),
         SourceBlockCommand.unorderedList => '- ',
         SourceBlockCommand.taskList => '- [ ] ',
       };
@@ -344,15 +353,69 @@ abstract final class SourceCommands {
 ) {
   final selection = _normalizedSelection(value);
   final text = value.text;
+  var effectiveEnd = selection.end;
+  if (!selection.isCollapsed &&
+      effectiveEnd > selection.start &&
+      text.codeUnitAt(effectiveEnd - 1) == 0x0a) {
+    effectiveEnd -= 1;
+  }
   final lineStart =
       text.lastIndexOf('\n', math.max(0, selection.start - 1)) + 1;
-  final nextBreak = text.indexOf('\n', selection.end);
+  final nextBreak = text.indexOf('\n', effectiveEnd);
   final lineEnd = nextBreak < 0 ? text.length : nextBreak;
   return (
     start: lineStart,
     end: lineEnd,
     lines: text.substring(lineStart, lineEnd).split('\n'),
   );
+}
+
+List<String> _orderedListLines(List<String> lines, RegExp markerPattern) {
+  final levels = <_OrderedListLevel>[];
+  final result = <String>[];
+  for (final line in lines) {
+    final match = markerPattern.firstMatch(line);
+    final inputIndent = match?.group(1) ?? '';
+    final inputColumns = _indentColumns(inputIndent);
+    final content = match?.group(2) ?? line.trimLeft();
+    while (levels.isNotEmpty && levels.last.inputColumns > inputColumns) {
+      levels.removeLast();
+    }
+    if (levels.isEmpty || levels.last.inputColumns < inputColumns) {
+      final outputIndent = levels.isEmpty
+          ? inputIndent
+          : '${levels.last.outputIndent}${' ' * (levels.last.markerWidth + 1)}';
+      levels.add(
+        _OrderedListLevel(
+          inputColumns: inputColumns,
+          outputIndent: outputIndent,
+        ),
+      );
+    }
+    final level = levels.last;
+    level.number += 1;
+    final marker = '${level.number}.';
+    level.markerWidth = marker.length;
+    result.add('${level.outputIndent}$marker $content');
+  }
+  return result;
+}
+
+int _indentColumns(String indentation) {
+  var columns = 0;
+  for (final codeUnit in indentation.codeUnits) {
+    columns += codeUnit == 0x09 ? 4 : 1;
+  }
+  return columns;
+}
+
+class _OrderedListLevel {
+  _OrderedListLevel({required this.inputColumns, required this.outputIndent});
+
+  final int inputColumns;
+  final String outputIndent;
+  int number = 0;
+  int markerWidth = 2;
 }
 
 TextSelection _normalizedSelection(TextEditingValue value) {

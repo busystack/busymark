@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show CheckedState;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -13,6 +14,8 @@ import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_layout.dart';
+import 'package:busymark/src/editor/document_list_marker.dart';
+import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
@@ -2837,6 +2840,17 @@ void main() {}
     );
     await tester.pump();
 
+    final paragraphField = tester.widget<TextField>(
+      find.byType(TextField).at(1),
+    );
+    expect(
+      paragraphField.selectionHeightStyle,
+      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+    );
+    expect(
+      paragraphField.selectionWidthStyle,
+      BusyMarkDocumentTextGeometry.selectionWidthStyle,
+    );
     final textFieldRender = tester.renderObject<RenderObject>(
       find.byType(TextField).at(1),
     );
@@ -2860,6 +2874,14 @@ void main() {}
     final painter = customPaint.painter! as dynamic;
     expect(painter.selectionRange.start, 0);
     expect(painter.selectionRange.end, firstParagraph.length);
+    final painterContext = tester.element(painterFinder.at(1));
+    expect(
+      painter.color,
+      DefaultSelectionStyle.of(painterContext).selectionColor ??
+          Theme.of(painterContext).colorScheme.primary.withValues(
+            alpha: BusyMarkDocumentTextGeometry.fallbackSelectionAlpha,
+          ),
+    );
 
     final paintBox = tester.renderObject<RenderBox>(painterFinder.at(1));
     final painterText =
@@ -2879,20 +2901,19 @@ void main() {}
         baseOffset: exampleStart,
         extentOffset: exampleStart + 'example.'.length,
       ),
+      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
     painterText.dispose();
 
     expect(highlightBoxes, hasLength(exampleBoxes.length));
-    final lineTolerance =
-        (exampleBoxes.last.bottom - exampleBoxes.last.top) / 3;
-    expect(
-      (highlightBoxes.last.top - exampleBoxes.last.top).abs(),
-      lessThan(lineTolerance),
-    );
-    expect(
-      (highlightBoxes.last.bottom - exampleBoxes.last.bottom).abs(),
-      lessThan(lineTolerance),
-    );
+    for (var index = 0; index < exampleBoxes.length; index += 1) {
+      expect(highlightBoxes[index].top, closeTo(exampleBoxes[index].top, 0.01));
+      expect(
+        highlightBoxes[index].bottom,
+        closeTo(exampleBoxes[index].bottom, 0.01),
+      );
+    }
   });
 
   testWidgets('WYSIWYG Ctrl+X cuts block selection', (tester) async {
@@ -5154,6 +5175,62 @@ void main() {}
     expect(find.byType(TextField).evaluate().length, lessThan(80));
   });
 
+  testWidgets('WYSIWYG task checkbox toggles directly when clicked', (
+    tester,
+  ) async {
+    final semanticsHandle = tester.ensureSemantics();
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- [ ] Clickable task\n',
+    );
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final marker = find.byType(BusyMarkDocumentListMarker);
+    expect(marker, findsOneWidget);
+    expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isFalse);
+    final semanticCheckbox = find.bySemanticsLabel('Toggle task checked');
+    expect(semanticCheckbox, findsOneWidget);
+    expect(
+      tester.getSemantics(semanticCheckbox).flagsCollection.isChecked,
+      CheckedState.isFalse,
+    );
+
+    await tester.tap(marker);
+    await tester.pump();
+
+    expect(markdown, '- [x] Clickable task\n');
+    expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isTrue);
+    expect(
+      tester.getSemantics(semanticCheckbox).flagsCollection.isChecked,
+      CheckedState.isTrue,
+    );
+
+    await tester.tap(marker);
+    await tester.pump();
+
+    expect(markdown, '- [ ] Clickable task\n');
+    expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isFalse);
+    semanticsHandle.dispose();
+  });
+
   test('WYSIWYG block commands serialize headings and lists', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'Title\n');
     final controller = BusyMarkWysiwygDocumentController(
@@ -5541,10 +5618,28 @@ void main() {}
     );
     await tester.pump();
 
-    expect(find.byType(Table), findsOneWidget);
+    final tableFinder = find.byType(Table);
+    final deleteTableFinder = find.byTooltip('Delete table');
+    expect(tableFinder, findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(5));
     expect(find.text('| Header 1 | Header 2 |'), findsNothing);
-    expect(find.byTooltip('Delete table'), findsOneWidget);
+    expect(deleteTableFinder, findsOneWidget);
+    expect(
+      find.descendant(of: tableFinder, matching: deleteTableFinder),
+      findsOneWidget,
+    );
+    final framedTableAncestors = <DecoratedBox>[];
+    tester.element(tableFinder).visitAncestorElements((element) {
+      if (element.widget is BusyMarkWysiwygBlockField) {
+        return false;
+      }
+      if (element.widget case final DecoratedBox decoratedBox) {
+        framedTableAncestors.add(decoratedBox);
+      }
+      return true;
+    });
+    expect(framedTableAncestors, isEmpty);
+    expect(busyMarkWysiwygContentPadding(widgetTable), EdgeInsets.zero);
     expect(find.byTooltip('Column 1'), findsOneWidget);
     expect(find.byTooltip('Column 2'), findsOneWidget);
     expect(find.byTooltip('Row 1'), findsOneWidget);
@@ -5571,6 +5666,12 @@ void main() {}
       '| --- | --- |\n'
       '| Alice | Cell |\n',
     );
+
+    await tester.tap(deleteTableFinder);
+    await tester.pump();
+
+    expect(find.byType(Table), findsNothing);
+    expect(markdown, 'Intro\n');
   });
 
   test('WYSIWYG list indent outdent and task toggle commands serialize', () {
@@ -5605,6 +5706,120 @@ void main() {}
 
     taskController.toggleTaskChecked([taskId]);
     expect(taskController.markdown, '- [x] Todo\n');
+  });
+
+  test('WYSIWYG ordered indentation starts a nested list at one', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. One\n2. Two\n3. Three\n4. Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.last.id;
+
+    expect(controller.indentListItems([childId]), isTrue);
+
+    final nested = controller.document.blocks.last.children.single;
+    expect(nested.attributes['marker'], '1.');
+    expect(controller.markdown, '1. One\n\n2. Two\n\n3. Three\n   1. Child\n');
+  });
+
+  test('WYSIWYG ordered indentation preserves a top-level start value', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '5. Parent\n6. Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+
+    expect(
+      controller.indentListItems([controller.document.blocks.last.id]),
+      isTrue,
+    );
+
+    final parent = controller.document.blocks.single;
+    expect(parent.attributes['marker'], '5.');
+    expect(parent.children.single.attributes['marker'], '1.');
+  });
+
+  test('WYSIWYG ordered indentation numbers multiple nested siblings', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. Parent\n2. First child\n3. Second child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childIds = controller.document.blocks
+        .skip(1)
+        .map((block) => block.id)
+        .toList();
+
+    expect(controller.indentListItems(childIds), isTrue);
+
+    expect(
+      controller.document.blocks.single.children.map(
+        (block) => block.attributes['marker'],
+      ),
+      ['1.', '2.'],
+    );
+  });
+
+  test('WYSIWYG ordered outdent continues the parent list numbering', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '1. One\n2. Parent\n   1. Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final childId = controller.document.blocks.last.children.single.id;
+
+    expect(controller.outdentListItems([childId]), isTrue);
+
+    expect(
+      controller.document.blocks.map((block) => block.attributes['marker']),
+      ['1.', '2.', '3.'],
+    );
+  });
+
+  test('WYSIWYG converts an unordered item to a valid ordered marker', () {
+    final parsed = parser.parse(filePath: 'topic.md', source: '- Item\n');
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final blockId = controller.document.blocks.single.id;
+
+    controller.applyBlockCommand(blockId, BusyWysiwygBlockCommand.orderedList);
+
+    expect(controller.document.blocks.single.attributes['marker'], '1.');
+    expect(controller.markdown, '1. Item\n');
+  });
+
+  test('WYSIWYG converts selected nested items at each list depth', () {
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- Parent\n  - Child\n',
+    );
+    final controller = BusyMarkWysiwygDocumentController(
+      document: parsed.busyDocument,
+    );
+    final parent = controller.document.blocks.single;
+    final child = parent.children.single;
+
+    controller.applyBlockCommandToBlocks([
+      parent.id,
+      child.id,
+    ], BusyWysiwygBlockCommand.orderedList);
+
+    final convertedParent = controller.document.blocks.single;
+    expect(convertedParent.kind, BusyBlockKind.orderedListItem);
+    expect(convertedParent.attributes['marker'], '1.');
+    expect(convertedParent.children.single.kind, BusyBlockKind.orderedListItem);
+    expect(convertedParent.children.single.attributes['marker'], '1.');
+    expect(controller.markdown, '1. Parent\n   1. Child\n');
   });
 }
 

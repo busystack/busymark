@@ -393,6 +393,12 @@ abstract class AppLocalizations {
   /// **'Copy name'**
   String get copyName;
 
+  /// Menu action that copies the active document file name.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy file name'**
+  String get copyFileName;
+
   /// Menu action that copies the selected file, folder, or workspace path.
   ///
   /// In en, this message translates to:
@@ -416,6 +422,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cut'**
   String get cut;
+
+  /// Outline action that raises a heading and its descendants by one rank.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote heading'**
+  String get promoteHeading;
+
+  /// Outline action that lowers a heading and its descendants by one rank.
+  ///
+  /// In en, this message translates to:
+  /// **'Demote heading'**
+  String get demoteHeading;
+
+  /// Outline action that swaps a heading section with its previous sibling section.
+  ///
+  /// In en, this message translates to:
+  /// **'Move section up'**
+  String get moveSectionUp;
+
+  /// Outline action that swaps a heading section with its next sibling section.
+  ///
+  /// In en, this message translates to:
+  /// **'Move section down'**
+  String get moveSectionDown;
+
+  /// Confirmation title before deleting a Markdown heading section.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete section?'**
+  String get confirmDeleteSectionTitle;
+
+  /// Confirmation message before deleting a Markdown heading section.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}” and all content in its section? This cannot be undone.'**
+  String confirmDeleteSectionMessage(String name);
 
   /// Dark theme option.
   ///
@@ -482,6 +524,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Main menu'**
   String get mainMenu;
+
+  /// Command that toggles full-screen window mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Screen'**
+  String get fullScreen;
 
   /// Markdown format label.
   ///
@@ -3608,11 +3656,11 @@ abstract class AppLocalizations {
   /// **'+{additions} -{deletions}'**
   String gitAdditionsDeletions(int additions, int deletions);
 
-  /// Tooltip for a changed file action menu.
+  /// Tooltip for a file action menu.
   ///
   /// In en, this message translates to:
   /// **'File actions'**
-  String get gitFileActions;
+  String get fileActions;
 
   /// Git file status label.
   ///

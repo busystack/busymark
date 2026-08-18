@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'busymark_design.dart';
 import 'busymark_glyphs.dart';
 import 'busymark_shortcuts.dart';
 import 'localization.dart';
+import 'window_control_service.dart';
 
 enum BusyMarkMainMenuAction {
   exportPdf,
+  fullScreen,
   settings,
   keyboardShortcuts,
   markdownAndHtml,
@@ -14,7 +17,7 @@ enum BusyMarkMainMenuAction {
   aboutBusyMark,
 }
 
-class BusyMarkMainMenuButton extends StatelessWidget {
+class BusyMarkMainMenuButton extends ConsumerWidget {
   const BusyMarkMainMenuButton({
     super.key,
     required this.onSelected,
@@ -25,8 +28,11 @@ class BusyMarkMainMenuButton extends StatelessWidget {
   final bool canExportPdf;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final fullScreen = ref.watch(
+      windowControlServiceProvider.select((service) => service.isFullScreen),
+    );
     return BusyMarkHeaderPopupMenuButton<BusyMarkMainMenuAction>(
       tooltip: l10n.mainMenu,
       icon: BusyMarkGlyphs.menuVertical,
@@ -37,6 +43,15 @@ class BusyMarkMainMenuButton extends StatelessWidget {
           icon: BusyMarkGlyphs.exportPdf,
           shortcut: BusyMarkAppShortcutLabels.exportPdf,
           enabled: canExportPdf,
+        ),
+        BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.fullScreen,
+          label: l10n.fullScreen,
+          icon: BusyMarkGlyphs.fullScreen,
+          shortcut: BusyMarkAppShortcutLabels.fullScreen,
+          checked: fullScreen,
+          trailingCheck: true,
+          mutuallyExclusive: false,
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.settings,

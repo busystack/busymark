@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "Copiar nombre de archivo",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "Copiar ruta",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -117,6 +121,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Promover encabezado",
+  "demoteHeading": "Degradar encabezado",
+  "moveSectionUp": "Mover sección hacia arriba",
+  "moveSectionDown": "Mover sección hacia abajo",
+  "confirmDeleteSectionTitle": "¿Eliminar sección?",
+  "confirmDeleteSectionMessage": "¿Eliminar «{name}» y todo el contenido de su sección? Esto no se puede deshacer.",
   "darkTheme": "Oscuro",
   "@darkTheme": {
     "description": "Dark theme option."
@@ -156,6 +166,10 @@
   "mainMenu": "Menú principal",
   "@mainMenu": {
     "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "Pantalla completa",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
   },
   "markdown": "Markdown",
   "@markdown": {
@@ -2199,7 +2213,7 @@
   "gitProjectHistory": "Proyecto",
   "gitFileHistory": "Archivo actual",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "Acciones de archivo",
+  "fileActions": "Acciones de archivo",
   "gitStatusAdded": "Añadido",
   "gitStatusDeleted": "Eliminado",
   "gitStatusRenamed": "Renombrado",

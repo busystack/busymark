@@ -130,7 +130,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip(l10n.gitFileActions));
+    await tester.tap(find.byTooltip(l10n.fileActions));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.gitOpenFile), findsOneWidget);

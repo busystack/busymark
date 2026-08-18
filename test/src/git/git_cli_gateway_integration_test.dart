@@ -127,6 +127,39 @@ void main() {
     expect(switched?.detachedHeadCommit, isNull);
   });
 
+  test('diff and commit details preserve C-quoted UTF-8 paths', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-quoted-path-');
+    await _git(root.path, ['config', 'core.quotePath', 'true']);
+    const repoRelativePath = 'docs/Über "guide".md';
+    final document = File(p.join(root.path, repoRelativePath));
+    await document.create(recursive: true);
+    await document.writeAsString('Initial.\n');
+    await _git(root.path, ['add', '--', repoRelativePath]);
+    await _git(root.path, ['commit', '-m', 'Add quoted path']);
+    await document.writeAsString('Changed.\n');
+
+    const gateway = GitCliGateway();
+    final info = await gateway.detectRepository(root.path);
+    expect(info, isNotNull);
+
+    final workingTreeDiff = await gateway.diffAll(info!, staged: false);
+    expect(workingTreeDiff.files.single.oldPath, repoRelativePath);
+    expect(workingTreeDiff.files.single.newPath, repoRelativePath);
+
+    await _git(root.path, ['add', '--', repoRelativePath]);
+    await _git(root.path, ['commit', '-m', 'Update quoted path']);
+    final commit = (await gateway.history(info, limit: 1)).single;
+    final details = await gateway.commitDetails(info, commit.fullHash);
+
+    expect(details.changedFiles.single.oldPath, repoRelativePath);
+    expect(details.changedFiles.single.newPath, repoRelativePath);
+    expect(details.fileSnapshots[repoRelativePath], 'Changed.\n');
+  });
+
   test(
     'pushSetUpstream does not broaden an option-like branch to --all',
     () async {

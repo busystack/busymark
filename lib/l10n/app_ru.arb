@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "Копировать имя файла",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "Копировать путь",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -117,6 +121,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "Повысить уровень заголовка",
+  "demoteHeading": "Понизить уровень заголовка",
+  "moveSectionUp": "Переместить раздел вверх",
+  "moveSectionDown": "Переместить раздел вниз",
+  "confirmDeleteSectionTitle": "Удалить раздел?",
+  "confirmDeleteSectionMessage": "Удалить раздел «{name}» со всем его содержимым? Это действие нельзя отменить.",
   "darkTheme": "Тёмная",
   "@darkTheme": {
     "description": "Dark theme option."
@@ -156,6 +166,10 @@
   "mainMenu": "Главное меню",
   "@mainMenu": {
     "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "Полноэкранный режим",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
   },
   "markdown": "Markdown",
   "@markdown": {
@@ -2217,7 +2231,7 @@
   "gitProjectHistory": "Проект",
   "gitFileHistory": "Текущий файл",
   "gitAdditionsDeletions": "+{additions} -{deletions}",
-  "gitFileActions": "Действия с файлом",
+  "fileActions": "Действия с файлом",
   "gitStatusAdded": "Добавлен",
   "gitStatusDeleted": "Удалён",
   "gitStatusRenamed": "Переименован",

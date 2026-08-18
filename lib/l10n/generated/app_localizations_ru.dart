@@ -159,6 +159,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get copyName => 'Копировать имя';
 
   @override
+  String get copyFileName => 'Копировать имя файла';
+
+  @override
   String get copyPath => 'Копировать путь';
 
   @override
@@ -169,6 +172,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get cut => 'Вырезать';
+
+  @override
+  String get promoteHeading => 'Повысить уровень заголовка';
+
+  @override
+  String get demoteHeading => 'Понизить уровень заголовка';
+
+  @override
+  String get moveSectionUp => 'Переместить раздел вверх';
+
+  @override
+  String get moveSectionDown => 'Переместить раздел вниз';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Удалить раздел?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Удалить раздел «$name» со всем его содержимым? Это действие нельзя отменить.';
+  }
 
   @override
   String get darkTheme => 'Тёмная';
@@ -202,6 +225,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mainMenu => 'Главное меню';
+
+  @override
+  String get fullScreen => 'Полноэкранный режим';
 
   @override
   String get markdown => 'Markdown';
@@ -2178,7 +2204,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Действия с файлом';
+  String get fileActions => 'Действия с файлом';
 
   @override
   String get gitStatusAdded => 'Добавлен';

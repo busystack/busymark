@@ -36,7 +36,6 @@ abstract final class BusyMarkRadius {
   static const double nativeHeaderButton = kYaruButtonRadius;
   static const double window = kYaruWindowRadius;
   static const double pill = 999;
-  static const double selection = 3;
 }
 
 abstract final class BusyMarkSizes {
@@ -82,8 +81,8 @@ abstract final class BusyMarkSizes {
   static const double sourceFoldButtonRightInset = 1;
   static const double documentHeadingTop = 18;
   static const double documentHeadingBottom = 6;
-  static const double documentListMarkerWidth = 18;
-  static const double documentListMarkerTopInset = 2;
+  static const double documentListMarkerWidth = 28;
+  static const double documentListMarkerTopInset = 0;
   static const double documentListIndent =
       documentListMarkerWidth + BusyMarkSpacing.sm;
   static const double documentImageMinWidth = 80;
@@ -129,7 +128,6 @@ abstract final class BusyMarkStroke {
   static const double focus = kYaruFocusBorderWidth;
   static const double sourceCursor = 1.4;
   static const double thematicBreak = 1.6;
-  static const double selectionInflate = 1.5;
 }
 
 abstract final class BusyMarkAlpha {
@@ -211,9 +209,20 @@ abstract final class BusyMarkTypography {
       1 => 1.55,
       2 => 1.36,
       3 => 1.22,
-      4 => 1.12,
-      5 => 1.04,
-      _ => 0.98,
+      4 => 1.10,
+      5 => 1.08,
+      _ => 1.06,
+    };
+  }
+
+  static double markdownHeadingLineHeight(int level) {
+    return switch (level) {
+      1 => 1.20,
+      2 => 1.23,
+      3 => 1.28,
+      4 => 1.37,
+      5 => 1.39,
+      _ => 1.42,
     };
   }
 }
@@ -328,7 +337,6 @@ abstract final class BusyMarkInsets {
     vertical: BusyMarkSpacing.xs,
   );
   static const wysiwygContainerContent = documentCalloutContent;
-  static const wysiwygTableContent = EdgeInsets.all(BusyMarkSpacing.smPlus);
   static const sourceEditor = EdgeInsets.fromLTRB(
     BusyMarkSourceEditorMetrics.paddingLeft,
     BusyMarkSourceEditorMetrics.paddingTop,
@@ -1092,22 +1100,34 @@ class BusyMarkCompactIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    return YaruIconButton(
-      iconSize: size,
-      tooltip: tooltip,
-      style: foregroundColor == null
+    final semanticStyle = ButtonStyle(
+      foregroundColor: foregroundColor == null
           ? null
-          : ButtonStyle(
-              foregroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.disabled)) {
-                  return colors.disabledForeground;
-                }
-                return foregroundColor;
-              }),
-            ),
+          : WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return colors.disabledForeground;
+              }
+              return foregroundColor;
+            }),
+    );
+    final yaruDefaults = YaruIconButton(
+      icon: const SizedBox.shrink(),
+      iconSize: size,
+    ).defaultStyleOf(context);
+    final button = IconButton(
+      tooltip: tooltip,
       icon: Icon(icon, size: glyphSize),
+      constraints: BoxConstraints.tightFor(width: size, height: size),
+      padding: EdgeInsets.zero,
+      style: semanticStyle.merge(yaruDefaults),
       onPressed: onPressed,
     );
+    return YaruTheme.maybeOf(context)?.focusBorders == true
+        ? YaruFocusBorder.primary(
+            borderRadius: BorderRadius.circular(BusyMarkRadius.pill),
+            child: button,
+          )
+        : button;
   }
 }
 
@@ -1455,6 +1475,7 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
           enabled: item.enabled,
           checked: item.checked,
           trailingCheck: item.trailingCheck,
+          mutuallyExclusive: item.mutuallyExclusive,
           routeKey: routeKeyPending ? routeKey : null,
         ),
       );
@@ -1498,6 +1519,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
+    bool mutuallyExclusive = true,
     Key? routeKey,
   }) : label = label,
        menuValue = value,
@@ -1505,6 +1527,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
        shortcut = shortcut,
        checked = checked,
        trailingCheck = trailingCheck,
+       mutuallyExclusive = mutuallyExclusive,
        super(
          value: value,
          child: KeyedSubtree(
@@ -1515,6 +1538,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
              shortcut: shortcut,
              checked: checked,
              trailingCheck: trailingCheck,
+             mutuallyExclusive: mutuallyExclusive,
            ),
          ),
        );
@@ -1525,6 +1549,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final String? shortcut;
   final bool checked;
   final bool trailingCheck;
+  final bool mutuallyExclusive;
 }
 
 class _BusyMarkPopupMenuItemContent extends StatelessWidget {
@@ -1534,6 +1559,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
     required this.shortcut,
     required this.checked,
     required this.trailingCheck,
+    required this.mutuallyExclusive,
   });
 
   final String label;
@@ -1541,6 +1567,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
   final String? shortcut;
   final bool checked;
   final bool trailingCheck;
+  final bool mutuallyExclusive;
 
   @override
   Widget build(BuildContext context) {
@@ -1559,7 +1586,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
           );
     return Semantics(
       checked: trailingCheck ? checked : null,
-      inMutuallyExclusiveGroup: trailingCheck,
+      inMutuallyExclusiveGroup: trailingCheck && mutuallyExclusive,
       child: IconTheme.merge(
         data: const IconThemeData(size: BusyMarkSizes.iconSm),
         child: Row(

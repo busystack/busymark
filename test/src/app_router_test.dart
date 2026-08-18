@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
@@ -109,7 +110,9 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byTooltip(l10n.back));
+      await tester.tap(
+        find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      );
       await tester.pumpAndSettle();
 
       expect(

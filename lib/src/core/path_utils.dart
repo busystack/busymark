@@ -56,9 +56,19 @@ class WorkspaceScanOptions {
 
   final int maxParsedFileBytes;
   final int maxParsedDocuments;
+
+  /// Maximum number of filesystem entries inspected while walking the tree.
+  ///
+  /// Directories, links, and unsupported files all consume this budget.
   final int maxTreeEntries;
   final bool followLinks;
 }
+
+typedef WorkspaceDirectoryLister =
+    Stream<FileSystemEntity> Function(
+      Directory directory, {
+      required bool followLinks,
+    });
 
 class WorkspaceScanResult {
   const WorkspaceScanResult({
@@ -122,23 +132,36 @@ Future<List<FileSystemEntity>> listWorkspaceEntities(String rootPath) async {
 Future<WorkspaceScanResult> scanWorkspaceEntities(
   String rootPath, {
   WorkspaceScanOptions options = const WorkspaceScanOptions(),
+  WorkspaceDirectoryLister? directoryLister,
 }) async {
   final directory = Directory(rootPath);
   if (!await directory.exists()) {
     return const WorkspaceScanResult(entities: [], diagnostics: []);
   }
+  final listDirectory = directoryLister ?? _listWorkspaceDirectory;
   final entities = <FileSystemEntity>[];
   final diagnostics = <Diagnostic>[];
   final pending = <Directory>[directory];
   var pendingIndex = 0;
+  var inspectedEntries = 0;
+  var reachedTreeEntryLimit = options.maxTreeEntries <= 0;
 
   while (pendingIndex < pending.length &&
-      entities.length < options.maxTreeEntries) {
+      inspectedEntries < options.maxTreeEntries) {
     final current = pending[pendingIndex++];
-    List<FileSystemEntity> listing;
+    final listing = <FileSystemEntity>[];
     try {
-      listing = await current.list(followLinks: options.followLinks).toList()
-        ..sort((a, b) => a.path.compareTo(b.path));
+      await for (final entity in listDirectory(
+        current,
+        followLinks: options.followLinks,
+      )) {
+        listing.add(entity);
+        inspectedEntries++;
+        if (inspectedEntries >= options.maxTreeEntries) {
+          reachedTreeEntryLimit = true;
+          break;
+        }
+      }
     } on Object catch (error) {
       diagnostics.add(
         _scanWarning(
@@ -149,6 +172,7 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       );
       continue;
     }
+    listing.sort((a, b) => a.path.compareTo(b.path));
 
     for (final entity in listing) {
       FileSystemEntityType type;
@@ -182,17 +206,23 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
         continue;
       }
       entities.add(entity);
-      if (entities.length >= options.maxTreeEntries) {
-        diagnostics.add(_scanWarning(rootPath, 'workspace.scan.skipped'));
-        break;
-      }
     }
+  }
+  if (reachedTreeEntryLimit) {
+    diagnostics.add(_scanWarning(rootPath, 'workspace.scan.skipped'));
   }
   entities.sort((a, b) => a.path.compareTo(b.path));
   return WorkspaceScanResult(
     entities: entities,
     diagnostics: sortDiagnostics(diagnostics),
   );
+}
+
+Stream<FileSystemEntity> _listWorkspaceDirectory(
+  Directory directory, {
+  required bool followLinks,
+}) {
+  return directory.list(followLinks: followLinks);
 }
 
 Diagnostic _scanWarning(

@@ -156,6 +156,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get copyName => 'نسخ الاسم';
 
   @override
+  String get copyFileName => 'نسخ اسم الملف';
+
+  @override
   String get copyPath => 'نسخ المسار';
 
   @override
@@ -166,6 +169,26 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cut => 'قص';
+
+  @override
+  String get promoteHeading => 'ترقية العنوان';
+
+  @override
+  String get demoteHeading => 'خفض رتبة العنوان';
+
+  @override
+  String get moveSectionUp => 'نقل القسم إلى أعلى';
+
+  @override
+  String get moveSectionDown => 'نقل القسم إلى أسفل';
+
+  @override
+  String get confirmDeleteSectionTitle => 'حذف القسم؟';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'هل تريد حذف ⁨$name⁩ وكل محتوى قسمه؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
 
   @override
   String get darkTheme => 'داكن';
@@ -199,6 +222,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get mainMenu => 'القائمة الرئيسية';
+
+  @override
+  String get fullScreen => 'ملء الشاشة';
 
   @override
   String get markdown => 'Markdown';
@@ -2172,7 +2198,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'إجراءات الملف';
+  String get fileActions => 'إجراءات الملف';
 
   @override
   String get gitStatusAdded => 'مضاف';

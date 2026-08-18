@@ -101,6 +101,10 @@
   "@copyName": {
     "description": "Menu action that copies the selected file, folder, or workspace name."
   },
+  "copyFileName": "نسخ اسم الملف",
+  "@copyFileName": {
+    "description": "Menu action that copies the active document file name."
+  },
   "copyPath": "نسخ المسار",
   "@copyPath": {
     "description": "Menu action that copies the selected file, folder, or workspace path."
@@ -117,6 +121,12 @@
   "@cut": {
     "description": "Cut command label."
   },
+  "promoteHeading": "ترقية العنوان",
+  "demoteHeading": "خفض رتبة العنوان",
+  "moveSectionUp": "نقل القسم إلى أعلى",
+  "moveSectionDown": "نقل القسم إلى أسفل",
+  "confirmDeleteSectionTitle": "حذف القسم؟",
+  "confirmDeleteSectionMessage": "هل تريد حذف \u2068{name}\u2069 وكل محتوى قسمه؟ لا يمكن التراجع عن هذا الإجراء.",
   "darkTheme": "داكن",
   "@darkTheme": {
     "description": "Dark theme option."
@@ -156,6 +166,10 @@
   "mainMenu": "القائمة الرئيسية",
   "@mainMenu": {
     "description": "Native header bar main menu tooltip."
+  },
+  "fullScreen": "ملء الشاشة",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
   },
   "markdown": "Markdown",
   "@markdown": {
@@ -2201,7 +2215,7 @@
   "gitProjectHistory": "المشروع",
   "gitFileHistory": "الملف الحالي",
   "gitAdditionsDeletions": "\u2068+{additions} -{deletions}\u2069",
-  "gitFileActions": "إجراءات الملف",
+  "fileActions": "إجراءات الملف",
   "gitStatusAdded": "مضاف",
   "gitStatusDeleted": "محذوف",
   "gitStatusRenamed": "أُعيدت تسميته",

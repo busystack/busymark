@@ -7,15 +7,12 @@ import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_list_marker.dart';
 import '../document_surface.dart';
+import '../document_text_geometry.dart';
 import '../document_text_direction.dart';
 import '../document_thematic_break.dart';
 import '../markdown_image_view.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_inline_controller.dart';
-
-const double _wysiwygTextFieldCursorWidth = 2.0;
-const double busyMarkWysiwygTextFieldLayoutInset =
-    1.0 + _wysiwygTextFieldCursorWidth;
 
 TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
@@ -87,7 +84,6 @@ EdgeInsets busyMarkWysiwygContentPadding(BusyBlock block) {
     BusyBlockKind.writersideRawXml ||
     BusyBlockKind.htmlBlock ||
     BusyBlockKind.unknown => BusyMarkInsets.wysiwygContainerContent,
-    BusyBlockKind.table => BusyMarkInsets.wysiwygTableContent,
     _ => EdgeInsets.zero,
   };
 }
@@ -150,6 +146,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onTableDeleted,
     required this.onImageEditRequested,
     required this.onHtmlEditRequested,
+    required this.onTaskChanged,
     required this.onFocused,
     this.selected = false,
     this.selectionRange,
@@ -180,6 +177,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onTableDeleted;
   final VoidCallback onImageEditRequested;
   final VoidCallback onHtmlEditRequested;
+  final ValueChanged<bool> onTaskChanged;
   final VoidCallback onFocused;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
@@ -255,14 +253,21 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                     : null,
                 behavior: HitTestBehavior.translucent,
                 onTap: tapHandler,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: _background(context),
-                    borderRadius: BorderRadius.circular(BusyMarkRadius.md),
-                    border: _border(context),
-                  ),
-                  child: Padding(padding: _contentPadding, child: content),
-                ),
+                child: block.kind == BusyBlockKind.table
+                    ? content
+                    : DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: _background(context),
+                          borderRadius: BorderRadius.circular(
+                            BusyMarkRadius.md,
+                          ),
+                          border: _border(context),
+                        ),
+                        child: Padding(
+                          padding: _contentPadding,
+                          child: content,
+                        ),
+                      ),
               ),
             ),
     );
@@ -349,15 +354,21 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                               text: controller.text,
                               style: style,
                               selectionRange: selectionRange,
-                              color: Theme.of(context).colorScheme.primary
-                                  .withValues(
-                                    alpha: BusyMarkAlpha.previewHighlight,
+                              color:
+                                  DefaultSelectionStyle.of(
+                                    context,
+                                  ).selectionColor ??
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(
+                                    alpha: BusyMarkDocumentTextGeometry
+                                        .fallbackSelectionAlpha,
                                   ),
                               textDirection: textDirection,
                               textScaler: MediaQuery.textScalerOf(context),
                               locale: Localizations.maybeLocaleOf(context),
-                              layoutWidthInset:
-                                  busyMarkWysiwygTextFieldLayoutInset,
+                              layoutWidthInset: BusyMarkDocumentTextGeometry
+                                  .editableLayoutInset,
                             ),
                           ),
                         ),
@@ -380,7 +391,12 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                           minLines: 1,
                           textDirection: textDirection,
                           style: style,
-                          cursorWidth: _wysiwygTextFieldCursorWidth,
+                          cursorWidth:
+                              BusyMarkDocumentTextGeometry.editableCursorWidth,
+                          selectionHeightStyle:
+                              BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                          selectionWidthStyle:
+                              BusyMarkDocumentTextGeometry.selectionWidthStyle,
                           decoration: const InputDecoration(
                             isCollapsed: true,
                             border: InputBorder.none,
@@ -443,7 +459,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideRawXml ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => fontSize * 2.4,
-      BusyBlockKind.table => fontSize * 5.8,
       BusyBlockKind.image => BusyMarkSizes.documentImageMinHeight,
       _ => 0,
     };
@@ -481,6 +496,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       ),
       BusyBlockKind.taskListItem => BusyMarkDocumentListMarker(
         task: block.attributes['task'] == 'true',
+        onTaskChanged: onTaskChanged,
+        taskTooltip: context.l10n.toggleTaskChecked,
       ),
       BusyBlockKind.htmlBlock => SizedBox(
         width: BusyMarkSizes.wysiwygPrefixWidth,
@@ -501,7 +518,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => colors.panel,
       _ => BusyMarkLinuxPalette.transparent,
@@ -515,7 +531,6 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
       BusyBlockKind.writersideRawXml ||
-      BusyBlockKind.table ||
       BusyBlockKind.htmlBlock ||
       BusyBlockKind.unknown => Border.all(color: colors.subtleBorder),
       _ => null,
@@ -1183,81 +1198,67 @@ class _TableBlockEditor extends StatelessWidget {
     final dataWidth = (columnCount * BusyMarkSizes.tableColumnBaseWidth)
         .clamp(BusyMarkSizes.tableMinWidth, BusyMarkSizes.tableMaxWidth)
         .toDouble();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: BusyMarkHeaderIconButton(
-            tooltip: context.l10n.deleteTable,
-            icon: BusyMarkGlyphs.delete,
-            foregroundColor: colors.mutedForeground,
-            onPressed: onTableDeleted,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: dataWidth + _controlSize),
+        child: Table(
+          border: TableBorder(
+            horizontalInside: BorderSide(color: colors.subtleBorder),
+            verticalInside: BorderSide(color: colors.subtleBorder),
+            top: BorderSide(color: colors.subtleBorder),
+            right: BorderSide(color: colors.subtleBorder),
+            bottom: BorderSide(color: colors.subtleBorder),
+            left: BorderSide(color: colors.subtleBorder),
+            borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
           ),
-        ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: dataWidth + _controlSize),
-            child: Table(
-              border: TableBorder(
-                horizontalInside: BorderSide(color: colors.subtleBorder),
-                verticalInside: BorderSide(color: colors.subtleBorder),
-                top: BorderSide(color: colors.subtleBorder),
-                right: BorderSide(color: colors.subtleBorder),
-                bottom: BorderSide(color: colors.subtleBorder),
-                left: BorderSide(color: colors.subtleBorder),
-                borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-              ),
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              columnWidths: {
-                0: const FixedColumnWidth(_controlSize),
-                for (var index = 0; index < columnCount; index++)
-                  index + 1: const FlexColumnWidth(),
-              },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          columnWidths: {
+            0: const FixedColumnWidth(_controlSize),
+            for (var index = 0; index < columnCount; index++)
+              index + 1: const FlexColumnWidth(),
+          },
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: colors.controlHover),
               children: [
-                TableRow(
-                  decoration: BoxDecoration(color: colors.controlHover),
-                  children: [
-                    const _TableCornerCell(),
-                    for (var column = 0; column < columnCount; column++)
-                      _TableColumnControlCell(
-                        columnIndex: column,
-                        onInserted: onColumnInserted,
-                        onDeleted: onColumnDeleted,
-                      ),
-                  ],
-                ),
-                for (final (rowIndex, row) in rows.indexed)
-                  TableRow(
-                    decoration: BoxDecoration(
-                      color: _isHeaderRow(row, rowIndex)
-                          ? colors.control
-                          : BusyMarkLinuxPalette.transparent,
-                    ),
-                    children: [
-                      _TableRowControlCell(
-                        rowIndex: rowIndex,
-                        onInserted: onRowInserted,
-                        onDeleted: onRowDeleted,
-                      ),
-                      for (var column = 0; column < columnCount; column++)
-                        _TableCellEditor(
-                          cell: column < row.children.length
-                              ? row.children[column]
-                              : null,
-                          header: _isHeaderRow(row, rowIndex),
-                          style: busyMarkDocumentBodyTextStyle(context),
-                          onFocused: onFocused,
-                          onChanged: onCellChanged,
-                        ),
-                    ],
+                _TableCornerCell(onTableDeleted: onTableDeleted),
+                for (var column = 0; column < columnCount; column++)
+                  _TableColumnControlCell(
+                    columnIndex: column,
+                    onInserted: onColumnInserted,
+                    onDeleted: onColumnDeleted,
                   ),
               ],
             ),
-          ),
+            for (final (rowIndex, row) in rows.indexed)
+              TableRow(
+                decoration: BoxDecoration(
+                  color: _isHeaderRow(row, rowIndex)
+                      ? colors.control
+                      : BusyMarkLinuxPalette.transparent,
+                ),
+                children: [
+                  _TableRowControlCell(
+                    rowIndex: rowIndex,
+                    onInserted: onRowInserted,
+                    onDeleted: onRowDeleted,
+                  ),
+                  for (var column = 0; column < columnCount; column++)
+                    _TableCellEditor(
+                      cell: column < row.children.length
+                          ? row.children[column]
+                          : null,
+                      header: _isHeaderRow(row, rowIndex),
+                      style: busyMarkDocumentBodyTextStyle(context),
+                      onFocused: onFocused,
+                      onChanged: onCellChanged,
+                    ),
+                ],
+              ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -1279,11 +1280,23 @@ class _TableBlockEditor extends StatelessWidget {
 enum _TableControlAction { insertBefore, insertAfter, delete }
 
 class _TableCornerCell extends StatelessWidget {
-  const _TableCornerCell();
+  const _TableCornerCell({required this.onTableDeleted});
+
+  final VoidCallback onTableDeleted;
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.square(dimension: _TableBlockEditor._controlSize);
+    final colors = BusyMarkSurfaceColors.of(context);
+    return SizedBox.square(
+      dimension: _TableBlockEditor._controlSize,
+      child: BusyMarkHeaderIconButton(
+        tooltip: context.l10n.deleteTable,
+        icon: BusyMarkGlyphs.delete,
+        foregroundColor: colors.mutedForeground,
+        borderRadius: BusyMarkRadius.sm,
+        onPressed: onTableDeleted,
+      ),
+    );
   }
 }
 
@@ -1532,22 +1545,12 @@ class _WysiwygSelectionPainter extends CustomPainter {
     )..layout(maxWidth: maxWidth);
     final boxes = textPainter.getBoxesForSelection(
       TextSelection(baseOffset: start, extentOffset: end),
+      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
     final paint = Paint()..color = color;
     for (final box in boxes) {
-      final rect = Rect.fromLTRB(
-        box.left,
-        box.top,
-        box.right,
-        box.bottom,
-      ).inflate(BusyMarkStroke.selectionInflate);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          rect,
-          const Radius.circular(BusyMarkRadius.selection),
-        ),
-        paint,
-      );
+      canvas.drawRect(box.toRect(), paint);
     }
   }
 

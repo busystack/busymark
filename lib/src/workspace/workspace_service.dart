@@ -26,7 +26,7 @@ class WorkspaceService {
   const WorkspaceService({
     this.markdownParser = const MarkdownParser(),
     this.previewBuilder = const MarkdownPreviewBuilder(),
-    this.writersideService = const WritersideModuleService(),
+    WritersideModuleService? writersideService,
     this.writersideProjectCreator = const WritersideProjectCreator(),
     this.writersideTopicCreator = const WritersideTopicCreator(),
     this.writersideTocEditor = const WritersideTocEditor(),
@@ -34,7 +34,9 @@ class WorkspaceService {
     this.writersideTopicRemovalService = const WritersideTopicRemovalService(),
     this.scanOptions = const WorkspaceScanOptions(),
     Future<void> Function(String targetPath)? beforeNewFilePublish,
-  }) : _beforeNewFilePublish = beforeNewFilePublish;
+  }) : writersideService = writersideService ?? const WritersideModuleService(),
+       _useWorkspaceScanOptionsForWriterside = writersideService == null,
+       _beforeNewFilePublish = beforeNewFilePublish;
 
   final MarkdownParser markdownParser;
   final MarkdownPreviewBuilder previewBuilder;
@@ -45,6 +47,7 @@ class WorkspaceService {
   final WritersideTopicFileEditor writersideTopicFileEditor;
   final WritersideTopicRemovalService writersideTopicRemovalService;
   final WorkspaceScanOptions scanOptions;
+  final bool _useWorkspaceScanOptionsForWriterside;
   final Future<void> Function(String targetPath)? _beforeNewFilePublish;
 
   Workspace createUntitledMarkdown({String source = ''}) {
@@ -254,7 +257,14 @@ class WorkspaceService {
 
   Future<WritersideModule> _currentWritersideModule(Workspace workspace) async {
     final openedModule = _writersideModule(workspace);
-    return writersideService.load(openedModule.rootPath);
+    return _loadWritersideModule(openedModule.rootPath);
+  }
+
+  Future<WritersideModule> _loadWritersideModule(String rootPath) {
+    return writersideService.load(
+      rootPath,
+      options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
+    );
   }
 
   WritersideInstance _writersideInstanceForTree(
@@ -1092,7 +1102,7 @@ class WorkspaceService {
     String rootPath, {
     String? activeFilePath,
   }) async {
-    final module = await writersideService.load(rootPath);
+    final module = await _loadWritersideModule(rootPath);
     final scan = await scanWorkspaceEntities(rootPath, options: scanOptions);
     final entities = scan.entities;
     final files = <DocumentFile>[];

@@ -913,6 +913,31 @@ void main() {
     },
   );
 
+  test('overlapping manual save writes the newer requested revision', () async {
+    final service = _AutosaveWorkspaceService(pauseFirstSave: true);
+    final harness = await _createControllerHarness(service: service);
+    final settingsController = harness.settingsController;
+    final controller = harness.controller;
+
+    await settingsController.setAutoSave(false);
+    await controller.openPath(service.path);
+    controller.updateActiveText('# First\n');
+    final firstSave = controller.saveActive();
+    await service.firstSaveStarted.future;
+
+    controller.updateActiveText('# Second\n');
+    final secondSave = controller.saveActive();
+    service.releaseFirstSave();
+
+    expect(await firstSave, isTrue);
+    expect(await secondSave, isTrue);
+    expect(service.savedTexts, ['# First\n', '# Second\n']);
+    expect(controller.state.isDirty, isFalse);
+
+    controller.dispose();
+    settingsController.dispose();
+  });
+
   test(
     'save refuses to overwrite external file changes without force',
     () async {
@@ -1129,6 +1154,8 @@ class _AppSettingsControllerDriver {
 
   Future<void> setValidateOnEdit(bool enabled) =>
       _notifier.setValidateOnEdit(enabled);
+
+  Future<void> setAutoSave(bool enabled) => _notifier.setAutoSave(enabled);
 
   void dispose() {}
 }

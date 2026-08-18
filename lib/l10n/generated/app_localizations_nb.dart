@@ -159,6 +159,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get copyName => 'Kopier navn';
 
   @override
+  String get copyFileName => 'Kopier filnavn';
+
+  @override
   String get copyPath => 'Kopier sti';
 
   @override
@@ -169,6 +172,26 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get cut => 'Klipp ut';
+
+  @override
+  String get promoteHeading => 'Hev overskrift';
+
+  @override
+  String get demoteHeading => 'Senk overskrift';
+
+  @override
+  String get moveSectionUp => 'Flytt seksjonen opp';
+
+  @override
+  String get moveSectionDown => 'Flytt seksjonen ned';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Slette seksjonen?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Slette «$name» og alt innholdet i seksjonen? Dette kan ikke angres.';
+  }
 
   @override
   String get darkTheme => 'Mørk';
@@ -202,6 +225,9 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get mainMenu => 'Hovedmeny';
+
+  @override
+  String get fullScreen => 'Fullskjerm';
 
   @override
   String get markdown => 'Markdown';
@@ -2147,7 +2173,7 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Filhandlinger';
+  String get fileActions => 'Filhandlinger';
 
   @override
   String get gitStatusAdded => 'Lagt til';

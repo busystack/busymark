@@ -158,6 +158,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copyName => 'Копіювати назву';
 
   @override
+  String get copyFileName => 'Копіювати назву файлу';
+
+  @override
   String get copyPath => 'Копіювати шлях';
 
   @override
@@ -168,6 +171,26 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get cut => 'Вирізати';
+
+  @override
+  String get promoteHeading => 'Підвищити рівень заголовка';
+
+  @override
+  String get demoteHeading => 'Знизити рівень заголовка';
+
+  @override
+  String get moveSectionUp => 'Перемістити розділ вище';
+
+  @override
+  String get moveSectionDown => 'Перемістити розділ нижче';
+
+  @override
+  String get confirmDeleteSectionTitle => 'Видалити розділ?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return 'Видалити розділ «$name» з усім його вмістом? Цю дію не можна скасувати.';
+  }
 
   @override
   String get darkTheme => 'Темна';
@@ -201,6 +224,9 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get mainMenu => 'Головне меню';
+
+  @override
+  String get fullScreen => 'Повноекранний режим';
 
   @override
   String get markdown => 'Markdown';
@@ -2187,7 +2213,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'Дії з файлом';
+  String get fileActions => 'Дії з файлом';
 
   @override
   String get gitStatusAdded => 'Додано';

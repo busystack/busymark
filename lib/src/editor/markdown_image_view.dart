@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -147,27 +148,21 @@ class MarkdownImageView extends StatelessWidget {
   }
 
   Widget _fileImage(File file, String source, bool svg) {
+    if (svg) {
+      return _LocalSvgImage(
+        file: file,
+        source: source,
+        alt: alt,
+        width: width,
+        height: height,
+      );
+    }
     if (!file.existsSync()) {
       return _MarkdownImagePlaceholder(
         source: source,
         alt: alt,
         height: height ?? 120,
       );
-    }
-    if (svg) {
-      final svg = _readLocalSvgForFlutter(file);
-      if (svg == null) {
-        return _MarkdownImagePlaceholder(
-          source: source,
-          alt: alt,
-          height: height ?? 120,
-        );
-      }
-      final badge = svg.badge;
-      if (badge != null) {
-        return _SvgBadgeView(data: badge, width: width, height: height);
-      }
-      return _svgPicture(svg.source, source);
     }
     return Image.file(
       file,
@@ -191,26 +186,62 @@ class MarkdownImageView extends StatelessWidget {
       height: height,
     );
   }
-
-  Widget _svgPicture(String svgSource, String source) {
-    return SvgPicture.string(
-      svgSource,
-      width: width,
-      height: height,
-      fit: BoxFit.contain,
-      alignment: Alignment.center,
-      errorBuilder: (context, error, stackTrace) => _MarkdownImagePlaceholder(
-        source: source,
-        alt: alt,
-        height: height ?? 120,
-      ),
-    );
-  }
 }
 
 bool _isSvgPath(String value) {
   final path = value.split('#').first.split('?').first;
   return p.extension(path).toLowerCase() == '.svg';
+}
+
+class _LocalSvgImage extends StatefulWidget {
+  const _LocalSvgImage({
+    required this.file,
+    required this.source,
+    required this.alt,
+    required this.width,
+    required this.height,
+  });
+
+  final File file;
+  final String source;
+  final String alt;
+  final double? width;
+  final double? height;
+
+  @override
+  State<_LocalSvgImage> createState() => _LocalSvgImageState();
+}
+
+class _LocalSvgImageState extends State<_LocalSvgImage> {
+  late Future<_SvgImageSource?> _svgSource;
+
+  @override
+  void initState() {
+    super.initState();
+    _svgSource = _loadLocalSvgForFlutter(widget.file);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LocalSvgImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.file.path != widget.file.path) {
+      _svgSource = _loadLocalSvgForFlutter(widget.file);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_SvgImageSource?>(
+      future: _svgSource,
+      builder: (context, snapshot) => _buildAsyncSvgImage(
+        snapshot: snapshot,
+        source: widget.source,
+        alt: widget.alt,
+        width: widget.width,
+        height: widget.height,
+      ),
+    );
+  }
 }
 
 class _NetworkSvgImage extends StatefulWidget {
@@ -251,56 +282,68 @@ class _NetworkSvgImageState extends State<_NetworkSvgImage> {
   Widget build(BuildContext context) {
     return FutureBuilder<_SvgImageSource?>(
       future: _svgSource,
-      builder: (context, snapshot) {
-        final svg = snapshot.data;
-        if (snapshot.connectionState == ConnectionState.done && svg != null) {
-          final badge = svg.badge;
-          if (badge != null) {
-            return _SvgBadgeView(
-              data: badge,
-              width: widget.width,
-              height: widget.height,
-            );
-          }
-          return SvgPicture.string(
-            svg.source,
-            width: widget.width,
-            height: widget.height,
-            fit: BoxFit.contain,
-            alignment: Alignment.center,
-            errorBuilder: (context, error, stackTrace) =>
-                _MarkdownImagePlaceholder(
-                  source: widget.source,
-                  alt: widget.alt,
-                  height: widget.height ?? 120,
-                ),
-          );
-        }
-        if (snapshot.connectionState != ConnectionState.done) {
-          return SizedBox(height: widget.height ?? _defaultRemoteSvgHeight);
-        }
-        return _MarkdownImagePlaceholder(
-          source: widget.source,
-          alt: widget.alt,
-          height: widget.height ?? 120,
-        );
-      },
+      builder: (context, snapshot) => _buildAsyncSvgImage(
+        snapshot: snapshot,
+        source: widget.source,
+        alt: widget.alt,
+        width: widget.width,
+        height: widget.height,
+      ),
     );
   }
 }
 
-_SvgImageSource? _readLocalSvgForFlutter(File file) {
+Widget _buildAsyncSvgImage({
+  required AsyncSnapshot<_SvgImageSource?> snapshot,
+  required String source,
+  required String alt,
+  required double? width,
+  required double? height,
+}) {
+  final svg = snapshot.data;
+  if (snapshot.connectionState == ConnectionState.done && svg != null) {
+    final badge = svg.badge;
+    if (badge != null) {
+      return _SvgBadgeView(data: badge, width: width, height: height);
+    }
+    return SvgPicture.string(
+      svg.source,
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
+      alignment: Alignment.center,
+      errorBuilder: (context, error, stackTrace) => _MarkdownImagePlaceholder(
+        source: source,
+        alt: alt,
+        height: height ?? 120,
+      ),
+    );
+  }
+  if (snapshot.connectionState != ConnectionState.done) {
+    return SizedBox(height: height ?? _defaultPendingSvgHeight);
+  }
+  return _MarkdownImagePlaceholder(
+    source: source,
+    alt: alt,
+    height: height ?? 120,
+  );
+}
+
+Future<_SvgImageSource?> _loadLocalSvgForFlutter(File file) async {
   try {
-    final source = file.readAsStringSync();
-    final sanitized = _svgForFlutter(source);
-    if (sanitized == null) {
+    final stat = await file.stat();
+    if (stat.type != FileSystemEntityType.file || stat.size > _maxSvgBytes) {
       return null;
     }
-    return _SvgImageSource(
-      source: sanitized,
-      badge:
-          _SvgBadgeData.tryParse(source) ?? _SvgBadgeData.tryParse(sanitized),
-    );
+    final bytes = BytesBuilder(copy: false);
+    await for (final chunk in file.openRead(0, _maxSvgBytes + 1)) {
+      bytes.add(chunk);
+      if (bytes.length > _maxSvgBytes) {
+        return null;
+      }
+    }
+    final rawSource = utf8.decode(bytes.takeBytes());
+    return await Isolate.run(() => _parseSvgForFlutter(rawSource));
   } on Object {
     return null;
   }
@@ -330,21 +373,24 @@ Future<_SvgImageSource?> _loadNetworkSvgForFlutter(String source) async {
       }
     }
     final rawSource = utf8.decode(bytes.takeBytes());
-    final sanitized = _svgForFlutter(rawSource);
-    if (sanitized == null) {
-      return null;
-    }
-    return _SvgImageSource(
-      source: sanitized,
-      badge:
-          _SvgBadgeData.tryParse(rawSource) ??
-          _SvgBadgeData.tryParse(sanitized),
-    );
+    return _parseSvgForFlutter(rawSource);
   } on Object {
     return null;
   } finally {
     client.close(force: true);
   }
+}
+
+_SvgImageSource? _parseSvgForFlutter(String rawSource) {
+  final sanitized = _svgForFlutter(rawSource);
+  if (sanitized == null) {
+    return null;
+  }
+  return _SvgImageSource(
+    source: sanitized,
+    badge:
+        _SvgBadgeData.tryParse(rawSource) ?? _SvgBadgeData.tryParse(sanitized),
+  );
 }
 
 class _SvgImageSource {
@@ -876,7 +922,7 @@ const _supportedSvgImageMimeTypes = {
 
 const _networkSvgTimeout = Duration(seconds: 10);
 const _maxSvgBytes = 1024 * 1024;
-const _defaultRemoteSvgHeight = 24.0;
+const _defaultPendingSvgHeight = 24.0;
 const _badgeHorizontalPadding = 4.0;
 const _badgeIconTextGap = 4.0;
 

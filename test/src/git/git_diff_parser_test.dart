@@ -75,6 +75,35 @@ rename to new.md
     expect(file.newPath, 'new.md');
   });
 
+  test('decodes C-quoted UTF-8 paths emitted by Git', () {
+    final diff = parser.parse(r'''
+diff --git "a/docs/\303\234ber \"guide\".md" "b/docs/\303\234ber \"guide\".md"
+--- "a/docs/\303\234ber \"guide\".md"
++++ "b/docs/\303\234ber \"guide\".md"
+@@ -1 +1 @@
+-Old
++New
+''');
+
+    final file = diff.files.single;
+    expect(file.oldPath, 'docs/Über "guide".md');
+    expect(file.newPath, 'docs/Über "guide".md');
+  });
+
+  test('decodes C-quoted rename metadata emitted by Git', () {
+    final diff = parser.parse(r'''
+diff --git "a/docs/\303\204lter Name.md" "b/docs/\303\204lterer \"Name\".md"
+similarity index 100%
+rename from "docs/\303\204lter Name.md"
+rename to "docs/\303\204lterer \"Name\".md"
+''');
+
+    final file = diff.files.single;
+    expect(file.status, GitDiffFileStatus.renamed);
+    expect(file.oldPath, 'docs/Älter Name.md');
+    expect(file.newPath, 'docs/Älterer "Name".md');
+  });
+
   test('parses binary file marker', () {
     final diff = parser.parse('''
 diff --git a/image.png b/image.png

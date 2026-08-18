@@ -78,6 +78,37 @@ void main() {
     expect(value.selection.start, 1);
   });
 
+  test('ordered list numbering restarts for nested source lines', () {
+    const source = 'One\nTwo\nThree\n  Child\n';
+
+    final ordered = SourceCommands.applyBlockCommand(
+      const TextEditingValue(
+        text: source,
+        selection: TextSelection(baseOffset: 0, extentOffset: source.length),
+      ),
+      SourceBlockCommand.orderedList,
+    );
+
+    expect(ordered.text, '1. One\n2. Two\n3. Three\n   1. Child\n');
+  });
+
+  test('ordered list numbering restarts beneath each source parent', () {
+    const source = 'Parent A\n  Child A\nParent B\n  Child B\n';
+
+    final ordered = SourceCommands.applyBlockCommand(
+      const TextEditingValue(
+        text: source,
+        selection: TextSelection(baseOffset: 0, extentOffset: source.length),
+      ),
+      SourceBlockCommand.orderedList,
+    );
+
+    expect(
+      ordered.text,
+      '1. Parent A\n   1. Child A\n2. Parent B\n   1. Child B\n',
+    );
+  });
+
   test('inline commands toggle bold italic code and links', () {
     final bold = SourceCommands.applyInlineCommand(
       const TextEditingValue(

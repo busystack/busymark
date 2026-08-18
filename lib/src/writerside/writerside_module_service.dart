@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 
+import '../core/anchored_path_guard.dart';
 import '../core/diagnostic.dart';
 import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
@@ -27,105 +30,189 @@ class WritersideModuleService {
   final WritersideCategoriesParser categoriesParser;
   final WorkspaceScanOptions scanOptions;
 
-  Future<WritersideModule> load(String rootPath) async {
-    final root = normalizePath(rootPath);
+  Future<WritersideModule> load(
+    String rootPath, {
+    WorkspaceScanOptions? options,
+  }) async {
+    final effectiveScanOptions = options ?? scanOptions;
+    var root = normalizePath(rootPath);
     final diagnostics = <Diagnostic>[];
-    final configPath = await _resolveConfigPath(root);
-    if (configPath == null) {
+    final CanonicalPathAnchor anchor;
+    try {
+      anchor = await captureCanonicalDirectoryAnchor(root);
+      root = anchor.rootPath;
+    } on AnchoredPathViolation catch (error) {
       final expectedPath = p.join(root, 'writerside.cfg');
       diagnostics.add(
         Diagnostic(
           code: 'writerside.config.missing',
           severity: DiagnosticSeverity.error,
           filePath: expectedPath,
+          args: {'error': '$error'},
         ),
       );
-      final emptyConfig = WritersideConfig(
-        filePath: expectedPath,
-        version: null,
-        moduleName: null,
-        topicRoots: const [WritersideTopicRoot(dir: 'topics', explicit: false)],
-        imageRoots: const [WritersideImageRoot(dir: 'images', explicit: false)],
-        apiSpecificationsDir: 'specifications',
-        apiSpecificationsExplicit: false,
-        buildConfigDir: 'cfg',
-        buildConfigExplicit: false,
-        snippetsDir: null,
-        resourcesFile: null,
-        resourcesDir: null,
-        varsFile: null,
-        categoriesFile: null,
-        instanceGroupsFile: null,
-        instances: const [],
-        settings: const WritersideSettingsConfig(),
-        diagnostics: const [],
-      );
-      return WritersideModule(
-        rootPath: root,
-        config: emptyConfig,
-        instances: const [],
-        topics: const [],
-        variables: const [],
-        categories: const [],
-        diagnostics: diagnostics,
-      );
+      return _emptyModule(root, expectedPath, diagnostics);
     }
-    final configSource = await File(configPath).readAsString();
+    final configCandidate = await _resolveConfigPath(root);
+    if (configCandidate == null) {
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.config.missing',
+          severity: DiagnosticSeverity.error,
+          filePath: p.join(root, 'writerside.cfg'),
+        ),
+      );
+      return _emptyModule(root, p.join(root, 'writerside.cfg'), diagnostics);
+    }
+    final AnchoredPathResolution configResolution;
+    try {
+      configResolution = await resolveAnchoredPath(
+        anchor,
+        configCandidate,
+        allowRoot: false,
+      );
+    } on AnchoredPathViolation catch (error) {
+      diagnostics.add(
+        _unsafeConfiguredPathDiagnostic(
+          configPath: configCandidate,
+          configuredPath: p.basename(configCandidate),
+          kind: 'config',
+          error: error,
+        ),
+      );
+      return _emptyModule(root, configCandidate, diagnostics);
+    }
+    if (configResolution.type != FileSystemEntityType.file) {
+      diagnostics.add(
+        Diagnostic(
+          code: 'writerside.config.missing',
+          severity: DiagnosticSeverity.error,
+          filePath: configResolution.path,
+        ),
+      );
+      return _emptyModule(root, configResolution.path, diagnostics);
+    }
+    final configPath = configResolution.path;
+    final configSource = await _readFileForParsing(
+      File(configPath),
+      diagnostics,
+      effectiveScanOptions,
+      readFailureCode: 'workspace.file.read-failed',
+    );
+    if (configSource == null) {
+      return _emptyModule(root, configPath, diagnostics);
+    }
     final config = configParser.parse(configPath, configSource);
     diagnostics.addAll(config.diagnostics);
     final usableTopicRoots = await _existingTopicRoots(
       diagnostics,
-      root,
+      anchor,
       config,
+      configPath,
+      configSource,
     );
-    await _validateImageRoots(diagnostics, root, config);
+    final validatedImageDirs = await _validateImageRoots(
+      diagnostics,
+      anchor,
+      config,
+      configPath,
+      configSource,
+    );
     await _validateOptionalConfiguredDirectory(
       diagnostics,
-      root,
+      anchor,
       config.buildConfigDir,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'buildConfig',
       explicit: config.buildConfigExplicit,
       code: 'writerside.config.missing-build-config-directory',
       severity: DiagnosticSeverity.info,
     );
     await _validateOptionalConfiguredDirectory(
       diagnostics,
-      root,
+      anchor,
       config.apiSpecificationsDir,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'apiSpecifications',
       explicit: config.apiSpecificationsExplicit,
       code: 'writerside.config.missing-api-specifications-directory',
       severity: DiagnosticSeverity.info,
     );
     await _validateOptionalConfiguredDirectory(
       diagnostics,
-      root,
+      anchor,
       config.snippetsDir,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'snippets',
       explicit: config.snippetsDir != null,
       code: 'writerside.config.missing-snippets-directory',
       severity: DiagnosticSeverity.warning,
     );
-    await _validateOptionalConfiguredFile(
+    final variablesResolution = await _validateOptionalConfiguredFile(
       diagnostics,
-      root,
+      anchor,
       config.varsFile,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'variables',
       code: 'writerside.config.missing-vars-file',
     );
-    await _validateOptionalConfiguredFile(
+    final categoriesResolution = await _validateOptionalConfiguredFile(
       diagnostics,
-      root,
+      anchor,
       config.categoriesFile,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'categories',
       code: 'writerside.config.missing-categories-file',
     );
     await _validateOptionalConfiguredFile(
       diagnostics,
-      root,
+      anchor,
       config.instanceGroupsFile,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'instanceGroups',
       code: 'writerside.config.missing-instance-groups-file',
+    );
+    await _validateConfiguredPathSafety(
+      diagnostics,
+      anchor,
+      config.resourcesFile,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'resourcesFile',
+      allowRoot: false,
+    );
+    await _validateConfiguredPathSafety(
+      diagnostics,
+      anchor,
+      config.resourcesDir,
+      configPath: configPath,
+      configSource: configSource,
+      kind: 'resourcesDirectory',
+      allowRoot: true,
     );
 
     final instances = <WritersideInstance>[];
     for (final source in config.instanceSources) {
-      final treePath = p.join(root, source);
-      if (!await File(treePath).exists()) {
+      final resolution = await _resolveConfiguredPath(
+        diagnostics,
+        anchor,
+        source,
+        configPath: configPath,
+        configSource: configSource,
+        kind: 'instanceTree',
+        allowRoot: false,
+      );
+      if (resolution == null) {
+        continue;
+      }
+      final treePath = resolution.path;
+      if (resolution.type != FileSystemEntityType.file) {
         diagnostics.add(
           Diagnostic(
             code: 'writerside.config.missing-instance-tree',
@@ -137,24 +224,61 @@ class WritersideModuleService {
         );
         continue;
       }
-      final treeSource = await File(treePath).readAsString();
+      final treeSource = await _readFileForParsing(
+        File(treePath),
+        diagnostics,
+        effectiveScanOptions,
+        readFailureCode: 'workspace.file.read-failed',
+      );
+      if (treeSource == null) {
+        continue;
+      }
       final instance = treeParser.parse(treePath, treeSource);
       diagnostics.addAll(instance.diagnostics);
       instances.add(instance);
     }
 
     final topics = <WritersideTopic>[];
+    final unparsedTopics = _UnparsedTopicIndex();
+    var parsedDocuments = 0;
     for (final topicsRoot in usableTopicRoots) {
       final scan = await scanWorkspaceEntities(
         topicsRoot,
-        options: scanOptions,
+        options: effectiveScanOptions,
       );
       diagnostics.addAll(scan.diagnostics);
       for (final entity in scan.entities.whereType<File>()) {
         final extension = p.extension(entity.path).toLowerCase();
+        if (extension != '.md' &&
+            extension != '.markdown' &&
+            extension != '.topic') {
+          continue;
+        }
+        final topicFileName = normalizedRelative(topicsRoot, entity.path);
+        if (parsedDocuments >= effectiveScanOptions.maxParsedDocuments) {
+          diagnostics.add(
+            Diagnostic(
+              code: 'workspace.scan.document-limit',
+              severity: DiagnosticSeverity.warning,
+              filePath: entity.path,
+            ),
+          );
+          unparsedTopics.add(topicFileName);
+          continue;
+        }
+        final source = await _readFileForParsing(
+          entity,
+          diagnostics,
+          effectiveScanOptions,
+          readFailureCode: 'writerside.topic.read-failed',
+        );
+        if (source == null) {
+          unparsedTopics.add(topicFileName);
+          continue;
+        }
+        parsedDocuments++;
         try {
           if (extension == '.md' || extension == '.markdown') {
-            final source = await entity.readAsString();
             final topic = topicParser.parseMarkdown(
               filePath: entity.path,
               source: source,
@@ -162,8 +286,7 @@ class WritersideModuleService {
             );
             diagnostics.addAll(topic.diagnostics);
             topics.add(topic);
-          } else if (extension == '.topic') {
-            final source = await entity.readAsString();
+          } else {
             final topic = topicParser.parseXml(
               filePath: entity.path,
               source: source,
@@ -173,6 +296,7 @@ class WritersideModuleService {
             topics.add(topic);
           }
         } on Object catch (error) {
+          unparsedTopics.add(topicFileName);
           diagnostics.add(
             Diagnostic(
               code: 'writerside.topic.read-failed',
@@ -186,27 +310,43 @@ class WritersideModuleService {
     }
 
     final variables = <WritersideVariable>[];
-    if (config.varsFile != null) {
-      final file = File(p.join(root, config.varsFile));
+    var validateVariables = true;
+    if (variablesResolution?.type == FileSystemEntityType.file) {
+      final file = File(variablesResolution!.path);
       if (await file.exists()) {
-        final parsed = variablesParser.parse(
-          file.path,
-          await file.readAsString(),
+        final source = await _readFileForParsing(
+          file,
+          diagnostics,
+          effectiveScanOptions,
+          readFailureCode: 'workspace.file.read-failed',
         );
-        variables.addAll(parsed.$1);
-        diagnostics.addAll(parsed.$2);
+        if (source == null) {
+          validateVariables = false;
+        } else {
+          final parsed = variablesParser.parse(file.path, source);
+          variables.addAll(parsed.$1);
+          diagnostics.addAll(parsed.$2);
+        }
       }
     }
     final categories = <WritersideCategory>[];
-    if (config.categoriesFile != null) {
-      final file = File(p.join(root, config.categoriesFile));
+    var validateCategories = true;
+    if (categoriesResolution?.type == FileSystemEntityType.file) {
+      final file = File(categoriesResolution!.path);
       if (await file.exists()) {
-        final parsed = categoriesParser.parse(
-          file.path,
-          await file.readAsString(),
+        final source = await _readFileForParsing(
+          file,
+          diagnostics,
+          effectiveScanOptions,
+          readFailureCode: 'workspace.file.read-failed',
         );
-        categories.addAll(parsed.$1);
-        diagnostics.addAll(parsed.$2);
+        if (source == null) {
+          validateCategories = false;
+        } else {
+          final parsed = categoriesParser.parse(file.path, source);
+          categories.addAll(parsed.$1);
+          diagnostics.addAll(parsed.$2);
+        }
       }
     }
 
@@ -218,8 +358,17 @@ class WritersideModuleService {
       variables: variables,
       categories: categories,
       diagnostics: const [],
+      validatedImageDirs: validatedImageDirs,
     );
-    diagnostics.addAll(_resolve(module));
+    diagnostics.addAll(
+      _resolve(
+        module,
+        validatedImageDirs,
+        unparsedTopics: unparsedTopics,
+        validateVariables: validateVariables,
+        validateCategories: validateCategories,
+      ),
+    );
     return WritersideModule(
       rootPath: module.rootPath,
       config: module.config,
@@ -228,31 +377,134 @@ class WritersideModuleService {
       variables: module.variables,
       categories: module.categories,
       diagnostics: sortDiagnostics(diagnostics),
+      validatedImageDirs: module.validatedImageDirs,
     );
   }
 
   Future<String?> _resolveConfigPath(String root) async {
     final configPath = p.join(root, 'writerside.cfg');
-    if (await File(configPath).exists()) {
+    final configType = await FileSystemEntity.type(
+      configPath,
+      followLinks: false,
+    );
+    if (configType == FileSystemEntityType.file ||
+        configType == FileSystemEntityType.link) {
       return configPath;
     }
     final legacyPath = p.join(root, 'project.ihp');
-    if (await File(legacyPath).exists()) {
+    final legacyType = await FileSystemEntity.type(
+      legacyPath,
+      followLinks: false,
+    );
+    if (legacyType == FileSystemEntityType.file ||
+        legacyType == FileSystemEntityType.link) {
       return legacyPath;
     }
     return null;
   }
 
+  WritersideModule _emptyModule(
+    String root,
+    String configPath,
+    List<Diagnostic> diagnostics,
+  ) {
+    final emptyConfig = WritersideConfig(
+      filePath: configPath,
+      version: null,
+      moduleName: null,
+      topicRoots: const [WritersideTopicRoot(dir: 'topics', explicit: false)],
+      imageRoots: const [WritersideImageRoot(dir: 'images', explicit: false)],
+      apiSpecificationsDir: 'specifications',
+      apiSpecificationsExplicit: false,
+      buildConfigDir: 'cfg',
+      buildConfigExplicit: false,
+      snippetsDir: null,
+      resourcesFile: null,
+      resourcesDir: null,
+      varsFile: null,
+      categoriesFile: null,
+      instanceGroupsFile: null,
+      instances: const [],
+      settings: const WritersideSettingsConfig(),
+      diagnostics: const [],
+    );
+    return WritersideModule(
+      rootPath: root,
+      config: emptyConfig,
+      instances: const [],
+      topics: const [],
+      variables: const [],
+      categories: const [],
+      diagnostics: sortDiagnostics(diagnostics),
+      validatedImageDirs: const ['images'],
+    );
+  }
+
+  Future<String?> _readFileForParsing(
+    File file,
+    List<Diagnostic> diagnostics,
+    WorkspaceScanOptions options, {
+    required String readFailureCode,
+  }) async {
+    final maxBytes = options.maxParsedFileBytes;
+    if (maxBytes < 0) {
+      diagnostics.add(_fileTooLargeDiagnostic(file.path));
+      return null;
+    }
+    try {
+      final bytes = BytesBuilder(copy: false);
+      await for (final chunk in file.openRead(0, maxBytes + 1)) {
+        bytes.add(chunk);
+      }
+      if (bytes.length > maxBytes) {
+        diagnostics.add(_fileTooLargeDiagnostic(file.path));
+        return null;
+      }
+      return utf8.decode(bytes.takeBytes());
+    } on Object catch (error) {
+      diagnostics.add(
+        Diagnostic(
+          code: readFailureCode,
+          severity: DiagnosticSeverity.warning,
+          filePath: file.path,
+          args: {'error': '$error'},
+        ),
+      );
+      return null;
+    }
+  }
+
+  Diagnostic _fileTooLargeDiagnostic(String filePath) {
+    return Diagnostic(
+      code: 'workspace.file.too-large',
+      severity: DiagnosticSeverity.warning,
+      filePath: filePath,
+    );
+  }
+
   Future<List<String>> _existingTopicRoots(
     List<Diagnostic> diagnostics,
-    String root,
+    CanonicalPathAnchor anchor,
     WritersideConfig config,
+    String configPath,
+    String configSource,
   ) async {
     final existing = <String>[];
     for (final topicRoot in config.topicRoots) {
-      final path = p.join(root, topicRoot.dir);
-      if (await Directory(path).exists()) {
-        existing.add(path);
+      final resolution = await _resolveConfiguredPath(
+        diagnostics,
+        anchor,
+        topicRoot.dir,
+        configPath: configPath,
+        configSource: configSource,
+        kind: 'topics',
+        allowRoot: true,
+      );
+      if (resolution == null) {
+        continue;
+      }
+      if (resolution.type == FileSystemEntityType.directory) {
+        existing.add(resolution.path);
         continue;
       }
       if (topicRoot.explicit) {
@@ -260,7 +512,7 @@ class WritersideModuleService {
           Diagnostic(
             code: 'writerside.config.missing-directory',
             severity: DiagnosticSeverity.error,
-            filePath: path,
+            filePath: resolution.path,
             args: {'kind': 'topics', 'relativePath': topicRoot.dir},
           ),
         );
@@ -270,7 +522,7 @@ class WritersideModuleService {
         config.topicRoots.any(
           (root) => !root.explicit && root.dir == 'topics',
         )) {
-      final path = p.join(root, 'topics');
+      final path = p.join(anchor.rootPath, 'topics');
       diagnostics.add(
         Diagnostic(
           code: 'writerside.config.missing-directory',
@@ -283,14 +535,31 @@ class WritersideModuleService {
     return existing;
   }
 
-  Future<void> _validateImageRoots(
+  Future<List<String>> _validateImageRoots(
     List<Diagnostic> diagnostics,
-    String root,
+    CanonicalPathAnchor anchor,
     WritersideConfig config,
+    String configPath,
+    String configSource,
   ) async {
+    final validated = <String>[];
     for (final imageRoot in config.imageRoots) {
-      final path = p.join(root, imageRoot.dir);
-      if (await Directory(path).exists()) {
+      final resolution = await _resolveConfiguredPath(
+        diagnostics,
+        anchor,
+        imageRoot.dir,
+        configPath: configPath,
+        configSource: configSource,
+        kind: 'images',
+        allowRoot: true,
+      );
+      if (resolution == null) {
+        continue;
+      }
+      validated.add(
+        p.normalize(p.relative(resolution.path, from: anchor.rootPath)),
+      );
+      if (resolution.type == FileSystemEntityType.directory) {
         continue;
       }
       diagnostics.add(
@@ -299,62 +568,168 @@ class WritersideModuleService {
           severity: imageRoot.explicit
               ? DiagnosticSeverity.warning
               : DiagnosticSeverity.info,
-          filePath: path,
+          filePath: resolution.path,
           args: {'kind': 'images', 'relativePath': imageRoot.dir},
         ),
       );
     }
+    return validated.isEmpty ? const ['images'] : validated.toSet().toList();
   }
 
-  Future<void> _validateOptionalConfiguredDirectory(
+  Future<AnchoredPathResolution?> _validateOptionalConfiguredDirectory(
     List<Diagnostic> diagnostics,
-    String root,
+    CanonicalPathAnchor anchor,
     String? relativePath, {
+    required String configPath,
+    required String configSource,
+    required String kind,
     required bool explicit,
     required String code,
     required DiagnosticSeverity severity,
   }) async {
     if (!explicit || relativePath == null || relativePath.isEmpty) {
-      return;
+      return null;
     }
-    final path = p.join(root, relativePath);
-    if (await Directory(path).exists()) {
-      return;
+    final resolution = await _resolveConfiguredPath(
+      diagnostics,
+      anchor,
+      relativePath,
+      configPath: configPath,
+      configSource: configSource,
+      kind: kind,
+      allowRoot: true,
+    );
+    if (resolution == null ||
+        resolution.type == FileSystemEntityType.directory) {
+      return resolution;
     }
     diagnostics.add(
       Diagnostic(
         code: code,
         severity: severity,
-        filePath: path,
+        filePath: resolution.path,
         args: {'relativePath': relativePath},
       ),
     );
+    return resolution;
   }
 
-  Future<void> _validateOptionalConfiguredFile(
+  Future<AnchoredPathResolution?> _validateOptionalConfiguredFile(
     List<Diagnostic> diagnostics,
-    String root,
+    CanonicalPathAnchor anchor,
     String? relativePath, {
+    required String configPath,
+    required String configSource,
+    required String kind,
     required String code,
   }) async {
     if (relativePath == null || relativePath.isEmpty) {
-      return;
+      return null;
     }
-    final path = p.join(root, relativePath);
-    if (await File(path).exists()) {
-      return;
+    final resolution = await _resolveConfiguredPath(
+      diagnostics,
+      anchor,
+      relativePath,
+      configPath: configPath,
+      configSource: configSource,
+      kind: kind,
+      allowRoot: false,
+    );
+    if (resolution == null || resolution.type == FileSystemEntityType.file) {
+      return resolution;
     }
     diagnostics.add(
       Diagnostic(
         code: code,
         severity: DiagnosticSeverity.warning,
-        filePath: path,
+        filePath: resolution.path,
         args: {'relativePath': relativePath},
       ),
     );
+    return resolution;
   }
 
-  List<Diagnostic> _resolve(WritersideModule module) {
+  Future<void> _validateConfiguredPathSafety(
+    List<Diagnostic> diagnostics,
+    CanonicalPathAnchor anchor,
+    String? configuredPath, {
+    required String configPath,
+    required String configSource,
+    required String kind,
+    required bool allowRoot,
+  }) async {
+    if (configuredPath == null || configuredPath.isEmpty) {
+      return;
+    }
+    await _resolveConfiguredPath(
+      diagnostics,
+      anchor,
+      configuredPath,
+      configPath: configPath,
+      configSource: configSource,
+      kind: kind,
+      allowRoot: allowRoot,
+    );
+  }
+
+  Future<AnchoredPathResolution?> _resolveConfiguredPath(
+    List<Diagnostic> diagnostics,
+    CanonicalPathAnchor anchor,
+    String configuredPath, {
+    required String configPath,
+    required String configSource,
+    required String kind,
+    required bool allowRoot,
+  }) async {
+    final candidate = p.isAbsolute(configuredPath)
+        ? p.normalize(configuredPath)
+        : p.normalize(p.join(anchor.rootPath, configuredPath));
+    try {
+      return await resolveAnchoredPath(
+        anchor,
+        candidate,
+        allowRoot: allowRoot,
+        allowMissingAncestors: true,
+      );
+    } on AnchoredPathViolation catch (error) {
+      diagnostics.add(
+        _unsafeConfiguredPathDiagnostic(
+          configPath: configPath,
+          configSource: configSource,
+          configuredPath: configuredPath,
+          kind: kind,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Diagnostic _unsafeConfiguredPathDiagnostic({
+    required String configPath,
+    String? configSource,
+    required String configuredPath,
+    required String kind,
+    required AnchoredPathViolation error,
+  }) {
+    return Diagnostic(
+      code: 'writerside.config.path-unsafe',
+      severity: DiagnosticSeverity.error,
+      filePath: configPath,
+      args: {'path': configuredPath, 'kind': kind, 'reason': error.reason.name},
+      sourceSpan: configSource == null
+          ? null
+          : _stringSpan(configPath, configSource, configuredPath),
+    );
+  }
+
+  List<Diagnostic> _resolve(
+    WritersideModule module,
+    List<String> validatedImageDirs, {
+    required _UnparsedTopicIndex unparsedTopics,
+    required bool validateVariables,
+    required bool validateCategories,
+  }) {
     final diagnostics = <Diagnostic>[];
     final variableNames = module.variableNames;
     final categoryIds = module.categories.map((item) => item.id).toSet();
@@ -377,7 +752,8 @@ class WritersideModuleService {
     for (final instance in module.instances) {
       if (instance.startPage != null) {
         final resolved = _resolveTopicReference(module, instance.startPage!);
-        if (resolved.isMissing) {
+        if (resolved.isMissing &&
+            !unparsedTopics.matches(instance.startPage!)) {
           diagnostics.add(
             Diagnostic(
               code: 'writerside.tree.missing-start-page',
@@ -399,7 +775,7 @@ class WritersideModuleService {
         final topic = node.topicFileName;
         if (topic != null) {
           final resolved = _resolveTopicReference(module, topic);
-          if (resolved.isMissing) {
+          if (resolved.isMissing && !unparsedTopics.matches(topic)) {
             diagnostics.add(
               Diagnostic(
                 code: 'writerside.tree.missing-topic',
@@ -460,17 +836,19 @@ class WritersideModuleService {
         }
         duplicateIds[id.id] = id.span;
       }
-      for (final variable in topic.variables) {
-        if (!variableNames.contains(variable.name)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.variable.unresolved',
-              severity: DiagnosticSeverity.warning,
-              filePath: topic.filePath,
-              args: {'name': variable.name},
-              sourceSpan: variable.span,
-            ),
-          );
+      if (validateVariables) {
+        for (final variable in topic.variables) {
+          if (!variableNames.contains(variable.name)) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.variable.unresolved',
+                severity: DiagnosticSeverity.warning,
+                filePath: topic.filePath,
+                args: {'name': variable.name},
+                sourceSpan: variable.span,
+              ),
+            );
+          }
         }
       }
       for (final link in topic.links) {
@@ -486,6 +864,10 @@ class WritersideModuleService {
             : _resolveTopicReference(module, targetReference, fromTopic: topic);
         final target = resolved.topic;
         if (target == null) {
+          if (resolved.isMissing &&
+              unparsedTopics.matches(targetReference, fromTopic: topic)) {
+            continue;
+          }
           diagnostics.add(
             resolved.isAmbiguous
                 ? _ambiguousTopicReferenceDiagnostic(
@@ -532,7 +914,12 @@ class WritersideModuleService {
         if (hasUriScheme(image.destination)) {
           continue;
         }
-        if (!_localImageExistsInAnyRoot(module, topic, image.destination)) {
+        if (!_localImageExistsInAnyRoot(
+          module,
+          topic,
+          image.destination,
+          validatedImageDirs,
+        )) {
           diagnostics.add(
             Diagnostic(
               code: 'markdown.image.missing-file',
@@ -563,6 +950,10 @@ class WritersideModuleService {
         );
         final target = resolved.topic;
         if (target == null) {
+          if (resolved.isMissing &&
+              unparsedTopics.matches(include.from!, fromTopic: topic)) {
+            continue;
+          }
           if (!include.nullable) {
             diagnostics.add(
               resolved.isAmbiguous
@@ -597,25 +988,27 @@ class WritersideModuleService {
           }
         }
       }
-      for (final categoryRef in RegExp(
-        r'<category\b[^>]*ref="([^"]+)"',
-      ).allMatches(topic.markdown?.source ?? '')) {
-        final ref = categoryRef.group(1)!;
-        if (!categoryIds.contains(ref)) {
-          diagnostics.add(
-            Diagnostic(
-              code: 'writerside.category.unresolved',
-              severity: DiagnosticSeverity.warning,
-              filePath: topic.filePath,
-              args: {'ref': ref},
-              sourceSpan: SourceSpan.fromOffsets(
+      if (validateCategories) {
+        for (final categoryRef in RegExp(
+          r'<category\b[^>]*ref="([^"]+)"',
+        ).allMatches(topic.markdown?.source ?? '')) {
+          final ref = categoryRef.group(1)!;
+          if (!categoryIds.contains(ref)) {
+            diagnostics.add(
+              Diagnostic(
+                code: 'writerside.category.unresolved',
+                severity: DiagnosticSeverity.warning,
                 filePath: topic.filePath,
-                source: topic.markdown!.source,
-                startOffset: categoryRef.start,
-                endOffset: categoryRef.end,
+                args: {'ref': ref},
+                sourceSpan: SourceSpan.fromOffsets(
+                  filePath: topic.filePath,
+                  source: topic.markdown!.source,
+                  startOffset: categoryRef.start,
+                  endOffset: categoryRef.end,
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
       }
     }
@@ -655,8 +1048,9 @@ class WritersideModuleService {
     WritersideModule module,
     WritersideTopic topic,
     String destination,
+    List<String> validatedImageDirs,
   ) {
-    for (final imagesDir in module.config.imagesDirs) {
+    for (final imagesDir in validatedImageDirs) {
       if (localImageExists(
         activeFilePath: topic.filePath,
         destination: destination,
@@ -697,4 +1091,33 @@ class _TopicResolution {
   bool get isMissing => matches.isEmpty;
   bool get isAmbiguous => matches.length > 1;
   WritersideTopic? get topic => matches.length == 1 ? matches.single : null;
+}
+
+class _UnparsedTopicIndex {
+  final _fileNames = <String>{};
+  final _baseNames = <String>{};
+
+  void add(String fileName) {
+    _fileNames.add(fileName);
+    _baseNames.add(p.basename(fileName));
+  }
+
+  bool matches(String reference, {WritersideTopic? fromTopic}) {
+    final normalized = p.normalize(reference.trim()).replaceAll(r'\', '/');
+    if (normalized.isEmpty) {
+      return false;
+    }
+    if (_fileNames.contains(normalized)) {
+      return true;
+    }
+    if (fromTopic != null && !p.isAbsolute(normalized)) {
+      final relative = p
+          .normalize(p.join(p.dirname(fromTopic.fileName), normalized))
+          .replaceAll(r'\', '/');
+      if (_fileNames.contains(relative)) {
+        return true;
+      }
+    }
+    return _baseNames.contains(p.basename(normalized));
+  }
 }

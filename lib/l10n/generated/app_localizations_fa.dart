@@ -156,6 +156,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get copyName => 'کپی نام';
 
   @override
+  String get copyFileName => 'کپی نام فایل';
+
+  @override
   String get copyPath => 'کپی مسیر';
 
   @override
@@ -166,6 +169,26 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get cut => 'برش';
+
+  @override
+  String get promoteHeading => 'ارتقای عنوان';
+
+  @override
+  String get demoteHeading => 'تنزل عنوان';
+
+  @override
+  String get moveSectionUp => 'انتقال بخش به بالا';
+
+  @override
+  String get moveSectionDown => 'انتقال بخش به پایین';
+
+  @override
+  String get confirmDeleteSectionTitle => 'بخش حذف شود؟';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return '«⁨$name⁩» و همهٔ محتوای بخش آن حذف شود؟ این کار قابل بازگشت نیست.';
+  }
 
   @override
   String get darkTheme => 'تیره';
@@ -199,6 +222,9 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get mainMenu => 'منوی اصلی';
+
+  @override
+  String get fullScreen => 'تمام‌صفحه';
 
   @override
   String get markdown => 'Markdown';
@@ -2204,7 +2230,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'عملیات فایل';
+  String get fileActions => 'عملیات فایل';
 
   @override
   String get gitStatusAdded => 'افزوده‌شده';

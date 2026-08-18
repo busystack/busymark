@@ -158,6 +158,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get copyName => 'नाम कॉपी करें';
 
   @override
+  String get copyFileName => 'फ़ाइल नाम कॉपी करें';
+
+  @override
   String get copyPath => 'पथ कॉपी करें';
 
   @override
@@ -168,6 +171,26 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get cut => 'कट करें';
+
+  @override
+  String get promoteHeading => 'शीर्षक को ऊपर करें';
+
+  @override
+  String get demoteHeading => 'शीर्षक को नीचे करें';
+
+  @override
+  String get moveSectionUp => 'अनुभाग ऊपर ले जाएँ';
+
+  @override
+  String get moveSectionDown => 'अनुभाग नीचे ले जाएँ';
+
+  @override
+  String get confirmDeleteSectionTitle => 'अनुभाग हटाएँ?';
+
+  @override
+  String confirmDeleteSectionMessage(String name) {
+    return '$name और उसके अनुभाग की सारी सामग्री हटाएँ? इसे वापस नहीं किया जा सकता।';
+  }
 
   @override
   String get darkTheme => 'डार्क';
@@ -201,6 +224,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get mainMenu => 'मुख्य मेन्यू';
+
+  @override
+  String get fullScreen => 'पूर्ण स्क्रीन';
 
   @override
   String get markdown => 'Markdown';
@@ -2141,7 +2167,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get gitFileActions => 'फ़ाइल कार्रवाइयाँ';
+  String get fileActions => 'फ़ाइल कार्रवाइयाँ';
 
   @override
   String get gitStatusAdded => 'जोड़ा गया';
