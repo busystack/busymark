@@ -1804,7 +1804,7 @@ void main() {
     );
 
     await pressControlShortcut(LogicalKeyboardKey.digit4);
-    expect(find.text(l10n.gitNoChanges), findsOneWidget);
+    expect(find.text(l10n.gitUnstaged), findsOneWidget);
     expect(find.byTooltip(l10n.gitBehindCount(3)), findsOneWidget);
     expect(find.byTooltip(l10n.gitAheadCount(2)), findsOneWidget);
 
@@ -1976,9 +1976,13 @@ void main() {
       findsWidgets,
     );
 
+    final sourceDiffViewer = tester.widget<GitDiffViewer>(
+      find.byType(GitDiffViewer),
+    );
+    expect(sourceDiffViewer.openFilePath, 'README.md');
+
     await tester.tap(find.byTooltip(l10n.gitOpenFile));
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     var workspace = container.read(workspaceControllerProvider).workspace!;
     var gitState = container.read(gitControllerProvider);
@@ -2000,8 +2004,7 @@ void main() {
     expect(find.byTooltip(l10n.gitOpenFile), findsOneWidget);
 
     await tester.tap(find.byTooltip(l10n.gitOpenFile));
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     workspace = container.read(workspaceControllerProvider).workspace!;
     gitState = container.read(gitControllerProvider);
@@ -7591,7 +7594,23 @@ GitState _gitDiffState(String rootPath) {
     repositoryInfo: repository,
     statusSnapshot: GitStatusSnapshot(
       repositoryInfo: repository,
-      files: const [],
+      files: [
+        GitFileStatus(
+          repoRelativePath: 'README.md',
+          absolutePath: '$rootPath/README.md',
+          indexStatus: GitFileChangeStatus.unmodified,
+          workTreeStatus: GitFileChangeStatus.modified,
+          category: GitFileStatusCategory.modified,
+          staged: false,
+          unstaged: true,
+          untracked: false,
+          deleted: false,
+          renamed: false,
+          copied: false,
+          conflicted: false,
+          ignored: false,
+        ),
+      ],
     ),
     selectedChange: const GitChangeSelection(
       path: 'guide.md',

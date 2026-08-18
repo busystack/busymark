@@ -15,6 +15,7 @@ class GitDiffViewer extends StatefulWidget {
     required this.hasUnsavedEditorChanges,
     required this.onOpenFile,
     required this.onClose,
+    this.openFilePath,
     this.showHeader = true,
     this.showFileHeaders = true,
     this.showCloseButton = true,
@@ -29,6 +30,7 @@ class GitDiffViewer extends StatefulWidget {
   final bool hasUnsavedEditorChanges;
   final ValueChanged<String> onOpenFile;
   final VoidCallback onClose;
+  final String? openFilePath;
   final bool showHeader;
   final bool showFileHeaders;
   final bool showCloseButton;
@@ -180,6 +182,7 @@ class _GitDiffViewerState extends State<GitDiffViewer> {
                         changeKeys: changeNavigationEnabled
                             ? _changeKeys
                             : null,
+                        openFilePath: widget.openFilePath,
                         onOpenFile: widget.onOpenFile,
                         showHeader: widget.showFileHeaders,
                         showActions: widget.showFileActions,
@@ -383,6 +386,7 @@ class _DiffFileSection extends StatelessWidget {
     required this.snapshot,
     required this.changeIndexOffset,
     required this.changeKeys,
+    required this.openFilePath,
     required this.onOpenFile,
     required this.showHeader,
     required this.showActions,
@@ -394,6 +398,7 @@ class _DiffFileSection extends StatelessWidget {
   final String? snapshot;
   final int changeIndexOffset;
   final Map<int, GlobalKey>? changeKeys;
+  final String? openFilePath;
   final ValueChanged<String> onOpenFile;
   final bool showHeader;
   final bool showActions;
@@ -483,14 +488,12 @@ class _DiffFileSection extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: BusyMarkSpacing.xs),
-                      if (showActions)
+                      if (showActions && openFilePath != null)
                         BusyMarkHeaderIconButton(
                           tooltip: context.l10n.gitOpenFile,
                           icon: BusyMarkGlyphs.externalLink,
                           transparent: true,
-                          onPressed: path.isEmpty
-                              ? null
-                              : () => onOpenFile(path),
+                          onPressed: () => onOpenFile(openFilePath!),
                         ),
                     ],
                   ),
@@ -504,7 +507,7 @@ class _DiffFileSection extends StatelessWidget {
               sourceBody,
             ],
           ),
-          if (!showPathHeader && showActions)
+          if (!showPathHeader && showActions && openFilePath != null)
             Positioned(
               top: BusyMarkSpacing.xs,
               right: BusyMarkSpacing.xs,
@@ -512,7 +515,7 @@ class _DiffFileSection extends StatelessWidget {
                 tooltip: context.l10n.gitOpenFile,
                 icon: BusyMarkGlyphs.externalLink,
                 transparent: true,
-                onPressed: path.isEmpty ? null : () => onOpenFile(path),
+                onPressed: () => onOpenFile(openFilePath!),
               ),
             ),
         ],

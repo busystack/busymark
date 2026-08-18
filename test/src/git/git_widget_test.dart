@@ -153,6 +153,78 @@ void main() {
     },
   );
 
+  testWidgets(
+    'AD path shows staged addition and unstaged deletion without open action',
+    (tester) async {
+      final openedPaths = <String>[];
+      await tester.pumpWidget(
+        _localized(
+          GitCommitActions(
+            commit: (_) async => true,
+            child: GitFileActions(
+              select: (_) {},
+              unselect: (_) {},
+              discard: (_) {},
+              child: GitChangesView(
+                state: _state(
+                  files: [
+                    _file(
+                      'draft.md',
+                      staged: true,
+                      unstaged: true,
+                      category: GitFileStatusCategory.deleted,
+                      indexStatus: GitFileChangeStatus.added,
+                      workTreeStatus: GitFileChangeStatus.deleted,
+                    ),
+                  ],
+                ),
+                onSelectFile: (_) {},
+                onOpenFile: openedPaths.add,
+                onConfirmDiscard: (_) async => true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final stagedRow = find.byKey(
+        const ValueKey('git-change-staged-draft.md'),
+      );
+      final unstagedRow = find.byKey(
+        const ValueKey('git-change-unstaged-draft.md'),
+      );
+      expect(
+        find.descendant(of: stagedRow, matching: find.text('A')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: unstagedRow, matching: find.text('D')),
+        findsOneWidget,
+      );
+      expect(find.byTooltip(l10n.gitStatusAdded), findsOneWidget);
+      expect(find.byTooltip(l10n.gitStatusDeleted), findsOneWidget);
+      expect(
+        find.descendant(
+          of: stagedRow,
+          matching: find.byTooltip(l10n.fileActions),
+        ),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.descendant(
+          of: unstagedRow,
+          matching: find.byTooltip(l10n.fileActions),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.gitOpenFile), findsNothing);
+      expect(find.text(l10n.gitDiscard), findsOneWidget);
+      expect(openedPaths, isEmpty);
+    },
+  );
+
   testWidgets('staged rename preserves both paths and workspace scope', (
     tester,
   ) async {
@@ -203,6 +275,101 @@ void main() {
       ),
     ]);
     expect(unstagedPaths, ['outside/old.md', 'docs/new.md']);
+  });
+
+  testWidgets('rename paths follow the selected Git status column', (
+    tester,
+  ) async {
+    final selections = <GitChangeSelection>[];
+    final stagedPathSets = <List<String>>[];
+    final unstagedPathSets = <List<String>>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (paths) => stagedPathSets.add(paths),
+            unselect: (paths) => unstagedPathSets.add(paths),
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file(
+                    'docs/new.md',
+                    originalPath: 'docs/old.md',
+                    staged: true,
+                    unstaged: true,
+                    category: GitFileStatusCategory.renamed,
+                    indexStatus: GitFileChangeStatus.modified,
+                    workTreeStatus: GitFileChangeStatus.renamed,
+                  ),
+                ],
+              ),
+              onSelectFile: selections.add,
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final stagedRow = find.byKey(
+      const ValueKey('git-change-staged-docs/new.md'),
+    );
+    final unstagedRow = find.byKey(
+      const ValueKey('git-change-unstaged-docs/new.md'),
+    );
+    expect(
+      find.descendant(of: stagedRow, matching: find.text('new.md')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: unstagedRow,
+        matching: find.text('docs/old.md → docs/new.md'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.descendant(of: stagedRow, matching: find.text('new.md')),
+    );
+    await tester.tap(
+      find.descendant(
+        of: unstagedRow,
+        matching: find.text('docs/old.md → docs/new.md'),
+      ),
+    );
+    final stagedCheckbox = find.descendant(
+      of: stagedRow,
+      matching: find.byType(YaruCheckbox),
+    );
+    final unstagedCheckbox = find.descendant(
+      of: unstagedRow,
+      matching: find.byType(YaruCheckbox),
+    );
+    await tester.tap(stagedCheckbox);
+    await tester.tap(unstagedCheckbox);
+    await tester.pump();
+
+    expect(selections, const [
+      GitChangeSelection(
+        path: 'docs/new.md',
+        comparison: GitComparisonType.staged,
+      ),
+      GitChangeSelection(
+        path: 'docs/new.md',
+        comparison: GitComparisonType.unstaged,
+        originalRepoRelativePath: 'docs/old.md',
+      ),
+    ]);
+    expect(unstagedPathSets, const [
+      ['docs/new.md'],
+    ]);
+    expect(stagedPathSets, const [
+      ['docs/old.md', 'docs/new.md'],
+    ]);
   });
 
   testWidgets('commit panel reports staged count and unsaved editor state', (
@@ -815,6 +982,7 @@ void main() {
             showHeader: false,
             showFileHeaders: false,
             showCloseButton: false,
+            openFilePath: 'README.md',
             onOpenFile: (path) => openedPath = path,
             onClose: () {},
           ),
@@ -830,6 +998,55 @@ void main() {
       expect(openedPath, 'README.md');
     },
   );
+
+  testWidgets('diff open action requires an explicit working-tree target', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: GitDiff(
+            title: 'historical.md',
+            files: [_diffFile('historical.md', 'Historical change')],
+            rawPatch: '',
+            hasBinaryFiles: false,
+          ),
+          hasUnsavedEditorChanges: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
+  });
+
+  testWidgets('diff open action uses the explicit current path', (
+    tester,
+  ) async {
+    String? openedPath;
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: GitDiff(
+            title: 'old.md',
+            files: [_diffFile('old.md', 'Historical change')],
+            rawPatch: '',
+            hasBinaryFiles: false,
+          ),
+          hasUnsavedEditorChanges: false,
+          openFilePath: 'current.md',
+          onOpenFile: (path) => openedPath = path,
+          onClose: () {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip(l10n.gitOpenFile));
+    await tester.pump();
+
+    expect(openedPath, 'current.md');
+  });
 
   testWidgets('embedded diff keeps rename paths visible', (tester) async {
     await tester.pumpWidget(
@@ -1387,6 +1604,8 @@ GitFileStatus _file(
   bool untracked = false,
   bool conflicted = false,
   GitFileStatusCategory? category,
+  GitFileChangeStatus? indexStatus,
+  GitFileChangeStatus? workTreeStatus,
 }) {
   final resolvedCategory =
       category ??
@@ -1395,23 +1614,46 @@ GitFileStatus _file(
           : untracked
           ? GitFileStatusCategory.untracked
           : GitFileStatusCategory.modified);
+  GitFileChangeStatus statusForCategory() {
+    return switch (resolvedCategory) {
+      GitFileStatusCategory.added => GitFileChangeStatus.added,
+      GitFileStatusCategory.deleted => GitFileChangeStatus.deleted,
+      GitFileStatusCategory.renamed => GitFileChangeStatus.renamed,
+      GitFileStatusCategory.copied => GitFileChangeStatus.copied,
+      GitFileStatusCategory.untracked => GitFileChangeStatus.untracked,
+      GitFileStatusCategory.conflicted => GitFileChangeStatus.unmerged,
+      GitFileStatusCategory.ignored => GitFileChangeStatus.ignored,
+      GitFileStatusCategory.typeChanged => GitFileChangeStatus.typeChanged,
+      GitFileStatusCategory.modified => GitFileChangeStatus.modified,
+      GitFileStatusCategory.unknown => GitFileChangeStatus.unknown,
+    };
+  }
+
+  final resolvedIndexStatus =
+      indexStatus ??
+      (staged ? statusForCategory() : GitFileChangeStatus.unmodified);
+  final resolvedWorkTreeStatus =
+      workTreeStatus ??
+      (unstaged ? statusForCategory() : GitFileChangeStatus.unmodified);
   return GitFileStatus(
     repoRelativePath: path,
     absolutePath: '/repo/$path',
     originalRepoRelativePath: originalPath,
-    indexStatus: staged
-        ? GitFileChangeStatus.modified
-        : GitFileChangeStatus.unmodified,
-    workTreeStatus: unstaged
-        ? GitFileChangeStatus.modified
-        : GitFileChangeStatus.unmodified,
+    indexStatus: resolvedIndexStatus,
+    workTreeStatus: resolvedWorkTreeStatus,
     category: resolvedCategory,
     staged: staged,
     unstaged: unstaged,
     untracked: untracked,
-    deleted: resolvedCategory == GitFileStatusCategory.deleted,
-    renamed: resolvedCategory == GitFileStatusCategory.renamed,
-    copied: resolvedCategory == GitFileStatusCategory.copied,
+    deleted:
+        resolvedIndexStatus == GitFileChangeStatus.deleted ||
+        resolvedWorkTreeStatus == GitFileChangeStatus.deleted,
+    renamed:
+        resolvedIndexStatus == GitFileChangeStatus.renamed ||
+        resolvedWorkTreeStatus == GitFileChangeStatus.renamed,
+    copied:
+        resolvedIndexStatus == GitFileChangeStatus.copied ||
+        resolvedWorkTreeStatus == GitFileChangeStatus.copied,
     conflicted: conflicted,
     ignored: false,
   );

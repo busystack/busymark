@@ -220,6 +220,21 @@ class GitFileStatus {
   final bool copied;
   final bool conflicted;
   final bool ignored;
+
+  bool get hasStagedRename => indexStatus == GitFileChangeStatus.renamed;
+
+  bool get hasUnstagedRename => workTreeStatus == GitFileChangeStatus.renamed;
+
+  bool get hasWorkingTreeFile {
+    if (untracked) {
+      return true;
+    }
+    if (workTreeStatus == GitFileChangeStatus.deleted) {
+      return false;
+    }
+    return indexStatus != GitFileChangeStatus.deleted ||
+        workTreeStatus != GitFileChangeStatus.unmodified;
+  }
 }
 
 class GitStatusSnapshot {

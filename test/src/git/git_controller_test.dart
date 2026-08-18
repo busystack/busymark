@@ -12,6 +12,54 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('diff open target follows the current working-tree context', () {
+    const repository = GitRepositoryInfo(
+      rootPath: '/repo',
+      gitDirPath: '/repo/.git',
+    );
+    const addedThenDeleted = GitFileStatus(
+      repoRelativePath: 'draft.md',
+      absolutePath: '/repo/draft.md',
+      indexStatus: GitFileChangeStatus.added,
+      workTreeStatus: GitFileChangeStatus.deleted,
+      category: GitFileStatusCategory.deleted,
+      staged: true,
+      unstaged: true,
+      untracked: false,
+      deleted: true,
+      renamed: false,
+      copied: false,
+      conflicted: false,
+      ignored: false,
+    );
+    const changesState = GitState(
+      repositoryInfo: repository,
+      statusSnapshot: GitStatusSnapshot(
+        repositoryInfo: repository,
+        files: [addedThenDeleted],
+      ),
+      selectedChange: GitChangeSelection(
+        path: 'draft.md',
+        comparison: GitComparisonType.staged,
+      ),
+    );
+
+    expect(changesState.selectedDiffOpenFilePath, isNull);
+    expect(
+      const GitState(
+        selectedView: GitView.fileHistory,
+        fileHistory: GitFileHistoryState(currentPath: 'current.md'),
+      ).selectedDiffOpenFilePath,
+      'current.md',
+    );
+    expect(
+      const GitState(
+        selectedView: GitView.projectHistory,
+      ).selectedDiffOpenFilePath,
+      isNull,
+    );
+  });
+
   test('refreshes after workspace attach', () async {
     final gateway = _FakeGitGateway();
     final container = _container(gateway);

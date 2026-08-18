@@ -117,7 +117,7 @@ class GitSidebarTab extends ConsumerWidget {
                     for (final file
                         in state.statusSnapshot?.stagedFiles ??
                             const <GitFileStatus>[])
-                      if (file.renamed &&
+                      if (file.hasStagedRename &&
                           file.originalRepoRelativePath != null &&
                           controller.isOutsideWorkspace(
                             file.originalRepoRelativePath!,

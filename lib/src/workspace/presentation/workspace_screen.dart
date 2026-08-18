@@ -451,6 +451,7 @@ class WorkspaceScreen extends ConsumerWidget {
                   )
                 : _GitDiffDocumentView(
                     diff: gitState.selectedDiffForDisplay,
+                    openFilePath: gitState.selectedDiffOpenFilePath,
                     workspace: workspace,
                     viewMode: settings.documentViewMode,
                     hasUnsavedEditorChanges: state.isDirty,
@@ -1064,11 +1065,18 @@ Future<void> _openGitDiffFile(
   if (repo == null) {
     return;
   }
+  final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
+  if (!File(absolutePath).existsSync()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.errorPathDoesNotExist(absolutePath))),
+    );
+    await ref.read(gitControllerProvider.notifier).refresh();
+    return;
+  }
   if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
       !context.mounted) {
     return;
   }
-  final absolutePath = p.normalize(p.join(repo.rootPath, repoRelativePath));
   final workspace = ref.read(workspaceControllerProvider).workspace;
   final fileInWorkspace =
       workspace?.files.any((file) => file.absolutePath == absolutePath) ??
@@ -6800,6 +6808,7 @@ String _diffTabTitle(String path) {
 class _GitDiffDocumentView extends StatefulWidget {
   const _GitDiffDocumentView({
     required this.diff,
+    required this.openFilePath,
     required this.workspace,
     required this.viewMode,
     required this.hasUnsavedEditorChanges,
@@ -6808,6 +6817,7 @@ class _GitDiffDocumentView extends StatefulWidget {
   });
 
   final GitDiff? diff;
+  final String? openFilePath;
   final Workspace workspace;
   final DocumentViewModePreference viewMode;
   final bool hasUnsavedEditorChanges;
@@ -6890,6 +6900,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                 direction: 1,
               ),
               target: _diffChangeTarget(diff, _currentChangeIndex),
+              openFilePath: widget.openFilePath,
               onOpenFile: widget.onOpenFile,
             ),
           Expanded(
@@ -6910,6 +6921,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                       changeNavigatorController: splitVisible
                           ? _sourceChangeNavigatorController
                           : null,
+                      openFilePath: widget.openFilePath,
                       onOpenFile: widget.onOpenFile,
                       onClose: () {},
                     ),
@@ -6932,6 +6944,7 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                             onNext: () =>
                                 _jumpToPreviewChange(changeTargets, 1),
                             target: null,
+                            openFilePath: null,
                             onOpenFile: null,
                           ),
                         Expanded(
@@ -7066,6 +7079,7 @@ class _DiffChangeNavigator extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.target,
+    required this.openFilePath,
     required this.onOpenFile,
   });
 
@@ -7074,12 +7088,12 @@ class _DiffChangeNavigator extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final _DiffChangeTarget? target;
+  final String? openFilePath;
   final ValueChanged<String>? onOpenFile;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
-    final path = target?.file.displayPath ?? '';
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.headerbarFlat,
@@ -7115,14 +7129,13 @@ class _DiffChangeNavigator extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
-              BusyMarkHeaderIconButton(
-                tooltip: context.l10n.gitOpenFile,
-                icon: BusyMarkGlyphs.externalLink,
-                transparent: true,
-                onPressed: path.isEmpty || onOpenFile == null
-                    ? null
-                    : () => onOpenFile!(path),
-              ),
+              if (openFilePath != null && onOpenFile != null)
+                BusyMarkHeaderIconButton(
+                  tooltip: context.l10n.gitOpenFile,
+                  icon: BusyMarkGlyphs.externalLink,
+                  transparent: true,
+                  onPressed: () => onOpenFile!(openFilePath!),
+                ),
             ] else
               const Spacer(),
             BusyMarkHeaderIconButton(

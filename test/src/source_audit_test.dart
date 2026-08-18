@@ -1149,7 +1149,7 @@ void main() {
     expect(gitChanges, contains('stagedFiles: snapshot.stagedFiles'));
     expect(gitChanges, isNot(contains('gitCommitSelectedFiles')));
     expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
-    expect(gitChanges, contains('busyMarkVcsFileColorForGitStatus(file)'));
+    expect(gitChanges, contains('busyMarkVcsFileColorForChangeStatus(status)'));
     expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
     expect(gitChanges, contains('BusyMarkPushButton.suggested('));
     expect(gitChanges, isNot(contains('BusyMarkDialogButton(')));

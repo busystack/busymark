@@ -184,6 +184,42 @@ void main() {
   });
 
   test(
+    'staged addition deleted from the working tree keeps separate diffs',
+    () async {
+      if (!await _gitAvailable()) {
+        markTestSkipped('Git executable is unavailable.');
+        return;
+      }
+      final root = await _createRepository('busymark-git-added-deleted-');
+      final draft = File(p.join(root.path, 'draft.md'));
+      await draft.writeAsString('# Draft\n\nStaged content.\n');
+      await _git(root.path, ['add', 'draft.md']);
+      await draft.delete();
+
+      const gateway = GitCliGateway();
+      final info = (await gateway.detectRepository(root.path))!;
+      final status = await gateway.status(info);
+      final file = status.files.singleWhere(
+        (candidate) => candidate.repoRelativePath == 'draft.md',
+      );
+
+      expect(file.indexStatus, GitFileChangeStatus.added);
+      expect(file.workTreeStatus, GitFileChangeStatus.deleted);
+      expect(status.stagedFiles, contains(file));
+      expect(status.unstagedFiles, contains(file));
+      expect(file.hasWorkingTreeFile, isFalse);
+
+      final staged = await gateway.diffFile(info, 'draft.md', staged: true);
+      final unstaged = await gateway.diffFile(info, 'draft.md', staged: false);
+
+      expect(staged.files.single.status, GitDiffFileStatus.added);
+      expect(staged.fileSnapshots['draft.md'], contains('Staged content.'));
+      expect(unstaged.files.single.status, GitDiffFileStatus.deleted);
+      expect(unstaged.fileSnapshots['draft.md'], contains('Staged content.'));
+    },
+  );
+
+  test(
     'preserves complete deleted content and restores a deleted version',
     () async {
       if (!await _gitAvailable()) {

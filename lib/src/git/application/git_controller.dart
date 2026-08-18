@@ -178,6 +178,24 @@ class GitState {
     GitView.fileHistory => fileHistory.comparison?.diff,
     GitView.projectHistory => projectHistory.comparison?.diff,
   };
+  String? get selectedDiffOpenFilePath {
+    return switch (selectedView) {
+      GitView.changes => () {
+        final selection = selectedChange;
+        if (selection == null) {
+          return null;
+        }
+        final path = selectedCommitFilePath ?? selection.path;
+        final status = statusSnapshot?.files
+            .where((file) => file.repoRelativePath == path)
+            .firstOrNull;
+        return (status?.hasWorkingTreeFile ?? false) ? path : null;
+      }(),
+      GitView.fileHistory => fileHistory.currentPath,
+      GitView.projectHistory => null,
+    };
+  }
+
   List<GitCommitSummary> get history => switch (selectedView) {
     GitView.fileHistory => [
       for (final entry in fileHistory.entries) entry.commit,
@@ -871,7 +889,8 @@ class GitController extends Notifier<GitState> {
     return state.statusSnapshot?.stagedFiles.any(
           (file) =>
               file.repoRelativePath == currentPath ||
-              file.originalRepoRelativePath == currentPath,
+              (file.hasStagedRename &&
+                  file.originalRepoRelativePath == currentPath),
         ) ??
         false;
   }
@@ -1695,7 +1714,7 @@ class GitController extends Notifier<GitState> {
       return GitChangeSelection(
         path: repoRelativePath,
         comparison: GitComparisonType.unstaged,
-        originalRepoRelativePath: file.renamed
+        originalRepoRelativePath: file.hasUnstagedRename
             ? file.originalRepoRelativePath
             : null,
       );
@@ -1704,16 +1723,13 @@ class GitController extends Notifier<GitState> {
       return GitChangeSelection(
         path: repoRelativePath,
         comparison: GitComparisonType.untracked,
-        originalRepoRelativePath: file.renamed
-            ? file.originalRepoRelativePath
-            : null,
       );
     }
     if (file.staged) {
       return GitChangeSelection(
         path: repoRelativePath,
         comparison: GitComparisonType.staged,
-        originalRepoRelativePath: file.renamed
+        originalRepoRelativePath: file.hasStagedRename
             ? file.originalRepoRelativePath
             : null,
       );
@@ -1745,16 +1761,17 @@ class GitController extends Notifier<GitState> {
       return GitChangeSelection(
         path: selection.path,
         comparison: selection.comparison,
-        originalRepoRelativePath: file.renamed
-            ? file.originalRepoRelativePath
-            : null,
+        originalRepoRelativePath: _originalPathForComparison(
+          file,
+          selection.comparison,
+        ),
       );
     }
     if (file.unstaged) {
       return GitChangeSelection(
         path: selection.path,
         comparison: GitComparisonType.unstaged,
-        originalRepoRelativePath: file.renamed
+        originalRepoRelativePath: file.hasUnstagedRename
             ? file.originalRepoRelativePath
             : null,
       );
@@ -1763,21 +1780,33 @@ class GitController extends Notifier<GitState> {
       return GitChangeSelection(
         path: selection.path,
         comparison: GitComparisonType.untracked,
-        originalRepoRelativePath: file.renamed
-            ? file.originalRepoRelativePath
-            : null,
       );
     }
     if (file.staged) {
       return GitChangeSelection(
         path: selection.path,
         comparison: GitComparisonType.staged,
-        originalRepoRelativePath: file.renamed
+        originalRepoRelativePath: file.hasStagedRename
             ? file.originalRepoRelativePath
             : null,
       );
     }
     return null;
+  }
+
+  String? _originalPathForComparison(
+    GitFileStatus file,
+    GitComparisonType comparison,
+  ) {
+    return switch (comparison) {
+      GitComparisonType.staged =>
+        file.hasStagedRename ? file.originalRepoRelativePath : null,
+      GitComparisonType.unstaged =>
+        file.hasUnstagedRename ? file.originalRepoRelativePath : null,
+      GitComparisonType.untracked ||
+      GitComparisonType.commitChange ||
+      GitComparisonType.commitVersusCurrent => null,
+    };
   }
 
   void _setInvalidCommit(String hash) {
