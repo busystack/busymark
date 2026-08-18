@@ -18,6 +18,10 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     String repoRelativePath, {
     required bool staged,
   });
+  Future<GitDiff> diffUntrackedFile(
+    GitRepositoryInfo repository,
+    String repoRelativePath,
+  );
   Future<GitDiff> diffAll(GitRepositoryInfo repository, {required bool staged});
   Future<List<GitCommitSummary>> history(
     GitRepositoryInfo repository, {
@@ -25,10 +29,39 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     int limit = 200,
     int skip = 0,
   });
+  Future<List<GitFileHistoryEntry>> fileHistory(
+    GitRepositoryInfo repository,
+    String repoRelativePath, {
+    int limit = 200,
+    int skip = 0,
+  });
   Future<GitCommitDetails> commitDetails(
     GitRepositoryInfo repository,
     String hash, {
     String? repoRelativePath,
+  });
+  Future<String?> readFileAtCommit(
+    GitRepositoryInfo repository,
+    String hash,
+    String repoRelativePath,
+  );
+  Future<GitHistoricalFileComparison> compareFileWithParent(
+    GitRepositoryInfo repository,
+    String hash, {
+    String? oldPath,
+    String? newPath,
+  });
+  Future<GitHistoricalFileComparison> compareFileWithWorkingTree(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
+  });
+  Future<GitOperationResult> restoreFileFromCommit(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
   });
   Future<List<GitBranch>> branches(GitRepositoryInfo repository);
   Future<List<String>> remotes(GitRepositoryInfo repository);
@@ -53,6 +86,7 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     String message,
   );
+  Future<GitOperationResult> fetch(GitRepositoryInfo repository);
   Future<GitOperationResult> pullFastForwardOnly(GitRepositoryInfo repository);
   Future<GitOperationResult> push(GitRepositoryInfo repository);
   Future<GitOperationResult> pushSetUpstream(

@@ -552,7 +552,7 @@ class BusyMarkApp extends ConsumerWidget {
         if (tab.path.isEmpty) {
           return;
         }
-        gitController.selectCommitFile(tab.path);
+        await gitController.activateDiffFile(tab.path);
     }
   }
 

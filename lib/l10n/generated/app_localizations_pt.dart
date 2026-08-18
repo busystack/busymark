@@ -2041,6 +2041,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitChanges => 'Alterações';
 
   @override
+  String get gitStaged => 'Preparados';
+
+  @override
+  String get gitUnstaged => 'Não preparados';
+
+  @override
   String get gitHistory => 'Histórico';
 
   @override
@@ -2053,16 +2059,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Buscar';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Selecionar para o commit';
+  String get gitSelectForCommit => 'Adicionar arquivo ao índice';
 
   @override
-  String get gitRemoveFromCommit => 'Excluir do commit';
+  String get gitRemoveFromCommit => 'Remover arquivo do índice';
 
   @override
   String get gitDiscard => 'Descartar';
@@ -2084,7 +2093,21 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Selecione pelo menos um arquivo antes de criar o commit.';
+      'Adicione pelo menos um arquivo ao índice antes de criar o commit.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count arquivos preparados',
+      one: '1 arquivo preparado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Fora do espaço de trabalho';
 
   @override
   String get gitCommitMessageRequired => 'Digite uma mensagem de commit.';
@@ -2116,6 +2139,11 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'Arquivo binário. O BusyMark não exibe patches binários.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Arquivo binário ($size bytes). O BusyMark não exibe patches binários.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2181,6 +2209,29 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'Arquivo atual';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'O histórico do arquivo requer um arquivo Markdown aberto.';
+
+  @override
+  String get gitLoadMore => 'Carregar mais';
+
+  @override
+  String get gitChangesInCommit => 'Alterações neste commit';
+
+  @override
+  String get gitCompareWithCurrent => 'Comparar com a versão atual';
+
+  @override
+  String get gitRestoreVersion => 'Restaurar esta versão';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Restaurar esta versão do arquivo?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'O BusyMark substituirá o arquivo atual da árvore de trabalho pela versão selecionada do commit. O arquivo restaurado permanecerá não preparado.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

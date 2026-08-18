@@ -3434,6 +3434,18 @@ abstract class AppLocalizations {
   /// **'Changes'**
   String get gitChanges;
 
+  /// Git staged changes group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Staged'**
+  String get gitStaged;
+
+  /// Git unstaged changes group label.
+  ///
+  /// In en, this message translates to:
+  /// **'Unstaged'**
+  String get gitUnstaged;
+
   /// Git history view label.
   ///
   /// In en, this message translates to:
@@ -3458,6 +3470,12 @@ abstract class AppLocalizations {
   /// **'Pull'**
   String get gitPull;
 
+  /// Git fetch action label.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch'**
+  String get gitFetch;
+
   /// Git push action label.
   ///
   /// In en, this message translates to:
@@ -3470,16 +3488,16 @@ abstract class AppLocalizations {
   /// **'Commit'**
   String get gitCommit;
 
-  /// Tooltip for selecting a Git file for the next commit.
+  /// Tooltip for staging a Git file.
   ///
   /// In en, this message translates to:
-  /// **'Select for commit'**
+  /// **'Stage file'**
   String get gitSelectForCommit;
 
-  /// Tooltip for removing a Git file from the next commit selection.
+  /// Tooltip for unstaging a Git file.
   ///
   /// In en, this message translates to:
-  /// **'Leave out of commit'**
+  /// **'Unstage file'**
   String get gitRemoveFromCommit;
 
   /// Git discard action label.
@@ -3503,7 +3521,7 @@ abstract class AppLocalizations {
   /// Git untracked files group label.
   ///
   /// In en, this message translates to:
-  /// **'Unversioned Files'**
+  /// **'Untracked'**
   String get gitUntracked;
 
   /// Commit message field label.
@@ -3518,11 +3536,23 @@ abstract class AppLocalizations {
   /// **'Selected files'**
   String get gitCommitSelectedFiles;
 
-  /// Commit validation error when no files are selected.
+  /// Commit validation error when the repository index is empty.
   ///
   /// In en, this message translates to:
-  /// **'Select at least one file before committing.'**
+  /// **'Stage at least one file before committing.'**
   String get gitCommitNoSelectedFiles;
+
+  /// Number of repository files currently staged for commit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 staged file} other{{count} staged files}}'**
+  String gitStagedFileCount(int count);
+
+  /// Marker for a staged repository file outside the opened workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside workspace'**
+  String get gitOutsideWorkspace;
 
   /// Commit validation error when the message is empty.
   ///
@@ -3584,6 +3614,12 @@ abstract class AppLocalizations {
   /// **'Binary file. BusyMark does not render binary patches.'**
   String get gitBinaryFile;
 
+  /// Git diff binary file message with file size.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary file ({size} bytes). BusyMark does not render binary patches.'**
+  String gitBinaryFileInfo(int size);
+
   /// Git diff banner for unsaved editor changes.
   ///
   /// In en, this message translates to:
@@ -3641,14 +3677,56 @@ abstract class AppLocalizations {
   /// Project history action label.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Project History'**
   String get gitProjectHistory;
 
   /// Current file history action label.
   ///
   /// In en, this message translates to:
-  /// **'Current file'**
+  /// **'File History'**
   String get gitFileHistory;
+
+  /// File History empty state when no Markdown file is active.
+  ///
+  /// In en, this message translates to:
+  /// **'File History requires an open Markdown file.'**
+  String get gitFileHistoryRequiresOpenFile;
+
+  /// Action to load another page of Git history.
+  ///
+  /// In en, this message translates to:
+  /// **'Load More'**
+  String get gitLoadMore;
+
+  /// Historical comparison between a commit and its parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes in this commit'**
+  String get gitChangesInCommit;
+
+  /// Historical comparison between a commit and the working-tree file.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with current'**
+  String get gitCompareWithCurrent;
+
+  /// Action to restore one file from a selected commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this version'**
+  String get gitRestoreVersion;
+
+  /// Confirmation title for restoring a historical file version.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this file version?'**
+  String get gitConfirmRestoreTitle;
+
+  /// Confirmation body for restoring a historical file version.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark will replace the current working-tree file with the selected committed version. The restored file will remain unstaged.'**
+  String get gitConfirmRestoreMessage;
 
   /// Diff additions and deletions count.
   ///

@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/anchored_path_guard.dart';
 import '../application/git_gateway.dart';
 import '../domain/git_diff_parser.dart';
 import '../domain/git_log_parser.dart';
@@ -11,6 +13,8 @@ import 'git_executable_locator.dart';
 import 'git_process_runner.dart';
 
 const _logFormat = '%x1e%H%x1f%h%x1f%an%x1f%ae%x1f%ad%x1f%s%x1f%P';
+const _fileHistoryLogFormat = '$_logFormat%x00';
+const _maxUntrackedDiffBytes = 16 * 1024 * 1024;
 
 class GitCliGateway implements GitRepositoryGateway {
   const GitCliGateway({
@@ -141,15 +145,136 @@ class GitCliGateway implements GitRepositoryGateway {
       '--',
       repoRelativePath,
     ];
+    final executable = await _executable();
     final result = await _runGit(
-      await _executable(),
+      executable,
       repository.rootPath,
       args,
       commandName: 'diff',
     );
-    return diffParser.parse(
+    final diff = diffParser.parse(
       result.stdoutText,
       title: staged ? '$repoRelativePath staged' : '$repoRelativePath unstaged',
+    );
+    final parsedFile = diff.files
+        .where((file) => file.matchesPath(repoRelativePath))
+        .firstOrNull;
+    if (parsedFile == null || parsedFile.binary) {
+      return diff;
+    }
+    final snapshotPath = parsedFile.newPath ?? parsedFile.oldPath;
+    if (snapshotPath == null) {
+      return diff;
+    }
+    String? snapshot;
+    if (parsedFile.status == GitDiffFileStatus.deleted) {
+      snapshot = await _textAtRevision(
+        executable,
+        repository.rootPath,
+        staged ? 'HEAD' : '',
+        snapshotPath,
+      );
+    } else if (staged) {
+      snapshot = await _textAtRevision(
+        executable,
+        repository.rootPath,
+        '',
+        snapshotPath,
+      );
+    } else {
+      final resolution = await _resolveWorkingTreePath(
+        repository,
+        snapshotPath,
+        commandName: 'diff',
+      );
+      if (resolution.type == FileSystemEntityType.file) {
+        snapshot = _decodeTextBlob(await File(resolution.path).readAsBytes());
+      }
+    }
+    return GitDiff(
+      title: diff.title,
+      files: diff.files,
+      rawPatch: diff.rawPatch,
+      hasBinaryFiles: diff.hasBinaryFiles,
+      fileSnapshots: {if (snapshot != null) snapshotPath: snapshot},
+    );
+  }
+
+  @override
+  Future<GitDiff> diffUntrackedFile(
+    GitRepositoryInfo repository,
+    String repoRelativePath,
+  ) async {
+    _validateRepoPath(repository, repoRelativePath);
+    final resolution = await _resolveWorkingTreePath(
+      repository,
+      repoRelativePath,
+      commandName: 'diff',
+    );
+    final type = resolution.type;
+    if (type == FileSystemEntityType.notFound) {
+      return GitDiff(
+        title: '$repoRelativePath untracked',
+        files: const [],
+        rawPatch: '',
+        hasBinaryFiles: false,
+      );
+    }
+    if (type != FileSystemEntityType.file) {
+      throw GitFailure(
+        code: GitFailureCode.invalidPath,
+        userMessageKey: 'gitErrorUnsafePath',
+        rawMessage: repoRelativePath,
+        commandName: 'diff',
+      );
+    }
+    final file = File(resolution.path);
+    final size = await file.length();
+    if (size > _maxUntrackedDiffBytes) {
+      return _binaryUntrackedDiff(repoRelativePath, size);
+    }
+    final bytes = await file.readAsBytes();
+    String content;
+    try {
+      content = utf8.decode(bytes);
+    } on FormatException {
+      return _binaryUntrackedDiff(repoRelativePath, size);
+    }
+    if (bytes.contains(0)) {
+      return _binaryUntrackedDiff(repoRelativePath, size);
+    }
+    final lines = const LineSplitter().convert(content);
+    final hunk = lines.isEmpty
+        ? null
+        : GitDiffHunk(
+            oldStart: 0,
+            oldCount: 0,
+            newStart: 1,
+            newCount: lines.length,
+            heading: '',
+            lines: [
+              for (var index = 0; index < lines.length; index++)
+                GitDiffLine(
+                  kind: GitDiffLineKind.added,
+                  content: lines[index],
+                  newLineNumber: index + 1,
+                ),
+            ],
+          );
+    final diffFile = GitDiffFile(
+      newPath: repoRelativePath,
+      status: GitDiffFileStatus.added,
+      hunks: hunk == null ? const [] : [hunk],
+      binary: false,
+      additions: lines.length,
+      deletions: 0,
+    );
+    return GitDiff(
+      title: '$repoRelativePath untracked',
+      files: [diffFile],
+      rawPatch: _untrackedPatch(repoRelativePath, lines, content),
+      hasBinaryFiles: false,
+      fileSnapshots: {repoRelativePath: content},
     );
   }
 
@@ -210,51 +335,94 @@ class GitCliGateway implements GitRepositoryGateway {
   }
 
   @override
+  Future<List<GitFileHistoryEntry>> fileHistory(
+    GitRepositoryInfo repository,
+    String repoRelativePath, {
+    int limit = 200,
+    int skip = 0,
+  }) async {
+    _validateRepoPath(repository, repoRelativePath);
+    final result =
+        await _runGitMaybe(await _executable(), repository.rootPath, [
+          'log',
+          '--follow',
+          '--date=iso-strict',
+          '--max-count=${limit + skip}',
+          '--format=$_fileHistoryLogFormat',
+          '--name-status',
+          '-z',
+          '--',
+          repoRelativePath,
+        ], commandName: 'log');
+    if (result == null || !result.success) {
+      return const [];
+    }
+    return _parseFileHistory(result.stdoutText).skip(skip).take(limit).toList();
+  }
+
+  @override
   Future<GitCommitDetails> commitDetails(
     GitRepositoryInfo repository,
     String hash, {
     String? repoRelativePath,
   }) async {
-    if (!RegExp(r'^[0-9a-fA-F]{7,64}$').hasMatch(hash)) {
-      throw GitFailure(
-        code: GitFailureCode.invalidPath,
-        userMessageKey: 'gitErrorInvalidCommit',
-        rawMessage: hash,
-        commandName: 'show',
-      );
-    }
+    _validateCommitHash(hash);
     if (repoRelativePath != null) {
       _validateRepoPath(repository, repoRelativePath);
     }
-    final result = await _runGit(await _executable(), repository.rootPath, [
+    final executable = await _executable();
+    final headerResult = await _runGit(executable, repository.rootPath, [
       'show',
-      '--no-ext-diff',
-      '--no-textconv',
-      '--no-color',
-      '--find-renames',
-      '--find-copies',
+      '--no-patch',
       '--format=$_logFormat',
-      '--patch',
       hash,
-      if (repoRelativePath != null) ...['--', repoRelativePath],
     ], commandName: 'show');
-    final output = result.stdoutText;
-    final diffIndex = output.indexOf('\ndiff --git ');
-    final header = diffIndex < 0 ? output : output.substring(0, diffIndex);
-    final patch = diffIndex < 0 ? '' : output.substring(diffIndex + 1);
-    final summary = logParser.parseFirst(header);
+    final summary = logParser.parseFirst(headerResult.stdoutText);
     if (summary == null) {
       throw GitFailure(
         code: GitFailureCode.commandFailed,
         userMessageKey: 'gitErrorCommandFailed',
-        rawMessage: result.stderrText,
+        rawMessage: headerResult.stderrText,
         commandName: 'show',
-        exitCode: result.exitCode,
+        exitCode: headerResult.exitCode,
       );
     }
+    final parent = await _firstParent(executable, repository.rootPath, hash);
+    final paths = repoRelativePath == null
+        ? const <String>[]
+        : <String>[repoRelativePath];
+    final patchResult = await _runGit(
+      executable,
+      repository.rootPath,
+      parent == null
+          ? [
+              'show',
+              '--no-ext-diff',
+              '--no-textconv',
+              '--no-color',
+              '--find-renames',
+              '--find-copies',
+              '--format=',
+              '--patch',
+              hash,
+              if (paths.isNotEmpty) ...['--', ...paths],
+            ]
+          : [
+              'diff',
+              '--no-ext-diff',
+              '--no-textconv',
+              '--no-color',
+              '--find-renames',
+              '--find-copies',
+              parent,
+              hash,
+              if (paths.isNotEmpty) ...['--', ...paths],
+            ],
+      commandName: parent == null ? 'show' : 'diff',
+    );
+    final patch = patchResult.stdoutText;
     final diff = diffParser.parse(patch, title: summary.subject);
     final snapshots = <String, String>{};
-    final executable = await _executable();
     for (final file in diff.files) {
       if (file.binary) {
         continue;
@@ -263,9 +431,10 @@ class GitCliGateway implements GitRepositoryGateway {
       if (path.isEmpty) {
         continue;
       }
-      final revision = file.status == GitDiffFileStatus.deleted
-          ? '$hash^'
-          : hash;
+      final revision = file.status == GitDiffFileStatus.deleted ? parent : hash;
+      if (revision == null) {
+        continue;
+      }
       final content = await _fileContentAtRevision(
         executable,
         repository.rootPath,
@@ -281,6 +450,212 @@ class GitCliGateway implements GitRepositoryGateway {
       changedFiles: diff.files,
       patch: patch,
       fileSnapshots: snapshots,
+    );
+  }
+
+  @override
+  Future<String?> readFileAtCommit(
+    GitRepositoryInfo repository,
+    String hash,
+    String repoRelativePath,
+  ) async {
+    _validateCommitHash(hash);
+    _validateRepoPath(repository, repoRelativePath);
+    final bytes = await _fileBytesAtRevision(
+      await _executable(),
+      repository.rootPath,
+      hash,
+      repoRelativePath,
+    );
+    return bytes == null ? null : _decodeTextBlob(bytes);
+  }
+
+  @override
+  Future<GitHistoricalFileComparison> compareFileWithParent(
+    GitRepositoryInfo repository,
+    String hash, {
+    String? oldPath,
+    String? newPath,
+  }) async {
+    _validateCommitHash(hash);
+    if (oldPath == null && newPath == null) {
+      throw GitFailure(
+        code: GitFailureCode.invalidPath,
+        userMessageKey: 'gitErrorUnsafePath',
+        rawMessage: '',
+        commandName: 'show',
+      );
+    }
+    if (oldPath != null) {
+      _validateRepoPath(repository, oldPath);
+    }
+    if (newPath != null) {
+      _validateRepoPath(repository, newPath);
+    }
+    final executable = await _executable();
+    final paths = <String>{
+      if (oldPath != null) oldPath,
+      if (newPath != null) newPath,
+    };
+    final parent = await _firstParent(executable, repository.rootPath, hash);
+    final result = await _runGit(
+      executable,
+      repository.rootPath,
+      parent == null
+          ? [
+              'show',
+              '--no-ext-diff',
+              '--no-textconv',
+              '--no-color',
+              '--find-renames',
+              '--find-copies',
+              '--format=',
+              '--patch',
+              hash,
+              '--',
+              ...paths,
+            ]
+          : [
+              'diff',
+              '--no-ext-diff',
+              '--no-textconv',
+              '--no-color',
+              '--find-renames',
+              '--find-copies',
+              parent,
+              hash,
+              '--',
+              ...paths,
+            ],
+      commandName: parent == null ? 'show' : 'diff',
+    );
+    final parsed = diffParser.parse(
+      result.stdoutText,
+      title: newPath ?? oldPath!,
+    );
+    final matchingFiles = parsed.files
+        .where(
+          (file) =>
+              (oldPath != null && file.matchesPath(oldPath)) ||
+              (newPath != null && file.matchesPath(newPath)),
+        )
+        .toList();
+    final files = matchingFiles.isEmpty ? parsed.files : matchingFiles;
+    final parsedFile = files.firstOrNull;
+    final resolvedOldPath = parsedFile?.status == GitDiffFileStatus.added
+        ? null
+        : parsedFile?.oldPath ?? oldPath;
+    final resolvedNewPath = parsedFile?.status == GitDiffFileStatus.deleted
+        ? null
+        : parsedFile?.newPath ?? newPath;
+    final oldContent = resolvedOldPath == null || parent == null
+        ? ''
+        : await _textAtRevision(
+            executable,
+            repository.rootPath,
+            parent,
+            resolvedOldPath,
+          );
+    final newContent = resolvedNewPath == null
+        ? ''
+        : await _textAtRevision(
+            executable,
+            repository.rootPath,
+            hash,
+            resolvedNewPath,
+          );
+    final displayPath = resolvedNewPath ?? resolvedOldPath ?? '';
+    final diff = GitDiff(
+      title: displayPath,
+      files: files,
+      rawPatch: result.stdoutText,
+      hasBinaryFiles: files.any((file) => file.binary),
+      fileSnapshots: {
+        if (displayPath.isNotEmpty)
+          if (resolvedNewPath == null && oldContent != null)
+            displayPath: oldContent
+          else if (newContent != null)
+            displayPath: newContent,
+      },
+    );
+    return GitHistoricalFileComparison(
+      oldPath: resolvedOldPath,
+      newPath: resolvedNewPath,
+      oldContent: oldContent,
+      newContent: newContent,
+      diff: diff,
+    );
+  }
+
+  @override
+  Future<GitHistoricalFileComparison> compareFileWithWorkingTree(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
+  }) async {
+    _validateCommitHash(hash);
+    _validateRepoPath(repository, historicalPath);
+    _validateRepoPath(repository, currentPath);
+    final executable = await _executable();
+    final oldContent = await _textAtRevision(
+      executable,
+      repository.rootPath,
+      hash,
+      historicalPath,
+    );
+    final currentResolution = await _resolveWorkingTreePath(
+      repository,
+      currentPath,
+      commandName: 'diff',
+    );
+    final currentType = currentResolution.type;
+    if (currentType != FileSystemEntityType.file &&
+        currentType != FileSystemEntityType.notFound) {
+      throw GitFailure(
+        code: GitFailureCode.invalidPath,
+        userMessageKey: 'gitErrorUnsafePath',
+        rawMessage: currentPath,
+        commandName: 'diff',
+      );
+    }
+    final result = currentType == FileSystemEntityType.file
+        ? await _runGit(executable, repository.rootPath, [
+            'diff',
+            '--no-ext-diff',
+            '--no-textconv',
+            '--no-color',
+            '--find-renames',
+            '$hash:$historicalPath',
+            '--',
+            currentPath,
+          ], commandName: 'diff')
+        : null;
+    final currentBytes = currentType == FileSystemEntityType.file
+        ? await File(currentResolution.path).readAsBytes()
+        : null;
+    final newContent = currentBytes == null
+        ? ''
+        : _decodeTextBlob(currentBytes);
+    final diff = result == null
+        ? _deletedWorkingTreeDiff(
+            historicalPath: historicalPath,
+            currentPath: currentPath,
+            oldContent: oldContent,
+          )
+        : _withSnapshot(
+            diffParser.parse(result.stdoutText, title: currentPath),
+            currentPath,
+            newContent,
+          );
+    return GitHistoricalFileComparison(
+      oldPath: historicalPath,
+      newPath: currentType == FileSystemEntityType.notFound
+          ? null
+          : currentPath,
+      oldContent: oldContent,
+      newContent: newContent,
+      diff: diff,
     );
   }
 
@@ -357,16 +732,13 @@ class GitCliGateway implements GitRepositoryGateway {
           commandName: 'delete',
         );
       }
-      final absolute = p.normalize(p.join(repository.rootPath, relativePath));
-      if (!_isInside(repository.rootPath, absolute)) {
-        throw GitFailure(
-          code: GitFailureCode.invalidPath,
-          userMessageKey: 'gitErrorUnsafePath',
-          rawMessage: relativePath,
-          commandName: 'delete',
-        );
-      }
-      final type = await FileSystemEntity.type(absolute, followLinks: false);
+      final resolution = await _resolveWorkingTreePath(
+        repository,
+        relativePath,
+        commandName: 'delete',
+        allowFinalSymlink: true,
+      );
+      final type = resolution.type;
       if (type == FileSystemEntityType.directory) {
         throw GitFailure(
           code: GitFailureCode.invalidPath,
@@ -375,8 +747,10 @@ class GitCliGateway implements GitRepositoryGateway {
           commandName: 'delete',
         );
       }
-      if (type != FileSystemEntityType.notFound) {
-        await File(absolute).delete();
+      if (type == FileSystemEntityType.link) {
+        await Link(resolution.path).delete();
+      } else if (type == FileSystemEntityType.file) {
+        await File(resolution.path).delete();
       }
     }
     return const GitOperationResult(
@@ -408,6 +782,99 @@ class GitCliGateway implements GitRepositoryGateway {
         // Best-effort cleanup; preserve the Git result or failure.
       }
     }
+  }
+
+  @override
+  Future<GitOperationResult> restoreFileFromCommit(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
+  }) async {
+    _validateCommitHash(hash);
+    _validateRepoPath(repository, historicalPath);
+    _validateRepoPath(repository, currentPath);
+    final executable = await _executable();
+    await _ensureCommitExists(
+      executable,
+      repository.rootPath,
+      hash,
+      commandName: 'restore',
+    );
+    final initialDestination = await _resolveWorkingTreePath(
+      repository,
+      currentPath,
+      commandName: 'restore',
+    );
+    _requireFileOrMissing(
+      initialDestination,
+      relativePath: currentPath,
+      commandName: 'restore',
+    );
+    final bytes = await _fileBytesAtRevision(
+      executable,
+      repository.rootPath,
+      hash,
+      historicalPath,
+    );
+    if (bytes == null) {
+      if (initialDestination.type == FileSystemEntityType.file) {
+        await File(initialDestination.path).delete();
+      }
+      return const GitOperationResult(
+        success: true,
+        message: '',
+        stdout: '',
+        stderr: '',
+      );
+    }
+    if (historicalPath == currentPath) {
+      return _operation(repository, [
+        'restore',
+        '--source=$hash',
+        '--worktree',
+        '--',
+        currentPath,
+      ], 'restore');
+    }
+    final destination = File(initialDestination.path);
+    final stagingDirectory = await destination.parent.createTemp(
+      '.busymark-restore-',
+    );
+    final temporary = File(p.join(stagingDirectory.path, 'contents'));
+    try {
+      await temporary.writeAsBytes(bytes, flush: true);
+      final checkedDestination = await _resolveWorkingTreePath(
+        repository,
+        currentPath,
+        commandName: 'restore',
+      );
+      _requireFileOrMissing(
+        checkedDestination,
+        relativePath: currentPath,
+        commandName: 'restore',
+      );
+      await temporary.rename(checkedDestination.path);
+    } finally {
+      try {
+        if (await stagingDirectory.exists()) {
+          await stagingDirectory.delete(recursive: true);
+        }
+      } on Object {
+        // Best-effort cleanup; preserve the restore result or failure.
+      }
+    }
+    return const GitOperationResult(
+      success: true,
+      message: '',
+      stdout: '',
+      stderr: '',
+    );
+  }
+
+  @override
+  Future<GitOperationResult> fetch(GitRepositoryInfo repository) {
+    return _operation(repository, const ['fetch'], 'fetch');
   }
 
   @override
@@ -473,6 +940,55 @@ class GitCliGateway implements GitRepositoryGateway {
       stdout: result.stdoutText,
       stderr: result.stderrText,
     );
+  }
+
+  GitDiff _binaryUntrackedDiff(String repoRelativePath, int size) {
+    final file = GitDiffFile(
+      newPath: repoRelativePath,
+      status: GitDiffFileStatus.binary,
+      hunks: const [],
+      binary: true,
+      additions: 0,
+      deletions: 0,
+      binarySize: size,
+    );
+    return GitDiff(
+      title: '$repoRelativePath untracked',
+      files: [file],
+      rawPatch: 'Binary file $repoRelativePath ($size bytes)\n',
+      hasBinaryFiles: true,
+    );
+  }
+
+  String _untrackedPatch(
+    String repoRelativePath,
+    List<String> lines,
+    String content,
+  ) {
+    final aPath = _quotePatchPath('a/$repoRelativePath');
+    final bPath = _quotePatchPath('b/$repoRelativePath');
+    final buffer = StringBuffer()
+      ..writeln('diff --git $aPath $bPath')
+      ..writeln('new file mode 100644')
+      ..writeln('--- /dev/null')
+      ..writeln('+++ $bPath');
+    if (lines.isNotEmpty) {
+      buffer.writeln('@@ -0,0 +1,${lines.length} @@');
+      for (final line in lines) {
+        buffer.writeln('+$line');
+      }
+      if (!content.endsWith('\n')) {
+        buffer.writeln(r'\ No newline at end of file');
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _quotePatchPath(String path) {
+    if (!RegExp(r'[\s"\\\x00-\x1f\x7f]').hasMatch(path)) {
+      return path;
+    }
+    return jsonEncode(path);
   }
 
   Future<String> _executable() async {
@@ -568,6 +1084,15 @@ class GitCliGateway implements GitRepositoryGateway {
     String revision,
     String repoRelativePath,
   ) async {
+    return _textAtRevision(executable, repoRoot, revision, repoRelativePath);
+  }
+
+  Future<List<int>?> _fileBytesAtRevision(
+    String executable,
+    String repoRoot,
+    String revision,
+    String repoRelativePath,
+  ) async {
     final result = await _runGitMaybe(executable, repoRoot, [
       'show',
       '$revision:$repoRelativePath',
@@ -575,7 +1100,146 @@ class GitCliGateway implements GitRepositoryGateway {
     if (result == null || !result.success) {
       return null;
     }
-    return result.stdoutText;
+    return result.stdoutBytes;
+  }
+
+  Future<String?> _textAtRevision(
+    String executable,
+    String repoRoot,
+    String revision,
+    String repoRelativePath,
+  ) async {
+    final bytes = await _fileBytesAtRevision(
+      executable,
+      repoRoot,
+      revision,
+      repoRelativePath,
+    );
+    return bytes == null ? null : _decodeTextBlob(bytes);
+  }
+
+  String? _decodeTextBlob(List<int> bytes) {
+    if (bytes.contains(0)) {
+      return null;
+    }
+    try {
+      return utf8.decode(bytes);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  Future<String?> _firstParent(
+    String executable,
+    String repoRoot,
+    String hash,
+  ) async {
+    final result = await _runGitMaybe(executable, repoRoot, [
+      'rev-list',
+      '--parents',
+      '--max-count=1',
+      hash,
+    ], commandName: 'rev-list');
+    if (result == null || !result.success) {
+      return null;
+    }
+    final fields = result.stdoutText.trim().split(RegExp(r'\s+'));
+    return fields.length > 1 ? fields[1] : null;
+  }
+
+  Future<void> _ensureCommitExists(
+    String executable,
+    String repoRoot,
+    String hash, {
+    required String commandName,
+  }) async {
+    await _runGit(executable, repoRoot, [
+      'cat-file',
+      '-e',
+      '$hash^{commit}',
+    ], commandName: commandName);
+  }
+
+  GitDiff _withSnapshot(GitDiff diff, String path, String? content) {
+    return GitDiff(
+      title: diff.title,
+      files: diff.files,
+      rawPatch: diff.rawPatch,
+      hasBinaryFiles: diff.hasBinaryFiles,
+      fileSnapshots: {if (content != null) path: content},
+    );
+  }
+
+  GitDiff _deletedWorkingTreeDiff({
+    required String historicalPath,
+    required String currentPath,
+    required String? oldContent,
+  }) {
+    if (oldContent == null) {
+      final file = GitDiffFile(
+        oldPath: historicalPath,
+        status: GitDiffFileStatus.binary,
+        hunks: const [],
+        binary: true,
+        additions: 0,
+        deletions: 0,
+      );
+      return GitDiff(
+        title: currentPath,
+        files: [file],
+        rawPatch: 'Binary file $historicalPath was deleted.\n',
+        hasBinaryFiles: true,
+      );
+    }
+    final lines = const LineSplitter().convert(oldContent);
+    final hunk = lines.isEmpty
+        ? null
+        : GitDiffHunk(
+            oldStart: 1,
+            oldCount: lines.length,
+            newStart: 0,
+            newCount: 0,
+            heading: '',
+            lines: [
+              for (var index = 0; index < lines.length; index++)
+                GitDiffLine(
+                  kind: GitDiffLineKind.removed,
+                  content: lines[index],
+                  oldLineNumber: index + 1,
+                ),
+            ],
+          );
+    final file = GitDiffFile(
+      oldPath: historicalPath,
+      status: GitDiffFileStatus.deleted,
+      hunks: hunk == null ? const [] : [hunk],
+      binary: false,
+      additions: 0,
+      deletions: lines.length,
+    );
+    final buffer = StringBuffer()
+      ..writeln(
+        'diff --git ${_quotePatchPath('a/$historicalPath')} ${_quotePatchPath('b/$currentPath')}',
+      )
+      ..writeln('deleted file mode 100644')
+      ..writeln('--- ${_quotePatchPath('a/$historicalPath')}')
+      ..writeln('+++ /dev/null');
+    if (lines.isNotEmpty) {
+      buffer.writeln('@@ -1,${lines.length} +0,0 @@');
+      for (final line in lines) {
+        buffer.writeln('-$line');
+      }
+      if (!oldContent.endsWith('\n')) {
+        buffer.writeln(r'\ No newline at end of file');
+      }
+    }
+    return GitDiff(
+      title: currentPath,
+      files: [file],
+      rawPatch: buffer.toString(),
+      hasBinaryFiles: false,
+      fileSnapshots: {historicalPath: oldContent},
+    );
   }
 
   GitFailure _failureForResult(GitProcessResult result, String commandName) {
@@ -743,10 +1407,127 @@ class GitCliGateway implements GitRepositoryGateway {
     );
   }
 
+  List<GitFileHistoryEntry> _parseFileHistory(String output) {
+    final entries = <GitFileHistoryEntry>[];
+    for (final record in output.split('\x1e')) {
+      if (record.trim().isEmpty) {
+        continue;
+      }
+      final headerEnd = record.indexOf('\x00');
+      if (headerEnd < 0) {
+        continue;
+      }
+      final commit = logParser.parseFirst(
+        '\x1e${record.substring(0, headerEnd)}',
+      );
+      if (commit == null) {
+        continue;
+      }
+      final tokens = record
+          .substring(headerEnd + 1)
+          .split('\x00')
+          .where((token) => token.isNotEmpty)
+          .toList();
+      if (tokens.length < 2) {
+        continue;
+      }
+      final statusToken = tokens[0].replaceFirst(RegExp(r'^[\r\n]+'), '');
+      if (statusToken.isEmpty) {
+        continue;
+      }
+      final statusCode = statusToken[0];
+      final status = switch (statusCode) {
+        'A' => GitDiffFileStatus.added,
+        'D' => GitDiffFileStatus.deleted,
+        'R' => GitDiffFileStatus.renamed,
+        'C' => GitDiffFileStatus.copied,
+        'M' || 'T' => GitDiffFileStatus.modified,
+        _ => GitDiffFileStatus.unknown,
+      };
+      final isTwoPathStatus = statusCode == 'R' || statusCode == 'C';
+      if (isTwoPathStatus && tokens.length < 3) {
+        continue;
+      }
+      final pathInParent = isTwoPathStatus ? tokens[1] : tokens[1];
+      final pathAtCommit = isTwoPathStatus ? tokens[2] : tokens[1];
+      entries.add(
+        GitFileHistoryEntry(
+          commit: commit,
+          pathAtCommit: pathAtCommit,
+          pathInParent: status == GitDiffFileStatus.added ? null : pathInParent,
+          status: status,
+        ),
+      );
+    }
+    return entries;
+  }
+
   void _validateRepoPaths(GitRepositoryInfo repository, List<String> paths) {
     for (final path in paths) {
       _validateRepoPath(repository, path);
     }
+  }
+
+  Future<AnchoredPathResolution> _resolveWorkingTreePath(
+    GitRepositoryInfo repository,
+    String relativePath, {
+    required String commandName,
+    bool allowFinalSymlink = false,
+  }) async {
+    _validateRepoPath(repository, relativePath);
+    try {
+      final anchor = await captureCanonicalDirectoryAnchor(repository.rootPath);
+      final normalized = p.posix.normalize(relativePath.replaceAll(r'\', '/'));
+      return await resolveAnchoredPath(
+        anchor,
+        p.join(repository.rootPath, normalized),
+        allowRoot: false,
+        allowFinalSymlink: allowFinalSymlink,
+      );
+    } on AnchoredPathViolation catch (error) {
+      throw GitFailure(
+        code: GitFailureCode.invalidPath,
+        userMessageKey: 'gitErrorUnsafePath',
+        rawMessage: '$relativePath (${error.reason.name})',
+        commandName: commandName,
+      );
+    } on FileSystemException catch (error) {
+      throw GitFailure(
+        code: GitFailureCode.invalidPath,
+        userMessageKey: 'gitErrorUnsafePath',
+        rawMessage: '$relativePath (${error.message})',
+        commandName: commandName,
+      );
+    }
+  }
+
+  void _requireFileOrMissing(
+    AnchoredPathResolution resolution, {
+    required String relativePath,
+    required String commandName,
+  }) {
+    if (resolution.type == FileSystemEntityType.file ||
+        resolution.type == FileSystemEntityType.notFound) {
+      return;
+    }
+    throw GitFailure(
+      code: GitFailureCode.invalidPath,
+      userMessageKey: 'gitErrorUnsafePath',
+      rawMessage: relativePath,
+      commandName: commandName,
+    );
+  }
+
+  void _validateCommitHash(String hash) {
+    if (RegExp(r'^[0-9a-fA-F]{7,64}$').hasMatch(hash)) {
+      return;
+    }
+    throw GitFailure(
+      code: GitFailureCode.invalidPath,
+      userMessageKey: 'gitErrorInvalidCommit',
+      rawMessage: hash,
+      commandName: 'show',
+    );
   }
 
   void _validateRepoPath(GitRepositoryInfo repository, String relativePath) {

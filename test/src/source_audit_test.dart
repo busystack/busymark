@@ -770,7 +770,9 @@ void main() {
     expect(singleMarkdownClause, contains('_SidebarTab.outline'));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.files')));
     expect(singleMarkdownClause, isNot(contains('_SidebarTab.toc')));
-    expect(singleMarkdownClause, isNot(contains('_SidebarTab.git')));
+    expect(singleMarkdownClause, contains('_SidebarTab.git'));
+    expect(singleMarkdownClause, contains('_SidebarTab.gitFileHistory'));
+    expect(singleMarkdownClause, contains('_SidebarTab.gitProjectHistory'));
     expect(
       workspace,
       contains('showTabMenu: !widget.searchState.active && tabs.length > 1'),
@@ -910,12 +912,17 @@ void main() {
     expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.checklist'));
     expect(
       workspace,
-      contains('_SidebarTab.gitHistory => BusyMarkGlyphs.history'),
+      contains('_SidebarTab.gitFileHistory => BusyMarkGlyphs.documentHistory'),
+    );
+    expect(
+      workspace,
+      contains('_SidebarTab.gitProjectHistory => BusyMarkGlyphs.history'),
     );
     expect(
       workspace,
       contains(
-        '_SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history',
+        '_SidebarTab.gitProjectHistory => '
+        'BusyMarkSidebarShortcutLabels.history',
       ),
     );
     expect(workspace, contains('checked: tab == selectedTab'));
@@ -1006,8 +1013,10 @@ void main() {
     expect(workspace, contains('_performWorkspaceBranchAction'));
     expect(workspace, contains('controller.loadBranches()'));
     expect(workspace, contains('label: context.l10n.gitNewBranch'));
+    expect(workspace, contains('label: context.l10n.gitFetch'));
     expect(workspace, contains('label: context.l10n.gitPull'));
     expect(workspace, contains('label: context.l10n.gitPush'));
+    expect(workspace, contains('value: const _FetchBranchMenuAction()'));
     expect(workspace, contains('value: const _PullBranchMenuAction()'));
     expect(workspace, contains('value: const _PushBranchMenuAction()'));
     expect(workspace, contains('enabled: repository.upstreamBranch != null'));
@@ -1040,7 +1049,8 @@ void main() {
       contains('widget.searchState.active ? null : selectedTab'),
     );
     expect(workspace, contains('selectedTab == _SidebarTab.git'));
-    expect(workspace, contains('selectedTab == _SidebarTab.gitHistory'));
+    expect(workspace, contains('selectedTab == _SidebarTab.gitFileHistory'));
+    expect(workspace, contains('selectedTab == _SidebarTab.gitProjectHistory'));
     expect(workspace, contains('Future<void> _showWorkspacePathMenu'));
     expect(
       workspace,
@@ -1133,7 +1143,11 @@ void main() {
       contains('YaruCheckbox('),
     );
     expect(gitChanges, contains('context.l10n.gitSelectForCommit'));
-    expect(gitChanges, contains('context.l10n.gitCommitSelectedFiles'));
+    expect(gitChanges, contains('context.l10n.gitRemoveFromCommit'));
+    expect(gitChanges, contains('context.l10n.gitStagedFileCount'));
+    expect(gitChanges, contains('context.l10n.gitUnsavedChangesBanner'));
+    expect(gitChanges, contains('stagedFiles: snapshot.stagedFiles'));
+    expect(gitChanges, isNot(contains('gitCommitSelectedFiles')));
     expect(gitChanges, contains('busyMarkVcsFileStatusColor'));
     expect(gitChanges, contains('busyMarkVcsFileColorForGitStatus(file)'));
     expect(gitFileStatusColors, contains('BusyMarkVcsFileColor.modified'));
@@ -1147,8 +1161,6 @@ void main() {
     expect(gitChanges, isNot(contains('context.l10n.git${'Not'}Included')));
     expect(gitChanges, isNot(contains('_FileAction.${'include'}')));
     expect(gitChanges, isNot(contains('_FileAction.${'exclude'}')));
-    expect(gitChanges, isNot(contains('context.l10n.gitStage')));
-    expect(gitChanges, isNot(contains('context.l10n.gitUnstage')));
     expect(gitChanges, isNot(contains('FilledButton.icon')));
     expect(gitChanges, isNot(contains('showDialog<void>')));
     expect(gitChanges, isNot(contains('GitCommitDialog')));
@@ -1383,9 +1395,9 @@ void main() {
     expect(workspace, contains('label: context.l10n.copyPath'));
     expect(workspace, contains('label: context.l10n.openInFiles'));
     expect(workspace, contains('_FileTreeAction.openInFiles'));
-    expect(workspace, contains('class _FileHistorySidebar'));
-    expect(workspace, contains('_fileHistoryFile'));
-    expect(workspace, contains('onBack: _closeFileHistory'));
+    expect(workspace, isNot(contains('class _FileHistorySidebar')));
+    expect(workspace, isNot(contains('_fileHistoryFile')));
+    expect(workspace, isNot(contains('onBack: _closeFileHistory')));
     expect(workspace, contains('label: context.l10n.fileHistory'));
     expect(workspace, contains('loadFileHistory('));
     expect(workspace, contains('file.absolutePath'));
@@ -1406,10 +1418,7 @@ void main() {
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));
     expect(workspace, contains('label: context.l10n.newChildTopic'));
-    expect(
-      workspace,
-      isNot(contains('_selectTab(_SidebarTab.gitHistory, tabs)')),
-    );
+    expect(workspace, contains('_SidebarTab.gitFileHistory,'));
     expect(workspace, isNot(contains('class _FileTreeRow')));
     expect(workspace, isNot(contains('class _SidebarTile')));
     expect(workspace, isNot(contains('title: file.relativePath')));

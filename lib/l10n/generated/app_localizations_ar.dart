@@ -2041,6 +2041,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitChanges => 'التغييرات';
 
   @override
+  String get gitStaged => 'مُرحَّلة';
+
+  @override
+  String get gitUnstaged => 'غير مُرحَّلة';
+
+  @override
   String get gitHistory => 'السجل';
 
   @override
@@ -2053,16 +2059,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitPull => 'سحب';
 
   @override
+  String get gitFetch => 'جلب';
+
+  @override
   String get gitPush => 'دفع';
 
   @override
   String get gitCommit => 'إنشاء التزام';
 
   @override
-  String get gitSelectForCommit => 'تحديد للالتزام';
+  String get gitSelectForCommit => 'تجهيز الملف';
 
   @override
-  String get gitRemoveFromCommit => 'استبعاد من الالتزام';
+  String get gitRemoveFromCommit => 'إلغاء تجهيز الملف';
 
   @override
   String get gitDiscard => 'تجاهل';
@@ -2084,7 +2093,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'حدد ملفًا واحدًا على الأقل قبل إنشاء الالتزام.';
+      'جهّز ملفًا واحدًا على الأقل قبل إنشاء الالتزام.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ملفات مُرحَّلة',
+      one: 'ملف مُرحَّل واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'خارج مساحة العمل';
 
   @override
   String get gitCommitMessageRequired => 'أدخل رسالة الالتزام.';
@@ -2116,6 +2139,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'ملف ثنائي. لا يعرض BusyMark رقع الملفات الثنائية.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'ملف ثنائي ($size بايت). لا يعرض BusyMark رقع الملفات الثنائية.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2191,6 +2219,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'الملف الحالي';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'يتطلب سجل الملف فتح ملف Markdown.';
+
+  @override
+  String get gitLoadMore => 'تحميل المزيد';
+
+  @override
+  String get gitChangesInCommit => 'التغييرات في هذا الإيداع';
+
+  @override
+  String get gitCompareWithCurrent => 'مقارنة بالإصدار الحالي';
+
+  @override
+  String get gitRestoreVersion => 'استعادة هذا الإصدار';
+
+  @override
+  String get gitConfirmRestoreTitle => 'هل تريد استعادة إصدار الملف هذا؟';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'سيستبدل BusyMark ملف شجرة العمل الحالي بالإصدار المحدد من الإيداع. سيبقى الملف المستعاد غير مُرحَّل.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

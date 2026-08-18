@@ -2049,6 +2049,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitChanges => 'Изменения';
 
   @override
+  String get gitStaged => 'Индексированные';
+
+  @override
+  String get gitUnstaged => 'Неиндексированные';
+
+  @override
   String get gitHistory => 'История';
 
   @override
@@ -2061,16 +2067,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Получить';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Зафиксировать';
 
   @override
-  String get gitSelectForCommit => 'Выбрать для фиксации';
+  String get gitSelectForCommit => 'Добавить файл в индекс';
 
   @override
-  String get gitRemoveFromCommit => 'Исключить из фиксации';
+  String get gitRemoveFromCommit => 'Убрать файл из индекса';
 
   @override
   String get gitDiscard => 'Отменить изменения';
@@ -2092,7 +2101,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Перед созданием коммита выберите хотя бы один файл.';
+      'Перед созданием коммита добавьте в индекс хотя бы один файл.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count индексированных файлов',
+      one: '1 индексированный файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Вне рабочего пространства';
 
   @override
   String get gitCommitMessageRequired => 'Введите сообщение коммита.';
@@ -2124,6 +2147,11 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'Двоичный файл. BusyMark не отображает двоичные патчи.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Двоичный файл ($size байт). BusyMark не отображает двоичные патчи.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2197,6 +2225,29 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'Текущий файл';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Для истории файла требуется открытый файл Markdown.';
+
+  @override
+  String get gitLoadMore => 'Загрузить ещё';
+
+  @override
+  String get gitChangesInCommit => 'Изменения в этом коммите';
+
+  @override
+  String get gitCompareWithCurrent => 'Сравнить с текущей версией';
+
+  @override
+  String get gitRestoreVersion => 'Восстановить эту версию';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Восстановить эту версию файла?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark заменит текущий файл рабочего дерева выбранной версией из коммита. Восстановленный файл останется неиндексированным.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

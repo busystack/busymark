@@ -46,7 +46,6 @@ import '../../git/application/git_controller.dart';
 import '../../git/domain/git_models.dart';
 import '../../git/presentation/git_diff_viewer.dart';
 import '../../git/presentation/git_file_status_colors.dart';
-import '../../git/presentation/git_history_view.dart';
 import '../../git/presentation/git_sidebar_tab.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
@@ -566,9 +565,9 @@ class WorkspaceScreen extends ConsumerWidget {
           const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.git),
           BusyMarkSidebarShortcutActivators.history:
-              const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
+              const _SelectSidebarTabIntent(_SidebarTab.gitProjectHistory),
           const SingleActivator(LogicalKeyboardKey.numpad5, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.gitHistory),
+              const _SelectSidebarTabIntent(_SidebarTab.gitProjectHistory),
         },
         child: Actions(
           actions: {
@@ -871,7 +870,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.sidebarGit:
         _selectSidebarShortcut(ref, _SidebarTab.git);
       case HeaderBarAction.sidebarHistory:
-        _selectSidebarShortcut(ref, _SidebarTab.gitHistory);
+        _selectSidebarShortcut(ref, _SidebarTab.gitProjectHistory);
       case HeaderBarAction.search:
         _toggleSearch(ref);
       case HeaderBarAction.menu:
@@ -1254,6 +1253,8 @@ Future<void> _performWorkspaceBranchAction(
         return;
       }
       await controller.createBranch(branchName);
+    case _FetchBranchMenuAction():
+      await controller.fetch();
     case _PullBranchMenuAction():
       await controller.pullFastForwardOnly();
       await _refreshWorkspaceAfterGitFileChanges(ref);
@@ -1272,6 +1273,12 @@ List<PopupMenuEntry<_BranchMenuAction>> _sidebarBranchMenuItems(
   List<GitBranch> branches,
 ) {
   return [
+    BusyMarkPopupMenuItem(
+      value: const _FetchBranchMenuAction(),
+      label: context.l10n.gitFetch,
+      icon: BusyMarkGlyphs.refresh,
+      enabled: repository.hasRemote,
+    ),
     BusyMarkPopupMenuItem(
       value: const _PullBranchMenuAction(),
       label: context.l10n.gitPull,
@@ -1411,6 +1418,10 @@ final class _SwitchBranchMenuAction extends _BranchMenuAction {
 
 final class _CreateBranchMenuAction extends _BranchMenuAction {
   const _CreateBranchMenuAction();
+}
+
+final class _FetchBranchMenuAction extends _BranchMenuAction {
+  const _FetchBranchMenuAction();
 }
 
 final class _PullBranchMenuAction extends _BranchMenuAction {
@@ -1665,7 +1676,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
-  DocumentFile? _fileHistoryFile;
   _WritersideTopicUsageReview? _topicUsageReview;
 
   @override
@@ -1690,7 +1700,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
-      _fileHistoryFile = null;
       _topicUsageReview = null;
       _tab = _initialSidebarTabIndex(widget.workspace);
       return;
@@ -1750,13 +1759,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                         _openWritersideTopicUsage(context, usage),
                     onDoRefactor: () => _resumeWritersideTopicRemoval(context),
                   )
-                : _fileHistoryFile != null
-                ? _FileHistorySidebar(
-                    file: _fileHistoryFile!,
-                    onBack: _closeFileHistory,
-                    onOpenFile: (relativePath) =>
-                        _openGitDiffFile(context, ref, relativePath),
-                  )
                 : switch (selectedTab) {
                     _SidebarTab.files => _FilesTab(
                       workspace: widget.workspace,
@@ -1788,9 +1790,23 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                       onConfirmPushSetUpstream: () =>
                           _confirmGitPushSetUpstream(context, ref),
                     ),
-                    _SidebarTab.gitHistory => GitSidebarTab(
+                    _SidebarTab.gitFileHistory => GitSidebarTab(
                       workspace: widget.workspace,
-                      view: GitView.history,
+                      view: GitView.fileHistory,
+                      onOpenFile: (relativePath) =>
+                          _openGitDiffFile(context, ref, relativePath),
+                      onConfirmDiscard: (files) =>
+                          _confirmDiscardGitFiles(context, ref, files),
+                      onAfterWorkspaceFilesChanged: () =>
+                          _refreshWorkspaceAfterGitFileChanges(ref),
+                      onConfirmSwitchBranch: (branchName) =>
+                          _confirmSwitchGitBranch(context, ref, branchName),
+                      onConfirmPushSetUpstream: () =>
+                          _confirmGitPushSetUpstream(context, ref),
+                    ),
+                    _SidebarTab.gitProjectHistory => GitSidebarTab(
+                      workspace: widget.workspace,
+                      view: GitView.projectHistory,
                       onOpenFile: (relativePath) =>
                           _openGitDiffFile(context, ref, relativePath),
                       onConfirmDiscard: (files) =>
@@ -1817,36 +1833,37 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     }
     setState(() {
       _tab = index;
-      if (tab != _SidebarTab.files) {
-        _fileHistoryFile = null;
-      }
     });
-    if (tab != _SidebarTab.git && tab != _SidebarTab.gitHistory) {
+    if (tab != _SidebarTab.git &&
+        tab != _SidebarTab.gitFileHistory &&
+        tab != _SidebarTab.gitProjectHistory) {
       _clearGitDetailSelection(ref);
     }
   }
 
   Future<void> _showFileHistory(DocumentFile file) async {
+    if (widget.workspace.activeFilePath != file.absolutePath) {
+      if (!await saveOrConfirmSafeToChangeActiveFile(context, ref) ||
+          !mounted) {
+        return;
+      }
+      final opened = await ref
+          .read(workspaceControllerProvider.notifier)
+          .openActiveFile(file.absolutePath);
+      if (!opened || !mounted) {
+        return;
+      }
+    }
     await ref
         .read(gitControllerProvider.notifier)
         .loadFileHistory(file.absolutePath);
     if (!mounted) {
       return;
     }
-    final loadedPath = ref.read(gitControllerProvider).historyFilePath;
-    if (loadedPath == null) {
-      return;
-    }
-    setState(() {
-      _fileHistoryFile = file;
-    });
-  }
-
-  void _closeFileHistory() {
-    setState(() {
-      _fileHistoryFile = null;
-    });
-    _clearGitDetailSelection(ref);
+    _selectTab(
+      _SidebarTab.gitFileHistory,
+      _sidebarTabsFor(widget.workspace.kind),
+    );
   }
 
   Future<WritersideTopicRemovalResult?> _runWritersideTopicRemoval(
@@ -1904,7 +1921,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     }
     if (decision.reviewUsages) {
       setState(() {
-        _fileHistoryFile = null;
         _topicUsageReview = _WritersideTopicUsageReview(
           target: target,
           analysis: analysis,
@@ -2020,7 +2036,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git, gitHistory }
+enum _SidebarTab { files, toc, outline, git, gitFileHistory, gitProjectHistory }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -2044,19 +2060,26 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
     WorkspaceKind.untitledMarkdown => const [_SidebarTab.outline],
-    WorkspaceKind.singleMarkdown => const [_SidebarTab.outline],
+    WorkspaceKind.singleMarkdown => const [
+      _SidebarTab.outline,
+      _SidebarTab.git,
+      _SidebarTab.gitFileHistory,
+      _SidebarTab.gitProjectHistory,
+    ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
       _SidebarTab.outline,
       _SidebarTab.git,
-      _SidebarTab.gitHistory,
+      _SidebarTab.gitFileHistory,
+      _SidebarTab.gitProjectHistory,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
       _SidebarTab.toc,
       _SidebarTab.outline,
       _SidebarTab.git,
-      _SidebarTab.gitHistory,
+      _SidebarTab.gitFileHistory,
+      _SidebarTab.gitProjectHistory,
     ],
   };
 }
@@ -2066,8 +2089,9 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.files => context.l10n.files,
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
-    _SidebarTab.git => context.l10n.gitCommit,
-    _SidebarTab.gitHistory => context.l10n.gitHistory,
+    _SidebarTab.git => context.l10n.gitChanges,
+    _SidebarTab.gitFileHistory => context.l10n.gitFileHistory,
+    _SidebarTab.gitProjectHistory => context.l10n.gitProjectHistory,
   };
 }
 
@@ -2077,7 +2101,8 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
     _SidebarTab.git => BusyMarkGlyphs.checklist,
-    _SidebarTab.gitHistory => BusyMarkGlyphs.history,
+    _SidebarTab.gitFileHistory => BusyMarkGlyphs.documentHistory,
+    _SidebarTab.gitProjectHistory => BusyMarkGlyphs.history,
   };
 }
 
@@ -2087,7 +2112,8 @@ String? _sidebarTabShortcut(_SidebarTab tab) {
     _SidebarTab.toc => BusyMarkSidebarShortcutLabels.toc,
     _SidebarTab.outline => BusyMarkSidebarShortcutLabels.outline,
     _SidebarTab.git => BusyMarkSidebarShortcutLabels.git,
-    _SidebarTab.gitHistory => BusyMarkSidebarShortcutLabels.history,
+    _SidebarTab.gitFileHistory => null,
+    _SidebarTab.gitProjectHistory => BusyMarkSidebarShortcutLabels.history,
   };
 }
 
@@ -2305,7 +2331,8 @@ class _SidebarHeader extends StatelessWidget {
             ),
           ],
           if ((selectedTab == _SidebarTab.git ||
-                  selectedTab == _SidebarTab.gitHistory) &&
+                  selectedTab == _SidebarTab.gitFileHistory ||
+                  selectedTab == _SidebarTab.gitProjectHistory) &&
               repository != null &&
               branchLabel != null &&
               branchLabel.trim().isNotEmpty) ...[
@@ -3130,81 +3157,6 @@ Future<bool> _confirmDeleteOrphanTopicFile(
     ),
   );
   return confirmed ?? false;
-}
-
-class _FileHistorySidebar extends ConsumerWidget {
-  const _FileHistorySidebar({
-    required this.file,
-    required this.onBack,
-    required this.onOpenFile,
-  });
-
-  final DocumentFile file;
-  final VoidCallback onBack;
-  final ValueChanged<String> onOpenFile;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    final controller = ref.read(gitControllerProvider.notifier);
-    final basename = p.basename(file.relativePath);
-    final fileName = basename.isEmpty ? file.relativePath : basename;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.sidebar,
-            border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-          ),
-          child: SizedBox(
-            height: BusyMarkSizes.paneHeaderHeight,
-            child: Row(
-              children: [
-                const SizedBox(width: BusyMarkSpacing.xs),
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.back,
-                  icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-                  transparent: true,
-                  onPressed: onBack,
-                ),
-                const SizedBox(width: BusyMarkSpacing.xs),
-                Icon(
-                  WorkspaceGlyphs.forPath(file.absolutePath),
-                  size: BusyMarkSizes.iconSm,
-                  color: colors.mutedForeground,
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                Expanded(
-                  child: Text(
-                    fileName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: Directionality.of(context) == TextDirection.rtl
-                        ? TextAlign.right
-                        : TextAlign.left,
-                    textDirection: TextDirection.ltr,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colors.foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: GitHistoryView(
-            state: ref.watch(gitControllerProvider),
-            onSelectCommit: controller.loadCommitDetails,
-            onShowFileDiff: onOpenFile,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class _FilesTab extends ConsumerStatefulWidget {
@@ -6648,7 +6600,7 @@ class _EditorTabStrip extends ConsumerWidget {
         if (entry.path.isEmpty) {
           return;
         }
-        gitController.selectCommitFile(entry.path);
+        await gitController.activateDiffFile(entry.path);
     }
   }
 
@@ -7229,6 +7181,9 @@ _DiffPreviewData _diffPreviewData(GitDiff diff, Workspace workspace) {
 
 _DiffPreviewSnapshot? _diffPreviewSnapshot(GitDiff diff) {
   for (final file in diff.files) {
+    if (file.status == GitDiffFileStatus.deleted) {
+      continue;
+    }
     final path = file.displayPath;
     if (path.isEmpty) {
       continue;

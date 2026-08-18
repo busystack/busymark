@@ -2020,6 +2020,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitChanges => 'बदलाव';
 
   @override
+  String get gitStaged => 'स्टेज किए गए';
+
+  @override
+  String get gitUnstaged => 'स्टेज नहीं किए गए';
+
+  @override
   String get gitHistory => 'इतिहास';
 
   @override
@@ -2032,16 +2038,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitPull => 'पुल';
 
   @override
+  String get gitFetch => 'प्राप्त करें';
+
+  @override
   String get gitPush => 'पुश';
 
   @override
   String get gitCommit => 'कमिट करें';
 
   @override
-  String get gitSelectForCommit => 'कमिट के लिए चुनें';
+  String get gitSelectForCommit => 'फ़ाइल स्टेज करें';
 
   @override
-  String get gitRemoveFromCommit => 'कमिट से बाहर रखें';
+  String get gitRemoveFromCommit => 'फ़ाइल अनस्टेज करें';
 
   @override
   String get gitDiscard => 'त्यागें';
@@ -2063,7 +2072,21 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'कमिट करने से पहले कम से कम एक फ़ाइल चुनें।';
+      'कमिट करने से पहले कम से कम एक फ़ाइल स्टेज करें।';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count स्टेज की गई फ़ाइलें',
+      one: '1 स्टेज की गई फ़ाइल',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'कार्यस्थान के बाहर';
 
   @override
   String get gitCommitMessageRequired => 'कमिट संदेश दर्ज करें।';
@@ -2095,6 +2118,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'बाइनरी फ़ाइल। BusyMark बाइनरी पैच रेंडर नहीं करता है।';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'बाइनरी फ़ाइल ($size बाइट)। BusyMark बाइनरी पैच प्रदर्शित नहीं करता।';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2160,6 +2188,29 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'मौजूदा फ़ाइल';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'फ़ाइल इतिहास के लिए एक Markdown फ़ाइल खुली होनी चाहिए।';
+
+  @override
+  String get gitLoadMore => 'और लोड करें';
+
+  @override
+  String get gitChangesInCommit => 'इस कमिट में बदलाव';
+
+  @override
+  String get gitCompareWithCurrent => 'वर्तमान संस्करण से तुलना करें';
+
+  @override
+  String get gitRestoreVersion => 'यह संस्करण पुनर्स्थापित करें';
+
+  @override
+  String get gitConfirmRestoreTitle => 'फ़ाइल का यह संस्करण पुनर्स्थापित करें?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark वर्तमान कार्य-वृक्ष फ़ाइल को चुने गए कमिट संस्करण से बदल देगा। पुनर्स्थापित फ़ाइल स्टेज नहीं की जाएगी।';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

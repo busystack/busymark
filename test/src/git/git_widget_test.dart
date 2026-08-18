@@ -69,9 +69,10 @@ void main() {
     );
 
     expect(find.text(l10n.gitConflicts), findsOneWidget);
-    expect(find.text(l10n.gitChanges), findsOneWidget);
+    expect(find.text(l10n.gitStaged), findsOneWidget);
+    expect(find.text(l10n.gitUnstaged), findsOneWidget);
     expect(find.text(l10n.gitUntracked), findsOneWidget);
-    expect(find.byType(YaruCheckbox), findsNWidgets(4));
+    expect(find.byType(YaruCheckbox), findsNWidgets(3));
   });
 
   testWidgets('file checkboxes select files for commit', (tester) async {
@@ -106,6 +107,123 @@ void main() {
 
     expect(selectedPaths, ['changed.md']);
     expect(unselectedPaths, isEmpty);
+  });
+
+  testWidgets(
+    'a path with staged and unstaged changes appears in both groups',
+    (tester) async {
+      final selections = <GitChangeSelection>[];
+      await tester.pumpWidget(
+        _localized(
+          GitCommitActions(
+            commit: (_) async {},
+            child: GitFileActions(
+              select: (_) {},
+              unselect: (_) {},
+              discard: (_) {},
+              child: GitChangesView(
+                state: _state(
+                  files: [_file('both.md', staged: true, unstaged: true)],
+                ),
+                onSelectFile: selections.add,
+                onOpenFile: (_) {},
+                onConfirmDiscard: (_) async => true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('both.md'), findsNWidgets(2));
+      await tester.tap(find.text('both.md').at(0));
+      await tester.pump();
+      await tester.tap(find.text('both.md').at(1));
+      await tester.pump();
+
+      expect(selections, [
+        const GitChangeSelection(
+          path: 'both.md',
+          comparison: GitComparisonType.staged,
+        ),
+        const GitChangeSelection(
+          path: 'both.md',
+          comparison: GitComparisonType.unstaged,
+        ),
+      ]);
+    },
+  );
+
+  testWidgets('commit panel reports staged count and unsaved editor state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async {},
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            discard: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [
+                  _file('README.md', staged: true, unstaged: false),
+                  _file('outside.md', staged: true, unstaged: false),
+                ],
+              ),
+              hasUnsavedEditorChanges: true,
+              outsideWorkspacePaths: const {'outside.md'},
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(l10n.gitStagedFileCount(2)), findsOneWidget);
+    expect(find.text(l10n.gitUnsavedChangesBanner), findsOneWidget);
+    expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+  });
+
+  testWidgets('file history requires an active Markdown file', (tester) async {
+    final commit = GitCommitSummary(
+      fullHash: '1234567890abcdef',
+      shortHash: '1234567',
+      authorName: 'BusyMark Test',
+      authorEmail: 'test@example.invalid',
+      authorDate: DateTime(2026),
+      subject: 'Stale file history',
+      parentHashes: const [],
+    );
+    await tester.pumpWidget(
+      _localized(
+        GitFileHistoryView(
+          state: GitState(
+            fileHistory: GitFileHistoryState(
+              currentPath: 'README.md',
+              entries: [
+                GitFileHistoryEntry(
+                  commit: commit,
+                  pathAtCommit: 'README.md',
+                  pathInParent: 'README.md',
+                  status: GitDiffFileStatus.modified,
+                ),
+              ],
+            ),
+          ),
+          onSelectCommit: (_) {},
+          onChangesInCommit: () {},
+          onCompareWithCurrent: () {},
+          onRestoreVersion: () {},
+          onLoadMore: () {},
+        ),
+      ),
+    );
+
+    expect(find.text(l10n.gitFileHistoryRequiresOpenFile), findsOneWidget);
+    expect(find.text('Stale file history'), findsNothing);
   });
 
   testWidgets('file action menu does not contain commit selection actions', (
@@ -446,7 +564,7 @@ void main() {
     );
     var state = _state(
       files: const [],
-      selectedView: GitView.history,
+      selectedView: GitView.projectHistory,
       history: [commit],
       selectedCommitHash: commit.fullHash,
       selectedCommitFilePath: 'README.md',
@@ -593,6 +711,41 @@ void main() {
     },
   );
 
+  testWidgets('embedded diff keeps rename paths visible', (tester) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: const GitDiff(
+            title: 'new.md',
+            files: [
+              GitDiffFile(
+                oldPath: 'old.md',
+                newPath: 'new.md',
+                status: GitDiffFileStatus.renamed,
+                hunks: [],
+                binary: false,
+                additions: 0,
+                deletions: 0,
+              ),
+            ],
+            rawPatch: '',
+            hasBinaryFiles: false,
+            fileSnapshots: {'new.md': '# Renamed\n'},
+          ),
+          hasUnsavedEditorChanges: false,
+          showHeader: false,
+          showFileHeaders: false,
+          showCloseButton: false,
+          showFileActions: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('old.md → new.md'), findsOneWidget);
+  });
+
   testWidgets('diff viewer renders patch rows with shared source view', (
     tester,
   ) async {
@@ -720,6 +873,53 @@ void main() {
     expect(
       find.textContaining('unchanged after change', findRichText: true),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('deleted diff shows the complete removed file snapshot', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _localized(
+        GitDiffViewer(
+          diff: const GitDiff(
+            title: 'README.md',
+            files: [
+              GitDiffFile(
+                oldPath: 'README.md',
+                status: GitDiffFileStatus.deleted,
+                hunks: [],
+                binary: false,
+                additions: 0,
+                deletions: 3,
+              ),
+            ],
+            rawPatch: '',
+            hasBinaryFiles: false,
+            fileSnapshots: {
+              'README.md': '# Removed\n\nComplete old document.\n',
+            },
+          ),
+          hasUnsavedEditorChanges: false,
+          onOpenFile: (_) {},
+          onClose: () {},
+        ),
+      ),
+    );
+
+    final source = tester.widget<BusyMarkReadOnlySourceLines>(
+      find.byType(BusyMarkReadOnlySourceLines),
+    );
+    expect(source.lines.map((line) => line.text), [
+      '# Removed',
+      '',
+      'Complete old document.',
+    ]);
+    expect(
+      source.lines.every(
+        (line) => line.tone == BusyMarkReadOnlySourceLineTone.removed,
+      ),
+      isTrue,
     );
   });
 
@@ -998,12 +1198,61 @@ GitState _state({
     branches: branches,
     scopedFilePath: scopedFilePath,
     selectedView: selectedView,
-    history: history,
-    historyFilePath: historyFilePath,
-    selectedCommitHash: selectedCommitHash,
+    changeDiff: selectedView == GitView.changes ? selectedDiff : null,
+    fileHistory: GitFileHistoryState(
+      currentPath: historyFilePath,
+      entries: historyFilePath == null
+          ? const []
+          : [
+              for (final commit in history)
+                GitFileHistoryEntry(
+                  commit: commit,
+                  pathAtCommit: historyFilePath,
+                  pathInParent: historyFilePath,
+                  status: GitDiffFileStatus.modified,
+                ),
+            ],
+      selectedCommitHash: selectedView == GitView.fileHistory
+          ? selectedCommitHash
+          : null,
+      comparison: selectedView == GitView.fileHistory && selectedDiff != null
+          ? GitHistoricalFileComparison(
+              oldPath: historyFilePath,
+              newPath: historyFilePath,
+              oldContent: null,
+              newContent: null,
+              diff: selectedDiff,
+            )
+          : null,
+    ),
+    projectHistory: GitProjectHistoryState(
+      commits: history,
+      selectedCommitHash: selectedView == GitView.projectHistory
+          ? selectedCommitHash
+          : null,
+      selectedFilePath: selectedCommitFilePath,
+      details: selectedDiff == null || selectedCommitHash == null
+          ? null
+          : GitCommitDetails(
+              summary: history.firstWhere(
+                (commit) => commit.fullHash == selectedCommitHash,
+              ),
+              changedFiles: selectedDiff.files,
+              patch: selectedDiff.rawPatch,
+              fileSnapshots: selectedDiff.fileSnapshots,
+            ),
+      comparison: selectedView == GitView.projectHistory && selectedDiff != null
+          ? GitHistoricalFileComparison(
+              oldPath: selectedCommitFilePath,
+              newPath: selectedCommitFilePath,
+              oldContent: null,
+              newContent: null,
+              diff: selectedDiff,
+            )
+          : null,
+    ),
     selectedCommitFilePath: selectedCommitFilePath,
     openDiffFilePaths: openDiffFilePaths,
-    selectedDiff: selectedDiff,
     requiresWorkspaceTrust: requiresWorkspaceTrust,
   );
 }

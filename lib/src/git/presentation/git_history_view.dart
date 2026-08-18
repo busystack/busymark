@@ -6,6 +6,145 @@ import '../../app/localization.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
 
+class GitFileHistoryView extends StatelessWidget {
+  const GitFileHistoryView({
+    super.key,
+    required this.state,
+    required this.onSelectCommit,
+    required this.onChangesInCommit,
+    required this.onCompareWithCurrent,
+    required this.onRestoreVersion,
+    required this.onLoadMore,
+  });
+
+  final GitState state;
+  final ValueChanged<String> onSelectCommit;
+  final VoidCallback onChangesInCommit;
+  final VoidCallback onCompareWithCurrent;
+  final VoidCallback onRestoreVersion;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final history = state.fileHistory;
+    if (state.scopedFilePath == null || history.currentPath == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+          child: Text(
+            context.l10n.gitFileHistoryRequiresOpenFile,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    if (history.entries.isEmpty) {
+      return Center(child: Text(context.l10n.gitNoHistory));
+    }
+    return ListView(
+      padding: BusyMarkInsets.sidebarList,
+      children: [
+        for (final entry in history.entries) ...[
+          _CommitRow(
+            selected: entry.commit.fullHash == history.selectedCommitHash,
+            shortHash: entry.commit.shortHash,
+            subject: entry.commit.subject,
+            authorName: entry.commit.authorName,
+            date: entry.commit.authorDate,
+            onTap: () => onSelectCommit(entry.commit.fullHash),
+          ),
+          if (entry.commit.fullHash == history.selectedCommitHash)
+            _FileHistoryActions(
+              comparisonType: history.comparisonType,
+              canRestore: entry.newPath != null,
+              onChangesInCommit: onChangesInCommit,
+              onCompareWithCurrent: onCompareWithCurrent,
+              onRestoreVersion: onRestoreVersion,
+            ),
+        ],
+        if (history.hasMore)
+          _LoadMoreButton(
+            loading: history.isLoadingMore,
+            onPressed: onLoadMore,
+          ),
+      ],
+    );
+  }
+}
+
+class GitProjectHistoryView extends StatelessWidget {
+  const GitProjectHistoryView({
+    super.key,
+    required this.state,
+    required this.onSelectCommit,
+    required this.onShowFileDiff,
+    required this.onChangesInCommit,
+    required this.onCompareWithCurrent,
+    required this.onLoadMore,
+  });
+
+  final GitState state;
+  final ValueChanged<String> onSelectCommit;
+  final ValueChanged<String> onShowFileDiff;
+  final VoidCallback onChangesInCommit;
+  final VoidCallback onCompareWithCurrent;
+  final VoidCallback onLoadMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final project = state.projectHistory;
+    final history = project.commits;
+    return history.isEmpty
+        ? Center(child: Text(context.l10n.gitNoHistory))
+        : ListView(
+            padding: BusyMarkInsets.sidebarList,
+            children: [
+              for (final commit in history) ...[
+                Builder(
+                  builder: (context) {
+                    final selected =
+                        commit.fullHash == project.selectedCommitHash;
+                    final showFileMenu =
+                        selected &&
+                        (project.details?.changedFiles.isNotEmpty ?? false);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _CommitRow(
+                          selected: selected,
+                          shortHash: commit.shortHash,
+                          subject: commit.subject,
+                          authorName: commit.authorName,
+                          date: commit.authorDate,
+                          onTap: () => onSelectCommit(commit.fullHash),
+                        ),
+                        if (showFileMenu)
+                          _CommitFileMenu(
+                            files: project.details!.changedFiles,
+                            selectedPath: project.selectedFilePath,
+                            onShowFileDiff: onShowFileDiff,
+                          ),
+                        if (showFileMenu && project.selectedFilePath != null)
+                          _ProjectHistoryActions(
+                            comparisonType: project.comparisonType,
+                            onChangesInCommit: onChangesInCommit,
+                            onCompareWithCurrent: onCompareWithCurrent,
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+              if (project.hasMore)
+                _LoadMoreButton(
+                  loading: project.isLoadingMore,
+                  onPressed: onLoadMore,
+                ),
+            ],
+          );
+  }
+}
+
 class GitHistoryView extends StatelessWidget {
   const GitHistoryView({
     super.key,
@@ -20,40 +159,117 @@ class GitHistoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final history = state.history;
-    return history.isEmpty
-        ? Center(child: Text(context.l10n.gitNoHistory))
-        : ListView.builder(
-            padding: BusyMarkInsets.sidebarList,
-            itemCount: history.length,
-            itemBuilder: (context, index) {
-              final commit = history[index];
-              final selected = commit.fullHash == state.selectedCommitHash;
-              final showFileMenu =
-                  selected &&
-                  state.historyFilePath == null &&
-                  (state.selectedDiff?.files.isNotEmpty ?? false);
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _CommitRow(
-                    selected: selected,
-                    shortHash: commit.shortHash,
-                    subject: commit.subject,
-                    authorName: commit.authorName,
-                    date: commit.authorDate,
-                    onTap: () => onSelectCommit(commit.fullHash),
-                  ),
-                  if (showFileMenu)
-                    _CommitFileMenu(
-                      files: state.selectedDiff!.files,
-                      selectedPath: state.selectedCommitFilePath,
-                      onShowFileDiff: onShowFileDiff,
-                    ),
-                ],
-              );
-            },
-          );
+    return GitProjectHistoryView(
+      state: state,
+      onSelectCommit: onSelectCommit,
+      onShowFileDiff: onShowFileDiff,
+      onChangesInCommit: () {},
+      onCompareWithCurrent: () {},
+      onLoadMore: () {},
+    );
+  }
+}
+
+class _FileHistoryActions extends StatelessWidget {
+  const _FileHistoryActions({
+    required this.comparisonType,
+    required this.canRestore,
+    required this.onChangesInCommit,
+    required this.onCompareWithCurrent,
+    required this.onRestoreVersion,
+  });
+
+  final GitComparisonType comparisonType;
+  final bool canRestore;
+  final VoidCallback onChangesInCommit;
+  final VoidCallback onCompareWithCurrent;
+  final VoidCallback onRestoreVersion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        BusyMarkSpacing.lg,
+        BusyMarkSpacing.xs,
+        BusyMarkSpacing.xs,
+        BusyMarkSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkPushButton.standard(
+            onPressed: onChangesInCommit,
+            child: Text(context.l10n.gitChangesInCommit),
+          ),
+          const SizedBox(height: BusyMarkSpacing.xs),
+          BusyMarkPushButton.standard(
+            onPressed: onCompareWithCurrent,
+            child: Text(context.l10n.gitCompareWithCurrent),
+          ),
+          const SizedBox(height: BusyMarkSpacing.xs),
+          BusyMarkPushButton.standard(
+            onPressed: canRestore ? onRestoreVersion : null,
+            child: Text(context.l10n.gitRestoreVersion),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProjectHistoryActions extends StatelessWidget {
+  const _ProjectHistoryActions({
+    required this.comparisonType,
+    required this.onChangesInCommit,
+    required this.onCompareWithCurrent,
+  });
+
+  final GitComparisonType comparisonType;
+  final VoidCallback onChangesInCommit;
+  final VoidCallback onCompareWithCurrent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        BusyMarkSpacing.lg,
+        BusyMarkSpacing.xs,
+        BusyMarkSpacing.xs,
+        BusyMarkSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkPushButton.standard(
+            onPressed: onChangesInCommit,
+            child: Text(context.l10n.gitChangesInCommit),
+          ),
+          const SizedBox(height: BusyMarkSpacing.xs),
+          BusyMarkPushButton.standard(
+            onPressed: onCompareWithCurrent,
+            child: Text(context.l10n.gitCompareWithCurrent),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadMoreButton extends StatelessWidget {
+  const _LoadMoreButton({required this.loading, required this.onPressed});
+
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+      child: BusyMarkPushButton.standard(
+        onPressed: loading ? null : onPressed,
+        child: Text(context.l10n.gitLoadMore),
+      ),
+    );
   }
 }
 
@@ -141,6 +357,12 @@ class _CommitFileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final path = file.displayPath;
+    final pathLabel =
+        file.oldPath != null &&
+            file.newPath != null &&
+            file.oldPath != file.newPath
+        ? '${file.oldPath} → ${file.newPath}'
+        : path;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
       child: Material(
@@ -178,7 +400,7 @@ class _CommitFileRow extends StatelessWidget {
                 const SizedBox(width: BusyMarkSpacing.xs),
                 Expanded(
                   child: Text(
-                    path,
+                    pathLabel,
                     textDirection: TextDirection.ltr,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

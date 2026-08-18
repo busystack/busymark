@@ -2056,6 +2056,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitChanges => 'Zmiany';
 
   @override
+  String get gitStaged => 'W indeksie';
+
+  @override
+  String get gitUnstaged => 'Poza indeksem';
+
+  @override
   String get gitHistory => 'Historia';
 
   @override
@@ -2068,16 +2074,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Pobierz';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Zatwierdź';
 
   @override
-  String get gitSelectForCommit => 'Wybierz do zatwierdzenia';
+  String get gitSelectForCommit => 'Dodaj plik do indeksu';
 
   @override
-  String get gitRemoveFromCommit => 'Wyklucz z zatwierdzenia';
+  String get gitRemoveFromCommit => 'Usuń plik z indeksu';
 
   @override
   String get gitDiscard => 'Odrzuć';
@@ -2099,7 +2108,21 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Przed zatwierdzeniem wybierz co najmniej jeden plik.';
+      'Przed utworzeniem commitu dodaj do indeksu co najmniej jeden plik.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count plików w indeksie',
+      one: '1 plik w indeksie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Poza obszarem roboczym';
 
   @override
   String get gitCommitMessageRequired => 'Wprowadź komunikat zatwierdzenia.';
@@ -2131,6 +2154,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'Plik binarny. BusyMark nie wyświetla binarnych poprawek.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Plik binarny ($size bajtów). BusyMark nie wyświetla poprawek binarnych.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2204,6 +2232,29 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'Bieżący plik';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Historia pliku wymaga otwartego pliku Markdown.';
+
+  @override
+  String get gitLoadMore => 'Wczytaj więcej';
+
+  @override
+  String get gitChangesInCommit => 'Zmiany w tym commicie';
+
+  @override
+  String get gitCompareWithCurrent => 'Porównaj z bieżącą wersją';
+
+  @override
+  String get gitRestoreVersion => 'Przywróć tę wersję';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Przywrócić tę wersję pliku?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark zastąpi bieżący plik w drzewie roboczym wybraną wersją z commita. Przywrócony plik pozostanie poza indeksem.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

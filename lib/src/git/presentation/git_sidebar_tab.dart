@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/busymark_design.dart';
+import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../workspace/workspace_model.dart';
+import '../../workspace/workspace_controller.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
 import 'git_changes_view.dart';
@@ -33,6 +35,9 @@ class GitSidebarTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(gitControllerProvider);
+    final hasUnsavedEditorChanges = ref.watch(
+      workspaceControllerProvider.select((value) => value.isDirty),
+    );
     final controller = ref.read(gitControllerProvider.notifier);
     if (!state.availability.available) {
       return _GitEmptyState(
@@ -72,6 +77,12 @@ class GitSidebarTab extends ConsumerWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         controller.selectView(view);
       });
+    } else if (view == GitView.fileHistory &&
+        state.scopedFilePath != null &&
+        state.scopedFilePath != state.fileHistory.currentPath) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.loadActiveFileHistory();
+      });
     }
     return GitCommitActions(
       commit: controller.commit,
@@ -93,14 +104,39 @@ class GitSidebarTab extends ConsumerWidget {
               child: switch (view) {
                 GitView.changes => GitChangesView(
                   state: state,
-                  onSelectFile: controller.selectChangedFile,
+                  onSelectFile: controller.selectChange,
                   onOpenFile: onOpenFile,
                   onConfirmDiscard: onConfirmDiscard,
+                  hasUnsavedEditorChanges: hasUnsavedEditorChanges,
+                  outsideWorkspacePaths: {
+                    for (final file
+                        in state.statusSnapshot?.stagedFiles ??
+                            const <GitFileStatus>[])
+                      if (controller.isOutsideWorkspace(file.repoRelativePath))
+                        file.repoRelativePath,
+                  },
                 ),
-                GitView.history => GitHistoryView(
+                GitView.fileHistory => GitFileHistoryView(
                   state: state,
-                  onSelectCommit: controller.loadCommitDetails,
+                  onSelectCommit: controller.selectFileHistoryCommit,
+                  onChangesInCommit: controller.showFileHistoryCommitChange,
+                  onCompareWithCurrent:
+                      controller.compareFileHistoryWithCurrent,
+                  onRestoreVersion: () => _confirmRestoreVersion(
+                    context,
+                    controller,
+                    hasUnsavedEditorChanges,
+                  ),
+                  onLoadMore: controller.loadMoreFileHistory,
+                ),
+                GitView.projectHistory => GitProjectHistoryView(
+                  state: state,
+                  onSelectCommit: controller.selectProjectCommit,
                   onShowFileDiff: controller.selectCommitFile,
+                  onChangesInCommit: controller.showProjectCommitChange,
+                  onCompareWithCurrent:
+                      controller.compareProjectFileWithCurrent,
+                  onLoadMore: controller.loadMoreProjectHistory,
                 ),
               },
             ),
@@ -108,6 +144,45 @@ class GitSidebarTab extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmRestoreVersion(
+    BuildContext context,
+    GitController controller,
+    bool hasUnsavedEditorChanges,
+  ) async {
+    if (hasUnsavedEditorChanges) {
+      await controller.restoreSelectedFileVersion();
+      return;
+    }
+    await controller.compareFileHistoryWithCurrent();
+    if (!context.mounted) {
+      return;
+    }
+    final confirmed = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.gitConfirmRestoreTitle,
+        actions: [
+          BusyMarkDialogButton(
+            label: MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.gitRestoreVersion,
+            suggested: true,
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ],
+        children: [Text(dialogContext.l10n.gitConfirmRestoreMessage)],
+      ),
+    );
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+    if (await controller.restoreSelectedFileVersion()) {
+      await onAfterWorkspaceFilesChanged();
+    }
   }
 }
 

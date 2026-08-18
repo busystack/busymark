@@ -56,7 +56,32 @@ enum GitFailureCode {
   commandFailed,
 }
 
-enum GitView { changes, history }
+enum GitView { changes, fileHistory, projectHistory }
+
+enum GitComparisonType {
+  staged,
+  unstaged,
+  untracked,
+  commitChange,
+  commitVersusCurrent,
+}
+
+class GitChangeSelection {
+  const GitChangeSelection({required this.path, required this.comparison});
+
+  final String path;
+  final GitComparisonType comparison;
+
+  @override
+  bool operator ==(Object other) {
+    return other is GitChangeSelection &&
+        other.path == path &&
+        other.comparison == comparison;
+  }
+
+  @override
+  int get hashCode => Object.hash(path, comparison);
+}
 
 class GitAvailability {
   const GitAvailability({
@@ -224,6 +249,26 @@ class GitCommitSummary {
   final List<String> parentHashes;
 }
 
+class GitFileHistoryEntry {
+  const GitFileHistoryEntry({
+    required this.commit,
+    required this.pathAtCommit,
+    this.pathInParent,
+    required this.status,
+  });
+
+  final GitCommitSummary commit;
+  final String pathAtCommit;
+  final String? pathInParent;
+  final GitDiffFileStatus status;
+
+  String? get oldPath =>
+      status == GitDiffFileStatus.added ? null : (pathInParent ?? pathAtCommit);
+
+  String? get newPath =>
+      status == GitDiffFileStatus.deleted ? null : pathAtCommit;
+}
+
 class GitCommitDetails {
   const GitCommitDetails({
     required this.summary,
@@ -256,6 +301,24 @@ class GitDiff {
   final Map<String, String> fileSnapshots;
 }
 
+class GitHistoricalFileComparison {
+  const GitHistoricalFileComparison({
+    required this.oldPath,
+    required this.newPath,
+    required this.oldContent,
+    required this.newContent,
+    required this.diff,
+  });
+
+  final String? oldPath;
+  final String? newPath;
+  final String? oldContent;
+  final String? newContent;
+  final GitDiff diff;
+
+  bool get binary => oldContent == null || newContent == null;
+}
+
 class GitDiffFile {
   const GitDiffFile({
     this.oldPath,
@@ -265,6 +328,7 @@ class GitDiffFile {
     required this.binary,
     required this.additions,
     required this.deletions,
+    this.binarySize,
   });
 
   final String? oldPath;
@@ -274,6 +338,7 @@ class GitDiffFile {
   final bool binary;
   final int additions;
   final int deletions;
+  final int? binarySize;
 
   String get displayPath => newPath ?? oldPath ?? '';
 
@@ -288,6 +353,7 @@ class GitDiffFile {
     bool? binary,
     int? additions,
     int? deletions,
+    Object? binarySize = _unset,
   }) {
     return GitDiffFile(
       oldPath: oldPath ?? this.oldPath,
@@ -297,6 +363,9 @@ class GitDiffFile {
       binary: binary ?? this.binary,
       additions: additions ?? this.additions,
       deletions: deletions ?? this.deletions,
+      binarySize: identical(binarySize, _unset)
+          ? this.binarySize
+          : binarySize as int?,
     );
   }
 }

@@ -2077,6 +2077,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitChanges => 'تغییرات';
 
   @override
+  String get gitStaged => 'مرحله‌بندی‌شده';
+
+  @override
+  String get gitUnstaged => 'مرحله‌بندی‌نشده';
+
+  @override
   String get gitHistory => 'تاریخچه';
 
   @override
@@ -2089,16 +2095,19 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitPull => 'دریافت';
 
   @override
+  String get gitFetch => 'دریافت';
+
+  @override
   String get gitPush => 'ارسال';
 
   @override
   String get gitCommit => 'کامیت';
 
   @override
-  String get gitSelectForCommit => 'انتخاب برای کامیت';
+  String get gitSelectForCommit => 'مرحله‌بندی فایل';
 
   @override
-  String get gitRemoveFromCommit => 'حذف از کامیت';
+  String get gitRemoveFromCommit => 'خارج کردن فایل از مرحله‌بندی';
 
   @override
   String get gitDiscard => 'دور انداختن';
@@ -2120,7 +2129,21 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'پیش از کامیت، دست‌کم یک فایل را انتخاب کنید.';
+      'پیش از کامیت، دست‌کم یک فایل را مرحله‌بندی کنید.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count فایل مرحله‌بندی‌شده',
+      one: '۱ فایل مرحله‌بندی‌شده',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'خارج از فضای کاری';
 
   @override
   String get gitCommitMessageRequired => 'پیام کامیت را وارد کنید.';
@@ -2152,6 +2175,11 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'فایل دودویی است. BusyMark وصله‌های دودویی را نمایش نمی‌دهد.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'فایل دودویی ($size بایت). BusyMark وصله‌های دودویی را نمایش نمی‌دهد.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2216,6 +2244,29 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'فایل فعلی';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'تاریخچهٔ فایل به یک فایل Markdown باز نیاز دارد.';
+
+  @override
+  String get gitLoadMore => 'بارگیری بیشتر';
+
+  @override
+  String get gitChangesInCommit => 'تغییرات این ثبت';
+
+  @override
+  String get gitCompareWithCurrent => 'مقایسه با نسخهٔ فعلی';
+
+  @override
+  String get gitRestoreVersion => 'بازیابی این نسخه';
+
+  @override
+  String get gitConfirmRestoreTitle => 'این نسخهٔ فایل بازیابی شود؟';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark فایل فعلی در درخت کاری را با نسخهٔ انتخاب‌شده از ثبت جایگزین می‌کند. فایل بازیابی‌شده مرحله‌بندی‌نشده باقی می‌ماند.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

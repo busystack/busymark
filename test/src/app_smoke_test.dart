@@ -1851,7 +1851,7 @@ void main() {
     );
     expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
-    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -1888,7 +1888,7 @@ void main() {
       find.textContaining('Unchanged context after change', findRichText: true),
       findsWidgets,
     );
-    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
 
     await container
         .read(appSettingsControllerProvider.notifier)
@@ -1941,7 +1941,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(GitDiffViewer), findsOneWidget);
     expect(find.byType(BusyMarkReadOnlySourceLines), findsOneWidget);
-    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
     expect(find.byTooltip(l10n.gitOpenFile), findsOneWidget);
     expect(find.byTooltip(l10n.sourceSearchPreviousMatch), findsOneWidget);
     expect(find.byTooltip(l10n.sourceSearchNextMatch), findsOneWidget);
@@ -1989,9 +1989,9 @@ void main() {
     expect(find.byType(GitDiffViewer), findsNothing);
     expect(find.byTooltip(l10n.gitOpenFile), findsNothing);
 
-    container
+    await container
         .read(gitControllerProvider.notifier)
-        .selectCommitFile('README.md');
+        .activateDiffFile('README.md');
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(GitDiffViewer), findsOneWidget);
     expect(find.byTooltip(l10n.gitOpenFile), findsOneWidget);
@@ -2075,18 +2075,15 @@ void main() {
 
     gitState = container.read(gitControllerProvider);
     expect(gitController.loadedFileHistoryPath, readme.path);
-    expect(gitState.selectedView, GitView.changes);
+    expect(gitState.selectedView, GitView.fileHistory);
     expect(gitState.historyFilePath, 'README.md');
-    expect(find.byTooltip(l10n.back), findsOneWidget);
+    expect(find.byTooltip(l10n.back), findsNothing);
     expect(find.text('File history test commit'), findsOneWidget);
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
     expect(find.text(l10n.files), findsWidgets);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byTooltip(l10n.back));
+    await tester.tap(find.text(l10n.files).last);
     await tester.pumpAndSettle();
 
     expect(find.text('File history test commit'), findsNothing);
@@ -2344,6 +2341,7 @@ void main() {
     expect(gitController.branchLoadCount, 1);
     expect(find.text(l10n.gitPull), findsOneWidget);
     expect(find.text(l10n.gitPush), findsOneWidget);
+    expect(find.text(l10n.gitFetch), findsOneWidget);
     expect(find.text(l10n.gitNewBranch), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
@@ -2397,215 +2395,215 @@ void main() {
     for (final (label, shortcut) in <(String, String)>[
       (l10n.files, BusyMarkSidebarShortcutLabels.files),
       (l10n.outline, BusyMarkSidebarShortcutLabels.outline),
-      (l10n.gitCommit, BusyMarkSidebarShortcutLabels.git),
-      (l10n.gitHistory, BusyMarkSidebarShortcutLabels.history),
+      (l10n.gitChanges, BusyMarkSidebarShortcutLabels.git),
+      (l10n.gitProjectHistory, BusyMarkSidebarShortcutLabels.history),
     ]) {
       expect(find.text(label), findsOneWidget);
       expect(find.text(shortcut), findsOneWidget);
       expect(find.byTooltip('$label ($shortcut)'), findsNothing);
     }
+    expect(find.text(l10n.gitFileHistory), findsOneWidget);
   });
 
-  testWidgets(
-    'Writerside sidebar shortcuts survive document view changes',
-    (tester) async {
-      final binding = TestWidgetsFlutterBinding.ensureInitialized();
-      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
-      addTearDown(() {
-        binding.platformDispatcher.defaultRouteNameTestValue = '/';
-      });
-      final root = Directory('test/fixtures/writerside/basic_project').absolute;
-      final workspace = (await tester.runAsync(
-        () => const WorkspaceService().openPath(root.path),
-      ))!;
-      final controller = _MutableWorkspaceController(
-        WorkspaceState(
-          workspace: workspace,
-          activeText: workspace.markdown?.source ?? '',
-        ),
-      );
-      final container = ProviderContainer(
-        overrides: [
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-          workspaceControllerProvider.overrideWith(() => controller),
-          gitControllerProvider.overrideWith(
-            () => _PresetGitController(
-              _gitSidebarShortcutState(workspace.rootPath),
-            ),
+  testWidgets('Writerside sidebar shortcuts survive document view changes', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final root = Directory('test/fixtures/writerside/basic_project').absolute;
+    final workspace = (await tester.runAsync(
+      () => const WorkspaceService().openPath(root.path),
+    ))!;
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace,
+        activeText: workspace.markdown?.source ?? '',
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        workspaceControllerProvider.overrideWith(() => controller),
+        gitControllerProvider.overrideWith(
+          () => _PresetGitController(
+            _gitSidebarShortcutState(workspace.rootPath),
           ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const BusyMarkApp(),
         ),
-      );
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> selectView(LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pumpAndSettle();
+    }
 
-      Future<void> selectView(LogicalKeyboardKey key) async {
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyDownEvent(key);
-        await tester.sendKeyUpEvent(key);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-        await tester.pumpAndSettle();
+    Future<void> switchDocumentView(
+      LogicalKeyboardKey key,
+      DocumentViewModePreference expectedMode,
+    ) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyDownEvent(key);
+      await tester.sendKeyUpEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(appSettingsControllerProvider).documentViewMode,
+        expectedMode,
+      );
+    }
+
+    final activeDocumentField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.controller?.text.contains('# Introduction') == true,
+    );
+    expect(activeDocumentField, findsOneWidget);
+    await tester.tap(activeDocumentField);
+    await tester.pump();
+
+    final primaryRow = find.byKey(
+      const ValueKey('workspace-sidebar-primary-row'),
+    );
+    const firstContentKey = ValueKey('workspace-sidebar-first-content');
+    Finder viewMarker(LogicalKeyboardKey key) {
+      return switch (key) {
+        LogicalKeyboardKey.digit1 => find.byKey(
+          const ValueKey('workspace-sidebar-path-menu'),
+        ),
+        LogicalKeyboardKey.digit2 => find.byTooltip(l10n.tocActions),
+        LogicalKeyboardKey.digit3 => find.byKey(
+          const ValueKey('workspace-sidebar-outline-tree'),
+        ),
+        LogicalKeyboardKey.digit4 => find.text(l10n.gitNoChanges),
+        LogicalKeyboardKey.digit5 => find.text(
+          'Sidebar history shortcut commit',
+        ),
+        _ => throw ArgumentError.value(key, 'key'),
+      };
+    }
+
+    Finder? actionMenuMarker(LogicalKeyboardKey key) {
+      if (key == LogicalKeyboardKey.digit1) {
+        return find.byKey(const ValueKey('workspace-sidebar-path-menu'));
       }
-
-      Future<void> switchDocumentView(
-        LogicalKeyboardKey key,
-        DocumentViewModePreference expectedMode,
-      ) async {
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
-        await tester.sendKeyDownEvent(key);
-        await tester.sendKeyUpEvent(key);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
-        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-        await tester.pumpAndSettle();
-        expect(
-          container.read(appSettingsControllerProvider).documentViewMode,
-          expectedMode,
+      if (key == LogicalKeyboardKey.digit2) {
+        return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
+      }
+      if (key == LogicalKeyboardKey.digit3) {
+        return find.byKey(
+          const ValueKey('workspace-sidebar-outline-file-menu'),
         );
       }
-
-      final activeDocumentField = find.byWidgetPredicate(
-        (widget) =>
-            widget is TextField &&
-            widget.controller?.text.contains('# Introduction') == true,
-      );
-      expect(activeDocumentField, findsOneWidget);
-      await tester.tap(activeDocumentField);
-      await tester.pump();
-
-      final primaryRow = find.byKey(
-        const ValueKey('workspace-sidebar-primary-row'),
-      );
-      const firstContentKey = ValueKey('workspace-sidebar-first-content');
-      Finder viewMarker(LogicalKeyboardKey key) {
-        return switch (key) {
-          LogicalKeyboardKey.digit1 => find.byKey(
-            const ValueKey('workspace-sidebar-path-menu'),
-          ),
-          LogicalKeyboardKey.digit2 => find.byTooltip(l10n.tocActions),
-          LogicalKeyboardKey.digit3 => find.byKey(
-            const ValueKey('workspace-sidebar-outline-tree'),
-          ),
-          LogicalKeyboardKey.digit4 => find.text(l10n.gitNoChanges),
-          LogicalKeyboardKey.digit5 => find.text(
-            'Sidebar history shortcut commit',
-          ),
-          _ => throw ArgumentError.value(key, 'key'),
-        };
+      if (key == LogicalKeyboardKey.digit4 ||
+          key == LogicalKeyboardKey.digit5) {
+        return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
       }
+      return null;
+    }
 
-      Finder? actionMenuMarker(LogicalKeyboardKey key) {
-        if (key == LogicalKeyboardKey.digit1) {
-          return find.byKey(const ValueKey('workspace-sidebar-path-menu'));
-        }
-        if (key == LogicalKeyboardKey.digit2) {
-          return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
-        }
-        if (key == LogicalKeyboardKey.digit3) {
-          return find.byKey(
-            const ValueKey('workspace-sidebar-outline-file-menu'),
-          );
-        }
-        if (key == LogicalKeyboardKey.digit4 ||
-            key == LogicalKeyboardKey.digit5) {
-          return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
-        }
-        return null;
-      }
-
-      final actionMenuGuideRight = tester.getRect(primaryRow).right;
-      double? actionMenuRight;
-      for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
-          in <
-            (
-              LogicalKeyboardKey,
-              String,
-              bool,
-              LogicalKeyboardKey,
-              DocumentViewModePreference,
-            )
-          >[
-            (
-              LogicalKeyboardKey.digit1,
-              'Files',
-              true,
-              LogicalKeyboardKey.digit2,
-              DocumentViewModePreference.source,
-            ),
-            (
-              LogicalKeyboardKey.digit2,
-              'Topics',
-              true,
-              LogicalKeyboardKey.digit3,
-              DocumentViewModePreference.preview,
-            ),
-            (
-              LogicalKeyboardKey.digit3,
-              'Outline',
-              true,
-              LogicalKeyboardKey.digit4,
-              DocumentViewModePreference.split,
-            ),
-            (
-              LogicalKeyboardKey.digit4,
-              'Commit',
-              true,
-              LogicalKeyboardKey.digit1,
-              DocumentViewModePreference.editor,
-            ),
-            (
-              LogicalKeyboardKey.digit5,
-              'History',
-              true,
-              LogicalKeyboardKey.digit3,
-              DocumentViewModePreference.preview,
-            ),
-          ]) {
-        await switchDocumentView(documentViewKey, expectedDocumentView);
-        await selectView(key);
-        expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
-        final firstContent = find.byKey(firstContentKey);
-        expect(firstContent, findsOneWidget, reason: label);
-        final gap =
-            tester.getTopLeft(firstContent).dy -
-            tester.getBottomLeft(primaryRow).dy;
+    final actionMenuGuideRight = tester.getRect(primaryRow).right;
+    double? actionMenuRight;
+    for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
+        in <
+          (
+            LogicalKeyboardKey,
+            String,
+            bool,
+            LogicalKeyboardKey,
+            DocumentViewModePreference,
+          )
+        >[
+          (
+            LogicalKeyboardKey.digit1,
+            'Files',
+            true,
+            LogicalKeyboardKey.digit2,
+            DocumentViewModePreference.source,
+          ),
+          (
+            LogicalKeyboardKey.digit2,
+            'Topics',
+            true,
+            LogicalKeyboardKey.digit3,
+            DocumentViewModePreference.preview,
+          ),
+          (
+            LogicalKeyboardKey.digit3,
+            'Outline',
+            true,
+            LogicalKeyboardKey.digit4,
+            DocumentViewModePreference.split,
+          ),
+          (
+            LogicalKeyboardKey.digit4,
+            'Commit',
+            true,
+            LogicalKeyboardKey.digit1,
+            DocumentViewModePreference.editor,
+          ),
+          (
+            LogicalKeyboardKey.digit5,
+            'History',
+            true,
+            LogicalKeyboardKey.digit3,
+            DocumentViewModePreference.preview,
+          ),
+        ]) {
+      await switchDocumentView(documentViewKey, expectedDocumentView);
+      await selectView(key);
+      expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
+      final firstContent = find.byKey(firstContentKey);
+      expect(firstContent, findsOneWidget, reason: label);
+      final gap =
+          tester.getTopLeft(firstContent).dy -
+          tester.getBottomLeft(primaryRow).dy;
+      expect(
+        gap,
+        closeTo(BusyMarkSpacing.sm, 0.01),
+        reason: '$label sidebar gap',
+      );
+      final actionMenu = actionMenuMarker(key);
+      if (actionMenu != null) {
+        final right = tester.getRect(actionMenu).right;
+        actionMenuRight ??= right;
         expect(
-          gap,
-          closeTo(BusyMarkSpacing.sm, 0.01),
-          reason: '$label sidebar gap',
+          right,
+          closeTo(actionMenuRight, 0.01),
+          reason: '$label action menu trailing edge',
         );
-        final actionMenu = actionMenuMarker(key);
-        if (actionMenu != null) {
-          final right = tester.getRect(actionMenu).right;
-          actionMenuRight ??= right;
-          expect(
-            right,
-            closeTo(actionMenuRight, 0.01),
-            reason: '$label action menu trailing edge',
-          );
-          expect(
-            right,
-            closeTo(actionMenuGuideRight, 0.01),
-            reason: '$label action menu header alignment',
-          );
-        }
-        if (contextRow) {
-          expect(
-            tester.getSize(firstContent).height,
-            greaterThanOrEqualTo(BusyMarkSizes.iconButton),
-            reason: '$label sidebar context row height',
-          );
-        }
+        expect(
+          right,
+          closeTo(actionMenuGuideRight, 0.01),
+          reason: '$label action menu header alignment',
+        );
       }
-    },
-  );
+      if (contextRow) {
+        expect(
+          tester.getSize(firstContent).height,
+          greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+          reason: '$label sidebar context row height',
+        );
+      }
+    }
+  });
 
   testWidgets('Files view colors entries by Git status', (tester) async {
     final temp = Directory.systemTemp.createTempSync('busymark_file_vcs_');
@@ -4654,6 +4652,12 @@ After break.
       findsOneWidget,
     );
     expect(find.text(l10n.noOutline), findsNothing);
+
+    await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.gitChanges), findsOneWidget);
+    expect(find.text(l10n.gitFileHistory), findsOneWidget);
+    expect(find.text(l10n.gitProjectHistory), findsOneWidget);
   });
 
   testWidgets(
@@ -7534,22 +7538,29 @@ class _PresetGitController extends GitController {
         ? absolutePath.substring(repositoryRoot.length + 1)
         : absolutePath;
     state = state.copyWith(
-      selectedCommitHash: null,
+      scopedFilePath: repoRelativePath,
       selectedCommitFilePath: null,
       openDiffFilePaths: const [],
-      selectedDiff: null,
-      historyFilePath: repoRelativePath,
-      history: [
-        GitCommitSummary(
-          fullHash: '45a2b81a41822ad4171f62205ef996f5752a3bbd',
-          shortHash: '45a2b81',
-          authorName: 'BusyMark Test',
-          authorEmail: 'test@example.invalid',
-          authorDate: DateTime(2026),
-          subject: 'File history test commit',
-          parentHashes: const [],
-        ),
-      ],
+      selectedView: GitView.fileHistory,
+      fileHistory: GitFileHistoryState(
+        currentPath: repoRelativePath,
+        entries: [
+          GitFileHistoryEntry(
+            commit: GitCommitSummary(
+              fullHash: '45a2b81a41822ad4171f62205ef996f5752a3bbd',
+              shortHash: '45a2b81',
+              authorName: 'BusyMark Test',
+              authorEmail: 'test@example.invalid',
+              authorDate: DateTime(2026),
+              subject: 'File history test commit',
+              parentHashes: const [],
+            ),
+            pathAtCommit: repoRelativePath,
+            pathInParent: repoRelativePath,
+            status: GitDiffFileStatus.modified,
+          ),
+        ],
+      ),
     );
   }
 
@@ -7579,7 +7590,11 @@ GitState _gitDiffState(String rootPath) {
       repositoryInfo: repository,
       files: const [],
     ),
-    selectedDiff: GitDiff(
+    selectedChange: const GitChangeSelection(
+      path: 'guide.md',
+      comparison: GitComparisonType.unstaged,
+    ),
+    changeDiff: GitDiff(
       title: 'Update docs',
       files: [
         _readmeCodeBlockDiffFile(),
@@ -7691,17 +7706,19 @@ GitState _gitSidebarShortcutState(String rootPath) {
       repositoryInfo: repository,
       files: const [],
     ),
-    history: [
-      GitCommitSummary(
-        fullHash: '21e982c772a5cf43f4a99de6d7db9fb1283f50d1',
-        shortHash: '21e982c',
-        authorName: 'BusyMark Test',
-        authorEmail: 'test@example.invalid',
-        authorDate: DateTime(2026),
-        subject: 'Sidebar history shortcut commit',
-        parentHashes: const [],
-      ),
-    ],
+    projectHistory: GitProjectHistoryState(
+      commits: [
+        GitCommitSummary(
+          fullHash: '21e982c772a5cf43f4a99de6d7db9fb1283f50d1',
+          shortHash: '21e982c',
+          authorName: 'BusyMark Test',
+          authorEmail: 'test@example.invalid',
+          authorDate: DateTime(2026),
+          subject: 'Sidebar history shortcut commit',
+          parentHashes: const [],
+        ),
+      ],
+    ),
   );
 }
 

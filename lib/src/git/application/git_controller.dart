@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../app/app_settings.dart';
+import '../../core/path_utils.dart';
 import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_model.dart';
 import '../domain/git_models.dart';
@@ -18,19 +19,124 @@ final gitControllerProvider = NotifierProvider<GitController, GitState>(
   GitController.new,
 );
 
+class GitFileHistoryState {
+  const GitFileHistoryState({
+    this.entries = const [],
+    this.currentPath,
+    this.hasMore = false,
+    this.isLoadingMore = false,
+    this.selectedCommitHash,
+    this.comparisonType = GitComparisonType.commitChange,
+    this.comparison,
+  });
+
+  final List<GitFileHistoryEntry> entries;
+  final String? currentPath;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final String? selectedCommitHash;
+  final GitComparisonType comparisonType;
+  final GitHistoricalFileComparison? comparison;
+
+  GitFileHistoryEntry? get selectedEntry {
+    final hash = selectedCommitHash;
+    if (hash == null) {
+      return null;
+    }
+    return entries.where((entry) => entry.commit.fullHash == hash).firstOrNull;
+  }
+
+  GitFileHistoryState copyWith({
+    List<GitFileHistoryEntry>? entries,
+    Object? currentPath = _unset,
+    bool? hasMore,
+    bool? isLoadingMore,
+    Object? selectedCommitHash = _unset,
+    GitComparisonType? comparisonType,
+    Object? comparison = _unset,
+  }) {
+    return GitFileHistoryState(
+      entries: entries ?? this.entries,
+      currentPath: identical(currentPath, _unset)
+          ? this.currentPath
+          : currentPath as String?,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      selectedCommitHash: identical(selectedCommitHash, _unset)
+          ? this.selectedCommitHash
+          : selectedCommitHash as String?,
+      comparisonType: comparisonType ?? this.comparisonType,
+      comparison: identical(comparison, _unset)
+          ? this.comparison
+          : comparison as GitHistoricalFileComparison?,
+    );
+  }
+}
+
+class GitProjectHistoryState {
+  const GitProjectHistoryState({
+    this.commits = const [],
+    this.hasMore = false,
+    this.isLoadingMore = false,
+    this.selectedCommitHash,
+    this.selectedFilePath,
+    this.details,
+    this.comparisonType = GitComparisonType.commitChange,
+    this.comparison,
+  });
+
+  final List<GitCommitSummary> commits;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final String? selectedCommitHash;
+  final String? selectedFilePath;
+  final GitCommitDetails? details;
+  final GitComparisonType comparisonType;
+  final GitHistoricalFileComparison? comparison;
+
+  GitProjectHistoryState copyWith({
+    List<GitCommitSummary>? commits,
+    bool? hasMore,
+    bool? isLoadingMore,
+    Object? selectedCommitHash = _unset,
+    Object? selectedFilePath = _unset,
+    Object? details = _unset,
+    GitComparisonType? comparisonType,
+    Object? comparison = _unset,
+  }) {
+    return GitProjectHistoryState(
+      commits: commits ?? this.commits,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      selectedCommitHash: identical(selectedCommitHash, _unset)
+          ? this.selectedCommitHash
+          : selectedCommitHash as String?,
+      selectedFilePath: identical(selectedFilePath, _unset)
+          ? this.selectedFilePath
+          : selectedFilePath as String?,
+      details: identical(details, _unset)
+          ? this.details
+          : details as GitCommitDetails?,
+      comparisonType: comparisonType ?? this.comparisonType,
+      comparison: identical(comparison, _unset)
+          ? this.comparison
+          : comparison as GitHistoricalFileComparison?,
+    );
+  }
+}
+
 class GitState {
   const GitState({
     this.availability = const GitAvailability.unavailable(),
     this.repositoryInfo,
     this.statusSnapshot,
     this.selectedView = GitView.changes,
-    this.selectedFilePath,
-    this.selectedCommitHash,
+    this.selectedChange,
+    this.changeDiff,
+    this.fileHistory = const GitFileHistoryState(),
+    this.projectHistory = const GitProjectHistoryState(),
     this.selectedCommitFilePath,
     this.openDiffFilePaths = const [],
-    this.selectedDiff,
-    this.history = const [],
-    this.historyFilePath,
     this.branches = const [],
     this.requiresWorkspaceTrust = false,
     this.isRefreshing = false,
@@ -45,13 +151,12 @@ class GitState {
   final GitRepositoryInfo? repositoryInfo;
   final GitStatusSnapshot? statusSnapshot;
   final GitView selectedView;
-  final String? selectedFilePath;
-  final String? selectedCommitHash;
+  final GitChangeSelection? selectedChange;
+  final GitDiff? changeDiff;
+  final GitFileHistoryState fileHistory;
+  final GitProjectHistoryState projectHistory;
   final String? selectedCommitFilePath;
   final List<String> openDiffFilePaths;
-  final GitDiff? selectedDiff;
-  final List<GitCommitSummary> history;
-  final String? historyFilePath;
   final List<GitBranch> branches;
   final bool requiresWorkspaceTrust;
   final bool isRefreshing;
@@ -62,6 +167,26 @@ class GitState {
   final String? scopedFilePath;
 
   bool get isRepository => repositoryInfo != null;
+  String? get selectedFilePath => selectedChange?.path;
+  String? get selectedCommitHash => switch (selectedView) {
+    GitView.fileHistory => fileHistory.selectedCommitHash,
+    GitView.projectHistory => projectHistory.selectedCommitHash,
+    GitView.changes => null,
+  };
+  GitDiff? get selectedDiff => switch (selectedView) {
+    GitView.changes => changeDiff,
+    GitView.fileHistory => fileHistory.comparison?.diff,
+    GitView.projectHistory => projectHistory.comparison?.diff,
+  };
+  List<GitCommitSummary> get history => switch (selectedView) {
+    GitView.fileHistory => [
+      for (final entry in fileHistory.entries) entry.commit,
+    ],
+    GitView.projectHistory => projectHistory.commits,
+    GitView.changes => const [],
+  };
+  String? get historyFilePath =>
+      selectedView == GitView.fileHistory ? fileHistory.currentPath : null;
 
   GitDiff? get selectedDiffForDisplay {
     final diff = selectedDiff;
@@ -70,24 +195,20 @@ class GitState {
       return null;
     }
     if (path == null) {
-      return openDiffFilePaths.isEmpty ? diff : null;
+      return null;
     }
     if (!openDiffFilePaths.contains(path) && openDiffFilePaths.isNotEmpty) {
       return null;
-    }
-    if (path.isEmpty) {
-      return diff;
     }
     final selectedFiles = [
       for (final file in diff.files)
         if (file.matchesPath(path)) file,
     ];
     if (selectedFiles.isEmpty) {
-      return diff;
+      return diff.files.isEmpty ? diff : null;
     }
-    final title = path.isEmpty ? diff.title : path;
     return GitDiff(
-      title: title,
+      title: path,
       files: selectedFiles,
       rawPatch: diff.rawPatch,
       hasBinaryFiles: selectedFiles.any((file) => file.binary),
@@ -100,13 +221,12 @@ class GitState {
     Object? repositoryInfo = _unset,
     Object? statusSnapshot = _unset,
     GitView? selectedView,
-    Object? selectedFilePath = _unset,
-    Object? selectedCommitHash = _unset,
+    Object? selectedChange = _unset,
+    Object? changeDiff = _unset,
+    GitFileHistoryState? fileHistory,
+    GitProjectHistoryState? projectHistory,
     Object? selectedCommitFilePath = _unset,
     List<String>? openDiffFilePaths,
-    Object? selectedDiff = _unset,
-    List<GitCommitSummary>? history,
-    Object? historyFilePath = _unset,
     List<GitBranch>? branches,
     bool? requiresWorkspaceTrust,
     bool? isRefreshing,
@@ -125,23 +245,18 @@ class GitState {
           ? this.statusSnapshot
           : statusSnapshot as GitStatusSnapshot?,
       selectedView: selectedView ?? this.selectedView,
-      selectedFilePath: identical(selectedFilePath, _unset)
-          ? this.selectedFilePath
-          : selectedFilePath as String?,
-      selectedCommitHash: identical(selectedCommitHash, _unset)
-          ? this.selectedCommitHash
-          : selectedCommitHash as String?,
+      selectedChange: identical(selectedChange, _unset)
+          ? this.selectedChange
+          : selectedChange as GitChangeSelection?,
+      changeDiff: identical(changeDiff, _unset)
+          ? this.changeDiff
+          : changeDiff as GitDiff?,
+      fileHistory: fileHistory ?? this.fileHistory,
+      projectHistory: projectHistory ?? this.projectHistory,
       selectedCommitFilePath: identical(selectedCommitFilePath, _unset)
           ? this.selectedCommitFilePath
           : selectedCommitFilePath as String?,
       openDiffFilePaths: openDiffFilePaths ?? this.openDiffFilePaths,
-      selectedDiff: identical(selectedDiff, _unset)
-          ? this.selectedDiff
-          : selectedDiff as GitDiff?,
-      history: history ?? this.history,
-      historyFilePath: identical(historyFilePath, _unset)
-          ? this.historyFilePath
-          : historyFilePath as String?,
       branches: branches ?? this.branches,
       requiresWorkspaceTrust:
           requiresWorkspaceTrust ?? this.requiresWorkspaceTrust,
@@ -165,6 +280,7 @@ class GitState {
 
 class GitController extends Notifier<GitState> {
   static const _refreshDebounce = Duration(milliseconds: 350);
+  static const _historyPageSize = 50;
 
   late GitRepositoryGateway _gateway;
   final _validation = const GitValidation();
@@ -174,7 +290,8 @@ class GitController extends Notifier<GitState> {
   var _workspaceEpoch = 0;
   var _commitDetailsEpoch = 0;
   var _branchesEpoch = 0;
-  var _historyEpoch = 0;
+  var _fileHistoryEpoch = 0;
+  var _projectHistoryEpoch = 0;
   var _diffEpoch = 0;
   var _isUpdatingWorkspaceTrust = false;
 
@@ -256,13 +373,12 @@ class GitController extends Notifier<GitState> {
         requiresWorkspaceTrust: false,
         repositoryInfo: null,
         statusSnapshot: null,
-        selectedFilePath: null,
-        selectedCommitHash: null,
-        selectedDiff: null,
+        selectedChange: null,
+        changeDiff: null,
         selectedCommitFilePath: null,
         openDiffFilePaths: const [],
-        history: const [],
-        historyFilePath: null,
+        fileHistory: const GitFileHistoryState(),
+        projectHistory: const GitProjectHistoryState(),
         branches: const [],
         lastOperationMessage: null,
         scopedFilePath: null,
@@ -290,13 +406,12 @@ class GitController extends Notifier<GitState> {
           requiresWorkspaceTrust: false,
           repositoryInfo: null,
           statusSnapshot: null,
-          selectedFilePath: null,
-          selectedCommitHash: null,
-          selectedDiff: null,
+          selectedChange: null,
+          changeDiff: null,
           selectedCommitFilePath: null,
           openDiffFilePaths: const [],
-          history: const [],
-          historyFilePath: null,
+          fileHistory: const GitFileHistoryState(),
+          projectHistory: const GitProjectHistoryState(),
           branches: const [],
           lastOperationMessage: null,
           scopedFilePath: null,
@@ -309,13 +424,26 @@ class GitController extends Notifier<GitState> {
         return;
       }
       final scoped = _workspaceScopedRepoPath(workspace, status.repositoryInfo);
+      final selectedChange = _reconcileChangeSelection(
+        state.selectedChange,
+        status,
+      );
+      final clearChangeTab =
+          state.selectedView == GitView.changes && selectedChange == null;
       state = state.copyWith(
         isRefreshing: false,
         requiresWorkspaceTrust: false,
         repositoryInfo: status.repositoryInfo,
         statusSnapshot: status,
         scopedFilePath: scoped,
-        selectedFilePath: state.selectedFilePath ?? scoped,
+        selectedChange: selectedChange,
+        changeDiff: selectedChange == state.selectedChange
+            ? state.changeDiff
+            : null,
+        selectedCommitFilePath: clearChangeTab
+            ? null
+            : state.selectedCommitFilePath,
+        openDiffFilePaths: clearChangeTab ? const [] : state.openDiffFilePaths,
         lastError: null,
       );
     } on Object catch (error) {
@@ -349,20 +477,41 @@ class GitController extends Notifier<GitState> {
   }
 
   Future<void> selectView(GitView view) async {
-    state = state.copyWith(selectedView: view);
-    if (view == GitView.history &&
-        (state.history.isEmpty || state.historyFilePath != null)) {
-      await loadProjectHistory();
+    final activePath = switch (view) {
+      GitView.changes =>
+        state.changeDiff == null ? null : state.selectedChange?.path,
+      GitView.fileHistory =>
+        state.fileHistory.comparison?.diff.files.firstOrNull?.displayPath,
+      GitView.projectHistory => state.projectHistory.selectedFilePath,
+    };
+    state = state.copyWith(
+      selectedView: view,
+      selectedCommitFilePath: activePath,
+      openDiffFilePaths: activePath == null ? const [] : [activePath],
+    );
+    switch (view) {
+      case GitView.changes:
+        return;
+      case GitView.fileHistory:
+        final path = state.scopedFilePath;
+        if (path != null &&
+            (state.fileHistory.currentPath != path ||
+                state.fileHistory.entries.isEmpty)) {
+          await _loadFileHistory(path);
+        }
+      case GitView.projectHistory:
+        if (state.projectHistory.commits.isEmpty) {
+          await loadProjectHistory();
+        }
     }
   }
 
   void clearSelection() {
     state = state.copyWith(
-      selectedFilePath: null,
-      selectedCommitHash: null,
+      selectedChange: null,
+      changeDiff: null,
       selectedCommitFilePath: null,
       openDiffFilePaths: const [],
-      selectedDiff: null,
     );
   }
 
@@ -373,26 +522,54 @@ class GitController extends Notifier<GitState> {
     state = state.copyWith(selectedCommitFilePath: null);
   }
 
-  Future<void> selectChangedFile(String repoRelativePath) async {
-    final failure = _validation.validateRepoRelativePaths([repoRelativePath]);
+  Future<void> activateDiffFile(String repoRelativePath) async {
+    if (!state.openDiffFilePaths.contains(repoRelativePath)) {
+      return;
+    }
+    switch (state.selectedView) {
+      case GitView.changes:
+        if (state.changeDiff != null) {
+          state = state.copyWith(selectedCommitFilePath: repoRelativePath);
+        }
+      case GitView.fileHistory:
+        if (state.fileHistory.comparison != null) {
+          state = state.copyWith(selectedCommitFilePath: repoRelativePath);
+        }
+      case GitView.projectHistory:
+        await selectCommitFile(repoRelativePath);
+    }
+  }
+
+  Future<void> selectChange(GitChangeSelection selection) async {
+    final failure = _validation.validateRepoRelativePaths([selection.path]);
     if (failure != null) {
       state = state.copyWith(lastError: failure);
       return;
     }
     state = state.copyWith(
-      selectedFilePath: repoRelativePath,
-      selectedCommitHash: null,
+      selectedView: GitView.changes,
+      selectedChange: selection,
+      changeDiff: null,
       selectedCommitFilePath: null,
       openDiffFilePaths: const [],
-      selectedDiff: null,
     );
-    await _loadChangedFileDiff(repoRelativePath);
+    await _loadChangedFileDiff(selection);
+  }
+
+  Future<void> selectChangedFile(String repoRelativePath) async {
+    final selection = _preferredChangeSelection(repoRelativePath);
+    if (selection != null) {
+      await selectChange(selection);
+    }
   }
 
   Future<void> showCurrentFileDiff() async {
     final path = state.scopedFilePath;
     if (path != null) {
-      await selectChangedFile(path);
+      final selection = _preferredChangeSelection(path);
+      if (selection != null) {
+        await selectChange(selection);
+      }
     }
   }
 
@@ -405,54 +582,59 @@ class GitController extends Notifier<GitState> {
     if (relative == null) {
       return;
     }
-    await _loadHistory(repoRelativePath: relative);
+    await _loadFileHistory(relative);
   }
 
-  Future<void> loadProjectHistory() => _loadHistory();
+  Future<void> loadActiveFileHistory() async {
+    final path = state.scopedFilePath;
+    if (path != null) {
+      await _loadFileHistory(path);
+    }
+  }
+
+  Future<void> loadProjectHistory() => _loadProjectHistory();
 
   Future<void> loadCommitDetails(String hash) async {
-    final operation = _captureRepositoryOperation();
-    if (operation == null) {
-      return;
+    if (state.selectedView == GitView.fileHistory) {
+      await selectFileHistoryCommit(hash);
+    } else {
+      await selectProjectCommit(hash);
     }
-    if (!_knownHashes.contains(hash)) {
-      state = state.copyWith(
-        lastError: GitFailure(
-          code: GitFailureCode.invalidPath,
-          userMessageKey: 'gitErrorInvalidCommit',
-          rawMessage: hash,
-          commandName: 'show',
-        ),
-      );
+  }
+
+  Future<void> selectFileHistoryCommit(String hash) async {
+    final operation = _captureRepositoryOperation();
+    final entry = state.fileHistory.entries
+        .where((candidate) => candidate.commit.fullHash == hash)
+        .firstOrNull;
+    if (operation == null || entry == null || !_knownHashes.contains(hash)) {
+      _setInvalidCommit(hash);
       return;
     }
     final requestEpoch = ++_commitDetailsEpoch;
-    final historyFilePath = state.historyFilePath;
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
-      final details = await _gateway.commitDetails(
+      final comparison = await _gateway.compareFileWithParent(
         operation.repository,
         hash,
-        repoRelativePath: historyFilePath,
+        oldPath: entry.oldPath,
+        newPath: entry.newPath,
       );
       if (!_isCurrentRepositoryOperation(operation) ||
           requestEpoch != _commitDetailsEpoch) {
         return;
       }
-      final firstFilePath = _firstDiffFilePath(details.changedFiles);
+      final displayPath = comparison.newPath ?? comparison.oldPath;
       state = state.copyWith(
         isRunningOperation: false,
-        selectedCommitHash: hash,
-        selectedCommitFilePath: firstFilePath,
-        openDiffFilePaths: firstFilePath == null ? const [] : [firstFilePath],
-        selectedFilePath: null,
-        selectedDiff: GitDiff(
-          title: details.summary.subject,
-          files: details.changedFiles,
-          rawPatch: details.patch,
-          hasBinaryFiles: details.changedFiles.any((file) => file.binary),
-          fileSnapshots: details.fileSnapshots,
+        selectedView: GitView.fileHistory,
+        fileHistory: state.fileHistory.copyWith(
+          selectedCommitHash: hash,
+          comparisonType: GitComparisonType.commitChange,
+          comparison: comparison,
         ),
+        selectedCommitFilePath: displayPath,
+        openDiffFilePaths: displayPath == null ? const [] : [displayPath],
       );
     } on Object catch (error) {
       if (!_isCurrentRepositoryOperation(operation) ||
@@ -464,9 +646,65 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  void selectCommitFile(String repoRelativePath) {
-    final diff = state.selectedDiff;
-    if (diff == null) {
+  Future<void> selectProjectCommit(String hash) async {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
+      return;
+    }
+    if (!_knownHashes.contains(hash)) {
+      _setInvalidCommit(hash);
+      return;
+    }
+    final requestEpoch = ++_commitDetailsEpoch;
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final details = await _gateway.commitDetails(operation.repository, hash);
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      final firstFilePath = _firstDiffFilePath(details.changedFiles);
+      state = state.copyWith(
+        selectedView: GitView.projectHistory,
+        selectedCommitFilePath: null,
+        openDiffFilePaths: const [],
+        projectHistory: state.projectHistory.copyWith(
+          selectedCommitHash: hash,
+          selectedFilePath: firstFilePath,
+          details: details,
+          comparisonType: GitComparisonType.commitChange,
+          comparison: null,
+        ),
+      );
+      if (firstFilePath == null) {
+        state = state.copyWith(
+          isRunningOperation: false,
+          selectedCommitFilePath: null,
+          openDiffFilePaths: const [],
+        );
+        return;
+      }
+      await _loadProjectFileComparison(
+        operation,
+        hash,
+        firstFilePath,
+        requestEpoch: requestEpoch,
+      );
+    } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      _setFailure(error, commandName: 'show');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> selectCommitFile(String repoRelativePath) async {
+    final project = state.projectHistory;
+    final hash = project.selectedCommitHash;
+    final details = project.details;
+    if (hash == null || details == null) {
       return;
     }
     final failure = _validation.validateRepoRelativePaths([repoRelativePath]);
@@ -474,16 +712,208 @@ class GitController extends Notifier<GitState> {
       state = state.copyWith(lastError: failure);
       return;
     }
-    if (!diff.files.any((file) => file.matchesPath(repoRelativePath))) {
+    if (!details.changedFiles.any(
+      (file) => file.matchesPath(repoRelativePath),
+    )) {
       return;
     }
-    final openPaths = state.openDiffFilePaths.contains(repoRelativePath)
-        ? state.openDiffFilePaths
-        : [...state.openDiffFilePaths, repoRelativePath];
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
+      return;
+    }
+    final requestEpoch = ++_commitDetailsEpoch;
     state = state.copyWith(
-      selectedCommitFilePath: repoRelativePath,
-      openDiffFilePaths: openPaths,
+      isRunningOperation: true,
+      projectHistory: project.copyWith(selectedFilePath: repoRelativePath),
     );
+    await _loadProjectFileComparison(
+      operation,
+      hash,
+      repoRelativePath,
+      requestEpoch: requestEpoch,
+    );
+  }
+
+  Future<void> compareFileHistoryWithCurrent() async {
+    final operation = _captureRepositoryOperation();
+    final history = state.fileHistory;
+    final entry = history.selectedEntry;
+    final historicalPath = entry?.newPath;
+    final currentPath = history.currentPath;
+    if (operation == null || entry == null || currentPath == null) {
+      return;
+    }
+    final requestEpoch = ++_commitDetailsEpoch;
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final comparison = historicalPath == null
+          ? await _comparisonFromEmptyWorkingTree(
+              operation.repository,
+              currentPath,
+            )
+          : await _gateway.compareFileWithWorkingTree(
+              operation.repository,
+              entry.commit.fullHash,
+              historicalPath: historicalPath,
+              currentPath: currentPath,
+            );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      state = state.copyWith(
+        isRunningOperation: false,
+        fileHistory: state.fileHistory.copyWith(
+          comparisonType: GitComparisonType.commitVersusCurrent,
+          comparison: comparison,
+        ),
+        selectedCommitFilePath: currentPath,
+        openDiffFilePaths: [currentPath],
+      );
+    } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      _setFailure(error, commandName: 'diff');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> showFileHistoryCommitChange() async {
+    final hash = state.fileHistory.selectedCommitHash;
+    if (hash != null) {
+      await selectFileHistoryCommit(hash);
+    }
+  }
+
+  Future<void> compareProjectFileWithCurrent() async {
+    final operation = _captureRepositoryOperation();
+    final project = state.projectHistory;
+    final hash = project.selectedCommitHash;
+    final path = project.selectedFilePath;
+    final file = project.details?.changedFiles
+        .where((candidate) => path != null && candidate.matchesPath(path))
+        .firstOrNull;
+    if (operation == null || hash == null || path == null || file == null) {
+      return;
+    }
+    final historicalPath = file.newPath;
+    final requestEpoch = ++_commitDetailsEpoch;
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final comparison = historicalPath == null
+          ? await _comparisonFromEmptyWorkingTree(operation.repository, path)
+          : await _gateway.compareFileWithWorkingTree(
+              operation.repository,
+              hash,
+              historicalPath: historicalPath,
+              currentPath: path,
+            );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      state = state.copyWith(
+        isRunningOperation: false,
+        projectHistory: state.projectHistory.copyWith(
+          comparisonType: GitComparisonType.commitVersusCurrent,
+          comparison: comparison,
+        ),
+        selectedCommitFilePath: path,
+        openDiffFilePaths: [path],
+      );
+    } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      _setFailure(error, commandName: 'diff');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<void> showProjectCommitChange() async {
+    final path = state.projectHistory.selectedFilePath;
+    if (path != null) {
+      await selectCommitFile(path);
+    }
+  }
+
+  Future<bool> restoreSelectedFileVersion() async {
+    if (ref.read(workspaceControllerProvider).hasUnsavedChanges) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.dirtyWorkspace,
+          userMessageKey: 'gitErrorDirtyWorkspace',
+          rawMessage: '',
+          commandName: 'restore',
+        ),
+      );
+      return false;
+    }
+    final operation = _captureRepositoryOperation();
+    final history = state.fileHistory;
+    final entry = history.selectedEntry;
+    final historicalPath = entry?.newPath ?? entry?.pathAtCommit;
+    final currentPath = history.currentPath;
+    if (operation == null ||
+        entry == null ||
+        historicalPath == null ||
+        currentPath == null) {
+      return false;
+    }
+    state = state.copyWith(isRunningOperation: true, lastError: null);
+    try {
+      final result = await _gateway.restoreFileFromCommit(
+        operation.repository,
+        entry.commit.fullHash,
+        historicalPath: historicalPath,
+        currentPath: currentPath,
+      );
+      if (!_isCurrentRepositoryOperation(operation)) {
+        return false;
+      }
+      final reloaded = await ref
+          .read(workspaceControllerProvider.notifier)
+          .refreshWorkspaceFromDiskPreservingOpenTabs();
+      if (!reloaded || !_isCurrentRepositoryOperation(operation)) {
+        return false;
+      }
+      state = state.copyWith(
+        isRunningOperation: false,
+        lastOperationMessage: result.message,
+      );
+      await refresh();
+      return _isCurrentRepositoryOperation(operation);
+    } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation)) {
+        return false;
+      }
+      _setFailure(error, commandName: 'restore');
+      state = state.copyWith(isRunningOperation: false);
+      return false;
+    }
+  }
+
+  bool isOutsideWorkspace(String repoRelativePath) {
+    final repository = state.repositoryInfo;
+    final workspace = state.attachedWorkspace;
+    if (repository == null || workspace == null) {
+      return false;
+    }
+    final absolute = p.normalize(p.join(repository.rootPath, repoRelativePath));
+    if (workspace.kind == WorkspaceKind.singleMarkdown) {
+      final active = workspace.activeFilePath ?? workspace.rootPath;
+      return p.normalize(active) != absolute;
+    }
+    final relative = p.relative(
+      absolute,
+      from: p.normalize(workspace.rootPath),
+    );
+    return relative == '..' ||
+        relative.startsWith('..${p.separator}') ||
+        p.isAbsolute(relative);
   }
 
   void closeDiffFile(String repoRelativePath) {
@@ -494,7 +924,10 @@ class GitController extends Notifier<GitState> {
     }
     openPaths.removeAt(index);
     if (openPaths.isEmpty) {
-      clearSelection();
+      state = state.copyWith(
+        selectedCommitFilePath: null,
+        openDiffFilePaths: const [],
+      );
       return;
     }
     final nextIndex = index >= openPaths.length ? openPaths.length - 1 : index;
@@ -505,6 +938,9 @@ class GitController extends Notifier<GitState> {
       selectedCommitFilePath: activePath,
       openDiffFilePaths: openPaths,
     );
+    if (state.selectedView == GitView.projectHistory && activePath != null) {
+      unawaited(selectCommitFile(activePath));
+    }
   }
 
   Future<void> stageFiles(List<String> repoRelativePaths) {
@@ -573,7 +1009,12 @@ class GitController extends Notifier<GitState> {
       }
       final selected = state.selectedFilePath;
       if (selected != null && repoRelativePaths.contains(selected)) {
-        state = state.copyWith(selectedDiff: null);
+        state = state.copyWith(
+          selectedChange: null,
+          changeDiff: null,
+          selectedCommitFilePath: null,
+          openDiffFilePaths: const [],
+        );
       }
     } on Object catch (error) {
       if (!_isCurrentRepositoryOperation(operation)) {
@@ -611,6 +1052,10 @@ class GitController extends Notifier<GitState> {
     await _runOperation(
       (repository) => _gateway.pullFastForwardOnly(repository),
     );
+  }
+
+  Future<void> fetch() async {
+    await _runOperation((repository) => _gateway.fetch(repository));
   }
 
   Future<void> push({bool allowSetUpstream = false}) async {
@@ -758,46 +1203,147 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  Future<void> _loadHistory({String? repoRelativePath}) async {
+  Future<void> _loadFileHistory(
+    String repoRelativePath, {
+    bool append = false,
+  }) async {
     final operation = _captureRepositoryOperation();
     if (operation == null) {
       return;
     }
-    final requestEpoch = ++_historyEpoch;
-    state = state.copyWith(isRunningOperation: true, lastError: null);
+    final requestEpoch = ++_fileHistoryEpoch;
+    final existing = append
+        ? state.fileHistory.entries
+        : const <GitFileHistoryEntry>[];
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      selectedView: GitView.fileHistory,
+      fileHistory: state.fileHistory.copyWith(
+        currentPath: repoRelativePath,
+        isLoadingMore: append,
+        selectedCommitHash: append
+            ? state.fileHistory.selectedCommitHash
+            : null,
+        comparison: append ? state.fileHistory.comparison : null,
+      ),
+    );
     try {
-      final history = await _gateway.history(
+      final page = await _gateway.fileHistory(
         operation.repository,
-        repoRelativePath: repoRelativePath,
+        repoRelativePath,
+        limit: _historyPageSize + 1,
+        skip: existing.length,
       );
       if (!_isCurrentRepositoryOperation(operation) ||
-          requestEpoch != _historyEpoch) {
+          requestEpoch != _fileHistoryEpoch) {
         return;
       }
-      _knownHashes = {for (final commit in history) commit.fullHash};
+      final hasMore = page.length > _historyPageSize;
+      final entries = [...existing, ...page.take(_historyPageSize)];
+      _knownHashes.addAll(entries.map((entry) => entry.commit.fullHash));
       state = state.copyWith(
         isRunningOperation: false,
-        history: history,
-        historyFilePath: repoRelativePath,
-        selectedCommitHash: null,
-        selectedCommitFilePath: null,
-        openDiffFilePaths: const [],
-        selectedDiff: null,
-        selectedView: repoRelativePath == null
-            ? GitView.history
-            : state.selectedView,
+        fileHistory: state.fileHistory.copyWith(
+          entries: entries,
+          currentPath: repoRelativePath,
+          hasMore: hasMore,
+          isLoadingMore: false,
+        ),
+        selectedCommitFilePath: append ? state.selectedCommitFilePath : null,
+        openDiffFilePaths: append ? state.openDiffFilePaths : const [],
       );
     } on Object catch (error) {
       if (!_isCurrentRepositoryOperation(operation) ||
-          requestEpoch != _historyEpoch) {
+          requestEpoch != _fileHistoryEpoch) {
         return;
       }
       _setFailure(error, commandName: 'log');
-      state = state.copyWith(isRunningOperation: false);
+      state = state.copyWith(
+        isRunningOperation: false,
+        fileHistory: state.fileHistory.copyWith(isLoadingMore: false),
+      );
     }
   }
 
-  Future<void> _loadChangedFileDiff(String repoRelativePath) async {
+  Future<void> loadMoreFileHistory() async {
+    final history = state.fileHistory;
+    if (!history.hasMore ||
+        history.isLoadingMore ||
+        history.currentPath == null) {
+      return;
+    }
+    await _loadFileHistory(history.currentPath!, append: true);
+  }
+
+  Future<void> _loadProjectHistory({bool append = false}) async {
+    final operation = _captureRepositoryOperation();
+    if (operation == null) {
+      return;
+    }
+    final requestEpoch = ++_projectHistoryEpoch;
+    final existing = append
+        ? state.projectHistory.commits
+        : const <GitCommitSummary>[];
+    state = state.copyWith(
+      isRunningOperation: true,
+      lastError: null,
+      selectedView: GitView.projectHistory,
+      projectHistory: state.projectHistory.copyWith(
+        isLoadingMore: append,
+        selectedCommitHash: append
+            ? state.projectHistory.selectedCommitHash
+            : null,
+        selectedFilePath: append ? state.projectHistory.selectedFilePath : null,
+        details: append ? state.projectHistory.details : null,
+        comparison: append ? state.projectHistory.comparison : null,
+      ),
+    );
+    try {
+      final page = await _gateway.history(
+        operation.repository,
+        limit: _historyPageSize + 1,
+        skip: existing.length,
+      );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _projectHistoryEpoch) {
+        return;
+      }
+      final hasMore = page.length > _historyPageSize;
+      final commits = [...existing, ...page.take(_historyPageSize)];
+      _knownHashes.addAll(commits.map((commit) => commit.fullHash));
+      state = state.copyWith(
+        isRunningOperation: false,
+        projectHistory: state.projectHistory.copyWith(
+          commits: commits,
+          hasMore: hasMore,
+          isLoadingMore: false,
+        ),
+        selectedCommitFilePath: append ? state.selectedCommitFilePath : null,
+        openDiffFilePaths: append ? state.openDiffFilePaths : const [],
+      );
+    } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _projectHistoryEpoch) {
+        return;
+      }
+      _setFailure(error, commandName: 'log');
+      state = state.copyWith(
+        isRunningOperation: false,
+        projectHistory: state.projectHistory.copyWith(isLoadingMore: false),
+      );
+    }
+  }
+
+  Future<void> loadMoreProjectHistory() async {
+    final history = state.projectHistory;
+    if (!history.hasMore || history.isLoadingMore) {
+      return;
+    }
+    await _loadProjectHistory(append: true);
+  }
+
+  Future<void> _loadChangedFileDiff(GitChangeSelection selection) async {
     final operation = _captureRepositoryOperation();
     if (operation == null) {
       return;
@@ -805,33 +1351,37 @@ class GitController extends Notifier<GitState> {
     final requestEpoch = ++_diffEpoch;
     state = state.copyWith(isRunningOperation: true, lastError: null);
     try {
-      final staged = await _gateway.diffFile(
-        operation.repository,
-        repoRelativePath,
-        staged: true,
-      );
+      final diff = switch (selection.comparison) {
+        GitComparisonType.staged => _gateway.diffFile(
+          operation.repository,
+          selection.path,
+          staged: true,
+        ),
+        GitComparisonType.unstaged => _gateway.diffFile(
+          operation.repository,
+          selection.path,
+          staged: false,
+        ),
+        GitComparisonType.untracked => _gateway.diffUntrackedFile(
+          operation.repository,
+          selection.path,
+        ),
+        GitComparisonType.commitChange ||
+        GitComparisonType.commitVersusCurrent => throw StateError(
+          'Historical comparison cannot be loaded as a working-tree change.',
+        ),
+      };
+      final loaded = await diff;
       if (!_isCurrentRepositoryOperation(operation) ||
-          requestEpoch != _diffEpoch) {
-        return;
-      }
-      final unstaged = await _gateway.diffFile(
-        operation.repository,
-        repoRelativePath,
-        staged: false,
-      );
-      if (!_isCurrentRepositoryOperation(operation) ||
-          requestEpoch != _diffEpoch) {
+          requestEpoch != _diffEpoch ||
+          state.selectedChange != selection) {
         return;
       }
       state = state.copyWith(
         isRunningOperation: false,
-        selectedCommitFilePath: repoRelativePath,
-        openDiffFilePaths: [repoRelativePath],
-        selectedDiff: _combineDiffs(
-          repoRelativePath,
-          staged: staged,
-          unstaged: unstaged,
-        ),
+        changeDiff: loaded,
+        selectedCommitFilePath: selection.path,
+        openDiffFilePaths: [selection.path],
       );
     } on Object catch (error) {
       if (!_isCurrentRepositoryOperation(operation) ||
@@ -841,6 +1391,71 @@ class GitController extends Notifier<GitState> {
       _setFailure(error, commandName: 'diff');
       state = state.copyWith(isRunningOperation: false);
     }
+  }
+
+  Future<void> _loadProjectFileComparison(
+    _GitRepositoryOperation operation,
+    String hash,
+    String repoRelativePath, {
+    required int requestEpoch,
+  }) async {
+    try {
+      final file = state.projectHistory.details?.changedFiles
+          .where((candidate) => candidate.matchesPath(repoRelativePath))
+          .firstOrNull;
+      if (file == null) {
+        state = state.copyWith(isRunningOperation: false);
+        return;
+      }
+      final comparison = await _gateway.compareFileWithParent(
+        operation.repository,
+        hash,
+        oldPath: file.oldPath,
+        newPath: file.newPath,
+      );
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch ||
+          state.projectHistory.selectedCommitHash != hash ||
+          state.projectHistory.selectedFilePath != repoRelativePath) {
+        return;
+      }
+      final displayPath = comparison.newPath ?? comparison.oldPath;
+      final openPaths = displayPath == null
+          ? state.openDiffFilePaths
+          : state.openDiffFilePaths.contains(displayPath)
+          ? state.openDiffFilePaths
+          : [...state.openDiffFilePaths, displayPath];
+      state = state.copyWith(
+        isRunningOperation: false,
+        projectHistory: state.projectHistory.copyWith(
+          comparisonType: GitComparisonType.commitChange,
+          comparison: comparison,
+        ),
+        selectedCommitFilePath: displayPath,
+        openDiffFilePaths: openPaths,
+      );
+    } on Object catch (error) {
+      if (!_isCurrentRepositoryOperation(operation) ||
+          requestEpoch != _commitDetailsEpoch) {
+        return;
+      }
+      _setFailure(error, commandName: 'show');
+      state = state.copyWith(isRunningOperation: false);
+    }
+  }
+
+  Future<GitHistoricalFileComparison> _comparisonFromEmptyWorkingTree(
+    GitRepositoryInfo repository,
+    String currentPath,
+  ) async {
+    final diff = await _gateway.diffUntrackedFile(repository, currentPath);
+    return GitHistoricalFileComparison(
+      oldPath: null,
+      newPath: diff.files.isEmpty ? null : currentPath,
+      oldContent: '',
+      newContent: diff.files.isEmpty ? '' : diff.fileSnapshots[currentPath],
+      diff: diff,
+    );
   }
 
   Future<void> _runPathOperation(
@@ -890,7 +1505,7 @@ class GitController extends Notifier<GitState> {
       if (!_isCurrentRepositoryOperation(currentContext)) {
         return false;
       }
-      final selected = state.selectedFilePath;
+      final selected = state.selectedChange;
       if (selected != null) {
         await _loadChangedFileDiff(selected);
         if (!_isCurrentRepositoryOperation(currentContext)) {
@@ -957,13 +1572,12 @@ class GitController extends Notifier<GitState> {
       requiresWorkspaceTrust: true,
       repositoryInfo: null,
       statusSnapshot: null,
-      selectedFilePath: null,
-      selectedCommitHash: null,
+      selectedChange: null,
+      changeDiff: null,
       selectedCommitFilePath: null,
       openDiffFilePaths: const [],
-      selectedDiff: null,
-      history: const [],
-      historyFilePath: null,
+      fileHistory: const GitFileHistoryState(),
+      projectHistory: const GitProjectHistoryState(),
       branches: const [],
       lastError: null,
       lastOperationMessage: null,
@@ -1067,7 +1681,7 @@ class GitController extends Notifier<GitState> {
     GitRepositoryInfo repository,
   ) {
     final active = workspace.activeFilePath ?? workspace.markdown?.filePath;
-    if (active == null) {
+    if (active == null || !isMarkdownPath(active)) {
       return null;
     }
     return _repoRelativePath(repository.rootPath, active);
@@ -1083,6 +1697,93 @@ class GitController extends Notifier<GitState> {
     return relative.replaceAll(r'\', '/');
   }
 
+  GitChangeSelection? _preferredChangeSelection(String repoRelativePath) {
+    final snapshot = state.statusSnapshot;
+    if (snapshot == null) {
+      return null;
+    }
+    final file = snapshot.files
+        .where((candidate) => candidate.repoRelativePath == repoRelativePath)
+        .firstOrNull;
+    if (file == null || file.conflicted) {
+      return null;
+    }
+    if (file.unstaged) {
+      return GitChangeSelection(
+        path: repoRelativePath,
+        comparison: GitComparisonType.unstaged,
+      );
+    }
+    if (file.untracked) {
+      return GitChangeSelection(
+        path: repoRelativePath,
+        comparison: GitComparisonType.untracked,
+      );
+    }
+    if (file.staged) {
+      return GitChangeSelection(
+        path: repoRelativePath,
+        comparison: GitComparisonType.staged,
+      );
+    }
+    return null;
+  }
+
+  GitChangeSelection? _reconcileChangeSelection(
+    GitChangeSelection? selection,
+    GitStatusSnapshot snapshot,
+  ) {
+    if (selection == null) {
+      return null;
+    }
+    final file = snapshot.files
+        .where((candidate) => candidate.repoRelativePath == selection.path)
+        .firstOrNull;
+    if (file == null || file.conflicted) {
+      return null;
+    }
+    final stillExists = switch (selection.comparison) {
+      GitComparisonType.staged => file.staged,
+      GitComparisonType.unstaged => file.unstaged,
+      GitComparisonType.untracked => file.untracked,
+      GitComparisonType.commitChange ||
+      GitComparisonType.commitVersusCurrent => false,
+    };
+    if (stillExists) {
+      return selection;
+    }
+    if (file.unstaged) {
+      return GitChangeSelection(
+        path: selection.path,
+        comparison: GitComparisonType.unstaged,
+      );
+    }
+    if (file.untracked) {
+      return GitChangeSelection(
+        path: selection.path,
+        comparison: GitComparisonType.untracked,
+      );
+    }
+    if (file.staged) {
+      return GitChangeSelection(
+        path: selection.path,
+        comparison: GitComparisonType.staged,
+      );
+    }
+    return null;
+  }
+
+  void _setInvalidCommit(String hash) {
+    state = state.copyWith(
+      lastError: GitFailure(
+        code: GitFailureCode.invalidPath,
+        userMessageKey: 'gitErrorInvalidCommit',
+        rawMessage: hash,
+        commandName: 'show',
+      ),
+    );
+  }
+
   String? _firstDiffFilePath(List<GitDiffFile> files) {
     for (final file in files) {
       final path = file.displayPath;
@@ -1091,26 +1792,6 @@ class GitController extends Notifier<GitState> {
       }
     }
     return null;
-  }
-
-  GitDiff _combineDiffs(
-    String title, {
-    required GitDiff staged,
-    required GitDiff unstaged,
-  }) {
-    final raw = [
-      if (staged.rawPatch.trim().isNotEmpty)
-        '--- BusyMark staged changes ---\n${staged.rawPatch}',
-      if (unstaged.rawPatch.trim().isNotEmpty)
-        '--- BusyMark unstaged changes ---\n${unstaged.rawPatch}',
-    ].join('\n');
-    return GitDiff(
-      title: title,
-      files: [...staged.files, ...unstaged.files],
-      rawPatch: raw,
-      hasBinaryFiles: staged.hasBinaryFiles || unstaged.hasBinaryFiles,
-      fileSnapshots: {...staged.fileSnapshots, ...unstaged.fileSnapshots},
-    );
   }
 }
 
@@ -1161,6 +1842,12 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
   }) => _unavailable();
 
   @override
+  Future<GitDiff> diffUntrackedFile(
+    GitRepositoryInfo repository,
+    String repoRelativePath,
+  ) => _unavailable();
+
+  @override
   Future<GitDiff> diffAll(
     GitRepositoryInfo repository, {
     required bool staged,
@@ -1175,10 +1862,49 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
   }) => _unavailable();
 
   @override
+  Future<List<GitFileHistoryEntry>> fileHistory(
+    GitRepositoryInfo repository,
+    String repoRelativePath, {
+    int limit = 200,
+    int skip = 0,
+  }) => _unavailable();
+
+  @override
   Future<GitCommitDetails> commitDetails(
     GitRepositoryInfo repository,
     String hash, {
     String? repoRelativePath,
+  }) => _unavailable();
+
+  @override
+  Future<String?> readFileAtCommit(
+    GitRepositoryInfo repository,
+    String hash,
+    String repoRelativePath,
+  ) => _unavailable();
+
+  @override
+  Future<GitHistoricalFileComparison> compareFileWithParent(
+    GitRepositoryInfo repository,
+    String hash, {
+    String? oldPath,
+    String? newPath,
+  }) => _unavailable();
+
+  @override
+  Future<GitHistoricalFileComparison> compareFileWithWorkingTree(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
+  }) => _unavailable();
+
+  @override
+  Future<GitOperationResult> restoreFileFromCommit(
+    GitRepositoryInfo repository,
+    String hash, {
+    required String historicalPath,
+    required String currentPath,
   }) => _unavailable();
 
   @override
@@ -1218,6 +1944,10 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
     GitRepositoryInfo repository,
     String message,
   ) => _unavailable();
+
+  @override
+  Future<GitOperationResult> fetch(GitRepositoryInfo repository) =>
+      _unavailable();
 
   @override
   Future<GitOperationResult> pullFastForwardOnly(

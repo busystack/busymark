@@ -404,11 +404,21 @@ class _DiffFileSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final path = file.newPath ?? file.oldPath ?? '';
+    final pathChanged =
+        file.oldPath != null &&
+        file.newPath != null &&
+        file.oldPath != file.newPath;
+    final pathLabel = pathChanged ? '${file.oldPath} → ${file.newPath}' : path;
+    final showPathHeader = showHeader || pathChanged;
     final language = sourceSyntaxLanguageForPath(path);
     final sourceBody = file.binary
         ? Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.md),
-            child: Text(context.l10n.gitBinaryFile),
+            child: Text(
+              file.binarySize == null
+                  ? context.l10n.gitBinaryFile
+                  : context.l10n.gitBinaryFileInfo(file.binarySize!),
+            ),
           )
         : BusyMarkReadOnlySourceLines(
             language: language,
@@ -439,7 +449,7 @@ class _DiffFileSection extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (showHeader) ...[
+              if (showPathHeader) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     BusyMarkSpacing.md,
@@ -451,7 +461,7 @@ class _DiffFileSection extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          path,
+                          pathLabel,
                           textDirection: TextDirection.ltr,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -494,7 +504,7 @@ class _DiffFileSection extends StatelessWidget {
               sourceBody,
             ],
           ),
-          if (!showHeader && showActions)
+          if (!showPathHeader && showActions)
             Positioned(
               top: BusyMarkSpacing.xs,
               right: BusyMarkSpacing.xs,

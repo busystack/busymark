@@ -14,12 +14,16 @@ class GitChangesView extends StatefulWidget {
     required this.onSelectFile,
     required this.onOpenFile,
     required this.onConfirmDiscard,
+    this.hasUnsavedEditorChanges = false,
+    this.outsideWorkspacePaths = const {},
   });
 
   final GitState state;
-  final ValueChanged<String> onSelectFile;
+  final ValueChanged<GitChangeSelection> onSelectFile;
   final ValueChanged<String> onOpenFile;
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
+  final bool hasUnsavedEditorChanges;
+  final Set<String> outsideWorkspacePaths;
 
   @override
   State<GitChangesView> createState() => _GitChangesViewState();
@@ -50,47 +54,67 @@ class _GitChangesViewState extends State<GitChangesView> {
     if (snapshot == null) {
       return Center(child: Text(context.l10n.gitNoChanges));
     }
-    if (snapshot.clean) {
-      return Center(child: Text(context.l10n.gitNoChanges));
-    }
-    final trackedFiles = _trackedFiles(snapshot);
     return Column(
       children: [
         Expanded(
           child: ListView(
             padding: BusyMarkInsets.sidebarList,
             children: [
-              _ChangeGroup(
-                title: context.l10n.gitConflicts,
-                files: snapshot.conflictedFiles,
-                selectedPath: widget.state.selectedFilePath,
-                onSelectFile: widget.onSelectFile,
-                onOpenFile: widget.onOpenFile,
-                onConfirmDiscard: widget.onConfirmDiscard,
-              ),
-              _ChangeGroup(
-                title: context.l10n.gitChanges,
-                files: trackedFiles,
-                selectedPath: widget.state.selectedFilePath,
-                onSelectFile: widget.onSelectFile,
-                onOpenFile: widget.onOpenFile,
-                onConfirmDiscard: widget.onConfirmDiscard,
-              ),
-              _ChangeGroup(
-                title: context.l10n.gitUntracked,
-                files: snapshot.untrackedFiles,
-                selectedPath: widget.state.selectedFilePath,
-                onSelectFile: widget.onSelectFile,
-                onOpenFile: widget.onOpenFile,
-                onConfirmDiscard: widget.onConfirmDiscard,
-              ),
+              if (snapshot.clean)
+                Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                  child: Text(
+                    context.l10n.gitNoChanges,
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              else ...[
+                _ChangeGroup(
+                  kind: _ChangeGroupKind.conflicts,
+                  title: context.l10n.gitConflicts,
+                  files: snapshot.conflictedFiles,
+                  selectedChange: widget.state.selectedChange,
+                  onSelectFile: widget.onSelectFile,
+                  onOpenFile: widget.onOpenFile,
+                  onConfirmDiscard: widget.onConfirmDiscard,
+                ),
+                _ChangeGroup(
+                  kind: _ChangeGroupKind.staged,
+                  title: context.l10n.gitStaged,
+                  files: snapshot.stagedFiles,
+                  selectedChange: widget.state.selectedChange,
+                  onSelectFile: widget.onSelectFile,
+                  onOpenFile: widget.onOpenFile,
+                  onConfirmDiscard: widget.onConfirmDiscard,
+                  outsideWorkspacePaths: widget.outsideWorkspacePaths,
+                ),
+                _ChangeGroup(
+                  kind: _ChangeGroupKind.unstaged,
+                  title: context.l10n.gitUnstaged,
+                  files: snapshot.unstagedFiles,
+                  selectedChange: widget.state.selectedChange,
+                  onSelectFile: widget.onSelectFile,
+                  onOpenFile: widget.onOpenFile,
+                  onConfirmDiscard: widget.onConfirmDiscard,
+                ),
+                _ChangeGroup(
+                  kind: _ChangeGroupKind.untracked,
+                  title: context.l10n.gitUntracked,
+                  files: snapshot.untrackedFiles,
+                  selectedChange: widget.state.selectedChange,
+                  onSelectFile: widget.onSelectFile,
+                  onOpenFile: widget.onOpenFile,
+                  onConfirmDiscard: widget.onConfirmDiscard,
+                ),
+              ],
               const SizedBox(height: BusyMarkSpacing.xl),
             ],
           ),
         ),
         _CommitPanel(
           controller: _commitMessageController,
-          selectedFiles: snapshot.stagedFiles,
+          stagedFiles: snapshot.stagedFiles,
+          hasUnsavedEditorChanges: widget.hasUnsavedEditorChanges,
           committing: _committing,
           onCommit: _commit,
         ),
@@ -122,22 +146,24 @@ class _GitChangesViewState extends State<GitChangesView> {
 class _CommitPanel extends StatelessWidget {
   const _CommitPanel({
     required this.controller,
-    required this.selectedFiles,
+    required this.stagedFiles,
     required this.committing,
     required this.onCommit,
+    required this.hasUnsavedEditorChanges,
   });
 
   final TextEditingController controller;
-  final List<GitFileStatus> selectedFiles;
+  final List<GitFileStatus> stagedFiles;
   final bool committing;
   final Future<void> Function() onCommit;
+  final bool hasUnsavedEditorChanges;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final canCommit =
         !committing &&
-        selectedFiles.isNotEmpty &&
+        stagedFiles.isNotEmpty &&
         controller.text.trim().isNotEmpty;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -153,6 +179,13 @@ class _CommitPanel extends StatelessWidget {
               context.l10n.gitCommitMessage,
               style: busyMarkSectionHeaderStyle(context),
             ),
+            if (hasUnsavedEditorChanges) ...[
+              const SizedBox(height: BusyMarkSpacing.sm),
+              BusyMarkStatusBox(
+                message: context.l10n.gitUnsavedChangesBanner,
+                kind: BusyMarkStatusKind.warning,
+              ),
+            ],
             const SizedBox(height: BusyMarkSpacing.sm),
             TextField(
               controller: controller,
@@ -170,9 +203,7 @@ class _CommitPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    selectedFiles.isEmpty
-                        ? context.l10n.gitCommitNoSelectedFiles
-                        : context.l10n.gitCommitSelectedFiles,
+                    context.l10n.gitStagedFileCount(stagedFiles.length),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -215,20 +246,24 @@ class GitCommitActions extends InheritedWidget {
 
 class _ChangeGroup extends StatelessWidget {
   const _ChangeGroup({
+    required this.kind,
     required this.title,
     required this.files,
-    required this.selectedPath,
+    required this.selectedChange,
     required this.onSelectFile,
     required this.onOpenFile,
     required this.onConfirmDiscard,
+    this.outsideWorkspacePaths = const {},
   });
 
+  final _ChangeGroupKind kind;
   final String title;
   final List<GitFileStatus> files;
-  final String? selectedPath;
-  final ValueChanged<String> onSelectFile;
+  final GitChangeSelection? selectedChange;
+  final ValueChanged<GitChangeSelection> onSelectFile;
   final ValueChanged<String> onOpenFile;
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
+  final Set<String> outsideWorkspacePaths;
 
   @override
   Widget build(BuildContext context) {
@@ -252,8 +287,18 @@ class _ChangeGroup extends StatelessWidget {
           for (final file in files)
             _ChangedFileRow(
               file: file,
-              selected: file.repoRelativePath == selectedPath,
-              onSelect: () => onSelectFile(file.repoRelativePath),
+              kind: kind,
+              selected: _selectionFor(file) == selectedChange,
+              outsideWorkspace: outsideWorkspacePaths.contains(
+                file.repoRelativePath,
+              ),
+              onSelect: () {
+                if (kind == _ChangeGroupKind.conflicts) {
+                  onOpenFile(file.repoRelativePath);
+                } else {
+                  onSelectFile(_selectionFor(file)!);
+                }
+              },
               onSelectionChanged: (selected) {
                 final actions = GitFileActions.of(context);
                 if (selected) {
@@ -274,7 +319,24 @@ class _ChangeGroup extends StatelessWidget {
       ),
     );
   }
+
+  GitChangeSelection? _selectionFor(GitFileStatus file) {
+    final comparison = switch (kind) {
+      _ChangeGroupKind.staged => GitComparisonType.staged,
+      _ChangeGroupKind.unstaged => GitComparisonType.unstaged,
+      _ChangeGroupKind.untracked => GitComparisonType.untracked,
+      _ChangeGroupKind.conflicts => null,
+    };
+    return comparison == null
+        ? null
+        : GitChangeSelection(
+            path: file.repoRelativePath,
+            comparison: comparison,
+          );
+  }
 }
+
+enum _ChangeGroupKind { conflicts, staged, unstaged, untracked }
 
 class GitFileActions extends InheritedWidget {
   const GitFileActions({
@@ -304,7 +366,9 @@ class GitFileActions extends InheritedWidget {
 class _ChangedFileRow extends StatelessWidget {
   const _ChangedFileRow({
     required this.file,
+    required this.kind,
     required this.selected,
+    required this.outsideWorkspace,
     required this.onSelect,
     required this.onSelectionChanged,
     required this.onOpen,
@@ -312,7 +376,9 @@ class _ChangedFileRow extends StatelessWidget {
   });
 
   final GitFileStatus file;
+  final _ChangeGroupKind kind;
   final bool selected;
+  final bool outsideWorkspace;
   final VoidCallback onSelect;
   final ValueChanged<bool> onSelectionChanged;
   final VoidCallback onOpen;
@@ -344,15 +410,27 @@ class _ChangedFileRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                BusyMarkCheckbox(
-                  value: file.staged,
-                  tooltip: file.conflicted
-                      ? context.l10n.gitMarkResolved
-                      : file.staged
-                      ? context.l10n.gitRemoveFromCommit
-                      : context.l10n.gitSelectForCommit,
-                  onChanged: (value) => onSelectionChanged(value == true),
-                ),
+                if (kind == _ChangeGroupKind.conflicts)
+                  Icon(
+                    BusyMarkGlyphs.warning,
+                    size: BusyMarkSizes.iconSm,
+                    color: statusColor,
+                  )
+                else
+                  BusyMarkCheckbox(
+                    value: kind == _ChangeGroupKind.staged,
+                    tooltip: kind == _ChangeGroupKind.staged
+                        ? context.l10n.gitRemoveFromCommit
+                        : context.l10n.gitSelectForCommit,
+                    onChanged: (value) {
+                      if (kind == _ChangeGroupKind.staged && value == false) {
+                        onSelectionChanged(false);
+                      } else if (kind != _ChangeGroupKind.staged &&
+                          value == true) {
+                        onSelectionChanged(true);
+                      }
+                    },
+                  ),
                 const SizedBox(width: BusyMarkSpacing.xs),
                 _StatusBadge(file: file, color: statusColor),
                 const SizedBox(width: BusyMarkSpacing.sm),
@@ -378,6 +456,14 @@ class _ChangedFileRow extends StatelessWidget {
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
+                      if (outsideWorkspace)
+                        Text(
+                          context.l10n.gitOutsideWorkspace,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: colors.mutedForeground),
+                        ),
                     ],
                   ),
                 ),
@@ -391,11 +477,13 @@ class _ChangedFileRow extends StatelessWidget {
                       label: context.l10n.gitOpenFile,
                       icon: BusyMarkGlyphs.externalLink,
                     ),
-                    BusyMarkPopupMenuItem(
-                      value: _FileAction.discard,
-                      label: context.l10n.gitDiscard,
-                      icon: BusyMarkGlyphs.delete,
-                    ),
+                    if (kind == _ChangeGroupKind.unstaged ||
+                        kind == _ChangeGroupKind.untracked)
+                      BusyMarkPopupMenuItem(
+                        value: _FileAction.discard,
+                        label: context.l10n.gitDiscard,
+                        icon: BusyMarkGlyphs.delete,
+                      ),
                   ],
                   onSelected: (action) {
                     switch (action) {
@@ -491,10 +579,4 @@ class _StatusBadge extends StatelessWidget {
       GitFileStatusCategory.unknown => context.l10n.gitStatusUnknown,
     };
   }
-}
-
-List<GitFileStatus> _trackedFiles(GitStatusSnapshot snapshot) {
-  return snapshot.files
-      .where((file) => !file.untracked && !file.conflicted)
-      .toList();
 }

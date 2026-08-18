@@ -2023,6 +2023,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitChanges => 'Changes';
 
   @override
+  String get gitStaged => 'Staged';
+
+  @override
+  String get gitUnstaged => 'Unstaged';
+
+  @override
   String get gitHistory => 'History';
 
   @override
@@ -2035,16 +2041,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Fetch';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Select for commit';
+  String get gitSelectForCommit => 'Stage file';
 
   @override
-  String get gitRemoveFromCommit => 'Leave out of commit';
+  String get gitRemoveFromCommit => 'Unstage file';
 
   @override
   String get gitDiscard => 'Discard';
@@ -2056,7 +2065,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitMarkResolved => 'Mark resolved';
 
   @override
-  String get gitUntracked => 'Unversioned Files';
+  String get gitUntracked => 'Untracked';
 
   @override
   String get gitCommitMessage => 'Commit message';
@@ -2066,7 +2075,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Select at least one file before committing.';
+      'Stage at least one file before committing.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count staged files',
+      one: '1 staged file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Outside workspace';
 
   @override
   String get gitCommitMessageRequired => 'Enter a commit message.';
@@ -2098,6 +2121,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'Binary file. BusyMark does not render binary patches.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Binary file ($size bytes). BusyMark does not render binary patches.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2159,10 +2187,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get gitProjectHistory => 'Project';
+  String get gitProjectHistory => 'Project History';
 
   @override
-  String get gitFileHistory => 'Current file';
+  String get gitFileHistory => 'File History';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'File History requires an open Markdown file.';
+
+  @override
+  String get gitLoadMore => 'Load More';
+
+  @override
+  String get gitChangesInCommit => 'Changes in this commit';
+
+  @override
+  String get gitCompareWithCurrent => 'Compare with current';
+
+  @override
+  String get gitRestoreVersion => 'Restore this version';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Restore this file version?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark will replace the current working-tree file with the selected committed version. The restored file will remain unstaged.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

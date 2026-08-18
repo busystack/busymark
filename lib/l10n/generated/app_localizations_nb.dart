@@ -2028,6 +2028,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitChanges => 'Endringer';
 
   @override
+  String get gitStaged => 'Indeksert';
+
+  @override
+  String get gitUnstaged => 'Ikke indeksert';
+
+  @override
   String get gitHistory => 'Historikk';
 
   @override
@@ -2040,16 +2046,19 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Hent';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Velg for commit';
+  String get gitSelectForCommit => 'Legg fil i indeksen';
 
   @override
-  String get gitRemoveFromCommit => 'Utelat fra commit';
+  String get gitRemoveFromCommit => 'Fjern fil fra indeksen';
 
   @override
   String get gitDiscard => 'Forkast';
@@ -2071,7 +2080,21 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Velg minst én fil før du oppretter en commit.';
+      'Legg minst én fil i indeksen før du oppretter en commit.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count indekserte filer',
+      one: '1 indeksert fil',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Utenfor arbeidsområdet';
 
   @override
   String get gitCommitMessageRequired => 'Skriv inn en commit-melding.';
@@ -2102,6 +2125,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitBinaryFile => 'Binærfil. BusyMark viser ikke binære patcher.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Binærfil ($size byte). BusyMark viser ikke binære patcher.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2166,6 +2194,29 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'Gjeldende fil';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Filhistorikk krever en åpen Markdown-fil.';
+
+  @override
+  String get gitLoadMore => 'Last inn flere';
+
+  @override
+  String get gitChangesInCommit => 'Endringer i denne innsjekkingen';
+
+  @override
+  String get gitCompareWithCurrent => 'Sammenlign med gjeldende versjon';
+
+  @override
+  String get gitRestoreVersion => 'Gjenopprett denne versjonen';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Gjenopprette denne filversjonen?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

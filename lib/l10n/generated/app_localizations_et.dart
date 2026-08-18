@@ -2027,6 +2027,12 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitChanges => 'Muudatused';
 
   @override
+  String get gitStaged => 'Indekseeritud';
+
+  @override
+  String get gitUnstaged => 'Indekseerimata';
+
+  @override
   String get gitHistory => 'Ajalugu';
 
   @override
@@ -2039,16 +2045,19 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Hangi';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Vali commiti jaoks';
+  String get gitSelectForCommit => 'Lisa fail indeksisse';
 
   @override
-  String get gitRemoveFromCommit => 'Jäta commitist välja';
+  String get gitRemoveFromCommit => 'Eemalda fail indeksist';
 
   @override
   String get gitDiscard => 'Hülga';
@@ -2070,7 +2079,21 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Vali enne commiti loomist vähemalt üks fail.';
+      'Lisa enne commiti loomist vähemalt üks fail indeksisse.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count indekseeritud faili',
+      one: '1 indekseeritud fail',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Väljaspool tööruumi';
 
   @override
   String get gitCommitMessageRequired => 'Sisesta commiti sõnum.';
@@ -2101,6 +2124,11 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitBinaryFile => 'Binaarfail. BusyMark ei kuva binaarpaiku.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'Kahendfail ($size baiti). BusyMark ei kuva kahendpaiku.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2166,6 +2194,29 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'Praegune fail';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'Failiajalugu nõuab avatud Markdowni faili.';
+
+  @override
+  String get gitLoadMore => 'Laadi veel';
+
+  @override
+  String get gitChangesInCommit => 'Selle sissekande muudatused';
+
+  @override
+  String get gitCompareWithCurrent => 'Võrdle praeguse versiooniga';
+
+  @override
+  String get gitRestoreVersion => 'Taasta see versioon';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Kas taastada see failiversioon?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {

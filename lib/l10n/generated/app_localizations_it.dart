@@ -2045,6 +2045,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitChanges => 'Modifiche';
 
   @override
+  String get gitStaged => 'In stage';
+
+  @override
+  String get gitUnstaged => 'Non in stage';
+
+  @override
   String get gitHistory => 'Cronologia';
 
   @override
@@ -2057,16 +2063,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get gitPull => 'Pull';
 
   @override
+  String get gitFetch => 'Recupera';
+
+  @override
   String get gitPush => 'Push';
 
   @override
   String get gitCommit => 'Commit';
 
   @override
-  String get gitSelectForCommit => 'Seleziona per il commit';
+  String get gitSelectForCommit => 'Aggiungi file all’indice';
 
   @override
-  String get gitRemoveFromCommit => 'Escludi dal commit';
+  String get gitRemoveFromCommit => 'Rimuovi file dall’indice';
 
   @override
   String get gitDiscard => 'Scarta';
@@ -2088,7 +2097,21 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gitCommitNoSelectedFiles =>
-      'Seleziona almeno un file prima di creare il commit.';
+      'Aggiungi almeno un file all’indice prima di creare il commit.';
+
+  @override
+  String gitStagedFileCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count file in stage',
+      one: '1 file in stage',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get gitOutsideWorkspace => 'Fuori dall’area di lavoro';
 
   @override
   String get gitCommitMessageRequired => 'Inserisci un messaggio di commit.';
@@ -2120,6 +2143,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get gitBinaryFile =>
       'File binario. BusyMark non visualizza le patch binarie.';
+
+  @override
+  String gitBinaryFileInfo(int size) {
+    return 'File binario ($size byte). BusyMark non visualizza le patch binarie.';
+  }
 
   @override
   String get gitUnsavedChangesBanner =>
@@ -2185,6 +2213,29 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gitFileHistory => 'File corrente';
+
+  @override
+  String get gitFileHistoryRequiresOpenFile =>
+      'La cronologia file richiede un file Markdown aperto.';
+
+  @override
+  String get gitLoadMore => 'Carica altro';
+
+  @override
+  String get gitChangesInCommit => 'Modifiche in questo commit';
+
+  @override
+  String get gitCompareWithCurrent => 'Confronta con la versione corrente';
+
+  @override
+  String get gitRestoreVersion => 'Ripristina questa versione';
+
+  @override
+  String get gitConfirmRestoreTitle => 'Ripristinare questa versione del file?';
+
+  @override
+  String get gitConfirmRestoreMessage =>
+      'BusyMark sostituirà il file corrente nell’albero di lavoro con la versione selezionata del commit. Il file ripristinato resterà fuori dallo stage.';
 
   @override
   String gitAdditionsDeletions(int additions, int deletions) {
