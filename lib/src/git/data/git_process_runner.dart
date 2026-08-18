@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import '../domain/git_models.dart';
 
 const gitCommandTimeout = Duration(minutes: 2);
 const gitExecutableProbeTimeout = Duration(seconds: 5);
+const gitCommandOutputLimitBytes = 32 * 1024 * 1024;
 const _terminationGracePeriod = Duration(milliseconds: 250);
 const _terminationCleanupTimeout = Duration(seconds: 1);
 
@@ -45,9 +47,13 @@ class GitProcessResult {
 class DartGitCommandRunner implements GitCommandRunner {
   const DartGitCommandRunner({
     this.processGroupLauncher = const GitProcessGroupLauncher(),
-  });
+    this.maxOutputBytes = gitCommandOutputLimitBytes,
+  }) : assert(maxOutputBytes > 0);
 
   final GitProcessGroupLauncher processGroupLauncher;
+  final int maxOutputBytes;
+
+  static final Object _outputLimitReached = Object();
 
   @override
   Future<GitProcessResult> run(
@@ -76,8 +82,9 @@ class DartGitCommandRunner implements GitCommandRunner {
       includeParentEnvironment: true,
       runInShell: false,
     );
-    final stdoutFuture = process.stdout.expand((bytes) => bytes).toList();
-    final stderrFuture = process.stderr.expand((bytes) => bytes).toList();
+    final outputCapture = _BoundedOutputCapture(maxOutputBytes);
+    final stdoutFuture = outputCapture.collect(process.stdout);
+    final stderrFuture = outputCapture.collect(process.stderr);
     final completion = _collectResult(
       process,
       executable,
@@ -93,7 +100,16 @@ class DartGitCommandRunner implements GitCommandRunner {
       throw _timeoutFailure(commandName);
     }
     try {
-      return await completion.timeout(Duration(microseconds: remainingMicros));
+      final outcome = await Future.any<Object>([
+        completion,
+        outputCapture.limitReached.then<Object>((_) => _outputLimitReached),
+      ]).timeout(Duration(microseconds: remainingMicros));
+      if (identical(outcome, _outputLimitReached) || outputCapture.exceeded) {
+        await _terminate(process, processGroup: launch.processGroup);
+        await _awaitCleanup(completion);
+        throw _outputLimitFailure(commandName);
+      }
+      return outcome as GitProcessResult;
     } on TimeoutException {
       await _terminate(process, processGroup: launch.processGroup);
       await _awaitCleanup(completion);
@@ -166,6 +182,48 @@ class DartGitCommandRunner implements GitCommandRunner {
       rawMessage: 'Git command timed out.',
       commandName: commandName,
     );
+  }
+
+  GitFailure _outputLimitFailure(String commandName) {
+    return GitFailure(
+      code: GitFailureCode.commandFailed,
+      userMessageKey: 'gitErrorCommandFailed',
+      rawMessage:
+          'Git command output exceeded the $maxOutputBytes-byte capture limit.',
+      commandName: commandName,
+    );
+  }
+}
+
+class _BoundedOutputCapture {
+  _BoundedOutputCapture(this.maxBytes);
+
+  final int maxBytes;
+  final Completer<void> _limitReached = Completer<void>();
+  var _capturedBytes = 0;
+
+  Future<void> get limitReached => _limitReached.future;
+  bool get exceeded => _limitReached.isCompleted;
+
+  Future<List<int>> collect(Stream<List<int>> stream) async {
+    final output = BytesBuilder(copy: false);
+    await for (final chunk in stream) {
+      if (exceeded) {
+        continue;
+      }
+      final remaining = maxBytes - _capturedBytes;
+      if (chunk.length <= remaining) {
+        output.add(chunk);
+        _capturedBytes += chunk.length;
+        continue;
+      }
+      if (remaining > 0) {
+        output.add(chunk.sublist(0, remaining));
+        _capturedBytes += remaining;
+      }
+      _limitReached.complete();
+    }
+    return output.takeBytes();
   }
 }
 
