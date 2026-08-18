@@ -10,6 +10,7 @@ import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'workspace_controller.dart';
+import 'workspace_message.dart';
 
 enum _UnsavedChangesAction { cancel, discard, save }
 
@@ -106,14 +107,17 @@ Future<bool> saveActiveWithOverwriteConfirmation(
   if (operationTarget.needsSaveLocation) {
     return _saveActiveAs(context, ref, operationTarget);
   }
-  final changedOnDisk = await controller.activeFileChangedOnDisk(
-    target: operationTarget,
-  );
-  if (!controller.isActiveDocumentSaveTargetCurrent(operationTarget)) {
-    return false;
+  // The controller owns both the disk check and save serialization so a
+  // separate preflight cannot race an already-running write.
+  final saved = await controller.saveActive(target: operationTarget);
+  if (saved) {
+    return true;
   }
-  if (!changedOnDisk) {
-    return controller.saveActive(target: operationTarget);
+  final state = ref.read(workspaceControllerProvider);
+  if (!controller.isActiveDocumentSaveTargetCurrent(operationTarget) ||
+      state.message?.code !=
+          WorkspaceMessageCode.saveBlockedFileChangedOnDisk) {
+    return false;
   }
   if (!context.mounted) {
     return false;

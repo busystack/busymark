@@ -847,7 +847,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return inFlight;
       }
       final completed = await inFlight;
-      if (!isActiveDocumentSaveTargetCurrent(operationTarget)) {
+      // The preceding save may have advanced the controller-owned disk
+      // snapshot. Re-pin only that snapshot; document and edit identity must
+      // still match the queued request.
+      final refreshedTarget = _refreshActiveDocumentSaveTarget(operationTarget);
+      if (refreshedTarget == null) {
         return false;
       }
       if (!state.isDirty && completed) {
@@ -855,7 +859,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return saveActive(
         overwriteExternalChanges: overwriteExternalChanges,
-        target: operationTarget,
+        target: refreshedTarget,
       );
     }
     late final Future<bool> operation;
@@ -1054,26 +1058,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     return exists;
-  }
-
-  Future<bool> activeFileChangedOnDisk({
-    ActiveDocumentSaveTarget? target,
-  }) async {
-    final operationTarget = target ?? captureActiveDocumentSaveTarget();
-    final active = operationTarget?.path;
-    if (operationTarget == null ||
-        active == null ||
-        !isActiveDocumentSaveTargetCurrent(operationTarget)) {
-      return false;
-    }
-    final changed = await _service.fileChangedSince(
-      active,
-      operationTarget.snapshot,
-    );
-    if (!isActiveDocumentSaveTargetCurrent(operationTarget)) {
-      return false;
-    }
-    return changed;
   }
 
   Future<bool> discardActiveChanges({ActiveDocumentSaveTarget? target}) async {
@@ -1441,6 +1425,32 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         first.text == second.text &&
         first.workspaceKind == second.workspaceKind &&
         _sameFileSnapshot(first.snapshot, second.snapshot);
+  }
+
+  ActiveDocumentSaveTarget? _refreshActiveDocumentSaveTarget(
+    ActiveDocumentSaveTarget target,
+  ) {
+    final workspace = state.workspace;
+    if (!_isCurrentActiveDocument(
+          target.documentRevision,
+          workspaceId: target.workspaceId,
+          activeFilePath: target.path,
+        ) ||
+        workspace == null ||
+        _editRevision != target.editRevision ||
+        state.activeText != target.text ||
+        workspace.kind != target.workspaceKind) {
+      return null;
+    }
+    return ActiveDocumentSaveTarget._(
+      workspaceId: target.workspaceId,
+      path: target.path,
+      documentRevision: target.documentRevision,
+      editRevision: target.editRevision,
+      snapshot: workspace.activeFileSnapshot,
+      text: target.text,
+      workspaceKind: target.workspaceKind,
+    );
   }
 }
 

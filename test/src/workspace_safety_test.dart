@@ -328,6 +328,70 @@ void main() {
     },
   );
 
+  testWidgets('overlapping manual saves write the newer requested revision', (
+    tester,
+  ) async {
+    final service = _IdentityWorkspaceService()..pauseFirstSave = true;
+    final saveRequests = <Future<bool>>[];
+    late WidgetRef widgetRef;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(
+            _MemorySettingsStore()
+              ..value = AppSettings.defaults()
+                  .copyWith(autoSave: false)
+                  .toJson(),
+          ),
+          workspaceServiceProvider.overrideWithValue(service),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: Colors.green,
+          ),
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, child) {
+                widgetRef = ref;
+                return TextButton(
+                  onPressed: () {
+                    saveRequests.add(
+                      saveActiveWithOverwriteConfirmation(context, ref),
+                    );
+                  },
+                  child: const Text('Save document'),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final controller = widgetRef.read(workspaceControllerProvider.notifier);
+    await controller.openPath(service.rootPath);
+    controller.updateActiveText('# First revision\n');
+    await tester.tap(find.text('Save document'));
+    await service.firstSaveStarted.future;
+
+    controller.updateActiveText('# Second revision\n');
+    await tester.tap(find.text('Save document'));
+    await tester.pump();
+    service.releaseFirstSave();
+
+    expect(await Future.wait(saveRequests), [isTrue, isTrue]);
+    await tester.pumpAndSettle();
+    expect(service.saves, [
+      (path: service.firstPath, text: '# First revision\n'),
+      (path: service.firstPath, text: '# Second revision\n'),
+    ]);
+    expect(service.documents[service.firstPath], '# Second revision\n');
+    expect(widgetRef.read(workspaceControllerProvider).isDirty, isFalse);
+  });
+
   testWidgets('save cancels when the active document changes during disk I/O', (
     tester,
   ) async {
@@ -845,11 +909,14 @@ class _IdentityWorkspaceService extends WorkspaceService {
   };
   final saves = <({String path, String text})>[];
   final fileChangeCheckStarted = Completer<void>();
+  final firstSaveStarted = Completer<void>();
   final pathExistsCheckStarted = Completer<void>();
   final pathExistsChecks = <String>[];
   var firstChangedOnDisk = false;
+  var pauseFirstSave = false;
   Completer<bool>? pendingFileChangedResult;
   Completer<bool>? pendingPathExistsResult;
+  final _releaseFirstSave = Completer<void>();
 
   @override
   Future<Workspace> openPath(String path) async {
@@ -918,8 +985,18 @@ class _IdentityWorkspaceService extends WorkspaceService {
   @override
   Future<WorkspaceFileSnapshot> saveText(String path, String text) async {
     saves.add((path: path, text: text));
+    if (pauseFirstSave && saves.length == 1) {
+      firstSaveStarted.complete();
+      await _releaseFirstSave.future;
+    }
     documents[path] = text;
     return _snapshot(text);
+  }
+
+  void releaseFirstSave() {
+    if (!_releaseFirstSave.isCompleted) {
+      _releaseFirstSave.complete();
+    }
   }
 
   @override
