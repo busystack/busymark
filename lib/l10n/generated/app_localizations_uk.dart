@@ -2474,6 +2474,70 @@ class AppLocalizationsUk extends AppLocalizations {
       'BusyMark не вдалося експортувати цей документ як PDF.';
 
   @override
+  String get visualizationRendering => 'Візуалізація…';
+
+  @override
+  String get visualizationStale =>
+      'Відображається останній коректний результат';
+
+  @override
+  String get visualizationShowSource => 'Показати вихідний код';
+
+  @override
+  String get visualizationShowRender => 'Показати результат';
+
+  @override
+  String get visualizationFitWidth => 'Припасувати до ширини';
+
+  @override
+  String get visualizationSaveImage => 'Зберегти зображення';
+
+  @override
+  String get visualizationCopyImage => 'Копіювати зображення';
+
+  @override
+  String get visualizationImageCopied => 'Зображення скопійовано';
+
+  @override
+  String get visualizationOpenApiReference => 'Відкрити довідник API';
+
+  @override
+  String get visualizationValid => 'Коректно';
+
+  @override
+  String get visualizationInvalid => 'Некоректно';
+
+  @override
+  String get visualizationServers => 'Сервери';
+
+  @override
+  String get visualizationPaths => 'Шляхи';
+
+  @override
+  String get visualizationOperations => 'Операції';
+
+  @override
+  String get visualizationTags => 'Теги';
+
+  @override
+  String get visualizationNoOperations => 'Відповідних операцій не знайдено';
+
+  @override
+  String get visualizationSearchOperations => 'Пошук операцій';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Не вдалося відобразити цю візуалізацію.';
+
+  @override
+  String get visualizationRetry => 'Повторити';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return 'Файл $fileName збережено';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
       'Експортувати активний документ Markdown як PDF.';
 }

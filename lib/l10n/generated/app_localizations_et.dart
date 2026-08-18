@@ -2435,6 +2435,69 @@ class AppLocalizationsEt extends AppLocalizations {
       'BusyMark ei saanud seda dokumenti PDF-ina eksportida.';
 
   @override
+  String get visualizationRendering => 'Renderdamine…';
+
+  @override
+  String get visualizationStale => 'Kuvatakse viimast kehtivat renderdust';
+
+  @override
+  String get visualizationShowSource => 'Kuva lähtekood';
+
+  @override
+  String get visualizationShowRender => 'Kuva renderdus';
+
+  @override
+  String get visualizationFitWidth => 'Mahuta laiusele';
+
+  @override
+  String get visualizationSaveImage => 'Salvesta pilt';
+
+  @override
+  String get visualizationCopyImage => 'Kopeeri pilt';
+
+  @override
+  String get visualizationImageCopied => 'Pilt on kopeeritud';
+
+  @override
+  String get visualizationOpenApiReference => 'Ava API viitedokumentatsioon';
+
+  @override
+  String get visualizationValid => 'Kehtiv';
+
+  @override
+  String get visualizationInvalid => 'Kehtetu';
+
+  @override
+  String get visualizationServers => 'Serverid';
+
+  @override
+  String get visualizationPaths => 'Teed';
+
+  @override
+  String get visualizationOperations => 'Toimingud';
+
+  @override
+  String get visualizationTags => 'Sildid';
+
+  @override
+  String get visualizationNoOperations => 'Sobivaid toiminguid pole';
+
+  @override
+  String get visualizationSearchOperations => 'Otsi toiminguid';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Seda visualiseeringut ei saanud renderdada.';
+
+  @override
+  String get visualizationRetry => 'Proovi uuesti';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return '$fileName on salvestatud';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
       'Ekspordi aktiivne Markdowni dokument PDF-ina.';
 }

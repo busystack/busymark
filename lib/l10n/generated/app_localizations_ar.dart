@@ -2458,6 +2458,68 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذر على BusyMark تصدير هذا المستند بصيغة PDF.';
 
   @override
+  String get visualizationRendering => 'جارٍ التصيير…';
+
+  @override
+  String get visualizationStale => 'عرض آخر تصيير صالح';
+
+  @override
+  String get visualizationShowSource => 'إظهار المصدر';
+
+  @override
+  String get visualizationShowRender => 'إظهار التصيير';
+
+  @override
+  String get visualizationFitWidth => 'ملاءمة مع العرض';
+
+  @override
+  String get visualizationSaveImage => 'حفظ الصورة';
+
+  @override
+  String get visualizationCopyImage => 'نسخ الصورة';
+
+  @override
+  String get visualizationImageCopied => 'تم نسخ الصورة';
+
+  @override
+  String get visualizationOpenApiReference => 'فتح مرجع API';
+
+  @override
+  String get visualizationValid => 'صالح';
+
+  @override
+  String get visualizationInvalid => 'غير صالح';
+
+  @override
+  String get visualizationServers => 'الخوادم';
+
+  @override
+  String get visualizationPaths => 'المسارات';
+
+  @override
+  String get visualizationOperations => 'العمليات';
+
+  @override
+  String get visualizationTags => 'الوسوم';
+
+  @override
+  String get visualizationNoOperations => 'لا توجد عمليات مطابقة';
+
+  @override
+  String get visualizationSearchOperations => 'البحث في العمليات';
+
+  @override
+  String get visualizationRenderFailed => 'تعذر تصيير هذا التصور.';
+
+  @override
+  String get visualizationRetry => 'إعادة المحاولة';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return 'تم حفظ $fileName';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
       'تصدير مستند Markdown النشط بصيغة PDF.';
 }

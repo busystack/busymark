@@ -55,6 +55,8 @@ import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_section_editor.dart';
 import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../visualization/visualization_card.dart';
+import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
@@ -7609,6 +7611,7 @@ PreviewBlock _withDiffPreviewTone(PreviewBlock block, _DiffPreviewTone? tone) {
     text: block.text,
     level: block.level,
     language: block.language,
+    visualization: block.visualization,
     inlines: block.inlines,
     children: [
       for (final child in block.children) _withDiffPreviewTone(child, tone),
@@ -7654,6 +7657,7 @@ PreviewBlock _withDiffPreviewCodeLineTones(
     text: block.text,
     level: block.level,
     language: block.language,
+    visualization: block.visualization,
     inlines: block.inlines,
     children: block.children,
     attributes: {
@@ -7995,6 +7999,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 scrollRequest: _wysiwygScrollRequest,
                 onVisibleHeadingChanged: _handleWysiwygVisibleHeadingChanged,
                 documentLayout: standaloneDocumentLayout,
+                visualizationRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
                     .request(),
@@ -8042,6 +8049,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               child: _PreviewPane(
                 preview: widget.state.preview,
                 workspace: widget.state.workspace,
+                activeSource: widget.state.activeText,
+                editRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
+                visualizationsEnabled: true,
+                onVisualizationDiagnostic: _openVisualizationSourceLine,
+                onEditVisualizationSource: _openVisualizationSourceLine,
                 controller: _previewScrollController,
                 itemPositionsListener: _previewItemPositionsListener,
                 onBlockContextAvailable: _rememberPreviewBlockContext,
@@ -8058,6 +8072,27 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   void _rememberPreviewBlockContext(int index, BuildContext context) {
     _previewBlockContexts[index] = context;
+  }
+
+  Future<void> _openVisualizationSourceLine(int line) async {
+    final workspace = widget.state.workspace;
+    final filePath = _activeEditorPath();
+    if (workspace == null || filePath == null) {
+      return;
+    }
+    final settings = ref.read(appSettingsControllerProvider);
+    if (settings.documentViewMode == DocumentViewModePreference.preview ||
+        settings.documentViewMode == DocumentViewModePreference.editor) {
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.split);
+    }
+    if (!mounted || widget.state.workspace?.id != workspace.id) {
+      return;
+    }
+    ref
+        .read(_sourceNavigationTargetProvider.notifier)
+        .set(_SourceNavigationTarget(filePath: filePath, line: line));
   }
 
   void _forgetPreviewBlockContext(int index, BuildContext context) {
@@ -8527,6 +8562,11 @@ class _PreviewPane extends StatelessWidget {
     required this.workspace,
     required this.controller,
     required this.documentLayout,
+    this.activeSource = '',
+    this.editRevision = 0,
+    this.visualizationsEnabled = false,
+    this.onVisualizationDiagnostic,
+    this.onEditVisualizationSource,
     this.itemPositionsListener,
     this.onBlockContextAvailable,
     this.onBlockContextUnavailable,
@@ -8534,6 +8574,11 @@ class _PreviewPane extends StatelessWidget {
 
   final PreviewDocument? preview;
   final Workspace? workspace;
+  final String activeSource;
+  final int editRevision;
+  final bool visualizationsEnabled;
+  final ValueChanged<int>? onVisualizationDiagnostic;
+  final ValueChanged<int>? onEditVisualizationSource;
   final ItemScrollController controller;
   final ItemPositionsListener? itemPositionsListener;
   final BusyMarkDocumentLayoutSpec documentLayout;
@@ -8581,6 +8626,11 @@ class _PreviewPane extends StatelessWidget {
       first: index == 0,
       listRunEnd: _isLastListBlock(index),
       workspace: workspace,
+      activeSource: activeSource,
+      editRevision: editRevision,
+      visualizationsEnabled: visualizationsEnabled,
+      onVisualizationDiagnostic: onVisualizationDiagnostic,
+      onEditVisualizationSource: onEditVisualizationSource,
       headingKey: block.kind == PreviewBlockKind.heading
           ? ValueKey('preview-heading-$index')
           : null,
@@ -8658,6 +8708,11 @@ class _PreviewBlockView extends StatelessWidget {
     required this.first,
     required this.listRunEnd,
     required this.headingKey,
+    this.activeSource = '',
+    this.editRevision = 0,
+    this.visualizationsEnabled = false,
+    this.onVisualizationDiagnostic,
+    this.onEditVisualizationSource,
   });
 
   final PreviewBlock block;
@@ -8665,6 +8720,11 @@ class _PreviewBlockView extends StatelessWidget {
   final bool first;
   final bool listRunEnd;
   final Key? headingKey;
+  final String activeSource;
+  final int editRevision;
+  final bool visualizationsEnabled;
+  final ValueChanged<int>? onVisualizationDiagnostic;
+  final ValueChanged<int>? onEditVisualizationSource;
 
   @override
   Widget build(BuildContext context) {
@@ -8690,6 +8750,9 @@ class _PreviewBlockView extends StatelessWidget {
           ),
         ),
       ),
+      PreviewBlockKind.code
+          when visualizationsEnabled && displayBlock.visualization != null =>
+        _visualizationCard(displayBlock),
       PreviewBlockKind.code => BusyMarkDocumentCodeBlock(
         backgroundColor: _diffPreviewCodeBackground(context, displayBlock),
         child: Text.rich(
@@ -8817,6 +8880,48 @@ class _PreviewBlockView extends StatelessWidget {
     };
   }
 
+  Widget _visualizationCard(PreviewBlock block) {
+    final descriptor = block.visualization!;
+    final documentPath =
+        workspace?.activeFilePath ?? workspace?.markdown?.filePath ?? '';
+    final blockIdentity =
+        block.attributes['editorBlockId'] ??
+        block.sourceStartOffset?.toString() ??
+        '${block.sourceStartLine ?? 1}';
+    return BusyMarkVisualizationCard(
+      key: ValueKey('visualization-$documentPath-$blockIdentity'),
+      descriptor: descriptor,
+      source: block.text,
+      sourceFence: _visualizationSourceFence(block, descriptor),
+      documentPath: documentPath,
+      workspaceRoot: workspace?.rootPath ?? '',
+      sourceStartLine: block.sourceStartLine ?? 1,
+      editRevision: editRevision,
+      blockKey: 'preview:${workspace?.id ?? ''}:$documentPath:$blockIdentity',
+      onDiagnosticSelected: onVisualizationDiagnostic,
+      onEditSource: onEditVisualizationSource == null
+          ? null
+          : () => onEditVisualizationSource!(block.sourceStartLine ?? 1),
+    );
+  }
+
+  String _visualizationSourceFence(
+    PreviewBlock block,
+    VisualizationDescriptor descriptor,
+  ) {
+    final start = block.sourceStartOffset;
+    final end = block.sourceEndOffset;
+    if (start != null &&
+        end != null &&
+        start >= 0 &&
+        end >= start &&
+        end <= activeSource.length) {
+      return activeSource.substring(start, end);
+    }
+    final source = block.text.endsWith('\n') ? block.text : '${block.text}\n';
+    return '```${descriptor.originalLanguage}\n$source```';
+  }
+
   TextSpan _diffPreviewCodeTextSpan(
     BuildContext context,
     PreviewBlock block,
@@ -8894,6 +8999,11 @@ class _PreviewBlockView extends StatelessWidget {
             first: first && index == 0,
             listRunEnd: _isLastListBlock(blocks, index),
             headingKey: null,
+            activeSource: activeSource,
+            editRevision: editRevision,
+            visualizationsEnabled: visualizationsEnabled,
+            onVisualizationDiagnostic: onVisualizationDiagnostic,
+            onEditVisualizationSource: onEditVisualizationSource,
           ),
       ],
     );
@@ -8934,6 +9044,8 @@ class _PreviewBlockView extends StatelessWidget {
       kind: block.kind,
       text: text,
       level: block.level,
+      language: block.language,
+      visualization: block.visualization,
       attributes: block.attributes,
       inlines: block.inlines,
       children: block.children,

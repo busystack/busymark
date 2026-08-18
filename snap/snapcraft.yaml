@@ -23,6 +23,11 @@ platforms:
     build-on: [amd64]
     build-for: [amd64]
 
+plugs:
+  browser-support:
+    interface: browser-support
+    allow-sandbox: false
+
 apps:
   busymark:
     command: busymark
@@ -32,6 +37,7 @@ apps:
     plugs:
       - desktop
       - desktop-legacy
+      - browser-support
       - gsettings
       - opengl
       - wayland
@@ -53,12 +59,16 @@ parts:
     source: .
     flutter-target: lib/main.dart
     flutter-channel: stable
+    build-snaps:
+      - node/24/stable
     build-packages:
       - curl
       - libhandy-1-dev
+      - libwebkit2gtk-4.1-dev
       - xz-utils
     stage-packages:
       - libhandy-1-0
+      - libwebkit2gtk-4.1-0
       - libx11-6
       - libxdamage1
       - libxext6

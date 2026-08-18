@@ -2488,6 +2488,68 @@ class AppLocalizationsFa extends AppLocalizations {
   String get pdfExportFailed => 'BusyMark نتوانست این سند را به PDF تبدیل کند.';
 
   @override
+  String get visualizationRendering => 'در حال رندر…';
+
+  @override
+  String get visualizationStale => 'نمایش آخرین رندر معتبر';
+
+  @override
+  String get visualizationShowSource => 'نمایش منبع';
+
+  @override
+  String get visualizationShowRender => 'نمایش رندر';
+
+  @override
+  String get visualizationFitWidth => 'تطبیق با عرض';
+
+  @override
+  String get visualizationSaveImage => 'ذخیره تصویر';
+
+  @override
+  String get visualizationCopyImage => 'کپی تصویر';
+
+  @override
+  String get visualizationImageCopied => 'تصویر کپی شد';
+
+  @override
+  String get visualizationOpenApiReference => 'باز کردن مرجع API';
+
+  @override
+  String get visualizationValid => 'معتبر';
+
+  @override
+  String get visualizationInvalid => 'نامعتبر';
+
+  @override
+  String get visualizationServers => 'سرورها';
+
+  @override
+  String get visualizationPaths => 'مسیرها';
+
+  @override
+  String get visualizationOperations => 'عملیات‌ها';
+
+  @override
+  String get visualizationTags => 'برچسب‌ها';
+
+  @override
+  String get visualizationNoOperations => 'عملیات منطبقی وجود ندارد';
+
+  @override
+  String get visualizationSearchOperations => 'جستجوی عملیات';
+
+  @override
+  String get visualizationRenderFailed => 'این تصویرسازی رندر نشد.';
+
+  @override
+  String get visualizationRetry => 'تلاش دوباره';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return '$fileName ذخیره شد';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
       'سند Markdown فعال را به PDF صادر کنید.';
 }

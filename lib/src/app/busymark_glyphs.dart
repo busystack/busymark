@@ -32,6 +32,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData exportPdf = YaruIcons.save_as;
   static const IconData externalLink = YaruIcons.external_link;
   static const IconData feedback = YaruIcons.chat_text;
+  static const IconData fitWidth = YaruIcons.zoom_fit_best;
   static const IconData folder = YaruIcons.folder;
   static const IconData folderOpen = YaruIcons.folder_open;
   static const IconData font = YaruIcons.font;
@@ -65,6 +66,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
   static const IconData redo = YaruIcons.redo;
+  static const IconData refresh = YaruIcons.refresh;
   static const IconData save = YaruIcons.save;
   static const IconData search = YaruIcons.search;
   static const IconData searchUnavailable = YaruIcons.find_replace;
@@ -90,6 +92,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData unorderedList = YaruIcons.unordered_list;
   static const IconData upArrow = YaruIcons.pan_up;
   static const IconData warning = YaruIcons.warning;
+  static const IconData windowClose = YaruIcons.window_close;
   static const IconData writersideProject = YaruIcons.book;
 
   /// Maps Flutter menu glyphs to freedesktop themed-icon names for GTK.

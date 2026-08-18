@@ -4106,10 +4106,10 @@ abstract class AppLocalizations {
   /// **'{fileName} was exported.'**
   String pdfExported(String fileName);
 
-  /// PDF export success message when some images were omitted.
+  /// PDF export success message when some content fell back or was omitted.
   ///
   /// In en, this message translates to:
-  /// **'{fileName} was exported. Images that could not be included: {count}.'**
+  /// **'{fileName} was exported with {count} warning(s).'**
   String pdfExportedWithWarnings(String fileName, int count);
 
   /// Error shown when the bundled PDF compiler is unavailable.
@@ -4129,6 +4129,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'BusyMark could not export this document as PDF.'**
   String get pdfExportFailed;
+
+  /// Status shown while a fenced visualization is rendering.
+  ///
+  /// In en, this message translates to:
+  /// **'Rendering…'**
+  String get visualizationRendering;
+
+  /// Status shown when a visualization displays its last valid result while newer source renders or is invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the last valid render'**
+  String get visualizationStale;
+
+  /// Action that reveals the original source fence for a visualization.
+  ///
+  /// In en, this message translates to:
+  /// **'Show source'**
+  String get visualizationShowSource;
+
+  /// Action that returns from visualization source to its rendered output.
+  ///
+  /// In en, this message translates to:
+  /// **'Show render'**
+  String get visualizationShowRender;
+
+  /// Action that resets diagram zoom to fit its card.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to width'**
+  String get visualizationFitWidth;
+
+  /// Action that saves a rendered diagram as an SVG or PNG file.
+  ///
+  /// In en, this message translates to:
+  /// **'Save image'**
+  String get visualizationSaveImage;
+
+  /// Action that copies a rendered diagram to the image clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy image'**
+  String get visualizationCopyImage;
+
+  /// Confirmation after copying a rendered diagram to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Image copied'**
+  String get visualizationImageCopied;
+
+  /// Action that opens the complete interactive OpenAPI reference window.
+  ///
+  /// In en, this message translates to:
+  /// **'Open API Reference'**
+  String get visualizationOpenApiReference;
+
+  /// OpenAPI validation success state.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid'**
+  String get visualizationValid;
+
+  /// OpenAPI validation failure state.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid'**
+  String get visualizationInvalid;
+
+  /// OpenAPI server count label.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers'**
+  String get visualizationServers;
+
+  /// OpenAPI path count label.
+  ///
+  /// In en, this message translates to:
+  /// **'Paths'**
+  String get visualizationPaths;
+
+  /// OpenAPI operation count label.
+  ///
+  /// In en, this message translates to:
+  /// **'Operations'**
+  String get visualizationOperations;
+
+  /// OpenAPI tag summary label.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get visualizationTags;
+
+  /// Empty state for the filtered OpenAPI operation list.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching operations'**
+  String get visualizationNoOperations;
+
+  /// Hint for the OpenAPI operation search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search operations'**
+  String get visualizationSearchOperations;
+
+  /// Fallback message for a failed visualization render.
+  ///
+  /// In en, this message translates to:
+  /// **'This visualization could not be rendered.'**
+  String get visualizationRenderFailed;
+
+  /// Action that retries a failed visualization render.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get visualizationRetry;
+
+  /// Confirmation after saving a rendered diagram.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {fileName}'**
+  String visualizationSaved(String fileName);
 
   /// Keyboard-shortcut description for PDF export.
   ///

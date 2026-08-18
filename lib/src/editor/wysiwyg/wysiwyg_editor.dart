@@ -55,6 +55,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onCloseSearch,
     this.headerBarService,
     this.documentLayout,
+    this.visualizationRevision = 0,
   });
 
   final BusyDocument document;
@@ -78,6 +79,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final VoidCallback? onCloseSearch;
   final LinuxHeaderBarService? headerBarService;
   final BusyMarkDocumentLayoutSpec? documentLayout;
+  final int visualizationRevision;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -621,6 +623,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       onHtmlEditRequested: () =>
           unawaited(_handleHtmlBlockEditRequested(block.id)),
       onTaskChanged: (checked) => _handleTaskCheckedChanged(block.id, checked),
+      editRevision: widget.visualizationRevision + _documentGeneration,
     );
   }
 

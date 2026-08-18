@@ -89,6 +89,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
 
+  int get editRevision => _editRevision;
+
   @override
   WorkspaceState build() {
     _service = ref.read(workspaceServiceProvider);

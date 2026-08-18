@@ -758,6 +758,17 @@ bool _addFencedCodeLineRanges(
     _addXmlRanges(ranges, line, lineStart, baseStyle, palette);
     return ranges.length > before;
   }
+  if (_visualizationCodeLanguages.contains(language)) {
+    _addVisualizationCodeLineRanges(
+      ranges,
+      lineStart,
+      line,
+      language,
+      baseStyle,
+      palette,
+    );
+    return ranges.length > before;
+  }
 
   final commentStyle = baseStyle.copyWith(color: palette.comment);
   final keywordStyle = baseStyle.copyWith(color: palette.keyword);
@@ -839,9 +850,114 @@ String _normalizedFenceLanguage(String value) {
     'ts' || 'tsx' => 'typescript',
     'yml' => 'yaml',
     'topic' => 'xml',
+    'puml' => 'plantuml',
+    'oas' || 'swagger' => 'openapi',
     _ => language,
   };
 }
+
+void _addVisualizationCodeLineRanges(
+  List<_HighlightRange> ranges,
+  int lineStart,
+  String line,
+  String language,
+  TextStyle baseStyle,
+  BusyMarkSyntaxColors palette,
+) {
+  final commentStyle = baseStyle.copyWith(color: palette.comment);
+  final keywordStyle = baseStyle.copyWith(color: palette.keyword);
+  final stringStyle = baseStyle.copyWith(color: palette.string);
+  final literalStyle = baseStyle.copyWith(color: palette.literal);
+  final attributeStyle = baseStyle.copyWith(color: palette.attribute);
+  final punctuationStyle = baseStyle.copyWith(color: palette.punctuation);
+
+  _addCodeStringRanges(ranges, lineStart, line, language, stringStyle);
+  for (final marker in switch (language) {
+    'mermaid' => const ['%%'],
+    'plantuml' => const ["'"],
+    'd2' || 'openapi' => const ['#'],
+    _ => const <String>[],
+  }) {
+    final index = line.indexOf(marker);
+    if (index >= 0 && !_positionInsideRange(ranges, lineStart + index)) {
+      _addRange(
+        ranges,
+        lineStart + index,
+        lineStart + line.length,
+        commentStyle,
+      );
+    }
+  }
+
+  if (language == 'plantuml') {
+    _addInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      RegExp(r'(?<!\w)[@!]\w+'),
+      keywordStyle,
+    );
+    _addInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      RegExp(r'/\*.*?\*/|/\x27.*?\x27/'),
+      commentStyle,
+    );
+  }
+
+  if (language == 'd2' || language == 'openapi') {
+    _addInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      RegExp(r'(?<![\w-])(?:[A-Za-z_][\w.-]*|"[^"]+")(?=\s*:)'),
+      attributeStyle,
+    );
+  }
+  if (language == 'openapi') {
+    _addInlineMatches(
+      ranges,
+      lineStart,
+      line,
+      _jsonAttributePattern,
+      attributeStyle,
+    );
+  }
+
+  _addInlineMatches(ranges, lineStart, line, _codeNumberPattern, literalStyle);
+  final keywords = _visualizationKeywords(language);
+  for (final word in _codeWordPattern.allMatches(line)) {
+    final token = word.group(0)!;
+    if (keywords.contains(token) ||
+        keywords.contains(token.toLowerCase()) ||
+        _codeLiterals.contains(token.toLowerCase())) {
+      _addRange(
+        ranges,
+        lineStart + word.start,
+        lineStart + word.end,
+        _codeLiterals.contains(token.toLowerCase())
+            ? literalStyle
+            : keywordStyle,
+      );
+    }
+  }
+  _addInlineMatches(
+    ranges,
+    lineStart,
+    line,
+    RegExp(r'--?>|<--?|<->|==>|\.\.|[{}\[\]():;,|]'),
+    punctuationStyle,
+  );
+}
+
+Set<String> _visualizationKeywords(String language) => switch (language) {
+  'mermaid' => _mermaidKeywords,
+  'plantuml' => _plantUmlKeywords,
+  'd2' => _d2Keywords,
+  'openapi' => _openApiKeywords,
+  _ => const {},
+};
 
 void _addCodeStringRanges(
   List<_HighlightRange> ranges,
@@ -912,6 +1028,143 @@ bool _positionInsideRange(List<_HighlightRange> ranges, int offset) {
 }
 
 const _xmlCodeLanguages = {'html', 'xml'};
+
+const _visualizationCodeLanguages = {'mermaid', 'plantuml', 'd2', 'openapi'};
+
+const _mermaidKeywords = {
+  'flowchart',
+  'graph',
+  'sequenceDiagram',
+  'classDiagram',
+  'stateDiagram',
+  'stateDiagram-v2',
+  'erDiagram',
+  'journey',
+  'gantt',
+  'pie',
+  'requirementDiagram',
+  'gitGraph',
+  'mindmap',
+  'timeline',
+  'quadrantChart',
+  'xychart-beta',
+  'block-beta',
+  'packet-beta',
+  'architecture-beta',
+  'kanban',
+  'participant',
+  'actor',
+  'class',
+  'state',
+  'subgraph',
+  'end',
+  'note',
+  'loop',
+  'alt',
+  'else',
+  'opt',
+  'par',
+  'and',
+  'rect',
+  'activate',
+  'deactivate',
+};
+
+const _plantUmlKeywords = {
+  'actor',
+  'agent',
+  'artifact',
+  'boundary',
+  'card',
+  'class',
+  'cloud',
+  'component',
+  'control',
+  'database',
+  'entity',
+  'enum',
+  'file',
+  'folder',
+  'frame',
+  'interface',
+  'node',
+  'package',
+  'participant',
+  'queue',
+  'rectangle',
+  'stack',
+  'state',
+  'storage',
+  'usecase',
+  'abstract',
+  'annotation',
+  'circle',
+  'diamond',
+  'object',
+  'map',
+  'json',
+  'yaml',
+  'start',
+  'stop',
+  'if',
+  'then',
+  'else',
+  'elseif',
+  'endif',
+  'while',
+  'endwhile',
+  'repeat',
+  'fork',
+  'end',
+  'note',
+  'legend',
+  'title',
+  'skinparam',
+};
+
+const _d2Keywords = {
+  'direction',
+  'shape',
+  'style',
+  'label',
+  'tooltip',
+  'link',
+  'near',
+  'constraint',
+  'grid-rows',
+  'grid-columns',
+  'classes',
+  'vars',
+  'layers',
+  'scenarios',
+  'steps',
+};
+
+const _openApiKeywords = {
+  'openapi',
+  'swagger',
+  'info',
+  'servers',
+  'paths',
+  'components',
+  'security',
+  'tags',
+  'externalDocs',
+  'get',
+  'put',
+  'post',
+  'delete',
+  'options',
+  'head',
+  'patch',
+  'trace',
+  'parameters',
+  'requestBody',
+  'responses',
+  'callbacks',
+  'schemas',
+  'securitySchemes',
+};
 
 const _codeLiterals = {'false', 'nil', 'none', 'null', 'true', 'undefined'};
 

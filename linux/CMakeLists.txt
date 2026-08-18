@@ -54,6 +54,7 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 pkg_check_modules(HANDY REQUIRED IMPORTED_TARGET libhandy-1)
+pkg_check_modules(WEBKIT REQUIRED IMPORTED_TARGET webkit2gtk-4.1)
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
@@ -92,6 +93,78 @@ add_custom_target(busymark_typst ALL
 )
 add_dependencies(${BINARY_NAME} busymark_typst)
 
+# Offline visualization engines and the pinned D2 CLI. JavaScript is bundled
+# at build time; Node.js is not installed in or required by the application.
+set(VISUALIZATION_WEB_DIR "${CMAKE_BINARY_DIR}/visualization/web")
+set(VISUALIZATION_WEB_VERSION "${VISUALIZATION_WEB_DIR}/VERSION")
+set(VISUALIZATION_WEB_HARNESS "${VISUALIZATION_WEB_DIR}/harness.html")
+set(VISUALIZATION_WEB_BOOTSTRAP "${VISUALIZATION_WEB_DIR}/bootstrap.js")
+set(VISUALIZATION_WEB_ENGINES "${VISUALIZATION_WEB_DIR}/render-engines.js")
+set(VISUALIZATION_WEB_SCALAR "${VISUALIZATION_WEB_DIR}/scalar.js")
+set(VISUALIZATION_WEB_VIZ "${VISUALIZATION_WEB_DIR}/viz-global.js")
+add_custom_command(
+  OUTPUT
+    "${VISUALIZATION_WEB_VERSION}"
+    "${VISUALIZATION_WEB_HARNESS}"
+    "${VISUALIZATION_WEB_BOOTSTRAP}"
+    "${VISUALIZATION_WEB_ENGINES}"
+    "${VISUALIZATION_WEB_SCALAR}"
+    "${VISUALIZATION_WEB_VIZ}"
+  COMMAND
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_visualization_web.sh"
+    "${VISUALIZATION_WEB_DIR}"
+  DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_visualization_web.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/package.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/package-lock.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/render_engines.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/reference.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/bootstrap.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/harness.html"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/reference.html"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/visualization/generate_notices.js"
+  COMMENT "Preparing pinned offline visualization web engines"
+  VERBATIM
+)
+add_custom_target(busymark_visualization_web ALL
+  DEPENDS
+    "${VISUALIZATION_WEB_VERSION}"
+    "${VISUALIZATION_WEB_HARNESS}"
+    "${VISUALIZATION_WEB_BOOTSTRAP}"
+    "${VISUALIZATION_WEB_ENGINES}"
+    "${VISUALIZATION_WEB_SCALAR}"
+    "${VISUALIZATION_WEB_VIZ}"
+)
+add_dependencies(${BINARY_NAME} busymark_visualization_web)
+
+set(D2_BUNDLE_DIR "${CMAKE_BINARY_DIR}/d2/linux-${CMAKE_SYSTEM_PROCESSOR}")
+set(D2_EXECUTABLE "${D2_BUNDLE_DIR}/d2")
+set(D2_VERSION_FILE "${D2_BUNDLE_DIR}/VERSION")
+set(D2_LICENSE "${D2_BUNDLE_DIR}/LICENSE.txt")
+set(D2_NOTICE "${D2_BUNDLE_DIR}/NOTICE")
+add_custom_command(
+  OUTPUT
+    "${D2_EXECUTABLE}"
+    "${D2_VERSION_FILE}"
+    "${D2_LICENSE}"
+    "${D2_NOTICE}"
+  COMMAND
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_d2.sh"
+    "${D2_BUNDLE_DIR}"
+    "${CMAKE_SYSTEM_PROCESSOR}"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_d2.sh"
+  COMMENT "Preparing checksum-pinned D2 renderer"
+  VERBATIM
+)
+add_custom_target(busymark_d2 ALL
+  DEPENDS
+    "${D2_EXECUTABLE}"
+    "${D2_VERSION_FILE}"
+    "${D2_LICENSE}"
+    "${D2_NOTICE}"
+)
+add_dependencies(${BINARY_NAME} busymark_d2)
+
 # Only the install-generated bundle's copy of the executable will launch
 # correctly, since the resources must in the right relative locations. To avoid
 # people trying to run the unbundled copy, put it in a subdirectory instead of
@@ -129,6 +202,21 @@ install(PROGRAMS "${TYPST_EXECUTABLE}"
 
 install(FILES "${TYPST_LICENSE}" "${TYPST_NOTICE}" "${TYPST_VERSION_FILE}"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/typst"
+  COMPONENT Runtime)
+
+install(PROGRAMS "${D2_EXECUTABLE}"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/libexec/busymark"
+  COMPONENT Runtime)
+
+install(FILES
+  "${D2_LICENSE}"
+  "${D2_NOTICE}"
+  "${D2_VERSION_FILE}"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/d2"
+  COMPONENT Runtime)
+
+install(DIRECTORY "${VISUALIZATION_WEB_DIR}/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/busymark/visualization"
   COMPONENT Runtime)
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"

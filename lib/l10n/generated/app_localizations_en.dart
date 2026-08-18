@@ -2414,7 +2414,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pdfExportedWithWarnings(String fileName, int count) {
-    return '$fileName was exported. Images that could not be included: $count.';
+    return '$fileName was exported with $count warning(s).';
   }
 
   @override
@@ -2427,6 +2427,69 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pdfExportFailed =>
       'BusyMark could not export this document as PDF.';
+
+  @override
+  String get visualizationRendering => 'Rendering…';
+
+  @override
+  String get visualizationStale => 'Showing the last valid render';
+
+  @override
+  String get visualizationShowSource => 'Show source';
+
+  @override
+  String get visualizationShowRender => 'Show render';
+
+  @override
+  String get visualizationFitWidth => 'Fit to width';
+
+  @override
+  String get visualizationSaveImage => 'Save image';
+
+  @override
+  String get visualizationCopyImage => 'Copy image';
+
+  @override
+  String get visualizationImageCopied => 'Image copied';
+
+  @override
+  String get visualizationOpenApiReference => 'Open API Reference';
+
+  @override
+  String get visualizationValid => 'Valid';
+
+  @override
+  String get visualizationInvalid => 'Invalid';
+
+  @override
+  String get visualizationServers => 'Servers';
+
+  @override
+  String get visualizationPaths => 'Paths';
+
+  @override
+  String get visualizationOperations => 'Operations';
+
+  @override
+  String get visualizationTags => 'Tags';
+
+  @override
+  String get visualizationNoOperations => 'No matching operations';
+
+  @override
+  String get visualizationSearchOperations => 'Search operations';
+
+  @override
+  String get visualizationRenderFailed =>
+      'This visualization could not be rendered.';
+
+  @override
+  String get visualizationRetry => 'Retry';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return 'Saved $fileName';
+  }
 
   @override
   String get shortcutExportPdfDescription =>

@@ -14,6 +14,8 @@ enum MarkdownExportBlockKind {
   tableCell,
   rawText,
   group,
+  visualization,
+  openApiReference,
 }
 
 enum MarkdownExportInlineKind {

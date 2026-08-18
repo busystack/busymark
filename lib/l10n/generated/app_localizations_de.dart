@@ -2461,6 +2461,69 @@ class AppLocalizationsDe extends AppLocalizations {
       'BusyMark konnte dieses Dokument nicht als PDF exportieren.';
 
   @override
+  String get visualizationRendering => 'Wird gerendert…';
+
+  @override
+  String get visualizationStale => 'Letzte gültige Darstellung wird angezeigt';
+
+  @override
+  String get visualizationShowSource => 'Quelltext anzeigen';
+
+  @override
+  String get visualizationShowRender => 'Darstellung anzeigen';
+
+  @override
+  String get visualizationFitWidth => 'An Breite anpassen';
+
+  @override
+  String get visualizationSaveImage => 'Bild speichern';
+
+  @override
+  String get visualizationCopyImage => 'Bild kopieren';
+
+  @override
+  String get visualizationImageCopied => 'Bild kopiert';
+
+  @override
+  String get visualizationOpenApiReference => 'API-Referenz öffnen';
+
+  @override
+  String get visualizationValid => 'Gültig';
+
+  @override
+  String get visualizationInvalid => 'Ungültig';
+
+  @override
+  String get visualizationServers => 'Server';
+
+  @override
+  String get visualizationPaths => 'Pfade';
+
+  @override
+  String get visualizationOperations => 'Operationen';
+
+  @override
+  String get visualizationTags => 'Schlagwörter';
+
+  @override
+  String get visualizationNoOperations => 'Keine passenden Operationen';
+
+  @override
+  String get visualizationSearchOperations => 'Operationen durchsuchen';
+
+  @override
+  String get visualizationRenderFailed =>
+      'Diese Visualisierung konnte nicht gerendert werden.';
+
+  @override
+  String get visualizationRetry => 'Erneut versuchen';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return '$fileName gespeichert';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
       'Das aktive Markdown-Dokument als PDF exportieren.';
 }

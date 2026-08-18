@@ -24,6 +24,7 @@ projects.
 - Create Writerside Markdown and XML topics from the TOC.
 - Edit and save local files.
 - Preview Markdown content.
+- Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
 - Run basic diagnostics.
@@ -96,6 +97,17 @@ PDF generation is local and offline. BusyMark bundles the pinned Typst compiler;
 users do not install or configure a separate program. Local PNG, JPEG, GIF, and
 safe SVG images are included. Remote images are deliberately not downloaded
 during export and are represented by their alternative text.
+
+Mermaid and PlantUML fences are exported as vector diagrams. D2 uses normalized
+SVG where possible and a local high-resolution raster fallback for browser-only
+labels. OpenAPI fences become static, selectable API reference content. Failed
+visualizations fall back to their original source and produce an export warning.
+
+See [offline visualizations](docs/visualizations.md) for supported fences,
+security policy, pinned engines, architecture, and verification. Working
+examples are in [demo/visualizations.md](demo/visualizations.md),
+[demo/openapi-local-reference.md](demo/openapi-local-reference.md), and
+[demo/plantuml-conformance.md](demo/plantuml-conformance.md).
 
 ## Run From Source
 
@@ -210,23 +222,35 @@ Store listing translations are managed outside `snap/snapcraft.yaml`.
 
 ## Build Linux Locally
 
-Source builds require the libhandy development headers, `curl`, and `xz-utils`.
-Packaged users receive every runtime component with BusyMark and do not install
-development packages.
+Source builds require the libhandy and WebKitGTK 4.1 development headers,
+`curl`, `xz-utils`, and Node.js 22 or newer with npm. Node.js is used only to
+assemble the checksum-pinned web bundle. Packaged users receive every runtime
+component with BusyMark and do not install development packages, Node.js, Java,
+or Chromium.
 
 ```bash
-sudo apt-get install curl libhandy-1-dev xz-utils
+sudo apt-get install curl libhandy-1-dev xz-utils libwebkit2gtk-4.1-dev
+# Install Node.js 22 or newer from https://nodejs.org/en/download
+node --version
+npm --version
 flutter build linux
 ```
 
-The Linux build downloads the matching x86_64 or ARM64 Typst 0.15.1 binary from
-its official release and verifies its pinned SHA-256 checksum before bundling
-it. For an offline build, point the build at the matching official archive:
+The Linux build downloads the matching x86_64 or ARM64 Typst 0.15.1 binary, the
+Linux amd64 D2 0.7.1 release, and exact JavaScript packages, then verifies the
+pinned artifacts before bundling them. D2 visualization is currently packaged
+only for amd64. To reuse already downloaded official Typst and D2 archives,
+point the build at them:
 
 ```bash
 BUSYMARK_TYPST_ARCHIVE=/path/to/typst-x86_64-unknown-linux-musl.tar.xz \
+BUSYMARK_D2_ARCHIVE=/path/to/d2-v0.7.1-linux-amd64.tar.gz \
   flutter build linux
 ```
+
+A clean source build still assembles the checksum-pinned JavaScript packages.
+The resulting BusyMark application is self-contained and performs no runtime
+downloads for visualization.
 
 The Linux desktop file uses the application id `io.busystack.busymark` and
 installs the app icon from `assets/branding/busymark_logo.svg`.
@@ -239,5 +263,7 @@ handling, and clear user-facing behavior.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE). The bundled Typst compiler's license and
-upstream notices are installed under `share/licenses/typst`.
+Apache-2.0. See [LICENSE](LICENSE). Bundled Typst and D2 licenses and notices are
+installed under `share/licenses`; visualization JavaScript licenses, package
+metadata, the exact lock file, and consolidated notices are installed with the
+offline web bundle.

@@ -2428,6 +2428,69 @@ class AppLocalizationsHi extends AppLocalizations {
       'BusyMark इस दस्तावेज़ को PDF के रूप में निर्यात नहीं कर सका।';
 
   @override
+  String get visualizationRendering => 'रेंडर हो रहा है…';
+
+  @override
+  String get visualizationStale => 'अंतिम मान्य रेंडर दिखाया जा रहा है';
+
+  @override
+  String get visualizationShowSource => 'स्रोत दिखाएँ';
+
+  @override
+  String get visualizationShowRender => 'रेंडर दिखाएँ';
+
+  @override
+  String get visualizationFitWidth => 'चौड़ाई के अनुसार फ़िट करें';
+
+  @override
+  String get visualizationSaveImage => 'चित्र सहेजें';
+
+  @override
+  String get visualizationCopyImage => 'चित्र कॉपी करें';
+
+  @override
+  String get visualizationImageCopied => 'चित्र कॉपी किया गया';
+
+  @override
+  String get visualizationOpenApiReference => 'API संदर्भ खोलें';
+
+  @override
+  String get visualizationValid => 'मान्य';
+
+  @override
+  String get visualizationInvalid => 'अमान्य';
+
+  @override
+  String get visualizationServers => 'सर्वर';
+
+  @override
+  String get visualizationPaths => 'पाथ';
+
+  @override
+  String get visualizationOperations => 'ऑपरेशन';
+
+  @override
+  String get visualizationTags => 'टैग';
+
+  @override
+  String get visualizationNoOperations => 'कोई मेल खाता ऑपरेशन नहीं';
+
+  @override
+  String get visualizationSearchOperations => 'ऑपरेशन खोजें';
+
+  @override
+  String get visualizationRenderFailed =>
+      'इस विज़ुअलाइज़ेशन को रेंडर नहीं किया जा सका।';
+
+  @override
+  String get visualizationRetry => 'फिर प्रयास करें';
+
+  @override
+  String visualizationSaved(String fileName) {
+    return '$fileName सहेजा गया';
+  }
+
+  @override
   String get shortcutExportPdfDescription =>
       'सक्रिय Markdown दस्तावेज़ को PDF के रूप में निर्यात करें।';
 }
