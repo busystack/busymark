@@ -1169,7 +1169,7 @@ class WorkspaceService {
     List<Diagnostic> diagnostics,
   ) async {
     try {
-      return _documentFile(path, rootPath);
+      return await _documentFile(path, rootPath);
     } on Object catch (error) {
       diagnostics.add(
         Diagnostic(
@@ -1211,7 +1211,7 @@ class WorkspaceService {
       return null;
     }
     try {
-      return markdownParser.parseAsync(
+      return await markdownParser.parseAsync(
         filePath: file.path,
         source: await file.readAsString(),
         workspaceRoot: workspaceRoot,

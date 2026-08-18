@@ -1217,7 +1217,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       if (preferredActivePath != null) {
-        return _openActiveFile(preferredActivePath);
+        return await _openActiveFile(preferredActivePath);
       }
       return true;
     } on Object catch (error, stackTrace) {

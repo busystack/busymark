@@ -2406,205 +2406,206 @@ void main() {
     }
   });
 
-  testWidgets('Writerside sidebar shortcuts survive document view changes', (
-    tester,
-  ) async {
-    final binding = TestWidgetsFlutterBinding.ensureInitialized();
-    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
-    addTearDown(() {
-      binding.platformDispatcher.defaultRouteNameTestValue = '/';
-    });
-    final root = Directory('test/fixtures/writerside/basic_project').absolute;
-    final workspace = (await tester.runAsync(
-      () => const WorkspaceService().openPath(root.path),
-    ))!;
-    final controller = _MutableWorkspaceController(
-      WorkspaceState(
-        workspace: workspace,
-        activeText: workspace.markdown?.source ?? '',
-      ),
-    );
-    final container = ProviderContainer(
-      overrides: [
-        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-        workspaceControllerProvider.overrideWith(() => controller),
-        gitControllerProvider.overrideWith(
-          () => _PresetGitController(
-            _gitSidebarShortcutState(workspace.rootPath),
-          ),
+  testWidgets(
+    'Writerside sidebar shortcuts survive document view changes',
+    (tester) async {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+      addTearDown(() {
+        binding.platformDispatcher.defaultRouteNameTestValue = '/';
+      });
+      final root = Directory('test/fixtures/writerside/basic_project').absolute;
+      final workspace = (await tester.runAsync(
+        () => const WorkspaceService().openPath(root.path),
+      ))!;
+      final controller = _MutableWorkspaceController(
+        WorkspaceState(
+          workspace: workspace,
+          activeText: workspace.markdown?.source ?? '',
         ),
-      ],
-    );
-    addTearDown(container.dispose);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const BusyMarkApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    Future<void> selectView(LogicalKeyboardKey key) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pumpAndSettle();
-    }
-
-    Future<void> switchDocumentView(
-      LogicalKeyboardKey key,
-      DocumentViewModePreference expectedMode,
-    ) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pumpAndSettle();
-      expect(
-        container.read(appSettingsControllerProvider).documentViewMode,
-        expectedMode,
       );
-    }
-
-    final activeDocumentField = find.byWidgetPredicate(
-      (widget) =>
-          widget is TextField &&
-          widget.controller?.text.contains('# Introduction') == true,
-    );
-    expect(activeDocumentField, findsOneWidget);
-    await tester.tap(activeDocumentField);
-    await tester.pump();
-
-    final primaryRow = find.byKey(
-      const ValueKey('workspace-sidebar-primary-row'),
-    );
-    const firstContentKey = ValueKey('workspace-sidebar-first-content');
-    Finder viewMarker(LogicalKeyboardKey key) {
-      return switch (key) {
-        LogicalKeyboardKey.digit1 => find.byKey(
-          const ValueKey('workspace-sidebar-path-menu'),
-        ),
-        LogicalKeyboardKey.digit2 => find.byTooltip(l10n.tocActions),
-        LogicalKeyboardKey.digit3 => find.byKey(
-          const ValueKey('workspace-sidebar-outline-tree'),
-        ),
-        LogicalKeyboardKey.digit4 => find.text(l10n.gitNoChanges),
-        LogicalKeyboardKey.digit5 => find.text(
-          'Sidebar history shortcut commit',
-        ),
-        _ => throw ArgumentError.value(key, 'key'),
-      };
-    }
-
-    Finder? actionMenuMarker(LogicalKeyboardKey key) {
-      if (key == LogicalKeyboardKey.digit1) {
-        return find.byKey(const ValueKey('workspace-sidebar-path-menu'));
-      }
-      if (key == LogicalKeyboardKey.digit2) {
-        return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
-      }
-      if (key == LogicalKeyboardKey.digit3) {
-        return find.byKey(
-          const ValueKey('workspace-sidebar-outline-file-menu'),
-        );
-      }
-      if (key == LogicalKeyboardKey.digit4 ||
-          key == LogicalKeyboardKey.digit5) {
-        return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
-      }
-      return null;
-    }
-
-    final actionMenuGuideRight = tester.getRect(primaryRow).right;
-    double? actionMenuRight;
-    for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
-        in <
-          (
-            LogicalKeyboardKey,
-            String,
-            bool,
-            LogicalKeyboardKey,
-            DocumentViewModePreference,
-          )
-        >[
-          (
-            LogicalKeyboardKey.digit1,
-            'Files',
-            true,
-            LogicalKeyboardKey.digit2,
-            DocumentViewModePreference.source,
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceControllerProvider.overrideWith(() => controller),
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(
+              _gitSidebarShortcutState(workspace.rootPath),
+            ),
           ),
-          (
-            LogicalKeyboardKey.digit2,
-            'Topics',
-            true,
-            LogicalKeyboardKey.digit3,
-            DocumentViewModePreference.preview,
-          ),
-          (
-            LogicalKeyboardKey.digit3,
-            'Outline',
-            true,
-            LogicalKeyboardKey.digit4,
-            DocumentViewModePreference.split,
-          ),
-          (
-            LogicalKeyboardKey.digit4,
-            'Commit',
-            true,
-            LogicalKeyboardKey.digit1,
-            DocumentViewModePreference.editor,
-          ),
-          (
-            LogicalKeyboardKey.digit5,
-            'History',
-            true,
-            LogicalKeyboardKey.digit3,
-            DocumentViewModePreference.preview,
-          ),
-        ]) {
-      await switchDocumentView(documentViewKey, expectedDocumentView);
-      await selectView(key);
-      expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
-      final firstContent = find.byKey(firstContentKey);
-      expect(firstContent, findsOneWidget, reason: label);
-      final gap =
-          tester.getTopLeft(firstContent).dy -
-          tester.getBottomLeft(primaryRow).dy;
-      expect(
-        gap,
-        closeTo(BusyMarkSpacing.sm, 0.01),
-        reason: '$label sidebar gap',
+        ],
       );
-      final actionMenu = actionMenuMarker(key);
-      if (actionMenu != null) {
-        final right = tester.getRect(actionMenu).right;
-        actionMenuRight ??= right;
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      Future<void> selectView(LogicalKeyboardKey key) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(key);
+        await tester.sendKeyUpEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> switchDocumentView(
+        LogicalKeyboardKey key,
+        DocumentViewModePreference expectedMode,
+      ) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyDownEvent(key);
+        await tester.sendKeyUpEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
         expect(
-          right,
-          closeTo(actionMenuRight, 0.01),
-          reason: '$label action menu trailing edge',
-        );
-        expect(
-          right,
-          closeTo(actionMenuGuideRight, 0.01),
-          reason: '$label action menu header alignment',
+          container.read(appSettingsControllerProvider).documentViewMode,
+          expectedMode,
         );
       }
-      if (contextRow) {
-        expect(
-          tester.getSize(firstContent).height,
-          greaterThanOrEqualTo(BusyMarkSizes.iconButton),
-          reason: '$label sidebar context row height',
-        );
+
+      final activeDocumentField = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.controller?.text.contains('# Introduction') == true,
+      );
+      expect(activeDocumentField, findsOneWidget);
+      await tester.tap(activeDocumentField);
+      await tester.pump();
+
+      final primaryRow = find.byKey(
+        const ValueKey('workspace-sidebar-primary-row'),
+      );
+      const firstContentKey = ValueKey('workspace-sidebar-first-content');
+      Finder viewMarker(LogicalKeyboardKey key) {
+        return switch (key) {
+          LogicalKeyboardKey.digit1 => find.byKey(
+            const ValueKey('workspace-sidebar-path-menu'),
+          ),
+          LogicalKeyboardKey.digit2 => find.byTooltip(l10n.tocActions),
+          LogicalKeyboardKey.digit3 => find.byKey(
+            const ValueKey('workspace-sidebar-outline-tree'),
+          ),
+          LogicalKeyboardKey.digit4 => find.text(l10n.gitNoChanges),
+          LogicalKeyboardKey.digit5 => find.text(
+            'Sidebar history shortcut commit',
+          ),
+          _ => throw ArgumentError.value(key, 'key'),
+        };
       }
-    }
-  });
+
+      Finder? actionMenuMarker(LogicalKeyboardKey key) {
+        if (key == LogicalKeyboardKey.digit1) {
+          return find.byKey(const ValueKey('workspace-sidebar-path-menu'));
+        }
+        if (key == LogicalKeyboardKey.digit2) {
+          return find.byKey(const ValueKey('workspace-sidebar-toc-menu'));
+        }
+        if (key == LogicalKeyboardKey.digit3) {
+          return find.byKey(
+            const ValueKey('workspace-sidebar-outline-file-menu'),
+          );
+        }
+        if (key == LogicalKeyboardKey.digit4 ||
+            key == LogicalKeyboardKey.digit5) {
+          return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
+        }
+        return null;
+      }
+
+      final actionMenuGuideRight = tester.getRect(primaryRow).right;
+      double? actionMenuRight;
+      for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
+          in <
+            (
+              LogicalKeyboardKey,
+              String,
+              bool,
+              LogicalKeyboardKey,
+              DocumentViewModePreference,
+            )
+          >[
+            (
+              LogicalKeyboardKey.digit1,
+              'Files',
+              true,
+              LogicalKeyboardKey.digit2,
+              DocumentViewModePreference.source,
+            ),
+            (
+              LogicalKeyboardKey.digit2,
+              'Topics',
+              true,
+              LogicalKeyboardKey.digit3,
+              DocumentViewModePreference.preview,
+            ),
+            (
+              LogicalKeyboardKey.digit3,
+              'Outline',
+              true,
+              LogicalKeyboardKey.digit4,
+              DocumentViewModePreference.split,
+            ),
+            (
+              LogicalKeyboardKey.digit4,
+              'Commit',
+              true,
+              LogicalKeyboardKey.digit1,
+              DocumentViewModePreference.editor,
+            ),
+            (
+              LogicalKeyboardKey.digit5,
+              'History',
+              true,
+              LogicalKeyboardKey.digit3,
+              DocumentViewModePreference.preview,
+            ),
+          ]) {
+        await switchDocumentView(documentViewKey, expectedDocumentView);
+        await selectView(key);
+        expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
+        final firstContent = find.byKey(firstContentKey);
+        expect(firstContent, findsOneWidget, reason: label);
+        final gap =
+            tester.getTopLeft(firstContent).dy -
+            tester.getBottomLeft(primaryRow).dy;
+        expect(
+          gap,
+          closeTo(BusyMarkSpacing.sm, 0.01),
+          reason: '$label sidebar gap',
+        );
+        final actionMenu = actionMenuMarker(key);
+        if (actionMenu != null) {
+          final right = tester.getRect(actionMenu).right;
+          actionMenuRight ??= right;
+          expect(
+            right,
+            closeTo(actionMenuRight, 0.01),
+            reason: '$label action menu trailing edge',
+          );
+          expect(
+            right,
+            closeTo(actionMenuGuideRight, 0.01),
+            reason: '$label action menu header alignment',
+          );
+        }
+        if (contextRow) {
+          expect(
+            tester.getSize(firstContent).height,
+            greaterThanOrEqualTo(BusyMarkSizes.iconButton),
+            reason: '$label sidebar context row height',
+          );
+        }
+      }
+    },
+  );
 
   testWidgets('Files view colors entries by Git status', (tester) async {
     final temp = Directory.systemTemp.createTempSync('busymark_file_vcs_');

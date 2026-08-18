@@ -200,11 +200,9 @@ void main() {
 
     final release = releaseBusyMarkModalBarrier(headerBar);
     await tester.pump();
-    expect(
-      transitions,
-      [1],
-      reason: 'the native hide must wait for the in-flight native show',
-    );
+    expect(transitions, [
+      1,
+    ], reason: 'the native hide must wait for the in-flight native show');
 
     firstUpdate.complete();
     await Future.wait([acquire, release]);

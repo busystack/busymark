@@ -865,7 +865,7 @@ class WritersideTopicRemovalService {
       if (resolution.type != FileSystemEntityType.file) {
         throw const FileSystemException('Not a regular file');
       }
-      return File(resolution.path).readAsString();
+      return await File(resolution.path).readAsString();
     } on BusyMarkException {
       rethrow;
     } on Object catch (error) {
