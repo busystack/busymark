@@ -150,6 +150,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onTableDeleted,
     required this.onImageEditRequested,
     required this.onHtmlEditRequested,
+    required this.onTaskChanged,
     required this.onFocused,
     this.selected = false,
     this.selectionRange,
@@ -180,6 +181,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onTableDeleted;
   final VoidCallback onImageEditRequested;
   final VoidCallback onHtmlEditRequested;
+  final ValueChanged<bool> onTaskChanged;
   final VoidCallback onFocused;
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
@@ -481,6 +483,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       ),
       BusyBlockKind.taskListItem => BusyMarkDocumentListMarker(
         task: block.attributes['task'] == 'true',
+        onTaskChanged: onTaskChanged,
+        taskTooltip: context.l10n.toggleTaskChecked,
       ),
       BusyBlockKind.htmlBlock => SizedBox(
         width: BusyMarkSizes.wysiwygPrefixWidth,

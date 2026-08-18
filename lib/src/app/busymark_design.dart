@@ -82,8 +82,8 @@ abstract final class BusyMarkSizes {
   static const double sourceFoldButtonRightInset = 1;
   static const double documentHeadingTop = 18;
   static const double documentHeadingBottom = 6;
-  static const double documentListMarkerWidth = 18;
-  static const double documentListMarkerTopInset = 2;
+  static const double documentListMarkerWidth = 28;
+  static const double documentListMarkerTopInset = 0;
   static const double documentListIndent =
       documentListMarkerWidth + BusyMarkSpacing.sm;
   static const double documentImageMinWidth = 80;

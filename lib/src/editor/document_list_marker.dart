@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
+import 'document_surface.dart';
 
 /// Shared list marker geometry for Editor and Preview.
 class BusyMarkDocumentListMarker extends StatelessWidget {
@@ -10,30 +11,36 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
     this.ordered = false,
     this.marker,
     this.task,
-  });
+    this.onTaskChanged,
+    this.taskTooltip,
+  }) : assert(onTaskChanged == null || task != null);
 
   final bool ordered;
   final String? marker;
   final bool? task;
+  final ValueChanged<bool>? onTaskChanged;
+  final String? taskTooltip;
 
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     final taskState = task;
     final markerWidget = taskState != null
-        ? Icon(
-            taskState ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
-            size: BusyMarkSizes.iconSm,
-            color: colors.mutedForeground,
-          )
+        ? _taskMarker(context, colors, taskState)
         : ordered
         ? Text(
             marker ?? '1.',
             textAlign: TextAlign.end,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colors.mutedForeground,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            maxLines: 1,
+            softWrap: false,
+            style:
+                busyMarkDocumentBodyTextStyle(
+                  context,
+                  color: colors.foreground,
+                ).copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
           )
         : Padding(
             padding: const EdgeInsets.only(
@@ -56,6 +63,42 @@ class BusyMarkDocumentListMarker extends StatelessWidget {
           top: BusyMarkSizes.documentListMarkerTopInset,
         ),
         child: markerWidget,
+      ),
+    );
+  }
+
+  Widget _taskMarker(
+    BuildContext context,
+    BusyMarkSurfaceColors colors,
+    bool taskState,
+  ) {
+    final onChanged = onTaskChanged;
+    if (onChanged == null) {
+      return Icon(
+        taskState ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
+        size: BusyMarkSizes.iconSm,
+        color: colors.mutedForeground,
+      );
+    }
+    void toggle() => onChanged(!taskState);
+    final tooltip = taskTooltip ?? '';
+    return Semantics(
+      container: true,
+      checked: taskState,
+      enabled: true,
+      label: tooltip.isEmpty ? null : tooltip,
+      onTap: toggle,
+      child: ExcludeSemantics(
+        child: BusyMarkCompactIconButton(
+          tooltip: tooltip,
+          icon: taskState ? BusyMarkGlyphs.checkedBox : BusyMarkGlyphs.task,
+          size: BusyMarkSizes.compactIconButton,
+          glyphSize: BusyMarkSizes.iconSm,
+          foregroundColor: taskState
+              ? Theme.of(context).colorScheme.primary
+              : colors.foreground,
+          onPressed: toggle,
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show CheckedState;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -13,6 +14,7 @@ import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_layout.dart';
+import 'package:busymark/src/editor/document_list_marker.dart';
 import 'package:busymark/src/editor/markdown_image_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
@@ -5152,6 +5154,62 @@ void main() {}
     await tester.pump();
 
     expect(find.byType(TextField).evaluate().length, lessThan(80));
+  });
+
+  testWidgets('WYSIWYG task checkbox toggles directly when clicked', (
+    tester,
+  ) async {
+    final semanticsHandle = tester.ensureSemantics();
+    final parsed = parser.parse(
+      filePath: 'topic.md',
+      source: '- [ ] Clickable task\n',
+    );
+    var markdown = parsed.source;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 640,
+            child: BusyMarkWysiwygEditor(
+              document: parsed.busyDocument,
+              onSourceChanged: (_, value) => markdown = value,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final marker = find.byType(BusyMarkDocumentListMarker);
+    expect(marker, findsOneWidget);
+    expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isFalse);
+    final semanticCheckbox = find.bySemanticsLabel('Toggle task checked');
+    expect(semanticCheckbox, findsOneWidget);
+    expect(
+      tester.getSemantics(semanticCheckbox).flagsCollection.isChecked,
+      CheckedState.isFalse,
+    );
+
+    await tester.tap(marker);
+    await tester.pump();
+
+    expect(markdown, '- [x] Clickable task\n');
+    expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isTrue);
+    expect(
+      tester.getSemantics(semanticCheckbox).flagsCollection.isChecked,
+      CheckedState.isTrue,
+    );
+
+    await tester.tap(marker);
+    await tester.pump();
+
+    expect(markdown, '- [ ] Clickable task\n');
+    expect(tester.widget<BusyMarkDocumentListMarker>(marker).task, isFalse);
+    semanticsHandle.dispose();
   });
 
   test('WYSIWYG block commands serialize headings and lists', () {

@@ -534,6 +534,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           unawaited(_handleImageBlockEditRequested(block.id)),
       onHtmlEditRequested: () =>
           unawaited(_handleHtmlBlockEditRequested(block.id)),
+      onTaskChanged: (checked) => _handleTaskCheckedChanged(block.id, checked),
     );
   }
 
@@ -2555,6 +2556,19 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _recordUndoSnapshot();
     _documentController.toggleTaskChecked(blockIds);
     _clearBlockSelection();
+    _emitMarkdown();
+  }
+
+  void _handleTaskCheckedChanged(String blockId, bool checked) {
+    final block = _documentController.blockById(blockId);
+    if (block == null ||
+        block.kind != BusyBlockKind.taskListItem ||
+        (block.attributes['task'] == 'true') == checked) {
+      return;
+    }
+    _handleBlockFocused(blockId);
+    _recordUndoSnapshot();
+    _documentController.toggleTaskChecked([blockId]);
     _emitMarkdown();
   }
 

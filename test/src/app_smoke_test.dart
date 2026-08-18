@@ -5564,7 +5564,7 @@ Draft paragraph.
     expect(rect.bottom, lessThan(800), reason: 'rect=$rect offset=$offset');
   });
 
-  testWidgets('Editor and Preview share list indentation and run spacing', (
+  testWidgets('Editor and Preview share ordered list styling and geometry', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 800);
@@ -5580,8 +5580,8 @@ Draft paragraph.
           .toJson();
     final service = _SearchWorkspaceService(
       '# Title\n\n'
-      '- First item\n'
-      '- Second item\n'
+      '1. First item\n'
+      '2. Second item\n'
       '\n'
       'After list paragraph.\n',
     );
@@ -5614,9 +5614,18 @@ Draft paragraph.
     final editorMarkers = find.byType(BusyMarkDocumentListMarker);
     expect(editorMarkers, findsNWidgets(2));
     final editorMarkerRect = tester.getRect(editorMarkers.first);
+    final editorMarkerText = tester.widget<Text>(
+      find.descendant(of: editorMarkers.first, matching: find.text('1.')),
+    );
+    final editorMarkerColors = BusyMarkSurfaceColors.of(
+      tester.element(editorMarkers.first),
+    );
     final editorItemGap = editorSecond.top - editorFirst.bottom;
     final editorAfterListGap = editorAfter.top - editorSecond.bottom;
 
+    expect(editorMarkerRect.width, greaterThanOrEqualTo(24));
+    expect(editorMarkerText.style?.color, editorMarkerColors.foreground);
+    expect(editorMarkerText.style?.fontWeight, FontWeight.w600);
     expect(editorAfterListGap, greaterThan(editorItemGap + BusyMarkSpacing.xs));
 
     await container
@@ -5630,6 +5639,9 @@ Draft paragraph.
     final previewMarkers = find.byType(BusyMarkDocumentListMarker);
     expect(previewMarkers, findsNWidgets(2));
     final previewMarkerRect = tester.getRect(previewMarkers.first);
+    final previewMarkerText = tester.widget<Text>(
+      find.descendant(of: previewMarkers.first, matching: find.text('1.')),
+    );
     final previewItemGap = previewSecond.top - previewFirst.bottom;
     final previewAfterListGap = previewAfter.top - previewSecond.bottom;
 
@@ -5638,6 +5650,7 @@ Draft paragraph.
     expect(previewAfter.left, closeTo(editorAfter.left, 0.1));
     expect(previewMarkerRect.left, closeTo(editorMarkerRect.left, 0.1));
     expect(previewMarkerRect.width, editorMarkerRect.width);
+    expect(previewMarkerText.style, editorMarkerText.style);
     expect(previewItemGap, closeTo(editorItemGap, 0.1));
     expect(previewAfterListGap, closeTo(editorAfterListGap, 0.1));
   });
