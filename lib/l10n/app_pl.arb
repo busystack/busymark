@@ -163,6 +163,10 @@
   "@mainMenu": {
     "description": "Native header bar main menu tooltip."
   },
+  "fullScreen": "Pełny ekran",
+  "@fullScreen": {
+    "description": "Command that toggles full-screen window mode."
+  },
   "markdown": "Markdown",
   "@markdown": {
     "description": "Markdown format label."

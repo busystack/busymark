@@ -223,6 +223,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get mainMenu => 'मुख्य मेन्यू';
 
   @override
+  String get fullScreen => 'पूर्ण स्क्रीन';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

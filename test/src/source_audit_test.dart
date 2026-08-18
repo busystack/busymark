@@ -1419,7 +1419,11 @@ void main() {
 
     expect(workspace, contains('_outlineNavigationTargetProvider'));
     expect(workspace, contains('_OutlineNavigationTarget'));
-    expect(workspace, contains('outline: _activeDocumentOutline(state)'));
+    expect(
+      workspace,
+      contains('final documentOutline = _activeDocumentOutline(state);'),
+    );
+    expect(workspace, contains('outline: documentOutline'));
     expect(workspace, contains('return preview.outline'));
     expect(workspace, contains('headingId: heading.id'));
     expect(workspace, contains('line: heading.sourceStartLine'));

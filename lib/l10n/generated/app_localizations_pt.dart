@@ -224,6 +224,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get mainMenu => 'Menu principal';
 
   @override
+  String get fullScreen => 'Tela cheia';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

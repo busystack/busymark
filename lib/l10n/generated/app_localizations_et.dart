@@ -221,6 +221,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get mainMenu => 'Peamenüü';
 
   @override
+  String get fullScreen => 'Täisekraan';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

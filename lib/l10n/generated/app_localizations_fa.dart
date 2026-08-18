@@ -221,6 +221,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get mainMenu => 'منوی اصلی';
 
   @override
+  String get fullScreen => 'تمام‌صفحه';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

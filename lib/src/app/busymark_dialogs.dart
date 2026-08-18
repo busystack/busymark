@@ -390,6 +390,22 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
+                title: context.l10n.fullScreen,
+                leading: const Icon(BusyMarkGlyphs.fullScreen),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.fullScreen,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: context.l10n.back,
+                leading: Icon(
+                  BusyMarkGlyphs.backFor(Directionality.of(context)),
+                ),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkAppShortcutLabels.back,
+                ),
+              ),
+              BusyMarkActionRow(
                 title: context.l10n.search,
                 subtitle: context.l10n.shortcutSearchDescription,
                 leading: const Icon(BusyMarkGlyphs.search),

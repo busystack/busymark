@@ -221,6 +221,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get mainMenu => 'القائمة الرئيسية';
 
   @override
+  String get fullScreen => 'ملء الشاشة';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

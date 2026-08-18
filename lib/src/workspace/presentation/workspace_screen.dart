@@ -21,6 +21,7 @@ import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_search_field.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../app/window_control_service.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart' show slugForHeading;
@@ -599,6 +600,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         child: BusyMarkHeaderIconButton(
                           tooltip: context.l10n.welcome,
                           icon: BusyMarkGlyphs.home,
+                          shortcut: BusyMarkAppShortcutLabels.back,
                           onPressed: () async {
                             final router = GoRouter.of(context);
                             if (await confirmSafeToContinue(context, ref)) {
@@ -818,6 +820,8 @@ class WorkspaceScreen extends ConsumerWidget {
         break;
       case HeaderBarAction.exportPdf:
         unawaited(exportActiveMarkdownToPdf(context, ref));
+      case HeaderBarAction.fullScreen:
+        break;
       case HeaderBarAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case HeaderBarAction.keyboardShortcuts:
@@ -881,6 +885,8 @@ class WorkspaceScreen extends ConsumerWidget {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
         unawaited(exportActiveMarkdownToPdf(context, ref));
+      case BusyMarkMainMenuAction.fullScreen:
+        unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case BusyMarkMainMenuAction.keyboardShortcuts:
@@ -7779,10 +7785,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _handleSourceVisibleLineChanged(int? line) {
-    if (widget.viewMode != DocumentViewModePreference.source &&
-        widget.viewMode != DocumentViewModePreference.split) {
-      return;
-    }
     final heading = line == null
         ? null
         : _outlineHeadingAtOrBeforeLine(widget.outline, line);

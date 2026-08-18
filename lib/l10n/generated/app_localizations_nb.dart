@@ -224,6 +224,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get mainMenu => 'Hovedmeny';
 
   @override
+  String get fullScreen => 'Fullskjerm';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

@@ -42,6 +42,14 @@ class BusyMarkApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(appSettingsControllerProvider);
+    final windowControls = ref.watch(windowControlServiceProvider);
+    ref.listen(headerBarActionsProvider, (previous, next) {
+      next.whenData((event) {
+        if (event.action == HeaderBarAction.fullScreen) {
+          unawaited(windowControls.toggleFullScreen());
+        }
+      });
+    });
     final fallbackAccent = ref.watch(initialSystemAccentColorProvider);
     final accent = ref
         .watch(systemAccentColorProvider)
@@ -73,7 +81,11 @@ class BusyMarkApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
-        final headerBarDefaults = _nativeHeaderBarDefaults(context, settings);
+        final headerBarDefaults = _nativeHeaderBarDefaults(
+          context,
+          settings,
+          fullScreen: windowControls.isFullScreen,
+        );
         return HeaderBarConfigurationDefaults(
           configuration: headerBarDefaults,
           child: _BusyMarkWindowLifecycle(
@@ -86,6 +98,9 @@ class BusyMarkApp extends ConsumerWidget {
                 BusyMarkAppShortcutActivators.save: const _SaveActiveIntent(),
                 BusyMarkAppShortcutActivators.exportPdf:
                     const _ExportPdfIntent(),
+                BusyMarkAppShortcutActivators.fullScreen:
+                    const _ToggleFullScreenIntent(),
+                BusyMarkAppShortcutActivators.back: const _BackIntent(),
                 BusyMarkAppShortcutActivators.keyboardShortcuts:
                     const _KeyboardShortcutsIntent(),
                 BusyMarkAppShortcutActivators.settings: const _SettingsIntent(),
@@ -180,6 +195,19 @@ class BusyMarkApp extends ConsumerWidget {
                           exportActiveMarkdownToPdf(navigatorContext, ref),
                         );
                       }
+                      return null;
+                    },
+                  ),
+                  _ToggleFullScreenIntent:
+                      CallbackAction<_ToggleFullScreenIntent>(
+                        onInvoke: (intent) {
+                          unawaited(windowControls.toggleFullScreen());
+                          return null;
+                        },
+                      ),
+                  _BackIntent: CallbackAction<_BackIntent>(
+                    onInvoke: (intent) {
+                      unawaited(_navigateBack(ref, router));
                       return null;
                     },
                   ),
@@ -318,6 +346,24 @@ class BusyMarkApp extends ConsumerWidget {
       },
       routerConfig: router,
     );
+  }
+
+  Future<void> _navigateBack(WidgetRef ref, GoRouter router) async {
+    final uri = router.routeInformationProvider.value.uri;
+    if (uri.path == settingsRoutePath) {
+      router.go(SettingsReturnTarget.fromSettingsUri(uri).location);
+      return;
+    }
+    if (uri.path != '/workspace') {
+      return;
+    }
+    final navigatorContext = rootNavigatorKey.currentContext;
+    if (navigatorContext == null ||
+        !await confirmSafeToContinue(navigatorContext, ref) ||
+        !navigatorContext.mounted) {
+      return;
+    }
+    router.go('/');
   }
 
   Future<void> _showOpenChooser(
@@ -594,8 +640,9 @@ class BusyMarkApp extends ConsumerWidget {
 
   HeaderBarConfiguration _nativeHeaderBarDefaults(
     BuildContext context,
-    AppSettings settings,
-  ) {
+    AppSettings settings, {
+    required bool fullScreen,
+  }) {
     final material = MaterialLocalizations.of(context);
     final l10n = context.l10n;
     final theme = HeaderBarTheme.fromContext(context);
@@ -622,10 +669,14 @@ class BusyMarkApp extends ConsumerWidget {
       sidebar: settings.sidebarVisible ? l10n.hideSidebar : l10n.showSidebar,
       sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
       back: material.backButtonTooltip,
+      backShortcut: BusyMarkAppShortcutLabels.back,
       save: l10n.save,
       exportPdf: l10n.exportAsPdf,
       exportPdfShortcut: BusyMarkAppShortcutLabels.exportPdf,
       exportPdfGtkAccelerator: BusyMarkAppShortcutGtkAccelerators.exportPdf,
+      fullScreen: l10n.fullScreen,
+      fullScreenShortcut: BusyMarkAppShortcutLabels.fullScreen,
+      fullScreenGtkAccelerator: BusyMarkAppShortcutGtkAccelerators.fullScreen,
       settings: l10n.settings,
       settingsShortcut: BusyMarkAppShortcutLabels.settings,
       settingsGtkAccelerator: BusyMarkAppShortcutGtkAccelerators.settings,
@@ -652,6 +703,7 @@ class BusyMarkApp extends ConsumerWidget {
       sidebarVisible: false,
       sidebarToggleVisible: false,
       backVisible: false,
+      fullScreen: fullScreen,
       modalBarrierDepth: 0,
       sidebarWidth: BusyMarkSizes.sidebarWidth,
       labels: labels,
@@ -849,6 +901,14 @@ class _SaveActiveIntent extends Intent {
 
 class _ExportPdfIntent extends Intent {
   const _ExportPdfIntent();
+}
+
+class _ToggleFullScreenIntent extends Intent {
+  const _ToggleFullScreenIntent();
+}
+
+class _BackIntent extends Intent {
+  const _BackIntent();
 }
 
 class _KeyboardShortcutsIntent extends Intent {

@@ -145,6 +145,85 @@ void main() {
     );
   });
 
+  testWidgets('main menu and F11 toggle full-screen mode', (tester) async {
+    final nativeWindow = _FakeNativeWindowController();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          nativeWindowControllerProvider.overrideWithValue(nativeWindow),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Finder fullScreenMenuItem() => find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupMenuItem<Object?> &&
+          widget.label == l10n.fullScreen,
+    );
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.fullScreen), findsOneWidget);
+    expect(find.text(BusyMarkAppShortcutLabels.fullScreen), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkPopupMenuItem<Object?>>(fullScreenMenuItem())
+          .checked,
+      isFalse,
+    );
+
+    await tester.tap(find.text(l10n.fullScreen));
+    await tester.pumpAndSettle();
+    expect(nativeWindow.fullScreenValues, [true]);
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BusyMarkPopupMenuItem<Object?>>(fullScreenMenuItem())
+          .checked,
+      isTrue,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f11);
+    await tester.pumpAndSettle();
+    expect(nativeWindow.fullScreenValues, [true, false]);
+  });
+
+  testWidgets('Alt+Left activates the header Back command', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        ],
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
+    await tester.pumpAndSettle();
+    expect(
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+  });
+
   testWidgets('Escape closes header popup menus', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -7557,8 +7636,10 @@ class _MemorySettingsStore implements LocalSettingsStore {
 
 class _FakeNativeWindowController implements NativeWindowController {
   final preventCloseValues = <bool>[];
+  final fullScreenValues = <bool>[];
   final listeners = <WindowListener>[];
   var closeCount = 0;
+  var fullScreen = false;
 
   @override
   Future<void> setPreventClose(bool value) async {
@@ -7568,6 +7649,15 @@ class _FakeNativeWindowController implements NativeWindowController {
   @override
   Future<void> close() async {
     closeCount++;
+  }
+
+  @override
+  Future<bool> isFullScreen() async => fullScreen;
+
+  @override
+  Future<void> setFullScreen(bool value) async {
+    fullScreen = value;
+    fullScreenValues.add(value);
   }
 
   @override

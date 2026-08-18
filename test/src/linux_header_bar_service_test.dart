@@ -100,6 +100,7 @@ void main() {
 
     await sendNativeAction('save');
     await sendNativeAction('save');
+    await sendNativeAction('fullScreen');
     await sendNativeAction('reportIssue');
     await sendNativeAction('sidebarFiles');
     await sendNativeAction('sidebarToc');
@@ -110,6 +111,7 @@ void main() {
     expect(events.map((event) => event.action), [
       HeaderBarAction.save,
       HeaderBarAction.save,
+      HeaderBarAction.fullScreen,
       HeaderBarAction.reportIssue,
       HeaderBarAction.sidebarFiles,
       HeaderBarAction.sidebarToc,
@@ -117,7 +119,7 @@ void main() {
       HeaderBarAction.sidebarGit,
       HeaderBarAction.sidebarHistory,
     ]);
-    expect(events.map((event) => event.sequence), [1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(events.map((event) => event.sequence), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(events.first, isNot(events.last));
   });
 

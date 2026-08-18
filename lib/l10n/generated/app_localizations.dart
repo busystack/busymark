@@ -519,6 +519,12 @@ abstract class AppLocalizations {
   /// **'Main menu'**
   String get mainMenu;
 
+  /// Command that toggles full-screen window mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Screen'**
+  String get fullScreen;
+
   /// Markdown format label.
   ///
   /// In en, this message translates to:

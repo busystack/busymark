@@ -100,6 +100,7 @@ void main() {
       'sidebarWidth',
       'textDirection',
       'backVisible',
+      'fullScreen',
       'modalBarrierVisible',
       'modalBarrierDepth',
       'labels',
@@ -212,11 +213,13 @@ void main() {
     expect(service, contains('keyboardShortcuts'));
     expect(service, contains('markdownAndHtml'));
     expect(service, contains('reportIssue'));
+    expect(service, contains('fullScreen'));
     expect(app, contains('menu: l10n.mainMenu'));
     expect(app, contains('settings: l10n.settings'));
     expect(app, contains('keyboardShortcuts: l10n.keyboardShortcuts'));
     expect(app, contains('markdownAndHtml: l10n.markdownAndHtml'));
     expect(app, contains('reportIssue: l10n.reportIssue'));
+    expect(app, contains('fullScreen: l10n.fullScreen'));
     expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
     expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
     expect(dialogs, contains('showBusyMarkMarkdownHtmlDialog'));
@@ -226,6 +229,8 @@ void main() {
     expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.redo'));
     expect(shortcuts, contains("newDocumentLabel = 'Ctrl+N'"));
     expect(shortcuts, contains("saveLabel = 'Ctrl+S'"));
+    expect(shortcuts, contains("fullScreenLabel = 'F11'"));
+    expect(shortcuts, contains("backLabel = 'Alt+Left'"));
     expect(shortcuts, contains("undoLabel = 'Ctrl+Z'"));
     expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
     expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
@@ -242,6 +247,7 @@ void main() {
     expect(mainMenu, contains('tooltip: l10n.mainMenu'));
     expect(mainMenu, contains('label: l10n.reportIssue'));
     expect(mainMenu, contains('label: l10n.exportAsPdf'));
+    expect(mainMenu, contains('label: l10n.fullScreen'));
     expect(mainMenu, contains('enabled: canExportPdf'));
     expect(native, contains('GtkWidget* main_menu_button;'));
     expect(native, contains('GMenu* main_menu_model;'));
@@ -249,6 +255,9 @@ void main() {
     expect(native, contains('rebuild_main_menu_model'));
     expect(native, contains('"header.keyboard-shortcuts"'));
     expect(native, contains('"header.export-pdf"'));
+    expect(native, contains('"header.full-screen"'));
+    expect(native, contains('full_screen_gaction_activated_cb'));
+    expect(native, contains('configuration.full_screen'));
     expect(native, contains('configuration.can_export_pdf'));
     expect(native, contains('"header.markdown-and-html"'));
     expect(native, contains('"header.report-issue"'));

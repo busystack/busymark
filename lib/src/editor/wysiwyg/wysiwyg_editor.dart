@@ -95,8 +95,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _redoStack = <BusyDocument>[];
   final _itemScrollController = ItemScrollController();
   final _itemPositionsListener = ItemPositionsListener.create();
-  List<_EditorRenderEntry> _viewportRenderEntries = const [];
-  List<DocumentOutlineHeading> _viewportOutline = const [];
+  List<({int itemIndex, DocumentOutlineHeading heading})>
+  _viewportOutlineStops = const [];
   String? _reportedVisibleHeadingKey;
   bool _hasReportedVisibleHeading = false;
   late final FocusNode _selectionFocusNode;
@@ -213,7 +213,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleVisibleItemsChanged() {
-    if (!mounted || _viewportRenderEntries.isEmpty) {
+    if (!mounted || _viewportOutlineStops.isEmpty) {
       return;
     }
     int? firstVisible;
@@ -228,23 +228,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (firstVisible == null) {
       return;
     }
+    var low = 0;
+    var high = _viewportOutlineStops.length - 1;
     DocumentOutlineHeading? heading;
-    for (
-      var index = math.min(firstVisible, _viewportRenderEntries.length - 1);
-      index >= 0;
-      index -= 1
-    ) {
-      final block = _viewportRenderEntries[index].block;
-      if (block.kind != BusyBlockKind.heading) {
-        continue;
+    while (low <= high) {
+      final middle = (low + high) >> 1;
+      final candidate = _viewportOutlineStops[middle];
+      if (candidate.itemIndex <= firstVisible) {
+        heading = candidate.heading;
+        low = middle + 1;
+      } else {
+        high = middle - 1;
       }
-      heading = _viewportOutline
-          .where((candidate) => candidate.editorBlockId == block.id)
-          .firstOrNull;
-      heading ??= _viewportOutline
-          .where((candidate) => candidate.id == block.attributes['id'])
-          .firstOrNull;
-      break;
     }
     final key = heading == null
         ? null
@@ -265,8 +260,21 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final renderEntries = _editorRenderEntries(
       _documentController.document.blocks,
     );
-    _viewportRenderEntries = renderEntries;
-    _viewportOutline = _documentController.document.outline;
+    final outline = _documentController.document.outline;
+    final outlineByBlockId = {
+      for (final heading in outline)
+        if (heading.editorBlockId case final blockId?) blockId: heading,
+    };
+    final outlineByHeadingId = {
+      for (final heading in outline) heading.id: heading,
+    };
+    _viewportOutlineStops = [
+      for (final (index, entry) in renderEntries.indexed)
+        if (outlineByBlockId[entry.block.id] ??
+                outlineByHeadingId[entry.block.attributes['id']]
+            case final heading?)
+          (itemIndex: index, heading: heading),
+    ];
     final blocks = entries.map((entry) => entry.block).toList();
     final blockSelectionActive = _hasBlockSelection;
     final selectionRangesByBlockId = {

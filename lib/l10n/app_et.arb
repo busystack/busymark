@@ -129,6 +129,8 @@
   "@lightTheme": {"description": "Light theme option."},
   "mainMenu": "Peamenüü",
   "@mainMenu": {"description": "Native header bar main menu tooltip."},
+  "fullScreen": "Täisekraan",
+  "@fullScreen": {"description": "Command that toggles full-screen window mode."},
   "markdown": "Markdown",
   "@markdown": {"description": "Markdown format label."},
   "open": "Ava",

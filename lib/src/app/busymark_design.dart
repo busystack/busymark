@@ -1476,6 +1476,7 @@ List<PopupMenuEntry<T>> _busyMarkFallbackItems<T>(
           enabled: item.enabled,
           checked: item.checked,
           trailingCheck: item.trailingCheck,
+          mutuallyExclusive: item.mutuallyExclusive,
           routeKey: routeKeyPending ? routeKey : null,
         ),
       );
@@ -1519,6 +1520,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
     super.enabled = true,
     bool checked = false,
     bool trailingCheck = false,
+    bool mutuallyExclusive = true,
     Key? routeKey,
   }) : label = label,
        menuValue = value,
@@ -1526,6 +1528,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
        shortcut = shortcut,
        checked = checked,
        trailingCheck = trailingCheck,
+       mutuallyExclusive = mutuallyExclusive,
        super(
          value: value,
          child: KeyedSubtree(
@@ -1536,6 +1539,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
              shortcut: shortcut,
              checked: checked,
              trailingCheck: trailingCheck,
+             mutuallyExclusive: mutuallyExclusive,
            ),
          ),
        );
@@ -1546,6 +1550,7 @@ class BusyMarkPopupMenuItem<T> extends PopupMenuItem<T> {
   final String? shortcut;
   final bool checked;
   final bool trailingCheck;
+  final bool mutuallyExclusive;
 }
 
 class _BusyMarkPopupMenuItemContent extends StatelessWidget {
@@ -1555,6 +1560,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
     required this.shortcut,
     required this.checked,
     required this.trailingCheck,
+    required this.mutuallyExclusive,
   });
 
   final String label;
@@ -1562,6 +1568,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
   final String? shortcut;
   final bool checked;
   final bool trailingCheck;
+  final bool mutuallyExclusive;
 
   @override
   Widget build(BuildContext context) {
@@ -1580,7 +1587,7 @@ class _BusyMarkPopupMenuItemContent extends StatelessWidget {
           );
     return Semantics(
       checked: trailingCheck ? checked : null,
-      inMutuallyExclusiveGroup: trailingCheck,
+      inMutuallyExclusiveGroup: trailingCheck && mutuallyExclusive,
       child: IconTheme.merge(
         data: const IconThemeData(size: BusyMarkSizes.iconSm),
         child: Row(

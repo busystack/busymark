@@ -223,6 +223,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get mainMenu => 'Menu główne';
 
   @override
+  String get fullScreen => 'Pełny ekran';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

@@ -225,6 +225,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get mainMenu => 'Hauptmenü';
 
   @override
+  String get fullScreen => 'Vollbild';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

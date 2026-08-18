@@ -223,6 +223,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get mainMenu => 'Головне меню';
 
   @override
+  String get fullScreen => 'Повноекранний режим';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

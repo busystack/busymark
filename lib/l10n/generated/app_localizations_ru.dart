@@ -224,6 +224,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mainMenu => 'Главное меню';
 
   @override
+  String get fullScreen => 'Полноэкранный режим';
+
+  @override
   String get markdown => 'Markdown';
 
   @override

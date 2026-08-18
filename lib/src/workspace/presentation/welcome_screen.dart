@@ -17,6 +17,7 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
+import '../../app/window_control_service.dart';
 import '../../core/debug_log.dart';
 import '../../core/path_utils.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
@@ -233,6 +234,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
       case HeaderBarAction.exportPdf:
+      case HeaderBarAction.fullScreen:
       case HeaderBarAction.menu:
       case HeaderBarAction.viewModeEditor:
       case HeaderBarAction.viewModeSource:
@@ -264,6 +266,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
         break;
+      case BusyMarkMainMenuAction.fullScreen:
+        unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:

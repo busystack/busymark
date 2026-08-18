@@ -10,6 +10,23 @@ void main() {
     await service.initialize();
 
     expect(native.preventCloseValues, [true]);
+    expect(native.listeners, hasLength(1));
+  });
+
+  test('toggles full screen and tracks native window-state changes', () async {
+    final native = _FakeNativeWindowController();
+    final service = WindowControlService(nativeWindow: native);
+
+    await service.initialize();
+    await service.toggleFullScreen();
+
+    expect(native.fullScreenValues, [true]);
+    expect(service.isFullScreen, isTrue);
+
+    native.listeners.single.onWindowLeaveFullScreen();
+    expect(service.isFullScreen, isFalse);
+    native.listeners.single.onWindowEnterFullScreen();
+    expect(service.isFullScreen, isTrue);
   });
 
   test('no dirty documents closes without dialog', () async {
@@ -130,8 +147,10 @@ void main() {
 
 class _FakeNativeWindowController implements NativeWindowController {
   final preventCloseValues = <bool>[];
+  final fullScreenValues = <bool>[];
   final listeners = <WindowListener>[];
   var closeCount = 0;
+  var fullScreen = false;
 
   @override
   Future<void> setPreventClose(bool value) async {
@@ -141,6 +160,15 @@ class _FakeNativeWindowController implements NativeWindowController {
   @override
   Future<void> close() async {
     closeCount++;
+  }
+
+  @override
+  Future<bool> isFullScreen() async => fullScreen;
+
+  @override
+  Future<void> setFullScreen(bool value) async {
+    fullScreen = value;
+    fullScreenValues.add(value);
   }
 
   @override
