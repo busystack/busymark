@@ -16,6 +16,7 @@ class GitChangesView extends StatefulWidget {
     required this.onConfirmDiscard,
     this.hasUnsavedEditorChanges = false,
     this.outsideWorkspacePaths = const {},
+    this.onDraftCommitMessage,
   });
 
   final GitState state;
@@ -24,6 +25,7 @@ class GitChangesView extends StatefulWidget {
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
   final bool hasUnsavedEditorChanges;
   final Set<String> outsideWorkspacePaths;
+  final Future<String?> Function()? onDraftCommitMessage;
 
   @override
   State<GitChangesView> createState() => _GitChangesViewState();
@@ -32,6 +34,7 @@ class GitChangesView extends StatefulWidget {
 class _GitChangesViewState extends State<GitChangesView> {
   late final TextEditingController _commitMessageController;
   var _committing = false;
+  var _drafting = false;
 
   @override
   void initState() {
@@ -131,9 +134,33 @@ class _GitChangesViewState extends State<GitChangesView> {
           hasUnsavedEditorChanges: widget.hasUnsavedEditorChanges,
           committing: _committing,
           onCommit: _commit,
+          onDraftCommitMessage: widget.onDraftCommitMessage == null
+              ? null
+              : _draftCommitMessage,
+          drafting: _drafting,
         ),
       ],
     );
+  }
+
+  Future<void> _draftCommitMessage() async {
+    final callback = widget.onDraftCommitMessage;
+    if (callback == null || _drafting || _committing) {
+      return;
+    }
+    setState(() => _drafting = true);
+    try {
+      final proposal = await callback();
+      if (mounted && proposal != null) {
+        _commitMessageController
+          ..text = proposal.trim()
+          ..selection = TextSelection.collapsed(offset: proposal.trim().length);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _drafting = false);
+      }
+    }
   }
 
   Future<void> _commit() async {
@@ -169,6 +196,8 @@ class _CommitPanel extends StatelessWidget {
     required this.committing,
     required this.onCommit,
     required this.hasUnsavedEditorChanges,
+    required this.drafting,
+    this.onDraftCommitMessage,
   });
 
   final TextEditingController controller;
@@ -176,6 +205,8 @@ class _CommitPanel extends StatelessWidget {
   final bool committing;
   final Future<void> Function() onCommit;
   final bool hasUnsavedEditorChanges;
+  final bool drafting;
+  final Future<void> Function()? onDraftCommitMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +249,19 @@ class _CommitPanel extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
+            if (onDraftCommitMessage != null) ...[
+              BusyMarkPushButton.standard(
+                onPressed: !committing && !drafting && stagedFiles.isNotEmpty
+                    ? () => onDraftCommitMessage!()
+                    : null,
+                child: Text(
+                  drafting
+                      ? context.l10n.aiDrafting
+                      : context.l10n.aiDraftWithAi,
+                ),
+              ),
+              const SizedBox(height: BusyMarkSpacing.sm),
+            ],
             Row(
               children: [
                 Expanded(

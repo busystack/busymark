@@ -74,7 +74,72 @@ void main() {
     expect(invocation?.input, 'Unclear text.');
     expect(invocation?.contentFormat, AiContentFormat.markdown);
     expect(invocation?.sourceRevision, 7);
+    expect(invocation?.documentSource, source);
+    expect(invocation?.replacementStart, 0);
+    expect(invocation?.replacementEnd, 13);
     expect(changedText, 'Clear text.\n');
+  });
+
+  testWidgets('source AI code action captures one complete fenced block', (
+    tester,
+  ) async {
+    const source = 'Before.\n\n```dart\nfinal value = 1;\n```\n\nAfter.\n';
+    AiEditInvocation? invocation;
+    String? changedText;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (text, _) => changedText = text,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              editRevision: 9,
+              onAiEdit: (value) async {
+                invocation = value;
+                return 'The block declares an immutable integer value.';
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    field.controller!.selection = TextSelection.collapsed(
+      offset: source.indexOf('value'),
+    );
+
+    await tester.tap(find.byTooltip('AI'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Explain code').last);
+    await tester.pumpAndSettle();
+
+    expect(invocation?.feature, AiFeature.explainCode);
+    expect(invocation?.scope, AiScope.codeBlock);
+    expect(invocation?.input, '```dart\nfinal value = 1;\n```\n');
+    expect(invocation?.replacementStart, source.indexOf('\n\nAfter.') + 1);
+    expect(invocation?.replacementStart, invocation?.replacementEnd);
+    expect(
+      changedText,
+      contains('The block declares an immutable integer value.'),
+    );
   });
 
   testWidgets('source editor remains LTR inside an Arabic interface', (

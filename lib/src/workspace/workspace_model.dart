@@ -31,6 +31,12 @@ enum DocumentKind {
   unknown,
 }
 
+extension DocumentKindAiSupport on DocumentKind {
+  bool get supportsAiMarkdownEditing =>
+      this == DocumentKind.markdown ||
+      this == DocumentKind.writersideMarkdownTopic;
+}
+
 class ActiveDocumentOutline {
   const ActiveDocumentOutline({
     required this.workspaceId,

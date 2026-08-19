@@ -24,6 +24,11 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
     'markdown.attribute.malformed' => l10n.diagnosticMarkdownAttributeMalformed,
     'markdown.heading.duplicate-id' =>
       l10n.diagnosticMarkdownHeadingDuplicateId(value('id')),
+    'markdown.heading.skipped-level' =>
+      l10n.diagnosticMarkdownHeadingSkippedLevel(
+        int.tryParse(value('level')) ?? 0,
+        int.tryParse(value('previousLevel')) ?? 0,
+      ),
     'writerside.topic.h1-converted-to-chapter' =>
       l10n.diagnosticWritersideTopicH1ConvertedToChapter,
     'writerside.topic.missing-title' =>
@@ -46,12 +51,17 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
               value('targetName'),
             )
           : l10n.diagnosticMarkdownLinkUnresolvedAnchor(value('anchor')),
+    'markdown.link.empty-text' => l10n.diagnosticMarkdownLinkEmptyText,
+    'markdown.link.review-text' => l10n.diagnosticMarkdownLinkReviewText(
+      value('text'),
+    ),
     'markdown.image.missing-alt' => l10n.diagnosticMarkdownImageMissingAlt(
       value('destination'),
     ),
     'markdown.image.missing-file' => l10n.diagnosticMarkdownImageMissingFile(
       value('destination'),
     ),
+    'markdown.table.empty-header' => l10n.diagnosticMarkdownTableEmptyHeader,
     'writerside.config.invalid-xml' ||
     'writerside.build-profiles.invalid-xml' ||
     'writerside.instance-groups.invalid-xml' ||

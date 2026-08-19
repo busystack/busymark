@@ -29,24 +29,40 @@ void main() {
     expect(settings.toJson()['autoSave'], isTrue);
   });
 
-  test('AI defaults to disabled local Ollama and round-trips safely', () {
+  test('AI defaults disabled and provider settings never persist secrets', () {
     final defaults = AppSettings.defaults();
     expect(defaults.aiProviderPreference, AiProviderPreference.disabled);
     expect(defaults.aiOllamaEndpoint, 'http://127.0.0.1:11434');
     expect(defaults.aiOllamaModel, isEmpty);
+    expect(defaults.aiOpenAiModel, 'gpt-5.6-terra');
+    expect(defaults.aiGeminiModel, 'gemini-3.6-flash');
+    expect(
+      defaults.aiModelRoutingPreference,
+      AiModelRoutingPreference.automatic,
+    );
+    expect(defaults.aiCloudProviderConsentIds, isEmpty);
 
     final reloaded = AppSettings.fromJson(
       defaults
           .copyWith(
-            aiProviderPreference: AiProviderPreference.ollamaLocal,
+            aiProviderPreference: AiProviderPreference.openAi,
             aiOllamaModel: 'local-model',
+            aiOpenAiModel: 'gpt-5.6-sol',
+            aiModelRoutingPreference: AiModelRoutingPreference.fixed,
+            aiCloudProviderConsentIds: const ['openai'],
           )
           .toJson(),
     );
 
-    expect(reloaded.aiProviderPreference, AiProviderPreference.ollamaLocal);
+    expect(reloaded.aiProviderPreference, AiProviderPreference.openAi);
     expect(reloaded.aiOllamaModel, 'local-model');
-    expect(reloaded.toJson(), isNot(contains('apiKey')));
+    expect(reloaded.aiOpenAiModel, 'gpt-5.6-sol');
+    expect(reloaded.aiModelRoutingPreference, AiModelRoutingPreference.fixed);
+    expect(reloaded.aiCloudProviderConsentIds, ['openai']);
+    final serialized = jsonEncode(reloaded.toJson()).toLowerCase();
+    expect(serialized, isNot(contains('apikey')));
+    expect(serialized, isNot(contains('api_key')));
+    expect(serialized, isNot(contains('secret')));
   });
 
   test('editing button direction defaults to horizontal', () {

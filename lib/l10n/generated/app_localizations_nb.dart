@@ -3047,7 +3047,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'KI-redigering er eksplisitt og bare lokal. BusyMark sender kun den viste konteksten til en Ollama-tjeneste på loopback-grensesnittet og bruker aldri et forslag uten gjennomgang.';
+      'KI-redigering startes bare eksplisitt. BusyMark sender kun den viste konteksten til den valgte leverandøren og bruker aldri et forslag uten gjennomgang.';
 
   @override
   String get aiProvider => 'KI-leverandør';
@@ -3075,11 +3075,11 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark kunne ikke teste den lokale Ollama-tilkoblingen.';
+      'BusyMark kunne ikke bekrefte KI-tekstgenerering.';
 
   @override
   String get aiConfigureFirst =>
-      'Aktiver Lokal Ollama og velg en installert modell under Innstillinger → KI.';
+      'Aktiver en KI-leverandør og bekreft en modell under Innstillinger → KI.';
 
   @override
   String get aiRewrite => 'Skriv om';
@@ -3122,7 +3122,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Lokal Ollama mottar $count tegn fra gjeldende redigeringskontekst.';
+    return 'Den valgte leverandøren mottar $count tegn fra den viste konteksten.';
   }
 
   @override
@@ -3145,4 +3145,152 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Vis sendt kontekst';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'KI er deaktivert. BusyMark sender aldri dokumentinnhold uten en eksplisitt KI-handling.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark sender bare konteksten som vises i gjennomgangsdialogen, til den konfigurerte lokale Ollama-tjenesten. Forslag brukes aldri uten gjennomgang.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark sender bare konteksten som vises i gjennomgangsdialogen, til $provider. Forespørsler er tilstandsløse, og forslag brukes aldri uten gjennomgang.';
+  }
+
+  @override
+  String get aiApiKey => 'API-nøkkel';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'En nøkkel er lagret i systemets legitimasjonslager';
+
+  @override
+  String get aiApiKeyEnterHint => 'Skriv inn en API-nøkkel for leverandøren';
+
+  @override
+  String get aiReplaceApiKey => 'Erstatt API-nøkkel';
+
+  @override
+  String get aiSaveApiKey => 'Lagre API-nøkkel sikkert';
+
+  @override
+  String get aiRemoveApiKey => 'Fjern lagret API-nøkkel';
+
+  @override
+  String get aiCredentialSaved =>
+      'API-nøkkelen ble lagret i systemets legitimasjonslager.';
+
+  @override
+  String get aiCredentialRemoved => 'Den lagrede API-nøkkelen ble fjernet.';
+
+  @override
+  String get aiModelRouting => 'Modellvalg';
+
+  @override
+  String get aiAutomaticRouting => 'Automatisk etter oppgave';
+
+  @override
+  String get aiFixedModelRouting => 'Bruk valgt modell';
+
+  @override
+  String get aiPreferredModel => 'Foretrukket modell';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests forespørsler · $input inndata-tokener · $output utdata-tokener';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Sende innhold til $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Aktiver $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Bare innholdet som vises i hver KI-gjennomgangsdialog, sendes. Forespørsler er tilstandsløse, forslag krever gjennomgang, og API-nøkkelen lagres i legitimasjonslageret til Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Bekreft først datadeling med $provider under Innstillinger → KI.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Generering bekreftet med $model. $count kompatible modeller er tilgjengelige.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'En kaldstart av den lokale modellen ble oppdaget.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Ingen kompatibel tekstgenereringsmodell er tilgjengelig.';
+
+  @override
+  String get aiEnableProvider => 'Aktiver en KI-leverandør først.';
+
+  @override
+  String get aiExplainCode => 'Forklar kode';
+
+  @override
+  String get aiImproveCode => 'Forbedre kode';
+
+  @override
+  String get aiDraftCommitMessage => 'Lag utkast til commit-melding';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Plasser markøren i en inngjerdet kodeblokk først.';
+
+  @override
+  String get aiDrafting => 'Lager utkast…';
+
+  @override
+  String get aiDraftWithAi => 'Lag utkast med KI';
+
+  @override
+  String get generateOrUpdateMarkdownToc =>
+      'Generer/oppdater innholdsfortegnelse';
+
+  @override
+  String get markdownTocTitle => 'Innholdsfortegnelse';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Innholdsfortegnelsen ble oppdatert med $count oppføringer.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Legg til minst én seksjonsoverskrift før du genererer en innholdsfortegnelse.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'BusyMark-markørene for innholdsfortegnelsen mangler, er duplisert eller står i feil rekkefølge.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Overskrift på nivå $level følger nivå $previousLevel; kontroller seksjonsnestingen.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Lenketeksten er tom. Oppgi et tilgjengelig navn som beskriver formålet.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Kontroller om lenketeksten «$text» beskriver formålet i konteksten.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tabelloverskrifter må identifisere kolonnene. Fyll ut alle tomme overskrifter.';
 }

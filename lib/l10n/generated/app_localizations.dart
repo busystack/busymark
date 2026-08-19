@@ -5148,7 +5148,7 @@ abstract class AppLocalizations {
   /// Privacy description for BusyMark local AI.
   ///
   /// In en, this message translates to:
-  /// **'AI editing is explicit and local-only. BusyMark sends only the displayed context to a loopback Ollama service and never applies a proposal without review.'**
+  /// **'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.'**
   String get aiLocalOnlyDescription;
 
   /// Settings label for the active AI provider.
@@ -5169,13 +5169,13 @@ abstract class AppLocalizations {
   /// **'Ollama model'**
   String get aiOllamaModel;
 
-  /// Button that checks Ollama and discovers installed models.
+  /// Button that verifies generation with the configured AI provider and model.
   ///
   /// In en, this message translates to:
   /// **'Test connection'**
   String get aiTestConnection;
 
-  /// Status while BusyMark checks Ollama.
+  /// Status while BusyMark verifies the configured AI provider and model.
   ///
   /// In en, this message translates to:
   /// **'Testing…'**
@@ -5193,16 +5193,16 @@ abstract class AppLocalizations {
   /// **'Ollama is running, but no installed models were found.'**
   String get aiNoModels;
 
-  /// Generic failure shown while testing the local Ollama connection.
+  /// Generic failure shown while testing AI generation.
   ///
   /// In en, this message translates to:
-  /// **'BusyMark could not test the local Ollama connection.'**
+  /// **'BusyMark could not verify AI text generation.'**
   String get aiConnectionFailed;
 
   /// Message shown when an AI action is unavailable.
   ///
   /// In en, this message translates to:
-  /// **'Enable Local Ollama and choose an installed model in Settings → AI.'**
+  /// **'Enable an AI provider and verify a model in Settings → AI.'**
   String get aiConfigureFirst;
 
   /// AI action that rewrites selected text for clarity.
@@ -5286,7 +5286,7 @@ abstract class AppLocalizations {
   /// Disclosure of AI context size.
   ///
   /// In en, this message translates to:
-  /// **'Local Ollama will receive {count} characters from the current editor context.'**
+  /// **'The selected provider will receive {count} characters from the displayed context.'**
   String aiContextDisclosure(int count);
 
   /// Label for original text in an AI proposal review.
@@ -5324,6 +5324,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View context sent'**
   String get aiViewContext;
+
+  /// Privacy notice when AI is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is disabled. BusyMark never sends document content without an explicit AI action.'**
+  String get aiPrivacyDisabled;
+
+  /// Privacy notice for local Ollama.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark sends only the context shown in the review dialog to the configured loopback Ollama service. Proposals are never applied without review.'**
+  String get aiPrivacyLocal;
+
+  /// Privacy notice for a selected cloud provider.
+  ///
+  /// In en, this message translates to:
+  /// **'BusyMark sends only the context shown in the review dialog to {provider}. Requests are stateless and proposals are never applied without review.'**
+  String aiPrivacyCloud(String provider);
+
+  /// Label for a cloud AI provider API key.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get aiApiKey;
+
+  /// Hint when a cloud API key is already stored.
+  ///
+  /// In en, this message translates to:
+  /// **'A key is stored in the system credential store'**
+  String get aiApiKeyStoredHint;
+
+  /// Hint for entering a cloud provider API key.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a provider API key'**
+  String get aiApiKeyEnterHint;
+
+  /// Action that replaces a stored cloud provider key.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace API key'**
+  String get aiReplaceApiKey;
+
+  /// Action that saves a cloud provider key to the system credential store.
+  ///
+  /// In en, this message translates to:
+  /// **'Save API key securely'**
+  String get aiSaveApiKey;
+
+  /// Action that removes a cloud provider key from the system credential store.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove saved API key'**
+  String get aiRemoveApiKey;
+
+  /// Confirmation after saving an AI provider key.
+  ///
+  /// In en, this message translates to:
+  /// **'API key saved in the system credential store.'**
+  String get aiCredentialSaved;
+
+  /// Confirmation after removing an AI provider key.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved API key was removed.'**
+  String get aiCredentialRemoved;
+
+  /// Settings label for AI model routing.
+  ///
+  /// In en, this message translates to:
+  /// **'Model routing'**
+  String get aiModelRouting;
+
+  /// AI model routing option that chooses by task class.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic by task'**
+  String get aiAutomaticRouting;
+
+  /// AI model routing option that always uses the preferred model.
+  ///
+  /// In en, this message translates to:
+  /// **'Use selected model'**
+  String get aiFixedModelRouting;
+
+  /// Settings label for a preferred cloud AI model.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred model'**
+  String get aiPreferredModel;
+
+  /// Local monthly AI usage summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{requests} requests · {input} input tokens · {output} output tokens'**
+  String aiUsageThisMonth(int requests, int input, int output);
+
+  /// Cloud AI data-sharing confirmation title.
+  ///
+  /// In en, this message translates to:
+  /// **'Send content to {provider}?'**
+  String aiCloudConsentTitle(String provider);
+
+  /// Action that confirms use of a cloud AI provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable {provider}'**
+  String aiCloudConsentEnable(String provider);
+
+  /// Cloud AI data-sharing and credential disclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Only content shown in each AI review dialog is sent. Requests are stateless, proposals require review, and the API key is stored in the Linux system credential store.'**
+  String get aiCloudConsentMessage;
+
+  /// AI action error when cloud consent is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm {provider} data sharing in Settings → AI first.'**
+  String aiCloudConsentRequired(String provider);
+
+  /// Successful AI model generation qualification.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation verified with {model}. {count} compatible model(s) available.'**
+  String aiGenerationVerified(String model, int count);
+
+  /// Additional model qualification status when local generation required a cold start.
+  ///
+  /// In en, this message translates to:
+  /// **'A local model cold start was observed.'**
+  String get aiColdStartObserved;
+
+  /// AI connection status when no compatible generation model is available.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible text-generation model is available.'**
+  String get aiNoCompatibleModels;
+
+  /// AI settings error when no provider is enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable an AI provider first.'**
+  String get aiEnableProvider;
+
+  /// AI action that explains a fenced code block.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain code'**
+  String get aiExplainCode;
+
+  /// AI action that proposes an improved fenced code block.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve code'**
+  String get aiImproveCode;
+
+  /// AI action that drafts a Git commit message.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft commit message'**
+  String get aiDraftCommitMessage;
+
+  /// AI code action error when no fenced code block is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Place the cursor in a fenced code block first.'**
+  String get aiCodeBlockRequired;
+
+  /// Progress label while AI drafts a commit message.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafting…'**
+  String get aiDrafting;
+
+  /// Action that drafts a Git commit message with AI.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft with AI'**
+  String get aiDraftWithAi;
+
+  /// Deterministic action that creates or refreshes a Markdown table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate/update table of contents'**
+  String get generateOrUpdateMarkdownToc;
+
+  /// Heading inserted above a generated Markdown table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Table of contents'**
+  String get markdownTocTitle;
+
+  /// Confirmation after generating a Markdown table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Table of contents updated with {count} entries.'**
+  String markdownTocUpdated(int count);
+
+  /// Message when a Markdown document has no section headings for a generated table of contents.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one section heading before generating a table of contents.'**
+  String get markdownTocNoHeadings;
+
+  /// Message when a generated Markdown table-of-contents region cannot be safely updated.
+  ///
+  /// In en, this message translates to:
+  /// **'The BusyMark table-of-contents markers are missing, duplicated, or out of order.'**
+  String get markdownTocMalformedMarkers;
+
+  /// Accessibility diagnostic for a skipped Markdown heading level.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading level {level} follows level {previousLevel}; review the section nesting.'**
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel);
+
+  /// Accessibility diagnostic for a Markdown link without text.
+  ///
+  /// In en, this message translates to:
+  /// **'Link text is empty; provide an accessible name that describes its purpose.'**
+  String get diagnosticMarkdownLinkEmptyText;
+
+  /// Accessibility hint for potentially non-descriptive Markdown link text.
+  ///
+  /// In en, this message translates to:
+  /// **'Review whether the link text “{text}” describes its purpose in context.'**
+  String diagnosticMarkdownLinkReviewText(String text);
+
+  /// Accessibility diagnostic for an empty Markdown table header cell.
+  ///
+  /// In en, this message translates to:
+  /// **'Table header cells must identify their columns; complete each empty header.'**
+  String get diagnosticMarkdownTableEmptyHeader;
 }
 
 class _AppLocalizationsDelegate

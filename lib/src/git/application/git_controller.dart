@@ -1054,6 +1054,26 @@ class GitController extends Notifier<GitState> {
     return completed;
   }
 
+  Future<String?> stagedDiffForAi() async {
+    final operation = _captureRepositoryOperation();
+    if (operation == null ||
+        (state.statusSnapshot?.stagedFiles.isEmpty ?? true)) {
+      return null;
+    }
+    try {
+      final diff = await _gateway.diffAll(operation.repository, staged: true);
+      if (!_isCurrentRepositoryOperation(operation)) {
+        return null;
+      }
+      return diff.rawPatch.trim().isEmpty ? null : diff.rawPatch;
+    } on Object catch (error) {
+      if (_isCurrentRepositoryOperation(operation)) {
+        _setFailure(error, commandName: 'diff');
+      }
+      return null;
+    }
+  }
+
   Future<void> pullFastForwardOnly() async {
     await _runOperation(
       (repository) => _gateway.pullFastForwardOnly(repository),

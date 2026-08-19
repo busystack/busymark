@@ -3074,7 +3074,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'La modifica con IA è esplicita e solo locale. BusyMark invia esclusivamente il contesto mostrato a un servizio Ollama sull’interfaccia di loopback e non applica mai una proposta senza revisione.';
+      'La modifica con IA viene avviata solo esplicitamente. BusyMark invia esclusivamente il contesto mostrato al fornitore selezionato e non applica mai una proposta senza revisione.';
 
   @override
   String get aiProvider => 'Provider IA';
@@ -3102,11 +3102,11 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark non è riuscito a verificare la connessione locale a Ollama.';
+      'BusyMark non è riuscito a verificare la generazione di testo con IA.';
 
   @override
   String get aiConfigureFirst =>
-      'Abilita Ollama locale e scegli un modello installato in Impostazioni → IA.';
+      'Abilita un fornitore di IA e verifica un modello in Impostazioni → IA.';
 
   @override
   String get aiRewrite => 'Riscrivi';
@@ -3149,7 +3149,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Ollama locale riceverà $count caratteri dal contesto corrente dell’editor.';
+    return 'Il fornitore selezionato riceverà $count caratteri dal contesto mostrato.';
   }
 
   @override
@@ -3172,4 +3172,151 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Visualizza contesto inviato';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'L’IA è disabilitata. BusyMark non invia mai il contenuto del documento senza un’azione IA esplicita.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark invia solo il contesto mostrato nella finestra di revisione al servizio Ollama locale configurato. Le proposte non vengono mai applicate senza revisione.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark invia solo il contesto mostrato nella finestra di revisione a $provider. Le richieste sono senza stato e le proposte non vengono mai applicate senza revisione.';
+  }
+
+  @override
+  String get aiApiKey => 'Chiave API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Una chiave è salvata nell’archivio credenziali di sistema';
+
+  @override
+  String get aiApiKeyEnterHint => 'Inserisci una chiave API del fornitore';
+
+  @override
+  String get aiReplaceApiKey => 'Sostituisci chiave API';
+
+  @override
+  String get aiSaveApiKey => 'Salva la chiave API in modo sicuro';
+
+  @override
+  String get aiRemoveApiKey => 'Rimuovi la chiave API salvata';
+
+  @override
+  String get aiCredentialSaved =>
+      'La chiave API è stata salvata nell’archivio credenziali di sistema.';
+
+  @override
+  String get aiCredentialRemoved => 'La chiave API salvata è stata rimossa.';
+
+  @override
+  String get aiModelRouting => 'Selezione del modello';
+
+  @override
+  String get aiAutomaticRouting => 'Automatica in base all’attività';
+
+  @override
+  String get aiFixedModelRouting => 'Usa il modello selezionato';
+
+  @override
+  String get aiPreferredModel => 'Modello preferito';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests richieste · $input token di input · $output token di output';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Inviare contenuti a $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Abilita $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Viene inviato solo il contenuto mostrato in ciascuna finestra di revisione dell’IA. Le richieste sono senza stato, le proposte richiedono revisione e la chiave API viene salvata nell’archivio credenziali di sistema di Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Conferma prima la condivisione dei dati con $provider in Impostazioni → IA.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Generazione verificata con $model. Sono disponibili $count modelli compatibili.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'È stato rilevato un avvio a freddo del modello locale.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Non è disponibile alcun modello compatibile per la generazione di testo.';
+
+  @override
+  String get aiEnableProvider => 'Abilita prima un fornitore di IA.';
+
+  @override
+  String get aiExplainCode => 'Spiega il codice';
+
+  @override
+  String get aiImproveCode => 'Migliora il codice';
+
+  @override
+  String get aiDraftCommitMessage => 'Crea una bozza del messaggio di commit';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Posiziona prima il cursore in un blocco di codice delimitato.';
+
+  @override
+  String get aiDrafting => 'Creazione bozza…';
+
+  @override
+  String get aiDraftWithAi => 'Crea bozza con IA';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Genera/aggiorna indice';
+
+  @override
+  String get markdownTocTitle => 'Indice';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Indice aggiornato con $count voci.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Aggiungi almeno un titolo di sezione prima di generare un indice.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'I marcatori dell’indice di BusyMark sono mancanti, duplicati o fuori ordine.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Il titolo di livello $level segue il livello $previousLevel; verifica la struttura delle sezioni.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Il testo del collegamento è vuoto; fornisci un nome accessibile che ne descriva lo scopo.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Verifica se il testo del collegamento “$text” ne descrive lo scopo nel contesto.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Le intestazioni della tabella devono identificare le colonne; completa ogni intestazione vuota.';
 }

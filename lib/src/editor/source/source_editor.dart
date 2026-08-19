@@ -13,6 +13,7 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
+import '../../markdown/markdown_fence.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
@@ -375,41 +376,65 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final selected = selection.isCollapsed
         ? ''
         : value.text.substring(selection.start, selection.end);
-    final selectionRequired = switch (feature) {
-      AiFeature.rewrite ||
-      AiFeature.shorten ||
-      AiFeature.tone ||
-      AiFeature.translate ||
-      AiFeature.proofread => true,
-      AiFeature.summarize || AiFeature.draft => false,
-    };
-    if (selectionRequired && selected.trim().isEmpty) {
+    if (feature == AiFeature.draftCommitMessage) {
+      return;
+    }
+    if (feature.requiresSelection && selected.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l10n.aiSelectionRequired)));
       return;
     }
-    final scope = selected.isNotEmpty
-        ? AiScope.selection
-        : feature == AiFeature.summarize
-        ? AiScope.document
-        : AiScope.insertion;
-    final input = selected.isNotEmpty
-        ? selected
-        : feature == AiFeature.summarize
-        ? value.text
-        : '';
+    var replacementStart = selection.start;
+    var replacementEnd = selection.end;
+    var replacementOriginal = selected;
+    late final AiScope scope;
+    late final String input;
+    if (feature.requiresCodeBlock) {
+      final codeBlock = _fencedCodeBlockAt(value.text, selection);
+      if (codeBlock == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.aiCodeBlockRequired)),
+        );
+        return;
+      }
+      scope = AiScope.codeBlock;
+      input = value.text.substring(codeBlock.start, codeBlock.end);
+      if (feature == AiFeature.improveCode) {
+        replacementStart = codeBlock.start;
+        replacementEnd = codeBlock.end;
+        replacementOriginal = input;
+      } else {
+        replacementStart = codeBlock.end;
+        replacementEnd = codeBlock.end;
+        replacementOriginal = '';
+      }
+    } else {
+      scope = selected.isNotEmpty
+          ? AiScope.selection
+          : feature == AiFeature.summarize
+          ? AiScope.document
+          : AiScope.insertion;
+      input = selected.isNotEmpty
+          ? selected
+          : feature == AiFeature.summarize
+          ? value.text
+          : '';
+    }
     final originalText = value.text;
     final result = await callback(
       AiEditInvocation(
         feature: feature,
         scope: scope,
         input: input,
-        replacementOriginal: selected,
+        replacementOriginal: replacementOriginal,
         sourceRevision: widget.editRevision,
         targetId:
-            '${widget.filePath ?? 'untitled'}:${selection.start}:${selection.end}',
+            '${widget.filePath ?? 'untitled'}:$replacementStart:$replacementEnd',
         documentPath: widget.filePath,
+        documentSource: originalText,
+        replacementStart: replacementStart,
+        replacementEnd: replacementEnd,
       ),
     );
     if (!mounted || result == null) {
@@ -421,17 +446,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
       return;
     }
-    if (selection.isCollapsed) {
-      final insertion = _blockInsertion(originalText, selection.start, result);
+    if (replacementStart == replacementEnd) {
+      final insertion = _blockInsertion(originalText, replacementStart, result);
       _applyFullEditingValue(
         TextEditingValue(
           text: originalText.replaceRange(
-            selection.start,
-            selection.end,
+            replacementStart,
+            replacementEnd,
             insertion,
           ),
           selection: TextSelection.collapsed(
-            offset: selection.start + insertion.length,
+            offset: replacementStart + insertion.length,
           ),
         ),
       );
@@ -439,13 +464,59 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     _applyFullEditingValue(
       TextEditingValue(
-        text: originalText.replaceRange(selection.start, selection.end, result),
+        text: originalText.replaceRange(
+          replacementStart,
+          replacementEnd,
+          result,
+        ),
         selection: TextSelection(
-          baseOffset: selection.start,
-          extentOffset: selection.start + result.length,
+          baseOffset: replacementStart,
+          extentOffset: replacementStart + result.length,
         ),
       ),
     );
+  }
+
+  _SourceFenceSpan? _fencedCodeBlockAt(String source, TextSelection selection) {
+    final lines = source.split(RegExp('(?<=\n)'));
+    var offset = 0;
+    var index = 0;
+    while (index < lines.length) {
+      final raw = lines[index];
+      final line = raw.endsWith('\n') ? raw.substring(0, raw.length - 1) : raw;
+      final fence = MarkdownFence.parse(line);
+      if (fence == null) {
+        offset += raw.length;
+        index += 1;
+        continue;
+      }
+      final start = offset;
+      offset += raw.length;
+      index += 1;
+      var closed = false;
+      while (index < lines.length) {
+        final candidateRaw = lines[index];
+        final candidate = candidateRaw.endsWith('\n')
+            ? candidateRaw.substring(0, candidateRaw.length - 1)
+            : candidateRaw;
+        offset += candidateRaw.length;
+        index += 1;
+        if (fence.closes(candidate)) {
+          closed = true;
+          break;
+        }
+      }
+      if (!closed) {
+        return null;
+      }
+      final intersects = selection.isCollapsed
+          ? selection.start >= start && selection.start <= offset
+          : selection.start < offset && selection.end > start;
+      if (intersects) {
+        return _SourceFenceSpan(start, offset);
+      }
+    }
+    return null;
   }
 
   String _blockInsertion(String source, int offset, String proposal) {
@@ -919,6 +990,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           _SourceEditorFrame.editorPaddingRight,
     );
   }
+}
+
+class _SourceFenceSpan {
+  const _SourceFenceSpan(this.start, this.end);
+
+  final int start;
+  final int end;
 }
 
 class _SourceEditorFrame extends StatelessWidget {

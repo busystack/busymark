@@ -290,6 +290,14 @@ class MarkdownParser {
     );
     links.addAll(inlineReferences.links);
     images.addAll(inlineReferences.images);
+    diagnostics.addAll(
+      _accessibilityDiagnostics(
+        filePath: filePath,
+        headings: headings,
+        links: links,
+        document: busyDocument,
+      ),
+    );
 
     if (validateLocalReferences) {
       diagnostics.addAll(
@@ -321,6 +329,95 @@ class MarkdownParser {
       diagnostics: sortDiagnostics(diagnostics),
       busyDocument: busyDocument,
     );
+  }
+
+  List<Diagnostic> _accessibilityDiagnostics({
+    required String filePath,
+    required List<MarkdownHeading> headings,
+    required List<MarkdownLink> links,
+    required BusyDocument document,
+  }) {
+    final diagnostics = <Diagnostic>[];
+    for (var index = 1; index < headings.length; index += 1) {
+      final previous = headings[index - 1];
+      final current = headings[index];
+      if (current.level <= previous.level + 1) {
+        continue;
+      }
+      diagnostics.add(
+        Diagnostic(
+          code: 'markdown.heading.skipped-level',
+          severity: DiagnosticSeverity.warning,
+          filePath: filePath,
+          args: {'previousLevel': previous.level, 'level': current.level},
+          sourceSpan: current.span,
+          relatedSpans: [previous.span],
+        ),
+      );
+    }
+
+    const genericLinkLabels = {
+      'click here',
+      'here',
+      'learn more',
+      'more',
+      'read more',
+      'this link',
+    };
+    for (final link in links) {
+      final text = link.text.trim();
+      if (text.isEmpty) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.link.empty-text',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            sourceSpan: link.span,
+          ),
+        );
+        continue;
+      }
+      final normalized = text.toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      if (genericLinkLabels.contains(normalized) ||
+          normalized == link.destination.trim().toLowerCase()) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.link.review-text',
+            severity: DiagnosticSeverity.hint,
+            filePath: filePath,
+            args: {'text': text},
+            sourceSpan: link.span,
+          ),
+        );
+      }
+    }
+
+    for (final block in _walkBlocks(document.blocks)) {
+      if (block.kind != BusyBlockKind.table) {
+        continue;
+      }
+      final header = block.children.firstOrNull;
+      if (header == null ||
+          header.children.isEmpty ||
+          header.children.any((cell) => cell.plainText.trim().isEmpty)) {
+        diagnostics.add(
+          Diagnostic(
+            code: 'markdown.table.empty-header',
+            severity: DiagnosticSeverity.warning,
+            filePath: filePath,
+            sourceSpan: block.sourceSpan,
+          ),
+        );
+      }
+    }
+    return diagnostics;
+  }
+
+  Iterable<BusyBlock> _walkBlocks(Iterable<BusyBlock> roots) sync* {
+    for (final block in roots) {
+      yield block;
+      yield* _walkBlocks(block.children);
+    }
   }
 
   BusyDocument _withScannedSourceMetadata(

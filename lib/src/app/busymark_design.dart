@@ -1981,6 +1981,9 @@ class BusyMarkGroupedTextEntry extends StatelessWidget {
     this.textDirection,
     this.textStyle,
     this.alignLabelWithHint = false,
+    this.obscureText = false,
+    this.enableSuggestions = true,
+    this.autocorrect = true,
     this.trailing,
     this.onChanged,
     this.onSubmitted,
@@ -2002,6 +2005,9 @@ class BusyMarkGroupedTextEntry extends StatelessWidget {
   final TextDirection? textDirection;
   final TextStyle? textStyle;
   final bool alignLabelWithHint;
+  final bool obscureText;
+  final bool enableSuggestions;
+  final bool autocorrect;
   final Widget? trailing;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -2019,6 +2025,9 @@ class BusyMarkGroupedTextEntry extends StatelessWidget {
         maxLines: maxLines,
         textInputAction: textInputAction,
         textDirection: textDirection,
+        obscureText: obscureText,
+        enableSuggestions: enableSuggestions,
+        autocorrect: autocorrect,
         style: textStyle,
         onChanged: enabled ? onChanged : null,
         onFieldSubmitted: enabled ? onSubmitted : null,

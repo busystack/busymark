@@ -26,8 +26,9 @@ projects.
 - Edit and save local files.
 - Preview Markdown content.
 - Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
-- Rewrite, shorten, summarize, translate, proofread, and draft Markdown with an
-  explicitly configured local Ollama model and diff-before-apply review.
+- Rewrite, shorten, summarize, translate, proofread, draft, and assist with
+  fenced code through an explicitly configured Ollama, OpenAI, or Gemini model
+  and diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
 - Run basic diagnostics.
@@ -128,18 +129,20 @@ security boundaries, Snap limitations, and the authoritative JetBrains
 references. An exportable configuration is included in
 [demo/writerside-instances](demo/writerside-instances).
 
-## Local AI editing
+## AI editing
 
-BusyMark's optional AI editing is disabled by default and uses only a
-loopback Ollama service. It supports explicit Rewrite, Shorten, Summarize,
-Change tone, Translate, Proofread, and Draft actions in Source and Editor
-views. BusyMark shows the exact context sent, streams into a unified Markdown
-diff, rejects stale results and protected-Markdown changes, and never applies a
-proposal without confirmation. Remote Ollama/cloud models are excluded.
+BusyMark's optional AI editing is disabled by default and supports loopback
+Ollama, OpenAI, and Google Gemini. It exposes explicit Markdown actions in
+Source view, fenced-code assistance, and staged-diff commit-message drafting.
+BusyMark discloses the selected provider and context, streams into a temporary
+proposal, reparses and validates the complete candidate Markdown document,
+shows a unified diff, and never applies a proposal without confirmation. Cloud
+keys are stored in the operating-system credential service and cloud use
+requires explicit consent; provider routing never crosses provider boundaries.
 
-See [local AI editing](docs/local-ai.md) for configuration, privacy and
-security boundaries, the reviewed architecture decision, and authoritative
-protocol references. An interactive exercise is available in
+See [AI editing](docs/local-ai.md) for configuration, privacy and security
+boundaries, model routing, release qualification, and authoritative protocol
+references. An interactive exercise is available in
 [demo/ai-editing.md](demo/ai-editing.md).
 
 ## Run From Source

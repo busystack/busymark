@@ -3070,7 +3070,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'التحرير بالذكاء الاصطناعي صريح ومحلي فقط. يرسل BusyMark السياق المعروض وحده إلى خدمة Ollama على واجهة الاسترجاع، ولا يطبّق أي اقتراح من دون مراجعته.';
+      'لا يبدأ التحرير بالذكاء الاصطناعي إلا بإجراء صريح. لا يرسل BusyMark إلا السياق المعروض إلى المزوّد المحدد، ولا يطبّق أي اقتراح من دون مراجعته.';
 
   @override
   String get aiProvider => 'موفّر الذكاء الاصطناعي';
@@ -3097,11 +3097,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'تعذر على BusyMark اختبار الاتصال المحلي بـ Ollama.';
+      'تعذّر على BusyMark التحقق من إنشاء النص بالذكاء الاصطناعي.';
 
   @override
   String get aiConfigureFirst =>
-      'فعّل Ollama المحلي واختر نموذجًا مثبّتًا من الإعدادات ← الذكاء الاصطناعي.';
+      'فعّل مزوّد ذكاء اصطناعي وتحقق من نموذج في الإعدادات ← الذكاء الاصطناعي.';
 
   @override
   String get aiRewrite => 'إعادة الصياغة';
@@ -3145,7 +3145,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'سيتلقى Ollama المحلي ⁨$count⁩ حرفًا من سياق المحرر الحالي.';
+    return 'سيتلقى المزوّد المحدد ⁨$count⁩ حرفًا من السياق المعروض.';
   }
 
   @override
@@ -3168,4 +3168,148 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aiViewContext => 'عرض السياق المُرسل';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'الذكاء الاصطناعي معطّل. لا يرسل BusyMark محتوى المستند مطلقًا من دون إجراء صريح للذكاء الاصطناعي.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'لا يرسل BusyMark إلا السياق المعروض في مربع حوار المراجعة إلى خدمة Ollama المحلية المضبوطة. لا تُطبّق الاقتراحات مطلقًا من دون مراجعة.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'لا يرسل BusyMark إلا السياق المعروض في مربع حوار المراجعة إلى ⁨$provider⁩. الطلبات عديمة الحالة، ولا تُطبّق الاقتراحات مطلقًا من دون مراجعة.';
+  }
+
+  @override
+  String get aiApiKey => 'مفتاح API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'يوجد مفتاح محفوظ في مخزن بيانات الاعتماد في النظام';
+
+  @override
+  String get aiApiKeyEnterHint => 'أدخل مفتاح API للمزوّد';
+
+  @override
+  String get aiReplaceApiKey => 'استبدال مفتاح API';
+
+  @override
+  String get aiSaveApiKey => 'حفظ مفتاح API بأمان';
+
+  @override
+  String get aiRemoveApiKey => 'إزالة مفتاح API المحفوظ';
+
+  @override
+  String get aiCredentialSaved =>
+      'حُفظ مفتاح API في مخزن بيانات الاعتماد في النظام.';
+
+  @override
+  String get aiCredentialRemoved => 'أُزيل مفتاح API المحفوظ.';
+
+  @override
+  String get aiModelRouting => 'اختيار النموذج';
+
+  @override
+  String get aiAutomaticRouting => 'تلقائي حسب المهمة';
+
+  @override
+  String get aiFixedModelRouting => 'استخدام النموذج المحدد';
+
+  @override
+  String get aiPreferredModel => 'النموذج المفضّل';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '⁨$requests⁩ طلبات · ⁨$input⁩ رموز إدخال · ⁨$output⁩ رموز إخراج';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'هل تريد إرسال المحتوى إلى ⁨$provider⁩؟';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'تفعيل ⁨$provider⁩';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'لا يُرسل إلا المحتوى المعروض في كل مربع حوار لمراجعة الذكاء الاصطناعي. الطلبات عديمة الحالة، وتتطلب الاقتراحات مراجعة، ويُحفظ مفتاح API في مخزن بيانات الاعتماد في نظام Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'أكد أولًا مشاركة البيانات مع ⁨$provider⁩ في الإعدادات ← الذكاء الاصطناعي.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'تم التحقق من الإنشاء باستخدام ⁨$model⁩. يتوفر ⁨$count⁩ من النماذج المتوافقة.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'تم اكتشاف بدء تشغيل بارد للنموذج المحلي.';
+
+  @override
+  String get aiNoCompatibleModels => 'لا يتوفر نموذج متوافق لإنشاء النص.';
+
+  @override
+  String get aiEnableProvider => 'فعّل مزوّد ذكاء اصطناعي أولًا.';
+
+  @override
+  String get aiExplainCode => 'شرح الشفرة';
+
+  @override
+  String get aiImproveCode => 'تحسين الشفرة';
+
+  @override
+  String get aiDraftCommitMessage => 'صياغة مسودة رسالة الإيداع';
+
+  @override
+  String get aiCodeBlockRequired => 'ضع المؤشر أولًا داخل كتلة شفرة مسيّجة.';
+
+  @override
+  String get aiDrafting => 'جارٍ إعداد المسودة…';
+
+  @override
+  String get aiDraftWithAi => 'إعداد مسودة بالذكاء الاصطناعي';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'إنشاء/تحديث جدول المحتويات';
+
+  @override
+  String get markdownTocTitle => 'جدول المحتويات';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'حُدّث جدول المحتويات وأصبح يضم ⁨$count⁩ من الإدخالات.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'أضف عنوان قسم واحدًا على الأقل قبل إنشاء جدول المحتويات.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'علامات جدول محتويات BusyMark مفقودة أو مكررة أو بترتيب غير صحيح.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'يلي عنوان المستوى ⁨$previousLevel⁩ عنوان من المستوى ⁨$level⁩؛ راجع تداخل الأقسام.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'نص الرابط فارغ؛ أدخل اسمًا ميسّرًا يصف الغرض منه.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'راجع ما إذا كان نص الرابط «⁨$text⁩» يصف غرضه ضمن السياق.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'يجب أن تعرّف رؤوس الجدول أعمدتها؛ أكمل كل رأس فارغ.';
 }

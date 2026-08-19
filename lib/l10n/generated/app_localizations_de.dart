@@ -3081,7 +3081,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'KI-Bearbeitung erfolgt ausdrücklich und nur lokal. BusyMark sendet ausschließlich den angezeigten Kontext an einen Ollama-Dienst auf der Loopback-Schnittstelle und wendet einen Vorschlag nie ohne Prüfung an.';
+      'KI-Bearbeitung erfolgt nur auf ausdrücklichen Befehl. BusyMark sendet ausschließlich den angezeigten Kontext an den ausgewählten Anbieter und übernimmt keinen Vorschlag ohne Prüfung.';
 
   @override
   String get aiProvider => 'KI-Anbieter';
@@ -3109,11 +3109,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark konnte die lokale Ollama-Verbindung nicht testen.';
+      'BusyMark konnte die KI-Textgenerierung nicht überprüfen.';
 
   @override
   String get aiConfigureFirst =>
-      'Aktivieren Sie Lokales Ollama und wählen Sie unter Einstellungen → KI ein installiertes Modell aus.';
+      'Aktivieren Sie unter Einstellungen → KI einen KI-Anbieter und überprüfen Sie ein Modell.';
 
   @override
   String get aiRewrite => 'Umschreiben';
@@ -3156,7 +3156,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Das lokale Ollama erhält $count Zeichen aus dem aktuellen Editorkontext.';
+    return 'Der ausgewählte Anbieter erhält $count Zeichen aus dem angezeigten Kontext.';
   }
 
   @override
@@ -3179,4 +3179,153 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Gesendeten Kontext anzeigen';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'KI ist deaktiviert. BusyMark sendet Dokumentinhalte niemals ohne eine ausdrückliche KI-Aktion.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark sendet nur den im Prüfdialog angezeigten Kontext an den konfigurierten lokalen Ollama-Dienst. Vorschläge werden nie ohne Prüfung übernommen.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark sendet nur den im Prüfdialog angezeigten Kontext an $provider. Anfragen sind zustandslos, und Vorschläge werden nie ohne Prüfung übernommen.';
+  }
+
+  @override
+  String get aiApiKey => 'API-Schlüssel';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Ein Schlüssel ist in der systemweiten Anmeldeinformationsverwaltung gespeichert';
+
+  @override
+  String get aiApiKeyEnterHint => 'API-Schlüssel des Anbieters eingeben';
+
+  @override
+  String get aiReplaceApiKey => 'API-Schlüssel ersetzen';
+
+  @override
+  String get aiSaveApiKey => 'API-Schlüssel sicher speichern';
+
+  @override
+  String get aiRemoveApiKey => 'Gespeicherten API-Schlüssel entfernen';
+
+  @override
+  String get aiCredentialSaved =>
+      'Der API-Schlüssel wurde in der systemweiten Anmeldeinformationsverwaltung gespeichert.';
+
+  @override
+  String get aiCredentialRemoved =>
+      'Der gespeicherte API-Schlüssel wurde entfernt.';
+
+  @override
+  String get aiModelRouting => 'Modellauswahl';
+
+  @override
+  String get aiAutomaticRouting => 'Automatisch nach Aufgabe';
+
+  @override
+  String get aiFixedModelRouting => 'Ausgewähltes Modell verwenden';
+
+  @override
+  String get aiPreferredModel => 'Bevorzugtes Modell';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests Anfragen · $input Eingabetoken · $output Ausgabetoken';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Inhalte an $provider senden?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return '$provider aktivieren';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Es werden nur Inhalte gesendet, die im jeweiligen KI-Prüfdialog angezeigt werden. Anfragen sind zustandslos, Vorschläge müssen geprüft werden, und der API-Schlüssel wird in der Anmeldeinformationsverwaltung von Linux gespeichert.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Bestätigen Sie zuerst unter Einstellungen → KI die Datenweitergabe an $provider.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Generierung mit $model überprüft. $count kompatible Modelle verfügbar.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'Ein Kaltstart des lokalen Modells wurde erkannt.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Es ist kein kompatibles Modell zur Textgenerierung verfügbar.';
+
+  @override
+  String get aiEnableProvider => 'Aktivieren Sie zuerst einen KI-Anbieter.';
+
+  @override
+  String get aiExplainCode => 'Code erklären';
+
+  @override
+  String get aiImproveCode => 'Code verbessern';
+
+  @override
+  String get aiDraftCommitMessage => 'Commit-Nachricht entwerfen';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Setzen Sie den Cursor zuerst in einen eingezäunten Codeblock.';
+
+  @override
+  String get aiDrafting => 'Entwurf wird erstellt…';
+
+  @override
+  String get aiDraftWithAi => 'Mit KI entwerfen';
+
+  @override
+  String get generateOrUpdateMarkdownToc =>
+      'Inhaltsverzeichnis erstellen/aktualisieren';
+
+  @override
+  String get markdownTocTitle => 'Inhaltsverzeichnis';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Inhaltsverzeichnis mit $count Einträgen aktualisiert.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Fügen Sie mindestens eine Abschnittsüberschrift hinzu, bevor Sie ein Inhaltsverzeichnis erstellen.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Die BusyMark-Markierungen für das Inhaltsverzeichnis fehlen, sind doppelt vorhanden oder in falscher Reihenfolge.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Auf Überschriftenebene $previousLevel folgt Ebene $level; prüfen Sie die Abschnittsverschachtelung.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Der Linktext ist leer; geben Sie einen zugänglichen Namen an, der den Zweck beschreibt.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Prüfen Sie, ob der Linktext „$text“ seinen Zweck im Kontext beschreibt.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tabellenüberschriften müssen ihre Spalten bezeichnen; füllen Sie jede leere Überschrift aus.';
 }

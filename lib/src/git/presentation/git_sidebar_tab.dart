@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../ai/ai_edit_ui.dart';
+import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_glyphs.dart';
@@ -123,6 +125,8 @@ class GitSidebarTab extends ConsumerWidget {
                           ))
                         file.originalRepoRelativePath!,
                   },
+                  onDraftCommitMessage: () =>
+                      _draftCommitMessage(context, ref, controller),
                 ),
                 GitView.fileHistory => GitFileHistoryView(
                   state: state,
@@ -146,6 +150,33 @@ class GitSidebarTab extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<String?> _draftCommitMessage(
+    BuildContext context,
+    WidgetRef ref,
+    GitController controller,
+  ) async {
+    final patch = await controller.stagedDiffForAi();
+    if (patch == null || !context.mounted) {
+      return null;
+    }
+    final repository = ref.read(gitControllerProvider).repositoryInfo;
+    return showBusyMarkAiProposal(
+      context,
+      ref,
+      AiEditInvocation(
+        feature: AiFeature.draftCommitMessage,
+        scope: AiScope.gitDiff,
+        input: patch,
+        replacementOriginal: '',
+        sourceRevision: 0,
+        targetId: 'git-commit:${repository?.rootPath ?? 'repository'}',
+        documentPath: null,
+        contentFormat: AiContentFormat.plainText,
+        enforceDocumentRevision: false,
       ),
     );
   }

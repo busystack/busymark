@@ -3099,7 +3099,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'ویرایش با هوش مصنوعی صریح و فقط محلی است. BusyMark تنها بافت نمایش‌داده‌شده را به سرویس Ollama روی رابط بازگشتی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.';
+      'ویرایش با هوش مصنوعی فقط با اقدام صریح آغاز می‌شود. BusyMark تنها زمینهٔ نمایش‌داده‌شده را برای ارائه‌دهندهٔ انتخابی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.';
 
   @override
   String get aiProvider => 'ارائه‌دهندهٔ هوش مصنوعی';
@@ -3127,11 +3127,11 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark نتوانست اتصال محلی Ollama را آزمایش کند.';
+      'BusyMark نتوانست تولید متن با هوش مصنوعی را تأیید کند.';
 
   @override
   String get aiConfigureFirst =>
-      'Ollama محلی را فعال کنید و در تنظیمات ← هوش مصنوعی یک مدل نصب‌شده برگزینید.';
+      'ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال و مدلی را در تنظیمات ← هوش مصنوعی تأیید کنید.';
 
   @override
   String get aiRewrite => 'بازنویسی';
@@ -3175,7 +3175,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Ollama محلی ⁨$count⁩ نویسه از بافت فعلی ویرایشگر دریافت می‌کند.';
+    return 'ارائه‌دهندهٔ انتخابی ⁨$count⁩ نویسه از زمینهٔ نمایش‌داده‌شده دریافت می‌کند.';
   }
 
   @override
@@ -3198,4 +3198,150 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get aiViewContext => 'نمایش بافت ارسال‌شده';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'هوش مصنوعی غیرفعال است. BusyMark هرگز بدون یک اقدام صریح هوش مصنوعی محتوای سند را ارسال نمی‌کند.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به سرویس محلی Ollama پیکربندی‌شده می‌فرستد. پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark فقط زمینهٔ نمایش‌داده‌شده در کادر بازبینی را به ⁨$provider⁩ می‌فرستد. درخواست‌ها بدون حالت هستند و پیشنهادها هرگز بدون بازبینی اعمال نمی‌شوند.';
+  }
+
+  @override
+  String get aiApiKey => 'کلید API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'یک کلید در مخزن اعتبارنامهٔ سیستم ذخیره شده است';
+
+  @override
+  String get aiApiKeyEnterHint => 'کلید API ارائه‌دهنده را وارد کنید';
+
+  @override
+  String get aiReplaceApiKey => 'جایگزینی کلید API';
+
+  @override
+  String get aiSaveApiKey => 'ذخیرهٔ امن کلید API';
+
+  @override
+  String get aiRemoveApiKey => 'حذف کلید API ذخیره‌شده';
+
+  @override
+  String get aiCredentialSaved =>
+      'کلید API در مخزن اعتبارنامهٔ سیستم ذخیره شد.';
+
+  @override
+  String get aiCredentialRemoved => 'کلید API ذخیره‌شده حذف شد.';
+
+  @override
+  String get aiModelRouting => 'انتخاب مدل';
+
+  @override
+  String get aiAutomaticRouting => 'خودکار بر اساس کار';
+
+  @override
+  String get aiFixedModelRouting => 'استفاده از مدل انتخابی';
+
+  @override
+  String get aiPreferredModel => 'مدل ترجیحی';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '⁨$requests⁩ درخواست · ⁨$input⁩ توکن ورودی · ⁨$output⁩ توکن خروجی';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'محتوا برای ⁨$provider⁩ ارسال شود؟';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'فعال‌کردن ⁨$provider⁩';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'فقط محتوای نمایش‌داده‌شده در هر کادر بازبینی هوش مصنوعی ارسال می‌شود. درخواست‌ها بدون حالت هستند، پیشنهادها نیاز به بازبینی دارند و کلید API در مخزن اعتبارنامهٔ سیستم Linux ذخیره می‌شود.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'ابتدا اشتراک‌گذاری داده با ⁨$provider⁩ را در تنظیمات ← هوش مصنوعی تأیید کنید.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'تولید با ⁨$model⁩ تأیید شد. ⁨$count⁩ مدل سازگار در دسترس است.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'راه‌اندازی سرد مدل محلی شناسایی شد.';
+
+  @override
+  String get aiNoCompatibleModels => 'هیچ مدل سازگار تولید متن در دسترس نیست.';
+
+  @override
+  String get aiEnableProvider =>
+      'ابتدا یک ارائه‌دهندهٔ هوش مصنوعی را فعال کنید.';
+
+  @override
+  String get aiExplainCode => 'توضیح کد';
+
+  @override
+  String get aiImproveCode => 'بهبود کد';
+
+  @override
+  String get aiDraftCommitMessage => 'تهیهٔ پیش‌نویس پیام ثبت';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'ابتدا مکان‌نما را در یک بلوک کد حصارشده قرار دهید.';
+
+  @override
+  String get aiDrafting => 'در حال تهیهٔ پیش‌نویس…';
+
+  @override
+  String get aiDraftWithAi => 'تهیهٔ پیش‌نویس با هوش مصنوعی';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'ایجاد/به‌روزرسانی فهرست مطالب';
+
+  @override
+  String get markdownTocTitle => 'فهرست مطالب';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'فهرست مطالب با ⁨$count⁩ مدخل به‌روزرسانی شد.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'پیش از ایجاد فهرست مطالب دست‌کم یک عنوان بخش اضافه کنید.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'نشانگرهای فهرست مطالب BusyMark وجود ندارند، تکراری‌اند یا ترتیب نادرستی دارند.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'عنوان سطح ⁨$level⁩ پس از سطح ⁨$previousLevel⁩ آمده است؛ تودرتویی بخش‌ها را بازبینی کنید.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'متن پیوند خالی است؛ نام دسترس‌پذیری وارد کنید که هدف آن را توضیح دهد.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'بررسی کنید که آیا متن پیوند «⁨$text⁩» هدف آن را در زمینه توضیح می‌دهد.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'سرستون‌های جدول باید ستون‌های خود را مشخص کنند؛ هر سرستون خالی را تکمیل کنید.';
 }

@@ -3069,7 +3069,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'A edição com IA é explícita e apenas local. O BusyMark envia somente o contexto exibido para um serviço Ollama na interface de loopback e nunca aplica uma proposta sem revisão.';
+      'A edição com IA é iniciada apenas de forma explícita. O BusyMark envia somente o contexto exibido ao provedor selecionado e nunca aplica uma proposta sem revisão.';
 
   @override
   String get aiProvider => 'Provedor de IA';
@@ -3097,11 +3097,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'O BusyMark não conseguiu testar a conexão local com o Ollama.';
+      'O BusyMark não conseguiu verificar a geração de texto por IA.';
 
   @override
   String get aiConfigureFirst =>
-      'Ative o Ollama local e escolha um modelo instalado em Configurações → IA.';
+      'Ative um provedor de IA e verifique um modelo em Configurações → IA.';
 
   @override
   String get aiRewrite => 'Reescrever';
@@ -3144,7 +3144,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'O Ollama local receberá $count caracteres do contexto atual do editor.';
+    return 'O provedor selecionado receberá $count caracteres do contexto exibido.';
   }
 
   @override
@@ -3167,4 +3167,151 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Ver contexto enviado';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'A IA está desativada. O BusyMark nunca envia o conteúdo do documento sem uma ação explícita de IA.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'O BusyMark envia apenas o contexto exibido na caixa de diálogo de revisão ao serviço Ollama local configurado. As propostas nunca são aplicadas sem revisão.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'O BusyMark envia apenas o contexto exibido na caixa de diálogo de revisão para $provider. As solicitações não mantêm estado e as propostas nunca são aplicadas sem revisão.';
+  }
+
+  @override
+  String get aiApiKey => 'Chave de API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Uma chave está armazenada no cofre de credenciais do sistema';
+
+  @override
+  String get aiApiKeyEnterHint => 'Insira uma chave de API do provedor';
+
+  @override
+  String get aiReplaceApiKey => 'Substituir chave de API';
+
+  @override
+  String get aiSaveApiKey => 'Salvar chave de API com segurança';
+
+  @override
+  String get aiRemoveApiKey => 'Remover chave de API salva';
+
+  @override
+  String get aiCredentialSaved =>
+      'A chave de API foi salva no cofre de credenciais do sistema.';
+
+  @override
+  String get aiCredentialRemoved => 'A chave de API salva foi removida.';
+
+  @override
+  String get aiModelRouting => 'Seleção de modelo';
+
+  @override
+  String get aiAutomaticRouting => 'Automática conforme a tarefa';
+
+  @override
+  String get aiFixedModelRouting => 'Usar o modelo selecionado';
+
+  @override
+  String get aiPreferredModel => 'Modelo preferido';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests solicitações · $input tokens de entrada · $output tokens de saída';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Enviar conteúdo para $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Ativar $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Somente o conteúdo exibido em cada caixa de diálogo de revisão de IA é enviado. As solicitações não mantêm estado, as propostas exigem revisão e a chave de API é armazenada no cofre de credenciais do sistema Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Primeiro, confirme o compartilhamento de dados com $provider em Configurações → IA.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Geração verificada com $model. Há $count modelos compatíveis disponíveis.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'Foi detetado um arranque a frio do modelo local.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Não há nenhum modelo compatível de geração de texto disponível.';
+
+  @override
+  String get aiEnableProvider => 'Primeiro, ative um provedor de IA.';
+
+  @override
+  String get aiExplainCode => 'Explicar código';
+
+  @override
+  String get aiImproveCode => 'Melhorar código';
+
+  @override
+  String get aiDraftCommitMessage => 'Criar rascunho da mensagem de commit';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Primeiro, posicione o cursor em um bloco de código delimitado.';
+
+  @override
+  String get aiDrafting => 'Criando rascunho…';
+
+  @override
+  String get aiDraftWithAi => 'Criar rascunho com IA';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Gerar/atualizar sumário';
+
+  @override
+  String get markdownTocTitle => 'Sumário';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Sumário atualizado com $count entradas.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Adicione pelo menos um título de seção antes de gerar um sumário.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Os marcadores de sumário do BusyMark estão ausentes, duplicados ou fora de ordem.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'O título de nível $level vem após o nível $previousLevel; revise o aninhamento das seções.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'O texto do link está vazio; forneça um nome acessível que descreva sua finalidade.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Verifique se o texto do link “$text” descreve sua finalidade no contexto.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Os cabeçalhos da tabela devem identificar suas colunas; preencha cada cabeçalho vazio.';
 }

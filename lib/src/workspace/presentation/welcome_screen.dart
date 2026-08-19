@@ -264,6 +264,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
+      case BusyMarkMainMenuAction.generateMarkdownToc:
         break;
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());

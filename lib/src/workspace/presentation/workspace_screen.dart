@@ -54,6 +54,7 @@ import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_section_editor.dart';
+import '../../markdown/markdown_toc_generator.dart';
 import '../../markdown/preview_model.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../visualization/visualization_card.dart';
@@ -540,6 +541,9 @@ class WorkspaceScreen extends ConsumerWidget {
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     final canExportPdf = canExportWorkspacePdf(state);
+    final canGenerateMarkdownToc =
+        _activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
+        false;
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
@@ -696,6 +700,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         ),
                         BusyMarkMainMenuButton(
                           canExportPdf: canExportPdf,
+                          canGenerateMarkdownToc: canGenerateMarkdownToc,
                           onSelected: (action) =>
                               _handleMainMenuAction(context, ref, action),
                         ),
@@ -892,6 +897,8 @@ class WorkspaceScreen extends ConsumerWidget {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
         unawaited(exportWorkspaceToPdf(context, ref));
+      case BusyMarkMainMenuAction.generateMarkdownToc:
+        _generateOrUpdateMarkdownToc(context, ref);
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -908,6 +915,49 @@ class WorkspaceScreen extends ConsumerWidget {
         );
       case BusyMarkMainMenuAction.aboutBusyMark:
         showBusyMarkAboutDialog(context);
+    }
+  }
+
+  void _generateOrUpdateMarkdownToc(BuildContext context, WidgetRef ref) {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    if (workspace == null) {
+      return;
+    }
+    final kind = _activeWorkspaceDocumentKind(workspace);
+    if (!(kind?.supportsAiMarkdownEditing ?? false)) {
+      return;
+    }
+    final filePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    if (filePath == null) {
+      return;
+    }
+    try {
+      final result = const MarkdownTocGenerator().generate(
+        source: state.activeText,
+        filePath: filePath,
+        mode: kind == DocumentKind.writersideMarkdownTopic
+            ? MarkdownMode.writersideMarkdown
+            : MarkdownMode.gfm,
+        title: context.l10n.markdownTocTitle,
+      );
+      ref
+          .read(workspaceControllerProvider.notifier)
+          .updateActiveText(result.source, sourceFilePath: filePath);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.markdownTocUpdated(result.entryCount)),
+        ),
+      );
+    } on MarkdownTocException catch (error) {
+      final message = switch (error.failure) {
+        MarkdownTocFailure.malformedMarkers =>
+          context.l10n.markdownTocMalformedMarkers,
+        MarkdownTocFailure.noHeadings => context.l10n.markdownTocNoHeadings,
+      };
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -8575,12 +8625,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 visualizationRevision: ref
                     .read(workspaceControllerProvider.notifier)
                     .editRevision,
-                aiEditRevision: ref
-                    .read(workspaceControllerProvider.notifier)
-                    .editRevision,
-                aiDocumentPath: activeEditorPath,
-                onAiEdit: (invocation) =>
-                    showBusyMarkAiProposal(context, ref, invocation),
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
                     .request(),
@@ -8619,8 +8663,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 editRevision: ref
                     .read(workspaceControllerProvider.notifier)
                     .editRevision,
-                onAiEdit: (invocation) =>
-                    showBusyMarkAiProposal(context, ref, invocation),
+                onAiEdit:
+                    (_activeDocumentKind(
+                          widget.state.workspace,
+                        )?.supportsAiMarkdownEditing ??
+                        false)
+                    ? (invocation) =>
+                          showBusyMarkAiProposal(context, ref, invocation)
+                    : null,
               ),
             ),
           if (sourceVisible && previewVisible)
@@ -8753,19 +8803,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (workspace == null) {
       return null;
     }
-    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-    if (activePath == null) {
-      return null;
-    }
-    for (final file in workspace.files) {
-      if (file.absolutePath == activePath) {
-        return file.kind;
-      }
-    }
-    return workspace.kind == WorkspaceKind.untitledMarkdown ||
-            workspace.kind == WorkspaceKind.singleMarkdown
-        ? DocumentKind.markdown
-        : null;
+    return _activeWorkspaceDocumentKind(workspace);
   }
 
   void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
@@ -8989,8 +9027,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
-    return kind == DocumentKind.markdown ||
-        kind == DocumentKind.writersideMarkdownTopic;
+    return kind?.supportsAiMarkdownEditing ?? false;
   }
 
   BusyDocument? _wysiwygDocument() {
@@ -11316,6 +11353,22 @@ class _DiagnosticRow extends ConsumerWidget {
       ),
     );
   }
+}
+
+DocumentKind? _activeWorkspaceDocumentKind(Workspace workspace) {
+  final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+  if (activePath == null) {
+    return null;
+  }
+  for (final file in workspace.files) {
+    if (file.absolutePath == activePath) {
+      return file.kind;
+    }
+  }
+  return workspace.kind == WorkspaceKind.untitledMarkdown ||
+          workspace.kind == WorkspaceKind.singleMarkdown
+      ? DocumentKind.markdown
+      : null;
 }
 
 IconData _diagnosticIconForSeverity(DiagnosticSeverity severity) {

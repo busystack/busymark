@@ -54,12 +54,12 @@ void main() {
     expect(request.systemPrompt, contains('untrusted document data'));
   });
 
-  test('WYSIWYG requests explicitly require plain-text output', () {
+  test('plain-text summary and draft prompts never request Markdown', () {
     final request = AiPromptBuilder.build(
       id: 'plain-text',
       targetId: 'document:block',
-      feature: AiFeature.rewrite,
-      scope: AiScope.selection,
+      feature: AiFeature.summarize,
+      scope: AiScope.document,
       input: 'Original text.',
       model: 'test-model',
       sourceRevision: 4,
@@ -72,6 +72,21 @@ void main() {
       request.systemPrompt,
       contains('no commentary or Markdown formatting'),
     );
+    expect(request.userPrompt, contains('plain text'));
+    expect(request.userPrompt, isNot(contains('Markdown summary')));
+
+    final draft = AiPromptBuilder.build(
+      id: 'plain-draft',
+      targetId: 'document:block',
+      feature: AiFeature.draft,
+      scope: AiScope.insertion,
+      input: '',
+      model: 'test-model',
+      sourceRevision: 4,
+      contentFormat: AiContentFormat.plainText,
+      instruction: 'Release note',
+    );
+    expect(draft.userPrompt, contains('professional plain text'));
   });
 
   group('Markdown proposal guard', () {
@@ -193,6 +208,13 @@ echo safe
               200,
             );
           }
+          if (request.url.path == '/api/show') {
+            return http.Response(
+              '{"capabilities":["completion"],'
+              '"model_info":{"test.context_length":32768}}',
+              200,
+            );
+          }
           chatRequest = request;
           return http.Response(
             '{"message":{"content":"Clear"},"done":false}\n'
@@ -212,9 +234,9 @@ echo safe
       await token.dispose();
 
       expect(models.map((model) => model.name), [
-        'model-a',
         'model-b',
         'test-model',
+        'model-a',
       ]);
       expect(chatRequest.method, 'POST');
       expect(chatRequest.followRedirects, isFalse);
@@ -236,6 +258,13 @@ echo safe
           if (request.url.path == '/api/tags') {
             return http.Response('{"models":[{"name":"test-model"}]}', 200);
           }
+          if (request.url.path == '/api/show') {
+            return http.Response(
+              '{"capabilities":["completion"],'
+              '"model_info":{"test.context_length":32768}}',
+              200,
+            );
+          }
           return http.Response(
             '{"message":{"content":"Complete"},"done":true}\n'
             '{"message":{"content":" unvalidated"},"done":false}\n',
@@ -255,6 +284,38 @@ echo safe
         'Complete',
       );
       expect(events.whereType<AiCompleted>(), hasLength(1));
+      await token.dispose();
+    });
+
+    test('uses the documented low thinking level for GPT-OSS', () async {
+      late http.Request chatRequest;
+      final provider = OllamaAiProvider(
+        client: MockClient((request) async {
+          if (request.url.path == '/api/tags') {
+            return http.Response('{"models":[{"name":"test-model"}]}', 200);
+          }
+          if (request.url.path == '/api/show') {
+            return http.Response(
+              '{"capabilities":["completion","thinking"],'
+              '"model_info":{"general.architecture":"gptoss",'
+              '"gptoss.context_length":131072}}',
+              200,
+            );
+          }
+          chatRequest = request;
+          return http.Response(
+            '{"message":{"content":"Revised text."},"done":true}\n',
+            200,
+          );
+        }),
+        endpoint: 'http://127.0.0.1:11434',
+      );
+      final token = AiCancellationToken();
+
+      await provider.stream(_request(), cancellationToken: token).toList();
+
+      final body = jsonDecode(chatRequest.body) as Map<String, dynamic>;
+      expect(body['think'], 'low');
       await token.dispose();
     });
 
@@ -440,25 +501,18 @@ class _StreamingClient extends http.BaseClient {
         200,
       );
     }
+    if (request.url.path == '/api/show') {
+      return http.StreamedResponse(
+        Stream.value(
+          utf8.encode(
+            '{"capabilities":["completion"],'
+            '"model_info":{"test.context_length":32768}}',
+          ),
+        ),
+        200,
+      );
+    }
     return http.StreamedResponse(stream, 200);
-  }
-}
-
-extension on AiRequest {
-  AiRequest copyWithModel(String value) {
-    return AiRequest(
-      id: id,
-      targetId: targetId,
-      feature: feature,
-      scope: scope,
-      input: input,
-      model: value,
-      sourceRevision: sourceRevision,
-      systemPrompt: systemPrompt,
-      userPrompt: userPrompt,
-      contentFormat: contentFormat,
-      promptVersion: promptVersion,
-    );
   }
 }
 
@@ -467,7 +521,24 @@ class _IncompleteProvider implements AiProvider {
   String get id => 'incomplete';
 
   @override
-  Future<List<AiModelInfo>> listModels() async => const [];
+  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
+    kind: AiProviderKind.ollamaLocal,
+    streaming: true,
+    modelDiscovery: false,
+    maximumConcurrentRequests: 1,
+    recommendedModels: {},
+  );
+
+  @override
+  Future<List<AiModelInfo>> listModels({
+    AiCancellationToken? cancellationToken,
+  }) async => const [];
+
+  @override
+  Future<AiHealthResult> checkHealth({
+    required String model,
+    required AiCancellationToken cancellationToken,
+  }) => throw UnimplementedError();
 
   @override
   Stream<AiStreamEvent> stream(
@@ -486,11 +557,28 @@ class _ControlledProvider implements AiProvider {
   @override
   String get id => 'controlled';
 
+  @override
+  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
+    kind: AiProviderKind.ollamaLocal,
+    streaming: true,
+    modelDiscovery: false,
+    maximumConcurrentRequests: 2,
+    recommendedModels: {},
+  );
+
   Future<void> started(String id) =>
       (_started[id] ??= Completer<void>()).future;
 
   @override
-  Future<List<AiModelInfo>> listModels() async => const [];
+  Future<List<AiModelInfo>> listModels({
+    AiCancellationToken? cancellationToken,
+  }) async => const [];
+
+  @override
+  Future<AiHealthResult> checkHealth({
+    required String model,
+    required AiCancellationToken cancellationToken,
+  }) => throw UnimplementedError();
 
   @override
   Stream<AiStreamEvent> stream(

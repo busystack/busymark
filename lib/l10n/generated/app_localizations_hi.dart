@@ -3045,7 +3045,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'एआई संपादन स्पष्ट रूप से शुरू किया जाता है और केवल स्थानीय रूप से चलता है। BusyMark केवल दिखाया गया संदर्भ लूपबैक Ollama सेवा को भेजता है और समीक्षा के बिना किसी सुझाव को लागू नहीं करता।';
+      'AI संपादन केवल स्पष्ट कार्रवाई से शुरू होता है। BusyMark चयनित प्रदाता को केवल दिखाया गया संदर्भ भेजता है और समीक्षा के बिना किसी प्रस्ताव को लागू नहीं करता।';
 
   @override
   String get aiProvider => 'एआई प्रदाता';
@@ -3073,11 +3073,11 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark स्थानीय Ollama कनेक्शन की जाँच नहीं कर सका।';
+      'BusyMark AI टेक्स्ट जनरेशन को सत्यापित नहीं कर सका।';
 
   @override
   String get aiConfigureFirst =>
-      'स्थानीय Ollama सक्षम करें और सेटिंग्स → एआई में कोई इंस्टॉल किया गया मॉडल चुनें।';
+      'पहले सेटिंग्स → AI में किसी AI प्रदाता को सक्षम करें और मॉडल सत्यापित करें।';
 
   @override
   String get aiRewrite => 'पुनर्लेखन';
@@ -3120,7 +3120,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'स्थानीय Ollama को वर्तमान संपादक संदर्भ से $count वर्ण मिलेंगे।';
+    return 'चयनित प्रदाता को दिखाए गए संदर्भ के $count वर्ण मिलेंगे।';
   }
 
   @override
@@ -3143,4 +3143,150 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiViewContext => 'भेजा गया संदर्भ देखें';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'AI अक्षम है। BusyMark किसी स्पष्ट AI कार्रवाई के बिना दस्तावेज़ की सामग्री कभी नहीं भेजता।';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark समीक्षा संवाद में दिखाया गया संदर्भ केवल कॉन्फ़िगर की गई स्थानीय Ollama सेवा को भेजता है। प्रस्ताव समीक्षा के बिना कभी लागू नहीं होते।';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark समीक्षा संवाद में दिखाया गया संदर्भ केवल $provider को भेजता है। अनुरोध स्टेटलेस होते हैं और प्रस्ताव समीक्षा के बिना कभी लागू नहीं होते।';
+  }
+
+  @override
+  String get aiApiKey => 'API कुंजी';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'एक कुंजी सिस्टम क्रेडेंशियल स्टोर में सुरक्षित है';
+
+  @override
+  String get aiApiKeyEnterHint => 'प्रदाता की API कुंजी दर्ज करें';
+
+  @override
+  String get aiReplaceApiKey => 'API कुंजी बदलें';
+
+  @override
+  String get aiSaveApiKey => 'API कुंजी सुरक्षित रूप से सहेजें';
+
+  @override
+  String get aiRemoveApiKey => 'सहेजी गई API कुंजी हटाएँ';
+
+  @override
+  String get aiCredentialSaved =>
+      'API कुंजी सिस्टम क्रेडेंशियल स्टोर में सहेजी गई।';
+
+  @override
+  String get aiCredentialRemoved => 'सहेजी गई API कुंजी हटा दी गई।';
+
+  @override
+  String get aiModelRouting => 'मॉडल चयन';
+
+  @override
+  String get aiAutomaticRouting => 'कार्य के अनुसार स्वचालित';
+
+  @override
+  String get aiFixedModelRouting => 'चयनित मॉडल का उपयोग करें';
+
+  @override
+  String get aiPreferredModel => 'पसंदीदा मॉडल';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests अनुरोध · $input इनपुट टोकन · $output आउटपुट टोकन';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'सामग्री $provider को भेजें?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return '$provider सक्षम करें';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'केवल प्रत्येक AI समीक्षा संवाद में दिखाई गई सामग्री भेजी जाती है। अनुरोध स्टेटलेस होते हैं, प्रस्तावों की समीक्षा आवश्यक होती है और API कुंजी Linux सिस्टम क्रेडेंशियल स्टोर में सुरक्षित रहती है।';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'पहले सेटिंग्स → AI में $provider के साथ डेटा साझा करने की पुष्टि करें।';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return '$model के साथ जनरेशन सत्यापित हुआ। $count संगत मॉडल उपलब्ध हैं।';
+  }
+
+  @override
+  String get aiColdStartObserved => 'स्थानीय मॉडल का कोल्ड स्टार्ट पाया गया।';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'कोई संगत टेक्स्ट-जनरेशन मॉडल उपलब्ध नहीं है।';
+
+  @override
+  String get aiEnableProvider => 'पहले किसी AI प्रदाता को सक्षम करें।';
+
+  @override
+  String get aiExplainCode => 'कोड समझाएँ';
+
+  @override
+  String get aiImproveCode => 'कोड सुधारें';
+
+  @override
+  String get aiDraftCommitMessage => 'कमिट संदेश का मसौदा बनाएँ';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'पहले कर्सर को किसी फ़ेंस्ड कोड ब्लॉक में रखें।';
+
+  @override
+  String get aiDrafting => 'मसौदा बनाया जा रहा है…';
+
+  @override
+  String get aiDraftWithAi => 'AI से मसौदा बनाएँ';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'विषय-सूची बनाएँ/अपडेट करें';
+
+  @override
+  String get markdownTocTitle => 'विषय-सूची';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'विषय-सूची $count प्रविष्टियों के साथ अपडेट हुई।';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'विषय-सूची बनाने से पहले कम-से-कम एक अनुभाग शीर्षक जोड़ें।';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'BusyMark विषय-सूची मार्कर अनुपस्थित, डुप्लिकेट या गलत क्रम में हैं।';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'स्तर $level का शीर्षक स्तर $previousLevel के बाद है; अनुभागों का नेस्टिंग जाँचें।';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'लिंक टेक्स्ट खाली है; उसके उद्देश्य का वर्णन करने वाला सुलभ नाम दें।';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'जाँचें कि लिंक टेक्स्ट “$text” संदर्भ में उसके उद्देश्य का वर्णन करता है या नहीं।';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'तालिका शीर्षकों को अपने कॉलम पहचानने चाहिए; हर खाली शीर्षक पूरा करें।';
 }

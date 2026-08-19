@@ -13,7 +13,9 @@ enum BusyMarkThemeModePreference { system, light, dark }
 
 enum DocumentViewModePreference { editor, source, preview, split }
 
-enum AiProviderPreference { disabled, ollamaLocal }
+enum AiProviderPreference { disabled, ollamaLocal, openAi, gemini }
+
+enum AiModelRoutingPreference { automatic, fixed }
 
 enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
 
@@ -86,6 +88,10 @@ class AppSettings {
     required this.aiProviderPreference,
     required this.aiOllamaEndpoint,
     required this.aiOllamaModel,
+    required this.aiOpenAiModel,
+    required this.aiGeminiModel,
+    required this.aiModelRoutingPreference,
+    required this.aiCloudProviderConsentIds,
     required this.allowRemoteImages,
     required this.remoteImageAllowedWorkspacePaths,
     required this.trustedGitWorkspacePaths,
@@ -112,6 +118,10 @@ class AppSettings {
       aiProviderPreference: AiProviderPreference.disabled,
       aiOllamaEndpoint: 'http://127.0.0.1:11434',
       aiOllamaModel: '',
+      aiOpenAiModel: 'gpt-5.6-terra',
+      aiGeminiModel: 'gemini-3.6-flash',
+      aiModelRoutingPreference: AiModelRoutingPreference.automatic,
+      aiCloudProviderConsentIds: [],
       allowRemoteImages: false,
       remoteImageAllowedWorkspacePaths: [],
       trustedGitWorkspacePaths: [],
@@ -170,6 +180,18 @@ class AppSettings {
           json['aiOllamaEndpoint']?.toString() ?? defaults.aiOllamaEndpoint,
       aiOllamaModel:
           json['aiOllamaModel']?.toString() ?? defaults.aiOllamaModel,
+      aiOpenAiModel:
+          json['aiOpenAiModel']?.toString() ?? defaults.aiOpenAiModel,
+      aiGeminiModel:
+          json['aiGeminiModel']?.toString() ?? defaults.aiGeminiModel,
+      aiModelRoutingPreference: _enumFromName(
+        AiModelRoutingPreference.values,
+        json['aiModelRoutingPreference'],
+        defaults.aiModelRoutingPreference,
+      ),
+      aiCloudProviderConsentIds: _stringListFromJson(
+        json['aiCloudProviderConsentIds'],
+      ),
       allowRemoteImages:
           json['allowRemoteImages'] as bool? ?? defaults.allowRemoteImages,
       remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
@@ -213,6 +235,10 @@ class AppSettings {
   final AiProviderPreference aiProviderPreference;
   final String aiOllamaEndpoint;
   final String aiOllamaModel;
+  final String aiOpenAiModel;
+  final String aiGeminiModel;
+  final AiModelRoutingPreference aiModelRoutingPreference;
+  final List<String> aiCloudProviderConsentIds;
   final bool allowRemoteImages;
   final List<String> remoteImageAllowedWorkspacePaths;
   final List<String> trustedGitWorkspacePaths;
@@ -241,6 +267,10 @@ class AppSettings {
     'aiProviderPreference': aiProviderPreference.name,
     'aiOllamaEndpoint': aiOllamaEndpoint,
     'aiOllamaModel': aiOllamaModel,
+    'aiOpenAiModel': aiOpenAiModel,
+    'aiGeminiModel': aiGeminiModel,
+    'aiModelRoutingPreference': aiModelRoutingPreference.name,
+    'aiCloudProviderConsentIds': aiCloudProviderConsentIds,
     'allowRemoteImages': allowRemoteImages,
     'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
     'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
@@ -308,6 +338,10 @@ class AppSettings {
     AiProviderPreference? aiProviderPreference,
     String? aiOllamaEndpoint,
     String? aiOllamaModel,
+    String? aiOpenAiModel,
+    String? aiGeminiModel,
+    AiModelRoutingPreference? aiModelRoutingPreference,
+    List<String>? aiCloudProviderConsentIds,
     bool? allowRemoteImages,
     List<String>? remoteImageAllowedWorkspacePaths,
     List<String>? trustedGitWorkspacePaths,
@@ -336,6 +370,12 @@ class AppSettings {
       aiProviderPreference: aiProviderPreference ?? this.aiProviderPreference,
       aiOllamaEndpoint: aiOllamaEndpoint ?? this.aiOllamaEndpoint,
       aiOllamaModel: aiOllamaModel ?? this.aiOllamaModel,
+      aiOpenAiModel: aiOpenAiModel ?? this.aiOpenAiModel,
+      aiGeminiModel: aiGeminiModel ?? this.aiGeminiModel,
+      aiModelRoutingPreference:
+          aiModelRoutingPreference ?? this.aiModelRoutingPreference,
+      aiCloudProviderConsentIds:
+          aiCloudProviderConsentIds ?? this.aiCloudProviderConsentIds,
       allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
       remoteImageAllowedWorkspacePaths:
           remoteImageAllowedWorkspacePaths ??
@@ -518,6 +558,38 @@ class AppSettingsController extends Notifier<AppSettings> {
     return _mutate(
       (settings) => settings.copyWith(aiOllamaModel: model.trim()),
     );
+  }
+
+  Future<void> setAiOpenAiModel(String model) {
+    return _mutate(
+      (settings) => settings.copyWith(aiOpenAiModel: model.trim()),
+    );
+  }
+
+  Future<void> setAiGeminiModel(String model) {
+    return _mutate(
+      (settings) => settings.copyWith(aiGeminiModel: model.trim()),
+    );
+  }
+
+  Future<void> setAiModelRoutingPreference(
+    AiModelRoutingPreference preference,
+  ) {
+    return _mutate(
+      (settings) => settings.copyWith(aiModelRoutingPreference: preference),
+    );
+  }
+
+  Future<void> grantAiCloudProviderConsent(String providerId) {
+    final normalized = providerId.trim();
+    if (normalized.isEmpty) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final ids = {normalized, ...settings.aiCloudProviderConsentIds}.toList()
+        ..sort();
+      return settings.copyWith(aiCloudProviderConsentIds: ids);
+    });
   }
 
   Future<void> setAllowRemoteImages(bool enabled) {
@@ -757,6 +829,17 @@ Map<String, String> _stringMapFromJson(Object? value) {
           entry.value.toString().trim().isNotEmpty)
         entry.key.toString(): entry.value.toString(),
   });
+}
+
+List<String> _stringListFromJson(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final values = {
+    for (final item in value)
+      if ((item?.toString().trim() ?? '').isNotEmpty) item.toString().trim(),
+  }.toList()..sort();
+  return values;
 }
 
 String? _normalizedWorkspacePath(String? value) {

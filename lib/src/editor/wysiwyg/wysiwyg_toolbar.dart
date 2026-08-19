@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../ai/ai_edit_ui.dart';
-import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
@@ -22,7 +20,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onOutdentCommand,
     required this.onToggleTaskCommand,
     required this.onHardBreakCommand,
-    this.onAiCommand,
     this.alignEnd = false,
     this.axis = Axis.horizontal,
   });
@@ -38,7 +35,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onOutdentCommand;
   final VoidCallback onToggleTaskCommand;
   final VoidCallback onHardBreakCommand;
-  final ValueChanged<AiFeature>? onAiCommand;
   final bool alignEnd;
   final Axis axis;
 
@@ -64,19 +60,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: BusyMarkSpacing.xs,
         children: _groups(axis, [
-          [
-            if (onAiCommand != null)
-              BusyMarkHeaderPopupMenuButton<AiFeature>(
-                tooltip: context.l10n.ai,
-                icon: BusyMarkGlyphs.ai,
-                transparent: false,
-                elevated: true,
-                foregroundColor: BusyMarkLinuxPalette.white,
-                backgroundColor: _editorToolbarButtonBackground(context),
-                itemBuilder: aiFeatureMenuItems,
-                onSelected: onAiCommand!,
-              ),
-          ],
           [
             _blockStyleMenu(context),
             _button(

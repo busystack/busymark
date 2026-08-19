@@ -12,6 +12,7 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../workspace/workspace_controller.dart';
+import 'ai_configuration.dart';
 import 'ai_models.dart';
 import 'ai_policy.dart';
 import 'ai_providers.dart';
@@ -25,17 +26,21 @@ String aiFeatureLabel(BuildContext context, AiFeature feature) {
     AiFeature.translate => context.l10n.aiTranslate,
     AiFeature.proofread => context.l10n.aiProofread,
     AiFeature.draft => context.l10n.aiDraft,
+    AiFeature.explainCode => context.l10n.aiExplainCode,
+    AiFeature.improveCode => context.l10n.aiImproveCode,
+    AiFeature.draftCommitMessage => context.l10n.aiDraftCommitMessage,
   };
 }
 
 List<PopupMenuEntry<AiFeature>> aiFeatureMenuItems(BuildContext context) {
   return [
     for (final feature in AiFeature.values)
-      BusyMarkPopupMenuItem(
-        value: feature,
-        label: aiFeatureLabel(context, feature),
-        icon: BusyMarkGlyphs.ai,
-      ),
+      if (feature != AiFeature.draftCommitMessage)
+        BusyMarkPopupMenuItem(
+          value: feature,
+          label: aiFeatureLabel(context, feature),
+          icon: BusyMarkGlyphs.ai,
+        ),
   ];
 }
 
@@ -45,13 +50,31 @@ Future<String?> showBusyMarkAiProposal(
   AiEditInvocation invocation,
 ) async {
   final settings = ref.read(appSettingsControllerProvider);
-  if (settings.aiProviderPreference != AiProviderPreference.ollamaLocal ||
-      settings.aiOllamaModel.trim().isEmpty) {
+  final providerKind = settings.aiProviderKind;
+  if (providerKind == null) {
+    await _showAiMessage(context, context.l10n.aiConfigureFirst);
+    return null;
+  }
+  if (!settings.hasCloudConsent(providerKind)) {
+    await _showAiMessage(
+      context,
+      context.l10n.aiCloudConsentRequired(providerKind.displayName),
+    );
+    return null;
+  }
+  final provider = ref.read(aiProviderRegistryProvider).require(providerKind);
+  final modelCandidates = settings.modelCandidatesFor(
+    invocation.feature,
+    provider,
+  );
+  if (modelCandidates.isEmpty) {
     await _showAiMessage(context, context.l10n.aiConfigureFirst);
     return null;
   }
   try {
-    AiPolicy.validateLocalOllamaEndpoint(settings.aiOllamaEndpoint);
+    if (providerKind == AiProviderKind.ollamaLocal) {
+      AiPolicy.validateLocalOllamaEndpoint(settings.aiOllamaEndpoint);
+    }
   } on AiException catch (error) {
     await _showAiMessage(context, error.message);
     return null;
@@ -75,13 +98,21 @@ Future<String?> showBusyMarkAiProposal(
     request = AiPromptBuilder.build(
       id: const Uuid().v4(),
       targetId: configured.targetId,
+      provider: providerKind,
       feature: configured.feature,
       scope: configured.scope,
       input: configured.input,
-      model: settings.aiOllamaModel,
+      modelCandidates: modelCandidates,
       sourceRevision: configured.sourceRevision,
       contentFormat: configured.contentFormat,
       instruction: configured.instruction,
+      replacementOriginal: configured.replacementOriginal,
+      documentSource: configured.documentSource,
+      replacementStart: configured.replacementStart,
+      replacementEnd: configured.replacementEnd,
+      deadline: providerKind == AiProviderKind.ollamaLocal
+          ? const Duration(minutes: 5)
+          : const Duration(minutes: 2),
     );
   } on AiException catch (error) {
     if (context.mounted) {
@@ -216,6 +247,8 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
   final _output = StringBuffer();
   AiUsage? _usage;
   String? _error;
+  String? _providerId;
+  String? _model;
   var _complete = false;
 
   @override
@@ -237,7 +270,7 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
 
   @override
   void dispose() {
-    ref.read(aiCoordinatorProvider).cancel(widget.request.targetId);
+    ref.read(aiCoordinatorProvider).cancelRequest(widget.request.id);
     unawaited(_subscription?.cancel());
     super.dispose();
   }
@@ -254,8 +287,9 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
           _usage = usage;
         case AiCompleted():
           _complete = true;
-        case AiStarted():
-          break;
+        case AiStarted(:final providerId, :final model):
+          _providerId = providerId ?? _providerId;
+          _model = model ?? _model;
       }
     });
   }
@@ -278,9 +312,10 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
     final currentPath =
         workspace?.activeFilePath ?? workspace?.markdown?.filePath;
     final revisionCurrent =
-        ref.read(workspaceControllerProvider.notifier).editRevision ==
-            widget.invocation.sourceRevision &&
-        currentPath == widget.invocation.documentPath;
+        !widget.invocation.enforceDocumentRevision ||
+        (ref.read(workspaceControllerProvider.notifier).editRevision ==
+                widget.invocation.sourceRevision &&
+            currentPath == widget.invocation.documentPath);
     final proposal = _output.toString();
     return BusyMarkDialogShell(
       title: context.l10n.aiProposal,
@@ -290,7 +325,7 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
         BusyMarkDialogButton(
           label: context.l10n.cancel,
           onPressed: () {
-            ref.read(aiCoordinatorProvider).cancel(widget.request.targetId);
+            ref.read(aiCoordinatorProvider).cancelRequest(widget.request.id);
             Navigator.pop(context);
           },
         ),
@@ -317,9 +352,10 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
       ],
       children: [
         BusyMarkStatusBox(
-          message: context.l10n.aiContextDisclosure(
-            widget.request.input.length,
-          ),
+          message:
+              '${context.l10n.aiProvider}: ${_providerName()}'
+              ' · ${context.l10n.aiPreferredModel}: ${_model ?? widget.request.model}\n'
+              '${context.l10n.aiContextDisclosure(widget.request.input.length)}',
           kind: BusyMarkStatusKind.information,
         ),
         const SizedBox(height: BusyMarkSpacing.sm),
@@ -384,6 +420,15 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
       return '';
     }
     return context.l10n.aiTokenUsage(input ?? 0, output ?? 0);
+  }
+
+  String _providerName() {
+    for (final provider in AiProviderKind.values) {
+      if (provider.id == _providerId) {
+        return provider.displayName;
+      }
+    }
+    return widget.request.provider.displayName;
   }
 }
 

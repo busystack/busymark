@@ -3044,7 +3044,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'AI editing is explicit and local-only. BusyMark sends only the displayed context to a loopback Ollama service and never applies a proposal without review.';
+      'AI editing is explicit. BusyMark sends only the context shown for the selected provider and never applies a proposal without review.';
 
   @override
   String get aiProvider => 'AI provider';
@@ -3072,11 +3072,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark could not test the local Ollama connection.';
+      'BusyMark could not verify AI text generation.';
 
   @override
   String get aiConfigureFirst =>
-      'Enable Local Ollama and choose an installed model in Settings → AI.';
+      'Enable an AI provider and verify a model in Settings → AI.';
 
   @override
   String get aiRewrite => 'Rewrite';
@@ -3119,7 +3119,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Local Ollama will receive $count characters from the current editor context.';
+    return 'The selected provider will receive $count characters from the displayed context.';
   }
 
   @override
@@ -3142,4 +3142,150 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiViewContext => 'View context sent';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'AI is disabled. BusyMark never sends document content without an explicit AI action.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark sends only the context shown in the review dialog to the configured loopback Ollama service. Proposals are never applied without review.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark sends only the context shown in the review dialog to $provider. Requests are stateless and proposals are never applied without review.';
+  }
+
+  @override
+  String get aiApiKey => 'API key';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'A key is stored in the system credential store';
+
+  @override
+  String get aiApiKeyEnterHint => 'Enter a provider API key';
+
+  @override
+  String get aiReplaceApiKey => 'Replace API key';
+
+  @override
+  String get aiSaveApiKey => 'Save API key securely';
+
+  @override
+  String get aiRemoveApiKey => 'Remove saved API key';
+
+  @override
+  String get aiCredentialSaved =>
+      'API key saved in the system credential store.';
+
+  @override
+  String get aiCredentialRemoved => 'The saved API key was removed.';
+
+  @override
+  String get aiModelRouting => 'Model routing';
+
+  @override
+  String get aiAutomaticRouting => 'Automatic by task';
+
+  @override
+  String get aiFixedModelRouting => 'Use selected model';
+
+  @override
+  String get aiPreferredModel => 'Preferred model';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests requests · $input input tokens · $output output tokens';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Send content to $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Enable $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Only content shown in each AI review dialog is sent. Requests are stateless, proposals require review, and the API key is stored in the Linux system credential store.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Confirm $provider data sharing in Settings → AI first.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Generation verified with $model. $count compatible model(s) available.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'A local model cold start was observed.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'No compatible text-generation model is available.';
+
+  @override
+  String get aiEnableProvider => 'Enable an AI provider first.';
+
+  @override
+  String get aiExplainCode => 'Explain code';
+
+  @override
+  String get aiImproveCode => 'Improve code';
+
+  @override
+  String get aiDraftCommitMessage => 'Draft commit message';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Place the cursor in a fenced code block first.';
+
+  @override
+  String get aiDrafting => 'Drafting…';
+
+  @override
+  String get aiDraftWithAi => 'Draft with AI';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Generate/update table of contents';
+
+  @override
+  String get markdownTocTitle => 'Table of contents';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Table of contents updated with $count entries.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Add at least one section heading before generating a table of contents.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'The BusyMark table-of-contents markers are missing, duplicated, or out of order.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Heading level $level follows level $previousLevel; review the section nesting.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Link text is empty; provide an accessible name that describes its purpose.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Review whether the link text “$text” describes its purpose in context.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Table header cells must identify their columns; complete each empty header.';
 }

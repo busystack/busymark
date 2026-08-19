@@ -3076,7 +3076,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'L’édition par IA est explicite et uniquement locale. BusyMark envoie seulement le contexte affiché à un service Ollama en boucle locale et n’applique jamais une proposition sans vérification.';
+      'L’édition par IA est déclenchée explicitement. BusyMark envoie uniquement le contexte affiché au fournisseur sélectionné et n’applique jamais une proposition sans validation.';
 
   @override
   String get aiProvider => 'Fournisseur d’IA';
@@ -3104,11 +3104,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark n’a pas pu tester la connexion locale à Ollama.';
+      'BusyMark n’a pas pu vérifier la génération de texte par IA.';
 
   @override
   String get aiConfigureFirst =>
-      'Activez Ollama local et choisissez un modèle installé dans Paramètres → IA.';
+      'Activez un fournisseur d’IA et vérifiez un modèle dans Paramètres → IA.';
 
   @override
   String get aiRewrite => 'Réécrire';
@@ -3152,7 +3152,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Ollama local recevra $count caractères du contexte actuel de l’éditeur.';
+    return 'Le fournisseur sélectionné recevra $count caractères du contexte affiché.';
   }
 
   @override
@@ -3175,4 +3175,152 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Afficher le contexte envoyé';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'L’IA est désactivée. BusyMark n’envoie jamais le contenu du document sans action d’IA explicite.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark envoie uniquement le contexte affiché dans la boîte de dialogue de validation au service Ollama local configuré. Les propositions ne sont jamais appliquées sans validation.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark envoie uniquement le contexte affiché dans la boîte de dialogue de validation à $provider. Les requêtes sont sans état et les propositions ne sont jamais appliquées sans validation.';
+  }
+
+  @override
+  String get aiApiKey => 'Clé API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Une clé est enregistrée dans le trousseau d’identifiants du système';
+
+  @override
+  String get aiApiKeyEnterHint => 'Saisissez une clé API du fournisseur';
+
+  @override
+  String get aiReplaceApiKey => 'Remplacer la clé API';
+
+  @override
+  String get aiSaveApiKey => 'Enregistrer la clé API de manière sécurisée';
+
+  @override
+  String get aiRemoveApiKey => 'Supprimer la clé API enregistrée';
+
+  @override
+  String get aiCredentialSaved =>
+      'La clé API a été enregistrée dans le trousseau d’identifiants du système.';
+
+  @override
+  String get aiCredentialRemoved => 'La clé API enregistrée a été supprimée.';
+
+  @override
+  String get aiModelRouting => 'Sélection du modèle';
+
+  @override
+  String get aiAutomaticRouting => 'Automatique selon la tâche';
+
+  @override
+  String get aiFixedModelRouting => 'Utiliser le modèle sélectionné';
+
+  @override
+  String get aiPreferredModel => 'Modèle préféré';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests requêtes · $input jetons d’entrée · $output jetons de sortie';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Envoyer du contenu à $provider ?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Activer $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Seul le contenu affiché dans chaque boîte de dialogue de validation de l’IA est envoyé. Les requêtes sont sans état, les propositions doivent être validées et la clé API est conservée dans le trousseau d’identifiants du système Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Confirmez d’abord le partage de données avec $provider dans Paramètres → IA.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Génération vérifiée avec $model. $count modèles compatibles disponibles.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'Un démarrage à froid du modèle local a été détecté.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Aucun modèle de génération de texte compatible n’est disponible.';
+
+  @override
+  String get aiEnableProvider => 'Activez d’abord un fournisseur d’IA.';
+
+  @override
+  String get aiExplainCode => 'Expliquer le code';
+
+  @override
+  String get aiImproveCode => 'Améliorer le code';
+
+  @override
+  String get aiDraftCommitMessage => 'Rédiger un message de commit';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Placez d’abord le curseur dans un bloc de code délimité.';
+
+  @override
+  String get aiDrafting => 'Rédaction…';
+
+  @override
+  String get aiDraftWithAi => 'Rédiger avec l’IA';
+
+  @override
+  String get generateOrUpdateMarkdownToc =>
+      'Générer/actualiser la table des matières';
+
+  @override
+  String get markdownTocTitle => 'Table des matières';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Table des matières actualisée avec $count entrées.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Ajoutez au moins un titre de section avant de générer une table des matières.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Les marqueurs de table des matières BusyMark sont absents, en double ou dans le mauvais ordre.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Le titre de niveau $level suit le niveau $previousLevel ; vérifiez l’imbrication des sections.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Le texte du lien est vide ; fournissez un nom accessible qui décrit son objectif.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Vérifiez si le texte du lien « $text » décrit son objectif dans le contexte.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Les en-têtes de tableau doivent identifier leurs colonnes ; complétez chaque en-tête vide.';
 }

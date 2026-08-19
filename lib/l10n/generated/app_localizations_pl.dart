@@ -3091,7 +3091,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'Edycja z użyciem SI jest jawna i wyłącznie lokalna. BusyMark wysyła tylko wyświetlony kontekst do usługi Ollama na interfejsie pętli zwrotnej i nigdy nie stosuje propozycji bez sprawdzenia.';
+      'Edycja z użyciem SI jest uruchamiana wyłącznie jawnie. BusyMark wysyła do wybranego dostawcy tylko pokazany kontekst i nigdy nie stosuje propozycji bez jej sprawdzenia.';
 
   @override
   String get aiProvider => 'Dostawca SI';
@@ -3119,11 +3119,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark nie mógł przetestować lokalnego połączenia z Ollama.';
+      'BusyMark nie mógł zweryfikować generowania tekstu przez SI.';
 
   @override
   String get aiConfigureFirst =>
-      'Włącz lokalny Ollama i wybierz zainstalowany model w Ustawienia → SI.';
+      'Najpierw włącz dostawcę SI i zweryfikuj model w Ustawienia → SI.';
 
   @override
   String get aiRewrite => 'Przepisz';
@@ -3166,7 +3166,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Lokalny Ollama otrzyma $count znaków z bieżącego kontekstu edytora.';
+    return 'Wybrany dostawca otrzyma $count znaków z pokazanego kontekstu.';
   }
 
   @override
@@ -3189,4 +3189,149 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Pokaż wysłany kontekst';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'SI jest wyłączona. BusyMark nigdy nie wysyła treści dokumentu bez jawnego działania SI.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do skonfigurowanej lokalnej usługi Ollama. Propozycje nigdy nie są stosowane bez sprawdzenia.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark wysyła tylko kontekst pokazany w oknie przeglądu do $provider. Żądania są bezstanowe, a propozycje nigdy nie są stosowane bez sprawdzenia.';
+  }
+
+  @override
+  String get aiApiKey => 'Klucz API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Klucz jest zapisany w systemowym magazynie poświadczeń';
+
+  @override
+  String get aiApiKeyEnterHint => 'Wprowadź klucz API dostawcy';
+
+  @override
+  String get aiReplaceApiKey => 'Zastąp klucz API';
+
+  @override
+  String get aiSaveApiKey => 'Zapisz bezpiecznie klucz API';
+
+  @override
+  String get aiRemoveApiKey => 'Usuń zapisany klucz API';
+
+  @override
+  String get aiCredentialSaved =>
+      'Klucz API zapisano w systemowym magazynie poświadczeń.';
+
+  @override
+  String get aiCredentialRemoved => 'Zapisany klucz API został usunięty.';
+
+  @override
+  String get aiModelRouting => 'Wybór modelu';
+
+  @override
+  String get aiAutomaticRouting => 'Automatycznie według zadania';
+
+  @override
+  String get aiFixedModelRouting => 'Użyj wybranego modelu';
+
+  @override
+  String get aiPreferredModel => 'Preferowany model';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests żądań · $input tokenów wejściowych · $output tokenów wyjściowych';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Wysłać treść do $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Włącz $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Wysyłana jest wyłącznie treść pokazana w każdym oknie przeglądu SI. Żądania są bezstanowe, propozycje wymagają sprawdzenia, a klucz API jest przechowywany w systemowym magazynie poświadczeń systemu Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Najpierw potwierdź udostępnianie danych usłudze $provider w Ustawienia → SI.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Generowanie zweryfikowano za pomocą $model. Dostępnych zgodnych modeli: $count.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'Wykryto zimny start modelu lokalnego.';
+
+  @override
+  String get aiNoCompatibleModels => 'Brak zgodnego modelu generowania tekstu.';
+
+  @override
+  String get aiEnableProvider => 'Najpierw włącz dostawcę SI.';
+
+  @override
+  String get aiExplainCode => 'Wyjaśnij kod';
+
+  @override
+  String get aiImproveCode => 'Ulepsz kod';
+
+  @override
+  String get aiDraftCommitMessage => 'Utwórz wersję roboczą komunikatu commita';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Najpierw umieść kursor w ogrodzonym bloku kodu.';
+
+  @override
+  String get aiDrafting => 'Tworzenie wersji roboczej…';
+
+  @override
+  String get aiDraftWithAi => 'Utwórz wersję roboczą z SI';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Wygeneruj/zaktualizuj spis treści';
+
+  @override
+  String get markdownTocTitle => 'Spis treści';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Zaktualizowano spis treści zawierający $count pozycji.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Przed wygenerowaniem spisu treści dodaj co najmniej jeden nagłówek sekcji.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Znaczniki spisu treści BusyMark są nieobecne, powielone lub ułożone w niewłaściwej kolejności.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Nagłówek poziomu $level występuje po poziomie $previousLevel; sprawdź zagnieżdżenie sekcji.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Tekst odnośnika jest pusty; podaj dostępną nazwę opisującą jego cel.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Sprawdź, czy tekst odnośnika „$text” opisuje jego cel w kontekście.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Nagłówki tabeli muszą identyfikować kolumny; uzupełnij każdy pusty nagłówek.';
 }

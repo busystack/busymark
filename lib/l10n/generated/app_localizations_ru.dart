@@ -3084,7 +3084,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'Редактирование с помощью ИИ запускается явно и выполняется только локально. BusyMark отправляет исключительно показанный контекст службе Ollama на интерфейсе обратной связи и никогда не применяет предложение без проверки.';
+      'Редактирование с помощью ИИ запускается только явно. BusyMark отправляет выбранному поставщику только показанный контекст и никогда не применяет предложение без проверки.';
 
   @override
   String get aiProvider => 'Поставщик ИИ';
@@ -3112,11 +3112,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark не удалось проверить локальное подключение к Ollama.';
+      'BusyMark не удалось проверить генерацию текста с помощью ИИ.';
 
   @override
   String get aiConfigureFirst =>
-      'Включите локальный Ollama и выберите установленную модель в разделе «Настройки → ИИ».';
+      'Включите поставщика ИИ и проверьте модель в разделе «Настройки → ИИ».';
 
   @override
   String get aiRewrite => 'Переписать';
@@ -3159,7 +3159,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Локальный Ollama получит $count символов из текущего контекста редактора.';
+    return 'Выбранный поставщик получит $count символов из показанного контекста.';
   }
 
   @override
@@ -3182,4 +3182,151 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Показать отправленный контекст';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'ИИ отключён. BusyMark никогда не отправляет содержимое документа без явного действия с ИИ.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark отправляет только контекст, показанный в диалоге проверки, настроенной локальной службе Ollama. Предложения никогда не применяются без проверки.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark отправляет только контекст, показанный в диалоге проверки, поставщику $provider. Запросы не сохраняют состояние, а предложения никогда не применяются без проверки.';
+  }
+
+  @override
+  String get aiApiKey => 'Ключ API';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Ключ сохранён в системном хранилище учётных данных';
+
+  @override
+  String get aiApiKeyEnterHint => 'Введите ключ API поставщика';
+
+  @override
+  String get aiReplaceApiKey => 'Заменить ключ API';
+
+  @override
+  String get aiSaveApiKey => 'Безопасно сохранить ключ API';
+
+  @override
+  String get aiRemoveApiKey => 'Удалить сохранённый ключ API';
+
+  @override
+  String get aiCredentialSaved =>
+      'Ключ API сохранён в системном хранилище учётных данных.';
+
+  @override
+  String get aiCredentialRemoved => 'Сохранённый ключ API удалён.';
+
+  @override
+  String get aiModelRouting => 'Выбор модели';
+
+  @override
+  String get aiAutomaticRouting => 'Автоматически по задаче';
+
+  @override
+  String get aiFixedModelRouting => 'Использовать выбранную модель';
+
+  @override
+  String get aiPreferredModel => 'Предпочитаемая модель';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests запросов · $input входных токенов · $output выходных токенов';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Отправить содержимое поставщику $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Включить $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Отправляется только содержимое, показанное в каждом диалоге проверки ИИ. Запросы не сохраняют состояние, предложения требуют проверки, а ключ API хранится в системном хранилище учётных данных Linux.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Сначала подтвердите передачу данных поставщику $provider в разделе «Настройки → ИИ».';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Генерация с помощью $model проверена. Доступно совместимых моделей: $count.';
+  }
+
+  @override
+  String get aiColdStartObserved =>
+      'Обнаружен холодный запуск локальной модели.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Нет доступной совместимой модели генерации текста.';
+
+  @override
+  String get aiEnableProvider => 'Сначала включите поставщика ИИ.';
+
+  @override
+  String get aiExplainCode => 'Объяснить код';
+
+  @override
+  String get aiImproveCode => 'Улучшить код';
+
+  @override
+  String get aiDraftCommitMessage => 'Создать черновик сообщения коммита';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Сначала поместите курсор в ограждённый блок кода.';
+
+  @override
+  String get aiDrafting => 'Создание черновика…';
+
+  @override
+  String get aiDraftWithAi => 'Создать черновик с ИИ';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Создать/обновить оглавление';
+
+  @override
+  String get markdownTocTitle => 'Оглавление';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Оглавление обновлено, записей: $count.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Добавьте хотя бы один заголовок раздела перед созданием оглавления.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'Маркеры оглавления BusyMark отсутствуют, повторяются или расположены в неверном порядке.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'За заголовком уровня $previousLevel следует уровень $level; проверьте вложенность разделов.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Текст ссылки пуст; укажите доступное имя, описывающее её назначение.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Проверьте, описывает ли текст ссылки «$text» её назначение в контексте.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Заголовки таблицы должны обозначать столбцы; заполните каждый пустой заголовок.';
 }

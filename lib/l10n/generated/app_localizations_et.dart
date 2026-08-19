@@ -3050,7 +3050,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get aiLocalOnlyDescription =>
-      'TI-põhine redigeerimine käivitatakse teadlikult ja toimub ainult kohalikult. BusyMark saadab üksnes kuvatud konteksti tagasisideaadressil töötavale Ollama teenusele ega rakenda ettepanekut kunagi ilma ülevaatuseta.';
+      'Tehisintellektiga redigeerimine käivitatakse ainult selgesõnaliselt. BusyMark saadab valitud teenusepakkujale üksnes kuvatud konteksti ega rakenda ettepanekut ilma ülevaatuseta.';
 
   @override
   String get aiProvider => 'TI-teenuse pakkuja';
@@ -3078,11 +3078,11 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get aiConnectionFailed =>
-      'BusyMark ei saanud kohalikku Ollama ühendust testida.';
+      'BusyMark ei saanud tehisintellekti tekstiloomet kontrollida.';
 
   @override
   String get aiConfigureFirst =>
-      'Luba kohalik Ollama ja vali installitud mudel menüüs Sätted → TI.';
+      'Luba jaotises Sätted → TI teenusepakkuja ning kontrolli mudelit.';
 
   @override
   String get aiRewrite => 'Sõnasta ümber';
@@ -3125,7 +3125,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String aiContextDisclosure(int count) {
-    return 'Kohalik Ollama saab redaktori praegusest kontekstist $count märki.';
+    return 'Valitud teenusepakkuja saab kuvatud kontekstist $count märki.';
   }
 
   @override
@@ -3148,4 +3148,150 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get aiViewContext => 'Kuva saadetud kontekst';
+
+  @override
+  String get aiPrivacyDisabled =>
+      'Tehisintellekt on keelatud. BusyMark ei saada dokumendi sisu kunagi ilma selgesõnalise TI-toiminguta.';
+
+  @override
+  String get aiPrivacyLocal =>
+      'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult seadistatud kohalikule Ollama teenusele. Ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
+
+  @override
+  String aiPrivacyCloud(String provider) {
+    return 'BusyMark saadab ülevaatusdialoogis kuvatud konteksti ainult teenusele $provider. Päringud on olekuta ja ettepanekuid ei rakendata kunagi ilma ülevaatuseta.';
+  }
+
+  @override
+  String get aiApiKey => 'API-võti';
+
+  @override
+  String get aiApiKeyStoredHint =>
+      'Võti on salvestatud süsteemi mandaadihoidlasse';
+
+  @override
+  String get aiApiKeyEnterHint => 'Sisesta teenusepakkuja API-võti';
+
+  @override
+  String get aiReplaceApiKey => 'Asenda API-võti';
+
+  @override
+  String get aiSaveApiKey => 'Salvesta API-võti turvaliselt';
+
+  @override
+  String get aiRemoveApiKey => 'Eemalda salvestatud API-võti';
+
+  @override
+  String get aiCredentialSaved =>
+      'API-võti salvestati süsteemi mandaadihoidlasse.';
+
+  @override
+  String get aiCredentialRemoved => 'Salvestatud API-võti eemaldati.';
+
+  @override
+  String get aiModelRouting => 'Mudeli valimine';
+
+  @override
+  String get aiAutomaticRouting => 'Automaatselt ülesande järgi';
+
+  @override
+  String get aiFixedModelRouting => 'Kasuta valitud mudelit';
+
+  @override
+  String get aiPreferredModel => 'Eelistatud mudel';
+
+  @override
+  String aiUsageThisMonth(int requests, int input, int output) {
+    return '$requests päringut · $input sisendmärgendit · $output väljundmärgendit';
+  }
+
+  @override
+  String aiCloudConsentTitle(String provider) {
+    return 'Kas saata sisu teenusele $provider?';
+  }
+
+  @override
+  String aiCloudConsentEnable(String provider) {
+    return 'Luba $provider';
+  }
+
+  @override
+  String get aiCloudConsentMessage =>
+      'Saadetakse ainult igas TI ülevaatusdialoogis kuvatud sisu. Päringud on olekuta, ettepanekud vajavad ülevaatust ja API-võti salvestatakse Linuxi süsteemi mandaadihoidlasse.';
+
+  @override
+  String aiCloudConsentRequired(String provider) {
+    return 'Kinnita esmalt jaotises Sätted → TI andmete jagamine teenusega $provider.';
+  }
+
+  @override
+  String aiGenerationVerified(String model, int count) {
+    return 'Tekstiloome mudeliga $model on kontrollitud. Saadaval on $count ühilduvat mudelit.';
+  }
+
+  @override
+  String get aiColdStartObserved => 'Tuvastati kohaliku mudeli külmkäivitus.';
+
+  @override
+  String get aiNoCompatibleModels =>
+      'Ühilduvat tekstiloome mudelit ei ole saadaval.';
+
+  @override
+  String get aiEnableProvider => 'Luba esmalt TI teenusepakkuja.';
+
+  @override
+  String get aiExplainCode => 'Selgita koodi';
+
+  @override
+  String get aiImproveCode => 'Täiusta koodi';
+
+  @override
+  String get aiDraftCommitMessage => 'Koosta sissekande sõnumi mustand';
+
+  @override
+  String get aiCodeBlockRequired =>
+      'Aseta kursor esmalt piiritletud koodiplokki.';
+
+  @override
+  String get aiDrafting => 'Mustandi koostamine…';
+
+  @override
+  String get aiDraftWithAi => 'Koosta TI-ga mustand';
+
+  @override
+  String get generateOrUpdateMarkdownToc => 'Loo/värskenda sisukord';
+
+  @override
+  String get markdownTocTitle => 'Sisukord';
+
+  @override
+  String markdownTocUpdated(int count) {
+    return 'Sisukord värskendati $count kirjega.';
+  }
+
+  @override
+  String get markdownTocNoHeadings =>
+      'Lisa enne sisukorra loomist vähemalt üks jaotise pealkiri.';
+
+  @override
+  String get markdownTocMalformedMarkers =>
+      'BusyMarki sisukorra tähised puuduvad, korduvad või on vales järjekorras.';
+
+  @override
+  String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
+    return 'Taseme $level pealkiri järgneb tasemele $previousLevel; kontrolli jaotiste pesastust.';
+  }
+
+  @override
+  String get diagnosticMarkdownLinkEmptyText =>
+      'Lingi tekst on tühi; lisa ligipääsetav nimi, mis kirjeldab selle otstarvet.';
+
+  @override
+  String diagnosticMarkdownLinkReviewText(String text) {
+    return 'Kontrolli, kas lingi tekst „$text” kirjeldab kontekstis selle otstarvet.';
+  }
+
+  @override
+  String get diagnosticMarkdownTableEmptyHeader =>
+      'Tabelipäised peavad veerge kirjeldama; täida kõik tühjad päised.';
 }
