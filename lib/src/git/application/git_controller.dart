@@ -800,20 +800,6 @@ class GitController extends Notifier<GitState> {
     }
   }
 
-  Future<void> showFileHistoryCommitChange() async {
-    final hash = state.fileHistory.selectedCommitHash;
-    if (hash != null) {
-      await selectFileHistoryCommit(hash);
-    }
-  }
-
-  Future<void> showProjectCommitChange() async {
-    final path = state.projectHistory.selectedFilePath;
-    if (path != null) {
-      await selectCommitFile(path);
-    }
-  }
-
   Future<bool> restoreSelectedFileVersion() async {
     if (ref.read(workspaceControllerProvider).hasUnsavedChanges) {
       state = state.copyWith(
@@ -956,10 +942,16 @@ class GitController extends Notifier<GitState> {
     );
   }
 
-  Future<void> discardFiles(List<String> repoRelativePaths) async {
-    final operation = _captureRepositoryOperation();
+  Future<void> rollbackFiles(List<String> repoRelativePaths) {
+    return _runPathOperation(
+      repoRelativePaths,
+      (repository, paths) => _gateway.rollbackTracked(repository, paths),
+    );
+  }
+
+  Future<void> deleteUntrackedFiles(List<String> repoRelativePaths) async {
     final snapshot = state.statusSnapshot;
-    if (operation == null || snapshot == null) {
+    if (snapshot == null) {
       return;
     }
     final failure = _validation.validateRepoRelativePaths(repoRelativePaths);
@@ -967,61 +959,27 @@ class GitController extends Notifier<GitState> {
       state = state.copyWith(lastError: failure);
       return;
     }
-    final untracked = <String>[];
-    final tracked = <String>[];
     for (final path in repoRelativePaths) {
       final status = snapshot.files
           .where((file) => file.repoRelativePath == path)
           .firstOrNull;
-      if (status?.untracked ?? false) {
-        untracked.add(path);
-      } else {
-        tracked.add(path);
-      }
-    }
-    state = state.copyWith(isRunningOperation: true, lastError: null);
-    try {
-      GitOperationResult? result;
-      if (tracked.isNotEmpty) {
-        result = await _gateway.discardTracked(operation.repository, tracked);
-        if (!_isCurrentRepositoryOperation(operation)) {
-          return;
-        }
-      }
-      if (untracked.isNotEmpty) {
-        result = await _gateway.discardUntracked(
-          operation.repository,
-          untracked,
-          snapshot,
-        );
-        if (!_isCurrentRepositoryOperation(operation)) {
-          return;
-        }
-      }
-      state = state.copyWith(
-        isRunningOperation: false,
-        lastOperationMessage: result?.message,
-      );
-      await refresh();
-      if (!_isCurrentRepositoryOperation(operation)) {
-        return;
-      }
-      final selected = state.selectedFilePath;
-      if (selected != null && repoRelativePaths.contains(selected)) {
+      if (status?.untracked != true) {
         state = state.copyWith(
-          selectedChange: null,
-          changeDiff: null,
-          selectedCommitFilePath: null,
-          openDiffFilePaths: const [],
+          lastError: GitFailure(
+            code: GitFailureCode.invalidPath,
+            userMessageKey: 'gitErrorUnsafePath',
+            rawMessage: path,
+            commandName: 'delete',
+          ),
         );
-      }
-    } on Object catch (error) {
-      if (!_isCurrentRepositoryOperation(operation)) {
         return;
       }
-      _setFailure(error, commandName: 'restore');
-      state = state.copyWith(isRunningOperation: false);
     }
+    await _runPathOperation(
+      repoRelativePaths,
+      (repository, paths) =>
+          _gateway.discardUntracked(repository, paths, snapshot),
+    );
   }
 
   Future<bool> commit(String message) async {
@@ -1964,7 +1922,7 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
   ) => _unavailable();
 
   @override
-  Future<GitOperationResult> discardTracked(
+  Future<GitOperationResult> rollbackTracked(
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
   ) => _unavailable();

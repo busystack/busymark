@@ -89,8 +89,12 @@ class GitSidebarTab extends ConsumerWidget {
       child: GitFileActions(
         select: (paths) => controller.stageFiles(paths),
         unselect: (paths) => controller.unstageFiles(paths),
-        discard: (paths) async {
-          await controller.discardFiles(paths);
+        rollback: (paths) async {
+          await controller.rollbackFiles(paths);
+          await onAfterWorkspaceFilesChanged();
+        },
+        deleteUntracked: (paths) async {
+          await controller.deleteUntrackedFiles(paths);
           await onAfterWorkspaceFilesChanged();
         },
         child: Column(
@@ -128,7 +132,6 @@ class GitSidebarTab extends ConsumerWidget {
                 GitView.fileHistory => GitFileHistoryView(
                   state: state,
                   onSelectCommit: controller.selectFileHistoryCommit,
-                  onChangesInCommit: controller.showFileHistoryCommitChange,
                   onCompareWithCurrent:
                       controller.compareFileHistoryWithCurrent,
                   onRestoreVersion: () => _confirmRestoreVersion(
@@ -142,7 +145,6 @@ class GitSidebarTab extends ConsumerWidget {
                   state: state,
                   onSelectCommit: controller.selectProjectCommit,
                   onShowFileDiff: controller.selectCommitFile,
-                  onChangesInCommit: controller.showProjectCommitChange,
                   onLoadMore: controller.loadMoreProjectHistory,
                 ),
               },

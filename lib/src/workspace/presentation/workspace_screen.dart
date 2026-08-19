@@ -451,6 +451,7 @@ class WorkspaceScreen extends ConsumerWidget {
                   )
                 : _GitDiffDocumentView(
                     diff: gitState.selectedDiffForDisplay,
+                    comparisonLabel: _gitDiffComparisonLabel(context, gitState),
                     openFilePath: gitState.selectedDiffOpenFilePath,
                     workspace: workspace,
                     viewMode: settings.documentViewMode,
@@ -1132,7 +1133,9 @@ Future<bool> _confirmDiscardGitFiles(
           onPressed: () => Navigator.pop(context, false),
         ),
         BusyMarkDialogButton(
-          label: context.l10n.gitDiscard,
+          label: tracked.isEmpty
+              ? context.l10n.delete
+              : context.l10n.gitDiscard,
           destructive: true,
           onPressed: () => Navigator.pop(context, true),
         ),
@@ -2137,6 +2140,38 @@ String? _gitBranchLabel(BuildContext context, GitRepositoryInfo? repository) {
   return commit == null
       ? context.l10n.gitDetachedHead
       : context.l10n.gitDetachedHeadAt(commit);
+}
+
+String? _gitDiffComparisonLabel(BuildContext context, GitState state) {
+  final comparison = switch (state.selectedView) {
+    GitView.changes => null,
+    GitView.fileHistory => state.fileHistory.comparison,
+    GitView.projectHistory => state.projectHistory.comparison,
+  };
+  if (comparison == null) {
+    return null;
+  }
+  final commit = switch (state.selectedView) {
+    GitView.changes => null,
+    GitView.fileHistory => state.fileHistory.selectedEntry?.commit,
+    GitView.projectHistory =>
+      state.projectHistory.commits
+          .where(
+            (candidate) =>
+                candidate.fullHash == state.projectHistory.selectedCommitHash,
+          )
+          .firstOrNull,
+  };
+  if (commit == null) {
+    return null;
+  }
+  final label =
+      state.selectedView == GitView.fileHistory &&
+          state.fileHistory.comparisonType ==
+              GitComparisonType.commitVersusCurrent
+      ? context.l10n.gitCompareWithCurrent
+      : context.l10n.gitChangesInCommit;
+  return '$label · ${busyMarkLtrIsolateFor(context, commit.shortHash)}';
 }
 
 class _SidebarHeader extends StatelessWidget {
@@ -6808,6 +6843,7 @@ String _diffTabTitle(String path) {
 class _GitDiffDocumentView extends StatefulWidget {
   const _GitDiffDocumentView({
     required this.diff,
+    required this.comparisonLabel,
     required this.openFilePath,
     required this.workspace,
     required this.viewMode,
@@ -6817,6 +6853,7 @@ class _GitDiffDocumentView extends StatefulWidget {
   });
 
   final GitDiff? diff;
+  final String? comparisonLabel;
   final String? openFilePath;
   final Workspace workspace;
   final DocumentViewModePreference viewMode;
@@ -6885,6 +6922,40 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
       decoration: BoxDecoration(color: colors.view),
       child: Column(
         children: [
+          if (widget.comparisonLabel != null)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.headerbarFlat,
+                border: Border(bottom: BorderSide(color: colors.subtleBorder)),
+              ),
+              child: SizedBox(
+                height: BusyMarkSizes.paneHeaderHeight,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BusyMarkSpacing.md,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        BusyMarkGlyphs.documentHistory,
+                        size: BusyMarkSizes.iconSm,
+                        color: colors.mutedForeground,
+                      ),
+                      const SizedBox(width: BusyMarkSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          widget.comparisonLabel!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           if (splitVisible && sourceChangeCount > 0)
             _DiffChangeNavigator(
               currentIndex: _currentChangeIndex,

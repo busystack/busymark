@@ -3500,10 +3500,10 @@ abstract class AppLocalizations {
   /// **'Unstage file'**
   String get gitRemoveFromCommit;
 
-  /// Git discard action label.
+  /// Action that rolls a tracked file back to HEAD.
   ///
   /// In en, this message translates to:
-  /// **'Discard'**
+  /// **'Rollback'**
   String get gitDiscard;
 
   /// Action label for opening a file from a Git row or diff.
@@ -3635,7 +3635,7 @@ abstract class AppLocalizations {
   /// Confirmation body for discarding tracked changes.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}'**
+  /// **'{count, plural, =1{All staged and unstaged changes in the selected tracked file will be restored to HEAD.} other{All staged and unstaged changes in the selected tracked files will be restored to HEAD.}}'**
   String gitConfirmDiscardTracked(int count);
 
   /// Confirmation body for deleting untracked files.

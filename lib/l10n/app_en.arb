@@ -1429,8 +1429,8 @@
   "@gitSelectForCommit": {"description": "Tooltip for staging a Git file."},
   "gitRemoveFromCommit": "Unstage file",
   "@gitRemoveFromCommit": {"description": "Tooltip for unstaging a Git file."},
-  "gitDiscard": "Discard",
-  "@gitDiscard": {"description": "Git discard action label."},
+  "gitDiscard": "Rollback",
+  "@gitDiscard": {"description": "Action that rolls a tracked file back to HEAD."},
   "gitOpenFile": "Open file",
   "@gitOpenFile": {"description": "Action label for opening a file from a Git row or diff."},
   "gitMarkResolved": "Mark resolved",
@@ -1479,7 +1479,7 @@
   "@gitUnsavedChangesBanner": {"description": "Git diff banner for unsaved editor changes."},
   "gitConfirmDiscardTitle": "Discard Git changes?",
   "@gitConfirmDiscardTitle": {"description": "Confirmation title for discarding Git changes."},
-  "gitConfirmDiscardTracked": "{count, plural, =1{The selected tracked file will be restored from Git.} other{The selected tracked files will be restored from Git.}}",
+  "gitConfirmDiscardTracked": "{count, plural, =1{All staged and unstaged changes in the selected tracked file will be restored to HEAD.} other{All staged and unstaged changes in the selected tracked files will be restored to HEAD.}}",
   "@gitConfirmDiscardTracked": {
     "description": "Confirmation body for discarding tracked changes.",
     "placeholders": {"count": {"type": "int"}}

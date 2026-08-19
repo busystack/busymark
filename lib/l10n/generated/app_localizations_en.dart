@@ -2056,7 +2056,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitRemoveFromCommit => 'Unstage file';
 
   @override
-  String get gitDiscard => 'Discard';
+  String get gitDiscard => 'Rollback';
 
   @override
   String get gitOpenFile => 'Open file';
@@ -2139,8 +2139,10 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'The selected tracked files will be restored from Git.',
-      one: 'The selected tracked file will be restored from Git.',
+      other:
+          'All staged and unstaged changes in the selected tracked files will be restored to HEAD.',
+      one:
+          'All staged and unstaged changes in the selected tracked file will be restored to HEAD.',
     );
     return '$_temp0';
   }

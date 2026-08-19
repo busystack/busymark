@@ -11,7 +11,6 @@ class GitFileHistoryView extends StatelessWidget {
     super.key,
     required this.state,
     required this.onSelectCommit,
-    required this.onChangesInCommit,
     required this.onCompareWithCurrent,
     required this.onRestoreVersion,
     required this.onLoadMore,
@@ -19,7 +18,6 @@ class GitFileHistoryView extends StatelessWidget {
 
   final GitState state;
   final ValueChanged<String> onSelectCommit;
-  final VoidCallback onChangesInCommit;
   final VoidCallback onCompareWithCurrent;
   final VoidCallback onRestoreVersion;
   final VoidCallback onLoadMore;
@@ -45,21 +43,41 @@ class GitFileHistoryView extends StatelessWidget {
       padding: BusyMarkInsets.sidebarList,
       children: [
         for (final entry in history.entries) ...[
-          _CommitRow(
-            selected: entry.commit.fullHash == history.selectedCommitHash,
-            shortHash: entry.commit.shortHash,
-            subject: entry.commit.subject,
-            authorName: entry.commit.authorName,
-            date: entry.commit.authorDate,
-            onTap: () => onSelectCommit(entry.commit.fullHash),
+          Builder(
+            builder: (context) {
+              final selected =
+                  entry.commit.fullHash == history.selectedCommitHash;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _CommitRow(
+                    selected: selected,
+                    shortHash: entry.commit.shortHash,
+                    subject: entry.commit.subject,
+                    authorName: entry.commit.authorName,
+                    date: entry.commit.authorDate,
+                    trailing: selected
+                        ? _FileHistoryCommitMenu(
+                            canRestore: entry.newPath != null,
+                            onCompareWithCurrent: onCompareWithCurrent,
+                            onRestoreVersion: onRestoreVersion,
+                          )
+                        : null,
+                    onTap: () => onSelectCommit(entry.commit.fullHash),
+                  ),
+                  if (selected)
+                    _HistoryComparisonLabel(
+                      label:
+                          history.comparisonType ==
+                              GitComparisonType.commitVersusCurrent
+                          ? context.l10n.gitCompareWithCurrent
+                          : context.l10n.gitChangesInCommit,
+                      shortHash: entry.commit.shortHash,
+                    ),
+                ],
+              );
+            },
           ),
-          if (entry.commit.fullHash == history.selectedCommitHash)
-            _FileHistoryActions(
-              canRestore: entry.newPath != null,
-              onChangesInCommit: onChangesInCommit,
-              onCompareWithCurrent: onCompareWithCurrent,
-              onRestoreVersion: onRestoreVersion,
-            ),
         ],
         if (history.hasMore)
           _LoadMoreButton(
@@ -77,14 +95,12 @@ class GitProjectHistoryView extends StatelessWidget {
     required this.state,
     required this.onSelectCommit,
     required this.onShowFileDiff,
-    required this.onChangesInCommit,
     required this.onLoadMore,
   });
 
   final GitState state;
   final ValueChanged<String> onSelectCommit;
   final ValueChanged<String> onShowFileDiff;
-  final VoidCallback onChangesInCommit;
   final VoidCallback onLoadMore;
 
   @override
@@ -121,10 +137,6 @@ class GitProjectHistoryView extends StatelessWidget {
                             selectedPath: project.selectedFilePath,
                             onShowFileDiff: onShowFileDiff,
                           ),
-                        if (showFileMenu && project.selectedFilePath != null)
-                          _ProjectHistoryActions(
-                            onChangesInCommit: onChangesInCommit,
-                          ),
                       ],
                     );
                   },
@@ -140,71 +152,83 @@ class GitProjectHistoryView extends StatelessWidget {
   }
 }
 
-class _FileHistoryActions extends StatelessWidget {
-  const _FileHistoryActions({
+enum _FileHistoryCommitAction { compareWithCurrent, restoreVersion }
+
+class _FileHistoryCommitMenu extends StatelessWidget {
+  const _FileHistoryCommitMenu({
     required this.canRestore,
-    required this.onChangesInCommit,
     required this.onCompareWithCurrent,
     required this.onRestoreVersion,
   });
 
   final bool canRestore;
-  final VoidCallback onChangesInCommit;
   final VoidCallback onCompareWithCurrent;
   final VoidCallback onRestoreVersion;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        BusyMarkSpacing.lg,
-        BusyMarkSpacing.xs,
-        BusyMarkSpacing.xs,
-        BusyMarkSpacing.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BusyMarkPushButton.standard(
-            onPressed: onChangesInCommit,
-            child: Text(context.l10n.gitChangesInCommit),
-          ),
-          const SizedBox(height: BusyMarkSpacing.xs),
-          BusyMarkPushButton.standard(
-            onPressed: onCompareWithCurrent,
-            child: Text(context.l10n.gitCompareWithCurrent),
-          ),
-          const SizedBox(height: BusyMarkSpacing.xs),
-          BusyMarkPushButton.standard(
-            onPressed: canRestore ? onRestoreVersion : null,
-            child: Text(context.l10n.gitRestoreVersion),
-          ),
-        ],
-      ),
+    return BusyMarkHeaderPopupMenuButton<_FileHistoryCommitAction>(
+      tooltip: context.l10n.fileActions,
+      icon: BusyMarkGlyphs.menuHorizontal,
+      transparent: true,
+      itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: _FileHistoryCommitAction.compareWithCurrent,
+          label: context.l10n.gitCompareWithCurrent,
+          icon: BusyMarkGlyphs.preview,
+        ),
+        BusyMarkPopupMenuItem(
+          value: _FileHistoryCommitAction.restoreVersion,
+          label: context.l10n.gitRestoreVersion,
+          icon: BusyMarkGlyphs.undo,
+          enabled: canRestore,
+        ),
+      ],
+      onSelected: (action) {
+        switch (action) {
+          case _FileHistoryCommitAction.compareWithCurrent:
+            onCompareWithCurrent();
+          case _FileHistoryCommitAction.restoreVersion:
+            onRestoreVersion();
+        }
+      },
     );
   }
 }
 
-class _ProjectHistoryActions extends StatelessWidget {
-  const _ProjectHistoryActions({required this.onChangesInCommit});
+class _HistoryComparisonLabel extends StatelessWidget {
+  const _HistoryComparisonLabel({required this.label, required this.shortHash});
 
-  final VoidCallback onChangesInCommit;
+  final String label;
+  final String shortHash;
 
   @override
   Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(
         BusyMarkSpacing.lg,
-        BusyMarkSpacing.xs,
-        BusyMarkSpacing.xs,
+        0,
+        BusyMarkSpacing.sm,
         BusyMarkSpacing.sm,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          BusyMarkPushButton.standard(
-            onPressed: onChangesInCommit,
-            child: Text(context.l10n.gitChangesInCommit),
+          Icon(
+            BusyMarkGlyphs.preview,
+            size: BusyMarkSizes.iconSm,
+            color: colors.mutedForeground,
+          ),
+          const SizedBox(width: BusyMarkSpacing.xs),
+          Expanded(
+            child: Text(
+              '$label · ${busyMarkLtrIsolateFor(context, shortHash)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
+            ),
           ),
         ],
       ),
@@ -395,6 +419,7 @@ class _CommitRow extends StatelessWidget {
     required this.authorName,
     required this.date,
     required this.onTap,
+    this.trailing,
   });
 
   final bool selected;
@@ -403,6 +428,7 @@ class _CommitRow extends StatelessWidget {
   final String authorName;
   final DateTime date;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -420,29 +446,40 @@ class _CommitRow extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  subject,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: BusyMarkSpacing.xs),
-                Text(
-                  '${busyMarkLtrIsolateFor(context, shortHash)} - '
-                  '${busyMarkBidiIsolateFor(context, authorName)} - '
-                  '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colors.mutedForeground,
-                    fontFamily: BusyMarkTypography.monoFontFamily,
-                    fontFamilyFallback:
-                        BusyMarkTypography.monoFontFamilyFallback,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: BusyMarkSpacing.xs),
+                      Text(
+                        '${busyMarkLtrIsolateFor(context, shortHash)} - '
+                        '${busyMarkBidiIsolateFor(context, authorName)} - '
+                        '${busyMarkBidiIsolateFor(context, MaterialLocalizations.of(context).formatShortDate(date.toLocal()))}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.mutedForeground,
+                          fontFamily: BusyMarkTypography.monoFontFamily,
+                          fontFamilyFallback:
+                              BusyMarkTypography.monoFontFamilyFallback,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                if (trailing != null) ...[
+                  const SizedBox(width: BusyMarkSpacing.xs),
+                  trailing!,
+                ],
               ],
             ),
           ),

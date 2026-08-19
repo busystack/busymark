@@ -49,7 +49,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -85,7 +86,8 @@ void main() {
           child: GitFileActions(
             select: selectedPaths.addAll,
             unselect: unselectedPaths.addAll,
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('changed.md')]),
               onSelectFile: (_) {},
@@ -120,7 +122,8 @@ void main() {
             child: GitFileActions(
               select: (_) {},
               unselect: (_) {},
-              discard: (_) {},
+              rollback: (_) {},
+              deleteUntracked: (_) {},
               child: GitChangesView(
                 state: _state(
                   files: [_file('both.md', staged: true, unstaged: true)],
@@ -157,6 +160,7 @@ void main() {
     'AD path shows staged addition and unstaged deletion without open action',
     (tester) async {
       final openedPaths = <String>[];
+      final rollbackPathSets = <List<String>>[];
       await tester.pumpWidget(
         _localized(
           GitCommitActions(
@@ -164,7 +168,8 @@ void main() {
             child: GitFileActions(
               select: (_) {},
               unselect: (_) {},
-              discard: (_) {},
+              rollback: (paths) => rollbackPathSets.add(paths),
+              deleteUntracked: (_) {},
               child: GitChangesView(
                 state: _state(
                   files: [
@@ -208,7 +213,7 @@ void main() {
           of: stagedRow,
           matching: find.byTooltip(l10n.fileActions),
         ),
-        findsNothing,
+        findsOneWidget,
       );
 
       await tester.tap(
@@ -221,6 +226,12 @@ void main() {
 
       expect(find.text(l10n.gitOpenFile), findsNothing);
       expect(find.text(l10n.gitDiscard), findsOneWidget);
+      await tester.tap(find.text(l10n.gitDiscard));
+      await tester.pumpAndSettle();
+
+      expect(rollbackPathSets, const [
+        ['draft.md'],
+      ]);
       expect(openedPaths, isEmpty);
     },
   );
@@ -230,6 +241,7 @@ void main() {
   ) async {
     final selections = <GitChangeSelection>[];
     final unstagedPaths = <String>[];
+    final rollbackPathSets = <List<String>>[];
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
@@ -237,7 +249,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: unstagedPaths.addAll,
-            discard: (_) {},
+            rollback: (paths) => rollbackPathSets.add(paths),
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -262,6 +275,23 @@ void main() {
 
     expect(find.text('outside/old.md → docs/new.md'), findsOneWidget);
     expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+
+    final stagedRow = find.byKey(
+      const ValueKey('git-change-staged-docs/new.md'),
+    );
+    await tester.tap(
+      find.descendant(
+        of: stagedRow,
+        matching: find.byTooltip(l10n.fileActions),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.gitDiscard));
+    await tester.pumpAndSettle();
+
+    expect(rollbackPathSets, const [
+      ['outside/old.md', 'docs/new.md'],
+    ]);
 
     await tester.tap(find.text('outside/old.md → docs/new.md'));
     await tester.tap(find.byType(YaruCheckbox).last);
@@ -290,7 +320,8 @@ void main() {
           child: GitFileActions(
             select: (paths) => stagedPathSets.add(paths),
             unselect: (paths) => unstagedPathSets.add(paths),
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -382,7 +413,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -433,7 +465,6 @@ void main() {
             ),
           ),
           onSelectCommit: (_) {},
-          onChangesInCommit: () {},
           onCompareWithCurrent: () {},
           onRestoreVersion: () {},
           onLoadMore: () {},
@@ -455,7 +486,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('changed.md')]),
               onSelectFile: (_) {},
@@ -476,6 +508,44 @@ void main() {
     expect(find.text(l10n.gitRemoveFromCommit), findsNothing);
   });
 
+  testWidgets('untracked file menu uses an explicit delete action', (
+    tester,
+  ) async {
+    final deletedPathSets = <List<String>>[];
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (paths) => deletedPathSets.add(paths),
+            child: GitChangesView(
+              state: _state(files: [_file('draft.md', untracked: true)]),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.delete), findsOneWidget);
+    expect(find.text(l10n.gitDiscard), findsNothing);
+
+    await tester.tap(find.text(l10n.delete));
+    await tester.pumpAndSettle();
+
+    expect(deletedPathSets, const [
+      ['draft.md'],
+    ]);
+  });
+
   testWidgets('commit section colors files by Git status', (tester) async {
     await tester.pumpWidget(
       _localized(
@@ -484,7 +554,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [
@@ -523,7 +594,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [_file('README.md', staged: true, unstaged: false)],
@@ -560,7 +632,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(
                 files: [_file('README.md', staged: true, unstaged: false)],
@@ -590,7 +663,8 @@ void main() {
         child: GitFileActions(
           select: (_) {},
           unselect: (_) {},
-          discard: (_) {},
+          rollback: (_) {},
+          deleteUntracked: (_) {},
           child: GitChangesView(
             state: state,
             onSelectFile: (_) {},
@@ -639,7 +713,8 @@ void main() {
           child: GitFileActions(
             select: (_) {},
             unselect: (_) {},
-            discard: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
             child: GitChangesView(
               state: _state(files: [_file('conflict.md', conflicted: true)]),
               onSelectFile: (_) {},
@@ -823,6 +898,85 @@ void main() {
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
   });
 
+  testWidgets(
+    'file history exposes contextual comparison and restore actions',
+    (tester) async {
+      final commit = GitCommitSummary(
+        fullHash: '1234567890abcdef',
+        shortHash: '1234567',
+        authorName: 'BusyMark Test',
+        authorEmail: 'busymark@example.com',
+        authorDate: DateTime(2026),
+        subject: 'Update docs',
+        parentHashes: const ['abcdef0123456789'],
+      );
+      var compareCalls = 0;
+      var restoreCalls = 0;
+      var state = _state(
+        files: const [],
+        scopedFilePath: 'README.md',
+        selectedView: GitView.fileHistory,
+        history: [commit],
+        historyFilePath: 'README.md',
+        selectedCommitHash: commit.fullHash,
+        selectedCommitFilePath: 'README.md',
+        openDiffFilePaths: const ['README.md'],
+        selectedDiff: GitDiff(
+          title: 'README.md',
+          files: [_diffFile('README.md', 'Commit change')],
+          rawPatch: '',
+          hasBinaryFiles: false,
+        ),
+      );
+
+      await tester.pumpWidget(
+        _localized(
+          StatefulBuilder(
+            builder: (context, setState) => GitFileHistoryView(
+              state: state,
+              onSelectCommit: (_) {},
+              onCompareWithCurrent: () {
+                compareCalls++;
+                setState(() {
+                  state = state.copyWith(
+                    fileHistory: state.fileHistory.copyWith(
+                      comparisonType: GitComparisonType.commitVersusCurrent,
+                    ),
+                  );
+                });
+              },
+              onRestoreVersion: () => restoreCalls++,
+              onLoadMore: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining(l10n.gitChangesInCommit), findsOneWidget);
+      expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
+      expect(find.text(l10n.gitRestoreVersion), findsNothing);
+
+      await tester.tap(find.byTooltip(l10n.fileActions));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.gitCompareWithCurrent), findsOneWidget);
+      expect(find.text(l10n.gitRestoreVersion), findsOneWidget);
+
+      await tester.tap(find.text(l10n.gitCompareWithCurrent));
+      await tester.pumpAndSettle();
+
+      expect(compareCalls, 1);
+      expect(find.textContaining(l10n.gitCompareWithCurrent), findsOneWidget);
+
+      await tester.tap(find.byTooltip(l10n.fileActions));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.gitRestoreVersion));
+      await tester.pumpAndSettle();
+
+      expect(restoreCalls, 1);
+    },
+  );
+
   testWidgets('project history file rows show selected file diff', (
     tester,
   ) async {
@@ -877,7 +1031,6 @@ void main() {
                         );
                       });
                     },
-                    onChangesInCommit: () {},
                     onLoadMore: () {},
                   ),
                 ),
@@ -899,7 +1052,7 @@ void main() {
 
     expect(find.text('README.md'), findsAtLeastNWidgets(1));
     expect(find.text('guide.md'), findsOneWidget);
-    expect(find.text(de.gitChangesInCommit), findsOneWidget);
+    expect(find.text(de.gitChangesInCommit), findsNothing);
     expect(find.text(de.gitCompareWithCurrent), findsNothing);
     expect(
       find.textContaining('Readme change', findRichText: true),
@@ -1517,6 +1670,7 @@ GitState _state({
   String? selectedCommitFilePath,
   List<String> openDiffFilePaths = const [],
   GitDiff? selectedDiff,
+  GitComparisonType fileHistoryComparisonType = GitComparisonType.commitChange,
   bool requiresWorkspaceTrust = false,
   Workspace? workspace,
 }) {
@@ -1553,6 +1707,7 @@ GitState _state({
       selectedCommitHash: selectedView == GitView.fileHistory
           ? selectedCommitHash
           : null,
+      comparisonType: fileHistoryComparisonType,
       comparison: selectedView == GitView.fileHistory && selectedDiff != null
           ? GitHistoricalFileComparison(
               oldPath: historyFilePath,

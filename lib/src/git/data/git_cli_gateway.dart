@@ -710,13 +710,15 @@ class GitCliGateway implements GitRepositoryGateway {
   }
 
   @override
-  Future<GitOperationResult> discardTracked(
+  Future<GitOperationResult> rollbackTracked(
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
   ) {
     _validateRepoPaths(repository, repoRelativePaths);
     return _operation(repository, [
       'restore',
+      '--source=HEAD',
+      '--staged',
       '--worktree',
       '--',
       ...repoRelativePaths,

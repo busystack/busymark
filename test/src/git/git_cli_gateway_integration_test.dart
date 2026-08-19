@@ -98,7 +98,7 @@ void main() {
 
     await readme.writeAsString('# Docs\n\nDiscard me.\n');
     expect((await gateway.status(info)).unstagedFiles, isNotEmpty);
-    await gateway.discardTracked(info, ['README.md']);
+    await gateway.rollbackTracked(info, ['README.md']);
     expect(await readme.readAsString(), contains('Changed.'));
 
     final draft = File(p.join(root.path, 'draft.md'));
@@ -183,6 +183,44 @@ void main() {
     expect(cachedDiff.exitCode, 0, reason: '${cachedDiff.stderr}');
   });
 
+  test('rollback restores both sides of a staged rename to HEAD', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-rollback-rename-');
+    final original = File(p.join(root.path, 'README.md'));
+    final renamed = File(p.join(root.path, 'renamed.md'));
+    await _git(root.path, ['mv', 'README.md', 'renamed.md']);
+    await renamed.writeAsString('# Changed after rename\n');
+
+    const gateway = GitCliGateway();
+    final info = (await gateway.detectRepository(root.path))!;
+    final before = await gateway.status(info);
+    final rename = before.stagedFiles.single;
+    expect(rename.originalRepoRelativePath, 'README.md');
+    expect(rename.repoRelativePath, 'renamed.md');
+    expect(before.unstagedFiles.single.repoRelativePath, 'renamed.md');
+
+    await gateway.rollbackTracked(info, [
+      rename.originalRepoRelativePath!,
+      rename.repoRelativePath,
+    ]);
+
+    expect((await gateway.status(info)).clean, isTrue);
+    expect(await original.readAsString(), '# Docs\n');
+    expect(await renamed.exists(), isFalse);
+    final cachedDiff = await Process.run('git', [
+      '-C',
+      root.path,
+      'diff',
+      '--cached',
+      '--quiet',
+      '--exit-code',
+    ], runInShell: false);
+    expect(cachedDiff.exitCode, 0, reason: '${cachedDiff.stderr}');
+  });
+
   test(
     'staged addition deleted from the working tree keeps separate diffs',
     () async {
@@ -216,6 +254,11 @@ void main() {
       expect(staged.fileSnapshots['draft.md'], contains('Staged content.'));
       expect(unstaged.files.single.status, GitDiffFileStatus.deleted);
       expect(unstaged.fileSnapshots['draft.md'], contains('Staged content.'));
+
+      await gateway.rollbackTracked(info, ['draft.md']);
+
+      expect((await gateway.status(info)).clean, isTrue);
+      expect(await draft.exists(), isFalse);
     },
   );
 

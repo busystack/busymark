@@ -333,10 +333,16 @@ class _ChangeGroup extends StatelessWidget {
                 }
               },
               onOpen: () => onOpenFile(file.repoRelativePath),
-              onDiscard: () async {
+              onRollback: () async {
                 final actions = GitFileActions.of(context);
                 if (await onConfirmDiscard([file])) {
-                  actions.discard([file.repoRelativePath]);
+                  actions.rollback(_rollbackPathsFor(file));
+                }
+              },
+              onDelete: () async {
+                final actions = GitFileActions.of(context);
+                if (await onConfirmDiscard([file])) {
+                  actions.deleteUntracked([file.repoRelativePath]);
                 }
               },
             ),
@@ -374,6 +380,17 @@ class _ChangeGroup extends StatelessWidget {
     ];
   }
 
+  List<String> _rollbackPathsFor(GitFileStatus file) {
+    final originalPath = file.originalRepoRelativePath;
+    return [
+      if ((file.hasStagedRename || file.hasUnstagedRename) &&
+          originalPath != null &&
+          originalPath != file.repoRelativePath)
+        originalPath,
+      file.repoRelativePath,
+    ];
+  }
+
   bool _renamedForGroup(GitFileStatus file) {
     return switch (kind) {
       _ChangeGroupKind.staged => file.hasStagedRename,
@@ -399,13 +416,15 @@ class GitFileActions extends InheritedWidget {
     super.key,
     required this.select,
     required this.unselect,
-    required this.discard,
+    required this.rollback,
+    required this.deleteUntracked,
     required super.child,
   });
 
   final void Function(List<String> paths) select;
   final void Function(List<String> paths) unselect;
-  final void Function(List<String> paths) discard;
+  final void Function(List<String> paths) rollback;
+  final void Function(List<String> paths) deleteUntracked;
 
   static GitFileActions of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<GitFileActions>()!;
@@ -415,7 +434,8 @@ class GitFileActions extends InheritedWidget {
   bool updateShouldNotify(GitFileActions oldWidget) {
     return select != oldWidget.select ||
         unselect != oldWidget.unselect ||
-        discard != oldWidget.discard;
+        rollback != oldWidget.rollback ||
+        deleteUntracked != oldWidget.deleteUntracked;
   }
 }
 
@@ -430,7 +450,8 @@ class _ChangedFileRow extends StatelessWidget {
     required this.onSelect,
     required this.onSelectionChanged,
     required this.onOpen,
-    required this.onDiscard,
+    required this.onRollback,
+    required this.onDelete,
   });
 
   final GitFileStatus file;
@@ -442,7 +463,8 @@ class _ChangedFileRow extends StatelessWidget {
   final VoidCallback onSelect;
   final ValueChanged<bool> onSelectionChanged;
   final VoidCallback onOpen;
-  final VoidCallback onDiscard;
+  final VoidCallback onRollback;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -461,8 +483,9 @@ class _ChangedFileRow extends StatelessWidget {
       context,
       busyMarkVcsFileColorForChangeStatus(status),
     );
-    final canDiscard =
-        kind == _ChangeGroupKind.unstaged || kind == _ChangeGroupKind.untracked;
+    final canRollback =
+        kind == _ChangeGroupKind.staged || kind == _ChangeGroupKind.unstaged;
+    final canDelete = kind == _ChangeGroupKind.untracked;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BusyMarkStroke.hairline),
       child: Material(
@@ -541,7 +564,7 @@ class _ChangedFileRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (canOpen || canDiscard)
+                if (canOpen || canRollback || canDelete)
                   BusyMarkHeaderPopupMenuButton<_FileAction>(
                     tooltip: context.l10n.fileActions,
                     icon: BusyMarkGlyphs.menuHorizontal,
@@ -553,10 +576,16 @@ class _ChangedFileRow extends StatelessWidget {
                           label: context.l10n.gitOpenFile,
                           icon: BusyMarkGlyphs.externalLink,
                         ),
-                      if (canDiscard)
+                      if (canRollback)
                         BusyMarkPopupMenuItem(
-                          value: _FileAction.discard,
+                          value: _FileAction.rollback,
                           label: context.l10n.gitDiscard,
+                          icon: BusyMarkGlyphs.undo,
+                        ),
+                      if (canDelete)
+                        BusyMarkPopupMenuItem(
+                          value: _FileAction.delete,
+                          label: context.l10n.delete,
                           icon: BusyMarkGlyphs.delete,
                         ),
                     ],
@@ -564,8 +593,10 @@ class _ChangedFileRow extends StatelessWidget {
                       switch (action) {
                         case _FileAction.open:
                           onOpen();
-                        case _FileAction.discard:
-                          onDiscard();
+                        case _FileAction.rollback:
+                          onRollback();
+                        case _FileAction.delete:
+                          onDelete();
                       }
                     },
                   ),
@@ -591,7 +622,7 @@ class _ChangedFileRow extends StatelessWidget {
   }
 }
 
-enum _FileAction { open, discard }
+enum _FileAction { open, rollback, delete }
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status, required this.color});

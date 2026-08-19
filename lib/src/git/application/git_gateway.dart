@@ -74,7 +74,7 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
   );
-  Future<GitOperationResult> discardTracked(
+  Future<GitOperationResult> rollbackTracked(
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
   );

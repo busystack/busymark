@@ -330,6 +330,20 @@ void main() {
     expect(gateway.diffOriginalPaths, ['old.md']);
   });
 
+  test('rollback forwards every validated rename path', () async {
+    final gateway = _FakeGitGateway(staged: true);
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+
+    await controller.rollbackFiles(['old.md', 'new.md']);
+
+    expect(gateway.rollbackPathSets, const [
+      ['old.md', 'new.md'],
+    ]);
+  });
+
   test('reactivates an open change comparison tab', () async {
     final gateway = _FakeGitGateway();
     final container = _container(gateway);
@@ -684,6 +698,38 @@ void main() {
   );
 
   test(
+    'file history switches between commit and working-tree comparisons',
+    () async {
+      final gateway = _FakeGitGateway();
+      final container = _container(gateway);
+      final controller = container.read(gitControllerProvider.notifier);
+      controller.attachWorkspace(_workspace(activeFilePath: '/repo/README.md'));
+      await controller.refresh();
+      await controller.loadFileHistory('/repo/README.md');
+
+      await controller.selectFileHistoryCommit('1234567890abcdef');
+
+      var history = container.read(gitControllerProvider).fileHistory;
+      expect(history.comparisonType, GitComparisonType.commitChange);
+      expect(history.comparison?.oldContent, '# Before\n');
+      expect(history.comparison?.newContent, '# Full revision text\n');
+
+      await controller.compareFileHistoryWithCurrent();
+
+      history = container.read(gitControllerProvider).fileHistory;
+      expect(history.comparisonType, GitComparisonType.commitVersusCurrent);
+      expect(history.comparison?.oldContent, '# Full revision text\n');
+      expect(history.comparison?.newContent, '# Working tree\n');
+
+      await controller.selectFileHistoryCommit('1234567890abcdef');
+
+      history = container.read(gitControllerProvider).fileHistory;
+      expect(history.comparisonType, GitComparisonType.commitChange);
+      expect(history.comparison?.newContent, '# Full revision text\n');
+    },
+  );
+
+  test(
     'project history loads selected commit details without a file scope',
     () async {
       final gateway = _FakeGitGateway();
@@ -944,6 +990,7 @@ class _FakeGitGateway implements GitRepositoryGateway {
   final diffRequests = <(String, bool)>[];
   final diffOriginalPaths = <String?>[];
   final untrackedDiffRequests = <String>[];
+  final rollbackPathSets = <List<String>>[];
   var indexContent = '# Indexed\n';
   var workingTreeContent = '# Working tree\n';
   String? lastDetectedWorkspacePath;
@@ -1217,12 +1264,21 @@ class _FakeGitGateway implements GitRepositoryGateway {
     String hash, {
     required String historicalPath,
     required String currentPath,
-  }) {
-    return compareFileWithParent(
-      repository,
-      hash,
+  }) async {
+    final file = _diffFile(currentPath);
+    final diff = GitDiff(
+      title: currentPath,
+      files: [file],
+      rawPatch: 'working-tree comparison',
+      hasBinaryFiles: false,
+      fileSnapshots: {currentPath: workingTreeContent},
+    );
+    return GitHistoricalFileComparison(
       oldPath: historicalPath,
       newPath: currentPath,
+      oldContent: '# Full revision text\n',
+      newContent: workingTreeContent,
+      diff: diff,
     );
   }
 
@@ -1247,10 +1303,13 @@ class _FakeGitGateway implements GitRepositoryGateway {
   Future<List<String>> remotes(GitRepositoryInfo repository) async => const [];
 
   @override
-  Future<GitOperationResult> discardTracked(
+  Future<GitOperationResult> rollbackTracked(
     GitRepositoryInfo repository,
     List<String> repoRelativePaths,
-  ) async => _result();
+  ) async {
+    rollbackPathSets.add(List.unmodifiable(repoRelativePaths));
+    return _result();
+  }
 
   @override
   Future<GitOperationResult> discardUntracked(
