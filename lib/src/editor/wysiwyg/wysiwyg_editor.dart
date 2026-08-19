@@ -448,8 +448,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onOutdentCommand: _applyOutdentCommand,
                       onToggleTaskCommand: _applyToggleTaskCommand,
                       onHardBreakCommand: _applyHardBreakCommand,
-                      onCodeLanguageCommand: () =>
-                          unawaited(_applyCodeLanguageCommand()),
                     ),
                   ),
                 ],
@@ -2017,6 +2015,20 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _applyBlockCommand(BusyWysiwygBlockCommand command) {
     final selectedBlocks = _selectedBlocks();
+    final activeBlock = _activeBlockId == null
+        ? null
+        : _documentController.blockById(_activeBlockId!);
+    final commandTargets = selectedBlocks.isNotEmpty
+        ? selectedBlocks
+        : [if (activeBlock != null) activeBlock];
+    if (command == BusyWysiwygBlockCommand.codeBlock &&
+        commandTargets.isNotEmpty &&
+        commandTargets.every(
+          (block) => block.kind == BusyBlockKind.codeBlock,
+        )) {
+      unawaited(_applyCodeLanguageCommand());
+      return;
+    }
     if (selectedBlocks.isNotEmpty) {
       _recordUndoSnapshot();
       _documentController.applyBlockCommandToBlocks(

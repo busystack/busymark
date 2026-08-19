@@ -101,6 +101,7 @@ class _BusyMarkVisualizationCardState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.blockKey != widget.blockKey) {
       _coordinator.cancel(oldWidget.blockKey);
+      _coordinator.clearLastSuccessful(oldWidget.blockKey);
       _successfulResult = null;
       _latestResult = null;
     }
@@ -118,6 +119,7 @@ class _BusyMarkVisualizationCardState
   void dispose() {
     _debounce?.cancel();
     _coordinator.cancel(widget.blockKey);
+    _coordinator.clearLastSuccessful(widget.blockKey);
     _transformationController.dispose();
     super.dispose();
   }
@@ -417,7 +419,9 @@ class _BusyMarkVisualizationCardState
           children: [
             for (final diagnostic in diagnostics.take(5))
               InkWell(
-                onTap: widget.onDiagnosticSelected == null
+                onTap:
+                    widget.onDiagnosticSelected == null ||
+                        diagnostic.line == null
                     ? null
                     : () => _selectDiagnostic(diagnostic),
                 child: Padding(
@@ -435,7 +439,7 @@ class _BusyMarkVisualizationCardState
                         size: BusyMarkSizes.iconSm,
                       ),
                       const SizedBox(width: BusyMarkSpacing.sm),
-                      Expanded(child: Text(diagnostic.message)),
+                      Expanded(child: Text(_diagnosticMessage(diagnostic))),
                     ],
                   ),
                 ),
@@ -481,6 +485,18 @@ class _BusyMarkVisualizationCardState
     widget.onDiagnosticSelected?.call(
       diagnostic.documentLine(widget.sourceStartLine),
     );
+  }
+
+  String _diagnosticMessage(VisualizationDiagnostic diagnostic) {
+    final sourceId = diagnostic.sourceId;
+    if (sourceId == null || sourceId.isEmpty) {
+      return diagnostic.message;
+    }
+    final location = diagnostic.sourceLine == null
+        ? ''
+        : ':${diagnostic.sourceLine}'
+              '${diagnostic.sourceColumn == null ? '' : ':${diagnostic.sourceColumn}'}';
+    return '$sourceId$location: ${diagnostic.message}';
   }
 
   Future<void> _openApiReference(OpenApiVisualizationResult result) async {

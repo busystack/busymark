@@ -439,36 +439,40 @@ void main() {
     },
   );
 
-  test('save as explicit overwrite replaces the final symlink only', () async {
-    final directory = await Directory.systemTemp.createTemp(
-      'busymark-save-as-symlink-',
-    );
-    final target = File('${directory.path}/target.md');
-    final link = Link('${directory.path}/note.md');
-    await target.writeAsString('# Target\n');
-    await link.create(target.path);
-    final harness = await _createControllerHarness();
-    final settingsController = harness.settingsController;
-    final controller = harness.controller;
+  test(
+    'save as explicit overwrite replaces the final symlink only',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-as-symlink-',
+      );
+      final target = File('${directory.path}/target.md');
+      final link = Link('${directory.path}/note.md');
+      await target.writeAsString('# Target\n');
+      await link.create(target.path);
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
 
-    await controller.createMarkdownFile();
-    controller.updateActiveText('# Draft\n');
+      await controller.createMarkdownFile();
+      controller.updateActiveText('# Draft\n');
 
-    expect(
-      await controller.saveActiveAs(link.path, overwriteExisting: true),
-      isTrue,
-    );
-    expect(
-      await FileSystemEntity.type(link.path, followLinks: false),
-      FileSystemEntityType.file,
-    );
-    expect(await File(link.path).readAsString(), '# Draft\n');
-    expect(await target.readAsString(), '# Target\n');
+      expect(
+        await controller.saveActiveAs(link.path, overwriteExisting: true),
+        isTrue,
+      );
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), '# Draft\n');
+      expect(await target.readAsString(), '# Target\n');
 
-    controller.dispose();
-    settingsController.dispose();
-    await directory.delete(recursive: true);
-  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
+      controller.dispose();
+      settingsController.dispose();
+      await directory.delete(recursive: true);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test(
     'save as preserves source edits for an untitled Markdown file',

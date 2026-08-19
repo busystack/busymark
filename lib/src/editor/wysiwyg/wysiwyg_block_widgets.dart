@@ -15,6 +15,7 @@ import '../../markdown/busymark_document.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import 'wysiwyg_inline_controller.dart';
+import 'wysiwyg_visualization_navigation.dart';
 
 TextDirection busyMarkWysiwygBlockTextDirection(
   BusyBlock block, {
@@ -232,7 +233,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
               blockKey: 'wysiwyg:$documentFilePath:${block.id}',
               sourceEditor: content,
               onEditSource: _focusBlock,
-              onDiagnosticSelected: (_) => _focusBlock(),
+              onDiagnosticSelected: _focusDiagnosticLine,
             )
           : block.kind == BusyBlockKind.codeBlock
           ? Directionality(
@@ -454,6 +455,17 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         offset: controller.text.length,
       );
     }
+  }
+
+  void _focusDiagnosticLine(int documentLine) {
+    _focusBlock();
+    controller.selection = TextSelection.collapsed(
+      offset: wysiwygVisualizationDiagnosticOffset(
+        text: controller.text,
+        blockStartLine: block.sourceSpan?.startLine ?? 1,
+        documentLine: documentLine,
+      ),
+    );
   }
 
   void _editImageBlock() {

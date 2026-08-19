@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "Повысить уровень заголовка",
-  "demoteHeading": "Понизить уровень заголовка",
+  "promoteSection": "Повысить уровень раздела",
+  "demoteSection": "Понизить уровень раздела",
   "moveSectionUp": "Переместить раздел вверх",
   "moveSectionDown": "Переместить раздел вниз",
   "confirmDeleteSectionTitle": "Удалить раздел?",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Новый документ",
+  "shortcutNewDocument": "Создать",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Создать новый несохранённый документ Markdown",
+  "shortcutNewDocumentDescription": "Создать файл Markdown или проект Writerside",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2211,7 +2211,7 @@
   "gitCommitNoSelectedFiles": "Перед созданием коммита добавьте в индекс хотя бы один файл.",
   "gitCommitMessageRequired": "Введите сообщение коммита.",
   "gitCreateBranch": "Создать ветку",
-  "gitNewBranch": "+ Новая ветка",
+  "gitNewBranch": "Новая ветка",
   "gitBranchName": "Название ветки",
   "gitSwitchBranch": "Переключиться",
   "gitNoChanges": "Нет изменений",

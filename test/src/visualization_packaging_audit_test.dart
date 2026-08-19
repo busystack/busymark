@@ -4,6 +4,33 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('release metadata is consistent and production-grade', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final metainfo = File(
+      'linux/io.busystack.busymark.metainfo.xml',
+    ).readAsStringSync();
+
+    expect(pubspec, contains(RegExp(r'^version: 0\.3\.0$', multiLine: true)));
+    expect(
+      snapcraft,
+      contains(RegExp(r'^version: "0\.3\.0"$', multiLine: true)),
+    );
+    expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
+    expect(
+      snapcraft,
+      contains(
+        RegExp(
+          r'^contact: https://github\.com/busystack/busymark/issues$',
+          multiLine: true,
+        ),
+      ),
+    );
+    expect(metainfo, contains('<release version="0.3.0"'));
+    expect(pubspec, isNot(contains('0.3.01')));
+    expect(snapcraft, isNot(contains('0.3.01')));
+  });
+
   test(
     'web engines are exact, checksummed, licensed, and installed offline',
     () {
@@ -68,6 +95,32 @@ void main() {
     expect(snapcraft, contains('build-on: [amd64]'));
   });
 
+  test('Linux CI builds and exercises the bundled visualization stack', () {
+    final workflow = File(
+      '.github/workflows/flutter-linux.yml',
+    ).readAsStringSync();
+
+    expect(workflow, contains('libwebkit2gtk-4.1-dev'));
+    expect(workflow, contains('poppler-utils'));
+    expect(workflow, contains('actions/checkout@v7'));
+    expect(workflow, contains('actions/setup-node@v7'));
+    expect(workflow, contains('actions/upload-artifact@v7'));
+    expect(workflow, contains("node-version: '22'"));
+    expect(workflow, contains('BUSYMARK_D2_PATH:'));
+    expect(workflow, contains('BUSYMARK_TYPST_PATH:'));
+    expect(workflow, contains('tools/visualization_smoke.py'));
+    expect(workflow, contains('GDK_BACKEND=wayland'));
+    expect(workflow, contains('snapcore/action-build@v1'));
+    expect(workflow, contains('sudo snap install --dangerous'));
+    expect(workflow, contains('snap run busymark'));
+    expect(workflow, contains('--visualization-release-smoke='));
+    expect(workflow, contains('BUSYMARK_RELEASE_SMOKE=1'));
+    expect(workflow, contains('visualization-smoke.pdf'));
+    final smoke = File('tools/visualization_smoke.py').readAsStringSync();
+    expect(smoke, contains('terminate_web_process'));
+    expect(smoke, contains('WebKit process termination and recovery'));
+  });
+
   test(
     'WebKit host and harness disable persistence and external resources',
     () {
@@ -99,6 +152,14 @@ void main() {
       expect(native, contains('set_enable_developer_extras(settings, FALSE)'));
       expect(native, contains('webkit_permission_request_deny'));
       expect(native, contains('g_str_has_prefix(uri, "busymark-render:")'));
+      expect(native, contains('web-process-terminated'));
+      expect(native, contains('render_process_terminated_cb'));
+      expect(native, contains('recreate_render_view'));
+      expect(native, contains('terminateWebProcessForReleaseSmoke'));
+      expect(native, contains('BUSYMARK_RELEASE_SMOKE'));
+      expect(native, contains('gtk_widget_get_allocated_width'));
+      expect(native, contains('snapshot_allocation_attempts'));
+      expect(native, contains('schedule_render_view_recreation'));
       expect(native, isNot(contains('g_str_has_prefix(uri, "http:')));
       for (final html in [harness, reference]) {
         expect(html, contains("default-src 'none'"));

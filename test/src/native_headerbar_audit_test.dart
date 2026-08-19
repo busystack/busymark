@@ -1259,24 +1259,15 @@ void main() {
     expect(app, contains('source: l10n.source'));
     expect(app, contains('preview: l10n.preview'));
     expect(app, contains('split: l10n.split'));
-    expect(
-      app,
-      contains('editorShortcut: BusyMarkDocumentViewShortcutLabels.editor'),
-    );
-    expect(app, contains('editorGtkAccelerator:'));
-    expect(app, contains('BusyMarkDocumentViewShortcutGtkAccelerators.editor'));
-    expect(
-      app,
-      contains('sourceShortcut: BusyMarkDocumentViewShortcutLabels.source'),
-    );
-    expect(
-      app,
-      contains('previewShortcut: BusyMarkDocumentViewShortcutLabels.preview'),
-    );
-    expect(
-      app,
-      contains('splitShortcut: BusyMarkDocumentViewShortcutLabels.split'),
-    );
+    expect(app, contains("editorShortcut: ''"));
+    expect(app, contains("editorGtkAccelerator: ''"));
+    expect(app, contains("sourceShortcut: ''"));
+    expect(app, contains("sourceGtkAccelerator: ''"));
+    expect(app, contains("previewShortcut: ''"));
+    expect(app, contains("previewGtkAccelerator: ''"));
+    expect(app, contains("splitShortcut: ''"));
+    expect(app, contains("splitGtkAccelerator: ''"));
+    expect(app, isNot(contains('BusyMarkDocumentViewShortcut')));
     expect(
       app,
       contains('sidebarShortcut: BusyMarkSidebarShortcutLabels.toggleSidebar'),

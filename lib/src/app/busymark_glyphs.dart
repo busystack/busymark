@@ -18,6 +18,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData clear = YaruIcons.edit_clear;
   static const IconData clearAll = YaruIcons.edit_clear_all;
   static const IconData code = YaruIcons.code;
+  static const IconData codeBlock = YaruIcons.terminal;
   static const IconData downArrow = YaruIcons.pan_down;
   static const IconData copy = YaruIcons.copy;
   static const IconData cut = YaruIcons.cut;
@@ -44,6 +45,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData hide = YaruIcons.hide;
   static const IconData history = YaruIcons.history;
   static const IconData home = YaruIcons.home;
+  static const IconData htmlBlock = YaruIcons.code;
   static const IconData image = YaruIcons.image;
   static const IconData imageMissing = YaruIcons.image_missing;
   static const IconData indent = YaruIcons.indent_more;
@@ -138,7 +140,13 @@ abstract final class BusyMarkGlyphs {
     if (icon == clearAll) {
       return 'edit-clear-all-symbolic';
     }
-    if (icon == code || icon == sourceView || icon == symbols) {
+    if (icon == codeBlock) {
+      return 'utilities-terminal-symbolic';
+    }
+    if (icon == code ||
+        icon == htmlBlock ||
+        icon == sourceView ||
+        icon == symbols) {
       return 'text-x-generic-symbolic';
     }
     if (icon == copy) {

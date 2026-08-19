@@ -676,9 +676,6 @@ class WorkspaceScreen extends ConsumerWidget {
                           icon: _documentViewModeIcon(
                             settings.documentViewMode,
                           ),
-                          shortcut: _documentViewModeShortcut(
-                            settings.documentViewMode,
-                          ),
                           itemBuilder: (context) => [
                             for (final mode
                                 in DocumentViewModePreference.values)
@@ -686,7 +683,6 @@ class WorkspaceScreen extends ConsumerWidget {
                                 value: mode,
                                 label: _documentViewModeLabel(context, mode),
                                 icon: _documentViewModeIcon(mode),
-                                shortcut: _documentViewModeShortcut(mode),
                                 checked: mode == settings.documentViewMode,
                                 trailingCheck: true,
                               ),
@@ -962,19 +958,6 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.source => context.l10n.source,
       DocumentViewModePreference.preview => context.l10n.preview,
       DocumentViewModePreference.split => context.l10n.split,
-    };
-  }
-
-  String _documentViewModeShortcut(DocumentViewModePreference mode) {
-    return switch (mode) {
-      DocumentViewModePreference.editor =>
-        BusyMarkDocumentViewShortcutLabels.editor,
-      DocumentViewModePreference.source =>
-        BusyMarkDocumentViewShortcutLabels.source,
-      DocumentViewModePreference.preview =>
-        BusyMarkDocumentViewShortcutLabels.preview,
-      DocumentViewModePreference.split =>
-        BusyMarkDocumentViewShortcutLabels.split,
     };
   }
 
@@ -2438,6 +2421,12 @@ class _SidebarHeader extends StatelessWidget {
       return filePath == null || filePath.isEmpty
           ? context.l10n.untitledMarkdownFileName
           : filePath;
+    }
+    if (workspace.kind == WorkspaceKind.writersideModule) {
+      final moduleName = workspace.writersideModule?.config.moduleName?.trim();
+      if (moduleName != null && moduleName.isNotEmpty) {
+        return moduleName;
+      }
     }
     final path = _workspacePath(workspace);
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
@@ -6177,13 +6166,13 @@ List<PopupMenuEntry<_OutlineSectionAction>> _outlineSectionMenuItems(
     const PopupMenuDivider(height: BusyMarkSpacing.sm),
     BusyMarkPopupMenuItem(
       value: _OutlineSectionAction.promote,
-      label: context.l10n.promoteHeading,
+      label: context.l10n.promoteSection,
       icon: BusyMarkGlyphs.outdentFor(direction),
       enabled: capabilities.canPromote,
     ),
     BusyMarkPopupMenuItem(
       value: _OutlineSectionAction.demote,
-      label: context.l10n.demoteHeading,
+      label: context.l10n.demoteSection,
       icon: BusyMarkGlyphs.indentFor(direction),
       enabled: capabilities.canDemote,
     ),

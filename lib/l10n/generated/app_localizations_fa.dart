@@ -171,10 +171,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get cut => 'برش';
 
   @override
-  String get promoteHeading => 'ارتقای عنوان';
+  String get promoteSection => 'ارتقای بخش';
 
   @override
-  String get demoteHeading => 'تنزل عنوان';
+  String get demoteSection => 'تنزل بخش';
 
   @override
   String get moveSectionUp => 'انتقال بخش به بالا';
@@ -392,11 +392,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get shortcutGroupGeneral => 'عمومی';
 
   @override
-  String get shortcutNewDocument => 'سند جدید';
+  String get shortcutNewDocument => 'ایجاد';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'ایجاد یک سند Markdown ذخیره‌نشدهٔ جدید';
+      'ایجاد فایل Markdown یا پروژهٔ Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -2152,7 +2152,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitCreateBranch => 'ایجاد شاخه';
 
   @override
-  String get gitNewBranch => '+ شاخهٔ جدید';
+  String get gitNewBranch => 'شاخهٔ جدید';
 
   @override
   String get gitBranchName => 'نام شاخه';

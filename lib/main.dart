@@ -5,16 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/app/busymark_app.dart';
-import 'package:busymark/src/app/startup_path.dart';
+import 'src/app/startup_path.dart';
 import 'src/app/system_accent.dart';
 import 'src/git/application/git_controller.dart';
 import 'src/git/data/git_cli_gateway.dart';
 import 'src/platform/linux_header_bar_service.dart';
+import 'src/visualization/visualization_release_smoke.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   await LinuxHeaderBarService.instance.initialize();
+  if (visualizationReleaseSmokeReportPath(args) case final reportPath?) {
+    exit(await runVisualizationReleaseSmoke(reportPath));
+  }
   var initialAccent = busyMarkDefaultAccentColor;
   if (Platform.isLinux) {
     initialAccent =

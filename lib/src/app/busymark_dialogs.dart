@@ -32,13 +32,14 @@ final _apacheLicenseUri = Uri.parse(_apacheLicenseUrl);
 final _busyMarkModalShortcuts = <ShortcutActivator, Intent>{
   for (final shortcut in BusyMarkAppShortcuts.definitions.values)
     shortcut.activator: const DoNothingAndStopPropagationIntent(),
-  for (final shortcut in BusyMarkDocumentViewShortcuts.definitions.values)
-    shortcut.activator: const DoNothingAndStopPropagationIntent(),
+  for (final entry in BusyMarkEditorShortcuts.definitions.entries)
+    if (entry.key != BusyMarkEditorShortcutAction.pastePlainText)
+      entry.value.activator: const DoNothingAndStopPropagationIntent(),
   for (final shortcut in BusyMarkSidebarShortcuts.definitions.values)
     shortcut.activator: const DoNothingAndStopPropagationIntent(),
 };
 
-/// Prevents application navigation shortcuts from escaping a modal surface.
+/// Prevents application and workspace shortcuts from escaping a modal surface.
 ///
 /// Use this around modal UI that is not presented by
 /// [showBusyMarkModalDialog], such as an in-page editor overlay.
@@ -478,40 +479,6 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
             ],
           ),
           BusyMarkGroupedList(
-            title: context.l10n.viewMode,
-            filled: true,
-            children: [
-              BusyMarkActionRow(
-                title: context.l10n.editor,
-                leading: const Icon(BusyMarkGlyphs.editorView),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkDocumentViewShortcutLabels.editor,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.source,
-                leading: const Icon(BusyMarkGlyphs.sourceView),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkDocumentViewShortcutLabels.source,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.preview,
-                leading: const Icon(BusyMarkGlyphs.previewView),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkDocumentViewShortcutLabels.preview,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.split,
-                leading: const Icon(BusyMarkGlyphs.splitView),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkDocumentViewShortcutLabels.split,
-                ),
-              ),
-            ],
-          ),
-          BusyMarkGroupedList(
             title: context.l10n.shortcutGroupTextEditing,
             filled: true,
             children: [
@@ -733,13 +700,6 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                   BusyMarkEditorShortcutLabels.codeBlock,
                 ),
               ),
-              BusyMarkActionRow(
-                title: context.l10n.codeBlockLanguage,
-                leading: const Icon(BusyMarkGlyphs.insertObject),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkEditorShortcutLabels.codeBlockLanguage,
-                ),
-              ),
             ],
           ),
           BusyMarkGroupedList(
@@ -771,13 +731,6 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
-                title: context.l10n.toggleTaskChecked,
-                leading: const Icon(BusyMarkGlyphs.checkedBox),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkEditorShortcutLabels.toggleTask,
-                ),
-              ),
-              BusyMarkActionRow(
                 title: context.l10n.indentListItem,
                 leading: Icon(
                   BusyMarkGlyphs.indentFor(Directionality.of(context)),
@@ -806,35 +759,6 @@ void showBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 leading: const Icon(BusyMarkGlyphs.image),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkEditorShortcutLabels.image,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.inlineImage,
-                leading: const Icon(BusyMarkGlyphs.inlineImage),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkEditorShortcutLabels.inlineImage,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.table,
-                leading: const Icon(BusyMarkGlyphs.table),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkEditorShortcutLabels.table,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.htmlBlock,
-                subtitle: context.l10n.shortcutHtmlBlockDescription,
-                leading: const Icon(BusyMarkGlyphs.code),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkEditorShortcutLabels.htmlBlock,
-                ),
-              ),
-              BusyMarkActionRow(
-                title: context.l10n.thematicBreak,
-                leading: const Icon(BusyMarkGlyphs.thematicBreak),
-                trailing: const _KeyboardShortcutBadge(
-                  BusyMarkEditorShortcutLabels.thematicBreak,
                 ),
               ),
               BusyMarkActionRow(

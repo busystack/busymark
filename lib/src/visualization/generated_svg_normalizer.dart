@@ -94,20 +94,24 @@ class GeneratedSvgNormalizer {
     String? vectorSafeSvg;
     if (!hasForeignObject) {
       final vectorDocument = XmlDocument.parse(browserSafeSvg);
-      _inlineStyleSheets(vectorDocument);
-      for (final style
-          in vectorDocument.findAllElements('style').toList(growable: false)) {
-        style.parent?.children.remove(style);
+      final stylesWereFullyInlined = _inlineStyleSheets(vectorDocument);
+      if (stylesWereFullyInlined) {
+        for (final style
+            in vectorDocument
+                .findAllElements('style')
+                .toList(growable: false)) {
+          style.parent?.children.remove(style);
+        }
+        if (vectorDocument.descendants.whereType<XmlElement>().any(
+          (element) => element.name.local.toLowerCase() == 'foreignobject',
+        )) {
+          throw const GeneratedSvgException(
+            'visualization.unsafeSvg',
+            'Vector SVG normalization left browser-only content.',
+          );
+        }
+        vectorSafeSvg = vectorDocument.toXmlString(pretty: false);
       }
-      if (vectorDocument.descendants.whereType<XmlElement>().any(
-        (element) => element.name.local.toLowerCase() == 'foreignobject',
-      )) {
-        throw const GeneratedSvgException(
-          'visualization.unsafeSvg',
-          'Vector SVG normalization left browser-only content.',
-        );
-      }
-      vectorSafeSvg = vectorDocument.toXmlString(pretty: false);
     }
 
     return GeneratedSvgNormalization(
@@ -163,7 +167,7 @@ class GeneratedSvgNormalizer {
           continue;
         }
         if (name == 'style') {
-          final safeStyle = _safeInlineStyle(value);
+          final safeStyle = _sanitizeBrowserInlineStyle(value);
           if (safeStyle.isEmpty) {
             element.attributes.remove(attribute);
           } else {
@@ -201,7 +205,10 @@ class GeneratedSvgNormalizer {
         'Generated SVG contains invalid CSS.',
       );
     }
-    final uriValidator = _CssUriValidator(allowDataFonts: true);
+    final uriValidator = _CssUriValidator(
+      allowDataFonts: true,
+      allowDataImages: true,
+    );
     sheet.visit(uriValidator);
     if (!uriValidator.safe) {
       throw const GeneratedSvgException(
@@ -215,7 +222,9 @@ class GeneratedSvgNormalizer {
     return printer.toString();
   }
 
-  void _inlineStyleSheets(XmlDocument document) {
+  bool _inlineStyleSheets(XmlDocument document) {
+    final appliedProperties = <XmlElement, Map<String, String>>{};
+    var complete = _inlineStylesAreVectorRepresentable(document);
     final styleElements = document.findAllElements('style').toList();
     for (final styleElement in styleElements) {
       final errors = <css_parser.Message>[];
@@ -228,59 +237,176 @@ class GeneratedSvgNormalizer {
           'Generated SVG contains invalid CSS.',
         );
       }
-      _applyRules(document, sheet.topLevels);
+      if (!_applyRules(document, sheet.topLevels, appliedProperties)) {
+        complete = false;
+      }
     }
+    return complete;
   }
 
-  void _applyRules(XmlDocument document, Iterable<css.TreeNode> nodes) {
-    for (final node in nodes) {
-      if (node is css.MediaDirective) {
-        _applyRules(document, node.rules);
+  bool _inlineStylesAreVectorRepresentable(XmlDocument document) {
+    for (final element in <XmlElement>[
+      document.rootElement,
+      ...document.rootElement.descendants.whereType<XmlElement>(),
+    ]) {
+      final source = element.getAttribute('style');
+      if (source == null || source.isEmpty) {
         continue;
       }
+      final errors = <css_parser.Message>[];
+      final sheet = css_parser.parse('x{$source}', errors: errors);
+      if (errors.any(
+            (error) => error.level == css_parser.MessageLevel.severe,
+          ) ||
+          sheet.topLevels.isEmpty ||
+          sheet.topLevels.first is! css.RuleSet) {
+        return false;
+      }
+      final rule = sheet.topLevels.first as css.RuleSet;
+      for (final item in rule.declarationGroup.declarations) {
+        if (item is! css.Declaration ||
+            item.expression == null ||
+            !_isSafePresentation(
+              item.property.toLowerCase(),
+              _serializeExpression(item.expression!),
+            )) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool _applyRules(
+    XmlDocument document,
+    Iterable<css.TreeNode> nodes,
+    Map<XmlElement, Map<String, String>> appliedProperties,
+  ) {
+    var complete = true;
+    final elements = <XmlElement>[
+      document.rootElement,
+      ...document.rootElement.descendants.whereType<XmlElement>(),
+    ];
+    for (final node in nodes) {
+      // Conditional rules, embedded fonts, and other at-rules cannot be
+      // represented by SVG presentation attributes without changing their
+      // browser semantics. Keep the sanitized browser SVG and rasterize it.
       if (node is! css.RuleSet || node.selectorGroup == null) {
+        complete = false;
         continue;
       }
       final declarations = <String, String>{};
+      var hasUnrepresentableDeclaration = false;
       for (final item in node.declarationGroup.declarations) {
         if (item is! css.Declaration || item.expression == null) {
+          hasUnrepresentableDeclaration = true;
           continue;
         }
         final property = item.property.toLowerCase();
         final value = _serializeExpression(item.expression!);
-        if (_isSafePresentation(property, value)) {
+        if (!item.important && _isSafePresentation(property, value)) {
           declarations[property] = value;
+        } else {
+          hasUnrepresentableDeclaration = true;
         }
-      }
-      if (declarations.isEmpty) {
-        continue;
       }
       for (final selector in node.selectorGroup!.selectors) {
         final selectorSource = selector.span?.text.trim() ?? '';
         if (!_isSupportedSelector(selectorSource)) {
+          if (node.declarationGroup.declarations.isNotEmpty) {
+            complete = false;
+          }
           continue;
         }
-        for (final element in <XmlElement>[
-          document.rootElement,
-          ...document.rootElement.descendants.whereType<XmlElement>(),
-        ]) {
-          if (!_matchesSelector(element, selectorSource)) {
-            continue;
+        final matches = elements.where(
+          (element) => _matchesSelector(element, selectorSource),
+        );
+        for (final element in matches) {
+          if (hasUnrepresentableDeclaration) {
+            complete = false;
           }
+          final inlineProperties = _inlineStyleProperties(element);
+          final applied = appliedProperties.putIfAbsent(element, () => {});
           for (final entry in declarations.entries) {
+            // Normal stylesheet declarations do not override inline style.
+            if (inlineProperties.contains(entry.key)) {
+              continue;
+            }
+            final previous = applied[entry.key];
+            if (previous != null && previous != entry.value) {
+              // Resolving the full CSS cascade is outside this conservative
+              // inliner. Rasterization preserves the browser's exact result.
+              complete = false;
+              continue;
+            }
+            applied[entry.key] = entry.value;
             if (entry.key == 'display') {
               final existing = element.getAttribute('style') ?? '';
               element.setAttribute(
                 'style',
                 _mergeInlineDeclaration(existing, entry.key, entry.value),
               );
-            } else if (element.getAttribute(entry.key) == null) {
+            } else {
               element.setAttribute(entry.key, entry.value);
             }
           }
         }
       }
     }
+    return complete;
+  }
+
+  Set<String> _inlineStyleProperties(XmlElement element) {
+    final style = element.getAttribute('style');
+    if (style == null || style.isEmpty) {
+      return const {};
+    }
+    return {
+      for (final declaration in style.split(';'))
+        if (declaration.indexOf(':') case final separator when separator > 0)
+          declaration.substring(0, separator).trim().toLowerCase(),
+    };
+  }
+
+  String _sanitizeBrowserInlineStyle(String source) {
+    final errors = <css_parser.Message>[];
+    final sheet = css_parser.parse('x{$source}', errors: errors);
+    if (errors.any((error) => error.level == css_parser.MessageLevel.severe) ||
+        sheet.topLevels.isEmpty ||
+        sheet.topLevels.first is! css.RuleSet) {
+      return '';
+    }
+    final rule = sheet.topLevels.first as css.RuleSet;
+    final declarations = <String>[];
+    for (final item in rule.declarationGroup.declarations) {
+      if (item is! css.Declaration || item.expression == null) {
+        continue;
+      }
+      final property = item.property.toLowerCase();
+      final value = _serializeExpression(item.expression!);
+      if (_isSafeBrowserPresentation(property, value)) {
+        declarations.add(
+          '$property:$value${item.important ? '!important' : ''}',
+        );
+      }
+    }
+    return declarations.join(';');
+  }
+
+  bool _isSafeBrowserPresentation(String property, String value) {
+    const blockedProperties = {
+      'behavior',
+      '-moz-binding',
+      ..._CssAnimationRemovingVisitor.blockedProperties,
+    };
+    final lowered = value.toLowerCase();
+    return property.isNotEmpty &&
+        property.length <= 128 &&
+        value.length <= 4096 &&
+        !blockedProperties.contains(property) &&
+        !lowered.contains('expression(') &&
+        !lowered.contains('javascript:') &&
+        _hasOnlySafeCssUrls(value, allowDataImages: true);
   }
 
   String _safeInlineStyle(String source) {
@@ -357,13 +483,20 @@ class GeneratedSvgNormalizer {
         lowered.startsWith('data:image/webp;base64,');
   }
 
-  bool _hasOnlySafeCssUrls(String value, {bool allowDataFonts = false}) {
+  bool _hasOnlySafeCssUrls(
+    String value, {
+    bool allowDataFonts = false,
+    bool allowDataImages = false,
+  }) {
     final errors = <css_parser.Message>[];
     final sheet = css_parser.parse('x{fill:$value}', errors: errors);
     if (errors.any((error) => error.level == css_parser.MessageLevel.severe)) {
       return false;
     }
-    final validator = _CssUriValidator(allowDataFonts: allowDataFonts);
+    final validator = _CssUriValidator(
+      allowDataFonts: allowDataFonts,
+      allowDataImages: allowDataImages,
+    );
     sheet.visit(validator);
     return validator.safe;
   }
@@ -496,9 +629,13 @@ const _cssUrlAttributes = {
 };
 
 class _CssUriValidator extends css.Visitor {
-  _CssUriValidator({required this.allowDataFonts});
+  _CssUriValidator({
+    required this.allowDataFonts,
+    this.allowDataImages = false,
+  });
 
   final bool allowDataFonts;
+  final bool allowDataImages;
   var safe = true;
 
   @override
@@ -514,12 +651,19 @@ class _CssUriValidator extends css.Visitor {
             lowered.startsWith('data:font/woff2;base64,'))) {
       return;
     }
+    if (allowDataImages &&
+        (lowered.startsWith('data:image/png;base64,') ||
+            lowered.startsWith('data:image/jpeg;base64,') ||
+            lowered.startsWith('data:image/gif;base64,') ||
+            lowered.startsWith('data:image/webp;base64,'))) {
+      return;
+    }
     safe = false;
   }
 }
 
 class _CssAnimationRemovingVisitor extends css.Visitor {
-  static const _blockedProperties = {
+  static const blockedProperties = {
     'animation',
     'animation-delay',
     'animation-direction',
@@ -541,7 +685,7 @@ class _CssAnimationRemovingVisitor extends css.Visitor {
     node.declarations.removeWhere(
       (item) =>
           item is css.Declaration &&
-          _blockedProperties.contains(item.property.toLowerCase()),
+          blockedProperties.contains(item.property.toLowerCase()),
     );
     super.visitDeclarationGroup(node);
   }

@@ -10,9 +10,9 @@ authoritative.
 
 | Renderer | Fence identifiers | Preview | PDF |
 | --- | --- | --- | --- |
-| Mermaid | `mermaid` | Sanitized SVG | Vector SVG |
-| PlantUML | `plantuml`, `puml` | Sanitized SVG | Vector SVG |
-| D2 | `d2` | Sanitized SVG, or PNG for `<foreignObject>` output | Vector SVG, or high-resolution PNG |
+| Mermaid | `mermaid` | Sanitized SVG when styling is vector-safe; otherwise PNG | Vector SVG when styling is vector-safe; otherwise high-resolution PNG |
+| PlantUML | `plantuml`, `puml` | Sanitized SVG when styling is vector-safe; otherwise PNG | Vector SVG when styling is vector-safe; otherwise high-resolution PNG |
+| D2 | `d2` | Sanitized SVG when all styling is vector-safe; otherwise PNG | Vector SVG when all styling is vector-safe; otherwise high-resolution PNG |
 | OpenAPI | `openapi`, `oas`, `swagger` | Native summary and a BusyMark-owned Scalar window | Static, selectable reference content |
 
 Identifiers are classified case-insensitively. Saving preserves the exact
@@ -77,8 +77,12 @@ Execution has bounded source, time, stdout, stderr, dimensions, and output, and
 uses a fresh temporary working directory with a minimal environment. Fenced D2
 imports and icon/image assets are disabled in the first release. BusyMark asks
 D2 only for SVG: safe CSS is inlined, executable or remote content and
-animations are removed, and remaining `<foreignObject>` output is rasterized
-by the local WebKit host. The existing external-SVG policy is unchanged.
+animations are removed. Vector output is accepted only when every remaining CSS
+rule can be represented without changing its meaning. Embedded fonts,
+unsupported selectors or declarations, conflicting cascade rules, and
+`<foreignObject>` content retain their sanitized browser styling and are
+rasterized by the local WebKit host. BusyMark never silently drops styling to
+claim that an SVG is vector-safe. The existing external-SVG policy is unchanged.
 
 OpenAPI uses Scalar's parser for OpenAPI 3.2, 3.1, 3.0, and Swagger 2.0,
 Scalar's official JSON bundler for local references, and the YAML parser's exact
@@ -146,18 +150,39 @@ xvfb-run -a -s '-screen 0 1280x1024x24' \
   --d2 build/linux/x64/debug/d2/linux-x86_64/d2
 ```
 
-Release candidates must additionally run the same demos and PDF cases in the
-final strict Snap on both Wayland and X11. Automated suites cover cancellation,
-stale-result rejection, timeout wiring, sanitization and external-resource
-cases, traversal and symlink escapes, circular OpenAPI references, input
-limits, both themes, cache-version invalidation, and PDF output. Release
-validation must also exercise live WebKit process termination and recovery.
+The release binary has a CI-only verification entry point. It is accepted by
+the native host only when `BUSYMARK_RELEASE_SMOKE=1` is set and writes a JSON
+report plus a real Typst PDF:
+
+```bash
+BUSYMARK_RELEASE_SMOKE=1 \
+  build/linux/x64/release/bundle/busymark \
+  --visualization-release-smoke=/tmp/busymark-visualization-report.json
+```
+
+The Linux workflow installs WebKitGTK 4.1 development files explicitly, builds
+the release bundle, runs all Flutter tests with the bundled D2 and Typst paths,
+and runs the real engine corpus under X11 and Wayland. It then exercises the
+actual Dart coordinator, native WebKit channel, D2 CSS and `foreignObject`
+raster paths, OpenAPI model, live WebKit process termination/recovery, and Typst
+PDF export through the release executable.
+
+The same workflow builds the final strict Snap in a clean core24 build
+environment, installs it without changing its strict confinement, and runs that
+release verification under both X11 and Wayland. Automated suites also cover
+cancellation, stale-result rejection, timeout wiring, sanitization and external
+resources, traversal and symlink escapes, circular OpenAPI references, input
+limits, both themes, cache-version invalidation, D2 raster snapshots, and a
+rasterized visual assertion of generated SVG content in the PDF. Human release
+review should still inspect the demo documents and PDF for visual quality; it
+is not a substitute for these automated product-path checks.
 
 ## Authoritative references
 
 - [Flutter Linux platform channels](https://docs.flutter.dev/platform-integration/platform-channels)
 - [WebKitGTK ephemeral contexts](https://webkitgtk.org/reference/webkit2gtk/stable/ctor.WebContext.new_ephemeral.html)
 - [WebKitGTK subprocess sandbox](https://webkitgtk.org/reference/webkit2gtk/stable/method.WebContext.set_sandbox_enabled.html)
+- [WebKitGTK web-process termination](https://webkitgtk.org/reference/webkit2gtk/stable/method.WebView.terminate_web_process.html)
 - [Mermaid programmatic usage and strict security](https://mermaid.js.org/config/usage.html)
 - [PlantUML official npm publishing and MIT build](https://github.com/plantuml/plantuml/blob/master/PUBLISHING_NPM.md)
 - [D2 SVG and PNG export behavior](https://d2lang.com/tour/exports/)
@@ -167,3 +192,6 @@ validation must also exercise live WebKit process termination and recovery.
 - [Scalar API Reference configuration](https://scalar.com/products/api-references/configuration)
 - [Snap browser-support interface](https://snapcraft.io/docs/reference/interfaces/browser-support-interface/)
 - [Snapcraft GNOME extension](https://forum.snapcraft.io/t/the-gnome-extension/31449)
+- [Snapcraft project-file `grade` semantics](https://documentation.ubuntu.com/snapcraft/latest/reference/project-file/snapcraft-yaml/)
+- [GitHub Ubuntu 24.04 runner image](https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md)
+- [Ubuntu 24.04 WebKitGTK 4.1 development package](https://packages.ubuntu.com/noble-updates/libwebkit2gtk-4.1-dev)

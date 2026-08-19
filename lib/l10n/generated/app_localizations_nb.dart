@@ -174,10 +174,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get cut => 'Klipp ut';
 
   @override
-  String get promoteHeading => 'Hev overskrift';
+  String get promoteSection => 'Hev seksjonen';
 
   @override
-  String get demoteHeading => 'Senk overskrift';
+  String get demoteSection => 'Senk seksjonen';
 
   @override
   String get moveSectionUp => 'Flytt seksjonen opp';
@@ -395,11 +395,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get shortcutGroupGeneral => 'Generelt';
 
   @override
-  String get shortcutNewDocument => 'Nytt dokument';
+  String get shortcutNewDocument => 'Opprett';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Opprett et nytt ulagret Markdown-dokument';
+      'Opprett en Markdown-fil eller et Writerside-prosjekt';
 
   @override
   String get shortcutOpenDescription =>
@@ -2103,7 +2103,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitCreateBranch => 'Opprett gren';
 
   @override
-  String get gitNewBranch => '+ Ny gren';
+  String get gitNewBranch => 'Ny gren';
 
   @override
   String get gitBranchName => 'Grennavn';

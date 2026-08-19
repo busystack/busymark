@@ -187,7 +187,7 @@ class WebVisualizationRenderer implements VisualizationRenderer {
     }
     final normalized = svgNormalizer.normalize(svg);
     cancellationToken.throwIfCancelled();
-    if (normalized.hasForeignObject) {
+    if (normalized.vectorSafeSvg == null) {
       final scale = request.profile == VisualizationRenderProfile.pdf
           ? 3.0
           : 2.0;

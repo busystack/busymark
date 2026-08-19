@@ -11,11 +11,12 @@ description: |
 
 license: Apache-2.0
 base: core24
-grade: devel
+grade: stable
 confinement: strict
 icon: assets/branding/busymark_logo.svg
 website: https://github.com/busystack/busymark
 issues: https://github.com/busystack/busymark/issues
+contact: https://github.com/busystack/busymark/issues
 source-code: https://github.com/busystack/busymark
 
 platforms:

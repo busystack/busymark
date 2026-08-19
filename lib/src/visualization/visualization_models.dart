@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
-const visualizationSanitizerVersion = '2';
+const visualizationSanitizerVersion = '3';
 const mermaidEngineVersion = '11.16.1';
 const plantUmlEngineVersion = '1.2026.6';
 const d2EngineVersion = '0.7.1';
@@ -195,6 +195,9 @@ class VisualizationDiagnostic {
     required this.severity,
     this.line,
     this.column,
+    this.sourceId,
+    this.sourceLine,
+    this.sourceColumn,
   });
 
   factory VisualizationDiagnostic.fromJson(Map<Object?, Object?> json) {
@@ -208,6 +211,9 @@ class VisualizationDiagnostic {
       ),
       line: (json['line'] as num?)?.toInt(),
       column: (json['column'] as num?)?.toInt(),
+      sourceId: json['sourceId'] as String?,
+      sourceLine: (json['sourceLine'] as num?)?.toInt(),
+      sourceColumn: (json['sourceColumn'] as num?)?.toInt(),
     );
   }
 
@@ -221,6 +227,13 @@ class VisualizationDiagnostic {
   /// One-based column relative to [line].
   final int? column;
 
+  /// Dependency identifier when a diagnostic originates outside the fence.
+  final String? sourceId;
+
+  /// One-based location inside [sourceId].
+  final int? sourceLine;
+  final int? sourceColumn;
+
   int documentLine(int blockStartLine) => blockStartLine + (line ?? 1);
 
   Map<String, Object?> toJson() => {
@@ -229,6 +242,9 @@ class VisualizationDiagnostic {
     'severity': severity.name,
     if (line != null) 'line': line,
     if (column != null) 'column': column,
+    if (sourceId != null) 'sourceId': sourceId,
+    if (sourceLine != null) 'sourceLine': sourceLine,
+    if (sourceColumn != null) 'sourceColumn': sourceColumn,
   };
 }
 

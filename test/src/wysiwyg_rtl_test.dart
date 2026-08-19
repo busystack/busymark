@@ -224,6 +224,7 @@ void main() {
   testWidgets('WYSIWYG technical dialog inputs stay LTR in an RTL UI', (
     tester,
   ) async {
+    final l10n = lookupAppLocalizations(const Locale('ar'));
     final parsed = parser.parse(filePath: 'topic.md', source: 'مرحبا\n');
     await _pumpEditor(
       tester,
@@ -232,12 +233,10 @@ void main() {
       textDirection: TextDirection.rtl,
     );
 
-    await _pressEditorShortcut(
-      tester,
-      LogicalKeyboardKey.keyH,
-      control: true,
-      alt: true,
-    );
+    final htmlButton = find.byTooltip(l10n.htmlBlock);
+    await tester.ensureVisible(htmlButton);
+    await tester.tap(htmlButton);
+    await tester.pumpAndSettle();
     final htmlField = tester.widget<TextField>(
       find.descendant(
         of: find.byKey(const ValueKey('wysiwyg-html-source-field')),
@@ -258,7 +257,7 @@ void main() {
       tester,
       LogicalKeyboardKey.keyI,
       control: true,
-      alt: true,
+      shift: true,
     );
     final imageFieldFinder = find.descendant(
       of: find.byKey(BusyMarkImageDialogKeys.source),
@@ -301,9 +300,15 @@ void main() {
 
     await _pressEditorShortcut(
       tester,
-      LogicalKeyboardKey.keyG,
+      LogicalKeyboardKey.keyK,
       control: true,
-      alt: true,
+      shift: true,
+    );
+    await _pressEditorShortcut(
+      tester,
+      LogicalKeyboardKey.keyK,
+      control: true,
+      shift: true,
     );
     final languageField = tester.widget<TextField>(
       find.descendant(
@@ -599,6 +604,7 @@ Future<void> _pressEditorShortcut(
   LogicalKeyboardKey key, {
   bool control = false,
   bool alt = false,
+  bool shift = false,
 }) async {
   if (control) {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -606,8 +612,14 @@ Future<void> _pressEditorShortcut(
   if (alt) {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
   }
+  if (shift) {
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+  }
   await tester.sendKeyDownEvent(key);
   await tester.sendKeyUpEvent(key);
+  if (shift) {
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+  }
   if (alt) {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
   }

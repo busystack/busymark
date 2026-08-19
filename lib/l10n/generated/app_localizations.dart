@@ -423,17 +423,17 @@ abstract class AppLocalizations {
   /// **'Cut'**
   String get cut;
 
-  /// Outline action that raises a heading and its descendants by one rank.
+  /// Outline action that raises a heading section, including descendant headings, by one rank.
   ///
   /// In en, this message translates to:
-  /// **'Promote heading'**
-  String get promoteHeading;
+  /// **'Promote section'**
+  String get promoteSection;
 
-  /// Outline action that lowers a heading and its descendants by one rank.
+  /// Outline action that lowers a heading section, including descendant headings, by one rank.
   ///
   /// In en, this message translates to:
-  /// **'Demote heading'**
-  String get demoteHeading;
+  /// **'Demote section'**
+  String get demoteSection;
 
   /// Outline action that swaps a heading section with its previous sibling section.
   ///
@@ -855,16 +855,16 @@ abstract class AppLocalizations {
   /// **'General'**
   String get shortcutGroupGeneral;
 
-  /// Keyboard shortcut label for creating a document.
+  /// Keyboard shortcut label for opening the content creation chooser.
   ///
   /// In en, this message translates to:
-  /// **'New document'**
+  /// **'Create'**
   String get shortcutNewDocument;
 
-  /// Keyboard shortcut description for creating a document.
+  /// Keyboard shortcut description for creating Markdown files or Writerside projects.
   ///
   /// In en, this message translates to:
-  /// **'Create a new unsaved Markdown document'**
+  /// **'Create a Markdown file or Writerside project'**
   String get shortcutNewDocumentDescription;
 
   /// Keyboard shortcut description for opening content.
@@ -3569,7 +3569,7 @@ abstract class AppLocalizations {
   /// Git branch dropdown action for creating a new branch.
   ///
   /// In en, this message translates to:
-  /// **'+ New Branch'**
+  /// **'New Branch'**
   String get gitNewBranch;
 
   /// Branch name field label.

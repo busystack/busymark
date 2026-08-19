@@ -98,6 +98,10 @@ void main() {
       await _pumpUntilFound(tester, find.text('Demo API'));
 
       expect(find.text('Demo API'), findsOneWidget);
+      expect(
+        find.text('openapi/components.yaml:14:7: Dependency warning'),
+        findsOneWidget,
+      );
       expect(find.text('/notes'), findsOneWidget);
       expect(find.text('/users'), findsOneWidget);
       await tester.enterText(find.byType(TextField), 'users');
@@ -233,6 +237,16 @@ class _CardRenderer implements VisualizationRenderer {
     if (request.kind == VisualizationRendererKind.openApi) {
       return const OpenApiVisualizationResult(
         content: 'openapi: 3.1.0',
+        diagnostics: [
+          VisualizationDiagnostic(
+            code: 'visualization.openapiWarning',
+            message: 'Dependency warning',
+            severity: VisualizationDiagnosticSeverity.warning,
+            sourceId: 'openapi/components.yaml',
+            sourceLine: 14,
+            sourceColumn: 7,
+          ),
+        ],
         reference: OpenApiReferenceModel(
           title: 'Demo API',
           apiVersion: '1.0.0',

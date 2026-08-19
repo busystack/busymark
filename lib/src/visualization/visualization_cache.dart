@@ -39,21 +39,26 @@ class VisualizationCache {
       }
       final stat = await file.stat();
       if (stat.size <= 0 || stat.size > maximumEntryBytes) {
+        await _deleteInvalidEntry(file);
         return null;
       }
       final decoded = jsonDecode(await file.readAsString());
       if (decoded is! Map<String, Object?> ||
           decoded['schemaVersion'] != 1 ||
           decoded['key'] != key) {
+        await _deleteInvalidEntry(file);
         return null;
       }
       final result = _decodeResult(decoded);
       if (result != null) {
         _remember(key, result);
         unawaitedBestEffort(file.setLastModified(DateTime.now()));
+      } else {
+        await _deleteInvalidEntry(file);
       }
       return result;
     } on Object {
+      await _deleteInvalidEntry(file);
       return null;
     }
   }
@@ -99,6 +104,16 @@ class VisualizationCache {
   }
 
   File _fileForKey(String key) => File(p.join(diskRoot.path, '$key.json'));
+
+  Future<void> _deleteInvalidEntry(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } on Object {
+      // A cache miss remains safe even when the invalid file is read-only.
+    }
+  }
 
   Future<void> _trimDiskBestEffort() async {
     try {

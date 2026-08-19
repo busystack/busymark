@@ -274,65 +274,75 @@ void main() {
     expect(workspace.activeFilePath, isNull);
   });
 
-  test('rejects a configured topic root reached through a symlink', () async {
-    final parent = await Directory.systemTemp.createTemp(
-      'busymark-writerside-config-symlink-',
-    );
-    addTearDown(() => parent.deleteSync(recursive: true));
-    final root = Directory(p.join(parent.path, 'module'))..createSync();
-    final outside = Directory(p.join(parent.path, 'outside'))..createSync();
-    final outsideTopic = File(p.join(outside.path, 'secret.md'))
-      ..writeAsStringSync('# Outside\n');
-    await Link(p.join(root.path, 'topics')).create(outside.path);
-    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+  test(
+    'rejects a configured topic root reached through a symlink',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-writerside-config-symlink-',
+      );
+      addTearDown(() => parent.deleteSync(recursive: true));
+      final root = Directory(p.join(parent.path, 'module'))..createSync();
+      final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+      final outsideTopic = File(p.join(outside.path, 'secret.md'))
+        ..writeAsStringSync('# Outside\n');
+      await Link(p.join(root.path, 'topics')).create(outside.path);
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
 <ihp version="2.0">
   <topics dir="topics"/>
 </ihp>
 ''');
 
-    final module = await moduleService.load(root.path);
+      final module = await moduleService.load(root.path);
 
-    expect(
-      module.topics.map((topic) => topic.filePath),
-      isNot(contains(outsideTopic.path)),
-    );
-    expect(
-      module.diagnostics.where(
-        (diagnostic) =>
-            diagnostic.code == 'writerside.config.path-unsafe' &&
-            diagnostic.args['reason'] == 'symlinkComponent',
-      ),
-      isNotEmpty,
-    );
-  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
+      expect(
+        module.topics.map((topic) => topic.filePath),
+        isNot(contains(outsideTopic.path)),
+      );
+      expect(
+        module.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'writerside.config.path-unsafe' &&
+              diagnostic.args['reason'] == 'symlinkComponent',
+        ),
+        isNotEmpty,
+      );
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
-  test('rejects a Writerside config file reached through a symlink', () async {
-    final parent = await Directory.systemTemp.createTemp(
-      'busymark-writerside-config-file-symlink-',
-    );
-    addTearDown(() => parent.deleteSync(recursive: true));
-    final root = Directory(p.join(parent.path, 'module'))..createSync();
-    final outsideConfig = File(p.join(parent.path, 'outside.cfg'))
-      ..writeAsStringSync('''
+  test(
+    'rejects a Writerside config file reached through a symlink',
+    () async {
+      final parent = await Directory.systemTemp.createTemp(
+        'busymark-writerside-config-file-symlink-',
+      );
+      addTearDown(() => parent.deleteSync(recursive: true));
+      final root = Directory(p.join(parent.path, 'module'))..createSync();
+      final outsideConfig = File(p.join(parent.path, 'outside.cfg'))
+        ..writeAsStringSync('''
 <ihp version="2.0">
   <module name="Outside"/>
 </ihp>
 ''');
-    await Link(p.join(root.path, 'writerside.cfg')).create(outsideConfig.path);
+      await Link(
+        p.join(root.path, 'writerside.cfg'),
+      ).create(outsideConfig.path);
 
-    final module = await moduleService.load(root.path);
+      final module = await moduleService.load(root.path);
 
-    expect(module.config.moduleName, isNull);
-    expect(
-      module.diagnostics.where(
-        (diagnostic) =>
-            diagnostic.code == 'writerside.config.path-unsafe' &&
-            diagnostic.args['kind'] == 'config' &&
-            diagnostic.args['reason'] == 'symlinkComponent',
-      ),
-      isNotEmpty,
-    );
-  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
+      expect(module.config.moduleName, isNull);
+      expect(
+        module.diagnostics.where(
+          (diagnostic) =>
+              diagnostic.code == 'writerside.config.path-unsafe' &&
+              diagnostic.args['kind'] == 'config' &&
+              diagnostic.args['reason'] == 'symlinkComponent',
+        ),
+        isNotEmpty,
+      );
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test('loads project.ihp as an equivalent Writerside config file', () async {
     final root = await Directory.systemTemp.createTemp('busymark-project-ihp-');

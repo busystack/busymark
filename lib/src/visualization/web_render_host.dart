@@ -80,6 +80,14 @@ class PlatformWebRenderHost implements WebRenderHost {
   final Duration renderTimeout;
   final Duration rasterTimeout;
 
+  /// Release verification hook. The Linux runner accepts this operation only
+  /// when `BUSYMARK_RELEASE_SMOKE=1` is present in its environment.
+  Future<void> terminateWebProcessForReleaseSmoke() async {
+    await _channel
+        .invokeMethod<void>('terminateWebProcessForReleaseSmoke')
+        .timeout(renderTimeout);
+  }
+
   @override
   Future<Map<Object?, Object?>> renderMermaid({
     required String source,

@@ -173,10 +173,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cut => 'Вирізати';
 
   @override
-  String get promoteHeading => 'Підвищити рівень заголовка';
+  String get promoteSection => 'Підвищити рівень розділу';
 
   @override
-  String get demoteHeading => 'Знизити рівень заголовка';
+  String get demoteSection => 'Знизити рівень розділу';
 
   @override
   String get moveSectionUp => 'Перемістити розділ вище';
@@ -394,11 +394,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shortcutGroupGeneral => 'Загальні';
 
   @override
-  String get shortcutNewDocument => 'Новий документ';
+  String get shortcutNewDocument => 'Створити';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Створити новий незбережений документ Markdown';
+      'Створити файл Markdown або проєкт Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -2133,7 +2133,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitCreateBranch => 'Створити гілку';
 
   @override
-  String get gitNewBranch => '+ Нова гілка';
+  String get gitNewBranch => 'Нова гілка';
 
   @override
   String get gitBranchName => 'Назва гілки';

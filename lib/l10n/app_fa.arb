@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "ارتقای عنوان",
-  "demoteHeading": "تنزل عنوان",
+  "promoteSection": "ارتقای بخش",
+  "demoteSection": "تنزل بخش",
   "moveSectionUp": "انتقال بخش به بالا",
   "moveSectionDown": "انتقال بخش به پایین",
   "confirmDeleteSectionTitle": "بخش حذف شود؟",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "سند جدید",
+  "shortcutNewDocument": "ایجاد",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "ایجاد یک سند Markdown ذخیره‌نشدهٔ جدید",
+  "shortcutNewDocumentDescription": "ایجاد فایل Markdown یا پروژهٔ Writerside",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2207,7 +2207,7 @@
   "gitCommitNoSelectedFiles": "پیش از کامیت، دست‌کم یک فایل را مرحله‌بندی کنید.",
   "gitCommitMessageRequired": "پیام کامیت را وارد کنید.",
   "gitCreateBranch": "ایجاد شاخه",
-  "gitNewBranch": "+ شاخهٔ جدید",
+  "gitNewBranch": "شاخهٔ جدید",
   "gitBranchName": "نام شاخه",
   "gitSwitchBranch": "تغییر",
   "gitNoChanges": "تغییری وجود ندارد",

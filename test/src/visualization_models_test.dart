@@ -40,6 +40,23 @@ void main() {
     );
   });
 
+  test('preserves dependency diagnostic source locations', () {
+    const diagnostic = VisualizationDiagnostic(
+      code: 'visualization.invalidOpenApi',
+      message: 'Invalid response',
+      severity: VisualizationDiagnosticSeverity.error,
+      sourceId: 'openapi/components.yaml',
+      sourceLine: 14,
+      sourceColumn: 7,
+    );
+
+    final decoded = VisualizationDiagnostic.fromJson(diagnostic.toJson());
+    expect(decoded.sourceId, diagnostic.sourceId);
+    expect(decoded.sourceLine, 14);
+    expect(decoded.sourceColumn, 7);
+    expect(decoded.line, isNull);
+  });
+
   group('visualization cache keys', () {
     test('canonicalizes options and dependency order', () {
       final first = _request(
@@ -155,7 +172,7 @@ void main() {
       expect(readOpenApi.dependencies.single.id, 'parts.yaml');
     });
 
-    test('does not persist failures and ignores malformed entries', () async {
+    test('does not persist failures and repairs malformed entries', () async {
       final cache = VisualizationCache(diskRoot: directory);
       await cache.put(
         'failure',
@@ -163,8 +180,22 @@ void main() {
       );
       expect(await directory.list(followLinks: false).isEmpty, isTrue);
 
-      await File('${directory.path}/broken.json').writeAsString('{broken');
+      final broken = File('${directory.path}/broken.json');
+      await broken.writeAsString('{broken');
       expect(await cache.get('broken'), isNull);
+      expect(await broken.exists(), isFalse);
+
+      const replacement = SvgVisualizationResult(
+        svg: '<svg viewBox="0 0 1 1"/>',
+        width: 1,
+        height: 1,
+      );
+      await cache.put('broken', replacement);
+      final repaired = await VisualizationCache(
+        diskRoot: directory,
+      ).get('broken');
+      expect(repaired, isA<SvgVisualizationResult>());
+      expect((repaired! as SvgVisualizationResult).svg, replacement.svg);
     });
 
     test('derives the XDG cache path without changing the environment', () {

@@ -171,10 +171,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cut => 'قص';
 
   @override
-  String get promoteHeading => 'ترقية العنوان';
+  String get promoteSection => 'ترقية القسم';
 
   @override
-  String get demoteHeading => 'خفض رتبة العنوان';
+  String get demoteSection => 'خفض رتبة القسم';
 
   @override
   String get moveSectionUp => 'نقل القسم إلى أعلى';
@@ -391,11 +391,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get shortcutGroupGeneral => 'عام';
 
   @override
-  String get shortcutNewDocument => 'مستند جديد';
+  String get shortcutNewDocument => 'إنشاء';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'إنشاء مستند Markdown جديد غير محفوظ';
+      'إنشاء ملف Markdown أو مشروع Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -2116,7 +2116,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitCreateBranch => 'إنشاء فرع';
 
   @override
-  String get gitNewBranch => '+ فرع جديد';
+  String get gitNewBranch => 'فرع جديد';
 
   @override
   String get gitBranchName => 'اسم الفرع';

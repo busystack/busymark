@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'visualization_cache.dart';
 import 'visualization_models.dart';
@@ -9,11 +10,19 @@ class VisualizationCoordinator {
     required Iterable<VisualizationRenderer> renderers,
     VisualizationCache? cache,
     this.maximumConcurrentRenders = 2,
+    this.maximumLastSuccessfulEntries = 128,
   }) : cache = cache ?? VisualizationCache() {
     if (maximumConcurrentRenders < 1) {
       throw ArgumentError.value(
         maximumConcurrentRenders,
         'maximumConcurrentRenders',
+        'Must be at least one.',
+      );
+    }
+    if (maximumLastSuccessfulEntries < 1) {
+      throw ArgumentError.value(
+        maximumLastSuccessfulEntries,
+        'maximumLastSuccessfulEntries',
         'Must be at least one.',
       );
     }
@@ -29,16 +38,23 @@ class VisualizationCoordinator {
 
   final VisualizationCache cache;
   final int maximumConcurrentRenders;
+  final int maximumLastSuccessfulEntries;
   final Map<VisualizationRendererKind, VisualizationRenderer> _renderers = {};
   final Map<String, VisualizationCancellationToken> _activeTokens = {};
   final Map<String, int> _latestRevisions = {};
-  final Map<String, VisualizationRenderResult> _lastSuccessful = {};
+  final LinkedHashMap<String, VisualizationRenderResult> _lastSuccessful =
+      LinkedHashMap();
   final List<_QueuedRender> _queue = [];
   var _running = 0;
   var _disposed = false;
 
-  VisualizationRenderResult? lastSuccessfulFor(String blockKey) =>
-      _lastSuccessful[blockKey];
+  VisualizationRenderResult? lastSuccessfulFor(String blockKey) {
+    final result = _lastSuccessful.remove(blockKey);
+    if (result != null) {
+      _lastSuccessful[blockKey] = result;
+    }
+    return result;
+  }
 
   Future<VisualizationRenderResult> render(
     VisualizationRenderRequest request,
@@ -74,7 +90,7 @@ class VisualizationCoordinator {
       _throwIfSuperseded(prepared, token);
       if (cached != null) {
         if (cached.isSuccessful) {
-          _lastSuccessful[prepared.blockKey] = cached;
+          _rememberLastSuccessful(prepared.blockKey, cached);
         }
         return cached;
       }
@@ -129,6 +145,8 @@ class VisualizationCoordinator {
       token.cancel();
     }
     _activeTokens.clear();
+    _latestRevisions.clear();
+    _lastSuccessful.clear();
     for (final queued in _queue) {
       if (!queued.completer.isCompleted) {
         queued.completer.completeError(const VisualizationCancelledException());
@@ -161,7 +179,7 @@ class VisualizationCoordinator {
       final result = await queued.renderer.render(queued.request, queued.token);
       _throwIfSuperseded(queued.request, queued.token);
       if (result.isSuccessful) {
-        _lastSuccessful[queued.request.blockKey] = result;
+        _rememberLastSuccessful(queued.request.blockKey, result);
         await cache.put(queued.request.cacheKey, result);
       }
       _throwIfSuperseded(queued.request, queued.token);
@@ -201,6 +219,17 @@ class VisualizationCoordinator {
     if (_latestRevisions[request.blockKey] != request.editRevision ||
         !identical(_activeTokens[request.blockKey], token)) {
       throw const VisualizationSupersededException();
+    }
+  }
+
+  void _rememberLastSuccessful(
+    String blockKey,
+    VisualizationRenderResult result,
+  ) {
+    _lastSuccessful.remove(blockKey);
+    _lastSuccessful[blockKey] = result;
+    while (_lastSuccessful.length > maximumLastSuccessfulEntries) {
+      _lastSuccessful.remove(_lastSuccessful.keys.first);
     }
   }
 }

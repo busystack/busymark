@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "Hev overskrift",
-  "demoteHeading": "Senk overskrift",
+  "promoteSection": "Hev seksjonen",
+  "demoteSection": "Senk seksjonen",
   "moveSectionUp": "Flytt seksjonen opp",
   "moveSectionDown": "Flytt seksjonen ned",
   "confirmDeleteSectionTitle": "Slette seksjonen?",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Nytt dokument",
+  "shortcutNewDocument": "Opprett",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Opprett et nytt ulagret Markdown-dokument",
+  "shortcutNewDocumentDescription": "Opprett en Markdown-fil eller et Writerside-prosjekt",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2193,7 +2193,7 @@
   "gitCommitNoSelectedFiles": "Legg minst én fil i indeksen før du oppretter en commit.",
   "gitCommitMessageRequired": "Skriv inn en commit-melding.",
   "gitCreateBranch": "Opprett gren",
-  "gitNewBranch": "+ Ny gren",
+  "gitNewBranch": "Ny gren",
   "gitBranchName": "Grennavn",
   "gitSwitchBranch": "Bytt",
   "gitNoChanges": "Ingen endringer",

@@ -102,6 +102,43 @@ description: |md
     expect(host.lastScale, 3);
   });
 
+  test(
+    'rasterizes browser CSS that cannot be preserved in vector form',
+    () async {
+      final runner = _FakeD2Runner(
+        stdout: Uint8List.fromList(
+          '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10">
+  <style>
+    @font-face { font-family: local; src: url(data:font/woff2;base64,AAAA); }
+    text { font-family: local; }
+  </style>
+  <text>Styled</text>
+</svg>
+'''
+              .codeUnits,
+        ),
+      );
+      final host = _RasterHost();
+      final renderer = D2VisualizationRenderer(
+        webRenderHost: host,
+        locator: const D2ExecutableLocator(
+          environment: {'BUSYMARK_D2_PATH': '/bin/true'},
+        ),
+        commandRunner: runner,
+      );
+
+      final result = await renderer.render(
+        _request(),
+        VisualizationCancellationToken(),
+      );
+
+      expect(result, isA<RasterVisualizationResult>());
+      expect(host.rasterCalls, 1);
+      expect(host.lastSvg, contains('data:font/woff2;base64,AAAA'));
+    },
+  );
+
   test('maps D2 diagnostics and renderer limits to typed results', () async {
     final invalid = D2VisualizationRenderer(
       webRenderHost: _RasterHost(),
@@ -218,6 +255,7 @@ class _FakeD2Runner implements D2CommandRunner {
 class _RasterHost implements WebRenderHost {
   var rasterCalls = 0;
   double? lastScale;
+  String? lastSvg;
 
   @override
   Future<void> copyPngToClipboard(Uint8List pngBytes) async {}
@@ -232,6 +270,7 @@ class _RasterHost implements WebRenderHost {
   }) async {
     rasterCalls++;
     lastScale = scale;
+    lastSvg = svg;
     return Uint8List.fromList([137, 80, 78, 71]);
   }
 

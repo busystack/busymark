@@ -172,10 +172,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cut => 'Cut';
 
   @override
-  String get promoteHeading => 'Promote heading';
+  String get promoteSection => 'Promote section';
 
   @override
-  String get demoteHeading => 'Demote heading';
+  String get demoteSection => 'Demote section';
 
   @override
   String get moveSectionUp => 'Move section up';
@@ -393,11 +393,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutGroupGeneral => 'General';
 
   @override
-  String get shortcutNewDocument => 'New document';
+  String get shortcutNewDocument => 'Create';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Create a new unsaved Markdown document';
+      'Create a Markdown file or Writerside project';
 
   @override
   String get shortcutOpenDescription =>
@@ -2098,7 +2098,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitCreateBranch => 'Create branch';
 
   @override
-  String get gitNewBranch => '+ New Branch';
+  String get gitNewBranch => 'New Branch';
 
   @override
   String get gitBranchName => 'Branch name';

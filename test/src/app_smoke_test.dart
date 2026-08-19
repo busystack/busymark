@@ -63,6 +63,40 @@ void main() {
     headerBarService = _FallbackHeaderBarService();
   });
 
+  test('editor shortcuts use documented cross-editor defaults', () {
+    expect(
+      {
+        for (final entry in BusyMarkEditorShortcuts.definitions.entries)
+          entry.key: entry.value.label,
+      },
+      {
+        BusyMarkEditorShortcutAction.bold: 'Ctrl+B',
+        BusyMarkEditorShortcutAction.italic: 'Ctrl+I',
+        BusyMarkEditorShortcutAction.underline: 'Ctrl+U',
+        BusyMarkEditorShortcutAction.strikethrough: 'Alt+Shift+5',
+        BusyMarkEditorShortcutAction.inlineCode: 'Ctrl+Shift+`',
+        BusyMarkEditorShortcutAction.link: 'Ctrl+K',
+        BusyMarkEditorShortcutAction.paragraph: 'Ctrl+Alt+0',
+        BusyMarkEditorShortcutAction.heading1: 'Ctrl+Alt+1',
+        BusyMarkEditorShortcutAction.heading2: 'Ctrl+Alt+2',
+        BusyMarkEditorShortcutAction.heading3: 'Ctrl+Alt+3',
+        BusyMarkEditorShortcutAction.heading4: 'Ctrl+Alt+4',
+        BusyMarkEditorShortcutAction.heading5: 'Ctrl+Alt+5',
+        BusyMarkEditorShortcutAction.heading6: 'Ctrl+Alt+6',
+        BusyMarkEditorShortcutAction.orderedList: 'Ctrl+Shift+7',
+        BusyMarkEditorShortcutAction.unorderedList: 'Ctrl+Shift+8',
+        BusyMarkEditorShortcutAction.taskList: 'Ctrl+Shift+9',
+        BusyMarkEditorShortcutAction.indent: 'Ctrl+]',
+        BusyMarkEditorShortcutAction.outdent: 'Ctrl+[',
+        BusyMarkEditorShortcutAction.blockquote: 'Ctrl+Shift+Q',
+        BusyMarkEditorShortcutAction.codeBlock: 'Ctrl+Shift+K',
+        BusyMarkEditorShortcutAction.image: 'Ctrl+Shift+I',
+        BusyMarkEditorShortcutAction.hardLineBreak: 'Shift+Enter',
+        BusyMarkEditorShortcutAction.pastePlainText: 'Ctrl+Shift+V',
+      },
+    );
+  });
+
   testWidgets('app wires generated localization delegates and locales', (
     tester,
   ) async {
@@ -716,7 +750,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(l10n.createWritersideProject));
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    final newDialog = find.byType(BusyMarkDialogShell);
+    expect(newDialog, findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: newDialog,
+        matching: find.text(l10n.createWritersideProject),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.createWritersideProject), findsWidgets);
@@ -895,17 +942,10 @@ void main() {
     expect(find.text(l10n.gitProjectHistory), findsNothing);
     expect(find.text(l10n.gitHistory), findsNothing);
     expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
-    expect(find.text(l10n.viewMode), findsOneWidget);
-    expect(find.text(l10n.editor), findsOneWidget);
-    expect(find.text(l10n.source), findsOneWidget);
-    expect(find.text(l10n.preview), findsOneWidget);
-    expect(find.text(l10n.split), findsOneWidget);
+    expect(find.text(l10n.viewMode), findsNothing);
 
     final expectedShortcutLabels = <String>{
       ...BusyMarkAppShortcuts.definitions.values.map(
-        (definition) => definition.label,
-      ),
-      ...BusyMarkDocumentViewShortcuts.definitions.values.map(
         (definition) => definition.label,
       ),
       ...BusyMarkTextEditingShortcuts.definitions.values.map(
@@ -1083,7 +1123,9 @@ void main() {
     expect(logoSize.height, lessThanOrEqualTo(BusyMarkSizes.aboutLogoViewport));
   });
 
-  testWidgets('Ctrl+N creates a new Markdown document', (tester) async {
+  testWidgets('Ctrl+N chooses between Markdown and Writerside creation', (
+    tester,
+  ) async {
     final service = _StartupWorkspaceService();
     await tester.pumpWidget(
       ProviderScope(
@@ -1102,6 +1144,37 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
+    final newDialog = find.byType(BusyMarkDialogShell);
+    final createMarkdown = find.descendant(
+      of: newDialog,
+      matching: find.text(l10n.createMarkdownFile),
+    );
+    final createWriterside = find.descendant(
+      of: newDialog,
+      matching: find.text(l10n.createWritersideProject),
+    );
+    expect(service.untitledCount, 0);
+    expect(newDialog, findsOneWidget);
+    expect(createMarkdown, findsOneWidget);
+    expect(createWriterside, findsOneWidget);
+    expect(
+      find.descendant(
+        of: newDialog,
+        matching: find.byIcon(BusyMarkGlyphs.newDocument),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: newDialog,
+        matching: find.byIcon(BusyMarkGlyphs.writersideProject),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(createMarkdown);
+    await tester.pumpAndSettle();
+
     expect(service.untitledCount, 1);
     expect(find.text(l10n.createMarkdownFile), findsNothing);
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
@@ -1114,7 +1187,10 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults().copyWith(autoSave: false).toJson(),
+        ),
         workspaceServiceProvider.overrideWithValue(service),
         startupPathProvider.overrideWithValue(
           'test/fixtures/markdown/basic.md',
@@ -1145,6 +1221,31 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
+    final firstNewDialog = find.byType(BusyMarkDialogShell);
+    expect(
+      find.descendant(
+        of: firstNewDialog,
+        matching: find.text(l10n.createMarkdownFile),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: firstNewDialog,
+        matching: find.text(l10n.createWritersideProject),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.unsavedChanges), findsNothing);
+
+    await tester.tap(
+      find.descendant(
+        of: firstNewDialog,
+        matching: find.text(l10n.createMarkdownFile),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text(l10n.unsavedChanges), findsOneWidget);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
@@ -1160,10 +1261,25 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.text(l10n.createMarkdownFile),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text(l10n.unsavedChanges), findsOneWidget);
 
     await tester.tap(find.text(l10n.discard));
     await tester.pumpAndSettle();
+    for (
+      var attempt = 0;
+      attempt < 10 && service.untitledCount == 0;
+      attempt++
+    ) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     expect(service.untitledCount, 1);
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
@@ -1559,17 +1675,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    Future<void> pressControlAltShortcut(LogicalKeyboardKey key) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -1584,27 +1689,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(container.read(workspaceControllerProvider).workspace, isNotNull);
-
-    await pressControlAltShortcut(LogicalKeyboardKey.digit3);
-    expect(
-      container.read(appSettingsControllerProvider).documentViewMode,
-      DocumentViewModePreference.preview,
-    );
-    await pressControlAltShortcut(LogicalKeyboardKey.digit2);
-    expect(
-      container.read(appSettingsControllerProvider).documentViewMode,
-      DocumentViewModePreference.source,
-    );
-    await pressControlAltShortcut(LogicalKeyboardKey.digit1);
-    expect(
-      container.read(appSettingsControllerProvider).documentViewMode,
-      DocumentViewModePreference.editor,
-    );
-    await pressControlAltShortcut(LogicalKeyboardKey.digit4);
-    expect(
-      container.read(appSettingsControllerProvider).documentViewMode,
-      DocumentViewModePreference.split,
-    );
 
     final controller = container.read(workspaceControllerProvider.notifier);
     await controller.openActiveFile(second.path);
@@ -2307,16 +2391,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    Future<void> pressDocumentViewShortcut(
-      LogicalKeyboardKey key,
+    Future<void> setDocumentViewMode(
       DocumentViewModePreference expectedMode,
     ) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(expectedMode);
       await tester.pump(const Duration(milliseconds: 100));
       await tester.pump(const Duration(milliseconds: 100));
       expect(
@@ -2376,20 +2456,14 @@ void main() {
       reason: 'The shortcut must work while the document field owns focus.',
     );
 
-    await pressDocumentViewShortcut(
-      LogicalKeyboardKey.digit2,
-      DocumentViewModePreference.source,
-    );
+    await setDocumentViewMode(DocumentViewModePreference.source);
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
 
-    await pressDocumentViewShortcut(
-      LogicalKeyboardKey.digit3,
-      DocumentViewModePreference.preview,
-    );
+    await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
@@ -2437,6 +2511,7 @@ void main() {
     expect(find.text(l10n.gitPush), findsOneWidget);
     expect(find.text(l10n.gitFetch), findsOneWidget);
     expect(find.text(l10n.gitNewBranch), findsOneWidget);
+    expect(l10n.gitNewBranch, isNot(startsWith('+')));
     expect(find.text(l10n.gitChanges), findsOneWidget);
     expect(find.text(l10n.gitProjectHistory), findsOneWidget);
     expect(find.text(l10n.gitFileHistory), findsOneWidget);
@@ -2452,10 +2527,7 @@ void main() {
     );
     expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
 
-    await pressDocumentViewShortcut(
-      LogicalKeyboardKey.digit4,
-      DocumentViewModePreference.split,
-    );
+    await setDocumentViewMode(DocumentViewModePreference.split);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
@@ -2464,10 +2536,7 @@ void main() {
     expect(find.byTooltip(l10n.gitActions), findsOneWidget);
     expect(branchMenu, findsOneWidget);
 
-    await pressDocumentViewShortcut(
-      LogicalKeyboardKey.digit1,
-      DocumentViewModePreference.editor,
-    );
+    await setDocumentViewMode(DocumentViewModePreference.editor);
     await pressControlShortcut(LogicalKeyboardKey.digit3);
     expect(find.text(l10n.gitNoChanges), findsNothing);
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
@@ -2554,6 +2623,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('workspace-sidebar-primary-label')),
+        matching: find.text('BusyMark Test'),
+      ),
+      findsOneWidget,
+    );
+
     Future<void> selectView(LogicalKeyboardKey key) async {
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(key);
@@ -2562,16 +2639,12 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Future<void> switchDocumentView(
-      LogicalKeyboardKey key,
+    Future<void> setDocumentViewMode(
       DocumentViewModePreference expectedMode,
     ) async {
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyDownEvent(key);
-      await tester.sendKeyUpEvent(key);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
-      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await container
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(expectedMode);
       await tester.pumpAndSettle();
       expect(
         container.read(appSettingsControllerProvider).documentViewMode,
@@ -2626,46 +2699,34 @@ void main() {
 
     final actionMenuGuideRight = tester.getRect(primaryRow).right;
     double? actionMenuRight;
-    for (final (key, label, contextRow, documentViewKey, expectedDocumentView)
-        in <
-          (
-            LogicalKeyboardKey,
-            String,
-            bool,
-            LogicalKeyboardKey,
-            DocumentViewModePreference,
-          )
-        >[
+    for (final (key, label, contextRow, expectedDocumentView)
+        in <(LogicalKeyboardKey, String, bool, DocumentViewModePreference)>[
           (
             LogicalKeyboardKey.digit1,
             'Files',
             true,
-            LogicalKeyboardKey.digit2,
             DocumentViewModePreference.source,
           ),
           (
             LogicalKeyboardKey.digit2,
             'Topics',
             true,
-            LogicalKeyboardKey.digit3,
             DocumentViewModePreference.preview,
           ),
           (
             LogicalKeyboardKey.digit3,
             'Outline',
             true,
-            LogicalKeyboardKey.digit4,
             DocumentViewModePreference.split,
           ),
           (
             LogicalKeyboardKey.digit4,
             'Git',
             true,
-            LogicalKeyboardKey.digit1,
             DocumentViewModePreference.editor,
           ),
         ]) {
-      await switchDocumentView(documentViewKey, expectedDocumentView);
+      await setDocumentViewMode(expectedDocumentView);
       await selectView(key);
       expect(viewMarker(key), findsOneWidget, reason: '$label selected view');
       final firstContent = find.byKey(firstContentKey);
@@ -3197,7 +3258,6 @@ void main() {
   testWidgets('source view supports editor formatting shortcuts', (
     tester,
   ) async {
-    final de = AppLocalizationsDe();
     final temp = Directory.systemTemp.createTempSync('busymark_source_keys_');
     addTearDown(() {
       temp.deleteSync(recursive: true);
@@ -3280,7 +3340,7 @@ void main() {
     await tester.enterText(sourceField, 'alpha');
     await tester.pump();
 
-    await pressShortcut(LogicalKeyboardKey.period, control: true, shift: true);
+    await pressShortcut(LogicalKeyboardKey.keyQ, control: true, shift: true);
     expect(container.read(workspaceControllerProvider).activeText, '> alpha');
 
     await tester.enterText(sourceField, 'snippet');
@@ -3291,28 +3351,10 @@ void main() {
     );
     await tester.pump();
 
-    await pressShortcut(LogicalKeyboardKey.keyC, control: true, alt: true);
+    await pressShortcut(LogicalKeyboardKey.keyK, control: true, shift: true);
     expect(
       container.read(workspaceControllerProvider).activeText,
       '```\nsnippet\n```',
-    );
-
-    await tester.enterText(sourceField, 'row');
-    await tester.pump();
-
-    await pressShortcut(LogicalKeyboardKey.keyT, control: true, shift: true);
-    expect(
-      container.read(workspaceControllerProvider).activeText,
-      contains('| ${de.tableHeaderNumber(1)} | ${de.tableHeaderNumber(2)} |'),
-    );
-
-    await tester.enterText(sourceField, '');
-    await tester.pump();
-
-    await pressShortcut(LogicalKeyboardKey.keyH, control: true, alt: true);
-    expect(
-      container.read(workspaceControllerProvider).activeText,
-      contains('<p>${de.htmlContentDefault}</p>'),
     );
 
     await tester.enterText(sourceField, 'line');
@@ -4642,6 +4684,14 @@ After break.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
 
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.text(l10n.createMarkdownFile),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     nativeWindow.listeners.single.onWindowClose();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -4992,16 +5042,16 @@ Beta body.
     for (final label in [
       l10n.copy,
       l10n.cut,
-      l10n.promoteHeading,
-      l10n.demoteHeading,
+      l10n.promoteSection,
+      l10n.demoteSection,
       l10n.moveSectionUp,
       l10n.moveSectionDown,
       l10n.delete,
     ]) {
       expect(menuItem(label), findsOneWidget);
     }
-    expect(popupItem(l10n.promoteHeading).enabled, isTrue);
-    expect(popupItem(l10n.demoteHeading).enabled, isTrue);
+    expect(popupItem(l10n.promoteSection).enabled, isTrue);
+    expect(popupItem(l10n.demoteSection).enabled, isTrue);
     expect(popupItem(l10n.moveSectionUp).enabled, isFalse);
     expect(popupItem(l10n.moveSectionDown).enabled, isTrue);
 
@@ -5011,7 +5061,7 @@ Beta body.
     expect(container.read(workspaceControllerProvider).activeText, source);
 
     await openMenu('Alpha');
-    await tester.tap(find.text(l10n.promoteHeading));
+    await tester.tap(find.text(l10n.promoteSection));
     final promoted = source
         .replaceFirst('### Alpha', '## Alpha')
         .replaceFirst('#### Alpha child', '### Alpha child');
@@ -5019,7 +5069,7 @@ Beta body.
 
     await resetSource();
     await openMenu('Alpha');
-    await tester.tap(find.text(l10n.demoteHeading));
+    await tester.tap(find.text(l10n.demoteSection));
     final demoted = source
         .replaceFirst('### Alpha', '#### Alpha')
         .replaceFirst('#### Alpha child', '##### Alpha child');

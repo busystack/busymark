@@ -226,11 +226,13 @@ function sourceDiagnostic(error, sourceMap, severity = 'error') {
   const position = error?.linePos?.[0]
     ?? (Number.isInteger(error?.pos?.[0]) ? sourceMap.lineCounter.linePos(error.pos[0]) : undefined)
   const message = String(error?.message ?? 'OpenAPI source could not be parsed.').slice(0, 2000)
-  if (!sourceMap.entrypoint && position) {
+  if (!sourceMap.entrypoint) {
     return {
       code: String(error?.code ?? 'visualization.invalidOpenApi'),
-      message: sourceMap.id + ':' + position.line + ':' + position.col + ': ' + message,
+      message,
       severity,
+      sourceId: sourceMap.id,
+      ...(position ? { sourceLine: position.line, sourceColumn: position.col } : {}),
     }
   }
   return {
@@ -286,8 +288,8 @@ function validationPathSegments(path) {
   return path.slice(1).split('/').map((segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~'))
 }
 
-function validationLocation(error, sourceMap) {
-  const path = validationPathSegments(error?.path)
+function validationLocation(sourceMap, requestedPath) {
+  const path = [...requestedPath]
   while (path.length > 0) {
     const node = sourceMap.document.getIn(path, true)
     if (Number.isInteger(node?.range?.[0])) return sourceMap.lineCounter.linePos(node.range[0])
@@ -296,14 +298,89 @@ function validationLocation(error, sourceMap) {
   return undefined
 }
 
-function validationDiagnostics(errors, sourceMap) {
+function pathStartsWith(path, prefix) {
+  return prefix.length <= path.length && prefix.every((segment, index) => segment === path[index])
+}
+
+function sourceMapForBundledUrl(value, parsedFiles) {
+  if (typeof value !== 'string') return undefined
+  const portableValue = normalizePortablePath(value.replace(/^\/+/, ''))
+  const entryDirectory = portableDirectory(parsedFiles[0].sourceMap.id)
+  const entryRelative = normalizePortablePath(`${entryDirectory}/${portableValue}`)
+  return parsedFiles
+    .map((parsed) => parsed.sourceMap)
+    .find((sourceMap) => sourceMap.id === portableValue || sourceMap.id === entryRelative)
+}
+
+function bundledReferenceProvenance(document, parsedFiles) {
+  const mappings = document?.['x-ext-urls']
+  if (!mappings || typeof mappings !== 'object' || Array.isArray(mappings)) return []
+  const sourceMapsByHash = new Map(
+    Object.entries(mappings)
+      .map(([hash, value]) => [hash, sourceMapForBundledUrl(value, parsedFiles)])
+      .filter(([, sourceMap]) => sourceMap !== undefined),
+  )
+  const provenance = []
+  const visit = (value, bundledPath = []) => {
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => visit(item, [...bundledPath, String(index)]))
+      return
+    }
+    if (!value || typeof value !== 'object') return
+    const ownerSourceMap = bundledPath[0] === 'x-ext'
+      ? sourceMapsByHash.get(bundledPath[1])
+      : parsedFiles[0].sourceMap
+    const ownerPath = bundledPath[0] === 'x-ext' ? bundledPath.slice(2) : bundledPath
+    if (typeof value.$ref === 'string' && value.$ref.startsWith('#/x-ext/')) {
+      const target = validationPathSegments(value.$ref.slice(1))
+      const targetSourceMap = sourceMapsByHash.get(target[1])
+      if (ownerSourceMap && targetSourceMap) {
+        provenance.push({
+          ownerId: ownerSourceMap.id,
+          renderedPath: ownerPath,
+          targetSourceMap,
+          targetPath: target.slice(2),
+        })
+      }
+    }
+    for (const [key, item] of Object.entries(value)) {
+      if (key !== 'x-ext-urls') visit(item, [...bundledPath, key])
+    }
+  }
+  visit(document)
+  return provenance.sort((left, right) => right.renderedPath.length - left.renderedPath.length)
+}
+
+function validationAttribution(error, parsedFiles, provenance) {
+  let sourceMap = parsedFiles[0].sourceMap
+  let path = validationPathSegments(error?.path)
+  const visited = new Set()
+  for (;;) {
+    const mapping = provenance.find((candidate) =>
+      candidate.ownerId === sourceMap.id && pathStartsWith(path, candidate.renderedPath))
+    if (!mapping) break
+    const key = `${mapping.ownerId}\u0000${mapping.renderedPath.join('\u0000')}\u0000${mapping.targetSourceMap.id}`
+    if (visited.has(key)) break
+    visited.add(key)
+    path = [...mapping.targetPath, ...path.slice(mapping.renderedPath.length)]
+    sourceMap = mapping.targetSourceMap
+  }
+  return { sourceMap, location: validationLocation(sourceMap, path) }
+}
+
+function validationDiagnostics(errors, parsedFiles, provenance) {
   return (errors ?? []).slice(0, 200).map((error) => {
-    const location = validationLocation(error, sourceMap)
+    const { sourceMap, location } = validationAttribution(error, parsedFiles, provenance)
     return {
       code: String(error?.code ?? 'visualization.invalidOpenApi'),
       message: String(error?.message ?? 'OpenAPI validation failed.').slice(0, 2000),
       severity: 'error',
-      ...(location ? { line: location.line, column: location.col } : {}),
+      ...(sourceMap.entrypoint
+        ? (location ? { line: location.line, column: location.col } : {})
+        : {
+            sourceId: sourceMap.id,
+            ...(location ? { sourceLine: location.line, sourceColumn: location.col } : {}),
+          }),
     }
   })
 }
@@ -322,7 +399,7 @@ async function bundleOpenApi(parsedFiles) {
   const documents = new Map(
     parsedFiles.slice(1).map((parsed) => ['/' + parsed.file.filename, parsed.rawSpecification]),
   )
-  return bundle(structuredClone(entry.rawSpecification), {
+  const document = await bundle(structuredClone(entry.rawSpecification), {
     origin: '/' + entry.file.filename,
     plugins: [{
       type: 'loader',
@@ -335,7 +412,11 @@ async function bundleOpenApi(parsedFiles) {
       },
     }],
     treeShake: false,
+    urlMap: true,
   })
+  const provenance = bundledReferenceProvenance(document, parsedFiles)
+  delete document['x-ext-urls']
+  return { document, provenance }
 }
 
 function operationSummary(document) {
@@ -375,7 +456,8 @@ export async function prepareOpenApi(request) {
   ]
   const files = parsedFiles.map((parsed) => parsed.file)
   const validation = await validate(files)
-  const bundledDocument = await bundleOpenApi(parsedFiles)
+  const bundled = await bundleOpenApi(parsedFiles)
+  const bundledDocument = bundled.document
   const bundledValidation = await validate(bundledDocument)
   const errors = uniqueValidationErrors(validation.errors ?? [], bundledValidation.errors ?? [])
   const document = files[0].specification
@@ -406,7 +488,7 @@ export async function prepareOpenApi(request) {
       },
       diagnostics: [
         ...parsedFiles.flatMap((parsed) => parsed.sourceMap.warnings),
-        ...validationDiagnostics(errors, parsedFiles[0].sourceMap),
+        ...validationDiagnostics(errors, parsedFiles, bundled.provenance),
       ],
     },
   }

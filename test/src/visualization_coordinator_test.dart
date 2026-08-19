@@ -154,6 +154,13 @@ void main() {
         ),
         throwsArgumentError,
       );
+      expect(
+        () => VisualizationCoordinator(
+          renderers: const [],
+          maximumLastSuccessfulEntries: 0,
+        ),
+        throwsArgumentError,
+      );
       final coordinator = VisualizationCoordinator(
         renderers: const [],
         cache: VisualizationCache(diskRoot: cacheDirectory),
@@ -165,16 +172,41 @@ void main() {
       expect((result as FailedVisualizationResult).retryable, isFalse);
     },
   );
+
+  test('bounds last-successful render retention with LRU eviction', () async {
+    final renderer = _ControlledRenderer();
+    final coordinator = _coordinator(
+      renderer,
+      cacheDirectory,
+      maximumLastSuccessfulEntries: 2,
+    );
+    addTearDown(coordinator.dispose);
+
+    for (final (index, key) in ['first', 'second', 'third'].indexed) {
+      final future = coordinator.render(
+        _request(blockKey: key, source: key, revision: index + 1),
+      );
+      await renderer.waitForStarts(index + 1);
+      renderer.completeByBlock(key, _svg(key));
+      await future;
+    }
+
+    expect(coordinator.lastSuccessfulFor('first'), isNull);
+    expect(coordinator.lastSuccessfulFor('second'), isNotNull);
+    expect(coordinator.lastSuccessfulFor('third'), isNotNull);
+  });
 }
 
 VisualizationCoordinator _coordinator(
   VisualizationRenderer renderer,
   Directory cacheDirectory, {
   int maximumConcurrentRenders = 2,
+  int maximumLastSuccessfulEntries = 128,
 }) {
   return VisualizationCoordinator(
     renderers: [renderer],
     maximumConcurrentRenders: maximumConcurrentRenders,
+    maximumLastSuccessfulEntries: maximumLastSuccessfulEntries,
     cache: VisualizationCache(diskRoot: cacheDirectory),
   );
 }

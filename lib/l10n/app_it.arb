@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "Promuovi intestazione",
-  "demoteHeading": "Retrocedi intestazione",
+  "promoteSection": "Promuovi sezione",
+  "demoteSection": "Retrocedi sezione",
   "moveSectionUp": "Sposta sezione in alto",
   "moveSectionDown": "Sposta sezione in basso",
   "confirmDeleteSectionTitle": "Eliminare la sezione?",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Nuovo documento",
+  "shortcutNewDocument": "Crea",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Crea un nuovo documento Markdown non salvato",
+  "shortcutNewDocumentDescription": "Crea un file Markdown o un progetto Writerside",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2193,7 +2193,7 @@
   "gitCommitNoSelectedFiles": "Aggiungi almeno un file all’indice prima di creare il commit.",
   "gitCommitMessageRequired": "Inserisci un messaggio di commit.",
   "gitCreateBranch": "Crea ramo",
-  "gitNewBranch": "+ Nuovo ramo",
+  "gitNewBranch": "Nuovo ramo",
   "gitBranchName": "Nome del ramo",
   "gitSwitchBranch": "Passa",
   "gitNoChanges": "Nessuna modifica",

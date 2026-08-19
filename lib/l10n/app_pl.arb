@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "Podnieś rangę nagłówka",
-  "demoteHeading": "Obniż rangę nagłówka",
+  "promoteSection": "Podnieś rangę sekcji",
+  "demoteSection": "Obniż rangę sekcji",
   "moveSectionUp": "Przenieś sekcję wyżej",
   "moveSectionDown": "Przenieś sekcję niżej",
   "confirmDeleteSectionTitle": "Usunąć sekcję?",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "Nowy dokument",
+  "shortcutNewDocument": "Utwórz",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "Utwórz nowy niezapisany dokument Markdown",
+  "shortcutNewDocumentDescription": "Utwórz plik Markdown lub projekt Writerside",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2211,7 +2211,7 @@
   "gitCommitNoSelectedFiles": "Przed utworzeniem commitu dodaj do indeksu co najmniej jeden plik.",
   "gitCommitMessageRequired": "Wprowadź komunikat zatwierdzenia.",
   "gitCreateBranch": "Utwórz gałąź",
-  "gitNewBranch": "+ Nowa gałąź",
+  "gitNewBranch": "Nowa gałąź",
   "gitBranchName": "Nazwa gałęzi",
   "gitSwitchBranch": "Przełącz",
   "gitNoChanges": "Brak zmian",

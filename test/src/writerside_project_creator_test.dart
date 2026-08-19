@@ -65,6 +65,34 @@ void main() {
     },
   );
 
+  test('derives the starter topic filename from its title', () async {
+    final parent = await tempParent();
+
+    final result = await creator.create(
+      WritersideProjectCreateRequest(
+        parentDirectoryPath: parent.path,
+        projectName: 'Linguality Docs',
+        directoryName: 'linguality-docs',
+        instanceName: 'User Guide',
+        topicTitle: 'Introduction',
+      ),
+    );
+
+    expect(
+      result.startTopicPath,
+      p.join(result.rootPath, 'topics', 'introduction.md'),
+    );
+    expect(
+      File(result.startTopicPath).readAsStringSync(),
+      startsWith('# Introduction'),
+    );
+
+    final module = await moduleService.load(result.rootPath);
+    expect(module.config.moduleName, 'Linguality Docs');
+    expect(module.instances.single.startPage, 'introduction.md');
+    expect(module.topicsByFileName.keys, contains('introduction.md'));
+  });
+
   test(
     'creates starter project with Unicode directory and instance ID',
     () async {
@@ -145,9 +173,7 @@ void main() {
         ),
       );
 
-      final source = File(
-        p.join(result.rootPath, 'topics', 'getting-started.md'),
-      ).readAsStringSync();
+      final source = File(result.startTopicPath).readAsStringSync();
       final module = await moduleService.load(result.rootPath);
 
       expect(source, startsWith('# '));
@@ -223,29 +249,34 @@ void main() {
     skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
   );
 
-  test('canonicalizes a project parent selected through a symlink', () async {
-    final parent = await tempParent();
-    final container = Directory(p.join(parent.path, 'container'))..createSync();
-    final outside = Directory(p.join(parent.path, 'outside'))..createSync();
-    final actualParent = Directory(p.join(outside.path, 'projects'))
-      ..createSync();
-    final link = Link(p.join(container.path, 'bridge'))
-      ..createSync(outside.path);
+  test(
+    'canonicalizes a project parent selected through a symlink',
+    () async {
+      final parent = await tempParent();
+      final container = Directory(p.join(parent.path, 'container'))
+        ..createSync();
+      final outside = Directory(p.join(parent.path, 'outside'))..createSync();
+      final actualParent = Directory(p.join(outside.path, 'projects'))
+        ..createSync();
+      final link = Link(p.join(container.path, 'bridge'))
+        ..createSync(outside.path);
 
-    final result = await creator.create(
-      WritersideProjectCreateRequest(
-        parentDirectoryPath: p.join(link.path, 'projects'),
-        projectName: 'Docs',
-        directoryName: 'docs',
-        instanceName: 'User Guide',
-        topicTitle: 'Getting started',
-      ),
-    );
+      final result = await creator.create(
+        WritersideProjectCreateRequest(
+          parentDirectoryPath: p.join(link.path, 'projects'),
+          projectName: 'Docs',
+          directoryName: 'docs',
+          instanceName: 'User Guide',
+          topicTitle: 'Getting started',
+        ),
+      );
 
-    final canonicalParent = await actualParent.resolveSymbolicLinks();
-    expect(result.rootPath, p.join(canonicalParent, 'docs'));
-    expect(Directory(p.join(actualParent.path, 'docs')).existsSync(), isTrue);
-  }, skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false);
+      final canonicalParent = await actualParent.resolveSymbolicLinks();
+      expect(result.rootPath, p.join(canonicalParent, 'docs'));
+      expect(Directory(p.join(actualParent.path, 'docs')).existsSync(), isTrue);
+    },
+    skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
 
   test('rejects unsafe create request names before writing files', () async {
     final parent = await tempParent();

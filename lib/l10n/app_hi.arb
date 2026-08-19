@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "शीर्षक को ऊपर करें",
-  "demoteHeading": "शीर्षक को नीचे करें",
+  "promoteSection": "अनुभाग को ऊपर करें",
+  "demoteSection": "अनुभाग को नीचे करें",
   "moveSectionUp": "अनुभाग ऊपर ले जाएँ",
   "moveSectionDown": "अनुभाग नीचे ले जाएँ",
   "confirmDeleteSectionTitle": "अनुभाग हटाएँ?",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "नया दस्तावेज़",
+  "shortcutNewDocument": "बनाएँ",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "नया, सहेजा न गया Markdown दस्तावेज़ बनाएँ",
+  "shortcutNewDocumentDescription": "Markdown फ़ाइल या Writerside प्रोजेक्ट बनाएँ",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2195,7 +2195,7 @@
   "gitCommitNoSelectedFiles": "कमिट करने से पहले कम से कम एक फ़ाइल स्टेज करें।",
   "gitCommitMessageRequired": "कमिट संदेश दर्ज करें।",
   "gitCreateBranch": "शाखा बनाएँ",
-  "gitNewBranch": "+ नई शाखा",
+  "gitNewBranch": "नई शाखा",
   "gitBranchName": "शाखा का नाम",
   "gitSwitchBranch": "बदलें",
   "gitNoChanges": "कोई बदलाव नहीं",

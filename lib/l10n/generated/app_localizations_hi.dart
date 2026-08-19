@@ -173,10 +173,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get cut => 'कट करें';
 
   @override
-  String get promoteHeading => 'शीर्षक को ऊपर करें';
+  String get promoteSection => 'अनुभाग को ऊपर करें';
 
   @override
-  String get demoteHeading => 'शीर्षक को नीचे करें';
+  String get demoteSection => 'अनुभाग को नीचे करें';
 
   @override
   String get moveSectionUp => 'अनुभाग ऊपर ले जाएँ';
@@ -394,11 +394,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get shortcutGroupGeneral => 'सामान्य';
 
   @override
-  String get shortcutNewDocument => 'नया दस्तावेज़';
+  String get shortcutNewDocument => 'बनाएँ';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'नया, सहेजा न गया Markdown दस्तावेज़ बनाएँ';
+      'Markdown फ़ाइल या Writerside प्रोजेक्ट बनाएँ';
 
   @override
   String get shortcutOpenDescription =>
@@ -2095,7 +2095,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitCreateBranch => 'शाखा बनाएँ';
 
   @override
-  String get gitNewBranch => '+ नई शाखा';
+  String get gitNewBranch => 'नई शाखा';
 
   @override
   String get gitBranchName => 'शाखा का नाम';

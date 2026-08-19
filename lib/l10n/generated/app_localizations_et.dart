@@ -171,10 +171,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get cut => 'Lõika';
 
   @override
-  String get promoteHeading => 'Tõsta pealkirja taset';
+  String get promoteSection => 'Tõsta jaotise taset';
 
   @override
-  String get demoteHeading => 'Langeta pealkirja taset';
+  String get demoteSection => 'Langeta jaotise taset';
 
   @override
   String get moveSectionUp => 'Liiguta jaotis üles';
@@ -392,11 +392,11 @@ class AppLocalizationsEt extends AppLocalizations {
   String get shortcutGroupGeneral => 'Üldine';
 
   @override
-  String get shortcutNewDocument => 'Uus dokument';
+  String get shortcutNewDocument => 'Loo';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Loo uus salvestamata Markdowni dokument';
+      'Loo Markdowni fail või Writerside’i projekt';
 
   @override
   String get shortcutOpenDescription =>
@@ -2102,7 +2102,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitCreateBranch => 'Loo haru';
 
   @override
-  String get gitNewBranch => '+ Uus haru';
+  String get gitNewBranch => 'Uus haru';
 
   @override
   String get gitBranchName => 'Haru nimi';

@@ -92,6 +92,73 @@ void main() {
 
       expect(result.browserSafeSvg, contains('data:font/woff2;base64,AAAA'));
       expect(result.browserSafeSvg, isNot(contains('tracker.png')));
+      expect(
+        result.vectorSafeSvg,
+        isNull,
+        reason: 'Embedded fonts must be rendered by the browser, not dropped.',
+      );
+    },
+  );
+
+  test('requires rasterization for CSS the vector inliner cannot preserve', () {
+    for (final style in [
+      '.group > .node { fill: red; }',
+      '[data-kind="node"] { fill: red; }',
+      '.node:first-child { fill: red; }',
+      '.node { transform: translate(1px); }',
+      '@media screen { .node { fill: red; } }',
+    ]) {
+      final result = normalizer.normalize('''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <style>$style</style>
+  <g class="group"><rect class="node" data-kind="node" width="10" height="10" /></g>
+</svg>
+''');
+
+      expect(result.browserSafeSvg, contains('<style'), reason: style);
+      expect(result.vectorSafeSvg, isNull, reason: style);
+    }
+  });
+
+  test('preserves safe browser-only inline CSS and rasterizes it', () {
+    final result = normalizer.normalize('''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <rect width="10" height="10"
+    style="transform:translate(1px);background-color:#fff;fill:red" />
+</svg>
+''');
+
+    expect(result.browserSafeSvg, contains('transform:translate(1px)'));
+    expect(result.browserSafeSvg, contains('background-color:#fff'));
+    expect(result.browserSafeSvg, contains('fill:#f00'));
+    expect(result.vectorSafeSvg, isNull);
+  });
+
+  test('removes unsafe URLs from inline CSS', () {
+    final result = normalizer.normalize('''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <rect width="10" height="10"
+    style="fill:red;filter:url(https://example.com/filter.svg)" />
+</svg>
+''');
+
+    expect(result.browserSafeSvg, contains('fill:#f00'));
+    expect(result.browserSafeSvg, isNot(contains('example.com')));
+    expect(result.vectorSafeSvg, isNotNull);
+  });
+
+  test(
+    'does not claim a vector result when CSS cascade resolution is needed',
+    () {
+      final result = normalizer.normalize('''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+  <style>.node { fill: red; } .selected { fill: blue; }</style>
+  <rect class="node selected" width="10" height="10" />
+</svg>
+''');
+
+      expect(result.vectorSafeSvg, isNull);
+      expect(result.browserSafeSvg, contains('.selected'));
     },
   );
 

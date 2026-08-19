@@ -12,6 +12,7 @@ from pathlib import Path
 
 import gi
 
+gi.require_foreign("cairo")
 gi.require_version("Gtk", "3.0")
 gi.require_version("WebKit2", "4.1")
 from gi.repository import Gio, GLib, Gtk, WebKit2  # noqa: E402
@@ -33,13 +34,23 @@ class WebHarnessSmoke:
         self.index = 0
         self.failures: list[str] = []
         self.loaded_uri: str | None = None
+        self.recovery_pending = False
+        self.recovery_completed = False
         self.loop = GLib.MainLoop()
         self.context = WebKit2.WebContext.new_ephemeral()
+        self.context.set_sandbox_enabled("SNAP" not in os.environ)
         self.context.register_uri_scheme("busymark-render", self._serve)
         security_manager = self.context.get_security_manager()
         security_manager.register_uri_scheme_as_secure("busymark-render")
         security_manager.register_uri_scheme_as_cors_enabled("busymark-render")
-        self.view = WebKit2.WebView.new_with_context(self.context)
+        self.view = self._create_view()
+        self.window = Gtk.OffscreenWindow()
+        self.window.set_default_size(1280, 800)
+        self.window.add(self.view)
+        self.window.show_all()
+
+    def _create_view(self) -> WebKit2.WebView:
+        view = WebKit2.WebView.new_with_context(self.context)
         settings = WebKit2.Settings()
         settings.set_enable_javascript(True)
         settings.set_enable_html5_local_storage(False)
@@ -49,13 +60,11 @@ class WebHarnessSmoke:
         settings.set_enable_page_cache(False)
         settings.set_enable_media(False)
         settings.set_enable_webrtc(False)
-        self.view.set_settings(settings)
-        self.view.connect("load-changed", self._loaded)
-        self.view.connect("load-failed", self._load_failed)
-        self.window = Gtk.OffscreenWindow()
-        self.window.set_default_size(1280, 800)
-        self.window.add(self.view)
-        self.window.show_all()
+        view.set_settings(settings)
+        view.connect("load-changed", self._loaded)
+        view.connect("load-failed", self._load_failed)
+        view.connect("web-process-terminated", self._web_process_terminated)
+        return view
 
     def _serve(self, request: WebKit2.URISchemeRequest) -> None:
         name = request.get_path().lstrip("/")
@@ -116,6 +125,27 @@ class WebHarnessSmoke:
         self.loop.quit()
         return True
 
+    def _web_process_terminated(
+        self, view: WebKit2.WebView, _reason: WebKit2.WebProcessTerminationReason
+    ) -> None:
+        if not self.recovery_pending:
+            self.failures.append("WebKit web process terminated unexpectedly")
+        else:
+            print("PASS WebKit process termination and recovery")
+        self.recovery_pending = False
+        self.recovery_completed = True
+        self.loaded_uri = None
+        self.window.remove(view)
+        view.destroy()
+        self.view = self._create_view()
+        self.window.add(self.view)
+        self.window.show_all()
+        GLib.idle_add(self._resume_after_recovery)
+
+    def _resume_after_recovery(self) -> bool:
+        self._start_case()
+        return GLib.SOURCE_REMOVE
+
     def _execute_case(self) -> None:
         case = self.cases[self.index]
         payload = json.dumps(json.dumps(case["request"]))
@@ -152,10 +182,55 @@ return JSON.stringify(await window.{function}(JSON.parse({payload})))
             response = json.loads(value.to_string())
             validator = case["validator"]
             validator(response)
+            if case.get("snapshot") is True:
+                view.get_snapshot(
+                    WebKit2.SnapshotRegion.FULL_DOCUMENT,
+                    WebKit2.SnapshotOptions.TRANSPARENT_BACKGROUND,
+                    None,
+                    self._snapshot_finished,
+                    None,
+                )
+                return
             print(f"PASS {case['name']}")
         except Exception as error:  # noqa: BLE001
             self.failures.append(f"{case['name']}: {error}")
+        self._advance_case()
+
+    def _snapshot_finished(
+        self, view: WebKit2.WebView, result: Gio.AsyncResult, _data
+    ) -> None:
+        case = self.cases[self.index]
+        try:
+            surface = view.get_snapshot_finish(result)
+            surface.flush()
+            pixels = bytes(surface.get_data())
+            opaque_pixels = sum(
+                1 for index in range(3, len(pixels), 4) if pixels[index] != 0
+            )
+            colors = {
+                pixels[index : index + 3]
+                for index in range(0, len(pixels) - 3, 4)
+                if pixels[index + 3] != 0
+            }
+            if surface.get_width() < 1200 or surface.get_height() < 800:
+                raise AssertionError(
+                    f"Raster snapshot was too small: {surface.get_width()}x{surface.get_height()}"
+                )
+            if opaque_pixels < 1000 or len(colors) < 8:
+                raise AssertionError(
+                    f"Raster snapshot was visually empty: {opaque_pixels} pixels, {len(colors)} colors"
+                )
+            print(f"PASS {case['name']} visual snapshot")
+        except Exception as error:  # noqa: BLE001
+            self.failures.append(f"{case['name']} visual snapshot: {error}")
+        self._advance_case()
+
+    def _advance_case(self) -> None:
         self.index += 1
+        if self.index == 2 and not self.recovery_completed:
+            self.recovery_pending = True
+            self.view.terminate_web_process()
+            return
         self._start_case()
 
 
@@ -201,6 +276,22 @@ def expect_openapi_parse_diagnostic(response: dict[str, object]) -> None:
         raise AssertionError(f"OpenAPI parse diagnostic had no source line: {diagnostics}")
 
 
+def expect_openapi_dependency_diagnostic(response: dict[str, object]) -> None:
+    diagnostics = response.get("diagnostics")
+    if not isinstance(diagnostics, list) or not diagnostics:
+        raise AssertionError("OpenAPI dependency diagnostics were empty")
+    if not any(
+        isinstance(item, dict)
+        and item.get("sourceId") == "dependency-path.yaml"
+        and item.get("sourceLine") == 4
+        and item.get("line") is None
+        for item in diagnostics
+    ):
+        raise AssertionError(
+            f"OpenAPI dependency diagnostic used the wrong source map: {diagnostics}"
+        )
+
+
 def expect_local_references(response: dict[str, object]) -> None:
     references = response.get("references")
     if not isinstance(references, list) or len(references) != 1:
@@ -219,8 +310,16 @@ def expect_reference(response: dict[str, object]) -> None:
         raise AssertionError("Scalar API Reference did not open")
 
 
-def d2_smoke(executable: Path) -> list[str]:
+def expect_raster_ready(response: dict[str, object]) -> None:
+    if response.get("rasterReady") is not True:
+        raise AssertionError(f"WebKit did not prepare the raster image: {response}")
+    if response.get("pixelWidth") != 1200 or response.get("pixelHeight") != 800:
+        raise AssertionError(f"Unexpected raster dimensions: {response}")
+
+
+def d2_smoke(executable: Path) -> tuple[list[str], dict[str, str]]:
     failures: list[str] = []
+    outputs: dict[str, str] = {}
     sources = {
         "D2 vector": "direction: right\na -> b\n",
         "D2 foreignObject": (
@@ -268,10 +367,11 @@ def d2_smoke(executable: Path) -> list[str]:
                 raise AssertionError("D2 output root is not SVG")
             if name.endswith("foreignObject") and b"foreignObject" not in result.stdout:
                 raise AssertionError("D2 Markdown output did not contain foreignObject")
+            outputs[name] = result.stdout.decode()
             print(f"PASS {name}")
         except Exception as error:  # noqa: BLE001
             failures.append(f"{name}: {error}")
-    return failures
+    return failures, outputs
 
 
 def main() -> int:
@@ -297,6 +397,7 @@ def main() -> int:
         encoding="utf-8"
     )
     plantuml = fenced_sources(args.plantuml_corpus, ("plantuml", "puml"))
+    d2_failures, d2_outputs = d2_smoke(args.d2.resolve())
     cases: list[dict[str, object]] = [
         {
             "name": "Mermaid",
@@ -318,6 +419,25 @@ def main() -> int:
             },
             "validator": expect_svg,
         },
+        *(
+            [
+                {
+                    "name": "D2 WebKit raster fallback",
+                    "uri": "busymark-render://app/harness.html",
+                    "request": {
+                        "operation": "rasterizeSvg",
+                        "svg": d2_outputs["D2 foreignObject"],
+                        "width": 600,
+                        "height": 400,
+                        "scale": 2,
+                    },
+                    "validator": expect_raster_ready,
+                    "snapshot": True,
+                }
+            ]
+            if "D2 foreignObject" in d2_outputs
+            else []
+        ),
         *[
             {
                 "name": f"PlantUML {index + 1}/{len(plantuml)}",
@@ -408,6 +528,42 @@ def main() -> int:
             "validator": expect_openapi_parse_diagnostic,
         },
         {
+            "name": "OpenAPI dependency source location",
+            "uri": "busymark-render://app/harness.html",
+            "request": {
+                "operation": "parseOpenApi",
+                "entryId": "dependency-entry.openapi",
+                "source": (
+                    "openapi: 3.1.0\n"
+                    "info:\n"
+                    "  title: Dependency diagnostic\n"
+                    "  version: 1.0.0\n"
+                    "paths:\n"
+                    "  /pets/{id}:\n"
+                    "    $ref: './dependency-path.yaml#/path'\n"
+                ),
+                "dependencies": [
+                    {
+                        "id": "dependency-path.yaml",
+                        "source": (
+                            "path:\n"
+                            "  get:\n"
+                            "    parameters:\n"
+                            "      - name: other\n"
+                            "        in: path\n"
+                            "        required: true\n"
+                            "        schema:\n"
+                            "          type: string\n"
+                            "    responses:\n"
+                            "      '200':\n"
+                            "        description: OK\n"
+                        ),
+                    }
+                ],
+            },
+            "validator": expect_openapi_dependency_diagnostic,
+        },
+        {
             "name": "Scalar API Reference",
             "uri": "busymark-render://app/reference.html",
             "request": {
@@ -436,7 +592,7 @@ def main() -> int:
         },
     ]
     failures = WebHarnessSmoke(args.assets.resolve(), cases).run()
-    failures.extend(d2_smoke(args.d2.resolve()))
+    failures.extend(d2_failures)
     if failures:
         for failure in failures:
             print(f"FAIL {failure}", file=sys.stderr)

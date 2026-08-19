@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:busymark/src/export/markdown_export_document.dart';
 import 'package:busymark/src/export/markdown_export_mapper.dart';
@@ -259,6 +260,43 @@ void main() {
       expect(
         result.warnings.map((warning) => warning.code),
         contains(MarkdownPdfWarningCode.visualizationRenderFailed),
+      );
+
+      final previewRoot = p.join(temporaryDirectory.path, 'pdf-preview');
+      final rasterized = await Process.run('pdftoppm', [
+        '-f',
+        '1',
+        '-singlefile',
+        '-r',
+        '96',
+        '-png',
+        destination,
+        previewRoot,
+      ]);
+      expect(rasterized.exitCode, 0, reason: rasterized.stderr.toString());
+      final previewBytes = await File('$previewRoot.png').readAsBytes();
+      final codec = await ui.instantiateImageCodec(previewBytes);
+      final frame = await codec.getNextFrame();
+      final pixels = await frame.image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
+      expect(pixels, isNotNull);
+      var blueDiagramPixels = 0;
+      final rgba = pixels!.buffer.asUint8List();
+      for (var index = 0; index + 3 < rgba.length; index += 4) {
+        final red = rgba[index];
+        final green = rgba[index + 1];
+        final blue = rgba[index + 2];
+        if (blue > 120 && blue > green + 35 && green > red + 25) {
+          blueDiagramPixels++;
+        }
+      }
+      frame.image.dispose();
+      codec.dispose();
+      expect(
+        blueDiagramPixels,
+        greaterThan(500),
+        reason: 'The styled vector diagram was not visible in the PDF page.',
       );
     },
     skip: typstPath == null || !File(typstPath).existsSync()

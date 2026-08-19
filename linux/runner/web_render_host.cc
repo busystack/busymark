@@ -22,6 +22,10 @@ struct PendingRequest {
   gchar* operation;
   gchar* request_id;
   gchar* arguments_json;
+  gint snapshot_width;
+  gint snapshot_height;
+  guint snapshot_allocation_attempts;
+  guint snapshot_wait_source_id;
   gboolean responded;
 };
 
@@ -41,12 +45,15 @@ struct _BusyMarkWebRenderHost {
   GtkApplication* application;
   GtkWindow* parent_window;
   FlMethodChannel* channel;
+  FlMethodCall* release_smoke_recovery_call;
+  guint release_smoke_terminate_source_id;
   WebKitWebContext* context;
   GtkWidget* offscreen_window;
   WebKitWebView* web_view;
   GCancellable* active_cancellable;
   GQueue* queue;
   PendingRequest* active;
+  guint recreate_source_id;
   gchar* resource_root;
   gboolean ready;
   gboolean recreate_requested;
@@ -61,6 +68,7 @@ namespace {
 
 void pump_requests(BusyMarkWebRenderHost* self);
 void recreate_render_view(BusyMarkWebRenderHost* self);
+void schedule_render_view_recreation(BusyMarkWebRenderHost* self);
 
 void respond_error(FlMethodCall* method_call,
                    const gchar* code,
@@ -71,6 +79,10 @@ void respond_error(FlMethodCall* method_call,
 void pending_request_free(PendingRequest* request) {
   if (request == nullptr) {
     return;
+  }
+  if (request->snapshot_wait_source_id != 0) {
+    g_source_remove(request->snapshot_wait_source_id);
+    request->snapshot_wait_source_id = 0;
   }
   g_clear_object(&request->method_call);
   g_clear_object(&request->host);
@@ -283,8 +295,7 @@ void complete_active(BusyMarkWebRenderHost* self) {
   g_clear_object(&self->active_cancellable);
   pending_request_free(request);
   if (self->recreate_requested && !self->shutting_down) {
-    self->recreate_requested = FALSE;
-    recreate_render_view(self);
+    schedule_render_view_recreation(self);
   }
   pump_requests(self);
   g_object_unref(self);
@@ -347,6 +358,8 @@ void snapshot_finished_cb(GObject* object,
   request->responded = TRUE;
   fl_method_call_respond_success(request->method_call, value, nullptr);
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view), 1, 1);
+  gtk_widget_set_size_request(self->offscreen_window, 1, 1);
+  gtk_window_set_default_size(GTK_WINDOW(self->offscreen_window), 1, 1);
   gtk_window_resize(GTK_WINDOW(self->offscreen_window), 1, 1);
   complete_active(self);
 }
@@ -355,11 +368,31 @@ gboolean begin_snapshot_cb(gpointer user_data) {
   auto* request = static_cast<PendingRequest*>(user_data);
   BusyMarkWebRenderHost* self = request->host;
   if (self->shutting_down || self->web_view == nullptr) {
+    request->snapshot_wait_source_id = 0;
     respond_pending_error(request, "visualization.hostUnavailable",
                           "The WebKit host is shutting down.");
     complete_active(self);
     return G_SOURCE_REMOVE;
   }
+  const gint allocated_width =
+      gtk_widget_get_allocated_width(GTK_WIDGET(self->web_view));
+  const gint allocated_height =
+      gtk_widget_get_allocated_height(GTK_WIDGET(self->web_view));
+  if (allocated_width < request->snapshot_width ||
+      allocated_height < request->snapshot_height) {
+    request->snapshot_allocation_attempts++;
+    if (request->snapshot_allocation_attempts < 100) {
+      gtk_widget_queue_resize(self->offscreen_window);
+      return G_SOURCE_CONTINUE;
+    }
+    respond_pending_error(
+        request, "visualization.rasterFailed",
+        "GTK did not allocate the requested WebKit raster dimensions.");
+    request->snapshot_wait_source_id = 0;
+    complete_active(self);
+    return G_SOURCE_REMOVE;
+  }
+  request->snapshot_wait_source_id = 0;
   webkit_web_view_get_snapshot(
       self->web_view, WEBKIT_SNAPSHOT_REGION_FULL_DOCUMENT,
       WEBKIT_SNAPSHOT_OPTIONS_TRANSPARENT_BACKGROUND,
@@ -395,12 +428,22 @@ gboolean prepare_snapshot(PendingRequest* request, const gchar* json) {
     return FALSE;
   }
   BusyMarkWebRenderHost* self = request->host;
+  request->snapshot_width = static_cast<gint>(width);
+  request->snapshot_height = static_cast<gint>(height);
+  request->snapshot_allocation_attempts = 0;
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view),
+                              static_cast<gint>(width),
+                              static_cast<gint>(height));
+  gtk_widget_set_size_request(self->offscreen_window, static_cast<gint>(width),
+                              static_cast<gint>(height));
+  gtk_window_set_default_size(GTK_WINDOW(self->offscreen_window),
                               static_cast<gint>(width),
                               static_cast<gint>(height));
   gtk_window_resize(GTK_WINDOW(self->offscreen_window),
                     static_cast<gint>(width), static_cast<gint>(height));
-  g_idle_add(begin_snapshot_cb, request);
+  gtk_widget_queue_resize(self->offscreen_window);
+  request->snapshot_wait_source_id =
+      g_timeout_add(10, begin_snapshot_cb, request);
   return TRUE;
 }
 
@@ -476,6 +519,12 @@ void render_load_changed_cb(WebKitWebView*,
   auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
   if (event == WEBKIT_LOAD_FINISHED) {
     self->ready = TRUE;
+    if (self->release_smoke_recovery_call != nullptr) {
+      g_autoptr(FlValue) result = fl_value_new_null();
+      fl_method_call_respond_success(self->release_smoke_recovery_call, result,
+                                     nullptr);
+      g_clear_object(&self->release_smoke_recovery_call);
+    }
     pump_requests(self);
   }
 }
@@ -489,8 +538,7 @@ void render_process_terminated_cb(WebKitWebView*,
   if (self->active_cancellable != nullptr) {
     g_cancellable_cancel(self->active_cancellable);
   } else if (!self->shutting_down) {
-    self->recreate_requested = FALSE;
-    recreate_render_view(self);
+    schedule_render_view_recreation(self);
   }
 }
 
@@ -522,6 +570,25 @@ void recreate_render_view(BusyMarkWebRenderHost* self) {
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view), 1, 1);
   gtk_widget_show_all(self->offscreen_window);
   webkit_web_view_load_uri(self->web_view, kHarnessUri);
+}
+
+gboolean recreate_render_view_cb(gpointer user_data) {
+  auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
+  self->recreate_source_id = 0;
+  if (!self->shutting_down && self->recreate_requested) {
+    self->recreate_requested = FALSE;
+    recreate_render_view(self);
+  }
+  return G_SOURCE_REMOVE;
+}
+
+void schedule_render_view_recreation(BusyMarkWebRenderHost* self) {
+  if (self->shutting_down || self->recreate_source_id != 0) {
+    return;
+  }
+  self->recreate_source_id = g_idle_add_full(
+      G_PRIORITY_DEFAULT_IDLE, recreate_render_view_cb, g_object_ref(self),
+      g_object_unref);
 }
 
 void reference_async_finished_cb(GObject* object,
@@ -733,6 +800,40 @@ void copy_visualization_image(FlMethodCall* method_call, FlValue* args) {
   fl_method_call_respond_success(method_call, result, nullptr);
 }
 
+gboolean terminate_web_process_for_release_smoke_cb(gpointer user_data) {
+  auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
+  self->release_smoke_terminate_source_id = 0;
+  if (self->shutting_down || self->web_view == nullptr ||
+      self->release_smoke_recovery_call == nullptr) {
+    return G_SOURCE_REMOVE;
+  }
+  self->ready = FALSE;
+  webkit_web_view_terminate_web_process(self->web_view);
+  return G_SOURCE_REMOVE;
+}
+
+void terminate_web_process_for_release_smoke(BusyMarkWebRenderHost* self,
+                                             FlMethodCall* method_call) {
+  const gchar* enabled = g_getenv("BUSYMARK_RELEASE_SMOKE");
+  if (g_strcmp0(enabled, "1") != 0) {
+    respond_error(method_call, "visualization.releaseSmokeDisabled",
+                  "The release visualization smoke hook is disabled.");
+    return;
+  }
+  if (!self->ready || self->web_view == nullptr || self->active != nullptr ||
+      !g_queue_is_empty(self->queue) ||
+      self->release_smoke_recovery_call != nullptr) {
+    respond_error(method_call, "visualization.hostBusy",
+                  "The WebKit host is not idle for its recovery check.");
+    return;
+  }
+  self->release_smoke_recovery_call =
+      FL_METHOD_CALL(g_object_ref(method_call));
+  self->release_smoke_terminate_source_id = g_idle_add_full(
+      G_PRIORITY_DEFAULT_IDLE, terminate_web_process_for_release_smoke_cb,
+      g_object_ref(self), g_object_unref);
+}
+
 void method_call_cb(FlMethodChannel*,
                     FlMethodCall* method_call,
                     gpointer user_data) {
@@ -751,6 +852,10 @@ void method_call_cb(FlMethodChannel*,
   if (g_strcmp0(method, "copyVisualizationImage") == 0) {
     copy_visualization_image(method_call,
                              fl_method_call_get_args(method_call));
+    return;
+  }
+  if (g_strcmp0(method, "terminateWebProcessForReleaseSmoke") == 0) {
+    terminate_web_process_for_release_smoke(self, method_call);
     return;
   }
   if (!is_render_operation(method) &&
@@ -810,6 +915,20 @@ void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
     return;
   }
   self->shutting_down = TRUE;
+  if (self->release_smoke_terminate_source_id != 0) {
+    g_source_remove(self->release_smoke_terminate_source_id);
+    self->release_smoke_terminate_source_id = 0;
+  }
+  if (self->recreate_source_id != 0) {
+    g_source_remove(self->recreate_source_id);
+    self->recreate_source_id = 0;
+  }
+  if (self->release_smoke_recovery_call != nullptr) {
+    respond_error(self->release_smoke_recovery_call,
+                  "visualization.hostUnavailable",
+                  "The WebKit host is shutting down.");
+    g_clear_object(&self->release_smoke_recovery_call);
+  }
   if (self->active_cancellable != nullptr) {
     g_cancellable_cancel(self->active_cancellable);
   }
@@ -876,6 +995,7 @@ static void busymark_web_render_host_dispose(GObject* object) {
   auto* self = BUSYMARK_WEB_RENDER_HOST(object);
   busymark_web_render_host_shutdown(self);
   g_clear_object(&self->channel);
+  g_clear_object(&self->release_smoke_recovery_call);
   g_clear_object(&self->active_cancellable);
   g_clear_object(&self->context);
   G_OBJECT_CLASS(busymark_web_render_host_parent_class)->dispose(object);

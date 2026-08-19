@@ -15,7 +15,7 @@ class WritersideProjectCreateRequest {
     required this.topicTitle,
     this.moduleName,
     this.instanceId = 'user-guide',
-    this.topicFileName = 'getting-started.md',
+    this.topicFileName,
   });
 
   final String parentDirectoryPath;
@@ -25,7 +25,7 @@ class WritersideProjectCreateRequest {
   final String instanceName;
   final String instanceId;
   final String topicTitle;
-  final String topicFileName;
+  final String? topicFileName;
 }
 
 class WritersideProjectCreateResult {
@@ -289,7 +289,15 @@ class WritersideProjectCreator {
       throw const BusyMarkException('writerside.project.instance-id-invalid');
     }
 
-    final topicFileName = request.topicFileName.trim();
+    final topicTitle = request.topicTitle.trim();
+    if (topicTitle.isEmpty) {
+      throw const BusyMarkException('writerside.project.topic-title-required');
+    }
+
+    final generatedTopicSlug = slugForHeading(topicTitle);
+    final topicFileName = request.topicFileName == null
+        ? '${generatedTopicSlug.isEmpty ? 'getting-started' : generatedTopicSlug}.md'
+        : request.topicFileName!.trim();
     if (topicFileName.isEmpty ||
         topicFileName == '.' ||
         topicFileName == '..' ||
@@ -299,11 +307,6 @@ class WritersideProjectCreator {
         topicFileName.contains(r'\') ||
         !topicFileName.endsWith('.md')) {
       throw const BusyMarkException('writerside.project.topic-file-invalid');
-    }
-
-    final topicTitle = request.topicTitle.trim();
-    if (topicTitle.isEmpty) {
-      throw const BusyMarkException('writerside.project.topic-title-required');
     }
 
     final instanceName = request.instanceName.trim().isEmpty

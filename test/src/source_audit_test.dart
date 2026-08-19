@@ -1642,7 +1642,6 @@ void main() {
       'context.l10n.toggleTaskChecked',
       'context.l10n.indentListItem',
       'context.l10n.outdentListItem',
-      'context.l10n.codeBlockLanguage',
       'context.l10n.inlineImage',
       'context.l10n.table',
       'context.l10n.hardLineBreak',
@@ -1651,20 +1650,28 @@ void main() {
     }
     for (final shortcut in [
       'BusyMarkEditorShortcutLabels.textStyle',
-      'BusyMarkEditorShortcutLabels.toggleTask',
       'BusyMarkEditorShortcutLabels.indent',
       'BusyMarkEditorShortcutLabels.outdent',
       'BusyMarkEditorShortcutLabels.blockquote',
       'BusyMarkEditorShortcutLabels.codeBlock',
-      'BusyMarkEditorShortcutLabels.codeBlockLanguage',
       'BusyMarkEditorShortcutLabels.image',
-      'BusyMarkEditorShortcutLabels.inlineImage',
-      'BusyMarkEditorShortcutLabels.table',
-      'BusyMarkEditorShortcutLabels.thematicBreak',
       'BusyMarkEditorShortcutLabels.hardLineBreak',
     ]) {
       expect(toolbar, contains(shortcut));
     }
+    for (final shortcut in [
+      'BusyMarkEditorShortcutLabels.toggleTask',
+      'BusyMarkEditorShortcutLabels.codeBlockLanguage',
+      'BusyMarkEditorShortcutLabels.inlineImage',
+      'BusyMarkEditorShortcutLabels.table',
+      'BusyMarkEditorShortcutLabels.htmlBlock',
+      'BusyMarkEditorShortcutLabels.thematicBreak',
+    ]) {
+      expect(toolbar, isNot(contains(shortcut)));
+    }
+    expect(toolbar, isNot(contains('context.l10n.codeBlockLanguage')));
+    expect(editor, contains('BusyMarkEditorShortcutAction.codeBlockLanguage'));
+    expect(editor, contains('_applyCodeLanguageCommand()'));
     expect(commands, contains('heading4'));
     expect(commands, contains('heading5'));
     expect(commands, contains('heading6'));

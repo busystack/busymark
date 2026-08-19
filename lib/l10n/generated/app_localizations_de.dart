@@ -175,10 +175,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get cut => 'Ausschneiden';
 
   @override
-  String get promoteHeading => 'Überschrift hochstufen';
+  String get promoteSection => 'Abschnitt hochstufen';
 
   @override
-  String get demoteHeading => 'Überschrift herabstufen';
+  String get demoteSection => 'Abschnitt herabstufen';
 
   @override
   String get moveSectionUp => 'Abschnitt nach oben verschieben';
@@ -396,11 +396,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortcutGroupGeneral => 'Allgemein';
 
   @override
-  String get shortcutNewDocument => 'Neues Dokument';
+  String get shortcutNewDocument => 'Erstellen';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Neues, nicht gespeichertes Markdown-Dokument erstellen';
+      'Markdown-Datei oder Writerside-Projekt erstellen';
 
   @override
   String get shortcutOpenDescription =>
@@ -2124,7 +2124,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gitCreateBranch => 'Branch erstellen';
 
   @override
-  String get gitNewBranch => '+ Neuer Branch';
+  String get gitNewBranch => 'Neuer Branch';
 
   @override
   String get gitBranchName => 'Branchname';

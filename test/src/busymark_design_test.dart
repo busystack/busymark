@@ -1332,7 +1332,6 @@ void main() {
                   onOutdentCommand: () {},
                   onToggleTaskCommand: () {},
                   onHardBreakCommand: () {},
-                  onCodeLanguageCommand: () {},
                 ),
               ),
             ),
@@ -1357,6 +1356,65 @@ void main() {
       expect(
         popup.backgroundColor?.resolve({WidgetState.disabled}),
         colors.disabledControl,
+      );
+      final l10n = AppLocalizations.of(tester.element(toolbar));
+      final buttons = tester
+          .widgetList<BusyMarkHeaderIconButton>(
+            find.descendant(
+              of: toolbar,
+              matching: find.byType(BusyMarkHeaderIconButton),
+            ),
+          )
+          .toList(growable: false);
+      expect(buttons.map((button) => button.tooltip), [
+        l10n.textStyle,
+        l10n.bold,
+        l10n.italic,
+        l10n.underline,
+        l10n.strikethrough,
+        l10n.inlineCode,
+        l10n.link,
+        l10n.hardLineBreak,
+        l10n.blockquote,
+        l10n.codeBlock,
+        l10n.htmlBlock,
+        l10n.thematicBreak,
+        l10n.unorderedList,
+        l10n.orderedList,
+        l10n.taskList,
+        l10n.toggleTaskChecked,
+        l10n.indentListItem,
+        l10n.outdentListItem,
+        l10n.image,
+        l10n.inlineImage,
+        l10n.table,
+      ]);
+      expect(
+        buttons.any((button) => button.tooltip == l10n.codeBlockLanguage),
+        isFalse,
+      );
+      final buttonsByTooltip = {
+        for (final button in buttons) button.tooltip: button,
+      };
+      expect(buttonsByTooltip[l10n.codeBlock]?.icon, BusyMarkGlyphs.codeBlock);
+      expect(buttonsByTooltip[l10n.htmlBlock]?.icon, BusyMarkGlyphs.htmlBlock);
+      expect(
+        buttonsByTooltip[l10n.codeBlock]?.icon,
+        isNot(buttonsByTooltip[l10n.htmlBlock]?.icon),
+      );
+      expect(
+        find.descendant(
+          of: toolbar,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is SizedBox &&
+                widget.key is ValueKey<String> &&
+                (widget.key! as ValueKey<String>).value.startsWith(
+                  'wysiwyg-toolbar-group-separator-',
+                ),
+          ),
+        ),
+        findsNWidgets(3),
       );
 
       final actions = tester.widgetList<BusyMarkHeaderIconButton>(

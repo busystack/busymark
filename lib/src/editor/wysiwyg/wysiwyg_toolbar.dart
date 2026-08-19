@@ -20,7 +20,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required this.onOutdentCommand,
     required this.onToggleTaskCommand,
     required this.onHardBreakCommand,
-    required this.onCodeLanguageCommand,
     this.alignEnd = false,
     this.axis = Axis.horizontal,
   });
@@ -36,7 +35,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final VoidCallback onOutdentCommand;
   final VoidCallback onToggleTaskCommand;
   final VoidCallback onHardBreakCommand;
-  final VoidCallback onCodeLanguageCommand;
   final bool alignEnd;
   final Axis axis;
 
@@ -62,113 +60,8 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: BusyMarkSpacing.xs,
         children: _groups(axis, [
-          [_blockStyleMenu(context)],
           [
-            _button(
-              context,
-              tooltip: context.l10n.unorderedList,
-              icon: BusyMarkGlyphs.unorderedList,
-              shortcut: BusyMarkEditorShortcutLabels.unorderedList,
-              onPressed: () =>
-                  onBlockCommand(BusyWysiwygBlockCommand.unorderedList),
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.orderedList,
-              icon: BusyMarkGlyphs.orderedList,
-              shortcut: BusyMarkEditorShortcutLabels.orderedList,
-              onPressed: () =>
-                  onBlockCommand(BusyWysiwygBlockCommand.orderedList),
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.taskList,
-              icon: BusyMarkGlyphs.checkedBox,
-              shortcut: BusyMarkEditorShortcutLabels.taskList,
-              onPressed: () => onBlockCommand(BusyWysiwygBlockCommand.taskList),
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.toggleTaskChecked,
-              icon: BusyMarkGlyphs.checkedBox,
-              shortcut: BusyMarkEditorShortcutLabels.toggleTask,
-              onPressed: onToggleTaskCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.indentListItem,
-              icon: BusyMarkGlyphs.indentFor(direction),
-              shortcut: BusyMarkEditorShortcutLabels.indent,
-              onPressed: onIndentCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.outdentListItem,
-              icon: BusyMarkGlyphs.outdentFor(direction),
-              shortcut: BusyMarkEditorShortcutLabels.outdent,
-              onPressed: onOutdentCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.blockquote,
-              icon: BusyMarkGlyphs.blockquote,
-              shortcut: BusyMarkEditorShortcutLabels.blockquote,
-              onPressed: () =>
-                  onBlockCommand(BusyWysiwygBlockCommand.blockquote),
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.codeBlock,
-              icon: BusyMarkGlyphs.code,
-              shortcut: BusyMarkEditorShortcutLabels.codeBlock,
-              onPressed: () =>
-                  onBlockCommand(BusyWysiwygBlockCommand.codeBlock),
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.codeBlockLanguage,
-              icon: BusyMarkGlyphs.insertObject,
-              shortcut: BusyMarkEditorShortcutLabels.codeBlockLanguage,
-              onPressed: onCodeLanguageCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.image,
-              icon: BusyMarkGlyphs.image,
-              shortcut: BusyMarkEditorShortcutLabels.image,
-              onPressed: onImageCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.inlineImage,
-              icon: BusyMarkGlyphs.inlineImage,
-              shortcut: BusyMarkEditorShortcutLabels.inlineImage,
-              onPressed: onInlineImageCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.table,
-              icon: BusyMarkGlyphs.table,
-              shortcut: BusyMarkEditorShortcutLabels.table,
-              onPressed: onTableCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.htmlBlock,
-              icon: BusyMarkGlyphs.code,
-              shortcut: BusyMarkEditorShortcutLabels.htmlBlock,
-              onPressed: onHtmlCommand,
-            ),
-            _button(
-              context,
-              tooltip: context.l10n.thematicBreak,
-              icon: BusyMarkGlyphs.thematicBreak,
-              shortcut: BusyMarkEditorShortcutLabels.thematicBreak,
-              onPressed: () =>
-                  onBlockCommand(BusyWysiwygBlockCommand.thematicBreak),
-            ),
-          ],
-          [
+            _blockStyleMenu(context),
             _button(
               context,
               tooltip: context.l10n.bold,
@@ -221,6 +114,103 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               onPressed: onHardBreakCommand,
             ),
           ],
+          [
+            _button(
+              context,
+              tooltip: context.l10n.blockquote,
+              icon: BusyMarkGlyphs.blockquote,
+              shortcut: BusyMarkEditorShortcutLabels.blockquote,
+              onPressed: () =>
+                  onBlockCommand(BusyWysiwygBlockCommand.blockquote),
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.codeBlock,
+              icon: BusyMarkGlyphs.codeBlock,
+              shortcut: BusyMarkEditorShortcutLabels.codeBlock,
+              onPressed: () =>
+                  onBlockCommand(BusyWysiwygBlockCommand.codeBlock),
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.htmlBlock,
+              icon: BusyMarkGlyphs.htmlBlock,
+              onPressed: onHtmlCommand,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.thematicBreak,
+              icon: BusyMarkGlyphs.thematicBreak,
+              onPressed: () =>
+                  onBlockCommand(BusyWysiwygBlockCommand.thematicBreak),
+            ),
+          ],
+          [
+            _button(
+              context,
+              tooltip: context.l10n.unorderedList,
+              icon: BusyMarkGlyphs.unorderedList,
+              shortcut: BusyMarkEditorShortcutLabels.unorderedList,
+              onPressed: () =>
+                  onBlockCommand(BusyWysiwygBlockCommand.unorderedList),
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.orderedList,
+              icon: BusyMarkGlyphs.orderedList,
+              shortcut: BusyMarkEditorShortcutLabels.orderedList,
+              onPressed: () =>
+                  onBlockCommand(BusyWysiwygBlockCommand.orderedList),
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.taskList,
+              icon: BusyMarkGlyphs.checkedBox,
+              shortcut: BusyMarkEditorShortcutLabels.taskList,
+              onPressed: () => onBlockCommand(BusyWysiwygBlockCommand.taskList),
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.toggleTaskChecked,
+              icon: BusyMarkGlyphs.checkedBox,
+              onPressed: onToggleTaskCommand,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.indentListItem,
+              icon: BusyMarkGlyphs.indentFor(direction),
+              shortcut: BusyMarkEditorShortcutLabels.indent,
+              onPressed: onIndentCommand,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.outdentListItem,
+              icon: BusyMarkGlyphs.outdentFor(direction),
+              shortcut: BusyMarkEditorShortcutLabels.outdent,
+              onPressed: onOutdentCommand,
+            ),
+          ],
+          [
+            _button(
+              context,
+              tooltip: context.l10n.image,
+              icon: BusyMarkGlyphs.image,
+              shortcut: BusyMarkEditorShortcutLabels.image,
+              onPressed: onImageCommand,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.inlineImage,
+              icon: BusyMarkGlyphs.inlineImage,
+              onPressed: onInlineImageCommand,
+            ),
+            _button(
+              context,
+              tooltip: context.l10n.table,
+              icon: BusyMarkGlyphs.table,
+              onPressed: onTableCommand,
+            ),
+          ],
         ]),
       ),
     );
@@ -228,10 +218,12 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   List<Widget> _groups(Axis axis, List<List<Widget>> groups) {
     final widgets = <Widget>[];
-    for (final group in groups.where((items) => items.isNotEmpty)) {
+    for (final (groupIndex, group)
+        in groups.where((items) => items.isNotEmpty).indexed) {
       if (widgets.isNotEmpty) {
         widgets.add(
           SizedBox(
+            key: ValueKey('wysiwyg-toolbar-group-separator-$groupIndex'),
             width: axis == Axis.horizontal ? BusyMarkSpacing.sm : null,
             height: axis == Axis.vertical ? BusyMarkSpacing.sm : null,
           ),

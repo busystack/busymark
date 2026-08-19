@@ -121,8 +121,8 @@
   "@cut": {
     "description": "Cut command label."
   },
-  "promoteHeading": "ترقية العنوان",
-  "demoteHeading": "خفض رتبة العنوان",
+  "promoteSection": "ترقية القسم",
+  "demoteSection": "خفض رتبة القسم",
   "moveSectionUp": "نقل القسم إلى أعلى",
   "moveSectionDown": "نقل القسم إلى أسفل",
   "confirmDeleteSectionTitle": "حذف القسم؟",
@@ -385,11 +385,11 @@
   "@shortcutGroupGeneral": {
     "description": "Keyboard shortcut group for general application commands."
   },
-  "shortcutNewDocument": "مستند جديد",
+  "shortcutNewDocument": "إنشاء",
   "@shortcutNewDocument": {
     "description": "Keyboard shortcut label for creating a document."
   },
-  "shortcutNewDocumentDescription": "إنشاء مستند Markdown جديد غير محفوظ",
+  "shortcutNewDocumentDescription": "إنشاء ملف Markdown أو مشروع Writerside",
   "@shortcutNewDocumentDescription": {
     "description": "Keyboard shortcut description for creating a document."
   },
@@ -2195,7 +2195,7 @@
   "gitCommitNoSelectedFiles": "جهّز ملفًا واحدًا على الأقل قبل إنشاء الالتزام.",
   "gitCommitMessageRequired": "أدخل رسالة الالتزام.",
   "gitCreateBranch": "إنشاء فرع",
-  "gitNewBranch": "+ فرع جديد",
+  "gitNewBranch": "فرع جديد",
   "gitBranchName": "اسم الفرع",
   "gitSwitchBranch": "تبديل",
   "gitNoChanges": "لا توجد تغييرات",

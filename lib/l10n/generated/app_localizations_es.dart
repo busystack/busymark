@@ -174,10 +174,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cut => 'Cortar';
 
   @override
-  String get promoteHeading => 'Promover encabezado';
+  String get promoteSection => 'Promover sección';
 
   @override
-  String get demoteHeading => 'Degradar encabezado';
+  String get demoteSection => 'Degradar sección';
 
   @override
   String get moveSectionUp => 'Mover sección hacia arriba';
@@ -395,11 +395,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutGroupGeneral => 'General';
 
   @override
-  String get shortcutNewDocument => 'Nuevo documento';
+  String get shortcutNewDocument => 'Crear';
 
   @override
   String get shortcutNewDocumentDescription =>
-      'Crear un nuevo documento Markdown sin guardar';
+      'Crear un archivo Markdown o un proyecto de Writerside';
 
   @override
   String get shortcutOpenDescription =>
@@ -2125,7 +2125,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitCreateBranch => 'Crear rama';
 
   @override
-  String get gitNewBranch => '+ Nueva rama';
+  String get gitNewBranch => 'Nueva rama';
 
   @override
   String get gitBranchName => 'Nombre de la rama';

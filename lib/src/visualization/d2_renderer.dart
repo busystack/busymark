@@ -425,7 +425,7 @@ class D2VisualizationRenderer implements VisualizationRenderer {
       final svg = utf8.decode(processResult.stdout);
       final normalized = svgNormalizer.normalize(svg);
       cancellationToken.throwIfCancelled();
-      if (normalized.hasForeignObject) {
+      if (normalized.vectorSafeSvg == null) {
         final scale = request.profile == VisualizationRenderProfile.pdf
             ? 3.0
             : 2.0;

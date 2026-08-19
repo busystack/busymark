@@ -11,9 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('modal dialogs stop app and document-view shortcuts', (
-    tester,
-  ) async {
+  testWidgets('modal dialogs stop app and editor shortcuts', (tester) async {
     const channel = MethodChannel('com.busymark.test/modal-shortcuts');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
       call,
@@ -29,7 +27,7 @@ void main() {
     final headerBar = LinuxHeaderBarService(channel: channel);
     await headerBar.initialize();
     var appShortcutInvocations = 0;
-    var documentViewShortcutInvocations = 0;
+    var editorShortcutInvocations = 0;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -39,8 +37,8 @@ void main() {
             BusyMarkAppShortcutActivators.previousTab:
                 const _AppShortcutIntent(),
             BusyMarkAppShortcutActivators.closeTab: const _AppShortcutIntent(),
-            BusyMarkDocumentViewShortcutActivators.editor:
-                const _DocumentViewShortcutIntent(),
+            BusyMarkEditorShortcutActivators.heading1:
+                const _EditorShortcutIntent(),
           },
           child: Actions(
             actions: <Type, Action<Intent>>{
@@ -50,13 +48,12 @@ void main() {
                   return null;
                 },
               ),
-              _DocumentViewShortcutIntent:
-                  CallbackAction<_DocumentViewShortcutIntent>(
-                    onInvoke: (_) {
-                      documentViewShortcutInvocations += 1;
-                      return null;
-                    },
-                  ),
+              _EditorShortcutIntent: CallbackAction<_EditorShortcutIntent>(
+                onInvoke: (_) {
+                  editorShortcutInvocations += 1;
+                  return null;
+                },
+              ),
             },
             child: child!,
           ),
@@ -94,7 +91,7 @@ void main() {
     await _pressControlShortcut(tester, LogicalKeyboardKey.digit1, alt: true);
 
     expect(appShortcutInvocations, 0);
-    expect(documentViewShortcutInvocations, 0);
+    expect(editorShortcutInvocations, 0);
     expect(find.text('Dismiss'), findsOneWidget);
   });
 
@@ -200,9 +197,11 @@ void main() {
 
     final release = releaseBusyMarkModalBarrier(headerBar);
     await tester.pump();
-    expect(transitions, [
-      1,
-    ], reason: 'the native hide must wait for the in-flight native show');
+    expect(
+      transitions,
+      [1],
+      reason: 'the native hide must wait for the in-flight native show',
+    );
 
     firstUpdate.complete();
     await Future.wait([acquire, release]);
@@ -389,8 +388,8 @@ class _AppShortcutIntent extends Intent {
   const _AppShortcutIntent();
 }
 
-class _DocumentViewShortcutIntent extends Intent {
-  const _DocumentViewShortcutIntent();
+class _EditorShortcutIntent extends Intent {
+  const _EditorShortcutIntent();
 }
 
 class _FailingModalBarrierService extends LinuxHeaderBarService {
