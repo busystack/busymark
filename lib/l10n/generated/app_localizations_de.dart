@@ -2244,6 +2244,54 @@ class AppLocalizationsDe extends AppLocalizations {
       'BusyMark ersetzt die aktuelle Datei im Arbeitsverzeichnis durch die ausgewählte Commit-Version. Die wiederhergestellte Datei bleibt nicht vorgemerkt.';
 
   @override
+  String get gitCommitActions => 'Commit-Aktionen';
+
+  @override
+  String get gitResetCurrentBranchToHere =>
+      'Aktuellen Branch hierher zurücksetzen…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return '$branch auf $commit zurücksetzen?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Dadurch wird der Branch $branch auf den Commit $commit verschoben. Wählen Sie aus, wie Git den Index und das Arbeitsverzeichnis aktualisiert.';
+  }
+
+  @override
+  String get gitReset => 'Zurücksetzen';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Nur den Branch verschieben. Index und Arbeitsverzeichnis bleiben unverändert; Unterschiede zum ausgewählten Commit bleiben vorgemerkt.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Den Branch verschieben und den Index zurücksetzen. Das Arbeitsverzeichnis bleibt unverändert; Unterschiede bleiben nicht vorgemerkt.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Branch, Index und Arbeitsverzeichnis zurücksetzen. Änderungen an verfolgten Dateien werden verworfen; blockierende nicht verfolgte Dateien können gelöscht werden.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Den Branch und verfolgte Dateien zurücksetzen, lokale Änderungen aber beibehalten. Git bricht ab, wenn diese Änderungen dem Zurücksetzen entgegenstehen.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2311,8 +2359,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Speichern oder verwerfen Sie die Editoränderungen in BusyMark, bevor Sie den Branch wechseln.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Speichern oder verwerfen Sie Änderungen im BusyMark-Editor, bevor Sie den aktuellen Branch zurücksetzen.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Entfernen Sie die Datei aus dem Index, bevor Sie eine frühere Version wiederherstellen.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Checken Sie vor dem Zurücksetzen einen Branch aus.';
 
   @override
   String get gitErrorDiverged =>

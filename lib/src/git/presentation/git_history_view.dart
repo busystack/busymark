@@ -71,12 +71,14 @@ class GitProjectHistoryView extends StatelessWidget {
     required this.state,
     required this.onSelectCommit,
     required this.onShowFileDiff,
+    required this.onResetCurrentBranch,
     required this.onLoadMore,
   });
 
   final GitState state;
   final ValueChanged<String> onSelectCommit;
   final ValueChanged<String> onShowFileDiff;
+  final VoidCallback onResetCurrentBranch;
   final VoidCallback onLoadMore;
 
   @override
@@ -105,6 +107,14 @@ class GitProjectHistoryView extends StatelessWidget {
                           subject: commit.subject,
                           authorName: commit.authorName,
                           date: commit.authorDate,
+                          trailing: selected
+                              ? _ProjectHistoryCommitMenu(
+                                  canReset:
+                                      state.repositoryInfo?.currentBranch !=
+                                      null,
+                                  onResetCurrentBranch: onResetCurrentBranch,
+                                )
+                              : null,
                           onTap: () => onSelectCommit(commit.fullHash),
                         ),
                         if (showFileMenu)
@@ -125,6 +135,41 @@ class GitProjectHistoryView extends StatelessWidget {
                 ),
             ],
           );
+  }
+}
+
+enum _ProjectHistoryCommitAction { resetCurrentBranch }
+
+class _ProjectHistoryCommitMenu extends StatelessWidget {
+  const _ProjectHistoryCommitMenu({
+    required this.canReset,
+    required this.onResetCurrentBranch,
+  });
+
+  final bool canReset;
+  final VoidCallback onResetCurrentBranch;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkHeaderPopupMenuButton<_ProjectHistoryCommitAction>(
+      tooltip: context.l10n.gitCommitActions,
+      icon: BusyMarkGlyphs.menuHorizontal,
+      transparent: true,
+      itemBuilder: (context) => [
+        BusyMarkPopupMenuItem(
+          value: _ProjectHistoryCommitAction.resetCurrentBranch,
+          label: context.l10n.gitResetCurrentBranchToHere,
+          icon: BusyMarkGlyphs.undo,
+          enabled: canReset,
+        ),
+      ],
+      onSelected: (action) {
+        switch (action) {
+          case _ProjectHistoryCommitAction.resetCurrentBranch:
+            onResetCurrentBranch();
+        }
+      },
+    );
   }
 }
 

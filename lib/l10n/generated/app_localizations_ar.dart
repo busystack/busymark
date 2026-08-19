@@ -2244,6 +2244,53 @@ class AppLocalizationsAr extends AppLocalizations {
       'سيستبدل BusyMark ملف شجرة العمل الحالي بالإصدار المحدد من الإيداع. سيبقى الملف المستعاد غير مُرحَّل.';
 
   @override
+  String get gitCommitActions => 'إجراءات الإيداع';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'إعادة تعيين الفرع الحالي إلى هنا…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'إعادة تعيين ⁨$branch⁩ إلى ⁨$commit⁩؟';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'سينقل هذا الفرع ⁨$branch⁩ إلى الإيداع ⁨$commit⁩. اختر كيفية تحديث Git للفهرس وشجرة العمل.';
+  }
+
+  @override
+  String get gitReset => 'إعادة تعيين';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'نقل الفرع فقط. إبقاء الفهرس وشجرة العمل دون تغيير؛ تظل الاختلافات عن الإيداع المحدد مُرحَّلة.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'نقل الفرع وإعادة تعيين الفهرس. إبقاء شجرة العمل دون تغيير، مع ترك الاختلافات غير مُرحَّلة.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'نقل الفرع وإعادة تعيين الفهرس وشجرة العمل. تُلغى التغييرات المتتبعة؛ وقد تُحذف الملفات غير المتتبعة التي تعيق العملية.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'نقل الفرع وإعادة تعيين الملفات المتتبعة مع الاحتفاظ بالتغييرات المحلية. يتوقف Git إذا تعارضت هذه التغييرات مع إعادة التعيين.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '⁨+$additions -$deletions⁩';
   }
@@ -2308,8 +2355,15 @@ class AppLocalizationsAr extends AppLocalizations {
       'احفظ تغييرات محرر BusyMark أو تجاهلها قبل تبديل الفروع.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'احفظ تغييرات محرر BusyMark أو تجاهلها قبل إعادة تعيين الفرع الحالي.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق.';
+
+  @override
+  String get gitErrorResetDetachedHead => 'انتقل إلى فرع قبل إعادة تعيينه.';
 
   @override
   String get gitErrorDiverged =>

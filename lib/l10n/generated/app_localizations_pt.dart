@@ -2234,6 +2234,53 @@ class AppLocalizationsPt extends AppLocalizations {
       'O BusyMark substituirá o arquivo atual da árvore de trabalho pela versão selecionada do commit. O arquivo restaurado permanecerá não preparado.';
 
   @override
+  String get gitCommitActions => 'Ações do commit';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Redefinir a branch atual aqui…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Redefinir $branch para $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Isto move a branch $branch para o commit $commit. Escolha como o Git deve atualizar o índice e a árvore de trabalho.';
+  }
+
+  @override
+  String get gitReset => 'Redefinir';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Mover apenas a branch. Manter o índice e a árvore de trabalho inalterados; as diferenças em relação ao commit selecionado permanecem preparadas.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Mover a branch e redefinir o índice. Manter a árvore de trabalho inalterada, deixando as diferenças não preparadas.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Mover a branch e redefinir o índice e a árvore de trabalho. As alterações monitorizadas são descartadas; os arquivos não monitorizados que bloqueiam a operação podem ser eliminados.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Mover a branch e redefinir os arquivos monitorizados, preservando as alterações locais. O Git aborta se essas alterações entrarem em conflito com a redefinição.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2300,8 +2347,16 @@ class AppLocalizationsPt extends AppLocalizations {
       'Salve ou descarte as alterações do editor do BusyMark antes de trocar de branch.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Guarde ou descarte as alterações no editor do BusyMark antes de redefinir a branch atual.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Remova o arquivo do índice antes de restaurar uma versão anterior.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Mude para uma branch antes de a redefinir.';
 
   @override
   String get gitErrorDiverged =>

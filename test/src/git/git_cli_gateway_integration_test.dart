@@ -109,6 +109,70 @@ void main() {
     expect(await draft.exists(), isFalse);
   });
 
+  test('resets the current branch with each explicit Git reset mode', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    const gateway = GitCliGateway();
+    for (final mode in GitResetMode.values) {
+      final root = await _createRepository('busymark-git-reset-${mode.name}-');
+      final initialHash = await _gitOutput(root.path, ['rev-parse', 'HEAD']);
+      final readme = File(p.join(root.path, 'README.md'));
+      await readme.writeAsString('# Later\n');
+      await _git(root.path, ['add', 'README.md']);
+      await _git(root.path, ['commit', '-m', 'Later docs']);
+      final info = (await gateway.detectRepository(root.path))!;
+
+      await gateway.resetCurrentBranch(info, initialHash, mode);
+
+      expect(
+        await _gitOutput(root.path, ['rev-parse', 'HEAD']),
+        initialHash,
+        reason: '$mode must move the current branch',
+      );
+      final status = await gateway.status(info);
+      switch (mode) {
+        case GitResetMode.soft:
+          expect(status.stagedFiles, hasLength(1));
+          expect(status.unstagedFiles, isEmpty);
+          expect(await readme.readAsString(), '# Later\n');
+        case GitResetMode.mixed:
+          expect(status.stagedFiles, isEmpty);
+          expect(status.unstagedFiles, hasLength(1));
+          expect(await readme.readAsString(), '# Later\n');
+        case GitResetMode.hard || GitResetMode.keep:
+          expect(status.clean, isTrue);
+          expect(await readme.readAsString(), '# Docs\n');
+      }
+    }
+  });
+
+  test('refuses to reset while HEAD is detached', () async {
+    if (!await _gitAvailable()) {
+      markTestSkipped('Git executable is unavailable.');
+      return;
+    }
+    final root = await _createRepository('busymark-git-reset-detached-');
+    final initialHash = await _gitOutput(root.path, ['rev-parse', 'HEAD']);
+    await _git(root.path, ['checkout', '--detach', initialHash]);
+    const gateway = GitCliGateway();
+    final info = (await gateway.detectRepository(root.path))!;
+
+    await expectLater(
+      gateway.resetCurrentBranch(info, initialHash, GitResetMode.hard),
+      throwsA(
+        isA<GitFailure>().having(
+          (failure) => failure.code,
+          'code',
+          GitFailureCode.detachedHead,
+        ),
+      ),
+    );
+
+    expect(await _gitOutput(root.path, ['rev-parse', 'HEAD']), initialHash);
+  });
+
   test('keeps staged and unstaged comparisons separate', () async {
     if (!await _gitAvailable()) {
       markTestSkipped('Git executable is unavailable.');

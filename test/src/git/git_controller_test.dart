@@ -475,6 +475,55 @@ void main() {
     );
   });
 
+  test('project history reset uses the selected commit and mode', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+    await controller.loadProjectHistory();
+    await controller.selectProjectCommit('1234567890abcdef');
+
+    final reset = await controller.resetCurrentBranchToSelectedCommit(
+      GitResetMode.mixed,
+    );
+
+    expect(reset, isTrue);
+    expect(gateway.resetCalls, 1);
+    expect(gateway.resetHash, '1234567890abcdef');
+    expect(gateway.resetMode, GitResetMode.mixed);
+    expect(
+      container.read(gitControllerProvider).selectedView,
+      GitView.projectHistory,
+    );
+  });
+
+  test('project history reset is blocked by unsaved editor content', () async {
+    final gateway = _FakeGitGateway();
+    final container = _container(gateway);
+    await container
+        .read(workspaceControllerProvider.notifier)
+        .createMarkdownFile();
+    container
+        .read(workspaceControllerProvider.notifier)
+        .updateActiveText('# Unsaved\n');
+    final controller = container.read(gitControllerProvider.notifier);
+    controller.attachWorkspace(_workspace());
+    await controller.refresh();
+    await controller.loadProjectHistory();
+    await controller.selectProjectCommit('1234567890abcdef');
+
+    final reset = await controller.resetCurrentBranchToSelectedCommit(
+      GitResetMode.hard,
+    );
+
+    expect(reset, isFalse);
+    expect(gateway.resetCalls, 0);
+    final failure = container.read(gitControllerProvider).lastError;
+    expect(failure?.code, GitFailureCode.dirtyWorkspace);
+    expect(failure?.commandName, 'reset');
+  });
+
   test('fetch refreshes repository status', () async {
     final gateway = _FakeGitGateway();
     final container = _container(gateway);
@@ -987,6 +1036,9 @@ class _FakeGitGateway implements GitRepositoryGateway {
   var switchCalls = 0;
   var fetchCalls = 0;
   var restoreCalls = 0;
+  var resetCalls = 0;
+  String? resetHash;
+  GitResetMode? resetMode;
   final diffRequests = <(String, bool)>[];
   final diffOriginalPaths = <String?>[];
   final untrackedDiffRequests = <String>[];
@@ -1003,6 +1055,7 @@ class _FakeGitGateway implements GitRepositoryGateway {
   static const repo = GitRepositoryInfo(
     rootPath: '/repo',
     gitDirPath: '/repo/.git',
+    currentBranch: 'main',
   );
 
   @override
@@ -1291,6 +1344,18 @@ class _FakeGitGateway implements GitRepositoryGateway {
   }) async {
     restoreCalls += 1;
     workingTreeContent = '# Restored\n';
+    return _result();
+  }
+
+  @override
+  Future<GitOperationResult> resetCurrentBranch(
+    GitRepositoryInfo repository,
+    String hash,
+    GitResetMode mode,
+  ) async {
+    resetCalls += 1;
+    resetHash = hash;
+    resetMode = mode;
     return _result();
   }
 

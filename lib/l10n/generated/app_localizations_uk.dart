@@ -2259,6 +2259,53 @@ class AppLocalizationsUk extends AppLocalizations {
       'BusyMark замінить поточний файл робочого дерева вибраною версією з коміту. Відновлений файл залишиться неіндексованим.';
 
   @override
+  String get gitCommitActions => 'Дії з комітом';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Скинути поточну гілку сюди…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Скинути $branch на $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Гілку $branch буде переміщено на коміт $commit. Виберіть, як Git має оновити індекс і робоче дерево.';
+  }
+
+  @override
+  String get gitReset => 'Скинути';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Перемістити лише гілку. Залишити індекс і робоче дерево без змін; відмінності від вибраного коміту залишаться індексованими.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Перемістити гілку й скинути індекс. Залишити робоче дерево без змін, а відмінності — неіндексованими.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Перемістити гілку й скинути індекс і робоче дерево. Відстежувані зміни буде відкинуто; не відстежувані файли, що заважають операції, може бути видалено.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Перемістити гілку й скинути відстежувані файли, зберігши локальні зміни. Git перерве операцію, якщо ці зміни конфліктують зі скиданням.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2324,8 +2371,16 @@ class AppLocalizationsUk extends AppLocalizations {
       'Перед перемиканням гілки збережіть або відкиньте зміни в редакторі BusyMark.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Збережіть або відкиньте зміни в редакторі BusyMark перед скиданням поточної гілки.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Приберіть файл з індексу перед відновленням попередньої версії.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Перейдіть на гілку перед її скиданням.';
 
   @override
   String get gitErrorDiverged =>

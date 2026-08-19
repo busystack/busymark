@@ -2250,6 +2250,53 @@ class AppLocalizationsRu extends AppLocalizations {
       'BusyMark заменит текущий файл рабочего дерева выбранной версией из коммита. Восстановленный файл останется неиндексированным.';
 
   @override
+  String get gitCommitActions => 'Действия с коммитом';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Сбросить текущую ветку сюда…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Сбросить $branch на $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Ветка $branch будет перемещена на коммит $commit. Выберите, как Git должен обновить индекс и рабочее дерево.';
+  }
+
+  @override
+  String get gitReset => 'Сбросить';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Переместить только ветку. Оставить индекс и рабочее дерево без изменений; отличия от выбранного коммита останутся индексированными.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Переместить ветку и сбросить индекс. Оставить рабочее дерево без изменений, а отличия — неиндексированными.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Переместить ветку и сбросить индекс и рабочее дерево. Отслеживаемые изменения будут отброшены; мешающие неотслеживаемые файлы могут быть удалены.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Переместить ветку и сбросить отслеживаемые файлы, сохранив локальные изменения. Git прервёт операцию, если эти изменения конфликтуют со сбросом.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2316,8 +2363,16 @@ class AppLocalizationsRu extends AppLocalizations {
       'Перед переключением ветки сохраните или отмените изменения в редакторе BusyMark.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Сохраните или отмените изменения в редакторе BusyMark перед сбросом текущей ветки.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Уберите файл из индекса перед восстановлением предыдущей версии.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Переключитесь на ветку перед её сбросом.';
 
   @override
   String get gitErrorDiverged =>

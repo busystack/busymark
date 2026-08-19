@@ -2238,6 +2238,53 @@ class AppLocalizationsIt extends AppLocalizations {
       'BusyMark sostituirà il file corrente nell’albero di lavoro con la versione selezionata del commit. Il file ripristinato resterà fuori dallo stage.';
 
   @override
+  String get gitCommitActions => 'Azioni del commit';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Reimposta qui il branch corrente…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Reimpostare $branch su $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Questa operazione sposta il branch $branch sul commit $commit. Scegli come Git deve aggiornare l’indice e l’albero di lavoro.';
+  }
+
+  @override
+  String get gitReset => 'Reimposta';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Sposta solo il branch. Mantiene invariati l’indice e l’albero di lavoro; le differenze rispetto al commit selezionato restano nello stage.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Sposta il branch e reimposta l’indice. Mantiene invariato l’albero di lavoro, lasciando le differenze fuori dallo stage.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Sposta il branch e reimposta l’indice e l’albero di lavoro. Le modifiche ai file tracciati vengono eliminate; i file non tracciati che ostacolano l’operazione possono essere rimossi.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Sposta il branch e reimposta i file tracciati conservando le modifiche locali. Git interrompe l’operazione se tali modifiche sono in conflitto con il ripristino.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2305,8 +2352,16 @@ class AppLocalizationsIt extends AppLocalizations {
       'Salva o scarta le modifiche dell’editor di BusyMark prima di cambiare ramo.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Salva o scarta le modifiche nell’editor di BusyMark prima di reimpostare il branch corrente.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Rimuovi il file dall’indice prima di ripristinare una versione precedente.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Passa a un branch prima di reimpostarlo.';
 
   @override
   String get gitErrorDiverged =>

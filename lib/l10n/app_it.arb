@@ -2450,6 +2450,21 @@
   "gitConfirmRestoreTitle": "Ripristinare questa versione del file?",
   "gitConfirmRestoreMessage": "BusyMark sostituirà il file corrente nell’albero di lavoro con la versione selezionata del commit. Il file ripristinato resterà fuori dallo stage.",
   "gitBinaryFileInfo": "File binario ({size} byte). BusyMark non visualizza le patch binarie.",
-  "gitErrorRestoreStagedFile": "Rimuovi il file dall’indice prima di ripristinare una versione precedente."
+  "gitErrorRestoreStagedFile": "Rimuovi il file dall’indice prima di ripristinare una versione precedente.",
+  "gitCommitActions": "Azioni del commit",
+  "gitResetCurrentBranchToHere": "Reimposta qui il branch corrente…",
+  "gitResetCurrentBranchTitle": "Reimpostare {branch} su {commit}?",
+  "gitResetCurrentBranchMessage": "Questa operazione sposta il branch {branch} sul commit {commit}. Scegli come Git deve aggiornare l’indice e l’albero di lavoro.",
+  "gitReset": "Reimposta",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Sposta solo il branch. Mantiene invariati l’indice e l’albero di lavoro; le differenze rispetto al commit selezionato restano nello stage.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Sposta il branch e reimposta l’indice. Mantiene invariato l’albero di lavoro, lasciando le differenze fuori dallo stage.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Sposta il branch e reimposta l’indice e l’albero di lavoro. Le modifiche ai file tracciati vengono eliminate; i file non tracciati che ostacolano l’operazione possono essere rimossi.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Sposta il branch e reimposta i file tracciati conservando le modifiche locali. Git interrompe l’operazione se tali modifiche sono in conflitto con il ripristino.",
+  "gitErrorResetDirtyWorkspace": "Salva o scarta le modifiche nell’editor di BusyMark prima di reimpostare il branch corrente.",
+  "gitErrorResetDetachedHead": "Passa a un branch prima di reimpostarlo."
 
 }

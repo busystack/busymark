@@ -64,6 +64,11 @@ abstract class GitRepositoryGateway implements GitRepositoryDetector {
     required String historicalPath,
     required String currentPath,
   });
+  Future<GitOperationResult> resetCurrentBranch(
+    GitRepositoryInfo repository,
+    String hash,
+    GitResetMode mode,
+  );
   Future<List<GitBranch>> branches(GitRepositoryInfo repository);
   Future<List<String>> remotes(GitRepositoryInfo repository);
   Future<GitOperationResult> stage(

@@ -2468,6 +2468,21 @@
   "gitConfirmRestoreTitle": "Восстановить эту версию файла?",
   "gitConfirmRestoreMessage": "BusyMark заменит текущий файл рабочего дерева выбранной версией из коммита. Восстановленный файл останется неиндексированным.",
   "gitBinaryFileInfo": "Двоичный файл ({size} байт). BusyMark не отображает двоичные патчи.",
-  "gitErrorRestoreStagedFile": "Уберите файл из индекса перед восстановлением предыдущей версии."
+  "gitErrorRestoreStagedFile": "Уберите файл из индекса перед восстановлением предыдущей версии.",
+  "gitCommitActions": "Действия с коммитом",
+  "gitResetCurrentBranchToHere": "Сбросить текущую ветку сюда…",
+  "gitResetCurrentBranchTitle": "Сбросить {branch} на {commit}?",
+  "gitResetCurrentBranchMessage": "Ветка {branch} будет перемещена на коммит {commit}. Выберите, как Git должен обновить индекс и рабочее дерево.",
+  "gitReset": "Сбросить",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Переместить только ветку. Оставить индекс и рабочее дерево без изменений; отличия от выбранного коммита останутся индексированными.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Переместить ветку и сбросить индекс. Оставить рабочее дерево без изменений, а отличия — неиндексированными.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Переместить ветку и сбросить индекс и рабочее дерево. Отслеживаемые изменения будут отброшены; мешающие неотслеживаемые файлы могут быть удалены.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Переместить ветку и сбросить отслеживаемые файлы, сохранив локальные изменения. Git прервёт операцию, если эти изменения конфликтуют со сбросом.",
+  "gitErrorResetDirtyWorkspace": "Сохраните или отмените изменения в редакторе BusyMark перед сбросом текущей ветки.",
+  "gitErrorResetDetachedHead": "Переключитесь на ветку перед её сбросом."
 
 }

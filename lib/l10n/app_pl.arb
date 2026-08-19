@@ -2468,6 +2468,21 @@
   "gitConfirmRestoreTitle": "Przywrócić tę wersję pliku?",
   "gitConfirmRestoreMessage": "BusyMark zastąpi bieżący plik w drzewie roboczym wybraną wersją z commita. Przywrócony plik pozostanie poza indeksem.",
   "gitBinaryFileInfo": "Plik binarny ({size} bajtów). BusyMark nie wyświetla poprawek binarnych.",
-  "gitErrorRestoreStagedFile": "Usuń plik z indeksu przed przywróceniem wcześniejszej wersji."
+  "gitErrorRestoreStagedFile": "Usuń plik z indeksu przed przywróceniem wcześniejszej wersji.",
+  "gitCommitActions": "Operacje na commicie",
+  "gitResetCurrentBranchToHere": "Zresetuj bieżącą gałąź tutaj…",
+  "gitResetCurrentBranchTitle": "Zresetować {branch} do {commit}?",
+  "gitResetCurrentBranchMessage": "Ta operacja przenosi gałąź {branch} do commita {commit}. Wybierz sposób aktualizacji indeksu i drzewa roboczego przez Git.",
+  "gitReset": "Zresetuj",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Przenieś tylko gałąź. Pozostaw indeks i drzewo robocze bez zmian; różnice względem wybranego commita pozostaną w indeksie.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Przenieś gałąź i zresetuj indeks. Pozostaw drzewo robocze bez zmian, a różnice poza indeksem.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Przenieś gałąź oraz zresetuj indeks i drzewo robocze. Śledzone zmiany zostaną odrzucone; blokujące pliki nieśledzone mogą zostać usunięte.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Przenieś gałąź i zresetuj śledzone pliki, zachowując zmiany lokalne. Git przerwie operację, jeśli zmiany kolidują z resetem.",
+  "gitErrorResetDirtyWorkspace": "Zapisz lub odrzuć zmiany w edytorze BusyMark przed zresetowaniem bieżącej gałęzi.",
+  "gitErrorResetDetachedHead": "Przełącz się na gałąź przed jej zresetowaniem."
 
 }

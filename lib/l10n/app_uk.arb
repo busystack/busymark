@@ -2468,6 +2468,21 @@
   "gitConfirmRestoreTitle": "Відновити цю версію файлу?",
   "gitConfirmRestoreMessage": "BusyMark замінить поточний файл робочого дерева вибраною версією з коміту. Відновлений файл залишиться неіндексованим.",
   "gitBinaryFileInfo": "Двійковий файл ({size} байтів). BusyMark не відображає двійкові патчі.",
-  "gitErrorRestoreStagedFile": "Приберіть файл з індексу перед відновленням попередньої версії."
+  "gitErrorRestoreStagedFile": "Приберіть файл з індексу перед відновленням попередньої версії.",
+  "gitCommitActions": "Дії з комітом",
+  "gitResetCurrentBranchToHere": "Скинути поточну гілку сюди…",
+  "gitResetCurrentBranchTitle": "Скинути {branch} на {commit}?",
+  "gitResetCurrentBranchMessage": "Гілку {branch} буде переміщено на коміт {commit}. Виберіть, як Git має оновити індекс і робоче дерево.",
+  "gitReset": "Скинути",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Перемістити лише гілку. Залишити індекс і робоче дерево без змін; відмінності від вибраного коміту залишаться індексованими.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Перемістити гілку й скинути індекс. Залишити робоче дерево без змін, а відмінності — неіндексованими.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Перемістити гілку й скинути індекс і робоче дерево. Відстежувані зміни буде відкинуто; не відстежувані файли, що заважають операції, може бути видалено.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Перемістити гілку й скинути відстежувані файли, зберігши локальні зміни. Git перерве операцію, якщо ці зміни конфліктують зі скиданням.",
+  "gitErrorResetDirtyWorkspace": "Збережіть або відкиньте зміни в редакторі BusyMark перед скиданням поточної гілки.",
+  "gitErrorResetDetachedHead": "Перейдіть на гілку перед її скиданням."
 
 }

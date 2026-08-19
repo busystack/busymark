@@ -7,6 +7,7 @@ import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../workspace/workspace_model.dart';
 import '../../workspace/workspace_controller.dart';
+import '../../workspace/workspace_safety.dart';
 import '../application/git_controller.dart';
 import '../domain/git_models.dart';
 import 'git_changes_view.dart';
@@ -137,6 +138,8 @@ class GitSidebarTab extends ConsumerWidget {
                   state: state,
                   onSelectCommit: controller.selectProjectCommit,
                   onShowFileDiff: controller.selectCommitFile,
+                  onResetCurrentBranch: () =>
+                      _confirmResetCurrentBranch(context, ref, controller),
                   onLoadMore: controller.loadMoreProjectHistory,
                 ),
               },
@@ -185,6 +188,113 @@ class GitSidebarTab extends ConsumerWidget {
       await onAfterWorkspaceFilesChanged();
     }
   }
+
+  Future<void> _confirmResetCurrentBranch(
+    BuildContext context,
+    WidgetRef ref,
+    GitController controller,
+  ) async {
+    final state = ref.read(gitControllerProvider);
+    final branch = state.repositoryInfo?.currentBranch;
+    final selectedHash = state.projectHistory.selectedCommitHash;
+    final selectedCommits = [
+      for (final entry in state.projectHistory.commits)
+        if (entry.fullHash == selectedHash) entry,
+    ];
+    if (branch == null || selectedCommits.isEmpty) {
+      return;
+    }
+    final commit = selectedCommits.first;
+    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+      return;
+    }
+    final mode = await showBusyMarkModalDialog<GitResetMode>(
+      context,
+      builder: (dialogContext) =>
+          _GitResetDialog(branch: branch, commit: commit),
+    );
+    if (mode == null || !context.mounted) {
+      return;
+    }
+    if (await controller.resetCurrentBranchToSelectedCommit(mode)) {
+      await onAfterWorkspaceFilesChanged();
+    }
+  }
+}
+
+class _GitResetDialog extends StatefulWidget {
+  const _GitResetDialog({required this.branch, required this.commit});
+
+  final String branch;
+  final GitCommitSummary commit;
+
+  @override
+  State<_GitResetDialog> createState() => _GitResetDialogState();
+}
+
+class _GitResetDialogState extends State<_GitResetDialog> {
+  GitResetMode? _mode;
+
+  @override
+  Widget build(BuildContext context) {
+    final commit = widget.commit.shortHash;
+    return BusyMarkDialogShell(
+      title: context.l10n.gitResetCurrentBranchTitle(widget.branch, commit),
+      maxWidth: BusyMarkSizes.dialogWide,
+      actions: [
+        BusyMarkDialogButton(
+          label: context.l10n.cancel,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        BusyMarkDialogButton(
+          label: context.l10n.gitReset,
+          destructive: true,
+          onPressed: _mode == null
+              ? null
+              : () => Navigator.of(context).pop(_mode),
+        ),
+      ],
+      children: [
+        Text(context.l10n.gitResetCurrentBranchMessage(widget.branch, commit)),
+        const SizedBox(height: BusyMarkSpacing.md),
+        RadioGroup<GitResetMode>(
+          groupValue: _mode,
+          onChanged: (mode) => setState(() => _mode = mode),
+          child: Column(
+            children: [
+              for (final mode in GitResetMode.values)
+                RadioListTile<GitResetMode>(
+                  key: ValueKey('git-reset-mode-${mode.name}'),
+                  value: mode,
+                  title: Text(_resetModeLabel(context, mode)),
+                  subtitle: Text(_resetModeDescription(context, mode)),
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _resetModeLabel(BuildContext context, GitResetMode mode) {
+    return switch (mode) {
+      GitResetMode.soft => context.l10n.gitResetModeSoft,
+      GitResetMode.mixed => context.l10n.gitResetModeMixed,
+      GitResetMode.hard => context.l10n.gitResetModeHard,
+      GitResetMode.keep => context.l10n.gitResetModeKeep,
+    };
+  }
+
+  String _resetModeDescription(BuildContext context, GitResetMode mode) {
+    return switch (mode) {
+      GitResetMode.soft => context.l10n.gitResetModeSoftDescription,
+      GitResetMode.mixed => context.l10n.gitResetModeMixedDescription,
+      GitResetMode.hard => context.l10n.gitResetModeHardDescription,
+      GitResetMode.keep => context.l10n.gitResetModeKeepDescription,
+    };
+  }
 }
 
 class _GitMessage extends StatelessWidget {
@@ -218,8 +328,12 @@ class _GitMessage extends StatelessWidget {
       GitFailureCode.noRemote => context.l10n.gitErrorNoRemote,
       GitFailureCode.noUpstream => context.l10n.gitErrorNoUpstream,
       GitFailureCode.multipleRemotes => context.l10n.gitErrorMultipleRemotes,
-      GitFailureCode.dirtyWorkspace => context.l10n.gitErrorDirtyWorkspace,
+      GitFailureCode.dirtyWorkspace =>
+        failure.commandName == 'reset'
+            ? context.l10n.gitErrorResetDirtyWorkspace
+            : context.l10n.gitErrorDirtyWorkspace,
       GitFailureCode.stagedChanges => context.l10n.gitErrorRestoreStagedFile,
+      GitFailureCode.detachedHead => context.l10n.gitErrorResetDetachedHead,
       GitFailureCode.diverged => context.l10n.gitErrorDiverged,
       GitFailureCode.authentication => context.l10n.gitErrorAuthentication,
       GitFailureCode.network => context.l10n.gitErrorNetwork,
@@ -251,6 +365,7 @@ BusyMarkStatusKind _gitFailureStatusKind(GitFailureCode code) {
     GitFailureCode.multipleRemotes => BusyMarkStatusKind.information,
     GitFailureCode.dirtyWorkspace ||
     GitFailureCode.stagedChanges ||
+    GitFailureCode.detachedHead ||
     GitFailureCode.diverged ||
     GitFailureCode.conflict => BusyMarkStatusKind.warning,
     GitFailureCode.unavailable ||

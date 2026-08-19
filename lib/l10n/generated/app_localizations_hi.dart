@@ -2213,6 +2213,53 @@ class AppLocalizationsHi extends AppLocalizations {
       'BusyMark वर्तमान कार्य-वृक्ष फ़ाइल को चुने गए कमिट संस्करण से बदल देगा। पुनर्स्थापित फ़ाइल स्टेज नहीं की जाएगी।';
 
   @override
+  String get gitCommitActions => 'कमिट कार्रवाइयाँ';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'मौजूदा ब्रांच को यहाँ रीसेट करें…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return '$branch को $commit पर रीसेट करें?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'इससे ब्रांच $branch, कमिट $commit पर चली जाएगी। चुनें कि Git इंडेक्स और वर्किंग ट्री को कैसे अपडेट करे।';
+  }
+
+  @override
+  String get gitReset => 'रीसेट करें';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'केवल ब्रांच को ले जाएँ। इंडेक्स और वर्किंग ट्री को न बदलें; चुने गए कमिट से अंतर स्टेज में बने रहेंगे।';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'ब्रांच को ले जाएँ और इंडेक्स रीसेट करें। वर्किंग ट्री को न बदलें, ताकि अंतर अनस्टेज्ड रहें।';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'ब्रांच को ले जाएँ और इंडेक्स तथा वर्किंग ट्री रीसेट करें। ट्रैक किए गए बदलाव हटा दिए जाएँगे; रास्ता रोकने वाली अनट्रैक्ड फ़ाइलें हटाई जा सकती हैं।';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'ब्रांच को ले जाएँ और स्थानीय बदलाव सुरक्षित रखते हुए ट्रैक की गई फ़ाइलें रीसेट करें। इन बदलावों में टकराव होने पर Git रीसेट रोक देता है।';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2278,8 +2325,16 @@ class AppLocalizationsHi extends AppLocalizations {
       'शाखा बदलने से पहले BusyMark संपादक के बदलाव सहेजें या त्यागें।';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'मौजूदा ब्रांच को रीसेट करने से पहले BusyMark संपादक के बदलाव सहेजें या छोड़ दें।';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'पिछला संस्करण पुनर्स्थापित करने से पहले फ़ाइल को अनस्टेज करें।';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'रीसेट करने से पहले किसी ब्रांच पर जाएँ।';
 
   @override
   String get gitErrorDiverged =>

@@ -2257,6 +2257,53 @@ class AppLocalizationsPl extends AppLocalizations {
       'BusyMark zastąpi bieżący plik w drzewie roboczym wybraną wersją z commita. Przywrócony plik pozostanie poza indeksem.';
 
   @override
+  String get gitCommitActions => 'Operacje na commicie';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Zresetuj bieżącą gałąź tutaj…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Zresetować $branch do $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Ta operacja przenosi gałąź $branch do commita $commit. Wybierz sposób aktualizacji indeksu i drzewa roboczego przez Git.';
+  }
+
+  @override
+  String get gitReset => 'Zresetuj';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Przenieś tylko gałąź. Pozostaw indeks i drzewo robocze bez zmian; różnice względem wybranego commita pozostaną w indeksie.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Przenieś gałąź i zresetuj indeks. Pozostaw drzewo robocze bez zmian, a różnice poza indeksem.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Przenieś gałąź oraz zresetuj indeks i drzewo robocze. Śledzone zmiany zostaną odrzucone; blokujące pliki nieśledzone mogą zostać usunięte.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Przenieś gałąź i zresetuj śledzone pliki, zachowując zmiany lokalne. Git przerwie operację, jeśli zmiany kolidują z resetem.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2324,8 +2371,16 @@ class AppLocalizationsPl extends AppLocalizations {
       'Przed przełączeniem gałęzi zapisz lub odrzuć zmiany w edytorze BusyMark.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Zapisz lub odrzuć zmiany w edytorze BusyMark przed zresetowaniem bieżącej gałęzi.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Usuń plik z indeksu przed przywróceniem wcześniejszej wersji.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Przełącz się na gałąź przed jej zresetowaniem.';
 
   @override
   String get gitErrorDiverged =>

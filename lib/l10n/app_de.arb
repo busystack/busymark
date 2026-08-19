@@ -2473,6 +2473,21 @@
   "gitConfirmRestoreTitle": "Diese Dateiversion wiederherstellen?",
   "gitConfirmRestoreMessage": "BusyMark ersetzt die aktuelle Datei im Arbeitsverzeichnis durch die ausgewählte Commit-Version. Die wiederhergestellte Datei bleibt nicht vorgemerkt.",
   "gitBinaryFileInfo": "Binärdatei ({size} Byte). BusyMark stellt Binär-Patches nicht dar.",
-  "gitErrorRestoreStagedFile": "Entfernen Sie die Datei aus dem Index, bevor Sie eine frühere Version wiederherstellen."
+  "gitErrorRestoreStagedFile": "Entfernen Sie die Datei aus dem Index, bevor Sie eine frühere Version wiederherstellen.",
+  "gitCommitActions": "Commit-Aktionen",
+  "gitResetCurrentBranchToHere": "Aktuellen Branch hierher zurücksetzen…",
+  "gitResetCurrentBranchTitle": "{branch} auf {commit} zurücksetzen?",
+  "gitResetCurrentBranchMessage": "Dadurch wird der Branch {branch} auf den Commit {commit} verschoben. Wählen Sie aus, wie Git den Index und das Arbeitsverzeichnis aktualisiert.",
+  "gitReset": "Zurücksetzen",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Nur den Branch verschieben. Index und Arbeitsverzeichnis bleiben unverändert; Unterschiede zum ausgewählten Commit bleiben vorgemerkt.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Den Branch verschieben und den Index zurücksetzen. Das Arbeitsverzeichnis bleibt unverändert; Unterschiede bleiben nicht vorgemerkt.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Branch, Index und Arbeitsverzeichnis zurücksetzen. Änderungen an verfolgten Dateien werden verworfen; blockierende nicht verfolgte Dateien können gelöscht werden.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Den Branch und verfolgte Dateien zurücksetzen, lokale Änderungen aber beibehalten. Git bricht ab, wenn diese Änderungen dem Zurücksetzen entgegenstehen.",
+  "gitErrorResetDirtyWorkspace": "Speichern oder verwerfen Sie Änderungen im BusyMark-Editor, bevor Sie den aktuellen Branch zurücksetzen.",
+  "gitErrorResetDetachedHead": "Checken Sie vor dem Zurücksetzen einen Branch aus."
 
 }

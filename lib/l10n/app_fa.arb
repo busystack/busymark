@@ -2471,6 +2471,21 @@
   "gitConfirmRestoreTitle": "این نسخهٔ فایل بازیابی شود؟",
   "gitConfirmRestoreMessage": "BusyMark فایل فعلی در درخت کاری را با نسخهٔ انتخاب‌شده از ثبت جایگزین می‌کند. فایل بازیابی‌شده مرحله‌بندی‌نشده باقی می‌ماند.",
   "gitBinaryFileInfo": "فایل دودویی ({size} بایت). BusyMark وصله‌های دودویی را نمایش نمی‌دهد.",
-  "gitErrorRestoreStagedFile": "پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید."
+  "gitErrorRestoreStagedFile": "پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید.",
+  "gitCommitActions": "عملیات ثبت",
+  "gitResetCurrentBranchToHere": "بازنشانی شاخهٔ فعلی به اینجا…",
+  "gitResetCurrentBranchTitle": "\u2068{branch}\u2069 روی \u2068{commit}\u2069 بازنشانی شود؟",
+  "gitResetCurrentBranchMessage": "این کار شاخهٔ \u2068{branch}\u2069 را به ثبت \u2068{commit}\u2069 منتقل می‌کند. نحوهٔ به‌روزرسانی فهرست و درخت کاری توسط Git را انتخاب کنید.",
+  "gitReset": "بازنشانی",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "فقط شاخه را جابه‌جا کنید. فهرست و درخت کاری بدون تغییر می‌مانند؛ تفاوت‌ها با ثبت انتخاب‌شده همچنان مرحله‌بندی‌شده خواهند بود.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "شاخه را جابه‌جا و فهرست را بازنشانی کنید. درخت کاری بدون تغییر می‌ماند و تفاوت‌ها مرحله‌بندی‌نشده خواهند بود.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "شاخه را جابه‌جا و فهرست و درخت کاری را بازنشانی کنید. تغییرات فایل‌های رهگیری‌شده کنار گذاشته می‌شوند؛ فایل‌های رهگیری‌نشدهٔ مانع ممکن است حذف شوند.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "شاخه را جابه‌جا و فایل‌های رهگیری‌شده را بازنشانی کنید، اما تغییرات محلی را نگه دارید. اگر این تغییرات با بازنشانی تداخل داشته باشند، Git عملیات را متوقف می‌کند.",
+  "gitErrorResetDirtyWorkspace": "پیش از بازنشانی شاخهٔ فعلی، تغییرات ویرایشگر BusyMark را ذخیره یا کنار بگذارید.",
+  "gitErrorResetDetachedHead": "پیش از بازنشانی، به یک شاخه بروید."
 
 }

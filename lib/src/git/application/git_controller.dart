@@ -867,6 +867,54 @@ class GitController extends Notifier<GitState> {
     }
   }
 
+  Future<bool> resetCurrentBranchToSelectedCommit(GitResetMode mode) async {
+    final project = state.projectHistory;
+    final hash = project.selectedCommitHash;
+    final operation = _captureRepositoryOperation();
+    if (hash == null ||
+        operation == null ||
+        !_knownHashes.contains(hash) ||
+        !project.commits.any((commit) => commit.fullHash == hash)) {
+      _setInvalidCommit(hash ?? '');
+      return false;
+    }
+    if (operation.repository.currentBranch == null) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.detachedHead,
+          userMessageKey: 'gitErrorResetDetachedHead',
+          rawMessage: '',
+          commandName: 'reset',
+        ),
+      );
+      return false;
+    }
+    if (ref.read(workspaceControllerProvider).hasUnsavedChanges) {
+      state = state.copyWith(
+        lastError: const GitFailure(
+          code: GitFailureCode.dirtyWorkspace,
+          userMessageKey: 'gitErrorResetDirtyWorkspace',
+          rawMessage: '',
+          commandName: 'reset',
+        ),
+      );
+      return false;
+    }
+    final completed = await _runOperation(
+      (repository) => _gateway.resetCurrentBranch(repository, hash, mode),
+      context: operation,
+    );
+    if (!completed || !_isCurrentRepositoryOperation(operation)) {
+      return false;
+    }
+    await loadBranches();
+    if (!_isCurrentRepositoryOperation(operation)) {
+      return false;
+    }
+    await loadProjectHistory();
+    return _isCurrentRepositoryOperation(operation) && state.lastError == null;
+  }
+
   bool get selectedFileHasStagedChanges {
     final currentPath = state.fileHistory.currentPath;
     if (currentPath == null) {
@@ -1901,6 +1949,13 @@ class UnavailableGitRepositoryGateway implements GitRepositoryGateway {
     required String historicalPath,
     required String currentPath,
   }) => _unavailable();
+
+  @override
+  Future<GitOperationResult> resetCurrentBranch(
+    GitRepositoryInfo repository,
+    String hash,
+    GitResetMode mode,
+  ) => _unavailable();
 
   @override
   Future<List<GitBranch>> branches(GitRepositoryInfo repository) =>

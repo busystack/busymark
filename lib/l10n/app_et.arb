@@ -1661,6 +1661,21 @@
   "gitConfirmRestoreTitle": "Kas taastada see failiversioon?",
   "gitConfirmRestoreMessage": "BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.",
   "gitBinaryFileInfo": "Kahendfail ({size} baiti). BusyMark ei kuva kahendpaiku.",
-  "gitErrorRestoreStagedFile": "Eemalda fail enne varasema versiooni taastamist indeksist."
+  "gitErrorRestoreStagedFile": "Eemalda fail enne varasema versiooni taastamist indeksist.",
+  "gitCommitActions": "Sissekande toimingud",
+  "gitResetCurrentBranchToHere": "Lähtesta praegune haru siia…",
+  "gitResetCurrentBranchTitle": "Kas lähtestada {branch} sissekandele {commit}?",
+  "gitResetCurrentBranchMessage": "See liigutab haru {branch} sissekandele {commit}. Vali, kuidas Git indeksit ja tööpuud uuendab.",
+  "gitReset": "Lähtesta",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Liiguta ainult haru. Jäta indeks ja tööpuu muutmata; erinevused valitud sissekandest jäävad indekseerituks.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Liiguta haru ja lähtesta indeks. Jäta tööpuu muutmata, nii et erinevused jäävad indekseerimata.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Liiguta haru ning lähtesta indeks ja tööpuu. Jälgitavad muudatused hüljatakse; toimingut takistavad jälgimata failid võidakse kustutada.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Liiguta haru ja lähtesta jälgitavad failid, säilitades kohalikud muudatused. Git katkestab, kui need muudatused on lähtestamisega vastuolus.",
+  "gitErrorResetDirtyWorkspace": "Salvesta või hülga BusyMarki redaktori muudatused enne praeguse haru lähtestamist.",
+  "gitErrorResetDetachedHead": "Enne lähtestamist võta kasutusele mõni haru."
 
 }

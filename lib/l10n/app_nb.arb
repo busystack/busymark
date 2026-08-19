@@ -2450,6 +2450,21 @@
   "gitConfirmRestoreTitle": "Gjenopprette denne filversjonen?",
   "gitConfirmRestoreMessage": "BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.",
   "gitBinaryFileInfo": "Binærfil ({size} byte). BusyMark viser ikke binære patcher.",
-  "gitErrorRestoreStagedFile": "Fjern filen fra indeksen før du gjenoppretter en tidligere versjon."
+  "gitErrorRestoreStagedFile": "Fjern filen fra indeksen før du gjenoppretter en tidligere versjon.",
+  "gitCommitActions": "Handlinger for innsjekking",
+  "gitResetCurrentBranchToHere": "Tilbakestill gjeldende gren hit…",
+  "gitResetCurrentBranchTitle": "Tilbakestille {branch} til {commit}?",
+  "gitResetCurrentBranchMessage": "Dette flytter grenen {branch} til innsjekkingen {commit}. Velg hvordan Git skal oppdatere indeksen og arbeidstreet.",
+  "gitReset": "Tilbakestill",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Flytt bare grenen. Behold indeksen og arbeidstreet uendret; forskjeller fra den valgte innsjekkingen forblir indeksert.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Flytt grenen og tilbakestill indeksen. Behold arbeidstreet uendret, slik at forskjellene blir uindekserte.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Flytt grenen og tilbakestill indeksen og arbeidstreet. Sporede endringer forkastes; usporede filer som blokkerer operasjonen, kan bli slettet.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Flytt grenen og tilbakestill sporede filer, men behold lokale endringer. Git avbryter hvis endringene kommer i konflikt med tilbakestillingen.",
+  "gitErrorResetDirtyWorkspace": "Lagre eller forkast endringer i BusyMark-redigereren før du tilbakestiller gjeldende gren.",
+  "gitErrorResetDetachedHead": "Bytt til en gren før du tilbakestiller den."
 
 }

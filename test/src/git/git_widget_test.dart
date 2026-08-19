@@ -997,6 +997,7 @@ void main() {
                   child: GitProjectHistoryView(
                     state: state,
                     onSelectCommit: (_) {},
+                    onResetCurrentBranch: () {},
                     onShowFileDiff: (path) {
                       setState(() {
                         state = state.copyWith(
@@ -1073,6 +1074,78 @@ void main() {
       find.textContaining('Guide change', findRichText: true),
       findsNothing,
     );
+  });
+
+  testWidgets('project history reset requires an explicit reset mode', (
+    tester,
+  ) async {
+    const repo = GitRepositoryInfo(
+      rootPath: '/repo',
+      gitDirPath: '/repo/.git',
+      currentBranch: 'main',
+    );
+    final commit = GitCommitSummary(
+      fullHash: '1234567890abcdef',
+      shortHash: '1234567',
+      authorName: 'BusyMark Test',
+      authorEmail: 'busymark@example.com',
+      authorDate: DateTime(2026),
+      subject: 'Update docs',
+      parentHashes: const ['abcdef0123456789'],
+    );
+    final workspace = _workspace();
+    final controller = _PresetGitController(
+      _state(
+        files: const [],
+        repo: repo,
+        selectedView: GitView.projectHistory,
+        history: [commit],
+        selectedCommitHash: commit.fullHash,
+        workspace: workspace,
+      ),
+    );
+    var refreshCalls = 0;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [gitControllerProvider.overrideWith(() => controller)],
+        child: _localized(
+          GitSidebarTab(
+            workspace: workspace,
+            onOpenFile: (_) {},
+            onConfirmDiscard: (_) async => true,
+            onAfterWorkspaceFilesChanged: () async => refreshCalls++,
+            onConfirmSwitchBranch: (_) async => true,
+            onConfirmPushSetUpstream: () async => true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip(l10n.gitCommitActions));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.gitResetCurrentBranchToHere));
+    await tester.pumpAndSettle();
+
+    final resetButton = find.widgetWithText(
+      BusyMarkDialogButton,
+      l10n.gitReset,
+    );
+    expect(resetButton, findsOneWidget);
+    expect(tester.widget<BusyMarkDialogButton>(resetButton).onPressed, isNull);
+
+    await tester.tap(find.text(l10n.gitResetModeMixed));
+    await tester.pump();
+    expect(
+      tester.widget<BusyMarkDialogButton>(resetButton).onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.text(l10n.gitReset));
+    await tester.pumpAndSettle();
+
+    expect(controller.resetModes, [GitResetMode.mixed]);
+    expect(refreshCalls, 1);
   });
 
   testWidgets('dirty editor banner appears in diff viewer', (tester) async {
@@ -1845,10 +1918,17 @@ class _PresetGitController extends GitController {
   _PresetGitController(this.initialState);
 
   final GitState initialState;
+  final resetModes = <GitResetMode>[];
 
   @override
   GitState build() => initialState;
 
   @override
   Future<List<GitBranch>> loadBranches() async => state.branches;
+
+  @override
+  Future<bool> resetCurrentBranchToSelectedCommit(GitResetMode mode) async {
+    resetModes.add(mode);
+    return true;
+  }
 }

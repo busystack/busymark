@@ -2269,6 +2269,53 @@ class AppLocalizationsFa extends AppLocalizations {
       'BusyMark فایل فعلی در درخت کاری را با نسخهٔ انتخاب‌شده از ثبت جایگزین می‌کند. فایل بازیابی‌شده مرحله‌بندی‌نشده باقی می‌ماند.';
 
   @override
+  String get gitCommitActions => 'عملیات ثبت';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'بازنشانی شاخهٔ فعلی به اینجا…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return '⁨$branch⁩ روی ⁨$commit⁩ بازنشانی شود؟';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'این کار شاخهٔ ⁨$branch⁩ را به ثبت ⁨$commit⁩ منتقل می‌کند. نحوهٔ به‌روزرسانی فهرست و درخت کاری توسط Git را انتخاب کنید.';
+  }
+
+  @override
+  String get gitReset => 'بازنشانی';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'فقط شاخه را جابه‌جا کنید. فهرست و درخت کاری بدون تغییر می‌مانند؛ تفاوت‌ها با ثبت انتخاب‌شده همچنان مرحله‌بندی‌شده خواهند بود.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'شاخه را جابه‌جا و فهرست را بازنشانی کنید. درخت کاری بدون تغییر می‌ماند و تفاوت‌ها مرحله‌بندی‌نشده خواهند بود.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'شاخه را جابه‌جا و فهرست و درخت کاری را بازنشانی کنید. تغییرات فایل‌های رهگیری‌شده کنار گذاشته می‌شوند؛ فایل‌های رهگیری‌نشدهٔ مانع ممکن است حذف شوند.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'شاخه را جابه‌جا و فایل‌های رهگیری‌شده را بازنشانی کنید، اما تغییرات محلی را نگه دارید. اگر این تغییرات با بازنشانی تداخل داشته باشند، Git عملیات را متوقف می‌کند.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     final intl.NumberFormat additionsNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -2340,8 +2387,15 @@ class AppLocalizationsFa extends AppLocalizations {
       'پیش از تغییر شاخه، تغییرات ویرایشگر BusyMark را ذخیره کنید یا دور بیندازید.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'پیش از بازنشانی شاخهٔ فعلی، تغییرات ویرایشگر BusyMark را ذخیره یا کنار بگذارید.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'پیش از بازیابی نسخهٔ پیشین، فایل را از حالت مرحله‌بندی خارج کنید.';
+
+  @override
+  String get gitErrorResetDetachedHead => 'پیش از بازنشانی، به یک شاخه بروید.';
 
   @override
   String get gitErrorDiverged =>

@@ -2218,6 +2218,53 @@ class AppLocalizationsEn extends AppLocalizations {
       'BusyMark will replace the current working-tree file with the selected committed version. The restored file will remain unstaged.';
 
   @override
+  String get gitCommitActions => 'Commit actions';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Reset current branch to here…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Reset $branch to $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'This moves branch $branch to commit $commit. Choose how Git updates the index and working tree.';
+  }
+
+  @override
+  String get gitReset => 'Reset';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Move the branch only. Keep the index and working tree unchanged; differences from the selected commit remain staged.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Move the branch and reset the index. Keep the working tree unchanged, leaving differences unstaged.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Move the branch and reset the index and working tree. Tracked changes are discarded; obstructing untracked files may be deleted.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Move the branch and reset tracked files while preserving local changes. Git aborts if those changes conflict with the reset.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2282,8 +2329,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Save or discard BusyMark editor changes before switching branches.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Save or discard BusyMark editor changes before resetting the current branch.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Unstage this file before restoring a historical version.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Check out a branch before resetting it.';
 
   @override
   String get gitErrorDiverged =>

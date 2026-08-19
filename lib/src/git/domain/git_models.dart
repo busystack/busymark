@@ -50,12 +50,15 @@ enum GitFailureCode {
   multipleRemotes,
   dirtyWorkspace,
   stagedChanges,
+  detachedHead,
   diverged,
   authentication,
   network,
   conflict,
   commandFailed,
 }
+
+enum GitResetMode { soft, mixed, hard, keep }
 
 enum GitView { changes, fileHistory, projectHistory }
 

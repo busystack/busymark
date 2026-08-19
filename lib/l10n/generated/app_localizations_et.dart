@@ -2219,6 +2219,53 @@ class AppLocalizationsEt extends AppLocalizations {
       'BusyMark asendab praeguse tööpuu faili valitud sissekande versiooniga. Taastatud fail jääb indekseerimata.';
 
   @override
+  String get gitCommitActions => 'Sissekande toimingud';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Lähtesta praegune haru siia…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Kas lähtestada $branch sissekandele $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'See liigutab haru $branch sissekandele $commit. Vali, kuidas Git indeksit ja tööpuud uuendab.';
+  }
+
+  @override
+  String get gitReset => 'Lähtesta';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Liiguta ainult haru. Jäta indeks ja tööpuu muutmata; erinevused valitud sissekandest jäävad indekseerituks.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Liiguta haru ja lähtesta indeks. Jäta tööpuu muutmata, nii et erinevused jäävad indekseerimata.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Liiguta haru ning lähtesta indeks ja tööpuu. Jälgitavad muudatused hüljatakse; toimingut takistavad jälgimata failid võidakse kustutada.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Liiguta haru ja lähtesta jälgitavad failid, säilitades kohalikud muudatused. Git katkestab, kui need muudatused on lähtestamisega vastuolus.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2283,8 +2330,16 @@ class AppLocalizationsEt extends AppLocalizations {
       'Enne haru vahetamist salvesta või hülga BusyMarki redaktori muudatused.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Salvesta või hülga BusyMarki redaktori muudatused enne praeguse haru lähtestamist.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Eemalda fail enne varasema versiooni taastamist indeksist.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Enne lähtestamist võta kasutusele mõni haru.';
 
   @override
   String get gitErrorDiverged =>

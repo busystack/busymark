@@ -2245,6 +2245,53 @@ class AppLocalizationsEs extends AppLocalizations {
       'BusyMark reemplazará el archivo actual del árbol de trabajo por la versión seleccionada del commit. El archivo restaurado permanecerá sin preparar.';
 
   @override
+  String get gitCommitActions => 'Acciones del commit';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Restablecer aquí la rama actual…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return '¿Restablecer $branch en $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Esto mueve la rama $branch al commit $commit. Elige cómo debe actualizar Git el índice y el árbol de trabajo.';
+  }
+
+  @override
+  String get gitReset => 'Restablecer';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Mover solo la rama. Mantener sin cambios el índice y el árbol de trabajo; las diferencias respecto al commit seleccionado permanecen preparadas.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Mover la rama y restablecer el índice. Mantener sin cambios el árbol de trabajo, dejando las diferencias sin preparar.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Mover la rama y restablecer el índice y el árbol de trabajo. Se descartan los cambios con seguimiento; pueden eliminarse archivos sin seguimiento que obstaculicen la operación.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Mover la rama y restablecer los archivos con seguimiento conservando los cambios locales. Git aborta si esos cambios entran en conflicto con el restablecimiento.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2312,8 +2359,16 @@ class AppLocalizationsEs extends AppLocalizations {
       'Guarde o descarte los cambios del editor de BusyMark antes de cambiar de rama.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Guarda o descarta los cambios del editor de BusyMark antes de restablecer la rama actual.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Quite el archivo del área de preparación antes de restaurar una versión anterior.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Cambia a una rama antes de restablecerla.';
 
   @override
   String get gitErrorDiverged =>

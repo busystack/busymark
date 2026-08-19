@@ -2473,6 +2473,21 @@
   "gitConfirmRestoreTitle": "¿Restaurar esta versión del archivo?",
   "gitConfirmRestoreMessage": "BusyMark reemplazará el archivo actual del árbol de trabajo por la versión seleccionada del commit. El archivo restaurado permanecerá sin preparar.",
   "gitBinaryFileInfo": "Archivo binario ({size} bytes). BusyMark no muestra parches binarios.",
-  "gitErrorRestoreStagedFile": "Quite el archivo del área de preparación antes de restaurar una versión anterior."
+  "gitErrorRestoreStagedFile": "Quite el archivo del área de preparación antes de restaurar una versión anterior.",
+  "gitCommitActions": "Acciones del commit",
+  "gitResetCurrentBranchToHere": "Restablecer aquí la rama actual…",
+  "gitResetCurrentBranchTitle": "¿Restablecer {branch} en {commit}?",
+  "gitResetCurrentBranchMessage": "Esto mueve la rama {branch} al commit {commit}. Elige cómo debe actualizar Git el índice y el árbol de trabajo.",
+  "gitReset": "Restablecer",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "Mover solo la rama. Mantener sin cambios el índice y el árbol de trabajo; las diferencias respecto al commit seleccionado permanecen preparadas.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "Mover la rama y restablecer el índice. Mantener sin cambios el árbol de trabajo, dejando las diferencias sin preparar.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "Mover la rama y restablecer el índice y el árbol de trabajo. Se descartan los cambios con seguimiento; pueden eliminarse archivos sin seguimiento que obstaculicen la operación.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "Mover la rama y restablecer los archivos con seguimiento conservando los cambios locales. Git aborta si esos cambios entran en conflicto con el restablecimiento.",
+  "gitErrorResetDirtyWorkspace": "Guarda o descarta los cambios del editor de BusyMark antes de restablecer la rama actual.",
+  "gitErrorResetDetachedHead": "Cambia a una rama antes de restablecerla."
 
 }

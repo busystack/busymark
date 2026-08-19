@@ -2219,6 +2219,53 @@ class AppLocalizationsNb extends AppLocalizations {
       'BusyMark erstatter den gjeldende filen i arbeidstreet med den valgte innsjekkede versjonen. Den gjenopprettede filen forblir uindeksert.';
 
   @override
+  String get gitCommitActions => 'Handlinger for innsjekking';
+
+  @override
+  String get gitResetCurrentBranchToHere => 'Tilbakestill gjeldende gren hit…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Tilbakestille $branch til $commit?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Dette flytter grenen $branch til innsjekkingen $commit. Velg hvordan Git skal oppdatere indeksen og arbeidstreet.';
+  }
+
+  @override
+  String get gitReset => 'Tilbakestill';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Flytt bare grenen. Behold indeksen og arbeidstreet uendret; forskjeller fra den valgte innsjekkingen forblir indeksert.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Flytt grenen og tilbakestill indeksen. Behold arbeidstreet uendret, slik at forskjellene blir uindekserte.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Flytt grenen og tilbakestill indeksen og arbeidstreet. Sporede endringer forkastes; usporede filer som blokkerer operasjonen, kan bli slettet.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Flytt grenen og tilbakestill sporede filer, men behold lokale endringer. Git avbryter hvis endringene kommer i konflikt med tilbakestillingen.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2284,8 +2331,16 @@ class AppLocalizationsNb extends AppLocalizations {
       'Lagre eller forkast endringene i BusyMark-redigereren før du bytter gren.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Lagre eller forkast endringer i BusyMark-redigereren før du tilbakestiller gjeldende gren.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Fjern filen fra indeksen før du gjenoppretter en tidligere versjon.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Bytt til en gren før du tilbakestiller den.';
 
   @override
   String get gitErrorDiverged =>

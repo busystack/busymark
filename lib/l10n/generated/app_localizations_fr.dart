@@ -2239,6 +2239,54 @@ class AppLocalizationsFr extends AppLocalizations {
       'BusyMark remplacera le fichier actuel de l’arbre de travail par la version sélectionnée du commit. Le fichier restauré restera non indexé.';
 
   @override
+  String get gitCommitActions => 'Actions du commit';
+
+  @override
+  String get gitResetCurrentBranchToHere =>
+      'Réinitialiser la branche actuelle ici…';
+
+  @override
+  String gitResetCurrentBranchTitle(String branch, String commit) {
+    return 'Réinitialiser $branch sur $commit ?';
+  }
+
+  @override
+  String gitResetCurrentBranchMessage(String branch, String commit) {
+    return 'Cette action déplace la branche $branch sur le commit $commit. Choisissez comment Git met à jour l’index et l’arbre de travail.';
+  }
+
+  @override
+  String get gitReset => 'Réinitialiser';
+
+  @override
+  String get gitResetModeSoft => 'Soft';
+
+  @override
+  String get gitResetModeSoftDescription =>
+      'Déplacer uniquement la branche. Conserver l’index et l’arbre de travail ; les différences par rapport au commit sélectionné restent indexées.';
+
+  @override
+  String get gitResetModeMixed => 'Mixed';
+
+  @override
+  String get gitResetModeMixedDescription =>
+      'Déplacer la branche et réinitialiser l’index. Conserver l’arbre de travail, en laissant les différences non indexées.';
+
+  @override
+  String get gitResetModeHard => 'Hard';
+
+  @override
+  String get gitResetModeHardDescription =>
+      'Déplacer la branche et réinitialiser l’index et l’arbre de travail. Les modifications suivies sont abandonnées ; les fichiers non suivis qui bloquent l’opération peuvent être supprimés.';
+
+  @override
+  String get gitResetModeKeep => 'Keep';
+
+  @override
+  String get gitResetModeKeepDescription =>
+      'Déplacer la branche et réinitialiser les fichiers suivis tout en conservant les modifications locales. Git abandonne si elles entrent en conflit avec la réinitialisation.';
+
+  @override
   String gitAdditionsDeletions(int additions, int deletions) {
     return '+$additions -$deletions';
   }
@@ -2304,8 +2352,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'Enregistrez ou abandonnez les modifications de l’éditeur BusyMark avant de changer de branche.';
 
   @override
+  String get gitErrorResetDirtyWorkspace =>
+      'Enregistrez ou abandonnez les modifications de l’éditeur BusyMark avant de réinitialiser la branche actuelle.';
+
+  @override
   String get gitErrorRestoreStagedFile =>
       'Retirez le fichier de l’index avant de restaurer une version antérieure.';
+
+  @override
+  String get gitErrorResetDetachedHead =>
+      'Basculez sur une branche avant de la réinitialiser.';
 
   @override
   String get gitErrorDiverged =>

@@ -2452,6 +2452,21 @@
   "gitConfirmRestoreTitle": "هل تريد استعادة إصدار الملف هذا؟",
   "gitConfirmRestoreMessage": "سيستبدل BusyMark ملف شجرة العمل الحالي بالإصدار المحدد من الإيداع. سيبقى الملف المستعاد غير مُرحَّل.",
   "gitBinaryFileInfo": "ملف ثنائي ({size} بايت). لا يعرض BusyMark رقع الملفات الثنائية.",
-  "gitErrorRestoreStagedFile": "أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق."
+  "gitErrorRestoreStagedFile": "أزل الملف من منطقة التجهيز قبل استعادة إصدار سابق.",
+  "gitCommitActions": "إجراءات الإيداع",
+  "gitResetCurrentBranchToHere": "إعادة تعيين الفرع الحالي إلى هنا…",
+  "gitResetCurrentBranchTitle": "إعادة تعيين \u2068{branch}\u2069 إلى \u2068{commit}\u2069؟",
+  "gitResetCurrentBranchMessage": "سينقل هذا الفرع \u2068{branch}\u2069 إلى الإيداع \u2068{commit}\u2069. اختر كيفية تحديث Git للفهرس وشجرة العمل.",
+  "gitReset": "إعادة تعيين",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "نقل الفرع فقط. إبقاء الفهرس وشجرة العمل دون تغيير؛ تظل الاختلافات عن الإيداع المحدد مُرحَّلة.",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "نقل الفرع وإعادة تعيين الفهرس. إبقاء شجرة العمل دون تغيير، مع ترك الاختلافات غير مُرحَّلة.",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "نقل الفرع وإعادة تعيين الفهرس وشجرة العمل. تُلغى التغييرات المتتبعة؛ وقد تُحذف الملفات غير المتتبعة التي تعيق العملية.",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "نقل الفرع وإعادة تعيين الملفات المتتبعة مع الاحتفاظ بالتغييرات المحلية. يتوقف Git إذا تعارضت هذه التغييرات مع إعادة التعيين.",
+  "gitErrorResetDirtyWorkspace": "احفظ تغييرات محرر BusyMark أو تجاهلها قبل إعادة تعيين الفرع الحالي.",
+  "gitErrorResetDetachedHead": "انتقل إلى فرع قبل إعادة تعيينه."
 
 }

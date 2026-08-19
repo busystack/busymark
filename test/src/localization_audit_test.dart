@@ -263,6 +263,28 @@ void main() {
       expect(branchTitle, contains('${fsi}feature/rtl-v2$pdi'));
       expect(branchTitle.split(fsi).length - 1, 1);
       expect(branchTitle.split(pdi).length - 1, 1);
+      final resetTitle = l10n.gitResetCurrentBranchTitle(
+        'feature/rtl-v2',
+        'a1b2c3d',
+      );
+      expect(
+        resetTitle,
+        allOf(
+          contains('${fsi}feature/rtl-v2$pdi'),
+          contains('${fsi}a1b2c3d$pdi'),
+        ),
+      );
+      final resetMessage = l10n.gitResetCurrentBranchMessage(
+        'feature/rtl-v2',
+        'a1b2c3d',
+      );
+      expect(
+        resetMessage,
+        allOf(
+          contains('${fsi}feature/rtl-v2$pdi'),
+          contains('${fsi}a1b2c3d$pdi'),
+        ),
+      );
       expect(l10n.gitDetachedHeadAt('a1b2c3d'), contains('${fsi}a1b2c3d$pdi'));
       expect(
         l10n.gitDiffHunkRange('-12,4', '+12,6'),
@@ -593,6 +615,10 @@ const _sharedEnglishMatches = <String>{
   'gitPull',
   'gitPush',
   'gitAdditionsDeletions',
+  'gitResetModeSoft',
+  'gitResetModeMixed',
+  'gitResetModeHard',
+  'gitResetModeKeep',
 };
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{

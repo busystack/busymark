@@ -2452,6 +2452,21 @@
   "gitConfirmRestoreTitle": "फ़ाइल का यह संस्करण पुनर्स्थापित करें?",
   "gitConfirmRestoreMessage": "BusyMark वर्तमान कार्य-वृक्ष फ़ाइल को चुने गए कमिट संस्करण से बदल देगा। पुनर्स्थापित फ़ाइल स्टेज नहीं की जाएगी।",
   "gitBinaryFileInfo": "बाइनरी फ़ाइल ({size} बाइट)। BusyMark बाइनरी पैच प्रदर्शित नहीं करता।",
-  "gitErrorRestoreStagedFile": "पिछला संस्करण पुनर्स्थापित करने से पहले फ़ाइल को अनस्टेज करें।"
+  "gitErrorRestoreStagedFile": "पिछला संस्करण पुनर्स्थापित करने से पहले फ़ाइल को अनस्टेज करें।",
+  "gitCommitActions": "कमिट कार्रवाइयाँ",
+  "gitResetCurrentBranchToHere": "मौजूदा ब्रांच को यहाँ रीसेट करें…",
+  "gitResetCurrentBranchTitle": "{branch} को {commit} पर रीसेट करें?",
+  "gitResetCurrentBranchMessage": "इससे ब्रांच {branch}, कमिट {commit} पर चली जाएगी। चुनें कि Git इंडेक्स और वर्किंग ट्री को कैसे अपडेट करे।",
+  "gitReset": "रीसेट करें",
+  "gitResetModeSoft": "Soft",
+  "gitResetModeSoftDescription": "केवल ब्रांच को ले जाएँ। इंडेक्स और वर्किंग ट्री को न बदलें; चुने गए कमिट से अंतर स्टेज में बने रहेंगे।",
+  "gitResetModeMixed": "Mixed",
+  "gitResetModeMixedDescription": "ब्रांच को ले जाएँ और इंडेक्स रीसेट करें। वर्किंग ट्री को न बदलें, ताकि अंतर अनस्टेज्ड रहें।",
+  "gitResetModeHard": "Hard",
+  "gitResetModeHardDescription": "ब्रांच को ले जाएँ और इंडेक्स तथा वर्किंग ट्री रीसेट करें। ट्रैक किए गए बदलाव हटा दिए जाएँगे; रास्ता रोकने वाली अनट्रैक्ड फ़ाइलें हटाई जा सकती हैं।",
+  "gitResetModeKeep": "Keep",
+  "gitResetModeKeepDescription": "ब्रांच को ले जाएँ और स्थानीय बदलाव सुरक्षित रखते हुए ट्रैक की गई फ़ाइलें रीसेट करें। इन बदलावों में टकराव होने पर Git रीसेट रोक देता है।",
+  "gitErrorResetDirtyWorkspace": "मौजूदा ब्रांच को रीसेट करने से पहले BusyMark संपादक के बदलाव सहेजें या छोड़ दें।",
+  "gitErrorResetDetachedHead": "रीसेट करने से पहले किसी ब्रांच पर जाएँ।"
 
 }

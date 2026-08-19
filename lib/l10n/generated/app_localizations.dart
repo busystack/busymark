@@ -3728,6 +3728,84 @@ abstract class AppLocalizations {
   /// **'BusyMark will replace the current working-tree file with the selected committed version. The restored file will remain unstaged.'**
   String get gitConfirmRestoreMessage;
 
+  /// Tooltip for actions on a selected Git commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Commit actions'**
+  String get gitCommitActions;
+
+  /// Project History action that moves the current branch to the selected commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset current branch to here…'**
+  String get gitResetCurrentBranchToHere;
+
+  /// Title for choosing how to reset the current branch to a selected commit.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset {branch} to {commit}?'**
+  String gitResetCurrentBranchTitle(String branch, String commit);
+
+  /// Explanation shown before resetting the current branch.
+  ///
+  /// In en, this message translates to:
+  /// **'This moves branch {branch} to commit {commit}. Choose how Git updates the index and working tree.'**
+  String gitResetCurrentBranchMessage(String branch, String commit);
+
+  /// Action that confirms resetting the current Git branch.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get gitReset;
+
+  /// Git soft reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Soft'**
+  String get gitResetModeSoft;
+
+  /// Git soft reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch only. Keep the index and working tree unchanged; differences from the selected commit remain staged.'**
+  String get gitResetModeSoftDescription;
+
+  /// Git mixed reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed'**
+  String get gitResetModeMixed;
+
+  /// Git mixed reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch and reset the index. Keep the working tree unchanged, leaving differences unstaged.'**
+  String get gitResetModeMixedDescription;
+
+  /// Git hard reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard'**
+  String get gitResetModeHard;
+
+  /// Git hard reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch and reset the index and working tree. Tracked changes are discarded; obstructing untracked files may be deleted.'**
+  String get gitResetModeHardDescription;
+
+  /// Git keep reset mode label.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get gitResetModeKeep;
+
+  /// Git keep reset mode explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the branch and reset tracked files while preserving local changes. Git aborts if those changes conflict with the reset.'**
+  String get gitResetModeKeepDescription;
+
   /// Diff additions and deletions count.
   ///
   /// In en, this message translates to:
@@ -3848,11 +3926,23 @@ abstract class AppLocalizations {
   /// **'Save or discard BusyMark editor changes before switching branches.'**
   String get gitErrorDirtyWorkspace;
 
+  /// Git reset error shown when the editor has unsaved content.
+  ///
+  /// In en, this message translates to:
+  /// **'Save or discard BusyMark editor changes before resetting the current branch.'**
+  String get gitErrorResetDirtyWorkspace;
+
   /// Git error shown when historical restoration is blocked because the current file is staged.
   ///
   /// In en, this message translates to:
   /// **'Unstage this file before restoring a historical version.'**
   String get gitErrorRestoreStagedFile;
+
+  /// Git reset error shown while HEAD is detached.
+  ///
+  /// In en, this message translates to:
+  /// **'Check out a branch before resetting it.'**
+  String get gitErrorResetDetachedHead;
 
   /// Git error message.
   ///

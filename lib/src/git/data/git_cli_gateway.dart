@@ -885,6 +885,37 @@ class GitCliGateway implements GitRepositoryGateway {
   }
 
   @override
+  Future<GitOperationResult> resetCurrentBranch(
+    GitRepositoryInfo repository,
+    String hash,
+    GitResetMode mode,
+  ) async {
+    _validateCommitHash(hash);
+    final executable = await _executable();
+    await _ensureCommitExists(
+      executable,
+      repository.rootPath,
+      hash,
+      commandName: 'reset',
+    );
+    final branch = await _runGitMaybe(executable, repository.rootPath, const [
+      'symbolic-ref',
+      '--quiet',
+      '--short',
+      'HEAD',
+    ], commandName: 'reset');
+    if (branch == null || !branch.success || branch.stdoutText.trim().isEmpty) {
+      throw const GitFailure(
+        code: GitFailureCode.detachedHead,
+        userMessageKey: 'gitErrorResetDetachedHead',
+        rawMessage: '',
+        commandName: 'reset',
+      );
+    }
+    return _operation(repository, ['reset', '--${mode.name}', hash], 'reset');
+  }
+
+  @override
   Future<GitOperationResult> fetch(GitRepositoryInfo repository) {
     return _operation(repository, const ['fetch'], 'fetch');
   }
