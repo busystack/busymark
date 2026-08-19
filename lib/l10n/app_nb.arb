@@ -2175,9 +2175,9 @@
   "gitChanges": "Endringer",
   "gitHistory": "Historikk",
   "gitBranches": "Grener",
-  "gitBranchActions": "Grenhandlinger",
-  "@gitBranchActions": {
-    "description": "Tooltip for the Git branch action menu button."
+  "gitActions": "Git-handlinger",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
   },
   "gitPull": "Pull",
   "gitPush": "Push",

@@ -2058,7 +2058,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get gitBranches => 'Branches';
 
   @override
-  String get gitBranchActions => 'Actions sur les branches';
+  String get gitActions => 'Actions Git';
 
   @override
   String get gitPull => 'Pull';

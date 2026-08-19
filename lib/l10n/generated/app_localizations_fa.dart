@@ -2089,7 +2089,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get gitBranches => 'شاخه‌ها';
 
   @override
-  String get gitBranchActions => 'عملیات شاخه‌ها';
+  String get gitActions => 'عملیات Git';
 
   @override
   String get gitPull => 'دریافت';

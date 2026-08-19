@@ -3458,11 +3458,11 @@ abstract class AppLocalizations {
   /// **'Branches'**
   String get gitBranches;
 
-  /// Tooltip for the Git branch action menu button.
+  /// Tooltip for the Git action menu button.
   ///
   /// In en, this message translates to:
-  /// **'Branch actions'**
-  String get gitBranchActions;
+  /// **'Git actions'**
+  String get gitActions;
 
   /// Git pull action label.
   ///

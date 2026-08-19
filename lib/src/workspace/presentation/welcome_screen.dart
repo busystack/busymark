@@ -244,7 +244,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case HeaderBarAction.sidebarToc:
       case HeaderBarAction.sidebarOutline:
       case HeaderBarAction.sidebarGit:
-      case HeaderBarAction.sidebarHistory:
         break;
     }
   }

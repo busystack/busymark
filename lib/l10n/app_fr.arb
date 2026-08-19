@@ -2175,9 +2175,9 @@
   "gitChanges": "Modifications",
   "gitHistory": "Historique",
   "gitBranches": "Branches",
-  "gitBranchActions": "Actions sur les branches",
-  "@gitBranchActions": {
-    "description": "Tooltip for the Git branch action menu button."
+  "gitActions": "Actions Git",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
   },
   "gitPull": "Pull",
   "gitPush": "Push",

@@ -1087,9 +1087,6 @@ static const gchar* sidebar_shortcut_action_for_key(guint keyval) {
     case GDK_KEY_4:
     case GDK_KEY_KP_4:
       return "sidebarGit";
-    case GDK_KEY_5:
-    case GDK_KEY_KP_5:
-      return "sidebarHistory";
     default:
       return nullptr;
   }

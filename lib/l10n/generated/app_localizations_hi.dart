@@ -2032,7 +2032,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gitBranches => 'शाखाएँ';
 
   @override
-  String get gitBranchActions => 'शाखा संबंधी कार्रवाइयाँ';
+  String get gitActions => 'Git कार्रवाइयाँ';
 
   @override
   String get gitPull => 'पुल';

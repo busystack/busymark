@@ -2177,9 +2177,9 @@
   "gitChanges": "التغييرات",
   "gitHistory": "السجل",
   "gitBranches": "الفروع",
-  "gitBranchActions": "إجراءات الفروع",
-  "@gitBranchActions": {
-    "description": "Tooltip for the Git branch action menu button."
+  "gitActions": "إجراءات Git",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
   },
   "gitPull": "سحب",
   "gitPush": "دفع",

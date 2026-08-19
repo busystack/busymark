@@ -16,7 +16,6 @@ class GitSidebarTab extends ConsumerWidget {
   const GitSidebarTab({
     super.key,
     required this.workspace,
-    this.view = GitView.changes,
     required this.onOpenFile,
     required this.onConfirmDiscard,
     required this.onAfterWorkspaceFilesChanged,
@@ -25,7 +24,6 @@ class GitSidebarTab extends ConsumerWidget {
   });
 
   final Workspace workspace;
-  final GitView view;
   final ValueChanged<String> onOpenFile;
   final Future<bool> Function(List<GitFileStatus> files) onConfirmDiscard;
   final Future<void> Function() onAfterWorkspaceFilesChanged;
@@ -73,11 +71,7 @@ class GitSidebarTab extends ConsumerWidget {
             : null,
       );
     }
-    if (state.selectedView != view) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        controller.selectView(view);
-      });
-    } else if (view == GitView.fileHistory &&
+    if (state.selectedView == GitView.fileHistory &&
         state.scopedFilePath != null &&
         state.scopedFilePath != state.fileHistory.currentPath) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,7 +99,7 @@ class GitSidebarTab extends ConsumerWidget {
             else if (state.lastOperationMessage?.isNotEmpty ?? false)
               _GitOperationMessage(message: state.lastOperationMessage!),
             Expanded(
-              child: switch (view) {
+              child: switch (state.selectedView) {
                 GitView.changes => GitChangesView(
                   state: state,
                   onSelectFile: controller.selectChange,

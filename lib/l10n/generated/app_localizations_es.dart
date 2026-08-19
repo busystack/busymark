@@ -2061,7 +2061,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gitBranches => 'Ramas';
 
   @override
-  String get gitBranchActions => 'Acciones de ramas';
+  String get gitActions => 'Acciones de Git';
 
   @override
   String get gitPull => 'Pull';

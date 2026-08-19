@@ -1030,9 +1030,11 @@ void main() {
     expect(native, contains('"searchEscapePressed"'));
     expect(native, contains('sidebar_shortcut_action_for_key'));
     expect(native, contains('GDK_KEY_KP_1'));
-    expect(native, contains('GDK_KEY_KP_5'));
+    expect(native, contains('GDK_KEY_KP_4'));
+    expect(native, isNot(contains('GDK_KEY_KP_5')));
     expect(native, contains('"sidebarFiles"'));
-    expect(native, contains('"sidebarHistory"'));
+    expect(native, contains('"sidebarGit"'));
+    expect(native, isNot(contains('"sidebarHistory"')));
     expect(native, contains('modifiers != GDK_CONTROL_MASK'));
     expect(
       native,

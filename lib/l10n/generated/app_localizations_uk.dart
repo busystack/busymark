@@ -2070,7 +2070,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get gitBranches => 'Гілки';
 
   @override
-  String get gitBranchActions => 'Дії з гілками';
+  String get gitActions => 'Дії Git';
 
   @override
   String get gitPull => 'Pull';

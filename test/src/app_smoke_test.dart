@@ -890,8 +890,9 @@ void main() {
     expect(find.text(l10n.shortcutBulletedListDescription), findsOneWidget);
     expect(find.text(l10n.shortcutChecklistDescription), findsOneWidget);
     expect(find.text(l10n.shortcutGroupSidebar), findsOneWidget);
-    expect(find.text(l10n.gitChanges), findsOneWidget);
-    expect(find.text(l10n.gitProjectHistory), findsOneWidget);
+    expect(find.text(l10n.git), findsOneWidget);
+    expect(find.text(l10n.gitChanges), findsNothing);
+    expect(find.text(l10n.gitProjectHistory), findsNothing);
     expect(find.text(l10n.gitHistory), findsNothing);
     expect(find.text(l10n.shortcutDeleteTreeItemDescription), findsOneWidget);
     expect(find.text(l10n.viewMode), findsOneWidget);
@@ -2383,7 +2384,7 @@ void main() {
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(find.byTooltip(temp.path), findsOneWidget);
-    expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
+    expect(find.byTooltip(l10n.gitActions), findsNothing);
 
     await pressDocumentViewShortcut(
       LogicalKeyboardKey.digit3,
@@ -2392,7 +2393,7 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
+    expect(find.byTooltip(l10n.gitActions), findsOneWidget);
     final branchRow = find.byKey(
       const ValueKey('workspace-sidebar-first-content'),
     );
@@ -2436,17 +2437,31 @@ void main() {
     expect(find.text(l10n.gitPush), findsOneWidget);
     expect(find.text(l10n.gitFetch), findsOneWidget);
     expect(find.text(l10n.gitNewBranch), findsOneWidget);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(find.text(l10n.gitChanges), findsOneWidget);
+    expect(find.text(l10n.gitProjectHistory), findsOneWidget);
+    expect(find.text(l10n.gitFileHistory), findsOneWidget);
+    expect(find.byIcon(BusyMarkGlyphs.refresh), findsOneWidget);
+    expect(find.byIcon(BusyMarkGlyphs.add), findsOneWidget);
+    expect(find.byType(PopupMenuDivider), findsNWidgets(3));
+
+    await tester.tap(find.text(l10n.gitProjectHistory));
     await tester.pumpAndSettle();
+    expect(
+      container.read(gitControllerProvider).selectedView,
+      GitView.projectHistory,
+    );
+    expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
 
     await pressDocumentViewShortcut(
       LogicalKeyboardKey.digit4,
       DocumentViewModePreference.split,
     );
-    await pressControlShortcut(LogicalKeyboardKey.digit5);
-    expect(find.text('Sidebar history shortcut commit'), findsOneWidget);
+    await pressControlShortcut(LogicalKeyboardKey.digit4);
+    expect(find.text(l10n.gitNoChanges), findsOneWidget);
+    expect(find.text('Sidebar history shortcut commit'), findsNothing);
+    expect(container.read(gitControllerProvider).selectedView, GitView.changes);
     expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitBranchActions), findsOneWidget);
+    expect(find.byTooltip(l10n.gitActions), findsOneWidget);
     expect(branchMenu, findsOneWidget);
 
     await pressDocumentViewShortcut(
@@ -2458,7 +2473,7 @@ void main() {
     expect(find.text('Sidebar history shortcut commit'), findsNothing);
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
-    expect(find.byTooltip(l10n.gitBranchActions), findsNothing);
+    expect(find.byTooltip(l10n.gitActions), findsNothing);
     final outlineFileMenu = find.byKey(
       const ValueKey('workspace-sidebar-outline-file-menu'),
     );
@@ -2488,14 +2503,15 @@ void main() {
     for (final (label, shortcut) in <(String, String)>[
       (l10n.files, BusyMarkSidebarShortcutLabels.files),
       (l10n.outline, BusyMarkSidebarShortcutLabels.outline),
-      (l10n.gitChanges, BusyMarkSidebarShortcutLabels.git),
-      (l10n.gitProjectHistory, BusyMarkSidebarShortcutLabels.history),
+      (l10n.git, BusyMarkSidebarShortcutLabels.git),
     ]) {
       expect(find.text(label), findsOneWidget);
       expect(find.text(shortcut), findsOneWidget);
       expect(find.byTooltip('$label ($shortcut)'), findsNothing);
     }
-    expect(find.text(l10n.gitFileHistory), findsOneWidget);
+    expect(find.text(l10n.gitChanges), findsNothing);
+    expect(find.text(l10n.gitFileHistory), findsNothing);
+    expect(find.text(l10n.gitProjectHistory), findsNothing);
   });
 
   testWidgets('Writerside sidebar shortcuts survive document view changes', (
@@ -2586,9 +2602,6 @@ void main() {
           const ValueKey('workspace-sidebar-outline-tree'),
         ),
         LogicalKeyboardKey.digit4 => find.text(l10n.gitNoChanges),
-        LogicalKeyboardKey.digit5 => find.text(
-          'Sidebar history shortcut commit',
-        ),
         _ => throw ArgumentError.value(key, 'key'),
       };
     }
@@ -2605,8 +2618,7 @@ void main() {
           const ValueKey('workspace-sidebar-outline-file-menu'),
         );
       }
-      if (key == LogicalKeyboardKey.digit4 ||
-          key == LogicalKeyboardKey.digit5) {
+      if (key == LogicalKeyboardKey.digit4) {
         return find.byKey(const ValueKey('workspace-sidebar-branch-menu'));
       }
       return null;
@@ -2647,17 +2659,10 @@ void main() {
           ),
           (
             LogicalKeyboardKey.digit4,
-            'Changes',
+            'Git',
             true,
             LogicalKeyboardKey.digit1,
             DocumentViewModePreference.editor,
-          ),
-          (
-            LogicalKeyboardKey.digit5,
-            'Project History',
-            true,
-            LogicalKeyboardKey.digit3,
-            DocumentViewModePreference.preview,
           ),
         ]) {
       await switchDocumentView(documentViewKey, expectedDocumentView);
@@ -4748,9 +4753,10 @@ After break.
 
     await tester.tap(find.byTooltip(l10n.sidebarViewMenu));
     await tester.pumpAndSettle();
-    expect(find.text(l10n.gitChanges), findsOneWidget);
-    expect(find.text(l10n.gitFileHistory), findsOneWidget);
-    expect(find.text(l10n.gitProjectHistory), findsOneWidget);
+    expect(find.text(l10n.git), findsOneWidget);
+    expect(find.text(l10n.gitChanges), findsNothing);
+    expect(find.text(l10n.gitFileHistory), findsNothing);
+    expect(find.text(l10n.gitProjectHistory), findsNothing);
   });
 
   testWidgets(

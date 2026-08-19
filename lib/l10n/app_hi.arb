@@ -2177,9 +2177,9 @@
   "gitChanges": "बदलाव",
   "gitHistory": "इतिहास",
   "gitBranches": "शाखाएँ",
-  "gitBranchActions": "शाखा संबंधी कार्रवाइयाँ",
-  "@gitBranchActions": {
-    "description": "Tooltip for the Git branch action menu button."
+  "gitActions": "Git कार्रवाइयाँ",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
   },
   "gitPull": "पुल",
   "gitPush": "पुश",

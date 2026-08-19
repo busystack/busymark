@@ -6,6 +6,7 @@ abstract final class BusyMarkGlyphs {
   const BusyMarkGlyphs._();
 
   static const IconData about = YaruIcons.information;
+  static const IconData add = YaruIcons.plus;
   static const IconData appearance = YaruIcons.desktop_appearance;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData bold = YaruIcons.bold;
@@ -106,6 +107,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == about || icon == info) {
       return 'help-about-symbolic';
+    }
+    if (icon == add) {
+      return 'list-add-symbolic';
     }
     if (icon == appearance || icon == settings) {
       return 'preferences-system-symbolic';
@@ -247,6 +251,9 @@ abstract final class BusyMarkGlyphs {
     }
     if (icon == redo) {
       return 'edit-redo-symbolic';
+    }
+    if (icon == refresh) {
+      return 'view-refresh-symbolic';
     }
     if (icon == exportPdf) {
       return 'document-save-as-symbolic';

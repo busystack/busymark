@@ -2039,7 +2039,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get gitBranches => 'Harud';
 
   @override
-  String get gitBranchActions => 'Harutoimingud';
+  String get gitActions => 'Giti toimingud';
 
   @override
   String get gitPull => 'Pull';

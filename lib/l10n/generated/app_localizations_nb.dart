@@ -2040,7 +2040,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get gitBranches => 'Grener';
 
   @override
-  String get gitBranchActions => 'Grenhandlinger';
+  String get gitActions => 'Git-handlinger';
 
   @override
   String get gitPull => 'Pull';

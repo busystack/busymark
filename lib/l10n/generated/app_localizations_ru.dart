@@ -2061,7 +2061,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gitBranches => 'Ветки';
 
   @override
-  String get gitBranchActions => 'Действия с ветками';
+  String get gitActions => 'Действия Git';
 
   @override
   String get gitPull => 'Pull';

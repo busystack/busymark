@@ -2053,7 +2053,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gitBranches => 'الفروع';
 
   @override
-  String get gitBranchActions => 'إجراءات الفروع';
+  String get gitActions => 'إجراءات Git';
 
   @override
   String get gitPull => 'سحب';

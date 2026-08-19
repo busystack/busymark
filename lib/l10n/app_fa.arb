@@ -2189,9 +2189,9 @@
   "gitChanges": "تغییرات",
   "gitHistory": "تاریخچه",
   "gitBranches": "شاخه‌ها",
-  "gitBranchActions": "عملیات شاخه‌ها",
-  "@gitBranchActions": {
-    "description": "Tooltip for the Git branch action menu button."
+  "gitActions": "عملیات Git",
+  "@gitActions": {
+    "description": "Tooltip for the Git action menu button."
   },
   "gitPull": "دریافت",
   "gitPush": "ارسال",
