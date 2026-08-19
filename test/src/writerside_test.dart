@@ -6,6 +6,7 @@ import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -261,7 +262,7 @@ void main() {
       (diagnostic) => diagnostic.code == 'writerside.config.path-unsafe',
     );
 
-    expect(unsafeDiagnostics, hasLength(11));
+    expect(unsafeDiagnostics, hasLength(12));
     expect(
       unsafeDiagnostics.map((diagnostic) => diagnostic.args['reason']).toSet(),
       {'outsideRoot'},
@@ -736,5 +737,257 @@ void main() {
       module.diagnostics.map((item) => item.code),
       isNot(contains('markdown.image.missing-file')),
     );
+  });
+
+  test('parses the documented instance tree elements and attributes', () {
+    final instance = treeParser.parse('/project/guide.tree', '''
+<instance-profile id="guide" name="Guide" start-page="intro.md" status="eap">
+  <toc-element topic="intro.md" id="intro" toc-title="Introduction"
+      hidden="true" wip="true" instance="guide" filter="desktop"
+      accepts-web-file-names="old.html" accepts-web-file-names-ref="legacy"/>
+  <toc-element ref="admin.md" in="admin"/>
+  <toc-element toc-title="Moved" hidden="true"
+      accepts-web-file-names="moved.html"
+      target-for-accept-web-file-names="https://example.com/new"/>
+  <include from="library.tree" element-id="shared"
+      instance="@public" use-filter="empty,desktop"/>
+  <snippet id="local" instance="guide" filter="desktop">
+    <toc-element topic="local.md"/>
+  </snippet>
+</instance-profile>
+''');
+
+    expect(instance.status, 'eap');
+    expect(instance.treeEntries, hasLength(5));
+    final intro = instance.treeEntries.first as TocNode;
+    expect(intro.topicFileName, 'intro.md');
+    expect(intro.tocTitle, 'Introduction');
+    expect(intro.hidden, isTrue);
+    expect(intro.workInProgress, isTrue);
+    expect(intro.instanceCondition, 'guide');
+    expect(intro.customFilter, 'desktop');
+    expect(intro.acceptsWebFileNames, 'old.html');
+    expect(intro.acceptsWebFileNamesRef, 'legacy');
+    expect(intro.sourceTocPath, [0]);
+    final reference = instance.treeEntries[1] as TocNode;
+    expect(reference.referenceTopicFileName, 'admin.md');
+    expect(reference.referenceInstanceId, 'admin');
+    final redirect = instance.treeEntries[2] as TocNode;
+    expect(redirect.targetForAcceptWebFileNames, 'https://example.com/new');
+    final include = instance.treeEntries[3] as WritersideTocInclude;
+    expect(include.from, 'library.tree');
+    expect(include.elementId, 'shared');
+    expect(include.instanceCondition, '@public');
+    expect(include.useFilters, ['empty', 'desktop']);
+    final snippet = instance.treeEntries[4] as WritersideTocSnippet;
+    expect(snippet.id, 'local');
+    expect(snippet.entries.single, isA<TocNode>());
+    expect(instance.diagnostics.where(isError), isEmpty);
+  });
+
+  test(
+    'resolves registered TOC libraries, filters, groups, and cross-instance refs',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-writerside-instances-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance-groups src="instance-groups.xml"/>
+  <instance src="library.tree"/>
+  <instance src="guide.tree" version="2026.2" web-path="/guide/"/>
+  <instance src="admin.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'instance-groups.xml')).writeAsStringSync('''
+<instance-groups><group id="public" instances="guide"/></instance-groups>
+''');
+      File(p.join(root.path, 'library.tree')).writeAsStringSync('''
+<instance-profile id="library" name="Shared TOC" is-library="true">
+  <snippet id="shared">
+    <toc-element topic="common.md"/>
+    <toc-element topic="desktop.md" filter="desktop"/>
+    <toc-element topic="admin-only.md" instance="admin"/>
+  </snippet>
+</instance-profile>
+''');
+      File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" name="Guide" start-page="intro.md">
+  <toc-element topic="intro.md" wip="true"/>
+  <include from="library.tree" element-id="shared"
+      instance="@public" use-filter="empty,desktop"/>
+  <toc-element ref="admin.md" in="admin"/>
+</instance-profile>
+''');
+      File(p.join(root.path, 'admin.tree')).writeAsStringSync('''
+<instance-profile id="admin" name="Admin" start-page="admin.md">
+  <toc-element topic="admin.md"/>
+</instance-profile>
+''');
+      for (final name in const [
+        'intro.md',
+        'common.md',
+        'desktop.md',
+        'admin-only.md',
+        'admin.md',
+      ]) {
+        File(
+          p.join(root.path, 'topics', name),
+        ).writeAsStringSync('# ${p.basenameWithoutExtension(name)}\n');
+      }
+
+      final module = await moduleService.load(root.path);
+      final workspace = await workspaceService.openPath(root.path);
+      final guide = module.instances.singleWhere(
+        (instance) => instance.id == 'guide',
+      );
+      final library = module.instances.singleWhere(
+        (instance) => instance.id == 'library',
+      );
+
+      expect(guide.version, '2026.2');
+      expect(guide.webPath, '/guide/');
+      expect(
+        guide.navigationTocRoots
+            .expand((node) => node.flatten())
+            .map((node) => node.topicReference)
+            .whereType<String>(),
+        ['intro.md', 'common.md', 'desktop.md', 'admin.md'],
+      );
+      final included = guide.navigationTocRoots[1];
+      expect(included.topicFileName, 'common.md');
+      expect(included.included, isTrue);
+      expect(included.canEditStructure, isFalse);
+      expect(guide.tocRoots.map((node) => node.topicReference), [
+        'intro.md',
+        'admin.md',
+      ]);
+      expect(library.isLibrary, isTrue);
+      expect(library.navigationTocRoots.single.id, 'shared');
+      expect(
+        library.navigationTocRoots.single.children.map(
+          (node) => node.topicFileName,
+        ),
+        ['common.md', 'desktop.md'],
+      );
+      expect(workspace.activeFilePath, p.join(root.path, 'topics', 'intro.md'));
+      expect(
+        module.diagnostics.map((diagnostic) => diagnostic.code),
+        isNot(
+          anyOf(
+            contains('writerside.tree.unresolved-include-source'),
+            contains('writerside.tree.unresolved-include-element'),
+            contains('writerside.tree.missing-reference-topic'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test('reports circular reusable tree includes without recursing', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-writerside-circular-tree-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    Directory(p.join(root.path, 'topics')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><topics dir="topics"/><instance src="guide.tree"/><instance src="library.tree"/></ihp>
+''');
+    File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" name="Guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+  <include from="library.tree" element-id="loop"/>
+</instance-profile>
+''');
+    File(p.join(root.path, 'library.tree')).writeAsStringSync('''
+<instance-profile id="library" name="Library" is-library="true">
+  <snippet id="loop"><include from="library.tree" element-id="loop"/></snippet>
+</instance-profile>
+''');
+    File(
+      p.join(root.path, 'topics', 'intro.md'),
+    ).writeAsStringSync('# Intro\n');
+
+    final module = await moduleService.load(root.path);
+
+    expect(
+      module.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('writerside.tree.circular-include'),
+    );
+    final guide = module.instances.first;
+    expect(guide.navigationTocRoots, hasLength(2));
+    expect(guide.navigationTocRoots.last.includeResolutionError, 'circular');
+  });
+
+  test(
+    'included content still requires a regular instance home page',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-writerside-included-home-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><topics dir="topics"/><instance src="guide.tree"/><instance src="library.tree"/></ihp>
+''');
+      File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" name="Guide">
+  <include from="library.tree" element-id="shared"/>
+</instance-profile>
+''');
+      File(p.join(root.path, 'library.tree')).writeAsStringSync('''
+<instance-profile id="library" name="Library" is-library="true">
+  <snippet id="shared"><toc-element topic="common.md"/></snippet>
+</instance-profile>
+''');
+      File(
+        p.join(root.path, 'topics', 'common.md'),
+      ).writeAsStringSync('# Common\n');
+
+      final module = await moduleService.load(root.path);
+
+      expect(
+        module.diagnostics.map((diagnostic) => diagnostic.code),
+        contains('writerside.tree.missing-start-page'),
+      );
+    },
+  );
+
+  test('ignores status-specific values for general instance settings', () {
+    const parser = WritersideBuildProfilesParser();
+    final profiles = parser.parse('cfg/buildprofiles.xml', '''
+<buildprofiles>
+  <variables>
+    <noindex-content status="release">false</noindex-content>
+    <noindex-content>true</noindex-content>
+  </variables>
+  <build-profile instance="guide">
+    <variables>
+      <offline-docs status="eap">true</offline-docs>
+      <offline-docs>false</offline-docs>
+    </variables>
+  </build-profile>
+</buildprofiles>
+''');
+
+    expect(profiles.globalValues.noindexContent, isTrue);
+    expect(profiles.valuesFor('guide').offlineDocs, isFalse);
+  });
+
+  test('instance demo is a valid openable Writerside module', () async {
+    final module = await moduleService.load('demo/writerside-instances');
+
+    expect(module.instances.map((instance) => instance.id), [
+      'guide',
+      'admin',
+      'shared',
+    ]);
+    expect(module.instances.last.isLibrary, isTrue);
+    expect(module.instances.first.allowSearchEngineIndexing, isTrue);
+    expect(module.instances[1].offlineArtifact, isTrue);
+    expect(module.diagnostics.where(isError), isEmpty);
   });
 }

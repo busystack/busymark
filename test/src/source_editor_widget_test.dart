@@ -3,6 +3,7 @@ import 'dart:ui' show BoxHeightStyle;
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
+import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/core/diagnostic.dart';
@@ -18,6 +19,64 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  testWidgets('source AI action applies a selection through the editor path', (
+    tester,
+  ) async {
+    const source = 'Unclear text.\n';
+    AiEditInvocation? invocation;
+    String? changedText;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: BusyMarkLinuxPalette.blueAccent,
+        ),
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/topic.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (text, _) => changedText = text,
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              editRevision: 7,
+              onAiEdit: (value) async {
+                invocation = value;
+                return 'Clear text.';
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    final field = tester.widget<TextField>(find.byType(TextField));
+    field.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 13,
+    );
+
+    await tester.tap(find.byTooltip('AI'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rewrite').last);
+    await tester.pumpAndSettle();
+
+    expect(invocation?.input, 'Unclear text.');
+    expect(invocation?.contentFormat, AiContentFormat.markdown);
+    expect(invocation?.sourceRevision, 7);
+    expect(changedText, 'Clear text.\n');
+  });
+
   testWidgets('source editor remains LTR inside an Arabic interface', (
     tester,
   ) async {

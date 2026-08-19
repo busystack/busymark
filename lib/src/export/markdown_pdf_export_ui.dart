@@ -18,6 +18,7 @@ import '../visualization/visualization_providers.dart';
 import 'markdown_visualization_export.dart';
 import 'markdown_pdf_export_service.dart';
 import 'markdown_pdf_models.dart';
+import 'writerside_pdf_export_ui.dart';
 
 final markdownPdfExportServiceProvider = Provider<MarkdownPdfExportService>(
   (ref) => MarkdownPdfExportService(
@@ -45,6 +46,18 @@ bool canExportActiveMarkdown(WorkspaceState state) {
           ),
     WorkspaceKind.writersideModule => false,
   };
+}
+
+bool canExportWorkspacePdf(WorkspaceState state) {
+  return canExportActiveMarkdown(state) || canExportWritersidePdf(state);
+}
+
+Future<void> exportWorkspaceToPdf(BuildContext context, WidgetRef ref) {
+  final workspace = ref.read(workspaceControllerProvider).workspace;
+  if (workspace?.kind == WorkspaceKind.writersideModule) {
+    return exportWritersideModuleToPdf(context, ref);
+  }
+  return exportActiveMarkdownToPdf(context, ref);
 }
 
 Future<void> exportActiveMarkdownToPdf(

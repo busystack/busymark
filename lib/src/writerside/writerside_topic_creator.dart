@@ -19,19 +19,37 @@ class WritersideTocNodeIdentity {
   const WritersideTocNodeIdentity({
     required this.hidden,
     this.topicFileName,
+    this.referenceTopicFileName,
+    this.referenceInstanceId,
     this.href,
     this.tocTitle,
     this.id,
+    this.acceptsWebFileNames,
+    this.acceptsWebFileNamesRef,
+    this.targetForAcceptWebFileNames,
+    this.instanceCondition,
+    this.customFilter,
+    this.origin,
+    this.workInProgress = false,
     this.children = const [],
   });
 
   factory WritersideTocNodeIdentity.fromNode(TocNode node) {
     return WritersideTocNodeIdentity(
       topicFileName: node.topicFileName,
+      referenceTopicFileName: node.referenceTopicFileName,
+      referenceInstanceId: node.referenceInstanceId,
       href: node.href,
       tocTitle: node.tocTitle,
       id: node.id,
+      acceptsWebFileNames: node.acceptsWebFileNames,
+      acceptsWebFileNamesRef: node.acceptsWebFileNamesRef,
+      targetForAcceptWebFileNames: node.targetForAcceptWebFileNames,
+      instanceCondition: node.instanceCondition,
+      customFilter: node.customFilter,
+      origin: node.origin,
       hidden: node.hidden,
+      workInProgress: node.workInProgress,
       children: [
         for (final child in node.children)
           WritersideTocNodeIdentity.fromNode(child),
@@ -40,18 +58,38 @@ class WritersideTocNodeIdentity {
   }
 
   final String? topicFileName;
+  final String? referenceTopicFileName;
+  final String? referenceInstanceId;
   final String? href;
   final String? tocTitle;
   final String? id;
+  final String? acceptsWebFileNames;
+  final String? acceptsWebFileNamesRef;
+  final String? targetForAcceptWebFileNames;
+  final String? instanceCondition;
+  final String? customFilter;
+  final String? origin;
   final bool hidden;
+  final bool workInProgress;
   final List<WritersideTocNodeIdentity> children;
 
   bool matches(XmlElement element) {
     if (element.name.local != 'toc-element' ||
         element.getAttribute('topic') != topicFileName ||
+        element.getAttribute('ref') != referenceTopicFileName ||
+        element.getAttribute('in') != referenceInstanceId ||
         element.getAttribute('href') != href ||
         element.getAttribute('toc-title') != tocTitle ||
         element.getAttribute('id') != id ||
+        element.getAttribute('accepts-web-file-names') != acceptsWebFileNames ||
+        element.getAttribute('accepts-web-file-names-ref') !=
+            acceptsWebFileNamesRef ||
+        element.getAttribute('target-for-accept-web-file-names') !=
+            targetForAcceptWebFileNames ||
+        element.getAttribute('instance') != instanceCondition ||
+        element.getAttribute('filter') != customFilter ||
+        element.getAttribute('origin') != origin ||
+        (element.getAttribute('wip') == 'true') != workInProgress ||
         (element.getAttribute('hidden') == 'true') != hidden) {
       return false;
     }
@@ -312,6 +350,16 @@ class WritersideTopicCreator {
     final element = XmlElement(XmlName.parts('toc-element'), [
       XmlAttribute(XmlName.parts('topic'), topicFileName),
     ]);
+    final isFirstTopic = !root.descendants.whereType<XmlElement>().any(
+      (element) =>
+          element.name.local == 'toc-element' &&
+          element.getAttribute('topic')?.trim().isNotEmpty == true,
+    );
+    if (isFirstTopic &&
+        root.getAttribute('start-page') == null &&
+        root.getAttribute('is-library') != 'true') {
+      root.setAttribute('start-page', topicFileName);
+    }
     if (request.placement == WritersideTopicCreatePlacement.root) {
       root.children.add(element);
       return _treeXml(document);

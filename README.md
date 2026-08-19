@@ -22,9 +22,12 @@ projects.
 - Open Writerside-compatible project folders.
 - Create Writerside-compatible starter projects.
 - Create Writerside Markdown and XML topics from the TOC.
+- Create, select, import, edit, and reuse Writerside help instances and TOC libraries.
 - Edit and save local files.
 - Preview Markdown content.
 - Render Mermaid, PlantUML, D2, and fenced OpenAPI content locally and offline.
+- Rewrite, shorten, summarize, translate, proofread, and draft Markdown with an
+  explicitly configured local Ollama model and diff-before-apply review.
 - Export Markdown documents as accessible, tagged PDF files.
 - Navigate project files, table of contents, and document outline.
 - Run basic diagnostics.
@@ -75,6 +78,11 @@ configuration locations for topics, images, variables, categories, instances,
 snippets, build configuration, API specifications, instance groups, and selected
 settings metadata. Topic support includes Markdown topics, XML `.topic` files,
 TOC registration, instance-specific topic titles, and custom web file names.
+Instance support includes local selection and icon colors, version/web-path and
+build settings, Markdown import, status, ID refactoring, instance groups,
+conditional and reusable TOC sections, and cross-instance topic references.
+See [Writerside instances](docs/writerside-instances.md) for behavior, safety
+rules, an openable example, and the authoritative JetBrains references.
 
 Folder workspaces include documentation-like files such as Markdown, Writerside
 topic files, `.tree`, `.cfg`, `.list`, and `.xml` files. Common resource files
@@ -88,15 +96,15 @@ are skipped to keep the app responsive.
 ## PDF export
 
 Use **Main menu → Export as PDF** or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>
-while a Markdown document is active. BusyMark exports the current editor
-contents, including unsaved changes, and offers A4 or Letter paper, portrait or
-landscape orientation, three margin sizes, and optional page numbers. Writerside
-topics are not exported yet.
+to export either the active Markdown document or the opened Writerside module.
+Markdown export uses the current editor contents, including unsaved changes,
+and offers A4 or Letter paper, portrait or landscape orientation, three margin
+sizes, and optional page numbers.
 
-PDF generation is local and offline. BusyMark bundles the pinned Typst compiler;
-users do not install or configure a separate program. Local PNG, JPEG, GIF, and
-safe SVG images are included. Remote images are deliberately not downloaded
-during export and are represented by their alternative text.
+Markdown PDF generation is local and offline. BusyMark bundles the pinned Typst
+compiler; users do not install or configure a separate program. Local PNG,
+JPEG, GIF, and safe SVG images are included. Remote images are deliberately not
+downloaded during export and are represented by their alternative text.
 
 Mermaid and PlantUML fences are exported as vector diagrams. D2 uses normalized
 SVG where possible and a local high-resolution raster fallback for browser-only
@@ -108,6 +116,31 @@ security policy, pinned engines, architecture, and verification. Working
 examples are in [demo/visualizations.md](demo/visualizations.md),
 [demo/openapi-local-reference.md](demo/openapi-local-reference.md), and
 [demo/plantuml-conformance.md](demo/plantuml-conformance.md).
+
+Writerside PDF export builds one selected output instance with JetBrains'
+official, versioned Writerside builder image. It supports generated settings or
+an existing project `PDF.xml`, including orientation, keymap, cover page,
+header, footer, and table-of-contents title. Docker is required, the large image
+is downloaded only after confirmation, project sources stay read-only, and
+builder network access is disabled unless explicitly enabled. See
+[Writerside PDF export](docs/writerside-pdf-export.md) for setup, customization,
+security boundaries, Snap limitations, and the authoritative JetBrains
+references. An exportable configuration is included in
+[demo/writerside-instances](demo/writerside-instances).
+
+## Local AI editing
+
+BusyMark's optional AI editing is disabled by default and uses only a
+loopback Ollama service. It supports explicit Rewrite, Shorten, Summarize,
+Change tone, Translate, Proofread, and Draft actions in Source and Editor
+views. BusyMark shows the exact context sent, streams into a unified Markdown
+diff, rejects stale results and protected-Markdown changes, and never applies a
+proposal without confirmation. Remote Ollama/cloud models are excluded.
+
+See [local AI editing](docs/local-ai.md) for configuration, privacy and
+security boundaries, the reviewed architecture decision, and authoritative
+protocol references. An interactive exercise is available in
+[demo/ai-editing.md](demo/ai-editing.md).
 
 ## Run From Source
 

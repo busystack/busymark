@@ -2636,5 +2636,547 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortcutExportPdfDescription =>
-      'Das aktive Markdown-Dokument als PDF exportieren.';
+      'Das aktive Dokument oder Writerside-Modul als PDF exportieren.';
+
+  @override
+  String get newHelpInstance => 'Neue Hilfeinstanz';
+
+  @override
+  String get importMarkdownInstance => 'Neue Instanz aus Markdown-Dateien';
+
+  @override
+  String get newTocLibrary => 'Neue TOC-Bibliothek';
+
+  @override
+  String get editInstance => 'Instanz bearbeiten';
+
+  @override
+  String get openTocFile => 'TOC-Datei öffnen';
+
+  @override
+  String get changeInstanceColor => 'Instanzfarbe ändern';
+
+  @override
+  String get createHelpInstance => 'Hilfeinstanz erstellen';
+
+  @override
+  String get createTocLibrary => 'TOC-Bibliothek erstellen';
+
+  @override
+  String get importMarkdownAsInstance => 'Markdown als Instanz importieren';
+
+  @override
+  String get instanceVersion => 'Version';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'Wenn dieses Feld leer ist, wird die Projektversion $version verwendet.';
+  }
+
+  @override
+  String get instanceWebPath => 'Webpfad';
+
+  @override
+  String get instanceStatus => 'Status';
+
+  @override
+  String get instanceStatusRelease => 'Veröffentlichung';
+
+  @override
+  String get instanceStatusEap => 'Early Access';
+
+  @override
+  String get instanceStatusDeprecated => 'Veraltet';
+
+  @override
+  String get allowSearchEngineIndexing =>
+      'Indizierung durch Suchmaschinen zulassen';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Externen Suchmaschinen erlauben, diese Ausgabe zu indizieren.';
+
+  @override
+  String get offlineArtifact => 'Offline-Artefakt';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Ressourcen bündeln, damit die erstellte Dokumentation eigenständig ist.';
+
+  @override
+  String get instanceOutputSettings => 'Ausgabeeinstellungen';
+
+  @override
+  String get markdownImportSource => 'Markdown-Quelle';
+
+  @override
+  String get markdownImportFiles => 'Markdown-Dateien';
+
+  @override
+  String get selectNone => 'Keine auswählen';
+
+  @override
+  String markdownFilesFound(int count) {
+    return '$count Markdown-Datei(en) gefunden';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'In diesem Verzeichnis wurden keine Markdown-Dateien gefunden.';
+
+  @override
+  String get copyReferencedMedia => 'Referenzierte Medien kopieren';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Lokale Bilder und Videos der ausgewählten Dateien unter Beibehaltung relativer Pfade kopieren.';
+
+  @override
+  String get instanceIdRenameWarningTitle => 'Instanz-ID umbenennen?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark benennt die .tree-Datei um und aktualisiert Writerside-Projektreferenzen von „$oldId“ zu „$newId“. Veröffentlichungsskripte werden nicht geändert und müssen separat aktualisiert werden.';
+  }
+
+  @override
+  String get renameAndUpdateReferences =>
+      'Umbenennen und Referenzen aktualisieren';
+
+  @override
+  String get tocLibraryDescription =>
+      'Eine TOC-Bibliothek speichert wiederverwendbare Abschnitte und erzeugt keine eigene Ausgabe.';
+
+  @override
+  String get defaultTocLibraryName => 'Gemeinsames TOC';
+
+  @override
+  String get instanceColorAutomatic => 'Automatisch';
+
+  @override
+  String get instanceColorBlue => 'Blau';
+
+  @override
+  String get instanceColorGreen => 'Grün';
+
+  @override
+  String get instanceColorOrange => 'Orange';
+
+  @override
+  String get instanceColorPurple => 'Violett';
+
+  @override
+  String get instanceColorRed => 'Rot';
+
+  @override
+  String get instanceColorTeal => 'Türkis';
+
+  @override
+  String get instanceColorYellow => 'Gelb';
+
+  @override
+  String get errorWritersideInstanceNameRequired =>
+      'Geben Sie einen Instanznamen ein.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'Eine Instanz mit der ID „$id“ ist bereits vorhanden.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'Der Instanzbaum ist bereits vorhanden: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Das Markdown-Quellverzeichnis ist nicht vorhanden: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Wählen Sie mindestens eine zu importierende Markdown-Datei aus.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'Dies ist keine lesbare Markdown-Datei innerhalb der ausgewählten Quelle: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'Der Import würde eine vorhandene Projektdatei überschreiben: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Instanzdateien wurden auf dem Datenträger geändert. Prüfen Sie sie und versuchen Sie es erneut.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark konnte die Instanzänderung nicht vollständig zurücknehmen. Prüfen Sie diese Dateien, bevor Sie fortfahren: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'Eine TOC-Bibliothek kann keine Markdown-Themen importieren.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Der Webpfad muss aus einer einzigen Zeile bestehen.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Die Writerside-Instanzkonfiguration ist ungültig. Korrigieren Sie die Diagnosen und versuchen Sie es erneut.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark konnte die Instanzänderungen nicht sicher bereitstellen.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'Unbekannter Instanzstatus „$status“. Verwenden Sie release, eap oder deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'Die Instanz-ID „$id“ wird von mehreren Baumdateien verwendet.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml muss ein <buildprofiles>-Wurzelelement besitzen.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'Der Wert $name „$value“ muss true oder false sein.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Ein <build-profile>-Element muss eine Instanz-ID angeben.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Ein <include> im Baum muss sowohl from als auch element-id angeben.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Ein <snippet> im Baum muss eine id angeben.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Eine instanzübergreifende TOC-Referenz muss sowohl ref als auch in angeben.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Ein TOC-Element kann nicht gleichzeitig auf mehrere Themen, Referenzen, Links oder Weiterleitungen verweisen.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'Die Baumelement-ID „$id“ ist mehrfach deklariert.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Die Instanzgruppendatei muss ein <instance-groups>-Wurzelelement besitzen.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Eine Instanzgruppe muss eine nicht leere id und Instanzliste angeben.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'Die Instanzgruppen-ID „$id“ ist mehrfach deklariert.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'Die TOC-Einbindung „$source#$id“ gehört zum externen Modul „$origin“ und kann in diesem Arbeitsbereich nicht erweitert werden.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'Das Baumelement „$id“ ist im registrierten Baum „$source“ nicht vorhanden.';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'Die Baumeinbindung „$source#$id“ erzeugt einen Zyklus.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'Die Instanzbedingung verweist auf die unbekannte Gruppe „@$group“.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'Die instanzübergreifende Referenz verweist auf die unbekannte Instanz „$instance“.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'Das Thema „$topic“ gehört nicht zur referenzierten Instanz „$instance“.';
+  }
+
+  @override
+  String get download => 'Herunterladen';
+
+  @override
+  String get exportWritersideAsPdf => 'Writerside als PDF exportieren';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Eine Writerside-Instanz mit dem offiziellen Writerside-Builder von JetBrains erstellen.';
+
+  @override
+  String get writersidePdfContent => 'Exportinhalt';
+
+  @override
+  String get writersidePdfSettings => 'PDF-Einstellungen';
+
+  @override
+  String get writersidePdfConfigureHere => 'Für diesen Export konfigurieren';
+
+  @override
+  String get writersidePdfProjectConfiguration =>
+      'Projektkonfiguration verwenden';
+
+  @override
+  String get writersidePdfConfigurationFile => 'PDF-Konfigurationsdatei';
+
+  @override
+  String get writersidePdfPage => 'Seite';
+
+  @override
+  String get writersidePdfKeymap => 'Tastaturbelegung';
+
+  @override
+  String get writersidePdfNoKeymap => 'Keine Tastaturbelegung';
+
+  @override
+  String get writersidePdfTocTitle => 'Titel des Inhaltsverzeichnisses';
+
+  @override
+  String get writersidePdfCover => 'Deckblatt';
+
+  @override
+  String get writersidePdfIncludeCover => 'Deckblatt einfügen';
+
+  @override
+  String get writersidePdfCoverTitle => 'Deckblatttitel';
+
+  @override
+  String get writersidePdfCoverDescription => 'Deckblattbeschreibung';
+
+  @override
+  String get writersidePdfCopyright => 'Urheberrecht';
+
+  @override
+  String get writersidePdfCoverLogo => 'Deckblattlogo';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Deckblattlogo auswählen';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'Kopf- und Fußzeile';
+
+  @override
+  String get writersidePdfHeader => 'Kopfzeile';
+
+  @override
+  String get writersidePdfFooter => 'Fußzeile';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'Diese Werte ordnen das geöffnete Modul dem Quelllayout des Builders zu.';
+
+  @override
+  String get writersidePdfModuleName => 'Modulname';
+
+  @override
+  String get writersidePdfSourceRoot => 'Quellstammverzeichnis';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'Quellstammverzeichnis auswählen';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Builder-Version';
+
+  @override
+  String get writersidePdfAllowNetwork =>
+      'Netzwerk während des Builds zulassen';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Standardmäßig deaktiviert. Nur aktivieren, wenn das Projekt bewusst entfernte Build-Ressourcen benötigt.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Geben Sie den Modulnamen ein.';
+
+  @override
+  String get writersidePdfSourceRootRequired =>
+      'Wählen Sie das Quellstammverzeichnis aus.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Geben Sie eine gültige Builder-Version ein.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Writerside-Builder erforderlich';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark verwendet das offizielle Container-Image $image. Jetzt herunterladen? Das Image ist groß und wird von Docker gespeichert.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Writerside-Builder wird heruntergeladen…';
+
+  @override
+  String get exportingWritersidePdf => 'Writerside-PDF wird exportiert…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Docker ist für den Writerside-PDF-Export erforderlich. Installieren und starten Sie Docker und versuchen Sie es erneut.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'Das angeforderte Writerside-Builder-Image ist nicht verfügbar.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'Die Writerside-PDF-Konfiguration ist ungültig.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'Der Writerside-Builder konnte die PDF-Datei nicht erstellen.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Der Writerside-Builder hat keine gültige PDF-Datei erzeugt.';
+
+  @override
+  String get ai => 'KI';
+
+  @override
+  String get aiLocalOllama => 'Lokales Ollama';
+
+  @override
+  String get aiDisabled => 'Deaktiviert';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'KI-Bearbeitung erfolgt ausdrücklich und nur lokal. BusyMark sendet ausschließlich den angezeigten Kontext an einen Ollama-Dienst auf der Loopback-Schnittstelle und wendet einen Vorschlag nie ohne Prüfung an.';
+
+  @override
+  String get aiProvider => 'KI-Anbieter';
+
+  @override
+  String get aiOllamaEndpoint => 'Ollama-Endpunkt';
+
+  @override
+  String get aiOllamaModel => 'Ollama-Modell';
+
+  @override
+  String get aiTestConnection => 'Verbindung testen';
+
+  @override
+  String get aiTestingConnection => 'Wird getestet…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Verbunden. $count installierte(s) Modell(e) gefunden.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama wird ausgeführt, aber es wurden keine installierten Modelle gefunden.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark konnte die lokale Ollama-Verbindung nicht testen.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Aktivieren Sie Lokales Ollama und wählen Sie unter Einstellungen → KI ein installiertes Modell aus.';
+
+  @override
+  String get aiRewrite => 'Umschreiben';
+
+  @override
+  String get aiShorten => 'Kürzen';
+
+  @override
+  String get aiSummarize => 'Zusammenfassen';
+
+  @override
+  String get aiChangeTone => 'Ton ändern…';
+
+  @override
+  String get aiTranslate => 'Übersetzen…';
+
+  @override
+  String get aiProofread => 'Korrekturlesen';
+
+  @override
+  String get aiDraft => 'Entwurf erstellen…';
+
+  @override
+  String get aiSelectionRequired => 'Wählen Sie Text für diese KI-Aktion aus.';
+
+  @override
+  String get aiTonePrompt => 'Beschreiben Sie den gewünschten Ton';
+
+  @override
+  String get aiLanguagePrompt => 'Zielsprache';
+
+  @override
+  String get aiDraftPrompt => 'Was soll BusyMark entwerfen?';
+
+  @override
+  String get aiGenerating => 'Vorschlag wird erstellt…';
+
+  @override
+  String get aiProposal => 'KI-Vorschlag';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Das lokale Ollama erhält $count Zeichen aus dem aktuellen Editorkontext.';
+  }
+
+  @override
+  String get aiOriginal => 'Originaltext';
+
+  @override
+  String get aiSuggested => 'Vorschlag';
+
+  @override
+  String get aiApplyProposal => 'Vorschlag anwenden';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '$input Eingabetoken · $output Ausgabetoken';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'Das Dokument wurde während der Erstellung dieses Vorschlags geändert. Führen Sie die Aktion erneut aus.';
+
+  @override
+  String get aiViewContext => 'Gesendeten Kontext anzeigen';
 }

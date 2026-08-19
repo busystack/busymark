@@ -2605,5 +2605,541 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutExportPdfDescription =>
-      'Export the active Markdown document as a PDF.';
+      'Export the active document or Writerside module as a PDF.';
+
+  @override
+  String get newHelpInstance => 'New help instance';
+
+  @override
+  String get importMarkdownInstance => 'New instance from Markdown files';
+
+  @override
+  String get newTocLibrary => 'New TOC library';
+
+  @override
+  String get editInstance => 'Edit instance';
+
+  @override
+  String get openTocFile => 'Open TOC file';
+
+  @override
+  String get changeInstanceColor => 'Change instance color';
+
+  @override
+  String get createHelpInstance => 'Create help instance';
+
+  @override
+  String get createTocLibrary => 'Create TOC library';
+
+  @override
+  String get importMarkdownAsInstance => 'Import Markdown as instance';
+
+  @override
+  String get instanceVersion => 'Version';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'The project version is $version when this field is empty.';
+  }
+
+  @override
+  String get instanceWebPath => 'Web path';
+
+  @override
+  String get instanceStatus => 'Status';
+
+  @override
+  String get instanceStatusRelease => 'Release';
+
+  @override
+  String get instanceStatusEap => 'Early access';
+
+  @override
+  String get instanceStatusDeprecated => 'Deprecated';
+
+  @override
+  String get allowSearchEngineIndexing => 'Allow search engine indexing';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Allow external search engines to index this output.';
+
+  @override
+  String get offlineArtifact => 'Offline artifact';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Bundle resources so the built documentation is self-contained.';
+
+  @override
+  String get instanceOutputSettings => 'Output settings';
+
+  @override
+  String get markdownImportSource => 'Markdown source';
+
+  @override
+  String get markdownImportFiles => 'Markdown files';
+
+  @override
+  String get selectNone => 'Select none';
+
+  @override
+  String markdownFilesFound(int count) {
+    return '$count Markdown file(s) found';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'No Markdown files were found in this directory.';
+
+  @override
+  String get copyReferencedMedia => 'Copy referenced media';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Copy local images and video referenced by the selected files while preserving relative paths.';
+
+  @override
+  String get instanceIdRenameWarningTitle => 'Rename instance ID?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark will rename the .tree file and update Writerside project references from “$oldId” to “$newId”. Publication scripts are not changed and must be updated separately.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'Rename and update references';
+
+  @override
+  String get tocLibraryDescription =>
+      'A TOC library stores reusable sections and does not produce its own output.';
+
+  @override
+  String get defaultTocLibraryName => 'Shared TOC';
+
+  @override
+  String get instanceColorAutomatic => 'Automatic';
+
+  @override
+  String get instanceColorBlue => 'Blue';
+
+  @override
+  String get instanceColorGreen => 'Green';
+
+  @override
+  String get instanceColorOrange => 'Orange';
+
+  @override
+  String get instanceColorPurple => 'Purple';
+
+  @override
+  String get instanceColorRed => 'Red';
+
+  @override
+  String get instanceColorTeal => 'Teal';
+
+  @override
+  String get instanceColorYellow => 'Yellow';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'Enter an instance name.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'An instance with ID “$id” already exists.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'The instance tree already exists: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'The Markdown source directory does not exist: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Select at least one Markdown file to import.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'This is not a readable Markdown file inside the selected source: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'Import would overwrite an existing project file: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Instance files changed on disk. Review them and try again.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark could not completely roll back the instance change. Review these files before continuing: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'A TOC library cannot import Markdown topics.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'The web path must be a single line.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'The Writerside instance configuration is invalid. Correct its diagnostics and try again.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark could not stage the instance changes safely.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'Unknown instance status “$status”. Use release, eap, or deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'The instance ID “$id” is used by more than one tree file.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml must have a <buildprofiles> root element.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'The $name value “$value” must be true or false.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'A <build-profile> element must specify an instance ID.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'A tree <include> must specify both from and element-id.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'A tree <snippet> must specify an id.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'A cross-instance TOC reference must specify both ref and in.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'A TOC element cannot target more than one topic, reference, link, or redirect.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'Tree element ID “$id” is declared more than once.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'The instance groups file must have an <instance-groups> root element.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'An instance group must specify a non-empty id and instances list.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'Instance group ID “$id” is declared more than once.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'TOC include “$source#$id” belongs to external module “$origin” and cannot be expanded in this workspace.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'Tree element “$id” does not exist in registered tree “$source”.';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'Tree include “$source#$id” creates a cycle.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'Instance condition references unknown group “@$group”.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'Cross-instance reference targets unknown instance “$instance”.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'Topic “$topic” is not in referenced instance “$instance”.';
+  }
+
+  @override
+  String get download => 'Download';
+
+  @override
+  String get exportWritersideAsPdf => 'Export Writerside as PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Build one Writerside instance with JetBrains’ official Writerside builder.';
+
+  @override
+  String get writersidePdfContent => 'Export content';
+
+  @override
+  String get writersidePdfSettings => 'PDF settings';
+
+  @override
+  String get writersidePdfConfigureHere => 'Configure for this export';
+
+  @override
+  String get writersidePdfProjectConfiguration => 'Use project configuration';
+
+  @override
+  String get writersidePdfConfigurationFile => 'PDF configuration file';
+
+  @override
+  String get writersidePdfPage => 'Page';
+
+  @override
+  String get writersidePdfKeymap => 'Keymap';
+
+  @override
+  String get writersidePdfNoKeymap => 'No keymap';
+
+  @override
+  String get writersidePdfTocTitle => 'Table of contents title';
+
+  @override
+  String get writersidePdfCover => 'Cover page';
+
+  @override
+  String get writersidePdfIncludeCover => 'Include cover page';
+
+  @override
+  String get writersidePdfCoverTitle => 'Cover title';
+
+  @override
+  String get writersidePdfCoverDescription => 'Cover description';
+
+  @override
+  String get writersidePdfCopyright => 'Copyright';
+
+  @override
+  String get writersidePdfCoverLogo => 'Cover logo';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Choose cover logo';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'Header and footer';
+
+  @override
+  String get writersidePdfHeader => 'Header';
+
+  @override
+  String get writersidePdfFooter => 'Footer';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'These values map the opened module to the builder’s source layout.';
+
+  @override
+  String get writersidePdfModuleName => 'Module name';
+
+  @override
+  String get writersidePdfSourceRoot => 'Source root';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'Choose source root';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Builder version';
+
+  @override
+  String get writersidePdfAllowNetwork => 'Allow network during build';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Disabled by default. Enable only when the project intentionally needs remote build resources.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Enter the module name.';
+
+  @override
+  String get writersidePdfSourceRootRequired => 'Choose the source root.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Enter a valid builder version.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Writerside builder required';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark uses the official $image container image. Download it now? The image is large and is stored by Docker.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Downloading Writerside builder…';
+
+  @override
+  String get exportingWritersidePdf => 'Exporting Writerside PDF…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Docker is required for Writerside PDF export. Install and start Docker, then try again.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'The requested Writerside builder image is not available.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'The Writerside PDF configuration is invalid.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'The Writerside builder could not create the PDF.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'The Writerside builder did not produce a valid PDF.';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get aiLocalOllama => 'Local Ollama';
+
+  @override
+  String get aiDisabled => 'Disabled';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'AI editing is explicit and local-only. BusyMark sends only the displayed context to a loopback Ollama service and never applies a proposal without review.';
+
+  @override
+  String get aiProvider => 'AI provider';
+
+  @override
+  String get aiOllamaEndpoint => 'Ollama endpoint';
+
+  @override
+  String get aiOllamaModel => 'Ollama model';
+
+  @override
+  String get aiTestConnection => 'Test connection';
+
+  @override
+  String get aiTestingConnection => 'Testing…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Connected. $count installed model(s) found.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama is running, but no installed models were found.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark could not test the local Ollama connection.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Enable Local Ollama and choose an installed model in Settings → AI.';
+
+  @override
+  String get aiRewrite => 'Rewrite';
+
+  @override
+  String get aiShorten => 'Shorten';
+
+  @override
+  String get aiSummarize => 'Summarize';
+
+  @override
+  String get aiChangeTone => 'Change tone…';
+
+  @override
+  String get aiTranslate => 'Translate…';
+
+  @override
+  String get aiProofread => 'Proofread';
+
+  @override
+  String get aiDraft => 'Draft…';
+
+  @override
+  String get aiSelectionRequired => 'Select text for this AI action.';
+
+  @override
+  String get aiTonePrompt => 'Describe the target tone';
+
+  @override
+  String get aiLanguagePrompt => 'Target language';
+
+  @override
+  String get aiDraftPrompt => 'What should BusyMark draft?';
+
+  @override
+  String get aiGenerating => 'Generating proposal…';
+
+  @override
+  String get aiProposal => 'AI proposal';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Local Ollama will receive $count characters from the current editor context.';
+  }
+
+  @override
+  String get aiOriginal => 'Original';
+
+  @override
+  String get aiSuggested => 'Suggested';
+
+  @override
+  String get aiApplyProposal => 'Apply proposal';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '$input input tokens · $output output tokens';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'The document changed while this proposal was generated. Run the action again.';
+
+  @override
+  String get aiViewContext => 'View context sent';
 }

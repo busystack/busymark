@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+<instance-profile id="admin" name="Administration Guide"
+                  start-page="operations.md" status="eap">
+  <toc-element topic="operations.md"/>
+  <include from="shared.tree" element-id="setup" instance="@published"
+           use-filter="empty,server"/>
+</instance-profile>

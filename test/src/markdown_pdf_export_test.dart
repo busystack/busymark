@@ -7,8 +7,10 @@ import 'package:busymark/src/export/markdown_pdf_export_service.dart';
 import 'package:busymark/src/export/markdown_pdf_export_ui.dart';
 import 'package:busymark/src/export/markdown_pdf_models.dart';
 import 'package:busymark/src/export/typst_compiler.dart';
+import 'package:busymark/src/export/writerside_pdf_export_ui.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -57,6 +59,28 @@ void main() {
       isFalse,
     );
     expect(canExportActiveMarkdown(const WorkspaceState()), isFalse);
+  });
+
+  test('workspace PDF export accepts a Writerside module instance', () async {
+    final module = await const WritersideModuleService().load(
+      'test/fixtures/writerside/basic_project',
+    );
+    final workspace = Workspace(
+      id: 'writerside',
+      rootPath: module.rootPath,
+      kind: WorkspaceKind.writersideModule,
+      openedAt: DateTime(2026),
+      files: const [],
+      diagnostics: const [],
+      writersideModule: module,
+    );
+
+    expect(canExportWorkspacePdf(WorkspaceState(workspace: workspace)), isTrue);
+    expect(
+      canExportActiveMarkdown(WorkspaceState(workspace: workspace)),
+      isFalse,
+    );
+    expect(defaultWritersideBuilderModuleName(module), 'BusyMark Test');
   });
 
   test('atomic PDF publication never replaces without confirmation', () async {

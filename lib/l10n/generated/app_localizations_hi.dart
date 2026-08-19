@@ -2602,5 +2602,545 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get shortcutExportPdfDescription =>
-      'सक्रिय Markdown दस्तावेज़ को PDF के रूप में निर्यात करें।';
+      'सक्रिय दस्तावेज़ या Writerside मॉड्यूल को PDF के रूप में निर्यात करें।';
+
+  @override
+  String get newHelpInstance => 'नया हेल्प इंस्टेंस';
+
+  @override
+  String get importMarkdownInstance => 'Markdown फ़ाइलों से नया इंस्टेंस';
+
+  @override
+  String get newTocLibrary => 'नई विषय-सूची लाइब्रेरी';
+
+  @override
+  String get editInstance => 'इंस्टेंस संपादित करें';
+
+  @override
+  String get openTocFile => 'विषय-सूची फ़ाइल खोलें';
+
+  @override
+  String get changeInstanceColor => 'इंस्टेंस का रंग बदलें';
+
+  @override
+  String get createHelpInstance => 'हेल्प इंस्टेंस बनाएँ';
+
+  @override
+  String get createTocLibrary => 'विषय-सूची लाइब्रेरी बनाएँ';
+
+  @override
+  String get importMarkdownAsInstance =>
+      'Markdown को इंस्टेंस के रूप में आयात करें';
+
+  @override
+  String get instanceVersion => 'संस्करण';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'यह फ़ील्ड खाली होने पर प्रोजेक्ट का संस्करण $version है।';
+  }
+
+  @override
+  String get instanceWebPath => 'वेब पथ';
+
+  @override
+  String get instanceStatus => 'स्थिति';
+
+  @override
+  String get instanceStatusRelease => 'रिलीज़';
+
+  @override
+  String get instanceStatusEap => 'प्रारंभिक पहुँच';
+
+  @override
+  String get instanceStatusDeprecated => 'अप्रचलित';
+
+  @override
+  String get allowSearchEngineIndexing => 'सर्च इंजन इंडेक्सिंग की अनुमति दें';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'बाहरी सर्च इंजनों को इस आउटपुट को इंडेक्स करने दें।';
+
+  @override
+  String get offlineArtifact => 'ऑफ़लाइन पैकेज';
+
+  @override
+  String get offlineArtifactDescription =>
+      'संसाधनों को बंडल करें ताकि बनाई गई दस्तावेज़ीकरण सामग्री आत्मनिर्भर हो।';
+
+  @override
+  String get instanceOutputSettings => 'आउटपुट सेटिंग';
+
+  @override
+  String get markdownImportSource => 'Markdown स्रोत';
+
+  @override
+  String get markdownImportFiles => 'Markdown फ़ाइलें';
+
+  @override
+  String get selectNone => 'सभी का चयन हटाएँ';
+
+  @override
+  String markdownFilesFound(int count) {
+    return '$count Markdown फ़ाइल मिलीं';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'इस डायरेक्टरी में कोई Markdown फ़ाइल नहीं मिली।';
+
+  @override
+  String get copyReferencedMedia => 'संदर्भित मीडिया कॉपी करें';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'चुनी गई फ़ाइलों में संदर्भित स्थानीय चित्र और वीडियो कॉपी करें और सापेक्ष पथ बनाए रखें।';
+
+  @override
+  String get instanceIdRenameWarningTitle => 'इंस्टेंस ID का नाम बदलें?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark .tree फ़ाइल का नाम बदलेगा और Writerside प्रोजेक्ट संदर्भों को “$oldId” से “$newId” में अपडेट करेगा। प्रकाशन स्क्रिप्ट नहीं बदली जाएँगी और उन्हें अलग से अपडेट करना होगा।';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'नाम बदलें और संदर्भ अपडेट करें';
+
+  @override
+  String get tocLibraryDescription =>
+      'विषय-सूची लाइब्रेरी पुनः उपयोग योग्य अनुभाग संग्रहीत करती है और अपना अलग आउटपुट नहीं बनाती।';
+
+  @override
+  String get defaultTocLibraryName => 'साझा विषय-सूची';
+
+  @override
+  String get instanceColorAutomatic => 'स्वचालित';
+
+  @override
+  String get instanceColorBlue => 'नीला';
+
+  @override
+  String get instanceColorGreen => 'हरा';
+
+  @override
+  String get instanceColorOrange => 'नारंगी';
+
+  @override
+  String get instanceColorPurple => 'बैंगनी';
+
+  @override
+  String get instanceColorRed => 'लाल';
+
+  @override
+  String get instanceColorTeal => 'हरिनील';
+
+  @override
+  String get instanceColorYellow => 'पीला';
+
+  @override
+  String get errorWritersideInstanceNameRequired =>
+      'इंस्टेंस का नाम दर्ज करें।';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return '“$id” ID वाला इंस्टेंस पहले से मौजूद है।';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'इंस्टेंस ट्री पहले से मौजूद है: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Markdown स्रोत डायरेक्टरी मौजूद नहीं है: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'आयात करने के लिए कम से कम एक Markdown फ़ाइल चुनें।';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'यह चुने गए स्रोत के भीतर पढ़ी जा सकने वाली Markdown फ़ाइल नहीं है: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'आयात करने पर मौजूदा प्रोजेक्ट फ़ाइल ओवरराइट हो जाएगी: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'डिस्क पर इंस्टेंस फ़ाइलें बदल गई हैं। उनकी समीक्षा करें और फिर से प्रयास करें।';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark इंस्टेंस बदलाव को पूरी तरह वापस नहीं कर सका। आगे बढ़ने से पहले इन फ़ाइलों की समीक्षा करें: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'विषय-सूची लाइब्रेरी Markdown विषय आयात नहीं कर सकती।';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'वेब पथ एक ही पंक्ति में होना चाहिए।';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Writerside इंस्टेंस कॉन्फ़िगरेशन अमान्य है। इसके निदान सुधारें और फिर से प्रयास करें।';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark इंस्टेंस बदलाव सुरक्षित रूप से तैयार नहीं कर सका।';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'अज्ञात इंस्टेंस स्थिति “$status”। release, eap या deprecated का उपयोग करें।';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'इंस्टेंस ID “$id” एक से अधिक ट्री फ़ाइलों द्वारा उपयोग की गई है।';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'buildprofiles.xml में मूल एलिमेंट <buildprofiles> होना चाहिए।';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return '$name का मान “$value” true या false होना चाहिए।';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      '<build-profile> एलिमेंट में इंस्टेंस ID निर्दिष्ट होनी चाहिए।';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'ट्री <include> में from और element-id दोनों निर्दिष्ट होने चाहिए।';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'ट्री <snippet> में id निर्दिष्ट होनी चाहिए।';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'क्रॉस-इंस्टेंस विषय-सूची संदर्भ में ref और in दोनों निर्दिष्ट होने चाहिए।';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'विषय-सूची एलिमेंट एक से अधिक विषय, संदर्भ, लिंक या रीडायरेक्ट को लक्षित नहीं कर सकता।';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'ट्री एलिमेंट ID “$id” एक से अधिक बार घोषित की गई है।';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'इंस्टेंस समूह फ़ाइल में मूल एलिमेंट <instance-groups> होना चाहिए।';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'इंस्टेंस समूह में गैर-रिक्त id और इंस्टेंस सूची निर्दिष्ट होनी चाहिए।';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'इंस्टेंस समूह ID “$id” एक से अधिक बार घोषित की गई है।';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'विषय-सूची समावेशन “$source#$id” बाहरी मॉड्यूल “$origin” का है और इसे इस कार्यस्थान में विस्तृत नहीं किया जा सकता।';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'ट्री एलिमेंट “$id” पंजीकृत ट्री “$source” में मौजूद नहीं है।';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'ट्री समावेशन “$source#$id” चक्र बनाता है।';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'इंस्टेंस शर्त अज्ञात समूह “@$group” का संदर्भ देती है।';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'क्रॉस-इंस्टेंस संदर्भ अज्ञात इंस्टेंस “$instance” को लक्षित करता है।';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'विषय “$topic” संदर्भित इंस्टेंस “$instance” में नहीं है।';
+  }
+
+  @override
+  String get download => 'डाउनलोड करें';
+
+  @override
+  String get exportWritersideAsPdf =>
+      'Writerside को PDF के रूप में निर्यात करें';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'JetBrains के आधिकारिक Writerside बिल्डर से एक Writerside इंस्टेंस बनाएँ।';
+
+  @override
+  String get writersidePdfContent => 'निर्यात सामग्री';
+
+  @override
+  String get writersidePdfSettings => 'PDF सेटिंग';
+
+  @override
+  String get writersidePdfConfigureHere => 'इस निर्यात के लिए कॉन्फ़िगर करें';
+
+  @override
+  String get writersidePdfProjectConfiguration =>
+      'प्रोजेक्ट कॉन्फ़िगरेशन का उपयोग करें';
+
+  @override
+  String get writersidePdfConfigurationFile => 'PDF कॉन्फ़िगरेशन फ़ाइल';
+
+  @override
+  String get writersidePdfPage => 'पृष्ठ';
+
+  @override
+  String get writersidePdfKeymap => 'कीमैप';
+
+  @override
+  String get writersidePdfNoKeymap => 'कोई कीमैप नहीं';
+
+  @override
+  String get writersidePdfTocTitle => 'विषय-सूची का शीर्षक';
+
+  @override
+  String get writersidePdfCover => 'आवरण पृष्ठ';
+
+  @override
+  String get writersidePdfIncludeCover => 'आवरण पृष्ठ शामिल करें';
+
+  @override
+  String get writersidePdfCoverTitle => 'आवरण शीर्षक';
+
+  @override
+  String get writersidePdfCoverDescription => 'आवरण विवरण';
+
+  @override
+  String get writersidePdfCopyright => 'कॉपीराइट';
+
+  @override
+  String get writersidePdfCoverLogo => 'आवरण लोगो';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'आवरण लोगो चुनें';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'शीर्षलेख और पादलेख';
+
+  @override
+  String get writersidePdfHeader => 'शीर्षलेख';
+
+  @override
+  String get writersidePdfFooter => 'पादलेख';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'ये मान खुले मॉड्यूल को बिल्डर की स्रोत संरचना से जोड़ते हैं।';
+
+  @override
+  String get writersidePdfModuleName => 'मॉड्यूल का नाम';
+
+  @override
+  String get writersidePdfSourceRoot => 'स्रोत रूट';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'स्रोत रूट चुनें';
+
+  @override
+  String get writersidePdfBuilderVersion => 'बिल्डर संस्करण';
+
+  @override
+  String get writersidePdfAllowNetwork =>
+      'बिल्ड के दौरान नेटवर्क की अनुमति दें';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'डिफ़ॉल्ट रूप से बंद। केवल तभी चालू करें जब प्रोजेक्ट को जानबूझकर दूरस्थ बिल्ड संसाधनों की आवश्यकता हो।';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'मॉड्यूल का नाम दर्ज करें।';
+
+  @override
+  String get writersidePdfSourceRootRequired => 'स्रोत रूट चुनें।';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'मान्य बिल्डर संस्करण दर्ज करें।';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Writerside बिल्डर आवश्यक है';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark आधिकारिक $image कंटेनर इमेज का उपयोग करता है। इसे अभी डाउनलोड करें? इमेज बड़ी है और Docker इसे संग्रहित करेगा।';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Writerside बिल्डर डाउनलोड हो रहा है…';
+
+  @override
+  String get exportingWritersidePdf => 'Writerside PDF निर्यात हो रहा है…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Writerside PDF निर्यात के लिए Docker आवश्यक है। Docker इंस्टॉल करके चालू करें, फिर दोबारा प्रयास करें।';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'अनुरोधित Writerside बिल्डर इमेज उपलब्ध नहीं है।';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'Writerside PDF कॉन्फ़िगरेशन अमान्य है।';
+
+  @override
+  String get writersidePdfBuildFailed => 'Writerside बिल्डर PDF नहीं बना सका।';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Writerside बिल्डर ने मान्य PDF नहीं बनाया।';
+
+  @override
+  String get ai => 'एआई';
+
+  @override
+  String get aiLocalOllama => 'स्थानीय Ollama';
+
+  @override
+  String get aiDisabled => 'अक्षम';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'एआई संपादन स्पष्ट रूप से शुरू किया जाता है और केवल स्थानीय रूप से चलता है। BusyMark केवल दिखाया गया संदर्भ लूपबैक Ollama सेवा को भेजता है और समीक्षा के बिना किसी सुझाव को लागू नहीं करता।';
+
+  @override
+  String get aiProvider => 'एआई प्रदाता';
+
+  @override
+  String get aiOllamaEndpoint => 'Ollama एंडपॉइंट';
+
+  @override
+  String get aiOllamaModel => 'Ollama मॉडल';
+
+  @override
+  String get aiTestConnection => 'कनेक्शन जाँचें';
+
+  @override
+  String get aiTestingConnection => 'जाँच जारी…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'कनेक्ट हो गया। $count इंस्टॉल किए गए मॉडल मिले।';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama चल रहा है, लेकिन कोई इंस्टॉल किया गया मॉडल नहीं मिला।';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark स्थानीय Ollama कनेक्शन की जाँच नहीं कर सका।';
+
+  @override
+  String get aiConfigureFirst =>
+      'स्थानीय Ollama सक्षम करें और सेटिंग्स → एआई में कोई इंस्टॉल किया गया मॉडल चुनें।';
+
+  @override
+  String get aiRewrite => 'पुनर्लेखन';
+
+  @override
+  String get aiShorten => 'छोटा करें';
+
+  @override
+  String get aiSummarize => 'सारांश बनाएँ';
+
+  @override
+  String get aiChangeTone => 'लहजा बदलें…';
+
+  @override
+  String get aiTranslate => 'अनुवाद करें…';
+
+  @override
+  String get aiProofread => 'प्रूफ़रीड करें';
+
+  @override
+  String get aiDraft => 'मसौदा बनाएँ…';
+
+  @override
+  String get aiSelectionRequired => 'इस एआई क्रिया के लिए टेक्स्ट चुनें।';
+
+  @override
+  String get aiTonePrompt => 'वांछित लहजे का वर्णन करें';
+
+  @override
+  String get aiLanguagePrompt => 'लक्षित भाषा';
+
+  @override
+  String get aiDraftPrompt => 'BusyMark को क्या लिखना चाहिए?';
+
+  @override
+  String get aiGenerating => 'सुझाव बनाया जा रहा है…';
+
+  @override
+  String get aiProposal => 'एआई सुझाव';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'स्थानीय Ollama को वर्तमान संपादक संदर्भ से $count वर्ण मिलेंगे।';
+  }
+
+  @override
+  String get aiOriginal => 'मूल टेक्स्ट';
+
+  @override
+  String get aiSuggested => 'सुझाया गया टेक्स्ट';
+
+  @override
+  String get aiApplyProposal => 'सुझाव लागू करें';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '$input इनपुट टोकन · $output आउटपुट टोकन';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'यह सुझाव बनते समय दस्तावेज़ बदल गया। क्रिया फिर से चलाएँ।';
+
+  @override
+  String get aiViewContext => 'भेजा गया संदर्भ देखें';
 }

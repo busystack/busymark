@@ -294,6 +294,12 @@ void main() {
         l10n.diagnosticWritersideVariableUnresolved('api-version'),
         contains('$fsi%api-version%$pdi'),
       );
+      expect(
+        l10n.writersidePdfBuilderDownloadDescription(
+          'jetbrains/writerside-builder:2026.07.8925',
+        ),
+        contains('${fsi}jetbrains/writerside-builder:2026.07.8925$pdi'),
+      );
     }
   });
 
@@ -632,6 +638,9 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitDetachedHead',
     'gitBranches',
     'gitCommit',
+    'instanceColorOrange',
+    'instanceVersion',
+    'instanceStatus',
   },
   'et': {'link', 'gitCommit'},
   'es': {
@@ -654,6 +663,9 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'editorPlaceholderCode',
     'pdfOrientation',
     'pdfPortrait',
+    'instanceColorOrange',
+    'instanceVersion',
+    'writersidePdfPage',
   },
   'it': {
     'editor',
@@ -664,7 +676,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'foldKindTag',
     'gitCommit',
   },
-  'nb': {'systemTheme', 'systemLanguage', 'gitCommit'},
+  'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
   'pl': {'folder', 'foldKindTag'},
   'pt': {
     'editor',

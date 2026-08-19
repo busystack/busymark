@@ -6,12 +6,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
+import '../../ai/ai_edit_ui.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
@@ -57,6 +59,7 @@ import '../../platform/linux_header_bar_service.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
+import '../../writerside/writerside_instance_service.dart';
 import '../../writerside/writerside_topic_creator.dart';
 import '../../writerside/writerside_topic_removal_service.dart';
 import '../workspace_controller.dart';
@@ -66,6 +69,7 @@ import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
 import 'welcome_screen.dart';
+import 'writerside_instance_dialog.dart';
 
 final _outlineNavigationTargetProvider =
     NotifierProvider<
@@ -535,7 +539,7 @@ class WorkspaceScreen extends ConsumerWidget {
         ? '*${_activeFileName(context, workspace)}'
         : _activeFileName(context, workspace);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
-    final canExportPdf = canExportActiveMarkdown(state);
+    final canExportPdf = canExportWorkspacePdf(state);
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
@@ -824,7 +828,7 @@ class WorkspaceScreen extends ConsumerWidget {
       case HeaderBarAction.save:
         break;
       case HeaderBarAction.exportPdf:
-        unawaited(exportActiveMarkdownToPdf(context, ref));
+        unawaited(exportWorkspaceToPdf(context, ref));
       case HeaderBarAction.fullScreen:
         break;
       case HeaderBarAction.settings:
@@ -887,7 +891,7 @@ class WorkspaceScreen extends ConsumerWidget {
   ) {
     switch (action) {
       case BusyMarkMainMenuAction.exportPdf:
-        unawaited(exportActiveMarkdownToPdf(context, ref));
+        unawaited(exportWorkspaceToPdf(context, ref));
       case BusyMarkMainMenuAction.fullScreen:
         unawaited(ref.read(windowControlServiceProvider).toggleFullScreen());
       case BusyMarkMainMenuAction.settings:
@@ -4323,7 +4327,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     super.initState();
     _workspaceId = widget.workspace.id;
     _tocStructureKey = _tocStructureSignature(widget.workspace);
-    _selectedInstanceTreePath = _preferredTocInstanceTreePath(widget.workspace);
+    _selectedInstanceTreePath = _preferredInstanceTreePath(widget.workspace);
     _expandedNodeKeys = _initialExpandedTocNodeKeys(
       widget.workspace,
       treePath: _selectedInstanceTreePath,
@@ -4348,9 +4352,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _tocStructureKey = nextStructureKey;
-      _selectedInstanceTreePath = _preferredTocInstanceTreePath(
-        widget.workspace,
-      );
+      _selectedInstanceTreePath = _preferredInstanceTreePath(widget.workspace);
       _expandedNodeKeys = _initialExpandedTocNodeKeys(
         widget.workspace,
         treePath: _selectedInstanceTreePath,
@@ -4364,7 +4366,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     if (nextStructureKey != _tocStructureKey) {
       _tocStructureKey = nextStructureKey;
-      _selectedInstanceTreePath = _preferredTocInstanceTreePath(
+      _selectedInstanceTreePath = _preferredInstanceTreePath(
         widget.workspace,
         currentTreePath: _selectedInstanceTreePath,
       );
@@ -4410,6 +4412,27 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
   }
 
+  String? _preferredInstanceTreePath(
+    Workspace workspace, {
+    String? currentTreePath,
+  }) {
+    final storedId = ref
+        .read(appSettingsControllerProvider)
+        .selectedWritersideInstanceId(workspace.rootPath);
+    if (currentTreePath == null && storedId != null) {
+      final stored = workspace.writersideModule?.instances
+          .where((instance) => instance.id == storedId)
+          .firstOrNull;
+      if (stored != null) {
+        return stored.sourceTreePath;
+      }
+    }
+    return _preferredTocInstanceTreePath(
+      workspace,
+      currentTreePath: currentTreePath,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final module = widget.workspace.writersideModule;
@@ -4421,9 +4444,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     final instance =
         _tocInstanceForTreePath(module, _selectedInstanceTreePath) ??
-        module.instances.first;
+        _defaultWritersideInstance(module);
+    final instanceColor = ref
+        .watch(appSettingsControllerProvider)
+        .writersideInstanceIconColor(widget.workspace.rootPath, instance.id);
     final entries = _visibleTocTreeEntries(
-      instance.tocRoots,
+      instance.navigationTocRoots,
       _expandedNodeKeys,
     );
     _TocTreeEntry? selectedEntry;
@@ -4467,6 +4493,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                 return _TocHeader(
                   instances: module.instances,
                   selectedInstance: instance,
+                  selectedColor: instanceColor,
                   onSelectInstance: (treePath) {
                     if (p.equals(treePath, instance.sourceTreePath)) {
                       return;
@@ -4483,13 +4510,43 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       );
                       _cutEntry = null;
                     });
+                    final selected = _tocInstanceForTreePath(module, treePath);
+                    if (selected != null) {
+                      unawaited(
+                        ref
+                            .read(appSettingsControllerProvider.notifier)
+                            .selectWritersideInstance(
+                              widget.workspace.rootPath,
+                              selected.id,
+                            ),
+                      );
+                    }
                   },
                   onCreateTopic: () => _showCreateTopicDialog(
                     context,
                     instanceTreePath: instance.sourceTreePath,
                     placement: WritersideTopicCreatePlacement.root,
-                    referenceEntry: selectedEntry,
+                    referenceEntry: null,
                   ),
+                  onCreateHelpInstance: () => _showInstanceEditor(
+                    context,
+                    BusyMarkWritersideInstanceDialogMode.createHelp,
+                  ),
+                  onImportMarkdownInstance: () =>
+                      _showMarkdownInstanceImport(context),
+                  onCreateLibrary: () => _showInstanceEditor(
+                    context,
+                    BusyMarkWritersideInstanceDialogMode.createLibrary,
+                  ),
+                  onEditInstance: () => _showInstanceEditor(
+                    context,
+                    BusyMarkWritersideInstanceDialogMode.edit,
+                    instance: instance,
+                  ),
+                  onChangeColor: () =>
+                      _showInstanceColorDialog(context, instance),
+                  onOpenTocFile: () =>
+                      _openInstanceTree(context, instance.sourceTreePath),
                 );
               }
               final entry = entries[index - 1];
@@ -4497,9 +4554,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
               final key = entry.pathKey;
               final expanded = _expandedNodeKeys.contains(key);
               final hasChildren = node.children.isNotEmpty;
-              final writersideTopic = node.topicFileName == null
+              final topicReference = node.topicReference;
+              final writersideTopic =
+                  topicReference == null || node.origin != null
                   ? null
-                  : module.topicByReference(node.topicFileName!);
+                  : module.topicByReference(topicReference);
               final topicPath = writersideTopic?.filePath;
               final rawLabel = _tocNodeLabel(context, node);
               final label = _tocNodeDisplayLabel(context, node);
@@ -4527,7 +4586,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
                     ? topicPath == widget.workspace.activeFilePath
                     : entry.pathKey == _selectedNodePathKey,
                 depth: entry.depth,
-                icon: node.href != null
+                icon: node.includeResolutionError != null
+                    ? BusyMarkGlyphs.error
+                    : node.workInProgress
+                    ? BusyMarkGlyphs.warning
+                    : node.href != null
                     ? BusyMarkGlyphs.externalLink
                     : BusyMarkGlyphs.document,
                 hasChildren: hasChildren,
@@ -4569,6 +4632,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
                       entry: entry,
                       topic: writersideTopic,
                       rawLabel: rawLabel,
+                      canEditStructure:
+                          node.canEditStructure &&
+                          p.equals(
+                            node.sourceTreePath!,
+                            instance.sourceTreePath,
+                          ),
                       position: details.globalPosition,
                     ),
                   );
@@ -4586,10 +4655,21 @@ class _TocTabState extends ConsumerState<_TocTab> {
     required String instanceTreePath,
     required _TocTreeEntry entry,
   }) async {
+    if (!entry.canEditStructureIn(instanceTreePath)) {
+      return;
+    }
     if (!_tocTreeEntryStillMatches(widget.workspace, instanceTreePath, entry)) {
       return;
     }
-    final reference = entry.node.topicFileName;
+    final reference = entry.node.topicReference;
+    final rawNode = _rawTocNodeForEntry(
+      widget.workspace,
+      instanceTreePath,
+      entry,
+    );
+    if (rawNode == null) {
+      return;
+    }
     final topic = reference == null
         ? null
         : widget.workspace.writersideModule?.topicByReference(reference);
@@ -4599,7 +4679,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           mode: WritersideTopicRemovalMode.removeFromInstance,
           topicPath: topic.filePath,
           treePath: instanceTreePath,
-          nodePath: entry.path,
+          nodePath: entry.editPath!,
         ),
       );
       if (!mounted || result == null) {
@@ -4629,8 +4709,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
         .read(workspaceControllerProvider.notifier)
         .removeWritersideTocEntry(
           treePath: instanceTreePath,
-          nodePath: entry.path,
-          expectedIdentity: WritersideTocNodeIdentity.fromNode(entry.node),
+          nodePath: entry.editPath!,
+          expectedIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
         );
     if (!mounted || !removed) {
       return;
@@ -4648,6 +4728,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
     required _TocTreeEntry entry,
     required WritersideTopic? topic,
     required String rawLabel,
+    required bool canEditStructure,
     required Offset position,
   }) async {
     final topicPath = topic?.filePath;
@@ -4658,10 +4739,15 @@ class _TocTabState extends ConsumerState<_TocTab> {
         ? null
         : _gitRelativePathForFileTreeEntry(ref, topicPath);
     final cutEntry = _cutEntry;
+    final rawNode = canEditStructure
+        ? _rawTocNodeForEntry(widget.workspace, instanceTreePath, entry)
+        : null;
     final canPaste =
         cutEntry != null &&
         _tocClipboardEntryStillMatches(widget.workspace, cutEntry) &&
-        _canPasteTocTreeEntry(cutEntry, instanceTreePath, entry.path);
+        canEditStructure &&
+        rawNode != null &&
+        _canPasteTocTreeEntry(cutEntry, instanceTreePath, entry.editPath!);
     final action = await _showTocTreeMenu(
       context,
       position,
@@ -4669,6 +4755,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
       showHistory: historyFile != null,
       showPaste: canPaste,
       enableGitActions: gitRelativePath != null,
+      canEditStructure: canEditStructure,
     );
     if (!mounted || !context.mounted || action == null) {
       return;
@@ -4680,6 +4767,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
     switch (action) {
       case _TocTreeAction.newSiblingTopic:
+        if (!canEditStructure) {
+          return;
+        }
         await _showCreateTopicDialog(
           context,
           instanceTreePath: instanceTreePath,
@@ -4687,6 +4777,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           referenceEntry: entry,
         );
       case _TocTreeAction.newChildTopic:
+        if (!canEditStructure) {
+          return;
+        }
         await _showCreateTopicDialog(
           context,
           instanceTreePath: instanceTreePath,
@@ -4725,16 +4818,22 @@ class _TocTabState extends ConsumerState<_TocTab> {
           _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.cut:
+        if (!canEditStructure || rawNode == null) {
+          return;
+        }
         setState(() {
           _cutEntry = _TocTreeClipboardEntry(
             treePath: instanceTreePath,
-            nodePath: entry.path,
-            nodeFingerprint: _tocNodeFingerprint(entry.node),
-            nodeIdentity: WritersideTocNodeIdentity.fromNode(entry.node),
+            nodePath: entry.editPath!,
+            nodeFingerprint: _tocNodeFingerprint(rawNode),
+            nodeIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
           );
         });
       case _TocTreeAction.pasteAfter:
       case _TocTreeAction.pasteAsChild:
+        if (!canEditStructure || rawNode == null) {
+          return;
+        }
         final source = _cutEntry;
         if (source == null ||
             !_tocClipboardEntryStillMatches(widget.workspace, source)) {
@@ -4759,9 +4858,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
               placement: action == _TocTreeAction.pasteAsChild
                   ? WritersideTopicCreatePlacement.child
                   : WritersideTopicCreatePlacement.sibling,
-              referencePath: entry.path,
+              referencePath: entry.editPath!,
               sourceIdentity: source.nodeIdentity,
-              referenceIdentity: WritersideTocNodeIdentity.fromNode(entry.node),
+              referenceIdentity: WritersideTocNodeIdentity.fromNode(rawNode),
             );
         if (!mounted) {
           return;
@@ -4774,6 +4873,9 @@ class _TocTabState extends ConsumerState<_TocTab> {
           _clearGitDetailSelection(ref);
         }
       case _TocTreeAction.removeFromToc:
+        if (!canEditStructure) {
+          return;
+        }
         await _removeTocEntry(
           context,
           instanceTreePath: instanceTreePath,
@@ -4824,6 +4926,115 @@ class _TocTabState extends ConsumerState<_TocTab> {
     }
   }
 
+  Future<void> _showInstanceEditor(
+    BuildContext context,
+    BusyMarkWritersideInstanceDialogMode mode, {
+    WritersideInstance? instance,
+    String? importRootPath,
+    List<WritersideMarkdownImportCandidate> importCandidates = const [],
+  }) async {
+    final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
+    if (!canContinue || !mounted || !context.mounted) {
+      return;
+    }
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    final result =
+        await showBusyMarkModalEditorDialog<WritersideInstanceMutationResult>(
+          context,
+          headerBarService: headerBar.isAvailable ? headerBar : null,
+          maxWidth: BusyMarkSizes.dialogWide,
+          builder: (dialogContext) => BusyMarkWritersideInstanceDialog(
+            workspace: widget.workspace,
+            mode: mode,
+            instance: instance,
+            importRootPath: importRootPath,
+            importCandidates: importCandidates,
+          ),
+        );
+    if (result == null || !mounted) {
+      return;
+    }
+    final id = p.basenameWithoutExtension(result.treePath);
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    final previousId = result.previousId;
+    if (previousId != null && previousId != id) {
+      await settings.renameWritersideInstancePreferences(
+        widget.workspace.rootPath,
+        previousId,
+        id,
+      );
+    }
+    await settings.selectWritersideInstance(widget.workspace.rootPath, id);
+    if (mounted) {
+      setState(() {
+        _selectedInstanceTreePath = result.treePath;
+        _selectedNodePathKey = null;
+        _cutEntry = null;
+      });
+    }
+  }
+
+  Future<void> _showMarkdownInstanceImport(BuildContext context) async {
+    final sourcePath = await getDirectoryPath(
+      initialDirectory: widget.workspace.rootPath,
+      confirmButtonText: context.l10n.open,
+      canCreateDirectories: false,
+    );
+    if (sourcePath == null || !mounted || !context.mounted) {
+      return;
+    }
+    final candidates = await ref
+        .read(workspaceControllerProvider.notifier)
+        .discoverWritersideMarkdownImport(sourcePath);
+    if (candidates == null || !mounted || !context.mounted) {
+      return;
+    }
+    await _showInstanceEditor(
+      context,
+      BusyMarkWritersideInstanceDialogMode.importMarkdown,
+      importRootPath: sourcePath,
+      importCandidates: candidates,
+    );
+  }
+
+  Future<void> _showInstanceColorDialog(
+    BuildContext context,
+    WritersideInstance instance,
+  ) async {
+    final settings = ref.read(appSettingsControllerProvider);
+    final headerBar = ref.read(linuxHeaderBarServiceProvider);
+    final color = await showBusyMarkModalDialog<WritersideInstanceIconColor>(
+      context,
+      headerBarService: headerBar.isAvailable ? headerBar : null,
+      builder: (context) => BusyMarkWritersideInstanceColorDialog(
+        selected: settings.writersideInstanceIconColor(
+          widget.workspace.rootPath,
+          instance.id,
+        ),
+      ),
+    );
+    if (color == null || !mounted) {
+      return;
+    }
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setWritersideInstanceIconColor(
+          widget.workspace.rootPath,
+          instance.id,
+          color,
+        );
+  }
+
+  Future<void> _openInstanceTree(BuildContext context, String treePath) async {
+    final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
+    if (!canContinue || !mounted || !context.mounted) {
+      return;
+    }
+    await ref
+        .read(workspaceControllerProvider.notifier)
+        .openActiveFile(treePath);
+  }
+
   Future<void> _showCreateTopicDialog(
     BuildContext context, {
     required String instanceTreePath,
@@ -4832,6 +5043,16 @@ class _TocTabState extends ConsumerState<_TocTab> {
   }) async {
     final canContinue = await saveOrConfirmSafeToChangeActiveFile(context, ref);
     if (!canContinue || !mounted || !context.mounted) {
+      return;
+    }
+    final rawReference = referenceEntry == null
+        ? null
+        : _rawTocNodeForEntry(
+            widget.workspace,
+            instanceTreePath,
+            referenceEntry,
+          );
+    if (referenceEntry != null && rawReference == null) {
       return;
     }
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
@@ -4843,11 +5064,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
         workspace: widget.workspace,
         instanceTreePath: instanceTreePath,
         placement: placement,
-        referencePath: referenceEntry?.path,
+        referencePath: referenceEntry?.editPath,
         referenceTopic: referenceEntry?.node.topicFileName,
-        referenceIdentity: referenceEntry == null
+        referenceIdentity: rawReference == null
             ? null
-            : WritersideTocNodeIdentity.fromNode(referenceEntry.node),
+            : WritersideTocNodeIdentity.fromNode(rawReference),
         referenceLabel: referenceEntry == null
             ? null
             : _tocNodeDisplayLabel(dialogContext, referenceEntry.node),
@@ -4897,6 +5118,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
   required bool showHistory,
   required bool showPaste,
   required bool enableGitActions,
+  required bool canEditStructure,
 }) {
   return _showSidebarTreeMenu<_TocTreeAction>(
     context,
@@ -4906,11 +5128,13 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         value: _TocTreeAction.newSiblingTopic,
         label: context.l10n.newSiblingTopic,
         icon: BusyMarkGlyphs.newDocument,
+        enabled: canEditStructure,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.newChildTopic,
         label: context.l10n.newChildTopic,
         icon: BusyMarkGlyphs.tree,
+        enabled: canEditStructure,
       ),
       const PopupMenuDivider(height: BusyMarkSpacing.sm),
       BusyMarkPopupMenuItem(
@@ -4923,6 +5147,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         value: _TocTreeAction.cut,
         label: context.l10n.cut,
         icon: BusyMarkGlyphs.cut,
+        enabled: canEditStructure,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.pasteAfter,
@@ -4941,6 +5166,7 @@ Future<_TocTreeAction?> _showTocTreeMenu(
         label: context.l10n.removeTocElement,
         icon: BusyMarkGlyphs.outdentFor(Directionality.of(context)),
         shortcut: BusyMarkTreeShortcutLabels.deleteSelection,
+        enabled: canEditStructure,
       ),
       BusyMarkPopupMenuItem(
         value: _TocTreeAction.delete,
@@ -5014,12 +5240,52 @@ bool _tocTreeEntryStillMatches(
   String treePath,
   _TocTreeEntry entry,
 ) {
-  return _tocPathStillMatches(
-    workspace,
-    treePath,
-    entry.path,
-    _tocNodeFingerprint(entry.node),
-  );
+  if (!entry.canEditStructureIn(treePath)) {
+    final module = workspace.writersideModule;
+    final instance = module == null
+        ? null
+        : _tocInstanceForTreePath(module, treePath);
+    final current = instance == null
+        ? null
+        : _tocNodeAtPath(instance.navigationTocRoots, entry.path);
+    return current != null &&
+        _tocNodeFingerprint(current) == _tocNodeFingerprint(entry.node);
+  }
+  final rawNode = _rawTocNodeForEntry(workspace, treePath, entry);
+  return rawNode != null && _sameTocNodeAttributes(rawNode, entry.node);
+}
+
+TocNode? _rawTocNodeForEntry(
+  Workspace workspace,
+  String treePath,
+  _TocTreeEntry entry,
+) {
+  final editPath = entry.editPath;
+  if (editPath == null) {
+    return null;
+  }
+  final module = workspace.writersideModule;
+  final instance = module == null
+      ? null
+      : _tocInstanceForTreePath(module, treePath);
+  return instance == null ? null : _tocNodeAtPath(instance.tocRoots, editPath);
+}
+
+bool _sameTocNodeAttributes(TocNode first, TocNode second) {
+  return first.topicFileName == second.topicFileName &&
+      first.referenceTopicFileName == second.referenceTopicFileName &&
+      first.referenceInstanceId == second.referenceInstanceId &&
+      first.href == second.href &&
+      first.tocTitle == second.tocTitle &&
+      first.id == second.id &&
+      first.acceptsWebFileNames == second.acceptsWebFileNames &&
+      first.acceptsWebFileNamesRef == second.acceptsWebFileNamesRef &&
+      first.targetForAcceptWebFileNames == second.targetForAcceptWebFileNames &&
+      first.instanceCondition == second.instanceCondition &&
+      first.customFilter == second.customFilter &&
+      first.origin == second.origin &&
+      first.hidden == second.hidden &&
+      first.workInProgress == second.workInProgress;
 }
 
 bool _tocPathStillMatches(
@@ -5090,8 +5356,14 @@ bool _tocPathContains(List<int> parent, List<int> candidate) {
 }
 
 String _tocNodeLabel(BuildContext context, TocNode node) {
+  if (node.includeFrom != null || node.includeElementId != null) {
+    final source = node.includeFrom ?? '?';
+    final element = node.includeElementId ?? '?';
+    return '$source#$element';
+  }
   return node.tocTitle ??
       node.topicFileName ??
+      node.referenceTopicFileName ??
       node.href ??
       context.l10n.tocSection;
 }
@@ -5099,7 +5371,10 @@ String _tocNodeLabel(BuildContext context, TocNode node) {
 String _tocNodeDisplayLabel(BuildContext context, TocNode node) {
   final label = _tocNodeLabel(context, node);
   return node.tocTitle == null &&
-          (node.topicFileName != null || node.href != null)
+          (node.topicFileName != null ||
+              node.referenceTopicFileName != null ||
+              node.href != null ||
+              node.includeFrom != null)
       ? busyMarkLtrIsolateFor(context, label)
       : label;
 }
@@ -5124,9 +5399,9 @@ String _tocStructureSignature(Workspace workspace) {
   for (final instance in module.instances) {
     addField(instance.sourceTreePath);
     buffer
-      ..write(instance.tocRoots.length)
+      ..write(instance.navigationTocRoots.length)
       ..write(':');
-    for (final node in instance.tocRoots) {
+    for (final node in instance.navigationTocRoots) {
       addField(_tocNodeFingerprint(node));
     }
   }
@@ -5148,11 +5423,24 @@ String _tocNodeFingerprint(TocNode node) {
 
   addField(node.id);
   addField(node.topicFileName);
+  addField(node.referenceTopicFileName);
+  addField(node.referenceInstanceId);
   addField(node.href);
   addField(node.tocTitle);
+  addField(node.acceptsWebFileNames);
+  addField(node.acceptsWebFileNamesRef);
+  addField(node.targetForAcceptWebFileNames);
+  addField(node.instanceCondition);
+  addField(node.customFilter);
+  addField(node.origin);
+  addField(node.includeFrom);
+  addField(node.includeElementId);
+  addField(node.includeResolutionError);
   addField(node.span.filePath);
   buffer
     ..write(node.hidden ? '1:' : '0:')
+    ..write(node.workInProgress ? '1:' : '0:')
+    ..write(node.included ? '1:' : '0:')
     ..write(node.span.startOffset)
     ..write(':')
     ..write(node.span.endOffset)
@@ -5195,20 +5483,42 @@ Future<bool> _confirmRemoveTocEntry(
   return confirmed ?? false;
 }
 
-enum _TocHeaderAction { newTopic }
+enum _TocHeaderAction {
+  newTopic,
+  newHelpInstance,
+  importMarkdownInstance,
+  newLibrary,
+  editInstance,
+  changeColor,
+  openTocFile,
+}
 
 class _TocHeader extends StatelessWidget {
   const _TocHeader({
     required this.instances,
     required this.selectedInstance,
+    required this.selectedColor,
     required this.onSelectInstance,
     required this.onCreateTopic,
+    required this.onCreateHelpInstance,
+    required this.onImportMarkdownInstance,
+    required this.onCreateLibrary,
+    required this.onEditInstance,
+    required this.onChangeColor,
+    required this.onOpenTocFile,
   });
 
   final List<WritersideInstance> instances;
   final WritersideInstance selectedInstance;
+  final WritersideInstanceIconColor selectedColor;
   final ValueChanged<String> onSelectInstance;
   final VoidCallback onCreateTopic;
+  final VoidCallback onCreateHelpInstance;
+  final VoidCallback onImportMarkdownInstance;
+  final VoidCallback onCreateLibrary;
+  final VoidCallback onEditInstance;
+  final VoidCallback onChangeColor;
+  final VoidCallback onOpenTocFile;
 
   @override
   Widget build(BuildContext context) {
@@ -5226,28 +5536,30 @@ class _TocHeader extends StatelessWidget {
                 style: busyMarkSectionHeaderStyle(context),
               ),
             ),
-            if (instances.length > 1) ...[
-              const SizedBox(width: BusyMarkSpacing.xs),
-              BusyMarkHeaderPopupMenuButton<String>(
-                tooltip: context.l10n.instanceName,
-                icon: BusyMarkGlyphs.tree,
-                transparent: true,
-                itemBuilder: (context) => [
-                  for (final instance in instances)
-                    BusyMarkPopupMenuItem(
-                      value: instance.sourceTreePath,
-                      label: instance.name,
-                      icon: BusyMarkGlyphs.tree,
-                      checked: p.equals(
-                        instance.sourceTreePath,
-                        selectedInstance.sourceTreePath,
-                      ),
-                      trailingCheck: true,
-                    ),
-                ],
-                onSelected: onSelectInstance,
+            const SizedBox(width: BusyMarkSpacing.xs),
+            BusyMarkHeaderPopupMenuButton<String>(
+              tooltip: context.l10n.instanceName,
+              icon: BusyMarkGlyphs.tree,
+              foregroundColor: writersideInstanceIconColorValue(
+                context,
+                selectedColor,
               ),
-            ],
+              transparent: true,
+              itemBuilder: (context) => [
+                for (final instance in instances)
+                  BusyMarkPopupMenuItem(
+                    value: instance.sourceTreePath,
+                    label: instance.name,
+                    icon: BusyMarkGlyphs.tree,
+                    checked: p.equals(
+                      instance.sourceTreePath,
+                      selectedInstance.sourceTreePath,
+                    ),
+                    trailingCheck: true,
+                  ),
+              ],
+              onSelected: onSelectInstance,
+            ),
             BusyMarkHeaderPopupMenuButton<_TocHeaderAction>(
               key: const ValueKey('workspace-sidebar-toc-menu'),
               tooltip: context.l10n.tocActions,
@@ -5261,11 +5573,55 @@ class _TocHeader extends StatelessWidget {
                   label: context.l10n.newTopic,
                   icon: BusyMarkGlyphs.newDocument,
                 ),
+                const PopupMenuDivider(),
+                BusyMarkPopupMenuItem(
+                  value: _TocHeaderAction.newHelpInstance,
+                  label: context.l10n.newHelpInstance,
+                  icon: BusyMarkGlyphs.add,
+                ),
+                BusyMarkPopupMenuItem(
+                  value: _TocHeaderAction.importMarkdownInstance,
+                  label: context.l10n.importMarkdownInstance,
+                  icon: BusyMarkGlyphs.folderOpen,
+                ),
+                BusyMarkPopupMenuItem(
+                  value: _TocHeaderAction.newLibrary,
+                  label: context.l10n.newTocLibrary,
+                  icon: BusyMarkGlyphs.code,
+                ),
+                const PopupMenuDivider(),
+                BusyMarkPopupMenuItem(
+                  value: _TocHeaderAction.editInstance,
+                  label: context.l10n.editInstance,
+                  icon: BusyMarkGlyphs.edit,
+                ),
+                BusyMarkPopupMenuItem(
+                  value: _TocHeaderAction.changeColor,
+                  label: context.l10n.changeInstanceColor,
+                  icon: BusyMarkGlyphs.appearance,
+                ),
+                BusyMarkPopupMenuItem(
+                  value: _TocHeaderAction.openTocFile,
+                  label: context.l10n.openTocFile,
+                  icon: BusyMarkGlyphs.documentOpen,
+                ),
               ],
               onSelected: (action) {
                 switch (action) {
                   case _TocHeaderAction.newTopic:
                     onCreateTopic();
+                  case _TocHeaderAction.newHelpInstance:
+                    onCreateHelpInstance();
+                  case _TocHeaderAction.importMarkdownInstance:
+                    onImportMarkdownInstance();
+                  case _TocHeaderAction.newLibrary:
+                    onCreateLibrary();
+                  case _TocHeaderAction.editInstance:
+                    onEditInstance();
+                  case _TocHeaderAction.changeColor:
+                    onChangeColor();
+                  case _TocHeaderAction.openTocFile:
+                    onOpenTocFile();
                 }
               },
             ),
@@ -5643,6 +5999,14 @@ class _TocTreeEntry {
   final List<int> path;
 
   String get pathKey => path.join('/');
+
+  List<int>? get editPath => node.sourceTocPath;
+
+  bool canEditStructureIn(String treePath) {
+    return node.canEditStructure &&
+        node.sourceTreePath != null &&
+        p.equals(node.sourceTreePath!, treePath);
+  }
 }
 
 List<_TocTreeEntry> _visibleTocTreeEntries(
@@ -5694,7 +6058,7 @@ String? _preferredTocInstanceTreePath(
     return current.sourceTreePath;
   }
   return _tocInstanceTreePathForActiveFile(workspace) ??
-      module.instances.first.sourceTreePath;
+      _defaultWritersideInstance(module).sourceTreePath;
 }
 
 String? _tocInstanceTreePathForActiveFile(
@@ -5708,13 +6072,13 @@ String? _tocInstanceTreePathForActiveFile(
   }
   String? firstMatch;
   for (final instance in module.instances) {
-    final matches = instance.tocRoots.expand((node) => node.flatten()).any((
-      node,
-    ) {
-      final reference = node.topicFileName;
-      return reference != null &&
-          module.topicByReference(reference)?.filePath == activeFilePath;
-    });
+    final matches = instance.navigationTocRoots
+        .expand((node) => node.flatten())
+        .any((node) {
+          final reference = node.topicReference;
+          return reference != null &&
+              module.topicByReference(reference)?.filePath == activeFilePath;
+        });
     if (!matches) {
       continue;
     }
@@ -5734,13 +6098,14 @@ String? _activeTocNodePathKey(Workspace workspace, {String? treePath}) {
     return null;
   }
   final instance =
-      _tocInstanceForTreePath(module, treePath) ?? module.instances.first;
+      _tocInstanceForTreePath(module, treePath) ??
+      _defaultWritersideInstance(module);
   String? result;
   void visit(TocNode node, List<int> path) {
     if (result != null) {
       return;
     }
-    final reference = node.topicFileName;
+    final reference = node.topicReference;
     if (reference != null &&
         module.topicByReference(reference)?.filePath == activeFilePath) {
       result = path.join('/');
@@ -5751,7 +6116,7 @@ String? _activeTocNodePathKey(Workspace workspace, {String? treePath}) {
     }
   }
 
-  final roots = instance.tocRoots;
+  final roots = instance.navigationTocRoots;
   for (var index = 0; index < roots.length; index += 1) {
     visit(roots[index], [index]);
   }
@@ -5767,7 +6132,8 @@ Set<String> _initialExpandedTocNodeKeys(
     return const {};
   }
   final instance =
-      _tocInstanceForTreePath(module, treePath) ?? module.instances.first;
+      _tocInstanceForTreePath(module, treePath) ??
+      _defaultWritersideInstance(module);
   final expanded = <String>{};
   void visit(TocNode node, List<int> path) {
     if (node.children.isNotEmpty) {
@@ -5778,8 +6144,8 @@ Set<String> _initialExpandedTocNodeKeys(
     }
   }
 
-  for (var index = 0; index < instance.tocRoots.length; index += 1) {
-    visit(instance.tocRoots[index], [index]);
+  for (var index = 0; index < instance.navigationTocRoots.length; index += 1) {
+    visit(instance.navigationTocRoots[index], [index]);
   }
   return expanded
     ..addAll(_activeTocAncestorKeys(workspace, treePath: treePath));
@@ -5792,12 +6158,13 @@ Set<String> _activeTocAncestorKeys(Workspace workspace, {String? treePath}) {
     return const {};
   }
   final instance =
-      _tocInstanceForTreePath(module, treePath) ?? module.instances.first;
+      _tocInstanceForTreePath(module, treePath) ??
+      _defaultWritersideInstance(module);
   final ancestors = <String>{};
   bool visit(TocNode node, List<int> path) {
-    final topic = node.topicFileName == null
+    final topic = node.topicReference == null || node.origin != null
         ? null
-        : module.topicByReference(node.topicFileName!)?.filePath;
+        : module.topicByReference(node.topicReference!)?.filePath;
     if (topic == activeFilePath) {
       return true;
     }
@@ -5810,10 +6177,17 @@ Set<String> _activeTocAncestorKeys(Workspace workspace, {String? treePath}) {
     return false;
   }
 
-  for (var index = 0; index < instance.tocRoots.length; index += 1) {
-    visit(instance.tocRoots[index], [index]);
+  for (var index = 0; index < instance.navigationTocRoots.length; index += 1) {
+    visit(instance.navigationTocRoots[index], [index]);
   }
   return ancestors;
+}
+
+WritersideInstance _defaultWritersideInstance(WritersideModule module) {
+  return module.instances
+          .where((instance) => !instance.isLibrary)
+          .firstOrNull ??
+      module.instances.first;
 }
 
 class _OutlineTab extends ConsumerStatefulWidget {
@@ -8201,6 +8575,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 visualizationRevision: ref
                     .read(workspaceControllerProvider.notifier)
                     .editRevision,
+                aiEditRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
+                aiDocumentPath: activeEditorPath,
+                onAiEdit: (invocation) =>
+                    showBusyMarkAiProposal(context, ref, invocation),
                 onOpenSearch: () => ref
                     .read(workspaceSearchOpenRequestProvider.notifier)
                     .request(),
@@ -8236,6 +8616,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     .request(),
                 onVisibleLineChanged: _handleSourceVisibleLineChanged,
                 onChanged: _handleSourceChanged,
+                editRevision: ref
+                    .read(workspaceControllerProvider.notifier)
+                    .editRevision,
+                onAiEdit: (invocation) =>
+                    showBusyMarkAiProposal(context, ref, invocation),
               ),
             ),
           if (sourceVisible && previewVisible)

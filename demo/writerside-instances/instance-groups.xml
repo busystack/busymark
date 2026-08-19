@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<instance-groups>
+  <group id="published" instances="guide,admin"/>
+</instance-groups>

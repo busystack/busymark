@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pdf landscape="false">
+  <cover-page>
+    <title>BusyMark Product Guide</title>
+    <description>Writerside instances, reusable navigation, and project workflows</description>
+    <copyright>BusyStack © 2026</copyright>
+  </cover-page>
+  <header>BusyMark Product Guide</header>
+  <footer>BusyStack documentation</footer>
+  <toc-title>Guide contents</toc-title>
+</pdf>

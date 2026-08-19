@@ -7,6 +7,7 @@ abstract final class BusyMarkGlyphs {
 
   static const IconData about = YaruIcons.information;
   static const IconData add = YaruIcons.plus;
+  static const IconData ai = YaruIcons.star_filled;
   static const IconData appearance = YaruIcons.desktop_appearance;
   static const IconData blockquote = YaruIcons.chat_text;
   static const IconData bold = YaruIcons.bold;

@@ -11,6 +11,7 @@ import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
 import '../markdown/preview_model.dart';
 import '../writerside/writerside_project_creator.dart';
+import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import '../writerside/writerside_topic_creator.dart';
 import 'workspace_model.dart';
@@ -334,6 +335,61 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return false;
     }
+  }
+
+  Future<List<WritersideMarkdownImportCandidate>?>
+  discoverWritersideMarkdownImport(String sourceDirectoryPath) async {
+    try {
+      return await _service.discoverWritersideMarkdownImport(
+        sourceDirectoryPath,
+      );
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Discover Writerside Markdown import failed',
+        error,
+        stackTrace,
+        context: {'source': busyMarkLogPath(sourceDirectoryPath)},
+      );
+      state = state.copyWith(
+        isLoading: false,
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<WritersideInstanceMutationResult?> createWritersideInstance(
+    WritersideInstanceCreateRequest request,
+  ) async {
+    if (state.isDirty) {
+      return null;
+    }
+    WritersideInstanceMutationResult? result;
+    final succeeded = await _runWorkspaceFileOperation((workspace) async {
+      result = await _service.createWritersideInstance(workspace, request);
+      return result!.firstTopicPath;
+    });
+    return succeeded ? result : null;
+  }
+
+  Future<WritersideInstanceMutationResult?> updateWritersideInstance(
+    WritersideInstanceUpdateRequest request,
+  ) async {
+    if (state.isDirty) {
+      return null;
+    }
+    WritersideInstanceMutationResult? result;
+    final activePath = state.workspace?.activeFilePath;
+    final succeeded = await _runWorkspaceFileOperation((workspace) async {
+      result = await _service.updateWritersideInstance(workspace, request);
+      return activePath != null && p.equals(activePath, request.treePath)
+          ? result!.treePath
+          : null;
+    });
+    return succeeded ? result : null;
   }
 
   Future<void> openFile(String path) => openPath(path);

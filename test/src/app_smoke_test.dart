@@ -1423,6 +1423,37 @@ void main() {
     await openPopup(find.byTooltip(l10n.tocActions));
     expect(tester.widget<IconButton>(tocMenuButton).isSelected, isFalse);
     expect(find.text(l10n.newTopic), findsOneWidget);
+    expect(find.text(l10n.newHelpInstance), findsOneWidget);
+    expect(find.text(l10n.importMarkdownInstance), findsOneWidget);
+    expect(find.text(l10n.newTocLibrary), findsOneWidget);
+    expect(find.text(l10n.editInstance), findsOneWidget);
+    expect(find.text(l10n.changeInstanceColor), findsOneWidget);
+    expect(find.text(l10n.openTocFile), findsOneWidget);
+    await tester.tap(find.text(l10n.editInstance));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(l10n.instanceOutputSettings), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('writerside-instance-name')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('writerside-instance-id')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('writerside-instance-version')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('writerside-instance-web-path')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.allowSearchEngineIndexing), findsOneWidget);
+    expect(find.text(l10n.offlineArtifact), findsOneWidget);
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await openPopup(find.byTooltip(l10n.tocActions));
     await tester.tap(find.text(l10n.newTopic));
     await tester.pump(const Duration(milliseconds: 300));
 

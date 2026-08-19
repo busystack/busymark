@@ -2649,5 +2649,546 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get shortcutExportPdfDescription =>
-      'Експортувати активний документ Markdown як PDF.';
+      'Експортувати активний документ або модуль Writerside як PDF.';
+
+  @override
+  String get newHelpInstance => 'Новий екземпляр довідки';
+
+  @override
+  String get importMarkdownInstance => 'Новий екземпляр із файлів Markdown';
+
+  @override
+  String get newTocLibrary => 'Нова бібліотека змісту';
+
+  @override
+  String get editInstance => 'Змінити екземпляр';
+
+  @override
+  String get openTocFile => 'Відкрити файл змісту';
+
+  @override
+  String get changeInstanceColor => 'Змінити колір екземпляра';
+
+  @override
+  String get createHelpInstance => 'Створити екземпляр довідки';
+
+  @override
+  String get createTocLibrary => 'Створити бібліотеку змісту';
+
+  @override
+  String get importMarkdownAsInstance => 'Імпортувати Markdown як екземпляр';
+
+  @override
+  String get instanceVersion => 'Версія';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'Коли це поле порожнє, використовується версія проєкту $version.';
+  }
+
+  @override
+  String get instanceWebPath => 'Вебшлях';
+
+  @override
+  String get instanceStatus => 'Стан';
+
+  @override
+  String get instanceStatusRelease => 'Випуск';
+
+  @override
+  String get instanceStatusEap => 'Ранній доступ';
+
+  @override
+  String get instanceStatusDeprecated => 'Застарілий';
+
+  @override
+  String get allowSearchEngineIndexing =>
+      'Дозволити індексацію пошуковими системами';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'Дозволити зовнішнім пошуковим системам індексувати цей результат.';
+
+  @override
+  String get offlineArtifact => 'Пакунок для автономної роботи';
+
+  @override
+  String get offlineArtifactDescription =>
+      'Додати ресурси, щоб зібрана документація була самодостатньою.';
+
+  @override
+  String get instanceOutputSettings => 'Налаштування результату';
+
+  @override
+  String get markdownImportSource => 'Джерело Markdown';
+
+  @override
+  String get markdownImportFiles => 'Файли Markdown';
+
+  @override
+  String get selectNone => 'Зняти всі позначки';
+
+  @override
+  String markdownFilesFound(int count) {
+    return 'Знайдено файлів Markdown: $count';
+  }
+
+  @override
+  String get noMarkdownFilesFound =>
+      'У цьому каталозі файлів Markdown не знайдено.';
+
+  @override
+  String get copyReferencedMedia => 'Копіювати використані медіафайли';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'Копіювати локальні зображення й відео, на які посилаються вибрані файли, зі збереженням відносних шляхів.';
+
+  @override
+  String get instanceIdRenameWarningTitle =>
+      'Перейменувати ідентифікатор екземпляра?';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark перейменує файл .tree й оновить посилання проєкту Writerside з «$oldId» на «$newId». Скрипти публікації не змінюються — їх потрібно оновити окремо.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'Перейменувати й оновити посилання';
+
+  @override
+  String get tocLibraryDescription =>
+      'Бібліотека змісту зберігає повторно використовувані розділи й не створює власного результату.';
+
+  @override
+  String get defaultTocLibraryName => 'Спільний зміст';
+
+  @override
+  String get instanceColorAutomatic => 'Автоматично';
+
+  @override
+  String get instanceColorBlue => 'Синій';
+
+  @override
+  String get instanceColorGreen => 'Зелений';
+
+  @override
+  String get instanceColorOrange => 'Помаранчевий';
+
+  @override
+  String get instanceColorPurple => 'Фіолетовий';
+
+  @override
+  String get instanceColorRed => 'Червоний';
+
+  @override
+  String get instanceColorTeal => 'Бірюзовий';
+
+  @override
+  String get instanceColorYellow => 'Жовтий';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'Введіть назву екземпляра.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'Екземпляр з ідентифікатором «$id» уже існує.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'Дерево екземпляра вже існує: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'Каталог джерела Markdown не існує: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'Виберіть принаймні один файл Markdown для імпорту.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'Це не придатний для читання файл Markdown усередині вибраного джерела: $path';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'Імпорт перезапише наявний файл проєкту: $path';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'Файли екземпляра змінилися на диску. Перегляньте їх і повторіть спробу.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark не вдалося повністю відкотити зміну екземпляра. Перегляньте ці файли, перш ніж продовжити: $paths';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'Бібліотека змісту не може імпортувати теми Markdown.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'Вебшлях має складатися з одного рядка.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'Конфігурація екземпляра Writerside некоректна. Виправте її діагностичні повідомлення й повторіть спробу.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark не вдалося безпечно підготувати зміни екземпляра.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'Невідомий стан екземпляра «$status». Використовуйте release, eap або deprecated.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'Ідентифікатор екземпляра «$id» використовується в кількох файлах дерева.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'Кореневим елементом buildprofiles.xml має бути <buildprofiles>.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'Значення $name «$value» має бути true або false.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'Елемент <build-profile> має вказувати ідентифікатор екземпляра.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'Елемент дерева <include> має вказувати й from, і element-id.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'Елемент дерева <snippet> має вказувати id.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'Міжекземплярне посилання змісту має вказувати й ref, і in.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'Елемент змісту не може одночасно посилатися на кілька тем, посилань, адрес або перенаправлень.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'Ідентифікатор елемента дерева «$id» оголошено кілька разів.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'Кореневим елементом файлу груп екземплярів має бути <instance-groups>.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'Група екземплярів має вказувати непорожній ідентифікатор і список екземплярів.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'Ідентифікатор групи екземплярів «$id» оголошено кілька разів.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'Включення змісту «$source#$id» належить зовнішньому модулю «$origin» і не може бути розгорнуте в цій робочій області.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'Елемент дерева «$id» відсутній у зареєстрованому дереві «$source».';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'Включення дерева «$source#$id» створює цикл.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'Умова екземпляра посилається на невідому групу «@$group».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'Міжекземплярне посилання вказує на невідомий екземпляр «$instance».';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'Теми «$topic» немає у вказаному екземплярі «$instance».';
+  }
+
+  @override
+  String get download => 'Завантажити';
+
+  @override
+  String get exportWritersideAsPdf => 'Експорт Writerside у PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'Зберіть один екземпляр Writerside за допомогою офіційного збирача JetBrains.';
+
+  @override
+  String get writersidePdfContent => 'Вміст експорту';
+
+  @override
+  String get writersidePdfSettings => 'Налаштування PDF';
+
+  @override
+  String get writersidePdfConfigureHere => 'Налаштувати для цього експорту';
+
+  @override
+  String get writersidePdfProjectConfiguration =>
+      'Використати конфігурацію проєкту';
+
+  @override
+  String get writersidePdfConfigurationFile => 'Файл конфігурації PDF';
+
+  @override
+  String get writersidePdfPage => 'Сторінка';
+
+  @override
+  String get writersidePdfKeymap => 'Розкладка клавіш';
+
+  @override
+  String get writersidePdfNoKeymap => 'Без розкладки клавіш';
+
+  @override
+  String get writersidePdfTocTitle => 'Заголовок змісту';
+
+  @override
+  String get writersidePdfCover => 'Титульна сторінка';
+
+  @override
+  String get writersidePdfIncludeCover => 'Додати титульну сторінку';
+
+  @override
+  String get writersidePdfCoverTitle => 'Заголовок обкладинки';
+
+  @override
+  String get writersidePdfCoverDescription => 'Опис на обкладинці';
+
+  @override
+  String get writersidePdfCopyright => 'Авторські права';
+
+  @override
+  String get writersidePdfCoverLogo => 'Логотип на обкладинці';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'Вибрати логотип для обкладинки';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'Верхній і нижній колонтитули';
+
+  @override
+  String get writersidePdfHeader => 'Верхній колонтитул';
+
+  @override
+  String get writersidePdfFooter => 'Нижній колонтитул';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'Ці значення зіставляють відкритий модуль зі структурою вихідних файлів збирача.';
+
+  @override
+  String get writersidePdfModuleName => 'Назва модуля';
+
+  @override
+  String get writersidePdfSourceRoot => 'Коренева папка вихідних файлів';
+
+  @override
+  String get writersidePdfChooseSourceRoot =>
+      'Вибрати кореневу папку вихідних файлів';
+
+  @override
+  String get writersidePdfBuilderVersion => 'Версія збирача';
+
+  @override
+  String get writersidePdfAllowNetwork => 'Дозволити мережу під час збирання';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'Початково вимкнено. Увімкніть лише тоді, коли проєкт навмисно потребує віддалених ресурсів збирання.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'Введіть назву модуля.';
+
+  @override
+  String get writersidePdfSourceRootRequired =>
+      'Виберіть кореневу папку вихідних файлів.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'Введіть припустиму версію збирача.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'Потрібен збирач Writerside';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark використовує офіційний образ контейнера $image. Завантажити його зараз? Образ має великий розмір і зберігатиметься в Docker.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'Завантаження збирача Writerside…';
+
+  @override
+  String get exportingWritersidePdf => 'Експорт PDF Writerside…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'Для експорту Writerside у PDF потрібен Docker. Установіть і запустіть Docker, а потім повторіть спробу.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'Запитаний образ збирача Writerside недоступний.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'Конфігурація PDF Writerside є неприпустимою.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'Збирачу Writerside не вдалося створити PDF.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'Збирач Writerside не створив припустимий PDF.';
+
+  @override
+  String get ai => 'ШІ';
+
+  @override
+  String get aiLocalOllama => 'Локальний Ollama';
+
+  @override
+  String get aiDisabled => 'Вимкнено';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'Редагування за допомогою ШІ запускається явно й виконується лише локально. BusyMark надсилає виключно показаний контекст службі Ollama на інтерфейсі зворотного зв’язку й ніколи не застосовує пропозицію без перевірки.';
+
+  @override
+  String get aiProvider => 'Постачальник ШІ';
+
+  @override
+  String get aiOllamaEndpoint => 'Кінцева точка Ollama';
+
+  @override
+  String get aiOllamaModel => 'Модель Ollama';
+
+  @override
+  String get aiTestConnection => 'Перевірити підключення';
+
+  @override
+  String get aiTestingConnection => 'Перевірка…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'Підключено. Знайдено встановлених моделей: $count.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama запущено, але встановлених моделей не знайдено.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark не вдалося перевірити локальне підключення до Ollama.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Увімкніть локальний Ollama й виберіть установлену модель у розділі «Налаштування → ШІ».';
+
+  @override
+  String get aiRewrite => 'Переписати';
+
+  @override
+  String get aiShorten => 'Скоротити';
+
+  @override
+  String get aiSummarize => 'Підсумувати';
+
+  @override
+  String get aiChangeTone => 'Змінити тон…';
+
+  @override
+  String get aiTranslate => 'Перекласти…';
+
+  @override
+  String get aiProofread => 'Вичитати';
+
+  @override
+  String get aiDraft => 'Створити чернетку…';
+
+  @override
+  String get aiSelectionRequired => 'Виділіть текст для цієї дії ШІ.';
+
+  @override
+  String get aiTonePrompt => 'Опишіть бажаний тон';
+
+  @override
+  String get aiLanguagePrompt => 'Цільова мова';
+
+  @override
+  String get aiDraftPrompt => 'Що має підготувати BusyMark?';
+
+  @override
+  String get aiGenerating => 'Створення пропозиції…';
+
+  @override
+  String get aiProposal => 'Пропозиція ШІ';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Локальний Ollama отримає $count символів із поточного контексту редактора.';
+  }
+
+  @override
+  String get aiOriginal => 'Початковий текст';
+
+  @override
+  String get aiSuggested => 'Пропозиція';
+
+  @override
+  String get aiApplyProposal => 'Застосувати пропозицію';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return 'Вхідні токени: $input · вихідні токени: $output';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'Документ змінився під час створення цієї пропозиції. Запустіть дію ще раз.';
+
+  @override
+  String get aiViewContext => 'Показати надісланий контекст';
 }

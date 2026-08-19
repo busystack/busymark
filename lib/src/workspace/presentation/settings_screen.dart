@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../ai/ai_models.dart';
+import '../../ai/ai_policy.dart';
+import '../../ai/ai_providers.dart';
 import '../../app/app_router.dart';
 import '../../app/app_settings.dart';
 import '../../app/app_locale.dart';
@@ -117,6 +120,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+      SettingsPage.ai => const _AiSettingsPage(),
       SettingsPage.window => BusyMarkGroupedList(
         title: l10n.settingsWindowSectionTitle,
         filled: true,
@@ -348,12 +352,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-enum SettingsPage { appearance, editor, validation, window, privacy, advanced }
+enum SettingsPage {
+  appearance,
+  editor,
+  validation,
+  ai,
+  window,
+  privacy,
+  advanced,
+}
 
 SettingsPage settingsPageFromRouteValue(String? value) {
   return switch (value) {
     'editor' => SettingsPage.editor,
     'validation' => SettingsPage.validation,
+    'ai' => SettingsPage.ai,
     'window' => SettingsPage.window,
     'privacy' => SettingsPage.privacy,
     'advanced' => SettingsPage.advanced,
@@ -369,6 +382,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
     SettingsPage.appearance => l10n.appearance,
     SettingsPage.editor => l10n.editor,
     SettingsPage.validation => l10n.validation,
+    SettingsPage.ai => l10n.ai,
     SettingsPage.window => l10n.settingsWindowSectionTitle,
     SettingsPage.privacy => l10n.privacy,
     SettingsPage.advanced => l10n.advanced,
@@ -380,6 +394,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.appearance => BusyMarkGlyphs.appearance,
     SettingsPage.editor => BusyMarkGlyphs.editorView,
     SettingsPage.validation => BusyMarkGlyphs.diagnostics,
+    SettingsPage.ai => BusyMarkGlyphs.ai,
     SettingsPage.window => BusyMarkGlyphs.desktop,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,
     SettingsPage.advanced => BusyMarkGlyphs.settings,
@@ -941,5 +956,214 @@ class _EditorToolbarDirectionControl extends StatelessWidget {
       EditorToolbarDirection.horizontal => context.l10n.horizontal,
       EditorToolbarDirection.vertical => context.l10n.vertical,
     };
+  }
+}
+
+class _AiSettingsPage extends ConsumerStatefulWidget {
+  const _AiSettingsPage();
+
+  @override
+  ConsumerState<_AiSettingsPage> createState() => _AiSettingsPageState();
+}
+
+class _AiSettingsPageState extends ConsumerState<_AiSettingsPage> {
+  late final TextEditingController _endpointController;
+  List<AiModelInfo> _models = const [];
+  String? _status;
+  BusyMarkStatusKind _statusKind = BusyMarkStatusKind.information;
+  var _testing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _endpointController = TextEditingController(
+      text: ref.read(appSettingsControllerProvider).aiOllamaEndpoint,
+    );
+  }
+
+  @override
+  void dispose() {
+    _endpointController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(appSettingsControllerProvider);
+    final controller = ref.read(appSettingsControllerProvider.notifier);
+    final enabled =
+        settings.aiProviderPreference == AiProviderPreference.ollamaLocal;
+    final modelNames = {
+      if (settings.aiOllamaModel.isNotEmpty) settings.aiOllamaModel,
+      for (final model in _models) model.name,
+    }.toList()..sort();
+    return BusyMarkGroupedList(
+      title: context.l10n.ai,
+      filled: true,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.md),
+          child: BusyMarkStatusBox(
+            message: context.l10n.aiLocalOnlyDescription,
+            kind: BusyMarkStatusKind.information,
+          ),
+        ),
+        BusyMarkActionRow(
+          title: context.l10n.aiProvider,
+          leading: const Icon(BusyMarkGlyphs.ai),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: BusyMarkPopupSelector<AiProviderPreference>(
+              value: settings.aiProviderPreference,
+              label: enabled
+                  ? context.l10n.aiLocalOllama
+                  : context.l10n.aiDisabled,
+              tooltip: context.l10n.aiProvider,
+              options: [
+                BusyMarkPopupSelectorOption(
+                  value: AiProviderPreference.disabled,
+                  label: context.l10n.aiDisabled,
+                ),
+                BusyMarkPopupSelectorOption(
+                  value: AiProviderPreference.ollamaLocal,
+                  label: context.l10n.aiLocalOllama,
+                ),
+              ],
+              onSelected: controller.setAiProviderPreference,
+            ),
+          ),
+        ),
+        BusyMarkGroupedTextEntry(
+          key: const ValueKey('ai-ollama-endpoint'),
+          label: context.l10n.aiOllamaEndpoint,
+          controller: _endpointController,
+          enabled: enabled && !_testing,
+          textInputAction: TextInputAction.done,
+          onSubmitted: _saveEndpoint,
+        ),
+        BusyMarkActionRow(
+          title: context.l10n.aiOllamaModel,
+          leading: const Icon(BusyMarkGlyphs.ai),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: modelNames.isEmpty
+                ? Text(
+                    settings.aiOllamaModel.isEmpty
+                        ? context.l10n.aiNoModels
+                        : settings.aiOllamaModel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : BusyMarkPopupSelector<String>(
+                    value: settings.aiOllamaModel.isEmpty
+                        ? modelNames.first
+                        : settings.aiOllamaModel,
+                    label: settings.aiOllamaModel.isEmpty
+                        ? modelNames.first
+                        : settings.aiOllamaModel,
+                    tooltip: context.l10n.aiOllamaModel,
+                    options: [
+                      for (final model in modelNames)
+                        BusyMarkPopupSelectorOption(value: model, label: model),
+                    ],
+                    onSelected: enabled ? controller.setAiOllamaModel : (_) {},
+                  ),
+          ),
+        ),
+        BusyMarkActionRow(
+          title: _testing
+              ? context.l10n.aiTestingConnection
+              : context.l10n.aiTestConnection,
+          leading: _testing
+              ? const SizedBox.square(
+                  dimension: BusyMarkSizes.iconSm,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(BusyMarkGlyphs.refresh),
+          onTap: enabled && !_testing ? _testConnection : null,
+        ),
+        if (_status != null)
+          Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.md),
+            child: BusyMarkStatusBox(message: _status!, kind: _statusKind),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _testConnection() async {
+    setState(() {
+      _testing = true;
+      _status = null;
+    });
+    final settingsController = ref.read(appSettingsControllerProvider.notifier);
+    try {
+      final endpoint = AiPolicy.validateLocalOllamaEndpoint(
+        _endpointController.text,
+      );
+      await settingsController.setAiOllamaEndpoint(endpoint.origin);
+      final provider = ref.read(aiProviderProvider);
+      final models = await provider.listModels();
+      if (!mounted) {
+        return;
+      }
+      final currentModel = ref
+          .read(appSettingsControllerProvider)
+          .aiOllamaModel;
+      if (models.isNotEmpty &&
+          !models.any((model) => model.name == currentModel)) {
+        await settingsController.setAiOllamaModel(models.first.name);
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _models = models;
+        _status = models.isEmpty
+            ? context.l10n.aiNoModels
+            : context.l10n.aiConnectionReady(models.length);
+        _statusKind = models.isEmpty
+            ? BusyMarkStatusKind.warning
+            : BusyMarkStatusKind.success;
+      });
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _status = context.l10n.aiConnectionFailed;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _testing = false);
+      }
+    }
+  }
+
+  Future<void> _saveEndpoint(String value) async {
+    try {
+      final endpoint = AiPolicy.validateLocalOllamaEndpoint(value);
+      _endpointController.text = endpoint.origin;
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setAiOllamaEndpoint(endpoint.origin);
+      if (mounted) {
+        setState(() => _status = null);
+      }
+    } on AiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _status = error.message;
+          _statusKind = BusyMarkStatusKind.error;
+        });
+      }
+    }
   }
 }

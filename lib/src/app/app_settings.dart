@@ -13,9 +13,22 @@ enum BusyMarkThemeModePreference { system, light, dark }
 
 enum DocumentViewModePreference { editor, source, preview, split }
 
+enum AiProviderPreference { disabled, ollamaLocal }
+
 enum EditorToolbarPlacement { topLeft, topRight, bottomLeft, bottomRight }
 
 enum EditorToolbarDirection { horizontal, vertical }
+
+enum WritersideInstanceIconColor {
+  automatic,
+  blue,
+  green,
+  orange,
+  purple,
+  red,
+  teal,
+  yellow,
+}
 
 const Object _unset = Object();
 
@@ -70,9 +83,14 @@ class AppSettings {
     required this.editorToolbarDirection,
     required this.autoSave,
     required this.validateOnEdit,
+    required this.aiProviderPreference,
+    required this.aiOllamaEndpoint,
+    required this.aiOllamaModel,
     required this.allowRemoteImages,
     required this.remoteImageAllowedWorkspacePaths,
     required this.trustedGitWorkspacePaths,
+    required this.selectedWritersideInstanceIds,
+    required this.writersideInstanceIconColors,
     required this.confirmCloseWithUnsavedChanges,
     required this.recentWorkspaces,
     this.lastOpenedPath,
@@ -91,9 +109,14 @@ class AppSettings {
       editorToolbarDirection: EditorToolbarDirection.horizontal,
       autoSave: true,
       validateOnEdit: true,
+      aiProviderPreference: AiProviderPreference.disabled,
+      aiOllamaEndpoint: 'http://127.0.0.1:11434',
+      aiOllamaModel: '',
       allowRemoteImages: false,
       remoteImageAllowedWorkspacePaths: [],
       trustedGitWorkspacePaths: [],
+      selectedWritersideInstanceIds: {},
+      writersideInstanceIconColors: {},
       confirmCloseWithUnsavedChanges: true,
       recentWorkspaces: [],
     );
@@ -138,6 +161,15 @@ class AppSettings {
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
+      aiProviderPreference: _enumFromName(
+        AiProviderPreference.values,
+        json['aiProviderPreference'],
+        defaults.aiProviderPreference,
+      ),
+      aiOllamaEndpoint:
+          json['aiOllamaEndpoint']?.toString() ?? defaults.aiOllamaEndpoint,
+      aiOllamaModel:
+          json['aiOllamaModel']?.toString() ?? defaults.aiOllamaModel,
       allowRemoteImages:
           json['allowRemoteImages'] as bool? ?? defaults.allowRemoteImages,
       remoteImageAllowedWorkspacePaths: _workspacePathListFromJson(
@@ -145,6 +177,12 @@ class AppSettings {
       ),
       trustedGitWorkspacePaths: _gitWorkspacePathListFromJson(
         json['trustedGitWorkspacePaths'],
+      ),
+      selectedWritersideInstanceIds: _stringMapFromJson(
+        json['selectedWritersideInstanceIds'],
+      ),
+      writersideInstanceIconColors: _stringMapFromJson(
+        json['writersideInstanceIconColors'],
       ),
       confirmCloseWithUnsavedChanges:
           json['confirmCloseWithUnsavedChanges'] as bool? ??
@@ -172,9 +210,14 @@ class AppSettings {
   final EditorToolbarDirection editorToolbarDirection;
   final bool autoSave;
   final bool validateOnEdit;
+  final AiProviderPreference aiProviderPreference;
+  final String aiOllamaEndpoint;
+  final String aiOllamaModel;
   final bool allowRemoteImages;
   final List<String> remoteImageAllowedWorkspacePaths;
   final List<String> trustedGitWorkspacePaths;
+  final Map<String, String> selectedWritersideInstanceIds;
+  final Map<String, String> writersideInstanceIconColors;
   final bool confirmCloseWithUnsavedChanges;
   final String? lastOpenedPath;
   final List<RecentWorkspace> recentWorkspaces;
@@ -195,9 +238,14 @@ class AppSettings {
     'editorToolbarDirection': editorToolbarDirection.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
+    'aiProviderPreference': aiProviderPreference.name,
+    'aiOllamaEndpoint': aiOllamaEndpoint,
+    'aiOllamaModel': aiOllamaModel,
     'allowRemoteImages': allowRemoteImages,
     'remoteImageAllowedWorkspacePaths': remoteImageAllowedWorkspacePaths,
     'trustedGitWorkspacePaths': trustedGitWorkspacePaths,
+    'selectedWritersideInstanceIds': selectedWritersideInstanceIds,
+    'writersideInstanceIconColors': writersideInstanceIconColors,
     'confirmCloseWithUnsavedChanges': confirmCloseWithUnsavedChanges,
     'lastOpenedPath': lastOpenedPath,
     'recentWorkspaces': recentWorkspaces.map((item) => item.toJson()).toList(),
@@ -213,6 +261,27 @@ class AppSettings {
 
   bool trustsGitWorkspace(String? workspacePath) {
     return trustedGitWorkspacePath(workspacePath) != null;
+  }
+
+  String? selectedWritersideInstanceId(String workspacePath) {
+    return selectedWritersideInstanceIds[_normalizedWorkspacePath(
+      workspacePath,
+    )];
+  }
+
+  WritersideInstanceIconColor writersideInstanceIconColor(
+    String workspacePath,
+    String instanceId,
+  ) {
+    final workspace = _normalizedWorkspacePath(workspacePath);
+    if (workspace == null) {
+      return WritersideInstanceIconColor.automatic;
+    }
+    return _enumFromName(
+      WritersideInstanceIconColor.values,
+      writersideInstanceIconColors['$workspace::$instanceId'],
+      WritersideInstanceIconColor.automatic,
+    );
   }
 
   /// Returns the canonical, trusted path that is safe to pass to Git.
@@ -236,9 +305,14 @@ class AppSettings {
     EditorToolbarDirection? editorToolbarDirection,
     bool? autoSave,
     bool? validateOnEdit,
+    AiProviderPreference? aiProviderPreference,
+    String? aiOllamaEndpoint,
+    String? aiOllamaModel,
     bool? allowRemoteImages,
     List<String>? remoteImageAllowedWorkspacePaths,
     List<String>? trustedGitWorkspacePaths,
+    Map<String, String>? selectedWritersideInstanceIds,
+    Map<String, String>? writersideInstanceIconColors,
     bool? confirmCloseWithUnsavedChanges,
     String? lastOpenedPath,
     List<RecentWorkspace>? recentWorkspaces,
@@ -259,12 +333,19 @@ class AppSettings {
           editorToolbarDirection ?? this.editorToolbarDirection,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
+      aiProviderPreference: aiProviderPreference ?? this.aiProviderPreference,
+      aiOllamaEndpoint: aiOllamaEndpoint ?? this.aiOllamaEndpoint,
+      aiOllamaModel: aiOllamaModel ?? this.aiOllamaModel,
       allowRemoteImages: allowRemoteImages ?? this.allowRemoteImages,
       remoteImageAllowedWorkspacePaths:
           remoteImageAllowedWorkspacePaths ??
           this.remoteImageAllowedWorkspacePaths,
       trustedGitWorkspacePaths:
           trustedGitWorkspacePaths ?? this.trustedGitWorkspacePaths,
+      selectedWritersideInstanceIds:
+          selectedWritersideInstanceIds ?? this.selectedWritersideInstanceIds,
+      writersideInstanceIconColors:
+          writersideInstanceIconColors ?? this.writersideInstanceIconColors,
       confirmCloseWithUnsavedChanges:
           confirmCloseWithUnsavedChanges ?? this.confirmCloseWithUnsavedChanges,
       lastOpenedPath: lastOpenedPath ?? this.lastOpenedPath,
@@ -421,6 +502,24 @@ class AppSettingsController extends Notifier<AppSettings> {
     return _mutate((settings) => settings.copyWith(validateOnEdit: enabled));
   }
 
+  Future<void> setAiProviderPreference(AiProviderPreference preference) {
+    return _mutate(
+      (settings) => settings.copyWith(aiProviderPreference: preference),
+    );
+  }
+
+  Future<void> setAiOllamaEndpoint(String endpoint) {
+    return _mutate(
+      (settings) => settings.copyWith(aiOllamaEndpoint: endpoint.trim()),
+    );
+  }
+
+  Future<void> setAiOllamaModel(String model) {
+    return _mutate(
+      (settings) => settings.copyWith(aiOllamaModel: model.trim()),
+    );
+  }
+
   Future<void> setAllowRemoteImages(bool enabled) {
     return _mutate((settings) => settings.copyWith(allowRemoteImages: enabled));
   }
@@ -461,6 +560,78 @@ class AppSettingsController extends Notifier<AppSettings> {
     return _mutate(
       (settings) => settings.copyWith(trustedGitWorkspacePaths: []),
     );
+  }
+
+  Future<void> selectWritersideInstance(
+    String workspacePath,
+    String instanceId,
+  ) {
+    final workspace = _normalizedWorkspacePath(workspacePath);
+    final id = instanceId.trim();
+    if (workspace == null || id.isEmpty) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final selected = Map<String, String>.of(
+        settings.selectedWritersideInstanceIds,
+      )..[workspace] = id;
+      return settings.copyWith(selectedWritersideInstanceIds: selected);
+    });
+  }
+
+  Future<void> setWritersideInstanceIconColor(
+    String workspacePath,
+    String instanceId,
+    WritersideInstanceIconColor color,
+  ) {
+    final workspace = _normalizedWorkspacePath(workspacePath);
+    final id = instanceId.trim();
+    if (workspace == null || id.isEmpty) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final colors = Map<String, String>.of(
+        settings.writersideInstanceIconColors,
+      );
+      final key = '$workspace::$id';
+      if (color == WritersideInstanceIconColor.automatic) {
+        colors.remove(key);
+      } else {
+        colors[key] = color.name;
+      }
+      return settings.copyWith(writersideInstanceIconColors: colors);
+    });
+  }
+
+  Future<void> renameWritersideInstancePreferences(
+    String workspacePath,
+    String oldId,
+    String newId,
+  ) {
+    final workspace = _normalizedWorkspacePath(workspacePath);
+    if (workspace == null || oldId == newId) {
+      return Future<void>.value();
+    }
+    return _mutate((settings) {
+      final selected = Map<String, String>.of(
+        settings.selectedWritersideInstanceIds,
+      );
+      if (selected[workspace] == oldId) {
+        selected[workspace] = newId;
+      }
+      final colors = Map<String, String>.of(
+        settings.writersideInstanceIconColors,
+      );
+      final oldKey = '$workspace::$oldId';
+      final color = colors.remove(oldKey);
+      if (color != null) {
+        colors['$workspace::$newId'] = color;
+      }
+      return settings.copyWith(
+        selectedWritersideInstanceIds: selected,
+        writersideInstanceIconColors: colors,
+      );
+    });
   }
 
   Future<void> setConfirmCloseWithUnsavedChanges(bool enabled) {
@@ -574,6 +745,18 @@ List<String> _gitWorkspacePathListFromJson(Object? value) {
         path,
   }.toList()..sort();
   return paths;
+}
+
+Map<String, String> _stringMapFromJson(Object? value) {
+  if (value is! Map) {
+    return const {};
+  }
+  return Map.unmodifiable({
+    for (final entry in value.entries)
+      if (entry.key.toString().trim().isNotEmpty &&
+          entry.value.toString().trim().isNotEmpty)
+        entry.key.toString(): entry.value.toString(),
+  });
 }
 
 String? _normalizedWorkspacePath(String? value) {

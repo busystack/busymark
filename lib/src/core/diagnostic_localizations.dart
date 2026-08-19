@@ -53,6 +53,8 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
       value('destination'),
     ),
     'writerside.config.invalid-xml' ||
+    'writerside.build-profiles.invalid-xml' ||
+    'writerside.instance-groups.invalid-xml' ||
     'writerside.tree.invalid-xml' ||
     'writerside.variables.invalid-xml' ||
     'writerside.categories.invalid-xml' ||
@@ -77,6 +79,64 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
     'writerside.tree.id-mismatch' => l10n.diagnosticWritersideTreeIdMismatch(
       value('id'),
     ),
+    'writerside.tree.invalid-status' =>
+      l10n.diagnosticWritersideTreeInvalidStatus(value('status')),
+    'writerside.tree.duplicate-instance-id' =>
+      l10n.diagnosticWritersideDuplicateInstanceId(value('id')),
+    'writerside.tree.invalid-include' =>
+      l10n.diagnosticWritersideTreeInvalidInclude,
+    'writerside.tree.missing-snippet-id' =>
+      l10n.diagnosticWritersideTreeMissingSnippetId,
+    'writerside.tree.invalid-cross-instance-reference' =>
+      l10n.diagnosticWritersideTreeInvalidCrossInstanceReference,
+    'writerside.tree.conflicting-toc-targets' =>
+      l10n.diagnosticWritersideTreeConflictingTargets,
+    'writerside.tree.duplicate-element-id' =>
+      l10n.diagnosticWritersideTreeDuplicateElementId(value('id')),
+    'writerside.instance-groups.invalid-root' =>
+      l10n.diagnosticWritersideInstanceGroupsInvalidRoot,
+    'writerside.instance-groups.invalid-group' =>
+      l10n.diagnosticWritersideInstanceGroupInvalid,
+    'writerside.instance-groups.duplicate-id' =>
+      l10n.diagnosticWritersideInstanceGroupDuplicateId(value('id')),
+    'writerside.tree.external-include' =>
+      l10n.diagnosticWritersideExternalTreeInclude(
+        value('source'),
+        value('id'),
+        value('origin'),
+      ),
+    'writerside.tree.unsafe-include-source' =>
+      l10n.errorFileOperationOutsideRoot,
+    'writerside.tree.unresolved-include-source' =>
+      l10n.diagnosticWritersideIncludeSourceMissing(value('source')),
+    'writerside.tree.unresolved-include-element' =>
+      l10n.diagnosticWritersideTreeIncludeElementMissing(
+        value('source'),
+        value('id'),
+      ),
+    'writerside.tree.circular-include' =>
+      l10n.diagnosticWritersideTreeCircularInclude(
+        value('source'),
+        value('id'),
+      ),
+    'writerside.tree.unknown-instance-group' =>
+      l10n.diagnosticWritersideUnknownInstanceGroup(value('group')),
+    'writerside.tree.missing-reference-instance' =>
+      l10n.diagnosticWritersideReferenceInstanceMissing(value('instance')),
+    'writerside.tree.missing-reference-topic' =>
+      l10n.diagnosticWritersideReferenceTopicMissing(
+        value('topic'),
+        value('instance'),
+      ),
+    'writerside.build-profiles.invalid-root' =>
+      l10n.diagnosticWritersideBuildProfilesInvalidRoot,
+    'writerside.build-profiles.invalid-boolean' =>
+      l10n.diagnosticWritersideBuildProfilesInvalidBoolean(
+        value('name'),
+        value('value'),
+      ),
+    'writerside.build-profiles.missing-instance' =>
+      l10n.diagnosticWritersideBuildProfileMissingInstance,
     'writerside.tree.missing-start-page' =>
       args.containsKey('startPage')
           ? l10n.diagnosticWritersideStartPageMissing(value('startPage'))

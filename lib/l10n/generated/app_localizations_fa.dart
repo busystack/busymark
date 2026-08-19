@@ -2660,5 +2660,542 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get shortcutExportPdfDescription =>
-      'سند Markdown فعال را به PDF صادر کنید.';
+      'سند فعال یا ماژول Writerside را به PDF صادر کنید.';
+
+  @override
+  String get newHelpInstance => 'نمونهٔ راهنمای جدید';
+
+  @override
+  String get importMarkdownInstance => 'نمونهٔ جدید از فایل‌های Markdown';
+
+  @override
+  String get newTocLibrary => 'کتابخانهٔ جدید فهرست مطالب';
+
+  @override
+  String get editInstance => 'ویرایش نمونه';
+
+  @override
+  String get openTocFile => 'باز کردن فایل فهرست مطالب';
+
+  @override
+  String get changeInstanceColor => 'تغییر رنگ نمونه';
+
+  @override
+  String get createHelpInstance => 'ایجاد نمونهٔ راهنما';
+
+  @override
+  String get createTocLibrary => 'ایجاد کتابخانهٔ فهرست مطالب';
+
+  @override
+  String get importMarkdownAsInstance => 'وارد کردن Markdown به‌عنوان نمونه';
+
+  @override
+  String get instanceVersion => 'نسخه';
+
+  @override
+  String instanceVersionInherited(String version) {
+    return 'وقتی این فیلد خالی باشد، نسخهٔ پروژه ⁨$version⁩ است.';
+  }
+
+  @override
+  String get instanceWebPath => 'مسیر وب';
+
+  @override
+  String get instanceStatus => 'وضعیت';
+
+  @override
+  String get instanceStatusRelease => 'انتشار نهایی';
+
+  @override
+  String get instanceStatusEap => 'دسترسی زودهنگام';
+
+  @override
+  String get instanceStatusDeprecated => 'منسوخ';
+
+  @override
+  String get allowSearchEngineIndexing =>
+      'اجازهٔ نمایه‌سازی به موتورهای جست‌وجو';
+
+  @override
+  String get allowSearchEngineIndexingDescription =>
+      'به موتورهای جست‌وجوی خارجی اجازه دهید این خروجی را نمایه کنند.';
+
+  @override
+  String get offlineArtifact => 'بستهٔ آفلاین';
+
+  @override
+  String get offlineArtifactDescription =>
+      'منابع را بسته‌بندی کنید تا مستندات ساخته‌شده خودکفا باشند.';
+
+  @override
+  String get instanceOutputSettings => 'تنظیمات خروجی';
+
+  @override
+  String get markdownImportSource => 'منبع Markdown';
+
+  @override
+  String get markdownImportFiles => 'فایل‌های Markdown';
+
+  @override
+  String get selectNone => 'لغو انتخاب همه';
+
+  @override
+  String markdownFilesFound(int count) {
+    return '⁨$count⁩ فایل Markdown پیدا شد';
+  }
+
+  @override
+  String get noMarkdownFilesFound => 'هیچ فایل Markdown در این پوشه پیدا نشد.';
+
+  @override
+  String get copyReferencedMedia => 'کپی رسانه‌های ارجاع‌شده';
+
+  @override
+  String get copyReferencedMediaDescription =>
+      'تصویرها و ویدیوهای محلی ارجاع‌شده در فایل‌های انتخابی را با حفظ مسیرهای نسبی کپی کنید.';
+
+  @override
+  String get instanceIdRenameWarningTitle => 'شناسهٔ نمونه تغییر نام کند؟';
+
+  @override
+  String instanceIdRenameWarning(String oldId, String newId) {
+    return 'BusyMark نام فایل ⁨.tree⁩ را تغییر می‌دهد و ارجاع‌های پروژهٔ Writerside را از «⁨$oldId⁩» به «⁨$newId⁩» به‌روزرسانی می‌کند. اسکریپت‌های انتشار تغییر نمی‌کنند و باید جداگانه به‌روزرسانی شوند.';
+  }
+
+  @override
+  String get renameAndUpdateReferences => 'تغییر نام و به‌روزرسانی ارجاع‌ها';
+
+  @override
+  String get tocLibraryDescription =>
+      'کتابخانهٔ فهرست مطالب بخش‌های قابل استفادهٔ مجدد را نگه می‌دارد و خروجی مستقلی تولید نمی‌کند.';
+
+  @override
+  String get defaultTocLibraryName => 'فهرست مطالب مشترک';
+
+  @override
+  String get instanceColorAutomatic => 'خودکار';
+
+  @override
+  String get instanceColorBlue => 'آبی';
+
+  @override
+  String get instanceColorGreen => 'سبز';
+
+  @override
+  String get instanceColorOrange => 'نارنجی';
+
+  @override
+  String get instanceColorPurple => 'بنفش';
+
+  @override
+  String get instanceColorRed => 'قرمز';
+
+  @override
+  String get instanceColorTeal => 'سبزآبی';
+
+  @override
+  String get instanceColorYellow => 'زرد';
+
+  @override
+  String get errorWritersideInstanceNameRequired => 'نام نمونه را وارد کنید.';
+
+  @override
+  String errorWritersideInstanceIdExists(String id) {
+    return 'نمونه‌ای با شناسهٔ «⁨$id⁩» از قبل وجود دارد.';
+  }
+
+  @override
+  String errorWritersideInstanceTreeExists(String path) {
+    return 'درخت نمونه از قبل وجود دارد: ⁨$path⁩';
+  }
+
+  @override
+  String errorWritersideInstanceImportSourceMissing(String path) {
+    return 'پوشهٔ منبع Markdown وجود ندارد: ⁨$path⁩';
+  }
+
+  @override
+  String get errorWritersideInstanceImportSelectionRequired =>
+      'دست‌کم یک فایل Markdown برای وارد کردن انتخاب کنید.';
+
+  @override
+  String errorWritersideInstanceImportFileInvalid(String path) {
+    return 'این یک فایل Markdown خواندنی درون منبع انتخاب‌شده نیست: ⁨$path⁩';
+  }
+
+  @override
+  String errorWritersideInstanceImportTargetExists(String path) {
+    return 'وارد کردن، فایل موجود پروژه را بازنویسی می‌کند: ⁨$path⁩';
+  }
+
+  @override
+  String get errorWritersideInstanceFilesChanged =>
+      'فایل‌های نمونه روی دیسک تغییر کرده‌اند. آن‌ها را بررسی و دوباره تلاش کنید.';
+
+  @override
+  String errorWritersideInstanceRollbackFailed(String paths) {
+    return 'BusyMark نتوانست تغییر نمونه را کاملاً برگرداند. پیش از ادامه این فایل‌ها را بررسی کنید: ⁨$paths⁩';
+  }
+
+  @override
+  String get errorWritersideInstanceLibraryImport =>
+      'کتابخانهٔ فهرست مطالب نمی‌تواند موضوع‌های Markdown را وارد کند.';
+
+  @override
+  String get errorWritersideInstanceWebPathInvalid =>
+      'مسیر وب باید یک خط باشد.';
+
+  @override
+  String get errorWritersideInstanceConfigurationInvalid =>
+      'پیکربندی نمونهٔ Writerside نامعتبر است. عیب‌یابی‌های آن را اصلاح و دوباره تلاش کنید.';
+
+  @override
+  String get errorWritersideInstanceTemporaryFile =>
+      'BusyMark نتوانست تغییرات نمونه را با ایمنی آماده کند.';
+
+  @override
+  String diagnosticWritersideTreeInvalidStatus(String status) {
+    return 'وضعیت نمونهٔ «⁨$status⁩» ناشناخته است. از ⁨release⁩، ⁨eap⁩ یا ⁨deprecated⁩ استفاده کنید.';
+  }
+
+  @override
+  String diagnosticWritersideDuplicateInstanceId(String id) {
+    return 'شناسهٔ نمونهٔ «⁨$id⁩» در بیش از یک فایل درخت استفاده شده است.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfilesInvalidRoot =>
+      'عنصر ریشهٔ ⁨buildprofiles.xml⁩ باید ⁨<buildprofiles>⁩ باشد.';
+
+  @override
+  String diagnosticWritersideBuildProfilesInvalidBoolean(
+    String name,
+    String value,
+  ) {
+    return 'مقدار ⁨$name⁩ یعنی «⁨$value⁩» باید ⁨true⁩ یا ⁨false⁩ باشد.';
+  }
+
+  @override
+  String get diagnosticWritersideBuildProfileMissingInstance =>
+      'عنصر ⁨<build-profile>⁩ باید شناسهٔ نمونه را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidInclude =>
+      'عنصر ⁨<include>⁩ درخت باید هر دو مقدار ⁨from⁩ و ⁨element-id⁩ را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeMissingSnippetId =>
+      'عنصر ⁨<snippet>⁩ درخت باید ⁨id⁩ را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeInvalidCrossInstanceReference =>
+      'ارجاع میان‌نمونه‌ای فهرست مطالب باید هر دو مقدار ⁨ref⁩ و ⁨in⁩ را مشخص کند.';
+
+  @override
+  String get diagnosticWritersideTreeConflictingTargets =>
+      'یک عنصر فهرست مطالب نمی‌تواند بیش از یک موضوع، ارجاع، پیوند یا تغییرمسیر را هدف قرار دهد.';
+
+  @override
+  String diagnosticWritersideTreeDuplicateElementId(String id) {
+    return 'شناسهٔ عنصر درخت «⁨$id⁩» بیش از یک بار تعریف شده است.';
+  }
+
+  @override
+  String get diagnosticWritersideInstanceGroupsInvalidRoot =>
+      'عنصر ریشهٔ فایل گروه‌های نمونه باید ⁨<instance-groups>⁩ باشد.';
+
+  @override
+  String get diagnosticWritersideInstanceGroupInvalid =>
+      'گروه نمونه باید یک شناسهٔ غیرخالی و فهرست نمونه‌ها را مشخص کند.';
+
+  @override
+  String diagnosticWritersideInstanceGroupDuplicateId(String id) {
+    return 'شناسهٔ گروه نمونهٔ «⁨$id⁩» بیش از یک بار تعریف شده است.';
+  }
+
+  @override
+  String diagnosticWritersideExternalTreeInclude(
+    String source,
+    String id,
+    String origin,
+  ) {
+    return 'گنجاندن فهرست مطالب «⁨$source#$id⁩» به پیمانهٔ خارجی «⁨$origin⁩» تعلق دارد و در این فضای کاری قابل گسترش نیست.';
+  }
+
+  @override
+  String diagnosticWritersideTreeIncludeElementMissing(
+    String source,
+    String id,
+  ) {
+    return 'عنصر درخت «⁨$id⁩» در درخت ثبت‌شدهٔ «⁨$source⁩» وجود ندارد.';
+  }
+
+  @override
+  String diagnosticWritersideTreeCircularInclude(String source, String id) {
+    return 'گنجاندن درخت «⁨$source#$id⁩» یک چرخه ایجاد می‌کند.';
+  }
+
+  @override
+  String diagnosticWritersideUnknownInstanceGroup(String group) {
+    return 'شرط نمونه به گروه ناشناختهٔ «⁨@$group⁩» ارجاع می‌دهد.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceInstanceMissing(String instance) {
+    return 'ارجاع میان‌نمونه‌ای، نمونهٔ ناشناختهٔ «⁨$instance⁩» را هدف قرار می‌دهد.';
+  }
+
+  @override
+  String diagnosticWritersideReferenceTopicMissing(
+    String topic,
+    String instance,
+  ) {
+    return 'موضوع «⁨$topic⁩» در نمونهٔ ارجاع‌شدهٔ «⁨$instance⁩» نیست.';
+  }
+
+  @override
+  String get download => 'بارگیری';
+
+  @override
+  String get exportWritersideAsPdf => 'صدور Writerside به‌صورت PDF';
+
+  @override
+  String get writersidePdfExportDescription =>
+      'یک نمونهٔ Writerside را با سازندهٔ رسمی JetBrains بسازید.';
+
+  @override
+  String get writersidePdfContent => 'محتوای صدور';
+
+  @override
+  String get writersidePdfSettings => 'تنظیمات PDF';
+
+  @override
+  String get writersidePdfConfigureHere => 'پیکربندی برای این صدور';
+
+  @override
+  String get writersidePdfProjectConfiguration => 'استفاده از پیکربندی پروژه';
+
+  @override
+  String get writersidePdfConfigurationFile => 'فایل پیکربندی PDF';
+
+  @override
+  String get writersidePdfPage => 'صفحه';
+
+  @override
+  String get writersidePdfKeymap => 'نگاشت کلیدها';
+
+  @override
+  String get writersidePdfNoKeymap => 'بدون نگاشت کلید';
+
+  @override
+  String get writersidePdfTocTitle => 'عنوان فهرست مطالب';
+
+  @override
+  String get writersidePdfCover => 'صفحهٔ جلد';
+
+  @override
+  String get writersidePdfIncludeCover => 'افزودن صفحهٔ جلد';
+
+  @override
+  String get writersidePdfCoverTitle => 'عنوان جلد';
+
+  @override
+  String get writersidePdfCoverDescription => 'توضیح جلد';
+
+  @override
+  String get writersidePdfCopyright => 'حق نشر';
+
+  @override
+  String get writersidePdfCoverLogo => 'نشان جلد';
+
+  @override
+  String get writersidePdfChooseCoverLogo => 'انتخاب نشان جلد';
+
+  @override
+  String get writersidePdfHeaderAndFooter => 'سرصفحه و پاصفحه';
+
+  @override
+  String get writersidePdfHeader => 'سرصفحه';
+
+  @override
+  String get writersidePdfFooter => 'پاصفحه';
+
+  @override
+  String get writersidePdfAdvancedDescription =>
+      'این مقادیر ماژول باز را به چیدمان منبع سازنده نگاشت می‌کنند.';
+
+  @override
+  String get writersidePdfModuleName => 'نام ماژول';
+
+  @override
+  String get writersidePdfSourceRoot => 'ریشهٔ منبع';
+
+  @override
+  String get writersidePdfChooseSourceRoot => 'انتخاب ریشهٔ منبع';
+
+  @override
+  String get writersidePdfBuilderVersion => 'نسخهٔ سازنده';
+
+  @override
+  String get writersidePdfAllowNetwork => 'اجازهٔ شبکه هنگام ساخت';
+
+  @override
+  String get writersidePdfAllowNetworkDescription =>
+      'به‌طور پیش‌فرض غیرفعال است. فقط وقتی فعال کنید که پروژه عمداً به منابع ساخت راه دور نیاز دارد.';
+
+  @override
+  String get writersidePdfModuleNameRequired => 'نام ماژول را وارد کنید.';
+
+  @override
+  String get writersidePdfSourceRootRequired => 'ریشهٔ منبع را انتخاب کنید.';
+
+  @override
+  String get writersidePdfBuilderVersionInvalid =>
+      'نسخهٔ معتبر سازنده را وارد کنید.';
+
+  @override
+  String get writersidePdfBuilderRequired => 'سازندهٔ Writerside لازم است';
+
+  @override
+  String writersidePdfBuilderDownloadDescription(String image) {
+    return 'BusyMark از تصویر کانتینر رسمی ⁨$image⁩ استفاده می‌کند. اکنون بارگیری شود؟ تصویر بزرگ است و Docker آن را ذخیره می‌کند.';
+  }
+
+  @override
+  String get writersidePdfDownloadingBuilder =>
+      'در حال بارگیری سازندهٔ Writerside…';
+
+  @override
+  String get exportingWritersidePdf => 'در حال صدور PDF از Writerside…';
+
+  @override
+  String get writersidePdfDockerUnavailable =>
+      'برای صدور Writerside به PDF به Docker نیاز است. Docker را نصب و اجرا کنید و دوباره تلاش کنید.';
+
+  @override
+  String get writersidePdfBuilderUnavailable =>
+      'تصویر درخواستی سازندهٔ Writerside در دسترس نیست.';
+
+  @override
+  String get writersidePdfConfigurationInvalid =>
+      'پیکربندی PDF در Writerside معتبر نیست.';
+
+  @override
+  String get writersidePdfBuildFailed =>
+      'سازندهٔ Writerside نتوانست PDF را ایجاد کند.';
+
+  @override
+  String get writersidePdfInvalidOutput =>
+      'سازندهٔ Writerside یک PDF معتبر تولید نکرد.';
+
+  @override
+  String get ai => 'هوش مصنوعی';
+
+  @override
+  String get aiLocalOllama => 'Ollama محلی';
+
+  @override
+  String get aiDisabled => 'غیرفعال';
+
+  @override
+  String get aiLocalOnlyDescription =>
+      'ویرایش با هوش مصنوعی صریح و فقط محلی است. BusyMark تنها بافت نمایش‌داده‌شده را به سرویس Ollama روی رابط بازگشتی می‌فرستد و هیچ پیشنهادی را بدون بازبینی اعمال نمی‌کند.';
+
+  @override
+  String get aiProvider => 'ارائه‌دهندهٔ هوش مصنوعی';
+
+  @override
+  String get aiOllamaEndpoint => 'نقطهٔ پایانی Ollama';
+
+  @override
+  String get aiOllamaModel => 'مدل Ollama';
+
+  @override
+  String get aiTestConnection => 'آزمایش اتصال';
+
+  @override
+  String get aiTestingConnection => 'در حال آزمایش…';
+
+  @override
+  String aiConnectionReady(int count) {
+    return 'متصل شد. ⁨$count⁩ مدل نصب‌شده پیدا شد.';
+  }
+
+  @override
+  String get aiNoModels =>
+      'Ollama در حال اجرا است، اما هیچ مدل نصب‌شده‌ای پیدا نشد.';
+
+  @override
+  String get aiConnectionFailed =>
+      'BusyMark نتوانست اتصال محلی Ollama را آزمایش کند.';
+
+  @override
+  String get aiConfigureFirst =>
+      'Ollama محلی را فعال کنید و در تنظیمات ← هوش مصنوعی یک مدل نصب‌شده برگزینید.';
+
+  @override
+  String get aiRewrite => 'بازنویسی';
+
+  @override
+  String get aiShorten => 'کوتاه‌سازی';
+
+  @override
+  String get aiSummarize => 'خلاصه‌سازی';
+
+  @override
+  String get aiChangeTone => 'تغییر لحن…';
+
+  @override
+  String get aiTranslate => 'ترجمه…';
+
+  @override
+  String get aiProofread => 'ویرایش و اصلاح';
+
+  @override
+  String get aiDraft => 'تهیهٔ پیش‌نویس…';
+
+  @override
+  String get aiSelectionRequired =>
+      'برای این کنش هوش مصنوعی متنی را انتخاب کنید.';
+
+  @override
+  String get aiTonePrompt => 'لحن موردنظر را توصیف کنید';
+
+  @override
+  String get aiLanguagePrompt => 'زبان مقصد';
+
+  @override
+  String get aiDraftPrompt => 'BusyMark چه چیزی را پیش‌نویس کند؟';
+
+  @override
+  String get aiGenerating => 'در حال تولید پیشنهاد…';
+
+  @override
+  String get aiProposal => 'پیشنهاد هوش مصنوعی';
+
+  @override
+  String aiContextDisclosure(int count) {
+    return 'Ollama محلی ⁨$count⁩ نویسه از بافت فعلی ویرایشگر دریافت می‌کند.';
+  }
+
+  @override
+  String get aiOriginal => 'متن اصلی';
+
+  @override
+  String get aiSuggested => 'متن پیشنهادی';
+
+  @override
+  String get aiApplyProposal => 'اعمال پیشنهاد';
+
+  @override
+  String aiTokenUsage(int input, int output) {
+    return '⁨$input⁩ توکن ورودی · ⁨$output⁩ توکن خروجی';
+  }
+
+  @override
+  String get aiStaleProposal =>
+      'سند هنگام تولید این پیشنهاد تغییر کرد. کنش را دوباره اجرا کنید.';
+
+  @override
+  String get aiViewContext => 'نمایش بافت ارسال‌شده';
 }

@@ -161,10 +161,8 @@ class BusyMarkApp extends ConsumerWidget {
                       final state = ref.read(workspaceControllerProvider);
                       final navigatorContext = rootNavigatorKey.currentContext;
                       if (navigatorContext != null &&
-                          canExportActiveMarkdown(state)) {
-                        unawaited(
-                          exportActiveMarkdownToPdf(navigatorContext, ref),
-                        );
+                          canExportWorkspacePdf(state)) {
+                        unawaited(exportWorkspaceToPdf(navigatorContext, ref));
                       }
                       return null;
                     },

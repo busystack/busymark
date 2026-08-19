@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+<instance-profile id="guide" name="Product Guide" start-page="welcome.md">
+  <toc-element topic="welcome.md" toc-title="Welcome" wip="true"/>
+  <include from="shared.tree" element-id="setup" instance="@published"
+           use-filter="empty,desktop"/>
+  <toc-element ref="operations.md" in="admin" toc-title="Administration"/>
+  <toc-element topic="legal.md" hidden="true"
+               accepts-web-file-names-ref="legacy-legal"/>
+  <toc-element toc-title="Support" href="https://example.com/support"/>
+  <toc-element toc-title="Legacy landing page" hidden="true"
+               accepts-web-file-names="old-guide.html"
+               target-for-accept-web-file-names="https://example.com/guide"/>
+</instance-profile>

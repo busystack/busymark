@@ -29,6 +29,26 @@ void main() {
     expect(settings.toJson()['autoSave'], isTrue);
   });
 
+  test('AI defaults to disabled local Ollama and round-trips safely', () {
+    final defaults = AppSettings.defaults();
+    expect(defaults.aiProviderPreference, AiProviderPreference.disabled);
+    expect(defaults.aiOllamaEndpoint, 'http://127.0.0.1:11434');
+    expect(defaults.aiOllamaModel, isEmpty);
+
+    final reloaded = AppSettings.fromJson(
+      defaults
+          .copyWith(
+            aiProviderPreference: AiProviderPreference.ollamaLocal,
+            aiOllamaModel: 'local-model',
+          )
+          .toJson(),
+    );
+
+    expect(reloaded.aiProviderPreference, AiProviderPreference.ollamaLocal);
+    expect(reloaded.aiOllamaModel, 'local-model');
+    expect(reloaded.toJson(), isNot(contains('apiKey')));
+  });
+
   test('editing button direction defaults to horizontal', () {
     final defaults = AppSettings.defaults();
     final missing = AppSettings.fromJson(const <String, Object?>{});
@@ -297,6 +317,48 @@ void main() {
       EditorToolbarDirection.vertical,
     );
   });
+
+  test(
+    'Writerside instance selection and icon color persist across renames',
+    () async {
+      final store = _MemorySettingsStore();
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+
+      await controller.selectWritersideInstance('/tmp/docs/../docs', 'guide');
+      await controller.setWritersideInstanceIconColor(
+        '/tmp/docs',
+        'guide',
+        WritersideInstanceIconColor.purple,
+      );
+      await controller.renameWritersideInstancePreferences(
+        '/tmp/docs',
+        'guide',
+        'product',
+      );
+
+      final settings = container.read(appSettingsControllerProvider);
+      expect(settings.selectedWritersideInstanceId('/tmp/docs'), 'product');
+      expect(
+        settings.writersideInstanceIconColor('/tmp/docs', 'product'),
+        WritersideInstanceIconColor.purple,
+      );
+      expect(
+        settings.writersideInstanceIconColor('/tmp/docs', 'guide'),
+        WritersideInstanceIconColor.automatic,
+      );
+      final reloaded = AppSettings.fromJson(store.value);
+      expect(reloaded.selectedWritersideInstanceId('/tmp/docs'), 'product');
+      expect(
+        reloaded.writersideInstanceIconColor('/tmp/docs', 'product'),
+        WritersideInstanceIconColor.purple,
+      );
+    },
+  );
 
   test(
     'initial load preserves user actions made before it completes',

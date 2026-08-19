@@ -143,6 +143,35 @@ void main() {
     );
   });
 
+  test('first real topic under an empty group becomes the home page', () async {
+    final root = await tempModule();
+    File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
+<instance-profile id="ug" name="User Guide">
+  <toc-element id="guides" toc-title="Guides"/>
+</instance-profile>
+''');
+
+    await creator.create(
+      WritersideTopicCreateTarget(
+        rootPath: root.path,
+        treePath: p.join(root.path, 'ug.tree'),
+        topicsRootDir: 'topics',
+        existingTopicIds: const {'intro'},
+      ),
+      const WritersideTopicCreateRequest(
+        title: 'First page',
+        fileName: 'first-page',
+        placement: WritersideTopicCreatePlacement.child,
+        referenceTocPath: [0],
+      ),
+    );
+
+    final tree = XmlDocument.parse(
+      File(p.join(root.path, 'ug.tree')).readAsStringSync(),
+    );
+    expect(tree.rootElement.getAttribute('start-page'), 'first-page.md');
+  });
+
   test('exact TOC path disambiguates sibling insertion', () async {
     final root = await tempModule();
     File(p.join(root.path, 'ug.tree')).writeAsStringSync('''

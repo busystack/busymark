@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
+import '../../ai/ai_edit_ui.dart';
+import '../../ai/ai_models.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_shortcuts.dart';
 import '../../app/localization.dart';
 import '../../core/diagnostic.dart';
@@ -36,6 +39,8 @@ class BusyMarkSourceEditor extends StatefulWidget {
     required this.onOpenSearch,
     required this.onCloseSearch,
     this.onVisibleLineChanged,
+    this.onAiEdit,
+    this.editRevision = 0,
   });
 
   final String text;
@@ -51,6 +56,8 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<int?>? onVisibleLineChanged;
+  final BusyMarkAiEditCallback? onAiEdit;
+  final int editRevision;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -336,9 +343,115 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                 onClose: widget.onCloseSearch,
               ),
             ),
+          if (widget.onAiEdit != null)
+            Positioned(
+              right: BusyMarkSpacing.sm,
+              bottom: BusyMarkSpacing.sm,
+              child: BusyMarkHeaderPopupMenuButton<AiFeature>(
+                tooltip: context.l10n.ai,
+                icon: BusyMarkGlyphs.ai,
+                itemBuilder: aiFeatureMenuItems,
+                onSelected: (feature) => unawaited(_runAiFeature(feature)),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  Future<void> _runAiFeature(AiFeature feature) async {
+    final callback = widget.onAiEdit;
+    if (callback == null) {
+      return;
+    }
+    final value = _fullEditingValue();
+    final rawSelection = value.selection;
+    final selection = rawSelection.isValid
+        ? TextSelection(
+            baseOffset: rawSelection.start.clamp(0, value.text.length).toInt(),
+            extentOffset: rawSelection.end.clamp(0, value.text.length).toInt(),
+          )
+        : TextSelection.collapsed(offset: value.text.length);
+    final selected = selection.isCollapsed
+        ? ''
+        : value.text.substring(selection.start, selection.end);
+    final selectionRequired = switch (feature) {
+      AiFeature.rewrite ||
+      AiFeature.shorten ||
+      AiFeature.tone ||
+      AiFeature.translate ||
+      AiFeature.proofread => true,
+      AiFeature.summarize || AiFeature.draft => false,
+    };
+    if (selectionRequired && selected.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.aiSelectionRequired)));
+      return;
+    }
+    final scope = selected.isNotEmpty
+        ? AiScope.selection
+        : feature == AiFeature.summarize
+        ? AiScope.document
+        : AiScope.insertion;
+    final input = selected.isNotEmpty
+        ? selected
+        : feature == AiFeature.summarize
+        ? value.text
+        : '';
+    final originalText = value.text;
+    final result = await callback(
+      AiEditInvocation(
+        feature: feature,
+        scope: scope,
+        input: input,
+        replacementOriginal: selected,
+        sourceRevision: widget.editRevision,
+        targetId:
+            '${widget.filePath ?? 'untitled'}:${selection.start}:${selection.end}',
+        documentPath: widget.filePath,
+      ),
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+    if (_controller.fullText != originalText) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.aiStaleProposal)));
+      return;
+    }
+    if (selection.isCollapsed) {
+      final insertion = _blockInsertion(originalText, selection.start, result);
+      _applyFullEditingValue(
+        TextEditingValue(
+          text: originalText.replaceRange(
+            selection.start,
+            selection.end,
+            insertion,
+          ),
+          selection: TextSelection.collapsed(
+            offset: selection.start + insertion.length,
+          ),
+        ),
+      );
+      return;
+    }
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: originalText.replaceRange(selection.start, selection.end, result),
+        selection: TextSelection(
+          baseOffset: selection.start,
+          extentOffset: selection.start + result.length,
+        ),
+      ),
+    );
+  }
+
+  String _blockInsertion(String source, int offset, String proposal) {
+    final beforeNeedsBreak = offset > 0 && source[offset - 1] != '\n';
+    final afterNeedsBreak = offset < source.length && source[offset] != '\n';
+    return '${beforeNeedsBreak ? '\n\n' : ''}$proposal${afterNeedsBreak ? '\n\n' : ''}';
   }
 
   void _syncSearchOptions() {

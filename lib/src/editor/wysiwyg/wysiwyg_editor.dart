@@ -8,6 +8,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
+import '../../ai/ai_models.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
@@ -56,6 +57,9 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.headerBarService,
     this.documentLayout,
     this.visualizationRevision = 0,
+    this.onAiEdit,
+    this.aiEditRevision = 0,
+    this.aiDocumentPath,
   });
 
   final BusyDocument document;
@@ -80,6 +84,9 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final LinuxHeaderBarService? headerBarService;
   final BusyMarkDocumentLayoutSpec? documentLayout;
   final int visualizationRevision;
+  final BusyMarkAiEditCallback? onAiEdit;
+  final int aiEditRevision;
+  final String? aiDocumentPath;
 
   @override
   State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
@@ -448,6 +455,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       onOutdentCommand: _applyOutdentCommand,
                       onToggleTaskCommand: _applyToggleTaskCommand,
                       onHardBreakCommand: _applyHardBreakCommand,
+                      onAiCommand: widget.onAiEdit == null
+                          ? null
+                          : (feature) => unawaited(_runAiFeature(feature)),
                     ),
                   ),
                 ],
@@ -2011,6 +2021,107 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return !block.preserveRaw &&
         block.kind != BusyBlockKind.thematicBreak &&
         block.kind != BusyBlockKind.table;
+  }
+
+  Future<void> _runAiFeature(AiFeature feature) async {
+    final callback = widget.onAiEdit;
+    if (callback == null) {
+      return;
+    }
+    final selectionRanges = _currentSelectionRanges();
+    final selectedText = selectionRanges
+        .map((range) {
+          final text = range.block.plainText;
+          return text.substring(
+            range.start.clamp(0, text.length).toInt(),
+            range.end.clamp(0, text.length).toInt(),
+          );
+        })
+        .join('\n\n');
+    final selectionRequired = switch (feature) {
+      AiFeature.rewrite ||
+      AiFeature.shorten ||
+      AiFeature.tone ||
+      AiFeature.translate ||
+      AiFeature.proofread => true,
+      AiFeature.summarize || AiFeature.draft => false,
+    };
+    if (selectionRequired && selectedText.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.aiSelectionRequired)));
+      return;
+    }
+    final target = _captureDialogTarget();
+    final hadDocumentSelection = _hasBlockSelection;
+    final activeBlockId = _activeBlockId;
+    final activeController = activeBlockId == null
+        ? null
+        : _textControllers[activeBlockId];
+    final activeText = activeController?.text;
+    final activeSelection = activeController?.selection.isValid ?? false
+        ? activeController!.selection
+        : TextSelection.collapsed(offset: activeText?.length ?? 0);
+    final scope = selectedText.isNotEmpty
+        ? AiScope.selection
+        : feature == AiFeature.summarize
+        ? AiScope.document
+        : AiScope.insertion;
+    final input = selectedText.isNotEmpty
+        ? selectedText
+        : feature == AiFeature.summarize
+        ? _documentController.markdown
+        : '';
+    final result = await callback(
+      AiEditInvocation(
+        feature: feature,
+        scope: scope,
+        input: input,
+        replacementOriginal: selectedText,
+        sourceRevision: widget.aiEditRevision,
+        targetId:
+            '${widget.document.filePath}:${activeBlockId ?? 'document'}:${activeSelection.start}:${activeSelection.end}',
+        documentPath: widget.aiDocumentPath,
+        contentFormat: AiContentFormat.plainText,
+      ),
+    );
+    if (result == null || !_isDialogTargetCurrent(target)) {
+      return;
+    }
+    if (hadDocumentSelection) {
+      _replaceDocumentSelectionWithText(result);
+      return;
+    }
+    if (activeBlockId == null ||
+        activeController == null ||
+        activeText == null ||
+        activeController.text != activeText) {
+      return;
+    }
+    final start = activeSelection.start.clamp(0, activeText.length).toInt();
+    final end = activeSelection.end.clamp(start, activeText.length).toInt();
+    final insertion = activeSelection.isCollapsed
+        ? _aiBlockInsertion(activeText, start, result)
+        : result;
+    final nextText = activeText.replaceRange(start, end, insertion);
+    activeController.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection(
+        baseOffset: start,
+        extentOffset: start + insertion.length,
+      ),
+    );
+    _handleBlockTextChanged(
+      _documentController.document.filePath,
+      activeBlockId,
+      nextText,
+    );
+  }
+
+  String _aiBlockInsertion(String source, int offset, String proposal) {
+    final beforeNeedsBreak = offset > 0 && source[offset - 1] != '\n';
+    final afterNeedsBreak = offset < source.length && source[offset] != '\n';
+    return '${beforeNeedsBreak ? '\n\n' : ''}$proposal${afterNeedsBreak ? '\n\n' : ''}';
   }
 
   void _applyBlockCommand(BusyWysiwygBlockCommand command) {
