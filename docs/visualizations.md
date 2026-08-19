@@ -82,7 +82,11 @@ rule can be represented without changing its meaning. Embedded fonts,
 unsupported selectors or declarations, conflicting cascade rules, and
 `<foreignObject>` content retain their sanitized browser styling and are
 rasterized by the local WebKit host. BusyMark never silently drops styling to
-claim that an SVG is vector-safe. The existing external-SVG policy is unchanged.
+claim that an SVG is vector-safe. Raster fallback prefers 2× preview and 3× PDF
+output, then reduces the scale when necessary to stay within WebKit's 8192-pixel
+dimension and 64,000,000-pixel area limits. Stored raster metadata uses the
+host's actual ceiling-rounded pixel dimensions. The existing external-SVG
+policy is unchanged.
 
 OpenAPI uses Scalar's parser for OpenAPI 3.2, 3.1, 3.0, and Swagger 2.0,
 Scalar's official JSON bundler for local references, and the YAML parser's exact

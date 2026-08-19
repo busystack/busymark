@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
-const visualizationSanitizerVersion = '3';
+const visualizationSanitizerVersion = '4';
 const mermaidEngineVersion = '11.16.1';
 const plantUmlEngineVersion = '1.2026.6';
 const d2EngineVersion = '0.7.1';

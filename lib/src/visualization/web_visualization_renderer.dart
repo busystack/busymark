@@ -7,6 +7,7 @@ import '../core/anchored_path_guard.dart';
 import 'generated_svg_normalizer.dart';
 import 'openapi_dependency_resolver.dart';
 import 'visualization_models.dart';
+import 'visualization_raster_sizing.dart';
 import 'visualization_renderer.dart';
 import 'web_render_host.dart';
 
@@ -17,12 +18,14 @@ class WebVisualizationRenderer implements VisualizationRenderer {
   const WebVisualizationRenderer({
     required this.host,
     this.svgNormalizer = const GeneratedSvgNormalizer(),
+    this.rasterSizingPolicy = const VisualizationRasterSizingPolicy(),
     OpenApiDependencyResolver? openApiDependencyResolver,
     this.maximumSourceCharacters = 500000,
   }) : _openApiDependencyResolver = openApiDependencyResolver;
 
   final WebRenderHost host;
   final GeneratedSvgNormalizer svgNormalizer;
+  final VisualizationRasterSizingPolicy rasterSizingPolicy;
   final OpenApiDependencyResolver? _openApiDependencyResolver;
   final int maximumSourceCharacters;
 
@@ -188,21 +191,23 @@ class WebVisualizationRenderer implements VisualizationRenderer {
     final normalized = svgNormalizer.normalize(svg);
     cancellationToken.throwIfCancelled();
     if (normalized.vectorSafeSvg == null) {
-      final scale = request.profile == VisualizationRenderProfile.pdf
-          ? 3.0
-          : 2.0;
+      final rasterSize = rasterSizingPolicy.fit(
+        width: normalized.width,
+        height: normalized.height,
+        profile: request.profile,
+      );
       final png = await host.rasterizeSvg(
         svg: normalized.browserSafeSvg,
         width: normalized.width,
         height: normalized.height,
-        scale: scale,
+        scale: rasterSize.scale,
         cancellationToken: cancellationToken,
       );
       cancellationToken.throwIfCancelled();
       return RasterVisualizationResult(
         pngBytes: png,
-        width: (normalized.width * scale).round(),
-        height: (normalized.height * scale).round(),
+        width: rasterSize.pixelWidth,
+        height: rasterSize.pixelHeight,
         diagnostics: diagnostics,
       );
     }

@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'generated_svg_normalizer.dart';
 import 'visualization_models.dart';
+import 'visualization_raster_sizing.dart';
 import 'visualization_renderer.dart';
 import 'web_render_host.dart';
 
@@ -348,6 +349,7 @@ class D2VisualizationRenderer implements VisualizationRenderer {
     this.commandRunner = const DartD2CommandRunner(),
     this.sourcePolicy = const D2SourcePolicy(),
     this.svgNormalizer = const GeneratedSvgNormalizer(),
+    this.rasterSizingPolicy = const VisualizationRasterSizingPolicy(),
     this.maximumSourceCharacters = 500000,
   });
 
@@ -356,6 +358,7 @@ class D2VisualizationRenderer implements VisualizationRenderer {
   final D2CommandRunner commandRunner;
   final D2SourcePolicy sourcePolicy;
   final GeneratedSvgNormalizer svgNormalizer;
+  final VisualizationRasterSizingPolicy rasterSizingPolicy;
   final int maximumSourceCharacters;
 
   @override
@@ -426,21 +429,23 @@ class D2VisualizationRenderer implements VisualizationRenderer {
       final normalized = svgNormalizer.normalize(svg);
       cancellationToken.throwIfCancelled();
       if (normalized.vectorSafeSvg == null) {
-        final scale = request.profile == VisualizationRenderProfile.pdf
-            ? 3.0
-            : 2.0;
+        final rasterSize = rasterSizingPolicy.fit(
+          width: normalized.width,
+          height: normalized.height,
+          profile: request.profile,
+        );
         final png = await webRenderHost.rasterizeSvg(
           svg: normalized.browserSafeSvg,
           width: normalized.width,
           height: normalized.height,
-          scale: scale,
+          scale: rasterSize.scale,
           cancellationToken: cancellationToken,
         );
         cancellationToken.throwIfCancelled();
         return RasterVisualizationResult(
           pngBytes: png,
-          width: (normalized.width * scale).round(),
-          height: (normalized.height * scale).round(),
+          width: rasterSize.pixelWidth,
+          height: rasterSize.pixelHeight,
         );
       }
       return SvgVisualizationResult(
