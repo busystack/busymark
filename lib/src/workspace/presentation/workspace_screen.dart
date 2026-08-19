@@ -452,6 +452,16 @@ class WorkspaceScreen extends ConsumerWidget {
                 : _GitDiffDocumentView(
                     diff: gitState.selectedDiffForDisplay,
                     comparisonLabel: _gitDiffComparisonLabel(context, gitState),
+                    comparisonType: gitState.selectedView == GitView.fileHistory
+                        ? gitState.fileHistory.comparisonType
+                        : null,
+                    comparisonEnabled: !gitState.isRunningOperation,
+                    onComparisonTypeChanged:
+                        gitState.selectedView == GitView.fileHistory
+                        ? (comparison) => unawaited(
+                            _selectFileHistoryComparison(ref, comparison),
+                          )
+                        : null,
                     openFilePath: gitState.selectedDiffOpenFilePath,
                     workspace: workspace,
                     viewMode: settings.documentViewMode,
@@ -2151,27 +2161,34 @@ String? _gitDiffComparisonLabel(BuildContext context, GitState state) {
   if (comparison == null) {
     return null;
   }
-  final commit = switch (state.selectedView) {
-    GitView.changes => null,
-    GitView.fileHistory => state.fileHistory.selectedEntry?.commit,
-    GitView.projectHistory =>
-      state.projectHistory.commits
-          .where(
-            (candidate) =>
-                candidate.fullHash == state.projectHistory.selectedCommitHash,
-          )
-          .firstOrNull,
-  };
-  if (commit == null) {
-    return null;
-  }
-  final label =
-      state.selectedView == GitView.fileHistory &&
+  return state.selectedView == GitView.fileHistory &&
           state.fileHistory.comparisonType ==
               GitComparisonType.commitVersusCurrent
       ? context.l10n.gitCompareWithCurrent
       : context.l10n.gitChangesInCommit;
-  return '$label · ${busyMarkLtrIsolateFor(context, commit.shortHash)}';
+}
+
+Future<void> _selectFileHistoryComparison(
+  WidgetRef ref,
+  GitComparisonType comparison,
+) async {
+  final controller = ref.read(gitControllerProvider.notifier);
+  switch (comparison) {
+    case GitComparisonType.commitChange:
+      final hash = ref
+          .read(gitControllerProvider)
+          .fileHistory
+          .selectedCommitHash;
+      if (hash != null) {
+        await controller.selectFileHistoryCommit(hash);
+      }
+    case GitComparisonType.commitVersusCurrent:
+      await controller.compareFileHistoryWithCurrent();
+    case GitComparisonType.staged:
+    case GitComparisonType.unstaged:
+    case GitComparisonType.untracked:
+      return;
+  }
 }
 
 class _SidebarHeader extends StatelessWidget {
@@ -6844,6 +6861,9 @@ class _GitDiffDocumentView extends StatefulWidget {
   const _GitDiffDocumentView({
     required this.diff,
     required this.comparisonLabel,
+    required this.comparisonType,
+    required this.comparisonEnabled,
+    required this.onComparisonTypeChanged,
     required this.openFilePath,
     required this.workspace,
     required this.viewMode,
@@ -6854,6 +6874,9 @@ class _GitDiffDocumentView extends StatefulWidget {
 
   final GitDiff? diff;
   final String? comparisonLabel;
+  final GitComparisonType? comparisonType;
+  final bool comparisonEnabled;
+  final ValueChanged<GitComparisonType>? onComparisonTypeChanged;
   final String? openFilePath;
   final Workspace workspace;
   final DocumentViewModePreference viewMode;
@@ -6904,6 +6927,15 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
     final sourceChangeCount = sourceVisible
         ? gitDiffSourceChangeCount(diff)
         : 0;
+    final comparisonUsesSourceNavigator =
+        widget.comparisonLabel != null &&
+        sourceVisible &&
+        sourceChangeCount > 0;
+    final comparisonUsesPreviewNavigator =
+        widget.comparisonLabel != null &&
+        !sourceVisible &&
+        previewVisible &&
+        changeTargets.isNotEmpty;
     final navigatorChangeCount = splitVisible
         ? sourceChangeCount
         : changeTargets.length;
@@ -6923,41 +6955,53 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
       child: Column(
         children: [
           if (widget.comparisonLabel != null)
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.headerbarFlat,
-                border: Border(bottom: BorderSide(color: colors.subtleBorder)),
-              ),
-              child: SizedBox(
-                height: BusyMarkSizes.paneHeaderHeight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: BusyMarkSpacing.md,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        BusyMarkGlyphs.documentHistory,
-                        size: BusyMarkSizes.iconSm,
-                        color: colors.mutedForeground,
-                      ),
-                      const SizedBox(width: BusyMarkSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          widget.comparisonLabel!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            _DiffToolbar(
+              label: widget.comparisonLabel!,
+              comparisonType: widget.comparisonType,
+              comparisonEnabled: widget.comparisonEnabled,
+              onComparisonTypeChanged: widget.onComparisonTypeChanged,
+              currentIndex:
+                  comparisonUsesSourceNavigator ||
+                      comparisonUsesPreviewNavigator
+                  ? _currentChangeIndex
+                  : null,
+              total: comparisonUsesSourceNavigator
+                  ? sourceChangeCount
+                  : comparisonUsesPreviewNavigator
+                  ? changeTargets.length
+                  : null,
+              onPrevious: comparisonUsesSourceNavigator
+                  ? () => _jumpToSplitChange(
+                      sourceChangeCount: sourceChangeCount,
+                      previewTargets: changeTargets,
+                      direction: -1,
+                    )
+                  : comparisonUsesPreviewNavigator
+                  ? () => _jumpToPreviewChange(changeTargets, -1)
+                  : null,
+              onNext: comparisonUsesSourceNavigator
+                  ? () => _jumpToSplitChange(
+                      sourceChangeCount: sourceChangeCount,
+                      previewTargets: changeTargets,
+                      direction: 1,
+                    )
+                  : comparisonUsesPreviewNavigator
+                  ? () => _jumpToPreviewChange(changeTargets, 1)
+                  : null,
+              target: comparisonUsesSourceNavigator
+                  ? _diffChangeTarget(diff, _currentChangeIndex)
+                  : null,
+              openFilePath: comparisonUsesSourceNavigator
+                  ? widget.openFilePath
+                  : null,
+              onOpenFile: comparisonUsesSourceNavigator
+                  ? widget.onOpenFile
+                  : null,
             ),
-          if (splitVisible && sourceChangeCount > 0)
-            _DiffChangeNavigator(
+          if (widget.comparisonLabel == null &&
+              splitVisible &&
+              sourceChangeCount > 0)
+            _DiffToolbar(
               currentIndex: _currentChangeIndex,
               total: sourceChangeCount,
               onPrevious: () => _jumpToSplitChange(
@@ -6988,8 +7032,11 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                       showFileActions: !splitVisible,
                       showHunkHeaders: !splitVisible,
                       editorFontSize: widget.editorFontSize,
-                      showChangeNavigator: !previewVisible,
-                      changeNavigatorController: splitVisible
+                      showChangeNavigator:
+                          !previewVisible && widget.comparisonLabel == null,
+                      changeNavigatorController:
+                          splitVisible ||
+                              (widget.comparisonLabel != null && sourceVisible)
                           ? _sourceChangeNavigatorController
                           : null,
                       openFilePath: widget.openFilePath,
@@ -7006,8 +7053,10 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
                   Expanded(
                     child: Column(
                       children: [
-                        if (!splitVisible && changeTargets.isNotEmpty)
-                          _DiffChangeNavigator(
+                        if (widget.comparisonLabel == null &&
+                            !splitVisible &&
+                            changeTargets.isNotEmpty)
+                          _DiffToolbar(
                             currentIndex: _currentChangeIndex,
                             total: changeTargets.length,
                             onPrevious: () =>
@@ -7143,21 +7192,29 @@ class _GitDiffDocumentViewState extends State<_GitDiffDocumentView> {
   }
 }
 
-class _DiffChangeNavigator extends StatelessWidget {
-  const _DiffChangeNavigator({
-    required this.currentIndex,
-    required this.total,
-    required this.onPrevious,
-    required this.onNext,
-    required this.target,
-    required this.openFilePath,
-    required this.onOpenFile,
+class _DiffToolbar extends StatelessWidget {
+  const _DiffToolbar({
+    this.label,
+    this.comparisonType,
+    this.comparisonEnabled = true,
+    this.onComparisonTypeChanged,
+    this.currentIndex,
+    this.total,
+    this.onPrevious,
+    this.onNext,
+    this.target,
+    this.openFilePath,
+    this.onOpenFile,
   });
 
-  final int currentIndex;
-  final int total;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
+  final String? label;
+  final GitComparisonType? comparisonType;
+  final bool comparisonEnabled;
+  final ValueChanged<GitComparisonType>? onComparisonTypeChanged;
+  final int? currentIndex;
+  final int? total;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
   final _DiffChangeTarget? target;
   final String? openFilePath;
   final ValueChanged<String>? onOpenFile;
@@ -7165,6 +7222,14 @@ class _DiffChangeNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
+    final hasNavigator =
+        currentIndex != null &&
+        total != null &&
+        total! > 0 &&
+        onPrevious != null &&
+        onNext != null;
+    final selectable =
+        comparisonType != null && onComparisonTypeChanged != null;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.headerbarFlat,
@@ -7175,56 +7240,165 @@ class _DiffChangeNavigator extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: BusyMarkSpacing.md),
-            Text(
-              '${currentIndex + 1} / $total',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            if (label != null) ...[
+              Icon(
+                BusyMarkGlyphs.documentHistory,
+                size: BusyMarkSizes.iconSm,
                 color: colors.mutedForeground,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-            if (target != null) ...[
-              const SizedBox(width: BusyMarkSpacing.md),
-              Expanded(
-                child: Text(
-                  gitDiffHunkRangeText(
-                    target!.hunk,
-                    format: context.l10n.gitDiffHunkRange,
-                    noLinesText: context.l10n.gitDiffNoLines,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.mutedForeground,
-                    fontFamily: BusyMarkTypography.monoFontFamily,
-                  ),
-                ),
               ),
               const SizedBox(width: BusyMarkSpacing.sm),
-              if (openFilePath != null && onOpenFile != null)
-                BusyMarkHeaderIconButton(
-                  tooltip: context.l10n.gitOpenFile,
-                  icon: BusyMarkGlyphs.externalLink,
-                  transparent: true,
-                  onPressed: () => onOpenFile!(openFilePath!),
+              Flexible(
+                flex: 2,
+                child: selectable
+                    ? _GitHistoryComparisonSelector(
+                        value: comparisonType!,
+                        label: label!,
+                        enabled: comparisonEnabled,
+                        onSelected: onComparisonTypeChanged!,
+                      )
+                    : Text(
+                        label!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+              ),
+            ],
+            if (hasNavigator) ...[
+              if (label != null) const SizedBox(width: BusyMarkSpacing.md),
+              Text(
+                '${currentIndex! + 1} / $total',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: colors.mutedForeground,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
+              ),
+              if (target != null) ...[
+                const SizedBox(width: BusyMarkSpacing.md),
+                Flexible(
+                  child: Text(
+                    gitDiffHunkRangeText(
+                      target!.hunk,
+                      format: context.l10n.gitDiffHunkRange,
+                      noLinesText: context.l10n.gitDiffNoLines,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.mutedForeground,
+                      fontFamily: BusyMarkTypography.monoFontFamily,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                if (openFilePath != null && onOpenFile != null)
+                  BusyMarkHeaderIconButton(
+                    tooltip: context.l10n.gitOpenFile,
+                    icon: BusyMarkGlyphs.externalLink,
+                    transparent: true,
+                    onPressed: () => onOpenFile!(openFilePath!),
+                  ),
+              ] else
+                const Spacer(),
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.sourceSearchPreviousMatch,
+                icon: YaruIcons.pan_up,
+                transparent: true,
+                onPressed: onPrevious!,
+              ),
+              BusyMarkHeaderIconButton(
+                tooltip: context.l10n.sourceSearchNextMatch,
+                icon: BusyMarkGlyphs.downArrow,
+                transparent: true,
+                onPressed: onNext!,
+              ),
             ] else
               const Spacer(),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.sourceSearchPreviousMatch,
-              icon: YaruIcons.pan_up,
-              transparent: true,
-              onPressed: onPrevious,
-            ),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.sourceSearchNextMatch,
-              icon: BusyMarkGlyphs.downArrow,
-              transparent: true,
-              onPressed: onNext,
-            ),
             const SizedBox(width: BusyMarkSpacing.xs),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GitHistoryComparisonSelector extends StatelessWidget {
+  const _GitHistoryComparisonSelector({
+    required this.value,
+    required this.label,
+    required this.enabled,
+    required this.onSelected,
+  });
+
+  final GitComparisonType value;
+  final String label;
+  final bool enabled;
+  final ValueChanged<GitComparisonType> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkMenuButton<GitComparisonType>(
+      key: const ValueKey('git-history-comparison-selector'),
+      tooltip: context.l10n.gitDiff,
+      enabled: enabled,
+      fallbackMenuWidth: 224,
+      items: [
+        BusyMarkPopupMenuItem(
+          value: GitComparisonType.commitChange,
+          label: context.l10n.gitChangesInCommit,
+          icon: BusyMarkGlyphs.documentHistory,
+          checked: value == GitComparisonType.commitChange,
+          trailingCheck: true,
+        ),
+        BusyMarkPopupMenuItem(
+          value: GitComparisonType.commitVersusCurrent,
+          label: context.l10n.gitCompareWithCurrent,
+          icon: BusyMarkGlyphs.preview,
+          checked: value == GitComparisonType.commitVersusCurrent,
+          trailingCheck: true,
+        ),
+      ],
+      onSelected: (selection) {
+        if (selection != value) {
+          onSelected(selection);
+        }
+      },
+      triggerBuilder: (context, trigger) {
+        return trigger.anchor(
+          child: Tooltip(
+            message: context.l10n.gitDiff,
+            child: Semantics(
+              expanded: trigger.isOpen,
+              child: BusyMarkPushButton.standard(
+                onPressed: trigger.onPressed,
+                focusNode: trigger.focusNode,
+                style: Theme.of(context).outlinedButtonTheme.style?.copyWith(
+                  side: const WidgetStatePropertyAll(BorderSide.none),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                      ),
+                    ),
+                    const SizedBox(width: BusyMarkSpacing.sm),
+                    const Icon(
+                      BusyMarkGlyphs.downArrow,
+                      size: BusyMarkSizes.iconSm,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

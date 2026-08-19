@@ -11,14 +11,12 @@ class GitFileHistoryView extends StatelessWidget {
     super.key,
     required this.state,
     required this.onSelectCommit,
-    required this.onCompareWithCurrent,
     required this.onRestoreVersion,
     required this.onLoadMore,
   });
 
   final GitState state;
   final ValueChanged<String> onSelectCommit;
-  final VoidCallback onCompareWithCurrent;
   final VoidCallback onRestoreVersion;
   final VoidCallback onLoadMore;
 
@@ -42,43 +40,21 @@ class GitFileHistoryView extends StatelessWidget {
     return ListView(
       padding: BusyMarkInsets.sidebarList,
       children: [
-        for (final entry in history.entries) ...[
-          Builder(
-            builder: (context) {
-              final selected =
-                  entry.commit.fullHash == history.selectedCommitHash;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _CommitRow(
-                    selected: selected,
-                    shortHash: entry.commit.shortHash,
-                    subject: entry.commit.subject,
-                    authorName: entry.commit.authorName,
-                    date: entry.commit.authorDate,
-                    trailing: selected
-                        ? _FileHistoryCommitMenu(
-                            canRestore: entry.newPath != null,
-                            onCompareWithCurrent: onCompareWithCurrent,
-                            onRestoreVersion: onRestoreVersion,
-                          )
-                        : null,
-                    onTap: () => onSelectCommit(entry.commit.fullHash),
-                  ),
-                  if (selected)
-                    _HistoryComparisonLabel(
-                      label:
-                          history.comparisonType ==
-                              GitComparisonType.commitVersusCurrent
-                          ? context.l10n.gitCompareWithCurrent
-                          : context.l10n.gitChangesInCommit,
-                      shortHash: entry.commit.shortHash,
-                    ),
-                ],
-              );
-            },
+        for (final entry in history.entries)
+          _CommitRow(
+            selected: entry.commit.fullHash == history.selectedCommitHash,
+            shortHash: entry.commit.shortHash,
+            subject: entry.commit.subject,
+            authorName: entry.commit.authorName,
+            date: entry.commit.authorDate,
+            trailing: entry.commit.fullHash == history.selectedCommitHash
+                ? _FileHistoryCommitMenu(
+                    canRestore: entry.newPath != null,
+                    onRestoreVersion: onRestoreVersion,
+                  )
+                : null,
+            onTap: () => onSelectCommit(entry.commit.fullHash),
           ),
-        ],
         if (history.hasMore)
           _LoadMoreButton(
             loading: history.isLoadingMore,
@@ -152,17 +128,15 @@ class GitProjectHistoryView extends StatelessWidget {
   }
 }
 
-enum _FileHistoryCommitAction { compareWithCurrent, restoreVersion }
+enum _FileHistoryCommitAction { restoreVersion }
 
 class _FileHistoryCommitMenu extends StatelessWidget {
   const _FileHistoryCommitMenu({
     required this.canRestore,
-    required this.onCompareWithCurrent,
     required this.onRestoreVersion,
   });
 
   final bool canRestore;
-  final VoidCallback onCompareWithCurrent;
   final VoidCallback onRestoreVersion;
 
   @override
@@ -173,11 +147,6 @@ class _FileHistoryCommitMenu extends StatelessWidget {
       transparent: true,
       itemBuilder: (context) => [
         BusyMarkPopupMenuItem(
-          value: _FileHistoryCommitAction.compareWithCurrent,
-          label: context.l10n.gitCompareWithCurrent,
-          icon: BusyMarkGlyphs.preview,
-        ),
-        BusyMarkPopupMenuItem(
           value: _FileHistoryCommitAction.restoreVersion,
           label: context.l10n.gitRestoreVersion,
           icon: BusyMarkGlyphs.undo,
@@ -186,52 +155,10 @@ class _FileHistoryCommitMenu extends StatelessWidget {
       ],
       onSelected: (action) {
         switch (action) {
-          case _FileHistoryCommitAction.compareWithCurrent:
-            onCompareWithCurrent();
           case _FileHistoryCommitAction.restoreVersion:
             onRestoreVersion();
         }
       },
-    );
-  }
-}
-
-class _HistoryComparisonLabel extends StatelessWidget {
-  const _HistoryComparisonLabel({required this.label, required this.shortHash});
-
-  final String label;
-  final String shortHash;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        BusyMarkSpacing.lg,
-        0,
-        BusyMarkSpacing.sm,
-        BusyMarkSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            BusyMarkGlyphs.preview,
-            size: BusyMarkSizes.iconSm,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: BusyMarkSpacing.xs),
-          Expanded(
-            child: Text(
-              '$label · ${busyMarkLtrIsolateFor(context, shortHash)}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

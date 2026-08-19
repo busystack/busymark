@@ -132,8 +132,6 @@ class GitSidebarTab extends ConsumerWidget {
                 GitView.fileHistory => GitFileHistoryView(
                   state: state,
                   onSelectCommit: controller.selectFileHistoryCommit,
-                  onCompareWithCurrent:
-                      controller.compareFileHistoryWithCurrent,
                   onRestoreVersion: () => _confirmRestoreVersion(
                     context,
                     controller,

@@ -2096,6 +2096,93 @@ void main() {
     expect(find.text('README.md'), findsWidgets);
   });
 
+  testWidgets(
+    'File History comparison selector shares its row with match navigation',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      final temp = Directory.systemTemp.createTempSync(
+        'busymark_git_history_selector_',
+      );
+      addTearDown(() {
+        temp.deleteSync(recursive: true);
+      });
+      final readme = File('${temp.path}/README.md')
+        ..writeAsStringSync('# Current\n');
+      final service = _TabbedWorkspaceService(
+        rootPath: temp.path,
+        paths: [readme.path],
+      );
+      final gitController = _PresetGitController(
+        _gitFileHistoryDiffState(temp.path),
+      );
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(documentViewMode: DocumentViewModePreference.split)
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue(temp.path),
+          gitControllerProvider.overrideWith(() => gitController),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var i = 0; i < 30; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find
+            .byKey(const ValueKey('git-history-comparison-selector'))
+            .evaluate()
+            .isNotEmpty) {
+          break;
+        }
+      }
+
+      final selector = find.byKey(
+        const ValueKey('git-history-comparison-selector'),
+      );
+      final previous = find.byTooltip(l10n.sourceSearchPreviousMatch);
+      final next = find.byTooltip(l10n.sourceSearchNextMatch);
+      expect(selector, findsOneWidget);
+      expect(previous, findsOneWidget);
+      expect(next, findsOneWidget);
+      expect(
+        (tester.getCenter(selector).dy - tester.getCenter(previous).dy).abs(),
+        lessThan(1),
+      );
+      expect(find.text(l10n.gitChangesInCommit), findsOneWidget);
+
+      await tester.tap(selector);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.gitCompareWithCurrent));
+      await tester.pumpAndSettle();
+
+      expect(gitController.compareWithCurrentCount, 1);
+      expect(find.text(l10n.gitCompareWithCurrent), findsOneWidget);
+
+      await tester.tap(selector);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.gitChangesInCommit));
+      await tester.pumpAndSettle();
+
+      expect(gitController.commitComparisonCount, 1);
+      expect(find.text(l10n.gitChangesInCommit), findsOneWidget);
+    },
+  );
+
   testWidgets('file tree disables Git file actions without a repository', (
     tester,
   ) async {
@@ -7515,6 +7602,8 @@ class _PresetGitController extends GitController {
   String? loadedFileHistoryPath;
   List<String> stagedPaths = const [];
   int branchLoadCount = 0;
+  int compareWithCurrentCount = 0;
+  int commitComparisonCount = 0;
 
   @override
   GitState build() => initialState;
@@ -7574,6 +7663,88 @@ class _PresetGitController extends GitController {
   Future<void> stageFiles(List<String> repoRelativePaths) async {
     stagedPaths = repoRelativePaths;
   }
+
+  @override
+  Future<void> compareFileHistoryWithCurrent() async {
+    compareWithCurrentCount += 1;
+    state = state.copyWith(
+      fileHistory: state.fileHistory.copyWith(
+        comparisonType: GitComparisonType.commitVersusCurrent,
+      ),
+    );
+  }
+
+  @override
+  Future<void> selectFileHistoryCommit(String hash) async {
+    commitComparisonCount += 1;
+    state = state.copyWith(
+      fileHistory: state.fileHistory.copyWith(
+        selectedCommitHash: hash,
+        comparisonType: GitComparisonType.commitChange,
+      ),
+    );
+  }
+}
+
+GitState _gitFileHistoryDiffState(String rootPath) {
+  final repository = GitRepositoryInfo(
+    rootPath: rootPath,
+    gitDirPath: '$rootPath/.git',
+    currentBranch: 'main',
+  );
+  const hash = '45a2b81a41822ad4171f62205ef996f5752a3bbd';
+  final commit = GitCommitSummary(
+    fullHash: hash,
+    shortHash: '45a2b81',
+    authorName: 'BusyMark Test',
+    authorEmail: 'test@example.invalid',
+    authorDate: DateTime(2026),
+    subject: 'File history test commit',
+    parentHashes: const ['30af618a6e962623a0098ad6a33b468f33dc49c7'],
+  );
+  final file = _readmeCodeBlockDiffFile();
+  final diff = GitDiff(
+    title: 'README.md',
+    files: [file],
+    rawPatch: '',
+    hasBinaryFiles: false,
+    fileSnapshots: const {'README.md': '# Readme change\n'},
+  );
+  return GitState(
+    availability: const GitAvailability(
+      available: true,
+      executablePath: '/usr/bin/git',
+      version: '2.50.0',
+    ),
+    repositoryInfo: repository,
+    statusSnapshot: GitStatusSnapshot(
+      repositoryInfo: repository,
+      files: const [],
+    ),
+    selectedView: GitView.fileHistory,
+    scopedFilePath: 'README.md',
+    fileHistory: GitFileHistoryState(
+      currentPath: 'README.md',
+      entries: [
+        GitFileHistoryEntry(
+          commit: commit,
+          pathAtCommit: 'README.md',
+          pathInParent: 'README.md',
+          status: GitDiffFileStatus.modified,
+        ),
+      ],
+      selectedCommitHash: hash,
+      comparison: GitHistoricalFileComparison(
+        oldPath: 'README.md',
+        newPath: 'README.md',
+        oldContent: '# Readme old\n',
+        newContent: '# Readme change\n',
+        diff: diff,
+      ),
+    ),
+    selectedCommitFilePath: 'README.md',
+    openDiffFilePaths: const ['README.md'],
+  );
 }
 
 GitState _gitDiffState(String rootPath) {

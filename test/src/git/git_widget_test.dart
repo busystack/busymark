@@ -465,7 +465,6 @@ void main() {
             ),
           ),
           onSelectCommit: (_) {},
-          onCompareWithCurrent: () {},
           onRestoreVersion: () {},
           onLoadMore: () {},
         ),
@@ -898,84 +897,62 @@ void main() {
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
   });
 
-  testWidgets(
-    'file history exposes contextual comparison and restore actions',
-    (tester) async {
-      final commit = GitCommitSummary(
-        fullHash: '1234567890abcdef',
-        shortHash: '1234567',
-        authorName: 'BusyMark Test',
-        authorEmail: 'busymark@example.com',
-        authorDate: DateTime(2026),
-        subject: 'Update docs',
-        parentHashes: const ['abcdef0123456789'],
-      );
-      var compareCalls = 0;
-      var restoreCalls = 0;
-      var state = _state(
-        files: const [],
-        scopedFilePath: 'README.md',
-        selectedView: GitView.fileHistory,
-        history: [commit],
-        historyFilePath: 'README.md',
-        selectedCommitHash: commit.fullHash,
-        selectedCommitFilePath: 'README.md',
-        openDiffFilePaths: const ['README.md'],
-        selectedDiff: GitDiff(
-          title: 'README.md',
-          files: [_diffFile('README.md', 'Commit change')],
-          rawPatch: '',
-          hasBinaryFiles: false,
+  testWidgets('file history keeps comparison controls out of the sidebar', (
+    tester,
+  ) async {
+    final commit = GitCommitSummary(
+      fullHash: '1234567890abcdef',
+      shortHash: '1234567',
+      authorName: 'BusyMark Test',
+      authorEmail: 'busymark@example.com',
+      authorDate: DateTime(2026),
+      subject: 'Update docs',
+      parentHashes: const ['abcdef0123456789'],
+    );
+    var restoreCalls = 0;
+    final state = _state(
+      files: const [],
+      scopedFilePath: 'README.md',
+      selectedView: GitView.fileHistory,
+      history: [commit],
+      historyFilePath: 'README.md',
+      selectedCommitHash: commit.fullHash,
+      selectedCommitFilePath: 'README.md',
+      openDiffFilePaths: const ['README.md'],
+      selectedDiff: GitDiff(
+        title: 'README.md',
+        files: [_diffFile('README.md', 'Commit change')],
+        rawPatch: '',
+        hasBinaryFiles: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      _localized(
+        GitFileHistoryView(
+          state: state,
+          onSelectCommit: (_) {},
+          onRestoreVersion: () => restoreCalls++,
+          onLoadMore: () {},
         ),
-      );
+      ),
+    );
 
-      await tester.pumpWidget(
-        _localized(
-          StatefulBuilder(
-            builder: (context, setState) => GitFileHistoryView(
-              state: state,
-              onSelectCommit: (_) {},
-              onCompareWithCurrent: () {
-                compareCalls++;
-                setState(() {
-                  state = state.copyWith(
-                    fileHistory: state.fileHistory.copyWith(
-                      comparisonType: GitComparisonType.commitVersusCurrent,
-                    ),
-                  );
-                });
-              },
-              onRestoreVersion: () => restoreCalls++,
-              onLoadMore: () {},
-            ),
-          ),
-        ),
-      );
+    expect(find.textContaining(l10n.gitChangesInCommit), findsNothing);
+    expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
+    expect(find.text(l10n.gitRestoreVersion), findsNothing);
+    expect(find.textContaining(commit.shortHash), findsOneWidget);
 
-      expect(find.textContaining(l10n.gitChangesInCommit), findsOneWidget);
-      expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
-      expect(find.text(l10n.gitRestoreVersion), findsNothing);
+    await tester.tap(find.byTooltip(l10n.fileActions));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip(l10n.fileActions));
-      await tester.pumpAndSettle();
+    expect(find.text(l10n.gitCompareWithCurrent), findsNothing);
+    expect(find.text(l10n.gitRestoreVersion), findsOneWidget);
+    await tester.tap(find.text(l10n.gitRestoreVersion));
+    await tester.pumpAndSettle();
 
-      expect(find.text(l10n.gitCompareWithCurrent), findsOneWidget);
-      expect(find.text(l10n.gitRestoreVersion), findsOneWidget);
-
-      await tester.tap(find.text(l10n.gitCompareWithCurrent));
-      await tester.pumpAndSettle();
-
-      expect(compareCalls, 1);
-      expect(find.textContaining(l10n.gitCompareWithCurrent), findsOneWidget);
-
-      await tester.tap(find.byTooltip(l10n.fileActions));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.gitRestoreVersion));
-      await tester.pumpAndSettle();
-
-      expect(restoreCalls, 1);
-    },
-  );
+    expect(restoreCalls, 1);
+  });
 
   testWidgets('project history file rows show selected file diff', (
     tester,
